@@ -66,24 +66,23 @@ Outputs a Markdown + HTML report in `eval/reports/` comparing latency (IRIS `%SY
 
 | # | Source (title + origin) | Ref ID |
 |---|-------------------------|--------|
-| 1 | “Using Vector Search”, InterSystems Docs | turn0search0 |
-| 2 | “Faster Vector Searches with ANN index”, InterSystems Community | turn0search3 |
-| 3 | Gao et al. “HyDE: Precise Zero‑Shot Dense Retrieval” (arXiv 2212.10496) | turn1search2 |
-| 4 | Yan et al. “CRAG: Corrective Retrieval‑Augmented Generation” (arXiv 2401.15884) | turn1search1 |
-| 5 | CRAG GitHub reference implementation | turn1search5 |
-| 6 | Khattab & Zaharia “ColBERT v2” (Hugging Face card) | turn2search0 |
-| 7 | ColBERT v2 GitHub | turn2search2 |
-| 8 | Khattar et al. “ColPaLi” (arXiv 2407.01449) | turn2search1 |
-| 9 | Xu et al. “NodeRAG” (arXiv 2504.11544) | turn3search0 |
-| 10 | NodeRAG GitHub sample | turn3search1 |
-| 11 | Peng et al. “Graph RAG Survey” (arXiv 2408.08921) | turn4search0 |
-| 12 | LangChain GraphRetriever docs | turn4search1 |
-| 13 | InterSystems Docs “WITH (CTE)” | turn6search0 |
-| 14 | InterSystems Docs “CREATE AGGREGATE” | turn6search1 |
-| 15 | mg‑dbx‑napi high‑perf Node driver GitHub | turn5search0 |
-| 16 | RAGChecker GitHub | turn7search0 |
-| 17 | RAGAS framework (arXiv 2309.15217) | turn7search1 |
-| 18 | Evidently AI RAG testing docs | turn7search2 |
+| 1 | “Using Vector Search”, InterSystems Docs |
+| 2 | “Faster Vector Searches with ANN index”, InterSystems Community |
+| 3 | Gao et al. “HyDE: Precise Zero‑Shot Dense Retrieval” (arXiv 2212.10496) |
+| 4 | Yan et al. “CRAG: Corrective Retrieval‑Augmented Generation” (arXiv 2401.15884) | 
+| 5 | CRAG GitHub reference implementation | 
+| 6 | Khattab & Zaharia “ColBERT v2” (Hugging Face card) | 
+| 7 | ColBERT v2 GitHub | 
+| 8 | Khattar et al. “ColPaLi” (arXiv 2407.01449) | 
+| 9 | Xu et al. “NodeRAG” (arXiv 2504.11544) |
+| 10 | NodeRAG GitHub sample | 
+| 11 | Peng et al. “Graph RAG Survey” (arXiv 2408.08921) |
+| 12 | LangChain GraphRetriever docs |
+| 13 | InterSystems Docs “WITH (CTE)” |
+| 14 | InterSystems Docs “CREATE AGGREGATE” |
+| 15 | mg‑dbx‑napi high‑perf Node driver GitHub |
+| 16 | RAGChecker GitHub |
+| 17 | RAGAS framework (arXiv 2309.15217) |
+| 18 | Evidently AI RAG testing docs |
 
-> **Note:** Direct URLs omitted per security guidelines; each `Ref ID` is clickable in standard ChatGPT UI.
 
