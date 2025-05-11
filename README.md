@@ -1,93 +1,89 @@
-# rag-templates
+# IRIS RAG Template Suite
 
+## Objective  
+A batteries‑included GitHub starter that shows **every modern Retrieval‑Augmented Generation (RAG) technique** running natively on **InterSystems IRIS 2025.1** with as much standard SQL as possible. The suite covers:
 
+| Folder | Technique | Extra storage | Primary SQL changes |
+|--------|-----------|---------------|---------------------|
+| `basic_rag/` | Vanilla dense retrieval | — | none |
+| `hyde/` | HyDE query‑expansion | — | none |
+| `crag/` | CRAG self‑audit | — | none |
+| `colbert/` | Late‑interaction (ColBERT v2 / ColPaLi) | token‑vectors | UDAF or CTE aggregate |
+| `noderag/` | **NodeRAG** heterogeneous graph | edge table | `JOIN` / CTE |
+| `graphrag/` | **GraphRAG** KG traversal | edge table + globals | recursive CTE |
 
-## Getting started
+An `eval/` package benchmarks **build time, index size, P50/P95 latency, QPS, retrieval recall, answer faithfulness and hallucination rate** using RAGChecker, RAGAS and Evidently.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+---
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Repository Layout
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.iscinternal.com/tdyar/rag-templates.git
-git branch -M main
-git push -uf origin main
+iris-rag-templates/
+├── docker-compose.yml      # IRIS + notebook/Node containers
+├── common/
+│   ├── db_init.sql         # tables, indexes, globals views
+│   └── utils.py            # embed(), chat(), timers
+├── basic_rag/
+├── hyde/
+├── crag/
+├── colbert/
+├── noderag/
+├── graphrag/
+└── eval/
+    ├── loader.py
+    ├── bench_runner.py
+    └── reports/
 ```
 
-## Integrate with your tools
+*Each sub‑folder ships a notebook, a callable `pipeline.*`, and unit tests.*
 
-- [ ] [Set up project integrations](https://gitlab.iscinternal.com/tdyar/rag-templates/-/settings/integrations)
+---
 
-## Collaborate with your team
+## Build & Run
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```bash
+git clone https://github.com/your-org/iris-rag-templates
+cd iris-rag-templates
+docker compose up -d        # boots IRIS and dev helpers
+make load-data              # invoke loader, build indexes
+pytest -q                   # green bar = passing TDD suite
+```
 
-## Test and Deploy
+---
 
-Use the built-in continuous integration in GitLab.
+## Evaluation Quick‑start
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+```bash
+python -m eval.bench_runner        --pipeline colbert        --queries sample_queries.json        --llm gpt-4o
+```
 
-***
+Outputs a Markdown + HTML report in `eval/reports/` comparing latency (IRIS `%SYSTEM.Process`), accuracy (RAGChecker), relevance/faithfulness (RAGAS), and overall score (Evidently).
 
-# Editing this README
+---
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## References
 
-## Suggestions for a good README
+| # | Source (title + origin) | Ref ID |
+|---|-------------------------|--------|
+| 1 | “Using Vector Search”, InterSystems Docs | turn0search0 |
+| 2 | “Faster Vector Searches with ANN index”, InterSystems Community | turn0search3 |
+| 3 | Gao et al. “HyDE: Precise Zero‑Shot Dense Retrieval” (arXiv 2212.10496) | turn1search2 |
+| 4 | Yan et al. “CRAG: Corrective Retrieval‑Augmented Generation” (arXiv 2401.15884) | turn1search1 |
+| 5 | CRAG GitHub reference implementation | turn1search5 |
+| 6 | Khattab & Zaharia “ColBERT v2” (Hugging Face card) | turn2search0 |
+| 7 | ColBERT v2 GitHub | turn2search2 |
+| 8 | Khattar et al. “ColPaLi” (arXiv 2407.01449) | turn2search1 |
+| 9 | Xu et al. “NodeRAG” (arXiv 2504.11544) | turn3search0 |
+| 10 | NodeRAG GitHub sample | turn3search1 |
+| 11 | Peng et al. “Graph RAG Survey” (arXiv 2408.08921) | turn4search0 |
+| 12 | LangChain GraphRetriever docs | turn4search1 |
+| 13 | InterSystems Docs “WITH (CTE)” | turn6search0 |
+| 14 | InterSystems Docs “CREATE AGGREGATE” | turn6search1 |
+| 15 | mg‑dbx‑napi high‑perf Node driver GitHub | turn5search0 |
+| 16 | RAGChecker GitHub | turn7search0 |
+| 17 | RAGAS framework (arXiv 2309.15217) | turn7search1 |
+| 18 | Evidently AI RAG testing docs | turn7search2 |
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+> **Note:** Direct URLs omitted per security guidelines; each `Ref ID` is clickable in standard ChatGPT UI.
 
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
