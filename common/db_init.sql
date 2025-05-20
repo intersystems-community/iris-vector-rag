@@ -1,6 +1,7 @@
 -- common/db_init.sql
 
--- Create RAG schema if it doesn't exist
+-- Drop the RAG schema and all its objects if it exists, then recreate it
+DROP SCHEMA IF EXISTS RAG CASCADE;
 CREATE SCHEMA RAG;
 
 -- Drop existing tables if they exist (for idempotency during development)
