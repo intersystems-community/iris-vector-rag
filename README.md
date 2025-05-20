@@ -2,13 +2,14 @@
 
 This repository contains implementation templates for various Retrieval Augmented Generation (RAG) techniques using InterSystems IRIS.
 
-## Current Status & Strategy Note (May 20, 2025)
+## Current Development Strategy (As of May 20, 2025)
 
-**This project is currently undergoing a significant refactoring of its database interaction layer.**
+This project has transitioned to a simplified local development setup:
+- **Python Environment:** Managed on the host machine using `uv` (a fast Python package installer and resolver) to create a virtual environment (e.g., `.venv`). Dependencies are defined in `pyproject.toml`.
+- **InterSystems IRIS Database:** Runs in a dedicated Docker container, configured via `docker-compose.iris-only.yml`.
+- **Database Interaction:** Python RAG pipelines, running on the host, interact with the IRIS database container using client-side SQL executed via the `intersystems-iris` DB-API driver. Stored procedures for vector search are no longer used; vector search SQL is constructed and executed directly by the Python pipelines.
 
-Due to persistent challenges encountered with automated ObjectScript class compilation, SQL projection reliability, and issues with return value marshalling within the target Dockerized InterSystems IRIS environment (as detailed in `docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`), the implementation strategy for database-side logic (such as vector search procedures) has been revised.
-
-The project will now prioritize the use of **pure SQL Stored Procedures** for core database search operations. These SQL SPs will be defined directly in `.sql` files (e.g., `common/vector_search_procs.sql`) and created during database initialization. Python RAG pipelines will call these SQL Stored Procedures directly via ODBC. This change aims to improve the stability, reliability, and maintainability of the database integration components. The overall goals and RAG techniques explored remain the same.
+This approach simplifies the development loop, improves stability, and provides a clearer separation between the Python application logic and the IRIS database instance.
 
 ## RAG Techniques Implemented
 
@@ -30,62 +31,109 @@ The project will now prioritize the use of **pure SQL Stored Procedures** for co
 ## Requirements
 
 - Python 3.11+
-- Poetry for dependency management
-- InterSystems IRIS 2025.1+
-- Docker for test containers
+- `uv` (Python package installer and virtual environment manager). Installation: `curl -LsSf https://astral.sh/uv/install.sh | sh` or `pip install uv`.
+- Poetry (Optional, but recommended for a one-time export of `requirements.txt` if `uv` has trouble with direct `pyproject.toml` dependency installation for Poetry projects. If your Poetry version is < 1.1, you might need to upgrade it for the `export` command).
+- InterSystems IRIS 2025.1+ (Community Edition or licensed).
+- Docker (and Docker Compose) for running the IRIS database container.
 
 ## Setup
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/rag-templates.git
-   cd rag-templates
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository_url> # Replace <repository_url> with the actual URL
+    cd rag-templates
+    ```
 
-2. Install dependencies:
-   ```bash
-   poetry install
-   ```
+2.  **Set up Python Environment with `uv`:**
+    *   Ensure Python 3.11+ is installed on your host.
+    *   Install `uv` if you haven't already:
+        ```bash
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        # OR
+        # pip install uv
+        ```
+    *   Create a virtual environment (e.g., named `.venv`):
+        ```bash
+        uv venv .venv --python python3.11 # Or specify your Python 3.11+ executable
+        ```
+    *   Activate the virtual environment:
+        ```bash
+        source .venv/bin/activate
+        ```
+        (Your shell prompt should change to indicate the venv is active, e.g., `(.venv)`).
 
-3. Set up IRIS:
-   ```bash
-   make start-iris
-   ```
+3.  **Install Python Dependencies:**
+    *   **Recommended Method (using Poetry for export):** If you have Poetry (version 1.1+ recommended for the `export` command), run this once:
+        ```bash
+        # Ensure your .venv is active
+        poetry export -f requirements.txt --output requirements.txt --without-hashes --with dev
+        uv pip install -r requirements.txt
+        ```
+        The `--with dev` flag includes development dependencies like `pytest`.
+    *   **Alternative (if `uv` direct processing works or Poetry export is problematic):**
+        Temporarily comment out the `[tool.poetry.scripts]` section in `pyproject.toml` if you encounter "invalid console script" errors with `uv pip install .`.
+        ```bash
+        # Ensure your .venv is active
+        uv pip install . # Installs main dependencies
+        # To install development dependencies (like pytest, ruff, black, mypy):
+        # You might need to list them explicitly or add them to a dev requirements file
+        # e.g., uv pip install pytest pytest-cov pytest-mock ruff black mypy
+        # (Refer to [tool.poetry.group.dev.dependencies] in pyproject.toml for the full list)
+        ```
 
-4. Load test data:
-   ```bash
-   make load-data
-   ```
+4.  **Set up and Start IRIS Docker Container:**
+    *   The IRIS database runs in a dedicated Docker container.
+    *   Start the IRIS container:
+        ```bash
+        docker-compose -f docker-compose.iris-only.yml up -d
+        ```
+    *   Verify it's running: Check `docker ps` or access the IRIS Management Portal (default: `http://localhost:52773`, username `SuperUser`, password `SYS`).
+        *Note: If port 1972 or 52773 is in use on your host, adjust the port mappings in `docker-compose.iris-only.yml` and update connection environment variables (`IRIS_PORT`, `IRIS_WEB_PORT`) if necessary.*
+
+5.  **Initialize Database Schema:**
+    *   Ensure your `.venv` is active.
+    *   Run the database initialization script:
+        ```bash
+        python run_db_init_local.py --force-recreate
+        ```
+
+6.  **Load Test Data (PMC Articles):**
+    *   Ensure your `.venv` is active.
+    *   Download and process PMC articles into the IRIS database:
+        ```bash
+        python load_pmc_data.py --limit 1100 --force-recreate-schema no 
+        ```
+        (Adjust `--limit` as needed. `--force-recreate-schema no` prevents re-dropping tables if schema is already initialized).
+        This script will download data to `data/pmc_oas_downloaded/` and load it.
 
 ## Running Tests
 
-### Running Tests with 1000+ Documents
+Ensure your `.venv` is activated (`source .venv/bin/activate`) before running tests.
 
-As per our project requirements, all tests run with at least 1000 documents by default. This ensures testing in realistic conditions with substantial data volumes.
-
-Basic test run:
+### Running Unit Tests for a Specific Pipeline
 ```bash
-make test-1000
+pytest tests/test_basic_rag.py
+pytest tests/test_hyde.py
+pytest tests/test_crag.py
+pytest tests/test_colbert.py
+pytest tests/test_noderag.py
+pytest tests/test_graphrag.py
 ```
 
-Testing with real PMC documents:
+### Running All Unit Tests
 ```bash
-make test-real-pmc-1000
+pytest tests/
 ```
 
-Full test suite with reporting:
+### Running Integration Tests (Requires Data Loaded)
+The project includes tests that run against a live IRIS database with loaded data.
+Refer to specific test files or `Makefile` targets (e.g., `make test-real-pmc-1000`) for these. You may need to adapt `Makefile` commands if they use `poetry run`. A simple way is to run `pytest` with appropriate markers or paths:
 ```bash
-make test-all-1000-docs
+# Example for tests marked as 'real_data' (ensure data is loaded)
+pytest -m real_data
 ```
 
-Individual technique tests:
-```bash
-poetry run pytest -xvs tests/test_basic_1000.py
-poetry run pytest -xvs tests/test_colbert_1000.py
-poetry run pytest -xvs tests/test_noderag_1000.py
-```
-
-For more details on testing with 1000+ documents, see [1000_DOCUMENT_TESTING.md](1000_DOCUMENT_TESTING.md).
+For more details on testing with 1000+ documents, see [1000_DOCUMENT_TESTING.md](1000_DOCUMENT_TESTING.md) (this document may also need updates to reflect the new setup).
 
 ## Technique Documentation
 
@@ -122,15 +170,20 @@ This project follows strict TDD principles:
 4. **Complete Pipeline Testing**: Test full pipeline from data ingestion to answer generation
 5. **Assert Actual Results**: Tests make assertions on actual result properties
 
-## Running the Demo
+## Running the Demo Scripts
 
-Each RAG technique has a demo script:
+Each RAG technique has a demo script in its respective directory (e.g., `basic_rag/pipeline.py` has a `if __name__ == '__main__':` block for demo).
 
-```bash
-poetry run python demo_basic_rag.py
-poetry run python demo_colbert.py
-# etc.
-```
+To run a demo:
+1.  Ensure your `.venv` is activated (`source .venv/bin/activate`).
+2.  Ensure IRIS Docker container is running and the database is initialized and data loaded.
+3.  Run the desired pipeline script directly:
+    ```bash
+    python basic_rag/pipeline.py
+    python hyde/pipeline.py
+    # etc.
+    ```
+    (Note: Some demo scripts might be separate, e.g., `demo_basic_rag.py`. Adjust the command accordingly.)
 
 ## Contributing
 

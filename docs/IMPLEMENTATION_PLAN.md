@@ -2,17 +2,54 @@
 
 This guide lets a capable intern—or an agentic coding assistant—take the repo from _zero ➜ fully‑tested CI_.
 
-**IMPORTANT NOTE ON STRATEGY (May 20, 2025):** Due to significant challenges encountered with automated ObjectScript class compilation, SQL projection reliability, and return value marshalling within the target Dockerized IRIS environment (as detailed in `IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`), the implementation strategy for database-side logic (such as vector search procedures) has been revised. The project will now prioritize the use of **pure SQL Stored Procedures** defined directly in `.sql` files and created during database initialization. This approach bypasses ObjectScript class compilation for these components. Relevant sections below should be interpreted with this revised strategy in mind.
+**IMPORTANT NOTE ON DEVELOPMENT STRATEGY (As of May 20, 2025):**
+This project has transitioned to a simplified local development setup:
+- **Python Environment:** Managed on the host machine using `uv` (a fast Python package installer and resolver) to create a virtual environment (e.g., `.venv`). Dependencies are defined in `pyproject.toml`.
+- **InterSystems IRIS Database:** Runs in a dedicated Docker container, configured via `docker-compose.iris-only.yml`.
+- **Database Interaction:** Python RAG pipelines, running on the host, interact with the IRIS database container using client-side SQL executed via the `intersystems-iris` DB-API driver. Stored procedures for vector search are no longer used; vector search SQL is constructed and executed directly by the Python pipelines. ObjectScript class compilation for these core RAG components is bypassed.
+
+This approach simplifies the development loop, improves stability, and provides a clearer separation between the Python application logic and the IRIS database instance. References to older Docker setups or ObjectScript-based database logic in this document should be interpreted in light of this new strategy.
 
 ## 1. Environment
 
-1. **Clone + containers**  
-   *Use `docker-compose.yml` to spin up:*
-   - `iris:2025.1` (port 1972, REST 52773)  
-   - `dev` image with Python 3.11, Node 20, Poetry, pnpm, and Chrome‑driver for e2e tests.
+1.  **Clone Repository & Setup IRIS Container:**
+    *   Clone the repository.
+    *   The InterSystems IRIS database runs in a dedicated Docker container. Start it using:
+        ```bash
+        docker-compose -f docker-compose.iris-only.yml up -d
+        ```
+    *   This uses `intersystemsdc/iris-community:latest` (or as configured in the compose file) and maps relevant ports (e.g., 1972 for DB-API, 52773 for Management Portal).
 
-2. **Python deps** – `poetry install` installs LangChain, RAGAS, RAGChecker, Evidently, etc.  
-3. **Node deps** – `pnpm install` installs LangChainJS, mg‑dbx‑napi, Playwright.
+2.  **Host Python Environment Setup (using `uv`):**
+    *   Ensure Python 3.11+ is installed on your host.
+    *   Install `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh` or `pip install uv`.
+    *   Create and activate a virtual environment:
+        ```bash
+        uv venv .venv --python python3.11 # Or your Python 3.11+ path
+        source .venv/bin/activate
+        ```
+    *   Install Python dependencies:
+        The recommended method is to use Poetry (if available, version 1.1+ for `export`) to generate a `requirements.txt` that `uv` can reliably install:
+        ```bash
+        # From activated .venv
+        poetry export -f requirements.txt --output requirements.txt --without-hashes --with dev
+        uv pip install -r requirements.txt
+        ```
+        This installs LangChain, RAGAS, `intersystems-iris` driver, `pytest`, etc.
+
+3.  **Node.js Dependencies (If Applicable):**
+    *   If the project includes Node.js components (e.g., for a frontend or specific e2e testing tools not covered by Python Playwright):
+        ```bash
+        # pnpm install # Or npm install / yarn install
+        ```
+    *   This step might not be necessary if all development and testing can be done via the Python host environment.
+
+4.  **Initialize Database Schema & Load Data:**
+    *   From the activated host Python virtual environment:
+        ```bash
+        python run_db_init_local.py --force-recreate
+        python load_pmc_data.py --limit 1100 # Adjust limit as needed
+        ```
 
 ## 2. Data & Index Build (TDD)
 
@@ -20,9 +57,9 @@ This guide lets a capable intern—or an agentic coding assistant—take the rep
 |-----------|-----------------|
 | `tests/test_loader.py` | CSVs ingest without errors; table row counts match source. |
 | `tests/test_index_build.py` | Each HNSW index exists (`INFORMATION_SCHEMA.INDEXES`) and build time < N sec. |
-| `tests/test_token_vectors.py` | Token‑level ColBERT vectors stored and compressed ratio ≤ 2×. |
+| `tests/test_token_vectors.py` | Token‑level ColBERT vectors stored in `RAG.DocumentTokenEmbeddings` and compressed ratio ≤ 2×. |
 
-Use fixtures to measure elapsed build time (`%SYSTEM.Process` in ObjectScript).
+Elapsed build times for data loading or IRIS-side indexing can be measured using Python's `time` module or IRIS SQL monitoring tools if necessary. Direct ObjectScript calls like `%SYSTEM.Process` are not part of the Python-centric workflow.
 
 ## 3. Pipeline Correctness
 
@@ -121,8 +158,8 @@ The implementation includes functions for calculating:
 1. **Warm‑up 100 queries** to stabilize caches and initial performance variations  
 2. **Run 1000-query benchmark** with mixed query lengths and complexities  
 3. **Capture detailed metrics** for each pipeline:
-   - IRIS performance: `%SYSTEM.Performance.GetMetrics()`  
-   - Python performance: time series measurements  
+   - Python-side performance: time series measurements for pipeline execution, retrieval, and generation steps.
+   - IRIS database performance: Can be monitored using IRIS-native tools (e.g., SQL Monitor, Management Portal) if deep database-level analysis is required. Direct calls to `%SYSTEM.Performance.GetMetrics()` from Python are not part of this workflow.
 4. **Compare techniques** across all metrics
 5. **Emit reports** in JSON, Markdown, and HTML visualization formats
 
@@ -130,6 +167,7 @@ The implementation includes functions for calculating:
 
 ```bash
 # Command to run comparative benchmark of all techniques
+# (Ensure your host Python virtual environment is activated)
 python -m eval.bench_runner \
   --comparative \
   --pipelines basic_rag,hyde,crag,colbert,noderag,graphrag \
@@ -161,12 +199,11 @@ Sample query format in JSON:
 
 Fail the job if P95 > SLA or recall drops below minimum thresholds.
 
-## 5. Graph Globals Layer
+## 5. Graph Data Layer (SQL Tables)
 
-*ObjectScript unit tests* (`tests/test_globals.int`):
-
-- Assert global `^rag("out",src,dst,rtype)` contains ≥ edges.  
-- Round‑trip conversion to `kg_edges` SQL view matches count.  
+The knowledge graph is stored in SQL tables (`RAG.KnowledgeGraphNodes`, `RAG.KnowledgeGraphEdges`).
+Tests for graph data integrity or specific graph properties would be implemented as Python tests querying these SQL tables via DB-API.
+(Previously, this section referred to ObjectScript unit tests and direct global access, which is no longer the primary interaction model for RAG pipelines.)
 
 ## 6. Lint & Static Analysis
 

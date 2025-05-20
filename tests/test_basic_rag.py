@@ -34,10 +34,11 @@ def mock_iris_connector():
     mock_cursor_instance = MagicMock(spec=IRISCursorTypes) 
     mock_cursor_method.return_value = mock_cursor_instance
     
-    mock_cursor_instance.fetchall.return_value = [
+    # Explicitly create fetchall as a MagicMock and set its return_value
+    mock_cursor_instance.fetchall = MagicMock(return_value=[
         ("mock_doc_1", "Mocked document content 1.", 0.95),
         ("mock_doc_2", "Mocked document content 2.", 0.88)
-    ]
+    ])
     mock_cursor_instance.execute = MagicMock()
     # Add a close method to the mock cursor instance
     mock_cursor_instance.close = MagicMock()

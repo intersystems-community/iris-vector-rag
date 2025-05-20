@@ -7,7 +7,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import logging # Added
 from typing import List, Dict, Any, Callable, Tuple, Literal
-import sqlalchemy
+# import sqlalchemy # No longer needed
+# Attempt to import for type hinting, but make it optional
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnection
+except ImportError:
+    IRISConnection = Any # Fallback to Any if the driver isn't available during static analysis
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
 from common.iris_connector import get_iris_connection # For demo
@@ -54,7 +59,7 @@ class RetrievalEvaluator:
             return "disoriented"
 
 class CRAGPipeline:
-    def __init__(self, iris_connector: sqlalchemy.engine.base.Connection,
+    def __init__(self, iris_connector: IRISConnection, # Updated type hint
                  embedding_func: Callable[[List[str]], List[List[float]]],
                  llm_func: Callable[[str], str],
                  web_search_func: Callable[[str, int], List[str]] = None): # Optional web search
@@ -76,22 +81,25 @@ class CRAGPipeline:
         # For now, duplicating the core logic for clarity within CRAG.
 
         query_embedding = self.embedding_func([query_text])[0]
-        iris_vector_str = str(query_embedding)
+        # Format the vector string for TO_VECTOR explicitly: e.g., "[0.1,0.2,0.3]"
+        iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
+        # Assuming embedding dimension is 768, make this configurable if needed
+        embedding_dimension = 768 
 
         retrieved_docs: List[Document] = []
         sql_formatted = f"""
             SELECT TOP {top_k} doc_id, text_content,
-                           VECTOR_COSINE(embedding, TO_VECTOR(?)) AS score
-            FROM SourceDocuments
+                           VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', {embedding_dimension})) AS score
+            FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL -- Ensure embedding column is not null
             ORDER BY score DESC
         """
-        # Note: Assumes embedding is CLOB and TO_VECTOR can parse it.
-
+        
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
-            cursor.execute(sql_formatted, (iris_vector_str,))
+            logger.debug(f"CRAG Initial Retrieve Executing SQL: {sql_formatted}")
+            cursor.execute(sql_formatted) # Parameters are inlined
             results = cursor.fetchall()
 
             for row in results:
@@ -143,13 +151,15 @@ class CRAGPipeline:
         # Placeholder: Simple approach - treat each document as a chunk and filter by keyword presence
         # A real implementation would split into sentences/paragraphs and use embeddings/LLM for relevance.
         relevant_chunks: List[str] = []
+        query_keywords = set(query_text.lower().split())
         for doc in documents:
             if doc.content: # Ensure content is not None
-                # Ensure content is treated as string, even if it's None initially (though caught by 'if')
-                relevant_chunks.append(str(doc.content)) 
+                doc_content_lower = str(doc.content).lower()
+                # Simple keyword check: if any query keyword is in the doc content
+                if any(keyword in doc_content_lower for keyword in query_keywords):
+                    relevant_chunks.append(str(doc.content))
             else:
                 logger.warning(f"CRAG: Document {doc.id} has None content, skipping for decompose.")
-
 
         if not relevant_chunks:
             print("CRAG: No relevant chunks found after filtering.")
@@ -166,26 +176,23 @@ class CRAGPipeline:
         
         initial_docs = self._initial_retrieve(query_text, top_k)
         
-        # --- Temporarily bypass evaluator for debugging CRAG TypeError ---
-        # retrieval_status = self.retrieval_evaluator.evaluate(query_text, initial_docs)
-        print("CRAG DEBUG: Bypassed RetrievalEvaluator.evaluate")
-        # retrieval_status = "confident" # Assume confident to skip web search for now
-        # --- End of bypass ---
+        retrieval_status = self.retrieval_evaluator.evaluate(query_text, initial_docs)
+        # print("CRAG DEBUG: Bypassed RetrievalEvaluator.evaluate") # Removed bypass
+        # retrieval_status = "confident" # Assume confident to skip web search for now # Removed bypass
 
         current_docs = initial_docs
-        # --- Temporarily disable web search and decompose for debugging CRAG TypeError ---
-        # if retrieval_status == "ambiguous" or retrieval_status == "disoriented":
-        #     print(f"CRAG: Retrieval status is '{retrieval_status}'. Attempting web augmentation.")
-        #     current_docs = self._augment_with_web_search(query_text, initial_docs, web_top_k)
-        # else:
-        #     print(f"CRAG: Retrieval status is '{retrieval_status}'. Skipping web augmentation.")
+        if retrieval_status == "ambiguous" or retrieval_status == "disoriented":
+            print(f"CRAG: Retrieval status is '{retrieval_status}'. Attempting web augmentation.")
+            current_docs = self._augment_with_web_search(query_text, initial_docs, web_top_k)
+        else:
+            print(f"CRAG: Retrieval status is '{retrieval_status}'. Skipping web augmentation.")
         
-        # # Always run decompose-recompose on the (potentially augmented) documents
-        # refined_context_list = self._decompose_recompose_filter(query_text, current_docs)
+        # Always run decompose-recompose on the (potentially augmented) documents
+        refined_context_list = self._decompose_recompose_filter(query_text, current_docs)
         
-        # For debugging, just return content from initial_docs
-        refined_context_list = [str(doc.content) for doc in initial_docs if doc.content]
-        # --- End of temporary debug block ---
+        # # For debugging, just return content from initial_docs # Removed debug block
+        # refined_context_list = [str(doc.content) for doc in initial_docs if doc.content]
+        # # --- End of temporary debug block ---
 
         print(f"CRAG: Retrieve and correct step finished. Refined context has {len(refined_context_list)} chunks.")
         return refined_context_list

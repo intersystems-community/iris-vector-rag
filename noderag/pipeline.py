@@ -7,8 +7,13 @@ import logging # Added import
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import List, Dict, Any, Callable, Set
-import sqlalchemy
+# import sqlalchemy # No longer needed
 # import networkx as nx # Or other graph library - needed for graph traversal logic
+# Attempt to import for type hinting, but make it optional
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnection
+except ImportError:
+    IRISConnection = Any # Fallback to Any if the driver isn't available during static analysis
 
 logger = logging.getLogger(__name__) # Added logger initialization
 logger.setLevel(logging.DEBUG) # Ensure debug messages from this module are shown
@@ -18,7 +23,7 @@ from common.iris_connector import get_iris_connection # For demo
 # Removed: from common.db_vector_search import search_knowledge_graph_nodes_dynamically
 
 class NodeRAGPipeline:
-    def __init__(self, iris_connector: sqlalchemy.engine.base.Connection,
+    def __init__(self, iris_connector: IRISConnection, # Updated type hint
                  embedding_func: Callable[[List[str]], List[List[float]]], # For initial node finding
                  llm_func: Callable[[str], str],
                  graph_lib: Any = None): # Optional graph library instance/module
@@ -44,15 +49,15 @@ class NodeRAGPipeline:
         iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
         current_top_k_seeds = int(top_n_seed)
 
-        logger.info(f"NodeRAG: Identifying initial search nodes for query: '{query_text[:50]}...' using Python-generated SQL (fully inlined).")
+        # logger.info(f"NodeRAG: Identifying initial search nodes for query: '{query_text[:50]}...' using Python-generated SQL (fully inlined).") # Already logged above
         
-        if not self.embedding_func:
-            logger.warning("NodeRAG: Embedding function not provided for initial node finding.")
-            return []
-
-        query_embedding = self.embedding_func([query_text])[0]
-        iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
-        current_top_k_seeds = int(top_n_seed)
+        # Removed redundant block:
+        # if not self.embedding_func:
+        #     logger.warning("NodeRAG: Embedding function not provided for initial node finding.")
+        #     return []
+        # query_embedding = self.embedding_func([query_text])[0]
+        # iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
+        # current_top_k_seeds = int(top_n_seed)
 
         # Construct the dynamic SQL query string in Python
         # Inline TOP K and the vector string directly into the SQL query using f-strings.
@@ -61,7 +66,7 @@ class NodeRAGPipeline:
         sql_query = f"""
             SELECT TOP {current_top_k_seeds} node_id,
                    VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', 768)) AS score
-            FROM KnowledgeGraphNodes
+            FROM RAG.KnowledgeGraphNodes
             WHERE embedding IS NOT NULL
             ORDER BY score DESC
         """
@@ -149,7 +154,7 @@ class NodeRAGPipeline:
         placeholders = ', '.join(['?'] * len(node_ids))
         sql_fetch_content = f"""
             SELECT node_id, description_text -- Or node_name, etc. depending on what constitutes "content"
-            FROM KnowledgeGraphNodes
+            FROM RAG.KnowledgeGraphNodes
             WHERE node_id IN ({placeholders})
         """
 

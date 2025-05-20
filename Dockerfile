@@ -70,6 +70,10 @@ RUN poetry install --no-root --no-interaction --no-ansi
 USER root
 COPY . .
 RUN echo "--- Contents of /opt/app after COPY . . (as root): ---" && ls -la /opt/app
+# Explicitly ADD/COPY the problematic test file again to ensure it's the latest version
+# This will overwrite the version from COPY . . if it was stale for this specific file.
+ADD tests/test_basic_rag.py /opt/app/tests/test_basic_rag.py
+RUN echo "--- Contents of /opt/app/tests/test_basic_rag.py after explicit ADD: ---" && cat /opt/app/tests/test_basic_rag.py && echo "\n--- End of cat ---"
 RUN chown -R irisowner:irisowner /opt/app
 RUN echo "--- Contents of /opt/app after chown (as root): ---" && ls -la /opt/app
 

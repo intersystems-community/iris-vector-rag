@@ -4,31 +4,42 @@ import pytest
 from unittest.mock import MagicMock, patch
 import os
 import sys
-import sqlalchemy
+# import sqlalchemy # No longer needed
+from typing import Any # For mock type hints
 
 # Add the project root directory to Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from hyde.pipeline import HyDEPipeline
+from hyde.pipeline import HyDEPipeline # This will use the updated IRISConnection type hint
 from common.utils import Document, get_llm_func # For stub LLM
+
+# Attempt to import for type hinting, but make it optional
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnectionTypes, Cursor as IRISCursorTypes
+except ImportError:
+    IRISConnectionTypes = Any
+    IRISCursorTypes = Any
 
 # --- Mock Fixtures ---
 
 @pytest.fixture
 def mock_iris_connector():
-    """Simplified mock for the InterSystems IRIS connection object."""
-    mock_conn = MagicMock(spec=sqlalchemy.engine.base.Connection)
+    """Simplified mock for the InterSystems IRIS DB-API connection object."""
+    mock_conn = MagicMock(spec=IRISConnectionTypes)
     mock_cursor_method = MagicMock() # Mock for the .cursor() method call
     mock_conn.cursor = mock_cursor_method
     
-    mock_cursor_instance = MagicMock(spec=sqlalchemy.engine.cursor.CursorResult) # Mock for the cursor object
+    mock_cursor_instance = MagicMock(spec=IRISCursorTypes) # Mock for the cursor object
     mock_cursor_method.return_value = mock_cursor_instance
     
-    mock_cursor_instance.fetchall.return_value = [
+    # Explicitly create fetchall as a MagicMock and set its return_value
+    mock_cursor_instance.fetchall = MagicMock(return_value=[
         ("retrieved_doc1", "Actual content from DB for doc 1", 0.92),
         ("retrieved_doc2", "Actual content from DB for doc 2", 0.88)
-    ]
+    ])
     mock_cursor_instance.execute = MagicMock() # Ensure execute is a callable mock
+    mock_cursor_instance.close = MagicMock()
+    mock_conn.close = MagicMock()
     return mock_conn
 
 @pytest.fixture
@@ -97,7 +108,9 @@ def test_retrieve_documents_flow(hyde_pipeline, mock_embedding_func, mock_iris_c
     mock_cursor.execute.assert_called_once()
     executed_sql = mock_cursor.execute.call_args[0][0]
     assert f"SELECT TOP {top_k}" in executed_sql
-    assert "VECTOR_COSINE_SIMILARITY(embedding, TO_VECTOR(?))" in executed_sql
+    assert "VECTOR_COSINE(embedding, TO_VECTOR(" in executed_sql
+    assert "'DOUBLE', 768" in executed_sql
+    assert "FROM RAG.SourceDocuments" in executed_sql
     
     mock_cursor.fetchall.assert_called_once()
     assert len(retrieved_docs) == 2

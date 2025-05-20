@@ -2,7 +2,13 @@
 
 This document outlines the specific implementation strategy and Test-Driven Development (TDD) approach for each RAG technique in the IRIS RAG Templates suite.
 
-**IMPORTANT NOTE ON STRATEGY (May 20, 2025):** Due to significant challenges encountered with automated ObjectScript class compilation, SQL projection reliability, and return value marshalling within the target Dockerized IRIS environment (as detailed in `IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`), the implementation strategy for database-side logic (such as vector search procedures) has been revised. The project will now prioritize the use of **pure SQL Stored Procedures** defined directly in `.sql` files (e.g., `common/vector_search_procs.sql`) and created during database initialization. This approach bypasses ObjectScript class compilation for these core components. Python code will call these SQL Stored Procedures via ODBC. Relevant sections below, particularly those detailing direct IRIS interaction within pipeline classes and Section 9 (ObjectScript Integration), should be interpreted with this revised strategy in mind.
+**IMPORTANT NOTE ON DEVELOPMENT STRATEGY (As of May 20, 2025):**
+This project has transitioned to a simplified local development setup and a client-side SQL approach for database interactions.
+- **Python Environment:** Managed on the host machine using `uv` (a fast Python package installer and resolver) to create a virtual environment (e.g., `.venv`). Dependencies are defined in `pyproject.toml`.
+- **InterSystems IRIS Database:** Runs in a dedicated Docker container, configured via `docker-compose.iris-only.yml`.
+- **Database Interaction:** Python RAG pipelines, running on the host, interact with the IRIS database container using client-side SQL executed via the `intersystems-iris` DB-API driver. Stored procedures for vector search are no longer used; vector search SQL is constructed and executed directly by the Python pipelines. ObjectScript class compilation for these core RAG components is bypassed.
+
+This approach simplifies the development loop, improves stability, and provides a clearer separation between the Python application logic and the IRIS database instance. References to older Docker setups, ObjectScript-based database logic, or ODBC for pipeline-to-DB communication in this document should be interpreted in light of this new strategy. The `IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md` details past challenges but is superseded by this current strategy.
 
 ## Table of Contents
 1.  [Basic RAG](#1-basic-rag)
@@ -31,21 +37,22 @@ This document outlines the specific implementation strategy and Test-Driven Deve
     *   **Vector Index**: An HNSW index on the `embedding` column for fast similarity searches.
     *   **SQL Query (Conceptual)**:
         ```sql
-        SELECT TOP :top_k doc_id, text_content, VECTOR_COSINE_SIMILARITY(embedding, StringToVector(:query_embedding_literal)) AS similarity_score
-        FROM SourceDocuments
+        SELECT TOP :top_k doc_id, text_content, VECTOR_COSINE(embedding, TO_VECTOR(:query_embedding_literal, 'DOUBLE', :embedding_dim)) AS similarity_score
+        FROM RAG.SourceDocuments
         ORDER BY similarity_score DESC
         ```
-        *(This SQL logic will be encapsulated within a pure SQL Stored Procedure, e.g., `CREATE PROCEDURE RAG.SearchSourceDocuments(IN P_TopK INT, IN P_VectorString VARCHAR(...)) LANGUAGE SQL BEGIN ... END;`. The `:top_k` and `:query_embedding_literal` will become formal input parameters to this SQL SP. Python will call this SP via ODBC.)*
+        *(This SQL logic is constructed and executed directly by the Python pipeline using the `intersystems-iris` DB-API driver. The `:top_k`, `:query_embedding_literal`, and `:embedding_dim` are inlined into the SQL string before execution, as IRIS's `TO_VECTOR` function does not support parameterized vector string inputs.)*
 *   **Key Python Components**:
     *   An embedding client/model (e.g., `sentence_transformers.SentenceTransformer` loaded locally, or an API).
     *   An LLM client (e.g., using `langchain.llms`, `openai` library, or Hugging Face `pipeline`).
-    *   An IRIS database connector (e.g., `intersystems_irispython`).
+    *   An IRIS database connector using the `intersystems-iris` DB-API driver (obtained via `common.iris_connector.get_iris_connection()`).
     *   Helper functions in `common/utils.py` for embedding and LLM calls, and timers.
 
 **B. Outline `basic_rag/pipeline.py`:**
 ```python
 from typing import List, Dict, Any
 # from common.utils import embed_text_func, query_llm_func, timing_decorator # Example imports
+# from intersystems_iris.dbapi import Connection as IRISConnection # For type hint
 
 class Document: # Likely defined in common.utils or a shared types module
     id: Any
@@ -53,27 +60,33 @@ class Document: # Likely defined in common.utils or a shared types module
     score: float # Similarity score from retrieval
 
 class BasicRAGPipeline:
-    def __init__(self, iris_connector: Any, embedding_func: callable, llm_func: callable):
+    def __init__(self, iris_connector: Any, embedding_func: callable, llm_func: callable): # iris_connector is IRISConnection
         self.iris_connector = iris_connector
         self.embedding_func = embedding_func # From common.utils, wraps actual model
         self.llm_func = llm_func         # From common.utils, wraps actual LLM
 
     # @timing_decorator # from common.utils
     def retrieve_documents(self, query_text: str, top_k: int = 5) -> List[Document]:
-        query_embedding = self.embedding_func(query_text) # Returns a list/array of floats
+        query_embedding = self.embedding_func([query_text])[0] # Returns a list/array of floats
         
-        # Convert query_embedding to IRIS compatible string or list format for the query
-        # iris_vector_str = ... 
+        # Convert query_embedding to IRIS compatible string format
+        iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
+        embedding_dimension = len(query_embedding) # Or a fixed dimension like 768
         
-        # SQL query using self.iris_connector
-        # Example (New: Calling a pure SQL Stored Procedure):
+        # SQL query using self.iris_connector (DB-API)
+        # Example (Client-side SQL execution):
+        # sql_query = f"""
+        #     SELECT TOP {top_k} doc_id, text_content,
+        #            VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', {embedding_dimension})) AS score
+        #     FROM RAG.SourceDocuments
+        #     WHERE embedding IS NOT NULL
+        #     ORDER BY score DESC
+        # """
         # with self.iris_connector.cursor() as cursor:
-        #     sql_call = "{CALL RAG.SearchSourceDocuments(?, ?)}"  # Assuming SP name and parameters
-        #     # Parameters: P_TopK (INT), P_VectorString (VARCHAR)
-        #     cursor.execute(sql_call, (top_k, iris_vector_str))
+        #     cursor.execute(sql_query)
         #     results = cursor.fetchall()
-        #     # Process results, assuming SP returns doc_id, text_content, score
-        #     retrieved_docs = [Document(id=row.doc_id, content=row.text_content, score=row.score) for row in results]
+        #     # Process results
+        #     retrieved_docs = [Document(id=row[0], content=row[1], score=row[2]) for row in results]
         # return retrieved_docs
         return [] # Placeholder
 
@@ -114,18 +127,24 @@ class BasicRAGPipeline:
         hypothetical_doc_text = self._generate_hypothetical_document(query_text)
         hypothetical_doc_embedding = self.embedding_func(hypothetical_doc_text)
         
-        # Convert hypothetical_doc_embedding to IRIS compatible string or list format
-        # iris_vector_str = ...
+        # Convert hypothetical_doc_embedding to IRIS compatible string format
+        iris_vector_str = f"[{','.join(map(str, hypothetical_doc_embedding))}]"
+        embedding_dimension = len(hypothetical_doc_embedding) # Or a fixed dimension
 
-        # SQL query using self.iris_connector, similar to BasicRAG but with hypothetical_doc_embedding
-        # Example (New: Calling a pure SQL Stored Procedure):
+        # SQL query using self.iris_connector (DB-API)
+        # Example (Client-side SQL execution):
+        # sql_query = f"""
+        #     SELECT TOP {top_k} doc_id, text_content,
+        #            VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', {embedding_dimension})) AS score
+        #     FROM RAG.SourceDocuments
+        #     WHERE embedding IS NOT NULL
+        #     ORDER BY score DESC
+        # """
         # with self.iris_connector.cursor() as cursor:
-        #     sql_call = "{CALL RAG.SearchSourceDocuments(?, ?)}"  # Assuming SP name and parameters
-        #     # Parameters: P_TopK (INT), P_VectorString (VARCHAR from hypothetical doc embedding)
-        #     cursor.execute(sql_call, (top_k, iris_vector_str))
+        #     cursor.execute(sql_query)
         #     results = cursor.fetchall()
-        #     # Process results, assuming SP returns doc_id, text_content, score
-        #     retrieved_docs = [Document(id=row.doc_id, content=row.text_content, score=row.score) for row in results]
+        #     # Process results
+        #     retrieved_docs = [Document(id=row[0], content=row[1], score=row[2]) for row in results]
         # return retrieved_docs
         return [] # Placeholder
 
@@ -143,17 +162,25 @@ class BasicRAGPipeline:
 # ... (RetrievalEvaluator, CRAGPipeline init as before) ...
     # @timing_decorator
     def _initial_retrieve(self, query_text: str, top_k: int = 5) -> List[Document]:
-        # Similar to BasicRAG retrieval, now calling the SQL SP
-        query_embedding = self.embedding_func(query_text)
-        # Convert query_embedding to IRIS compatible string or list format
-        # iris_vector_str = ... 
+        # Similar to BasicRAG retrieval, using client-side SQL via DB-API
+        query_embedding = self.embedding_func([query_text])[0]
+        # Convert query_embedding to IRIS compatible string format
+        iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
+        embedding_dimension = len(query_embedding) # Or a fixed dimension
         
-        # Example (New: Calling a pure SQL Stored Procedure):
+        # Example (Client-side SQL execution):
+        # sql_query = f"""
+        #     SELECT TOP {top_k} doc_id, text_content,
+        #            VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', {embedding_dimension})) AS score
+        #     FROM RAG.SourceDocuments
+        #     WHERE embedding IS NOT NULL
+        #     ORDER BY score DESC
+        # """
         # with self.iris_connector.cursor() as cursor:
-        #     sql_call = "{CALL RAG.SearchSourceDocuments(?, ?)}"
-        #     cursor.execute(sql_call, (top_k, iris_vector_str))
+        #     cursor.execute(sql_query)
         #     results = cursor.fetchall()
-        #     retrieved_docs = [Document(id=row.doc_id, content=row.text_content, score=row.score) for row in results]
+        #     # Process results
+        #     retrieved_docs = [Document(id=row[0], content=row[1], score=row[2]) for row in results]
         # return retrieved_docs
         return [] # Placeholder
     # ... (other CRAG methods as before) ...
@@ -169,60 +196,77 @@ class BasicRAGPipeline:
 *   ...
 *   **IRIS Implementation Details**:
     *   ...
-    *   **Retrieval Logic**: This cannot be a simple single vector similarity SQL query. The MaxSim calculation needs to be implemented.
-        *   **Option 1 (UDF/Stored Procedure)**: Implement MaxSim logic as a **pure SQL User-Defined Function (UDF) or pure SQL Stored Procedure** in IRIS if the complexity of MaxSim is manageable within IRIS SQL's capabilities. This would be the most efficient. The `IMPLEMENTATION_PLAN.md` mentions "UDAF or CTE aggregate" which aligns with this SQL-centric approach. If direct SQL is insufficient for the full MaxSim logic, a Python UDF (if supported by IRIS and performant for this type of vector-intensive task) or client-side computation (Option 2) would be alternatives, avoiding ObjectScript class methods for this core logic due to the previously encountered compilation and projection issues.
-        *   **Option 2 (Client-Side Computation)**:
-            1.  Retrieve all token embeddings for candidate documents (this itself is a challenge – how to select candidate documents efficiently first?).
-            2.  Perform MaxSim in Python. This might be slow if many documents/tokens are involved.
-        *   **Hybrid Approach for Candidate Selection**: Perhaps a first-pass retrieval using averaged document embeddings (or embeddings of [CLS] tokens) to get candidate documents, then pull all token embeddings for these candidates and do fine-grained MaxSim.
+    *   **Retrieval Logic**: The MaxSim calculation is performed client-side in Python.
+        1.  **Query Encoding**: The input query is encoded into token-level embeddings using the ColBERT query encoder.
+        2.  **Fetch Document Token Embeddings**: All document token embeddings are fetched from the `RAG.DocumentTokenEmbeddings` table in IRIS via a DB-API SQL query.
+            *(Note: This is inefficient for large datasets. A production system might use an initial candidate retrieval step (e.g., using averaged document embeddings or another method) before fetching token embeddings for only those candidates, or implement MaxSim closer to the data, possibly via a performant UDF if feasible with IRIS capabilities for complex vector operations.)*
+        3.  **Client-Side MaxSim**: For each document, the MaxSim score is calculated in Python by comparing its token embeddings with the query token embeddings.
+        4.  **Top-K Selection**: Documents are ranked by their MaxSim scores, and the top-k are selected.
+        5.  **Fetch Content**: The text content for these top-k documents is fetched from the `RAG.SourceDocuments` table via a DB-API SQL query.
 *   ...
 
 **B. Outline `colbert/pipeline.py`:**
 ```python
-# ... (init as before) ...
+# ... (init, _calculate_cosine_similarity, _calculate_maxsim methods as in actual implementation) ...
+
     # @timing_decorator
-    def _calculate_maxsim_in_db(self, query_token_embeddings: List[List[float]], top_k: int) -> List[Document]:
-        # ...
+    def retrieve_documents(self, query_text: str, top_k: int = 5) -> List[Document]:
+        # 1. Encode query
+        query_token_embeddings = self.colbert_query_encoder(query_text)
+        
+        # 2. Fetch all document token embeddings from RAG.DocumentTokenEmbeddings
+        # all_doc_token_data = {} # doc_id -> List[List[float]]
+        # sql_fetch_tokens = "SELECT doc_id, token_embedding FROM RAG.DocumentTokenEmbeddings ..."
         # with self.iris_connector.cursor() as cursor:
-        #     sql = f"""
-        #         SELECT TOP {top_k} d.doc_id, d.text_content, 
-        #                        RAG.ColbertMaxSimScore(d.doc_id, ?) AS colbert_score 
-        #                        -- RAG.ColbertMaxSimScore would be a custom pure SQL UDF/Stored Procedure,
-        #                        -- or potentially a Python UDF if performant and supported.
-        #                        -- It iterates through document tokens for d.doc_id,
-        #                        -- compares with query_token_embeddings, and computes MaxSim.
-        #         FROM SourceDocuments d 
-        #         -- Potentially a pre-filtering step here if MaxSim is too slow over all docs
-        #         ORDER BY colbert_score DESC
-        #     """
-        # ...
+        #     cursor.execute(sql_fetch_tokens)
+        #     # Populate all_doc_token_data, parsing JSON string embeddings
+        
+        # 3. Calculate MaxSim for each document client-side
+        # doc_scores = [] # List of (doc_id, score)
+        # for doc_id, doc_embeddings in all_doc_token_data.items():
+        #     score = self._calculate_maxsim(query_token_embeddings, doc_embeddings)
+        #     doc_scores.append((doc_id, score))
+        
+        # 4. Sort and get top_k_doc_ids
+        
+        # 5. Fetch content for top_k_doc_ids from RAG.SourceDocuments
+        # sql_fetch_content = "SELECT doc_id, text_content FROM RAG.SourceDocuments WHERE doc_id IN (...)"
+        # with self.iris_connector.cursor() as cursor:
+        #     cursor.execute(sql_fetch_content, top_k_doc_ids_tuple)
+        #     # Populate retrieved_docs with Document objects
         return [] # Placeholder
 # ... (other ColBERT methods as before) ...
 ```
-*(Other ColBERT, NodeRAG, GraphRAG, TDD Suite, Environment Setup content as previously defined)*
+*(Other ColBERT, NodeRAG, GraphRAG, TDD Suite content as previously defined)*
+
+## 8. Environment Setup, Data Loading, and Performance Benchmarking
+
+Details on setting up the development environment (host Python with `uv`, dedicated IRIS Docker container), initializing the database schema (`run_db_init_local.py`), and loading data (`load_pmc_data.py`) are covered in the main `README.md` and Section 1 of this document.
+
+Performance benchmarking (`eval/bench_runner.py`) should be executed from the activated host Python virtual environment.
 
 ---
 
 ## 9. ObjectScript Integration (Revised Strategy)
 
-**Context for Revision:** As noted at the beginning of this document and detailed in `IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`, the primary mechanism for executing database-intensive RAG queries (e.g., vector search for document retrieval) has shifted from ObjectScript class methods projected as SQL stored procedures to **pure SQL Stored Procedures**. These SQL SPs will be defined in `.sql` files and called directly from the Python RAG pipeline code via ODBC.
+**Context for Revision:** As noted at the beginning of this document, the primary mechanism for database interaction by Python RAG pipelines has shifted to client-side SQL execution via the `intersystems-iris` DB-API driver. Stored Procedures and ODBC are no longer the primary interaction pattern for the RAG pipelines themselves.
 
-This revised Section 9 outlines how ObjectScript can still integrate with the Python RAG pipelines, primarily by invoking the overall Python pipeline execution flow using Embedded Python. The ObjectScript layer would not be responsible for defining or directly calling the core search stored procedures themselves in this new model.
+This revised Section 9 outlines how ObjectScript can still integrate with the Python RAG pipelines, primarily by invoking the Python pipeline execution flow using Embedded Python.
 
 **A. Approach: Invoking Python Pipelines from ObjectScript via Embedded Python (`%SYS.Python`)**
 
-*   **Rationale**: Offers better performance and a more "IRIS-native" feel compared to PEX if the Python environment can be managed within or accessible to the IRIS container.
-*   **Requirement**: The IRIS instance must have access to a Python 3.11 environment with all project dependencies. This typically means customizing the IRIS Docker image to include Python, Poetry, and the project's virtual environment.
-    *   The `pyproject.toml` and `poetry.lock` from the project root would be copied into the Docker image, and `poetry install` run during the image build.
-    *   The IRIS process needs to be configured with the path to this Python interpreter and `sys.path` appropriately set to find project modules.
+*   **Rationale**: Offers good performance for invoking Python logic from an IRIS context.
+*   **Requirement**: The IRIS instance (running in Docker) must have access to a Python 3.11 environment with all project dependencies. This typically means:
+    *   Copying the project (or a `requirements.txt` generated from it) into the IRIS Docker image.
+    *   Installing dependencies into a Python environment accessible by IRIS (e.g., using `uv pip install -r requirements.txt` during Docker image build for IRIS, or by mounting a host venv if feasible and correctly configured).
+    *   Ensuring IRIS's Embedded Python configuration points to the correct Python interpreter and `sys.path` includes the project modules.
 
 **B. ObjectScript Invoker Class (`RAGDemo.Invoker.cls`):**
 ```objectscript
 Class RAGDemo.Invoker Extends %RegisteredObject
 {
 
-// Property PythonPath As %String [InitialExpression="/path/to/venv/bin/python"]; // May not be needed if IRIS configured globally
-Property ProjectDir As %String [InitialExpression="/opt/iris_rag_project/"]; // Path where Python project code is inside IRIS env
+Property ProjectDir As %String [InitialExpression="/opt/iris_app/"]; // Path where Python project code is inside IRIS env (adjust if different)
 
 Method RunPipeline(pipelineName As %String, query As %String, topK As %Integer = 5) As %String
 {
@@ -238,7 +282,8 @@ Method RunPipeline(pipelineName As %String, query As %String, topK As %Integer =
         If 'projectPathInSysPath { Do sysPath.%Push(..ProjectDir) }
 
         // Construct module and class names from pipelineName
-        Set moduleName = $Replace(pipelineName, "_", ".") _ ".pipeline"
+        // Assumes pipeline modules are like 'basic_rag.pipeline', 'hyde.pipeline'
+        Set moduleName = $Replace(pipelineName, "_", ".") _ ".pipeline" 
         Set className = ""
         For i=1:1:$L(pipelineName,"_") { Set className = className _ $ZCVT($P(pipelineName,"_",i), "C") }
         Set className = className _ "Pipeline"
@@ -246,17 +291,19 @@ Method RunPipeline(pipelineName As %String, query As %String, topK As %Integer =
         Set pyModule = %SYS.Python.Import(moduleName)
         Set pyPipelineClass = pyModule.%Get(className)
 
-        // Initialize common Python utilities
+        // Initialize common Python utilities (these will get a DB-API connection)
+        Set commonConnectorModule = %SYS.Python.Import("common.iris_connector")
+        Set pythonIrisConnector = commonConnectorModule.get_iris_connection() // Gets a DB-API connection
+
         Set commonUtils = %SYS.Python.Import("common.utils")
-        Set pythonIrisConnector = commonUtils.get_iris_odbc_connector() 
-        Set pythonEmbeddingFunc = commonUtils.get_embedding_function() 
-        Set pythonLlmFunc = commonUtils.get_llm_function()
+        Set pythonEmbeddingFunc = commonUtils.get_embedding_func() 
+        Set pythonLlmFunc = commonUtils.get_llm_func()
 
         // Instantiate the Python RAG pipeline class
         Set pyPipelineInstance = pyPipelineClass.%New(pythonIrisConnector, pythonEmbeddingFunc, pythonLlmFunc)
         
         // Call the 'run' method of the Python pipeline instance
-        // The Python pipeline's 'run' method will internally call pure SQL SPs via ODBC
+        // The Python pipeline's 'run' method will internally use DB-API to execute SQL
         Set pyResultDict = pyPipelineInstance.run(query, topK)
         
         Set json = %SYS.Python.Import("json")
@@ -278,26 +325,51 @@ ClassMethod RunHyDE(query As %String, topK As %Integer = 5) As %String
 }
 ```
 
-**C. Python Adjustments in `common/utils.py` (Conceptual):**
+**C. Python Adjustments in `common/iris_connector.py` (Conceptual for Embedded Python):**
+The existing `common.iris_connector.get_iris_connection()` should work as is, as it uses environment variables for connection parameters which can be set within the IRIS Docker environment if needed for Embedded Python execution. It returns a DB-API connection.
+
 ```python
-# In common/utils.py
+# In common/iris_connector.py (conceptual, already implemented)
+# def get_iris_connection(config: Optional[Dict[str, Any]] = None) -> IRISConnection:
+#     # Uses os.environ.get("IRIS_HOST", "localhost"), etc.
+#     # Returns an intersystems_iris.dbapi.IRISConnection object
+```
 
-# Global cache for models/connectors
-_iris_odbc_connector_py = None # For Python-side ODBC connection
-_embedding_model_py = None
-_llm_py = None
+**D. ObjectScript Test Class (`RAGDemo.TestBed.cls`):**
+(This remains largely the same, but the underlying Python calls now use DB-API.)
+```objectscript
+Class RAGDemo.TestBed
+{
+ClassMethod TestAllPipelines()
+{
+    Set query = "What are the treatments for Type 2 Diabetes?"
+    
+    Write "Testing Basic RAG:",!
+    Write ##class(RAGDemo.Invoker).RunBasicRAG(query),!!
+    
+    Write "Testing HyDE RAG:",!
+    Write ##class(RAGDemo.Invoker).RunHyDE(query),!!
 
-def get_iris_odbc_connector(): # For Python code to call SQL SPs
-    global _iris_odbc_connector_py
-    if _iris_odbc_connector_py is None:
-        # Logic to initialize an ODBC connection to IRIS from Python
-        # using pyodbc and connection details (e.g., from env vars)
-        # _iris_odbc_connector_py = pyodbc.connect(...) 
-        pass
-    return _iris_odbc_connector_py
+    // ... Add calls for CRAG, ColBERT, NodeRAG, GraphRAG ...
+}
+}
+```
 
-def get_embedding_function(): 
-    global _embedding_model_py
+**E. TDD for Embedded Python Integration:**
+*   **ObjectScript Tests (`tests/test_rag_embedded.int`):**
+    *   Run within IRIS.
+    *   Call methods of `RAGDemo.Invoker`.
+    *   For integration tests, this will execute the full Python RAG pipelines (which in turn use DB-API to execute client-side SQL). This requires the IRIS instance to have the complete Python environment correctly configured.
+*   **Python Unit Tests**: The core Python RAG pipeline logic (including its DB-API calls) is tested as previously described using Python's `pytest`.
+
+**F. Python Gateway (PEX) as an Alternative (If Embedded Python is Problematic):**
+*   If managing a full Python environment within the IRIS Docker image for Embedded Python proves too complex, PEX remains an alternative.
+*   The Python RAG application would run as a separate service. ObjectScript would communicate with this PEX service.
+*   The Python service itself would use the `intersystems-iris` DB-API driver to connect to the IRIS database and execute client-side SQL.
+
+For this project, if invoking Python from ObjectScript is required, **Embedded Python is the first preference**, assuming the Python environment can be properly set up within or accessible to IRIS. The core RAG functionality relies on Python executing client-side SQL via DB-API.
+
+---
     if _embedding_model_py is None:
         # Load sentence transformer model
         # _embedding_model_py = SentenceTransformer(...)

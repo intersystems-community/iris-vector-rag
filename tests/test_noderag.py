@@ -4,13 +4,21 @@ import pytest
 from unittest.mock import MagicMock, patch
 import os
 import sys
-import sqlalchemy
+# import sqlalchemy # No longer needed
+from typing import Any # For mock type hints
 
 # Add the project root directory to Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from noderag.pipeline import NodeRAGPipeline
 from common.utils import Document
+
+# Attempt to import for type hinting, but make it optional
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnectionTypes, Cursor as IRISCursorTypes
+except ImportError:
+    IRISConnectionTypes = Any
+    IRISCursorTypes = Any
 
 # --- Mock Fixtures ---
 
@@ -20,25 +28,29 @@ def mock_iris_connector_for_noderag():
     Mock for IRIS connection specifically for NodeRAG tests.
     Needs to return KG node and edge data.
     """
-    mock_conn = MagicMock(spec=sqlalchemy.engine.base.Connection)
+    mock_conn = MagicMock(spec=IRISConnectionTypes)
     mock_cursor_method = MagicMock()
     mock_conn.cursor = mock_cursor_method
     
-    mock_cursor_instance = MagicMock(spec=sqlalchemy.engine.cursor.CursorResult)
+    mock_cursor_instance = MagicMock(spec=IRISCursorTypes)
     mock_cursor_method.return_value = mock_cursor_instance
     
     # Mock fetchall to return different results based on the executed query
-    def mock_fetchall_side_effect():
+    def mock_fetchall_side_effect_noderag(): # Renamed to avoid conflict if other tests use a similar name
+        # Ensure call_args is not None before accessing it
+        if mock_cursor_instance.execute.call_args is None or not mock_cursor_instance.execute.call_args[0]:
+            return [] # Or raise an error, or handle as appropriate for no call
+
         sql = mock_cursor_instance.execute.call_args[0][0].strip().lower()
         
-        if "from knowledgegraphnodes" in sql and "vector_cosine_similarity" in sql:
+        if "from rag.knowledgegraphnodes" in sql and "vector_cosine" in sql: # Updated table name and function
             # Mock results for _identify_initial_search_nodes (node_id, score)
             return [
                 ("node_kg_1", 0.95), # Diabetes
                 ("node_kg_2", 0.90), # Insulin
                 ("node_kg_3", 0.85), # Doc1
             ]
-        elif "from knowledgegraphnodes" in sql and "where node_id in" in sql:
+        elif "from rag.knowledgegraphnodes" in sql and "where node_id in" in sql: # Updated table name
             # Mock results for _retrieve_content_for_nodes (node_id, description_text)
             # Need to check which node_ids were requested in params
             params = mock_cursor_instance.execute.call_args[0][1]
@@ -52,7 +64,7 @@ def mock_iris_connector_for_noderag():
             
             return [(node_id, mock_node_data.get(node_id, "Mock content")) for node_id in requested_ids if node_id in mock_node_data]
             
-        elif "from knowledgegraphedges" in sql:
+        elif "from rag.knowledgegraphedges" in sql: # Updated table name
             # Mock results for fetching edges (edge_id, source, target, type, weight, properties)
             # This would be used by _traverse_graph if implemented
             return [
@@ -63,8 +75,10 @@ def mock_iris_connector_for_noderag():
         # Default for other queries
         return []
     
-    mock_cursor_instance.fetchall.side_effect = mock_fetchall_side_effect
+    mock_cursor_instance.fetchall = MagicMock(side_effect=mock_fetchall_side_effect_noderag)
     mock_cursor_instance.execute = MagicMock()
+    mock_cursor_instance.close = MagicMock()
+    mock_conn.close = MagicMock()
     return mock_conn
 
 @pytest.fixture
@@ -113,8 +127,9 @@ def test_identify_initial_search_nodes(noderag_pipeline, mock_iris_connector_for
     mock_cursor.execute.assert_called_once()
     executed_sql = mock_cursor.execute.call_args[0][0]
     assert f"SELECT TOP {top_n_seed}" in executed_sql
-    assert "FROM KnowledgeGraphNodes" in executed_sql
-    assert "VECTOR_COSINE_SIMILARITY(embedding, TO_VECTOR(?))" in executed_sql
+    assert "FROM RAG.KnowledgeGraphNodes" in executed_sql # Schema qualified
+    assert "VECTOR_COSINE(embedding, TO_VECTOR(" in executed_sql # Correct function and start of TO_VECTOR
+    assert "'DOUBLE', 768" in executed_sql # Check for type and dimension in TO_VECTOR
     
     mock_cursor.fetchall.assert_called_once()
     assert initial_node_ids == ["node_kg_1", "node_kg_2", "node_kg_3"] # Based on mock fetchall side_effect
@@ -145,7 +160,13 @@ def test_retrieve_content_for_nodes(noderag_pipeline, mock_iris_connector_for_no
     mock_iris_connector_for_noderag.cursor.assert_called_once()
     mock_cursor.execute.assert_called_once()
     executed_sql = mock_cursor.execute.call_args[0][0]
-    assert "SELECT node_id, description_text FROM KnowledgeGraphNodes WHERE node_id IN (?, ?)" in executed_sql # Check IN clause
+    # Condense all whitespace (including newlines, tabs) to single spaces for robust checking
+    condensed_sql = " ".join(executed_sql.split())
+    # Check for schema qualified table name and IN clause structure
+    assert "FROM RAG.KnowledgeGraphNodes WHERE node_id IN (" in condensed_sql
+    # Verify that parameters were passed to execute for the IN clause
+    assert mock_cursor.execute.call_args[0][1] is not None # Check that parameters tuple exists
+    assert len(mock_cursor.execute.call_args[0][1]) == len(node_ids) # Check number of parameters matches number of node_ids
     
     mock_cursor.fetchall.assert_called_once()
     
@@ -220,4 +241,4 @@ def test_run_orchestration(noderag_pipeline, mock_llm_func):
     assert result["query"] == query_text
     assert result["answer"] == "Final NodeRAG Answer"
     assert len(result["retrieved_documents"]) == 1
-    assert result["retrieved_documents"][0].id == "node_final"
+    assert result["retrieved_documents"][0]['id'] == "node_final" # Access as dict

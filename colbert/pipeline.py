@@ -6,10 +6,16 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import List, Dict, Any, Callable, Tuple
-import sqlalchemy
+# import sqlalchemy # No longer needed
 import numpy as np # For vector operations
 import json # Import json for parsing CLOB string
 import logging # Import logging
+
+# Attempt to import for type hinting, but make it optional
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnection
+except ImportError:
+    IRISConnection = Any # Fallback to Any if the driver isn't available during static analysis
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -18,7 +24,7 @@ from common.utils import Document, timing_decorator, get_llm_func, get_embedding
 from common.iris_connector import get_iris_connection # For demo
 
 class ColbertRAGPipeline:
-    def __init__(self, iris_connector: sqlalchemy.engine.base.Connection,
+    def __init__(self, iris_connector: IRISConnection, # Updated type hint
                  colbert_query_encoder_func: Callable[[str], List[List[float]]],
                  colbert_doc_encoder_func: Callable[[str], List[List[float]]], # Needed for offline indexing, but useful to have here
                  llm_func: Callable[[str], str]):
@@ -81,7 +87,7 @@ class ColbertRAGPipeline:
         # Assuming DocumentTokenEmbeddings table exists and embedding is CLOB string list
         sql_fetch_tokens = """
             SELECT doc_id, token_sequence_index, token_embedding
-            FROM DocumentTokenEmbeddings
+            FROM RAG.DocumentTokenEmbeddings
             ORDER BY doc_id, token_sequence_index
         """
 
@@ -143,7 +149,7 @@ class ColbertRAGPipeline:
             placeholders = ', '.join(['?'] * len(top_k_doc_ids))
             sql_fetch_content = f"""
                 SELECT doc_id, text_content
-                FROM SourceDocuments
+                FROM RAG.SourceDocuments
                 WHERE doc_id IN ({placeholders})
             """
             # Need to maintain order if possible, but IN clause doesn't guarantee order.

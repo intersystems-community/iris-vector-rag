@@ -17,7 +17,7 @@ except ImportError as e:
     sys.exit(1)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - [%(funcName)s] %(message)s')
-logger = logging.getLogger("run_db_init_docker")
+logger = logging.getLogger("run_db_init_local")
 
 def main():
     parser = argparse.ArgumentParser(description="Initialize InterSystems IRIS database schema (tables only) for RAG templates.")
@@ -74,7 +74,7 @@ def main():
                 logger.info("DBAPI IRIS connection closed.")
             except Exception as e_close_dbapi:
                 logger.error(f"Error closing DBAPI IRIS connection: {e_close_dbapi}")
-        logger.info("run_db_init_docker.py main() finished.")
+        logger.info("run_db_init_local.py main() finished.")
 
 if __name__ == "__main__":
     main()

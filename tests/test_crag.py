@@ -4,7 +4,8 @@ import pytest
 from unittest.mock import MagicMock, patch
 import os
 import sys
-import sqlalchemy
+# import sqlalchemy # No longer needed
+from typing import Any # For mock type hints
 
 # Add the project root directory to Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -12,24 +13,34 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from crag.pipeline import CRAGPipeline, RetrievalStatus, RetrievalEvaluator
 from common.utils import Document
 
+# Attempt to import for type hinting, but make it optional
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnectionTypes, Cursor as IRISCursorTypes
+except ImportError:
+    IRISConnectionTypes = Any
+    IRISCursorTypes = Any
+
 # --- Mock Fixtures ---
 
 @pytest.fixture
 def mock_iris_connector():
-    """Simplified mock for the InterSystems IRIS connection object."""
-    mock_conn = MagicMock(spec=sqlalchemy.engine.base.Connection)
+    """Simplified mock for the InterSystems IRIS DB-API connection object."""
+    mock_conn = MagicMock(spec=IRISConnectionTypes)
     mock_cursor_method = MagicMock()
     mock_conn.cursor = mock_cursor_method
     
-    mock_cursor_instance = MagicMock(spec=sqlalchemy.engine.cursor.CursorResult)
+    mock_cursor_instance = MagicMock(spec=IRISCursorTypes)
     mock_cursor_method.return_value = mock_cursor_instance
     
     # Default fetchall return for initial retrieval
-    mock_cursor_instance.fetchall.return_value = [
+    # Explicitly create fetchall as a MagicMock and set its return_value
+    mock_cursor_instance.fetchall = MagicMock(return_value=[
         ("initial_doc1", "Initial content 1 (score 0.9)", 0.9),
         ("initial_doc2", "Initial content 2 (score 0.6)", 0.6),
-    ]
+    ])
     mock_cursor_instance.execute = MagicMock()
+    mock_cursor_instance.close = MagicMock()
+    mock_conn.close = MagicMock()
     return mock_conn
 
 @pytest.fixture
@@ -112,7 +123,9 @@ def test_initial_retrieve(crag_pipeline, mock_iris_connector, mock_embedding_fun
     mock_cursor.execute.assert_called_once()
     executed_sql = mock_cursor.execute.call_args[0][0]
     assert f"SELECT TOP {top_k}" in executed_sql
-    assert "VECTOR_COSINE_SIMILARITY(embedding, TO_VECTOR(?))" in executed_sql
+    assert "VECTOR_COSINE(embedding, TO_VECTOR(" in executed_sql
+    assert "'DOUBLE', 768" in executed_sql # Assuming 768 from pipeline.py
+    assert "FROM RAG.SourceDocuments" in executed_sql
     
     mock_cursor.fetchall.assert_called_once()
     assert len(retrieved_docs) == 2 # Based on mock_iris_connector default
