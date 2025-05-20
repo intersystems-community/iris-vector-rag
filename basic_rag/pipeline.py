@@ -6,8 +6,13 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import List, Dict, Any, Callable
-import sqlalchemy # For type hinting iris_connector
+# import sqlalchemy # No longer needed for type hinting iris_connector
 import logging # Ensure logging is imported if not already
+# Attempt to import for type hinting, but make it optional if intersystems_iris is not always in dev env
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnection
+except ImportError:
+    IRISConnection = Any # Fallback to Any if the driver isn't available during static analysis
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func, get_iris_connector
 # Removed: from common.db_vector_search import search_source_documents_dynamically
@@ -16,7 +21,7 @@ logger = logging.getLogger(__name__) # Ensure logger is defined for the class if
 logger.setLevel(logging.DEBUG) # Ensure debug messages from this module are shown
 
 class BasicRAGPipeline:
-    def __init__(self, iris_connector: sqlalchemy.engine.base.Connection, 
+    def __init__(self, iris_connector: IRISConnection, # Updated type hint
                  embedding_func: Callable[[List[str]], List[List[float]]], 
                  llm_func: Callable[[str], str]):
         self.iris_connector = iris_connector
@@ -55,7 +60,7 @@ class BasicRAGPipeline:
         sql_query = f"""
             SELECT TOP {current_top_k} doc_id, text_content,
                    VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', 768)) AS score
-            FROM SourceDocuments
+            FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
             ORDER BY score DESC
         """

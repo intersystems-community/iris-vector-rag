@@ -2,42 +2,47 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-import sqlalchemy # Added import
+# import sqlalchemy # No longer needed
 import os
 import sys
+from typing import Any # For mock type hints
 
 # Add the project root directory to Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from basic_rag.pipeline import BasicRAGPipeline
+from basic_rag.pipeline import BasicRAGPipeline # This will now use the updated IRISConnection type hint
 from common.utils import Document
+
+# Attempt to import for type hinting, but make it optional
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnectionTypes, Cursor as IRISCursorTypes
+except ImportError:
+    IRISConnectionTypes = Any
+    IRISCursorTypes = Any
+
 
 # --- Mock Fixtures ---
 
 @pytest.fixture
 def mock_iris_connector():
-    """Simplified mock for the InterSystems IRIS connection object."""
-    mock_conn = MagicMock(spec=sqlalchemy.engine.base.Connection) 
+    """Simplified mock for the InterSystems IRIS DB-API connection object."""
+    mock_conn = MagicMock(spec=IRISConnectionTypes) 
     
-    # Create a mock for the cursor() method itself
     mock_cursor_method = MagicMock()
     mock_conn.cursor = mock_cursor_method
 
-    # This is the object that cursor() method will return
-    mock_cursor_instance = MagicMock(spec=sqlalchemy.engine.cursor.CursorResult) 
+    mock_cursor_instance = MagicMock(spec=IRISCursorTypes) 
     mock_cursor_method.return_value = mock_cursor_instance
     
-    # Default return for fetchall: a list of (doc_id, text_content, score)
-    mock_cursor_instance.fetchall.return_value = [ # Changed mock_cursor to mock_cursor_instance
+    mock_cursor_instance.fetchall.return_value = [
         ("mock_doc_1", "Mocked document content 1.", 0.95),
         ("mock_doc_2", "Mocked document content 2.", 0.88)
     ]
-    # Ensure execute itself is a mock and can be called.
-    # The return value of execute() for SELECTs is often the cursor itself or not directly used
-    # if fetchall() is called subsequently on the same cursor object.
-    # For DML, it might be rowcount. For DDL, often None.
-    # Let's make 'execute' a callable MagicMock.
     mock_cursor_instance.execute = MagicMock()
+    # Add a close method to the mock cursor instance
+    mock_cursor_instance.close = MagicMock()
+    # Add a close method to the mock connection instance
+    mock_conn.close = MagicMock()
     return mock_conn
 
 @pytest.fixture
@@ -83,12 +88,11 @@ def test_retrieve_documents_calls_embedding_and_iris(basic_rag_pipeline_under_te
     mock_cursor.execute.assert_called_once()
     
     # Check the SQL query structure (simplified check)
-    # The actual SQL string construction is complex due to f-string and parameters.
-    # We'll check that the call was made and that it contains key SQL elements.
     executed_sql = mock_cursor.execute.call_args[0][0]
     assert f"SELECT TOP {top_k}" in executed_sql
-    assert "VECTOR_COSINE_SIMILARITY(embedding, TO_VECTOR(?))" in executed_sql
-    assert "FROM SourceDocuments" in executed_sql
+    assert "VECTOR_COSINE(embedding, TO_VECTOR(" in executed_sql # Check for VECTOR_COSINE and start of TO_VECTOR
+    assert "'DOUBLE', 768" in executed_sql # Check for type and dimension in TO_VECTOR
+    assert "FROM RAG.SourceDocuments" in executed_sql # Check for schema-qualified table
     assert "ORDER BY score DESC" in executed_sql
     
     # Assert fetchall was called

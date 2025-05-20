@@ -20,26 +20,26 @@
     - [ ] **Test (Red):** Attempt to build the new image and run the container. It should start IRIS.
     - [ ] **Implement (Green):** Finalize `Dockerfile`, `docker-compose.yml`. Ensure IRIS starts and Python environment is usable within the container.
 - **Sub-Phase 2.2: Database Initialization Refactor**
-    - [ ] **Action:** Update `run_db_init_docker.py`:
+    - [x] **Action:** Update `run_db_init_docker.py`:
         - Ensure it connects to IRIS (localhost from within the container) using DB-API (via `common/iris_connector.py`).
         - Remove any ODBC-specific logic or dependencies if present.
-        - Remove Stored Procedure grant/diagnostic logic.
-    - [ ] **Action:** Update `common/db_init.py` and `common/db_init.sql` to *only* create schema and tables.
-    - [ ] **Action:** Empty or delete `common/vector_search_procs.sql` (as SPs are abandoned).
-    - [ ] **Test (Red):** Run the updated `run_db_init_docker.py` via `docker exec <container_name> python run_db_init_docker.py --force-recreate`. Expect schema/tables to be created.
-    - [ ] **Implement (Green):** Ensure DB init script runs successfully and creates the schema/tables.
+        - Remove Stored Procedure grant/diagnostic logic. (Done)
+    - [x] **Action:** Update `common/db_init.py` and `common/db_init.sql` to *only* create schema and tables. (Checked, no changes needed beyond SP removal from SQL files)
+    - [x] **Action:** Empty or delete `common/vector_search_procs.sql` (as SPs are abandoned). (Done)
+    - [x] **Test (Red):** Run the updated `run_db_init_docker.py` via `docker exec <container_name> python run_db_init_docker.py --force-recreate`. Expect schema/tables to be created. (Done)
+    - [x] **Implement (Green):** Ensure DB init script runs successfully and creates the schema/tables. (Done, schema created)
 - **Sub-Phase 2.3: Basic DB-API Connectivity Test**
-    - [ ] **Action:** Refactor `test_pyodbc_driver.py` to `test_dbapi_connection.py` (or create new).
-    - [ ] **Test (Red):** The new test should use DB-API to connect to IRIS (localhost from within the container) and run a simple `SELECT 1` or query a schema table.
-    - [ ] **Implement (Green):** Ensure `test_dbapi_connection.py` passes.
+    - [x] **Action:** Refactor `test_pyodbc_driver.py` to `test_dbapi_connection.py`. (Done)
+    - [x] **Test (Red):** The new test should use DB-API to connect to IRIS (localhost from within the container) and run a simple `SELECT 1` or query a schema table. (Done)
+    - [x] **Implement (Green):** Ensure `test_dbapi_connection.py` passes. (Done, test successful)
 
-**Phase 3: Implement Client-Side SQL for RAG Pipelines (TDD Approach)**
+**Phase 3: Implement Client-Side SQL for RAG Pipelines (TDD Approach) (Current Focus)**
 - **Goal:** Python RAG pipelines construct and execute SQL queries directly using DB-API.
 - **Sub-Phase 3.1: Basic RAG with Client-Side SQL**
-    - [ ] **Test (Red):** Update `tests/test_basic_rag.py`. Mocks for `iris_connector` will need to simulate DB-API behavior. End-to-end tests will verify direct SQL execution.
+    - [ ] **Test (Red):** Review and update `tests/test_basic_rag.py` if necessary to align with direct DB-API calls instead of SP mocks (if any were SP-specific). Focus on testing the retrieval logic.
     - [ ] **Implement (Green):** Modify `basic_rag/pipeline.py`:
-        - `retrieve_documents` method to build and execute `SELECT TOP ? ... VECTOR_COSINE(...)` using DB-API.
-        - Ensure parameters are correctly passed using `?` placeholders.
+        - Update `retrieve_documents` method to build and execute the vector search query (`SELECT TOP ? doc_id, text_content, VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', ?)) AS score FROM RAG.SourceDocuments ORDER BY score DESC`) using the DB-API.
+        - Ensure parameters (top_k, query_vector_string, vector_dimension) are correctly passed using `?` placeholders.
     - [ ] **Refactor:** Clean up Python and SQL construction.
 - **Sub-Phase 3.2 - 3.X:** Repeat for HyDE, CRAG, ColBERT, NodeRAG, GraphRAG.
     - **ColBERT Note:** MaxSim logic will likely be client-side (Python) if not expressible in a single complex SQL query. This involves fetching token embeddings for candidate docs and processing in Python.
