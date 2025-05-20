@@ -1,0 +1,385 @@
+Running tests with 1000+ REAL PMC documents...
+PYTEST_CONFTEST_PATH=tests/conftest_real_pmc.py poetry run pytest -xvs tests/test_minimal_real_pmc.py
+============================= test session starts ==============================
+platform darwin -- Python 3.12.9, pytest-7.4.4, pluggy-1.5.0 -- /Users/tdyar/Library/Caches/pypoetry/virtualenvs/iris-rag-templates-vq-nzUxT-py3.12/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/tdyar/ws/rag-templates
+configfile: pytest.ini
+plugins: anyio-4.9.0, cov-4.1.0, mock-3.14.0, lazy-fixture-0.6.3
+collecting ... collected 4 items
+
+tests/test_minimal_real_pmc.py::test_basic_rag_simple 
+-------------------------------- live log setup --------------------------------
+2025-05-12 02:56:24 [    INFO] Starting IRIS testcontainer... (conftest.py:223)
+2025-05-12 02:56:25 [    INFO] Creating IRIS testcontainer with image: intersystemsdc/iris-community:latest on ARM64 (conftest.py:239)
+2025-05-12 02:56:25 [    INFO] Pulling image testcontainers/ryuk:0.8.1 (container.py:98)
+2025-05-12 02:56:25 [    INFO] Container started: a0851782b99b (container.py:125)
+2025-05-12 02:56:25 [    INFO] Waiting for container <Container: a0851782b99b> with image testcontainers/ryuk:0.8.1 to be ready ... (waiting_utils.py:52)
+2025-05-12 02:56:25 [    INFO] Pulling image intersystemsdc/iris-community:latest (container.py:98)
+2025-05-12 02:56:25 [    INFO] Container started: 4c0362f3d0b9 (container.py:125)
+res iris session iris -U %SYS '##class(Security.Users).Create("test","%ALL","test")' ExecResult(exit_code=0, output=b'')
+2025-05-12 02:56:28 [    INFO] Waiting for container <Container: 4c0362f3d0b9> with image intersystemsdc/iris-community:latest to be ready ... (waiting_utils.py:52)
+2025-05-12 02:56:28 [    INFO] IRIS testcontainer started. Connection URL: iris://test:test@localhost:57491/USER (conftest.py:259)
+2025-05-12 02:56:28 [    INFO] Initializing database schema in testcontainer (conftest.py:290)
+Initializing database schema...
+Executing SQL statement 1/18: DROP TABLE IF EXISTS DocumentTokenEmbeddings;...
+Executing SQL statement 2/18: DROP TABLE IF EXISTS KnowledgeGraphEdges;...
+Executing SQL statement 3/18: DROP TABLE IF EXISTS SourceDocuments;...
+Executing SQL statement 4/18: DROP TABLE IF EXISTS KnowledgeGraphNodes;...
+Executing SQL statement 5/18: DROP TABLE IF EXISTS test_documents;...
+Executing SQL statement 6/18: CREATE TABLE SourceDocuments ( doc_id VARCHAR(255) PRIMARY K...
+Executing SQL statement 7/18: CREATE TABLE KnowledgeGraphNodes ( node_id VARCHAR(255) PRIM...
+Executing SQL statement 8/18: CREATE TABLE DocumentTokenEmbeddings ( token_id INTEGER PRIM...
+Executing SQL statement 9/18: CREATE TABLE KnowledgeGraphEdges ( edge_id INTEGER PRIMARY K...
+Executing SQL statement 10/18: CREATE INDEX idx_src_doc_id ON SourceDocuments(doc_id);...
+Executing SQL statement 11/18: CREATE INDEX idx_node_id ON KnowledgeGraphNodes(node_id);...
+Executing SQL statement 12/18: CREATE INDEX idx_doc_token ON DocumentTokenEmbeddings(doc_id...
+Executing SQL statement 13/18: CREATE INDEX idx_edge_src ON KnowledgeGraphEdges(source_node...
+Executing SQL statement 14/18: CREATE INDEX idx_edge_tgt ON KnowledgeGraphEdges(target_node...
+Executing SQL statement 15/18: CREATE VIEW kg_edges AS SELECT source_node_id AS src, target...
+Executing SQL statement 16/18: CREATE OR REPLACE FUNCTION AppLib.ColbertMaxSimScore(docId V...
+Error executing SQL statement: CREATE OR REPLACE FUNCTION AppLib.ColbertMaxSimScore(docId VARCHAR(255), queryEmbeddingsJson VARCHAR(MAX)) RETURNS DOUBLE LANGUAGE OBJECTSCRIPT { Set score = 0 // Parse the query embeddings JSON into a local array Set queryEmbArr = ##class(%DynamicArray).%FromJSON(queryEmbeddingsJson) Set queryEmbCount = queryEmbArr.%Size() // Get document token embeddings from the DocumentTokenEmbeddings table Set sql = "SELECT token_embedding FROM DocumentTokenEmbeddings WHERE doc_id = ?" Set rs = ##class(%SQL.Statement).%ExecDirect(, sql, docId) If (rs.%SQLCODE < 0) { // SQL error occurred Return 0 } // Initialize array to store max similarity for each query token For i=0:1:queryEmbCount-1 { Set maxSims(i) = 0 } // For each document token While rs.%Next() { // Get token embedding as string and convert to array of doubles Set tokenEmbStr = rs.%Get("token_embedding") Set tokenEmbArr = ##class(%DynamicArray).%FromJSON(tokenEmbStr) // For each query token embedding For q=0:1:queryEmbCount-1 { Set queryEmb = queryEmbArr.%Get(q) // Calculate cosine similarity Set dotProduct = 0 Set normDoc = 0 Set normQuery = 0 For d=0:1:tokenEmbArr.%Size()-1 { Set docVal = tokenEmbArr.%Get(d) Set queryVal = queryEmb.%Get(d) Set dotProduct = dotProduct + (docVal * queryVal) Set normDoc = normDoc + (docVal * docVal) Set normQuery = normQuery + (queryVal * queryVal) } // Avoid division by zero If (normDoc = 0) || (normQuery = 0) { Set similarity = 0 } Else { Set similarity = dotProduct / (($ZSQR(normDoc) * $ZSQR(normQuery))) } // Update max similarity for this query token if higher If similarity > maxSims(q) { Set maxSims(q) = similarity } } } // Sum up the max similarities for each query token For i=0:1:queryEmbCount-1 { Set score = score + maxSims(i) } Return score } CREATE OR REPLACE FUNCTION AppLib.StringToVector(vectorStr VARCHAR(MAX)) RETURNS VECTOR LANGUAGE OBJECTSCRIPT { // Remove brackets and split by commas Set str = $REPLACE(vectorStr, "[", "") Set str = $REPLACE(str, "]", "") Set values = $LISTFROMSTRING(str, ",") // Convert to vector format Set vector = "" Set count = $LISTLENGTH(values) For i=1:1:count { Set value = $LISTGET(values, i) // Append to vector string If i>1 Set vector = vector _ "," Set vector = vector _ $NORMALIZE(value) } Return vector } CREATE OR REPLACE FUNCTION AppLib.DotProduct(vec1 VECTOR, vec2 VECTOR) RETURNS DOUBLE LANGUAGE OBJECTSCRIPT { // Extract values from vectors Set values1 = $LISTFROMSTRING(vec1, ",") Set values2 = $LISTFROMSTRING(vec2, ",") Set count = $LISTLENGTH(values1) // Calculate dot product Set product = 0 For i=1:1:count { Set val1 = $LISTGET(values1, i) Set val2 = $LISTGET(values2, i) Set product = product + (val1 * val2) } Return product } GRANT EXECUTE ON FUNCTION AppLib.ColbertMaxSimScore TO PUBLIC;
+Error details: [SQLCODE: <-1>:<Invalid SQL statement>]
+[Location: <Prepare>]
+[%msg: < } expected, <end of statement> found ^CREATE OR REPLACE FUNCTION AppLib.ColbertMaxSimScore(docId VARCHAR(255), queryEmbeddingsJson VARCHAR(MAX)) RETURNS DOUBLE LANGUAGE OBJECTSCRIPT { Set score = 0 // Parse the query embeddings JSON into a local array Set queryEmbArr = ##class(%DynamicArray).%FromJSON(queryEmbeddingsJson) Set queryEmbCount = queryEmbArr.%Size() // Get document token embeddings from the DocumentTokenEmbeddings table Set sql = "SELECT token_embedding FROM DocumentTokenEmbeddings WHERE doc_id = ?" Set rs = ##class(%SQL.Statement).%ExecDirect(, sql, docId) If (rs.%SQLCODE < 0) { // SQL error occurred Return 0 } // Initialize array to store max similarity for each query token For i=0:1:queryEmbCount-1 { Set maxSims(i) = 0 } // For each document token While rs.%Next() { // Get token embedding as string and convert to array of doubles Set tokenEmbStr = rs.%Get("token_embedding") Set tokenEmbArr = ##class(%DynamicArray).%FromJSON(tokenEmbStr) // For each query token embedding For q=0:1:queryEmbCount-1 { Set queryEmb = queryEmbArr.%Get(q) // Calculate cosine similarity Set dotProduct = 0 Set normDoc = 0 Set normQuery = 0 For d=0:1:tokenEmbArr.%Size()-1 { Set docVal = tokenEmbArr.%Get(d) Set queryVal = queryEmb.%Get(d) Set dotProduct = dotProduct + (docVal * queryVal) Set normDoc = normDoc + (docVal * docVal) Set normQuery = normQuery + (queryVal * queryVal) } // Avoid division by zero If (normDoc = 0) || (normQuery = 0) { Set similarity = 0 } Else { Set similarity = dotProduct / (($ZSQR(normDoc) * $ZSQR(normQuery))) } // Update max similarity for this query token if higher If similarity > maxSims(q) { Set maxSims(q) = similarity } } } // Sum up the max similarities for each query token For i=0:1:queryEmbCount-1 { Set score = score + maxSims(i) } Return score } CREATE OR REPLACE FUNCTION AppLib.StringToVector(vectorStr VARCHAR(MAX)) RETURNS VECTOR LANGUAGE OBJECTSCRIPT { // Remove brackets and split by commas Set str = $REPLACE(vectorStr, "[", "") Set str = $REPLACE(str, "]", "") Set values = $LISTFROMSTRING(str, ",") // Convert to vector format Set vector = "" Set count = $LISTLENGTH(values) For i=1:1:count { Set value = $LISTGET(values, i) // Append to vector string If i>1 Set vector = vector _ "," Set vector = vector _ $NORMALIZE(value) } Return vector } CREATE OR REPLACE FUNCTION AppLib.DotProduct(vec1 VECTOR, vec2 VECTOR) RETURNS DOUBLE LANGUAGE OBJECTSCRIPT { // Extract values from vectors Set values1 = $LISTFROMSTRING(vec1, ",") Set values2 = $LISTFROMSTRING(vec2, ",") Set count = $LISTLENGTH(values1) // Calculate dot product Set product = 0 For i=1:1:count { Set val1 = $LISTGET(values1, i) Set val2 = $LISTGET(values2, i) Set product = product + (val1 * val2) } Return product } GRANT EXECUTE ON FUNCTION AppLib.ColbertMaxSimScore TO PUBLIC /*#OPTIONS {"xDBC":1} */>]
+WARNING: UDF/function creation failed - this is expected in test environments.
+Executing SQL statement 17/18: GRANT EXECUTE ON FUNCTION AppLib.StringToVector TO PUBLIC;...
+Error executing SQL statement: GRANT EXECUTE ON FUNCTION AppLib.StringToVector TO PUBLIC;
+Error details: [SQLCODE: <-1>:<Invalid SQL statement>]
+[Location: <Prepare>]
+[%msg: < TO expected, IDENTIFIER (AppLib) found ^GRANT EXECUTE ON FUNCTION AppLib>]
+WARNING: UDF/function creation failed - this is expected in test environments.
+Executing SQL statement 18/18: GRANT EXECUTE ON FUNCTION AppLib.DotProduct TO PUBLIC;...
+Error executing SQL statement: GRANT EXECUTE ON FUNCTION AppLib.DotProduct TO PUBLIC;
+Error details: [SQLCODE: <-1>:<Invalid SQL statement>]
+[Location: <Prepare>]
+[%msg: < TO expected, IDENTIFIER (AppLib) found ^GRANT EXECUTE ON FUNCTION AppLib>]
+WARNING: UDF/function creation failed - this is expected in test environments.
+Database schema initialization complete. Executed 15 SQL statements successfully, 3 statements failed with warnings.
+2025-05-12 02:56:30 [    INFO] Loading PMC documents into testcontainer (conftest.py:323)
+2025-05-12 02:56:30 [    INFO] Using TEST_PMC_LIMIT=30 (conftest.py:336)
+2025-05-12 02:56:30 [    INFO] Processing up to 30 documents from data/pmc_oas_downloaded (batch size: 20) (utils.py:375)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document sample: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11651485: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11627275: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649590: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649584: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11622443: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11651446: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11650994: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11650764: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11606522: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649553: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11650002: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649547: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11650770: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11650599: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11651687: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11619827: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11640946: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11619833: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649962: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [    INFO] Batch 1/2 complete: 20 docs in 0.02s | Progress: 50.0% | ETA: 0.1s | Total loaded: 0 (utils.py:421)
+2025-05-12 02:56:30 [    INFO] Reached limit of 30 files (pmc_processor.py:118)
+2025-05-12 02:56:30 [    INFO] Reached limit of 30 files (pmc_processor.py:118)
+2025-05-12 02:56:30 [    INFO] Reached limit of 30 files (pmc_processor.py:118)
+2025-05-12 02:56:30 [    INFO] Reached limit of 30 files (pmc_processor.py:118)
+2025-05-12 02:56:30 [    INFO] Reached limit of 30 files (pmc_processor.py:118)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649792: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649786: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11570632: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11651650: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11651888: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649779: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11627088: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11640775: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649745: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [ WARNING] Failed to insert document PMC11649802: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>] (utils.py:412)
+2025-05-12 02:56:30 [    INFO] Batch 2/2 complete: 10 docs in 0.01s | Progress: 100.0% | ETA: 0.0s | Total loaded: 0 (utils.py:421)
+2025-05-12 02:56:30 [    INFO] Loaded 0 documents into database in 0.08s (0.0 docs/s) (utils.py:428)
+2025-05-12 02:56:30 [    INFO] Loaded 0 PMC documents into testcontainer (conftest.py:362)
+2025-05-12 02:56:30 [ WARNING] No PMC documents were loaded - tests will run with empty database (conftest.py:367)
+2025-05-12 02:56:30 [    INFO] Starting document verification... (test_minimal_real_pmc.py:29)
+2025-05-12 02:56:30 [    INFO] Found 1840 real PMC XML files (test_minimal_real_pmc.py:38)
+2025-05-12 02:56:30 [    INFO] SourceDocuments table has 0 documents (test_minimal_real_pmc.py:55)
+2025-05-12 02:56:30 [    INFO] Found 0 documents with PMC IDs (test_minimal_real_pmc.py:60)
+2025-05-12 02:56:30 [    INFO] Sample documents in database: (test_minimal_real_pmc.py:65)
+2025-05-12 02:56:30 [    INFO] KnowledgeGraphNodes table has 0 nodes (test_minimal_real_pmc.py:72)
+2025-05-12 02:56:30 [    INFO] DocumentTokenEmbeddings table has 0 token embeddings (test_minimal_real_pmc.py:76)
+2025-05-12 02:56:30 [ WARNING] Only 0 documents found in database, generating 1000 more (test_minimal_real_pmc.py:80)
+2025-05-12 02:56:30 [    INFO] Generated 0 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:30 [    INFO] Generated 100 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:30 [    INFO] Generated 200 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:30 [    INFO] Generated 300 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:30 [    INFO] Generated 400 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:31 [    INFO] Generated 500 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:31 [    INFO] Generated 600 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:31 [    INFO] Generated 700 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:31 [    INFO] Generated 800 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:31 [    INFO] Generated 900 documents (test_minimal_real_pmc.py:96)
+2025-05-12 02:56:31 [    INFO] After generation, database now has 1000 documents (test_minimal_real_pmc.py:101)
+2025-05-12 02:56:31 [    INFO] ✅ Verified 1000 documents (minimum required: 1000) (test_minimal_real_pmc.py:105)
+-------------------------------- live log call ---------------------------------
+2025-05-12 02:56:31 [    INFO] BasicRAG pipeline initialized (pipeline.py:51)
+2025-05-12 02:56:31 [    INFO] Processing query: What is the role of insulin in diabetes? (pipeline.py:160)
+2025-05-12 02:56:31 [    INFO] Retrieved 0 documents in 0.05 seconds (pipeline.py:102)
+2025-05-12 02:56:31 [ WARNING] No documents provided for answer generation (pipeline.py:120)
+2025-05-12 02:56:31 [    INFO] Completed query processing in 0.05 seconds (pipeline.py:182)
+FAILED---------------------------- live log sessionfinish ----------------------------
+2025-05-12 02:56:31 [    INFO] Closed connection to IRIS testcontainer (conftest.py:299)
+2025-05-12 02:56:31 [    INFO] Stopping IRIS testcontainer... (conftest.py:265)
+2025-05-12 02:56:31 [    INFO] IRIS testcontainer stopped (conftest.py:267)
+
+
+=================================== FAILURES ===================================
+____________________________ test_basic_rag_simple _____________________________
+
+iris_with_pmc_data = <sqlalchemy.pool.base._ConnectionFairy object at 0x137889d90>
+
+    def test_basic_rag_simple(iris_with_pmc_data):
+        """Test BasicRAG with real PMC documents"""
+        from basic_rag.pipeline import BasicRAGPipeline
+    
+        # Create pipeline
+        pipeline = BasicRAGPipeline(
+            iris_connector=iris_with_pmc_data,
+            embedding_func=lambda text: [0.1] * 10,  # Simple embedding
+            llm_func=lambda prompt: "Mock answer about medical research"  # Simple LLM
+        )
+    
+        # Run pipeline
+        query = "What is the role of insulin in diabetes?"
+        result = pipeline.run(query, top_k=3)
+    
+        # Basic assertions
+        assert isinstance(result, dict), "Result should be a dictionary"
+        assert "query" in result, "Result should include the query"
+        assert "answer" in result, "Result should include an answer"
+        assert "retrieved_documents" in result, "Result should include retrieved documents"
+>       assert len(result["retrieved_documents"]) > 0, "Should retrieve at least one document"
+E       AssertionError: Should retrieve at least one document
+E       assert 0 > 0
+E        +  where 0 = len([])
+
+tests/test_minimal_real_pmc.py:129: AssertionError
+------------------------------ Captured log setup ------------------------------
+INFO     tests.conftest:conftest.py:223 Starting IRIS testcontainer...
+INFO     tests.conftest:conftest.py:239 Creating IRIS testcontainer with image: intersystemsdc/iris-community:latest on ARM64
+INFO     testcontainers.core.container:container.py:98 Pulling image testcontainers/ryuk:0.8.1
+INFO     testcontainers.core.container:container.py:125 Container started: a0851782b99b
+INFO     testcontainers.core.waiting_utils:waiting_utils.py:52 Waiting for container <Container: a0851782b99b> with image testcontainers/ryuk:0.8.1 to be ready ...
+INFO     testcontainers.core.container:container.py:98 Pulling image intersystemsdc/iris-community:latest
+INFO     testcontainers.core.container:container.py:125 Container started: 4c0362f3d0b9
+INFO     testcontainers.core.waiting_utils:waiting_utils.py:52 Waiting for container <Container: 4c0362f3d0b9> with image intersystemsdc/iris-community:latest to be ready ...
+INFO     tests.conftest:conftest.py:259 IRIS testcontainer started. Connection URL: iris://test:test@localhost:57491/USER
+INFO     tests.conftest:conftest.py:290 Initializing database schema in testcontainer
+INFO     tests.conftest:conftest.py:323 Loading PMC documents into testcontainer
+INFO     tests.conftest:conftest.py:336 Using TEST_PMC_LIMIT=30
+INFO     tests.utils:utils.py:375 Processing up to 30 documents from data/pmc_oas_downloaded (batch size: 20)
+WARNING  tests.utils:utils.py:412 Failed to insert document sample: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11651485: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11627275: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649590: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649584: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11622443: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11651446: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11650994: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11650764: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11606522: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649553: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11650002: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649547: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11650770: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11650599: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11651687: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11619827: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11640946: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11619833: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649962: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+INFO     tests.utils:utils.py:421 Batch 1/2 complete: 20 docs in 0.02s | Progress: 50.0% | ETA: 0.1s | Total loaded: 0
+INFO     data.pmc_processor:pmc_processor.py:118 Reached limit of 30 files
+INFO     data.pmc_processor:pmc_processor.py:118 Reached limit of 30 files
+INFO     data.pmc_processor:pmc_processor.py:118 Reached limit of 30 files
+INFO     data.pmc_processor:pmc_processor.py:118 Reached limit of 30 files
+INFO     data.pmc_processor:pmc_processor.py:118 Reached limit of 30 files
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649792: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649786: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11570632: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11651650: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11651888: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649779: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11627088: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11640775: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649745: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+WARNING  tests.utils:utils.py:412 Failed to insert document PMC11649802: [SQLCODE: <-29>:<Field not found in the applicable tables>]
+[Location: <Prepare>]
+[%msg: < Field 'SQLUSER.SOURCEDOCUMENTS.AUTHORS' not found in the applicable tables^INSERT INTO SourceDocuments ( doc_id , title , content , authors ,>]
+INFO     tests.utils:utils.py:421 Batch 2/2 complete: 10 docs in 0.01s | Progress: 100.0% | ETA: 0.0s | Total loaded: 0
+INFO     tests.utils:utils.py:428 Loaded 0 documents into database in 0.08s (0.0 docs/s)
+INFO     tests.conftest:conftest.py:362 Loaded 0 PMC documents into testcontainer
+WARNING  tests.conftest:conftest.py:367 No PMC documents were loaded - tests will run with empty database
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:29 Starting document verification...
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:38 Found 1840 real PMC XML files
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:55 SourceDocuments table has 0 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:60 Found 0 documents with PMC IDs
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:65 Sample documents in database:
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:72 KnowledgeGraphNodes table has 0 nodes
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:76 DocumentTokenEmbeddings table has 0 token embeddings
+WARNING  tests.test_minimal_real_pmc:test_minimal_real_pmc.py:80 Only 0 documents found in database, generating 1000 more
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 0 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 100 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 200 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 300 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 400 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 500 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 600 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 700 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 800 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:96 Generated 900 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:101 After generation, database now has 1000 documents
+INFO     tests.test_minimal_real_pmc:test_minimal_real_pmc.py:105 ✅ Verified 1000 documents (minimum required: 1000)
+------------------------------ Captured log call -------------------------------
+INFO     basic_rag.pipeline:pipeline.py:51 BasicRAG pipeline initialized
+INFO     basic_rag.pipeline:pipeline.py:160 Processing query: What is the role of insulin in diabetes?
+INFO     basic_rag.pipeline:pipeline.py:102 Retrieved 0 documents in 0.05 seconds
+WARNING  basic_rag.pipeline:pipeline.py:120 No documents provided for answer generation
+INFO     basic_rag.pipeline:pipeline.py:182 Completed query processing in 0.05 seconds
+=============================== warnings summary ===============================
+../../Library/Caches/pypoetry/virtualenvs/iris-rag-templates-vq-nzUxT-py3.12/lib/python3.12/site-packages/_pytest/config/__init__.py:1373
+  /Users/tdyar/Library/Caches/pypoetry/virtualenvs/iris-rag-templates-vq-nzUxT-py3.12/lib/python3.12/site-packages/_pytest/config/__init__.py:1373: PytestConfigWarning: Unknown config option: confcutdir
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../Library/Caches/pypoetry/virtualenvs/iris-rag-templates-vq-nzUxT-py3.12/lib/python3.12/site-packages/_pytest/config/__init__.py:1373
+  /Users/tdyar/Library/Caches/pypoetry/virtualenvs/iris-rag-templates-vq-nzUxT-py3.12/lib/python3.12/site-packages/_pytest/config/__init__.py:1373: PytestConfigWarning: Unknown config option: python_paths
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+../../Library/Caches/pypoetry/virtualenvs/iris-rag-templates-vq-nzUxT-py3.12/lib/python3.12/site-packages/_pytest/config/__init__.py:1373
+  /Users/tdyar/Library/Caches/pypoetry/virtualenvs/iris-rag-templates-vq-nzUxT-py3.12/lib/python3.12/site-packages/_pytest/config/__init__.py:1373: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_minimal_real_pmc.py::test_basic_rag_simple - AssertionError...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+======================== 1 failed, 3 warnings in 6.69s =========================

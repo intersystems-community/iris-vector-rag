@@ -1,0 +1,15 @@
+[ODBC Data Sources]
+user=user
+
+[user]
+Driver= /usr/irissys/bin/libirisodbc35.so
+Description=InterSystems IRIS
+Host=127.0.0.1
+Namespace=USER
+UID=_SYSTEM
+Password=SYS
+Port=51773
+Protocol=TCP
+Query Timeout=1
+Static Cursors=0
+Trace=off

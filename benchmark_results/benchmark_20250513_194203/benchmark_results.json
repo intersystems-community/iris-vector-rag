@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "total_techniques": 6,
+    "successful_techniques": 6,
+    "total_queries": 5,
+    "run_date": "2025-05-13T19:42:22.223251"
+  },
+  "results": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T19:42:05.603457",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 1257.3923749951064,
+          "answer": "Metformin helps lower glucose production in the liver and improves insulin sensitivity in individuals with type 2 diabetes. It is often prescribed as a first-line medication for the treatment of type 2 diabetes.",
+          "retrieved_documents": [
+            

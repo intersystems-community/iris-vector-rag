@@ -1,0 +1,298 @@
+{
+  "summary": {
+    "total_techniques": 6,
+    "successful_techniques": 6,
+    "total_queries": 5,
+    "run_date": "2025-05-13T19:11:09.345490"
+  },
+  "results": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T19:11:01.613854",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 94.71883299556794,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 35.75704099785071,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 35.742666994337924,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 35.455916993669234,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 35.97479100426426,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 35.771846771240234,
+        "p95": 82.98168182373045,
+        "p99": 92.38178253173828,
+        "throughput_qps": 21.010599715470775
+      },
+      "duration_seconds": 0.2379751205444336,
+      "end_time": "2025-05-13T19:11:01.852163"
+    },
+    "hyde": {
+      "pipeline": "hyde",
+      "queries_run": 5,
+      "start_time": "2025-05-13T19:11:01.852241",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 1215.7001249943278,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1177.247041996452,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 1801.1208750031074,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 1287.8393340070033,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 1004.5181660025264,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 1215.7070636749268,
+        "p95": 1698.4663009643555,
+        "p99": 1780.5908203125,
+        "throughput_qps": 0.7708048659438876
+      },
+      "duration_seconds": 6.4867260456085205,
+      "end_time": "2025-05-13T19:11:08.339229"
+    },
+    "colbert": {
+      "pipeline": "colbert",
+      "queries_run": 5,
+      "start_time": "2025-05-13T19:11:08.339326",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 45.729959005257115,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 46.32649999985006,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 47.13416699814843,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 46.84129200177267,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 46.431167000264395,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 163.64312171936035,
+        "p95": 214.53137397766113,
+        "p99": 221.67500495910645,
+        "throughput_qps": 5.728517975644227
+      },
+      "duration_seconds": 0.872826099395752,
+      "end_time": "2025-05-13T19:11:09.212296"
+    },
+    "crag": {
+      "pipeline": "crag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T19:11:09.212374",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 10.573332998319529,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 9.306416002800688,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 9.615834002033807,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 10.06045800022548,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 9.226165995642077,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        }
+      ],
+      "metrics": {
+        "p50": 9.623050689697266,
+        "p95": 10.477256774902344,
+        "p99": 10.559310913085938,
+        "throughput_qps": 102.03877873737989
+      },
+      "duration_seconds": 0.04900097846984863,
+      "end_time": "2025-05-13T19:11:09.261553"
+    },
+    "noderag": {
+      "pipeline": "noderag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T19:11:09.261614",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 9.201084001688287,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 8.162416001141537,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 7.73108300199965,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 8.378125006856862,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 7.481374996132217,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 8.170127868652344,
+        "p95": 9.044122695922852,
+        "p99": 9.175958633422852,
+        "throughput_qps": 121.3952788358012
+      },
+      "duration_seconds": 0.04118776321411133,
+      "end_time": "2025-05-13T19:11:09.302961"
+    },
+    "graphrag": {
+      "pipeline": "graphrag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T19:11:09.303022",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 8.186207996914163,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 9.145249998255167,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 8.183083999028895,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 8.431750000454485,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 8.102290994429495,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 8.192062377929688,
+        "p95": 9.009313583374023,
+        "p99": 9.124174118041992,
+        "throughput_qps": 118.35477899679444
+      },
+      "duration_seconds": 0.04224586486816406,
+      "end_time": "2025-05-13T19:11:09.345453"
+    }
+  }
+}

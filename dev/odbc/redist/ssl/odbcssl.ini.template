@@ -1,0 +1,40 @@
+[SampleSSLConfig] 
+# CAFile specifies the file containing the certificate(s) 
+# used to verify the server's certificate 
+CAFile=./CA.cer 
+
+# CertFile contains the client's certificate 
+CertFile=./Client.cer 
+
+# KeyFile specifies the client's private key file 
+# Password is the client's private key file password, if applicable 
+KeyFile=./Client.key 
+Password=MixOfAlphaNumeric&PuncChars! 
+
+# KeyType specifies the type of private key used by the client 
+# 1 = DSA 
+# 2 = RSA (default) 
+KeyType=2 
+
+# Protocols specifies the version(s) of SSL/TLS the client can perform 
+# 1 = SSLv2 
+# 2 = SSLv3 
+# 4 = TLSv1.0 
+# 8 = TLSv1.1 
+# 16 = TLSv1.2 
+# Protocol combinations are specified by adding individual numbers: 
+# 28 = TLSv1+TLSv1.1+TLSv1.2 (default) 
+Protocols=28 
+
+# CipherList specifies the list of enabled ciphersuites 
+CipherList=ALL:!aNULL:!eNULL:!EXP:!SSLv2 
+
+# VerifyPeer specifies the peer certificate verification level 
+# 0 = None (Continue even if certificate verification fails) 
+# 1 = Require (Continue only if certificate verification succeeds; 
+# default) 
+VerifyPeer=1 
+
+# VerifyDepth specifies the maximum number of CA certificates 
+# allowed in peer certificate chain 
+VerifyDepth=9 

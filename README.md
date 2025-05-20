@@ -1,88 +1,137 @@
-# IRIS RAG Template Suite
+# RAG Templates for InterSystems IRIS
 
-## Objective  
-A batteries‑included GitHub starter that shows **every modern Retrieval‑Augmented Generation (RAG) technique** running natively on **InterSystems IRIS 2025.1** with as much standard SQL as possible. The suite covers:
+This repository contains implementation templates for various Retrieval Augmented Generation (RAG) techniques using InterSystems IRIS.
 
-| Folder | Technique | Extra storage | Primary SQL changes |
-|--------|-----------|---------------|---------------------|
-| `basic_rag/` | Vanilla dense retrieval | — | none |
-| `hyde/` | HyDE query‑expansion | — | none |
-| `crag/` | CRAG self‑audit | — | none |
-| `colbert/` | Late‑interaction (ColBERT v2 / ColPaLi) | token‑vectors | UDAF or CTE aggregate |
-| `noderag/` | **NodeRAG** heterogeneous graph | edge table | `JOIN` / CTE |
-| `graphrag/` | **GraphRAG** KG traversal | edge table + globals | recursive CTE |
+## RAG Techniques Implemented
 
-An `eval/` package benchmarks **build time, index size, P50/P95 latency, QPS, retrieval recall, answer faithfulness and hallucination rate** using RAGChecker, RAGAS and Evidently.
+1. **BasicRAG**: Standard embedding-based retrieval
+2. **HyDE**: Hypothetical Document Embeddings
+3. **CRAG**: Corrective Retrieval Augmented Generation
+4. **ColBERT**: Contextualized Late Interaction over BERT
+5. **NodeRAG**: Heterogeneous graph-based retrieval
+6. **GraphRAG**: Knowledge graph-based retrieval
 
----
+## Features
 
-## Repository Layout
+- All techniques are implemented with Python and InterSystems IRIS
+- Comprehensive Test-Driven Development (TDD) approach
+- Tests with 1000+ real medical documents
+- Performance benchmarking and comparison
+- Scalable architecture for large document sets
+
+## Requirements
+
+- Python 3.11+
+- Poetry for dependency management
+- InterSystems IRIS 2025.1+
+- Docker for test containers
+
+## Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/rag-templates.git
+   cd rag-templates
+   ```
+
+2. Install dependencies:
+   ```bash
+   poetry install
+   ```
+
+3. Set up IRIS:
+   ```bash
+   make start-iris
+   ```
+
+4. Load test data:
+   ```bash
+   make load-data
+   ```
+
+## Running Tests
+
+### Running Tests with 1000+ Documents
+
+As per our project requirements, all tests run with at least 1000 documents by default. This ensures testing in realistic conditions with substantial data volumes.
+
+Basic test run:
+```bash
+make test-1000
+```
+
+Testing with real PMC documents:
+```bash
+make test-real-pmc-1000
+```
+
+Full test suite with reporting:
+```bash
+make test-all-1000-docs
+```
+
+Individual technique tests:
+```bash
+poetry run pytest -xvs tests/test_basic_1000.py
+poetry run pytest -xvs tests/test_colbert_1000.py
+poetry run pytest -xvs tests/test_noderag_1000.py
+```
+
+For more details on testing with 1000+ documents, see [1000_DOCUMENT_TESTING.md](1000_DOCUMENT_TESTING.md).
+
+## Technique Documentation
+
+Each RAG technique has detailed implementation documentation:
+
+- [COLBERT_IMPLEMENTATION.md](COLBERT_IMPLEMENTATION.md)
+- [NODERAG_IMPLEMENTATION.md](NODERAG_IMPLEMENTATION.md)
+- [GRAPHRAG_IMPLEMENTATION.md](GRAPHRAG_IMPLEMENTATION.md)
+- [CONTEXT_REDUCTION_STRATEGY.md](CONTEXT_REDUCTION_STRATEGY.md)
+
+## Project Structure
 
 ```
-iris-rag-templates/
-├── docker-compose.yml      # IRIS + notebook/Node containers
-├── common/
-│   ├── db_init.sql         # tables, indexes, globals views
-│   └── utils.py            # embed(), chat(), timers
-├── basic_rag/
-├── hyde/
-├── crag/
-├── colbert/
-├── noderag/
-├── graphrag/
-└── eval/
-    ├── loader.py
-    ├── bench_runner.py
-    └── reports/
+rag-templates/
+├── basic_rag/           # Standard RAG implementation
+├── colbert/             # ColBERT implementation
+├── common/              # Shared utilities
+├── crag/                # Corrective RAG implementation
+├── data/                # Data loading and processing
+├── eval/                # Evaluation and benchmarking
+├── graphrag/            # GraphRAG implementation
+├── hyde/                # HyDE implementation
+├── noderag/             # NodeRAG implementation
+└── tests/               # Test suite
 ```
 
-*Each sub‑folder ships a notebook, a callable `pipeline.*`, and unit tests.*
+## Test-Driven Development
 
----
+This project follows strict TDD principles:
 
-## Build & Run
+1. **Test-First Development**: All features start with failing tests
+2. **Red-Green-Refactor**: Write failing test, implement minimum code to pass, refactor
+3. **Real End-to-End Tests**: Tests verify that RAG techniques actually work with real data
+4. **Complete Pipeline Testing**: Test full pipeline from data ingestion to answer generation
+5. **Assert Actual Results**: Tests make assertions on actual result properties
+
+## Running the Demo
+
+Each RAG technique has a demo script:
 
 ```bash
-git clone https://github.com/your-org/iris-rag-templates
-cd iris-rag-templates
-docker compose up -d        # boots IRIS and dev helpers
-make load-data              # invoke loader, build indexes
-pytest -q                   # green bar = passing TDD suite
+poetry run python demo_basic_rag.py
+poetry run python demo_colbert.py
+# etc.
 ```
 
----
+## Contributing
 
-## Evaluation Quick‑start
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-```bash
-python -m eval.bench_runner        --pipeline colbert        --queries sample_queries.json        --llm gpt-4o
-```
+## License
 
-Outputs a Markdown + HTML report in `eval/reports/` comparing latency (IRIS `%SYSTEM.Process`), accuracy (RAGChecker), relevance/faithfulness (RAGAS), and overall score (Evidently).
-
----
-
-## References
-
-| # | Source (title + origin) | Ref ID |
-|---|-------------------------|--------|
-| 1 | “Using Vector Search”, InterSystems Docs |
-| 2 | “Faster Vector Searches with ANN index”, InterSystems Community |
-| 3 | Gao et al. “HyDE: Precise Zero‑Shot Dense Retrieval” (arXiv 2212.10496) |
-| 4 | Yan et al. “CRAG: Corrective Retrieval‑Augmented Generation” (arXiv 2401.15884) | 
-| 5 | CRAG GitHub reference implementation | 
-| 6 | Khattab & Zaharia “ColBERT v2” (Hugging Face card) | 
-| 7 | ColBERT v2 GitHub | 
-| 8 | Khattar et al. “ColPaLi” (arXiv 2407.01449) | 
-| 9 | Xu et al. “NodeRAG” (arXiv 2504.11544) |
-| 10 | NodeRAG GitHub sample | 
-| 11 | Peng et al. “Graph RAG Survey” (arXiv 2408.08921) |
-| 12 | LangChain GraphRetriever docs |
-| 13 | InterSystems Docs “WITH (CTE)” |
-| 14 | InterSystems Docs “CREATE AGGREGATE” |
-| 15 | mg‑dbx‑napi high‑perf Node driver GitHub |
-| 16 | RAGChecker GitHub |
-| 17 | RAGAS framework (arXiv 2309.15217) |
-| 18 | Evidently AI RAG testing docs |
-
-
+This project is licensed under the MIT License - see the LICENSE file for details.

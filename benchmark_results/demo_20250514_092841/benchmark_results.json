@@ -1,0 +1,229 @@
+{
+  "benchmarks": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "timestamp": "2025-05-14T09:28:41.663317",
+      "queries_run": 100,
+      "metrics": {
+        "context_recall": 0.72,
+        "answer_faithfulness": 0.8,
+        "answer_relevance": 0.75,
+        "latency_p50": 105,
+        "latency_p95": 150,
+        "throughput_qps": 18.5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "answer": "Metformin helps manage type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity.",
+          "latency_ms": 120
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "answer": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration and decreasing albuminuria.",
+          "latency_ms": 150
+        }
+      ],
+      "benchmark_metrics": {
+        "answer_f1": 0.65,
+        "supporting_facts_f1": 0.68,
+        "joint_f1": 0.51
+      }
+    },
+    "hyde": {
+      "pipeline": "hyde",
+      "timestamp": "2025-05-14T09:28:41.663323",
+      "queries_run": 100,
+      "metrics": {
+        "context_recall": 0.78,
+        "answer_faithfulness": 0.82,
+        "answer_relevance": 0.8,
+        "latency_p50": 120,
+        "latency_p95": 180,
+        "throughput_qps": 15.2
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "answer": "Metformin, a first-line treatment for type 2 diabetes, reduces hepatic glucose production and improves insulin sensitivity in peripheral tissues.",
+          "latency_ms": 130
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "answer": "SGLT2 inhibitors have renoprotective effects, reducing glomerular hyperfiltration and decreasing albuminuria in patients with diabetic kidney disease.",
+          "latency_ms": 160
+        }
+      ]
+    },
+    "colbert": {
+      "pipeline": "colbert",
+      "timestamp": "2025-05-14T09:28:41.663324",
+      "queries_run": 100,
+      "metrics": {
+        "context_recall": 0.85,
+        "answer_faithfulness": 0.87,
+        "answer_relevance": 0.83,
+        "latency_p50": 150,
+        "latency_p95": 220,
+        "throughput_qps": 12.8
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "answer": "Metformin reduces insulin resistance and hepatic glucose production, key mechanisms in treating type 2 diabetes. It also has beneficial effects on lipid metabolism and cardiovascular outcomes.",
+          "latency_ms": 155
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "answer": "SGLT2 inhibitors reduce intraglomerular pressure through tubuloglomerular feedback mechanisms, decreasing albuminuria and slowing the progression of diabetic kidney disease. Recent studies show they also reduce major adverse kidney events in patients with chronic kidney disease.",
+          "latency_ms": 170
+        }
+      ],
+      "benchmark_metrics": {
+        "answer_f1": 0.7,
+        "supporting_facts_f1": 0.73,
+        "joint_f1": 0.58
+      }
+    }
+  },
+  "comparison": {
+    "rankings": {
+      "context_recall": [
+        "colbert",
+        "hyde",
+        "basic_rag"
+      ],
+      "latency_p50": [
+        "basic_rag",
+        "hyde",
+        "colbert"
+      ],
+      "latency_p95": [
+        "basic_rag",
+        "hyde",
+        "colbert"
+      ],
+      "throughput_qps": [
+        "basic_rag",
+        "hyde",
+        "colbert"
+      ],
+      "answer_faithfulness": [
+        "colbert",
+        "hyde",
+        "basic_rag"
+      ],
+      "answer_relevance": [
+        "colbert",
+        "hyde",
+        "basic_rag"
+      ]
+    },
+    "percentage_diff": {
+      "context_recall": {
+        "colbert_vs_hyde": 8.974358974358967,
+        "colbert_vs_basic_rag": 18.055555555555557,
+        "hyde_vs_basic_rag": 8.333333333333341
+      },
+      "latency_p50": {
+        "basic_rag_vs_hyde": 12.5,
+        "basic_rag_vs_colbert": 30.0,
+        "hyde_vs_colbert": 20.0
+      },
+      "latency_p95": {
+        "basic_rag_vs_hyde": 16.666666666666664,
+        "basic_rag_vs_colbert": 31.818181818181817,
+        "hyde_vs_colbert": 18.181818181818183
+      },
+      "throughput_qps": {
+        "basic_rag_vs_hyde": 21.71052631578948,
+        "basic_rag_vs_colbert": 44.53124999999999,
+        "hyde_vs_colbert": 18.74999999999999
+      },
+      "answer_faithfulness": {
+        "colbert_vs_hyde": 6.097560975609762,
+        "colbert_vs_basic_rag": 8.749999999999995,
+        "hyde_vs_basic_rag": 2.4999999999999885
+      },
+      "answer_relevance": {
+        "colbert_vs_hyde": 3.7499999999999893,
+        "colbert_vs_basic_rag": 10.666666666666663,
+        "hyde_vs_basic_rag": 6.666666666666672
+      }
+    },
+    "best_technique": {
+      "retrieval_quality": "colbert",
+      "answer_quality": "colbert",
+      "performance": "basic_rag"
+    }
+  },
+  "benchmark_metrics": {
+    "basic_rag": {
+      "answer_f1": 0.0,
+      "supporting_facts_f1": 0.0,
+      "joint_f1": 0.0
+    },
+    "hyde": {
+      "answer_f1": 0.0,
+      "supporting_facts_f1": 0.0,
+      "joint_f1": 0.0
+    },
+    "colbert": {
+      "answer_f1": 0.0,
+      "supporting_facts_f1": 0.0,
+      "joint_f1": 0.0
+    }
+  },
+  "generated_at": "2025-05-14T09:28:42.271037",
+  "charts": [
+    {
+      "type": "radar",
+      "path": "benchmark_results/demo_20250514_092841/radar_comparison.png"
+    },
+    {
+      "type": "bar",
+      "metric": "context_recall",
+      "path": "benchmark_results/demo_20250514_092841/bar_context_recall.png"
+    },
+    {
+      "type": "bar",
+      "metric": "answer_faithfulness",
+      "path": "benchmark_results/demo_20250514_092841/bar_answer_faithfulness.png"
+    },
+    {
+      "type": "bar",
+      "metric": "answer_relevance",
+      "path": "benchmark_results/demo_20250514_092841/bar_answer_relevance.png"
+    },
+    {
+      "type": "bar",
+      "metric": "throughput_qps",
+      "path": "benchmark_results/demo_20250514_092841/bar_throughput_qps.png"
+    },
+    {
+      "type": "bar",
+      "metric": "latency_p50",
+      "path": "benchmark_results/demo_20250514_092841/bar_latency_p50.png"
+    },
+    {
+      "type": "bar",
+      "metric": "latency_p95",
+      "path": "benchmark_results/demo_20250514_092841/bar_latency_p95.png"
+    },
+    {
+      "type": "comparative",
+      "metric": "answer_f1",
+      "path": "benchmark_results/demo_20250514_092841/comparison_answer_f1.png"
+    },
+    {
+      "type": "comparative",
+      "metric": "supporting_facts_f1",
+      "path": "benchmark_results/demo_20250514_092841/comparison_supporting_facts_f1.png"
+    },
+    {
+      "type": "comparative",
+      "metric": "joint_f1",
+      "path": "benchmark_results/demo_20250514_092841/comparison_joint_f1.png"
+    }
+  ]
+}

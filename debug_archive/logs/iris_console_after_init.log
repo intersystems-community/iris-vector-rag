@@ -1,0 +1,115 @@
+~ /opt/irisapp
+/opt/irisapp
+[INFO] Starting InterSystems IRIS instance IRIS...
+[INFO] Starting Control Process
+Global buffer setting requires attention.  Auto-selected 25% of total memory.
+Allocated 2676MB shared memory
+1959MB global buffers, 195MB routine buffers
+This copy of InterSystems IRIS has been licensed for use exclusively by:
+InterSystems IRIS Community
+Copyright (c) 1986-2024 by InterSystems Corporation
+Any other use is a violation of your license agreement
+
+1 alert(s) during startup. See messages.log for details.
+Starting IRIS
+
+05/20/25-16:52:30:084 (389) 0 [Generic.Event] Global buffer setting requires attention.  Auto-selected 25% of total memory.
+05/20/25-16:52:30:105 (389) 0 [Generic.Event] Allocated 2676MB shared memory
+05/20/25-16:52:30:105 (389) 0 [Generic.Event] 1959MB global buffers, 195MB routine buffers, 64MB journal buffers, 137MB buffer descriptors, 300MB heap, 5MB ECP, 15MB miscellaneous
+05/20/25-16:52:30:105 (389) 0 [SIMD] SIMD optimization level: DEFAULT
+05/20/25-16:52:30:124 (389) 0 [WriteDaemon.UsingWIJFile] Using WIJ file: /usr/irissys/mgr/IRIS.WIJ
+05/20/25-16:52:30:124 (389) 0 [Generic.Event] No journaling info from prior system
+05/20/25-16:52:30:124 (389) 0 [WriteDaemon.CreatingNewWIJ] Creating a new WIJ file
+05/20/25-16:52:30:170 (389) 0 [WriteDaemon.CreatedNewWIJ] New WIJ file created
+05/20/25-16:52:30:172 (389) 0 [Generic.Event] 
+Startup of InterSystems IRIS [IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) Thu Oct 3 2024 14:29:04 EDT]
+	in /usr/irissys/bin/
+	with mgr: /usr/irissys/mgr
+	with wij: /usr/irissys/mgr/IRIS.WIJ
+	from: /usr/irissys/mgr/
+  OS=[Linux], version=[#1 SMP Thu Mar 20 16:32:56 UTC 2025], release=[6.10.14-linuxkit], machine=[aarch64]
+  nodename=[b43472859b20].
+  numasyncwijbuf: 2, wdwrite_asyncio_max: 64, wijdirectio: on, synctype: 3
+  System Initialized.
+05/20/25-16:52:30:174 (441) 0 [Database.MountedRW] Mounted database /usr/irissys/mgr/ (SFN 0) read-write.
+05/20/25-16:52:30:178 (441) 0 [Utility.Event] Instance 'IRIS' starting on node b43472859b20 by user irisowner on 05/20/2025 16:52:30.178 UTC
+05/20/25-16:52:30:178 (441) 0 [Utility.Event] Using parameters from file '/usr/irissys/iris.cpf'
+05/20/25-16:52:30:178 (441) 0 [Utility.Event] Loading DLLs
+05/20/25-16:52:30:178 (441) 0 [Database.MountedRO] Mounted database /usr/irissys/mgr/irislib/ (SFN 1) read-only. Database label is marked read-only. 
+05/20/25-16:52:30:178 (441) 0 [Utility.Event] Switching to temporary %SYS Namespace
+05/20/25-16:52:30:179 (441) 0 [Utility.Event] Loading Locale enuw (English, United States, Unicode) from objects
+05/20/25-16:52:30:182 (441) 0 [Database.MountedRW] Mounted database /usr/irissys/mgr/irislocaldata/ (SFN 2) read-write.
+05/20/25-16:52:30:183 (441) 0 [Utility.Event] Using OpenSSL 3.0.2 15 Mar 2022
+05/20/25-16:52:30:184 (430) 0 [WriteDaemon.Started] Write daemon started.
+05/20/25-16:52:30:192 (441) 0 [Database.MountedRW] Mounted database /usr/irissys/mgr/iristemp/ (SFN 3) read-write.
+05/20/25-16:52:30:199 (441) 0 [Utility.Event] /usr/irissys/mgr/iristemp/ initialized as IRISTEMP
+05/20/25-16:52:30:199 (441) 0 [Utility.Event] Switching to default %SYS Namespace
+05/20/25-16:52:30:201 (441) 0 [Utility.Event] Added ethernet device tunl0,gre0,gretap0,erspan0,ip_vti0,ip6_vti0,sit0,ip6tnl0,ip6gre0 to default list
+05/20/25-16:52:30:204 (442) 0 [Utility.Event] Log Monitor Started
+05/20/25-16:52:30:309 (443) 0 [Utility.Event] Clean Daemon Started
+05/20/25-16:52:30:311 (441) 1 [Utility.Event] Configuration file /usr/irissys/iris.cpf is not the same as when last shut down
+05/20/25-16:52:30:362 (441) 0 [Utility.Event] Updating configuration information from /usr/irissys/iris.cpf
+05/20/25-16:52:30:366 (441) 0 [Utility.Event] No archives configured
+05/20/25-16:52:30:366 (441) 0 [Utility.Event] Performing Journal Recovery
+05/20/25-16:52:30:367 (441) 0 [Utility.Event] Graceful system shutdown, journal restore not required
+05/20/25-16:52:30:367 (441) 0 [Utility.Event] Graceful system shutdown, transaction rollback not required
+05/20/25-16:52:30:368 (441) 0 [Utility.Event] START: /usr/irissys/mgr/journal/20250520.001
+05/20/25-16:52:30:372 (441) 0 [Generic.Event] INTERSYSTEMS IRIS JOURNALING SYSTEM MESSAGE
+Journaling started to: /usr/irissys/mgr/journal/20250520.001
+05/20/25-16:52:30:372 (441) 0 [Utility.Event] Journaling to /usr/irissys/mgr/journal/20250520.001 started.
+05/20/25-16:52:30:372 (441) 0 [Utility.Event] Processing WorkQueues section
+05/20/25-16:52:30:372 (441) 0 [Utility.Event] Processing Startup section
+05/20/25-16:52:30:373 (444) 0 [Utility.Event] Purging old application errors
+05/20/25-16:52:30:373 (441) 0 [Utility.Event] Processing config section
+05/20/25-16:52:30:375 (445) 0 [Utility.Event] LMF Info:  Licensed for 8 users.
+05/20/25-16:52:30:376 (441) 0 [Utility.Event] Initializing Security system
+05/20/25-16:52:30:381 (441) 0 [Utility.Event] Processing Network section
+05/20/25-16:52:30:381 (441) 0 [Utility.Event] Activating Network
+05/20/25-16:52:30:382 (441) 0 [Utility.Event] Processing Databases section
+05/20/25-16:52:30:383 (441) 0 [Database.MountedRW] Mounted database /usr/irissys/mgr/irisaudit/ (SFN 4) read-write.
+05/20/25-16:52:30:383 (441) 0 [Utility.Event] Processing Namespaces section
+05/20/25-16:52:30:383 (441) 0 [Utility.Event] Loading all namespaces
+05/20/25-16:52:30:386 (441) 0 [Database.MountedRW] Mounted database /usr/irissys/mgr/zpm/ (SFN 5) read-write.
+05/20/25-16:52:30:391 (441) 0 [Database.MountedRO] Mounted database /usr/irissys/mgr/enslib/ (SFN 6) read-only. Database label is marked read-only. 
+05/20/25-16:52:30:398 (441) 0 [Utility.Event] Activating namespaces
+05/20/25-16:52:30:398 (441) 0 [Utility.Event] Activating new namespace map
+05/20/25-16:52:30:416 (441) 0 [Utility.Event] Namespace changes have been activated
+05/20/25-16:52:30:416 (441) 0 [Utility.Event] Rebuilding Extent index for all namespaces
+05/20/25-16:52:30:416 (441) 0 [Utility.Event] Rebuilding Extent index for namespace %SYS
+05/20/25-16:52:30:721 (441) 0 [Utility.Event] Rebuilding Extent index for namespace USER
+05/20/25-16:52:30:721 (441) 0 [Database.MountedRW] Mounted database /usr/irissys/mgr/user/ (SFN 7) read-write.
+05/20/25-16:52:30:821 (441) 0 [Utility.Event] Rebuild of Extent index completed
+05/20/25-16:52:30:871 (449) 0 [Utility.Event] Starting superserver on port 1972
+05/20/25-16:52:30:871 (441) 0 [Utility.Event] Network Lock Upload Phase Starting
+05/20/25-16:52:30:871 (441) 0 [Utility.Event] Lock Upload Phase Complete
+05/20/25-16:52:30:871 (441) 0 [Utility.Event] Processing Miscellaneous section
+05/20/25-16:52:30:875 (452) 0 [Utility.Event] Starting Servers
+05/20/25-16:52:30:875 (441) 0 [Utility.Event] Processing Devices section
+05/20/25-16:52:30:876 (441) 0 [Utility.Event] Processing DeviceSubTypes section
+05/20/25-16:52:30:876 (441) 0 [Utility.Event] Processing MagTape section
+05/20/25-16:52:30:876 (441) 0 [Utility.Event] Processing IO section
+05/20/25-16:52:30:876 (441) 0 [Utility.Event] Processing SQL section
+05/20/25-16:52:30:876 (441) 0 [Utility.Event] Processing Macro Pre-Processor (MPP) section
+05/20/25-16:52:30:876 (441) 0 [Utility.Event] Processing OS Package Requirements section
+05/20/25-16:52:30:985 (452) 0 [Utility.Event] Private webserver started on 52773
+05/20/25-16:52:30:985 (452) 0 [Utility.Event] Processing Shadows section (this system as shadow)
+05/20/25-16:52:30:986 (452) 0 [Utility.Event] Processing Monitor section
+05/20/25-16:52:31:003 (603) 0 [Utility.Event] Starting TASKMGR
+05/20/25-16:52:31:004 (604) 0 [Utility.Event] [SYSTEM MONITOR] System Monitor started in %SYS
+05/20/25-16:52:31:007 (452) 0 [Utility.Event] Shard license: 0
+05/20/25-16:52:31:007 (606) 0 [Utility.Event] WorkQueue: Starting work queue daemon parent=452
+05/20/25-16:52:31:225 (432) 0 [Generic.Event] Journal log has been changed from edition 1 to 2
+05/20/25-16:52:31:227 (452) 0 [Generic.Event] INTERSYSTEMS IRIS JOURNALING SYSTEM MESSAGE
+Journaling switched to: /usr/irissys/mgr/journal/20250520.002
+05/20/25-16:52:31:806 (441) 0 [Generic.Event] Auditing to /usr/irissys/mgr/irisaudit/
+05/20/25-16:52:31:813 (441) 0 [Utility.Event] Executing ^ZSTU routine
+05/20/25-16:52:31:813 (441) 0 [Utility.Event] Executing ^%ZSTART routine
+05/20/25-16:52:31:813 (441) 0 [Utility.Event] Enabling logons
+05/20/25-16:52:31:814 (441) 0 [Utility.Event] Initializing Interoperability during system startup
+[INFO] ...started InterSystems IRIS instance IRIS
+[INFO] Executing command /docker-entrypoint.sh iris-after-start ...
+[INFO] 
+/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+
+[INFO] ...executed command /docker-entrypoint.sh iris-after-start 
+05/20/25-16:52:41:421 (621) 0 [Utility.Event] Journal File Compression: Compressed /usr/irissys/mgr/journal/20250520.001 from 327680 bytes to 90112 bytes, compression ratio = 3.6

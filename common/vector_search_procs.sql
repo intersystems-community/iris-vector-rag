@@ -1,0 +1,3 @@
+-- common/vector_search_procs.sql
+-- This file is intentionally left empty as the vector search logic
+-- is now implemented via Python-generated SQL in the RAG pipelines.

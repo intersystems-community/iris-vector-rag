@@ -1,0 +1,20 @@
+{
+  "configuration": {
+    "document_count": 1000,
+    "batch_size": 50,
+    "techniques": [
+      "graphrag"
+    ],
+    "use_real_embeddings": true,
+    "use_testcontainer": true,
+    "memory_limit": null
+  },
+  "execution": {
+    "total_time_seconds": 5.2510340213775635,
+    "return_code": 0,
+    "timestamp": "2025-05-11 23:48:53"
+  },
+  "metrics": {
+    "techniques": {}
+  }
+}

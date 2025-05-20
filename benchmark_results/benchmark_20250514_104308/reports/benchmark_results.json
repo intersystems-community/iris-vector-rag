@@ -1,0 +1,966 @@
+{
+  "benchmarks": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "queries_run": 5,
+      "start_time": "2025-05-14T10:43:38.658648",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 900.7459999993443,
+          "answer": "Metformin helps lower glucose production in the liver and improves insulin sensitivity in individuals with type 2 diabetes.",
+          "retrieved_documents": [
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".85826939496611343027"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".83322453855645106646"
+            },
+            {
+              "id": "PMC11570632",
+              "content": "Overexpression of mitotic arrest deficiency 2 (MAD2/MAD2L1), a pivotal component of the spindle assembly checkpoint (SAC), resulted in many types of cancer. Here we show that the depletion of tumor susceptibility gene 101 (TSG101), causes synthetic dosage lethality (SDL) in MAD2-overexpressing cells, and we term this cell death MAD2-overexpressing interphase cell death (MOID). The induction of MOID depends on PML and DAXX mediating mitochondrial AIFM1-release. MAD2, TSG101, and AIF-PML-DAXX axis regulate mitochondria, PML nuclear bodies (NBs), and autophagy with close inter-dependent protein stability in survival cells. Loss of C-terminal phosphorylation(s) of TSG101 and closed (C-)MAD2-overexpression contribute to induce MOID. In survival cells, both MAD2 and TSG101 localize at PML NBs in interphase, and TSG101 Y390 phosphorylation is required for localization of TSG101 to PML NBs. PML release from PML NBs through PML deSUMOylation contributes to induce MOID. The post-transcriptional/translational cell death machinery and the non-canonical transcriptional regulation are intricately linked to MOID, and ER-MAM, may serve as a crucial intersection for MOID signaling.",
+              "score": ".77534034099194204526"
+            },
+            {
+              "id": "PMC11641293",
+              "content": "To evaluate the positive effects of a CPC-, GK2-, and TXA-based (CPC/GK2/TXA) mouthwash after implant placement. Twenty patients (n = 20) who underwent posterior implant-placement surgery were randomly and evenly allocated to the study or the placebo group. After the mouthwash was used 3x/day for 7 to 10 days postoperatively, sutures were analysed by counting the colony-forming units (CFU) for total aerobes, total G [-] anaerobes, total enterobacteria and total  H. influenzae A. actinomycetemcomitans, P. gingivalis, T. forsythia, T. denticola, P. intermedia, P. micra, F. nucleatum, C. rectus, E. corrodens P. gingivalis, S. aureus, P. aeruginosa Sixteen patients (n = 16) completed the trial. A statistically significantly greater number of CFU was found in the placebo group for almost all species, especially for total G [-] anaerobes. No statistically significant in vitro resistance was found for  P. gingivalis, S. aureus,  P. aeruginosa The use of a CPC/GK2/TXA mouthwash inhibited propagation of the bacteria extracted from the post-surgical sutures after implant placement.",
+              "score": ".77171756823336823406"
+            },
+            {
+              "id": "PMC11640774",
+              "content": "This systematic review addressed flap designs in endodontic surgery which can have an impact on the Oral Health Related Quality of Life (OHRQoL). Four electronic databases were searched (PubMed, Cochrane Library, Web of Science, and Scopus) to identify all studies up to November 2019 that investigated the effect of flap designs on gingival recession and quality of life among healthy adults. The initial search identified 2701 references. Ten studies were included in this systematic review; two were randomised clinical trials and eight were non-randomised clinical trials. Studies showed that sulcular incision increases the risk of gingival recession and decreases OHRQoL. Two studies were included in the meta-analysis in relation to gingival recession. The pooled results demonstrated that submarginal incision showed a decreased weighted mean difference in gingival recession by 0.31 mm (95% CI: 0.12 \u2013 0.51) (p = 0.002) compared to sulcular incision. Sulcular incision flap unfavourably affect the level of gingiva and OHRQoL. All nonrandomised studies had a statistically significant bias and the sample sizes in all studies were relatively small. More gingival recession and lower OHRQoL were associated with sulcular incision. Additional investigations are warranted to provide more evidence.",
+              "score": ".77042994887303783979"
+            }
+          ]
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1379.0214589971583,
+          "answer": "SGLT2 inhibition affects kidney function by reducing the reabsorption of glucose in the kidneys, leading to increased glucose excretion in the urine. This can help lower blood glucose levels and reduce the workload on the kidneys.",
+          "retrieved_documents": [
+            {
+              "id": "PMC11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": ".84206692371920655038"
+            },
+            {
+              "id": "PMC11650413",
+              "content": "Acute kidney injury (AKI) is a critical morbidity after cytoreduction and hyperthermic intraperitoneal chemotherapy (CRS/HIPEC). This study was conducted to investigate the use of kidney-specific biomarkers to evaluate the diagnostic accuracy of post-HIPEC AKI. Patients who received CRS/HIPEC were prospectively enrolled in this study. We serially sampled urine neutrophil gelatinase-associated lipocalin (NGAL), serum cystatin C (sCyC), and \u03b22 microglobulin (s\u03b22-MG) on the day before CRS/HIPEC and then 2 h, 1 d, 2 d, 3 d, and 7 d after CRS/HIPEC. The primary outcome was the occurrence of AKI during the first 7 d. The areas under the receiver operating characteristic curve (AUCs) were calculated to evaluate the detection performance. A total of 75 patients were eligible, of whom 5 (6.7%) fulfilled the criteria of AKI during the study period (AKI group) and 70 did not (non-AKI group). No significant differences were observed in these biomarkers between the two groups, except for s\u03b22-MG on day 3 ( P P P This is the first prospective study to evaluate the value of kidney-specific biomarkers in patients after CRS/HIPEC. We found that AKI cannot be predicted by simply using the absolute measurements of these biomarkers because of the heterogeneous characteristics of the patients.",
+              "score": ".81701964572534424569"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".80471533443900933324"
+            },
+            {
+              "id": "PMC11646099",
+              "content": "Cardiovascular diseases are a leading cause of morbidity and mortality in patients with chronic kidney disease (CKD). Acute kidney injury (AKI) has been increasingly recognized as a potential exacerbating factor for cardiovascular events in these patients. The CKD-REIN study aims to explore the relationship between AKI and the risk of major adverse cardiovascular events (MACE) in a cohort of CKD patients. We hypothesize that AKI is a significant and independent predictor of MACE in patients with CKD, and that the severity of AKI correlates with the risk of subsequent cardiovascular events. This prospective cohort study included 3033 adult CKD patients from 40 outpatient nephrology clinics in France. Patients were followed for a median of 5.2 years. AKI episodes were identified and staged based on the KDIGO-AKI criteria. Cardiovascular events, including myocardial infarction, stroke, heart failure hospitalization, and cardiovascular death, were systematically recorded. The association between AKI and MACE was analyzed using a multivariable Cox model, adjusting for confounders such as demographic characteristics, medical history, and baseline kidney function. During the follow-up, 530 patients experienced at least one episode of AKI. The cumulative incidence of MACE at 1 year post-AKI was 8.1%. Patients with AKI had a significantly increased risk of MACE, with an adjusted hazard ratio (HR) of 5.78 ( P The findings of this study confirm that AKI is a significant independent predictor of MACE in CKD patients, demonstrating a strong severity\u2013response relationship. These results underscore the importance of vigilant cardiovascular monitoring and preventive strategies in CKD patients following AKI episodes. Understanding the mechanisms linking AKI to cardiovascular outcomes is crucial for developing targeted interventions to mitigate these risks.",
+              "score": ".80430412319886712691"
+            },
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".80097750305122561442"
+            }
+          ]
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 898.8529999915045,
+          "answer": "GLP-1 receptor agonists work by stimulating the GLP-1 receptors in the pancreas, leading to increased insulin secretion, decreased glucagon secretion, delayed gastric emptying, and increased satiety, ultimately resulting in improved blood sugar control.",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649397",
+              "content": "Halogens favorably contributes to the drug potency and metabolic stability via electrostatic interactions. Herein, the halogen effects on the reactivity of the halogenated 2,2,2-trifluoroacetophenones as serine-targeting covalent warheads were investigated. Our results showed that introducing halogen atoms, especially Cl or Br, into the phenyl scaffold would influence the electron density around the ring, which led to different time-dependent inhibition response to the target serine hydrolase (hCES1A). Co-crystallography analysis not only verified that halogenated molecules preferred to form covalent adducts, but also provided the conformational information for the design of covalent inhibitors targeting to hCES1A protein for the treatment of drug-induced acute enteritis.",
+              "score": ".79713299056865849491"
+            },
+            {
+              "id": "PMC11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": ".78512022669615977311"
+            },
+            {
+              "id": "PMC11619827",
+              "content": "This study evaluated the therapeutic efficacy of combining Neodymium-doped Yttrium Aluminum Garnet (Nd:YAG) laser with subgingival curettage and root planing (SRP) in generalised stage III/grade C periodontitis patients and its effects on cytokine dynamics and microbial community. Fifteen patients diagnosed with stage III/grade C periodontitis were included in the cohort. The right and left sides of the mouth were randomly assigned either the conventional SRP (control) group or the SRP supplemented with Nd:YAG laser group (experimental group, 160 mJ, 4 W) in a split-mouth design. Clinical periodontal indices were recorded at baseline and at the 6-week follow-up post-treatment. ELISA was utilised to measure IL-1\u03b2 and TNF-\u03b1 levels in gingival crevicular fluid. The subgingival microbiota\u2019s composition and variations were characterised using 16S rDNA amplicon sequencing, while quantitative real-time polymerase chain reaction (qRT-PCR) was employed to analyse the changes in the red-complex bacteria in subgingival plaque. The SRP+Nd group exhibited a statistically significant reduction in record probing depth (PD) and bleeding on probing (BOP) compared to the SRP group after treatment (p<0.05). The SRP+Nd group showed a markedly lower IL-1\u03b2 level than the SRP group (p<0.05). Furthermore, there was no statistically significant difference in the dominant subgingival microbiota composition and level of the red-complex bacteria between the two groups (p>0.05). The adjunctive use of Nd:YAG laser with SRP demonstrates promising short-term therapeutic benefits for patients with extensive stage III/grade C periodontitis. Both SRP as a standalone treatment and its combination with Nd:YAG laser effectively facilitate a transition in the dominant bacterial community from periodontitis-associated to periodontal health-associated microbiota.",
+              "score": ".78329077123906010182"
+            },
+            {
+              "id": "PMC11640774",
+              "content": "This systematic review addressed flap designs in endodontic surgery which can have an impact on the Oral Health Related Quality of Life (OHRQoL). Four electronic databases were searched (PubMed, Cochrane Library, Web of Science, and Scopus) to identify all studies up to November 2019 that investigated the effect of flap designs on gingival recession and quality of life among healthy adults. The initial search identified 2701 references. Ten studies were included in this systematic review; two were randomised clinical trials and eight were non-randomised clinical trials. Studies showed that sulcular incision increases the risk of gingival recession and decreases OHRQoL. Two studies were included in the meta-analysis in relation to gingival recession. The pooled results demonstrated that submarginal incision showed a decreased weighted mean difference in gingival recession by 0.31 mm (95% CI: 0.12 \u2013 0.51) (p = 0.002) compared to sulcular incision. Sulcular incision flap unfavourably affect the level of gingiva and OHRQoL. All nonrandomised studies had a statistically significant bias and the sample sizes in all studies were relatively small. More gingival recession and lower OHRQoL were associated with sulcular incision. Additional investigations are warranted to provide more evidence.",
+              "score": ".78019336633409330783"
+            },
+            {
+              "id": "PMC11649426",
+              "content": "Colorectal cancer has emerged as one of the predominant malignant tumors globally. Immunotherapy, as a novel therapeutic methodology, has opened up new possibilities for colorectal cancer patients. However, its actual clinical efficacy requires further enhancement. Copper, as an exceptionally crucial trace element, can influence various signaling pathways, gene expression, and biological metabolic processes in cells, thus playing a critical role in the pathogenesis of colorectal cancer. Recent studies have revealed that cuproptosis, a novel mode of cell death, holds promise to become a potential target to overcome resistance to colorectal cancer immunotherapy. This shows substantial potential in the combination treatment of colorectal cancer. Conveying copper into tumor cells via a nano-drug delivery system to induce cuproptosis of colorectal cancer cells could offer a potential strategy for eliminating drug-resistant colorectal cancer cells and vastly improving the efficacy of immunotherapy while ultimately destroy colorectal tumors. Moreover, combining the cuproptosis induction strategy with other anti-tumor approaches such as photothermal therapy, photodynamic therapy, and chemodynamic therapy could further enhance its therapeutic effect. This review aims to illuminate the practical significance of cuproptosis and cuproptosis-inducing nano-drugs in colorectal cancer immunotherapy, and scrutinize the current challenges and limitations of this methodology, thereby providing innovative thoughts and references for the advancement of cuproptosis-based colorectal cancer immunotherapy strategies.",
+              "score": ".77944523524906017541"
+            }
+          ]
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 924.4033750001108,
+          "answer": "The context provided does not contain information about the cardiovascular benefits of SGLT2 inhibitors.",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".81729814223865393518"
+            },
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".81167000763518493133"
+            },
+            {
+              "id": "PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": ".80105613234653794131"
+            },
+            {
+              "id": "PMC11641293",
+              "content": "To evaluate the positive effects of a CPC-, GK2-, and TXA-based (CPC/GK2/TXA) mouthwash after implant placement. Twenty patients (n = 20) who underwent posterior implant-placement surgery were randomly and evenly allocated to the study or the placebo group. After the mouthwash was used 3x/day for 7 to 10 days postoperatively, sutures were analysed by counting the colony-forming units (CFU) for total aerobes, total G [-] anaerobes, total enterobacteria and total  H. influenzae A. actinomycetemcomitans, P. gingivalis, T. forsythia, T. denticola, P. intermedia, P. micra, F. nucleatum, C. rectus, E. corrodens P. gingivalis, S. aureus, P. aeruginosa Sixteen patients (n = 16) completed the trial. A statistically significantly greater number of CFU was found in the placebo group for almost all species, especially for total G [-] anaerobes. No statistically significant in vitro resistance was found for  P. gingivalis, S. aureus,  P. aeruginosa The use of a CPC/GK2/TXA mouthwash inhibited propagation of the bacteria extracted from the post-surgical sutures after implant placement.",
+              "score": ".79630354383496881887"
+            },
+            {
+              "id": "PMC11649817",
+              "content": "Optical coherence tomography angiography is a valuable tool for evaluating acute ischemic choriocapillaritis. Tuberculosis and syphilis are the main secondary differentials..",
+              "score": ".79222342816877988624"
+            }
+          ]
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 768.2153330097208,
+          "answer": "I cannot answer the question based on the provided information.",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".80199882908332065234"
+            },
+            {
+              "id": "PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": ".78700932042278703981"
+            },
+            {
+              "id": "PMC11646099",
+              "content": "Cardiovascular diseases are a leading cause of morbidity and mortality in patients with chronic kidney disease (CKD). Acute kidney injury (AKI) has been increasingly recognized as a potential exacerbating factor for cardiovascular events in these patients. The CKD-REIN study aims to explore the relationship between AKI and the risk of major adverse cardiovascular events (MACE) in a cohort of CKD patients. We hypothesize that AKI is a significant and independent predictor of MACE in patients with CKD, and that the severity of AKI correlates with the risk of subsequent cardiovascular events. This prospective cohort study included 3033 adult CKD patients from 40 outpatient nephrology clinics in France. Patients were followed for a median of 5.2 years. AKI episodes were identified and staged based on the KDIGO-AKI criteria. Cardiovascular events, including myocardial infarction, stroke, heart failure hospitalization, and cardiovascular death, were systematically recorded. The association between AKI and MACE was analyzed using a multivariable Cox model, adjusting for confounders such as demographic characteristics, medical history, and baseline kidney function. During the follow-up, 530 patients experienced at least one episode of AKI. The cumulative incidence of MACE at 1 year post-AKI was 8.1%. Patients with AKI had a significantly increased risk of MACE, with an adjusted hazard ratio (HR) of 5.78 ( P The findings of this study confirm that AKI is a significant independent predictor of MACE in CKD patients, demonstrating a strong severity\u2013response relationship. These results underscore the importance of vigilant cardiovascular monitoring and preventive strategies in CKD patients following AKI episodes. Understanding the mechanisms linking AKI to cardiovascular outcomes is crucial for developing targeted interventions to mitigate these risks.",
+              "score": ".78265208548589526582"
+            },
+            {
+              "id": "PMC11649962",
+              "content": "Bone is a dynamic organ which continuously undergoes remodeling throughout one''s lifetime. Cellular production of reactive oxygen species (ROS) is essential for regulating bone homeostasis. Osteoclasts, multinucleated giant cells differentiated from macrophage lineage, are responsible for osteolytic bone conditions which are closely linked to ROS signaling pathways. In this study, an anti\u2010ROS enzyme, peroxiredoxin 1 (Prdx1) was found to be expressed both in bone marrow macrophages and osteoclasts. Recombinant Prdx1 protein was found to dose\u2010dependently inhibit ROS production and osteoclast differentiation. Mechanistically, Prdx1 protein also attenuated NFATc1 activation as well as the expression of C\u2010Fos, V\u2010ATPase\u2010d2, Cathepsin K, and Integrin \u03b1V. Collectively, Prdx1 is a negative regulator on osteoclast formation via inhibiting RANKL\u2010mediated ROS activity, thus suggesting its potential application for treating osteoclast related disorders.",
+              "score": ".77581514185245303849"
+            },
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".77283927198687396576"
+            }
+          ]
+        }
+      ],
+      "metrics": {
+        "p50": 900.7959365844727,
+        "p95": 1288.1940364837646,
+        "p99": 1360.9434795379639,
+        "throughput_qps": 1.0261341887583086
+      },
+      "duration_seconds": 4.872657060623169,
+      "end_time": "2025-05-14T10:43:43.533297"
+    },
+    "hyde": {
+      "pipeline": "hyde",
+      "queries_run": 5,
+      "start_time": "2025-05-14T10:43:43.534377",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 2397.78945800208,
+          "answer": "Metformin helps lower glucose production in the liver and improves insulin sensitivity in individuals with type 2 diabetes.",
+          "retrieved_documents": [
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".91344880616729950961"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".83143739955224904569"
+            },
+            {
+              "id": "PMC11649793",
+              "content": "Hydroxychloroquine (HCQ) is recommended for Chinese patients with immunoglobulin A nephropathy (IgAN). However, the relationship between HCQ blood concentration and the therapeutic effect for IgAN has not yet been defined. This study investigates the optimal and efficacious range of HCQ blood concentrations in Chinese patients with IgAN. Seventy-three patients with biopsy-proven IgAN who were at risk of progression were included in this study. Thirty-eight patients with IgAN were treated with HCQ plus an optimized renin\u2013angiotensin\u2013aldosterone system inhibitor (RAASi), and thirty-five patients received only RAASi. Blood HCQ concentration and 24-h proteinuria were examined at three and six months after treatment. The baseline proteinuria levels were comparable between the RAASi and HCQ groups. The HCQ group had lower 24-h proteinuria than the RAASi group three months after treatment, though the difference was not significant ( p p p p r p r p Hydroxyhloroquine safely reduces proteinuria in Chinese patients with IgAN. The efficacy of HCQ is positively correlated with its blood concentration. \n The online version contains supplementary material available at 10.1007/s40620-024-02029-z.",
+              "score": ".78101239222189056121"
+            },
+            {
+              "id": "PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": ".75962657516563314441"
+            },
+            {
+              "id": "PMC11651446",
+              "content": "Among 3 forms of mercury, elemental mercury vapor presents the highest threat due to its potential to cause acute pneumonitis. The management of acute mercury vapor poisoning remains unclear, particularly in acute lung injury. We present a case of mercury vapor poisoning resulting from the heating of cinnabar, successfully treated with high-dose corticosteroids and chelation therapy, and follow-up over 6 months. A 47-year-old female patient was admitted to the Emergency Department due to dyspnea, chest tightness, and weakness following cinnabar heating. Upon admission, she presented with tachypnea and respiratory failure. During the first 5 days, the respiratory failure rapidly progressed, requiring high-flow nasal cannula support, and showed no improvement with broad-spectrum intravenous (IV) antibiotics and 80\u2005mg daily IV methylprednisolone. Total blood and urinary mercury levels were measured to confirm the diagnosis. Upon confirmation of acute pneumonitis due to mercury vapor poisoning, the patient was administered high-dose methylprednisolone (500\u2005mg IV per day) and chelation therapy, which led to subsequent improvement. Six months after discharge, the patient completely recovered, as evidenced by chest imaging and pulmonary function tests. Heating elemental mercury can cause pneumonitis, leading to acute respiratory failure. A detailed history is crucial for diagnosis. High-dose methylprednisolone should be considered in patients who do not respond to lower doses. Patients should be monitored afterward to detect residual pulmonary fibrotic changes.",
+              "score": ".75899729603681986844"
+            }
+          ]
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 2661.6284170013387,
+          "answer": "SGLT2 inhibition can improve kidney function by reducing the reabsorption of glucose and sodium in the kidneys, which can lead to decreased blood pressure, reduced inflammation, and decreased oxidative stress in the kidneys. This can help protect the kidneys and potentially slow down the progression of kidney disease.",
+          "retrieved_documents": [
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".82294184032670836259"
+            },
+            {
+              "id": "PMC11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": ".82016080920413247934"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".81612637877359917037"
+            },
+            {
+              "id": "PMC11649793",
+              "content": "Hydroxychloroquine (HCQ) is recommended for Chinese patients with immunoglobulin A nephropathy (IgAN). However, the relationship between HCQ blood concentration and the therapeutic effect for IgAN has not yet been defined. This study investigates the optimal and efficacious range of HCQ blood concentrations in Chinese patients with IgAN. Seventy-three patients with biopsy-proven IgAN who were at risk of progression were included in this study. Thirty-eight patients with IgAN were treated with HCQ plus an optimized renin\u2013angiotensin\u2013aldosterone system inhibitor (RAASi), and thirty-five patients received only RAASi. Blood HCQ concentration and 24-h proteinuria were examined at three and six months after treatment. The baseline proteinuria levels were comparable between the RAASi and HCQ groups. The HCQ group had lower 24-h proteinuria than the RAASi group three months after treatment, though the difference was not significant ( p p p p r p r p Hydroxyhloroquine safely reduces proteinuria in Chinese patients with IgAN. The efficacy of HCQ is positively correlated with its blood concentration. \n The online version contains supplementary material available at 10.1007/s40620-024-02029-z.",
+              "score": ".79576476136380580594"
+            },
+            {
+              "id": "PMC11650413",
+              "content": "Acute kidney injury (AKI) is a critical morbidity after cytoreduction and hyperthermic intraperitoneal chemotherapy (CRS/HIPEC). This study was conducted to investigate the use of kidney-specific biomarkers to evaluate the diagnostic accuracy of post-HIPEC AKI. Patients who received CRS/HIPEC were prospectively enrolled in this study. We serially sampled urine neutrophil gelatinase-associated lipocalin (NGAL), serum cystatin C (sCyC), and \u03b22 microglobulin (s\u03b22-MG) on the day before CRS/HIPEC and then 2 h, 1 d, 2 d, 3 d, and 7 d after CRS/HIPEC. The primary outcome was the occurrence of AKI during the first 7 d. The areas under the receiver operating characteristic curve (AUCs) were calculated to evaluate the detection performance. A total of 75 patients were eligible, of whom 5 (6.7%) fulfilled the criteria of AKI during the study period (AKI group) and 70 did not (non-AKI group). No significant differences were observed in these biomarkers between the two groups, except for s\u03b22-MG on day 3 ( P P P This is the first prospective study to evaluate the value of kidney-specific biomarkers in patients after CRS/HIPEC. We found that AKI cannot be predicted by simply using the absolute measurements of these biomarkers because of the heterogeneous characteristics of the patients.",
+              "score": ".79387092758984756368"
+            }
+          ]
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 2589.621167004225,
+          "answer": "GLP-1 receptor agonists work by stimulating the GLP-1 receptors, which leads to increased insulin secretion, decreased glucagon secretion, slowed gastric emptying, and increased satiety. This helps to lower blood sugar levels in individuals with type 2 diabetes.",
+          "retrieved_documents": [
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".81607742763038693123"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".78415906257182232952"
+            },
+            {
+              "id": "PMC11649397",
+              "content": "Halogens favorably contributes to the drug potency and metabolic stability via electrostatic interactions. Herein, the halogen effects on the reactivity of the halogenated 2,2,2-trifluoroacetophenones as serine-targeting covalent warheads were investigated. Our results showed that introducing halogen atoms, especially Cl or Br, into the phenyl scaffold would influence the electron density around the ring, which led to different time-dependent inhibition response to the target serine hydrolase (hCES1A). Co-crystallography analysis not only verified that halogenated molecules preferred to form covalent adducts, but also provided the conformational information for the design of covalent inhibitors targeting to hCES1A protein for the treatment of drug-induced acute enteritis.",
+              "score": ".77323074503191024931"
+            },
+            {
+              "id": "PMC11651902",
+              "content": "Juvenile hormone (JH) is one of the most essential hormones controlling insect metamorphosis and physiology. While it is well known that JH affects many tissues throughout the insect life cycle, the difference in JH responsiveness and the repertoire of JH-inducible genes among different tissues has not been fully investigated. In this study, we monitored JH responsiveness  in vivo Drosophila melanogaster JH response element-GFP JHRE-GFP germ cell-expressed Lactate dehydrogenase",
+              "score": ".77226528098246760567"
+            },
+            {
+              "id": "PMC11649962",
+              "content": "Bone is a dynamic organ which continuously undergoes remodeling throughout one''s lifetime. Cellular production of reactive oxygen species (ROS) is essential for regulating bone homeostasis. Osteoclasts, multinucleated giant cells differentiated from macrophage lineage, are responsible for osteolytic bone conditions which are closely linked to ROS signaling pathways. In this study, an anti\u2010ROS enzyme, peroxiredoxin 1 (Prdx1) was found to be expressed both in bone marrow macrophages and osteoclasts. Recombinant Prdx1 protein was found to dose\u2010dependently inhibit ROS production and osteoclast differentiation. Mechanistically, Prdx1 protein also attenuated NFATc1 activation as well as the expression of C\u2010Fos, V\u2010ATPase\u2010d2, Cathepsin K, and Integrin \u03b1V. Collectively, Prdx1 is a negative regulator on osteoclast formation via inhibiting RANKL\u2010mediated ROS activity, thus suggesting its potential application for treating osteoclast related disorders.",
+              "score": ".76873699923061067362"
+            }
+          ]
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 1671.4972500049043,
+          "answer": "Based on the provided context, I cannot answer the question about the cardiovascular benefits of SGLT2 inhibitors.",
+          "retrieved_documents": [
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".85102541359781247454"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".84747913545127762091"
+            },
+            {
+              "id": "PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": ".80203820947572745936"
+            },
+            {
+              "id": "PMC11646099",
+              "content": "Cardiovascular diseases are a leading cause of morbidity and mortality in patients with chronic kidney disease (CKD). Acute kidney injury (AKI) has been increasingly recognized as a potential exacerbating factor for cardiovascular events in these patients. The CKD-REIN study aims to explore the relationship between AKI and the risk of major adverse cardiovascular events (MACE) in a cohort of CKD patients. We hypothesize that AKI is a significant and independent predictor of MACE in patients with CKD, and that the severity of AKI correlates with the risk of subsequent cardiovascular events. This prospective cohort study included 3033 adult CKD patients from 40 outpatient nephrology clinics in France. Patients were followed for a median of 5.2 years. AKI episodes were identified and staged based on the KDIGO-AKI criteria. Cardiovascular events, including myocardial infarction, stroke, heart failure hospitalization, and cardiovascular death, were systematically recorded. The association between AKI and MACE was analyzed using a multivariable Cox model, adjusting for confounders such as demographic characteristics, medical history, and baseline kidney function. During the follow-up, 530 patients experienced at least one episode of AKI. The cumulative incidence of MACE at 1 year post-AKI was 8.1%. Patients with AKI had a significantly increased risk of MACE, with an adjusted hazard ratio (HR) of 5.78 ( P The findings of this study confirm that AKI is a significant independent predictor of MACE in CKD patients, demonstrating a strong severity\u2013response relationship. These results underscore the importance of vigilant cardiovascular monitoring and preventive strategies in CKD patients following AKI episodes. Understanding the mechanisms linking AKI to cardiovascular outcomes is crucial for developing targeted interventions to mitigate these risks.",
+              "score": ".79217810414215716896"
+            },
+            {
+              "id": "PMC11649817",
+              "content": "Optical coherence tomography angiography is a valuable tool for evaluating acute ischemic choriocapillaritis. Tuberculosis and syphilis are the main secondary differentials..",
+              "score": ".78632200633439253146"
+            }
+          ]
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 2228.813458001241,
+          "answer": "Statins prevent cardiovascular disease by lowering cholesterol levels in the blood, particularly LDL cholesterol. They do this by blocking an enzyme in the liver that is responsible for producing cholesterol. Lower cholesterol levels can reduce the risk of plaque buildup in the arteries, which can lead to atherosclerosis and cardiovascular events like heart attacks and strokes.",
+          "retrieved_documents": [
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".81408301300430885306"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".79143926656672203279"
+            },
+            {
+              "id": "PMC11649962",
+              "content": "Bone is a dynamic organ which continuously undergoes remodeling throughout one''s lifetime. Cellular production of reactive oxygen species (ROS) is essential for regulating bone homeostasis. Osteoclasts, multinucleated giant cells differentiated from macrophage lineage, are responsible for osteolytic bone conditions which are closely linked to ROS signaling pathways. In this study, an anti\u2010ROS enzyme, peroxiredoxin 1 (Prdx1) was found to be expressed both in bone marrow macrophages and osteoclasts. Recombinant Prdx1 protein was found to dose\u2010dependently inhibit ROS production and osteoclast differentiation. Mechanistically, Prdx1 protein also attenuated NFATc1 activation as well as the expression of C\u2010Fos, V\u2010ATPase\u2010d2, Cathepsin K, and Integrin \u03b1V. Collectively, Prdx1 is a negative regulator on osteoclast formation via inhibiting RANKL\u2010mediated ROS activity, thus suggesting its potential application for treating osteoclast related disorders.",
+              "score": ".78857520852929108291"
+            },
+            {
+              "id": "PMC11649817",
+              "content": "Optical coherence tomography angiography is a valuable tool for evaluating acute ischemic choriocapillaritis. Tuberculosis and syphilis are the main secondary differentials..",
+              "score": ".78692504624603976104"
+            },
+            {
+              "id": "PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": ".78116341544677647679"
+            }
+          ]
+        }
+      ],
+      "metrics": {
+        "p50": 2397.845983505249,
+        "p95": 2647.2752571105957,
+        "p99": 2658.796558380127,
+        "throughput_qps": 0.43289064992179016
+      },
+      "duration_seconds": 11.5502610206604,
+      "end_time": "2025-05-14T10:43:55.085316"
+    },
+    "colbert": {
+      "pipeline": "colbert",
+      "queries_run": 5,
+      "start_time": "2025-05-14T10:43:55.085519",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 1825.2312919939868,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1703.7085000047227,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 1668.1792499875883,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 1641.5725410042796,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 1715.7984590012347,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 1815.4747486114502,
+        "p95": 1925.6571769714355,
+        "p99": 1945.7628059387207,
+        "throughput_qps": 0.546183841115099
+      },
+      "duration_seconds": 9.15442681312561,
+      "end_time": "2025-05-14T10:44:04.240118"
+    },
+    "crag": {
+      "pipeline": "crag",
+      "queries_run": 5,
+      "start_time": "2025-05-14T10:44:04.240201",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 1240.032166999299,
+          "answer": "Metformin helps lower glucose production in the liver and improves insulin sensitivity in individuals with type 2 diabetes. It is often the first-line medication prescribed for type 2 diabetes.",
+          "retrieved_context_chunks": [
+            "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+            "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+            "Overexpression of mitotic arrest deficiency 2 (MAD2/MAD2L1), a pivotal component of the spindle assembly checkpoint (SAC), resulted in many types of cancer. Here we show that the depletion of tumor susceptibility gene 101 (TSG101), causes synthetic dosage lethality (SDL) in MAD2-overexpressing cells, and we term this cell death MAD2-overexpressing interphase cell death (MOID). The induction of MOID depends on PML and DAXX mediating mitochondrial AIFM1-release. MAD2, TSG101, and AIF-PML-DAXX axis regulate mitochondria, PML nuclear bodies (NBs), and autophagy with close inter-dependent protein stability in survival cells. Loss of C-terminal phosphorylation(s) of TSG101 and closed (C-)MAD2-overexpression contribute to induce MOID. In survival cells, both MAD2 and TSG101 localize at PML NBs in interphase, and TSG101 Y390 phosphorylation is required for localization of TSG101 to PML NBs. PML release from PML NBs through PML deSUMOylation contributes to induce MOID. The post-transcriptional/translational cell death machinery and the non-canonical transcriptional regulation are intricately linked to MOID, and ER-MAM, may serve as a crucial intersection for MOID signaling.",
+            "To evaluate the positive effects of a CPC-, GK2-, and TXA-based (CPC/GK2/TXA) mouthwash after implant placement. Twenty patients (n = 20) who underwent posterior implant-placement surgery were randomly and evenly allocated to the study or the placebo group. After the mouthwash was used 3x/day for 7 to 10 days postoperatively, sutures were analysed by counting the colony-forming units (CFU) for total aerobes, total G [-] anaerobes, total enterobacteria and total  H. influenzae A. actinomycetemcomitans, P. gingivalis, T. forsythia, T. denticola, P. intermedia, P. micra, F. nucleatum, C. rectus, E. corrodens P. gingivalis, S. aureus, P. aeruginosa Sixteen patients (n = 16) completed the trial. A statistically significantly greater number of CFU was found in the placebo group for almost all species, especially for total G [-] anaerobes. No statistically significant in vitro resistance was found for  P. gingivalis, S. aureus,  P. aeruginosa The use of a CPC/GK2/TXA mouthwash inhibited propagation of the bacteria extracted from the post-surgical sutures after implant placement.",
+            "This systematic review addressed flap designs in endodontic surgery which can have an impact on the Oral Health Related Quality of Life (OHRQoL). Four electronic databases were searched (PubMed, Cochrane Library, Web of Science, and Scopus) to identify all studies up to November 2019 that investigated the effect of flap designs on gingival recession and quality of life among healthy adults. The initial search identified 2701 references. Ten studies were included in this systematic review; two were randomised clinical trials and eight were non-randomised clinical trials. Studies showed that sulcular incision increases the risk of gingival recession and decreases OHRQoL. Two studies were included in the meta-analysis in relation to gingival recession. The pooled results demonstrated that submarginal incision showed a decreased weighted mean difference in gingival recession by 0.31 mm (95% CI: 0.12 \u2013 0.51) (p = 0.002) compared to sulcular incision. Sulcular incision flap unfavourably affect the level of gingiva and OHRQoL. All nonrandomised studies had a statistically significant bias and the sample sizes in all studies were relatively small. More gingival recession and lower OHRQoL were associated with sulcular incision. Additional investigations are warranted to provide more evidence."
+          ]
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1160.6802500027698,
+          "answer": "SGLT2 inhibition affects kidney function by reducing the reabsorption of glucose in the kidneys, leading to increased glucose excretion in the urine. This can help lower blood glucose levels and reduce the workload on the kidneys, potentially slowing the progression of kidney disease in patients with type 2 diabetes.",
+          "retrieved_context_chunks": [
+            "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+            "Acute kidney injury (AKI) is a critical morbidity after cytoreduction and hyperthermic intraperitoneal chemotherapy (CRS/HIPEC). This study was conducted to investigate the use of kidney-specific biomarkers to evaluate the diagnostic accuracy of post-HIPEC AKI. Patients who received CRS/HIPEC were prospectively enrolled in this study. We serially sampled urine neutrophil gelatinase-associated lipocalin (NGAL), serum cystatin C (sCyC), and \u03b22 microglobulin (s\u03b22-MG) on the day before CRS/HIPEC and then 2 h, 1 d, 2 d, 3 d, and 7 d after CRS/HIPEC. The primary outcome was the occurrence of AKI during the first 7 d. The areas under the receiver operating characteristic curve (AUCs) were calculated to evaluate the detection performance. A total of 75 patients were eligible, of whom 5 (6.7%) fulfilled the criteria of AKI during the study period (AKI group) and 70 did not (non-AKI group). No significant differences were observed in these biomarkers between the two groups, except for s\u03b22-MG on day 3 ( P P P This is the first prospective study to evaluate the value of kidney-specific biomarkers in patients after CRS/HIPEC. We found that AKI cannot be predicted by simply using the absolute measurements of these biomarkers because of the heterogeneous characteristics of the patients.",
+            "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+            "Cardiovascular diseases are a leading cause of morbidity and mortality in patients with chronic kidney disease (CKD). Acute kidney injury (AKI) has been increasingly recognized as a potential exacerbating factor for cardiovascular events in these patients. The CKD-REIN study aims to explore the relationship between AKI and the risk of major adverse cardiovascular events (MACE) in a cohort of CKD patients. We hypothesize that AKI is a significant and independent predictor of MACE in patients with CKD, and that the severity of AKI correlates with the risk of subsequent cardiovascular events. This prospective cohort study included 3033 adult CKD patients from 40 outpatient nephrology clinics in France. Patients were followed for a median of 5.2 years. AKI episodes were identified and staged based on the KDIGO-AKI criteria. Cardiovascular events, including myocardial infarction, stroke, heart failure hospitalization, and cardiovascular death, were systematically recorded. The association between AKI and MACE was analyzed using a multivariable Cox model, adjusting for confounders such as demographic characteristics, medical history, and baseline kidney function. During the follow-up, 530 patients experienced at least one episode of AKI. The cumulative incidence of MACE at 1 year post-AKI was 8.1%. Patients with AKI had a significantly increased risk of MACE, with an adjusted hazard ratio (HR) of 5.78 ( P The findings of this study confirm that AKI is a significant independent predictor of MACE in CKD patients, demonstrating a strong severity\u2013response relationship. These results underscore the importance of vigilant cardiovascular monitoring and preventive strategies in CKD patients following AKI episodes. Understanding the mechanisms linking AKI to cardiovascular outcomes is crucial for developing targeted interventions to mitigate these risks.",
+            "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity."
+          ]
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 1217.229457994108,
+          "answer": "GLP-1 receptor agonists work by binding to and activating the GLP-1 receptors on pancreatic beta cells, leading to increased insulin secretion, decreased glucagon secretion, delayed gastric emptying, and increased satiety. This results in improved blood sugar control and weight loss in patients with type 2 diabetes.",
+          "retrieved_context_chunks": [
+            "Halogens favorably contributes to the drug potency and metabolic stability via electrostatic interactions. Herein, the halogen effects on the reactivity of the halogenated 2,2,2-trifluoroacetophenones as serine-targeting covalent warheads were investigated. Our results showed that introducing halogen atoms, especially Cl or Br, into the phenyl scaffold would influence the electron density around the ring, which led to different time-dependent inhibition response to the target serine hydrolase (hCES1A). Co-crystallography analysis not only verified that halogenated molecules preferred to form covalent adducts, but also provided the conformational information for the design of covalent inhibitors targeting to hCES1A protein for the treatment of drug-induced acute enteritis.",
+            "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+            "This study evaluated the therapeutic efficacy of combining Neodymium-doped Yttrium Aluminum Garnet (Nd:YAG) laser with subgingival curettage and root planing (SRP) in generalised stage III/grade C periodontitis patients and its effects on cytokine dynamics and microbial community. Fifteen patients diagnosed with stage III/grade C periodontitis were included in the cohort. The right and left sides of the mouth were randomly assigned either the conventional SRP (control) group or the SRP supplemented with Nd:YAG laser group (experimental group, 160 mJ, 4 W) in a split-mouth design. Clinical periodontal indices were recorded at baseline and at the 6-week follow-up post-treatment. ELISA was utilised to measure IL-1\u03b2 and TNF-\u03b1 levels in gingival crevicular fluid. The subgingival microbiota\u2019s composition and variations were characterised using 16S rDNA amplicon sequencing, while quantitative real-time polymerase chain reaction (qRT-PCR) was employed to analyse the changes in the red-complex bacteria in subgingival plaque. The SRP+Nd group exhibited a statistically significant reduction in record probing depth (PD) and bleeding on probing (BOP) compared to the SRP group after treatment (p<0.05). The SRP+Nd group showed a markedly lower IL-1\u03b2 level than the SRP group (p<0.05). Furthermore, there was no statistically significant difference in the dominant subgingival microbiota composition and level of the red-complex bacteria between the two groups (p>0.05). The adjunctive use of Nd:YAG laser with SRP demonstrates promising short-term therapeutic benefits for patients with extensive stage III/grade C periodontitis. Both SRP as a standalone treatment and its combination with Nd:YAG laser effectively facilitate a transition in the dominant bacterial community from periodontitis-associated to periodontal health-associated microbiota.",
+            "This systematic review addressed flap designs in endodontic surgery which can have an impact on the Oral Health Related Quality of Life (OHRQoL). Four electronic databases were searched (PubMed, Cochrane Library, Web of Science, and Scopus) to identify all studies up to November 2019 that investigated the effect of flap designs on gingival recession and quality of life among healthy adults. The initial search identified 2701 references. Ten studies were included in this systematic review; two were randomised clinical trials and eight were non-randomised clinical trials. Studies showed that sulcular incision increases the risk of gingival recession and decreases OHRQoL. Two studies were included in the meta-analysis in relation to gingival recession. The pooled results demonstrated that submarginal incision showed a decreased weighted mean difference in gingival recession by 0.31 mm (95% CI: 0.12 \u2013 0.51) (p = 0.002) compared to sulcular incision. Sulcular incision flap unfavourably affect the level of gingiva and OHRQoL. All nonrandomised studies had a statistically significant bias and the sample sizes in all studies were relatively small. More gingival recession and lower OHRQoL were associated with sulcular incision. Additional investigations are warranted to provide more evidence.",
+            "Colorectal cancer has emerged as one of the predominant malignant tumors globally. Immunotherapy, as a novel therapeutic methodology, has opened up new possibilities for colorectal cancer patients. However, its actual clinical efficacy requires further enhancement. Copper, as an exceptionally crucial trace element, can influence various signaling pathways, gene expression, and biological metabolic processes in cells, thus playing a critical role in the pathogenesis of colorectal cancer. Recent studies have revealed that cuproptosis, a novel mode of cell death, holds promise to become a potential target to overcome resistance to colorectal cancer immunotherapy. This shows substantial potential in the combination treatment of colorectal cancer. Conveying copper into tumor cells via a nano-drug delivery system to induce cuproptosis of colorectal cancer cells could offer a potential strategy for eliminating drug-resistant colorectal cancer cells and vastly improving the efficacy of immunotherapy while ultimately destroy colorectal tumors. Moreover, combining the cuproptosis induction strategy with other anti-tumor approaches such as photothermal therapy, photodynamic therapy, and chemodynamic therapy could further enhance its therapeutic effect. This review aims to illuminate the practical significance of cuproptosis and cuproptosis-inducing nano-drugs in colorectal cancer immunotherapy, and scrutinize the current challenges and limitations of this methodology, thereby providing innovative thoughts and references for the advancement of cuproptosis-based colorectal cancer immunotherapy strategies."
+          ]
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 826.4137500082143,
+          "answer": "SGLT2 inhibitors have been shown to reduce the risk of cardiovascular events, such as heart attacks, strokes, and heart failure, in patients with type 2 diabetes. They have also been associated with improvements in cardiovascular outcomes and kidney function in clinical trials.",
+          "retrieved_context_chunks": [
+            "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+            "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+            "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+            "To evaluate the positive effects of a CPC-, GK2-, and TXA-based (CPC/GK2/TXA) mouthwash after implant placement. Twenty patients (n = 20) who underwent posterior implant-placement surgery were randomly and evenly allocated to the study or the placebo group. After the mouthwash was used 3x/day for 7 to 10 days postoperatively, sutures were analysed by counting the colony-forming units (CFU) for total aerobes, total G [-] anaerobes, total enterobacteria and total  H. influenzae A. actinomycetemcomitans, P. gingivalis, T. forsythia, T. denticola, P. intermedia, P. micra, F. nucleatum, C. rectus, E. corrodens P. gingivalis, S. aureus, P. aeruginosa Sixteen patients (n = 16) completed the trial. A statistically significantly greater number of CFU was found in the placebo group for almost all species, especially for total G [-] anaerobes. No statistically significant in vitro resistance was found for  P. gingivalis, S. aureus,  P. aeruginosa The use of a CPC/GK2/TXA mouthwash inhibited propagation of the bacteria extracted from the post-surgical sutures after implant placement.",
+            "Optical coherence tomography angiography is a valuable tool for evaluating acute ischemic choriocapillaritis. Tuberculosis and syphilis are the main secondary differentials.."
+          ]
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 522.551875008503,
+          "answer": "I cannot answer the question based on the provided information.",
+          "retrieved_context_chunks": [
+            "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+            "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+            "Cardiovascular diseases are a leading cause of morbidity and mortality in patients with chronic kidney disease (CKD). Acute kidney injury (AKI) has been increasingly recognized as a potential exacerbating factor for cardiovascular events in these patients. The CKD-REIN study aims to explore the relationship between AKI and the risk of major adverse cardiovascular events (MACE) in a cohort of CKD patients. We hypothesize that AKI is a significant and independent predictor of MACE in patients with CKD, and that the severity of AKI correlates with the risk of subsequent cardiovascular events. This prospective cohort study included 3033 adult CKD patients from 40 outpatient nephrology clinics in France. Patients were followed for a median of 5.2 years. AKI episodes were identified and staged based on the KDIGO-AKI criteria. Cardiovascular events, including myocardial infarction, stroke, heart failure hospitalization, and cardiovascular death, were systematically recorded. The association between AKI and MACE was analyzed using a multivariable Cox model, adjusting for confounders such as demographic characteristics, medical history, and baseline kidney function. During the follow-up, 530 patients experienced at least one episode of AKI. The cumulative incidence of MACE at 1 year post-AKI was 8.1%. Patients with AKI had a significantly increased risk of MACE, with an adjusted hazard ratio (HR) of 5.78 ( P The findings of this study confirm that AKI is a significant independent predictor of MACE in CKD patients, demonstrating a strong severity\u2013response relationship. These results underscore the importance of vigilant cardiovascular monitoring and preventive strategies in CKD patients following AKI episodes. Understanding the mechanisms linking AKI to cardiovascular outcomes is crucial for developing targeted interventions to mitigate these risks.",
+            "Bone is a dynamic organ which continuously undergoes remodeling throughout one''s lifetime. Cellular production of reactive oxygen species (ROS) is essential for regulating bone homeostasis. Osteoclasts, multinucleated giant cells differentiated from macrophage lineage, are responsible for osteolytic bone conditions which are closely linked to ROS signaling pathways. In this study, an anti\u2010ROS enzyme, peroxiredoxin 1 (Prdx1) was found to be expressed both in bone marrow macrophages and osteoclasts. Recombinant Prdx1 protein was found to dose\u2010dependently inhibit ROS production and osteoclast differentiation. Mechanistically, Prdx1 protein also attenuated NFATc1 activation as well as the expression of C\u2010Fos, V\u2010ATPase\u2010d2, Cathepsin K, and Integrin \u03b1V. Collectively, Prdx1 is a negative regulator on osteoclast formation via inhibiting RANKL\u2010mediated ROS activity, thus suggesting its potential application for treating osteoclast related disorders.",
+            "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity."
+          ]
+        }
+      ],
+      "metrics": {
+        "p50": 1160.7213020324707,
+        "p95": 1235.4992866516113,
+        "p99": 1239.1479301452637,
+        "throughput_qps": 1.0065526290477809
+      },
+      "duration_seconds": 4.967450141906738,
+      "end_time": "2025-05-14T10:44:09.208441"
+    },
+    "noderag": {
+      "pipeline": "noderag",
+      "queries_run": 5,
+      "start_time": "2025-05-14T10:44:09.208698",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 760.2592920011375,
+          "answer": "Metformin helps lower glucose production in the liver and improves insulin sensitivity in type 2 diabetes.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11649744",
+              "content": "",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": null
+            },
+            {
+              "id": "entity_kg_2",
+              "content": "diabetes is a disease",
+              "score": null
+            },
+            {
+              "id": "entity_kg_4",
+              "content": "metformin is a medication",
+              "score": null
+            }
+          ]
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1199.8662080004578,
+          "answer": "SGLT2 inhibition affects kidney function by reducing glucose reabsorption in the kidneys, leading to increased glucose excretion in the urine. This can help lower blood glucose levels and reduce the workload on the kidneys, potentially slowing the progression of kidney disease in patients with diabetes.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11646099",
+              "content": "Cardiovascular diseases are a leading cause of morbidity and mortality in patients with chronic kidney disease (CKD). Acute kidney injury (AKI) has been increasingly recognized as a potential exacerbating factor for cardiovascular events in these patients. The CKD-REIN study aims to explore the relationship between AKI and the risk of major adverse cardiovascular events (MACE) in a cohort of CKD patients. We hypothesize that AKI is a significant and independent predictor of MACE in patients with CKD, and that the severity of AKI correlates with the risk of subsequent cardiovascular events. This prospective cohort study included 3033 adult CKD patients from 40 outpatient nephrology clinics in France. Patients were followed for a median of 5.2 years. AKI episodes were identified and staged based on the KDIGO-AKI criteria. Cardiovascular events, including myocardial infarction, stroke, heart failure hospitalization, and cardiovascular death, were systematically recorded. The association between AKI and MACE was analyzed using a multivariable Cox model, adjusting for confounders such as demographic characteristics, medical history, and baseline kidney function. During the follow-up, 530 patients experienced at least one episode of AKI. The cumulative incidence of MACE at 1 year post-AKI was 8.1%. Patients with AKI had a significantly increased risk of MACE, with an adjusted hazard ratio (HR) of 5.78 ( P The findings of this study confirm that AKI is a significant independent predictor of MACE in CKD patients, demonstrating a strong severity\u2013response relationship. These results underscore the importance of vigilant cardiovascular monitoring and preventive strategies in CKD patients following AKI episodes. Understanding the mechanisms linking AKI to cardiovascular outcomes is crucial for developing targeted interventions to mitigate these risks.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11650413",
+              "content": "Acute kidney injury (AKI) is a critical morbidity after cytoreduction and hyperthermic intraperitoneal chemotherapy (CRS/HIPEC). This study was conducted to investigate the use of kidney-specific biomarkers to evaluate the diagnostic accuracy of post-HIPEC AKI. Patients who received CRS/HIPEC were prospectively enrolled in this study. We serially sampled urine neutrophil gelatinase-associated lipocalin (NGAL), serum cystatin C (sCyC), and \u03b22 microglobulin (s\u03b22-MG) on the day before CRS/HIPEC and then 2 h, 1 d, 2 d, 3 d, and 7 d after CRS/HIPEC. The primary outcome was the occurrence of AKI during the first 7 d. The areas under the receiver operating characteristic curve (AUCs) were calculated to evaluate the detection performance. A total of 75 patients were eligible, of whom 5 (6.7%) fulfilled the criteria of AKI during the study period (AKI group) and 70 did not (non-AKI group). No significant differences were observed in these biomarkers between the two groups, except for s\u03b22-MG on day 3 ( P P P This is the first prospective study to evaluate the value of kidney-specific biomarkers in patients after CRS/HIPEC. We found that AKI cannot be predicted by simply using the absolute measurements of these biomarkers because of the heterogeneous characteristics of the patients.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": null
+            }
+          ]
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 621.4989580039401,
+          "answer": "I cannot answer the question based on the provided information.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11619827",
+              "content": "This study evaluated the therapeutic efficacy of combining Neodymium-doped Yttrium Aluminum Garnet (Nd:YAG) laser with subgingival curettage and root planing (SRP) in generalised stage III/grade C periodontitis patients and its effects on cytokine dynamics and microbial community. Fifteen patients diagnosed with stage III/grade C periodontitis were included in the cohort. The right and left sides of the mouth were randomly assigned either the conventional SRP (control) group or the SRP supplemented with Nd:YAG laser group (experimental group, 160 mJ, 4 W) in a split-mouth design. Clinical periodontal indices were recorded at baseline and at the 6-week follow-up post-treatment. ELISA was utilised to measure IL-1\u03b2 and TNF-\u03b1 levels in gingival crevicular fluid. The subgingival microbiota\u2019s composition and variations were characterised using 16S rDNA amplicon sequencing, while quantitative real-time polymerase chain reaction (qRT-PCR) was employed to analyse the changes in the red-complex bacteria in subgingival plaque. The SRP+Nd group exhibited a statistically significant reduction in record probing depth (PD) and bleeding on probing (BOP) compared to the SRP group after treatment (p<0.05). The SRP+Nd group showed a markedly lower IL-1\u03b2 level than the SRP group (p<0.05). Furthermore, there was no statistically significant difference in the dominant subgingival microbiota composition and level of the red-complex bacteria between the two groups (p>0.05). The adjunctive use of Nd:YAG laser with SRP demonstrates promising short-term therapeutic benefits for patients with extensive stage III/grade C periodontitis. Both SRP as a standalone treatment and its combination with Nd:YAG laser effectively facilitate a transition in the dominant bacterial community from periodontitis-associated to periodontal health-associated microbiota.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11649397",
+              "content": "Halogens favorably contributes to the drug potency and metabolic stability via electrostatic interactions. Herein, the halogen effects on the reactivity of the halogenated 2,2,2-trifluoroacetophenones as serine-targeting covalent warheads were investigated. Our results showed that introducing halogen atoms, especially Cl or Br, into the phenyl scaffold would influence the electron density around the ring, which led to different time-dependent inhibition response to the target serine hydrolase (hCES1A). Co-crystallography analysis not only verified that halogenated molecules preferred to form covalent adducts, but also provided the conformational information for the design of covalent inhibitors targeting to hCES1A protein for the treatment of drug-induced acute enteritis.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11649426",
+              "content": "Colorectal cancer has emerged as one of the predominant malignant tumors globally. Immunotherapy, as a novel therapeutic methodology, has opened up new possibilities for colorectal cancer patients. However, its actual clinical efficacy requires further enhancement. Copper, as an exceptionally crucial trace element, can influence various signaling pathways, gene expression, and biological metabolic processes in cells, thus playing a critical role in the pathogenesis of colorectal cancer. Recent studies have revealed that cuproptosis, a novel mode of cell death, holds promise to become a potential target to overcome resistance to colorectal cancer immunotherapy. This shows substantial potential in the combination treatment of colorectal cancer. Conveying copper into tumor cells via a nano-drug delivery system to induce cuproptosis of colorectal cancer cells could offer a potential strategy for eliminating drug-resistant colorectal cancer cells and vastly improving the efficacy of immunotherapy while ultimately destroy colorectal tumors. Moreover, combining the cuproptosis induction strategy with other anti-tumor approaches such as photothermal therapy, photodynamic therapy, and chemodynamic therapy could further enhance its therapeutic effect. This review aims to illuminate the practical significance of cuproptosis and cuproptosis-inducing nano-drugs in colorectal cancer immunotherapy, and scrutinize the current challenges and limitations of this methodology, thereby providing innovative thoughts and references for the advancement of cuproptosis-based colorectal cancer immunotherapy strategies.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651902",
+              "content": "Juvenile hormone (JH) is one of the most essential hormones controlling insect metamorphosis and physiology. While it is well known that JH affects many tissues throughout the insect life cycle, the difference in JH responsiveness and the repertoire of JH-inducible genes among different tissues has not been fully investigated. In this study, we monitored JH responsiveness  in vivo Drosophila melanogaster JH response element-GFP JHRE-GFP germ cell-expressed Lactate dehydrogenase",
+              "score": null
+            }
+          ]
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 1040.742458004388,
+          "answer": "SGLT2 inhibitors have been shown to provide cardiovascular benefits in patients with type 2 diabetes, including reducing the risk of heart failure and cardiovascular events. They have also been associated with a reduction in cardiovascular mortality and kidney disease progression.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11649744",
+              "content": "",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11650406",
+              "content": "Various catheter designs are appearing for Pulsed Field Ablation (PFA). It is unclear if they differ in terms of safety and efficiency. PFA studies have reported hemolysis, kidney injury, high troponin, among other side effects. Using a CT\u2010derived computer model, we compared catheter designs using two metrics: (1) efficiency: power delivered to an atrial wall target, expressed as a percent of total generator power; and (2) safety: electric current to achieve 90% transmurality (since more energy causes more collateral effects), as well as the corresponding electrode current density (ECD), a heat and bubble metric. The following catheter designs were compared: penta\u2010spline basket, Nitinol spheres (focal 9\u2009mm and large 1\u2010shot), circular, balloon, and flex\u2010circuit. Target was a 6\u2009\u00d7\u200947\u2009mm circumferential segment of atrial wall at LPV antrum. Transmurality was defined as percent of target having >600 volts per centimeter (V/cm) electric field needed for electroporation. Efficiency was 0.9, 1.4, 2.7, 5.9, 10, and 12% for the large 1\u2010shot and 9\u2009mm Nitinol spheres, penta\u2010spline, circular, flex spline, and balloon catheters, respectively. Regarding safety, currents for 90% transmurality were 70, 39,36,12.5, 5.3, and 4\u2009Amps for the same respective catheters, with less being safer. ECD was 124, 25, 74, 83, 41, and 31\u2009A/cm Computer models demonstrated a remarkable range in efficiency among catheters studied. Those having less atrial blood exposure had the highest efficiencies, with factors of up to 13X more efficiency compared to exposed ones. Higher efficiency designs have less collateral current and are safer. Confirmatory in\u2010vivo studies are required.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": null
+            }
+          ]
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 627.5391670060344,
+          "answer": "I cannot answer that question based on the provided information.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11649744",
+              "content": "",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11649962",
+              "content": "Bone is a dynamic organ which continuously undergoes remodeling throughout one's lifetime. Cellular production of reactive oxygen species (ROS) is essential for regulating bone homeostasis. Osteoclasts, multinucleated giant cells differentiated from macrophage lineage, are responsible for osteolytic bone conditions which are closely linked to ROS signaling pathways. In this study, an anti\u2010ROS enzyme, peroxiredoxin 1 (Prdx1) was found to be expressed both in bone marrow macrophages and osteoclasts. Recombinant Prdx1 protein was found to dose\u2010dependently inhibit ROS production and osteoclast differentiation. Mechanistically, Prdx1 protein also attenuated NFATc1 activation as well as the expression of C\u2010Fos, V\u2010ATPase\u2010d2, Cathepsin K, and Integrin \u03b1V. Collectively, Prdx1 is a negative regulator on osteoclast formation via inhibiting RANKL\u2010mediated ROS activity, thus suggesting its potential application for treating osteoclast related disorders.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": null
+            },
+            {
+              "id": "entity_kg_4",
+              "content": "metformin is a medication",
+              "score": null
+            }
+          ]
+        }
+      ],
+      "metrics": {
+        "p50": 760.2932453155518,
+        "p95": 1168.0886268615723,
+        "p99": 1193.5521507263184,
+        "throughput_qps": 1.1762142410095258
+      },
+      "duration_seconds": 4.25092625617981,
+      "end_time": "2025-05-14T10:44:13.460292"
+    },
+    "graphrag": {
+      "pipeline": "graphrag",
+      "queries_run": 5,
+      "start_time": "2025-05-14T10:44:13.460529",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 647.9202910122694,
+          "answer": "Metformin helps lower glucose production in the liver and improves insulin sensitivity in individuals with type 2 diabetes.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11649744",
+              "content": "",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": null
+            },
+            {
+              "id": "entity_kg_2",
+              "content": "diabetes is a disease",
+              "score": null
+            },
+            {
+              "id": "entity_kg_4",
+              "content": "metformin is a medication",
+              "score": null
+            }
+          ]
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 758.9158750051865,
+          "answer": "Based on the provided information, I cannot answer the question about how SGLT2 inhibition affects kidney function.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11646099",
+              "content": "Cardiovascular diseases are a leading cause of morbidity and mortality in patients with chronic kidney disease (CKD). Acute kidney injury (AKI) has been increasingly recognized as a potential exacerbating factor for cardiovascular events in these patients. The CKD-REIN study aims to explore the relationship between AKI and the risk of major adverse cardiovascular events (MACE) in a cohort of CKD patients. We hypothesize that AKI is a significant and independent predictor of MACE in patients with CKD, and that the severity of AKI correlates with the risk of subsequent cardiovascular events. This prospective cohort study included 3033 adult CKD patients from 40 outpatient nephrology clinics in France. Patients were followed for a median of 5.2 years. AKI episodes were identified and staged based on the KDIGO-AKI criteria. Cardiovascular events, including myocardial infarction, stroke, heart failure hospitalization, and cardiovascular death, were systematically recorded. The association between AKI and MACE was analyzed using a multivariable Cox model, adjusting for confounders such as demographic characteristics, medical history, and baseline kidney function. During the follow-up, 530 patients experienced at least one episode of AKI. The cumulative incidence of MACE at 1 year post-AKI was 8.1%. Patients with AKI had a significantly increased risk of MACE, with an adjusted hazard ratio (HR) of 5.78 ( P The findings of this study confirm that AKI is a significant independent predictor of MACE in CKD patients, demonstrating a strong severity\u2013response relationship. These results underscore the importance of vigilant cardiovascular monitoring and preventive strategies in CKD patients following AKI episodes. Understanding the mechanisms linking AKI to cardiovascular outcomes is crucial for developing targeted interventions to mitigate these risks.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11650413",
+              "content": "Acute kidney injury (AKI) is a critical morbidity after cytoreduction and hyperthermic intraperitoneal chemotherapy (CRS/HIPEC). This study was conducted to investigate the use of kidney-specific biomarkers to evaluate the diagnostic accuracy of post-HIPEC AKI. Patients who received CRS/HIPEC were prospectively enrolled in this study. We serially sampled urine neutrophil gelatinase-associated lipocalin (NGAL), serum cystatin C (sCyC), and \u03b22 microglobulin (s\u03b22-MG) on the day before CRS/HIPEC and then 2 h, 1 d, 2 d, 3 d, and 7 d after CRS/HIPEC. The primary outcome was the occurrence of AKI during the first 7 d. The areas under the receiver operating characteristic curve (AUCs) were calculated to evaluate the detection performance. A total of 75 patients were eligible, of whom 5 (6.7%) fulfilled the criteria of AKI during the study period (AKI group) and 70 did not (non-AKI group). No significant differences were observed in these biomarkers between the two groups, except for s\u03b22-MG on day 3 ( P P P This is the first prospective study to evaluate the value of kidney-specific biomarkers in patients after CRS/HIPEC. We found that AKI cannot be predicted by simply using the absolute measurements of these biomarkers because of the heterogeneous characteristics of the patients.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": null
+            }
+          ]
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 1048.5625420114957,
+          "answer": "GLP-1 receptor agonists work by binding to and activating the GLP-1 receptors, leading to increased insulin secretion, decreased glucagon secretion, delayed gastric emptying, and increased satiety.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11619827",
+              "content": "This study evaluated the therapeutic efficacy of combining Neodymium-doped Yttrium Aluminum Garnet (Nd:YAG) laser with subgingival curettage and root planing (SRP) in generalised stage III/grade C periodontitis patients and its effects on cytokine dynamics and microbial community. Fifteen patients diagnosed with stage III/grade C periodontitis were included in the cohort. The right and left sides of the mouth were randomly assigned either the conventional SRP (control) group or the SRP supplemented with Nd:YAG laser group (experimental group, 160 mJ, 4 W) in a split-mouth design. Clinical periodontal indices were recorded at baseline and at the 6-week follow-up post-treatment. ELISA was utilised to measure IL-1\u03b2 and TNF-\u03b1 levels in gingival crevicular fluid. The subgingival microbiota\u2019s composition and variations were characterised using 16S rDNA amplicon sequencing, while quantitative real-time polymerase chain reaction (qRT-PCR) was employed to analyse the changes in the red-complex bacteria in subgingival plaque. The SRP+Nd group exhibited a statistically significant reduction in record probing depth (PD) and bleeding on probing (BOP) compared to the SRP group after treatment (p<0.05). The SRP+Nd group showed a markedly lower IL-1\u03b2 level than the SRP group (p<0.05). Furthermore, there was no statistically significant difference in the dominant subgingival microbiota composition and level of the red-complex bacteria between the two groups (p>0.05). The adjunctive use of Nd:YAG laser with SRP demonstrates promising short-term therapeutic benefits for patients with extensive stage III/grade C periodontitis. Both SRP as a standalone treatment and its combination with Nd:YAG laser effectively facilitate a transition in the dominant bacterial community from periodontitis-associated to periodontal health-associated microbiota.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11649397",
+              "content": "Halogens favorably contributes to the drug potency and metabolic stability via electrostatic interactions. Herein, the halogen effects on the reactivity of the halogenated 2,2,2-trifluoroacetophenones as serine-targeting covalent warheads were investigated. Our results showed that introducing halogen atoms, especially Cl or Br, into the phenyl scaffold would influence the electron density around the ring, which led to different time-dependent inhibition response to the target serine hydrolase (hCES1A). Co-crystallography analysis not only verified that halogenated molecules preferred to form covalent adducts, but also provided the conformational information for the design of covalent inhibitors targeting to hCES1A protein for the treatment of drug-induced acute enteritis.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11649426",
+              "content": "Colorectal cancer has emerged as one of the predominant malignant tumors globally. Immunotherapy, as a novel therapeutic methodology, has opened up new possibilities for colorectal cancer patients. However, its actual clinical efficacy requires further enhancement. Copper, as an exceptionally crucial trace element, can influence various signaling pathways, gene expression, and biological metabolic processes in cells, thus playing a critical role in the pathogenesis of colorectal cancer. Recent studies have revealed that cuproptosis, a novel mode of cell death, holds promise to become a potential target to overcome resistance to colorectal cancer immunotherapy. This shows substantial potential in the combination treatment of colorectal cancer. Conveying copper into tumor cells via a nano-drug delivery system to induce cuproptosis of colorectal cancer cells could offer a potential strategy for eliminating drug-resistant colorectal cancer cells and vastly improving the efficacy of immunotherapy while ultimately destroy colorectal tumors. Moreover, combining the cuproptosis induction strategy with other anti-tumor approaches such as photothermal therapy, photodynamic therapy, and chemodynamic therapy could further enhance its therapeutic effect. This review aims to illuminate the practical significance of cuproptosis and cuproptosis-inducing nano-drugs in colorectal cancer immunotherapy, and scrutinize the current challenges and limitations of this methodology, thereby providing innovative thoughts and references for the advancement of cuproptosis-based colorectal cancer immunotherapy strategies.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651902",
+              "content": "Juvenile hormone (JH) is one of the most essential hormones controlling insect metamorphosis and physiology. While it is well known that JH affects many tissues throughout the insect life cycle, the difference in JH responsiveness and the repertoire of JH-inducible genes among different tissues has not been fully investigated. In this study, we monitored JH responsiveness  in vivo Drosophila melanogaster JH response element-GFP JHRE-GFP germ cell-expressed Lactate dehydrogenase",
+              "score": null
+            }
+          ]
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 857.8337499930058,
+          "answer": "SGLT2 inhibitors have been shown to have cardiovascular benefits in patients with type 2 diabetes. They have been associated with a reduced risk of cardiovascular events, heart failure hospitalization, and cardiovascular death in clinical trials.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11649744",
+              "content": "",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11650406",
+              "content": "Various catheter designs are appearing for Pulsed Field Ablation (PFA). It is unclear if they differ in terms of safety and efficiency. PFA studies have reported hemolysis, kidney injury, high troponin, among other side effects. Using a CT\u2010derived computer model, we compared catheter designs using two metrics: (1) efficiency: power delivered to an atrial wall target, expressed as a percent of total generator power; and (2) safety: electric current to achieve 90% transmurality (since more energy causes more collateral effects), as well as the corresponding electrode current density (ECD), a heat and bubble metric. The following catheter designs were compared: penta\u2010spline basket, Nitinol spheres (focal 9\u2009mm and large 1\u2010shot), circular, balloon, and flex\u2010circuit. Target was a 6\u2009\u00d7\u200947\u2009mm circumferential segment of atrial wall at LPV antrum. Transmurality was defined as percent of target having >600 volts per centimeter (V/cm) electric field needed for electroporation. Efficiency was 0.9, 1.4, 2.7, 5.9, 10, and 12% for the large 1\u2010shot and 9\u2009mm Nitinol spheres, penta\u2010spline, circular, flex spline, and balloon catheters, respectively. Regarding safety, currents for 90% transmurality were 70, 39,36,12.5, 5.3, and 4\u2009Amps for the same respective catheters, with less being safer. ECD was 124, 25, 74, 83, 41, and 31\u2009A/cm Computer models demonstrated a remarkable range in efficiency among catheters studied. Those having less atrial blood exposure had the highest efficiencies, with factors of up to 13X more efficiency compared to exposed ones. Higher efficiency designs have less collateral current and are safer. Confirmatory in\u2010vivo studies are required.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": null
+            }
+          ]
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 638.6845000088215,
+          "answer": "Based on the provided information from the knowledge graph, I cannot answer how statins prevent cardiovascular disease.",
+          "retrieved_documents": [
+            {
+              "id": "doc_kg_PMC11649744",
+              "content": "",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11649962",
+              "content": "Bone is a dynamic organ which continuously undergoes remodeling throughout one's lifetime. Cellular production of reactive oxygen species (ROS) is essential for regulating bone homeostasis. Osteoclasts, multinucleated giant cells differentiated from macrophage lineage, are responsible for osteolytic bone conditions which are closely linked to ROS signaling pathways. In this study, an anti\u2010ROS enzyme, peroxiredoxin 1 (Prdx1) was found to be expressed both in bone marrow macrophages and osteoclasts. Recombinant Prdx1 protein was found to dose\u2010dependently inhibit ROS production and osteoclast differentiation. Mechanistically, Prdx1 protein also attenuated NFATc1 activation as well as the expression of C\u2010Fos, V\u2010ATPase\u2010d2, Cathepsin K, and Integrin \u03b1V. Collectively, Prdx1 is a negative regulator on osteoclast formation via inhibiting RANKL\u2010mediated ROS activity, thus suggesting its potential application for treating osteoclast related disorders.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11650407",
+              "content": "Is the use of supraphysiologic doses of anabolic androgenic steroids (AASs) associated with persistent coronary microvascular dysfunction? In this cross-sectional study including 90 men, the prevalence of impaired myocardial flow reserve was increased among both those with current and former AAS use compared with controls. Among individuals with former AAS use, the accumulated duration of AAS use was independently associated with an increased risk of reduced myocardial flow reserve. The findings of this study suggest that AAS use may be associated with impaired myocardial flow reserve, with possible persistent coronary microvascular dysfunction years after AAS cessation.",
+              "score": null
+            },
+            {
+              "id": "doc_kg_PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": null
+            },
+            {
+              "id": "entity_kg_4",
+              "content": "metformin is a medication",
+              "score": null
+            }
+          ]
+        }
+      ],
+      "metrics": {
+        "p50": 758.9559555053711,
+        "p95": 1010.4469776153564,
+        "p99": 1040.964593887329,
+        "throughput_qps": 1.2649673943150201
+      },
+      "duration_seconds": 3.9526710510253906,
+      "end_time": "2025-05-14T10:44:17.413738"
+    }
+  },
+  "comparison": {
+    "rankings": {
+      "p99": [
+        "graphrag",
+        "noderag",
+        "crag",
+        "basic_rag",
+        "colbert",
+        "hyde"
+      ],
+      "p95": [
+        "graphrag",
+        "noderag",
+        "crag",
+        "basic_rag",
+        "colbert",
+        "hyde"
+      ],
+      "p50": [
+        "graphrag",
+        "noderag",
+        "basic_rag",
+        "crag",
+        "colbert",
+        "hyde"
+      ],
+      "throughput_qps": [
+        "graphrag",
+        "noderag",
+        "basic_rag",
+        "crag",
+        "colbert",
+        "hyde"
+      ]
+    },
+    "percentage_diff": {
+      "p99": {
+        "graphrag_vs_noderag": 12.784322557345682,
+        "graphrag_vs_crag": 15.993517112577656,
+        "graphrag_vs_basic_rag": 23.5115484560216,
+        "graphrag_vs_colbert": 46.500951158580584,
+        "graphrag_vs_hyde": 60.848279624615685,
+        "noderag_vs_crag": 3.6796074390892284,
+        "noderag_vs_basic_rag": 12.299653242651514,
+        "noderag_vs_colbert": 38.65890811133597,
+        "noderag_vs_hyde": 55.10930887267694,
+        "crag_vs_basic_rag": 8.94934662782979,
+        "crag_vs_colbert": 36.31557112905934,
+        "crag_vs_hyde": 53.39440596763014,
+        "basic_rag_vs_colbert": 30.05604406743784,
+        "basic_rag_vs_hyde": 48.813553438360124,
+        "colbert_vs_hyde": 26.817913171808165
+      },
+      "p95": {
+        "graphrag_vs_noderag": 13.495692503210854,
+        "graphrag_vs_crag": 18.215494858453578,
+        "graphrag_vs_basic_rag": 21.560964497750856,
+        "graphrag_vs_colbert": 47.52716165166376,
+        "graphrag_vs_hyde": 61.83067949200635,
+        "noderag_vs_crag": 5.456147204482171,
+        "noderag_vs_basic_rag": 9.323549575654793,
+        "noderag_vs_colbert": 39.34077982153211,
+        "noderag_vs_hyde": 55.875815190578315,
+        "crag_vs_basic_rag": 4.090591039839629,
+        "crag_vs_colbert": 35.84012245654574,
+        "crag_vs_hyde": 53.32939846987753,
+        "basic_rag_vs_colbert": 33.10366705512124,
+        "basic_rag_vs_hyde": 51.33887067377416,
+        "colbert_vs_hyde": 27.25889868085648
+      },
+      "p50": {
+        "graphrag_vs_noderag": 0.17589131804342625,
+        "graphrag_vs_basic_rag": 15.746072480845438,
+        "graphrag_vs_crag": 34.61342062246915,
+        "graphrag_vs_colbert": 58.19517974095471,
+        "graphrag_vs_hyde": 68.34842768358689,
+        "noderag_vs_basic_rag": 15.597616015194488,
+        "noderag_vs_crag": 34.49820865833624,
+        "noderag_vs_colbert": 58.1215191289741,
+        "noderag_vs_hyde": 68.2926572204554,
+        "basic_rag_vs_crag": 22.393434581829254,
+        "basic_rag_vs_colbert": 50.38234834863782,
+        "basic_rag_vs_hyde": 62.43311944215617,
+        "crag_vs_colbert": 36.06513652033782,
+        "crag_vs_hyde": 51.5931669499602,
+        "colbert_vs_hyde": 24.28726610882946
+      },
+      "throughput_qps": {
+        "graphrag_vs_noderag": 7.545662194101559,
+        "graphrag_vs_basic_rag": 23.275046107343496,
+        "graphrag_vs_crag": 25.673249247950885,
+        "graphrag_vs_colbert": 131.60102864494112,
+        "graphrag_vs_hyde": 192.21407173926264,
+        "noderag_vs_basic_rag": 14.625772525211744,
+        "noderag_vs_crag": 16.855711968309915,
+        "noderag_vs_colbert": 115.35134371755582,
+        "noderag_vs_hyde": 171.71162999755967,
+        "basic_rag_vs_crag": 1.9454084312563296,
+        "basic_rag_vs_colbert": 87.87340662867913,
+        "basic_rag_vs_hyde": 137.0423544476415,
+        "crag_vs_colbert": 84.28824752354161,
+        "crag_vs_hyde": 132.5189119306766,
+        "colbert_vs_hyde": 26.171318602926018
+      }
+    },
+    "best_technique": {
+      "retrieval_quality": null,
+      "answer_quality": null,
+      "performance": "graphrag"
+    }
+  },
+  "benchmark_metrics": {},
+  "generated_at": "2025-05-14T10:44:17.735837",
+  "charts": [
+    {
+      "type": "radar",
+      "path": "benchmark_results/benchmark_20250514_104308/reports/radar_comparison.png"
+    },
+    {
+      "type": "bar",
+      "metric": "throughput_qps",
+      "path": "benchmark_results/benchmark_20250514_104308/reports/bar_throughput_qps.png"
+    }
+  ]
+}

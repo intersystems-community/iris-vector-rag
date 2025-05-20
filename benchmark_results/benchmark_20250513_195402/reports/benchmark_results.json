@@ -1,0 +1,126 @@
+{
+  "benchmarks": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "queries_run": 2,
+      "start_time": "2025-05-13T19:54:05.080920",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 833.2101659907494,
+          "answer": "Metformin helps lower glucose production in the liver and improves insulin sensitivity in individuals with type 2 diabetes.",
+          "retrieved_documents": [
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".85826939496611343027"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".83322453855645106646"
+            },
+            {
+              "id": "PMC11570632",
+              "content": "Overexpression of mitotic arrest deficiency 2 (MAD2/MAD2L1), a pivotal component of the spindle assembly checkpoint (SAC), resulted in many types of cancer. Here we show that the depletion of tumor susceptibility gene 101 (TSG101), causes synthetic dosage lethality (SDL) in MAD2-overexpressing cells, and we term this cell death MAD2-overexpressing interphase cell death (MOID). The induction of MOID depends on PML and DAXX mediating mitochondrial AIFM1-release. MAD2, TSG101, and AIF-PML-DAXX axis regulate mitochondria, PML nuclear bodies (NBs), and autophagy with close inter-dependent protein stability in survival cells. Loss of C-terminal phosphorylation(s) of TSG101 and closed (C-)MAD2-overexpression contribute to induce MOID. In survival cells, both MAD2 and TSG101 localize at PML NBs in interphase, and TSG101 Y390 phosphorylation is required for localization of TSG101 to PML NBs. PML release from PML NBs through PML deSUMOylation contributes to induce MOID. The post-transcriptional/translational cell death machinery and the non-canonical transcriptional regulation are intricately linked to MOID, and ER-MAM, may serve as a crucial intersection for MOID signaling.",
+              "score": ".77534034099194204526"
+            },
+            {
+              "id": "PMC11651446",
+              "content": "Among 3 forms of mercury, elemental mercury vapor presents the highest threat due to its potential to cause acute pneumonitis. The management of acute mercury vapor poisoning remains unclear, particularly in acute lung injury. We present a case of mercury vapor poisoning resulting from the heating of cinnabar, successfully treated with high-dose corticosteroids and chelation therapy, and follow-up over 6 months. A 47-year-old female patient was admitted to the Emergency Department due to dyspnea, chest tightness, and weakness following cinnabar heating. Upon admission, she presented with tachypnea and respiratory failure. During the first 5 days, the respiratory failure rapidly progressed, requiring high-flow nasal cannula support, and showed no improvement with broad-spectrum intravenous (IV) antibiotics and 80\u2005mg daily IV methylprednisolone. Total blood and urinary mercury levels were measured to confirm the diagnosis. Upon confirmation of acute pneumonitis due to mercury vapor poisoning, the patient was administered high-dose methylprednisolone (500\u2005mg IV per day) and chelation therapy, which led to subsequent improvement. Six months after discharge, the patient completely recovered, as evidenced by chest imaging and pulmonary function tests. Heating elemental mercury can cause pneumonitis, leading to acute respiratory failure. A detailed history is crucial for diagnosis. High-dose methylprednisolone should be considered in patients who do not respond to lower doses. Patients should be monitored afterward to detect residual pulmonary fibrotic changes.",
+              "score": ".76437591830093076783"
+            },
+            {
+              "id": "PMC11622443",
+              "content": "This study aimed to investigate the correlation between serum vitamin D\nlevels and disease activity in patients with noninfectious uveitis. We conducted a prospective case-control study, assessing 51 patients with\nnoninfectious uveitis, categorized into active (n=22) and inactive (n=29)\ngroups, along with 51 healthy controls. Serum 25-hydroxy vitamin D [25(OH)D]\nlevels were measured. The uveitis group also completed a questionnaire\nregarding sunlight exposure habits and vitamin D supplementation. Patients with inflammation-related uveitis exhibited low serum 25(OH)D levels\nin 68% of cases. The median 25(OH)D level in patients with active uveitis\nwas 17.8 ng/mL (interquartile range [IQR], 15-21 ng/mL), significantly lower\ncompared to the 31.7 ng/mL (IQR, 25-39 ng/mL) in patients with inactive\nuveitis (p<0.001) and the 27 ng/mL (IQR, 23-31 ng/mL) in the Control\nGroup (p<0.001). Significantly, nearly all patients with uveitis taking\nvitamin D supplementation were in the Inactive Group (p<0.005). Moreover,\nreduced sunlight exposure was associated with active uveitis (p<0.003).\nFurthermore, patients with 25(OH)D levels below 20 ng/mL had ten times\nhigher odds of developing active uveitis (p=0.001). This study revealed a prevalent 25(OH)D deficiency among patients with\nnoninfectious uveitis and suggested a link between low 25(OH)D levels and\ndisease activity. To prevent future episodes of intraocular inflammation,\nvitamin D supplementation and controlled sunlight exposure could be viable\noptions.",
+              "score": ".76206058816790211984"
+            }
+          ]
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1115.3053750022082,
+          "answer": "SGLT2 inhibition affects kidney function by blocking the reabsorption of glucose in the kidneys, leading to increased glucose excretion in the urine. This mechanism helps reduce hyperglycemia and improve glycemic control in patients with type 2 diabetes. Additionally, SGLT2 inhibitors have been shown to have beneficial effects on kidney function by reducing albuminuria, lowering blood pressure, and potentially slowing the progression of chronic kidney disease.",
+          "retrieved_documents": [
+            {
+              "id": "PMC11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\u2013tandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": ".84206692371920655038"
+            },
+            {
+              "id": "PMC11651687",
+              "content": "Lifestyle intervention prevents or delays type 2 diabetes (T2D) in subjects at a high risk of T2D. However, it is not known whether genetic variants modify the effect on incident T2D during lifestyle intervention. To investigate whether a low or high genetic risk has effects on incident T2D in a group-based lifestyle intervention study. The T2D-GENE trial involved 973 men from the Metabolic Syndrome in Men (METSIM) cohort, aged 50-75 years, body mass index \u226525 kg/m The intervention significantly lowered the risk of T2D among the participants with a high genetic risk for T2D [hazards ratio (HR) 0.30, 95% confidence interval (CI) 0.16-0.56,  P P P Our results showed that individuals with a high genetic risk for T2D benefitted from a low-cost group-based intervention focusing on healthy diet and physical activity. Therefore, all individuals at risk of T2D should be encouraged to make lifestyle changes regardless of genetic risk.",
+              "score": ".80471533443900933324"
+            },
+            {
+              "id": "PMC11646099",
+              "content": "Cardiovascular diseases are a leading cause of morbidity and mortality in patients with chronic kidney disease (CKD). Acute kidney injury (AKI) has been increasingly recognized as a potential exacerbating factor for cardiovascular events in these patients. The CKD-REIN study aims to explore the relationship between AKI and the risk of major adverse cardiovascular events (MACE) in a cohort of CKD patients. We hypothesize that AKI is a significant and independent predictor of MACE in patients with CKD, and that the severity of AKI correlates with the risk of subsequent cardiovascular events. This prospective cohort study included 3033 adult CKD patients from 40 outpatient nephrology clinics in France. Patients were followed for a median of 5.2 years. AKI episodes were identified and staged based on the KDIGO-AKI criteria. Cardiovascular events, including myocardial infarction, stroke, heart failure hospitalization, and cardiovascular death, were systematically recorded. The association between AKI and MACE was analyzed using a multivariable Cox model, adjusting for confounders such as demographic characteristics, medical history, and baseline kidney function. During the follow-up, 530 patients experienced at least one episode of AKI. The cumulative incidence of MACE at 1 year post-AKI was 8.1%. Patients with AKI had a significantly increased risk of MACE, with an adjusted hazard ratio (HR) of 5.78 ( P The findings of this study confirm that AKI is a significant independent predictor of MACE in CKD patients, demonstrating a strong severity\u2013response relationship. These results underscore the importance of vigilant cardiovascular monitoring and preventive strategies in CKD patients following AKI episodes. Understanding the mechanisms linking AKI to cardiovascular outcomes is crucial for developing targeted interventions to mitigate these risks.",
+              "score": ".80430412319886712691"
+            },
+            {
+              "id": "sample",
+              "content": "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+              "score": ".80097750305122561442"
+            },
+            {
+              "id": "PMC11649962",
+              "content": "Bone is a dynamic organ which continuously undergoes remodeling throughout one's lifetime. Cellular production of reactive oxygen species (ROS) is essential for regulating bone homeostasis. Osteoclasts, multinucleated giant cells differentiated from macrophage lineage, are responsible for osteolytic bone conditions which are closely linked to ROS signaling pathways. In this study, an anti\u2010ROS enzyme, peroxiredoxin 1 (Prdx1) was found to be expressed both in bone marrow macrophages and osteoclasts. Recombinant Prdx1 protein was found to dose\u2010dependently inhibit ROS production and osteoclast differentiation. Mechanistically, Prdx1 protein also attenuated NFATc1 activation as well as the expression of C\u2010Fos, V\u2010ATPase\u2010d2, Cathepsin K, and Integrin \u03b1V. Collectively, Prdx1 is a negative regulator on osteoclast formation via inhibiting RANKL\u2010mediated ROS activity, thus suggesting its potential application for treating osteoclast related disorders.",
+              "score": ".79163792803341503923"
+            }
+          ]
+        }
+      ],
+      "metrics": {
+        "p50": 974.2769002914429,
+        "p95": 1101.2218832969666,
+        "p99": 1112.5058817863464,
+        "throughput_qps": 1.0263366950316204
+      },
+      "duration_seconds": 1.9486782550811768,
+      "end_time": "2025-05-13T19:54:07.030488"
+    }
+  },
+  "comparison": {
+    "rankings": {
+      "p95": [
+        "basic_rag"
+      ],
+      "throughput_qps": [
+        "basic_rag"
+      ],
+      "p99": [
+        "basic_rag"
+      ],
+      "p50": [
+        "basic_rag"
+      ]
+    },
+    "percentage_diff": {
+      "p95": {},
+      "throughput_qps": {},
+      "p99": {},
+      "p50": {}
+    },
+    "best_technique": {
+      "retrieval_quality": null,
+      "answer_quality": null,
+      "performance": "basic_rag"
+    }
+  },
+  "benchmark_metrics": {},
+  "generated_at": "2025-05-13T19:54:07.315185",
+  "charts": [
+    {
+      "type": "radar",
+      "path": "benchmark_results/benchmark_20250513_195402/reports/radar_comparison.png"
+    },
+    {
+      "type": "bar",
+      "metric": "throughput_qps",
+      "path": "benchmark_results/benchmark_20250513_195402/reports/bar_throughput_qps.png"
+    }
+  ]
+}

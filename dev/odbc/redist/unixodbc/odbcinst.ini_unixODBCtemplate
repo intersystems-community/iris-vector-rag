@@ -1,0 +1,12 @@
+[InterSystems ODBC]
+UsageCount=1
+Driver=/usr/irissys/bin/libirisodbcu35.so
+Setup=/usr/irissys/bin/libirisodbcu35.so
+SQLLevel=1
+FileUsage=0
+DriverODBCVer=02.10
+ConnectFunctions=YYN
+APILevel=1
+DEBUG=1
+CPTimeout=<not pooled>
+

@@ -1,0 +1,12 @@
+[user]
+Driver=InterSystems ODBC
+Protocol=TCP
+Host=localhost
+Port=51773
+Namespace=USER
+UID=_system
+Password=sys
+Description=Sample namespace
+Query Timeout=0
+Static Cursors=0
+

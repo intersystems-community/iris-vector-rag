@@ -1,0 +1,31 @@
+[ODBC Data Sources] 
+SamplesSSL = SampleSSL 
+
+[SampleSSL] 
+Driver = /home/guest/iris/bin/libirisodbc35.so 
+Description = IRIS ODBC driver 
+Host = localhost 
+Namespace = SAMPLES 
+UID = _SYSTEM 
+Password = SYS 
+Port = 1972 
+Protocol = TCP 
+Query Timeout = 1 
+Static Cursors = 0 
+Trace = off 
+TraceFile = iodbctrace.log 
+Service Principal Name = iris/localhost.domain.com 
+
+# To specify an SSL connection: 
+# The environment variable ISC_SSLconfigurations must be defined 
+# for the process initiating the connection. The value of this variable 
+# must be a file that contains one or more named configurations that 
+# can be used to initiate an SSL connection. 
+# Authentication Method must be set to 2. 
+# Security Level must be set to 10. 
+# SSL Server Name must be set to the appropriate named configuration 
+# in the file specified by ISC_SSLconfigurations 
+
+Authentication Method = 2 
+Security Level = 10 
+SSL Server Name = SampleSSLConfig 

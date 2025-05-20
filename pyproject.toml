@@ -1,0 +1,130 @@
+[tool.poetry]
+name = "iris-rag-templates"
+version = "0.1.0"
+description = "A suite of RAG technique templates for InterSystems IRIS"
+authors = ["Your Name <you@example.com>"] # Placeholder, can be updated
+readme = "README.md"
+packages = [
+    { include = "common" },
+    { include = "basic_rag" },
+    { include = "hyde" },
+    { include = "crag" },
+    { include = "colbert" },
+    { include = "noderag" },
+    { include = "graphrag" },
+    { include = "eval" },
+    { include = "tests" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+# Core IRIS and ML
+# Using community driver via URL, and making it non-optional for now if testcontainers depends on it implicitly
+intersystems-iris = { url = "https://github.com/intersystems-community/intersystems-irispython/releases/download/3.9.2/intersystems_iris-3.9.2-py3-none-any.whl" }
+sqlalchemy = "^2.0.0"
+testcontainers-iris = ">=1.2.0" # Updated to newer version for connection URL fixes
+testcontainers = ">=3.7.0" # Core testcontainers library
+sentence-transformers = {version = ">=2.3,<3", optional = true} # Pinned to 2.3.x or higher, less than 3
+huggingface-hub = {version = ">=0.20,<1", optional = true} # Ensure a modern hub, but <1 to avoid breaking changes if any
+langchain = {version = "^0.1.0", optional = true} # General LLM orchestration
+# Data loading
+datasets = "^2.14.0" # For Hugging Face dataset loading
+boto3 = {version = "^1.28.0", optional = true} # For AWS S3 access (optional)
+# Evaluation
+ragas = {version = "^0.1.0", optional = true}
+# ragchecker = {version = "...", optional = true} # Add version once known/available
+evidently = {version = "^0.4.0", optional = true}
+# Graph libraries
+networkx = {version = "^3.1", optional = true}
+# Testing
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+pytest-lazy-fixture = "^0.6.3"
+# Utilities
+requests = "^2.31.0" # For potential web calls in CRAG or data loading
+python-dotenv = "^1.0.0" # For managing environment variables (API keys, configs)
+pandas = {version = "^2.0.0", optional = true} # For data handling in loader/eval
+tqdm = "^4.66.0" # For progress bars in large-scale processing
+psutil = "^5.9.0" # For memory usage monitoring in large-scale tests
+
+# Optional dependencies for specific RAG techniques or full feature set
+pytest-mock = "^3.14.0"
+matplotlib = "^3.10.3"
+pyodbc = "^5.2.0"
+[tool.poetry.extras]
+iris = ["intersystems-iris", "sqlalchemy", "testcontainers-iris"] # Added sqlalchemy and testcontainers-iris
+embeddings = ["sentence-transformers"]
+llms = ["langchain"] # Or more specific ones like langchain-openai, langchain-huggingface
+evaluation = ["ragas", "evidentlyai"] # Add ragchecker when available
+graph = ["networkx"]
+data = ["pandas", "boto3"]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.5"
+black = "^23.11.0"
+mypy = "^1.7.0"
+# For ObjectScript testing from Python, if needed later
+# pytest-xprocess = "^0.23.0" 
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 88
+select = ["E", "W", "F", "I", "UP", "PL", "PT"]
+ignore = ["E501"] # Handled by black
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+# Add paths if using src layout, e.g. mypy_path = src
+# strict = true # Consider enabling for more rigor later
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+markers = [
+    "unit: marks unit tests (isolated components with mocks)",
+    "integration: marks integration tests (multiple components)",
+    "e2e: marks tests as end-to-end tests (requires live dependencies)",
+    "performance: marks tests that evaluate performance metrics",
+    "sql_validation: marks tests that validate SQL syntax against a real IRIS instance",
+    "force_real: marks tests that should only run with real data",
+    "force_mock: marks tests that should always use mock data",
+    "real_data: marks tests that can use real data if available"
+]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "--cov=. --cov-report=term"
+
+[tool.poetry.scripts]
+test = "pytest"
+unit-tests = "pytest -m unit"
+integration-tests = "pytest -m integration"
+e2e-tests = "pytest -m e2e"
+performance-tests = "pytest -m performance"
+check-iris = "python check_iris_module.py"
+load-pmc-data = "python load_pmc_data.py"
+generate-embeddings = "python generate_embeddings.py"
+demo-rag = "python demo_real_data_rag.py"
+test-iris-connector = "pytest tests/test_iris_connector.py -v"
+test-pmc-processor = "pytest tests/test_pmc_processor.py -v"
+test-data-loader = "pytest tests/test_data_loader.py -v"
+test-real-data = "pytest -m integration"
+test-real-data-sample = "pytest tests/test_real_data_sample.py -v"
+test-graphrag-testcontainer = "python run_real_data_tests.py --techniques graphrag --verbose"
+test-with-testcontainer = "python run_real_data_tests.py --verbose"
+test-context-reduction = "run_real_data_tests:main --pmc-limit 10 --techniques graphrag --verbose"
+demo-context-reduction = "demo_context_reduction:main"
+demo-real-context-reduction = "demo_context_reduction_with_real_data:main"
+simple-context-reduction = "simple_context_reduction_demo:main"
+test-large-scale = "run_large_scale_tests:main"
+test-with-1000-docs = "run_large_scale_tests:main --document-count 1000 --techniques graphrag --verbose"
+run-all-with-1000-docs = "run_all_tests_with_1000_docs:main"
+test-1000-docs = "python -m pytest tests/test_*_with_testcontainer.py -xvs --log-cli-level=INFO --tb=short"
+run-tests = "python run_tests.py"

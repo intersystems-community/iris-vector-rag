@@ -1,0 +1,76 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "data/pmc_oas_downloaded/**": true,
+      "crag/**": false,
+      "graphrag/**": false,
+      "hyde/**": false,
+      "noderag/**": false,
+      "basic_rag/**": false
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.git": true,
+      "data/pmc_oas_downloaded/**": true,
+      "crag/**": true,
+      "graphrag/**": true,
+      "hyde/**": true,
+      "noderag/**": true
+    },
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+      "*.py": "${capture}.test.py,${capture}.spec.py,test_${capture}.py",
+      "pyproject.toml": "poetry.lock"
+    },
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+      "-xvs",
+      "tests/test_colbert.py",
+      "tests/test_compression_utils.py",
+      "tests/validate_colbert.py"
+    ],
+    "files.associations": {
+      "*.sql": "sql"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "ms-python.pytest",
+      "donjayamanne.python-extension-pack"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Python: ColBERT Validation",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/tests/validate_colbert.py",
+        "console": "integratedTerminal",
+        "justMyCode": false
+      },
+      {
+        "name": "Python: Run ColBERT Tests",
+        "type": "python",
+        "request": "launch",
+        "module": "pytest",
+        "args": [
+          "-xvs",
+          "tests/test_colbert.py"
+        ],
+        "justMyCode": false
+      }
+    ]
+  }
+}

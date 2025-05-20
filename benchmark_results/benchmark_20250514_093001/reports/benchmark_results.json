@@ -1,0 +1,68 @@
+{
+  "benchmarks": {
+    "colbert": {
+      "pipeline": "colbert",
+      "queries_run": 1,
+      "start_time": "2025-05-14T09:30:09.208954",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 507.6724170066882,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 627.6531219482422,
+        "p95": 627.6531219482422,
+        "p99": 627.6531219482422,
+        "throughput_qps": 1.5931913290180248
+      },
+      "duration_seconds": 0.6276710033416748,
+      "end_time": "2025-05-14T09:30:09.836889"
+    }
+  },
+  "comparison": {
+    "rankings": {
+      "p99": [
+        "colbert"
+      ],
+      "throughput_qps": [
+        "colbert"
+      ],
+      "p50": [
+        "colbert"
+      ],
+      "p95": [
+        "colbert"
+      ]
+    },
+    "percentage_diff": {
+      "p99": {},
+      "throughput_qps": {},
+      "p50": {},
+      "p95": {}
+    },
+    "best_technique": {
+      "retrieval_quality": null,
+      "answer_quality": null,
+      "performance": "colbert"
+    }
+  },
+  "benchmark_metrics": {},
+  "generated_at": "2025-05-14T09:30:10.087096",
+  "charts": [
+    {
+      "type": "radar",
+      "path": "benchmark_results/benchmark_20250514_093001/reports/radar_comparison.png"
+    },
+    {
+      "type": "bar",
+      "metric": "throughput_qps",
+      "path": "benchmark_results/benchmark_20250514_093001/reports/bar_throughput_qps.png"
+    }
+  ]
+}

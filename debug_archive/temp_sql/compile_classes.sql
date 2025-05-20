@@ -1,0 +1,3 @@
+-- This file is no longer needed as class compilation will be done directly
+-- from the Python script run_db_init_docker.py.
+-- Leaving it empty or deleting it from db_init.py's processing list.

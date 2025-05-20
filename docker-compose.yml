@@ -1,0 +1,52 @@
+services:
+  iris:
+    image: intersystemsdc/iris-community:latest
+    container_name: iris_odbc_test_db
+    ports:
+      - "51774:1972" # Using a different host port to avoid conflict with existing 51773
+      - "52774:52773" # Management portal
+    environment:
+      - IRISUSERNAME=SuperUser
+      - IRISPASSWORD=SYS
+    volumes:
+      - iris_mgr_data:/usr/irissys/mgr # Use a named volume for IRIS manager data
+      # Mount only the common directory to a specific path in the IRIS container
+      - ./common:/irisdev_common 
+    # It's good practice to have a healthcheck, but skipping for initial simplicity.
+    # The app will need to handle initial connection attempts if IRIS is not ready.
+    # Alternatively, an entrypoint script in the IRIS container could initialize users/schema.
+    # For now, we assume the 'test' user and schema from common/db_init.py would be
+    # created manually or by running a setup script against this container first.
+    # The test_pyodbc_driver.py uses user 'test', pass 'test'.
+    # We'll need to ensure this user is created in this IRIS instance.
+    # A simple way is to use SuperUser/SYS for the pyodbc test initially.
+    # Let's adjust test_pyodbc_driver.py to use SuperUser/SYS for this test.
+
+  app:
+    build:
+      context: .
+      dockerfile: app.Dockerfile
+    container_name: rag_app_odbc_test
+    depends_on:
+      - iris
+    volumes:
+      - .:/app # Mount current directory (project code) into /app in container
+      - /var/run/docker.sock:/var/run/docker.sock # Mount Docker socket
+    environment:
+      - PYTHONUNBUFFERED=1
+      # For test_pyodbc_driver.py to connect to the 'iris' service:
+      - IRIS_HOST=iris 
+      - IRIS_PORT=1972 # Internal Docker network port for IRIS
+      - IRIS_NAMESPACE=USER
+      - IRIS_USERNAME=SuperUser # Using SuperUser for initial test via Docker network
+      - IRIS_PASSWORD=SYS
+    # Keep the container running for exec commands
+    stdin_open: true
+    tty: true
+
+volumes:
+  iris_mgr_data: {} # Define the named volume for IRIS manager data
+
+networks:
+  default:
+    name: rag_odbc_network

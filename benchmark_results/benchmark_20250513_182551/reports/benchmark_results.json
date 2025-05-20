@@ -1,0 +1,377 @@
+{
+  "benchmarks": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T18:25:51.707207",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 25.542916999256704,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 21.757916001661215,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 20.98975000262726,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 21.84924999892246,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 22.089166996011045,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 21.853923797607422,
+        "p95": 24.855613708496094,
+        "p99": 25.407791137695312,
+        "throughput_qps": 44.472549680741196
+      },
+      "duration_seconds": 0.11242890357971191,
+      "end_time": "2025-05-13T18:25:51.820105"
+    },
+    "hyde": {
+      "pipeline": "hyde",
+      "queries_run": 5,
+      "start_time": "2025-05-13T18:25:51.820216",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 2.3252500031958334,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1.5929590008454397,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 1.485959001001902,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 1.54179099627072,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 1.3300409991643392,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 1.5480518341064453,
+        "p95": 2.186918258666992,
+        "p99": 2.304677963256836,
+        "throughput_qps": 589.5513325087147
+      },
+      "duration_seconds": 0.008481025695800781,
+      "end_time": "2025-05-13T18:25:51.828890"
+    },
+    "colbert": {
+      "pipeline": "colbert",
+      "queries_run": 5,
+      "start_time": "2025-05-13T18:25:51.828953",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "error": "name 'Callable' is not defined"
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "error": "name 'Callable' is not defined"
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "error": "name 'Callable' is not defined"
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "error": "name 'Callable' is not defined"
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "error": "name 'Callable' is not defined"
+        }
+      ],
+      "metrics": {},
+      "duration_seconds": 0.00448918342590332,
+      "end_time": "2025-05-13T18:25:51.833445"
+    },
+    "crag": {
+      "pipeline": "crag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T18:25:51.833484",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 2.1446669998113066,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1.4646670024376363,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 1.4476249998551793,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 1.3755830004811287,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 1.3401249962043948,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_context_chunks": []
+        }
+      ],
+      "metrics": {
+        "p50": 1.4519691467285156,
+        "p95": 2.021312713623047,
+        "p99": 2.131175994873047,
+        "throughput_qps": 627.3451195070148
+      },
+      "duration_seconds": 0.007970094680786133,
+      "end_time": "2025-05-13T18:25:51.841766"
+    },
+    "noderag": {
+      "pipeline": "noderag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T18:25:51.841862",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 2.3715409988653846,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1.3131670057191513,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 1.1967500031460077,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 1.275791997613851,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 1.1449169978732243,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 1.2791156768798828,
+        "p95": 2.1692276000976562,
+        "p99": 2.3394775390625,
+        "throughput_qps": 670.5093199475654
+      },
+      "duration_seconds": 0.00745701789855957,
+      "end_time": "2025-05-13T18:25:51.849555"
+    },
+    "graphrag": {
+      "pipeline": "graphrag",
+      "queries_run": 5,
+      "start_time": "2025-05-13T18:25:51.849613",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 1.8427920003887266,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 1.2326670039328746,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 1.1337499963701703,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 1.1150000063935295,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 0.9895420007524081,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": []
+        }
+      ],
+      "metrics": {
+        "p50": 1.1379718780517578,
+        "p95": 1.7282485961914062,
+        "p99": 1.826324462890625,
+        "throughput_qps": 770.6717624577392
+      },
+      "duration_seconds": 0.006487846374511719,
+      "end_time": "2025-05-13T18:25:51.856281"
+    }
+  },
+  "comparison": {
+    "rankings": {
+      "throughput_qps": [
+        "graphrag",
+        "noderag",
+        "crag",
+        "hyde",
+        "basic_rag"
+      ],
+      "p50": [
+        "graphrag",
+        "noderag",
+        "crag",
+        "hyde",
+        "basic_rag"
+      ],
+      "p95": [
+        "graphrag",
+        "crag",
+        "noderag",
+        "hyde",
+        "basic_rag"
+      ],
+      "p99": [
+        "graphrag",
+        "crag",
+        "hyde",
+        "noderag",
+        "basic_rag"
+      ]
+    },
+    "percentage_diff": {
+      "throughput_qps": {
+        "graphrag_vs_noderag": 14.938262531236205,
+        "graphrag_vs_crag": 22.84653829193003,
+        "graphrag_vs_hyde": 30.72174040864324,
+        "graphrag_vs_basic_rag": 1632.9156254593563,
+        "noderag_vs_crag": 6.880455286632365,
+        "noderag_vs_hyde": 13.732135434984183,
+        "noderag_vs_basic_rag": 1407.6925536336607,
+        "crag_vs_hyde": 6.410601573484094,
+        "crag_vs_basic_rag": 1310.6344790451406,
+        "hyde_vs_basic_rag": 1225.6521983582595
+      },
+      "p50": {
+        "graphrag_vs_noderag": 11.03448275862069,
+        "graphrag_vs_crag": 21.625615763546797,
+        "graphrag_vs_hyde": 26.490066225165563,
+        "graphrag_vs_basic_rag": 94.79282581658703,
+        "noderag_vs_crag": 11.904761904761903,
+        "noderag_vs_hyde": 17.372555059294626,
+        "noderag_vs_basic_rag": 94.14697475507843,
+        "crag_vs_hyde": 6.206684121361467,
+        "crag_vs_basic_rag": 93.35602539765661,
+        "hyde_vs_basic_rag": 92.91636665139316
+      },
+      "p95": {
+        "graphrag_vs_crag": 14.498702524180231,
+        "graphrag_vs_noderag": 20.328849028400597,
+        "graphrag_vs_hyde": 20.97333362405425,
+        "graphrag_vs_basic_rag": 93.04684802210029,
+        "crag_vs_noderag": 6.818781324188869,
+        "crag_vs_hyde": 7.572553038396965,
+        "crag_vs_basic_rag": 91.86778191305682,
+        "noderag_vs_hyde": 0.8089309465146197,
+        "noderag_vs_basic_rag": 91.27268541610712,
+        "hyde_vs_basic_rag": 91.20151172159767
+      },
+      "p99": {
+        "graphrag_vs_crag": 14.304380901239542,
+        "graphrag_vs_hyde": 20.75576319088979,
+        "graphrag_vs_noderag": 21.93451604487347,
+        "graphrag_vs_basic_rag": 92.81195105472561,
+        "crag_vs_hyde": 7.528252152791285,
+        "crag_vs_noderag": 8.903763370727889,
+        "crag_vs_basic_rag": 91.61211620749194,
+        "hyde_vs_noderag": 1.4874934776937125,
+        "hyde_vs_basic_rag": 90.9292470535245,
+        "noderag_vs_basic_rag": 90.79228286164702
+      }
+    },
+    "best_technique": {
+      "retrieval_quality": null,
+      "answer_quality": null,
+      "performance": "graphrag"
+    }
+  },
+  "benchmark_metrics": {},
+  "generated_at": "2025-05-13T18:25:52.006418",
+  "charts": [
+    {
+      "type": "radar",
+      "path": "benchmark_results/benchmark_20250513_182551/reports/radar_comparison.png"
+    },
+    {
+      "type": "bar",
+      "metric": "throughput_qps",
+      "path": "benchmark_results/benchmark_20250513_182551/reports/bar_throughput_qps.png"
+    }
+  ]
+}
