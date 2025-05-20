@@ -2,6 +2,8 @@
 
 This guide lets a capable intern—or an agentic coding assistant—take the repo from _zero ➜ fully‑tested CI_.
 
+**IMPORTANT NOTE ON STRATEGY (May 20, 2025):** Due to significant challenges encountered with automated ObjectScript class compilation, SQL projection reliability, and return value marshalling within the target Dockerized IRIS environment (as detailed in `IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`), the implementation strategy for database-side logic (such as vector search procedures) has been revised. The project will now prioritize the use of **pure SQL Stored Procedures** defined directly in `.sql` files and created during database initialization. This approach bypasses ObjectScript class compilation for these components. Relevant sections below should be interpreted with this revised strategy in mind.
+
 ## 1. Environment
 
 1. **Clone + containers**  

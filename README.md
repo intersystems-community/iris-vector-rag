@@ -2,6 +2,14 @@
 
 This repository contains implementation templates for various Retrieval Augmented Generation (RAG) techniques using InterSystems IRIS.
 
+## Current Status & Strategy Note (May 20, 2025)
+
+**This project is currently undergoing a significant refactoring of its database interaction layer.**
+
+Due to persistent challenges encountered with automated ObjectScript class compilation, SQL projection reliability, and issues with return value marshalling within the target Dockerized InterSystems IRIS environment (as detailed in `docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`), the implementation strategy for database-side logic (such as vector search procedures) has been revised.
+
+The project will now prioritize the use of **pure SQL Stored Procedures** for core database search operations. These SQL SPs will be defined directly in `.sql` files (e.g., `common/vector_search_procs.sql`) and created during database initialization. Python RAG pipelines will call these SQL Stored Procedures directly via ODBC. This change aims to improve the stability, reliability, and maintainability of the database integration components. The overall goals and RAG techniques explored remain the same.
+
 ## RAG Techniques Implemented
 
 1. **BasicRAG**: Standard embedding-based retrieval
