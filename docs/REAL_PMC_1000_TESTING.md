@@ -1,6 +1,14 @@
-# Real PMC 1000+ Document Testing
+# Real PMC 1000+ Document Testing (Supplementary Guide)
 
-This document describes the implementation of testing with 1000+ REAL PMC documents as required by the project's `.clinerules` file.
+**Note:** The primary and most up-to-date guide for all testing is [`docs/TESTING.md`](docs/TESTING.md:1). This document provides supplementary details on specific scripts and `make` targets related to 1000+ real PMC document testing, which may be alternative or older methods.
+
+## Current Testing Status & Critical Blocker
+
+**IMPORTANT:** As of May 21, 2025, full end-to-end testing with newly loaded real PMC data (especially data requiring vector embeddings) is **BLOCKED**.
+
+This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded, operations requiring these embeddings cannot be performed on newly ingested real data.
+
+Consequently, while the testing framework and some mechanisms described here are in place, their execution with real embeddings is impacted. Tests on text-based components or with mock/pre-existing embeddings may still function. For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
 
 ## Background
 
@@ -33,8 +41,8 @@ The implementation consists of several key components:
 `run_with_real_pmc_data.sh` - A shell script that automates the entire process:
 - Verifies real PMC data availability
 - Starts an IRIS container if needed
-- Loads real PMC documents into the database
-- Runs all tests with real PMC data
+- Loads real PMC documents (text content) into the database (Note: Loading of new embeddings is currently BLOCKED).
+- Runs all tests with real PMC data (Note: Tests requiring new embeddings will be impacted by the blocker).
 - Verifies compliance with project requirements
 
 ### 4. Real PMC Test Configuration

@@ -31,6 +31,17 @@ RUN curl -sS https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py && \
 # Do NOT symlink /usr/bin/python3 to python3.11, to let IRIS system scripts use their expected Python.
 RUN ln -sf /usr/bin/python3.11 /usr/bin/python
 
+# Install unixODBC for pyodbc
+RUN apt-get update && apt-get install -y --no-install-recommends unixodbc unixodbc-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Copy ODBC configuration files
+# Assumes odbcinst_docker.ini (for driver definition) and odbc.ini (for DSN definition)
+# are in the build context (project root).
+COPY odbcinst_docker.ini /etc/odbcinst.ini
+COPY odbc.ini /etc/odbc.ini
+# Ensure these files have appropriate permissions if needed, though default should be fine.
+
 # Install Poetry using python3.11's pip
 ENV POETRY_HOME="/opt/poetry"
 # You can change this to your desired Poetry version
@@ -57,7 +68,13 @@ USER irisowner
 
 # Install project dependencies using Poetry as irisowner
 # This will create a virtual environment in /home/irisowner/.cache/pypoetry/virtualenvs
+# or in /opt/app/.venv if virtualenvs.in-project is true
 RUN poetry install --no-root --no-interaction --no-ansi
+
+# Add a step to verify pyodbc installation
+USER irisowner 
+RUN poetry run python -c "import pyodbc; print('pyodbc imported successfully by poetry run after install')"
+USER root # Switch back to root for subsequent COPY operations if needed, or adjust as necessary
 
 # Copy the rest of the application code into the image
 # This should happen after USER irisowner if files need specific ownership,

@@ -1,2 +1,4 @@
--- This file is intentionally left empty as Stored Procedures are not currently being used.
--- Database search logic will be implemented directly in Python client-side SQL.
+-- This file is intentionally left without Stored Procedure or UDF definitions 
+-- due to persistent syntax errors during their creation with TO_VECTOR 
+-- and dynamic vector string handling.
+-- The RAG pipelines are currently using alternative (e.g., mock) retrieval methods.

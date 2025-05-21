@@ -1,47 +1,53 @@
-# Context Reduction Testing with Real Data
+# Context Reduction Testing with Real Data (Testcontainer Approach)
 
-This document explains how to test context reduction strategies using real PMC data with Poetry and Testcontainers.
+**Note:** For an overview of context reduction strategies, see [`docs/CONTEXT_REDUCTION_STRATEGY.md`](docs/CONTEXT_REDUCTION_STRATEGY.md:1). For general project testing, refer to [`docs/TESTING.md`](docs/TESTING.md:1). This document details a specific approach for testing context reduction strategies using Testcontainers for managing IRIS instances.
+
+## Current Testing Status & Critical Blocker
+
+**IMPORTANT:** As of May 21, 2025, testing context reduction strategies with newly loaded real PMC data that requires vector embeddings is **BLOCKED**.
+
+This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, preventing the successful loading of document embeddings. While text data can be loaded, and context reduction can be tested on text or with mock/pre-existing embeddings, full validation with new real embeddings is impacted.
+
+For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
 
 ## Overview
 
-The RAG templates project now includes a comprehensive framework for testing context reduction strategies with real data. By using testcontainers, you can:
+This document describes a framework for testing context reduction strategies using Testcontainers to spin up ephemeral IRIS database instances. This allows for:
 
-1. Spin up ephemeral IRIS database containers for testing
-2. Load real PMC medical articles as test data
-3. Measure and validate context reduction effectiveness
-4. Compare different RAG techniques against the same queries
+1. Isolated IRIS database containers for testing.
+2. Loading real PMC medical articles (text content) as test data.
+3. Measuring and validating context reduction effectiveness (potentially with mock or pre-loaded embeddings due to the blocker).
 
 ## Prerequisites
 
-- Docker installed and running
-- Poetry for dependency management
-- PMC XML files in the data directory
+- Docker installed and running.
+- Python 3.11+ environment set up with `uv` as per [`README.md`](README.md:1). Ensure your virtual environment is active.
+- PMC XML files in the data directory (e.g., `data/pmc_oas_downloaded/`).
 
 ## Installation
 
-Install the required dependencies using Poetry:
+Install `testcontainers-iris` if you intend to use this Testcontainer-based approach:
 
 ```bash
-# Add testcontainers-iris dependency
-poetry add testcontainers-iris@>=1.2.0 testcontainers@>=3.7.0
-
-# Install all dependencies
-poetry install
+# Ensure .venv is active
+uv pip install "testcontainers-iris>=1.2.0" "testcontainers>=3.7.0"
 ```
+Project dependencies should already be installed via `uv pip install -r requirements.txt` or `uv pip install .` as per [`README.md`](README.md:1).
 
-## Running Tests with Poetry
+## Running Tests
 
-The project includes several Poetry scripts to easily run the tests:
+Tests using this Testcontainer approach are typically invoked via `pytest`, targeting specific test files or markers. (The `poetry run <script_alias>` commands below are illustrative of how `pyproject.toml` might define shortcuts; direct `pytest` commands are generally preferred for clarity if aliases are not universally known).
 
 ```bash
-# Test GraphRAG with testcontainer
-poetry run test-graphrag-testcontainer
+# Example: Run tests specifically designed for context reduction with Testcontainers
+# (Assuming tests/test_context_reduction.py uses @pytest.mark.force_testcontainer or similar)
+pytest tests/test_context_reduction.py -m force_testcontainer
 
-# Test context reduction specifically
-poetry run test-context-reduction
+# Example: Run GraphRAG tests that might be set up to use Testcontainers
+pytest tests/test_graphrag.py -m force_testcontainer # Adjust marker as needed
 
-# Run all testcontainer tests
-poetry run test-with-testcontainer
+# General command to run tests marked for Testcontainers
+pytest -m force_testcontainer tests/
 ```
 
 ## Test Architecture
@@ -73,10 +79,10 @@ The `tests/utils.py` module contains:
 
 ### 4. Test Runner
 
-The `run_real_data_tests.py` script offers:
-- Selection of specific RAG techniques to test
-- Control over document sample size
-- Options for real or mock embeddings
+The `scripts_to_review/run_real_data_tests.py` script (Note: path and status to be confirmed post Phase 0 review) might offer:
+- Selection of specific RAG techniques to test with Testcontainers.
+- Control over document sample size.
+- Options for real or mock embeddings.
 
 ## Measuring Context Reduction
 
@@ -125,6 +131,6 @@ If you encounter issues:
 ## Tips for Effective Testing
 
 - Use small PMC samples during development (`TEST_PMC_LIMIT=10`)
-- Use real embeddings for accurate context testing
-- Register custom pytest markers for your testing needs
-- Use session-scoped fixtures to avoid repeated container creation
+- Use real embeddings for accurate context testing (Note: loading new real embeddings is currently BLOCKED).
+- Register custom `pytest` markers for your testing needs.
+- Use session-scoped fixtures to avoid repeated container creation when using Testcontainers.

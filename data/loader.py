@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 def load_documents_to_iris(
     connection,
     documents: List[Dict[str, Any]],
-    embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None, # Added embedding_func
+    embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
+    colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None, # For ColBERT token embeddings
     batch_size: int = 50
 ) -> Dict[str, Any]:
     """
@@ -39,85 +40,159 @@ def load_documents_to_iris(
         Dictionary with loading statistics
     """
     start_time = time.time()
-    loaded_count = 0
+    loaded_doc_count = 0
+    loaded_token_count = 0
     error_count = 0
     
     try:
         cursor = connection.cursor()
         
         # Prepare documents in batches
-        batches = [documents[i:i+batch_size] for i in range(0, len(documents), batch_size)]
+        doc_batches = [documents[i:i+batch_size] for i in range(0, len(documents), batch_size)]
         
-        logger.info(f"Loading {len(documents)} documents in {len(batches)} batches")
+        logger.info(f"Loading {len(documents)} SourceDocuments in {len(doc_batches)} batches.")
         
-        for batch_idx, batch in enumerate(batches):
-            batch_params = []
-            
-            for doc in batch:
-                # Generate embedding if function is provided
+        for batch_idx, current_doc_batch in enumerate(doc_batches):
+            source_doc_batch_params = []
+            docs_for_token_embedding = [] # Store docs in this batch for subsequent token embedding
+
+            for doc in current_doc_batch:
                 embedding_vector_str = None
                 if embedding_func:
-                    # Use abstract for embedding, or title if abstract is empty
                     text_to_embed = doc.get("abstract") or doc.get("title", "")
                     if text_to_embed:
                         embedding = embedding_func([text_to_embed])[0]
                         embedding_vector_str = f"[{','.join(map(str, embedding))}]"
                     else:
-                        logger.warning(f"Document {doc.get('pmc_id')} has no abstract or title for embedding.")
+                        logger.warning(f"Document {doc.get('pmc_id')} has no abstract or title for sentence embedding.")
                 
                 doc_params = (
                     doc.get("pmc_id"),
                     doc.get("title"),
-                    doc.get("abstract"), # text_content in DB
+                    doc.get("abstract"), 
                     json.dumps(doc.get("authors", [])),
                     json.dumps(doc.get("keywords", [])),
-                    embedding_vector_str # embedding
+                    embedding_vector_str
                 )
-                batch_params.append(doc_params)
+                source_doc_batch_params.append(doc_params)
+                docs_for_token_embedding.append(doc) # Save for token processing
             
             try:
-                # Insert batch using executemany
-                cursor.executemany(
-                    """
-                    INSERT INTO SourceDocuments
-                    (doc_id, title, text_content, authors, keywords, embedding)
-                    VALUES (?, ?, ?, ?, ?, TO_VECTOR(?))
-                    """, 
-                    batch_params
-                )
-                connection.commit()
-                loaded_count += len(batch)
+                # Dynamically build SQL for SourceDocuments based on whether embeddings are present for this batch
+                # This is tricky with executemany if not all docs in batch have embeddings.
+                # Simpler: always use TO_VECTOR(?), but if embedding_vector_str is None, it will fail.
+                # Given the consistent TO_VECTOR(?) failure, let's assume for now that if embedding_func
+                # fails (like the torch issue), we will insert NULLs for embeddings.
+                # The current source_doc_batch_params has None for embedding_vector_str if embed_func failed.
+
+                # If embedding_function was None initially, all embedding_vector_str in batch will be None.
+                # We need to use a different SQL string for that case.
                 
-                if (batch_idx + 1) % 5 == 0 or batch_idx == len(batches) - 1:
+                # Check if the first doc's embedding_vector_str is None (implies all are, due to torch error)
+                # This is a simplification; ideally, we'd handle mixed cases or prepare two batches.
+                first_doc_embedding_param = source_doc_batch_params[0][5] if source_doc_batch_params else "dummy"
+
+                if first_doc_embedding_param is None: # No sentence embeddings available for this batch
+                    sql_source_docs = """
+                    INSERT INTO RAG.SourceDocuments
+                    (doc_id, title, text_content, authors, keywords, embedding)
+                    VALUES (?, ?, ?, ?, ?, ?) 
+                    """
+                    # Parameter for embedding is already None in source_doc_batch_params
+                else: # Attempt to use TO_VECTOR (will likely fail with current driver)
+                    sql_source_docs = """
+                    INSERT INTO RAG.SourceDocuments
+                    (doc_id, title, text_content, authors, keywords, embedding)
+                    VALUES (?, ?, ?, ?, ?, TO_VECTOR(?, 'DOUBLE', 768))
+                    """
+                
+                cursor.executemany(sql_source_docs, source_doc_batch_params)
+                loaded_doc_count += len(current_doc_batch)
+                
+                # Now process and insert ColBERT token embeddings
+                if colbert_doc_encoder_func:
+                    token_embedding_batch_params = []
+                    # Check if first token_vec_str would be None (it won't be with mock encoder, but for robustness)
+                    # For now, assume colbert_doc_encoder_func always provides valid strings for TO_VECTOR
+                    # or we insert NULL if it doesn't.
+                    # The mock encoder always returns data, so token_vec_str will be a string.
+                    
+                    # Simplified: Assume if colbert_doc_encoder_func is present, it yields usable vector strings.
+                    # The TO_VECTOR issue will likely hit here too.
+                    # To bypass TO_VECTOR for tokens if it fails:
+                    # sql_token_embeddings = """INSERT INTO RAG.DocumentTokenEmbeddings (...) VALUES (?, ?, ?, ?, ?)"""
+                    # And pass None for the token_vec_str if it's problematic.
+                    # For now, let's try with TO_VECTOR and see if it also fails for tokens.
+
+                    for doc_for_tokens in docs_for_token_embedding:
+                        doc_id = doc_for_tokens.get("pmc_id")
+                        text_for_colbert = doc_for_tokens.get("abstract") or doc_for_tokens.get("title", "")
+                        if doc_id and text_for_colbert:
+                            try:
+                                token_data = colbert_doc_encoder_func(text_for_colbert)
+                                for idx, (token_text, token_vec) in enumerate(token_data):
+                                    token_vec_str = f"[{','.join(map(str, token_vec))}]"
+                                    token_embedding_batch_params.append(
+                                        (doc_id, idx, token_text[:1000], token_vec_str, "{}")
+                                    )
+                            except Exception as colbert_e:
+                                logger.error(f"Error generating ColBERT token embeddings for doc {doc_id}: {colbert_e}")
+                    
+                    if token_embedding_batch_params:
+                        # Modify parameters to insert NULL for token_embedding to avoid TO_VECTOR(?)
+                        # The 4th element in each tuple of token_embedding_batch_params is token_vec_str.
+                        # We need to change it to None and adjust the SQL.
+                        token_params_for_null_embedding = []
+                        for params_tuple in token_embedding_batch_params:
+                            # Original: (doc_id, idx, token_text, token_vec_str, metadata_json_str)
+                            # New:      (doc_id, idx, token_text, None (for embedding), metadata_json_str)
+                            token_params_for_null_embedding.append(
+                                (params_tuple[0], params_tuple[1], params_tuple[2], None, params_tuple[4])
+                            )
+
+                        sql_token_embeddings_null = """
+                        INSERT INTO RAG.DocumentTokenEmbeddings
+                        (doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
+                        VALUES (?, ?, ?, ?, ?) 
+                        """
+                        # Using token_params_for_null_embedding which has None for the embedding
+                        cursor.executemany(sql_token_embeddings_null, token_params_for_null_embedding)
+                        loaded_token_count += len(token_embedding_batch_params) # Count based on attempts
+
+                connection.commit() 
+                
+                if (batch_idx + 1) % 1 == 0 or batch_idx == len(doc_batches) - 1: # Log more frequently
                     elapsed = time.time() - start_time
-                    rate = loaded_count / elapsed if elapsed > 0 else 0
-                    logger.info(f"Loaded {loaded_count}/{len(documents)} documents ({rate:.2f} docs/sec)")
+                    rate = loaded_doc_count / elapsed if elapsed > 0 else 0
+                    logger.info(f"Loaded {loaded_doc_count}/{len(documents)} SourceDocuments. Loaded {loaded_token_count} token embeddings. ({rate:.2f} docs/sec)")
                     
             except Exception as e:
-                logger.error(f"Error loading batch {batch_idx}: {e}")
+                logger.error(f"Error loading batch {batch_idx} (SourceDocs or Tokens): {e}")
                 connection.rollback()
-                error_count += len(batch)
+                error_count += len(current_doc_batch) # Count doc errors, token errors are harder to attribute here
         
         cursor.close()
         
     except Exception as e:
-        logger.error(f"Error in document loading: {e}")
-        error_count = len(documents) - loaded_count
+        logger.error(f"Error in document loading process: {e}")
+        error_count = len(documents) - loaded_doc_count # Approximate
     
     duration = time.time() - start_time
     
     return {
         "total_documents": len(documents),
-        "loaded_count": loaded_count,
-        "error_count": error_count,
+        "loaded_doc_count": loaded_doc_count,
+        "loaded_token_count": loaded_token_count,
+        "error_count": error_count, # This primarily counts document load errors
         "duration_seconds": duration,
-        "documents_per_second": loaded_count / duration if duration > 0 else 0
+        "documents_per_second": loaded_doc_count / duration if duration > 0 else 0
     }
 
 def process_and_load_documents(
     pmc_directory: str, 
     connection=None, 
-    embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None, # Added embedding_func
+    embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
+    colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None, # Added
     limit: int = 1000, 
     batch_size: int = 50,
     use_mock: bool = False
@@ -159,7 +234,13 @@ def process_and_load_documents(
         logger.info(f"Processed {processed_count} documents")
         
         # Load documents
-        load_stats = load_documents_to_iris(connection, documents, embedding_func, batch_size) # Pass embedding_func
+        load_stats = load_documents_to_iris(
+            connection, 
+            documents, 
+            embedding_func, 
+            colbert_doc_encoder_func, # Pass ColBERT encoder
+            batch_size
+        )
         
         # Close connection if we created it
         if not conn_provided:
@@ -209,20 +290,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Process and load documents
-    # For standalone script execution, get a real embedding function
+    # For standalone script execution, get real embedding functions
     from common.utils import get_embedding_func as get_real_embedding_func
+    from common.utils import get_colbert_doc_encoder_func # Assuming this will be created
     
     real_embed_func = None
-    if not args.mock: # Only get real embedder if not mocking DB
+    real_colbert_doc_encoder_func = None
+
+    if not args.mock: # Only get real embedders if not mocking DB
         try:
             real_embed_func = get_real_embedding_func()
         except Exception as e:
-            logger.error(f"Failed to initialize real embedding function for standalone loader: {e}")
-            logger.error("Proceeding without embeddings for standalone run.")
+            logger.error(f"Failed to initialize real sentence embedding function: {e}")
+            logger.info("Proceeding without sentence embeddings for standalone run.")
+        try:
+            # This function needs to be implemented in common/utils.py
+            # It should return a function: (text: str) -> List[Tuple[str, List[float]]]
+            real_colbert_doc_encoder_func = get_colbert_doc_encoder_func() 
+        except Exception as e:
+            logger.error(f"Failed to initialize real ColBERT document encoder function: {e}")
+            logger.info("Proceeding without ColBERT token embeddings for standalone run.")
 
     stats = process_and_load_documents(
         args.dir,
-        embedding_func=real_embed_func, # Pass embedding function
+        embedding_func=real_embed_func,
+        colbert_doc_encoder_func=real_colbert_doc_encoder_func, # Pass ColBERT encoder
         limit=args.limit,
         batch_size=args.batch,
         use_mock=args.mock

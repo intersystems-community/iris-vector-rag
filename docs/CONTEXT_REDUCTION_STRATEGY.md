@@ -2,6 +2,12 @@
 
 This document outlines several strategies for reducing document context size to fit within LLM token limits, which is essential when dealing with large documents or multiple retrieved documents that exceed the context window of an LLM.
 
+## Current Project Status & Blocker Impact
+
+**IMPORTANT:** As of May 21, 2025, the ability to thoroughly test and evaluate these context reduction strategies with newly loaded real PMC data (which first requires successful embedding-based retrieval) is impacted by the main project blocker: the `TO_VECTOR`/ODBC embedding load issue. While the strategies themselves can be unit-tested, their end-to-end effectiveness with fresh real data relies on resolving this blocker.
+
+For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+
 ## The Context Size Problem
 
 Most LLMs have a limited context window (e.g., 4K, 8K, or 16K tokens). When implementing RAG:
@@ -144,6 +150,7 @@ def count_tokens(text: str) -> int:
     # Rough heuristic: 1 word ≈ 1.3 tokens
     return int(len(words) * 1.3)
 ```
+Currently, the RAG pipelines in this project may use this heuristic or a simple word count for basic token estimation. For production accuracy, integrating a specific LLM tokenizer (like `tiktoken` for OpenAI models) into the pipelines is recommended as a future refinement.
 
 In production, it's recommended to use the actual LLM's tokenizer for more accurate counts. Most LLM providers offer tokenizer libraries:
 
@@ -176,4 +183,4 @@ To evaluate context reduction strategies:
 
 ## Implementation Note
 
-These strategies are implemented in `common/context_reduction.py` and can be easily integrated into any RAG pipeline. They are tested using test cases in `tests/test_context_reduction.py`.
+These strategies are implemented in [`common/context_reduction.py`](common/context_reduction.py:1) and can be integrated into any RAG pipeline. Currently, each RAG pipeline in this project may implement a default strategy (often simple truncation) or allow for these strategies to be manually applied to the retrieved context before LLM submission. Standardized, configurable integration across all pipelines is an area for future enhancement. They are unit-tested using test cases in [`tests/test_context_reduction.py`](tests/test_context_reduction.py:1).

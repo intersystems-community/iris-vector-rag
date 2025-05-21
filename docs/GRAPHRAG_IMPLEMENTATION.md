@@ -2,6 +2,14 @@
 
 This document outlines the implementation of GraphRAG (Graph-based Retrieval Augmented Generation) in the RAG templates framework.
 
+## Current Project Status & Blocker Impact
+
+**IMPORTANT:** As of May 21, 2025, full functionality of GraphRAG with newly loaded real PMC data, particularly aspects reliant on vector embeddings (e.g., building graph structures from new embeddings, or initial seed node selection using embeddings), is **BLOCKED**.
+
+This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of document and node embeddings into the database. While the GraphRAG pipeline logic and SQL CTEs are implemented, their operation with fresh, real-data embeddings cannot be fully tested or utilized until this blocker is resolved.
+
+For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+
 ## Overview
 
 GraphRAG is an advanced retrieval technique that uses a knowledge graph structure to improve information retrieval for question answering. Unlike traditional vector search methods, GraphRAG leverages both the semantic similarity and the graph structure (relationships between entities) to find relevant information.
@@ -34,13 +42,13 @@ Our implementation leverages SQL recursive CTEs (Common Table Expressions) for e
 - Functions for initial node identification, graph traversal, and answer generation
 - Support for both mock implementations (for testing) and real database connections
 
-### 3. Demo Script (`demo_graphrag.py`)
-- Command-line interface for testing the GraphRAG pipeline
+### 3. Demo Script (`scripts_to_review/demo_graphrag.py`)
+- Command-line interface for testing the GraphRAG pipeline. (Note: This script is in `scripts_to_review/`; its canonical status should be confirmed. The main pipeline script [`graphrag/pipeline.py`](graphrag/pipeline.py:1) may also be runnable for demos if it includes an `if __name__ == '__main__':` block.)
 - Support for both single queries and sample query sets
 - Visualization of graph traversal paths
 - Pretty printing of results organized by node type
 
-### 4. Tests (`tests/test_graphrag.py`)
+### 4. Tests ([`tests/test_graphrag.py`](tests/test_graphrag.py:1))
 - Comprehensive test suite for the GraphRAG pipeline
 - Tests for each component of the pipeline
 - Both mock-based unit tests and simulated real connection tests
@@ -77,38 +85,39 @@ The GraphRAG knowledge graph is stored in two main tables:
 
 ## Recursive CTE for Graph Traversal
 
-The core of our implementation is the SQL recursive CTE that performs graph traversal:
+The core of our implementation is the SQL recursive CTE that performs graph traversal.
+**Note on Parameters in CTE:** The SQL snippet below uses placeholders like `:query_embedding_str`, `:score_decay`, `:hybrid_weight`, and `:max_depth`. The `StartNodes` subquery implies initial seed nodes are provided. Due to IRIS SQL limitations where `TO_VECTOR()` does not accept direct parameter markers, these placeholders (especially `:query_embedding_str`) are substituted with validated values when the final SQL query is constructed in the Python code (e.g., using f-strings or other string formatting). The `common/vector_sql_utils.py` module provides utilities for safe construction of such dynamic SQL.
 
 ```sql
 WITH RECURSIVE PathCTE (start_node, current_node, path, depth, score) AS (
     -- Base case: start with seed nodes from vector similarity
-    SELECT 
-        n.node_id, 
-        n.node_id, 
-        CAST(n.node_id AS VARCHAR(1000)), 
+    SELECT
+        n.node_id,
+        n.node_id,
+        CAST(n.node_id AS VARCHAR(1000)),
         0,
-        VECTOR_COSINE_SIMILARITY(n.embedding, TO_VECTOR(:query_embedding_str)) AS score
+        VECTOR_COSINE_SIMILARITY(n.embedding, TO_VECTOR(:query_embedding_str)) AS score -- :query_embedding_str is replaced by validated string literal
     FROM KnowledgeGraphNodes n
-    WHERE n.node_id IN (SELECT node_id FROM StartNodes)
+    WHERE n.node_id IN (SELECT node_id FROM StartNodes) -- StartNodes generated dynamically
     
     UNION ALL
     
     -- Recursive case: traverse connected nodes
-    SELECT 
-        p.start_node, 
-        e.target_node_id, 
+    SELECT
+        p.start_node,
+        e.target_node_id,
         p.path || ',' || e.target_node_id,
         p.depth + 1,
         -- Calculate hybrid score combining path score and direct relevance
-        p.score * :score_decay + 
+        p.score * :score_decay + -- :score_decay is replaced by validated numeric literal
         VECTOR_COSINE_SIMILARITY(
-            target_node.embedding, 
+            target_node.embedding,
             TO_VECTOR(:query_embedding_str)
-        ) * :hybrid_weight
+        ) * :hybrid_weight -- :hybrid_weight is replaced by validated numeric literal
     FROM PathCTE p
     JOIN KnowledgeGraphEdges e ON p.current_node = e.source_node_id
     JOIN KnowledgeGraphNodes target_node ON e.target_node_id = target_node.node_id
-    WHERE p.depth < :max_depth
+    WHERE p.depth < :max_depth -- :max_depth is replaced by validated integer literal
       -- Avoid cycles in traversal
       AND NOT POSITION(',' || e.target_node_id || ',' IN ',' || p.path || ',') > 0
 )
@@ -117,7 +126,9 @@ WITH RECURSIVE PathCTE (start_node, current_node, path, depth, score) AS (
 ## Usage
 
 1. **Graph Building:**
-   Before using GraphRAG, you need to build a knowledge graph:
+   Before using GraphRAG with new data, you need to build and populate the knowledge graph tables (`KnowledgeGraphNodes`, `KnowledgeGraphEdges`).
+   **Note on Embedding Loading:** Storing new `embedding` values into the `embedding VECTOR` column of `KnowledgeGraphNodes` (line 59) is currently **BLOCKED** by the `TO_VECTOR`/ODBC issue. The graph can be built with text content, but vector-based operations on new nodes will be affected.
+
    ```python
    # Example code for building a knowledge graph (simplified)
    # This would typically be done in a data loading/indexing stage
@@ -125,9 +136,10 @@ WITH RECURSIVE PathCTE (start_node, current_node, path, depth, score) AS (
    # Add nodes
    for entity in entities:
        # Create entity node
+       # Storing entity.embedding (VECTOR type) is currently problematic for new data.
        execute_sql("""
-           INSERT INTO KnowledgeGraphNodes 
-           (node_id, node_type, node_name, content, embedding) 
+           INSERT INTO KnowledgeGraphNodes
+           (node_id, node_type, node_name, content, embedding)
            VALUES (?, ?, ?, ?, ?)
        """, (entity.id, "Entity", entity.name, entity.description, entity.embedding))
    

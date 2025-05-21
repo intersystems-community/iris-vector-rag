@@ -6,7 +6,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Install Python 3.12 (default on Ubuntu 24.04), pip, venv, dev tools, ODBC prerequisites, etc.
+ARG CACHE_BUSTER_ARG_APT="cache_buster_apt_1" 
+RUN echo "Forcing rebuild of apt-get install layer with ${CACHE_BUSTER_ARG_APT}"
+
+# Install Python 3.12, pip, venv, dev tools, ODBC prerequisites
+# REMOVED python3-pyodbc from this list
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3.12 \
@@ -19,7 +23,7 @@ RUN apt-get update && \
     gcc \
     binutils \
     libssl-dev \
-    # Prerequisites for Docker CLI install
+    # Prerequisites for Docker CLI install (keeping these for completeness for now)
     apt-transport-https \
     ca-certificates \
     gnupg \
@@ -42,42 +46,37 @@ RUN ln -sf /usr/bin/python3.12 /usr/bin/python && \
     ln -sf /usr/bin/python3.12 /usr/bin/python3 && \
     ln -sf /usr/bin/pip3 /usr/bin/pip
 
-# Install Poetry using the official installer
-RUN curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH="/root/.local/bin:${PATH}"
+# Install required packages
+RUN pip install pyodbc intersystems_iris --break-system-packages --no-cache-dir && \
+    echo "--- pyodbc and intersystems_iris installed via pip --break-system-packages ---" && \
+    echo "--- Files installed by pyodbc (pip show -f pyodbc): ---" && \
+    pip show -f pyodbc && \
+    echo "--- pip show pyodbc complete ---" && \
+    echo "--- Files installed by intersystems_iris (pip show -f intersystems_iris): ---" && \
+    pip show -f intersystems_iris || echo "intersystems_iris package info not available"
 
 # Create directory for IRIS ODBC driver
 RUN mkdir -p /opt/iris_odbc_driver
 
-# Copy the IRIS ODBC driver files from the extracted kit into the image.
+# Copy the IRIS ODBC driver files
 COPY bin/libirisodbcur6435.so /opt/iris_odbc_driver/libirisodbcur6435.so
 COPY bin/irisconnect.so /opt/iris_odbc_driver/irisconnect.so
-
-# Ensure driver files are executable
 RUN chmod +x /opt/iris_odbc_driver/*.so
-
-# Set LD_LIBRARY_PATH so the system can find the IRIS ODBC driver libraries
 ENV LD_LIBRARY_PATH=/opt/iris_odbc_driver:${LD_LIBRARY_PATH}
-
-# Verify files are copied and check permissions
 RUN ls -l /opt/iris_odbc_driver/
-
-# Check dependencies of the IRIS ODBC driver
 RUN ldd /opt/iris_odbc_driver/libirisodbcur6435.so || echo "ldd command failed or driver has issues"
 
-# Copy the odbcinst.ini file (which defines the IRIS ODBC driver) into the system location
+# Copy ODBC configuration files
 COPY odbcinst_docker.ini /etc/odbcinst.ini
+COPY odbc.ini /etc/odbc.ini
 
 # Set up the application directory
 WORKDIR /app
 
-# Copy only necessary files for dependency installation first to leverage Docker cache
-COPY poetry.lock pyproject.toml ./
+# Verify pyodbc is importable by the SYSTEM Python
+RUN python -c "import pyodbc; print('pyodbc successfully imported by SYSTEM python after pip install.')"
 
-# Install project dependencies using Poetry
-RUN poetry install --no-root --no-interaction --no-ansi
-
-# Copy the rest of the application code
+# Copy application code (test script will be run directly)
 COPY . .
 
 # Default command (can be overridden by docker-compose)

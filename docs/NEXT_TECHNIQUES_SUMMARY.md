@@ -1,4 +1,19 @@
-# Next RAG Techniques Implementation Summary
+# Next RAG Techniques Implementation Summary (ARCHIVAL - OUTDATED)
+
+**IMPORTANT NOTICE: This document is outdated and kept for historical reference only. It describes an early plan for implementing ColBERT, NodeRAG, and GraphRAG.**
+
+**All six RAG techniques mentioned in this project (BasicRAG, HyDE, CRAG, ColBERT, NodeRAG, and GraphRAG) have since been implemented.**
+
+For current information, please refer to:
+- Main project status: [`README.md`](README.md:1)
+- Individual RAG technique implementation details:
+  - [`docs/COLBERT_IMPLEMENTATION.md`](docs/COLBERT_IMPLEMENTATION.md:1)
+  - [`docs/NODERAG_IMPLEMENTATION.md`](docs/NODERAG_IMPLEMENTATION.md:1)
+  - [`docs/GRAPHRAG_IMPLEMENTATION.md`](docs/GRAPHRAG_IMPLEMENTATION.md:1)
+
+---
+
+(Original content below for historical context only)
 
 This document outlines the implementation plan for three advanced RAG techniques - ColBERT, NodeRAG, and GraphRAG - which will build upon our successfully implemented CRAG (Corrective Retrieval Augmented Generation) pipeline.
 

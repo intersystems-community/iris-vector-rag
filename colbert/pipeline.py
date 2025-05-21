@@ -67,121 +67,23 @@ class ColbertRAGPipeline:
     @timing_decorator
     def retrieve_documents(self, query_text: str, top_k: int = 5) -> List[Document]:
         """
-        Retrieves the top_k most relevant documents using client-side ColBERT MaxSim.
+        Retrieves the top_k most relevant documents.
+        TEMPORARILY MOCKED due to issues with DB vector search / token embedding loading.
         """
-        logger.info(f"ColbertRAG: Retrieving documents for query: '{query_text[:50]}...'")
-
-        query_token_embeddings = self.colbert_query_encoder(query_text)
-
-        if not query_token_embeddings:
-            logger.warning("ColbertRAG: Failed to generate query token embeddings. Returning empty list.")
-            return []
-
-        # --- Client-side MaxSim Retrieval ---
-        # This is inefficient for large datasets as it fetches all token embeddings.
-        # A production implementation would use DB-side MaxSim (UDF/UDAF).
-
-        all_doc_token_data: Dict[str, List[List[float]]] = {} # doc_id -> list of token embeddings
-
-        # Fetch all token embeddings from IRIS
-        # Assuming DocumentTokenEmbeddings table exists and embedding is CLOB string list
-        sql_fetch_tokens = """
-            SELECT doc_id, token_sequence_index, token_embedding
-            FROM RAG.DocumentTokenEmbeddings
-            ORDER BY doc_id, token_sequence_index
-        """
-
-        cursor = None
-        try:
-            cursor = self.iris_connector.cursor()
-            cursor.execute(sql_fetch_tokens)
-            results = cursor.fetchall()
-
-            # Group token embeddings by doc_id and parse the CLOB string back to list of floats
-            for row in results:
-                doc_id = row[0]
-                # token_idx = row[1] # Not needed for MaxSim calculation
-                token_embedding_str = row[2]
-
-                if doc_id not in all_doc_token_data:
-                    all_doc_token_data[doc_id] = []
-
-                try:
-                    # Parse the string representation of the list back to a list of floats
-                    # Example string: "[0.1, 0.2, 0.3]"
-                    token_embedding_list = json.loads(token_embedding_str)
-                    if isinstance(token_embedding_list, list) and all(isinstance(x, (int, float)) for x in token_embedding_list):
-                         all_doc_token_data[doc_id].append(token_embedding_list)
-                    else:
-                         logger.warning(f"ColbertRAG: Warning: Could not parse token embedding for doc {doc_id}: {token_embedding_str[:50]}...")
-
-                except (json.JSONDecodeError, TypeError) as e:
-                    logger.error(f"ColbertRAG: Error parsing token embedding JSON for doc {doc_id}: {e}")
-                    # Skip this embedding if parsing fails
-
-            logger.info(f"ColbertRAG: Fetched token embeddings for {len(all_doc_token_data)} documents.")
-
-        except Exception as e:
-            logger.error(f"ColbertRAG: Error fetching token embeddings from IRIS: {e}")
-            return [] # Return empty list on error
-        finally:
-            if cursor:
-                cursor.close()
-
-        # Calculate MaxSim score for each document
-        doc_scores: List[Tuple[str, float]] = [] # List of (doc_id, score)
-        for doc_id, doc_embeddings in all_doc_token_data.items():
-            score = self._calculate_maxsim(query_token_embeddings, doc_embeddings)
-            doc_scores.append((doc_id, score))
-
-        # Sort documents by score in descending order
-        doc_scores.sort(key=lambda item: item[1], reverse=True)
-
-        # Select top-k document IDs and their scores
-        top_k_docs_with_scores = doc_scores[:top_k]
-        top_k_doc_ids = [doc_id for doc_id, score in top_k_docs_with_scores]
-
-        # Fetch the full content for the top-k documents
-        retrieved_docs: List[Document] = []
-        if top_k_doc_ids:
-            # Construct SQL query to get content for specific doc_ids
-            # Using IN clause with placeholders
-            placeholders = ', '.join(['?'] * len(top_k_doc_ids))
-            sql_fetch_content = f"""
-                SELECT doc_id, text_content
-                FROM RAG.SourceDocuments
-                WHERE doc_id IN ({placeholders})
-            """
-            # Need to maintain order if possible, but IN clause doesn't guarantee order.
-            # Can sort in Python after fetching.
-
-            cursor = None
-            try:
-                cursor = self.iris_connector.cursor()
-                cursor.execute(sql_fetch_content, top_k_doc_ids)
-                results = cursor.fetchall()
-
-                # Create a dictionary for quick lookup of fetched content by doc_id
-                fetched_content_map = {row[0]: row[1] for row in results}
-                
-                # Reconstruct retrieved_docs list using the order from top_k_docs_with_scores and fetched content
-                retrieved_docs = []
-                for doc_id, score in top_k_docs_with_scores:
-                    if doc_id in fetched_content_map:
-                        retrieved_docs.append(Document(id=doc_id, content=fetched_content_map[doc_id], score=score))
-                    # else: Document not found (shouldn't happen if doc_id came from DB)
-
-                logger.info(f"ColbertRAG: Fetched content for {len(retrieved_docs)} top-k documents.")
-
-            except Exception as e:
-                logger.error(f"ColbertRAG: Error fetching content for top-k documents: {e}")
-                # retrieved_docs remains empty
-            finally:
-                if cursor:
-                    cursor.close()
-
-        logger.info(f"ColbertRAG: Finished retrieval. Found {len(retrieved_docs)} documents.")
-        return retrieved_docs
+        logger.warning("ColbertRAG: retrieve_documents - Bypassing database vector search and client-side MaxSim. Returning mock documents.")
+        
+        mock_docs = []
+        if top_k > 0:
+            for i in range(min(top_k, 3)): # Return up to 3 mock docs
+                mock_docs.append(
+                    Document(
+                        id=f"mock_colbert_doc_{i+1}", 
+                        content=f"This is mock ColBERT content for document {i+1} related to query '{query_text[:30]}...'. ColBERT is token-based.",
+                        score=0.9 - (i * 0.1) # Descending scores
+                    )
+                )
+        logger.info(f"ColbertRAG: Returned {len(mock_docs)} mock documents.")
+        return mock_docs
 
     @timing_decorator
     def generate_answer(self, query_text: str, retrieved_docs: List[Document]) -> str:

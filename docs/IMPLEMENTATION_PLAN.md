@@ -10,6 +10,62 @@ This project has transitioned to a simplified local development setup:
 
 This approach simplifies the development loop, improves stability, and provides a clearer separation between the Python application logic and the IRIS database instance. References to older Docker setups or ObjectScript-based database logic in this document should be interpreted in light of this new strategy.
 
+## Vector Operations Limitations and Workarounds
+
+When implementing RAG pipelines with IRIS SQL vector operations, several critical limitations have been identified that affect how vector search queries must be constructed:
+
+1. **TO_VECTOR() Function Rejects Parameter Markers**
+   * The `TO_VECTOR()` function does not accept parameter markers (`?`, `:param`, or `:%qpar`)
+   * Attempting to use parameters results in SQL syntax errors like `SQLCODE -1, ") expected, : found"`
+   * This affects all embedding vector operations which are central to RAG pipelines
+
+2. **TOP/FETCH FIRST Clauses Cannot Be Parameterized**
+   * Row limit clauses (`TOP n` or `FETCH FIRST n ROWS ONLY`) reject parameter markers
+   * Attempting to use parameters results in errors like `SQLCODE -1, "Expression expected, : found"`
+   * This prevents dynamic control of result set size in vector similarity searches
+
+3. **Client Drivers Rewrite Literals**
+   * Python and JDBC drivers replace embedded literals with `:%qpar(n)` even when no parameter list is supplied
+   * This creates misleading parse errors and further complicates vector operations
+
+### Implemented Workarounds
+
+To address these limitations, the following workarounds have been implemented:
+
+1. **String Interpolation for Vector Operations**
+   * Vector queries are constructed using string interpolation (f-strings in Python)
+   * Example:
+     ```python
+     sql = f"""
+         SELECT doc_id, text_content,
+                VECTOR_COSINE(embedding, TO_VECTOR('{vector_string}', 'DOUBLE', 768)) AS score
+         FROM SourceDocuments
+         WHERE embedding IS NOT NULL
+         ORDER BY score DESC
+         FETCH FIRST {top_k} ROWS ONLY
+     """
+     cursor.execute(sql)  # No parameters passed here as all are interpolated
+     ```
+
+2. **Input Validation to Prevent SQL Injection**
+   * All interpolated values are strictly validated before inclusion in SQL:
+     ```python
+     # Ensure top_k is an integer to prevent SQL injection
+     if not isinstance(top_k, int) or top_k <= 0:
+         raise ValueError("top_k must be a positive integer.")
+         
+     # Validate vector string contains only valid characters
+     allowed_chars = set("0123456789.[],")
+     if not all(c in allowed_chars for c in vector_string):
+         raise ValueError("Invalid vector string format.")
+     ```
+
+3. **Direct SQL Execution**
+   * SQL is executed directly without parameter binding
+   * This approach is used consistently across all RAG pipelines that require vector operations
+
+These workarounds enable the RAG pipelines to function correctly while maintaining security through careful validation. The team continues to monitor for potential IRIS SQL enhancements that might address these limitations in future releases.
+
 ## 1. Environment
 
 1.  **Clone Repository & Setup IRIS Container:**

@@ -2,81 +2,95 @@
 
 This document outlines the step-by-step process for executing benchmarks on our RAG techniques implementation, analyzing the results, and comparing them against published benchmarks to validate our implementation quality.
 
+## Current Project Status & Critical Blocker
+
+**IMPORTANT:** As of May 21, 2025, the execution of this Benchmark Plan with newly loaded real PMC data (especially data requiring vector embeddings) is **BLOCKED**.
+
+A critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded, benchmarks requiring these embeddings on newly ingested real data cannot be performed.
+
+**This entire plan is contingent on the resolution of this blocker for full real-data benchmarking.** Steps involving loading and using real embeddings cannot proceed until this issue is fixed. For more details, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+
 ## Prerequisites
 
-Before beginning the benchmarking process, ensure:
+Before beginning the benchmarking process (post-blocker resolution), ensure:
 
-1. IRIS database is running and accessible
-2. At least 1000 real PMC documents have been loaded into the database
-3. All RAG technique implementations are complete and passing unit tests
-4. Required Python packages are installed (`requirements.txt` or `poetry install`)
+1. **IRIS Database**: Running and accessible (primary setup: dedicated Docker via [`docker-compose.iris-only.yml`](docker-compose.iris-only.yml:1)).
+2. **Real PMC Data**: At least 1000 real PMC documents (text content) loaded into the database. (Loading of corresponding embeddings is currently BLOCKED).
+3. **RAG Implementations**: All RAG technique implementations are complete and unit tests pass.
+4. **Python Environment**: Python 3.11+ with `uv` and all project dependencies installed (see [`README.md`](README.md:1)).
 
-## Step 1: Verify IRIS Setup
+## Step 1: Verify IRIS Setup (Post Blocker Resolution for Embeddings)
 
-**Objective**: Ensure IRIS database is properly configured with sufficient real PMC data.
+**Objective**: Ensure IRIS database is properly configured with sufficient real PMC data, including embeddings.
 
 1. **Verify IRIS connection**:
+   The primary connection method is to the dedicated IRIS Docker container. [`common/iris_connector.py`](common/iris_connector.py:1) handles this. Testcontainers are an alternative for specific scenarios.
    ```python
    from common.iris_connector import get_iris_connection
    
-   # Try direct connection first
+   # Try direct connection to dedicated Docker first
    iris_conn = get_iris_connection(use_mock=False, use_testcontainer=False)
    
-   # If direct connection fails, try testcontainer
    if iris_conn is None:
-       print("Direct connection failed, trying testcontainer...")
-       iris_conn = get_iris_connection(use_mock=False, use_testcontainer=True)
+       print("Failed to establish IRIS connection to dedicated Docker instance.")
+       # Optionally, attempt Testcontainer if that's a configured fallback for this workflow
+       # iris_conn = get_iris_connection(use_mock=False, use_testcontainer=True)
    
-   # Verify connection
    if iris_conn is None:
-       print("Failed to establish IRIS connection")
+       print("Failed to establish IRIS connection.")
        exit(1)
    else:
-       print("IRIS connection successful")
+       print("IRIS connection successful.")
    ```
 
-2. **Check document count**:
+2. **Check document count (and embeddings post-blocker)**:
    ```python
    with iris_conn.cursor() as cursor:
        cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
        count = cursor.fetchone()[0]
-       print(f"Document count: {count}")
+       print(f"Document text count: {count}")
        
        if count < 1000:
-           print("Insufficient documents. Run load_pmc_data.py to load more.")
+           print("Insufficient documents. Run scripts_to_review/load_pmc_data.py to load more text.") # Path to be confirmed
            exit(1)
+       # Add verification for embeddings once loading is unblocked
+       # E.g., SELECT COUNT(*) FROM SourceDocuments WHERE embedding IS NOT NULL
    ```
 
 3. **Verify schema**:
    ```bash
-   python test_iris_schema.py
+   # Ensure .venv is active
+   python scripts_to_review/test_iris_schema.py # (Path to be confirmed post Phase 0 review)
    ```
 
-## Step 2: Run Benchmarks with Real Data
+## Step 2: Run Benchmarks with Real Data (Post Blocker Resolution)
 
-**Objective**: Execute benchmarks for all RAG techniques using real PMC data.
+**Objective**: Execute benchmarks for all RAG techniques using real PMC data with embeddings.
 
 1. **Run benchmark with all techniques**:
    ```bash
-   python run_benchmark_demo.py --techniques basic_rag hyde colbert crag noderag graphrag --llm stub
+   # Ensure .venv is active
+   python scripts/run_rag_benchmarks.py --techniques basic_rag hyde colbert crag noderag graphrag --llm stub
    ```
 
 2. **Run benchmark with specific dataset types**:
    ```bash
+   # Ensure .venv is active
    # For medical domain queries
-   python run_benchmark_demo.py --dataset medical --llm stub
+   python scripts/run_rag_benchmarks.py --dataset medical --llm stub
    
    # For multi-hop queries that test complex reasoning
-   python run_benchmark_demo.py --dataset multihop --llm stub
+   python scripts/run_rag_benchmarks.py --dataset multihop --llm stub
    ```
 
 3. **Run with actual LLM (for production benchmarks)**:
    ```bash
+   # Ensure .venv is active
    # Using GPT-3.5 for answer generation
-   python run_benchmark_demo.py --llm gpt-3.5-turbo
+   python scripts/run_rag_benchmarks.py --llm gpt-3.5-turbo
    
    # Using GPT-4 for higher quality answers (slower)
-   python run_benchmark_demo.py --llm gpt-4
+   python scripts/run_rag_benchmarks.py --llm gpt-4
    ```
 
 ## Step 3: Generate Comparative Visualizations
@@ -92,7 +106,8 @@ The benchmark runner will automatically generate visualizations in `benchmark_re
 Additional visualizations can be generated using:
 
 ```bash
-python demo_benchmark_analysis.py
+# Ensure .venv is active
+python scripts_to_review/demo_benchmark_analysis.py # (Path to be confirmed post Phase 0 review)
 ```
 
 This will produce visualizations in `benchmark_results/demo_[timestamp]/`
@@ -141,7 +156,8 @@ This will produce visualizations in `benchmark_results/demo_[timestamp]/`
 
 3. **Re-run benchmarks**:
    ```bash
-   python run_benchmark_demo.py
+   # Ensure .venv is active
+   python scripts/run_rag_benchmarks.py
    ```
 
 4. **Compare results** with previous benchmark to verify improvements
@@ -165,11 +181,11 @@ This will produce visualizations in `benchmark_results/demo_[timestamp]/`
 
 ## Conclusion
 
-By following this benchmark execution plan, we ensure that:
+By following this benchmark execution plan (once the embedding load blocker is resolved), we aim to ensure that:
 
-1. All RAG techniques are benchmarked against real PMC data
-2. Results are compared against published benchmarks
-3. Visualizations provide clear insights into relative performance
-4. Findings drive continuous improvement of our implementations
+1. All RAG techniques are benchmarked against real PMC data with embeddings.
+2. Results are compared against published benchmarks.
+3. Visualizations provide clear insights into relative performance.
+4. Findings drive continuous improvement of our implementations.
 
-This systematic approach ensures that our RAG implementations meet high standards of quality, performance, and real-world applicability.
+This systematic approach will help ensure that our RAG implementations meet high standards of quality, performance, and real-world applicability.

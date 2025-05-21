@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   iris_db:
     image: intersystemsdc/iris-community:latest

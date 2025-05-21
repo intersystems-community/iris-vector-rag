@@ -1,3 +1,15 @@
+# IRIS SQL Vector Operations: Change Suggestions for InterSystems
+
+**Project Context:** This document outlines critical limitations and proposed changes for InterSystems IRIS SQL vector operations, identified during the "RAG Templates for InterSystems IRIS" project (May 2025). These issues significantly impact the usability of IRIS for modern AI/ML applications, particularly Retrieval-Augmented Generation (RAG).
+
+The **primary project blocker** resulting from these limitations is the inability to reliably load vector embeddings into the database using standard client drivers (like ODBC) due to the behavior of the `TO_VECTOR()` function and driver-side parameterization of literals. This prevents real-data testing and benchmarking of RAG pipelines.
+
+Addressing these suggestions would greatly enhance IRIS as a platform for vector search and AI workloads.
+
+---
+
+(Original content formatted for JIRA/ServiceNow submission starts below)
+
 Below is an expanded bug-report that you can copy-paste into JIRA / ServiceNow.
 Every numbered issue now hyperlinks (via the citation IDs) to the exact paragraph in InterSystems documentation or community posts that would have spared the experiments you tried.
 Following the report you will find (1) distilled lessons learned and (2) a punch-list of concrete doc.intersystems.com changes to request from the docs team.
@@ -65,9 +77,10 @@ The ODBC/JDBC best-practice article notes that prepared statements add quoting a
 ⸻
 
 🔴 Resulting Impact
-	•	Impossible to build safe, parameterised, server-side vector search from Python, JDBC or stored procedures.
-	•	Forces developers to concatenate un-escaped literals, blocking multi-tenant APIs and any query governed by row-level security.
-	•	RAG frameworks (ColBERT, HyDE, GraphRAG, etc.) cannot target IRIS without custom string-templating layers.
+	•	**Querying Limitations:** Impossible to build safe, parameterised, server-side vector search *queries* from Python, JDBC, or stored procedures without resorting to client-side string interpolation for vector literals and `TOP`/`FETCH` values.
+	•	**Loading Blocker (Critical):** The combination of `TO_VECTOR()` rejecting parameters (Issue 1) and client drivers parameterizing literals (Issue 4) makes it impossible to reliably load vector embeddings into IRIS tables using standard `INSERT` or `UPDATE` statements with `TO_VECTOR([literal_vector_string])` via ODBC. This is the primary blocker for the RAG Templates project.
+	•	**Security & Brittleness:** Forces developers to use string concatenation for literals in queries, increasing risks and making SQL less robust. This blocks multi-tenant APIs and queries governed by row-level security if dynamic vectors are needed.
+	•	**Framework Incompatibility:** RAG frameworks (LangChain, LlamaIndex, ColBERT, HyDE, GraphRAG, etc.) cannot easily target IRIS without custom string-templating layers and workarounds for data loading.
 
 ⸻
 
