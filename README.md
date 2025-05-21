@@ -205,24 +205,14 @@ pytest tests/test_graphrag.py
 pytest tests/
 ```
 
-## Technique Documentation
+## Full Project Documentation
 
-Each RAG technique has detailed implementation documentation:
+For a comprehensive list and description of all project documentation, including RAG technique implementations, IRIS issue analyses, testing guides, and benchmark information, please see the **[Project Documentation Index](docs/INDEX.md:1)**.
 
-- [COLBERT_IMPLEMENTATION.md](docs/COLBERT_IMPLEMENTATION.md)
-- [NODERAG_IMPLEMENTATION.md](docs/NODERAG_IMPLEMENTATION.md)
-- [GRAPHRAG_IMPLEMENTATION.md](docs/GRAPHRAG_IMPLEMENTATION.md)
-- [CONTEXT_REDUCTION_STRATEGY.md](docs/CONTEXT_REDUCTION_STRATEGY.md)
-
-### Development and Implementation Challenges
-
-The project faced and overcame several significant challenges, particularly with InterSystems IRIS vector search implementation:
-
-- [DEVELOPMENT_STRATEGY_EVOLUTION.md](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md) - Documents the evolution of our development approach and why we pivoted to client-side SQL
-- [IRIS_VECTOR_SEARCH_LESSONS.md](docs/IRIS_VECTOR_SEARCH_LESSONS.md) - Summarizes key findings and lessons learned from implementing vector search with IRIS
-- [IRIS_SQL_VECTOR_OPERATIONS.md](docs/IRIS_SQL_VECTOR_OPERATIONS.md) - Detailed documentation of IRIS SQL vector operation limitations and our implemented workarounds
-- [IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md](docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md) - Detailed postmortem on IRIS SQL stored procedure projection, caching, and automation challenges
-- [POSTMORTEM_ODBC_SP_ISSUE.md](docs/POSTMORTEM_ODBC_SP_ISSUE.md) - Specific analysis of ODBC stored procedure call and compilation issues
+Key high-level documents include:
+- **[`PLAN_STATUS.md`](PLAN_STATUS.md:1)**: Detailed project status and task breakdown.
+- **[`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md:1)**: High-level summary for project managers.
+- **[`docs/DEVELOPMENT_STRATEGY_EVOLUTION.md`](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md:1)**: Evolution of the development approach.
 
 ## IRIS SQL Vector Operations Limitations
 
