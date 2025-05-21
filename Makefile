@@ -1,157 +1,114 @@
 # Makefile for the IRIS RAG Templates project
 
-.PHONY: help start-iris stop-iris pull-iris install-py-deps load-data \
-        lint test test-unit test-e2e-metrics test-globals test-all \
-        test-1000 test-real-pmc-1000 test-all-1000-docs \
+.PHONY: help start-iris stop-iris pull-iris \
+        export-py-deps install-py-deps setup-dev-env \
+        init-db load-data setup-db \
+        lint test test-unit test-real-pmc-1000 \
         docs-check clean
 
 # Configuration
-PYTHON_INTERPRETER := poetry run python
-PIP_EXEC := poetry run pip
-PYTEST_EXEC := poetry run pytest
+# Ensure .venv is activated before running make targets that use these
+PYTHON_INTERPRETER := python
+PYTEST_EXEC := pytest
+UV_EXEC := uv
+POETRY_EXEC := poetry
 
-# Default IRIS Docker settings (can be overridden by environment variables)
-IRIS_IMAGE := intersystemsdc/iris-community:latest
-IRIS_CONTAINER_NAME ?= iris_rag_demo
-# Changed IRIS_PORT_JDBC to avoid conflict with existing 'iris' container
-IRIS_PORT_JDBC ?= 51773
-# Changed IRIS_PORT_WEB to avoid conflict with existing 'iris' container
-IRIS_PORT_WEB ?= 52774
-IRIS_USER ?= demo      # Reverted to original simpler value
-IRIS_PASSWORD ?= demo   # Reverted to original simpler value
-IRIS_NAMESPACE ?= DEMO  # Reverted to original simpler value
+# IRIS Docker settings
+IRIS_COMPOSE_FILE := docker-compose.iris-only.yml
+IRIS_SERVICE_NAME := iris_db # Service name in docker-compose.iris-only.yml
+# IRIS connection details should be managed by environment variables (see common/iris_connector.py)
+# or directly by docker-compose.iris-only.yml
 
 help:
 	@echo "Available targets:"
-	@echo "  start-iris          - Start the IRIS Docker container"
-	@echo "  stop-iris           - Stop and remove the IRIS Docker container"
-	@echo "  pull-iris           - Pull the specified IRIS Docker image"
-	@echo "  install-py-deps     - Install Python dependencies using Poetry"
-	@echo "  load-data           - Run the data loading script (eval/loader.py)"
+	@echo "  start-iris          - Start the IRIS Docker container using docker-compose"
+	@echo "  stop-iris           - Stop and remove the IRIS Docker container using docker-compose"
+	@echo "  pull-iris           - Pull the IRIS Docker image specified in $(IRIS_COMPOSE_FILE)"
+	@echo "  export-py-deps      - Export Python dependencies from pyproject.toml to requirements.txt using Poetry"
+	@echo "  install-py-deps     - Install Python dependencies from requirements.txt using uv"
+	@echo "  setup-dev-env       - Export and install Python dependencies"
+	@echo "  init-db             - Initialize IRIS database schema (requires IRIS running)"
+	@echo "  load-data           - Load PMC data into IRIS (requires IRIS running and schema initialized)"
+	@echo "  setup-db            - Initialize schema and load data (requires IRIS running)"
 	@echo "  lint                - Run linters (ruff, black, mypy)"
-	@echo "  test                - Run all tests (alias for test-all)"
-	@echo "  test-unit           - Run Python unit tests"
-	@echo "  test-1000           - Run tests with 1000+ REAL PMC documents (as required by .clinerules)"
-	@echo "  test-real-pmc-1000  - Run tests with 1000+ REAL PMC documents (alternative method)"
-	@echo "  test-e2e-metrics    - Run end-to-end metrics tests (requires IRIS running)"
-	@echo "  test-globals        - Run ObjectScript globals tests (requires IRIS running)"
-	@echo "  test-all            - Run all linting, docs, and test suites"
-	@echo "  docs-check          - Build and check documentation"
+	@echo "  test                - Run all unit tests (alias for test-unit)"
+	@echo "  test-unit           - Run Python unit tests (e.g., tests/test_basic_rag.py)"
+	@echo "  test-real-pmc-1000  - Run E2E tests with 1000+ REAL PMC documents (requires IRIS running, schema, and data)"
+	@echo "  docs-check          - Build and check documentation (placeholder)"
 	@echo "  clean               - Clean up build artifacts and __pycache__"
 
 # --- Docker Management ---
 pull-iris:
-	docker pull $(IRIS_IMAGE)
+	docker-compose -f $(IRIS_COMPOSE_FILE) pull $(IRIS_SERVICE_NAME)
 
 start-iris:
-	@if [ $$(docker ps -q -f name=$(IRIS_CONTAINER_NAME)) ]; then \
-		echo "IRIS container '$(IRIS_CONTAINER_NAME)' is already running."; \
-	else \
-		echo "Starting IRIS container '$(IRIS_CONTAINER_NAME)'..."; \
-		echo "DEBUG: IRIS_IMAGE='$(IRIS_IMAGE)'"; \
-		echo "DEBUG: Full docker command: docker run -d --name $(IRIS_CONTAINER_NAME) -p $(IRIS_PORT_JDBC):1972 -p $(IRIS_PORT_WEB):52773 -e IRISUSERNAME=$(IRIS_USER) -e IRISPASSWORD=$(IRIS_PASSWORD) -e IRISNAMESPACE=$(IRIS_NAMESPACE) $(IRIS_IMAGE)"; \
-		docker run -d --name $(IRIS_CONTAINER_NAME) \
-			-p $(IRIS_PORT_JDBC):1972 \
-			-p $(IRIS_PORT_WEB):52773 \
-			-e IRISUSERNAME=$(IRIS_USER) \
-			-e IRISPASSWORD=$(IRIS_PASSWORD) \
-			-e IRISNAMESPACE=$(IRIS_NAMESPACE) \
-			$(IRIS_IMAGE); \
-		echo "IRIS container started. Waiting a few seconds for it to initialize..."; \
-		sleep 60; \
-		echo "IRIS should be ready."; \
-	fi
+	@echo "Starting IRIS container using $(IRIS_COMPOSE_FILE)..."
+	docker-compose -f $(IRIS_COMPOSE_FILE) up -d --wait $(IRIS_SERVICE_NAME)
+	@echo "IRIS container started. Waiting a bit longer for full initialization..."
+	@sleep 15 # Adjust as needed, --wait might not be enough for full app readiness
+	@echo "IRIS should be ready. Management Portal: http://localhost:52773 (default)"
 
 stop-iris:
-	@echo "Attempting to stop and remove IRIS container '$(IRIS_CONTAINER_NAME)'..."
-	@docker stop $(IRIS_CONTAINER_NAME) > /dev/null 2>&1 || true
-	@docker rm -f $(IRIS_CONTAINER_NAME) > /dev/null 2>&1 || true
-	@echo "IRIS container '$(IRIS_CONTAINER_NAME)' stopped and removed (if it existed)."
+	@echo "Stopping and removing IRIS container defined in $(IRIS_COMPOSE_FILE)..."
+	docker-compose -f $(IRIS_COMPOSE_FILE) down -v --remove-orphans
+	@echo "IRIS container stopped and removed."
 
-# --- Dependency Management ---
+# --- Dependency Management (Host Python Environment with uv) ---
+# Assumes .venv is created and activated:
+# uv venv .venv --python python3.11
+# source .venv/bin/activate
+export-py-deps:
+	@echo "Exporting dependencies from pyproject.toml to requirements.txt using Poetry..."
+	$(POETRY_EXEC) export -f requirements.txt --output requirements.txt --without-hashes --with dev
+
 install-py-deps:
-	poetry install
+	@echo "Installing Python dependencies from requirements.txt using uv..."
+	$(UV_EXEC) pip install -r requirements.txt
 
-# --- Data Loading ---
-load-data: install-py-deps
-	@echo "Running data loader (eval/loader.py)..."
-	# $(PYTHON_INTERPRETER) eval/loader.py # Uncomment when loader.py is implemented
+setup-dev-env: export-py-deps install-py-deps
+	@echo "Python development environment setup complete (dependencies exported and installed)."
 
-# --- Linting ---
+# --- Database Setup (Host Python scripts against IRIS Docker) ---
+init-db:
+	@echo "Initializing IRIS database schema..."
+	$(PYTHON_INTERPRETER) run_db_init_local.py --force-recreate
+
+load-data:
+	@echo "Loading PMC data into IRIS (limit 1100), including ColBERT token embeddings..."
+	$(PYTHON_INTERPRETER) scripts_to_review/load_pmc_data.py --limit 1100 --load-colbert
+
+setup-db: init-db load-data
+	@echo "Database schema initialized and data loaded."
+
+# --- Linting (Host Python Environment) ---
 lint:
-	@echo "Running linters..."
-	poetry run ruff check .
-	poetry run black . --check
-	poetry run mypy .
+	@echo "Running linters (ruff, black, mypy)..."
+	$(UV_EXEC) run ruff check .
+	$(UV_EXEC) run black . --check
+	$(UV_EXEC) run mypy .
 
-# --- Testing ---
+# --- Testing (Host Python Environment against IRIS Docker) ---
+# Ensure .venv is activated (source .venv/bin/activate)
+# Ensure IRIS is running (make start-iris) and DB is set up (make setup-db) for E2E tests
+
 test-unit:
 	@echo "Running Python unit tests..."
-	$(PYTEST_EXEC) tests/ # Placeholder, adjust path if needed
+	$(PYTEST_EXEC) tests/ # Runs all tests in the tests/ directory
 
-test-1000:
-	@echo "Running tests with 1000+ REAL PMC documents..."
-	PYTEST_CONFTEST_PATH=tests/conftest_real_pmc.py poetry run pytest -xvs tests/test_minimal_real_pmc.py
-
+# This is the primary target for E2E tests with 1000+ real PMC documents
 test-real-pmc-1000:
-	@echo "Running tests with 1000+ REAL PMC documents..."
-	poetry run pytest -xvs tests/test_all_with_real_pmc_1000.py
+	@echo "Running E2E tests with 1000+ REAL PMC documents (tests/test_all_with_real_pmc_1000.py)..."
+	@echo "Ensure IRIS is running, schema initialized, and data loaded (make start-iris; make setup-db)."
+	$(PYTEST_EXEC) -xvs tests/test_all_with_real_pmc_1000.py
 
-test-all-1000-docs: test-1000 test-real-pmc-1000
-	@echo "Running comprehensive tests with 1000+ documents..."
-	./run_all_tests_with_1000_docs.sh
+# Simplified 'test' alias
+test: test-unit
 
-test-all-rag-1000:
-	@echo "Running all RAG techniques with 1000+ documents..."
-	python run_all_rag_with_1000_docs.py
-
-test-all-rag-1000-with-log:
-	@echo "Running all RAG techniques with 1000+ documents and logging results..."
-	./run_all_rag_with_1000_docs.py | tee test_output_1000docs.log
-
-test-pytest-1000:
-	@echo "Running pytest for all RAG techniques with 1000+ documents..."
-	./run_pytest_with_1000_docs.py -v
-
-verify-1000-docs:
-	@echo "Verifying all RAG techniques with 1000+ documents..."
-	./verify_1000_docs_compliance.py
-
-test-all-1000-docs-compliance:
-	@echo "Running 1000+ document compliance tests for all RAG techniques..."
-	@echo "=========================================================="
-	@echo "This ensures compliance with .clinerules requirement of at least 1000 documents"
-	@echo "=========================================================="
-	@# First run with mock data for faster testing
-	@echo "Step 1: Running with mock data for initial verification"
-	@python -m pytest -v tests/test_all_with_1000_docs.py
-	@# Then run with real PMC documents for proper compliance
-	@echo "Step 2: Running with REAL PMC documents (as required by .clinerules)"
-	@./run_real_pmc_1000_tests.py
-
-# Target to ensure tests run with real PMC data in a real database
-test-with-real-pmc-db: 
-	@echo "Running tests with real PMC data in a real database as required by .clinerules"
-	@echo "=========================================================="
-	@bash -c "sleep 1 && ./run_with_real_pmc_data.sh"
-
-test-e2e-metrics: start-iris # Ensure IRIS is running
-	@echo "Running end-to-end metrics tests..."
-	# $(PYTEST_EXEC) tests/test_*.py -m e2e_metrics # Example marker, adjust as needed
-	@echo "Note: E2E metrics tests need IRIS running and data loaded."
-
-test-globals: start-iris # Ensure IRIS is running
-	@echo "Running ObjectScript globals tests..."
-	# Placeholder: Add command to execute ObjectScript tests
-	# e.g., $(PYTHON_INTERPRETER) scripts/run_objectscript_tests.py tests/test_globals.int
-	@echo "Note: ObjectScript globals tests need IRIS running and data loaded."
-
-test: test-all
-
-test-all: lint docs-check test-unit # test-e2e-metrics test-globals
-	@echo "All primary checks and unit tests passed."
-	@echo "Note: E2E and Globals tests commented out by default in 'test-all'."
-	@echo "Run 'make test-e2e-metrics' and 'make test-globals' separately after data loading."
+# test-all is now focused on linting and unit tests for quick checks.
+# E2E tests are run separately via test-real-pmc-1000.
+test-all: lint test-unit
+	@echo "Linting and unit tests passed."
+	@echo "For E2E tests with real data, run: make test-real-pmc-1000"
 
 
 # --- Documentation ---

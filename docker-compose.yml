@@ -1,52 +1,72 @@
+version: '3.8'
+
 services:
-  iris:
+  iris-db:
     image: intersystemsdc/iris-community:latest
-    container_name: iris_odbc_test_db
+    container_name: iris_db_service # Renamed for clarity
     ports:
-      - "51774:1972" # Using a different host port to avoid conflict with existing 51773
-      - "52774:52773" # Management portal
+      - "1972:1972"   # IRIS SuperServer port (host:container)
+      - "52773:52773"  # IRIS Management Portal (host:container)
     environment:
       - IRISUSERNAME=SuperUser
       - IRISPASSWORD=SYS
+      - IRISNAMESPACE=USER
     volumes:
-      - iris_mgr_data:/usr/irissys/mgr # Use a named volume for IRIS manager data
-      # Mount only the common directory to a specific path in the IRIS container
-      - ./common:/irisdev_common 
-    # It's good practice to have a healthcheck, but skipping for initial simplicity.
-    # The app will need to handle initial connection attempts if IRIS is not ready.
-    # Alternatively, an entrypoint script in the IRIS container could initialize users/schema.
-    # For now, we assume the 'test' user and schema from common/db_init.py would be
-    # created manually or by running a setup script against this container first.
-    # The test_pyodbc_driver.py uses user 'test', pass 'test'.
-    # We'll need to ensure this user is created in this IRIS instance.
-    # A simple way is to use SuperUser/SYS for the pyodbc test initially.
-    # Let's adjust test_pyodbc_driver.py to use SuperUser/SYS for this test.
+      - iris_db_data:/usr/irissys/mgr # Named volume for IRIS data persistence
+    # Add healthcheck for IRIS if needed
+    # healthcheck:
+    #   test: ["CMD", "iris", "session", "iris", "-U", "%SYS", "'##class(%SYS.System).IsFullyUp()'"] # Example
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 5
 
   app:
     build:
       context: .
-      dockerfile: app.Dockerfile
-    container_name: rag_app_odbc_test
-    depends_on:
-      - iris
-    volumes:
-      - .:/app # Mount current directory (project code) into /app in container
-      - /var/run/docker.sock:/var/run/docker.sock # Mount Docker socket
+      dockerfile: app.Dockerfile # Use the app.Dockerfile for the Python app
+    container_name: python_app_service # Renamed for clarity
     environment:
+      # Environment variables for Python application
       - PYTHONUNBUFFERED=1
-      # For test_pyodbc_driver.py to connect to the 'iris' service:
-      - IRIS_HOST=iris 
-      - IRIS_PORT=1972 # Internal Docker network port for IRIS
-      - IRIS_NAMESPACE=USER
-      - IRIS_USERNAME=SuperUser # Using SuperUser for initial test via Docker network
-      - IRIS_PASSWORD=SYS
-    # Keep the container running for exec commands
+      - PYTHONDONTWRITEBYTECODE=1
+      # ODBC environment variables
+      - ODBCINI=/app/odbc.ini
+      - ODBCSYSINI=/app
+      # For pyodbc DSN-less connection string if DSN [IRIS] in odbc.ini (inside container) doesn't work
+      # The odbc.ini copied by app.Dockerfile should point Host to 'iris-db'
+      - IRIS_HOSTNAME_DOCKER=iris-db # Service name of the IRIS container
+      - IRIS_PORT_DOCKER=1972
+      - IRIS_NAMESPACE_DOCKER=USER
+      - IRIS_UID_DOCKER=SuperUser
+      - IRIS_PWD_DOCKER=SYS
+      # For sqlalchemy-iris connection string
+      - IRIS_CONNECTION_STRING_SQLALCHEMY=iris://SuperUser:SYS@iris-db:1972/USER
+    volumes:
+      # Use a more specific volume mount that doesn't override Python packages
+      - ./basic_rag:/app/basic_rag
+      - ./colbert:/app/colbert
+      - ./common:/app/common
+      - ./crag:/app/crag
+      - ./data:/app/data
+      - ./eval:/app/eval
+      - ./graphrag:/app/graphrag
+      - ./hyde:/app/hyde
+      - ./noderag:/app/noderag
+      - ./tests:/app/tests
+      - ./bin:/app/bin
+      - ./odbc.ini:/app/odbc.ini
+      - ./odbcinst_docker.ini:/app/odbcinst_docker.ini
+      - ./test_pyodbc_vector_ops.py:/app/test_pyodbc_vector_ops.py
+      - ./test_iris_dbapi_vector_ops.py:/app/test_iris_dbapi_vector_ops.py
+      - ./test_iris_vector_workarounds.py:/app/test_iris_vector_workarounds.py
+    depends_on:
+      - iris-db
+    # Keep the container running to allow `docker exec`
     stdin_open: true
     tty: true
 
 volumes:
-  iris_mgr_data: {} # Define the named volume for IRIS manager data
+  iris_db_data: {} # Define the named volume for the IRIS DB service
 
-networks:
-  default:
-    name: rag_odbc_network
+# All services will be on the default Docker network created for this compose file,
+# allowing them to reach each other by service name.

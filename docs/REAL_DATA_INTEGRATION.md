@@ -1,48 +1,55 @@
-# Real Data Integration Guide
+# Real Data Integration Guide (Supplementary)
 
-This document explains how to use the real IRIS database connection and process real PMC data files.
+**Note:** For general project setup, see [`README.md`](README.md:1). For an overview of all testing procedures, see [`docs/TESTING.md`](docs/TESTING.md:1). This document provides specific details on integrating and testing with real PMC data, particularly concerning the `load_pmc_data.py` script.
+
+## Current Testing Status & Critical Blocker
+
+**IMPORTANT:** As of May 21, 2025, full end-to-end testing and use of newly loaded real PMC data (especially data requiring vector embeddings) is **BLOCKED**.
+
+This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded using scripts like `load_pmc_data.py`, operations requiring these embeddings on newly ingested real data cannot be performed.
+
+For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
 
 ## Overview
 
-We've implemented a complete pipeline for processing PMC XML files and loading them into IRIS, with support for:
+This guide explains how to use a real IRIS database connection and process real PMC data files, focusing on the `scripts_to_review/load_pmc_data.py` script. The system supports:
 
 - Real IRIS database connections
 - Mock database connections for testing
 - XML processing with metadata extraction
 - Batched data loading for performance
 - Conditional test execution based on data availability
-- Poetry commands for running all components
 
 ## Prerequisites
 
-1. InterSystems IRIS instance running and accessible
-2. Environment variables configured for database connection:
-   - `IRIS_HOST`: Hostname of IRIS instance
-   - `IRIS_PORT`: Port number (default: 1972)
-   - `IRIS_NAMESPACE`: Namespace (default: USER)
-   - `IRIS_USERNAME`: Username
-   - `IRIS_PASSWORD`: Password
-3. PMC XML files stored in `data/pmc_oas_downloaded` directory (or custom location)
+1. InterSystems IRIS instance running and accessible (typically via `docker-compose.iris-only.yml up -d`).
+2. Python 3.11+ environment set up with `uv` as per [`README.md`](README.md:1). Ensure your virtual environment is active.
+3. Environment variables configured for database connection (see [`common/iris_connector.py`](common/iris_connector.py:1) or [`README.md`](README.md:1)):
+   - `IRIS_HOST`, `IRIS_PORT`, `IRIS_NAMESPACE`, `IRIS_USERNAME`, `IRIS_PASSWORD`
+4. PMC XML files stored in `data/pmc_oas_downloaded` directory (or custom location).
 
-## Processing PMC Data
+## Processing PMC Data (Text Content)
 
-Use the `load_pmc_data.py` script to process PMC XML files and load them into IRIS.
+Use the `scripts_to_review/load_pmc_data.py` script to process PMC XML files and load their text content into IRIS.
+**Note:** Loading of vector embeddings with this script is currently **BLOCKED**.
 
 ```bash
+# Ensure your .venv is active, e.g., source .venv/bin/activate
+
 # Process 1000 files (default) from the standard directory
-poetry run load-pmc-data
+python scripts_to_review/load_pmc_data.py
 
 # Process a specific number of files
-poetry run load-pmc-data --limit 500
+python scripts_to_review/load_pmc_data.py --limit 500
 
 # Process files from a custom directory
-poetry run load-pmc-data --dir path/to/pmc/files
+python scripts_to_review/load_pmc_data.py --dir path/to/pmc/files
 
 # Initialize the database schema before loading
-poetry run load-pmc-data --init-db
+python scripts_to_review/load_pmc_data.py --init-db
 
-# Use a mock connection for testing
-poetry run load-pmc-data --mock
+# Use a mock connection for testing the script's logic
+python scripts_to_review/load_pmc_data.py --mock
 ```
 
 Full options:
@@ -107,30 +114,30 @@ def test_with_adaptive_behavior(iris_connection, use_real_data):
     cursor.close()
 ```
 
-See `tests/test_real_data_sample.py` for more examples.
+See `tests/test_e2e_rag_pipelines.py` or other relevant files in `tests/` for more examples of test structure. (Note: `tests/test_real_data_sample.py` reference needs verification).
 
-## Running Tests
+## Running Tests (Refer to `docs/TESTING.md`)
 
+For general instructions on running tests, including unit tests and E2E tests (and their current limitations), please refer to the main [`docs/TESTING.md`](docs/TESTING.md:1) guide.
+
+Example `pytest` commands (ensure virtual environment is active):
 ```bash
-# Run all tests (using real data if available)
-poetry run test
+# Run all tests (respecting markers and current blockers)
+pytest tests/
 
-# Run tests that require real data (skipped if unavailable)
-poetry run pytest -m force_real
+# Run tests marked for real data (will be skipped or fail if blocker prevents setup)
+pytest -m force_real tests/
 
-# Run tests with mock data only
-poetry run pytest -m force_mock
+# Run tests specifically with mock data
+pytest -m force_mock tests/
 
-# Run a specific test file
-poetry run test-iris-connector
-poetry run test-pmc-processor
-poetry run test-data-loader
-
-# Run integration tests (can use real data if available)
-poetry run test-real-data
+# Run a specific test file (example)
+pytest tests/test_data_loader.py
+# (Note: test_iris-connector, test-pmc-processor, test-real-data are not standard pytest commands; use direct file paths or -k for specific tests)
 ```
 
-## Context Reduction Strategy
+
+## Design Principles for Real Data Testing Framework
 
 This implementation follows our context reduction strategy by:
 
@@ -153,7 +160,7 @@ When adding new tests:
 - Verify environment variables are set correctly
 - Ensure IRIS instance is running and accessible
 - Check network connectivity
-- Try running `poetry run check-iris` to verify connection
+- Try running `python scripts_to_review/check_iris_module.py` (if this script is confirmed current) to verify connection.
 
 ### XML Processing Errors
 
@@ -163,6 +170,6 @@ When adding new tests:
 
 ### Test Failures
 
-- Check if real data is available using `poetry run test-real-data`
-- Verify database schema using `poetry run load-pmc-data --init-db`
-- Ensure tests are using the correct fixtures
+- Check if real data (text) is available. Note that real embedding data loading is blocked.
+- Verify database schema using `python scripts_to_review/load_pmc_data.py --init-db`
+- Ensure tests are using the correct fixtures and respecting the current data loading limitations.

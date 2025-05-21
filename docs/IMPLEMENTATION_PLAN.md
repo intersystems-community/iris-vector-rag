@@ -2,15 +2,110 @@
 
 This guide lets a capable intern—or an agentic coding assistant—take the repo from _zero ➜ fully‑tested CI_.
 
+**IMPORTANT NOTE ON DEVELOPMENT STRATEGY (As of May 20, 2025):**
+This project has transitioned to a simplified local development setup:
+- **Python Environment:** Managed on the host machine using `uv` (a fast Python package installer and resolver) to create a virtual environment (e.g., `.venv`). Dependencies are defined in `pyproject.toml`.
+- **InterSystems IRIS Database:** Runs in a dedicated Docker container, configured via `docker-compose.iris-only.yml`.
+- **Database Interaction:** Python RAG pipelines, running on the host, interact with the IRIS database container using client-side SQL executed via the `intersystems-iris` DB-API driver. Stored procedures for vector search are no longer used; vector search SQL is constructed and executed directly by the Python pipelines. ObjectScript class compilation for these core RAG components is bypassed.
+
+This approach simplifies the development loop, improves stability, and provides a clearer separation between the Python application logic and the IRIS database instance. References to older Docker setups or ObjectScript-based database logic in this document should be interpreted in light of this new strategy.
+
+## Vector Operations Limitations and Workarounds
+
+When implementing RAG pipelines with IRIS SQL vector operations, several critical limitations have been identified that affect how vector search queries must be constructed:
+
+1. **TO_VECTOR() Function Rejects Parameter Markers**
+   * The `TO_VECTOR()` function does not accept parameter markers (`?`, `:param`, or `:%qpar`)
+   * Attempting to use parameters results in SQL syntax errors like `SQLCODE -1, ") expected, : found"`
+   * This affects all embedding vector operations which are central to RAG pipelines
+
+2. **TOP/FETCH FIRST Clauses Cannot Be Parameterized**
+   * Row limit clauses (`TOP n` or `FETCH FIRST n ROWS ONLY`) reject parameter markers
+   * Attempting to use parameters results in errors like `SQLCODE -1, "Expression expected, : found"`
+   * This prevents dynamic control of result set size in vector similarity searches
+
+3. **Client Drivers Rewrite Literals**
+   * Python and JDBC drivers replace embedded literals with `:%qpar(n)` even when no parameter list is supplied
+   * This creates misleading parse errors and further complicates vector operations
+
+### Implemented Workarounds
+
+To address these limitations, the following workarounds have been implemented:
+
+1. **String Interpolation for Vector Operations**
+   * Vector queries are constructed using string interpolation (f-strings in Python)
+   * Example:
+     ```python
+     sql = f"""
+         SELECT doc_id, text_content,
+                VECTOR_COSINE(embedding, TO_VECTOR('{vector_string}', 'DOUBLE', 768)) AS score
+         FROM SourceDocuments
+         WHERE embedding IS NOT NULL
+         ORDER BY score DESC
+         FETCH FIRST {top_k} ROWS ONLY
+     """
+     cursor.execute(sql)  # No parameters passed here as all are interpolated
+     ```
+
+2. **Input Validation to Prevent SQL Injection**
+   * All interpolated values are strictly validated before inclusion in SQL:
+     ```python
+     # Ensure top_k is an integer to prevent SQL injection
+     if not isinstance(top_k, int) or top_k <= 0:
+         raise ValueError("top_k must be a positive integer.")
+         
+     # Validate vector string contains only valid characters
+     allowed_chars = set("0123456789.[],")
+     if not all(c in allowed_chars for c in vector_string):
+         raise ValueError("Invalid vector string format.")
+     ```
+
+3. **Direct SQL Execution**
+   * SQL is executed directly without parameter binding
+   * This approach is used consistently across all RAG pipelines that require vector operations
+
+These workarounds enable the RAG pipelines to function correctly while maintaining security through careful validation. The team continues to monitor for potential IRIS SQL enhancements that might address these limitations in future releases.
+
 ## 1. Environment
 
-1. **Clone + containers**  
-   *Use `docker-compose.yml` to spin up:*
-   - `iris:2025.1` (port 1972, REST 52773)  
-   - `dev` image with Python 3.11, Node 20, Poetry, pnpm, and Chrome‑driver for e2e tests.
+1.  **Clone Repository & Setup IRIS Container:**
+    *   Clone the repository.
+    *   The InterSystems IRIS database runs in a dedicated Docker container. Start it using:
+        ```bash
+        docker-compose -f docker-compose.iris-only.yml up -d
+        ```
+    *   This uses `intersystemsdc/iris-community:latest` (or as configured in the compose file) and maps relevant ports (e.g., 1972 for DB-API, 52773 for Management Portal).
 
-2. **Python deps** – `poetry install` installs LangChain, RAGAS, RAGChecker, Evidently, etc.  
-3. **Node deps** – `pnpm install` installs LangChainJS, mg‑dbx‑napi, Playwright.
+2.  **Host Python Environment Setup (using `uv`):**
+    *   Ensure Python 3.11+ is installed on your host.
+    *   Install `uv`: `curl -LsSf https://astral.sh/uv/install.sh | sh` or `pip install uv`.
+    *   Create and activate a virtual environment:
+        ```bash
+        uv venv .venv --python python3.11 # Or your Python 3.11+ path
+        source .venv/bin/activate
+        ```
+    *   Install Python dependencies:
+        The recommended method is to use Poetry (if available, version 1.1+ for `export`) to generate a `requirements.txt` that `uv` can reliably install:
+        ```bash
+        # From activated .venv
+        poetry export -f requirements.txt --output requirements.txt --without-hashes --with dev
+        uv pip install -r requirements.txt
+        ```
+        This installs LangChain, RAGAS, `intersystems-iris` driver, `pytest`, etc.
+
+3.  **Node.js Dependencies (If Applicable):**
+    *   If the project includes Node.js components (e.g., for a frontend or specific e2e testing tools not covered by Python Playwright):
+        ```bash
+        # pnpm install # Or npm install / yarn install
+        ```
+    *   This step might not be necessary if all development and testing can be done via the Python host environment.
+
+4.  **Initialize Database Schema & Load Data:**
+    *   From the activated host Python virtual environment:
+        ```bash
+        python run_db_init_local.py --force-recreate
+        python load_pmc_data.py --limit 1100 # Adjust limit as needed
+        ```
 
 ## 2. Data & Index Build (TDD)
 
@@ -18,9 +113,9 @@ This guide lets a capable intern—or an agentic coding assistant—take the rep
 |-----------|-----------------|
 | `tests/test_loader.py` | CSVs ingest without errors; table row counts match source. |
 | `tests/test_index_build.py` | Each HNSW index exists (`INFORMATION_SCHEMA.INDEXES`) and build time < N sec. |
-| `tests/test_token_vectors.py` | Token‑level ColBERT vectors stored and compressed ratio ≤ 2×. |
+| `tests/test_token_vectors.py` | Token‑level ColBERT vectors stored in `RAG.DocumentTokenEmbeddings` and compressed ratio ≤ 2×. |
 
-Use fixtures to measure elapsed build time (`%SYSTEM.Process` in ObjectScript).
+Elapsed build times for data loading or IRIS-side indexing can be measured using Python's `time` module or IRIS SQL monitoring tools if necessary. Direct ObjectScript calls like `%SYSTEM.Process` are not part of the Python-centric workflow.
 
 ## 3. Pipeline Correctness
 
@@ -119,8 +214,8 @@ The implementation includes functions for calculating:
 1. **Warm‑up 100 queries** to stabilize caches and initial performance variations  
 2. **Run 1000-query benchmark** with mixed query lengths and complexities  
 3. **Capture detailed metrics** for each pipeline:
-   - IRIS performance: `%SYSTEM.Performance.GetMetrics()`  
-   - Python performance: time series measurements  
+   - Python-side performance: time series measurements for pipeline execution, retrieval, and generation steps.
+   - IRIS database performance: Can be monitored using IRIS-native tools (e.g., SQL Monitor, Management Portal) if deep database-level analysis is required. Direct calls to `%SYSTEM.Performance.GetMetrics()` from Python are not part of this workflow.
 4. **Compare techniques** across all metrics
 5. **Emit reports** in JSON, Markdown, and HTML visualization formats
 
@@ -128,6 +223,7 @@ The implementation includes functions for calculating:
 
 ```bash
 # Command to run comparative benchmark of all techniques
+# (Ensure your host Python virtual environment is activated)
 python -m eval.bench_runner \
   --comparative \
   --pipelines basic_rag,hyde,crag,colbert,noderag,graphrag \
@@ -159,12 +255,11 @@ Sample query format in JSON:
 
 Fail the job if P95 > SLA or recall drops below minimum thresholds.
 
-## 5. Graph Globals Layer
+## 5. Graph Data Layer (SQL Tables)
 
-*ObjectScript unit tests* (`tests/test_globals.int`):
-
-- Assert global `^rag("out",src,dst,rtype)` contains ≥ edges.  
-- Round‑trip conversion to `kg_edges` SQL view matches count.  
+The knowledge graph is stored in SQL tables (`RAG.KnowledgeGraphNodes`, `RAG.KnowledgeGraphEdges`).
+Tests for graph data integrity or specific graph properties would be implemented as Python tests querying these SQL tables via DB-API.
+(Previously, this section referred to ObjectScript unit tests and direct global access, which is no longer the primary interaction model for RAG pipelines.)
 
 ## 6. Lint & Static Analysis
 

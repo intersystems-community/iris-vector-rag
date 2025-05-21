@@ -1,6 +1,14 @@
 # RAG Benchmarking Datasets and Reference Results
 
-This document outlines key datasets and published results for benchmarking Retrieval-Augmented Generation (RAG) systems. These can be used to compare our project's performance against established benchmarks.
+This document outlines key datasets and published results for benchmarking Retrieval-Augmented Generation (RAG) systems. These can serve as a reference for comparing our project's performance against established benchmarks, once full real-data benchmarking is possible.
+
+## Current Project Status & Blocker Impact
+
+**IMPORTANT:** As of May 21, 2025, performing comprehensive benchmarks of this project's RAG techniques against these external datasets using newly loaded real PMC data (with embeddings) is **BLOCKED**.
+
+This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of document embeddings. Benchmarking is contingent on resolving this blocker. For more details, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+
+The information below is for reference and future use once the blocker is addressed.
 
 ## MultiHopQA
 
@@ -101,10 +109,10 @@ To compare our RAG techniques against these published benchmarks:
    - Create query sets based on real examples from these datasets
    - For MultiHopQA, use our MultiHop query template in the benchmarking script
 
-2. **Metric Alignment**:
-   - Implement F1 score calculation for answer quality
-   - Add ROUGE-N metrics for summary-based answers
-   - Calculate precision/recall for fact retrieval
+2. **Metric Alignment**: (Note: The `eval/metrics.py` module contains implementations for several standard RAG metrics. Full validation and application of these metrics with real data are pending blocker resolution.)
+   - Ensure F1 score calculation for answer quality is robust.
+   - Ensure ROUGE-N metrics for summary-based answers are available.
+   - Ensure precision/recall for fact retrieval can be calculated.
 
 3. **Reporting Format**:
    - Include comparison to published benchmarks in reports
@@ -114,16 +122,17 @@ To compare our RAG techniques against these published benchmarks:
    - For biomedical domain, emphasize BioASQ and PubMedQA comparisons
    - For multi-hop reasoning, focus on MultiHopQA metrics
 
-## Using This Information
+## Using This Information (Post Blocker Resolution)
 
-When running benchmarks with the `run_benchmark_demo.py` script:
+When running benchmarks with the canonical [`scripts/run_rag_benchmarks.py`](scripts/run_rag_benchmarks.py:1) script:
 
 ```bash
+# Ensure .venv is active
 # For standard medical queries
-python run_benchmark_demo.py --dataset medical
+python scripts/run_rag_benchmarks.py --dataset medical
 
 # For multi-hop reasoning evaluation (comparable to MultiHopQA)
-python run_benchmark_demo.py --dataset multihop
+python scripts/run_rag_benchmarks.py --dataset multihop
 ```
 
-The generated reports will include comparisons to the reference results where applicable.
+The generated reports (once real-data benchmarking is possible) are intended to include comparisons to these reference results where applicable.

@@ -1,0 +1,46 @@
+{
+  "timestamp": "20250521_133646",
+  "database": {
+    "version": "Unknown",
+    "namespace": "USER"
+  },
+  "tables": {
+    "SourceDocuments": {
+      "exists": false
+    },
+    "DocumentTokenEmbeddings": {
+      "exists": false
+    },
+    "RAG.SourceDocuments": {
+      "exists": true,
+      "row_count": 1100,
+      "columns": [
+        "doc_id",
+        "title",
+        "text_content",
+        "abstract",
+        "authors",
+        "keywords",
+        "embedding"
+      ],
+      "with_embedding": 0,
+      "without_embedding": 1100
+    },
+    "RAG.DocumentTokenEmbeddings": {
+      "exists": true,
+      "row_count": 91927,
+      "columns": [
+        "doc_id",
+        "token_sequence_index",
+        "token_text",
+        "token_embedding",
+        "metadata_json"
+      ]
+    }
+  },
+  "sample_documents": [],
+  "vector_search_test": {
+    "error": "get_embedding_func() got an unexpected keyword argument 'mock'",
+    "success": false
+  }
+}

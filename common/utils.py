@@ -2,7 +2,7 @@
 
 import time
 from dataclasses import dataclass, field
-from typing import List, Callable, Any, Optional, Dict # Added Dict
+from typing import List, Callable, Any, Optional, Dict, Tuple # Added Tuple
 import sqlalchemy
 import os
 import logging # Added for logger usage in get_llm_func
@@ -172,6 +172,32 @@ def get_llm_func(provider: str = "openai", model_name: str = "gpt-3.5-turbo", **
         return str(response)
 
     return query_llm
+
+# --- ColBERT Specific Encoders ---
+# Placeholder for actual ColBERT model loading and encoding
+# For now, a mock function.
+# A real implementation would use a ColBERT checkpoint.
+# Expected output for loader: List[Tuple[str, List[float]]] -> [(token_text, token_embedding_vector), ...]
+def get_colbert_doc_encoder_func(model_name: str = "stub_colbert_doc_encoder") -> Callable[[str], List[Tuple[str, List[float]]]]:
+    """
+    Returns a mock ColBERT document encoder function.
+    Takes a text string, "tokenizes" it, and returns mock token embeddings.
+    """
+    logger.info(f"Using mock ColBERT document encoder: {model_name}")
+
+    def mock_colbert_doc_encode(text: str) -> List[Tuple[str, List[float]]]:
+        tokens = text.split()[:100] # Limit to first 100 mock tokens
+        if not tokens:
+            return []
+        
+        token_embeddings_data = []
+        for i, token_str in enumerate(tokens):
+            # Create a simple mock embedding based on token index and length
+            mock_embedding = [( (i % 10) + len(token_str) % 10 ) * 0.01] * 128 # 128-dim
+            token_embeddings_data.append((token_str, mock_embedding))
+        return token_embeddings_data
+
+    return mock_colbert_doc_encode
 
 
 def get_iris_connector(db_url: Optional[str] = None) -> sqlalchemy.engine.base.Connection:

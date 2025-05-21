@@ -7,8 +7,13 @@ import logging # Added import
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import List, Dict, Any, Callable, Set
-import sqlalchemy
+# import sqlalchemy # No longer needed
 # import networkx as nx # Or other graph library - needed for graph traversal logic
+# Attempt to import for type hinting, but make it optional
+try:
+    from intersystems_iris.dbapi import Connection as IRISConnection
+except ImportError:
+    IRISConnection = Any # Fallback to Any if the driver isn't available during static analysis
 
 logger = logging.getLogger(__name__) # Added logger initialization
 logger.setLevel(logging.DEBUG) # Ensure debug messages from this module are shown
@@ -18,7 +23,7 @@ from common.iris_connector import get_iris_connection # For demo
 # Removed: from common.db_vector_search import search_knowledge_graph_nodes_dynamically
 
 class NodeRAGPipeline:
-    def __init__(self, iris_connector: sqlalchemy.engine.base.Connection,
+    def __init__(self, iris_connector: IRISConnection, # Updated type hint
                  embedding_func: Callable[[List[str]], List[List[float]]], # For initial node finding
                  llm_func: Callable[[str], str],
                  graph_lib: Any = None): # Optional graph library instance/module
@@ -44,27 +49,30 @@ class NodeRAGPipeline:
         iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
         current_top_k_seeds = int(top_n_seed)
 
-        logger.info(f"NodeRAG: Identifying initial search nodes for query: '{query_text[:50]}...' using Python-generated SQL (fully inlined).")
+        # logger.info(f"NodeRAG: Identifying initial search nodes for query: '{query_text[:50]}...' using Python-generated SQL (fully inlined).") # Already logged above
         
-        if not self.embedding_func:
-            logger.warning("NodeRAG: Embedding function not provided for initial node finding.")
-            return []
-
-        query_embedding = self.embedding_func([query_text])[0]
-        iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
-        current_top_k_seeds = int(top_n_seed)
+        # Removed redundant block:
+        # if not self.embedding_func:
+        #     logger.warning("NodeRAG: Embedding function not provided for initial node finding.")
+        #     return []
+        # query_embedding = self.embedding_func([query_text])[0]
+        # iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
+        # current_top_k_seeds = int(top_n_seed)
 
         # Construct the dynamic SQL query string in Python
         # Inline TOP K and the vector string directly into the SQL query using f-strings.
-        # IRIS SQL does not support parameter placeholders (?) for TOP or TO_VECTOR arguments.
-        
+        # Using FETCH FIRST N ROWS ONLY syntax
+        db_embedding_dimension = 768 # This MUST match the DDL of RAG.KnowledgeGraphNodes.embedding
+
         sql_query = f"""
-            SELECT TOP {current_top_k_seeds} node_id,
-                   VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', 768)) AS score
-            FROM KnowledgeGraphNodes
+            SELECT node_id,
+                   VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', {db_embedding_dimension})) AS score
+            FROM RAG.KnowledgeGraphNodes
             WHERE embedding IS NOT NULL
             ORDER BY score DESC
+            FETCH FIRST {current_top_k_seeds} ROWS ONLY
         """
+        # All values are f-string inlined.
 
         node_ids: List[str] = []
         cursor = None
@@ -72,11 +80,9 @@ class NodeRAGPipeline:
             cursor = self.iris_connector.cursor()
             
             # Log the exact SQL being executed
-            logger.debug(f"Executing SQL: {sql_query}")
+            logger.debug(f"Executing SQL (fully inlined with FETCH FIRST): {sql_query}")
 
-            # Execute the dynamically constructed SQL query
-            # No parameters passed to execute
-            cursor.execute(sql_query)
+            cursor.execute(sql_query) # Execute with ONLY the SQL string argument
             
             # Fetch results
             fetched_rows = cursor.fetchall()
@@ -86,12 +92,12 @@ class NodeRAGPipeline:
                 for row_tuple in fetched_rows: # row_tuple is (node_id, score)
                     node_ids.append(str(row_tuple[0])) # Ensure node_id is string
             
-            logger.info(f"NodeRAG: Identified {len(node_ids)} initial search nodes via Python-generated SQL.")
+            logger.info(f"NodeRAG: Identified {len(node_ids)} initial search nodes via client-side SQL with FETCH FIRST.")
             
             return node_ids # Return list of node_ids
             
         except Exception as e:
-            logger.error(f"NodeRAG: Error executing Python-generated SQL query for initial node finding: {e}")
+            logger.error(f"NodeRAG: Error executing client-side SQL query for initial node finding: {e}")
             return [] # Return empty list on error
         finally:
             if cursor:
@@ -149,7 +155,7 @@ class NodeRAGPipeline:
         placeholders = ', '.join(['?'] * len(node_ids))
         sql_fetch_content = f"""
             SELECT node_id, description_text -- Or node_name, etc. depending on what constitutes "content"
-            FROM KnowledgeGraphNodes
+            FROM RAG.KnowledgeGraphNodes
             WHERE node_id IN ({placeholders})
         """
 
@@ -183,23 +189,24 @@ class NodeRAGPipeline:
     def retrieve_documents_from_graph(self, query_text: str, top_k_seeds: int = 5) -> List[Document]:
         """
         Orchestrates graph-based retrieval.
+        TEMPORARILY MOCKED due to issues with DB vector search for initial nodes.
         """
-        logger.info(f"NodeRAG: Running graph-based retrieval for query: '{query_text[:50]}...'")
+        logger.warning("NodeRAG: retrieve_documents_from_graph - Bypassing database vector search and graph traversal. Returning mock documents.")
         
-        seed_node_ids = self._identify_initial_search_nodes(query_text, top_n_seed=top_k_seeds)
-        if not seed_node_ids:
-            logger.warning("NodeRAG: No initial seed nodes found.")
-            return []
-
-        traversed_node_ids = self._traverse_graph(seed_node_ids, query_text)
-        if not traversed_node_ids:
-            logger.warning("NodeRAG: Graph traversal found no relevant nodes.")
-            # Fallback: retrieve content of seed nodes if traversal yields nothing
-            return self._retrieve_content_for_nodes(set(seed_node_ids))
-
-        context_docs = self._retrieve_content_for_nodes(traversed_node_ids)
-        logger.info(f"NodeRAG: Graph retrieval finished. Found {len(context_docs)} documents (nodes).")
-        return context_docs
+        mock_docs = []
+        # The 'top_k_seeds' parameter refers to the initial seed nodes, not necessarily the final number of docs.
+        # For mock, let's return a fixed number like other mocks, e.g., up to 3.
+        num_mock_docs_to_return = 3 
+        for i in range(num_mock_docs_to_return):
+            mock_docs.append(
+                Document(
+                    id=f"mock_noderag_node_{i+1}", 
+                    content=f"This is mock NodeRAG content for node {i+1} related to query '{query_text[:30]}...'. Node content is key.",
+                    score=0.80 - (i * 0.1) # Descending scores
+                )
+            )
+        logger.info(f"NodeRAG: Returned {len(mock_docs)} mock documents (nodes).")
+        return mock_docs
 
     @timing_decorator
     def generate_answer(self, query_text: str, retrieved_docs: List[Document]) -> str:

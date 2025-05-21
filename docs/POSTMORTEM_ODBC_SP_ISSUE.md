@@ -1,8 +1,12 @@
-# Postmortem: ODBC Stored Procedure Call and Compilation Issues
+# Postmortem: ODBC Stored Procedure Call and Compilation Issues (IRIS 2024.1.2)
 
-This document summarizes the extensive troubleshooting process undertaken to enable a Python application to reliably call an InterSystems IRIS ObjectScript class method projected as an SQL stored procedure, particularly focusing on automated class compilation and SQL projection visibility within a Dockerized environment.
+**Context:** This document details troubleshooting related to Stored Procedure (SP) calls, ObjectScript class compilation, and SQL projection, primarily experienced with InterSystems IRIS version 2024.1.2. These challenges significantly influenced the project's decision to pivot from SP-based RAG logic to a client-side SQL approach (see [`docs/DEVELOPMENT_STRATEGY_EVOLUTION.md`](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md:1)).
 
-## Initial Problem Statement
+While this postmortem focuses on SP development issues, the project's current primary blocker (as of May 2025, with IRIS 2025.1) is a related but distinct issue concerning `TO_VECTOR()`/ODBC limitations when loading vector embeddings, detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+
+This document summarizes the troubleshooting for SPs, focusing on automated class compilation and SQL projection visibility within a Dockerized environment using IRIS 2024.1.2.
+
+## Initial Problem Statement (with Stored Procedures)
 
 The primary goal was to call an SQL stored procedure, `RAG.VSU_SearchDocsV3` (projected from `RAG.VectorSearchUtils.SearchSourceDocuments`), from a Python script using `pyodbc`. The initial attempts resulted in a `[SQLCODE: <-460>:<General error>]` from the ODBC driver, indicating the procedure was likely found by name but failed during preparation or execution.
 

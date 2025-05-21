@@ -19,9 +19,9 @@ This report outlines a series of reproducible failures encountered during a proj
 
 These are not isolated bugs but appear to be systemic issues that create a hostile and inefficient development experience. This document provides a timeline of failures, identifies root causes, details workarounds, and proposes JIRA bug reports for InterSystems.
 
-**IRIS Version Encountered:** `IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) Thu Oct 3 2024 14:29:04 EDT`
+**IRIS Version Context:** The issues detailed in this postmortem, primarily concerning SQL Stored Procedure projection, ObjectScript class compilation, and caching, were encountered with `IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U)`. While these issues significantly influenced the project's pivot to client-side SQL, the project later targeted IRIS 2025.1 for its native vector search capabilities. IRIS 2025.1 introduced a separate set of challenges related to the `TO_VECTOR()` function and ODBC driver behavior, which became the primary blocker for real-data testing (see [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1)). It is presumed that many of the SP-related issues identified here could persist in newer versions if not specifically addressed by InterSystems.
 
-## Detailed Timeline of Failures & Attempts
+## Detailed Timeline of Failures & Attempts (with IRIS 2024.1.2)
 
 The core task involved calling an SQL stored procedure, `RAG.VSU_SearchDocsV3` (projected from `RAG.VectorSearchUtils.SearchSourceDocuments`), from Python using `pyodbc`.
 
@@ -135,9 +135,11 @@ A complex sequence of `Do $System.OBJ.Delete(...)`, `PURGE CACHED QUERIES`, `Do 
 
 ## Conclusion: A Call for Improved Developer Experience
 
-The journey documented in this report highlights significant friction points in the InterSystems IRIS developer experience. These are not issues of misunderstanding documented features but rather encounters with unexpected, undocumented, or seemingly buggy behavior of the platform, particularly concerning the reliability of its ObjectScript-to-SQL projection mechanisms within modern containerized development workflows. While IRIS is a powerful platform, these problems can lead to an excessive amount of time spent on debugging environment and tooling quirks rather than application logic.
+The journey documented in this report highlights significant friction points in the InterSystems IRIS developer experience, particularly with IRIS 2024.1.2 concerning the reliability of its ObjectScript-to-SQL projection mechanisms in containerized workflows. These are not issues of misunderstanding documented features but rather encounters with unexpected platform behavior. While IRIS is a powerful platform, these problems can lead to excessive time spent on debugging environment and tooling quirks.
 
-The "ghosts" of stale procedures and inexplicable compiler errors are not conducive to efficient development or robust automation. We urge InterSystems to investigate these areas thoroughly and prioritize fixes that lead to a more predictable, reliable, and debuggable development lifecycle for SQL-projected ObjectScript procedures. Until then, developers may indeed feel they are "one typo away from a haunted database."
+The "ghosts" of stale procedures and inexplicable compiler errors prompted the project's shift away from Stored Procedures for RAG logic. While this pivot mitigated these specific issues, the project subsequently encountered a different primary blocker with IRIS 2025.1 related to `TO_VECTOR()` and ODBC driver behavior when trying to load vector embeddings for real-data testing (detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1)).
+
+We urge InterSystems to investigate the SP projection and compilation issues thoroughly for overall platform stability and developer experience. Addressing both these foundational issues and the specific vector function limitations is crucial for IRIS to be a robust platform for modern AI/ML applications.
 
 ## References
 

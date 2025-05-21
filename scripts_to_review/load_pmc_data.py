@@ -6,10 +6,18 @@ This script processes PMC XML files and loads them into the IRIS database.
 It serves as a command-line interface to the data loader module.
 """
 
-import argparse
-import logging
 import os
 import sys
+
+# Add project root to sys.path to allow importing 'data' and 'common' packages
+# This is necessary because this script is in a subdirectory.
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+import argparse
+import logging
+# 'os' and 'sys' were imported above for path manipulation
 import time
 from typing import Dict, Any
 
@@ -77,6 +85,12 @@ def parse_args() -> argparse.Namespace:
         default="INFO", 
         help="Set logging level"
     )
+
+    parser.add_argument(
+        "--load-colbert",
+        action="store_true",
+        help="Generate and load ColBERT token embeddings into RAG.DocumentTokenEmbeddings"
+    )
     
     return parser.parse_args()
 
@@ -99,7 +113,32 @@ def main() -> int:
     if not connection:
         logger.error("Failed to establish database connection")
         return 1
-    
+
+    # Get embedding functions
+    # Standard sentence embedding function
+    from common.utils import get_embedding_func
+    embedding_function = None
+    if not args.mock: # Only get real embedder if not mocking DB
+        try:
+            embedding_function = get_embedding_func() # Uses default model
+        except Exception as e:
+            logger.error(f"Failed to initialize sentence embedding function: {e}")
+            logger.info("Proceeding without sentence embeddings.")
+
+    # ColBERT document token encoder function (optional)
+    colbert_doc_encoder_function = None
+    if args.load_colbert and not args.mock:
+        try:
+            from common.utils import get_colbert_doc_encoder_func
+            colbert_doc_encoder_function = get_colbert_doc_encoder_func() # Uses mock for now
+            logger.info("ColBERT document encoder function loaded (mock).")
+        except Exception as e:
+            logger.error(f"Failed to initialize ColBERT document encoder function: {e}")
+            logger.info("Proceeding without ColBERT token embeddings.")
+    elif args.load_colbert:
+        logger.info("ColBERT loading requested but using mock DB, so ColBERT encoder will not be used by loader.")
+
+
     try:
         # Initialize database if requested
         if args.init_db:
@@ -108,8 +147,10 @@ def main() -> int:
         
         # Process and load documents
         stats = process_and_load_documents(
-            args.dir,
+            pmc_directory=args.dir,
             connection=connection,
+            embedding_func=embedding_function, # Pass sentence embedder
+            colbert_doc_encoder_func=colbert_doc_encoder_function, # Pass ColBERT doc encoder
             limit=args.limit,
             batch_size=args.batch
         )
@@ -118,9 +159,11 @@ def main() -> int:
         if stats["success"]:
             logger.info("\n=== Processing and Loading Results ===")
             logger.info(f"Processed {stats['processed_count']} documents from {stats['processed_directory']}")
-            logger.info(f"Successfully loaded {stats['loaded_count']} documents")
+            logger.info(f"Successfully loaded {stats['loaded_doc_count']} documents") # Changed to loaded_doc_count
+            if stats.get('loaded_token_count', 0) > 0 : # Check if token count exists
+                logger.info(f"Successfully loaded {stats['loaded_token_count']} ColBERT token embeddings")
             if stats['error_count'] > 0:
-                logger.warning(f"Failed to load {stats['error_count']} documents")
+                logger.warning(f"Failed to load {stats['error_count']} documents (or batches containing them)")
             logger.info(f"Total time: {stats['duration_seconds']:.2f} seconds")
             logger.info(f"Loading rate: {stats['documents_per_second']:.2f} documents per second")
             
@@ -129,8 +172,9 @@ def main() -> int:
             print(f"{'Metric':<30} {'Value':<20}")
             print(f"{'-'*30} {'-'*20}")
             print(f"{'Documents Processed':<30} {stats['processed_count']:<20}")
-            print(f"{'Documents Loaded':<30} {stats['loaded_count']:<20}")
-            print(f"{'Documents Failed':<30} {stats['error_count']:<20}")
+            print(f"{'Source Documents Loaded':<30} {stats.get('loaded_doc_count', 0):<20}") # Use .get for safety
+            print(f"{'Token Embeddings Loaded':<30} {stats.get('loaded_token_count', 0):<20}") # Use .get for safety
+            print(f"{'Load Errors (Batches)':<30} {stats['error_count']:<20}")
             print(f"{'Processing Time (s)':<30} {stats['duration_seconds']:.2f}")
             print(f"{'Documents per Second':<30} {stats['documents_per_second']:.2f}")
             

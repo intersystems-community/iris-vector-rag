@@ -1,3 +1,4 @@
--- common/vector_search_procs.sql
--- This file is intentionally left empty as the vector search logic
--- is now implemented via Python-generated SQL in the RAG pipelines.
+-- This file is intentionally left without Stored Procedure or UDF definitions 
+-- due to persistent syntax errors during their creation with TO_VECTOR 
+-- and dynamic vector string handling.
+-- The RAG pipelines are currently using alternative (e.g., mock) retrieval methods.

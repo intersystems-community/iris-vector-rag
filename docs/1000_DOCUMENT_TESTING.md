@@ -1,6 +1,14 @@
-# 1000+ Document Testing for RAG Techniques
+# 1000+ Document Testing for RAG Techniques (Supplementary Guide)
 
-This document outlines the implementation of tests running with 1000+ documents as required by the project's `.clinerules` file.
+**Note:** The primary and most up-to-date guide for all testing is [`docs/TESTING.md`](docs/TESTING.md:1). This document provides supplementary details on specific scripts and `make` targets related to 1000+ document testing, which may be alternative or older methods.
+
+## Current Testing Status & Critical Blocker
+
+**IMPORTANT:** As of May 21, 2025, full end-to-end testing with newly loaded real PMC data (especially data requiring vector embeddings) is **BLOCKED**.
+
+This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded, operations requiring these embeddings cannot be performed on newly ingested real data.
+
+Consequently, while the testing framework and some mechanisms described here are in place, their execution with real embeddings is impacted. Tests on text-based components or with mock/pre-existing embeddings may still function. For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
 
 ## Background
 
@@ -75,8 +83,8 @@ The implementation follows a few key technical approaches:
 2. **Real PMC Data Implementation** (`tests/conftest_real_pmc.py`):
    - Loads real PMC XML documents from `data/pmc_oas_downloaded/` directory
    - If fewer than 1000 documents are available, generates additional ones using existing documents as templates
-   - Processes and loads documents into IRIS database
-   - Sets up token embeddings for ColBERT and knowledge graph for GraphRAG/NodeRAG
+   - Processes and loads documents (text content) into IRIS database
+   - Attempts to set up token embeddings for ColBERT and knowledge graph for GraphRAG/NodeRAG (Note: Loading of new embeddings is currently BLOCKED).
 
 3. **Performance Tracking**: All tests log the time taken to retrieve documents from the 1000+ document collection.
 
