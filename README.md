@@ -243,23 +243,40 @@ However, these workarounds have not been fully tested with real PMC data due to 
 
 ## Project Structure
 
+A high-level overview of the project structure:
 ```
 rag-templates/
-├── basic_rag/           # Standard RAG implementation
-├── colbert/             # ColBERT implementation
-├── common/              # Shared utilities
-│   └── vector_sql_utils.py  # Workarounds for IRIS SQL vector operations
-├── crag/                # Corrective RAG implementation
-├── data/                # Data loading and processing
-├── docs/
-│   └── IRIS_SQL_VECTOR_OPERATIONS.md  # Documentation of IRIS SQL vector limitations
-├── eval/                # Evaluation and benchmarking
-├── graphrag/            # GraphRAG implementation
-├── hyde/                # HyDE implementation
-├── noderag/             # NodeRAG implementation
-├── tests/               # Test suite
-└── test_iris_vector_workarounds.py  # Test for vector operation workarounds
-└── test_pyodbc_vector_ops.py        # Test for basic vector operations
+├── .gitignore
+├── README.md
+├── PLAN_STATUS.md
+├── pyproject.toml               # Project dependencies and metadata
+├── docker-compose.iris-only.yml # Docker compose for the dedicated IRIS container
+├── run_db_init_local.py         # Script to initialize local DB schema
+|
+├── basic_rag/                   # Basic RAG pipeline
+├── colbert/                     # ColBERT pipeline
+├── common/                      # Shared utilities
+│   ├── iris_connector.py
+│   └── vector_sql_utils.py      # Workarounds for IRIS SQL vector operations
+├── config/
+│   └── odbc/                    # ODBC configuration files
+│       ├── odbc.ini
+│       └── odbcinst_docker.ini
+├── crag/                        # CRAG pipeline
+├── data/                        # Data loading scripts and raw data (e.g., pmc_oas_downloaded/)
+├── docs/                        # Project documentation
+│   └── INDEX.md                 # Main documentation index
+├── eval/                        # Evaluation and benchmarking scripts
+├── graphrag/                    # GraphRAG pipeline
+├── hyde/                        # HyDE pipeline
+├── noderag/                     # NodeRAG pipeline
+├── scripts/                     # Utility and execution scripts
+│   ├── run_e2e_tests.py
+│   └── run_rag_benchmarks.py
+├── tests/                       # Pytest test suite
+│   ├── conftest.py
+│   └── test_e2e_rag_pipelines.py
+└── ... (other RAG pipeline directories, configuration files, etc.)
 ```
 
 ## Test-Driven Development
