@@ -29,6 +29,7 @@ Welcome to the RAG Templates project documentation. This page serves as a centra
 *   **[`IRIS_SQL_VECTOR_LIMITATIONS.md`](IRIS_SQL_VECTOR_LIMITATIONS.md:1)**: Primary technical explanation of IRIS SQL vector operations limitations, focusing on the current `TO_VECTOR`/ODBC embedding load blocker.
 *   **[`IRIS_SQL_VECTOR_OPERATIONS.md`](IRIS_SQL_VECTOR_OPERATIONS.md:1)**: Details the identified limitations and the implemented client-side SQL workarounds for *querying* vector data.
 *   **[`IRIS_SQL_CHANGE_SUGGESTIONS.md`](IRIS_SQL_CHANGE_SUGGESTIONS.md:1)**: A comprehensive bug report and enhancement request document formatted for submission to InterSystems, detailing issues and proposed fixes.
+*   **[`iris_sql_vector_limitations_bug_report.md`](iris_sql_vector_limitations_bug_report.md:1)**: (Original root-level bug report) A concise summary of the vector limitations, suitable for quick reference or external sharing.
 
 ### 4.2. Stored Procedure & Compilation Postmortems
 *   **[`IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`](IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md:1)**: Detailed postmortem on challenges with IRIS SQL Stored Procedure projection, caching, and automated ObjectScript class compilation (primarily based on IRIS 2024.1.2 experiences).
