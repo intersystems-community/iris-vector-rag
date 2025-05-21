@@ -121,12 +121,16 @@ Thumbs.db
 *.bak
 
 # Log files at the root
-# *.log
+# *.log # General logs are covered by line 48 under "Unit test / coverage reports"
 
-# Test outputs
+# Test and Benchmark Output Directories
 test_logs/
-# test_results/
+test_results/
+benchmark_results/
 
-# Specific files from your project list
-ODBC-2025.1.0.223.0-lnxubuntu2404arm64.tar.gz
-intersystems_irispython-3.2.0-py3-none-any.whl
+# Specific generated files (if they appear in root and not in the above dirs)
+test_results_1000_docs.json
+
+# Specific files from your project list (already covered by wildcards above but kept for explicitness if desired)
+# ODBC-2025.1.0.223.0-lnxubuntu2404arm64.tar.gz # Covered by *.tar.gz
+# intersystems_irispython-3.2.0-py3-none-any.whl # Covered by *.whl

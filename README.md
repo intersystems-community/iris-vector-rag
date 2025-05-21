@@ -2,6 +2,13 @@
 
 This repository contains implementation templates for various Retrieval Augmented Generation (RAG) techniques using InterSystems IRIS.
 
+---
+**Navigate the Documentation**
+
+For a comprehensive guide to all project documents, including setup, technical deep-dives, IRIS issue analyses, RAG technique implementations, testing, and benchmarking, please start with the:
+### **[Project Documentation Index](docs/INDEX.md)**
+---
+
 ## Project Status (As of May 21, 2025)
 
 The project has made significant progress but faces critical challenges:
@@ -205,14 +212,14 @@ pytest tests/test_graphrag.py
 pytest tests/
 ```
 
-## Full Project Documentation
+## Key Project Documents
 
-For a comprehensive list and description of all project documentation, including RAG technique implementations, IRIS issue analyses, testing guides, and benchmark information, please see the **[Project Documentation Index](docs/INDEX.md:1)**.
+While the **[Project Documentation Index](docs/INDEX.md)** provides a comprehensive list, some key starting points include:
 
-Key high-level documents include:
 - **[`PLAN_STATUS.md`](PLAN_STATUS.md:1)**: Detailed project status and task breakdown.
-- **[`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md:1)**: High-level summary for project managers.
-- **[`docs/DEVELOPMENT_STRATEGY_EVOLUTION.md`](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md:1)**: Evolution of the development approach.
+- **[`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md:1)**: High-level summary for project managers, including JIRA issue suggestions.
+- **[`docs/DEVELOPMENT_STRATEGY_EVOLUTION.md`](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md:1)**: Explains the evolution of the project's development approach and the pivot to client-side SQL.
+- **[`docs/TESTING.md`](docs/TESTING.md:1)**: The primary guide for all testing procedures.
 
 ## IRIS SQL Vector Operations Limitations
 
