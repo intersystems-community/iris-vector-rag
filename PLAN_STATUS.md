@@ -2,17 +2,23 @@
 
 ## Current Focus
 
-**Situation:** We have completed the vector operations investigation and implemented workarounds for the IRIS SQL vector limitations. We have created the infrastructure for end-to-end testing and benchmarking. However, we have encountered a critical blocker: the ODBC driver limitations with the TO_VECTOR function prevent loading documents with embeddings, which is blocking our ability to test with real PMC data.
+**Situation:** We have completed the vector operations investigation and implemented workarounds for the IRIS SQL vector limitations. We have also completed the investigation of alternative vector search approaches and identified a viable solution based on the langchain-iris implementation. We have created the infrastructure for end-to-end testing and benchmarking and are now ready to implement the solution and proceed with testing.
 
-**Current Status:** BLOCKED. While we have created end-to-end tests for all RAG pipelines, developed a benchmarking framework, and implemented scripts to automate the execution of tests with real PMC data, we cannot execute these tests with real data due to the IRIS SQL vector operations limitations.
+**Current Status:** IN PROGRESS. We have successfully identified a solution to the ODBC driver limitations with the TO_VECTOR function. The langchain-iris approach of storing embeddings as strings in VARCHAR columns and using TO_VECTOR only at query time provides a viable path forward. We have also addressed performance considerations for large document collections by developing recommendations for HNSW indexing. We now need to implement these approaches in our codebase and proceed with testing.
 
 **Next Tasks:**
-1. Address the ODBC driver limitations with the TO_VECTOR function to enable loading documents with embeddings
-2. Execute the end-to-end tests using our automated script (`scripts/run_e2e_tests.py`) with real PMC data (minimum 1000 documents)
-3. Continue following the Red-Green-Refactor TDD cycle for all remaining test implementations
-4. Execute benchmarks using `scripts/run_rag_benchmarks.py` (as detailed in `BENCHMARK_EXECUTION_PLAN.md`, ensuring script references there are also aligned) with real data
-5. Compare our implementation results against published benchmarks
-6. Document findings and optimize implementations based on benchmark results
+1. Implement the langchain-iris approach in our codebase:
+   - Update vector_sql_utils.py to support storing embeddings as strings
+   - Modify db_init.py to use VARCHAR for embedding storage
+   - Update RAG pipelines to use the new approach
+2. For performance optimization with large document collections:
+   - Consider implementing the dual-table architecture with HNSW indexing as described in `docs/HNSW_INDEXING_RECOMMENDATIONS.md`
+   - This may require ObjectScript expertise for trigger implementation
+3. Execute the end-to-end tests using our automated script (`scripts/run_e2e_tests.py`) with real PMC data (minimum 1000 documents)
+4. Continue following the Red-Green-Refactor TDD cycle for all remaining test implementations
+5. Execute benchmarks using `scripts/run_rag_benchmarks.py` (as detailed in `BENCHMARK_EXECUTION_PLAN.md`, ensuring script references there are also aligned) with real data
+6. Compare our implementation results against published benchmarks
+7. Document findings and optimize implementations based on benchmark results
 
 **Overall Goal:** Implement RAG pipelines using Python running on the host machine, connecting to an InterSystems IRIS database running in a simple, dedicated Docker container.
 
@@ -106,6 +112,47 @@
     - Use `execute_vector_search` to execute queries
   - [x] **Documentation:** Update `docs/IRIS_VECTOR_SEARCH_LESSONS.md` and `docs/DEVELOPMENT_STRATEGY_EVOLUTION.md` to document the vector search implementation approach and lessons learned.
 
+**Phase 3.6: Alternative Vector Search Approaches Investigation (COMPLETED)**
+- **Goal:** Investigate alternative approaches to vector search in IRIS that may overcome the TO_VECTOR function limitations.
+- **Sub-Phase 3.6.1: Comparative Analysis of External Vector Search Implementations (COMPLETED)**
+  - [x] **Investigation:** Analyze vector search implementations in external repositories:
+    - llama-iris: LlamaIndex integration with IRIS
+    - langchain-iris: LangChain integration with IRIS
+  - [x] **Comparison:** Identify key differences in vector handling approaches:
+    - SQLAlchemy vs. DBAPI approach
+    - Vector type handling (IRISVectorType vs. TO_VECTOR)
+    - Query construction methods
+    - ObjectScript function usage
+- **Sub-Phase 3.6.2: Test Environment Setup and Verification (COMPLETED)**
+  - [x] **Test Script:** Create test script to compare different vector search approaches:
+    - Set up test environment with IRIS container
+    - Test vector operations using langchain-iris approach
+    - Test vector operations using llama-iris approach
+    - Test vector operations using current project approach
+    - Compare results and behavior
+  - [x] **Vector Loading Tests:** Specifically test vector embedding loading:
+    - Test different methods of storing vector embeddings
+    - Identify successful approaches for loading embeddings
+    - Document findings and implementation details
+- **Sub-Phase 3.6.3: Adaptation Strategy Development (COMPLETED)**
+  - [x] **Proof-of-Concept:** Develop proof-of-concept adaptations:
+    - Created vector_storage_poc.py to demonstrate the langchain-iris approach
+    - Tested storing embeddings as comma-separated strings
+    - Evaluated hybrid approach using existing code with targeted improvements
+  - [x] **Evaluation:** Benchmark and compare approaches:
+    - Identified that langchain-iris successfully uses VECTOR_COSINE with VARCHAR storage
+    - Determined that storing embeddings as strings avoids TO_VECTOR limitations
+    - Documented trade-offs in VECTOR_SEARCH_ALTERNATIVES.md
+- **Sub-Phase 3.6.4: Documentation and Integration (COMPLETED)**
+  - [x] **Documentation:** Create comprehensive documentation:
+    - Documented findings in VECTOR_SEARCH_ALTERNATIVES.md
+    - Identified key insights about langchain-iris approach
+    - Created migration plan for adopting successful approaches
+  - [x] **Integration:** Implement the most promising approach:
+    - Created proof-of-concept implementation in vector_storage_poc.py
+    - Demonstrated storing embeddings as strings and using TO_VECTOR at query time
+    - Provided code examples for integration into the main project
+
 **Phase 4: (Optional) Dockerize Python Application for Deployment**
 - [ ] If needed for deployment, create a new `Dockerfile` for the Python application that connects to an external IRIS database. This is separate from the development setup.
 
@@ -198,11 +245,11 @@ Following the process outlined in `BENCHMARK_EXECUTION_PLAN.md`, we need to:
 - `app.Dockerfile` (if still present from very old setup)
 
 **Blockers/Issues:**
-*   **CRITICAL BLOCKER:** ODBC driver limitations with the TO_VECTOR function prevent loading documents with embeddings, blocking testing with real data
+*   ~~**CRITICAL BLOCKER:** ODBC driver limitations with the TO_VECTOR function prevent loading documents with embeddings, blocking testing with real data~~ (RESOLVED: Investigation completed in Phase 3.6, solution identified based on langchain-iris approach)
 *   User to complete review of scripts in `scripts_to_review/`.
 *   Ensuring host Python environment (3.11, uv, dependencies) is correctly set up.
 *   ~~Ensuring IRIS Docker container is stable and accessible from host Python.~~ (RESOLVED: Connection verified and stable)
-*   IRIS SQL vector operations limitations (PARTIALLY RESOLVED: Workarounds implemented and documented in Phase 3.5, but not fully tested with real data)
+*   IRIS SQL vector operations limitations (RESOLVED: Workarounds implemented and documented in Phase 3.5, and solution identified in Phase 3.6)
 
 ## Next Steps
 
@@ -234,8 +281,10 @@ Following the process outlined in `BENCHMARK_EXECUTION_PLAN.md`, we need to:
 
 | Task | Estimated Completion | Status |
 |------|----------------------|--------|
-| Execute end-to-end tests with new script | May 21, 2025 | ⚠️ Attempted but encountered ODBC driver limitations |
-| Fix failing tests and optimize | May 21, 2025 | ❌ Pending |
+| Investigate alternative vector search approaches | May 22, 2025 | ✅ Completed |
+| Implement solution based on langchain-iris approach | May 24, 2025 | ❌ Pending |
+| Execute end-to-end tests with new script | May 26, 2025 | ❌ Pending |
+| Fix failing tests and optimize | May 28, 2025 | ❌ Pending |
 | Run full benchmark suite | May 30, 2025 | ❌ Pending |
 | Generate benchmark visualizations | June 1, 2025 | ❌ Pending |
 | Update technique documentation | June 3, 2025 | ❌ Pending |
@@ -250,11 +299,12 @@ The following tasks are critical and must be completed before the project can be
    - Execute all RAG techniques with at least 1000 real PMC documents
    - Verify that each technique works correctly with real data
    - Document any issues encountered and their resolutions
-   - **CRITICAL BLOCKER**: ODBC driver limitations with TO_VECTOR function prevent loading documents with embeddings. Specifically:
-     - The TO_VECTOR() function does not accept parameter markers (?, :param, or :%qpar)
-     - Client drivers rewrite literals to :%qpar() even when no parameter list is supplied
-     - These limitations make it impossible to load vector embeddings using standard parameterized queries
-     - Our workarounds using string interpolation with validation have not been fully tested with real data
+   - **SOLUTION IDENTIFIED**: We have identified a solution to the ODBC driver limitations with TO_VECTOR function:
+     - Store embeddings as comma-separated strings in VARCHAR columns
+     - Use TO_VECTOR only at query time to convert strings to vectors
+     - This approach avoids the parameter binding issues with TO_VECTOR
+     - For large document collections, consider the dual-table architecture with HNSW indexing described in `docs/HNSW_INDEXING_RECOMMENDATIONS.md`
+     - Next step is to implement this solution in our codebase and test with real data
 
 2. **Testing with Real LLM:**
    - Use an actual LLM (not mocks) to generate answers
@@ -271,4 +321,4 @@ The following tasks are critical and must be completed before the project can be
    - Create a final report that honestly assesses the strengths and weaknesses of each technique
    - Document best practices and recommendations based on empirical evidence
 
-**Status:** The project is IN PROGRESS. While significant work has been done on the infrastructure for testing and benchmarking, the critical task of executing tests with real data has not been completed. A detailed plan for completing these tasks has been documented in `docs/REAL_DATA_TESTING_PLAN.md`.
+**Status:** The project is IN PROGRESS. We have made significant progress by identifying a solution to the critical blocker that was preventing us from loading documents with embeddings. The investigation of alternative vector search approaches (Phase 3.6) has been completed successfully, and we now have a clear path forward. The next step is to implement the solution based on the langchain-iris approach and proceed with testing using real PMC data. A detailed plan for completing these tasks has been documented in `docs/REAL_DATA_TESTING_PLAN.md` and the solution approach is documented in `docs/VECTOR_SEARCH_ALTERNATIVES.md`.

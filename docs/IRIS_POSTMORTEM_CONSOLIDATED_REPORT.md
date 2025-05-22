@@ -19,7 +19,24 @@ This report outlines a series of reproducible failures encountered during a proj
 
 These are not isolated bugs but appear to be systemic issues that create a hostile and inefficient development experience. This document provides a timeline of failures, identifies root causes, details workarounds, and proposes JIRA bug reports for InterSystems.
 
-**IRIS Version Context:** The issues detailed in this postmortem, primarily concerning SQL Stored Procedure projection, ObjectScript class compilation, and caching, were encountered with `IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U)`. While these issues significantly influenced the project's pivot to client-side SQL, the project later targeted IRIS 2025.1 for its native vector search capabilities. IRIS 2025.1 introduced a separate set of challenges related to the `TO_VECTOR()` function and ODBC driver behavior, which became the primary blocker for real-data testing (see [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md)). It is presumed that many of the SP-related issues identified here could persist in newer versions if not specifically addressed by InterSystems.
+**IRIS Version Context:** The issues detailed in this postmortem, primarily concerning SQL Stored Procedure projection, ObjectScript class compilation, and caching, were encountered with `IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U)`. While these issues significantly influenced the project's pivot to client-side SQL, the project later targeted IRIS 2025.1 for its native vector search capabilities. IRIS 2025.1 introduced a separate set of challenges related to the `TO_VECTOR()` function and ODBC driver behavior, which became the primary blocker for real-data testing.
+
+## Technical Environment Information
+
+| Component | Version/Details |
+|-----------|----------------|
+| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) |
+| Python Version | 3.12.9 |
+| Client Libraries | sqlalchemy 2.0.41 |
+| Operating System | macOS-15.3.2-arm64-arm-64bit |
+
+For detailed technical information about the vector search limitations, including client library behavior, error messages, and code examples, see:
+- [IRIS_SQL_VECTOR_LIMITATIONS.md](docs/IRIS_SQL_VECTOR_LIMITATIONS.md)
+- [VECTOR_SEARCH_TECHNICAL_DETAILS.md](docs/VECTOR_SEARCH_TECHNICAL_DETAILS.md)
+- [VECTOR_SEARCH_ALTERNATIVES.md](docs/VECTOR_SEARCH_ALTERNATIVES.md)
+- [HNSW_INDEXING_RECOMMENDATIONS.md](docs/HNSW_INDEXING_RECOMMENDATIONS.md)
+
+It is presumed that many of the SP-related issues identified here could persist in newer versions if not specifically addressed by InterSystems.
 
 ## Detailed Timeline of Failures & Attempts (with IRIS 2024.1.2)
 

@@ -223,6 +223,15 @@ While the **[Project Documentation Index](docs/INDEX.md)** provides a comprehens
 
 ## IRIS SQL Vector Operations Limitations
 
+### Technical Environment Information
+
+| Component | Version/Details |
+|-----------|----------------|
+| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) |
+| Python Version | 3.12.9 |
+| Client Libraries | sqlalchemy 2.0.41 |
+| Operating System | macOS-15.3.2-arm64-arm-64bit |
+
 InterSystems IRIS 2025.1 introduced vector search capabilities essential for RAG pipelines, but several critical limitations in the SQL implementation prevent standard parameterized queries from working with vector operations:
 
 1. **TO_VECTOR() Function Rejects Parameter Markers**: The `TO_VECTOR()` function does not accept parameter markers (`?`, `:param`, or `:%qpar`), which are standard in SQL for safe query parameterization.
@@ -239,7 +248,25 @@ These limitations force developers to use string interpolation instead of parame
 - Safe string interpolation with security checks
 - Helper functions to construct and execute vector search queries
 
-However, these workarounds have not been fully tested with real PMC data due to the ODBC driver limitations. For detailed information about these limitations and our implemented solutions, see [IRIS_SQL_VECTOR_OPERATIONS.md](docs/IRIS_SQL_VECTOR_OPERATIONS.md) and [IRIS_SQL_VECTOR_LIMITATIONS.md](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
+However, these workarounds have not been fully tested with real PMC data due to the ODBC driver limitations.
+
+### Specific Error Messages
+
+When attempting to use TO_VECTOR in SQL queries, we consistently encounter this error:
+
+```
+[SQLCODE: <-1>:<Invalid SQL statement>]
+[Location: <Prepare>]
+[%msg: < ) expected, : found ^SELECT TOP :%qpar(1) id , text_content , VECTOR_COSINE ( TO_VECTOR ( embedding , :%qpar>]
+```
+
+This error occurs with all three approaches (Direct SQL, Parameterized SQL, and String Interpolation), indicating a fundamental limitation of the ODBC driver.
+
+For detailed information about these limitations, our investigation findings, and recommended solutions, see:
+- [IRIS_SQL_VECTOR_LIMITATIONS.md](docs/IRIS_SQL_VECTOR_LIMITATIONS.md)
+- [VECTOR_SEARCH_TECHNICAL_DETAILS.md](docs/VECTOR_SEARCH_TECHNICAL_DETAILS.md)
+- [VECTOR_SEARCH_ALTERNATIVES.md](docs/VECTOR_SEARCH_ALTERNATIVES.md)
+- [HNSW_INDEXING_RECOMMENDATIONS.md](docs/HNSW_INDEXING_RECOMMENDATIONS.md)
 
 ## Project Structure
 

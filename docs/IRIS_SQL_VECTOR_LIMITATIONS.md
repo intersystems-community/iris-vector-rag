@@ -1,5 +1,16 @@
 # IRIS SQL Vector Operations Limitations
 
+## Environment Information
+
+| Component | Version/Details |
+|-----------|----------------|
+| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) |
+| Python Version | 3.12.9 |
+| Client Libraries | sqlalchemy 2.0.41 |
+| Operating System | macOS-15.3.2-arm64-arm-64bit |
+
+For detailed technical information, including client library behavior and code examples, see [VECTOR_SEARCH_TECHNICAL_DETAILS.md](VECTOR_SEARCH_TECHNICAL_DETAILS.md).
+
 ## Executive Summary
 
 This document provides a detailed technical explanation of the InterSystems IRIS SQL vector operations limitations. These limitations, particularly concerning the `TO_VECTOR()` function and ODBC driver behavior, are the **primary project blocker**, preventing full testing and benchmarking of RAG techniques with newly loaded real PMC data. This report documents these issues, attempted workarounds, and potential solutions.

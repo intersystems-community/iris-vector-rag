@@ -27,6 +27,9 @@ Welcome to the RAG Templates project documentation. This page serves as a centra
 
 ### 4.1. Vector SQL Limitations & Suggestions
 *   **[`IRIS_SQL_VECTOR_LIMITATIONS.md`](IRIS_SQL_VECTOR_LIMITATIONS.md)**: Primary technical explanation of IRIS SQL vector operations limitations, focusing on the current `TO_VECTOR`/ODBC embedding load blocker.
+*   **[`VECTOR_SEARCH_TECHNICAL_DETAILS.md`](VECTOR_SEARCH_TECHNICAL_DETAILS.md)**: Comprehensive technical details about vector search implementation, including environment information, client library behavior, and code examples.
+*   **[`VECTOR_SEARCH_ALTERNATIVES.md`](VECTOR_SEARCH_ALTERNATIVES.md)**: Investigation findings on alternative approaches to vector search in IRIS, focusing on solutions from langchain-iris and llama-iris.
+*   **[`HNSW_INDEXING_RECOMMENDATIONS.md`](HNSW_INDEXING_RECOMMENDATIONS.md)**: Recommendations for implementing HNSW indexing with InterSystems IRIS for high-performance vector search with large document collections.
 *   **[`IRIS_SQL_VECTOR_OPERATIONS.md`](IRIS_SQL_VECTOR_OPERATIONS.md)**: Details the identified limitations and the implemented client-side SQL workarounds for *querying* vector data.
 *   **[`IRIS_SQL_CHANGE_SUGGESTIONS.md`](IRIS_SQL_CHANGE_SUGGESTIONS.md)**: A comprehensive bug report and enhancement request document formatted for submission to InterSystems, detailing issues and proposed fixes.
 *   **[`iris_sql_vector_limitations_bug_report.md`](iris_sql_vector_limitations_bug_report.md)**: (Original root-level bug report) A concise summary of the vector limitations, suitable for quick reference or external sharing.

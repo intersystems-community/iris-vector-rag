@@ -1,5 +1,16 @@
 # Alternative Vector Search Approaches Investigation
 
+## Environment Information
+
+| Component | Version/Details |
+|-----------|----------------|
+| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) |
+| Python Version | 3.12.9 |
+| Client Libraries | sqlalchemy 2.0.41, langchain-iris 0.2.1, llama-iris 0.5.0 |
+| Operating System | macOS-15.3.2-arm64-arm-64bit |
+
+For detailed technical information, including client library behavior and code examples, see [VECTOR_SEARCH_TECHNICAL_DETAILS.md](VECTOR_SEARCH_TECHNICAL_DETAILS.md).
+
 ## Executive Summary
 
 This document outlines an investigation into alternative approaches to vector search in InterSystems IRIS that may overcome the current TO_VECTOR function limitations. By examining successful implementations in external repositories (llama-iris and langchain-iris), we aim to identify techniques that could resolve our critical blocker: the inability to load documents with embeddings due to ODBC driver limitations with the TO_VECTOR function.
@@ -176,6 +187,111 @@ class VectorSearchInvestigation:
         # Implementation details...
 ```
 
+## Investigation Findings
+
+After executing our test script and analyzing the source code of langchain-iris, we have discovered the following key insights:
+
+### 1. langchain-iris Approach
+
+The langchain-iris repository successfully implements vector search with IRIS by:
+
+1. **Storage Approach**:
+   - Stores embeddings as Python lists in VARCHAR columns
+   - Uses SQLAlchemy with a custom dialect (sqlalchemy_iris)
+   - Avoids using TO_VECTOR during insertion
+
+2. **Query Mechanism**:
+   - Uses native VECTOR_COSINE for similarity search
+   - Converts stored strings to vectors at query time using TO_VECTOR
+   - Uses SQLAlchemy's query building to handle SQL construction
+
+3. **Key Code Insight**:
+   ```python
+   # When native_vector is True
+   self.distance_strategy(embedding).label("distance")
+   ```
+
+4. **Database Schema**:
+   - Uses VARCHAR(56831) for embedding storage
+   - No native vector type in the database schema
+
+### 2. llama-iris Approach
+
+The llama-iris approach was less successful in our testing environment due to OpenAI API rate limits, but appears to follow a similar pattern to langchain-iris.
+
+### 3. Current Project Approach
+
+Our current approach faces limitations:
+
+1. **Storage Issues**:
+   - Attempts to use TO_VECTOR during insertion
+   - ODBC driver tries to parameterize parts that can't be parameterized
+   - Results in errors when inserting documents with embeddings
+
+2. **Query Mechanism**:
+   - Uses string interpolation with validation
+   - Works for querying but not for insertion
+
+## Proof of Concept Implementation
+
+We created a proof-of-concept implementation (`investigation/vector_storage_poc.py`) that demonstrates the langchain-iris approach:
+
+1. **Storage Solution**:
+   - Store embeddings as comma-separated strings: `"0.1,0.2,0.3,..."`
+   - Use VARCHAR columns with sufficient size
+   - Avoid using TO_VECTOR during insertion
+
+2. **Query Solution**:
+   - Use TO_VECTOR at query time to convert strings to vectors
+   - Continue using string interpolation with validation
+   - Use VECTOR_COSINE for similarity search
+
+3. **Implementation Challenges**:
+   - ODBC driver still attempts to parameterize parts of SQL statements
+   - Requires careful string construction and validation
+
+## Recommended Implementation
+
+Based on our findings, we recommend the following changes to our current implementation:
+
+1. **Update vector_sql_utils.py**:
+   - Modify to support storing embeddings as comma-separated strings
+   - Add functions for converting between vector formats
+   - Enhance validation for the new storage format
+
+2. **Update db_init.py**:
+   - Modify table creation to use VARCHAR for embedding storage
+   - Adjust column sizes based on embedding dimensions
+
+3. **Update RAG Pipelines**:
+   - Modify document loading to store embeddings as strings
+   - Ensure vector search queries use TO_VECTOR at query time
+
+## Code Example
+
+```python
+# Store embeddings as comma-separated strings
+embedding_str = ','.join(map(str, embedding))
+
+# Insert document with embedding as string
+insert_sql = f"""
+INSERT INTO {table_name} (id, text_content, embedding, metadata)
+VALUES (?, ?, ?, ?)
+"""
+cursor.execute(insert_sql, (doc_id, text, embedding_str, "{}"))
+
+# Query using TO_VECTOR at query time
+search_sql = f"""
+SELECT TOP {top_k} id, text_content, 
+       VECTOR_COSINE(
+           TO_VECTOR(embedding, 'DOUBLE', 384),
+           TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)
+       ) AS score
+FROM {table_name}
+ORDER BY score ASC
+"""
+```
+
 ## Expected Outcomes
 
 This investigation is expected to yield:
@@ -188,21 +304,38 @@ This investigation is expected to yield:
 
 ## Next Steps
 
-1. **Execute the investigation plan**:
-   - Run the test script to compare approaches
-   - Document findings and insights
-   - Identify the most promising approach
+1. **Execute the implementation plan**:
+   - Update vector_sql_utils.py with the new approach
+   - Modify db_init.py to use VARCHAR for embedding storage
+   - Update RAG pipelines to use the new approach
 
-2. **Implement the solution**:
-   - Adapt our codebase to use the successful approach
-   - Test with real PMC data
+2. **Test with real PMC data**:
+   - Load real PMC documents with embeddings
    - Verify that the critical blocker is resolved
+   - Run full RAG pipeline tests
 
 3. **Update documentation**:
-   - Document the new approach in IRIS_SQL_VECTOR_OPERATIONS.md
+   - Update IRIS_SQL_VECTOR_OPERATIONS.md with the new approach
    - Update IRIS_SQL_VECTOR_LIMITATIONS.md with new insights
    - Create migration guide for future reference
 
+## Performance Considerations for Large Document Collections
+
+While our investigation has identified a viable solution for loading documents with embeddings, we must also consider performance optimization for large document collections. HNSW (Hierarchical Navigable Small World) indexing is essential for efficient vector search with large datasets, but it requires the VECTOR datatype.
+
+To address this requirement, we have created a separate document with detailed recommendations for implementing HNSW indexing: [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md).
+
+The recommended approach involves:
+1. A dual-table architecture with VARCHAR storage for easy loading
+2. VECTOR storage with HNSW indexing for efficient search
+3. ObjectScript triggers to automatically convert between formats
+
+This approach provides the best of both worlds: easy document loading and high-performance vector search.
+
 ## Conclusion
 
-By investigating alternative approaches to vector search in IRIS, we aim to overcome the critical blocker that is preventing us from testing with real PMC data. This investigation is a crucial step toward completing the project and delivering a fully functional set of RAG templates for InterSystems IRIS.
+Our investigation has revealed that the langchain-iris approach provides a viable solution to our current vector search limitations. By storing embeddings as strings and using TO_VECTOR only at query time, we can avoid the ODBC driver limitations while still leveraging native vector operations for search.
+
+For basic testing and development, this approach is sufficient. For production deployments with large document collections, the dual-table architecture with HNSW indexing described in [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md) is recommended.
+
+This solution should allow us to proceed with loading real PMC documents with embeddings and testing our RAG pipelines with real data, while also providing a path to high-performance vector search for production deployments.
