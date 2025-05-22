@@ -139,7 +139,7 @@ The journey documented in this report highlights significant friction points in 
 
 The "ghosts" of stale procedures and inexplicable compiler errors prompted the project's shift away from Stored Procedures for RAG logic. While this pivot mitigated these specific issues, the project subsequently encountered a different primary blocker with IRIS 2025.1 related to `TO_VECTOR()` and ODBC driver behavior when trying to load vector embeddings for real-data testing (detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md)).
 
-We urge InterSystems to investigate the SP projection and compilation issues thoroughly for overall platform stability and developer experience. Addressing both these foundational issues and the specific vector function limitations is crucial for IRIS to be a robust platform for modern AI/ML applications.
+We urge Development and Quality Development to investigate SP projection and compilation issues thoroughly for overall platform stability and developer experience. Addressing both these foundational issues and the specific vector function limitations is crucial for IRIS to be a robust platform for modern AI/ML applications.
 
 ## References
 
