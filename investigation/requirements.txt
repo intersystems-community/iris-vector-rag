@@ -1,0 +1,5 @@
+langchain-iris
+llama-iris
+testcontainers-iris
+fastembed
+sqlalchemy
