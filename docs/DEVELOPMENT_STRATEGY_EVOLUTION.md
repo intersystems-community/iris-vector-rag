@@ -71,7 +71,7 @@ Given the persistent friction and time spent on environmental and tooling issues
 *   **Focus on Core RAG Logic:** By minimizing time spent on Docker and SP intricacies, development can focus on implementing and testing the RAG pipelines.
 *   **Leverage Stable Components:** Uses a stable, simple IRIS Docker container and standard host-based Python development practices.
 *   **Mitigate IRIS SQL Limitations:** The vector SQL utilities provide a consistent, safe approach to working with IRIS vector operations in `SELECT` queries despite the platform's limitations with parameter markers in vector functions.
-    *   **Note on Current Blocker:** While this client-side SQL strategy effectively addresses challenges with querying, a related platform issue concerning the loading of embedding data (often involving `TO_VECTOR` in `INSERT` or `UPDATE` statements, particularly with ODBC) currently blocks full real-data testing and benchmarking. This specific blocker is detailed further in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+    *   **Note on Current Blocker:** While this client-side SQL strategy effectively addresses challenges with querying, a related platform issue concerning the loading of embedding data (often involving `TO_VECTOR` in `INSERT` or `UPDATE` statements, particularly with ODBC) currently blocks full real-data testing and benchmarking. This specific blocker is detailed further in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 **Lessons Learned:**
 *   **Avoid Reliance on SQL Projection:** InterSystems IRIS's SQL projection mechanisms for ObjectScript classes are not reliable enough for automated development workflows, especially in containerized environments.

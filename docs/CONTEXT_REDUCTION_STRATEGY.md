@@ -6,7 +6,7 @@ This document outlines several strategies for reducing document context size to 
 
 **IMPORTANT:** As of May 21, 2025, the ability to thoroughly test and evaluate these context reduction strategies with newly loaded real PMC data (which first requires successful embedding-based retrieval) is impacted by the main project blocker: the `TO_VECTOR`/ODBC embedding load issue. While the strategies themselves can be unit-tested, their end-to-end effectiveness with fresh real data relies on resolving this blocker.
 
-For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## The Context Size Problem
 

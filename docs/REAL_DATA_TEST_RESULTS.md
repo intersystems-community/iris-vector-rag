@@ -39,7 +39,7 @@ A detailed comparative analysis of the different RAG techniques is available in 
 
 ## Conclusion
 
-The attempt to run end-to-end tests and benchmarks with real PMC data and a real LLM encountered significant technical challenges. The primary issue, as detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1), is the inability to load documents with vector embeddings into the database due to limitations with the `TO_VECTOR()` SQL function and ODBC driver behavior.
+The attempt to run end-to-end tests and benchmarks with real PMC data and a real LLM encountered significant technical challenges. The primary issue, as detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md), is the inability to load documents with vector embeddings into the database due to limitations with the `TO_VECTOR()` SQL function and ODBC driver behavior.
 
 ### Technical Challenges (Detailing the Embedding Load Blocker)
 

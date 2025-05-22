@@ -81,7 +81,7 @@ Example functions include:
 
 ## Proposed Improvements for InterSystems IRIS
 
-Based on our experience, we recommend InterSystems consider addressing the following areas, which align with the JIRA issues detailed in [`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md:1):
+Based on our experience, we recommend InterSystems consider addressing the following areas, which align with the JIRA issues detailed in [`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md):
 
 ### SQL Engine Enhancements:
 1.  **Parameter Support in Vector Functions:** Allow parameter markers in `TO_VECTOR()` (SQL-1) and `TOP`/`FETCH FIRST` clauses (SQL-2). This is crucial for standard SQL practices.
@@ -104,6 +104,6 @@ While InterSystems IRIS provides vector search capabilities, working with these 
 
 However, the project remains **critically blocked** by the inability to load new document embeddings due to ODBC driver limitations with the `TO_VECTOR()` function. This prevents full real-data testing and benchmarking. This issue requires urgent attention and resolution, potentially through engagement with InterSystems support.
 
-For a detailed explanation of the current primary blocker and other vector limitations, see [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+For a detailed explanation of the current primary blocker and other vector limitations, see [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 The lessons learned and strategies developed during this project will be valuable for any team implementing vector search with InterSystems IRIS, particularly in modern development environments that rely heavily on automation and containerization.

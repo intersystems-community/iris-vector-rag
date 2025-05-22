@@ -1,6 +1,6 @@
 # Real Data Integration Guide (Supplementary)
 
-**Note:** For general project setup, see [`README.md`](README.md:1). For an overview of all testing procedures, see [`docs/TESTING.md`](docs/TESTING.md:1). This document provides specific details on integrating and testing with real PMC data, particularly concerning the `load_pmc_data.py` script.
+**Note:** For general project setup, see [`README.md`](README.md). For an overview of all testing procedures, see [`docs/TESTING.md`](docs/TESTING.md). This document provides specific details on integrating and testing with real PMC data, particularly concerning the `load_pmc_data.py` script.
 
 ## Current Testing Status & Critical Blocker
 
@@ -8,7 +8,7 @@
 
 This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded using scripts like `load_pmc_data.py`, operations requiring these embeddings on newly ingested real data cannot be performed.
 
-For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## Overview
 
@@ -23,8 +23,8 @@ This guide explains how to use a real IRIS database connection and process real 
 ## Prerequisites
 
 1. InterSystems IRIS instance running and accessible (typically via `docker-compose.iris-only.yml up -d`).
-2. Python 3.11+ environment set up with `uv` as per [`README.md`](README.md:1). Ensure your virtual environment is active.
-3. Environment variables configured for database connection (see [`common/iris_connector.py`](common/iris_connector.py:1) or [`README.md`](README.md:1)):
+2. Python 3.11+ environment set up with `uv` as per [`README.md`](README.md). Ensure your virtual environment is active.
+3. Environment variables configured for database connection (see [`common/iris_connector.py`](common/iris_connector.py:1) or [`README.md`](README.md)):
    - `IRIS_HOST`, `IRIS_PORT`, `IRIS_NAMESPACE`, `IRIS_USERNAME`, `IRIS_PASSWORD`
 4. PMC XML files stored in `data/pmc_oas_downloaded` directory (or custom location).
 
@@ -118,7 +118,7 @@ See `tests/test_e2e_rag_pipelines.py` or other relevant files in `tests/` for mo
 
 ## Running Tests (Refer to `docs/TESTING.md`)
 
-For general instructions on running tests, including unit tests and E2E tests (and their current limitations), please refer to the main [`docs/TESTING.md`](docs/TESTING.md:1) guide.
+For general instructions on running tests, including unit tests and E2E tests (and their current limitations), please refer to the main [`docs/TESTING.md`](docs/TESTING.md) guide.
 
 Example `pytest` commands (ensure virtual environment is active):
 ```bash

@@ -8,7 +8,7 @@ A critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR(
 
 **This entire plan is contingent on the resolution of this blocker.** Steps involving embedding generation, embedding-dependent tests, and benchmarking with real embeddings cannot proceed until this issue is fixed.
 
-For more details on this blocker, please refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1) and [`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md:1).
+For more details on this blocker, please refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md) and [`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md).
 
 ## Overview
 
@@ -147,8 +147,8 @@ While we have implemented the infrastructure for testing with real data, the act
    - Include visualizations and comparative analysis
 
 3. **Update Project Status Documentation**
-   - Update [`PLAN_STATUS.md`](PLAN_STATUS.md:1) to reflect the completion of testing with real data (post-blocker).
-   - Update [`docs/PROJECT_COMPLETION_REPORT.md`](docs/PROJECT_COMPLETION_REPORT.md:1) with actual results.
+   - Update [`PLAN_STATUS.md`](PLAN_STATUS.md) to reflect the completion of testing with real data (post-blocker).
+   - Update [`docs/PROJECT_COMPLETION_REPORT.md`](docs/PROJECT_COMPLETION_REPORT.md) with actual results.
 
 ## Debugging Common Issues
 

@@ -4,7 +4,7 @@
 
 **This document contains PLACEHOLDER benchmark results and does NOT represent actual testing with real data.**
 
-The actual benchmarking with real PMC documents (requiring vector embeddings) and a real LLM has NOT yet been performed. This is due to the **critical `TO_VECTOR`/ODBC embedding load blocker** detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1). This document outlines the expected structure and format of benchmark results that will be generated once this blocker is resolved and real testing is completed according to the plan in [`docs/REAL_DATA_TESTING_PLAN.md`](docs/REAL_DATA_TESTING_PLAN.md:1).
+The actual benchmarking with real PMC documents (requiring vector embeddings) and a real LLM has NOT yet been performed. This is due to the **critical `TO_VECTOR`/ODBC embedding load blocker** detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md). This document outlines the expected structure and format of benchmark results that will be generated once this blocker is resolved and real testing is completed according to the plan in [`docs/REAL_DATA_TESTING_PLAN.md`](docs/REAL_DATA_TESTING_PLAN.md).
 
 ## Expected Benchmark Structure
 

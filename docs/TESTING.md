@@ -15,7 +15,7 @@ Consequently, while the testing framework is in place:
 - End-to-end tests relying on mock data or pre-existing data (if any) may run.
 - End-to-end tests requiring fresh loading and use of real PMC document embeddings **cannot be fully executed as intended.**
 
-For more details on this blocker, please refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1) and [`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md:1).
+For more details on this blocker, please refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md) and [`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md).
 
 ## Testing Requirements (.clinerules)
 
@@ -35,7 +35,7 @@ The primary testing environment consists of:
 - **`uv`** for virtual environment creation and package installation (from `pyproject.toml` or `requirements.txt`).
 - **InterSystems IRIS Database** running in a dedicated Docker container, managed by [`docker-compose.iris-only.yml`](docker-compose.iris-only.yml:1).
 
-Refer to the main [`README.md`](README.md:1) for detailed setup instructions.
+Refer to the main [`README.md`](README.md) for detailed setup instructions.
 The IRIS database connection is typically managed by [`common/iris_connector.py`](common/iris_connector.py:1), which uses environment variables for configuration.
 
 ## Types of Tests and How to Run Them
@@ -93,7 +93,7 @@ Benchmarking aims to compare the performance and quality of different RAG techni
 - **Script:** [`scripts/run_rag_benchmarks.py`](scripts/run_rag_benchmarks.py:1)
 - **Status:** Benchmarking with real data (requiring embeddings) is currently **BLOCKED**.
 - **Goal:** Run against 1000+ real PMC documents with a real LLM.
-- For more details, see [`docs/BENCHMARKING_README.md`](docs/BENCHMARKING_README.md:1) (Note: This file might need to be created or renamed from existing benchmark docs like `BENCHMARK_SETUP.md` or `BENCHMARK_EXECUTION_PLAN.md`).
+- For more details, see [`docs/BENCHMARKING_README.md`](docs/BENCHMARKING_README.md) (Note: This file might need to be created or renamed from existing benchmark docs like `BENCHMARK_SETUP.md` or `BENCHMARK_EXECUTION_PLAN.md`).
 
 ## Vector Operations
 
@@ -113,4 +113,4 @@ coverage html # For an HTML report in htmlcov/
 
 ## Alternative Testing Environments (e.g., Testcontainers)
 
-Some specialized test scenarios or documents (e.g., [`docs/CONTEXT_REDUCTION_TESTING.md`](docs/CONTEXT_REDUCTION_TESTING.md:1), [`docs/REAL_DATA_TESTING.md`](docs/REAL_DATA_TESTING.md:1)) describe using Testcontainers for managing ephemeral IRIS instances. This can be an alternative for specific CI/CD needs or isolated tests but is not the primary local development and testing strategy. Refer to those documents for Testcontainer-specific setup and execution, keeping in mind the overarching data loading blocker.
+Some specialized test scenarios or documents (e.g., [`docs/CONTEXT_REDUCTION_TESTING.md`](docs/CONTEXT_REDUCTION_TESTING.md), [`docs/REAL_DATA_TESTING.md`](docs/REAL_DATA_TESTING.md)) describe using Testcontainers for managing ephemeral IRIS instances. This can be an alternative for specific CI/CD needs or isolated tests but is not the primary local development and testing strategy. Refer to those documents for Testcontainer-specific setup and execution, keeping in mind the overarching data loading blocker.

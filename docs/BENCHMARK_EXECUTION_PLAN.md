@@ -8,7 +8,7 @@ This document outlines the step-by-step process for executing benchmarks on our 
 
 A critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded, benchmarks requiring these embeddings on newly ingested real data cannot be performed.
 
-**This entire plan is contingent on the resolution of this blocker for full real-data benchmarking.** Steps involving loading and using real embeddings cannot proceed until this issue is fixed. For more details, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+**This entire plan is contingent on the resolution of this blocker for full real-data benchmarking.** Steps involving loading and using real embeddings cannot proceed until this issue is fixed. For more details, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ Before beginning the benchmarking process (post-blocker resolution), ensure:
 1. **IRIS Database**: Running and accessible (primary setup: dedicated Docker via [`docker-compose.iris-only.yml`](docker-compose.iris-only.yml:1)).
 2. **Real PMC Data**: At least 1000 real PMC documents (text content) loaded into the database. (Loading of corresponding embeddings is currently BLOCKED).
 3. **RAG Implementations**: All RAG technique implementations are complete and unit tests pass.
-4. **Python Environment**: Python 3.11+ with `uv` and all project dependencies installed (see [`README.md`](README.md:1)).
+4. **Python Environment**: Python 3.11+ with `uv` and all project dependencies installed (see [`README.md`](README.md)).
 
 ## Step 1: Verify IRIS Setup (Post Blocker Resolution for Embeddings)
 

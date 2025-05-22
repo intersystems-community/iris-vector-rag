@@ -1,8 +1,8 @@
 # Postmortem: ODBC Stored Procedure Call and Compilation Issues (IRIS 2024.1.2)
 
-**Context:** This document details troubleshooting related to Stored Procedure (SP) calls, ObjectScript class compilation, and SQL projection, primarily experienced with InterSystems IRIS version 2024.1.2. These challenges significantly influenced the project's decision to pivot from SP-based RAG logic to a client-side SQL approach (see [`docs/DEVELOPMENT_STRATEGY_EVOLUTION.md`](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md:1)).
+**Context:** This document details troubleshooting related to Stored Procedure (SP) calls, ObjectScript class compilation, and SQL projection, primarily experienced with InterSystems IRIS version 2024.1.2. These challenges significantly influenced the project's decision to pivot from SP-based RAG logic to a client-side SQL approach (see [`docs/DEVELOPMENT_STRATEGY_EVOLUTION.md`](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md)).
 
-While this postmortem focuses on SP development issues, the project's current primary blocker (as of May 2025, with IRIS 2025.1) is a related but distinct issue concerning `TO_VECTOR()`/ODBC limitations when loading vector embeddings, detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+While this postmortem focuses on SP development issues, the project's current primary blocker (as of May 2025, with IRIS 2025.1) is a related but distinct issue concerning `TO_VECTOR()`/ODBC limitations when loading vector embeddings, detailed in [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 This document summarizes the troubleshooting for SPs, focusing on automated class compilation and SQL projection visibility within a Dockerized environment using IRIS 2024.1.2.
 

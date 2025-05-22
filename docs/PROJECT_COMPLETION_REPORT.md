@@ -143,7 +143,7 @@ The project has delivered significant foundational work:
 - **PENDING & BLOCKED**: Execution of tests with a full set of real PMC documents (Blocked by `TO_VECTOR`/ODBC embedding load issue).
 - **PENDING & BLOCKED**: Verification that all RAG techniques work with real data (Blocked by `TO_VECTOR`/ODBC embedding load issue).
 - Infrastructure for testing is in place, but actual testing with real data (requiring embeddings) cannot proceed until the blocker is resolved.
-- A detailed plan for real data testing is documented in [`REAL_DATA_TESTING_PLAN.md`](docs/REAL_DATA_TESTING_PLAN.md:1), but its execution is contingent on resolving the blocker.
+- A detailed plan for real data testing is documented in [`REAL_DATA_TESTING_PLAN.md`](docs/REAL_DATA_TESTING_PLAN.md), but its execution is contingent on resolving the blocker.
 
 ### Benchmarking and Performance Analysis
 
@@ -168,7 +168,7 @@ The project has delivered significant foundational work:
 - **PENDING & BLOCKED**: Generation of actual benchmark results (Blocked by `TO_VECTOR`/ODBC embedding load issue).
 - **PENDING & BLOCKED**: Comparative analysis of different RAG techniques (Blocked by `TO_VECTOR`/ODBC embedding load issue).
 - The benchmarking infrastructure is in place, but actual benchmarking with real data cannot proceed until the blocker is resolved.
-- A detailed plan for benchmarking with real data is included in [`REAL_DATA_TESTING_PLAN.md`](docs/REAL_DATA_TESTING_PLAN.md:1), but its execution is contingent on resolving the blocker.
+- A detailed plan for benchmarking with real data is included in [`REAL_DATA_TESTING_PLAN.md`](docs/REAL_DATA_TESTING_PLAN.md), but its execution is contingent on resolving the blocker.
 
 ## 3. Key Technical Innovations and Contributions
 

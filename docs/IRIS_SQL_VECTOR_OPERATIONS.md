@@ -13,7 +13,7 @@ The key issues identified are:
 
 These limitations force developers to use string interpolation for *querying* vector data (as implemented in [`common/vector_sql_utils.py`](common/vector_sql_utils.py:1) and used by [`common/db_vector_search.py`](common/db_vector_search.py:1)), instead of parameterized queries. This introduces potential security risks that must be carefully managed with validation.
 
-**Current Status: PROJECT BLOCKED.** While workarounds for *querying* are in place, the **primary project blocker** is that ODBC driver limitations with the `TO_VECTOR()` function prevent loading documents with embeddings. This blocks our ability to test RAG pipelines with new, real PMC data. For a detailed explanation, see [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+**Current Status: PROJECT BLOCKED.** While workarounds for *querying* are in place, the **primary project blocker** is that ODBC driver limitations with the `TO_VECTOR()` function prevent loading documents with embeddings. This blocks our ability to test RAG pipelines with new, real PMC data. For a detailed explanation, see [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## 2. Identified Limitations
 

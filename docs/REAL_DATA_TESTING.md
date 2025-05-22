@@ -1,6 +1,6 @@
 # Real Data Testing with Testcontainers (Supplementary Guide)
 
-**Note:** The primary and most up-to-date guide for all testing is [`docs/TESTING.md`](docs/TESTING.md:1). This document provides supplementary details on using Testcontainers for running tests with real PMC medical data in isolated IRIS database containers. This may be an alternative or specialized testing approach.
+**Note:** The primary and most up-to-date guide for all testing is [`docs/TESTING.md`](docs/TESTING.md). This document provides supplementary details on using Testcontainers for running tests with real PMC medical data in isolated IRIS database containers. This may be an alternative or specialized testing approach.
 
 ## Current Testing Status & Critical Blocker
 
@@ -8,7 +8,7 @@
 
 This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, preventing the successful loading of document embeddings. While Testcontainers can spin up IRIS instances and load text data, full validation with new real embeddings is impacted.
 
-For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## Overview
 
@@ -24,13 +24,13 @@ This approach can be useful for CI/CD pipelines or specific isolated test scenar
 ## Prerequisites & Installation
 
 - Docker installed and running.
-- Python 3.11+ environment set up with `uv` as per [`README.md`](README.md:1). Ensure your virtual environment is active.
+- Python 3.11+ environment set up with `uv` as per [`README.md`](README.md). Ensure your virtual environment is active.
 - To use this Testcontainer framework, install `testcontainers-iris`:
   ```bash
   # Ensure .venv is active
   uv pip install "testcontainers-iris>=1.2.0" "testcontainers>=3.7.0"
   ```
-  Project dependencies should already be installed via `uv pip install -r requirements.txt` or `uv pip install .` as per [`README.md`](README.md:1).
+  Project dependencies should already be installed via `uv pip install -r requirements.txt` or `uv pip install .` as per [`README.md`](README.md).
 
 ## Running Tests
 

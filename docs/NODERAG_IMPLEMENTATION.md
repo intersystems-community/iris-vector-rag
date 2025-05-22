@@ -8,7 +8,7 @@ This document outlines the implementation of NodeRAG (Node-based Retrieval Augme
 
 This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of document and node embeddings into the database. While the NodeRAG pipeline logic and SQL CTEs are implemented, their operation with fresh, real-data embeddings cannot be fully tested or utilized until this blocker is resolved.
 
-For more details on this blocker, please refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+For more details on this blocker, please refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## Overview
 

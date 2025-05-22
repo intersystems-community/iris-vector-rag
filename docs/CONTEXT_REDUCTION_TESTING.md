@@ -1,6 +1,6 @@
 # Context Reduction Testing with Real Data (Testcontainer Approach)
 
-**Note:** For an overview of context reduction strategies, see [`docs/CONTEXT_REDUCTION_STRATEGY.md`](docs/CONTEXT_REDUCTION_STRATEGY.md:1). For general project testing, refer to [`docs/TESTING.md`](docs/TESTING.md:1). This document details a specific approach for testing context reduction strategies using Testcontainers for managing IRIS instances.
+**Note:** For an overview of context reduction strategies, see [`docs/CONTEXT_REDUCTION_STRATEGY.md`](docs/CONTEXT_REDUCTION_STRATEGY.md). For general project testing, refer to [`docs/TESTING.md`](docs/TESTING.md). This document details a specific approach for testing context reduction strategies using Testcontainers for managing IRIS instances.
 
 ## Current Testing Status & Critical Blocker
 
@@ -8,7 +8,7 @@
 
 This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, preventing the successful loading of document embeddings. While text data can be loaded, and context reduction can be tested on text or with mock/pre-existing embeddings, full validation with new real embeddings is impacted.
 
-For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## Overview
 
@@ -21,7 +21,7 @@ This document describes a framework for testing context reduction strategies usi
 ## Prerequisites
 
 - Docker installed and running.
-- Python 3.11+ environment set up with `uv` as per [`README.md`](README.md:1). Ensure your virtual environment is active.
+- Python 3.11+ environment set up with `uv` as per [`README.md`](README.md). Ensure your virtual environment is active.
 - PMC XML files in the data directory (e.g., `data/pmc_oas_downloaded/`).
 
 ## Installation
@@ -32,7 +32,7 @@ Install `testcontainers-iris` if you intend to use this Testcontainer-based appr
 # Ensure .venv is active
 uv pip install "testcontainers-iris>=1.2.0" "testcontainers>=3.7.0"
 ```
-Project dependencies should already be installed via `uv pip install -r requirements.txt` or `uv pip install .` as per [`README.md`](README.md:1).
+Project dependencies should already be installed via `uv pip install -r requirements.txt` or `uv pip install .` as per [`README.md`](README.md).
 
 ## Running Tests
 

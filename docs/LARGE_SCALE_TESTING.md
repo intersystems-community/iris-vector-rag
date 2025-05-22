@@ -1,6 +1,6 @@
 # Large-Scale Testing (Potentially Outdated - Refer to Primary Testing Guide)
 
-**IMPORTANT NOTICE:** This document may contain outdated information, particularly regarding specific scripts, environment setup, and database schema details for embeddings. The primary and most up-to-date guide for all testing is [`docs/TESTING.md`](docs/TESTING.md:1). Refer to that document for canonical instructions.
+**IMPORTANT NOTICE:** This document may contain outdated information, particularly regarding specific scripts, environment setup, and database schema details for embeddings. The primary and most up-to-date guide for all testing is [`docs/TESTING.md`](docs/TESTING.md). Refer to that document for canonical instructions.
 
 This document describes an approach to running large-scale tests (1000+ documents, potentially up to 92,000+) for the RAG templates project.
 
@@ -10,18 +10,18 @@ This document describes an approach to running large-scale tests (1000+ document
 
 This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded, operations requiring these embeddings cannot be performed on newly ingested real data.
 
-Consequently, any large-scale testing reliant on new embeddings is impacted. For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+Consequently, any large-scale testing reliant on new embeddings is impacted. For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## Prerequisites
 
 - Python 3.11+ installed.
-- `uv` (Python package installer and virtual environment manager). See [`README.md`](README.md:1) for installation.
+- `uv` (Python package installer and virtual environment manager). See [`README.md`](README.md) for installation.
 - Docker installed (if using Testcontainers or the primary dedicated IRIS Docker setup).
 - Sufficient RAM (e.g., 8GB+) and disk space (1GB+ for data, more for larger datasets).
 
 ## Environment Setup
 
-Ensure your Python virtual environment is set up using `uv` and dependencies are installed as per [`README.md`](README.md:1).
+Ensure your Python virtual environment is set up using `uv` and dependencies are installed as per [`README.md`](README.md).
 For Testcontainer-specific tests mentioned in older guides, you might need `testcontainers-iris`:
 ```bash
 # Ensure .venv is active

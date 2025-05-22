@@ -31,7 +31,7 @@ The current client-side MaxSim calculation is inefficient for large datasets (li
 **Sketch of Server-Side Implementation:**
 
 *   **Goal:** Implement the ColBERT MaxSim calculation logic directly within the IRIS database server.
-*   **Approach:** Create a User-Defined Function (UDF) or User-Defined Aggregate Function (UDAF) in IRIS. (Note: Implementing robust UDFs/SPs in IRIS, especially using ObjectScript with SQL projection, can present challenges related to compilation and catalog management in automated environments. Refer to [`docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`](docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md:1). Embedded Python might offer a more direct route if it bypasses some of these issues.)
+*   **Approach:** Create a User-Defined Function (UDF) or User-Defined Aggregate Function (UDAF) in IRIS. (Note: Implementing robust UDFs/SPs in IRIS, especially using ObjectScript with SQL projection, can present challenges related to compilation and catalog management in automated environments. Refer to [`docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`](docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md). Embedded Python might offer a more direct route if it bypasses some of these issues.)
 *   **UDF/UDAF Functionality:**
     *   Input: Takes a document's token embeddings (e.g., from the CLOB in `DocumentTokenEmbeddings`) and the query's token embeddings (passed as a parameter, likely as a validated string for the UDF to parse).
     *   Processing: Performs the MaxSim calculation server-side. This involves iterating through the document's token embeddings, calculating cosine similarity with each query token embedding, finding the maximum similarity for each query token, and summing these maximums.

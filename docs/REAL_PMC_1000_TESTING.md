@@ -1,6 +1,6 @@
 # Real PMC 1000+ Document Testing (Supplementary Guide)
 
-**Note:** The primary and most up-to-date guide for all testing is [`docs/TESTING.md`](docs/TESTING.md:1). This document provides supplementary details on specific scripts and `make` targets related to 1000+ real PMC document testing, which may be alternative or older methods.
+**Note:** The primary and most up-to-date guide for all testing is [`docs/TESTING.md`](docs/TESTING.md). This document provides supplementary details on specific scripts and `make` targets related to 1000+ real PMC document testing, which may be alternative or older methods.
 
 ## Current Testing Status & Critical Blocker
 
@@ -8,7 +8,7 @@
 
 This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded, operations requiring these embeddings cannot be performed on newly ingested real data.
 
-Consequently, while the testing framework and some mechanisms described here are in place, their execution with real embeddings is impacted. Tests on text-based components or with mock/pre-existing embeddings may still function. For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+Consequently, while the testing framework and some mechanisms described here are in place, their execution with real embeddings is impacted. Tests on text-based components or with mock/pre-existing embeddings may still function. For more details on this blocker, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## Background
 

@@ -6,7 +6,7 @@ This document outlines key datasets and published results for benchmarking Retri
 
 **IMPORTANT:** As of May 21, 2025, performing comprehensive benchmarks of this project's RAG techniques against these external datasets using newly loaded real PMC data (with embeddings) is **BLOCKED**.
 
-This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of document embeddings. Benchmarking is contingent on resolving this blocker. For more details, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of document embeddings. Benchmarking is contingent on resolving this blocker. For more details, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 The information below is for reference and future use once the blocker is addressed.
 

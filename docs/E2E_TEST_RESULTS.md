@@ -4,7 +4,7 @@
 
 **This document contains PLACEHOLDER test results and does NOT represent actual testing with real data.**
 
-The actual execution of end-to-end tests with real PMC documents (especially those requiring vector embeddings) and a real LLM has NOT yet been performed due to the critical `TO_VECTOR`/ODBC embedding load blocker. This document outlines the expected structure and format of test results that will be generated once this blocker is resolved and real testing is completed according to the plan in [`docs/REAL_DATA_TESTING_PLAN.md`](docs/REAL_DATA_TESTING_PLAN.md:1).
+The actual execution of end-to-end tests with real PMC documents (especially those requiring vector embeddings) and a real LLM has NOT yet been performed due to the critical `TO_VECTOR`/ODBC embedding load blocker. This document outlines the expected structure and format of test results that will be generated once this blocker is resolved and real testing is completed according to the plan in [`docs/REAL_DATA_TESTING_PLAN.md`](docs/REAL_DATA_TESTING_PLAN.md).
 
 ## Expected Test Execution Process
 
@@ -53,7 +53,7 @@ It is important to note that:
 
 The following issues need to be addressed before or during the actual testing:
 
-1. **IRIS SQL `TO_VECTOR`/ODBC Blocker**: The primary issue is the inability to load new document embeddings due to limitations with the `TO_VECTOR` function and ODBC driver behavior. This prevents meaningful E2E testing with real data embeddings. See [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+1. **IRIS SQL `TO_VECTOR`/ODBC Blocker**: The primary issue is the inability to load new document embeddings due to limitations with the `TO_VECTOR` function and ODBC driver behavior. This prevents meaningful E2E testing with real data embeddings. See [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 2. **Real LLM Integration**: A real LLM service needs to be fully integrated and tested for answer generation and evaluation.
 

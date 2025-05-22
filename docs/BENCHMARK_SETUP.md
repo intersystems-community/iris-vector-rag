@@ -8,7 +8,7 @@ This document provides instructions for setting up the environment to run RAG te
 
 This is due to a critical limitation with the InterSystems IRIS ODBC driver and the `TO_VECTOR()` SQL function, which prevents the successful loading of documents with their vector embeddings into the database. While text data can be loaded, operations requiring these embeddings for benchmarking cannot be performed on newly ingested real data.
 
-This setup guide describes the intended process, but execution of benchmarks with real embeddings is contingent on resolving this blocker. For more details, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1).
+This setup guide describes the intended process, but execution of benchmarks with real embeddings is contingent on resolving this blocker. For more details, refer to [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md).
 
 ## Prerequisites
 
@@ -22,10 +22,10 @@ This setup guide describes the intended process, but execution of benchmarks wit
    - Python 3.11+ installed on your host machine.
    - `uv` (Python package installer and virtual environment manager).
    - Virtual environment created and activated (e.g., `uv venv .venv; source .venv/bin/activate`).
-   - All project dependencies installed via `uv pip install -r requirements.txt` or `uv pip install .` (see [`README.md`](README.md:1) for details).
+   - All project dependencies installed via `uv pip install -r requirements.txt` or `uv pip install .` (see [`README.md`](README.md) for details).
 
 3. **Environment Variables**
-   - Set up environment variables for IRIS connection as per [`README.md`](README.md:1) (e.g., `IRIS_HOST`, `IRIS_PORT`, `IRIS_NAMESPACE`, `IRIS_USERNAME`, `IRIS_PASSWORD`).
+   - Set up environment variables for IRIS connection as per [`README.md`](README.md) (e.g., `IRIS_HOST`, `IRIS_PORT`, `IRIS_NAMESPACE`, `IRIS_USERNAME`, `IRIS_PASSWORD`).
 
 ## Database Setup
 

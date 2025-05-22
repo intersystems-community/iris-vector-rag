@@ -216,10 +216,10 @@ pytest tests/
 
 While the **[Project Documentation Index](docs/INDEX.md)** provides a comprehensive list, some key starting points include:
 
-- **[`PLAN_STATUS.md`](PLAN_STATUS.md:1)**: Detailed project status and task breakdown.
-- **[`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md:1)**: High-level summary for project managers, including JIRA issue suggestions.
-- **[`docs/DEVELOPMENT_STRATEGY_EVOLUTION.md`](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md:1)**: Explains the evolution of the project's development approach and the pivot to client-side SQL.
-- **[`docs/TESTING.md`](docs/TESTING.md:1)**: The primary guide for all testing procedures.
+- **[`PLAN_STATUS.md`](PLAN_STATUS.md)**: Detailed project status and task breakdown.
+- **[`docs/MANAGEMENT_SUMMARY.md`](docs/MANAGEMENT_SUMMARY.md)**: High-level summary for project managers, including JIRA issue suggestions.
+- **[`docs/DEVELOPMENT_STRATEGY_EVOLUTION.md`](docs/DEVELOPMENT_STRATEGY_EVOLUTION.md)**: Explains the evolution of the project's development approach and the pivot to client-side SQL.
+- **[`docs/TESTING.md`](docs/TESTING.md)**: The primary guide for all testing procedures.
 
 ## IRIS SQL Vector Operations Limitations
 

@@ -5,11 +5,11 @@
 **All six RAG techniques mentioned in this project (BasicRAG, HyDE, CRAG, ColBERT, NodeRAG, and GraphRAG) have since been implemented.**
 
 For current information, please refer to:
-- Main project status: [`README.md`](README.md:1)
+- Main project status: [`README.md`](README.md)
 - Individual RAG technique implementation details:
-  - [`docs/COLBERT_IMPLEMENTATION.md`](docs/COLBERT_IMPLEMENTATION.md:1)
-  - [`docs/NODERAG_IMPLEMENTATION.md`](docs/NODERAG_IMPLEMENTATION.md:1)
-  - [`docs/GRAPHRAG_IMPLEMENTATION.md`](docs/GRAPHRAG_IMPLEMENTATION.md:1)
+  - [`docs/COLBERT_IMPLEMENTATION.md`](docs/COLBERT_IMPLEMENTATION.md)
+  - [`docs/NODERAG_IMPLEMENTATION.md`](docs/NODERAG_IMPLEMENTATION.md)
+  - [`docs/GRAPHRAG_IMPLEMENTATION.md`](docs/GRAPHRAG_IMPLEMENTATION.md)
 
 ---
 
