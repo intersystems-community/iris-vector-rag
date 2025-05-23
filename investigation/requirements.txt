@@ -3,3 +3,4 @@ llama-iris
 testcontainers-iris
 fastembed
 sqlalchemy
+intersystems-iris==5.1.2

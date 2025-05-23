@@ -6,13 +6,76 @@ This script provides a simple, standalone way to reproduce two key issues:
 1. Parameter substitution issues with TO_VECTOR in IRIS 2025.1
 2. Inability to create views, computed columns, or materialized views with TO_VECTOR for HNSW indexing
 
-Usage:
-    python investigation/reproduce_vector_issues.py
+=== COMPLETE SETUP INSTRUCTIONS FOR FRESH GIT CLONE ===
 
-Requirements:
-    - IRIS 2025.1 running (e.g., via docker-compose -f docker-compose.iris-only.yml up -d)
-    - intersystems-iris 5.1.2 Python driver installed
-    - fastembed installed (pip install fastembed)
+1. Clone the repository and navigate to the project directory:
+   ```
+   git clone https://gitlab.iscinternal.com/tdyar/rag-templates.git
+   cd rag-templates
+   ```
+
+2. Start IRIS 2025.1 using Docker:
+   ```
+   docker-compose -f docker-compose.iris-only.yml up -d
+   ```
+   This will start an IRIS 2025.1 container with the necessary configuration.
+
+3. Create a Python virtual environment and install dependencies:
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r investigation/requirements.txt
+   pip install fastembed intersystems-iris==5.1.2
+   ```
+
+4. Configure the connection to IRIS:
+   The script uses the following default connection parameters:
+   - Host: localhost
+   - Port: 1972
+   - Namespace: USER
+   - Username: _SYSTEM
+   - Password: SYS
+
+   If you need to use different connection parameters, you can set them as environment variables:
+   ```
+   export IRIS_HOST=localhost
+   export IRIS_PORT=1972
+   export IRIS_NAMESPACE=USER
+   export IRIS_USERNAME=_SYSTEM
+   export IRIS_PASSWORD=SYS
+   ```
+
+5. Run the script:
+   ```
+   python investigation/reproduce_vector_issues.py
+   ```
+
+6. Interpreting the results:
+   - The script will run a series of tests and display the results
+   - Look for error messages that confirm the issues
+   - The summary at the end will explain the implications of the test results
+
+=== WHAT THIS SCRIPT TESTS ===
+
+1. Parameter Substitution Issues:
+   - Direct query with parameter markers for TO_VECTOR
+   - Query with string interpolation for TO_VECTOR
+
+2. View Creation Issues:
+   - Creating a view with TO_VECTOR
+   - Creating a table with a computed column using TO_VECTOR
+   - Creating a materialized view with TO_VECTOR
+
+=== EXPECTED RESULTS ===
+
+All tests are expected to fail with specific error messages that confirm the issues.
+These failures demonstrate that the dual-table architecture with ObjectScript triggers
+is the only viable approach for implementing HNSW indexing in IRIS 2025.1.
+
+For more details, see the following documentation:
+- docs/HNSW_VIEW_TEST_RESULTS.md
+- docs/VECTOR_SEARCH_DOCUMENTATION_INDEX.md
+- docs/HNSW_INDEXING_RECOMMENDATIONS.md
 """
 
 import os
