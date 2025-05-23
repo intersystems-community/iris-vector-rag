@@ -70,6 +70,16 @@ The `reproduce_vector_issues.py` script provides a simple, standalone way to rep
 
    The SQL files contain the complete statements with actual embedding values, making it easy to run them directly in DBeaver or SQL Shell without any modifications.
 
+6. For DBeaver users who want to use parameterized queries:
+   
+   We've created a special guide for DBeaver users who want to use parameterized queries:
+   
+   ```
+   investigation/DBEAVER_PARAMETERIZED_QUERIES.md
+   ```
+   
+   This guide provides step-by-step instructions for using DBeaver's parameterized query feature, where you can enter queries with `?` parameters and then be prompted for the values. This is particularly useful for testing the parameter substitution issues with TO_VECTOR.
+
 ### What the Script Tests
 
 1. **Parameter Substitution Issues**:
