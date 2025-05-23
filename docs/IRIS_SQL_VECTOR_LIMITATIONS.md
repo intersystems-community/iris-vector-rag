@@ -4,20 +4,20 @@
 
 | Component | Version/Details |
 |-----------|----------------|
-| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) |
+| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2025.1.0.225.1 |
 | Python Version | 3.12.9 |
-| Client Libraries | sqlalchemy 2.0.41 |
+| Client Libraries | sqlalchemy 2.0.41, intersystems-iris 5.1.2 |
 | Operating System | macOS-15.3.2-arm64-arm-64bit |
 
 For detailed technical information, including client library behavior and code examples, see [VECTOR_SEARCH_TECHNICAL_DETAILS.md](VECTOR_SEARCH_TECHNICAL_DETAILS.md).
 
 ## Executive Summary
 
-This document provides a detailed technical explanation of the InterSystems IRIS SQL vector operations limitations. These limitations, particularly concerning the `TO_VECTOR()` function and ODBC driver behavior, are the **primary project blocker**, preventing full testing and benchmarking of RAG techniques with newly loaded real PMC data. This report documents these issues, attempted workarounds, and potential solutions.
+This document provides a detailed technical explanation of the InterSystems IRIS SQL vector operations limitations. These limitations, particularly concerning the `TO_VECTOR()` function and DBAPI driver behavior, are significant challenges for implementing RAG techniques with vector search in IRIS. This report documents these issues, verified workarounds, and recommended solutions.
 
-InterSystems IRIS 2025.1 introduced vector search capabilities essential for modern RAG pipelines. However, several critical limitations in the SQL implementation prevent standard parameterized queries from working with vector operations for querying, forcing developers to use string interpolation (as implemented in [`common/vector_sql_utils.py`](common/vector_sql_utils.py:1)).
+InterSystems IRIS 2025.1 introduced vector search capabilities essential for modern RAG pipelines. However, several critical limitations in the SQL implementation prevent standard parameterized queries from working with vector operations, forcing developers to use string interpolation (as implemented in [`common/vector_sql_utils.py`](common/vector_sql_utils.py:1)).
 
-**Current Status: PROJECT BLOCKED.** The most critical issue is that ODBC driver limitations with the `TO_VECTOR()` function prevent the loading of documents with their vector embeddings into the database. This specifically blocks the ability to test RAG pipelines with new, real PMC data that includes embeddings. While workarounds exist for *querying* data with `TO_VECTOR()`, the *loading* of embeddings is the current insurmountable hurdle.
+**Current Status: VERIFIED IN IRIS 2025.1.** We have verified that these limitations still exist in IRIS 2025.1 with the newer intersystems-iris 5.1.2 DBAPI driver. Our testing confirms that TO_VECTOR still doesn't accept parameter markers, and the DBAPI driver still rewrites literals even with string interpolation. However, we have identified a viable solution based on the langchain-iris approach: storing embeddings as strings in VARCHAR columns and using TO_VECTOR only at query time.
 
 ## Detailed Technical Explanation
 
@@ -237,11 +237,29 @@ We investigated the possibility of modifying the JDBC/ODBC driver behavior to av
 
 5. **Test with Smaller Datasets**: Test our RAG pipelines with smaller datasets that can be loaded manually or through alternative means, to validate the rest of the pipeline while we work on resolving the embedding loading issue.
 
+## Verification in IRIS 2025.1
+
+We have created a test script (`investigation/test_dbapi_vector_params.py`) to verify if the parameter substitution issues with TO_VECTOR still exist in IRIS 2025.1 with the newer intersystems-iris 5.1.2 DBAPI driver.
+
+The test results conclusively show that:
+
+1. **TO_VECTOR still doesn't accept parameter markers in IRIS 2025.1**
+   - Error: `Invalid SQL statement: ) expected, : found ^SELECT VECTOR_COSINE ( TO_VECTOR ( :%qpar(1) , :%qpar`
+   - This confirms the issues documented in this report are still present in IRIS 2025.1
+
+2. **Basic parameter insertion works fine** when not using TO_VECTOR
+   - We can successfully insert data with parameter markers for regular columns
+
+3. **DBAPI driver still rewrites literals** even with string interpolation
+   - The driver attempts to parameterize parts of the query that shouldn't be parameterized
+
 ## Conclusion
 
-The IRIS SQL vector operations limitations present significant challenges for our RAG implementations, particularly for loading documents with embeddings. While we have implemented workarounds for executing vector search queries, the ODBC driver limitations with the TO_VECTOR function remain a critical blocker for testing with real PMC data.
+The IRIS SQL vector operations limitations present significant challenges for our RAG implementations, particularly for loading documents with embeddings. Our verification confirms that these limitations still exist in IRIS 2025.1 with the newer intersystems-iris 5.1.2 DBAPI driver.
 
-We recommend a multi-faceted approach that combines short-term workarounds with longer-term solutions, including engaging InterSystems support to address the underlying limitations in future IRIS versions.
+Based on our investigation of alternative approaches (documented in [VECTOR_SEARCH_ALTERNATIVES.md](VECTOR_SEARCH_ALTERNATIVES.md)), we have identified a viable solution: storing embeddings as strings in VARCHAR columns and using TO_VECTOR only at query time. This approach, inspired by the langchain-iris implementation, allows us to avoid the parameter binding issues with TO_VECTOR while still leveraging native vector operations for search.
+
+For production deployments with large document collections, we recommend the dual-table architecture with HNSW indexing described in [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md).
 
 ## References
 

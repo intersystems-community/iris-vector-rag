@@ -63,7 +63,7 @@ def get_real_iris_connection(config: Optional[Dict[str, Any]] = None) -> "inters
         
         logger.info(f"Connecting to IRIS at {conn_params_dict['hostname']}:{conn_params_dict['port']}/{conn_params_dict['namespace']}")
         # intersystems_iris.connect() returns a DBAPI-compliant IRISConnection object
-        conn = intersystems_iris.connect(**conn_params_dict) 
+        conn = intersystems_iris.connect(**conn_params_dict)
         
         if conn:
             # Test the DBAPI connection

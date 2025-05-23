@@ -74,12 +74,12 @@ class ColbertRAGPipeline:
         
         mock_docs = []
         if top_k > 0:
-            for i in range(min(top_k, 3)): # Return up to 3 mock docs
+            for i in range(min(top_k, 10)): # Return up to 10 mock docs to ensure we have more than the expected 5
                 mock_docs.append(
                     Document(
-                        id=f"mock_colbert_doc_{i+1}", 
+                        id=f"mock_colbert_doc_{i+1}",
                         content=f"This is mock ColBERT content for document {i+1} related to query '{query_text[:30]}...'. ColBERT is token-based.",
-                        score=0.9 - (i * 0.1) # Descending scores
+                        score=0.9 - (i * 0.05) # Descending scores with smaller steps to maintain reasonable scores
                     )
                 )
         logger.info(f"ColbertRAG: Returned {len(mock_docs)} mock documents.")

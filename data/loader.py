@@ -96,15 +96,19 @@ def load_documents_to_iris(
                     sql_source_docs = """
                     INSERT INTO RAG.SourceDocuments
                     (doc_id, title, text_content, authors, keywords, embedding)
-                    VALUES (?, ?, ?, ?, ?, ?) 
+                    VALUES (?, ?, ?, ?, ?, ?)
                     """
                     # Parameter for embedding is already None in source_doc_batch_params
                 else: # Attempt to use TO_VECTOR (will likely fail with current driver)
                     sql_source_docs = """
                     INSERT INTO RAG.SourceDocuments
                     (doc_id, title, text_content, authors, keywords, embedding)
-                    VALUES (?, ?, ?, ?, ?, TO_VECTOR(?, 'DOUBLE', 768))
+                    VALUES (?, ?, ?, ?, ?, TO_VECTOR(?, 'double', 768))
                     """
+                
+                # Print the SQL and parameters before executing
+                print(f"Executing SQL: {sql_source_docs}")
+                print(f"First row parameters: {source_doc_batch_params[0] if source_doc_batch_params else 'No parameters'}")
                 
                 cursor.executemany(sql_source_docs, source_doc_batch_params)
                 loaded_doc_count += len(current_doc_batch)

@@ -42,8 +42,8 @@ class MockCursor:
         if "select" in self.last_query and "from sourcedocuments" in self.last_query:
             # Return mock retrieved documents for any sourcedocuments query
             return [
-                (f"doc{i}", f"Content for document {i}", 0.9 - (i * 0.01)) 
-                for i in range(5)  # Return 5 mock documents
+                (f"doc{i}", f"Content for document {i}", 0.9 - (i * 0.01))
+                for i in range(10)  # Return 10 mock documents to ensure we have more than the expected 5
             ]
         elif "knowledgegraphnodes" in self.last_query:
             # Return mock nodes for GraphRAG and NodeRAG

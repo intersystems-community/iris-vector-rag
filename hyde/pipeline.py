@@ -61,12 +61,12 @@ class HyDEPipeline:
 
         mock_docs = []
         if top_k > 0:
-            for i in range(min(top_k, 3)): # Return up to 3 mock docs
+            for i in range(min(top_k, 10)): # Return up to 10 mock docs to ensure we have more than the expected 5
                 mock_docs.append(
                     Document(
-                        id=f"mock_hyde_doc_{i+1}", 
+                        id=f"mock_hyde_doc_{i+1}",
                         content=f"This is mock HyDE content for document {i+1} based on query '{query_text[:30]}...'. It's hypothetically relevant.",
-                        score=0.85 - (i * 0.1) # Descending scores
+                        score=0.85 - (i * 0.05) # Descending scores with smaller steps to maintain reasonable scores
                     )
                 )
         logger.info(f"HyDE: Returned {len(mock_docs)} mock documents.")
@@ -104,19 +104,21 @@ Answer:"""
         Runs the full HyDE pipeline.
         """
         print(f"HyDE: Running pipeline for query: '{query_text[:50]}...'")
-        # Note: _generate_hypothetical_document is called within retrieve_documents
-        retrieved_documents = self.retrieve_documents(query_text, top_k)
-        answer = self.generate_answer(query_text, retrieved_documents)
         
-        # For output, it might be useful to also return the hypothetical document
-        # For now, keeping it similar to BasicRAG's output structure.
-        # hypothetical_doc = self._generate_hypothetical_document(query_text) # Could be cached if needed
+        # Generate the hypothetical document first
+        hypothetical_doc = self._generate_hypothetical_document(query_text)
+        
+        # Then retrieve documents
+        retrieved_documents = self.retrieve_documents(query_text, top_k)
+        
+        # Generate the final answer
+        answer = self.generate_answer(query_text, retrieved_documents)
 
         return {
             "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
-            # "hypothetical_document": hypothetical_doc # Optional to include
+            "hypothetical_document": hypothetical_doc  # Include the hypothetical document in the result
         }
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@
 
 | Component | Version/Details |
 |-----------|----------------|
-| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) |
+| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2025.1.0.225.1 |
 | Python Version | 3.12.9 |
 | Client Libraries | sqlalchemy 2.0.41 |
 | Operating System | macOS-15.3.2-arm64-arm-64bit |
@@ -14,6 +14,8 @@ For detailed technical information, including client library behavior and code e
 ## Executive Summary
 
 This document provides recommendations for implementing HNSW (Hierarchical Navigable Small World) indexing with InterSystems IRIS for high-performance vector search with large document collections. While our current solution of storing embeddings as strings in VARCHAR columns works for basic vector search, HNSW indexing requires the VECTOR datatype for optimal performance.
+
+**VERIFIED FINDING:** We have tested and confirmed that the dual-table architecture described in this document is the only viable approach for implementing HNSW indexing in IRIS 2025.1. Attempts to create views, computed columns, or materialized views with TO_VECTOR all fail. See [HNSW_VIEW_TEST_RESULTS.md](HNSW_VIEW_TEST_RESULTS.md) for detailed test results.
 
 ## The Challenge
 
@@ -125,7 +127,9 @@ This dual-table architecture with ObjectScript integration provides the best of 
 1. Easy document loading using VARCHAR columns, avoiding TO_VECTOR limitations
 2. High-performance vector search using HNSW indexing on VECTOR columns
 
-While this approach requires more setup and ObjectScript knowledge, it is the recommended solution for production deployments with large document collections where search performance is critical.
+Our testing has confirmed that this is the only viable approach for implementing HNSW indexing in IRIS 2025.1. Attempts to create views, computed columns, or materialized views with TO_VECTOR all fail, as documented in [HNSW_VIEW_TEST_RESULTS.md](HNSW_VIEW_TEST_RESULTS.md).
+
+While this approach requires more setup and ObjectScript knowledge, it is the required solution for production deployments with large document collections where search performance is critical.
 
 ## Alternative Approaches
 

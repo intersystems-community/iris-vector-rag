@@ -107,7 +107,11 @@ def load_documents_to_iris(
                         safe_keywords = keywords.replace("'", "''") if keywords else "{}"
                         
                         # Use string interpolation for the entire SQL statement
-                        sql = f"INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords, embedding) VALUES ('{doc_id}', '{safe_title}', '{safe_text}', '{safe_authors}', '{safe_keywords}', TO_VECTOR('{embedding_vector_str}', 'DOUBLE', 768))"
+                        sql = f"INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords, embedding) VALUES ('{doc_id}', '{safe_title}', '{safe_text}', '{safe_authors}', '{safe_keywords}', TO_VECTOR('{embedding_vector_str}', 'double', 768))"
+                        
+                        # Print the SQL before executing
+                        print(f"Executing SQL (with embedding): {sql}")
+                        
                         cursor.execute(sql)
                     else:
                         # Escape single quotes in string values
@@ -118,6 +122,10 @@ def load_documents_to_iris(
                         
                         # Use string interpolation for the entire SQL statement
                         sql = f"INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords, embedding) VALUES ('{doc_id}', '{safe_title}', '{safe_text}', '{safe_authors}', '{safe_keywords}', NULL)"
+                        
+                        # Print the SQL before executing
+                        print(f"Executing SQL (without embedding): {sql}")
+                        
                         cursor.execute(sql)
                     
                     loaded_doc_count += 1
@@ -139,7 +147,12 @@ def load_documents_to_iris(
                                 safe_token_text = token_text[:1000].replace("'", "''") if token_text else ""
                                 
                                 # Use string interpolation for the entire SQL statement
-                                token_sql = f"INSERT INTO RAG.DocumentTokenEmbeddings (doc_id, token_sequence_index, token_text, token_embedding, metadata_json) VALUES ('{doc_id}', {idx}, '{safe_token_text}', TO_VECTOR('{token_vec_str}', 'DOUBLE', 128), '{{}}')"
+                                token_sql = f"INSERT INTO RAG.DocumentTokenEmbeddings (doc_id, token_sequence_index, token_text, token_embedding, metadata_json) VALUES ('{doc_id}', {idx}, '{safe_token_text}', TO_VECTOR('{token_vec_str}', 'double', 128), '{{}}')"
+                                
+                                # Print the SQL before executing (only for the first token to avoid flooding the console)
+                                if idx == 0:
+                                    print(f"Executing token SQL (first token only): {token_sql}")
+                                
                                 cursor.execute(token_sql)
                                 loaded_token_count += 1
                         except Exception as colbert_e:

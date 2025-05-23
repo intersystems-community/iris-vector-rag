@@ -25,7 +25,7 @@ These are not isolated bugs but appear to be systemic issues that create a hosti
 
 | Component | Version/Details |
 |-----------|----------------|
-| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) |
+| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2025.1.0.225.1 |
 | Python Version | 3.12.9 |
 | Client Libraries | sqlalchemy 2.0.41 |
 | Operating System | macOS-15.3.2-arm64-arm-64bit |

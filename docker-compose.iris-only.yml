@@ -1,19 +1,25 @@
 services:
   iris_db:
-    image: intersystemsdc/iris-community:latest
+    image: containers.intersystems.com/intersystems/iris-community-arm64:latest-em
     container_name: iris_db_rag_standalone
     ports:
-      - "1972:1972"   # IRIS SuperServer port (host:container) - adjust host port if 1972 is in use
-      - "52773:52773" # IRIS Management Portal (host:container) - adjust host port if 52773 is in use
+      - "1972:1972"   # IRIS SuperServer port (host:container)
+      - "52773:52773" # IRIS Management Portal (host:container)
     environment:
-      - IRISUSERNAME=SuperUser
-      - IRISPASSWORD=SYS
-      - IRISNAMESPACE=USER # Default namespace for the IRIS instance
+      - IRISNAMESPACE=USER
+      - ISC_DEFAULT_PASSWORD=SYS
     volumes:
       - iris_db_data:/usr/irissys/mgr # Named volume for IRIS data persistence
     stdin_open: true # Keep container running
     tty: true        # Keep container running
-    # Consider adding a healthcheck for IRIS readiness if needed for automation scripts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:52773/csp/sys/UtilHome.csp"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    # Disable password expiration for all accounts using Security.Users.UnExpireUserPasswords()
+    command: --check-caps false -a "iris session iris -U%SYS '##class(Security.Users).UnExpireUserPasswords(\"*\")'"
 
 volumes:
   iris_db_data: {} # Defines the named volume for IRIS data

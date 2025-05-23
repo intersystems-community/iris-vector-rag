@@ -21,7 +21,7 @@ import logging
 import time
 from typing import Dict, Any
 
-from data.loader import process_and_load_documents
+from data.loader_fixed import process_and_load_documents
 from common.iris_connector import get_iris_connection
 from common.db_init import initialize_database
 

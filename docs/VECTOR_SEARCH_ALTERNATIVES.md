@@ -323,6 +323,8 @@ This investigation is expected to yield:
 
 While our investigation has identified a viable solution for loading documents with embeddings, we must also consider performance optimization for large document collections. HNSW (Hierarchical Navigable Small World) indexing is essential for efficient vector search with large datasets, but it requires the VECTOR datatype.
 
+**IMPORTANT LIMITATION:** The langchain-iris approach of storing embeddings as strings in VARCHAR columns is incompatible with HNSW indexing. We have verified through testing that attempts to create views, computed columns, or materialized views with TO_VECTOR all fail in IRIS 2025.1. See [HNSW_VIEW_TEST_RESULTS.md](HNSW_VIEW_TEST_RESULTS.md) for detailed test results.
+
 To address this requirement, we have created a separate document with detailed recommendations for implementing HNSW indexing: [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md).
 
 The recommended approach involves:
@@ -330,12 +332,22 @@ The recommended approach involves:
 2. VECTOR storage with HNSW indexing for efficient search
 3. ObjectScript triggers to automatically convert between formats
 
-This approach provides the best of both worlds: easy document loading and high-performance vector search.
+This dual-table architecture is the only viable approach for implementing high-performance vector search with HNSW indexing. It provides the best of both worlds: easy document loading and high-performance vector search.
 
 ## Conclusion
 
-Our investigation has revealed that the langchain-iris approach provides a viable solution to our current vector search limitations. By storing embeddings as strings and using TO_VECTOR only at query time, we can avoid the ODBC driver limitations while still leveraging native vector operations for search.
+Our investigation has revealed that the langchain-iris approach provides a viable solution to our current vector search limitations for basic use cases. By storing embeddings as strings and using TO_VECTOR only at query time, we can avoid the DBAPI driver limitations while still leveraging native vector operations for search.
 
-For basic testing and development, this approach is sufficient. For production deployments with large document collections, the dual-table architecture with HNSW indexing described in [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md) is recommended.
+However, it's critical to understand that:
 
-This solution should allow us to proceed with loading real PMC documents with embeddings and testing our RAG pipelines with real data, while also providing a path to high-performance vector search for production deployments.
+1. **For Basic Vector Search (Development/Testing)**:
+   - The langchain-iris approach (storing embeddings as strings in VARCHAR columns) is sufficient
+   - This approach works well for small document collections and development/testing scenarios
+   - It avoids the parameter substitution issues with TO_VECTOR during insertion
+
+2. **For High-Performance Vector Search (Production)**:
+   - The langchain-iris approach alone is **not compatible** with HNSW indexing
+   - HNSW indexing requires the VECTOR datatype, which cannot be created from VARCHAR columns using views or computed columns
+   - The dual-table architecture with ObjectScript triggers described in [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md) is the only viable approach
+
+This two-tiered solution allows us to proceed with loading real PMC documents with embeddings and testing our RAG pipelines with real data, while also providing a clear path to high-performance vector search for production deployments with large document collections.
