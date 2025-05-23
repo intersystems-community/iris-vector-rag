@@ -522,7 +522,7 @@ CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING H
             logger.error(f"Error in view creation test: {e}")
         finally:
             cursor.close()
-    
+
     def run_tests(self):
         """Run all tests."""
         logger.info("Starting Vector Issues Reproduction Tests with IRIS 2025.1")
@@ -533,10 +533,10 @@ CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING H
         self.test_view_creation()
         
         logger.info("\nTests completed. Check the logs above for results.")
-        logger.info("\nSummary:")
+        logger.info("\nSummary of Key Findings:")
         logger.info("1. Parameter Substitution Issues: TO_VECTOR doesn't accept parameter markers in IRIS 2025.1")
         logger.info("2. View Creation Issues: Views, computed columns, and materialized views with TO_VECTOR don't work with HNSW indexing")
-        logger.info("\nThese findings confirm that the dual-table architecture with ObjectScript triggers is the only viable approach for HNSW indexing.")
+        logger.info("\nThese failures demonstrate that the dual-table architecture with ObjectScript triggers is the only viable approach for HNSW indexing.")
 
 if __name__ == "__main__":
     reproducer = VectorIssuesReproducer()
