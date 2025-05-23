@@ -6,6 +6,7 @@ This document serves as a central index for all vector search documentation in t
 
 | Document | Description | Key Information |
 |----------|-------------|----------------|
+| [VECTOR_SEARCH_SYNTAX_FINDINGS.md](VECTOR_SEARCH_SYNTAX_FINDINGS.md) | **NEW** Updated findings on correct syntax for TO_VECTOR | Working parameter substitution, view creation, HNSW syntax issues |
 | [VECTOR_SEARCH_TECHNICAL_DETAILS.md](VECTOR_SEARCH_TECHNICAL_DETAILS.md) | Comprehensive technical details about vector search implementation | Environment information, client library behavior, code examples |
 | [VECTOR_SEARCH_ALTERNATIVES.md](VECTOR_SEARCH_ALTERNATIVES.md) | Investigation of alternative vector search approaches | langchain-iris approach, limitations with HNSW indexing |
 | [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md) | Recommendations for implementing HNSW indexing | Dual-table architecture, ObjectScript triggers |
@@ -86,6 +87,7 @@ This document serves as a central index for all vector search documentation in t
 | [investigation/test_dbapi_vector_params.py](../investigation/test_dbapi_vector_params.py) | Test of parameter substitution with TO_VECTOR | TO_VECTOR still doesn't accept parameter markers in IRIS 2025.1 |
 | [investigation/test_view_hnsw_2025.py](../investigation/test_view_hnsw_2025.py) | Test of view-based approach for HNSW indexing | View-based approach doesn't work in IRIS 2025.1 |
 | [investigation/reproduce_vector_issues.py](../investigation/reproduce_vector_issues.py) | Standalone script to reproduce vector issues | Simple script to demonstrate both parameter substitution issues and view-based approach limitations |
+| [investigation/test_working_vector_params.py](../investigation/test_working_vector_params.py) | **NEW** Test of working parameter substitution | Demonstrates correct syntax for TO_VECTOR with parameter markers |
 
 ## Implementation Status
 
