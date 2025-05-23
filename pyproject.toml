@@ -19,8 +19,8 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.11"
 # Core IRIS and ML
-# Using community driver via URL, and making it non-optional for now if testcontainers depends on it implicitly
-intersystems-iris = { url = "https://github.com/intersystems-community/intersystems-irispython/releases/download/3.9.2/intersystems_iris-3.9.2-py3-none-any.whl" }
+# Updated to use the latest version that's compatible with IRIS 2025.1
+intersystems-irispython = "==5.1.2"
 sqlalchemy = "^2.0.0"
 testcontainers-iris = ">=1.2.0" # Updated to newer version for connection URL fixes
 testcontainers = ">=3.7.0" # Core testcontainers library

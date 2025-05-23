@@ -1,0 +1,85 @@
+[Startup]
+SystemMode=DEVELOPMENT
+WebServer=1
+WebServerName=iris-2025
+WebServerPort=52773
+ShutdownTimeout=300
+DefaultPort=1972
+EnableEnsembleAutoStart=0
+EnableVirtualAddressSpace=0
+JournalFileClass=1
+MaxServerConn=1000
+MaxServers=64
+PasswordHash=IRIS
+ProgressTimeout=30
+ShutdownTimeout=300
+TempDirectory=/usr/irissys/mgr/Temp/
+WebServer=1
+WebServerName=iris-2025
+WebServerPort=52773
+
+[Actions]
+CreateDatabase:Name=/usr/irissys/mgr/user/,Directory=/usr/irissys/mgr/user/
+
+[Namespaces]
+USER=/usr/irissys/mgr/user/
+
+[Map.USER]
+Global.USER.* = /usr/irissys/mgr/user/
+Routine.USER.* = /usr/irissys/mgr/user/
+
+[Security]
+ApplicationSecurity=1
+AutheEnabled=64
+PasswordHash=IRIS
+
+[SqlSysDatatypes]
+BIGINT=%Library.BigInt
+BINARY=%Library.Binary
+BINARY VARYING=%Library.Binary
+BIT=%Library.Boolean
+CHAR=%Library.String
+CHAR VARYING=%Library.String
+CHARACTER=%Library.String
+CHARACTER VARYING=%Library.String
+DATE=%Library.Date
+DATETIME=%Library.TimeStamp
+DECIMAL=%Library.Decimal
+DOUBLE=%Library.Double
+DOUBLE PRECISION=%Library.Double
+FLOAT=%Library.Float
+IMAGE=IRIS.Image
+INT=%Library.Integer
+INTEGER=%Library.Integer
+LONG=%Library.Long
+LONG BINARY=%Library.Binary
+LONG VARCHAR=%Library.String
+MONEY=%Library.Currency
+NATIONAL CHAR=%Library.String
+NATIONAL CHAR VARYING=%Library.String
+NATIONAL CHARACTER=%Library.String
+NATIONAL CHARACTER VARYING=%Library.String
+NATIONAL TEXT=%Library.String
+NCHAR=%Library.String
+NCHAR VARYING=%Library.String
+NTEXT=%Library.String
+NUMERIC=%Library.Numeric
+NVARCHAR=%Library.String
+REAL=%Library.Float
+SMALLDATETIME=%Library.TimeStamp
+SMALLINT=%Library.SmallInt
+SMALLMONEY=%Library.Currency
+TEXT=%Library.String
+TIME=%Library.Time
+TIMESTAMP=%Library.TimeStamp
+TINYINT=%Library.TinyInt
+UNIQUEIDENTIFIER=%Library.UniqueIdentifier
+VARBINARY=%Library.Binary
+VARCHAR=%Library.String
+
+[Devices]
+Devices=(/dev/null,/dev/zero,/dev/random,/dev/urandom,/dev/stdin,/dev/stdout,/dev/stderr,/dev/tty,/dev/console,/dev/ptmx)
+
+[DeviceSubTypes]
+c=IRIS Terminal
+m=MT-Terminal

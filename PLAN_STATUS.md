@@ -4,7 +4,11 @@
 
 **Situation:** We have completed the vector operations investigation and implemented workarounds for the IRIS SQL vector limitations. We have also completed the investigation of alternative vector search approaches and identified a viable solution based on the langchain-iris implementation. We have created the infrastructure for end-to-end testing and benchmarking and are now ready to implement the solution and proceed with testing.
 
-**Current Status:** IN PROGRESS. We have successfully identified a solution to the ODBC driver limitations with the TO_VECTOR function. The langchain-iris approach of storing embeddings as strings in VARCHAR columns and using TO_VECTOR only at query time provides a viable path forward. We have also addressed performance considerations for large document collections by developing recommendations for HNSW indexing. We now need to implement these approaches in our codebase and proceed with testing.
+**Current Status:** IN PROGRESS. We have successfully identified a solution to the DBAPI driver limitations with the TO_VECTOR function. The langchain-iris approach of storing embeddings as strings in VARCHAR columns and using TO_VECTOR only at query time provides a viable path forward for basic vector search. We have also addressed performance considerations for large document collections by developing recommendations for HNSW indexing.
+
+**IMPORTANT UPDATE (May 23, 2025):** We have verified that the parameter substitution issues with TO_VECTOR still exist in IRIS 2025.1 with the newer intersystems-iris 5.1.2 DBAPI driver. Our testing confirms that TO_VECTOR still doesn't accept parameter markers, and the DBAPI driver still rewrites literals even with string interpolation.
+
+**CRITICAL FINDING (May 23, 2025):** We have tested the view-based approach for HNSW indexing with IRIS 2025.1 and confirmed that it does not work. Attempts to create views, computed columns, or materialized views with TO_VECTOR all failed. This confirms that the dual-table architecture with ObjectScript triggers, as described in HNSW_INDEXING_RECOMMENDATIONS.md, is the only viable approach for implementing high-performance vector search with HNSW indexing. The langchain-iris approach alone is sufficient for basic vector search but cannot be used with HNSW indexing.
 
 **Next Tasks:**
 1. Implement the langchain-iris approach in our codebase:
@@ -321,4 +325,12 @@ The following tasks are critical and must be completed before the project can be
    - Create a final report that honestly assesses the strengths and weaknesses of each technique
    - Document best practices and recommendations based on empirical evidence
 
-**Status:** The project is IN PROGRESS. We have made significant progress by identifying a solution to the critical blocker that was preventing us from loading documents with embeddings. The investigation of alternative vector search approaches (Phase 3.6) has been completed successfully, and we now have a clear path forward. The next step is to implement the solution based on the langchain-iris approach and proceed with testing using real PMC data. A detailed plan for completing these tasks has been documented in `docs/REAL_DATA_TESTING_PLAN.md` and the solution approach is documented in `docs/VECTOR_SEARCH_ALTERNATIVES.md`.
+**Status:** The project is IN PROGRESS. We have made significant progress by identifying a solution to the critical blocker that was preventing us from loading documents with embeddings. The investigation of alternative vector search approaches (Phase 3.6) has been completed successfully, and we now have a clear path forward.
+
+We have verified that the parameter substitution issues with TO_VECTOR still exist in IRIS 2025.1 with the newer intersystems-iris 5.1.2 DBAPI driver. We have also tested the view-based approach for HNSW indexing with IRIS 2025.1 and confirmed that it does not work. These findings are documented in `docs/HNSW_VIEW_TEST_RESULTS.md`.
+
+Our implementation strategy now has two clear paths:
+1. For basic vector search (development/testing): Use the langchain-iris approach of storing embeddings as strings in VARCHAR columns and using TO_VECTOR only at query time.
+2. For high-performance vector search (production): Use the dual-table architecture with ObjectScript triggers as described in `docs/HNSW_INDEXING_RECOMMENDATIONS.md`.
+
+The next step is to implement these solutions and proceed with testing using real PMC data. A detailed plan for completing these tasks has been documented in `docs/REAL_DATA_TESTING_PLAN.md` and the solution approaches are documented in `docs/VECTOR_SEARCH_ALTERNATIVES.md` and `docs/HNSW_INDEXING_RECOMMENDATIONS.md`.

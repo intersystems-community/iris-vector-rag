@@ -318,6 +318,31 @@ def iris_with_pmc_data(iris_testcontainer_connection):
     
     # Import the load_pmc_documents function
     from tests.utils import load_pmc_documents
+    import os
+    import sys
+    
+    # Ensure database schema is initialized before loading documents
+    logger.info("Ensuring database schema is initialized before loading documents")
+    with iris_testcontainer_connection.cursor() as cursor:
+        # Check if tables exist
+        try:
+            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SOURCEDOCUMENTS'")
+            table_exists = cursor.fetchone()[0] > 0
+            
+            if not table_exists:
+                logger.info("SourceDocuments table not found, initializing schema")
+                # Import and run schema initialization
+                from common.db_init import initialize_database
+                initialize_database(iris_testcontainer_connection)
+                logger.info("Schema initialization completed")
+            else:
+                logger.info("Database schema already initialized")
+        except Exception as e:
+            logger.warning(f"Error checking schema, will attempt to initialize: {e}")
+            # Import and run schema initialization
+            from common.db_init import initialize_database
+            initialize_database(iris_testcontainer_connection)
+            logger.info("Schema initialization completed")
     
     # Process a configurable set of PMC documents
     logger.info("Loading PMC documents into testcontainer")
@@ -354,8 +379,13 @@ def iris_with_pmc_data(iris_testcontainer_connection):
             logger.info(f"Performance: {metrics['docs_per_second']:.2f} docs/sec, peak memory: {metrics['peak_memory_mb']:.1f} MB")
         else:
             # Use the standard loader for smaller document sets
+            # Create a simple mock embedding function
+            def mock_embedding_func(text):
+                return [[0.1] * 768 for _ in range(len(text) if isinstance(text, list) else 1)]
+                
             doc_count = load_pmc_documents(
                 connection=iris_testcontainer_connection,
+                embedding_func=mock_embedding_func,
                 limit=limit,
                 pmc_dir="data/pmc_oas_downloaded"
             )
