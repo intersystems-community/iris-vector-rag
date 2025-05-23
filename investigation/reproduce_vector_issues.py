@@ -215,12 +215,25 @@ class VectorIssuesReproducer:
             # Print SQL for DBeaver/SQL Shell
             logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
             logger.info("-- Test 1a: Direct query with parameter markers")
+            logger.info("-- NOTE: This is the full SQL with actual embedding values (no parameters)")
             logger.info(f"""
 SELECT VECTOR_COSINE(
-    TO_VECTOR('{embedding_str[:20]}...', 'double', {self.embedding_dim}),
-    TO_VECTOR('{embedding_str[:20]}...', 'double', {self.embedding_dim})
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
 ) AS score;
             """)
+            
+            # Also save to a file for easy access
+            with open('investigation/sql_for_dbeaver_test1a.sql', 'w') as f:
+                f.write(f"""
+-- Test 1a: Direct query with parameter markers
+-- NOTE: This is the full SQL with actual embedding values (no parameters)
+SELECT VECTOR_COSINE(
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
+) AS score;
+                """)
+            logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test1a.sql")
             
             try:
                 cursor.execute(query_sql, (embedding_str, embedding_str))
@@ -242,12 +255,25 @@ SELECT VECTOR_COSINE(
             # Print SQL for DBeaver/SQL Shell
             logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
             logger.info("-- Test 1b: Query with string interpolation")
+            logger.info("-- NOTE: This is the full SQL with actual embedding values")
             logger.info(f"""
 SELECT VECTOR_COSINE(
-    TO_VECTOR('{embedding_str[:20]}...', 'double', {self.embedding_dim}),
-    TO_VECTOR('{embedding_str[:20]}...', 'double', {self.embedding_dim})
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
 ) AS score;
             """)
+            
+            # Also save to a file for easy access
+            with open('investigation/sql_for_dbeaver_test1b.sql', 'w') as f:
+                f.write(f"""
+-- Test 1b: Query with string interpolation
+-- NOTE: This is the full SQL with actual embedding values
+SELECT VECTOR_COSINE(
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
+) AS score;
+                """)
+            logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test1b.sql")
             
             try:
                 cursor.execute(query_sql)
@@ -292,6 +318,19 @@ SELECT
 FROM {self.table_name};
             """)
             
+            # Also save to a file for easy access
+            with open('investigation/sql_for_dbeaver_test2a.sql', 'w') as f:
+                f.write(f"""
+-- Test 2a: Create view with TO_VECTOR
+CREATE VIEW VectorView AS
+SELECT
+    id,
+    text_content,
+    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+FROM {self.table_name};
+                """)
+            logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2a.sql")
+            
             try:
                 cursor.execute(create_view_sql)
                 self.conn.commit()
@@ -309,6 +348,14 @@ FROM {self.table_name};
                 logger.info(f"""
 CREATE INDEX idx_vector_view ON VectorView (vector_embedding) USING HNSW;
                 """)
+                
+                # Also save to a file for easy access
+                with open('investigation/sql_for_dbeaver_test2a_index.sql', 'w') as f:
+                    f.write(f"""
+-- Create HNSW index on view
+CREATE INDEX idx_vector_view ON VectorView (vector_embedding) USING HNSW;
+                    """)
+                logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2a_index.sql")
                 
                 try:
                     cursor.execute(create_index_sql)
@@ -351,6 +398,19 @@ CREATE TABLE ComputedVectorTest (
 );
             """)
             
+            # Also save to a file for easy access
+            with open('investigation/sql_for_dbeaver_test2b.sql', 'w') as f:
+                f.write(f"""
+-- Test 2b: Create table with computed column
+CREATE TABLE ComputedVectorTest (
+    id VARCHAR(100) PRIMARY KEY,
+    text_content TEXT,
+    embedding VARCHAR(60000),
+    vector_embedding AS TO_VECTOR(embedding, 'double', {self.embedding_dim})
+);
+                """)
+            logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2b.sql")
+            
             try:
                 cursor.execute(create_computed_table_sql)
                 self.conn.commit()
@@ -368,6 +428,14 @@ CREATE TABLE ComputedVectorTest (
                 logger.info(f"""
 CREATE INDEX idx_computed_vector ON ComputedVectorTest (vector_embedding) USING HNSW;
                 """)
+                
+                # Also save to a file for easy access
+                with open('investigation/sql_for_dbeaver_test2b_index.sql', 'w') as f:
+                    f.write(f"""
+-- Create HNSW index on computed column
+CREATE INDEX idx_computed_vector ON ComputedVectorTest (vector_embedding) USING HNSW;
+                    """)
+                logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2b_index.sql")
                 
                 cursor.execute(create_computed_index_sql)
                 self.conn.commit()
@@ -405,6 +473,19 @@ SELECT
 FROM {self.table_name};
                 """)
                 
+                # Also save to a file for easy access
+                with open('investigation/sql_for_dbeaver_test2c.sql', 'w') as f:
+                    f.write(f"""
+-- Test 2c: Create a materialized view
+CREATE TABLE MaterializedVectorView AS
+SELECT
+    id,
+    text_content,
+    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+FROM {self.table_name};
+                    """)
+                logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2c.sql")
+                
                 cursor.execute(create_mat_view_sql)
                 self.conn.commit()
                 logger.info("✅ Successfully created materialized view!")
@@ -421,6 +502,14 @@ FROM {self.table_name};
                 logger.info(f"""
 CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING HNSW;
                 """)
+                
+                # Also save to a file for easy access
+                with open('investigation/sql_for_dbeaver_test2c_index.sql', 'w') as f:
+                    f.write(f"""
+-- Create HNSW index on materialized view
+CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING HNSW;
+                    """)
+                logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2c_index.sql")
                 
                 cursor.execute(create_mat_index_sql)
                 self.conn.commit()

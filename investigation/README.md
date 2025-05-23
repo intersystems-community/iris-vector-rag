@@ -52,15 +52,23 @@ The `reproduce_vector_issues.py` script provides a simple, standalone way to rep
    python investigation/reproduce_vector_issues.py
    ```
 
-   The script will print SQL statements that you can copy and paste into DBeaver or SQL Shell to reproduce the issues manually:
+   The script will:
+   - Print SQL statements that you can copy and paste into DBeaver or SQL Shell
+   - Save the complete SQL statements to files in the `investigation/` directory
+   
+   Example output:
    ```
    --- SQL FOR DBEAVER/SQL SHELL ---
    -- Test 1a: Direct query with parameter markers
+   -- NOTE: This is the full SQL with actual embedding values (no parameters)
    SELECT VECTOR_COSINE(
        TO_VECTOR('0.1,0.2,0.3,...', 'double', 384),
        TO_VECTOR('0.1,0.2,0.3,...', 'double', 384)
    ) AS score;
+   -- Full SQL saved to investigation/sql_for_dbeaver_test1a.sql
    ```
+
+   The SQL files contain the complete statements with actual embedding values, making it easy to run them directly in DBeaver or SQL Shell without any modifications.
 
 ### What the Script Tests
 
