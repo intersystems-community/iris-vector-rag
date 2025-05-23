@@ -1,6 +1,6 @@
 services:
   iris_db:
-    image: containers.intersystems.com/intersystems/iris-community-arm64:latest-em
+    image: containers.intersystems.com/intersystems/iris-community-arm64:2025.1.0.225.1-em
     container_name: iris_db_rag_standalone
     ports:
       - "1972:1972"   # IRIS SuperServer port (host:container)

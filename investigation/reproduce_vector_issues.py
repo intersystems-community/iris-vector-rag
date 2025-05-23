@@ -6,13 +6,76 @@ This script provides a simple, standalone way to reproduce two key issues:
 1. Parameter substitution issues with TO_VECTOR in IRIS 2025.1
 2. Inability to create views, computed columns, or materialized views with TO_VECTOR for HNSW indexing
 
-Usage:
-    python investigation/reproduce_vector_issues.py
+=== COMPLETE SETUP INSTRUCTIONS FOR FRESH GIT CLONE ===
 
-Requirements:
-    - IRIS 2025.1 running (e.g., via docker-compose -f docker-compose.iris-only.yml up -d)
-    - intersystems-iris 5.1.2 Python driver installed
-    - fastembed installed (pip install fastembed)
+1. Clone the repository and navigate to the project directory:
+   ```
+   git clone https://gitlab.iscinternal.com/tdyar/rag-templates.git
+   cd rag-templates
+   ```
+
+2. Start IRIS 2025.1 using Docker:
+   ```
+   docker-compose -f docker-compose.iris-only.yml up -d
+   ```
+   This will start an IRIS 2025.1 container with the necessary configuration.
+
+3. Create a Python virtual environment and install dependencies:
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r investigation/requirements.txt
+   pip install fastembed intersystems-iris==5.1.2
+   ```
+
+4. Configure the connection to IRIS:
+   The script uses the following default connection parameters:
+   - Host: localhost
+   - Port: 1972
+   - Namespace: USER
+   - Username: _SYSTEM
+   - Password: SYS
+
+   If you need to use different connection parameters, you can set them as environment variables:
+   ```
+   export IRIS_HOST=localhost
+   export IRIS_PORT=1972
+   export IRIS_NAMESPACE=USER
+   export IRIS_USERNAME=_SYSTEM
+   export IRIS_PASSWORD=SYS
+   ```
+
+5. Run the script:
+   ```
+   python investigation/reproduce_vector_issues.py
+   ```
+
+6. Interpreting the results:
+   - The script will run a series of tests and display the results
+   - Look for error messages that confirm the issues
+   - The summary at the end will explain the implications of the test results
+
+=== WHAT THIS SCRIPT TESTS ===
+
+1. Parameter Substitution Issues:
+   - Direct query with parameter markers for TO_VECTOR
+   - Query with string interpolation for TO_VECTOR
+
+2. View Creation Issues:
+   - Creating a view with TO_VECTOR
+   - Creating a table with a computed column using TO_VECTOR
+   - Creating a materialized view with TO_VECTOR
+
+=== EXPECTED RESULTS ===
+
+All tests are expected to fail with specific error messages that confirm the issues.
+These failures demonstrate that the dual-table architecture with ObjectScript triggers
+is the only viable approach for implementing HNSW indexing in IRIS 2025.1.
+
+For more details, see the following documentation:
+- docs/HNSW_VIEW_TEST_RESULTS.md
+- docs/VECTOR_SEARCH_DOCUMENTATION_INDEX.md
+- docs/HNSW_INDEXING_RECOMMENDATIONS.md
 """
 
 import os
@@ -153,14 +216,28 @@ class VectorIssuesReproducer:
             ) AS score
             """
             
-            query_sql = f"""
-            SELECT Top :top VECTOR_COSINE(
-                TO_VECTOR(:vector1, double, {self.embedding_dim}),
-                TO_VECTOR(:vector2, double, {self.embedding_dim})
-            ) AS score
-            """
-        
-            print(query_sql)
+            # Print SQL for DBeaver/SQL Shell
+            logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+            logger.info("-- Test 1a: Direct query with parameter markers")
+            logger.info("-- NOTE: This is the full SQL with actual embedding values (no parameters)")
+            logger.info(f"""
+SELECT VECTOR_COSINE(
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
+) AS score;
+            """)
+            
+            # Also save to a file for easy access
+            with open('investigation/sql_for_dbeaver_test1a.sql', 'w') as f:
+                f.write(f"""
+-- Test 1a: Direct query with parameter markers
+-- NOTE: This is the full SQL with actual embedding values (no parameters)
+SELECT VECTOR_COSINE(
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
+) AS score;
+                """)
+            logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test1a.sql")
             
             try:
                 cursor.execute(query_sql1, [5, embedding_str, embedding_str])
@@ -190,9 +267,31 @@ class VectorIssuesReproducer:
                 TO_VECTOR('{embedding_str}', double, {self.embedding_dim}),
                 TO_VECTOR('{embedding_str}', double, {self.embedding_dim})
             ) AS score
+            """
+            
+            # Print SQL for DBeaver/SQL Shell
+            logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+            logger.info("-- Test 1b: Query with string interpolation")
+            logger.info("-- NOTE: This is the full SQL with actual embedding values")
+            logger.info(f"""
+SELECT VECTOR_COSINE(
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
+) AS score;
             """)
-        
-           # print(query_sql)
+            
+            # Also save to a file for easy access
+            with open('investigation/sql_for_dbeaver_test1b.sql', 'w') as f:
+                f.write(f"""
+-- Test 1b: Query with string interpolation
+-- NOTE: This is the full SQL with actual embedding values
+SELECT VECTOR_COSINE(
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
+) AS score;
+                """)
+            logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test1b.sql")
+            
             try:
                 cursor.execute(query_sql)
                 result = cursor.fetchone()
@@ -219,12 +318,37 @@ class VectorIssuesReproducer:
             logger.info("Test 2a: Create view with TO_VECTOR")
             create_view_sql = f"""
             CREATE VIEW {self.view_name} AS
-            SELECT 
+            SELECT
                 id,
                 text_content,
                 TO_VECTOR(embedding, double, {self.embedding_dim}) AS vector_embedding
             FROM {self.table_name}
             """
+            
+            # Print SQL for DBeaver/SQL Shell
+            logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+            logger.info("-- Test 2a: Create view with TO_VECTOR")
+            logger.info(f"""
+CREATE VIEW VectorView AS
+SELECT
+    id,
+    text_content,
+    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+FROM {self.table_name};
+            """)
+            
+            # Also save to a file for easy access
+            with open('investigation/sql_for_dbeaver_test2a.sql', 'w') as f:
+                f.write(f"""
+-- Test 2a: Create view with TO_VECTOR
+CREATE VIEW VectorView AS
+SELECT
+    id,
+    text_content,
+    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+FROM {self.table_name};
+                """)
+            logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2a.sql")
             
             try:
                 cursor.execute(create_view_sql)
@@ -237,9 +361,21 @@ class VectorIssuesReproducer:
                 CREATE INDEX idx_{self.view_name}_vector ON {self.view_name} (vector_embedding) USING HNSW
                 """
                 
-                create_index_sql1 = f"""CREATE INDEX HNSWIndex ON TABLE scotch_reviews (description_vector) AS HNSW(M=80, Distance='DotProduct')"""
+                # Print SQL for DBeaver/SQL Shell
+                logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+                logger.info("-- Create HNSW index on view")
+                logger.info(f"""
+CREATE INDEX idx_vector_view ON VectorView (vector_embedding) USING HNSW;
+                """)
                 
-                print(create_index_sql)
+                # Also save to a file for easy access
+                with open('investigation/sql_for_dbeaver_test2a_index.sql', 'w') as f:
+                    f.write(f"""
+-- Create HNSW index on view
+CREATE INDEX idx_vector_view ON VectorView (vector_embedding) USING HNSW;
+                    """)
+                logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2a_index.sql")
+                
                 try:
                     cursor.execute(create_index_sql)
                     self.conn.commit()
@@ -270,6 +406,31 @@ class VectorIssuesReproducer:
             )
             """
             
+            # Print SQL for DBeaver/SQL Shell
+            logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+            logger.info("-- Test 2b: Create table with computed column")
+            logger.info(f"""
+CREATE TABLE ComputedVectorTest (
+    id VARCHAR(100) PRIMARY KEY,
+    text_content TEXT,
+    embedding VARCHAR(60000),
+    vector_embedding AS TO_VECTOR(embedding, 'double', {self.embedding_dim})
+);
+            """)
+            
+            # Also save to a file for easy access
+            with open('investigation/sql_for_dbeaver_test2b.sql', 'w') as f:
+                f.write(f"""
+-- Test 2b: Create table with computed column
+CREATE TABLE ComputedVectorTest (
+    id VARCHAR(100) PRIMARY KEY,
+    text_content TEXT,
+    embedding VARCHAR(60000),
+    vector_embedding AS TO_VECTOR(embedding, 'double', {self.embedding_dim})
+);
+                """)
+            logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2b.sql")
+            
             try:
                 cursor.execute(create_computed_table_sql)
                 self.conn.commit()
@@ -280,6 +441,22 @@ class VectorIssuesReproducer:
                 create_computed_index_sql = f"""
                 CREATE INDEX idx_computed_vector ON ComputedVectorTest (vector_embedding) USING HNSW
                 """
+                
+                # Print SQL for DBeaver/SQL Shell
+                logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+                logger.info("-- Create HNSW index on computed column")
+                logger.info(f"""
+CREATE INDEX idx_computed_vector ON ComputedVectorTest (vector_embedding) USING HNSW;
+                """)
+                
+                # Also save to a file for easy access
+                with open('investigation/sql_for_dbeaver_test2b_index.sql', 'w') as f:
+                    f.write(f"""
+-- Create HNSW index on computed column
+CREATE INDEX idx_computed_vector ON ComputedVectorTest (vector_embedding) USING HNSW;
+                    """)
+                logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2b_index.sql")
+                
                 cursor.execute(create_computed_index_sql)
                 self.conn.commit()
                 logger.info("✅ Successfully created HNSW index on the computed column!")
@@ -297,12 +474,38 @@ class VectorIssuesReproducer:
             try:
                 create_mat_view_sql = f"""
                 CREATE TABLE MaterializedVectorView AS
-                SELECT 
+                SELECT
                     id,
                     text_content,
                     TO_VECTOR(embedding, double, {self.embedding_dim}) AS vector_embedding
                 FROM {self.table_name}
                 """
+                
+                # Print SQL for DBeaver/SQL Shell
+                logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+                logger.info("-- Test 2c: Create a materialized view")
+                logger.info(f"""
+CREATE TABLE MaterializedVectorView AS
+SELECT
+    id,
+    text_content,
+    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+FROM {self.table_name};
+                """)
+                
+                # Also save to a file for easy access
+                with open('investigation/sql_for_dbeaver_test2c.sql', 'w') as f:
+                    f.write(f"""
+-- Test 2c: Create a materialized view
+CREATE TABLE MaterializedVectorView AS
+SELECT
+    id,
+    text_content,
+    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+FROM {self.table_name};
+                    """)
+                logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2c.sql")
+                
                 cursor.execute(create_mat_view_sql)
                 self.conn.commit()
                 logger.info("✅ Successfully created materialized view!")
@@ -312,6 +515,22 @@ class VectorIssuesReproducer:
                 create_mat_index_sql = f"""
                 CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING HNSW
                 """
+                
+                # Print SQL for DBeaver/SQL Shell
+                logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+                logger.info("-- Create HNSW index on materialized view")
+                logger.info(f"""
+CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING HNSW;
+                """)
+                
+                # Also save to a file for easy access
+                with open('investigation/sql_for_dbeaver_test2c_index.sql', 'w') as f:
+                    f.write(f"""
+-- Create HNSW index on materialized view
+CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING HNSW;
+                    """)
+                logger.info("-- Full SQL saved to investigation/sql_for_dbeaver_test2c_index.sql")
+                
                 cursor.execute(create_mat_index_sql)
                 self.conn.commit()
                 logger.info("✅ Successfully created HNSW index on the materialized view!")
@@ -323,7 +542,7 @@ class VectorIssuesReproducer:
             logger.error(f"Error in view creation test: {e}")
         finally:
             cursor.close()
-    
+
     def run_tests(self):
         """Run all tests."""
         logger.info("Starting Vector Issues Reproduction Tests with IRIS 2025.1")
@@ -334,10 +553,10 @@ class VectorIssuesReproducer:
         self.test_view_creation()
         
         logger.info("\nTests completed. Check the logs above for results.")
-        logger.info("\nSummary:")
+        logger.info("\nSummary of Key Findings:")
         logger.info("1. Parameter Substitution Issues: TO_VECTOR doesn't accept parameter markers in IRIS 2025.1")
         logger.info("2. View Creation Issues: Views, computed columns, and materialized views with TO_VECTOR don't work with HNSW indexing")
-        logger.info("\nThese findings confirm that the dual-table architecture with ObjectScript triggers is the only viable approach for HNSW indexing.")
+        logger.info("\nThese failures demonstrate that the dual-table architecture with ObjectScript triggers is the only viable approach for HNSW indexing.")
 
 if __name__ == "__main__":
     reproducer = VectorIssuesReproducer()
