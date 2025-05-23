@@ -19,6 +19,8 @@ import os
 import sys
 import logging
 from typing import List, Dict, Any, Tuple, Optional
+import traceback
+from sqlalchemy import text, create_engine
 
 # Add project root to path to import from common/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -26,6 +28,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 try:
     from common.iris_connector import get_iris_connection
 except ImportError:
+    traceback.print_exc()
     print("Error: Could not import get_iris_connection. Make sure you're running this script from the project root.")
     sys.exit(1)
 
@@ -138,41 +141,66 @@ class VectorIssuesReproducer:
         embedding_str = ','.join(map(str, embedding))
         
         cursor = self.conn.cursor()
+        engine = create_engine("iris://superuser:SYS@localhost:1972/USER")
         
         try:
             # Test 1: Direct query with parameter for TO_VECTOR
             logger.info("Test 1a: Direct query with parameter for TO_VECTOR")
-            query_sql = f"""
-            SELECT VECTOR_COSINE(
-                TO_VECTOR(?, 'double', {self.embedding_dim}),
-                TO_VECTOR(?, 'double', {self.embedding_dim})
+            query_sql1 = f"""
+            SELECT Top ? VECTOR_COSINE(
+                TO_VECTOR(?, double, {self.embedding_dim}),
+                TO_VECTOR(?, double, {self.embedding_dim})
             ) AS score
             """
             
+            query_sql = f"""
+            SELECT Top :top VECTOR_COSINE(
+                TO_VECTOR(:vector1, double, {self.embedding_dim}),
+                TO_VECTOR(:vector2, double, {self.embedding_dim})
+            ) AS score
+            """
+        
+            print(query_sql)
+            
             try:
-                cursor.execute(query_sql, (embedding_str, embedding_str))
+                cursor.execute(query_sql1, [5, embedding_str, embedding_str])
                 result = cursor.fetchone()
                 logger.info(f"✅ Successfully executed query with TO_VECTOR and parameter markers: {result}")
             except Exception as e:
+                traceback.print_exc()
                 logger.error(f"❌ Error executing query with TO_VECTOR and parameter markers: {e}")
-                logger.error("This confirms that TO_VECTOR doesn't accept parameter markers in IRIS 2025.1")
+                #logger.error("This confirms that TO_VECTOR doesn't accept parameter markers in IRIS 2025.1")
+            
+            try:
+                with engine.connect() as conn:
+                    with conn.begin():
+                        results = conn.execute(text(query_sql), {"vector1": embedding_str, "vector2": embedding_str, "top": 5})
+                        result = results.fetchone()
+                        logger.info(f"✅ Successfully executed query with SQLAlchemy and TO_VECTOR and parameter markers: {result}")
+            except Exception as e:
+               # traceback.print_exc()
+                logger.error(f"❌ Error executing query with TO_VECTOR and parameter markers: {e}")
+                #logger.error("This confirms that TO_VECTOR with SQLALCHEMY doesn't accept parameter markers in IRIS 2025.1")
+            
             
             # Test 2: Query with string interpolation
             logger.info("\nTest 1b: Query with string interpolation")
-            query_sql = f"""
+            query_sql = text(f"""
             SELECT VECTOR_COSINE(
-                TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim}),
-                TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
+                TO_VECTOR('{embedding_str}', double, {self.embedding_dim}),
+                TO_VECTOR('{embedding_str}', double, {self.embedding_dim})
             ) AS score
-            """
-            
+            """)
+        
+           # print(query_sql)
             try:
                 cursor.execute(query_sql)
                 result = cursor.fetchone()
                 logger.info(f"✅ Successfully executed query with TO_VECTOR and string interpolation: {result}")
             except Exception as e:
+                traceback.print_exc()
                 logger.error(f"❌ Error executing query with TO_VECTOR and string interpolation: {e}")
-                logger.error("This suggests that even string interpolation has issues with TO_VECTOR in IRIS 2025.1")
+                #logger.error("This suggests that even string interpolation has issues with TO_VECTOR in IRIS 2025.1")
             
         except Exception as e:
             logger.error(f"Error in parameter substitution test: {e}")
@@ -187,13 +215,14 @@ class VectorIssuesReproducer:
         
         try:
             # Test 1: Create view with TO_VECTOR
+            # Removed text() 
             logger.info("Test 2a: Create view with TO_VECTOR")
             create_view_sql = f"""
             CREATE VIEW {self.view_name} AS
             SELECT 
                 id,
                 text_content,
-                TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+                TO_VECTOR(embedding, double, {self.embedding_dim}) AS vector_embedding
             FROM {self.table_name}
             """
             
@@ -208,6 +237,9 @@ class VectorIssuesReproducer:
                 CREATE INDEX idx_{self.view_name}_vector ON {self.view_name} (vector_embedding) USING HNSW
                 """
                 
+                create_index_sql1 = f"""CREATE INDEX HNSWIndex ON TABLE scotch_reviews (description_vector) AS HNSW(M=80, Distance='DotProduct')"""
+                
+                print(create_index_sql)
                 try:
                     cursor.execute(create_index_sql)
                     self.conn.commit()
@@ -218,6 +250,7 @@ class VectorIssuesReproducer:
                     self.conn.rollback()
                 
             except Exception as e_view:
+                traceback.print_exc()
                 logger.error(f"❌ Failed to create view with TO_VECTOR: {e_view}")
                 self.conn.rollback()
             
@@ -233,7 +266,7 @@ class VectorIssuesReproducer:
                 id VARCHAR(100) PRIMARY KEY,
                 text_content TEXT,
                 embedding VARCHAR(60000),
-                vector_embedding AS TO_VECTOR(embedding, 'double', {self.embedding_dim})
+                vector_embedding AS TO_VECTOR(embedding, double, {self.embedding_dim})
             )
             """
             
@@ -267,7 +300,7 @@ class VectorIssuesReproducer:
                 SELECT 
                     id,
                     text_content,
-                    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+                    TO_VECTOR(embedding, double, {self.embedding_dim}) AS vector_embedding
                 FROM {self.table_name}
                 """
                 cursor.execute(create_mat_view_sql)
@@ -297,7 +330,7 @@ class VectorIssuesReproducer:
         
         self.setup_database()
         self.store_document()
-        self.test_parameter_substitution()
+        #self.test_parameter_substitution()
         self.test_view_creation()
         
         logger.info("\nTests completed. Check the logs above for results.")
