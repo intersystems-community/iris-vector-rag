@@ -212,6 +212,16 @@ class VectorIssuesReproducer:
             ) AS score
             """
             
+            # Print SQL for DBeaver/SQL Shell
+            logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+            logger.info("-- Test 1a: Direct query with parameter markers")
+            logger.info(f"""
+SELECT VECTOR_COSINE(
+    TO_VECTOR('{embedding_str[:20]}...', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str[:20]}...', 'double', {self.embedding_dim})
+) AS score;
+            """)
+            
             try:
                 cursor.execute(query_sql, (embedding_str, embedding_str))
                 result = cursor.fetchone()
@@ -228,6 +238,16 @@ class VectorIssuesReproducer:
                 TO_VECTOR('{embedding_str}', 'double', {self.embedding_dim})
             ) AS score
             """
+            
+            # Print SQL for DBeaver/SQL Shell
+            logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+            logger.info("-- Test 1b: Query with string interpolation")
+            logger.info(f"""
+SELECT VECTOR_COSINE(
+    TO_VECTOR('{embedding_str[:20]}...', 'double', {self.embedding_dim}),
+    TO_VECTOR('{embedding_str[:20]}...', 'double', {self.embedding_dim})
+) AS score;
+            """)
             
             try:
                 cursor.execute(query_sql)
@@ -253,12 +273,24 @@ class VectorIssuesReproducer:
             logger.info("Test 2a: Create view with TO_VECTOR")
             create_view_sql = f"""
             CREATE VIEW {self.view_name} AS
-            SELECT 
+            SELECT
                 id,
                 text_content,
                 TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
             FROM {self.table_name}
             """
+            
+            # Print SQL for DBeaver/SQL Shell
+            logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+            logger.info("-- Test 2a: Create view with TO_VECTOR")
+            logger.info(f"""
+CREATE VIEW VectorView AS
+SELECT
+    id,
+    text_content,
+    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+FROM {self.table_name};
+            """)
             
             try:
                 cursor.execute(create_view_sql)
@@ -270,6 +302,13 @@ class VectorIssuesReproducer:
                 create_index_sql = f"""
                 CREATE INDEX idx_{self.view_name}_vector ON {self.view_name} (vector_embedding) USING HNSW
                 """
+                
+                # Print SQL for DBeaver/SQL Shell
+                logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+                logger.info("-- Create HNSW index on view")
+                logger.info(f"""
+CREATE INDEX idx_vector_view ON VectorView (vector_embedding) USING HNSW;
+                """)
                 
                 try:
                     cursor.execute(create_index_sql)
@@ -300,6 +339,18 @@ class VectorIssuesReproducer:
             )
             """
             
+            # Print SQL for DBeaver/SQL Shell
+            logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+            logger.info("-- Test 2b: Create table with computed column")
+            logger.info(f"""
+CREATE TABLE ComputedVectorTest (
+    id VARCHAR(100) PRIMARY KEY,
+    text_content TEXT,
+    embedding VARCHAR(60000),
+    vector_embedding AS TO_VECTOR(embedding, 'double', {self.embedding_dim})
+);
+            """)
+            
             try:
                 cursor.execute(create_computed_table_sql)
                 self.conn.commit()
@@ -310,6 +361,14 @@ class VectorIssuesReproducer:
                 create_computed_index_sql = f"""
                 CREATE INDEX idx_computed_vector ON ComputedVectorTest (vector_embedding) USING HNSW
                 """
+                
+                # Print SQL for DBeaver/SQL Shell
+                logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+                logger.info("-- Create HNSW index on computed column")
+                logger.info(f"""
+CREATE INDEX idx_computed_vector ON ComputedVectorTest (vector_embedding) USING HNSW;
+                """)
+                
                 cursor.execute(create_computed_index_sql)
                 self.conn.commit()
                 logger.info("✅ Successfully created HNSW index on the computed column!")
@@ -327,12 +386,25 @@ class VectorIssuesReproducer:
             try:
                 create_mat_view_sql = f"""
                 CREATE TABLE MaterializedVectorView AS
-                SELECT 
+                SELECT
                     id,
                     text_content,
                     TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
                 FROM {self.table_name}
                 """
+                
+                # Print SQL for DBeaver/SQL Shell
+                logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+                logger.info("-- Test 2c: Create a materialized view")
+                logger.info(f"""
+CREATE TABLE MaterializedVectorView AS
+SELECT
+    id,
+    text_content,
+    TO_VECTOR(embedding, 'double', {self.embedding_dim}) AS vector_embedding
+FROM {self.table_name};
+                """)
+                
                 cursor.execute(create_mat_view_sql)
                 self.conn.commit()
                 logger.info("✅ Successfully created materialized view!")
@@ -342,6 +414,14 @@ class VectorIssuesReproducer:
                 create_mat_index_sql = f"""
                 CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING HNSW
                 """
+                
+                # Print SQL for DBeaver/SQL Shell
+                logger.info("\n--- SQL FOR DBEAVER/SQL SHELL ---")
+                logger.info("-- Create HNSW index on materialized view")
+                logger.info(f"""
+CREATE INDEX idx_mat_vector ON MaterializedVectorView (vector_embedding) USING HNSW;
+                """)
+                
                 cursor.execute(create_mat_index_sql)
                 self.conn.commit()
                 logger.info("✅ Successfully created HNSW index on the materialized view!")

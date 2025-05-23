@@ -52,6 +52,16 @@ The `reproduce_vector_issues.py` script provides a simple, standalone way to rep
    python investigation/reproduce_vector_issues.py
    ```
 
+   The script will print SQL statements that you can copy and paste into DBeaver or SQL Shell to reproduce the issues manually:
+   ```
+   --- SQL FOR DBEAVER/SQL SHELL ---
+   -- Test 1a: Direct query with parameter markers
+   SELECT VECTOR_COSINE(
+       TO_VECTOR('0.1,0.2,0.3,...', 'double', 384),
+       TO_VECTOR('0.1,0.2,0.3,...', 'double', 384)
+   ) AS score;
+   ```
+
 ### What the Script Tests
 
 1. **Parameter Substitution Issues**:
