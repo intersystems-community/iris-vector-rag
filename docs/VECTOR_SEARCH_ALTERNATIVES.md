@@ -4,7 +4,7 @@
 
 | Component | Version/Details |
 |-----------|----------------|
-| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2024.1.2 (Build 398U) |
+| IRIS Version | IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2025.1.0.225.1 |
 | Python Version | 3.12.9 |
 | Client Libraries | sqlalchemy 2.0.41, langchain-iris 0.2.1, llama-iris 0.5.0 |
 | Operating System | macOS-15.3.2-arm64-arm-64bit |
@@ -17,15 +17,9 @@ This document outlines an investigation into alternative approaches to vector se
 
 ## Problem Statement
 
-Our current RAG templates project is blocked by limitations in the InterSystems IRIS SQL vector operations, specifically:
+Our RAG templates project aims to leverage InterSystems IRIS SQL vector operations. Initial investigations with IRIS 2024.1 highlighted challenges with the `TO_VECTOR()` function, particularly concerning parameter markers and client driver behavior. With the advent of IRIS 2025.1, new findings (see [`docs/IRIS_SQL_VECTOR_LIMITATIONS.md`](docs/IRIS_SQL_VECTOR_LIMITATIONS.md:1) and [`docs/VECTOR_SEARCH_SYNTAX_FINDINGS.md`](docs/VECTOR_SEARCH_SYNTAX_FINDINGS.md:1)) indicate that `TO_VECTOR` *does* support parameter markers when using the `double` (no quotes) type specifier: `TO_VECTOR(?, double, <dim>)`.
 
-1. **TO_VECTOR() Function Rejects Parameter Markers**: The TO_VECTOR() function does not accept parameter markers (?, :param, or :%qpar), which are standard in SQL for safe query parameterization.
-
-2. **Client Drivers Rewrite Literals**: Python, JDBC, and other client drivers replace embedded literals with :%qpar(n) even when no parameter list is supplied, creating misleading parse errors.
-
-3. **ODBC Driver Limitations**: When attempting to load documents with embeddings, the ODBC driver encounters limitations with the TO_VECTOR function, preventing the loading of vector embeddings.
-
-While we have implemented workarounds for *querying* vector data using string interpolation with validation, the *loading* of embeddings remains a critical blocker that prevents testing with real PMC data.
+This document re-evaluates alternative approaches in light of these updated findings, focusing on robust and performant vector search solutions for IRIS 2025.1. The primary goal is to ensure efficient loading and querying of vector embeddings, compatible with HNSW indexing where appropriate.
 
 ## External Repositories Analysis
 
@@ -189,83 +183,110 @@ class VectorSearchInvestigation:
 
 ## Investigation Findings
 
-After executing our test script and analyzing the source code of langchain-iris, we have discovered the following key insights:
+With IRIS 2025.1, the landscape for vector operations has changed significantly. Our latest tests (e.g., [`investigation/test_working_vector_params.py`](../investigation/test_working_vector_params.py:1)) confirm that parameterized queries with `TO_VECTOR(?, double, <dim>)` are viable.
 
-### 1. langchain-iris Approach
+This new understanding impacts the assessment of previous approaches:
 
-The langchain-iris repository successfully implements vector search with IRIS by:
+1.  **Previous `langchain-iris` / `llama-iris` Workarounds (VARCHAR storage, `TO_VECTOR` at query time):**
+    *   **Rationale then:** These libraries often stored embeddings as strings (e.g., in `VARCHAR` columns) and used `TO_VECTOR` only at query time. This was a workaround for the perceived inability to use `TO_VECTOR` with parameters during `INSERT` or `UPDATE` operations in older IRIS versions or with misconfigured syntax.
+    *   **Relevance now (IRIS 2025.1):** While storing as `VARCHAR` and converting at query time still *works*, it's generally less efficient than storing directly as `VECTOR` type if the database supports it and if HNSW indexing is desired. The primary motivation for the `VARCHAR` approach (parameterization issues) is largely resolved with the correct `double` syntax. However, for systems where direct `VECTOR` type manipulation during ingest is complex, or for compatibility with tools expecting string representations, this can still be a fallback.
 
-1. **Storage Approach**:
-   - Stores embeddings as Python lists in VARCHAR columns
-   - Uses SQLAlchemy with a custom dialect (sqlalchemy_iris)
-   - Avoids using TO_VECTOR during insertion
+2.  **Direct `VECTOR` Type Usage with Parameterized `TO_VECTOR` (IRIS 2025.1):**
+    *   **Storage:** Embeddings can be inserted/updated directly into columns of `VECTOR` type using `TO_VECTOR(?, double, <dim>)` within `INSERT` or `UPDATE` statements.
+        ```sql
+        -- Example INSERT with parameterized TO_VECTOR
+        INSERT INTO MyTable (id, embedding_col) VALUES (?, TO_VECTOR(?, double, 384));
+        -- Python: cursor.execute(sql, (my_id, "[0.1,0.2,...]",))
+        ```
+    *   **Querying:** Similarity searches can also use parameterized `TO_VECTOR` if the query vector is passed as a parameter.
+        ```sql
+        SELECT id, VECTOR_COSINE(embedding_col, TO_VECTOR(?, double, 384)) AS score
+        FROM MyTable ORDER BY score DESC;
+        -- Python: cursor.execute(sql, ("[0.5,0.6,...]",))
+        ```
+    *   **Advantages:**
+        *   Allows for native `VECTOR` type storage, which is essential for HNSW indexing.
+        *   Simplifies data loading compared to multi-step conversions or ObjectScript triggers if direct SQL is preferred.
+        *   Utilizes standard SQL parameterization for security and clarity.
 
-2. **Query Mechanism**:
-   - Uses native VECTOR_COSINE for similarity search
-   - Converts stored strings to vectors at query time using TO_VECTOR
-   - Uses SQLAlchemy's query building to handle SQL construction
+3.  **HNSW Indexing Considerations:**
+    *   HNSW indexes can only be built on columns of `VECTOR` type.
+    *   Therefore, if HNSW is a requirement, embeddings *must* ultimately reside in a `VECTOR` column. The `VARCHAR` storage approach is incompatible with direct HNSW indexing on that `VARCHAR` column.
+    *   The dual-table architecture (see [`HNSW_INDEXING_RECOMMENDATIONS.md`](HNSW_INDEXING_RECOMMENDATIONS.md:1)) remains relevant if, for example, the ingestion pipeline prefers writing to a staging `VARCHAR` table before an ObjectScript trigger converts and moves data to a `VECTOR` table with an HNSW index. However, with working parameterized `TO_VECTOR`, direct insertion into the `VECTOR` table is more feasible.
 
-3. **Key Code Insight**:
-   ```python
-   # When native_vector is True
-   self.distance_strategy(embedding).label("distance")
-   ```
+## Proof of Concept Implementation (Updated for IRIS 2025.1)
 
-4. **Database Schema**:
-   - Uses VARCHAR(56831) for embedding storage
-   - No native vector type in the database schema
+A proof-of-concept should now focus on leveraging direct `VECTOR` type storage and parameterized `TO_VECTOR(?, double, <dim>)` calls. An example script like [`investigation/test_working_vector_params.py`](../investigation/test_working_vector_params.py:1) demonstrates this.
 
-### 2. llama-iris Approach
+**Key aspects of a PoC:**
 
-The llama-iris approach was less successful in our testing environment due to OpenAI API rate limits, but appears to follow a similar pattern to langchain-iris.
+1.  **Table Definition:**
+    ```sql
+    CREATE TABLE MyVectorTable (
+        id VARCHAR(255) PRIMARY KEY,
+        text_content %Text,
+        embedding VECTOR(EMBEDDING_DIMENSION, DOUBLE) WITH STORAGETYPE = 'STORE_VECTOR_AS_STRING' -- Or other storage types
+    );
+    -- Optionally, add HNSW index if needed
+    CREATE HNSW INDEX idx_hnsw_embedding ON MyVectorTable (embedding) WITH (%PARALLEL);
+    ```
 
-### 3. Current Project Approach
+2.  **Data Insertion (Python example):**
+    ```python
+    embedding_list = [0.1, 0.2, ..., 0.N] # Example embedding
+    embedding_str = "[" + ",".join(map(str, embedding_list)) + "]" # Format: "[d1,d2,...]"
+    doc_id = "doc1"
+    text = "Some document text."
 
-Our current approach faces limitations:
+    insert_sql = "INSERT INTO MyVectorTable (id, text_content, embedding) VALUES (?, ?, TO_VECTOR(?, double, ?))"
+    # cursor.execute(insert_sql, (doc_id, text, embedding_str, len(embedding_list)))
+    # conn.commit()
+    ```
 
-1. **Storage Issues**:
-   - Attempts to use TO_VECTOR during insertion
-   - ODBC driver tries to parameterize parts that can't be parameterized
-   - Results in errors when inserting documents with embeddings
+3.  **Data Querying (Python example):**
+    ```python
+    query_embedding_list = [0.5, 0.6, ..., 0.M]
+    query_embedding_str = "[" + ",".join(map(str, query_embedding_list)) + "]"
+    query_dim = len(query_embedding_list)
+    top_k = 5
 
-2. **Query Mechanism**:
-   - Uses string interpolation with validation
-   - Works for querying but not for insertion
+    search_sql = f"""
+    SELECT TOP ? id, text_content,
+           VECTOR_COSINE(embedding, TO_VECTOR(?, double, ?)) AS score
+    FROM MyVectorTable
+    ORDER BY score DESC
+    """
+    # cursor.execute(search_sql, (top_k, query_embedding_str, query_dim))
+    # results = cursor.fetchall()
+    ```
 
-## Proof of Concept Implementation
+## Recommended Implementation (IRIS 2025.1)
 
-We created a proof-of-concept implementation (`investigation/vector_storage_poc.py`) that demonstrates the langchain-iris approach:
+Given the confirmed support for `TO_VECTOR(?, double, <dim>)` in IRIS 2025.1:
 
-1. **Storage Solution**:
-   - Store embeddings as comma-separated strings: `"0.1,0.2,0.3,..."`
-   - Use VARCHAR columns with sufficient size
-   - Avoid using TO_VECTOR during insertion
+1.  **Prioritize Native `VECTOR` Type Storage:**
+    *   Define table columns intended for embeddings as `VECTOR(dimension, DOUBLE)`.
+    *   This is crucial for HNSW indexing and optimal performance.
 
-2. **Query Solution**:
-   - Use TO_VECTOR at query time to convert strings to vectors
-   - Continue using string interpolation with validation
-   - Use VECTOR_COSINE for similarity search
+2.  **Use Parameterized Queries for Inserts/Updates and Queries:**
+    *   Utilize `TO_VECTOR(?, double, <dim>)` for converting input vector data (formatted as `"[d1,d2,...]"`) during `INSERT` or `UPDATE` statements.
+    *   Use the same for query vectors in `SELECT` statements.
+    *   This approach enhances security and code clarity over string interpolation.
 
-3. **Implementation Challenges**:
-   - ODBC driver still attempts to parameterize parts of SQL statements
-   - Requires careful string construction and validation
+3.  **Update `common/vector_sql_utils.py` and `common/db_init.py`:**
+    *   [`common/db_init.py`](common/db_init.py:1): Ensure table creation scripts define embedding columns as `VECTOR(dim, DOUBLE)`. Include HNSW index creation where appropriate.
+    *   [`common/vector_sql_utils.py`](common/vector_sql_utils.py:1):
+        *   Refactor functions to construct parameterized SQL for vector operations.
+        *   Ensure helper functions correctly format Python list embeddings into the `"[d1,d2,...]"` string representation required by `TO_VECTOR` when passed as a parameter.
+        *   Remove or deprecate utilities designed for older string-interpolation workarounds if no longer necessary.
 
-## Recommended Implementation
+4.  **Update RAG Pipelines:**
+    *   Modify document loading logic to use parameterized `INSERT` statements with `TO_VECTOR(?, double, <dim>)`.
+    *   Adjust vector search query construction to use parameterized `SELECT` statements.
 
-Based on our findings, we recommend the following changes to our current implementation:
-
-1. **Update vector_sql_utils.py**:
-   - Modify to support storing embeddings as comma-separated strings
-   - Add functions for converting between vector formats
-   - Enhance validation for the new storage format
-
-2. **Update db_init.py**:
-   - Modify table creation to use VARCHAR for embedding storage
-   - Adjust column sizes based on embedding dimensions
-
-3. **Update RAG Pipelines**:
-   - Modify document loading to store embeddings as strings
-   - Ensure vector search queries use TO_VECTOR at query time
+5.  **HNSW Indexing:**
+    *   For performance-critical applications, ensure HNSW indexes are created on the `VECTOR` columns.
+    *   The dual-table architecture (staging `VARCHAR` table + ObjectScript trigger + final `VECTOR` table with HNSW) as described in [`HNSW_INDEXING_RECOMMENDATIONS.md`](HNSW_INDEXING_RECOMMENDATIONS.md:1) can still be used if the ingestion pipeline benefits from it, but the trigger logic should now also use the correct `TO_VECTOR(?, double, <dim>)` syntax if it's re-parsing string data. However, direct parameterized inserts into the `VECTOR` table are now more feasible.
 
 ## Code Example
 
@@ -284,8 +305,8 @@ cursor.execute(insert_sql, (doc_id, text, embedding_str, "{}"))
 search_sql = f"""
 SELECT TOP {top_k} id, text_content, 
        VECTOR_COSINE(
-           TO_VECTOR(embedding, 'DOUBLE', 384),
-           TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)
+           TO_VECTOR(embedding, double, 384), // Or just 'embedding' if it's already VECTOR type
+           TO_VECTOR('{query_embedding_str}', double, 384)
        ) AS score
 FROM {table_name}
 ORDER BY score ASC
@@ -323,7 +344,7 @@ This investigation is expected to yield:
 
 While our investigation has identified a viable solution for loading documents with embeddings, we must also consider performance optimization for large document collections. HNSW (Hierarchical Navigable Small World) indexing is essential for efficient vector search with large datasets, but it requires the VECTOR datatype.
 
-**IMPORTANT LIMITATION:** The langchain-iris approach of storing embeddings as strings in VARCHAR columns is incompatible with HNSW indexing. We have verified through testing that attempts to create views, computed columns, or materialized views with TO_VECTOR all fail in IRIS 2025.1. See [HNSW_VIEW_TEST_RESULTS.md](HNSW_VIEW_TEST_RESULTS.md) for detailed test results.
+**HNSW Indexing Requirement:** HNSW indexing requires the underlying column to be of `VECTOR` type. Storing embeddings as strings in `VARCHAR` columns is incompatible with direct HNSW indexing on that `VARCHAR` column. While views or computed columns using `TO_VECTOR` on a `VARCHAR` column might seem like a workaround, creating HNSW indexes on such derived vector structures is generally not supported or performant. For HNSW, data must reside in a native `VECTOR` column.
 
 To address this requirement, we have created a separate document with detailed recommendations for implementing HNSW indexing: [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md).
 
@@ -336,18 +357,20 @@ This dual-table architecture is the only viable approach for implementing high-p
 
 ## Conclusion
 
-Our investigation has revealed that the langchain-iris approach provides a viable solution to our current vector search limitations for basic use cases. By storing embeddings as strings and using TO_VECTOR only at query time, we can avoid the DBAPI driver limitations while still leveraging native vector operations for search.
+The confirmation in IRIS 2025.1 that `TO_VECTOR` supports parameterized queries with the `double` type specifier (`TO_VECTOR(?, double, <dim>)`) significantly simplifies and improves vector search implementations.
 
-However, it's critical to understand that:
+**Key Takeaways for IRIS 2025.1:**
 
-1. **For Basic Vector Search (Development/Testing)**:
-   - The langchain-iris approach (storing embeddings as strings in VARCHAR columns) is sufficient
-   - This approach works well for small document collections and development/testing scenarios
-   - It avoids the parameter substitution issues with TO_VECTOR during insertion
+1.  **Direct Parameterized `TO_VECTOR` is Preferred:**
+    *   This should be the default method for inserting, updating, and querying vector data.
+    *   It allows for native `VECTOR` type storage, essential for HNSW indexing.
+    *   It enhances security and code readability compared to older workarounds.
 
-2. **For High-Performance Vector Search (Production)**:
-   - The langchain-iris approach alone is **not compatible** with HNSW indexing
-   - HNSW indexing requires the VECTOR datatype, which cannot be created from VARCHAR columns using views or computed columns
-   - The dual-table architecture with ObjectScript triggers described in [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md) is the only viable approach
+2.  **`VARCHAR` Storage as a Fallback:**
+    *   Storing embeddings as strings in `VARCHAR` columns and converting with `TO_VECTOR` at query time is still possible but is a less optimal solution if native `VECTOR` type and HNSW are desired. It might be considered for compatibility or specific ingestion pipeline constraints.
 
-This two-tiered solution allows us to proceed with loading real PMC documents with embeddings and testing our RAG pipelines with real data, while also providing a clear path to high-performance vector search for production deployments with large document collections.
+3.  **HNSW Indexing Requires Native `VECTOR` Type:**
+    *   To leverage HNSW for performance, embeddings must be stored in columns of `VECTOR` type.
+    *   The dual-table architecture (detailed in [`HNSW_INDEXING_RECOMMENDATIONS.md`](HNSW_INDEXING_RECOMMENDATIONS.md:1)) remains a valid pattern if an intermediate staging/conversion step is beneficial, but direct parameterized inserts into `VECTOR` tables are now more feasible.
+
+The recommended path forward is to adapt all RAG pipeline components (data loading, querying, table definitions) to use parameterized `TO_VECTOR(?, double, <dim>)` calls with native `VECTOR` type columns, enabling robust, secure, and performant vector search capabilities in IRIS 2025.1.

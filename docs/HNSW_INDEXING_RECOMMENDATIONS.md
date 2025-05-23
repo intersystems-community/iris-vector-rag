@@ -40,7 +40,7 @@ CREATE TABLE SourceDocuments (
 )
 ```
 
-This table allows easy insertion of documents with embeddings as strings, avoiding the TO_VECTOR function limitations.
+This table serves as a staging area, allowing easy insertion of documents with embeddings as strings. This can be beneficial if the primary data ingestion mechanism is simpler with string-based embeddings, or if there were (now largely resolved with correct syntax for `TO_VECTOR` in IRIS 2025.1) concerns about `TO_VECTOR` during direct bulk inserts.
 
 ### 2. Vector Search Table (VECTOR)
 
@@ -73,7 +73,9 @@ ClassMethod ConvertEmbedding() [ Language = objectscript ]
     set embeddingStr = {embedding}
     
     // Convert to VECTOR using TO_VECTOR
-    set vectorEmb = ##class(%SQL.Statement).%ExecDirect(, "SELECT TO_VECTOR(?, 'DOUBLE', 384)", embeddingStr).%Next()
+    // Assuming embeddingStr is in the format "[d1,d2,d3,...]" or another format TO_VECTOR understands.
+    // For IRIS 2025.1, TO_VECTOR(?, double, 384) is preferred for parameterization.
+    set vectorEmb = ##class(%SQL.Statement).%ExecDirect(, "SELECT TO_VECTOR(?, double, 384)", embeddingStr).%Get(1)
     
     // Insert into the vector table
     do ##class(%SQL.Statement).%ExecDirect(, 

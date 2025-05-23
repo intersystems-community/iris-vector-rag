@@ -88,6 +88,9 @@ This document serves as a central index for all vector search documentation in t
 | [investigation/test_view_hnsw_2025.py](../investigation/test_view_hnsw_2025.py) | Test of view-based approach for HNSW indexing | View-based approach doesn't work in IRIS 2025.1 |
 | [investigation/reproduce_vector_issues.py](../investigation/reproduce_vector_issues.py) | Standalone script to reproduce vector issues | Simple script to demonstrate both parameter substitution issues and view-based approach limitations |
 | [investigation/test_working_vector_params.py](../investigation/test_working_vector_params.py) | **NEW** Test of working parameter substitution | Demonstrates correct syntax for TO_VECTOR with parameter markers |
+| [investigation/test_direct_vector_hnsw.py](../investigation/test_direct_vector_hnsw.py) | Test of direct HNSW indexing on `VECTOR` type columns. | Confirms direct HNSW indexing capabilities and syntax. |
+| [investigation/test_computed_vector_hnsw.py](../investigation/test_computed_vector_hnsw.py) | Test of HNSW indexing on computed `VECTOR` columns. | Investigates feasibility and performance of HNSW on computed vectors. |
+| [investigation/test_materialized_view_hnsw_extended.py](../investigation/test_materialized_view_hnsw_extended.py) | Extended testing of HNSW indexing with materialized views. | Further explores limitations or specific configurations for materialized view HNSW indexing. |
 
 ## Implementation Status
 

@@ -263,10 +263,11 @@ When attempting to use TO_VECTOR in SQL queries, we consistently encounter this 
 This error occurs with all three approaches (Direct SQL, Parameterized SQL, and String Interpolation), indicating a fundamental limitation of the ODBC driver.
 
 For detailed information about these limitations, our investigation findings, and recommended solutions, see:
-- [IRIS_SQL_VECTOR_LIMITATIONS.md](docs/IRIS_SQL_VECTOR_LIMITATIONS.md)
-- [VECTOR_SEARCH_TECHNICAL_DETAILS.md](docs/VECTOR_SEARCH_TECHNICAL_DETAILS.md)
-- [VECTOR_SEARCH_ALTERNATIVES.md](docs/VECTOR_SEARCH_ALTERNATIVES.md)
-- [HNSW_INDEXING_RECOMMENDATIONS.md](docs/HNSW_INDEXING_RECOMMENDATIONS.md)
+- [IRIS_SQL_VECTOR_LIMITATIONS.md](docs/IRIS_SQL_VECTOR_LIMITATIONS.md) - Details ongoing investigations and current understanding.
+- [VECTOR_SEARCH_SYNTAX_FINDINGS.md](docs/VECTOR_SEARCH_SYNTAX_FINDINGS.md) - **Key document for correct `TO_VECTOR` syntax in IRIS 2025.1.**
+- [VECTOR_SEARCH_TECHNICAL_DETAILS.md](docs/VECTOR_SEARCH_TECHNICAL_DETAILS.md) - Technical specifics of client libraries and driver behavior.
+- [VECTOR_SEARCH_ALTERNATIVES.md](docs/VECTOR_SEARCH_ALTERNATIVES.md) - Evaluation of different vector search strategies.
+- [HNSW_INDEXING_RECOMMENDATIONS.md](docs/HNSW_INDEXING_RECOMMENDATIONS.md) - Best practices for HNSW indexing.
 
 ## Project Structure
 

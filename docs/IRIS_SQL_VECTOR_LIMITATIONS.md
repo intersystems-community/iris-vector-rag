@@ -17,29 +17,24 @@ This document provides a detailed technical explanation of the InterSystems IRIS
 
 InterSystems IRIS 2025.1 introduced vector search capabilities essential for modern RAG pipelines. However, several critical limitations in the SQL implementation prevent standard parameterized queries from working with vector operations, forcing developers to use string interpolation (as implemented in [`common/vector_sql_utils.py`](common/vector_sql_utils.py:1)).
 
-**Current Status: VERIFIED IN IRIS 2025.1.** We have verified that these limitations still exist in IRIS 2025.1 with the newer intersystems-iris 5.1.2 DBAPI driver. Our testing confirms that TO_VECTOR still doesn't accept parameter markers, and the DBAPI driver still rewrites literals even with string interpolation. However, we have identified a viable solution based on the langchain-iris approach: storing embeddings as strings in VARCHAR columns and using TO_VECTOR only at query time.
+**Current Status: UPDATED FOR IRIS 2025.1.** Our latest testing with IRIS 2025.1 and the `intersystems-iris` 5.1.2 DBAPI driver (see [`investigation/test_working_vector_params.py`](../investigation/test_working_vector_params.py:1)) has revealed that `TO_VECTOR` *does* work with parameter markers when the `VECTOR` type is specified as `double` (without quotes). This is a significant update to our previous understanding. While some client-side driver behaviors might still require careful handling, the core `TO_VECTOR` function is more flexible than initially documented. The recommended approach for robust vector operations involves using parameterized queries with the correct `double` syntax.
 
 ## Detailed Technical Explanation
 
-### 1. TO_VECTOR() Function Rejects Parameter Markers
+### 1. TO_VECTOR() Function Works with Parameter Markers (Using `double`)
 
-The `TO_VECTOR()` function in IRIS SQL does not accept parameter markers (`?`, `:param`, or `:%qpar`), which are standard in SQL for safe query parameterization.
+The `TO_VECTOR()` function in IRIS SQL accepts parameter markers (`?`) when the vector type is specified as `double` (without quotes). This allows for safe query parameterization.
 
-**Example of what doesn't work:**
+**Example of what works:**
 
 ```sql
 SELECT doc_id,
-       VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) AS score
+       VECTOR_COSINE(embedding, TO_VECTOR(?, double, 768)) AS score
 FROM SourceDocuments
 ORDER BY score DESC
 ```
 
-**Error message:**
-```
-SQLCODE -1, ") expected, : found"
-```
-
-According to the IRIS documentation, the `TO_VECTOR` function only accepts literal strings unless used in ObjectScript Dynamic SQL. This limitation prevents the use of standard parameterized queries for vector search operations.
+This syntax has been verified in IRIS 2025.1 (see [`investigation/test_working_vector_params.py`](../investigation/test_working_vector_params.py:1)). Using `'DOUBLE'` (with quotes) or other variations might lead to errors. The key is to use the unquoted `double` keyword for the type.
 
 ### 2. TOP/FETCH FIRST Clauses Cannot Be Parameterized
 
@@ -239,27 +234,28 @@ We investigated the possibility of modifying the JDBC/ODBC driver behavior to av
 
 ## Verification in IRIS 2025.1
 
-We have created a test script (`investigation/test_dbapi_vector_params.py`) to verify if the parameter substitution issues with TO_VECTOR still exist in IRIS 2025.1 with the newer intersystems-iris 5.1.2 DBAPI driver.
+Our latest testing, documented in [`investigation/test_working_vector_params.py`](../investigation/test_working_vector_params.py:1), has provided new insights into `TO_VECTOR` behavior in IRIS 2025.1 with the `intersystems-iris` 5.1.2 DBAPI driver.
 
-The test results conclusively show that:
+The key findings are:
 
-1. **TO_VECTOR still doesn't accept parameter markers in IRIS 2025.1**
-   - Error: `Invalid SQL statement: ) expected, : found ^SELECT VECTOR_COSINE ( TO_VECTOR ( :%qpar(1) , :%qpar`
-   - This confirms the issues documented in this report are still present in IRIS 2025.1
+1.  **`TO_VECTOR` *works* with parameter markers when using `double` (no quotes) for the type.**
+    *   Example: `TO_VECTOR(?, double, 384)`
+    *   This allows for standard, secure parameterized queries for vector operations, which is a significant improvement.
 
-2. **Basic parameter insertion works fine** when not using TO_VECTOR
-   - We can successfully insert data with parameter markers for regular columns
+2.  **Using `'DOUBLE'` (with quotes) or other type specifiers may still lead to errors.**
+    *   The precise syntax `double` is crucial for successful parameterization.
 
-3. **DBAPI driver still rewrites literals** even with string interpolation
-   - The driver attempts to parameterize parts of the query that shouldn't be parameterized
+3.  **Basic parameter insertion for regular columns continues to work as expected.**
+
+4.  **Client DBAPI driver behavior regarding literal rewriting needs ongoing attention.** While server-side `TO_VECTOR` parameterization is confirmed, developers should remain aware of how their specific client driver handles query construction, especially if mixing literals and parameters.
 
 ## Conclusion
 
-The IRIS SQL vector operations limitations present significant challenges for our RAG implementations, particularly for loading documents with embeddings. Our verification confirms that these limitations still exist in IRIS 2025.1 with the newer intersystems-iris 5.1.2 DBAPI driver.
+The understanding of IRIS SQL vector operations, particularly `TO_VECTOR`, has evolved with IRIS 2025.1. The confirmation that `TO_VECTOR(?, double, <dim>)` supports parameter markers is a positive development, enabling more straightforward and secure RAG implementations.
 
-Based on our investigation of alternative approaches (documented in [VECTOR_SEARCH_ALTERNATIVES.md](VECTOR_SEARCH_ALTERNATIVES.md)), we have identified a viable solution: storing embeddings as strings in VARCHAR columns and using TO_VECTOR only at query time. This approach, inspired by the langchain-iris implementation, allows us to avoid the parameter binding issues with TO_VECTOR while still leveraging native vector operations for search.
+While string interpolation workarounds were previously necessary, the focus can now shift to using parameterized queries with the correct `double` syntax. This simplifies code and enhances security.
 
-For production deployments with large document collections, we recommend the dual-table architecture with HNSW indexing described in [HNSW_INDEXING_RECOMMENDATIONS.md](HNSW_INDEXING_RECOMMENDATIONS.md).
+For production deployments requiring high performance, the dual-table architecture with HNSW indexing, as detailed in [`HNSW_INDEXING_RECOMMENDATIONS.md`](HNSW_INDEXING_RECOMMENDATIONS.md:1), remains a strong recommendation. The ability to use parameterized `TO_VECTOR` calls can be incorporated into the ObjectScript triggers or data loading processes within this architecture. Developers should consult [`VECTOR_SEARCH_SYNTAX_FINDINGS.md`](VECTOR_SEARCH_SYNTAX_FINDINGS.md:1) for the latest comprehensive syntax details.
 
 ## References
 
