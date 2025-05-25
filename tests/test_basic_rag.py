@@ -87,14 +87,31 @@ def test_retrieve_documents_calls_embedding_and_iris(basic_rag_pipeline_under_te
     # Assert IRIS cursor was obtained and execute was called
     mock_iris_connector.cursor.assert_called_once()
     mock_cursor.execute.assert_called_once()
+
+    # Check the SQL query structure and parameters
+    args, kwargs = mock_cursor.execute.call_args
+    executed_sql = args[0]
+    executed_params = args[1]
     
-    # Check the SQL query structure (simplified check)
-    executed_sql = mock_cursor.execute.call_args[0][0]
-    assert f"SELECT TOP {top_k}" in executed_sql
-    assert "VECTOR_COSINE(embedding, TO_VECTOR(" in executed_sql # Check for VECTOR_COSINE and start of TO_VECTOR
-    assert "'DOUBLE', 768" in executed_sql # Check for type and dimension in TO_VECTOR
+    assert "SELECT TOP ?" in executed_sql # Check for placeholder
+    assert "VECTOR_COSINE" in executed_sql
+    assert "TO_VECTOR(embedding, double, " in executed_sql # Check for stored embedding
+    assert "TO_VECTOR(?, double, " in executed_sql      # Check for query embedding
+    assert "FROM RAG.SourceDocuments" in executed_sql
+    assert "ORDER BY similarity_score DESC" in executed_sql
+    
+    # Check that top_k is the first parameter
+    assert executed_params[0] == top_k
+    # Check that the second parameter is the stringified query embedding
+    # (mock_embedding_func.return_value[0] is the embedding list)
+    expected_embedding_str = ','.join(map(str, mock_embedding_func.return_value[0]))
+    assert executed_params[1] == expected_embedding_str
+    # Ensure the key components are in the SQL, allowing for flexibility in exact spacing/formatting
+    assert "VECTOR_COSINE" in executed_sql
+    assert "TO_VECTOR(embedding, double, 768)" in executed_sql  # Check for stored embedding
+    assert "TO_VECTOR(?, double, 768)" in executed_sql       # Check for query embedding
     assert "FROM RAG.SourceDocuments" in executed_sql # Check for schema-qualified table
-    assert "ORDER BY score DESC" in executed_sql
+    assert "ORDER BY similarity_score DESC" in executed_sql # Alias is similarity_score
     
     # Assert fetchall was called
     mock_cursor.fetchall.assert_called_once()

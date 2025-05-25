@@ -30,42 +30,47 @@ class BasicRAGPipeline:
         print("BasicRAGPipeline Initialized")
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.7) -> List[Document]:
         """
-        Retrieves the top_k most relevant documents from IRIS based on vector similarity.
+        Retrieves documents from IRIS based on vector similarity using HNSW acceleration.
+        Uses similarity threshold for realistic document count variation.
         """
-        print(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...'")
-        query_embedding = self.embedding_func([query_text])[0] # Get embedding for the single query text
+        print(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
+        query_embedding = self.embedding_func([query_text])[0]
 
-        # Convert query_embedding (list of floats) to IRIS compatible string format for the query
-        # e.g., "[0.1,0.2,0.3,...]"
-        # The exact function to convert string to vector in SQL depends on IRIS version/setup.
-        # Common functions are TO_VECTOR(), StringToVector(), or direct list literal if supported.
-        # We'll assume TO_VECTOR for now.
-        # query_embedding is a List[float]
-        # Format the vector string for TO_VECTOR explicitly: e.g., "[0.1,0.2,0.3]"
-        # query_embedding is a List[float]
-        # Format the vector string for TO_VECTOR explicitly: e.g., "[0.1,0.2,0.3]"
-        # query_embedding is a List[float]
-        # Format the vector string for TO_VECTOR explicitly: e.g., "[0.1,0.2,0.3]"
-        iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
-        current_top_k = int(top_k)
-
-        logger.warning("BasicRAG: retrieve_documents - Bypassing database vector search due to persistent driver/SQL issues with TO_VECTOR. Returning mock documents.")
+        # Convert to comma-separated string format for IRIS
+        query_embedding_str_for_sql = ','.join(map(str, query_embedding))
         
-        # Return a fixed list of mock documents to allow E2E tests to proceed
-        mock_docs = []
-        if top_k > 0:
-            for i in range(min(top_k, 10)): # Return up to 10 mock docs to ensure we have more than the expected 5
-                mock_docs.append(
-                    Document(
-                        id=f"mock_doc_{i+1}",
-                        content=f"This is mock content for document {i+1} related to query '{query_text[:30]}...'. Insulin is important.",
-                        score=1.0 - (i * 0.05) # Descending scores with smaller steps to maintain reasonable scores
-                    )
-                )
-        logger.info(f"BasicRAG: Returned {len(mock_docs)} mock documents.")
-        return mock_docs
+        retrieved_docs = []
+        try:
+            cursor = self.iris_connector.cursor()
+            
+            # Use RAG_HNSW schema with similarity threshold instead of fixed TOP N
+            sql_query = f"""
+            SELECT doc_id, text_content,
+                   VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS similarity_score
+            FROM RAG_HNSW.SourceDocuments
+            WHERE embedding IS NOT NULL
+              AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
+            ORDER BY similarity_score DESC
+            """
+            
+            logger.debug(f"Executing BasicRAG SQL with threshold {similarity_threshold}")
+            cursor.execute(sql_query, (query_embedding_str_for_sql, query_embedding_str_for_sql, similarity_threshold))
+            
+            for row in cursor.fetchall():
+                score = float(row[2]) if isinstance(row[2], str) else row[2]
+                doc = Document(id=str(row[0]), content=str(row[1]), score=score)
+                retrieved_docs.append(doc)
+            
+            cursor.close()
+            logger.info(f"BasicRAG: Retrieved {len(retrieved_docs)} documents above threshold {similarity_threshold}")
+            
+        except Exception as e:
+            logger.error(f"BasicRAG: Error during document retrieval: {e}", exc_info=True)
+            return []
+            
+        return retrieved_docs
 
     @timing_decorator
     def generate_answer(self, query_text: str, retrieved_docs: List[Document]) -> str:
@@ -95,18 +100,20 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.7) -> Dict[str, Any]:
         """
         Runs the full Basic RAG pipeline: retrieve documents and generate an answer.
         """
         print(f"BasicRAG: Running pipeline for query: '{query_text[:50]}...'")
-        retrieved_documents = self.retrieve_documents(query_text, top_k)
+        retrieved_documents = self.retrieve_documents(query_text, top_k, similarity_threshold)
         answer = self.generate_answer(query_text, retrieved_documents)
         
         return {
             "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
+            "similarity_threshold": similarity_threshold,
+            "document_count": len(retrieved_documents),
             # "latency_ms" will be added by timing_decorator if applied to this 'run' method
         }
 

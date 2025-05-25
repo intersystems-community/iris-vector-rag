@@ -62,14 +62,15 @@ def load_documents_to_iris(
                     text_to_embed = doc.get("abstract") or doc.get("title", "")
                     if text_to_embed:
                         embedding = embedding_func([text_to_embed])[0]
-                        embedding_vector_str = f"[{','.join(map(str, embedding))}]"
+                        # Store as comma-separated values (no brackets) for VARCHAR storage
+                        embedding_vector_str = ','.join(map(str, embedding))
                     else:
                         logger.warning(f"Document {doc.get('pmc_id')} has no abstract or title for sentence embedding.")
                 
                 doc_params = (
                     doc.get("pmc_id"),
                     doc.get("title"),
-                    doc.get("abstract"), 
+                    doc.get("abstract"),
                     json.dumps(doc.get("authors", [])),
                     json.dumps(doc.get("keywords", [])),
                     embedding_vector_str
@@ -78,33 +79,13 @@ def load_documents_to_iris(
                 docs_for_token_embedding.append(doc) # Save for token processing
             
             try:
-                # Dynamically build SQL for SourceDocuments based on whether embeddings are present for this batch
-                # This is tricky with executemany if not all docs in batch have embeddings.
-                # Simpler: always use TO_VECTOR(?), but if embedding_vector_str is None, it will fail.
-                # Given the consistent TO_VECTOR(?) failure, let's assume for now that if embedding_func
-                # fails (like the torch issue), we will insert NULLs for embeddings.
-                # The current source_doc_batch_params has None for embedding_vector_str if embed_func failed.
-
-                # If embedding_function was None initially, all embedding_vector_str in batch will be None.
-                # We need to use a different SQL string for that case.
-                
-                # Check if the first doc's embedding_vector_str is None (implies all are, due to torch error)
-                # This is a simplification; ideally, we'd handle mixed cases or prepare two batches.
-                first_doc_embedding_param = source_doc_batch_params[0][5] if source_doc_batch_params else "dummy"
-
-                if first_doc_embedding_param is None: # No sentence embeddings available for this batch
-                    sql_source_docs = """
-                    INSERT INTO RAG.SourceDocuments
-                    (doc_id, title, text_content, authors, keywords, embedding)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    """
-                    # Parameter for embedding is already None in source_doc_batch_params
-                else: # Attempt to use TO_VECTOR (will likely fail with current driver)
-                    sql_source_docs = """
-                    INSERT INTO RAG.SourceDocuments
-                    (doc_id, title, text_content, authors, keywords, embedding)
-                    VALUES (?, ?, ?, ?, ?, TO_VECTOR(?, 'double', 768))
-                    """
+                # Use simple INSERT without TO_VECTOR - store embeddings as VARCHAR comma-separated values
+                # This is the working approach based on schema investigation
+                sql_source_docs = """
+                INSERT INTO RAG.SourceDocuments
+                (doc_id, title, text_content, authors, keywords, embedding)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """
                 
                 # Print the SQL and parameters before executing
                 print(f"Executing SQL: {sql_source_docs}")
@@ -135,7 +116,8 @@ def load_documents_to_iris(
                             try:
                                 token_data = colbert_doc_encoder_func(text_for_colbert)
                                 for idx, (token_text, token_vec) in enumerate(token_data):
-                                    token_vec_str = f"[{','.join(map(str, token_vec))}]"
+                                    # Store as comma-separated values (no brackets) for VARCHAR storage
+                                    token_vec_str = ','.join(map(str, token_vec))
                                     token_embedding_batch_params.append(
                                         (doc_id, idx, token_text[:1000], token_vec_str, "{}")
                                     )
@@ -143,25 +125,14 @@ def load_documents_to_iris(
                                 logger.error(f"Error generating ColBERT token embeddings for doc {doc_id}: {colbert_e}")
                     
                     if token_embedding_batch_params:
-                        # Modify parameters to insert NULL for token_embedding to avoid TO_VECTOR(?)
-                        # The 4th element in each tuple of token_embedding_batch_params is token_vec_str.
-                        # We need to change it to None and adjust the SQL.
-                        token_params_for_null_embedding = []
-                        for params_tuple in token_embedding_batch_params:
-                            # Original: (doc_id, idx, token_text, token_vec_str, metadata_json_str)
-                            # New:      (doc_id, idx, token_text, None (for embedding), metadata_json_str)
-                            token_params_for_null_embedding.append(
-                                (params_tuple[0], params_tuple[1], params_tuple[2], None, params_tuple[4])
-                            )
-
-                        sql_token_embeddings_null = """
+                        # Insert token embeddings as VARCHAR comma-separated values
+                        sql_token_embeddings = """
                         INSERT INTO RAG.DocumentTokenEmbeddings
                         (doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
-                        VALUES (?, ?, ?, ?, ?) 
+                        VALUES (?, ?, ?, ?, ?)
                         """
-                        # Using token_params_for_null_embedding which has None for the embedding
-                        cursor.executemany(sql_token_embeddings_null, token_params_for_null_embedding)
-                        loaded_token_count += len(token_embedding_batch_params) # Count based on attempts
+                        cursor.executemany(sql_token_embeddings, token_embedding_batch_params)
+                        loaded_token_count += len(token_embedding_batch_params)
 
                 connection.commit() 
                 

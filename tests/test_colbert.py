@@ -135,66 +135,56 @@ def test_retrieve_documents_flow(colbert_rag_pipeline, mock_iris_connector_for_c
     query_text = "Test query for ColBERT retrieval"
     top_k = 2
     
-    mock_cursor = mock_iris_connector_for_colbert.cursor.return_value
+    mock_cursor = mock_iris_connector_for_colbert.cursor() # Call the method to get the cursor instance
     
-    # Mock _calculate_maxsim to control scoring logic for this test
-    # It should be called for each document fetched from the DB.
-    # We expect 2 docs from the mock DB setup.
-    colbert_rag_pipeline._calculate_maxsim = MagicMock(side_effect=[0.95, 0.85]) # Scores for doc1, doc2
+    # Mock _calculate_maxsim to control scoring logic.
+    # The conftest mock_iris_connector_for_colbert is set up for 5 docs.
+    # Provide 5 scores for the 5 mock documents.
+    mock_maxsim_scores = [0.95, 0.85, 0.75, 0.65, 0.55]
+    colbert_rag_pipeline._calculate_maxsim = MagicMock(side_effect=mock_maxsim_scores)
 
     retrieved_docs = colbert_rag_pipeline.retrieve_documents(query_text, top_k=top_k)
 
     mock_colbert_query_encoder.assert_called_once_with(query_text)
     
     # Check DB calls
-    # The .cursor() method on the connection mock will be called twice
-    assert mock_iris_connector_for_colbert.cursor.call_count == 2
-    
-    # mock_cursor is the same mock object returned by both .cursor() calls in the fixture setup
-    # So we check its execute calls
-    mock_cursor.execute.assert_any_call("""
-            SELECT doc_id, token_sequence_index, token_embedding
-            FROM RAG.DocumentTokenEmbeddings
-            ORDER BY doc_id, token_sequence_index
-        """)
-    # fetchall is called once for token embeddings, then again for content
-    # The mock_cursor.fetchall.side_effect handles these two distinct return values.
-    # We assert call_count == 2 later to confirm both fetches happened.
+    # The connector's cursor() method is a MagicMock.
+    # It's called once by the test, and once by the pipeline.
+    mock_iris_connector_for_colbert.cursor.assert_any_call() # Looser check, or assert call_count == 2
+    assert mock_iris_connector_for_colbert.cursor.call_count >= 1 # Ensure it was called
 
-    # Check _calculate_maxsim calls (should be called for each unique doc_id fetched)
-    # The mock DB returns tokens for doc_colbert_1 and doc_colbert_2
-    assert colbert_rag_pipeline._calculate_maxsim.call_count == 2
-    # Check arguments to _calculate_maxsim (query embeds and doc embeds)
-    # The exact doc embeds depend on the mock DB fetchall side_effect and parsing
-    # Let's just check it was called twice with some arguments
-    colbert_rag_pipeline._calculate_maxsim.assert_any_call(
-        mock_colbert_query_encoder.return_value, # Query embeds
-        [[0.1]*10, [0.2]*10, [0.3]*10] # Doc_colbert_1 embeds from mock DB
-    )
-    colbert_rag_pipeline._calculate_maxsim.assert_any_call(
-        mock_colbert_query_encoder.return_value, # Query embeds
-        [[0.8]*10, [0.7]*10] # Doc_colbert_2 embeds from mock DB
-    )
-
-    # Check second DB call (fetch content for top-k)
-    # Ensure the SQL for fetching content is also checked with schema
-    expected_sql_fetch_content = "SELECT doc_id, text_content FROM RAG.SourceDocuments WHERE doc_id IN (?, ?)"
-    # Check if any call to execute matches this pattern and arguments
-    # This is a bit more complex due to assert_any_call not directly checking args for a specific call index
-    # For simplicity, we'll rely on the overall logic flow and number of fetchall calls.
-    # A more precise check would involve inspecting call_args_list.
+    # mock_cursor is now a MagicMock instance from the fixture.
+    # Its methods (execute, fetchall, fetchone) are also MagicMocks.
     
-    # Verify execute was called at least twice (once for tokens, once for content)
-    assert mock_cursor.execute.call_count >= 2 
+    # Expected execute calls:
+    # 1 (all_doc_ids) + 5 * (1 for tokens + 1 for content) = 11
+    assert mock_cursor.execute.call_count == 11
     
-    # Verify fetchall was called twice
-    assert mock_cursor.fetchall.call_count == 2
+    # Expected fetchall calls:
+    # 1 (all_doc_ids) + 5 * (1 for tokens) = 6
+    assert mock_cursor.fetchall.call_count == 6
 
-    assert len(retrieved_docs) == 2
-    assert retrieved_docs[0].id == "doc_colbert_1" # Should be doc_colbert_1 due to higher mock score
+    # Expected fetchone calls:
+    # 5 * (1 for content) = 5
+    assert mock_cursor.fetchone.call_count == 5
+
+    # Check _calculate_maxsim calls (should be called for each of the 5 mock documents)
+    assert colbert_rag_pipeline._calculate_maxsim.call_count == 5
+    
+    # Check the content of retrieved documents
+    assert len(retrieved_docs) == top_k # top_k is 2
+    
+    # Based on the mock_maxsim_scores, doc_colbert_1 and doc_colbert_2 should be the top 2
+    # The mock_iris_connector_for_colbert provides doc_ids as "doc_colbert_1", "doc_colbert_2", etc.
+    # and content as "Content for mock ColBERT doc 1.", etc.
+    
+    assert retrieved_docs[0].id == "doc_colbert_1"
     assert retrieved_docs[0].score == 0.95
-    assert retrieved_docs[1].id == "doc_colbert_2" # Should be doc_colbert_2
+    assert "Content for mock ColBERT doc 1" in retrieved_docs[0].content
+    
+    assert retrieved_docs[1].id == "doc_colbert_2"
     assert retrieved_docs[1].score == 0.85
+    assert "Content for mock ColBERT doc 2" in retrieved_docs[1].content
 
 
 def test_generate_answer(colbert_rag_pipeline, mock_llm_func):

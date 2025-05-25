@@ -1,1 +1,0 @@
--- This file is no longer needed as class compilation will be done manually by the user.

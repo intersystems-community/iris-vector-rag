@@ -554,6 +554,178 @@ def _calculate_answer_similarity(answer1: str, answer2: str) -> float:
     similarity = difflib.SequenceMatcher(None, answer1, answer2).ratio()
     
     return similarity
+def calculate_hnsw_performance_metrics(
+    hnsw_latencies: List[float],
+    sequential_latencies: List[float],
+    hnsw_similarities: List[List[float]],
+    sequential_similarities: List[List[float]]
+) -> Dict[str, float]:
+    """
+    Calculate HNSW-specific performance metrics.
+    
+    Args:
+        hnsw_latencies: Query latencies with HNSW indexes (ms)
+        sequential_latencies: Query latencies with sequential scan (ms)  
+        hnsw_similarities: Similarity scores from HNSW queries
+        sequential_similarities: Similarity scores from sequential queries
+        
+    Returns:
+        Dictionary with HNSW performance metrics
+    """
+    metrics = {}
+    
+    if not hnsw_latencies or not sequential_latencies:
+        return metrics
+    
+    # Performance improvement metrics
+    avg_hnsw_latency = np.mean(hnsw_latencies)
+    avg_sequential_latency = np.mean(sequential_latencies)
+    
+    if avg_sequential_latency > 0:
+        speedup_ratio = avg_sequential_latency / avg_hnsw_latency
+        performance_improvement = (avg_sequential_latency - avg_hnsw_latency) / avg_sequential_latency * 100
+        
+        metrics["hnsw_speedup_ratio"] = float(speedup_ratio)
+        metrics["hnsw_performance_improvement_pct"] = float(performance_improvement)
+    
+    # HNSW-specific latency percentiles
+    if hnsw_latencies:
+        try:
+            hnsw_percentiles = calculate_latency_percentiles(hnsw_latencies)
+            for key, value in hnsw_percentiles.items():
+                metrics[f"hnsw_{key}"] = value
+        except ValueError:
+            pass
+    
+    # Quality preservation metrics (how well HNSW approximation preserves quality)
+    if hnsw_similarities and sequential_similarities:
+        try:
+            # Calculate quality preservation across all queries
+            quality_preservation_scores = []
+            
+            for hnsw_sims, seq_sims in zip(hnsw_similarities, sequential_similarities):
+                if hnsw_sims and seq_sims:
+                    # Compare top similarities
+                    hnsw_max = max(hnsw_sims)
+                    seq_max = max(seq_sims)
+                    
+                    if seq_max > 0:
+                        quality_ratio = hnsw_max / seq_max
+                        quality_preservation_scores.append(quality_ratio)
+            
+            if quality_preservation_scores:
+                metrics["hnsw_quality_preservation"] = float(np.mean(quality_preservation_scores))
+                metrics["hnsw_quality_preservation_std"] = float(np.std(quality_preservation_scores))
+        except Exception:
+            pass
+    
+    return metrics
+
+def calculate_hnsw_scalability_metrics(
+    document_counts: List[int], 
+    query_latencies: List[float]
+) -> Dict[str, float]:
+    """
+    Calculate HNSW scalability metrics.
+    
+    Args:
+        document_counts: List of document counts tested
+        query_latencies: Corresponding query latencies (ms)
+        
+    Returns:
+        Dictionary with scalability metrics
+    """
+    metrics = {}
+    
+    if len(document_counts) < 2 or len(query_latencies) < 2:
+        return metrics
+    
+    if len(document_counts) != len(query_latencies):
+        return metrics
+    
+    # Calculate scaling coefficient (how latency grows with document count)
+    try:
+        # Log-log regression to find scaling exponent
+        log_docs = np.log(document_counts)
+        log_latencies = np.log(query_latencies)
+        
+        # Simple linear regression on log-log scale: log(latency) = a * log(docs) + b
+        # The coefficient 'a' tells us the scaling behavior
+        coeffs = np.polyfit(log_docs, log_latencies, 1)
+        scaling_exponent = coeffs[0]
+        
+        metrics["hnsw_scaling_exponent"] = float(scaling_exponent)
+        
+        # Ideal HNSW should have sub-linear scaling (exponent < 1.0)
+        if scaling_exponent < 1.0:
+            metrics["hnsw_sublinear_scaling"] = 1.0  # Boolean metric: 1 if true, 0 if false
+        else:
+            metrics["hnsw_sublinear_scaling"] = 0.0
+        
+        # Calculate efficiency compared to linear scaling
+        linear_scaling_expected = document_counts[-1] / document_counts[0]
+        actual_scaling = query_latencies[-1] / query_latencies[0]
+        
+        if linear_scaling_expected > 0:
+            scaling_efficiency = linear_scaling_expected / actual_scaling
+            metrics["hnsw_scaling_efficiency"] = float(scaling_efficiency)
+    
+    except Exception:
+        pass
+    
+    return metrics
+
+def calculate_hnsw_index_effectiveness_metrics(
+    query_latencies: List[float],
+    index_parameters: Dict[str, Any] = None
+) -> Dict[str, float]:
+    """
+    Calculate metrics for HNSW index effectiveness.
+    
+    Args:
+        query_latencies: Query latencies with current HNSW parameters (ms)
+        index_parameters: HNSW parameters used (M, efConstruction, etc.)
+        
+    Returns:
+        Dictionary with index effectiveness metrics
+    """
+    metrics = {}
+    
+    if not query_latencies:
+        return metrics
+    
+    # Basic performance metrics
+    metrics["hnsw_avg_latency"] = float(np.mean(query_latencies))
+    metrics["hnsw_latency_variance"] = float(np.var(query_latencies))
+    metrics["hnsw_latency_cv"] = float(np.std(query_latencies) / np.mean(query_latencies))
+    
+    # Consistency metrics (lower variance is better)
+    latency_std = np.std(query_latencies)
+    latency_mean = np.mean(query_latencies)
+    
+    if latency_mean > 0:
+        # Coefficient of variation (normalized variance)
+        consistency_score = 1.0 / (1.0 + latency_std / latency_mean)
+        metrics["hnsw_consistency_score"] = float(consistency_score)
+    
+    # Index parameter effectiveness (if provided)
+    if index_parameters:
+        # Record parameters for analysis
+        if "M" in index_parameters:
+            metrics["hnsw_parameter_M"] = float(index_parameters["M"])
+        if "efConstruction" in index_parameters:
+            metrics["hnsw_parameter_efConstruction"] = float(index_parameters["efConstruction"])
+        
+        # Calculate efficiency score based on latency and parameters
+        # Lower M and efConstruction with good performance = higher efficiency
+        if "M" in index_parameters and "efConstruction" in index_parameters:
+            parameter_complexity = index_parameters["M"] * index_parameters["efConstruction"]
+            if parameter_complexity > 0 and latency_mean > 0:
+                # Efficiency = 1 / (latency * parameter_complexity)
+                efficiency = 1.0 / (latency_mean * parameter_complexity / 1000)  # Normalize
+                metrics["hnsw_parameter_efficiency"] = float(efficiency)
+    
+    return metrics
 
 def calculate_benchmark_metrics(results: List[Dict[str, Any]], 
                               queries: List[Dict[str, Any]], 

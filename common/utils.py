@@ -87,20 +87,20 @@ def build_hf_embedder(model_name: str = DEFAULT_EMBEDDING_MODEL):
     return embedding_func_hf
 
 
-def get_embedding_func(model_name: str = DEFAULT_EMBEDDING_MODEL, provider: Optional[str] = None) -> Callable[[List[str]], List[List[float]]]:
+def get_embedding_func(model_name: str = DEFAULT_EMBEDDING_MODEL, provider: Optional[str] = None, mock: bool = False) -> Callable[[List[str]], List[List[float]]]:
     """
     Returns a function that takes a list of texts and returns a list of embeddings.
     Defaults to using build_hf_embedder for real models.
-    Supports a "stub" provider for testing without real models.
+    Supports a "stub" provider or mock=True for testing without real models.
     """
-    if provider == "stub" or model_name == "stub":
-        print("Using stub embedding function.")
+    if mock or provider == "stub" or model_name == "stub":
+        logger.info("Using stub embedding function.")
         # The e5-base-v2 model (new default) has 768 dimensions. Stub should match.
         def stub_embed_texts(texts: List[str]) -> List[List[float]]:
-            return [[(len(text) % 100) * 0.01] * 768 for text in texts] 
+            return [[(len(text) % 100) * 0.01] * 768 for text in texts]
         return stub_embed_texts
     
-    print(f"Using pure HuggingFace embedder for model: {model_name}")
+    logger.info(f"Using pure HuggingFace embedder for model: {model_name}")
     return build_hf_embedder(model_name)
 
 

@@ -48,29 +48,60 @@ class HyDEPipeline:
         return hypothetical_doc_text
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.65) -> List[Document]:
         """
-        Generates a hypothetical document, embeds it, and retrieves similar actual documents.
-        TEMPORARILY MOCKED due to issues with DB vector search.
+        Generates a hypothetical document, embeds it, and retrieves similar actual documents
+        using vector search against the HNSW-accelerated database.
         """
-        logger.warning("HyDE: retrieve_documents - Bypassing database vector search due to persistent driver/SQL issues with TO_VECTOR. Returning mock documents.")
-        
-        # Still generate hypothetical document as it's part of HyDE's logic, even if not used for DB retrieval
-        hypothetical_doc_text = self._generate_hypothetical_document(query_text)
-        logger.info(f"HyDE: Generated hypothetical document (though not used for DB retrieval in mock): '{hypothetical_doc_text[:100]}...'")
+        logger.info(f"HyDE: Retrieving documents for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
 
-        mock_docs = []
-        if top_k > 0:
-            for i in range(min(top_k, 10)): # Return up to 10 mock docs to ensure we have more than the expected 5
-                mock_docs.append(
-                    Document(
-                        id=f"mock_hyde_doc_{i+1}",
-                        content=f"This is mock HyDE content for document {i+1} based on query '{query_text[:30]}...'. It's hypothetically relevant.",
-                        score=0.85 - (i * 0.05) # Descending scores with smaller steps to maintain reasonable scores
-                    )
-                )
-        logger.info(f"HyDE: Returned {len(mock_docs)} mock documents.")
-        return mock_docs
+        # 1. Generate hypothetical document
+        hypothetical_doc_text = self._generate_hypothetical_document(query_text)
+        logger.info(f"HyDE: Generated hypothetical document: '{hypothetical_doc_text[:100]}...'")
+
+        # 2. Embed the hypothetical document
+        hypothetical_doc_embedding = self.embedding_func([hypothetical_doc_text])[0]
+        logger.debug(f"HyDE: Embedding generated for hypothetical document.")
+
+        # 3. Construct and execute SQL query for vector search
+        documents = []
+        if not hypothetical_doc_embedding or not all(isinstance(x, (int, float)) for x in hypothetical_doc_embedding):
+            logger.error("HyDE: Failed to generate a valid embedding for the hypothetical document.")
+            return []
+
+        # Convert embedding to comma-separated string format for IRIS
+        embedding_str = ','.join(map(str, hypothetical_doc_embedding))
+
+        # Use RAG_HNSW schema with similarity threshold
+        sql_query = f"""
+            SELECT doc_id, text_content,
+                   VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+            FROM RAG_HNSW.SourceDocuments
+            WHERE embedding IS NOT NULL
+              AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
+            ORDER BY similarity_score DESC
+        """
+        
+        try:
+            cursor = self.iris_connector.cursor()
+            logger.debug(f"HyDE: Executing SQL query with threshold {similarity_threshold}")
+            cursor.execute(sql_query, (embedding_str, embedding_str, similarity_threshold))
+            results = cursor.fetchall()
+            
+            for row in results:
+                doc_id = row[0]
+                doc_content = row[1]
+                score = row[2]
+                documents.append(Document(id=str(doc_id), content=doc_content, score=float(score)))
+            
+            cursor.close()
+            logger.info(f"HyDE: Retrieved {len(documents)} documents above threshold {similarity_threshold}")
+
+        except Exception as e:
+            logger.error(f"HyDE: Error during database vector search: {e}", exc_info=True)
+            return []
+            
+        return documents
 
     @timing_decorator
     def generate_answer(self, query_text: str, retrieved_docs: List[Document]) -> str:
@@ -99,7 +130,7 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.65) -> Dict[str, Any]:
         """
         Runs the full HyDE pipeline.
         """
@@ -109,7 +140,7 @@ Answer:"""
         hypothetical_doc = self._generate_hypothetical_document(query_text)
         
         # Then retrieve documents
-        retrieved_documents = self.retrieve_documents(query_text, top_k)
+        retrieved_documents = self.retrieve_documents(query_text, top_k, similarity_threshold)
         
         # Generate the final answer
         answer = self.generate_answer(query_text, retrieved_documents)
@@ -118,7 +149,9 @@ Answer:"""
             "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
-            "hypothetical_document": hypothetical_doc  # Include the hypothetical document in the result
+            "hypothetical_document": hypothetical_doc,
+            "similarity_threshold": similarity_threshold,
+            "document_count": len(retrieved_documents)
         }
 
 if __name__ == '__main__':

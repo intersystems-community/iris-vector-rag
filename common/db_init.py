@@ -54,7 +54,7 @@ def split_sql_commands(sql_script: str) -> List[str]:
 
                 # If we are here, it means we are NOT in a procedure block.
                 # The lines accumulated in current_statement_lines might form one or more simple statements.
-                temp_buffer = "".join(current_statement_lines)
+                temp_buffer = "\n".join(current_statement_lines)
                 parts = temp_buffer.split(';')
                 for i, part_str in enumerate(parts):
                     clean_part = part_str.strip()
@@ -88,10 +88,9 @@ def initialize_database(iris_connector: Any, force_recreate: bool = False):
     
     # List of SQL files to execute in order
     sql_files_to_execute = [
-        ('db_init.sql', 'sql'),               # Main schema definitions
-        ('vector_similarity.sql', 'sql'),      # Vector similarity functions
-        ('vector_search_procs.sql', 'sql')   # SQL Stored procedures for vector search
-        # compilation_sp.sql removed as compilation is now manual
+        ('db_init_simple.sql', 'sql'),       # Simple, working schema definitions
+        # Note: vector_similarity.sql and vector_search_procs.sql removed for simplicity
+        # We'll handle vector operations directly in Python code
     ]
 
     # Path to the ObjectScript .cls file inside the Docker container

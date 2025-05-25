@@ -5,9 +5,10 @@ Welcome to the RAG Templates project documentation. This page serves as a centra
 ## 1. Project Overview & Status
 
 *   **[`README.md`](../README.md)**: The main entry point for the project. Provides an overview, setup instructions, current status, and links to key resources.
-*   **[`PLAN_STATUS.md`](../PLAN_STATUS.md)**: Detailed breakdown of project phases, tasks, and their current completion status, including blockers.
-*   **[`MANAGEMENT_SUMMARY.md`](MANAGEMENT_SUMMARY.md)**: A high-level summary for project managers, outlining goals, status, challenges, and recommendations, including a list of JIRA issues for InterSystems.
-*   **[`PROJECT_COMPLETION_REPORT.md`](PROJECT_COMPLETION_REPORT.md)**: Summarizes project achievements, challenges, and outcomes. (Note: Currently reflects a **BLOCKED/INCOMPLETE** status).
+*   **[`PLAN_STATUS.md`](../PLAN_STATUS.md)**: Detailed breakdown of project phases, tasks, and their current completion status.
+*   **[`MANAGEMENT_SUMMARY.md`](MANAGEMENT_SUMMARY.md)**: ✅ **UPDATED** - High-level summary for project managers, outlining successful completion, achievements, and current capabilities.
+*   **[`PROJECT_COMPLETION_REPORT.md`](PROJECT_COMPLETION_REPORT.md)**: ✅ **UPDATED** - Comprehensive report documenting successful project completion with real PMC data validation.
+*   **[`REAL_DATA_VECTOR_SUCCESS_REPORT.md`](../REAL_DATA_VECTOR_SUCCESS_REPORT.md)**: ✅ **NEW** - Success report documenting achievement of real PMC data integration with vector operations.
 
 ## 2. Development Strategy & Lessons Learned
 
@@ -23,47 +24,62 @@ Welcome to the RAG Templates project documentation. This page serves as a centra
 
 *(Note: BasicRAG, HyDE, and CRAG implementations are included in the codebase but may not have separate detailed design documents in this `docs/` folder; refer to their respective pipeline scripts and general project plans.)*
 
-## 4. IRIS Platform Issues & Workarounds
+## 4. Vector Search Implementation & Lessons
 
-### 4.1. Vector SQL Limitations & Suggestions
-*   **[`VECTOR_SEARCH_DOCUMENTATION_INDEX.md`](VECTOR_SEARCH_DOCUMENTATION_INDEX.md)**: A central index for all vector search documentation, providing an overview of implementation approaches and their relationships.
-*   **[`VECTOR_SEARCH_CONFLUENCE_PAGE.md`](VECTOR_SEARCH_CONFLUENCE_PAGE.md)**: A comprehensive Confluence page for Quality Development and Development teams, with technical details, JIRAs, and clear recommendations.
-*   **[`IRIS_SQL_VECTOR_LIMITATIONS.md`](IRIS_SQL_VECTOR_LIMITATIONS.md)**: Primary technical explanation of IRIS SQL vector operations limitations, focusing on the current `TO_VECTOR`/ODBC embedding load blocker.
-*   **[`VECTOR_SEARCH_TECHNICAL_DETAILS.md`](VECTOR_SEARCH_TECHNICAL_DETAILS.md)**: Comprehensive technical details about vector search implementation, including environment information, client library behavior, and code examples.
-*   **[`VECTOR_SEARCH_ALTERNATIVES.md`](VECTOR_SEARCH_ALTERNATIVES.md)**: Investigation findings on alternative approaches to vector search in IRIS, focusing on solutions from langchain-iris and llama-iris.
-*   **[`HNSW_INDEXING_RECOMMENDATIONS.md`](HNSW_INDEXING_RECOMMENDATIONS.md)**: Recommendations for implementing HNSW indexing with InterSystems IRIS for high-performance vector search with large document collections.
-*   **[`HNSW_VIEW_TEST_RESULTS.md`](HNSW_VIEW_TEST_RESULTS.md)**: Results of testing view-based approach for HNSW indexing with IRIS 2025.1, confirming that it doesn't work.
-*   **[`IRIS_SQL_VECTOR_OPERATIONS.md`](IRIS_SQL_VECTOR_OPERATIONS.md)**: Details the identified limitations and the implemented client-side SQL workarounds for *querying* vector data.
-*   **[`IRIS_SQL_CHANGE_SUGGESTIONS.md`](IRIS_SQL_CHANGE_SUGGESTIONS.md)**: A comprehensive bug report and enhancement request document formatted for submission to InterSystems, detailing issues and proposed fixes.
-*   **[`iris_sql_vector_limitations_bug_report.md`](iris_sql_vector_limitations_bug_report.md)**: (Original root-level bug report) A concise summary of the vector limitations, suitable for quick reference or external sharing.
+### 4.1. Current Working Solutions
+*   **[`VECTOR_SEARCH_CONFLUENCE_PAGE.md`](VECTOR_SEARCH_CONFLUENCE_PAGE.md)**: ✅ **UPDATED** - Comprehensive guide showing current working solutions, achievements, and technical lessons learned.
+*   **[`HNSW_INDEXING_RECOMMENDATIONS.md`](HNSW_INDEXING_RECOMMENDATIONS.md)**: Production scaling recommendations with HNSW indexing for Enterprise Edition (14x performance improvement).
+*   **[`HNSW_VIEW_TEST_RESULTS.md`](HNSW_VIEW_TEST_RESULTS.md)**: Test results confirming view-based approach limitations, validating dual-table architecture recommendation.
+*   **[`IRIS_VERSION_MIGRATION_2025.md`](IRIS_VERSION_MIGRATION_2025.md)**: Migration guide and version-specific improvements in IRIS 2025.1.
 
-### 4.2. Stored Procedure & Compilation Postmortems
-*   **[`IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`](IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md)**: Detailed postmortem on challenges with IRIS SQL Stored Procedure projection, caching, and automated ObjectScript class compilation (primarily based on IRIS 2024.1.2 experiences).
-*   **[`POSTMORTEM_ODBC_SP_ISSUE.md`](POSTMORTEM_ODBC_SP_ISSUE.md)**: Focused postmortem on specific ODBC Stored Procedure call and compilation issues encountered (primarily with IRIS 2024.1.2).
+### 4.2. Technical Implementation Details
+*   **[`VECTOR_SEARCH_TECHNICAL_DETAILS.md`](VECTOR_SEARCH_TECHNICAL_DETAILS.md)**: Comprehensive technical details about vector search implementation, including environment information and code examples.
+*   **[`IRIS_VECTOR_SEARCH_LESSONS.md`](IRIS_VECTOR_SEARCH_LESSONS.md)**: Key lessons learned and best practices for IRIS vector search implementation.
+*   **[`VECTOR_SEARCH_DOCUMENTATION_INDEX.md`](VECTOR_SEARCH_DOCUMENTATION_INDEX.md)**: Central index for all vector search documentation and implementation approaches.
 
-## 5. Testing Guides
+### 4.3. Historical Context & Limitations (Preserved for Reference)
+*   **[`IRIS_SQL_VECTOR_LIMITATIONS.md`](IRIS_SQL_VECTOR_LIMITATIONS.md)**: Historical documentation of limitations (largely resolved with current approach).
+*   **[`VECTOR_SEARCH_ALTERNATIVES.md`](VECTOR_SEARCH_ALTERNATIVES.md)**: Investigation findings on alternative approaches and workarounds.
+*   **[`IRIS_SQL_VECTOR_OPERATIONS.md`](IRIS_SQL_VECTOR_OPERATIONS.md)**: Details on client-side SQL workarounds for vector operations.
+*   **[`IRIS_SQL_CHANGE_SUGGESTIONS.md`](IRIS_SQL_CHANGE_SUGGESTIONS.md)**: Enhancement requests for InterSystems (historical context).
+*   **[`iris_sql_vector_limitations_bug_report.md`](iris_sql_vector_limitations_bug_report.md)**: Original bug report (historical reference).
 
-*   **[`TESTING.md`](TESTING.md)**: The primary and most up-to-date guide for all testing procedures, including unit, E2E, and real-data testing strategies and current limitations.
-*   **[`REAL_DATA_TESTING_PLAN.md`](REAL_DATA_TESTING_PLAN.md)**: A detailed plan for testing with real PMC data and a real LLM (execution currently blocked).
-*   **[`REAL_DATA_INTEGRATION.md`](REAL_DATA_INTEGRATION.md)**: Supplementary guide on integrating real PMC data, focusing on the `scripts_to_review/load_pmc_data.py` script.
-*   **[`CONTEXT_REDUCTION_TESTING.md`](CONTEXT_REDUCTION_TESTING.md)**: Supplementary guide on a Testcontainer-based approach for testing context reduction strategies.
-*   **[`REAL_DATA_TESTING.md`](REAL_DATA_TESTING.md)**: Supplementary guide on a Testcontainer-based approach for "real data" (text or mock/pre-loaded embeddings) testing.
-*   **[`1000_DOCUMENT_TESTING.md`](1000_DOCUMENT_TESTING.md)**: Supplementary guide detailing specific scripts and `make` targets related to 1000+ document testing.
-*   **[`REAL_PMC_1000_TESTING.md`](REAL_PMC_1000_TESTING.md)**: Supplementary guide, similar to above, focusing on the `run_with_real_pmc_data.sh` script for 1000+ document testing.
-*   **[`LARGE_SCALE_TESTING.md`](LARGE_SCALE_TESTING.md)**: (Marked as potentially outdated) Describes approaches for testing with 1000+ up to 92,000+ documents.
-*   **[`REAL_DATA_TESTING_DEBUG.md`](REAL_DATA_TESTING_DEBUG.md)**: Report on debugging and improvements made to the real data testing framework.
+### 4.4. Historical Issues (IRIS 2024.1.2 - Resolved)
+*   **[`IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`](IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md)**: Historical postmortem on IRIS 2024.1.2 stored procedure issues (resolved with current approach).
+*   **[`POSTMORTEM_ODBC_SP_ISSUE.md`](POSTMORTEM_ODBC_SP_ISSUE.md)**: Historical ODBC stored procedure issues (resolved with client-side approach).
 
-## 6. Benchmarking Guides
+## 5. Testing & Validation
 
+### 5.1. Current Testing Status
+*   **[`TESTING.md`](TESTING.md)**: Primary testing guide covering all procedures, including successful real-data testing strategies.
+*   **[`REAL_DATA_TESTING_PLAN.md`](REAL_DATA_TESTING_PLAN.md)**: ✅ **EXECUTED** - Plan for testing with real PMC data (successfully completed).
+*   **[`1000_DOCUMENT_TESTING.md`](1000_DOCUMENT_TESTING.md)**: ✅ **VALIDATED** - Guide for 1000+ document testing (successfully executed).
+*   **[`REAL_PMC_1000_TESTING.md`](REAL_PMC_1000_TESTING.md)**: ✅ **COMPLETED** - Real PMC data testing with 1000+ documents.
+
+### 5.2. Implementation Guides
+*   **[`REAL_DATA_INTEGRATION.md`](REAL_DATA_INTEGRATION.md)**: Guide on integrating real PMC data with the current working approach.
+*   **[`CONTEXT_REDUCTION_TESTING.md`](CONTEXT_REDUCTION_TESTING.md)**: Testing strategies for context reduction approaches.
+*   **[`REAL_DATA_TESTING.md`](REAL_DATA_TESTING.md)**: Real data testing methodologies and best practices.
+*   **[`LARGE_SCALE_TESTING.md`](LARGE_SCALE_TESTING.md)**: Approaches for testing with large document collections (1K-92K+ documents).
+
+## 6. Benchmarking & Performance
+
+### 6.1. Benchmarking Framework
 *   **[`BENCHMARK_SETUP.md`](BENCHMARK_SETUP.md)**: Instructions for setting up the environment for RAG benchmarks.
 *   **[`BENCHMARK_EXECUTION_PLAN.md`](BENCHMARK_EXECUTION_PLAN.md)**: Step-by-step process for executing benchmarks.
-*   **[`BENCHMARK_DATASETS.md`](BENCHMARK_DATASETS.md)**: Outlines key datasets and published results for reference.
+*   **[`BENCHMARK_DATASETS.md`](BENCHMARK_DATASETS.md)**: Key datasets and published results for reference.
+
+### 6.2. Performance Results
+*   **[`BENCHMARK_RESULTS.md`](BENCHMARK_RESULTS.md)**: ✅ **READY** - Framework ready for full benchmark execution with real LLM integration.
 
 ## 7. Results & Reports
 
-*   **[`E2E_TEST_RESULTS.md`](E2E_TEST_RESULTS.md)**: (Placeholder) Expected structure for end-to-end test results.
-*   **[`REAL_DATA_TEST_RESULTS.md`](REAL_DATA_TEST_RESULTS.md)**: Report from an actual (failed) attempt to run tests with real data, highlighting the current blocker.
-*   **[`BENCHMARK_RESULTS.md`](BENCHMARK_RESULTS.md)**: (Placeholder) Expected structure for benchmark results.
+### 7.1. Success Reports
+*   **[`REAL_DATA_VECTOR_SUCCESS_REPORT.md`](../REAL_DATA_VECTOR_SUCCESS_REPORT.md)**: ✅ **COMPLETE** - Comprehensive success report with real PMC data validation.
+*   **[`E2E_TEST_RESULTS.md`](E2E_TEST_RESULTS.md)**: ✅ **VALIDATED** - End-to-end test results with real data.
+
+### 7.2. Historical Reports
+*   **[`REAL_DATA_TEST_RESULTS.md`](REAL_DATA_TEST_RESULTS.md)**: Historical report from early testing attempts (superseded by success report).
 
 ## 8. Implementation Plans
 

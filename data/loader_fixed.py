@@ -98,35 +98,27 @@ def load_documents_to_iris(
                         else:
                             logger.warning(f"Document {doc_id} has no abstract or title for sentence embedding.")
                     
-                    # Use string interpolation for the entire SQL statement
+                    # Use parameterized approach for TO_VECTOR
                     if embedding_vector_str:
-                        # Escape single quotes in string values
-                        safe_title = title.replace("'", "''") if title else ""
-                        safe_text = text_content.replace("'", "''") if text_content else ""
-                        safe_authors = authors.replace("'", "''") if authors else "{}"
-                        safe_keywords = keywords.replace("'", "''") if keywords else "{}"
+                        # Use parameterized SQL with TO_VECTOR(?, double, 768)
+                        sql = "INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords, embedding) VALUES (?, ?, ?, ?, ?, TO_VECTOR(?, double, 768))"
+                        params = (doc_id, title, text_content, authors, keywords, embedding_vector_str)
                         
-                        # Use string interpolation for the entire SQL statement
-                        sql = f"INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords, embedding) VALUES ('{doc_id}', '{safe_title}', '{safe_text}', '{safe_authors}', '{safe_keywords}', TO_VECTOR('{embedding_vector_str}', 'double', 768))"
-                        
-                        # Print the SQL before executing
+                        # Print the SQL and params before executing
                         print(f"Executing SQL (with embedding): {sql}")
+                        print(f"Parameters: {params[:5]}... (embedding vector length: {len(embedding_vector_str)})")
                         
-                        cursor.execute(sql)
+                        cursor.execute(sql, params)
                     else:
-                        # Escape single quotes in string values
-                        safe_title = title.replace("'", "''") if title else ""
-                        safe_text = text_content.replace("'", "''") if text_content else ""
-                        safe_authors = authors.replace("'", "''") if authors else "{}"
-                        safe_keywords = keywords.replace("'", "''") if keywords else "{}"
+                        # Use parameterized SQL without embedding
+                        sql = "INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords, embedding) VALUES (?, ?, ?, ?, ?, NULL)"
+                        params = (doc_id, title, text_content, authors, keywords)
                         
-                        # Use string interpolation for the entire SQL statement
-                        sql = f"INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords, embedding) VALUES ('{doc_id}', '{safe_title}', '{safe_text}', '{safe_authors}', '{safe_keywords}', NULL)"
-                        
-                        # Print the SQL before executing
+                        # Print the SQL and params before executing
                         print(f"Executing SQL (without embedding): {sql}")
+                        print(f"Parameters: {params}")
                         
-                        cursor.execute(sql)
+                        cursor.execute(sql, params)
                     
                     loaded_doc_count += 1
                     
@@ -143,17 +135,18 @@ def load_documents_to_iris(
                                     logger.warning(f"Invalid token vector string for document {doc_id}, token {idx}. Skipping token.")
                                     continue
                                 
-                                # Escape single quotes in string values
-                                safe_token_text = token_text[:1000].replace("'", "''") if token_text else ""
-                                
-                                # Use string interpolation for the entire SQL statement
-                                token_sql = f"INSERT INTO RAG.DocumentTokenEmbeddings (doc_id, token_sequence_index, token_text, token_embedding, metadata_json) VALUES ('{doc_id}', {idx}, '{safe_token_text}', TO_VECTOR('{token_vec_str}', 'double', 128), '{{}}')"
+                                # Use parameterized SQL with TO_VECTOR(?, double, 128)
+                                token_sql = "INSERT INTO RAG.DocumentTokenEmbeddings (doc_id, token_sequence_index, token_text, token_embedding, metadata_json) VALUES (?, ?, ?, TO_VECTOR(?, double, 128), ?)"
+                                # Truncate token text to 1000 chars
+                                safe_token_text = token_text[:1000] if token_text else ""
+                                token_params = (doc_id, idx, safe_token_text, token_vec_str, "{}")
                                 
                                 # Print the SQL before executing (only for the first token to avoid flooding the console)
                                 if idx == 0:
                                     print(f"Executing token SQL (first token only): {token_sql}")
+                                    print(f"Token parameters: {token_params[:3]}... (token vector length: {len(token_vec_str)})")
                                 
-                                cursor.execute(token_sql)
+                                cursor.execute(token_sql, token_params)
                                 loaded_token_count += 1
                         except Exception as colbert_e:
                             logger.error(f"Error generating ColBERT token embeddings for doc {doc_id}: {colbert_e}")

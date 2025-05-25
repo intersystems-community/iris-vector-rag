@@ -100,23 +100,47 @@ def process_pmc_files(directory: str, limit: int = 1000) -> Generator[Dict[str, 
     start_time = time.time()
     
     # Walk through all subdirectories
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
+        logger.info(f"Walking directory: {root}, found {len(dirs)} dirs, {len(files)} files.")
         for file in files:
-            if file.endswith('.xml') and processed < limit:
+            if file.endswith('.xml'): # Process all XMLs, then check limit
                 file_path = os.path.join(root, file)
+                logger.debug(f"Found XML file: {file_path}")
+                if processed >= limit:
+                    logger.info(f"Limit of {limit} files reached. Stopping further processing.")
+                    return # Exit the generator completely
+
                 try:
+                    logger.debug(f"Attempting to extract metadata from: {file_path}")
                     metadata = extract_pmc_metadata(file_path)
-                    yield metadata
-                    processed += 1
-                    if processed % 100 == 0:
-                        elapsed = time.time() - start_time
-                        logger.info(f"Processed {processed} files in {elapsed:.2f}s ({processed/elapsed:.2f} files/s)")
+                    if metadata.get("title") == "Error" and "Failed to process" in metadata.get("abstract", ""):
+                        logger.warning(f"Metadata extraction indicated an error for {file_path}. Skipping yield.")
+                        # Optionally, we could still increment 'processed' if we count attempts
+                        # For now, only successfully yielded docs count towards 'processed'
+                    else:
+                        yield metadata
+                        processed += 1
+                        logger.debug(f"Successfully processed and yielded metadata for: {file_path} (Total processed: {processed})")
+                        if processed % 100 == 0 and processed > 0: # Ensure processed > 0 for division
+                            elapsed = time.time() - start_time
+                            if elapsed > 0: # Avoid division by zero
+                                logger.info(f"Processed {processed} files in {elapsed:.2f}s ({processed/elapsed:.2f} files/s)")
+                            else:
+                                logger.info(f"Processed {processed} files very quickly.")
                 except Exception as e:
-                    logger.error(f"Failed to process {file_path}: {e}")
-            
-            if processed >= limit:
-                logger.info(f"Reached limit of {limit} files")
-                break
+                    logger.error(f"Outer exception processing {file_path}: {e}")
+            else:
+                logger.debug(f"Skipping non-XML file: {file} in {root}")
+        
+        # This break was inside the files loop, potentially exiting the os.walk prematurely for the current root.
+        # Moved the limit check to be more robust at the start of processing each file.
+        # if processed >= limit:
+        #     logger.info(f"Reached limit of {limit} files after processing directory {root}")
+        #     break # This break only breaks the inner files loop for the current root.
+                     # The main 'return' above handles exiting the generator.
+    
+    if processed < limit:
+        logger.info(f"Finished walking all directories. Processed {processed} files (limit was {limit}).")
 
 if __name__ == "__main__":
     # Configure logging

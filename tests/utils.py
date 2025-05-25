@@ -287,9 +287,10 @@ def load_pmc_documents(connection, embedding_func: Callable, limit=50, pmc_dir="
                     # authors and keywords are str(list) representations.
                     # If they also cause issues, they might need more careful serialization.
 
+                    # Ensure insertion into RAG.SourceDocuments
                     cursor.execute(
-                        "INSERT INTO SourceDocuments (doc_id, title, text_content, authors, keywords, embedding) VALUES (?, ?, ?, ?, ?, TO_VECTOR(?))",
-                        (doc['pmc_id'], title_to_insert, abstract_to_insert, authors, keywords, embedding_value_to_insert)
+                        "INSERT INTO RAG.SourceDocuments (doc_id, title, abstract, text_content, authors, keywords, embedding) VALUES (?, ?, ?, ?, ?, ?, TO_VECTOR(?))",
+                        (doc['pmc_id'], title_to_insert, abstract_to_insert, abstract_to_insert, authors, keywords, embedding_value_to_insert) # Using abstract for text_content if not available
                     )
                     count += 1
                 except Exception as e:

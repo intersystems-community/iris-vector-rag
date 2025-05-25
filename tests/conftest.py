@@ -186,6 +186,87 @@ def mock_colbert_doc_encoder(mocker):
     return mock_encoder
 
 
+# Add a specific mock for ColBERT that handles multiple fetchall calls
+@pytest.fixture
+def mock_iris_connector_for_colbert(mocker):
+    """
+    Provides a simplified mock IRIS connector for ColBERT tests.
+    The connector's cursor() method returns a MagicMock cursor with iterable side_effects.
+    """
+    print("\\nFixture: Providing simplified MagicMock-based connector for ColBERT")
+
+    # Data sequences
+    mock_doc_ids_data = [("doc_c1",), ("doc_c2",), ("doc_c3",), ("doc_c4",), ("doc_c5",)]
+    token_embeddings_for_docs = [
+        [(json.dumps([0.11]*10),), (json.dumps([0.12]*10),)], # doc_c1
+        [(json.dumps([0.21]*10),), (json.dumps([0.22]*10),)], # doc_c2
+        [(json.dumps([0.31]*10),), (json.dumps([0.32]*10),)], # doc_c3
+        [(json.dumps([0.41]*10),), (json.dumps([0.42]*10),)], # doc_c4
+        [(json.dumps([0.51]*10),), (json.dumps([0.52]*10),)], # doc_c5
+    ]
+    content_for_docs = [
+        ("Content for doc_c1.",), ("Content for doc_c2.",), ("Content for doc_c3.",),
+        ("Content for doc_c4.",), ("Content for doc_c5.",),
+    ]
+    
+    # Combined sequence for fetchall calls:
+    # 1st call: all doc_ids
+    # 2nd-6th calls: token embeddings for each of the 5 docs
+    combined_fetchall_data = [mock_doc_ids_data] + token_embeddings_for_docs
+    
+    # Sequence for fetchone calls (content for each of the 5 docs)
+    combined_fetchone_data = content_for_docs
+
+    # Create a mock for the cursor
+    mock_cursor = mocker.MagicMock(spec=MockIRISCursor)
+    mock_cursor.execute = mocker.MagicMock()
+    
+    # Manually manage side_effect with a function and closure
+    _fetchall_call_idx_holder = [0]  # Use a list to hold the index
+    def fetchall_effect(*args, **kwargs):
+        idx = _fetchall_call_idx_holder[0]
+        if idx < len(combined_fetchall_data):
+            result = combined_fetchall_data[idx]
+            _fetchall_call_idx_holder[0] += 1
+            # print(f"Mock fetchall call #{_fetchall_call_idx_holder[0]}, returning: {str(result)[:50]}")
+            return result
+        # print(f"Mock fetchall StopIteration at call #{_fetchall_call_idx_holder[0] + 1}")
+        raise StopIteration("Mock fetchall sequence exhausted by fetchall_effect")
+
+    _fetchone_call_idx_holder = [0]  # Use a list to hold the index
+    def fetchone_effect(*args, **kwargs):
+        idx = _fetchone_call_idx_holder[0]
+        if idx < len(combined_fetchone_data):
+            result = combined_fetchone_data[idx]
+            _fetchone_call_idx_holder[0] += 1
+            # print(f"Mock fetchone call #{_fetchone_call_idx_holder[0]}, returning: {str(result)[:50]}")
+            return result
+        # print(f"Mock fetchone StopIteration at call #{_fetchone_call_idx_holder[0] + 1}")
+        raise StopIteration("Mock fetchone sequence exhausted by fetchone_effect")
+
+    mock_cursor.fetchall.side_effect = fetchall_effect
+    mock_cursor.fetchone.side_effect = fetchone_effect
+    
+    mock_cursor.close = mocker.MagicMock()
+
+    # Create a mock for the connector
+    mock_connector = mocker.MagicMock(spec=MockIRISConnector) # Use spec
+    mock_connector.cursor.return_value = mock_cursor # cursor() returns the pre-configured mock_cursor
+    
+    mock_connector.close = mocker.MagicMock()
+    mock_connector.commit = mocker.MagicMock()
+    mock_connector.rollback = mocker.MagicMock()
+        
+    return mock_connector
+
+@pytest.fixture
+def mock_colbert_query_encoder(mocker): # Keep the original mock_colbert_query_encoder
+    """Provides a mock ColBERT query encoder function."""
+    print("\\nFixture: Providing mock ColBERT query encoder function")
+    # Create a mock that wraps our standardized mock function
+    mock_encoder = mocker.Mock(side_effect=mock_colbert_query_encoder) # Uses the one from tests.mocks.models
+    return mock_encoder
+
 @pytest.fixture
 def mock_web_search_func(mocker):
     """Provides a mock web search function (for CRAG)."""
@@ -365,31 +446,59 @@ def iris_with_pmc_data(iris_testcontainer_connection):
         logger.warning(f"Processing {limit} documents may take a significant amount of time")
     
     try:
-        # For large-scale tests, use the optimized loading function if available
-        if limit >= 500 and 'tests.utils_large_scale' in sys.modules:
-            from tests.utils_large_scale import load_pmc_documents_large_scale
-            metrics = load_pmc_documents_large_scale(
-                connection=iris_testcontainer_connection,
-                limit=limit,
-                pmc_dir="data/pmc_oas_downloaded",
-                batch_size=50
-            )
-            doc_count = metrics["document_count"]
-            logger.info(f"Loaded {doc_count} PMC documents into testcontainer using optimized loader")
-            logger.info(f"Performance: {metrics['docs_per_second']:.2f} docs/sec, peak memory: {metrics['peak_memory_mb']:.1f} MB")
-        else:
-            # Use the standard loader for smaller document sets
-            # Create a simple mock embedding function
+        # Attempt to use the optimized loading function for large-scale tests
+        large_scale_loader_used = False
+        if limit >= 500:
+            try:
+                from tests.utils_large_scale import load_pmc_documents_large_scale
+                logger.info("Attempting to use load_pmc_documents_large_scale.")
+                # Construct absolute path for pmc_dir relative to project root
+                project_root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                abs_pmc_dir = os.path.join(project_root_path, "data/pmc_oas_downloaded")
+                logger.info(f"Using absolute PMC directory: {abs_pmc_dir}")
+
+                # Get the real embedding function
+                # This uses the existing fixture 'embedding_model_fixture' which provides the real one.
+                # However, fixtures cannot be called directly. We need to get it from common.utils.
+                real_embed_func = get_embedding_func(mock=False) # Ensure we get the real one
+
+                metrics = load_pmc_documents_large_scale(
+                    connection=iris_testcontainer_connection,
+                    embedding_func=real_embed_func, # Pass the real embedding function
+                    limit=limit,
+                    pmc_dir=abs_pmc_dir, # Pass absolute path
+                    batch_size=50 # Consider making this configurable
+                )
+                doc_count = metrics.get("document_count", 0) # Use .get for safety
+                logger.info(f"Loaded {doc_count} PMC documents into testcontainer using optimized loader.")
+                if "docs_per_second" in metrics and "peak_memory_mb" in metrics:
+                    logger.info(f"Performance: {metrics.get('docs_per_second', 0):.2f} docs/sec, peak memory: {metrics.get('peak_memory_mb', 0):.1f} MB")
+                large_scale_loader_used = True
+            except ImportError:
+                logger.warning("tests.utils_large_scale or load_pmc_documents_large_scale not found. Falling back to standard loader.")
+            except Exception as e_large_scale:
+                logger.error(f"Error using large-scale loader: {e_large_scale}. Falling back to standard loader.")
+        
+        if not large_scale_loader_used:
+            logger.info("Using standard load_pmc_documents from tests.utils.")
+            # Use the standard loader
             def mock_embedding_func(text):
-                return [[0.1] * 768 for _ in range(len(text) if isinstance(text, list) else 1)]
-                
+                if isinstance(text, list):
+                    return [[0.1] * 768 for _ in text]
+                return [0.1] * 768
+
+            # Construct absolute path for pmc_dir relative to project root
+            project_root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            abs_pmc_dir = os.path.join(project_root_path, "data/pmc_oas_downloaded")
+            logger.info(f"Using absolute PMC directory for standard loader: {abs_pmc_dir}")
+
             doc_count = load_pmc_documents(
                 connection=iris_testcontainer_connection,
                 embedding_func=mock_embedding_func,
                 limit=limit,
-                pmc_dir="data/pmc_oas_downloaded"
+                pmc_dir=abs_pmc_dir # Pass absolute path
             )
-            logger.info(f"Loaded {doc_count} PMC documents into testcontainer")
+            logger.info(f"Loaded {doc_count} PMC documents into testcontainer using standard loader.")
         
         # NEVER skip the test, even if no documents were loaded
         # Let the test decide how to handle this case

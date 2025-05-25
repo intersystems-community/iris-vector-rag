@@ -35,7 +35,7 @@ class NodeRAGPipeline:
         logger.info("NodeRAGPipeline Initialized")
 
     @timing_decorator
-    def _identify_initial_search_nodes(self, query_text: str, top_n_seed: int = 5) -> List[str]: # Returns list of node_ids
+    def _identify_initial_search_nodes(self, query_text: str, top_n_seed: int = 5, similarity_threshold: float = 0.6) -> List[str]: # Returns list of node_ids
         """
         Identifies initial nodes in the graph relevant to the query, typically via vector search.
         """
@@ -45,44 +45,174 @@ class NodeRAGPipeline:
             logger.warning("NodeRAG: Embedding function not provided for initial node finding.")
             return []
 
+        # First, check if the RAG.KnowledgeGraphNodes table exists and has data
+        cursor = None
+        try:
+            # Try to get the underlying DBAPI connection if this is a SQLAlchemy connection
+            if hasattr(self.iris_connector, 'connection') and hasattr(self.iris_connector.connection, 'cursor'):
+                logger.info(f"NodeRAG: Using underlying DBAPI connection from SQLAlchemy connection")
+                cursor = self.iris_connector.connection.cursor()
+            else:
+                cursor = self.iris_connector.cursor()
+            
+            # Log connection info
+            logger.info(f"NodeRAG: Using IRIS connection of type: {type(self.iris_connector).__name__}")
+            
+            # Try to get more information about the connection
+            try:
+                if hasattr(self.iris_connector, 'engine'):
+                    logger.info(f"NodeRAG: SQLAlchemy engine URL: {self.iris_connector.engine.url}")
+                if hasattr(self.iris_connector, 'connection') and hasattr(self.iris_connector.connection, 'dsn'):
+                    logger.info(f"NodeRAG: Connection DSN: {self.iris_connector.connection.dsn}")
+            except Exception as conn_info_error:
+                logger.error(f"NodeRAG: Error getting connection info: {conn_info_error}")
+            
+            # Check if table exists and has data
+            check_table_sql = """
+                SELECT COUNT(*) FROM RAG.KnowledgeGraphNodes
+            """
+            try:
+                cursor.execute(check_table_sql)
+                row_count = cursor.fetchone()[0]
+                logger.info(f"NodeRAG: RAG.KnowledgeGraphNodes table exists with {row_count} rows.")
+                
+                # If table exists but has no data, try using RAG.SourceDocuments instead
+                if row_count == 0:
+                    logger.warning("NodeRAG: RAG.KnowledgeGraphNodes table has no data. Checking if RAG.SourceDocuments exists...")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    source_docs_count = cursor.fetchone()[0]
+                    logger.info(f"NodeRAG: RAG.SourceDocuments table exists with {source_docs_count} rows.")
+                    
+                    # Try to directly check if the embeddings are usable for vector search regardless of reported count
+                    logger.info("NodeRAG: Attempting vector search test regardless of reported row count")
+                    try:
+                        # First, try to get a direct count of documents with non-NULL embeddings
+                        try:
+                            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+                            embedding_count = cursor.fetchone()[0]
+                            logger.info(f"NodeRAG: RAG.SourceDocuments has {embedding_count} rows with non-NULL embeddings.")
+                        except Exception as embedding_count_error:
+                            logger.error(f"NodeRAG: Error checking embedding count: {embedding_count_error}")
+                        
+                        # Try to get a sample document with embedding
+                        try:
+                            cursor.execute("SELECT TOP 1 doc_id, embedding FROM RAG.SourceDocuments")
+                            sample_row = cursor.fetchone()
+                            if sample_row:
+                                sample_id, sample_embedding = sample_row
+                                logger.info(f"NodeRAG: Sample document from doc_id {sample_id}, embedding is NULL: {sample_embedding is None}")
+                                if sample_embedding:
+                                    logger.info(f"NodeRAG: Sample embedding type: {type(sample_embedding)}, length: {len(str(sample_embedding))}")
+                                    logger.info(f"NodeRAG: Sample embedding preview: {str(sample_embedding)[:100]}...")
+                        except Exception as sample_error:
+                            logger.error(f"NodeRAG: Error checking sample document: {sample_error}")
+                        
+                        # Try a direct vector search with a simple test vector
+                        test_vector_str = "[0.1,0.2,0.3" + ",0.0" * 765 + "]"  # Simple test vector with 768 dimensions
+                        vector_search_sql = f"""
+                            SELECT TOP 1 doc_id,
+                                   VECTOR_COSINE(embedding, TO_VECTOR(?, double, 768)) AS score
+                            FROM RAG.SourceDocuments
+                            WHERE embedding IS NOT NULL
+                            ORDER BY score DESC
+                        """
+                        logger.info(f"NodeRAG: Testing vector search with simple test vector")
+                        cursor.execute(vector_search_sql, (test_vector_str,))
+                        test_result = cursor.fetchone()
+                        if test_result:
+                            test_id, test_score = test_result
+                            logger.info(f"NodeRAG: Vector search test successful! Found doc_id {test_id} with score {test_score}")
+                        else:
+                            logger.warning("NodeRAG: Vector search test returned no results")
+                        
+                        # Try a direct query to get documents with the highest embedding values
+                        try:
+                            cursor.execute("SELECT TOP 5 doc_id, embedding FROM RAG.SourceDocuments ORDER BY doc_id")
+                            rows = cursor.fetchall()
+                            logger.info(f"NodeRAG: Found {len(rows)} documents when ordering by doc_id")
+                            for row in rows:
+                                doc_id, embedding = row
+                                logger.info(f"NodeRAG: Document {doc_id}, embedding is NULL: {embedding is None}")
+                        except Exception as order_error:
+                            logger.error(f"NodeRAG: Error querying documents by doc_id: {order_error}")
+                        
+                    except Exception as vector_test_error:
+                        logger.error(f"NodeRAG: Error during vector search testing: {vector_test_error}")
+                    
+                    if source_docs_count > 0:
+                        logger.info("NodeRAG: Will use RAG.SourceDocuments for vector search instead of empty KnowledgeGraphNodes.")
+                        use_source_docs = True
+                    else:
+                        use_source_docs = False
+                else:
+                    use_source_docs = False
+            except Exception as table_check_error:
+                logger.error(f"NodeRAG: Error checking RAG.KnowledgeGraphNodes table: {table_check_error}")
+                logger.warning("NodeRAG: Will try using RAG.SourceDocuments instead.")
+                try:
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    source_docs_count = cursor.fetchone()[0]
+                    logger.info(f"NodeRAG: RAG.SourceDocuments table exists with {source_docs_count} rows.")
+                    
+                    # Check if SourceDocuments has embeddings
+                    try:
+                        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+                        embedding_count = cursor.fetchone()[0]
+                        logger.info(f"NodeRAG: RAG.SourceDocuments has {embedding_count} rows with non-NULL embeddings.")
+                    except Exception as embedding_check_error:
+                        logger.error(f"NodeRAG: Error checking embeddings: {embedding_check_error}")
+                    
+                    use_source_docs = True
+                except Exception as source_docs_error:
+                    logger.error(f"NodeRAG: Error checking RAG.SourceDocuments table: {source_docs_error}")
+                    logger.error("NodeRAG: No suitable table found for vector search.")
+                    return []
+        except Exception as e:
+            logger.error(f"NodeRAG: Error connecting to database: {e}")
+            return []
+        finally:
+            if cursor:
+                cursor.close()
+
+        # Now proceed with vector search using the appropriate table
         query_embedding = self.embedding_func([query_text])[0]
         iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
         current_top_k_seeds = int(top_n_seed)
+        db_embedding_dimension = 768
 
-        # logger.info(f"NodeRAG: Identifying initial search nodes for query: '{query_text[:50]}...' using Python-generated SQL (fully inlined).") # Already logged above
-        
-        # Removed redundant block:
-        # if not self.embedding_func:
-        #     logger.warning("NodeRAG: Embedding function not provided for initial node finding.")
-        #     return []
-        # query_embedding = self.embedding_func([query_text])[0]
-        # iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
-        # current_top_k_seeds = int(top_n_seed)
-
-        # Construct the dynamic SQL query string in Python
-        # Inline TOP K and the vector string directly into the SQL query using f-strings.
-        # Using FETCH FIRST N ROWS ONLY syntax
-        db_embedding_dimension = 768 # This MUST match the DDL of RAG.KnowledgeGraphNodes.embedding
-
-        sql_query = f"""
-            SELECT node_id,
-                   VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', {db_embedding_dimension})) AS score
-            FROM RAG.KnowledgeGraphNodes
-            WHERE embedding IS NOT NULL
-            ORDER BY score DESC
-            FETCH FIRST {current_top_k_seeds} ROWS ONLY
-        """
-        # All values are f-string inlined.
+        # Construct SQL query based on which table to use - updated for HNSW schema and thresholds
+        if use_source_docs:
+            sql_query = f"""
+                SELECT doc_id AS node_id,
+                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
+                FROM RAG_HNSW.SourceDocuments
+                WHERE embedding IS NOT NULL
+                  AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
+                ORDER BY score DESC
+            """
+            logger.info("NodeRAG: Using RAG_HNSW.SourceDocuments for vector search.")
+        else:
+            sql_query = f"""
+                SELECT node_id,
+                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
+                FROM RAG_HNSW.KnowledgeGraphNodes
+                WHERE embedding IS NOT NULL
+                  AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
+                ORDER BY score DESC
+            """
+            logger.info("NodeRAG: Using RAG_HNSW.KnowledgeGraphNodes for vector search.")
 
         node_ids: List[str] = []
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
             
-            # Log the exact SQL being executed
-            logger.debug(f"Executing SQL (fully inlined with FETCH FIRST): {sql_query}")
+            # Log the SQL and parameters
+            logger.debug(f"Executing SQL with threshold {similarity_threshold}: {sql_query}")
+            # Log a truncated version of the vector string for brevity
+            logger.debug(f"Parameters: ('{iris_vector_str[:70]}...', threshold: {similarity_threshold})")
 
-            cursor.execute(sql_query) # Execute with ONLY the SQL string argument
+            cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold)) # Pass vector string twice and threshold
             
             # Fetch results
             fetched_rows = cursor.fetchall()
@@ -150,14 +280,34 @@ class NodeRAGPipeline:
         if not node_ids:
             return []
 
-        # Fetch content from KnowledgeGraphNodes table
-        # Using IN clause with placeholders
+        # Fetch content from appropriate table based on what's available
+        # Check if we should use SourceDocuments (when KnowledgeGraphNodes is empty)
+        use_source_docs = False
+        try:
+            cursor_check = self.iris_connector.cursor()
+            cursor_check.execute("SELECT COUNT(*) FROM RAG.KnowledgeGraphNodes")
+            kg_count = cursor_check.fetchone()[0]
+            cursor_check.close()
+            if kg_count == 0:
+                use_source_docs = True
+                logger.info("NodeRAG: KnowledgeGraphNodes is empty, using SourceDocuments for content retrieval.")
+        except Exception as e:
+            logger.warning(f"NodeRAG: Error checking KnowledgeGraphNodes count: {e}")
+            use_source_docs = True
+
         placeholders = ', '.join(['?'] * len(node_ids))
-        sql_fetch_content = f"""
-            SELECT node_id, description_text -- Or node_name, etc. depending on what constitutes "content"
-            FROM RAG.KnowledgeGraphNodes
-            WHERE node_id IN ({placeholders})
-        """
+        if use_source_docs:
+            sql_fetch_content = f"""
+                SELECT doc_id, text_content
+                FROM RAG_HNSW.SourceDocuments
+                WHERE doc_id IN ({placeholders})
+            """
+        else:
+            sql_fetch_content = f"""
+                SELECT node_id, description_text
+                FROM RAG.KnowledgeGraphNodes
+                WHERE node_id IN ({placeholders})
+            """
 
         retrieved_docs: List[Document] = [] # Using Document structure to hold node content
         cursor = None
@@ -186,27 +336,33 @@ class NodeRAGPipeline:
 
 
     @timing_decorator
-    def retrieve_documents_from_graph(self, query_text: str, top_k_seeds: int = 5) -> List[Document]:
+    def retrieve_documents_from_graph(self, query_text: str, top_k_seeds: int = 5, similarity_threshold: float = 0.6) -> List[Document]:
         """
         Orchestrates graph-based retrieval.
-        TEMPORARILY MOCKED due to issues with DB vector search for initial nodes.
         """
-        logger.warning("NodeRAG: retrieve_documents_from_graph - Bypassing database vector search and graph traversal. Returning mock documents.")
+        logger.info(f"NodeRAG: Starting real graph retrieval for query: '{query_text[:50]}...' with threshold={similarity_threshold}")
+
+        # Step 1: Identify initial seed nodes using vector search
+        seed_node_ids = self._identify_initial_search_nodes(query_text, top_k_seeds, similarity_threshold)
         
-        mock_docs = []
-        # The 'top_k_seeds' parameter refers to the initial seed nodes, not necessarily the final number of docs.
-        # For mock, let's return a fixed number like other mocks, e.g., up to 3.
-        num_mock_docs_to_return = 3 
-        for i in range(num_mock_docs_to_return):
-            mock_docs.append(
-                Document(
-                    id=f"mock_noderag_node_{i+1}", 
-                    content=f"This is mock NodeRAG content for node {i+1} related to query '{query_text[:30]}...'. Node content is key.",
-                    score=0.80 - (i * 0.1) # Descending scores
-                )
-            )
-        logger.info(f"NodeRAG: Returned {len(mock_docs)} mock documents (nodes).")
-        return mock_docs
+        if not seed_node_ids:
+            logger.warning("NodeRAG: No seed nodes identified. Returning empty list.")
+            return []
+
+        # Step 2: Traverse the graph from these seed nodes
+        # _traverse_graph is currently a placeholder, returning seed_node_ids.
+        # This can be expanded later with actual graph traversal logic.
+        relevant_node_ids_set = self._traverse_graph(seed_node_ids, query_text) # max_depth and max_nodes can be added as params if needed
+
+        if not relevant_node_ids_set:
+            logger.warning("NodeRAG: No relevant nodes found after graph traversal. Returning empty list.")
+            return []
+
+        # Step 3: Retrieve content for the final set of relevant nodes
+        retrieved_documents = self._retrieve_content_for_nodes(relevant_node_ids_set)
+        
+        logger.info(f"NodeRAG: Retrieved {len(retrieved_documents)} documents from graph.")
+        return retrieved_documents
 
     @timing_decorator
     def generate_answer(self, query_text: str, retrieved_docs: List[Document]) -> str:
@@ -236,24 +392,21 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k_seeds: int = 5) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k_seeds: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
         """
         Runs the full NodeRAG pipeline (query-time).
         """
         logger.info(f"NodeRAG: Running pipeline for query: '{query_text[:50]}...'")
         # Note: Graph construction is an offline step, not part of 'run'
-        retrieved_documents = self.retrieve_documents_from_graph(query_text, top_k_seeds=top_k_seeds)
+        retrieved_documents = self.retrieve_documents_from_graph(query_text, top_k_seeds, similarity_threshold)
         answer = self.generate_answer(query_text, retrieved_documents)
 
-        # Ensure retrieved_documents are returned in a format compatible with benchmark metrics
-        # The retrieve_documents_from_graph method returns a List[Document].
-        # The benchmark runner expects a list of dicts with 'id', 'content', 'score'.
-        # The Document.to_dict() method handles this conversion.
-        
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": [doc.to_dict() for doc in retrieved_documents], # Convert Document objects to dicts
+            "retrieved_documents": [doc.to_dict() for doc in retrieved_documents],
+            "similarity_threshold": similarity_threshold,
+            "document_count": len(retrieved_documents)
         }
 
 if __name__ == '__main__':

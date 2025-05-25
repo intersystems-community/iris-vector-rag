@@ -41,6 +41,7 @@ def calculate_technique_comparison(benchmarks: Dict[str, Dict[str, Any]]) -> Dic
     answer_metrics = [m for m in all_metrics if "answer" in m or "faithfulness" in m or "relevance" in m]
     performance_metrics = [m for m in all_metrics if any(
         perf in m for perf in ["latency", "throughput", "qps", "p50", "p95", "p99"])]
+    hnsw_metrics = [m for m in all_metrics if "hnsw" in m]
     
     # Calculate rankings for each metric
     for metric in all_metrics:

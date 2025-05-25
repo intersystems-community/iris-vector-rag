@@ -48,6 +48,7 @@ class ColbertRAGPipeline:
     def _calculate_maxsim(self, query_embeddings: List[List[float]], doc_token_embeddings: List[List[float]]) -> float:
         """
         Calculates the MaxSim score between query token embeddings and document token embeddings.
+        ColBERT's late interaction: for each query token, find max similarity with any doc token, then sum.
         """
         if not query_embeddings or not doc_token_embeddings:
             return 0.0
@@ -55,35 +56,165 @@ class ColbertRAGPipeline:
         max_sim_scores = []
         for q_embed in query_embeddings:
             # Find max similarity between this query token and all document tokens
-            max_sim = 0.0
+            max_sim = -1.0  # Start with -1 since cosine similarity can be negative
             for d_embed in doc_token_embeddings:
                 sim = self._calculate_cosine_similarity(q_embed, d_embed)
                 max_sim = max(max_sim, sim)
             max_sim_scores.append(max_sim)
 
-        # Sum the max similarities for each query token
-        return sum(max_sim_scores)
+        # Sum the max similarities for each query token (ColBERT's late interaction)
+        total_score = sum(max_sim_scores)
+        
+        # Normalize by query length to make scores comparable across different query lengths
+        normalized_score = total_score / len(query_embeddings) if query_embeddings else 0.0
+        
+        return normalized_score
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> List[Document]:
         """
-        Retrieves the top_k most relevant documents.
-        TEMPORARILY MOCKED due to issues with DB vector search / token embedding loading.
+        Retrieves documents using ColBERT's MaxSim scoring with HNSW acceleration.
         """
-        logger.warning("ColbertRAG: retrieve_documents - Bypassing database vector search and client-side MaxSim. Returning mock documents.")
+        logger.info(f"ColbertRAG: Retrieving documents for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
+        query_token_embeddings = self.colbert_query_encoder(query_text)
+
+        if not query_token_embeddings:
+            logger.warning("ColbertRAG: Query encoder returned no embeddings.")
+            return []
+
+        candidate_docs_with_scores = []
         
-        mock_docs = []
-        if top_k > 0:
-            for i in range(min(top_k, 10)): # Return up to 10 mock docs to ensure we have more than the expected 5
-                mock_docs.append(
-                    Document(
-                        id=f"mock_colbert_doc_{i+1}",
-                        content=f"This is mock ColBERT content for document {i+1} related to query '{query_text[:30]}...'. ColBERT is token-based.",
-                        score=0.9 - (i * 0.05) # Descending scores with smaller steps to maintain reasonable scores
-                    )
-                )
-        logger.info(f"ColbertRAG: Returned {len(mock_docs)} mock documents.")
-        return mock_docs
+        try:
+            cursor = self.iris_connector.cursor()
+
+            # Step 1: Fetch all unique doc_ids from HNSW SourceDocuments as candidates
+            cursor.execute("SELECT DISTINCT doc_id FROM RAG_HNSW.SourceDocuments")
+            all_doc_ids = [row[0] for row in cursor.fetchall()]
+            
+            logger.info(f"ColbertRAG: Scoring {len(all_doc_ids)} candidate documents.")
+            
+            docs_with_token_embeddings = 0
+            docs_with_fallback_embeddings = 0
+            docs_above_threshold = 0
+
+            for doc_id in all_doc_ids:
+                # Step 2: For each doc_id, fetch its token embeddings from HNSW schema
+                sql_fetch_tokens = """
+                SELECT token_embedding
+                FROM RAG_HNSW.DocumentTokenEmbeddings
+                WHERE doc_id = ?
+                ORDER BY token_sequence_index
+                """
+                cursor.execute(sql_fetch_tokens, (doc_id,))
+                
+                doc_token_embeddings_str = cursor.fetchall()
+                
+                # If no token embeddings, fall back to generating them on-the-fly
+                if not doc_token_embeddings_str:
+                    # Fallback 1: Try to get document text and generate token embeddings
+                    sql_fetch_doc_text = """
+                    SELECT text_content
+                    FROM RAG_HNSW.SourceDocuments
+                    WHERE doc_id = ?
+                    """
+                    cursor.execute(sql_fetch_doc_text, (doc_id,))
+                    doc_text_result = cursor.fetchone()
+                    
+                    if doc_text_result and doc_text_result[0]:
+                        # Generate token embeddings on-the-fly using the ColBERT doc encoder
+                        try:
+                            doc_text = doc_text_result[0][:1000]  # Limit text length for performance
+                            current_doc_token_embeddings = self.colbert_doc_encoder(doc_text)
+                            logger.debug(f"ColbertRAG: Generated {len(current_doc_token_embeddings)} token embeddings on-the-fly for {doc_id}")
+                        except Exception as e:
+                            logger.warning(f"ColbertRAG: Error generating token embeddings for {doc_id}: {e}")
+                            # Fallback 2: Use document-level embedding as a single "token"
+                            sql_fetch_doc_embedding = """
+                            SELECT embedding
+                            FROM RAG_HNSW.SourceDocuments
+                            WHERE doc_id = ?
+                            """
+                            cursor.execute(sql_fetch_doc_embedding, (doc_id,))
+                            doc_embedding_result = cursor.fetchone()
+                            
+                            if not doc_embedding_result or not doc_embedding_result[0]:
+                                continue
+                            
+                            # Convert document embedding to token embedding format
+                            try:
+                                if isinstance(doc_embedding_result[0], str):
+                                    doc_embedding = [float(x) for x in doc_embedding_result[0].split(',')]
+                                else:
+                                    doc_embedding = doc_embedding_result[0]
+                                # Treat the entire document embedding as a single token
+                                current_doc_token_embeddings = [doc_embedding]
+                            except (ValueError, TypeError) as e:
+                                logger.warning(f"ColbertRAG: Error parsing document embedding for {doc_id}: {e}")
+                                continue
+                    else:
+                        continue
+                else:
+                    # Convert string embeddings to list of lists of floats
+                    current_doc_token_embeddings = []
+                    for token_row in doc_token_embeddings_str:
+                        try:
+                            # If token_embedding is already a list of floats from the driver
+                            if isinstance(token_row[0], list):
+                                 current_doc_token_embeddings.append(token_row[0])
+                            # If it's a JSON string representation of a list
+                            elif isinstance(token_row[0], str) and token_row[0].startswith('['):
+                                current_doc_token_embeddings.append(json.loads(token_row[0]))
+                            # If it's a comma-separated string
+                            elif isinstance(token_row[0], str):
+                                 current_doc_token_embeddings.append([float(x) for x in token_row[0].split(',')])
+                            else:
+                                logger.warning(f"ColbertRAG: Unexpected token embedding format for doc {doc_id}")
+                                pass
+                        except (json.JSONDecodeError, ValueError, TypeError) as e_parse:
+                            logger.error(f"ColbertRAG: Error parsing token embedding for doc {doc_id}: {e_parse}")
+                            continue
+
+                if not current_doc_token_embeddings:
+                    continue
+                
+                # Track what type of embeddings we're using
+                if len(doc_token_embeddings_str) > 0:
+                    docs_with_token_embeddings += 1
+                else:
+                    docs_with_fallback_embeddings += 1
+                
+                # Step 3: Calculate MaxSim score
+                maxsim_score = self._calculate_maxsim(query_token_embeddings, current_doc_token_embeddings)
+                
+                logger.debug(f"ColbertRAG: Doc {doc_id} MaxSim score: {maxsim_score:.4f} (threshold: {similarity_threshold})")
+                
+                # Only include documents above threshold
+                if maxsim_score > similarity_threshold:
+                    docs_above_threshold += 1
+                    # Fetch actual document content for context/display
+                    cursor.execute("SELECT text_content FROM RAG_HNSW.SourceDocuments WHERE doc_id = ?", (doc_id,))
+                    content_row = cursor.fetchone()
+                    doc_content = content_row[0] if content_row else "Content not found"
+                    
+                    candidate_docs_with_scores.append(Document(id=doc_id, content=doc_content, score=maxsim_score))
+
+            cursor.close()
+            
+            # Step 4: Sort documents by MaxSim score
+            candidate_docs_with_scores.sort(key=lambda doc: doc.score, reverse=True)
+            retrieved_docs = candidate_docs_with_scores
+            
+            logger.info(f"ColbertRAG: Processed {len(all_doc_ids)} documents:")
+            logger.info(f"  - {docs_with_token_embeddings} with pre-computed token embeddings")
+            logger.info(f"  - {docs_with_fallback_embeddings} with on-the-fly token embeddings")
+            logger.info(f"  - {docs_above_threshold} above threshold {similarity_threshold}")
+            logger.info(f"ColbertRAG: Found {len(retrieved_docs)} documents above threshold {similarity_threshold}")
+
+        except Exception as e:
+            logger.error(f"ColbertRAG: Error during document retrieval: {e}", exc_info=True)
+            return []
+
+        return retrieved_docs
 
     @timing_decorator
     def generate_answer(self, query_text: str, retrieved_docs: List[Document]) -> str:
@@ -113,23 +244,20 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
         """
         Runs the full ColBERT pipeline (client-side MaxSim).
         """
         logger.info(f"ColbertRAG: Running pipeline for query: '{query_text[:50]}...'")
-        retrieved_documents = self.retrieve_documents(query_text, top_k)
+        retrieved_documents = self.retrieve_documents(query_text, top_k, similarity_threshold)
         answer = self.generate_answer(query_text, retrieved_documents)
 
-        # Ensure retrieved_documents are returned in a format compatible with benchmark metrics
-        # The retrieve_documents method already returns a List[Document], which has id, content, and score.
-        # The benchmark runner expects a list of dicts with 'id', 'content', 'score'.
-        # The Document.to_dict() method handles this conversion.
-        
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": [doc.to_dict() for doc in retrieved_documents], # Convert Document objects to dicts
+            "retrieved_documents": [doc.to_dict() for doc in retrieved_documents],
+            "similarity_threshold": similarity_threshold,
+            "document_count": len(retrieved_documents)
         }
 
 if __name__ == '__main__':

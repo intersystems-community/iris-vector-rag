@@ -130,6 +130,18 @@ benchmark_results/
 
 # Specific generated files (if they appear in root and not in the above dirs)
 test_results_1000_docs.json
+benchmark_results_*.json
+
+# Investigation and experimental directories
+investigation/
+scripts_to_review/
+debug_archive/
+
+# Workspace files
+*.code-workspace
+
+# IRIS configuration files
+*.cpf
 
 # Specific files from your project list (already covered by wildcards above but kept for explicitness if desired)
 # ODBC-2025.1.0.223.0-lnxubuntu2404arm64.tar.gz # Covered by *.tar.gz

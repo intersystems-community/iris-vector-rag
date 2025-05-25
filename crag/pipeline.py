@@ -45,7 +45,7 @@ class RetrievalEvaluator:
         # This requires documents to have a score from retrieval.
         # BasicRAG/HyDE provide scores, but other methods might not.
         # Let's assume score is available for this simple mock.
-        total_score = sum(doc.score for doc in documents if doc.score is not None)
+        total_score = sum(doc.score for doc in documents if doc.score is not None and isinstance(doc.score, (int, float)))
         avg_score = total_score / len(documents) if documents else 0
 
         if avg_score > 0.8: # Arbitrary threshold
@@ -71,40 +71,36 @@ class CRAGPipeline:
         print("CRAGPipeline Initialized")
 
     @timing_decorator
-    def _initial_retrieve(self, query_text: str, top_k: int = 5) -> List[Document]:
+    def _initial_retrieve(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.5) -> List[Document]:
         """
-        Performs initial retrieval using embedding-based search (like BasicRAG).
+        Performs initial retrieval using embedding-based search with HNSW acceleration.
         """
-        print(f"CRAG: Performing initial retrieval for query: '{query_text[:50]}...'")
-        # Reuse logic from BasicRAGPipeline's retrieve_documents
-        # This would ideally be a shared retrieval function or a call to BasicRAGPipeline
-        # For now, duplicating the core logic for clarity within CRAG.
+        print(f"CRAG: Performing initial retrieval for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
 
         query_embedding = self.embedding_func([query_text])[0]
-        # Format the vector string for TO_VECTOR explicitly: e.g., "[0.1,0.2,0.3]"
-        iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
-        # Assuming embedding dimension is 768, make this configurable if needed
-        embedding_dimension = 768 
+        # Convert to comma-separated string format for IRIS
+        iris_vector_str = ','.join(map(str, query_embedding))
 
         retrieved_docs: List[Document] = []
-        sql_formatted = f"""
-            SELECT TOP {top_k} doc_id, text_content,
-                           VECTOR_COSINE(embedding, TO_VECTOR('{iris_vector_str}', 'DOUBLE', {embedding_dimension})) AS score
-            FROM RAG.SourceDocuments
-            WHERE embedding IS NOT NULL -- Ensure embedding column is not null
+        sql_query = f"""
+            SELECT doc_id, text_content,
+                   VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
+            FROM RAG_HNSW.SourceDocuments
+            WHERE embedding IS NOT NULL
+              AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
             ORDER BY score DESC
         """
         
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
-            logger.debug(f"CRAG Initial Retrieve Executing SQL: {sql_formatted}")
-            cursor.execute(sql_formatted) # Parameters are inlined
+            logger.debug(f"CRAG Initial Retrieve with threshold {similarity_threshold}")
+            cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold))
             results = cursor.fetchall()
 
             for row in results:
                 retrieved_docs.append(Document(id=row[0], content=row[1], score=row[2]))
-            print(f"CRAG: Initial retrieval found {len(retrieved_docs)} documents.")
+            print(f"CRAG: Initial retrieval found {len(retrieved_docs)} documents above threshold {similarity_threshold}")
         except Exception as e:
             print(f"CRAG: Error during initial retrieval: {e}")
         finally:
@@ -168,13 +164,13 @@ class CRAGPipeline:
 
 
     @timing_decorator
-    def retrieve_and_correct(self, query_text: str, top_k: int = 5, web_top_k: int = 3) -> List[str]:
+    def retrieve_and_correct(self, query_text: str, top_k: int = 5, web_top_k: int = 3, initial_threshold: float = 0.5, quality_threshold: float = 0.75) -> List[str]:
         """
         Performs initial retrieval, evaluates, potentially augments, and refines context.
         """
         print(f"CRAG: Running retrieve and correct step for query: '{query_text[:50]}...'")
         
-        initial_docs = self._initial_retrieve(query_text, top_k)
+        initial_docs = self._initial_retrieve(query_text, top_k, initial_threshold)
         
         retrieval_status = self.retrieval_evaluator.evaluate(query_text, initial_docs)
         # print("CRAG DEBUG: Bypassed RetrievalEvaluator.evaluate") # Removed bypass
@@ -225,18 +221,21 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, web_top_k: int = 3) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, web_top_k: int = 3, initial_threshold: float = 0.5, quality_threshold: float = 0.75) -> Dict[str, Any]:
         """
         Runs the full CRAG pipeline.
         """
         print(f"CRAG: Running pipeline for query: '{query_text[:50]}...'")
-        refined_context_list = self.retrieve_and_correct(query_text, top_k, web_top_k)
+        refined_context_list = self.retrieve_and_correct(query_text, top_k, web_top_k, initial_threshold, quality_threshold)
         answer = self.generate_answer(query_text, refined_context_list)
 
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_context_chunks": refined_context_list, # Note: returns list of strings
+            "retrieved_context_chunks": refined_context_list,
+            "initial_threshold": initial_threshold,
+            "quality_threshold": quality_threshold,
+            "document_count": len(refined_context_list)
         }
 
 if __name__ == '__main__':
