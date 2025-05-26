@@ -6,20 +6,16 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import List, Dict, Any, Callable
-# import sqlalchemy # No longer needed for type hinting
-import logging # Ensure logging is imported
-# Attempt to import for type hinting, but make it optional
+import logging
+
 try:
     from intersystems_iris.dbapi import Connection as IRISConnection
 except ImportError:
-    IRISConnection = Any # Fallback to Any if the driver isn't available during static analysis
-
+    IRISConnection = Any
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
-# Removed: from common.db_vector_search import search_source_documents_dynamically
 
-logger = logging.getLogger(__name__) # Add logger
-logger.setLevel(logging.DEBUG) # Ensure debug messages from this module are shown
+logger = logging.getLogger(__name__)
 
 class HyDEPipeline:
     def __init__(self, iris_connector: IRISConnection, # Updated type hint
@@ -28,7 +24,7 @@ class HyDEPipeline:
         self.iris_connector = iris_connector
         self.embedding_func = embedding_func
         self.llm_func = llm_func
-        print("HyDEPipeline Initialized")
+        logger.info("HyDEPipeline initialized")
 
     @timing_decorator
     def _generate_hypothetical_document(self, query_text: str) -> str:
@@ -44,7 +40,7 @@ class HyDEPipeline:
             f"Passage:"
         )
         hypothetical_doc_text = self.llm_func(prompt)
-        print(f"HyDE: Generated hypothetical document: '{hypothetical_doc_text[:100]}...'")
+        logger.debug(f"HyDE: Generated hypothetical document: '{hypothetical_doc_text[:100]}...'")
         return hypothetical_doc_text
 
     @timing_decorator

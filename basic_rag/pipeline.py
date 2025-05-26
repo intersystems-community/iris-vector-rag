@@ -6,28 +6,25 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import List, Dict, Any, Callable
-# import sqlalchemy # No longer needed for type hinting iris_connector
-import logging # Ensure logging is imported if not already
-# Attempt to import for type hinting, but make it optional if intersystems_iris is not always in dev env
+import logging
+
 try:
     from intersystems_iris.dbapi import Connection as IRISConnection
 except ImportError:
-    IRISConnection = Any # Fallback to Any if the driver isn't available during static analysis
+    IRISConnection = Any
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func, get_iris_connector
-# Removed: from common.db_vector_search import search_source_documents_dynamically
 
-logger = logging.getLogger(__name__) # Ensure logger is defined for the class if used
-logger.setLevel(logging.DEBUG) # Ensure debug messages from this module are shown
+logger = logging.getLogger(__name__)
 
 class BasicRAGPipeline:
-    def __init__(self, iris_connector: IRISConnection, # Updated type hint
-                 embedding_func: Callable[[List[str]], List[List[float]]], 
+    def __init__(self, iris_connector: IRISConnection,
+                 embedding_func: Callable[[List[str]], List[List[float]]],
                  llm_func: Callable[[str], str]):
         self.iris_connector = iris_connector
         self.embedding_func = embedding_func
         self.llm_func = llm_func
-        print("BasicRAGPipeline Initialized")
+        logger.info("BasicRAGPipeline initialized")
 
     @timing_decorator
     def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.75) -> List[Document]:
@@ -35,7 +32,7 @@ class BasicRAGPipeline:
         Retrieves documents from IRIS based on vector similarity using HNSW acceleration.
         Uses similarity threshold for realistic document count variation.
         """
-        print(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
+        logger.debug(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
         query_embedding = self.embedding_func([query_text])[0]
 
         # Convert to comma-separated string format for IRIS
@@ -77,9 +74,9 @@ class BasicRAGPipeline:
         """
         Generates an answer using the LLM based on the query and retrieved documents.
         """
-        print(f"BasicRAG: Generating answer for query: '{query_text[:50]}...'")
+        logger.debug(f"BasicRAG: Generating answer for query: '{query_text[:50]}...'")
         if not retrieved_docs:
-            print("BasicRAG: No documents retrieved. Returning a default response.")
+            logger.warning("BasicRAG: No documents retrieved. Returning a default response.")
             return "I could not find enough information to answer your question."
 
         # Limit context to prevent token overflow - truncate documents if needed
@@ -108,7 +105,7 @@ Question: {query_text}
 Answer:"""
         
         answer = self.llm_func(prompt)
-        print(f"BasicRAG: Generated answer: '{answer[:100]}...'")
+        logger.debug(f"BasicRAG: Generated answer: '{answer[:100]}...'")
         return answer
 
     @timing_decorator
@@ -116,7 +113,7 @@ Answer:"""
         """
         Runs the full Basic RAG pipeline: retrieve documents and generate an answer.
         """
-        print(f"BasicRAG: Running pipeline for query: '{query_text[:50]}...'")
+        logger.info(f"BasicRAG: Running pipeline for query: '{query_text[:50]}...'")
         retrieved_documents = self.retrieve_documents(query_text, top_k, similarity_threshold)
         # Limit documents for answer generation to prevent context overflow
         answer_docs = retrieved_documents[:top_k] if len(retrieved_documents) > top_k else retrieved_documents
