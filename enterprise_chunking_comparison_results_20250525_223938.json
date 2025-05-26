@@ -1,0 +1,86 @@
+{
+  "validation_summary": {
+    "target_documents": 5000,
+    "timestamp": "2025-05-25 22:39:38",
+    "techniques_tested": 7,
+    "successful_techniques": 6
+  },
+  "results": {
+    "BasicRAG": {
+      "success": true,
+      "chunking_overhead_ms": -619.4681326548258,
+      "retrieval_improvement_ratio": 1.0624999999999998,
+      "chunked_avg_time_ms": 1.9886493682861328,
+      "non_chunked_avg_time_ms": 621.4567820231119,
+      "chunked_avg_docs": 0.0,
+      "non_chunked_avg_docs": 10.0,
+      "error": null
+    },
+    "HyDE": {
+      "success": true,
+      "chunking_overhead_ms": -43.70546340942383,
+      "retrieval_improvement_ratio": 1.0624999999999998,
+      "chunked_avg_time_ms": 1.4383792877197266,
+      "non_chunked_avg_time_ms": 45.143842697143555,
+      "chunked_avg_docs": 0.0,
+      "non_chunked_avg_docs": 10.0,
+      "error": null
+    },
+    "CRAG": {
+      "success": true,
+      "chunking_overhead_ms": -558.7483247121176,
+      "retrieval_improvement_ratio": 1.0624999999999998,
+      "chunked_avg_time_ms": 1.6886393229166667,
+      "non_chunked_avg_time_ms": 560.4369640350342,
+      "chunked_avg_docs": 0.0,
+      "non_chunked_avg_docs": 18.0,
+      "error": null
+    },
+    "OptimizedColBERT": {
+      "success": false,
+      "chunking_overhead_ms": 0,
+      "retrieval_improvement_ratio": 1.0,
+      "chunked_avg_time_ms": 0,
+      "non_chunked_avg_time_ms": 0,
+      "chunked_avg_docs": 0,
+      "non_chunked_avg_docs": 0,
+      "error": "OptimizedColbertRAGPipeline.__init__() got an unexpected keyword argument 'embedding_func'"
+    },
+    "NodeRAG": {
+      "success": true,
+      "chunking_overhead_ms": -73.4250545501709,
+      "retrieval_improvement_ratio": 1.0624999999999998,
+      "chunked_avg_time_ms": 1.4289220174153645,
+      "non_chunked_avg_time_ms": 74.85397656758626,
+      "chunked_avg_docs": 0.0,
+      "non_chunked_avg_docs": 20.0,
+      "error": null
+    },
+    "GraphRAG": {
+      "success": true,
+      "chunking_overhead_ms": -31.708081563313804,
+      "retrieval_improvement_ratio": 1.0624999999999998,
+      "chunked_avg_time_ms": 1.5707015991210938,
+      "non_chunked_avg_time_ms": 33.2787831624349,
+      "chunked_avg_docs": 0.0,
+      "non_chunked_avg_docs": 20.0,
+      "error": null
+    },
+    "HybridiFindRAG": {
+      "success": true,
+      "chunking_overhead_ms": -57.59326616923014,
+      "retrieval_improvement_ratio": 1.0624999999999998,
+      "chunked_avg_time_ms": 1.6136964162190754,
+      "non_chunked_avg_time_ms": 59.20696258544922,
+      "chunked_avg_docs": 0.0,
+      "non_chunked_avg_docs": 10.0,
+      "error": null
+    }
+  },
+  "overall_analysis": {
+    "avg_chunking_overhead_ms": -230.77472050984701,
+    "avg_retrieval_improvement": 1.0624999999999998,
+    "best_performing_technique": "BasicRAG",
+    "lowest_overhead_technique": "BasicRAG"
+  }
+}
