@@ -6,7 +6,14 @@ This repository contains implementation templates for various Retrieval Augmente
 **Navigate the Documentation**
 
 For a comprehensive guide to all project documents, including setup, technical deep-dives, IRIS issue analyses, RAG technique implementations, testing, and benchmarking, please start with the:
-### **[Project Documentation Index](docs/INDEX.md)**
+### **[📚 Complete Documentation Index](docs/README.md)**
+
+The documentation is now organized into logical categories:
+- **🏗️ Implementation**: Technical implementation details for all RAG techniques
+- **✅ Validation**: Enterprise validation reports and testing results
+- **🚀 Deployment**: Production deployment guides and operational docs
+- **🔧 Fixes**: Technical fixes and troubleshooting documentation
+- **📊 Summaries**: High-level project summaries and status reports
 ---
 
 ## Project Status (As of May 25, 2025)
@@ -32,7 +39,7 @@ The project uses a proven local development setup:
 - **InterSystems IRIS Database:** Runs in a dedicated Docker container via `docker-compose.iris-only.yml`
 - **Database Interaction:** VARCHAR storage for embeddings with TO_VECTOR() conversion at query time, using robust utilities in `common/vector_sql_utils.py`
 
-This approach provides reliable vector search capabilities while maintaining clean separation between application logic and database operations. For technical details, see [REAL_DATA_VECTOR_SUCCESS_REPORT.md](REAL_DATA_VECTOR_SUCCESS_REPORT.md) and [IRIS_VECTOR_SEARCH_LESSONS.md](docs/IRIS_VECTOR_SEARCH_LESSONS.md).
+This approach provides reliable vector search capabilities while maintaining clean separation between application logic and database operations. For technical details, see [REAL_DATA_VECTOR_SUCCESS_REPORT.md](docs/validation/REAL_DATA_VECTOR_SUCCESS_REPORT.md) and [IRIS_VECTOR_SEARCH_LESSONS.md](docs/IRIS_VECTOR_SEARCH_LESSONS.md).
 
 ## RAG Techniques Implemented
 
