@@ -131,6 +131,11 @@ benchmark_results/
 # Specific generated files (if they appear in root and not in the above dirs)
 test_results_1000_docs.json
 benchmark_results_*.json
+enterprise_validation_*.json
+enterprise_scale_validation_*.json
+production_validation_results_*.json
+colbert_performance_comparison_*.json
+stress_test_report_*.md
 
 # Investigation and experimental directories
 investigation/
