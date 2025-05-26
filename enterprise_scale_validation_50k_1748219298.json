@@ -1,0 +1,29 @@
+{
+  "enterprise_validation_summary": {
+    "target_documents": 1000,
+    "total_time_minutes": 1.1499428351720173,
+    "successful_tests": 2,
+    "total_tests": 4,
+    "success_rate": 0.5,
+    "enterprise_ready": false
+  },
+  "test_results": [
+    {
+      "test_name": "document_ingestion",
+      "success": true,
+      "duration_seconds": 0,
+      "metrics": {
+        "skipped": true
+      },
+      "error": null
+    },
+    {
+      "test_name": "hnsw_performance_50k",
+      "success": false,
+      "duration_seconds": 5.071142196655273,
+      "metrics": {},
+      "error": "[SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^SELECT TOP :%qpar(1) doc_id , title , VECTOR_DOT_PRODUCT ( embedding , TO_VECTOR ( :%qpar(2) , :%qpar>]"
+    },
+    {
+      "test_name": "all_rag_techniques_50k",
+      "success": 

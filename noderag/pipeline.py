@@ -176,14 +176,14 @@ class NodeRAGPipeline:
 
         # Now proceed with vector search using the appropriate table
         query_embedding = self.embedding_func([query_text])[0]
-        iris_vector_str = f"[{','.join(map(str, query_embedding))}]"
+        iris_vector_str = ','.join(map(str, query_embedding))
         current_top_k_seeds = int(top_n_seed)
         db_embedding_dimension = 768
 
-        # Construct SQL query based on which table to use - updated for HNSW schema and thresholds
+        # Construct SQL query based on which table to use - use HNSW schema like BasicRAG
         if use_source_docs:
             sql_query = f"""
-                SELECT doc_id AS node_id,
+                SELECT TOP 20 doc_id AS node_id,
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
                 FROM RAG_HNSW.SourceDocuments
                 WHERE embedding IS NOT NULL
@@ -193,14 +193,14 @@ class NodeRAGPipeline:
             logger.info("NodeRAG: Using RAG_HNSW.SourceDocuments for vector search.")
         else:
             sql_query = f"""
-                SELECT node_id,
+                SELECT TOP 20 node_id,
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
-                FROM RAG_HNSW.KnowledgeGraphNodes
+                FROM RAG.KnowledgeGraphNodes
                 WHERE embedding IS NOT NULL
                   AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
                 ORDER BY score DESC
             """
-            logger.info("NodeRAG: Using RAG_HNSW.KnowledgeGraphNodes for vector search.")
+            logger.info("NodeRAG: Using RAG.KnowledgeGraphNodes for vector search.")
 
         node_ids: List[str] = []
         cursor = None

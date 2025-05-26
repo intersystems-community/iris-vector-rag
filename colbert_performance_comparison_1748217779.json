@@ -1,0 +1,103 @@
+{
+  "timestamp": 1748217779.2352982,
+  "data_status": {
+    "total_tokens": 0,
+    "documents_with_tokens": 0,
+    "null_embeddings": 0,
+    "valid_embeddings": 0
+  },
+  "hnsw_index_created": true,
+  "original_pipeline": {
+    "pipeline_name": "Original ColBERT",
+    "total_time": 9.01701021194458,
+    "query_results": [
+      {
+        "query_id": 0,
+        "query": "What are the latest treatments for diabetes?",
+        "time_seconds": 1.8694100379943848,
+        "documents_found": 0,
+        "success": true
+      },
+      {
+        "query_id": 1,
+        "query": "How does machine learning improve medical diagnosi...",
+        "time_seconds": 1.6973319053649902,
+        "documents_found": 0,
+        "success": true
+      },
+      {
+        "query_id": 2,
+        "query": "What are the mechanisms of cancer immunotherapy?",
+        "time_seconds": 1.6964201927185059,
+        "documents_found": 10,
+        "success": true
+      },
+      {
+        "query_id": 3,
+        "query": "How do genetic mutations contribute to disease dev...",
+        "time_seconds": 1.8797321319580078,
+        "documents_found": 0,
+        "success": true
+      },
+      {
+        "query_id": 4,
+        "query": "What role does AI play in modern healthcare system...",
+        "time_seconds": 1.8740191459655762,
+        "documents_found": 0,
+        "success": true
+      }
+    ],
+    "avg_time_per_query": 1.803402042388916,
+    "success_count": 5,
+    "error_count": 0
+  },
+  "optimized_pipeline": {
+    "pipeline_name": "Optimized ColBERT",
+    "total_time": 0.09356188774108887,
+    "query_results": [
+      {
+        "query_id": 0,
+        "query": "What are the latest treatments for diabetes?",
+        "time_seconds": 0.0746147632598877,
+        "documents_found": 0,
+        "success": true
+      },
+      {
+        "query_id": 1,
+        "query": "How does machine learning improve medical diagnosi...",
+        "time_seconds": 0.004172801971435547,
+        "documents_found": 0,
+        "success": true
+      },
+      {
+        "query_id": 2,
+        "query": "What are the mechanisms of cancer immunotherapy?",
+        "time_seconds": 0.004248142242431641,
+        "documents_found": 0,
+        "success": true
+      },
+      {
+        "query_id": 3,
+        "query": "How do genetic mutations contribute to disease dev...",
+        "time_seconds": 0.005383014678955078,
+        "documents_found": 0,
+        "success": true
+      },
+      {
+        "query_id": 4,
+        "query": "What role does AI play in modern healthcare system...",
+        "time_seconds": 0.004968166351318359,
+        "documents_found": 0,
+        "success": true
+      }
+    ],
+    "avg_time_per_query": 0.018712377548217772,
+    "success_count": 5,
+    "error_count": 0
+  },
+  "performance_improvement": {
+    "time_reduction_seconds": 8.923448324203491,
+    "time_reduction_percent": 98.96238458710904,
+    "speedup_factor": 96.37482130434451
+  }
+}

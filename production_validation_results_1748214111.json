@@ -1,0 +1,34 @@
+{
+  "validation_summary": {
+    "total_time_minutes": 0.10598344802856445,
+    "successful_tests": 0,
+    "total_tests": 4,
+    "success_rate": 0.0
+  },
+  "test_results": [
+    {
+      "test_name": "vector_similarity_performance",
+      "success": false,
+      "metrics": {},
+      "error": "[SQLCODE: <-254>:<Vector function only takes vectors as inputs>]\r\n[Location: <Prepare>]\r\n[%msg: <Argument #1 of vector function VECTOR_DOT_PRODUCT is not a vector.>]"
+    },
+    {
+      "test_name": "context_reduction_strategies",
+      "success": false,
+      "metrics": {},
+      "error": "[SQLCODE: <-254>:<Vector function only takes vectors as inputs>]\r\n[Location: <Prepare>]\r\n[%msg: <Argument #1 of vector function VECTOR_DOT_PRODUCT is not a vector.>]"
+    },
+    {
+      "test_name": "semantic_search_quality",
+      "success": false,
+      "metrics": {},
+      "error": "[SQLCODE: <-254>:<Vector function only takes vectors as inputs>]\r\n[Location: <Prepare>]\r\n[%msg: <Argument #1 of vector function VECTOR_DOT_PRODUCT is not a vector.>]"
+    },
+    {
+      "test_name": "system_performance_monitoring",
+      "success": false,
+      "metrics": {},
+      "error": "[SQLCODE: <-254>:<Vector function only takes vectors as inputs>]\r\n[Location: <Prepare>]\r\n[%msg: <Argument #1 of vector function VECTOR_DOT_PRODUCT is not a vector.>]"
+    }
+  ]
+}

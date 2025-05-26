@@ -1,0 +1,234 @@
+{
+  "timestamp": 1748218870.0155652,
+  "total_techniques_tested": 4,
+  "successful_techniques": 4,
+  "test_queries": [
+    "What are the latest treatments for diabetes?",
+    "How does machine learning improve medical diagnosis?",
+    "What are the mechanisms of cancer immunotherapy?",
+    "How do genetic mutations contribute to disease development?",
+    "What role does AI play in modern healthcare systems?"
+  ],
+  "technique_results": {
+    "BasicRAG": {
+      "technique": "BasicRAG",
+      "total_time": 1.5805859565734863,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 0.7512781620025635,
+          "documents_found": 357,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.19738388061523438,
+          "documents_found": 495,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.2033522129058838,
+          "documents_found": 375,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.29564595222473145,
+          "documents_found": 601,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.1327660083770752,
+          "documents_found": 299,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.3161171913146973,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 2127,
+      "avg_documents_per_query": 425.4
+    },
+    "OptimizedColBERT": {
+      "technique": "OptimizedColBERT",
+      "total_time": 15.334141969680786,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 2.838571071624756,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 2.816678762435913,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 2.805511951446533,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 3.2007498741149902,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 3.6725330352783203,
+          "documents_found": 5,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 3.066828393936157,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 25,
+      "avg_documents_per_query": 5.0
+    },
+    "HyDE": {
+      "technique": "HyDE",
+      "total_time": 1.4648149013519287,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 0.31098413467407227,
+          "documents_found": 1000,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.2654080390930176,
+          "documents_found": 1000,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.2817549705505371,
+          "documents_found": 1000,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.3502309322357178,
+          "documents_found": 1000,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.2562429904937744,
+          "documents_found": 1000,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.29296298027038575,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 5000,
+      "avg_documents_per_query": 1000.0
+    },
+    "CRAG": {
+      "technique": "CRAG",
+      "total_time": 1.4523799419403076,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 0.3467698097229004,
+          "documents_found": 0,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.33719301223754883,
+          "documents_found": 0,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.2569000720977783,
+          "documents_found": 0,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.2505910396575928,
+          "documents_found": 0,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.2608299255371094,
+          "documents_found": 0,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.29047598838806155,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 0,
+      "avg_documents_per_query": 0.0
+    }
+  },
+  "performance_ranking": [
+    [
+      "CRAG",
+      0.29047598838806155
+    ],
+    [
+      "HyDE",
+      0.29296298027038575
+    ],
+    [
+      "BasicRAG",
+      0.3161171913146973
+    ],
+    [
+      "OptimizedColBERT",
+      3.066828393936157
+    ]
+  ],
+  "retrieval_ranking": [
+    [
+      "HyDE",
+      1000.0
+    ],
+    [
+      "BasicRAG",
+      425.4
+    ],
+    [
+      "OptimizedColBERT",
+      5.0
+    ],
+    [
+      "CRAG",
+      0.0
+    ]
+  ]
+}

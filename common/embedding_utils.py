@@ -76,7 +76,7 @@ class MockColBERTModel:
             
         return tokens, np.array(token_embeddings)
 
-def get_embedding_model(model_name: str = "sentence-transformers/all-MiniLM-L6-v2", mock: bool = False):
+def get_embedding_model(model_name: str = "intfloat/e5-base-v2", mock: bool = False):
     """
     Get the embedding model for document embeddings.
     
@@ -98,6 +98,10 @@ def get_embedding_model(model_name: str = "sentence-transformers/all-MiniLM-L6-v
         return model
     except ImportError:
         logger.warning("SentenceTransformer package not installed. Using mock embedding model.")
+        return MockEmbeddingModel()
+    except Exception as e:
+        logger.error(f"Failed to load SentenceTransformer model {model_name}: {e}")
+        logger.warning("Falling back to mock embedding model.")
         return MockEmbeddingModel()
 
 def get_colbert_model(model_name: str = "colbert-ir/colbertv2.0", mock: bool = False):

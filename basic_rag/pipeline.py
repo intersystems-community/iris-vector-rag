@@ -30,7 +30,7 @@ class BasicRAGPipeline:
         print("BasicRAGPipeline Initialized")
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.7) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.75) -> List[Document]:
         """
         Retrieves documents from IRIS based on vector similarity using HNSW acceleration.
         Uses similarity threshold for realistic document count variation.
@@ -100,13 +100,15 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.7) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.75) -> Dict[str, Any]:
         """
         Runs the full Basic RAG pipeline: retrieve documents and generate an answer.
         """
         print(f"BasicRAG: Running pipeline for query: '{query_text[:50]}...'")
         retrieved_documents = self.retrieve_documents(query_text, top_k, similarity_threshold)
-        answer = self.generate_answer(query_text, retrieved_documents)
+        # Limit documents for answer generation to prevent context overflow
+        answer_docs = retrieved_documents[:top_k] if len(retrieved_documents) > top_k else retrieved_documents
+        answer = self.generate_answer(query_text, answer_docs)
         
         return {
             "query": query_text,

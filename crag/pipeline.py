@@ -83,7 +83,7 @@ class CRAGPipeline:
 
         retrieved_docs: List[Document] = []
         sql_query = f"""
-            SELECT doc_id, text_content,
+            SELECT TOP 20 doc_id, text_content,
                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
             FROM RAG_HNSW.SourceDocuments
             WHERE embedding IS NOT NULL

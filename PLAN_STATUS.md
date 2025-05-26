@@ -11,18 +11,28 @@
 **CRITICAL FINDING (May 23, 2025):** We have tested the view-based approach for HNSW indexing with IRIS 2025.1 and confirmed that it does not work. Attempts to create views, computed columns, or materialized views with TO_VECTOR all failed. This confirms that the dual-table architecture with ObjectScript triggers, as described in HNSW_INDEXING_RECOMMENDATIONS.md, is the only viable approach for implementing high-performance vector search with HNSW indexing. The langchain-iris approach alone is sufficient for basic vector search but cannot be used with HNSW indexing.
 
 **Next Tasks:**
-1. Implement the langchain-iris approach in our codebase:
+1. **CURRENT FOCUS: ObjectScript Integration Implementation (TDD) - IN PROGRESS**
+   - [x] Write failing tests for ObjectScript integration components
+   - [x] Implement ObjectScript wrapper classes (RAGDemo.Invoker.cls)
+   - [x] Create Python bridge module for Embedded Python integration
+   - [x] Implement ObjectScript test classes (RAGDemo.TestBed.cls)
+   - [x] Follow Red-Green-Refactor TDD cycle as defined in .clinerules
+   - [x] Python bridge tests passing (health check, pipeline discovery, validation)
+   - [x] ObjectScript classes generated and ready for deployment
+   - [ ] Deploy ObjectScript classes to IRIS instance
+   - [ ] End-to-end testing with real PMC data through ObjectScript interface
+2. Implement the langchain-iris approach in our codebase:
    - Update vector_sql_utils.py to support storing embeddings as strings
    - Modify db_init.py to use VARCHAR for embedding storage
    - Update RAG pipelines to use the new approach
-2. For performance optimization with large document collections:
+3. For performance optimization with large document collections:
    - Consider implementing the dual-table architecture with HNSW indexing as described in `docs/HNSW_INDEXING_RECOMMENDATIONS.md`
    - This may require ObjectScript expertise for trigger implementation
-3. Execute the end-to-end tests using our automated script (`scripts/run_e2e_tests.py`) with real PMC data (minimum 1000 documents)
-4. Continue following the Red-Green-Refactor TDD cycle for all remaining test implementations
-5. Execute benchmarks using `scripts/run_rag_benchmarks.py` (as detailed in `BENCHMARK_EXECUTION_PLAN.md`, ensuring script references there are also aligned) with real data
-6. Compare our implementation results against published benchmarks
-7. Document findings and optimize implementations based on benchmark results
+4. Execute the end-to-end tests using our automated script (`scripts/run_e2e_tests.py`) with real PMC data (minimum 1000 documents)
+5. Continue following the Red-Green-Refactor TDD cycle for all remaining test implementations
+6. Execute benchmarks using `scripts/run_rag_benchmarks.py` (as detailed in `BENCHMARK_EXECUTION_PLAN.md`, ensuring script references there are also aligned) with real data
+7. Compare our implementation results against published benchmarks
+8. Document findings and optimize implementations based on benchmark results
 
 **Overall Goal:** Implement RAG pipelines using Python running on the host machine, connecting to an InterSystems IRIS database running in a simple, dedicated Docker container.
 

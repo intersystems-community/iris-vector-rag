@@ -1,0 +1,13 @@
+{
+  "enterprise_validation_summary": {
+    "target_documents": 1000,
+    "total_time_minutes": 0.3730660160382589,
+    "successful_tests": 2,
+    "total_tests": 3,
+    "success_rate": 0.6666666666666666,
+    "enterprise_ready": false
+  },
+  "test_results": [
+    {
+      "test_name": "hnsw_performance_enterprise",
+      "success": 

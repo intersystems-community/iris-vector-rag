@@ -48,7 +48,7 @@ class HyDEPipeline:
         return hypothetical_doc_text
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.65) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.75) -> List[Document]:
         """
         Generates a hypothetical document, embeds it, and retrieves similar actual documents
         using vector search against the HNSW-accelerated database.
@@ -74,7 +74,7 @@ class HyDEPipeline:
 
         # Use RAG_HNSW schema with similarity threshold
         sql_query = f"""
-            SELECT doc_id, text_content,
+            SELECT TOP {top_k} doc_id, text_content,
                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
             FROM RAG_HNSW.SourceDocuments
             WHERE embedding IS NOT NULL

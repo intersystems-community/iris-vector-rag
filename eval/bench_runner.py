@@ -292,3 +292,143 @@ def load_benchmark_results(input_path: str) -> Dict[str, Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error loading benchmark results from {input_path}: {str(e)}")
         return {}
+
+class BenchmarkRunner:
+    """
+    Comprehensive benchmark runner for RAG techniques
+    """
+    
+    def __init__(self, connection, embedding_func, llm_func):
+        self.connection = connection
+        self.embedding_func = embedding_func
+        self.llm_func = llm_func
+        self.logger = logging.getLogger(self.__class__.__name__)
+    
+    def run_technique(self, technique_name: str, query: str) -> Dict[str, Any]:
+        """
+        Run a specific RAG technique with a query
+        
+        Args:
+            technique_name: Name of the RAG technique to run
+            query: Query string to process
+            
+        Returns:
+            Dictionary with technique results
+        """
+        self.logger.info(f"Running {technique_name} with query: {query[:50]}...")
+        
+        try:
+            if technique_name == "basic_rag":
+                return self._run_basic_rag(query)
+            elif technique_name == "colbert":
+                return self._run_colbert(query)
+            elif technique_name == "graphrag":
+                return self._run_graphrag(query)
+            elif technique_name == "noderag":
+                return self._run_noderag(query)
+            elif technique_name == "hyde":
+                return self._run_hyde(query)
+            elif technique_name == "crag":
+                return self._run_crag(query)
+            else:
+                raise ValueError(f"Unknown technique: {technique_name}")
+                
+        except Exception as e:
+            self.logger.error(f"Error running {technique_name}: {e}")
+            return {
+                "query": query,
+                "answer": f"Error: {str(e)}",
+                "retrieved_documents": [],
+                "error": str(e)
+            }
+    
+    def _run_basic_rag(self, query: str) -> Dict[str, Any]:
+        """Run basic RAG pipeline"""
+        try:
+            from basic_rag.pipeline import run_basic_rag_pipeline
+            return run_basic_rag_pipeline(
+                query=query,
+                iris_connector=self.connection,
+                embedding_func=self.embedding_func,
+                llm_func=self.llm_func
+            )
+        except ImportError:
+            return self._mock_technique_result(query, "basic_rag")
+    
+    def _run_colbert(self, query: str) -> Dict[str, Any]:
+        """Run ColBERT pipeline"""
+        try:
+            from colbert.pipeline import run_colbert_pipeline
+            return run_colbert_pipeline(
+                query=query,
+                iris_connector=self.connection,
+                embedding_func=self.embedding_func,
+                llm_func=self.llm_func
+            )
+        except ImportError:
+            return self._mock_technique_result(query, "colbert")
+    
+    def _run_graphrag(self, query: str) -> Dict[str, Any]:
+        """Run GraphRAG pipeline"""
+        try:
+            from graphrag.pipeline import run_graphrag_pipeline
+            return run_graphrag_pipeline(
+                query=query,
+                iris_connector=self.connection,
+                embedding_func=self.embedding_func,
+                llm_func=self.llm_func
+            )
+        except ImportError:
+            return self._mock_technique_result(query, "graphrag")
+    
+    def _run_noderag(self, query: str) -> Dict[str, Any]:
+        """Run NodeRAG pipeline"""
+        try:
+            from noderag.pipeline import run_noderag_pipeline
+            return run_noderag_pipeline(
+                query=query,
+                iris_connector=self.connection,
+                embedding_func=self.embedding_func,
+                llm_func=self.llm_func
+            )
+        except ImportError:
+            return self._mock_technique_result(query, "noderag")
+    
+    def _run_hyde(self, query: str) -> Dict[str, Any]:
+        """Run HyDE pipeline"""
+        try:
+            from hyde.pipeline import run_hyde_pipeline
+            return run_hyde_pipeline(
+                query=query,
+                iris_connector=self.connection,
+                embedding_func=self.embedding_func,
+                llm_func=self.llm_func
+            )
+        except ImportError:
+            return self._mock_technique_result(query, "hyde")
+    
+    def _run_crag(self, query: str) -> Dict[str, Any]:
+        """Run CRAG pipeline"""
+        try:
+            from crag.pipeline import run_crag_pipeline
+            return run_crag_pipeline(
+                query=query,
+                iris_connector=self.connection,
+                embedding_func=self.embedding_func,
+                llm_func=self.llm_func
+            )
+        except ImportError:
+            return self._mock_technique_result(query, "crag")
+    
+    def _mock_technique_result(self, query: str, technique: str) -> Dict[str, Any]:
+        """Generate mock result for techniques that can't be imported"""
+        return {
+            "query": query,
+            "answer": f"Mock {technique} answer for: {query}",
+            "retrieved_documents": [
+                {"id": f"mock_doc_{i}", "content": f"Mock content {i} for {technique}", "score": 0.9 - i*0.1}
+                for i in range(3)
+            ],
+            "technique": technique,
+            "mock": True
+        }

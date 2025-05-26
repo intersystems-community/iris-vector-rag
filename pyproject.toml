@@ -51,6 +51,11 @@ psutil = "^5.9.0" # For memory usage monitoring in large-scale tests
 pytest-mock = "^3.14.0"
 matplotlib = "^3.10.3"
 pyodbc = "^5.2.0"
+torch = "^2.7.0"
+torchvision = "^0.22.0"
+torchaudio = "^2.7.0"
+transformers = "^4.52.3"
+accelerate = "^1.7.0"
 [tool.poetry.extras]
 iris = ["intersystems-iris", "sqlalchemy", "testcontainers-iris"] # Added sqlalchemy and testcontainers-iris
 embeddings = ["sentence-transformers"]

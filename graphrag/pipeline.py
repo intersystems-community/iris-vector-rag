@@ -186,27 +186,52 @@ class GraphRAGPipeline:
 
 
     @timing_decorator
-    def retrieve_documents_via_kg(self, query_text: str, top_n_start_nodes: int = 3) -> List[Document]:
+    def retrieve_documents_via_kg(self, query_text: str, top_n_start_nodes: int = 20) -> List[Document]:
         """
-        Orchestrates Knowledge Graph-based retrieval.
-        TEMPORARILY MOCKED due to issues with DB vector search for initial nodes.
+        Orchestrates Knowledge Graph-based retrieval using real data from RAG_HNSW.SourceDocuments.
+        Since we don't have a proper knowledge graph yet, we'll use vector similarity on documents.
         """
-        logger.warning("GraphRAG: retrieve_documents_via_kg - Bypassing database vector search and graph traversal. Returning mock documents.")
+        logger.info(f"GraphRAG: Retrieving documents for query: '{query_text[:50]}...'")
         
-        mock_docs = []
-        # The 'top_n_start_nodes' parameter refers to the initial seed nodes.
-        # For mock, let's return a fixed number like other mocks, e.g., up to 3.
-        num_mock_docs_to_return = 3
-        for i in range(num_mock_docs_to_return):
-            mock_docs.append(
-                Document(
-                    id=f"mock_graphrag_node_{i+1}", 
-                    content=f"This is mock GraphRAG content for node {i+1} related to query '{query_text[:30]}...'. Graph structure is important.",
-                    score=0.75 - (i * 0.1) # Descending scores
-                )
-            )
-        logger.info(f"GraphRAG: Returned {len(mock_docs)} mock documents (nodes).")
-        return mock_docs
+        if not self.embedding_func:
+            logger.warning("GraphRAG: Embedding function not provided.")
+            return []
+
+        # Generate query embedding
+        query_embedding = self.embedding_func([query_text])[0]
+        query_vector_str = ','.join(map(str, query_embedding))
+        
+        retrieved_docs: List[Document] = []
+        sql_query = f"""
+            SELECT TOP 20 doc_id, text_content,
+                   VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
+            FROM RAG_HNSW.SourceDocuments
+            WHERE embedding IS NOT NULL
+              AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.7
+            ORDER BY score DESC
+        """
+        
+        cursor = None
+        try:
+            cursor = self.iris_connector.cursor()
+            cursor.execute(sql_query, (query_vector_str, query_vector_str))
+            results = cursor.fetchall()
+            
+            for row in results:
+                doc_id = row[0]
+                content = row[1] if row[1] else ""
+                score = float(row[2]) if row[2] else 0.0
+                retrieved_docs.append(Document(id=doc_id, content=content, score=score))
+            
+            logger.info(f"GraphRAG: Retrieved {len(retrieved_docs)} documents above threshold 0.7")
+            
+        except Exception as e:
+            logger.error(f"GraphRAG: Error during document retrieval: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+        
+        return retrieved_docs
 
     @timing_decorator
     def generate_answer(self, query_text: str, context_docs: List[Document]) -> str:
