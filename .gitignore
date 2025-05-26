@@ -141,6 +141,14 @@ stress_test_report_*.md
 investigation/
 scripts_to_review/
 debug_archive/
+archive/
+
+# Additional temporary files and patterns
+*_comparison_*.json
+*_chunking_*.json
+explore_*.py
+research_*.py
+test_*_integration.py
 
 # Workspace files
 *.code-workspace
