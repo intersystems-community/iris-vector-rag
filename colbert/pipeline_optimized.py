@@ -338,6 +338,13 @@ Answer:"""
             "document_count": len(retrieved_documents)
         }
 
+    @timing_decorator
+    def query(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
+        """
+        Alias for run() method to maintain compatibility with other pipeline interfaces.
+        """
+        return self.run(query_text, top_k, similarity_threshold)
+
 
 def check_hnsw_token_index_exists(iris_connector: IRISConnection) -> bool:
     """

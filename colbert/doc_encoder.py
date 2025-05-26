@@ -278,7 +278,7 @@ def get_colbert_doc_encoder(model_name: str = "colbert-ir/colbertv2.0",
         mock=mock
     )
     
-    return encoder
+    return encoder.encode
 
 
 def generate_token_embeddings_for_documents(

@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import logging # Added
-from typing import List, Dict, Any, Callable, Tuple, Literal
+from typing import List, Dict, Any, Callable, Tuple, Literal, Optional
 # import sqlalchemy # No longer needed
 # Attempt to import for type hinting, but make it optional
 try:
@@ -16,6 +16,7 @@ except ImportError:
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
 from common.iris_connector import get_iris_connection # For demo
+from common.chunk_retrieval import ChunkRetrievalService # Added for chunk support
 logger = logging.getLogger(__name__) # Added
 
 # Define evaluation status
@@ -62,20 +63,74 @@ class CRAGPipeline:
     def __init__(self, iris_connector: IRISConnection, # Updated type hint
                  embedding_func: Callable[[List[str]], List[List[float]]],
                  llm_func: Callable[[str], str],
-                 web_search_func: Callable[[str, int], List[str]] = None): # Optional web search
+                 web_search_func: Callable[[str, int], List[str]] = None, # Optional web search
+                 use_chunks: bool = True, # Enable chunk-based retrieval
+                 chunk_types: Optional[List[str]] = None): # Chunk types to use
         self.iris_connector = iris_connector
         self.embedding_func = embedding_func
         self.llm_func = llm_func
         self.retrieval_evaluator = RetrievalEvaluator(llm_func=llm_func, embedding_func=embedding_func)
         self.web_search_func = web_search_func
-        print("CRAGPipeline Initialized")
+        
+        # Chunk support
+        self.use_chunks = use_chunks
+        self.chunk_types = chunk_types or ['adaptive']
+        self.chunk_service = ChunkRetrievalService(iris_connector) if use_chunks else None
+        
+        logger.info(f"CRAGPipeline Initialized (use_chunks={use_chunks}, chunk_types={self.chunk_types})")
 
     @timing_decorator
     def _initial_retrieve(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.5) -> List[Document]:
         """
         Performs initial retrieval using embedding-based search with HNSW acceleration.
+        Now supports both chunk-based and document-based retrieval.
         """
-        print(f"CRAG: Performing initial retrieval for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
+        logger.info(f"CRAG: Performing initial retrieval for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
+
+        if self.use_chunks and self.chunk_service:
+            return self._retrieve_chunks(query_text, top_k, similarity_threshold)
+        else:
+            return self._retrieve_documents(query_text, top_k, similarity_threshold)
+    
+    def _retrieve_chunks(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.5) -> List[Document]:
+        """
+        Retrieve relevant chunks for CRAG processing
+        """
+        logger.info(f"CRAG: Retrieving chunks for query: '{query_text[:50]}...'")
+        
+        try:
+            # Check chunk availability first
+            chunk_stats = self.chunk_service.check_chunk_availability()
+            if not chunk_stats['available']:
+                logger.warning("CRAG: No chunks available, falling back to document retrieval")
+                return self._retrieve_documents(query_text, top_k, similarity_threshold)
+            
+            logger.info(f"CRAG: Found {chunk_stats['total_chunks']} chunks, {chunk_stats['chunks_with_embeddings']} with embeddings")
+            
+            # Generate query embedding
+            query_embedding = self.embedding_func([query_text])[0]
+            
+            # Retrieve chunks using the chunk service
+            retrieved_chunks = self.chunk_service.retrieve_chunks_for_query(
+                query_embedding=query_embedding,
+                top_k=top_k * 2,  # Get more chunks since they're smaller
+                chunk_types=self.chunk_types,
+                similarity_threshold=similarity_threshold
+            )
+            
+            logger.info(f"CRAG: Retrieved {len(retrieved_chunks)} chunks above threshold {similarity_threshold}")
+            return retrieved_chunks
+            
+        except Exception as e:
+            logger.error(f"CRAG: Error retrieving chunks: {e}")
+            logger.warning("CRAG: Falling back to document retrieval")
+            return self._retrieve_documents(query_text, top_k, similarity_threshold)
+    
+    def _retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.5) -> List[Document]:
+        """
+        Original document-based retrieval (fallback method)
+        """
+        logger.info(f"CRAG: Retrieving documents for query: '{query_text[:50]}...'")
 
         query_embedding = self.embedding_func([query_text])[0]
         # Convert to comma-separated string format for IRIS
@@ -94,7 +149,7 @@ class CRAGPipeline:
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
-            logger.debug(f"CRAG Initial Retrieve with threshold {similarity_threshold}")
+            logger.debug(f"CRAG Document Retrieve with threshold {similarity_threshold}")
             cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold))
             results = cursor.fetchall()
 
