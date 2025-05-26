@@ -25,7 +25,7 @@ def load_documents_to_iris(
     documents: List[Dict[str, Any]],
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
     colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None, # For ColBERT token embeddings
-    batch_size: int = 50
+    batch_size: int = 250
 ) -> Dict[str, Any]:
     """
     Load documents into IRIS database with batching, including embeddings.
@@ -67,8 +67,11 @@ def load_documents_to_iris(
                     else:
                         logger.warning(f"Document {doc.get('pmc_id')} has no abstract or title for sentence embedding.")
                 
+                # FIXED: Use doc_id instead of pmc_id - the PMC processor returns 'doc_id', not 'pmc_id'
+                doc_id_value = doc.get("doc_id") or doc.get("pmc_id")
+                
                 doc_params = (
-                    doc.get("pmc_id"),
+                    doc_id_value,
                     doc.get("title"),
                     doc.get("abstract"),
                     json.dumps(doc.get("authors", [])),
@@ -94,45 +97,49 @@ def load_documents_to_iris(
                 cursor.executemany(sql_source_docs, source_doc_batch_params)
                 loaded_doc_count += len(current_doc_batch)
                 
-                # Now process and insert ColBERT token embeddings
+                # Now process and insert ColBERT token embeddings - FIXED TO ACTUALLY WORK
                 if colbert_doc_encoder_func:
                     token_embedding_batch_params = []
-                    # Check if first token_vec_str would be None (it won't be with mock encoder, but for robustness)
-                    # For now, assume colbert_doc_encoder_func always provides valid strings for TO_VECTOR
-                    # or we insert NULL if it doesn't.
-                    # The mock encoder always returns data, so token_vec_str will be a string.
                     
-                    # Simplified: Assume if colbert_doc_encoder_func is present, it yields usable vector strings.
-                    # The TO_VECTOR issue will likely hit here too.
-                    # To bypass TO_VECTOR for tokens if it fails:
-                    # sql_token_embeddings = """INSERT INTO RAG.DocumentTokenEmbeddings (...) VALUES (?, ?, ?, ?, ?)"""
-                    # And pass None for the token_vec_str if it's problematic.
-                    # For now, let's try with TO_VECTOR and see if it also fails for tokens.
-
                     for doc_for_tokens in docs_for_token_embedding:
-                        doc_id = doc_for_tokens.get("pmc_id")
+                        # Use doc_id instead of pmc_id - same fix as above
+                        doc_id = doc_for_tokens.get("doc_id") or doc_for_tokens.get("pmc_id")
                         text_for_colbert = doc_for_tokens.get("abstract") or doc_for_tokens.get("title", "")
                         if doc_id and text_for_colbert:
                             try:
+                                # Get ColBERT token embeddings
                                 token_data = colbert_doc_encoder_func(text_for_colbert)
-                                for idx, (token_text, token_vec) in enumerate(token_data):
-                                    # Store as comma-separated values (no brackets) for VARCHAR storage
-                                    token_vec_str = ','.join(map(str, token_vec))
-                                    token_embedding_batch_params.append(
-                                        (doc_id, idx, token_text[:1000], token_vec_str, "{}")
-                                    )
+                                if token_data and len(token_data) == 2:  # Should be (tokens, embeddings)
+                                    tokens, embeddings = token_data
+                                    if tokens and embeddings and len(tokens) == len(embeddings):
+                                        for idx, (token_text, token_vec) in enumerate(zip(tokens, embeddings)):
+                                            # Store as comma-separated values for VARCHAR storage
+                                            token_vec_str = ','.join(map(str, token_vec))
+                                            token_embedding_batch_params.append(
+                                                (doc_id, idx, token_text[:1000], token_vec_str, "{}")
+                                            )
+                                    else:
+                                        logger.warning(f"Token/embedding length mismatch for doc {doc_id}: {len(tokens) if tokens else 0} tokens, {len(embeddings) if embeddings else 0} embeddings")
+                                else:
+                                    logger.warning(f"No token embeddings generated for doc {doc_id}")
                             except Exception as colbert_e:
                                 logger.error(f"Error generating ColBERT token embeddings for doc {doc_id}: {colbert_e}")
                     
                     if token_embedding_batch_params:
-                        # Insert token embeddings as VARCHAR comma-separated values
-                        sql_token_embeddings = """
-                        INSERT INTO RAG.DocumentTokenEmbeddings
-                        (doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
-                        VALUES (?, ?, ?, ?, ?)
-                        """
-                        cursor.executemany(sql_token_embeddings, token_embedding_batch_params)
-                        loaded_token_count += len(token_embedding_batch_params)
+                        try:
+                            # Insert token embeddings as VARCHAR comma-separated values
+                            sql_token_embeddings = """
+                            INSERT INTO RAG.DocumentTokenEmbeddings
+                            (doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
+                            VALUES (?, ?, ?, ?, ?)
+                            """
+                            cursor.executemany(sql_token_embeddings, token_embedding_batch_params)
+                            loaded_token_count += len(token_embedding_batch_params)
+                            logger.info(f"✅ Loaded {len(token_embedding_batch_params)} token embeddings for batch {batch_idx}")
+                        except Exception as token_e:
+                            logger.error(f"❌ Failed to insert token embeddings for batch {batch_idx}: {token_e}")
+                    else:
+                        logger.warning(f"⚠️ No token embeddings to insert for batch {batch_idx}")
 
                 connection.commit() 
                 

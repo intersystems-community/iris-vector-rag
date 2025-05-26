@@ -67,22 +67,43 @@ def extract_pmc_metadata(xml_file_path: str) -> Dict[str, Any]:
                 if kwd.text:
                     keywords.append(kwd.text)
         
+        # Create content by combining title, abstract, and other text
+        content = f"{title}\n\n{abstract}"
+        if authors:
+            content += f"\n\nAuthors: {', '.join(authors)}"
+        if keywords:
+            content += f"\n\nKeywords: {', '.join(keywords)}"
+        
         return {
-            "pmc_id": pmc_id,
+            "doc_id": pmc_id,
             "title": title,
+            "content": content,
             "abstract": abstract,
             "authors": authors,
-            "keywords": keywords
+            "keywords": keywords,
+            "metadata": {
+                "source": "PMC",
+                "file_path": xml_file_path,
+                "pmc_id": pmc_id
+            }
         }
         
     except Exception as e:
         logger.error(f"Error processing {xml_file_path}: {e}")
+        pmc_id = os.path.basename(xml_file_path).replace('.xml', '')
         return {
-            "pmc_id": os.path.basename(xml_file_path).replace('.xml', ''),
+            "doc_id": pmc_id,
             "title": "Error",
+            "content": f"Failed to process: {str(e)}",
             "abstract": f"Failed to process: {str(e)}",
             "authors": [],
-            "keywords": []
+            "keywords": [],
+            "metadata": {
+                "source": "PMC",
+                "file_path": xml_file_path,
+                "pmc_id": pmc_id,
+                "error": str(e)
+            }
         }
 
 def process_pmc_files(directory: str, limit: int = 1000) -> Generator[Dict[str, Any], None, None]:

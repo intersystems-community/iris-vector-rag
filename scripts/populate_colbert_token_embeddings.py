@@ -3,7 +3,7 @@
 Populate ColBERT Token Embeddings Script
 
 This script populates the DocumentTokenEmbeddings table with token-level embeddings
-for existing documents in the RAG_HNSW.SourceDocuments table.
+for existing documents in the RAG.SourceDocuments table.
 """
 
 import os
@@ -31,8 +31,8 @@ def get_documents_without_token_embeddings(iris_connector, limit: int = 100) -> 
         # First get doc_ids that don't have token embeddings
         query_doc_ids = f"""
         SELECT TOP {limit} s.doc_id
-        FROM RAG_HNSW.SourceDocuments s
-        LEFT JOIN RAG_HNSW.DocumentTokenEmbeddings t ON s.doc_id = t.doc_id
+        FROM RAG.SourceDocuments s
+        LEFT JOIN RAG.DocumentTokenEmbeddings t ON s.doc_id = t.doc_id
         WHERE t.doc_id IS NULL
         """
         
@@ -44,7 +44,7 @@ def get_documents_without_token_embeddings(iris_connector, limit: int = 100) -> 
         # For each doc_id, fetch the text content separately
         for doc_id in doc_ids:
             try:
-                cursor.execute("SELECT text_content FROM RAG_HNSW.SourceDocuments WHERE doc_id = ?", (doc_id,))
+                cursor.execute("SELECT text_content FROM RAG.SourceDocuments WHERE doc_id = ?", (doc_id,))
                 result = cursor.fetchone()
                 
                 if result and result[0]:
@@ -75,7 +75,7 @@ def insert_token_embeddings(iris_connector, doc_id: str, tokens: List[str], toke
             embedding_str = ','.join(map(str, embedding))
             
             insert_sql = """
-            INSERT INTO RAG_HNSW.DocumentTokenEmbeddings 
+            INSERT INTO RAG.DocumentTokenEmbeddings 
             (doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
             VALUES (?, ?, ?, ?, ?)
             """
@@ -164,19 +164,19 @@ def verify_token_embeddings(iris_connector) -> Dict[str, Any]:
         cursor = iris_connector.cursor()
         
         # Count total token embeddings
-        cursor.execute("SELECT COUNT(*) FROM RAG_HNSW.DocumentTokenEmbeddings")
+        cursor.execute("SELECT COUNT(*) FROM RAG.DocumentTokenEmbeddings")
         total_tokens = cursor.fetchone()[0]
         
         # Count documents with token embeddings
-        cursor.execute("SELECT COUNT(DISTINCT doc_id) FROM RAG_HNSW.DocumentTokenEmbeddings")
+        cursor.execute("SELECT COUNT(DISTINCT doc_id) FROM RAG.DocumentTokenEmbeddings")
         docs_with_tokens = cursor.fetchone()[0]
         
         # Count null embeddings
-        cursor.execute("SELECT COUNT(*) FROM RAG_HNSW.DocumentTokenEmbeddings WHERE token_embedding IS NULL")
+        cursor.execute("SELECT COUNT(*) FROM RAG.DocumentTokenEmbeddings WHERE token_embedding IS NULL")
         null_embeddings = cursor.fetchone()[0]
         
         # Get sample token embedding to verify format
-        cursor.execute("SELECT TOP 1 token_embedding FROM RAG_HNSW.DocumentTokenEmbeddings WHERE token_embedding IS NOT NULL")
+        cursor.execute("SELECT TOP 1 token_embedding FROM RAG.DocumentTokenEmbeddings WHERE token_embedding IS NOT NULL")
         sample_result = cursor.fetchone()
         sample_embedding = sample_result[0] if sample_result else None
         
