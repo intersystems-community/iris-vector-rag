@@ -885,3 +885,104 @@ def calculate_benchmark_metrics(results: List[Dict[str, Any]],
     # Add more benchmark types as needed
     
     return metrics
+
+def calculate_retrieval_metrics(retrieved_documents: List[Dict[str, Any]], query: str) -> Dict[str, float]:
+    """
+    Calculate retrieval-specific metrics for a single query
+    
+    Args:
+        retrieved_documents: List of retrieved documents
+        query: The original query string
+        
+    Returns:
+        Dictionary with retrieval metrics
+    """
+    if not retrieved_documents:
+        return {
+            "num_retrieved": 0,
+            "avg_score": 0.0,
+            "score_variance": 0.0,
+            "query_coverage": 0.0
+        }
+    
+    # Basic retrieval metrics
+    num_retrieved = len(retrieved_documents)
+    scores = [doc.get("score", 0.0) for doc in retrieved_documents if doc.get("score") is not None]
+    
+    avg_score = sum(scores) / len(scores) if scores else 0.0
+    score_variance = np.var(scores) if len(scores) > 1 else 0.0
+    
+    # Query coverage - how well do retrieved docs cover query terms
+    query_words = set(_tokenize(query.lower()))
+    if query_words:
+        all_doc_words = set()
+        for doc in retrieved_documents:
+            content = doc.get("content", "")
+            doc_words = set(_tokenize(content.lower()))
+            all_doc_words.update(doc_words)
+        
+        query_coverage = len(query_words.intersection(all_doc_words)) / len(query_words)
+    else:
+        query_coverage = 0.0
+    
+    return {
+        "num_retrieved": num_retrieved,
+        "avg_score": avg_score,
+        "score_variance": float(score_variance),
+        "query_coverage": query_coverage
+    }
+
+def calculate_answer_quality_metrics(answer: str, query: str, retrieved_documents: List[Dict[str, Any]]) -> Dict[str, float]:
+    """
+    Calculate answer quality metrics for a single query-answer pair
+    
+    Args:
+        answer: The generated answer
+        query: The original query
+        retrieved_documents: The documents used to generate the answer
+        
+    Returns:
+        Dictionary with answer quality metrics
+    """
+    if not answer:
+        return {
+            "answer_length": 0,
+            "query_relevance": 0.0,
+            "context_faithfulness": 0.0,
+            "completeness": 0.0
+        }
+    
+    # Basic answer metrics
+    answer_length = len(answer.split())
+    
+    # Query relevance - how well does answer address the query
+    query_words = set(_tokenize(query.lower()))
+    answer_words = set(_tokenize(answer.lower()))
+    
+    if query_words:
+        query_relevance = len(query_words.intersection(answer_words)) / len(query_words)
+    else:
+        query_relevance = 0.0
+    
+    # Context faithfulness - how well is answer supported by retrieved docs
+    if retrieved_documents:
+        context_text = " ".join([doc.get("content", "") for doc in retrieved_documents])
+        context_words = set(_tokenize(context_text.lower()))
+        
+        if answer_words:
+            context_faithfulness = len(answer_words.intersection(context_words)) / len(answer_words)
+        else:
+            context_faithfulness = 0.0
+    else:
+        context_faithfulness = 0.0
+    
+    # Completeness - subjective measure based on answer length and content
+    # Simple heuristic: longer answers that cover more query terms are more complete
+    completeness = min(1.0, (answer_length / 50.0) * (1.0 + query_relevance))
+    
+    return {
+        "answer_length": answer_length,
+        "query_relevance": query_relevance,
+        "context_faithfulness": context_faithfulness,
+        "completeness": completeness
+    }

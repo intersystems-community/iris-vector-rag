@@ -200,6 +200,50 @@ def get_colbert_doc_encoder_func(model_name: str = "stub_colbert_doc_encoder") -
     return mock_colbert_doc_encode
 
 
+def get_colbert_query_encoder_func(model_name: str = "stub_colbert_query_encoder") -> Callable[[str], List[List[float]]]:
+    """
+    Returns a mock ColBERT query encoder function.
+    Takes a text string and returns mock query token embeddings.
+    Expected output: List[List[float]] -> [token_embedding_vector, ...]
+    """
+    logger.info(f"Using mock ColBERT query encoder: {model_name}")
+
+    def mock_colbert_query_encode(text: str) -> List[List[float]]:
+        tokens = text.split()[:32]  # Limit to first 32 query tokens
+        if not tokens:
+            return []
+        
+        query_embeddings = []
+        for i, token_str in enumerate(tokens):
+            # Create a simple mock embedding based on token index and length
+            mock_embedding = [((i % 10) + len(token_str) % 10) * 0.01] * 128  # 128-dim
+            query_embeddings.append(mock_embedding)
+        return query_embeddings
+
+    return mock_colbert_query_encode
+
+
+def get_colbert_doc_encoder_func_adapted(model_name: str = "stub_colbert_doc_encoder") -> Callable[[str], List[List[float]]]:
+    """
+    Returns an adapted ColBERT document encoder function that matches the OptimizedColBERT pipeline interface.
+    Takes a text string and returns just the token embeddings (without token text).
+    Expected output: List[List[float]] -> [token_embedding_vector, ...]
+    """
+    logger.info(f"Using adapted mock ColBERT document encoder: {model_name}")
+    
+    # Get the original encoder that returns tuples
+    original_encoder = get_colbert_doc_encoder_func(model_name)
+    
+    def adapted_colbert_doc_encode(text: str) -> List[List[float]]:
+        # Get the original output with token text and embeddings
+        token_data = original_encoder(text)
+        # Extract just the embeddings (second element of each tuple)
+        embeddings_only = [embedding for token_text, embedding in token_data]
+        return embeddings_only
+    
+    return adapted_colbert_doc_encode
+
+
 def get_iris_connector(db_url: Optional[str] = None) -> sqlalchemy.engine.base.Connection:
     if db_url is None:
         db_url = os.getenv("IRIS_CONNECTION_URL")

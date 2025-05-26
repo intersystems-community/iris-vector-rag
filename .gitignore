@@ -131,11 +131,24 @@ benchmark_results/
 # Specific generated files (if they appear in root and not in the above dirs)
 test_results_1000_docs.json
 benchmark_results_*.json
+enterprise_validation_*.json
+enterprise_scale_validation_*.json
+production_validation_results_*.json
+colbert_performance_comparison_*.json
+stress_test_report_*.md
 
 # Investigation and experimental directories
 investigation/
 scripts_to_review/
 debug_archive/
+archive/
+
+# Additional temporary files and patterns
+*_comparison_*.json
+*_chunking_*.json
+explore_*.py
+research_*.py
+test_*_integration.py
 
 # Workspace files
 *.code-workspace
