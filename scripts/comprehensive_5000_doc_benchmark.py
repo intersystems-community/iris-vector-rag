@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
 """
-Enterprise Scale RAG System Validation - 50,000 Documents
+Comprehensive 5000-Document RAG Performance Benchmark
 
-This script validates the RAG system at true enterprise scale with 50,000 real PMC documents,
-demonstrating production-ready capabilities:
+This script runs a comprehensive performance comparison of all 7 RAG techniques
+on 5000 real PMC documents, including the new Hybrid iFind pipeline:
 
-1. Large-scale batch processing for 50k document ingestion
-2. Optimized data loading with progress tracking and error handling  
-3. Real PyTorch embeddings for 50k documents with batch optimization
-4. System performance monitoring during large-scale operations
-5. HNSW performance testing with 50k dataset
-6. Comprehensive RAG benchmarks on full 50k dataset
-7. Query performance and semantic search quality validation
-8. All RAG techniques tested (Basic RAG, HyDE, CRAG, ColBERT, NodeRAG, GraphRAG)
-9. System stability and resource usage monitoring
-10. Performance characteristics and scaling recommendations
+1. BasicRAG
+2. HyDE
+3. CRAG
+4. ColBERT (Optimized)
+5. NodeRAG
+6. GraphRAG
+7. Hybrid iFind+Graph+Vector RAG
+
+Features:
+- Scales to 5000 real PMC documents (no mocks)
+- Real PyTorch models and LLM calls
+- Comprehensive performance metrics
+- Resource usage monitoring
+- Diverse biomedical query testing
+- Detailed comparative analysis
+- Enterprise-scale validation
 
 Usage:
-    python scripts/enterprise_scale_50k_validation.py --target-docs 50000
-    python scripts/enterprise_scale_50k_validation.py --target-docs 50000 --skip-ingestion
+    python scripts/comprehensive_5000_doc_benchmark.py
+    python scripts/comprehensive_5000_doc_benchmark.py --skip-ingestion
+    python scripts/comprehensive_5000_doc_benchmark.py --fast-mode
 """
 
 import os
@@ -51,6 +58,7 @@ from crag.pipeline import CRAGPipeline
 from colbert.pipeline_optimized import OptimizedColbertRAGPipeline
 from noderag.pipeline import NodeRAGPipeline
 from graphrag.pipeline import GraphRAGPipeline
+from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
 
 # Configure logging
 logging.basicConfig(
@@ -64,8 +72,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 @dataclass
-class EnterpriseValidationResult:
-    """Results from enterprise scale validation"""
+class BenchmarkResult:
+    """Results from comprehensive benchmark"""
     test_name: str
     success: bool
     metrics: Dict[str, Any]
@@ -125,15 +133,15 @@ class SystemMonitor:
                 
             time.sleep(5)  # Monitor every 5 seconds
 
-class EnterpriseScaleValidator:
-    """Validates RAG system at enterprise scale (50k documents)"""
+class Comprehensive5000DocBenchmark:
+    """Comprehensive benchmark for all 7 RAG techniques on 5000 documents"""
     
-    def __init__(self, target_docs: int = 50000):
+    def __init__(self, target_docs: int = 5000):
         self.target_docs = target_docs
         self.connection = None
         self.embedding_func = None
         self.llm_func = None
-        self.results: List[EnterpriseValidationResult] = []
+        self.results: List[BenchmarkResult] = []
         self.start_time = time.time()
         self.monitor = SystemMonitor()
         
@@ -216,13 +224,13 @@ class EnterpriseScaleValidator:
         except Exception as e:
             logger.error(f"❌ Enterprise database setup failed: {e}")
             return False
-    def ingest_documents_to_target(self, skip_ingestion: bool = False) -> EnterpriseValidationResult:
+    def ingest_documents_to_target(self, skip_ingestion: bool = False) -> BenchmarkResult:
         """Ingest documents to reach target count with enterprise-scale batch processing"""
         start_time = time.time()
         
         if skip_ingestion:
             logger.info(f"⏭️ Skipping document ingestion (--skip-ingestion flag)")
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="document_ingestion",
                 success=True,
                 metrics={"skipped": True},
@@ -243,7 +251,7 @@ class EnterpriseScaleValidator:
             if current_count >= self.target_docs:
                 logger.info(f"✅ Target already reached: {current_count} >= {self.target_docs}")
                 monitoring_data = self.monitor.stop_monitoring()
-                return EnterpriseValidationResult(
+                return BenchmarkResult(
                     test_name="document_ingestion",
                     success=True,
                     metrics={
@@ -375,7 +383,7 @@ class EnterpriseScaleValidator:
             else:
                 logger.warning(f"⚠️ Partial ingestion: {final_count}/{self.target_docs} documents")
             
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="document_ingestion",
                 success=success,
                 metrics=metrics,
@@ -385,14 +393,14 @@ class EnterpriseScaleValidator:
         except Exception as e:
             self.monitor.stop_monitoring()
             logger.error(f"❌ Enterprise document ingestion failed: {e}")
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="document_ingestion",
                 success=False,
                 metrics={},
                 duration_seconds=time.time() - start_time,
                 error=str(e)
             )
-    def test_hnsw_performance_50k(self) -> EnterpriseValidationResult:
+    def test_hnsw_performance_50k(self) -> BenchmarkResult:
         """Test HNSW performance with 50k documents"""
         start_time = time.time()
         logger.info("🔍 Testing HNSW performance at 50k scale...")
@@ -512,7 +520,7 @@ class EnterpriseScaleValidator:
             
             logger.info(f"✅ HNSW Performance: {queries_per_second:.2f} queries/sec, {avg_total_time:.1f}ms avg")
             
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="hnsw_performance_50k",
                 success=success,
                 metrics=metrics,
@@ -522,37 +530,43 @@ class EnterpriseScaleValidator:
         except Exception as e:
             self.monitor.stop_monitoring()
             logger.error(f"❌ HNSW performance test failed: {e}")
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="hnsw_performance_50k",
                 success=False,
                 metrics={},
                 duration_seconds=time.time() - start_time,
                 error=str(e)
             )
-    def test_all_rag_techniques_50k(self, skip_colbert=False, skip_noderag=False, skip_graphrag=False, fast_mode=False) -> EnterpriseValidationResult:
-        """Test all RAG techniques with enterprise documents"""
+    def test_all_rag_techniques_5000(self, skip_colbert=False, skip_noderag=False, skip_graphrag=False, fast_mode=False) -> BenchmarkResult:
+        """Test all 7 RAG techniques with 5000 documents"""
         start_time = time.time()
-        logger.info("🎯 Testing all RAG techniques at 50k scale...")
+        logger.info("🎯 Testing all 7 RAG techniques at 5000-document scale...")
         
         try:
             self.monitor.start_monitoring()
             
-            # Test queries for enterprise validation
+            # Comprehensive biomedical test queries
             if fast_mode:
                 test_queries = [
                     "What are the latest treatments for type 2 diabetes?",
-                    "How does machine learning improve medical diagnosis accuracy?"
+                    "How does machine learning improve medical diagnosis accuracy?",
+                    "What are the mechanisms of cancer immunotherapy?"
                 ]
-                logger.info("🚀 Fast mode: Using 2 test queries")
+                logger.info("🚀 Fast mode: Using 3 test queries")
             else:
                 test_queries = [
                     "What are the latest treatments for type 2 diabetes?",
                     "How does machine learning improve medical diagnosis accuracy?",
                     "What are the mechanisms of cancer immunotherapy?",
                     "How do genetic mutations contribute to disease development?",
-                    "What role does AI play in modern healthcare systems?"
+                    "What role does AI play in modern healthcare systems?",
+                    "What are the effects of metformin on cardiovascular outcomes?",
+                    "How do SGLT2 inhibitors protect kidney function?",
+                    "What is the mechanism of action of GLP-1 receptor agonists?",
+                    "How do statins prevent cardiovascular disease?",
+                    "What are the mechanisms of antibiotic resistance?"
                 ]
-                logger.info("📋 Full mode: Using 5 test queries")
+                logger.info("📋 Full mode: Using 10 comprehensive biomedical queries")
             
             # Initialize all RAG pipelines with proper configurations
             mock_colbert_encoder = self._create_mock_colbert_encoder(128)
@@ -615,6 +629,17 @@ class EnterpriseScaleValidator:
             else:
                 logger.info("⏭️ Skipping GraphRAG pipeline")
             
+            # Hybrid iFind+Graph+Vector RAG - NEW 7th technique
+            try:
+                pipelines["Hybrid iFind RAG"] = HybridiFindRAGPipeline(
+                    iris_connector=self.connection,
+                    embedding_func=self.embedding_func,
+                    llm_func=self.llm_func
+                )
+                logger.info("✅ Hybrid iFind+Graph+Vector RAG pipeline initialized")
+            except Exception as e:
+                logger.error(f"❌ Hybrid iFind RAG initialization failed: {e}")
+            
             technique_results = {}
             
             for technique_name, pipeline in pipelines.items():
@@ -648,6 +673,9 @@ class EnterpriseScaleValidator:
                         elif technique_name == "GraphRAG":
                             # GraphRAG needs start nodes parameter
                             result = pipeline.run(query, top_n_start_nodes=3)
+                        elif technique_name == "Hybrid iFind RAG":
+                            # Hybrid iFind RAG uses query method with multi-modal search
+                            result = pipeline.query(query)
                         else:
                             # BasicRAG and HyDE use standard parameters
                             result = pipeline.run(query)
@@ -717,7 +745,7 @@ class EnterpriseScaleValidator:
             
             logger.info(f"✅ All RAG Techniques: {overall_success_rate:.2f} success rate, {overall_avg_time:.1f}ms avg")
             
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="all_rag_techniques_50k",
                 success=success,
                 metrics=metrics,
@@ -727,14 +755,14 @@ class EnterpriseScaleValidator:
         except Exception as e:
             self.monitor.stop_monitoring()
             logger.error(f"❌ RAG techniques test failed: {e}")
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="all_rag_techniques_50k",
                 success=False,
                 metrics={},
                 duration_seconds=time.time() - start_time,
                 error=str(e)
             )
-    def test_enterprise_query_performance(self) -> EnterpriseValidationResult:
+    def test_enterprise_query_performance(self) -> BenchmarkResult:
         """Test query performance and semantic search quality at enterprise scale"""
         start_time = time.time()
         logger.info("⚡ Testing enterprise query performance...")
@@ -868,7 +896,7 @@ class EnterpriseScaleValidator:
             
             logger.info(f"✅ Enterprise Query Performance: {success_rate:.2f} success rate, {queries_per_second:.2f} queries/sec")
             
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="enterprise_query_performance",
                 success=success,
                 metrics=metrics,
@@ -878,7 +906,7 @@ class EnterpriseScaleValidator:
         except Exception as e:
             self.monitor.stop_monitoring()
             logger.error(f"❌ Enterprise query performance test failed: {e}")
-            return EnterpriseValidationResult(
+            return BenchmarkResult(
                 test_name="enterprise_query_performance",
                 success=False,
                 metrics={},
@@ -1044,9 +1072,9 @@ class EnterpriseScaleValidator:
 
 def main():
     """Main function"""
-    parser = argparse.ArgumentParser(description="Enterprise Scale RAG System Validation - 50k Documents")
-    parser.add_argument("--target-docs", type=int, default=1000,
-                       help="Target number of documents for enterprise testing (default: 1000)")
+    parser = argparse.ArgumentParser(description="Comprehensive 5000-Document RAG Performance Benchmark")
+    parser.add_argument("--target-docs", type=int, default=5000,
+                       help="Target number of documents for comprehensive benchmark (default: 5000)")
     parser.add_argument("--skip-ingestion", action="store_true",
                        help="Skip document ingestion phase")
     parser.add_argument("--fast", action="store_true",
@@ -1060,12 +1088,12 @@ def main():
     
     args = parser.parse_args()
     
-    logger.info("Enterprise Scale RAG System Validation")
-    logger.info(f"Testing with {args.target_docs} documents using real PyTorch models")
+    logger.info("Comprehensive 5000-Document RAG Performance Benchmark")
+    logger.info(f"Testing all 7 RAG techniques with {args.target_docs} documents using real PyTorch models")
     
-    # Run enterprise validation
-    validator = EnterpriseScaleValidator(target_docs=args.target_docs)
-    success = validator.run_enterprise_validation_suite(
+    # Run comprehensive benchmark
+    benchmark = Comprehensive5000DocBenchmark(target_docs=args.target_docs)
+    success = benchmark.run_enterprise_validation_suite(
         skip_ingestion=args.skip_ingestion,
         skip_colbert=args.skip_colbert or args.fast,
         skip_noderag=args.skip_noderag,

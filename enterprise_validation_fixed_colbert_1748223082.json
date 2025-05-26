@@ -1,0 +1,396 @@
+{
+  "timestamp": 1748223082.647579,
+  "total_techniques_tested": 7,
+  "successful_techniques": 7,
+  "test_queries": [
+    "What are the latest treatments for diabetes?",
+    "How does machine learning improve medical diagnosis?",
+    "What are the mechanisms of cancer immunotherapy?",
+    "How do genetic mutations contribute to disease development?",
+    "What role does AI play in modern healthcare systems?"
+  ],
+  "technique_results": {
+    "BasicRAG": {
+      "technique": "BasicRAG",
+      "total_time": 2.810094118118286,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 1.0345029830932617,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.46582603454589844,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.43198418617248535,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.4778299331665039,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.3998258113861084,
+          "documents_found": 5,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.5620188236236572,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 25,
+      "avg_documents_per_query": 5.0
+    },
+    "OptimizedColBERT": {
+      "technique": "OptimizedColBERT",
+      "total_time": 15.55678105354309,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 2.9330382347106934,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 2.822892189025879,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 2.8388547897338867,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 3.2707607746124268,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 3.6911182403564453,
+          "documents_found": 5,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 3.1113562107086183,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 25,
+      "avg_documents_per_query": 5.0
+    },
+    "HyDE": {
+      "technique": "HyDE",
+      "total_time": 0.17345213890075684,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 0.06196188926696777,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.02801513671875,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.027570009231567383,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.02759695053100586,
+          "documents_found": 5,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.02818894386291504,
+          "documents_found": 5,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.03469042778015137,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 25,
+      "avg_documents_per_query": 5.0
+    },
+    "CRAG": {
+      "technique": "CRAG",
+      "total_time": 2.793566942214966,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 0.5514829158782959,
+          "documents_found": 18,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.5543270111083984,
+          "documents_found": 16,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.5530259609222412,
+          "documents_found": 19,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.5546770095825195,
+          "documents_found": 19,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.5798430442810059,
+          "documents_found": 19,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.5587133884429931,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 91,
+      "avg_documents_per_query": 18.2
+    },
+    "NodeRAG": {
+      "technique": "NodeRAG",
+      "total_time": 0.36165809631347656,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 0.07715392112731934,
+          "documents_found": 20,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.07159805297851562,
+          "documents_found": 20,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.07035422325134277,
+          "documents_found": 20,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.07007122039794922,
+          "documents_found": 20,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.07234978675842285,
+          "documents_found": 20,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.07233161926269531,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 100,
+      "avg_documents_per_query": 20.0
+    },
+    "GraphRAG": {
+      "technique": "GraphRAG",
+      "total_time": 0.24527287483215332,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 0.09820079803466797,
+          "documents_found": 20,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.0348811149597168,
+          "documents_found": 20,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.03764700889587402,
+          "documents_found": 20,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.03977084159851074,
+          "documents_found": 20,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.0346677303314209,
+          "documents_found": 20,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.04905457496643066,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 100,
+      "avg_documents_per_query": 20.0
+    },
+    "Hybrid iFind RAG": {
+      "technique": "Hybrid iFind RAG",
+      "total_time": 0.7535710334777832,
+      "query_results": [
+        {
+          "query_id": 0,
+          "query": "What are the latest treatments for diabetes?",
+          "time_seconds": 0.44295501708984375,
+          "documents_found": 0,
+          "success": true
+        },
+        {
+          "query_id": 1,
+          "query": "How does machine learning improve medical diagnosi...",
+          "time_seconds": 0.1637120246887207,
+          "documents_found": 0,
+          "success": true
+        },
+        {
+          "query_id": 2,
+          "query": "What are the mechanisms of cancer immunotherapy?",
+          "time_seconds": 0.06364202499389648,
+          "documents_found": 0,
+          "success": true
+        },
+        {
+          "query_id": 3,
+          "query": "How do genetic mutations contribute to disease dev...",
+          "time_seconds": 0.016335010528564453,
+          "documents_found": 0,
+          "success": true
+        },
+        {
+          "query_id": 4,
+          "query": "What role does AI play in modern healthcare system...",
+          "time_seconds": 0.06685400009155273,
+          "documents_found": 0,
+          "success": true
+        }
+      ],
+      "avg_time_per_query": 0.15071420669555663,
+      "success_count": 5,
+      "error_count": 0,
+      "total_documents_found": 0,
+      "avg_documents_per_query": 0.0
+    }
+  },
+  "performance_ranking": [
+    [
+      "HyDE",
+      0.03469042778015137
+    ],
+    [
+      "GraphRAG",
+      0.04905457496643066
+    ],
+    [
+      "NodeRAG",
+      0.07233161926269531
+    ],
+    [
+      "Hybrid iFind RAG",
+      0.15071420669555663
+    ],
+    [
+      "CRAG",
+      0.5587133884429931
+    ],
+    [
+      "BasicRAG",
+      0.5620188236236572
+    ],
+    [
+      "OptimizedColBERT",
+      3.1113562107086183
+    ]
+  ],
+  "retrieval_ranking": [
+    [
+      "NodeRAG",
+      20.0
+    ],
+    [
+      "GraphRAG",
+      20.0
+    ],
+    [
+      "CRAG",
+      18.2
+    ],
+    [
+      "BasicRAG",
+      5.0
+    ],
+    [
+      "OptimizedColBERT",
+      5.0
+    ],
+    [
+      "HyDE",
+      5.0
+    ],
+    [
+      "Hybrid iFind RAG",
+      0.0
+    ]
+  ]
+}

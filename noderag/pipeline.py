@@ -392,13 +392,13 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k_seeds: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
         """
         Runs the full NodeRAG pipeline (query-time).
         """
         logger.info(f"NodeRAG: Running pipeline for query: '{query_text[:50]}...'")
         # Note: Graph construction is an offline step, not part of 'run'
-        retrieved_documents = self.retrieve_documents_from_graph(query_text, top_k_seeds, similarity_threshold)
+        retrieved_documents = self.retrieve_documents_from_graph(query_text, top_k, similarity_threshold)
         answer = self.generate_answer(query_text, retrieved_documents)
 
         return {

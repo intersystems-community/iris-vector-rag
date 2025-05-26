@@ -47,9 +47,9 @@ class BasicRAGPipeline:
             
             # Use RAG_HNSW schema with similarity threshold instead of fixed TOP N
             sql_query = f"""
-            SELECT doc_id, text_content,
+            SELECT TOP {top_k} doc_id, text_content,
                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS similarity_score
-            FROM RAG_HNSW.SourceDocuments
+            FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
               AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
             ORDER BY similarity_score DESC
@@ -82,7 +82,19 @@ class BasicRAGPipeline:
             print("BasicRAG: No documents retrieved. Returning a default response.")
             return "I could not find enough information to answer your question."
 
-        context = "\n\n".join([doc.content for doc in retrieved_docs])
+        # Limit context to prevent token overflow - truncate documents if needed
+        context_parts = []
+        total_chars = 0
+        max_context_chars = 8000  # Conservative limit to stay under 16K tokens
+        
+        for doc in retrieved_docs:
+            doc_content = doc.content[:2000]  # Limit each document to 2000 chars
+            if total_chars + len(doc_content) > max_context_chars:
+                break
+            context_parts.append(doc_content)
+            total_chars += len(doc_content)
+        
+        context = "\n\n".join(context_parts)
         
         # Basic prompt engineering
         prompt = f"""You are a helpful AI assistant. Answer the question based on the provided context.

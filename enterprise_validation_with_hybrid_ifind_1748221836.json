@@ -1,0 +1,318 @@
+{
+  "timestamp": 1748221836,
+  "validation_time": 1.0475711822509766,
+  "fast_mode": false,
+  "test_queries": [
+    "What are the main applications of machine learning in healthcare?",
+    "How does deep learning differ from traditional machine learning?",
+    "What are the key challenges in natural language processing?",
+    "Explain the concept of transfer learning in AI",
+    "What are the ethical considerations in artificial intelligence?"
+  ],
+  "techniques_tested": 6,
+  "successful_techniques": 6,
+  "overall_success_rate": 0.16666666666666666,
+  "results": {
+    "BasicRAG": {
+      "technique": "BasicRAG",
+      "total_queries": 5,
+      "successful_queries": 0,
+      "failed_queries": 5,
+      "average_time": 0.042171287536621097,
+      "query_results": [
+        {
+          "query": "What are the main applications of machine learning in healthcare?",
+          "success": false,
+          "time": 0.058013916015625,
+          "error": "'BasicRAGPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        },
+        {
+          "query": "How does deep learning differ from traditional machine learning?",
+          "success": false,
+          "time": 0.049169063568115234,
+          "error": "'BasicRAGPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the key challenges in natural language processing?",
+          "success": false,
+          "time": 0.04129838943481445,
+          "error": "'BasicRAGPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        },
+        {
+          "query": "Explain the concept of transfer learning in AI",
+          "success": false,
+          "time": 0.03249096870422363,
+          "error": "'BasicRAGPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the ethical considerations in artificial intelligence?",
+          "success": false,
+          "time": 0.02988409996032715,
+          "error": "'BasicRAGPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        }
+      ],
+      "errors": [
+        "Query 1: 'BasicRAGPipeline' object has no attribute 'generate_response'",
+        "Query 2: 'BasicRAGPipeline' object has no attribute 'generate_response'",
+        "Query 3: 'BasicRAGPipeline' object has no attribute 'generate_response'",
+        "Query 4: 'BasicRAGPipeline' object has no attribute 'generate_response'",
+        "Query 5: 'BasicRAGPipeline' object has no attribute 'generate_response'"
+      ],
+      "success_rate": 0.0
+    },
+    "HyDE": {
+      "technique": "HyDE",
+      "total_queries": 5,
+      "successful_queries": 0,
+      "failed_queries": 5,
+      "average_time": 0.006001853942871093,
+      "query_results": [
+        {
+          "query": "What are the main applications of machine learning in healthcare?",
+          "success": false,
+          "time": 0.028689146041870117,
+          "error": "'HyDEPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        },
+        {
+          "query": "How does deep learning differ from traditional machine learning?",
+          "success": false,
+          "time": 0.0003509521484375,
+          "error": "'HyDEPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the key challenges in natural language processing?",
+          "success": false,
+          "time": 0.0003261566162109375,
+          "error": "'HyDEPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        },
+        {
+          "query": "Explain the concept of transfer learning in AI",
+          "success": false,
+          "time": 0.0003218650817871094,
+          "error": "'HyDEPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the ethical considerations in artificial intelligence?",
+          "success": false,
+          "time": 0.0003211498260498047,
+          "error": "'HyDEPipeline' object has no attribute 'generate_response'",
+          "num_documents": 0
+        }
+      ],
+      "errors": [
+        "Query 1: 'HyDEPipeline' object has no attribute 'generate_response'",
+        "Query 2: 'HyDEPipeline' object has no attribute 'generate_response'",
+        "Query 3: 'HyDEPipeline' object has no attribute 'generate_response'",
+        "Query 4: 'HyDEPipeline' object has no attribute 'generate_response'",
+        "Query 5: 'HyDEPipeline' object has no attribute 'generate_response'"
+      ],
+      "success_rate": 0.0
+    },
+    "CRAG": {
+      "technique": "CRAG",
+      "total_queries": 5,
+      "successful_queries": 0,
+      "failed_queries": 5,
+      "average_time": 4.291534423828125e-07,
+      "query_results": [
+        {
+          "query": "What are the main applications of machine learning in healthcare?",
+          "success": false,
+          "time": 1.1920928955078125e-06,
+          "error": "'CRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "How does deep learning differ from traditional machine learning?",
+          "success": false,
+          "time": 9.5367431640625e-07,
+          "error": "'CRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the key challenges in natural language processing?",
+          "success": false,
+          "time": 0.0,
+          "error": "'CRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "Explain the concept of transfer learning in AI",
+          "success": false,
+          "time": 0.0,
+          "error": "'CRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the ethical considerations in artificial intelligence?",
+          "success": false,
+          "time": 0.0,
+          "error": "'CRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        }
+      ],
+      "errors": [
+        "Query 1: 'CRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 2: 'CRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 3: 'CRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 4: 'CRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 5: 'CRAGPipeline' object has no attribute 'retrieve_documents'"
+      ],
+      "success_rate": 0.0
+    },
+    "NodeRAG": {
+      "technique": "NodeRAG",
+      "total_queries": 5,
+      "successful_queries": 0,
+      "failed_queries": 5,
+      "average_time": 5.7220458984375e-07,
+      "query_results": [
+        {
+          "query": "What are the main applications of machine learning in healthcare?",
+          "success": false,
+          "time": 9.5367431640625e-07,
+          "error": "'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "How does deep learning differ from traditional machine learning?",
+          "success": false,
+          "time": 0.0,
+          "error": "'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the key challenges in natural language processing?",
+          "success": false,
+          "time": 9.5367431640625e-07,
+          "error": "'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "Explain the concept of transfer learning in AI",
+          "success": false,
+          "time": 9.5367431640625e-07,
+          "error": "'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the ethical considerations in artificial intelligence?",
+          "success": false,
+          "time": 0.0,
+          "error": "'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        }
+      ],
+      "errors": [
+        "Query 1: 'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 2: 'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 3: 'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 4: 'NodeRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 5: 'NodeRAGPipeline' object has no attribute 'retrieve_documents'"
+      ],
+      "success_rate": 0.0
+    },
+    "GraphRAG": {
+      "technique": "GraphRAG",
+      "total_queries": 5,
+      "successful_queries": 0,
+      "failed_queries": 5,
+      "average_time": 2.384185791015625e-07,
+      "query_results": [
+        {
+          "query": "What are the main applications of machine learning in healthcare?",
+          "success": false,
+          "time": 0.0,
+          "error": "'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "How does deep learning differ from traditional machine learning?",
+          "success": false,
+          "time": 0.0,
+          "error": "'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the key challenges in natural language processing?",
+          "success": false,
+          "time": 1.1920928955078125e-06,
+          "error": "'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "Explain the concept of transfer learning in AI",
+          "success": false,
+          "time": 0.0,
+          "error": "'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        },
+        {
+          "query": "What are the ethical considerations in artificial intelligence?",
+          "success": false,
+          "time": 0.0,
+          "error": "'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+          "num_documents": 0
+        }
+      ],
+      "errors": [
+        "Query 1: 'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 2: 'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 3: 'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 4: 'GraphRAGPipeline' object has no attribute 'retrieve_documents'",
+        "Query 5: 'GraphRAGPipeline' object has no attribute 'retrieve_documents'"
+      ],
+      "success_rate": 0.0
+    },
+    "Hybrid iFind RAG": {
+      "technique": "Hybrid iFind RAG",
+      "total_queries": 5,
+      "successful_queries": 5,
+      "failed_queries": 0,
+      "average_time": 0.16122965812683104,
+      "query_results": [
+        {
+          "query": "What are the main applications of machine learning in healthcare?",
+          "success": true,
+          "time": 0.48734211921691895,
+          "num_documents": 0
+        },
+        {
+          "query": "How does deep learning differ from traditional machine learning?",
+          "success": true,
+          "time": 0.08919382095336914,
+          "num_documents": 0
+        },
+        {
+          "query": "What are the key challenges in natural language processing?",
+          "success": true,
+          "time": 0.08749604225158691,
+          "num_documents": 0
+        },
+        {
+          "query": "Explain the concept of transfer learning in AI",
+          "success": true,
+          "time": 0.10678625106811523,
+          "num_documents": 0
+        },
+        {
+          "query": "What are the ethical considerations in artificial intelligence?",
+          "success": true,
+          "time": 0.03533005714416504,
+          "num_documents": 0
+        }
+      ],
+      "errors": [],
+      "success_rate": 1.0
+    }
+  }
+}

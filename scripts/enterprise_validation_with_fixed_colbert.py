@@ -21,6 +21,9 @@ from basic_rag.pipeline import BasicRAGPipeline
 from colbert.pipeline_optimized import OptimizedColbertRAGPipeline
 from hyde.pipeline import HyDEPipeline
 from crag.pipeline import CRAGPipeline
+from noderag.pipeline import NodeRAGPipeline
+from graphrag.pipeline import GraphRAGPipeline
+from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -182,6 +185,39 @@ def run_enterprise_validation():
             logger.info("✅ CRAG pipeline initialized")
         except Exception as e:
             logger.error(f"❌ CRAG initialization failed: {e}")
+        
+        # NodeRAG
+        try:
+            pipelines["NodeRAG"] = NodeRAGPipeline(
+                iris_connector=iris_connector,
+                embedding_func=embedding_func,
+                llm_func=llm_func
+            )
+            logger.info("✅ NodeRAG pipeline initialized")
+        except Exception as e:
+            logger.error(f"❌ NodeRAG initialization failed: {e}")
+        
+        # GraphRAG
+        try:
+            pipelines["GraphRAG"] = GraphRAGPipeline(
+                iris_connector=iris_connector,
+                embedding_func=embedding_func,
+                llm_func=llm_func
+            )
+            logger.info("✅ GraphRAG pipeline initialized")
+        except Exception as e:
+            logger.error(f"❌ GraphRAG initialization failed: {e}")
+        
+        # Hybrid iFind+Graph+Vector RAG
+        try:
+            pipelines["Hybrid iFind RAG"] = HybridiFindRAGPipeline(
+                iris_connector=iris_connector,
+                embedding_func=embedding_func,
+                llm_func=llm_func
+            )
+            logger.info("✅ Hybrid iFind+Graph+Vector RAG pipeline initialized")
+        except Exception as e:
+            logger.error(f"❌ Hybrid iFind RAG initialization failed: {e}")
         
         # Test all pipelines
         all_results = {}

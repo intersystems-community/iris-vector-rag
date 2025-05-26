@@ -85,7 +85,7 @@ class CRAGPipeline:
         sql_query = f"""
             SELECT TOP 20 doc_id, text_content,
                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
-            FROM RAG_HNSW.SourceDocuments
+            FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
               AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
             ORDER BY score DESC
@@ -229,13 +229,23 @@ Answer:"""
         refined_context_list = self.retrieve_and_correct(query_text, top_k, web_top_k, initial_threshold, quality_threshold)
         answer = self.generate_answer(query_text, refined_context_list)
 
+        # Convert context chunks to document format for compatibility
+        retrieved_documents = []
+        for i, chunk in enumerate(refined_context_list):
+            retrieved_documents.append({
+                "id": f"crag_chunk_{i}",
+                "content": chunk,
+                "score": 1.0  # CRAG doesn't provide individual scores after processing
+            })
+
         return {
             "query": query_text,
             "answer": answer,
+            "retrieved_documents": retrieved_documents,
             "retrieved_context_chunks": refined_context_list,
             "initial_threshold": initial_threshold,
             "quality_threshold": quality_threshold,
-            "document_count": len(refined_context_list)
+            "document_count": len(retrieved_documents)
         }
 
 if __name__ == '__main__':

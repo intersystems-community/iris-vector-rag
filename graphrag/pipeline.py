@@ -186,7 +186,7 @@ class GraphRAGPipeline:
 
 
     @timing_decorator
-    def retrieve_documents_via_kg(self, query_text: str, top_n_start_nodes: int = 20) -> List[Document]:
+    def retrieve_documents_via_kg(self, query_text: str, top_k: int = 20) -> List[Document]:
         """
         Orchestrates Knowledge Graph-based retrieval using real data from RAG_HNSW.SourceDocuments.
         Since we don't have a proper knowledge graph yet, we'll use vector similarity on documents.
@@ -261,13 +261,13 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_n_start_nodes: int = 3) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.7) -> Dict[str, Any]:
         """
         Runs the full GraphRAG pipeline (query-time).
         """
         logger.info(f"GraphRAG: Running pipeline for query: '{query_text[:50]}...'")
         # Note: KG construction is an offline step, not part of 'run'
-        retrieved_documents = self.retrieve_documents_via_kg(query_text, top_n_start_nodes=top_n_start_nodes)
+        retrieved_documents = self.retrieve_documents_via_kg(query_text, top_k)
         answer = self.generate_answer(query_text, retrieved_documents)
 
         # Ensure retrieved_documents are returned in a format compatible with benchmark metrics
@@ -279,6 +279,8 @@ Answer:"""
             "query": query_text,
             "answer": answer,
             "retrieved_documents": [doc.to_dict() for doc in retrieved_documents], # Convert Document objects to dicts
+            "similarity_threshold": similarity_threshold,
+            "document_count": len(retrieved_documents)
         }
 
 if __name__ == '__main__':
