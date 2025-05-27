@@ -164,7 +164,7 @@ CREATE TABLE RAG_HNSW.DocumentSimilarities (
 ### Immediate Actions
 
 1. **Replace Non-Working SQL Files**
-   - Use [`common/db_init_working_reality.sql`](../common/db_init_working_reality.sql) as the primary schema
+   - Use [`common/db_init_simple.sql`](../common/db_init_simple.sql) as the primary schema
    - Archive or remove files with non-functional vector code
 
 2. **Update Application Code**
@@ -238,7 +238,7 @@ The system remains functional and can handle production workloads up to moderate
 
 ## Files Created/Updated
 
-- [`common/db_init_working_reality.sql`](../common/db_init_working_reality.sql) - Working schema based on actual capabilities
+- [`common/db_init_simple.sql`](../common/db_init_simple.sql) - Working schema based on actual capabilities
 - [`scripts/comprehensive_sql_cleanup_and_vector_implementation.py`](../scripts/comprehensive_sql_cleanup_and_vector_implementation.py) - Testing and validation script
 - This report documenting findings and recommendations
 

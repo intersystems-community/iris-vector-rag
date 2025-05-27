@@ -31,8 +31,9 @@ While the original NodeRAG concept typically uses Python-based graph libraries l
 
 ## Components Implemented
 
-### 1. SQL Functions (`common/noderag_cte.sql`)
-- `NodeRAGTraversal`: Core recursive CTE for multi-hop graph traversal
+### 1. SQL Functions (Removed - `common/noderag_cte.sql`)
+**Note**: SQL UDF files have been removed as they were not used by the current Python implementation.
+- `NodeRAGTraversal`: Core recursive CTE for multi-hop graph traversal (now implemented in Python)
 - `GetNodeRAGSeedNodes`: Helper function to identify starting nodes
 - `GetNodeContents`: Function to retrieve content for nodes
 - `GetNodeCentralityScores`: Function to calculate node importance

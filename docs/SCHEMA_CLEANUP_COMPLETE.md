@@ -78,7 +78,7 @@ The existing SQL schemas had significant issues that made them confusing and unn
 ## **MIGRATION STRATEGY**
 
 ### **For New Deployments:**
-Use [`common/schema_clean.sql`](common/schema_clean.sql) as the primary schema file.
+Use [`common/db_init_simple.sql`](../common/db_init_simple.sql) as the primary schema file.
 
 ### **For Existing Deployments:**
 1. **Backup existing data**

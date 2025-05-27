@@ -31,8 +31,9 @@ Our implementation leverages SQL recursive CTEs (Common Table Expressions) for e
 
 ## Components Implemented
 
-### 1. SQL Functions (`common/graphrag_cte.sql`)
-- `GraphRAGTraversal`: Core recursive CTE for multi-hop graph traversal
+### 1. SQL Functions (Removed - `common/graphrag_cte.sql`)
+**Note**: SQL UDF files have been removed as they were not used by the current Python implementation.
+- `GraphRAGTraversal`: Core recursive CTE for multi-hop graph traversal (now implemented in Python)
 - `FindGraphRAGStartNodes`: Helper function to identify starting nodes via vector similarity
 - `GetGraphNodeDetails`: Function to retrieve details for nodes
 - `GetConnectedNodes`: Function to get connections for a specific node
