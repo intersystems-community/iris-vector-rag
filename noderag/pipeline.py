@@ -180,17 +180,17 @@ class NodeRAGPipeline:
         current_top_k_seeds = int(top_n_seed)
         db_embedding_dimension = 768
 
-        # Construct SQL query based on which table to use - use HNSW schema like BasicRAG
+        # Construct SQL query based on which table to use - use RAG schema for Community Edition
         if use_source_docs:
             sql_query = f"""
                 SELECT TOP 20 doc_id AS node_id,
-                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
-                FROM RAG_HNSW.SourceDocuments
+                       VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
+                FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
-                  AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
+                  AND VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) > ?
                 ORDER BY score DESC
             """
-            logger.info("NodeRAG: Using RAG_HNSW.SourceDocuments for vector search.")
+            logger.info("NodeRAG: Using RAG.SourceDocuments for vector search.")
         else:
             sql_query = f"""
                 SELECT TOP 20 node_id,

@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 class RealPMCIngestionPipeline:
     """Complete real PMC data ingestion with chunking support"""
     
-    def __init__(self, data_dir: str = "data/pmc_oas_downloaded"):
+    def __init__(self, data_dir: str = "data/pmc_100k_downloaded"):
         self.data_dir = Path(data_dir)
         self.connection = None
         self.embedding_func = None

@@ -155,6 +155,19 @@ test_*_integration.py
 
 # IRIS configuration files
 *.cpf
+iris.key
+
+# Active ingestion data
+ingestion_checkpoint.pkl
+data/pmc_100k_downloaded/
+
+# Temporary development scripts
+scripts/test_*.py
+scripts/simple_*.py
+scripts/corrected_*.py
+scripts/fix_*.py
+scripts/minimal_*.py
+cleanup_for_git.py
 
 # Specific files from your project list (already covered by wildcards above but kept for explicitness if desired)
 # ODBC-2025.1.0.223.0-lnxubuntu2404arm64.tar.gz # Covered by *.tar.gz

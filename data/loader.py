@@ -57,13 +57,13 @@ def load_documents_to_iris(
             docs_for_token_embedding = [] # Store docs in this batch for subsequent token embedding
 
             for doc in current_doc_batch:
-                embedding_vector_str = None
+                embedding_vector = None
                 if embedding_func:
                     text_to_embed = doc.get("abstract") or doc.get("title", "")
                     if text_to_embed:
                         embedding = embedding_func([text_to_embed])[0]
-                        # Store as comma-separated values (no brackets) for VARCHAR storage
-                        embedding_vector_str = ','.join(map(str, embedding))
+                        # Format as string with brackets for IRIS VECTOR column
+                        embedding_vector = '[' + ','.join(map(str, embedding)) + ']'
                     else:
                         logger.warning(f"Document {doc.get('pmc_id')} has no abstract or title for sentence embedding.")
                 
@@ -76,14 +76,13 @@ def load_documents_to_iris(
                     doc.get("abstract"),
                     json.dumps(doc.get("authors", [])),
                     json.dumps(doc.get("keywords", [])),
-                    embedding_vector_str
+                    embedding_vector
                 )
                 source_doc_batch_params.append(doc_params)
                 docs_for_token_embedding.append(doc) # Save for token processing
             
             try:
-                # Use simple INSERT without TO_VECTOR - store embeddings as VARCHAR comma-separated values
-                # This is the working approach based on schema investigation
+                # Use simple INSERT with proper VECTOR data - IRIS will handle the conversion
                 sql_source_docs = """
                 INSERT INTO RAG.SourceDocuments
                 (doc_id, title, text_content, authors, keywords, embedding)
@@ -113,8 +112,8 @@ def load_documents_to_iris(
                                     tokens, embeddings = token_data
                                     if tokens and embeddings and len(tokens) == len(embeddings):
                                         for idx, (token_text, token_vec) in enumerate(zip(tokens, embeddings)):
-                                            # Store as comma-separated values for VARCHAR storage
-                                            token_vec_str = ','.join(map(str, token_vec))
+                                            # Format as string with brackets for IRIS VECTOR column
+                                            token_vec_str = '[' + ','.join(map(str, token_vec)) + ']'
                                             token_embedding_batch_params.append(
                                                 (doc_id, idx, token_text[:1000], token_vec_str, "{}")
                                             )
