@@ -6,6 +6,7 @@ from typing import List, Callable, Any, Optional, Dict, Tuple # Added Tuple
 import sqlalchemy
 import os
 import logging # Added for logger usage in get_llm_func
+import numpy as np
 
 logger = logging.getLogger(__name__) # Added for logger usage
 
@@ -70,16 +71,41 @@ def build_hf_embedder(model_name: str = DEFAULT_EMBEDDING_MODEL):
     @functools.lru_cache(maxsize=128) # Cache individual text embeddings
     def _embed_single_text(text: str) -> List[float]:
         with torch.no_grad():
-            inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
-            outputs = model(**inputs)
-            token_embeddings = outputs.last_hidden_state
-            attention_mask = inputs.attention_mask
-            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
-            sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
-            sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
-            pooled_embedding = sum_embeddings / sum_mask
-            normalized_embedding = torch.nn.functional.normalize(pooled_embedding, p=2, dim=1)
-            return normalized_embedding[0].cpu().tolist()
+            # Validate input text
+            if not text or not text.strip():
+                logger.warning("Empty or whitespace-only text provided for embedding")
+                return [0.0] * 768  # Return zero vector for e5-base-v2 dimensions
+            
+            try:
+                inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
+                outputs = model(**inputs)
+                token_embeddings = outputs.last_hidden_state
+                attention_mask = inputs.attention_mask
+                input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+                sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+                sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+                pooled_embedding = sum_embeddings / sum_mask
+                normalized_embedding = torch.nn.functional.normalize(pooled_embedding, p=2, dim=1)
+                
+                # Convert to numpy for NaN/inf checking
+                embedding_array = normalized_embedding[0].cpu().numpy()
+                
+                # Check for NaN or inf values and fix them
+                if np.any(np.isnan(embedding_array)) or np.any(np.isinf(embedding_array)):
+                    logger.warning(f"NaN/inf values detected in embedding for text: {text[:50]}...")
+                    embedding_array = np.nan_to_num(embedding_array, nan=0.0, posinf=1.0, neginf=-1.0)
+                    # Re-normalize after fixing
+                    norm = np.linalg.norm(embedding_array)
+                    if norm > 0:
+                        embedding_array = embedding_array / norm
+                    else:
+                        embedding_array = np.zeros_like(embedding_array)
+                
+                return embedding_array.tolist()
+                
+            except Exception as e:
+                logger.error(f"Error generating embedding for text '{text[:50]}...': {e}")
+                return [0.0] * 768  # Return zero vector on error
 
     def embedding_func_hf(texts: List[str]) -> List[List[float]]:
         return [_embed_single_text(t) for t in texts]

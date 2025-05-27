@@ -62,8 +62,8 @@ def load_documents_to_iris(
                     text_to_embed = doc.get("abstract") or doc.get("title", "")
                     if text_to_embed:
                         embedding = embedding_func([text_to_embed])[0]
-                        # Format as string with brackets for IRIS VECTOR column
-                        embedding_vector = '[' + ','.join(map(str, embedding)) + ']'
+                        # Format as comma-separated string for IRIS VECTOR column (no brackets)
+                        embedding_vector = ','.join(map(str, embedding))
                     else:
                         logger.warning(f"Document {doc.get('pmc_id')} has no abstract or title for sentence embedding.")
                 
@@ -112,8 +112,8 @@ def load_documents_to_iris(
                                     tokens, embeddings = token_data
                                     if tokens and embeddings and len(tokens) == len(embeddings):
                                         for idx, (token_text, token_vec) in enumerate(zip(tokens, embeddings)):
-                                            # Format as string with brackets for IRIS VECTOR column
-                                            token_vec_str = '[' + ','.join(map(str, token_vec)) + ']'
+                                            # Format as comma-separated string for IRIS VECTOR column (no brackets)
+                                            token_vec_str = ','.join(map(str, token_vec))
                                             token_embedding_batch_params.append(
                                                 (doc_id, idx, token_text[:1000], token_vec_str, "{}")
                                             )

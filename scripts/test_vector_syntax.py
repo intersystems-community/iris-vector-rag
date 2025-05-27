@@ -45,8 +45,8 @@ def test_vector_syntax():
             actual_type = cursor.fetchone()[0]
             print(f'✅ {syntax} -> {actual_type}')
             
-            # Test TO_VECTOR with this column
-            cursor.execute(f"INSERT INTO {test_table} (id, vec) VALUES (1, TO_VECTOR('[1,2,3]'))")
+            # Test TO_VECTOR with this column - CORRECTED SYNTAX
+            cursor.execute(f"INSERT INTO {test_table} (id, vec) VALUES (1, TO_VECTOR('1,2,3', double))")
             cursor.execute(f"SELECT vec FROM {test_table} WHERE id = 1")
             result = cursor.fetchone()[0]
             print(f'   TO_VECTOR test: {str(result)[:50]}...')

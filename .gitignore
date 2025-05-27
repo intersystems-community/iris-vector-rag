@@ -136,6 +136,9 @@ enterprise_scale_validation_*.json
 production_validation_results_*.json
 colbert_performance_comparison_*.json
 stress_test_report_*.md
+ingestion_report_*.json
+real_pmc_completion_report_*.json
+WORKING_HNSW_COMPARISON_REPORT_*.md
 
 # Investigation and experimental directories
 investigation/
@@ -167,6 +170,18 @@ scripts/simple_*.py
 scripts/corrected_*.py
 scripts/fix_*.py
 scripts/minimal_*.py
+scripts/monitor_*_fixed.py
+scripts/monitor_*_timing_fixed.py
+scripts/verify_*_fix.py
+scripts/convert_*.py
+scripts/configure_*.py
+scripts/deploy_*.py
+scripts/final_*.py
+scripts/query_*.py
+scripts/read_*.py
+scripts/schema_migration_*.py
+scripts/setup_ingestion_*.py
+scripts/vector_*.py
 cleanup_for_git.py
 
 # Specific files from your project list (already covered by wildcards above but kept for explicitness if desired)

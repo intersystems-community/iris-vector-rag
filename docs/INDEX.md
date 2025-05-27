@@ -31,11 +31,15 @@ Welcome to the RAG Templates project documentation. This page serves as a centra
 *   **[`HNSW_INDEXING_RECOMMENDATIONS.md`](HNSW_INDEXING_RECOMMENDATIONS.md)**: Production scaling recommendations with HNSW indexing for Enterprise Edition (14x performance improvement).
 *   **[`HNSW_VIEW_TEST_RESULTS.md`](HNSW_VIEW_TEST_RESULTS.md)**: Test results confirming view-based approach limitations, validating dual-table architecture recommendation.
 *   **[`IRIS_VERSION_MIGRATION_2025.md`](IRIS_VERSION_MIGRATION_2025.md)**: Migration guide and version-specific improvements in IRIS 2025.1.
+*   **[`VECTOR_SEARCH_COMMUNITY_VS_LICENSED_COMPARISON_REPORT.md`](VECTOR_SEARCH_COMMUNITY_VS_LICENSED_COMPARISON_REPORT.md)**: ✅ **NEW** - Comprehensive comparison between Community and Licensed editions for vector search capabilities.
+*   **[`DATABASE_STATE_ASSESSMENT_REPORT.md`](DATABASE_STATE_ASSESSMENT_REPORT.md)**: ✅ **NEW** - Current database state assessment and infrastructure validation report.
 
 ### 4.2. Technical Implementation Details
 *   **[`VECTOR_SEARCH_TECHNICAL_DETAILS.md`](VECTOR_SEARCH_TECHNICAL_DETAILS.md)**: Comprehensive technical details about vector search implementation, including environment information and code examples.
 *   **[`IRIS_VECTOR_SEARCH_LESSONS.md`](IRIS_VECTOR_SEARCH_LESSONS.md)**: Key lessons learned and best practices for IRIS vector search implementation.
 *   **[`VECTOR_SEARCH_DOCUMENTATION_INDEX.md`](VECTOR_SEARCH_DOCUMENTATION_INDEX.md)**: Central index for all vector search documentation and implementation approaches.
+*   **[`VECTOR_SEARCH_DOCUMENTATION_PLAN.md`](VECTOR_SEARCH_DOCUMENTATION_PLAN.md)**: ✅ **NEW** - Strategic plan for organizing and maintaining vector search documentation.
+*   **[`VECTOR_SEARCH_JIRA_IMPROVEMENTS.md`](VECTOR_SEARCH_JIRA_IMPROVEMENTS.md)**: ✅ **NEW** - Recommendations for IRIS vector search improvements and feature requests.
 
 ### 4.3. Historical Context & Limitations (Preserved for Reference)
 *   **[`IRIS_SQL_VECTOR_LIMITATIONS.md`](IRIS_SQL_VECTOR_LIMITATIONS.md)**: Historical documentation of limitations (largely resolved with current approach).
