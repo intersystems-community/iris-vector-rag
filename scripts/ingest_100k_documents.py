@@ -37,7 +37,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func, get_llm_func
-from data.loader import load_documents_to_iris
+from data.loader_varchar_fixed import load_documents_to_iris
 from data.pmc_processor import process_pmc_files
 from colbert.doc_encoder import get_colbert_doc_encoder
 

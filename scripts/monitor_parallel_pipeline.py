@@ -143,6 +143,17 @@ class ParallelPipelineMonitor:
                 'error': str(e)
             }
     
+    def _format_elapsed_time(self, elapsed_seconds):
+        """Format elapsed time in a human-readable way."""
+        if elapsed_seconds < 60:
+            return f"{elapsed_seconds:.1f} seconds"
+        elif elapsed_seconds < 3600:
+            minutes = elapsed_seconds / 60
+            return f"{minutes:.1f} minutes"
+        else:
+            hours = elapsed_seconds / 3600
+            return f"{hours:.1f} hours"
+    
     def display_status(self):
         """Display comprehensive status"""
         download_status = self.get_download_status()
@@ -207,9 +218,19 @@ class ParallelPipelineMonitor:
         """Continuously monitor both processes"""
         print("🚀 Starting continuous monitoring of parallel pipeline...")
         print(f"📊 Updates every {interval} seconds. Press Ctrl+C to stop.")
+        start_time = time.time()
+        start_datetime = datetime.now()
+        print(f"Started at: {start_datetime}")
+        print()
         
         try:
+            iteration = 0
             while True:
+                iteration += 1
+                elapsed_seconds = time.time() - start_time
+                
+                # Add timing info to status display
+                print(f"\n📊 Update #{iteration} - Elapsed: {self._format_elapsed_time(elapsed_seconds)}")
                 status = self.display_status()
                 
                 # Check for alerts
