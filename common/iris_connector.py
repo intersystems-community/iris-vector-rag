@@ -10,7 +10,7 @@ import logging
 import sys
 from typing import Optional, Any, Dict, Union
 from urllib.parse import urlparse
-import intersystems_iris # Import at module level
+import iris as intersystems_iris # Import at module level
 
 logger = logging.getLogger(__name__)
 
