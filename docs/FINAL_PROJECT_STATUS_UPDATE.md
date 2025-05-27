@@ -41,7 +41,7 @@
 6. **ObjectScript Framework**: Keyword processing and iFind integration classes
 
 ### Files Successfully Committed
-- ✅ `100K_INGESTION_DATA_FIXES_COMPLETE.md`
+- ✅ `docs/100K_INGESTION_DATA_FIXES_COMPLETE.md` (moved from root)
 - ✅ `docs/LIST_ERROR_FIX_COMPLETE.md` (moved from root)
 - ✅ `PROJECT_STATUS.md` (updated)
 - ✅ `common/vector_format_fix.py`

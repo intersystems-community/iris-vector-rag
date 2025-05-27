@@ -66,7 +66,7 @@ def format_vector_for_iris(vector: Union[List, np.ndarray, Any]) -> List[float]:
     
     This function addresses all known causes of LIST ERROR with various type codes:
     - Type code 101: Invalid list structure
-    - Type code 49: Numeric format issues  
+    - Type code 49: Numeric format issues
     - Type code 110: Data type mismatches
     - Type code 27: List element type issues
     - Type code 58: Encoding/character issues
@@ -76,6 +76,8 @@ def format_vector_for_iris(vector: Union[List, np.ndarray, Any]) -> List[float]:
     - Type code 0: General format errors
     - Type code 56: Array structure issues
     - Type code 59: Type conversion issues
+    - Type code 60: Complex object serialization issues
+    - Type code 69: Nested structure issues
     
     Args:
         vector: Input vector in various formats
@@ -91,14 +93,48 @@ def format_vector_for_iris(vector: Union[List, np.ndarray, Any]) -> List[float]:
         if vector is None:
             raise VectorFormatError("Vector is None")
         
+        # CRITICAL FIX for type 60/69 errors: Handle complex objects that might be nested
+        # Check if vector is a complex object that needs special handling
+        if hasattr(vector, '__dict__') or hasattr(vector, '__slots__'):
+            logger.warning(f"Complex object detected: {type(vector)}, attempting to extract numeric data")
+            # Try to extract numeric data from complex objects
+            if hasattr(vector, 'tolist'):
+                vector = vector.tolist()
+            elif hasattr(vector, 'data'):
+                vector = vector.data
+            elif hasattr(vector, 'values'):
+                vector = vector.values
+            else:
+                raise VectorFormatError(f"Cannot extract numeric data from complex object: {type(vector)}")
+        
         # Convert to numpy array first for consistent handling
         if isinstance(vector, (list, tuple)):
-            vector_array = np.array(vector, dtype=np.float64)
+            # CRITICAL: Ensure all elements are actually numeric before creating array
+            cleaned_vector = []
+            for i, item in enumerate(vector):
+                if hasattr(item, '__dict__') or hasattr(item, '__slots__'):
+                    # Complex object in list - try to extract numeric value
+                    if hasattr(item, 'item'):
+                        cleaned_vector.append(float(item.item()))
+                    elif hasattr(item, 'value'):
+                        cleaned_vector.append(float(item.value))
+                    else:
+                        cleaned_vector.append(float(item))
+                else:
+                    cleaned_vector.append(float(item))
+            vector_array = np.array(cleaned_vector, dtype=np.float64)
         elif isinstance(vector, np.ndarray):
             vector_array = vector.astype(np.float64)
         else:
             # Try to convert other types (e.g., torch tensors)
             try:
+                # CRITICAL: Force conversion to basic Python types first
+                if hasattr(vector, 'cpu'):
+                    vector = vector.cpu()
+                if hasattr(vector, 'numpy'):
+                    vector = vector.numpy()
+                if hasattr(vector, 'tolist'):
+                    vector = vector.tolist()
                 vector_array = np.array(vector, dtype=np.float64)
             except Exception as e:
                 raise VectorFormatError(f"Cannot convert vector type {type(vector)} to numpy array: {e}")

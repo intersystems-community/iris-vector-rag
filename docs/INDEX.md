@@ -5,10 +5,10 @@ Welcome to the RAG Templates project documentation. This page serves as a centra
 ## 1. Project Overview & Status
 
 *   **[`README.md`](../README.md)**: The main entry point for the project. Provides an overview, setup instructions, current status, and links to key resources.
-*   **[`PLAN_STATUS.md`](../PLAN_STATUS.md)**: Detailed breakdown of project phases, tasks, and their current completion status.
+*   **[`100K_PLAN_STATUS.md`](100K_PLAN_STATUS.md)**: Detailed breakdown of project phases, tasks, and their current completion status.
 *   **[`MANAGEMENT_SUMMARY.md`](MANAGEMENT_SUMMARY.md)**: ✅ **UPDATED** - High-level summary for project managers, outlining successful completion, achievements, and current capabilities.
 *   **[`PROJECT_COMPLETION_REPORT.md`](PROJECT_COMPLETION_REPORT.md)**: ✅ **UPDATED** - Comprehensive report documenting successful project completion with real PMC data validation.
-*   **[`REAL_DATA_VECTOR_SUCCESS_REPORT.md`](../REAL_DATA_VECTOR_SUCCESS_REPORT.md)**: ✅ **NEW** - Success report documenting achievement of real PMC data integration with vector operations.
+*   **[`PROJECT_STATUS_CURRENT.md`](PROJECT_STATUS_CURRENT.md)**: ✅ **CURRENT** - Latest project status and progress tracking.
 
 ## 2. Development Strategy & Lessons Learned
 

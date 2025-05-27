@@ -36,12 +36,40 @@ def format_vector_for_varchar_column(vector: List[float]) -> str:
         Comma-separated string representation
     """
     try:
-        # Ensure all values are finite floats
-        if not all(isinstance(v, (int, float)) and np.isfinite(v) for v in vector):
-            raise VectorFormatError("Vector contains non-finite values")
+        # CRITICAL FIX: Ensure we have a proper list of basic Python floats
+        if not isinstance(vector, list):
+            raise VectorFormatError(f"Expected list, got {type(vector)}")
+        
+        # Convert all values to basic Python floats and validate
+        safe_values = []
+        for i, v in enumerate(vector):
+            # Handle complex objects that might be in the vector
+            if hasattr(v, '__dict__') or hasattr(v, '__slots__'):
+                if hasattr(v, 'item'):
+                    v = v.item()
+                elif hasattr(v, 'value'):
+                    v = v.value
+                else:
+                    v = float(v)
+            
+            # Ensure it's a basic Python float
+            float_val = float(v)
+            
+            if not np.isfinite(float_val):
+                logger.warning(f"Non-finite value at index {i}: {float_val}, replacing with 0.0")
+                float_val = 0.0
+            
+            safe_values.append(float_val)
+        
+        if not safe_values:
+            raise VectorFormatError("Vector is empty after processing")
         
         # Format as comma-separated string with controlled precision
-        vector_str = ','.join(f"{float(x):.15g}" for x in vector)
+        vector_str = ','.join(f"{x:.15g}" for x in safe_values)
+        
+        # Final validation - ensure the string doesn't contain any problematic characters
+        if any(char in vector_str for char in ['\x00', '\n', '\r', '\t']):
+            raise VectorFormatError("Vector string contains problematic characters")
         
         return vector_str
         
