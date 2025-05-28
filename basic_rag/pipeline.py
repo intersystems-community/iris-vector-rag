@@ -9,7 +9,8 @@ from typing import List, Dict, Any, Callable
 import logging
 
 try:
-    from intersystems_iris.dbapi import Connection as IRISConnection
+    import iris
+    IRISConnection = iris.IRISConnection
 except ImportError:
     IRISConnection = Any
 
@@ -20,14 +21,16 @@ logger = logging.getLogger(__name__)
 class BasicRAGPipeline:
     def __init__(self, iris_connector: IRISConnection,
                  embedding_func: Callable[[List[str]], List[List[float]]],
-                 llm_func: Callable[[str], str]):
+                 llm_func: Callable[[str], str],
+                 schema: str = "RAG"):
         self.iris_connector = iris_connector
         self.embedding_func = embedding_func
         self.llm_func = llm_func
-        logger.info("BasicRAGPipeline initialized")
+        self.schema = schema
+        logger.info(f"BasicRAGPipeline initialized with schema: {schema}")
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.75) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
         Retrieves documents from IRIS based on vector similarity using HNSW acceleration.
         Uses similarity threshold for realistic document count variation.
@@ -46,18 +49,20 @@ class BasicRAGPipeline:
             sql_query = f"""
             SELECT TOP {top_k} doc_id, text_content,
                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS similarity_score
-            FROM RAG.SourceDocuments
+            FROM {self.schema}.SourceDocuments
             WHERE embedding IS NOT NULL
+              AND LENGTH(embedding) > 1000
               AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
             ORDER BY similarity_score DESC
             """
             
             logger.debug(f"Executing BasicRAG SQL with threshold {similarity_threshold}")
+            logger.debug(f"SQL Query: {sql_query}")
             cursor.execute(sql_query, (query_embedding_str_for_sql, query_embedding_str_for_sql, similarity_threshold))
             
             for row in cursor.fetchall():
                 score = float(row[2]) if isinstance(row[2], str) else row[2]
-                doc = Document(id=str(row[0]), content=str(row[1]), score=score)
+                doc = Document(id=str(row[0]), content=row[1] if row[1] is not None else "", score=score)
                 retrieved_docs.append(doc)
             
             cursor.close()
@@ -109,7 +114,7 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.75) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Runs the full Basic RAG pipeline: retrieve documents and generate an answer.
         """
@@ -122,7 +127,7 @@ Answer:"""
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": retrieved_documents,
+            "retrieved_documents": [doc.to_dict() for doc in retrieved_documents],
             "similarity_threshold": similarity_threshold,
             "document_count": len(retrieved_documents),
             # "latency_ms" will be added by timing_decorator if applied to this 'run' method

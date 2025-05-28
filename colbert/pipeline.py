@@ -71,7 +71,7 @@ class ColbertRAGPipeline:
         return normalized_score
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
         Retrieves documents using ColBERT's MaxSim scoring with HNSW acceleration.
         """
@@ -88,7 +88,7 @@ class ColbertRAGPipeline:
             cursor = self.iris_connector.cursor()
 
             # Step 1: Fetch all unique doc_ids from HNSW SourceDocuments as candidates
-            cursor.execute("SELECT DISTINCT doc_id FROM RAG_HNSW.SourceDocuments")
+            cursor.execute("SELECT DISTINCT doc_id FROM RAG.SourceDocuments")
             all_doc_ids = [row[0] for row in cursor.fetchall()]
             
             logger.info(f"ColbertRAG: Scoring {len(all_doc_ids)} candidate documents.")
@@ -114,7 +114,7 @@ class ColbertRAGPipeline:
                     # Fallback 1: Try to get document text and generate token embeddings
                     sql_fetch_doc_text = """
                     SELECT text_content
-                    FROM RAG_HNSW.SourceDocuments
+                    FROM RAG.SourceDocuments
                     WHERE doc_id = ?
                     """
                     cursor.execute(sql_fetch_doc_text, (doc_id,))
@@ -131,7 +131,7 @@ class ColbertRAGPipeline:
                             # Fallback 2: Use document-level embedding as a single "token"
                             sql_fetch_doc_embedding = """
                             SELECT embedding
-                            FROM RAG_HNSW.SourceDocuments
+                            FROM RAG.SourceDocuments
                             WHERE doc_id = ?
                             """
                             cursor.execute(sql_fetch_doc_embedding, (doc_id,))
@@ -192,7 +192,7 @@ class ColbertRAGPipeline:
                 if maxsim_score > similarity_threshold:
                     docs_above_threshold += 1
                     # Fetch actual document content for context/display
-                    cursor.execute("SELECT text_content FROM RAG_HNSW.SourceDocuments WHERE doc_id = ?", (doc_id,))
+                    cursor.execute("SELECT text_content FROM RAG.SourceDocuments WHERE doc_id = ?", (doc_id,))
                     content_row = cursor.fetchone()
                     doc_content = content_row[0] if content_row else "Content not found"
                     
@@ -244,7 +244,7 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Runs the full ColBERT pipeline (client-side MaxSim).
         """

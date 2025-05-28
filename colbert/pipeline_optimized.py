@@ -123,7 +123,7 @@ class OptimizedColbertRAGPipeline:
                     doc_id,
                     token_embedding,
                     VECTOR_COSINE(TO_VECTOR(token_embedding), TO_VECTOR(?)) as similarity
-                FROM RAG_HNSW.DocumentTokenEmbeddings
+                FROM RAG.DocumentTokenEmbeddings
                 WHERE token_embedding IS NOT NULL
                 ORDER BY VECTOR_COSINE(TO_VECTOR(token_embedding), TO_VECTOR(?)) DESC
                 """
@@ -177,7 +177,7 @@ class OptimizedColbertRAGPipeline:
                     docs_above_threshold += 1
                     
                     # Fetch document content
-                    cursor.execute("SELECT text_content FROM RAG_HNSW.SourceDocuments WHERE doc_id = ?", (doc_id,))
+                    cursor.execute("SELECT text_content FROM RAG.SourceDocuments WHERE doc_id = ?", (doc_id,))
                     content_row = cursor.fetchone()
                     doc_content = content_row[0] if content_row else "Content not found"
                     
@@ -260,7 +260,7 @@ class OptimizedColbertRAGPipeline:
                     docs_above_threshold += 1
                     
                     # Fetch document content
-                    cursor.execute("SELECT text_content FROM RAG_HNSW.SourceDocuments WHERE doc_id = ?", (doc_id,))
+                    cursor.execute("SELECT text_content FROM RAG.SourceDocuments WHERE doc_id = ?", (doc_id,))
                     content_row = cursor.fetchone()
                     doc_content = content_row[0] if content_row else "Content not found"
                     
@@ -322,7 +322,7 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Runs the full optimized ColBERT pipeline.
         """
@@ -339,7 +339,7 @@ Answer:"""
         }
 
     @timing_decorator
-    def query(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
+    def query(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Alias for run() method to maintain compatibility with other pipeline interfaces.
         """

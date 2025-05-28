@@ -142,8 +142,31 @@ class Ultimate100kEnterpriseValidator:
                 return False
             
             # Setup models
-            self.embedding_func = get_embedding_func(model_name="intfloat/e5-base-v2", mock=False)
-            self.llm_func = get_llm_func(provider="stub")
+            self.embedding_func = get_embedding_func(model_name="sentence-transformers/all-MiniLM-L6-v2", mock=False)
+            # Load .env file and try to use real OpenAI LLM
+            try:
+                from dotenv import load_dotenv
+                import os
+                load_dotenv()  # Load .env file
+                
+                if os.getenv("OPENAI_API_KEY"):
+                    self.llm_func = get_llm_func(provider="openai", model_name="gpt-3.5-turbo")
+                    logger.info("✅ Using OpenAI GPT-3.5-turbo LLM")
+                else:
+                    self.llm_func = get_llm_func(provider="stub")
+                    logger.info("⚠️ Using stub LLM (set OPENAI_API_KEY for real LLM)")
+            except Exception as e:
+                logger.warning(f"⚠️ OpenAI LLM failed, using stub: {e}")
+                self.llm_func = get_llm_func(provider="stub")
+            
+            # Setup web search function for CRAG
+            def simple_web_search(query: str, num_results: int = 3) -> List[str]:
+                """Simple mock web search for CRAG demonstration"""
+                return [
+                    f"Web search result {i+1}: Information about {query} from medical databases and research papers."
+                    for i in range(num_results)
+                ]
+            self.web_search_func = simple_web_search
             
             logger.info("✅ Setup completed successfully")
             return True
@@ -319,7 +342,8 @@ class Ultimate100kEnterpriseValidator:
                     pipelines["CRAG"] = CRAGPipeline(
                         iris_connector=self.connection,
                         embedding_func=self.embedding_func,
-                        llm_func=self.llm_func
+                        llm_func=self.llm_func,
+                        web_search_func=self.web_search_func
                     )
                 except Exception as e:
                     logger.error(f"❌ CRAG initialization failed: {e}")

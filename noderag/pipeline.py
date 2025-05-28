@@ -35,7 +35,7 @@ class NodeRAGPipeline:
         logger.info("NodeRAGPipeline Initialized")
 
     @timing_decorator
-    def _identify_initial_search_nodes(self, query_text: str, top_n_seed: int = 5, similarity_threshold: float = 0.6) -> List[str]: # Returns list of node_ids
+    def _identify_initial_search_nodes(self, query_text: str, top_n_seed: int = 5, similarity_threshold: float = 0.1) -> List[str]: # Returns list of node_ids
         """
         Identifies initial nodes in the graph relevant to the query, typically via vector search.
         """
@@ -108,12 +108,13 @@ class NodeRAGPipeline:
                             logger.error(f"NodeRAG: Error checking sample document: {sample_error}")
                         
                         # Try a direct vector search with a simple test vector
-                        test_vector_str = "[0.1,0.2,0.3" + ",0.0" * 765 + "]"  # Simple test vector with 768 dimensions
+                        test_vector_str = "[0.1,0.2,0.3" + ",0.0" * 381 + "]"  # Simple test vector with 384 dimensions
                         vector_search_sql = f"""
                             SELECT TOP 1 doc_id,
-                                   VECTOR_COSINE(embedding, TO_VECTOR(?, double, 768)) AS score
+                                   VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double, 384)) AS score
                             FROM RAG.SourceDocuments
                             WHERE embedding IS NOT NULL
+                              AND LENGTH(embedding) > 1000
                             ORDER BY score DESC
                         """
                         logger.info(f"NodeRAG: Testing vector search with simple test vector")
@@ -187,6 +188,7 @@ class NodeRAGPipeline:
                        VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
+                  AND LENGTH(embedding) > 1000
                   AND VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) > ?
                 ORDER BY score DESC
             """
@@ -212,7 +214,20 @@ class NodeRAGPipeline:
             # Log a truncated version of the vector string for brevity
             logger.debug(f"Parameters: ('{iris_vector_str[:70]}...', threshold: {similarity_threshold})")
 
-            cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold)) # Pass vector string twice and threshold
+            try:
+                cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold))
+            except Exception as vector_error:
+                logger.warning(f"NodeRAG: Vector function error: {vector_error}")
+                # Fallback to simpler query without vector comparison in WHERE clause
+                fallback_sql = f"""
+                SELECT TOP 20 doc_id AS node_id,
+                       VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
+                FROM RAG.SourceDocuments
+                WHERE embedding IS NOT NULL
+                  AND LENGTH(embedding) > 1000
+                ORDER BY score DESC
+                """
+                cursor.execute(fallback_sql, (iris_vector_str,)) # Pass vector string twice and threshold
             
             # Fetch results
             fetched_rows = cursor.fetchall()
@@ -299,7 +314,7 @@ class NodeRAGPipeline:
         if use_source_docs:
             sql_fetch_content = f"""
                 SELECT doc_id, text_content
-                FROM RAG_HNSW.SourceDocuments
+                FROM RAG.SourceDocuments
                 WHERE doc_id IN ({placeholders})
             """
         else:
@@ -336,7 +351,7 @@ class NodeRAGPipeline:
 
 
     @timing_decorator
-    def retrieve_documents_from_graph(self, query_text: str, top_k_seeds: int = 5, similarity_threshold: float = 0.6) -> List[Document]:
+    def retrieve_documents_from_graph(self, query_text: str, top_k_seeds: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
         Orchestrates graph-based retrieval.
         """
@@ -392,7 +407,7 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Runs the full NodeRAG pipeline (query-time).
         """
