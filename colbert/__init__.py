@@ -1,6 +1,6 @@
 """ColBERT package initialization."""
 
-from .pipeline import ColbertRAGPipeline # Corrected class name
-from common.utils import Document # Document is in common.utils, not pipeline
+from .pipeline import OptimizedColbertRAGPipeline, create_colbert_pipeline
+from common.utils import Document
 
-__all__ = ["ColbertRAGPipeline", "Document"] # Corrected class name in __all__
+__all__ = ["OptimizedColbertRAGPipeline", "create_colbert_pipeline", "Document"]
