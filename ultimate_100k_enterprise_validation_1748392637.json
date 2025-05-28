@@ -1,0 +1,169 @@
+{
+  "enterprise_validation_summary": {
+    "timestamp": "2025-05-27T20:37:17.738244",
+    "target_documents": 100000,
+    "schema_type": "RAG",
+    "fast_mode": true,
+    "total_validation_time_seconds": 52.437490940093994,
+    "techniques_tested": 7,
+    "successful_techniques": 7,
+    "success_rate": 1.0,
+    "test_queries_count": 3
+  },
+  "performance_rankings": {
+    "latency_ranking": [
+      [
+        "GraphRAG",
+        4.414717356363933
+      ],
+      [
+        "HyDE",
+        15.459775924682617
+      ],
+      [
+        "CRAG",
+        27.055025100708008
+      ],
+      [
+        "HybridiFindRAG",
+        35.39959589640299
+      ],
+      [
+        "NodeRAG",
+        200.21828015645346
+      ],
+      [
+        "BasicRAG",
+        233.55412483215332
+      ],
+      [
+        "OptimizedColBERT",
+        12042.308727900187
+      ]
+    ],
+    "memory_efficiency_ranking": [
+      [
+        "HyDE",
+        45645.75
+      ],
+      [
+        "CRAG",
+        45668.46875
+      ],
+      [
+        "BasicRAG",
+        45697.921875
+      ],
+      [
+        "NodeRAG",
+        45885.890625
+      ],
+      [
+        "GraphRAG",
+        45887.3125
+      ],
+      [
+        "HybridiFindRAG",
+        45942.8125
+      ],
+      [
+        "OptimizedColBERT",
+        45968.5625
+      ]
+    ]
+  },
+  "detailed_results": [
+    {
+      "technique": "BasicRAG",
+      "success": true,
+      "avg_time_ms": 233.55412483215332,
+      "avg_docs_retrieved": 0.0,
+      "success_rate": 1.0,
+      "total_queries": 3,
+      "peak_memory_mb": 45697.921875,
+      "avg_cpu_percent": 68.35000000000001,
+      "error": null,
+      "schema_type": "RAG"
+    },
+    {
+      "technique": "HyDE",
+      "success": true,
+      "avg_time_ms": 15.459775924682617,
+      "avg_docs_retrieved": 0.0,
+      "success_rate": 1.0,
+      "total_queries": 3,
+      "peak_memory_mb": 45645.75,
+      "avg_cpu_percent": 89.11666666666667,
+      "error": null,
+      "schema_type": "RAG"
+    },
+    {
+      "technique": "CRAG",
+      "success": true,
+      "avg_time_ms": 27.055025100708008,
+      "avg_docs_retrieved": 0.0,
+      "success_rate": 1.0,
+      "total_queries": 3,
+      "peak_memory_mb": 45668.46875,
+      "avg_cpu_percent": 43.166666666666664,
+      "error": null,
+      "schema_type": "RAG"
+    },
+    {
+      "technique": "OptimizedColBERT",
+      "success": true,
+      "avg_time_ms": 12042.308727900187,
+      "avg_docs_retrieved": 0.0,
+      "success_rate": 1.0,
+      "total_queries": 3,
+      "peak_memory_mb": 45968.5625,
+      "avg_cpu_percent": 62.416666666666664,
+      "error": null,
+      "schema_type": "RAG"
+    },
+    {
+      "technique": "NodeRAG",
+      "success": true,
+      "avg_time_ms": 200.21828015645346,
+      "avg_docs_retrieved": 0.0,
+      "success_rate": 1.0,
+      "total_queries": 3,
+      "peak_memory_mb": 45885.890625,
+      "avg_cpu_percent": 33.03333333333333,
+      "error": null,
+      "schema_type": "RAG"
+    },
+    {
+      "technique": "GraphRAG",
+      "success": true,
+      "avg_time_ms": 4.414717356363933,
+      "avg_docs_retrieved": 0.0,
+      "success_rate": 1.0,
+      "total_queries": 3,
+      "peak_memory_mb": 45887.3125,
+      "avg_cpu_percent": 5.45,
+      "error": null,
+      "schema_type": "RAG"
+    },
+    {
+      "technique": "HybridiFindRAG",
+      "success": true,
+      "avg_time_ms": 35.39959589640299,
+      "avg_docs_retrieved": 0.0,
+      "success_rate": 1.0,
+      "total_queries": 3,
+      "peak_memory_mb": 45942.8125,
+      "avg_cpu_percent": 30.366666666666664,
+      "error": null,
+      "schema_type": "RAG"
+    }
+  ],
+  "enterprise_recommendations": [
+    "\ud83d\ude80 Fastest technique: GraphRAG (4.4ms avg)",
+    "\ud83d\udcbe Most memory efficient: HyDE (45645.8MB peak)",
+    "\ud83d\udcc8 At 100k+ document scale, consider horizontal scaling",
+    "\ud83d\udd04 Implement caching layer for frequently accessed documents",
+    "\u26a1 Use HNSW indexing for optimal vector search performance",
+    "\ud83c\udfc6 Production-ready techniques: BasicRAG, HyDE, CRAG, NodeRAG, GraphRAG, HybridiFindRAG"
+  ]
+}
