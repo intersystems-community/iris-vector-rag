@@ -149,7 +149,7 @@ class HybridiFindRAGPipeline:
     
     def _graph_retrieval(self, query: str) -> List[Dict[str, Any]]:
         """
-        Perform graph-based retrieval using entity relationships.
+        Perform graph-based retrieval using the fixed GraphRAG components.
         
         Args:
             query: Input query string
@@ -158,54 +158,40 @@ class HybridiFindRAGPipeline:
             List of documents from graph traversal
         """
         try:
-            # Extract entities from query (simplified approach)
-            # TODO: Enhance with proper NER
-            keywords = self._extract_keywords(query)
+            # Use the fixed GraphRAG pipeline for proper knowledge graph traversal
+            from graphrag.pipeline import FixedGraphRAGPipeline
             
-            if not keywords:
-                return []
+            # Create GraphRAG pipeline instance
+            graph_pipeline = FixedGraphRAGPipeline(
+                iris_connector=self.iris_connector,
+                embedding_func=self.embedding_func,
+                llm_func=self.llm_func
+            )
             
-            # Search for entities matching query keywords
-            entity_conditions = []
-            params = []
+            # Get documents via knowledge graph traversal
+            graph_docs = graph_pipeline.retrieve_documents_via_kg(
+                query,
+                top_k=self.config['max_results_per_method']
+            )
             
-            for keyword in keywords[:3]:  # Limit to 3 keywords for entities
-                # Remove UPPER function - not supported on stream fields in IRIS
-                entity_conditions.append("d.text_content LIKE ?")
-                params.append(f"%{keyword}%")
-            
-            entity_where = " OR ".join(entity_conditions)
-            
-            query_sql = f"""
-            SELECT TOP {self.config['max_results_per_method']}
-                d.doc_id as document_id,
-                d.doc_id as title,
-                d.text_content as content,
-                '' as metadata,
-                1.0 as avg_strength,
-                ROW_NUMBER() OVER (ORDER BY d.doc_id) as rank_position
-            FROM RAG.SourceDocuments d
-            WHERE {entity_where}
-            ORDER BY d.doc_id
-            """
-            
-            cursor = self.iris_connector.cursor()
-            cursor.execute(query_sql, params)
             results = []
-            
-            for row in cursor.fetchall():
+            for i, doc in enumerate(graph_docs):
                 results.append({
-                    'document_id': row[0],
-                    'title': row[1],
-                    'content': row[2],
-                    'metadata': row[3],
-                    'relationship_strength': float(row[4]) if row[4] else 0.0,
-                    'rank_position': row[5],
+                    'document_id': doc.id,
+                    'title': doc.id,
+                    'content': doc.content,
+                    'metadata': '',
+                    'relationship_strength': doc.score,
+                    'rank_position': i + 1,
                     'method': 'graph'
                 })
             
-            cursor.close()
             logger.info(f"Graph retrieval returned {len(results)} results")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Graph retrieval failed: {e}")
+            return []
             return results
             
         except Exception as e:
