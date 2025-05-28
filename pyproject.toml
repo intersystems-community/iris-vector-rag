@@ -56,6 +56,10 @@ torchvision = "^0.22.0"
 torchaudio = "^2.7.0"
 transformers = "^4.52.3"
 accelerate = "^1.7.0"
+langchain-openai = ">=0.1.0,<0.2.0"
+seaborn = ">=0.13.0"
+plotly = ">=5.0.0"
+numpy = ">=1.24.0,<2.0.0"
 [tool.poetry.extras]
 iris = ["intersystems-iris", "sqlalchemy", "testcontainers-iris"] # Added sqlalchemy and testcontainers-iris
 embeddings = ["sentence-transformers"]

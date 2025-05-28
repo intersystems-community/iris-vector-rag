@@ -101,7 +101,7 @@ class ColbertRAGPipeline:
                 # Step 2: For each doc_id, fetch its token embeddings from HNSW schema
                 sql_fetch_tokens = """
                 SELECT token_embedding
-                FROM RAG_HNSW.DocumentTokenEmbeddings
+                FROM RAG.DocumentTokenEmbeddings
                 WHERE doc_id = ?
                 ORDER BY token_sequence_index
                 """

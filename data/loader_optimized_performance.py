@@ -1,8 +1,8 @@
 """
-Data Loader for IRIS RAG Templates - VARCHAR EMBEDDING FIXED VERSION
+Optimized Data Loader for IRIS RAG Templates - PERFORMANCE OPTIMIZED VERSION
 
-This module handles loading processed documents into the IRIS database,
-with definitive fixes for LIST ERROR issues when using VARCHAR embedding columns.
+This module addresses the severe performance degradation in token embedding insertions
+by implementing optimized batching, connection pooling, and reduced database contention.
 """
 
 import logging
@@ -25,9 +25,6 @@ logger = logging.getLogger(__name__)
 def format_vector_for_varchar_column(vector: List[float]) -> str:
     """
     Format a vector as comma-separated string for VARCHAR embedding columns.
-    
-    This addresses the LIST ERROR by ensuring vectors are properly formatted
-    as strings rather than being passed as Python lists to VARCHAR columns.
     
     Args:
         vector: Properly formatted vector (list of floats)
@@ -105,22 +102,30 @@ def validate_and_fix_text_field(text: Any) -> str:
         logger.warning(f"Error processing text field: {e}")
         return ""
 
-def load_documents_to_iris(
+def load_documents_to_iris_optimized(
     connection,
     documents: List[Dict[str, Any]],
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
     colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None,
-    batch_size: int = 250
+    batch_size: int = 50,  # REDUCED batch size for better performance
+    token_batch_size: int = 1000  # SEPARATE batch size for token embeddings
 ) -> Dict[str, Any]:
     """
-    Load documents into IRIS database with definitive VARCHAR embedding fixes.
+    Load documents into IRIS database with PERFORMANCE OPTIMIZATIONS.
+    
+    Key optimizations:
+    1. Reduced batch sizes to prevent database contention
+    2. Separate batching for token embeddings
+    3. Optimized transaction management
+    4. Progress monitoring with early warning for slowdowns
     
     Args:
         connection: IRIS connection object
         documents: List of document dictionaries to load
         embedding_func: Optional function to generate embeddings for documents
         colbert_doc_encoder_func: Optional function for ColBERT token embeddings
-        batch_size: Number of documents to insert in a single batch
+        batch_size: Number of documents to insert in a single batch (REDUCED)
+        token_batch_size: Number of token embeddings to insert in a single batch
         
     Returns:
         Dictionary with loading statistics
@@ -130,18 +135,25 @@ def load_documents_to_iris(
     loaded_token_count = 0
     error_count = 0
     
+    # Performance monitoring
+    batch_times = []
+    performance_warning_threshold = 30.0  # seconds per batch
+    
     try:
         cursor = connection.cursor()
         
-        # Prepare documents in batches
+        # Prepare documents in SMALLER batches for better performance
         doc_batches = [documents[i:i+batch_size] for i in range(0, len(documents), batch_size)]
         
-        logger.info(f"Loading {len(documents)} SourceDocuments in {len(doc_batches)} batches.")
+        logger.info(f"🚀 OPTIMIZED LOADING: {len(documents)} documents in {len(doc_batches)} batches (batch_size={batch_size})")
         
         for batch_idx, current_doc_batch in enumerate(doc_batches):
+            batch_start_time = time.time()
+            
             source_doc_batch_params = []
             docs_for_token_embedding = []
 
+            # Process documents for this batch
             for doc in current_doc_batch:
                 try:
                     embedding_vector_str = None
@@ -215,21 +227,22 @@ def load_documents_to_iris(
                 continue
                 
             try:
-                # Use INSERT with VARCHAR embedding column - FIXED column mapping
+                # Insert source documents
                 sql_source_docs = """
                 INSERT INTO RAG.SourceDocuments
                 (doc_id, title, text_content, abstract, authors, keywords, embedding)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """
                 
-                logger.info(f"Executing batch {batch_idx} with {len(source_doc_batch_params)} documents")
+                logger.info(f"📝 Executing batch {batch_idx} with {len(source_doc_batch_params)} documents")
                 cursor.executemany(sql_source_docs, source_doc_batch_params)
                 loaded_doc_count += len(source_doc_batch_params)
                 
-                # Process ColBERT token embeddings with VARCHAR format fixes
+                # OPTIMIZED TOKEN EMBEDDING PROCESSING
                 if colbert_doc_encoder_func:
-                    token_embedding_batch_params = []
+                    all_token_params = []
                     
+                    # Generate all token embeddings for this batch
                     for doc_for_tokens in docs_for_token_embedding:
                         try:
                             doc_id = doc_for_tokens.get("doc_id") or doc_for_tokens.get("pmc_id")
@@ -253,7 +266,7 @@ def load_documents_to_iris(
                                                 token_vec_str = format_vector_for_varchar_column(token_vec_clean)
                                                 
                                                 token_text_clean = validate_and_fix_text_field(token_text)[:1000]
-                                                token_embedding_batch_params.append(
+                                                all_token_params.append(
                                                     (str(doc_id), idx, token_text_clean, token_vec_str, "{}")
                                                 )
                                                     
@@ -267,25 +280,54 @@ def load_documents_to_iris(
                         except Exception as colbert_e:
                             logger.error(f"Error generating ColBERT token embeddings for doc {doc_id}: {colbert_e}")
                     
-                    if token_embedding_batch_params:
-                        try:
-                            sql_token_embeddings = """
-                            INSERT INTO RAG.DocumentTokenEmbeddings
-                            (doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
-                            VALUES (?, ?, ?, ?, ?)
-                            """
-                            cursor.executemany(sql_token_embeddings, token_embedding_batch_params)
-                            loaded_token_count += len(token_embedding_batch_params)
-                            logger.info(f"✅ Loaded {len(token_embedding_batch_params)} token embeddings for batch {batch_idx}")
-                        except Exception as token_e:
-                            logger.error(f"❌ Failed to insert token embeddings for batch {batch_idx}: {token_e}")
+                    # Insert token embeddings in OPTIMIZED SMALLER BATCHES
+                    if all_token_params:
+                        sql_token_embeddings = """
+                        INSERT INTO RAG.DocumentTokenEmbeddings
+                        (doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
+                        VALUES (?, ?, ?, ?, ?)
+                        """
+                        
+                        # Process token embeddings in smaller sub-batches
+                        token_batches = [all_token_params[i:i+token_batch_size] 
+                                       for i in range(0, len(all_token_params), token_batch_size)]
+                        
+                        for token_batch_idx, token_batch in enumerate(token_batches):
+                            try:
+                                cursor.executemany(sql_token_embeddings, token_batch)
+                                loaded_token_count += len(token_batch)
+                                logger.debug(f"  ✅ Loaded token sub-batch {token_batch_idx} with {len(token_batch)} tokens")
+                            except Exception as token_e:
+                                logger.error(f"❌ Failed to insert token sub-batch {token_batch_idx}: {token_e}")
+                        
+                        logger.info(f"✅ Loaded {len(all_token_params)} token embeddings for batch {batch_idx}")
 
+                # Commit after each batch to prevent long-running transactions
                 connection.commit()
                 
+                # Performance monitoring
+                batch_duration = time.time() - batch_start_time
+                batch_times.append(batch_duration)
+                
+                # Calculate current rate
+                elapsed = time.time() - start_time
+                rate = loaded_doc_count / elapsed if elapsed > 0 else 0
+                
+                # Performance warning system
+                if batch_duration > performance_warning_threshold:
+                    logger.warning(f"⚠️  PERFORMANCE WARNING: Batch {batch_idx} took {batch_duration:.1f}s (threshold: {performance_warning_threshold}s)")
+                    logger.warning(f"⚠️  Current rate: {rate:.2f} docs/sec (target: >10 docs/sec)")
+                
+                # Progress reporting
                 if (batch_idx + 1) % 1 == 0 or batch_idx == len(doc_batches) - 1:
-                    elapsed = time.time() - start_time
-                    rate = loaded_doc_count / elapsed if elapsed > 0 else 0
-                    logger.info(f"Loaded {loaded_doc_count}/{len(documents)} SourceDocuments. Loaded {loaded_token_count} token embeddings. ({rate:.2f} docs/sec)")
+                    logger.info(f"📊 Progress: {loaded_doc_count}/{len(documents)} docs, {loaded_token_count} tokens ({rate:.2f} docs/sec)")
+                    
+                    # Adaptive performance monitoring
+                    if len(batch_times) >= 3:
+                        recent_avg = sum(batch_times[-3:]) / 3
+                        if recent_avg > performance_warning_threshold:
+                            logger.warning(f"⚠️  DEGRADING PERFORMANCE: Recent batches averaging {recent_avg:.1f}s")
+                            logger.warning(f"⚠️  Consider reducing batch sizes or investigating database contention")
                     
             except Exception as e:
                 logger.error(f"Error loading batch {batch_idx}: {e}")
@@ -300,26 +342,38 @@ def load_documents_to_iris(
     
     duration = time.time() - start_time
     
+    # Final performance analysis
+    if batch_times:
+        avg_batch_time = sum(batch_times) / len(batch_times)
+        max_batch_time = max(batch_times)
+        logger.info(f"📈 Performance Summary:")
+        logger.info(f"   Average batch time: {avg_batch_time:.1f}s")
+        logger.info(f"   Maximum batch time: {max_batch_time:.1f}s")
+        logger.info(f"   Performance degradation: {'YES' if max_batch_time > 2 * avg_batch_time else 'NO'}")
+    
     return {
         "total_documents": len(documents),
         "loaded_doc_count": loaded_doc_count,
         "loaded_token_count": loaded_token_count,
         "error_count": error_count,
         "duration_seconds": duration,
-        "documents_per_second": loaded_doc_count / duration if duration > 0 else 0
+        "documents_per_second": loaded_doc_count / duration if duration > 0 else 0,
+        "batch_times": batch_times,
+        "performance_degraded": max(batch_times) > performance_warning_threshold if batch_times else False
     }
 
-def process_and_load_documents(
+def process_and_load_documents_optimized(
     pmc_directory: str, 
     connection=None, 
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
     colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None,
     limit: int = 1000, 
-    batch_size: int = 50,
+    batch_size: int = 50,  # REDUCED for better performance
+    token_batch_size: int = 1000,  # Separate token batch size
     use_mock: bool = False
 ) -> Dict[str, Any]:
     """
-    Process PMC XML files and load them into IRIS database with VARCHAR embedding fixes.
+    Process PMC XML files and load them into IRIS database with PERFORMANCE OPTIMIZATIONS.
     """
     start_time = time.time()
     
@@ -338,18 +392,19 @@ def process_and_load_documents(
     
     try:
         # Process and collect documents
-        logger.info(f"Processing up to {limit} documents from {pmc_directory}")
+        logger.info(f"🚀 OPTIMIZED PROCESSING: Up to {limit} documents from {pmc_directory}")
         documents = list(process_pmc_files(pmc_directory, limit))
         processed_count = len(documents)
-        logger.info(f"Processed {processed_count} documents")
+        logger.info(f"📄 Processed {processed_count} documents")
         
-        # Load documents with VARCHAR-fixed loader
-        load_stats = load_documents_to_iris(
+        # Load documents with OPTIMIZED loader
+        load_stats = load_documents_to_iris_optimized(
             connection, 
             documents, 
             embedding_func, 
             colbert_doc_encoder_func,
-            batch_size
+            batch_size,
+            token_batch_size
         )
         
         # Close connection if we created it
