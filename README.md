@@ -33,7 +33,7 @@ The documentation is now organized into logical categories:
 - 🎯 **Complete Portfolio**: All 7 major RAG techniques validated with clear use case guidance
 - 📊 **Quality Metrics**: RAGAS evaluation providing honest performance assessment
 - 🏗️ **Enterprise Scale**: 100K+ documents, 937K+ token embeddings, 273K+ entity knowledge graph
-- ⚡ **Performance Validated**: 0.76s (GraphRAG) to 23.88s (HybridiFindRAG) response times
+- ⚡ **Performance Validated**: 1.83s (GraphRAG) to 23.88s (HybridiFindRAG) response times
 - 🔬 **Scientific Rigor**: Medical domain questions with ground truth validation
 - 📈 **Clear Rankings**: Production recommendations based on speed vs quality analysis
 
@@ -56,7 +56,7 @@ This approach provides reliable vector search capabilities while maintaining cle
 
 Based on comprehensive RAGAS evaluation with medical domain questions (May 28, 2025):
 
-1. **🥇 GraphRAG** (0.76s) - Ultra-fast graph-based retrieval for speed-critical applications
+1. **🥇 GraphRAG** (1.83s) - **BREAKTHROUGH FIXED** - True knowledge graph traversal with 273K+ entities
 2. **🥈 ColBERT** (1.89s) - **BREAKTHROUGH PERFORMANCE** - Token-level retrieval with 937K+ embeddings
 3. **🥉 BasicRAG** (7.95s) - Reliable production baseline with consistent quality
 4. **🏅 CRAG** (8.26s) - Corrective retrieval with excellent coverage
@@ -68,7 +68,7 @@ Based on comprehensive RAGAS evaluation with medical domain questions (May 28, 2
 
 | Technique | Status | Avg Response Time | Success Rate | Enterprise Ready | Use Case |
 |-----------|--------|-------------------|--------------|------------------|----------|
-| **GraphRAG** | ✅ OPERATIONAL | 0.76s | 100% | ✅ *Speed Critical* | Real-time applications |
+| **GraphRAG** | ✅ OPERATIONAL | 1.83s | 100% | ✅ *Knowledge Graph* | True graph-based retrieval |
 | **ColBERT** | ✅ OPERATIONAL | **1.89s** | 100% | ✅ *Token-Level* | Advanced semantic search |
 | **BasicRAG** | ✅ OPERATIONAL | 7.95s | 100% | ✅ *Production Baseline* | Reliable general-purpose |
 | **CRAG** | ✅ OPERATIONAL | 8.26s | 100% | ✅ *Enhanced Coverage* | Corrective retrieval |
@@ -77,6 +77,8 @@ Based on comprehensive RAGAS evaluation with medical domain questions (May 28, 2
 | **HybridiFindRAG** | ✅ OPERATIONAL | 23.88s | 100% | ✅ *IRIS Native* | Multi-modal analysis |
 
 **🔧 ColBERT Performance Breakthrough**: Optimized from 5000+ seconds to 1.89 seconds (2600x improvement) with proper content management and enterprise-grade reliability.
+
+**🚀 GraphRAG Knowledge Graph Fix**: Completely reimplemented to use actual knowledge graph data (273K+ entities, 183K+ relationships) instead of querying empty tables. Performance changed from fake 0.76s to realistic 1.83s with true graph-based retrieval and quality results.
 
 ### Enterprise Features:
 - **Real Data Processing**: 1,825+ authentic PMC biomedical articles
