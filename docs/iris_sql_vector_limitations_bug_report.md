@@ -55,17 +55,44 @@ Attempts (`cursor.execute(sql,[vector])`, named params, or none) all fail: the d
 
 ---
 
-## Issue 4 – Client drivers rewrite literals to `:%qpar()`  
+## Issue 4 – Client drivers rewrite literals to `:%qpar()`
 
-Python and JDBC drivers replace embedded literals with `:%qpar(n)` even when **no** param list is supplied, creating misleading parse errors (see stack trace [^8]). A separate JDBC thread on SQL quoting highlights similar driver behaviour [^9]. The gateway article offers no mitigation [^10].
+Python and JDBC drivers replace embedded literals with `:%qpar(n)` even when **no** param list is supplied, creating misleading parse errors (see stack trace [^8]). A separate JDBC thread on SQL quoting highlights similar driver behaviour [^9]. The gateway article offers no mitigation [^10].
+
+### Critical Finding: F-String SQL Also Gets Parameterized
+
+Even when building complete SQL strings using Python f-strings with no parameters passed to `cursor.execute()`:
+
+```python
+sql = f"""
+    SELECT TOP 3 doc_id, title, text_content,
+           VECTOR_COSINE(document_embedding_vector,
+                        TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as similarity_score
+    FROM RAG.SourceDocuments_V2
+    WHERE document_embedding_vector IS NOT NULL
+    ORDER BY similarity_score DESC
+"""
+cursor.execute(sql)  # No parameters passed!
+```
+
+The driver **still** converts this to `:%qpar` placeholders, resulting in:
+```
+[SQLCODE: <-1>:<Invalid SQL statement>]
+[%msg: < ) expected, : found ^SELECT TOP :%qpar(1) doc_id , title , text_content , VECTOR_COSINE ( document_embedding_vector , TO_VECTOR ( :%qpar(2) , :%qpar>]
+```
+
+This makes it **impossible** to use vector search functions from Python, even with string concatenation.
+
+**Reproducible Example**: See [`iris_vector_error_example.py`](iris_vector_error_example.py) for a minimal demonstration.
 
 ---
 
-## Resulting Impact  
+## Resulting Impact
 
-* Cannot build safe, parameterised server‑side vector search from Python, JDBC, or stored procedures.  
-* Forces brittle string‑templating, blocking multi‑tenant APIs and RBAC‑secured queries.  
+* Cannot build safe, parameterised server‑side vector search from Python, JDBC, or stored procedures.
+* Forces brittle string‑templating, blocking multi‑tenant APIs and RBAC‑secured queries.
 * Without a fix, RAG frameworks cannot target IRIS without custom code.
+* **Current workaround**: Fall back to manual cosine similarity calculation in Python, which is 10-100x slower than HNSW index search.
 
 ---
 
@@ -92,11 +119,13 @@ Python and JDBC drivers replace embedded literals with `:%qpar(n)` even when **n
 
 ---
 
-## Priority fixes for engineering  
+## Priority fixes for engineering
 
-1. **Parser**: allow `?` / named parameters inside `TO_VECTOR()` and in `TOP`/`FETCH` clauses.  
-2. **Driver**: stop rewriting literals when the SQL string is already complete.  
-3. **`LANGUAGE SQL`**: support simple `DECLARE` & `SET`, or expose `%Prepare()` from within SPs.
+1. **Driver**: Provide option to disable automatic parameter conversion: `cursor.execute(sql, parse_params=False)`
+2. **Parser**: Allow `?` / named parameters inside `TO_VECTOR()` and in `TOP`/`FETCH` clauses.
+3. **Driver**: Stop rewriting literals when the SQL string is already complete (f-strings with no parameters).
+4. **`LANGUAGE SQL`**: Support simple `DECLARE` & `SET`, or expose `%Prepare()` from within SPs.
+5. **Documentation**: Add clear examples showing the current limitations and workarounds.
 
 ---
 
