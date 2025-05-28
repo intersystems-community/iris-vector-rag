@@ -14,6 +14,7 @@ Technical implementation details for all RAG techniques and systems:
 ### ✅ Validation & Testing (`validation/`)
 Enterprise validation reports and testing results:
 
+- [`COMPREHENSIVE_RAG_EVALUATION_REPORT.md`](validation/COMPREHENSIVE_RAG_EVALUATION_REPORT.md) - **🆕 RAGAS comprehensive evaluation with performance rankings and quality analysis**
 - [`ENTERPRISE_VALIDATION_COMPLETE.md`](validation/ENTERPRISE_VALIDATION_COMPLETE.md) - Complete enterprise validation with all 7 RAG techniques
 - [`ENTERPRISE_CHUNKING_VALIDATION_COMPLETE.md`](validation/ENTERPRISE_CHUNKING_VALIDATION_COMPLETE.md) - Enterprise-scale chunking vs non-chunking validation
 - [`REAL_DATA_VECTOR_SUCCESS_REPORT.md`](validation/REAL_DATA_VECTOR_SUCCESS_REPORT.md) - Real data vector search validation results

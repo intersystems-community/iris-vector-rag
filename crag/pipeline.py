@@ -205,7 +205,7 @@ class CRAGPipeline:
         relevant_chunks: List[str] = []
         query_keywords = set(query_text.lower().split())
         for doc in documents:
-            if doc.content: # Ensure content is not None
+            if doc.content and doc.content.strip() and doc.content != "None": # Ensure content is valid
                 doc_content_lower = str(doc.content).lower()
                 # Simple keyword check: if any query keyword is in the doc content
                 if any(keyword in doc_content_lower for keyword in query_keywords):

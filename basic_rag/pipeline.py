@@ -62,7 +62,7 @@ class BasicRAGPipeline:
             
             for row in cursor.fetchall():
                 score = float(row[2]) if isinstance(row[2], str) else row[2]
-                doc = Document(id=str(row[0]), content=str(row[1]), score=score)
+                doc = Document(id=str(row[0]), content=row[1] if row[1] is not None else "", score=score)
                 retrieved_docs.append(doc)
             
             cursor.close()

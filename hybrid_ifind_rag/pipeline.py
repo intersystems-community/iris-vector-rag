@@ -107,9 +107,9 @@ class HybridiFindRAGPipeline:
             params = []
             
             for i, keyword in enumerate(keywords[:5]):  # Limit to 5 keywords
-                # Use UPPER instead of LOWER for IRIS SQL compatibility with stream fields
-                keyword_conditions.append(f"UPPER(d.text_content) LIKE ?")
-                params.append(f"%{keyword.upper()}%")
+                # Remove UPPER function - not supported on stream fields in IRIS
+                keyword_conditions.append(f"d.text_content LIKE ?")
+                params.append(f"%{keyword}%")
             
             where_clause = " OR ".join(keyword_conditions)
             
@@ -170,9 +170,9 @@ class HybridiFindRAGPipeline:
             params = []
             
             for keyword in keywords[:3]:  # Limit to 3 keywords for entities
-                # Use UPPER instead of LOWER for IRIS SQL compatibility with stream fields
-                entity_conditions.append("UPPER(d.text_content) LIKE ?")
-                params.append(f"%{keyword.upper()}%")
+                # Remove UPPER function - not supported on stream fields in IRIS
+                entity_conditions.append("d.text_content LIKE ?")
+                params.append(f"%{keyword}%")
             
             entity_where = " OR ".join(entity_conditions)
             

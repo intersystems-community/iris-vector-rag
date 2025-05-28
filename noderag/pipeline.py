@@ -108,12 +108,13 @@ class NodeRAGPipeline:
                             logger.error(f"NodeRAG: Error checking sample document: {sample_error}")
                         
                         # Try a direct vector search with a simple test vector
-                        test_vector_str = "[0.1,0.2,0.3" + ",0.0" * 765 + "]"  # Simple test vector with 768 dimensions
+                        test_vector_str = "[0.1,0.2,0.3" + ",0.0" * 381 + "]"  # Simple test vector with 384 dimensions
                         vector_search_sql = f"""
                             SELECT TOP 1 doc_id,
-                                   VECTOR_COSINE(embedding, TO_VECTOR(?, double, 768)) AS score
+                                   VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double, 384)) AS score
                             FROM RAG.SourceDocuments
                             WHERE embedding IS NOT NULL
+                              AND LENGTH(embedding) > 1000
                             ORDER BY score DESC
                         """
                         logger.info(f"NodeRAG: Testing vector search with simple test vector")
@@ -213,7 +214,20 @@ class NodeRAGPipeline:
             # Log a truncated version of the vector string for brevity
             logger.debug(f"Parameters: ('{iris_vector_str[:70]}...', threshold: {similarity_threshold})")
 
-            cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold)) # Pass vector string twice and threshold
+            try:
+                cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold))
+            except Exception as vector_error:
+                logger.warning(f"NodeRAG: Vector function error: {vector_error}")
+                # Fallback to simpler query without vector comparison in WHERE clause
+                fallback_sql = f"""
+                SELECT TOP 20 doc_id AS node_id,
+                       VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
+                FROM RAG.SourceDocuments
+                WHERE embedding IS NOT NULL
+                  AND LENGTH(embedding) > 1000
+                ORDER BY score DESC
+                """
+                cursor.execute(fallback_sql, (iris_vector_str,)) # Pass vector string twice and threshold
             
             # Fetch results
             fetched_rows = cursor.fetchall()
@@ -300,7 +314,7 @@ class NodeRAGPipeline:
         if use_source_docs:
             sql_fetch_content = f"""
                 SELECT doc_id, text_content
-                FROM RAG_HNSW.SourceDocuments
+                FROM RAG.SourceDocuments
                 WHERE doc_id IN ({placeholders})
             """
         else:
