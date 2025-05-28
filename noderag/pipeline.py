@@ -35,7 +35,7 @@ class NodeRAGPipeline:
         logger.info("NodeRAGPipeline Initialized")
 
     @timing_decorator
-    def _identify_initial_search_nodes(self, query_text: str, top_n_seed: int = 5, similarity_threshold: float = 0.6) -> List[str]: # Returns list of node_ids
+    def _identify_initial_search_nodes(self, query_text: str, top_n_seed: int = 5, similarity_threshold: float = 0.1) -> List[str]: # Returns list of node_ids
         """
         Identifies initial nodes in the graph relevant to the query, typically via vector search.
         """
@@ -187,6 +187,7 @@ class NodeRAGPipeline:
                        VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
+                  AND LENGTH(embedding) > 1000
                   AND VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) > ?
                 ORDER BY score DESC
             """
@@ -336,7 +337,7 @@ class NodeRAGPipeline:
 
 
     @timing_decorator
-    def retrieve_documents_from_graph(self, query_text: str, top_k_seeds: int = 5, similarity_threshold: float = 0.6) -> List[Document]:
+    def retrieve_documents_from_graph(self, query_text: str, top_k_seeds: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
         Orchestrates graph-based retrieval.
         """
@@ -392,7 +393,7 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.6) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Runs the full NodeRAG pipeline (query-time).
         """

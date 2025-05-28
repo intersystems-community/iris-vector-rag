@@ -80,7 +80,7 @@ class CRAGPipeline:
         logger.info(f"CRAGPipeline Initialized (use_chunks={use_chunks}, chunk_types={self.chunk_types})")
 
     @timing_decorator
-    def _initial_retrieve(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.5) -> List[Document]:
+    def _initial_retrieve(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
         Performs initial retrieval using embedding-based search with HNSW acceleration.
         Now supports both chunk-based and document-based retrieval.
@@ -92,7 +92,7 @@ class CRAGPipeline:
         else:
             return self._retrieve_documents(query_text, top_k, similarity_threshold)
     
-    def _retrieve_chunks(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.5) -> List[Document]:
+    def _retrieve_chunks(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
         Retrieve relevant chunks for CRAG processing
         """
@@ -126,7 +126,7 @@ class CRAGPipeline:
             logger.warning("CRAG: Falling back to document retrieval")
             return self._retrieve_documents(query_text, top_k, similarity_threshold)
     
-    def _retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.5) -> List[Document]:
+    def _retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
         Original document-based retrieval (fallback method)
         """
@@ -142,6 +142,7 @@ class CRAGPipeline:
                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
             FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
+              AND LENGTH(embedding) > 1000
               AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
             ORDER BY score DESC
         """
@@ -219,7 +220,7 @@ class CRAGPipeline:
 
 
     @timing_decorator
-    def retrieve_and_correct(self, query_text: str, top_k: int = 5, web_top_k: int = 3, initial_threshold: float = 0.5, quality_threshold: float = 0.75) -> List[str]:
+    def retrieve_and_correct(self, query_text: str, top_k: int = 5, web_top_k: int = 3, initial_threshold: float = 0.1, quality_threshold: float = 0.75) -> List[str]:
         """
         Performs initial retrieval, evaluates, potentially augments, and refines context.
         """
@@ -276,7 +277,7 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, web_top_k: int = 3, initial_threshold: float = 0.5, quality_threshold: float = 0.75) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, web_top_k: int = 3, initial_threshold: float = 0.1, quality_threshold: float = 0.75) -> Dict[str, Any]:
         """
         Runs the full CRAG pipeline.
         """

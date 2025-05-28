@@ -120,7 +120,7 @@ class HybridiFindRAGPipeline:
                 d.text_content as content,
                 '' as metadata,
                 ROW_NUMBER() OVER (ORDER BY d.doc_id) as rank_position
-            FROM RAG_HNSW.SourceDocuments d
+            FROM RAG.SourceDocuments d
             WHERE {where_clause}
             ORDER BY d.doc_id
             """
@@ -184,7 +184,7 @@ class HybridiFindRAGPipeline:
                 '' as metadata,
                 1.0 as avg_strength,
                 ROW_NUMBER() OVER (ORDER BY d.doc_id) as rank_position
-            FROM RAG_HNSW.SourceDocuments d
+            FROM RAG.SourceDocuments d
             WHERE {entity_where}
             ORDER BY d.doc_id
             """
@@ -237,8 +237,9 @@ class HybridiFindRAGPipeline:
                 '' as metadata,
                 VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) as similarity_score,
                 ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) DESC) as rank_position
-            FROM RAG_HNSW.SourceDocuments d
+            FROM RAG.SourceDocuments d
             WHERE d.embedding IS NOT NULL
+              AND LENGTH(d.embedding) > 1000
             ORDER BY similarity_score DESC
             """
             

@@ -3,7 +3,7 @@
 import time
 from dataclasses import dataclass, field
 from typing import List, Callable, Any, Optional, Dict, Tuple # Added Tuple
-import sqlalchemy
+# import sqlalchemy  # Removed - not needed for IRIS
 import os
 import logging # Added for logger usage in get_llm_func
 import numpy as np
@@ -40,7 +40,7 @@ class Document:
 _llm_instance = None
 _current_llm_key = None # For caching LLM instance
 
-DEFAULT_EMBEDDING_MODEL = "intfloat/e5-base-v2" 
+DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # 384 dims to match database
 
 # New pure HuggingFace embedder
 _hf_embedder_cache = {}
@@ -270,7 +270,7 @@ def get_colbert_doc_encoder_func_adapted(model_name: str = "stub_colbert_doc_enc
     return adapted_colbert_doc_encode
 
 
-def get_iris_connector(db_url: Optional[str] = None) -> sqlalchemy.engine.base.Connection:
+def get_iris_connector(db_url: Optional[str] = None):
     if db_url is None:
         db_url = os.getenv("IRIS_CONNECTION_URL")
         if not db_url:

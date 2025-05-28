@@ -188,45 +188,128 @@ class GraphRAGPipeline:
     @timing_decorator
     def retrieve_documents_via_kg(self, query_text: str, top_k: int = 20) -> List[Document]:
         """
-        Orchestrates Knowledge Graph-based retrieval using real data from RAG_HNSW.SourceDocuments.
-        Since we don't have a proper knowledge graph yet, we'll use vector similarity on documents.
+        Orchestrates Knowledge Graph-based retrieval using entities and relationships.
+        Falls back to vector similarity if no graph results found.
         """
         logger.info(f"GraphRAG: Retrieving documents for query: '{query_text[:50]}...'")
         
-        if not self.embedding_func:
-            logger.warning("GraphRAG: Embedding function not provided.")
-            return []
-
-        # Generate query embedding
-        query_embedding = self.embedding_func([query_text])[0]
-        query_vector_str = ','.join(map(str, query_embedding))
-        
         retrieved_docs: List[Document] = []
-        sql_query = f"""
-            SELECT TOP 20 doc_id, text_content,
-                   VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
-            FROM RAG_HNSW.SourceDocuments
-            WHERE embedding IS NOT NULL
-              AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.7
-            ORDER BY score DESC
-        """
-        
         cursor = None
+        
         try:
             cursor = self.iris_connector.cursor()
-            cursor.execute(sql_query, (query_vector_str, query_vector_str))
-            results = cursor.fetchall()
             
-            for row in results:
-                doc_id = row[0]
-                content = row[1] if row[1] else ""
-                score = float(row[2]) if row[2] else 0.0
-                retrieved_docs.append(Document(id=doc_id, content=content, score=score))
+            # Step 1: Try knowledge graph retrieval first
+            query_keywords = query_text.lower().split()
+            entity_conditions = []
+            params = []
             
-            logger.info(f"GraphRAG: Retrieved {len(retrieved_docs)} documents above threshold 0.7")
+            for keyword in query_keywords[:5]:  # Limit to first 5 keywords
+                entity_conditions.append("LOWER(entity_name) LIKE ?")
+                params.append(f"%{keyword}%")
+            
+            if entity_conditions:
+                entity_query = f"""
+                    SELECT DISTINCT e.entity_id, e.entity_name, e.source_doc_id
+                    FROM RAG.Entities e
+                    WHERE {' OR '.join(entity_conditions)}
+                    LIMIT 10
+                """
+                
+                cursor.execute(entity_query, params)
+                relevant_entities = cursor.fetchall()
+                
+                logger.info(f"GraphRAG: Found {len(relevant_entities)} relevant entities")
+                
+                if relevant_entities:
+                    # Find related entities through relationships
+                    entity_ids = [entity[0] for entity in relevant_entities]
+                    entity_placeholders = ','.join(['?' for _ in entity_ids])
+                    
+                    relationship_query = f"""
+                        SELECT DISTINCT r.target_entity_id, e.source_doc_id
+                        FROM RAG.Relationships r
+                        JOIN RAG.Entities e ON r.target_entity_id = e.entity_id
+                        WHERE r.source_entity_id IN ({entity_placeholders})
+                        UNION
+                        SELECT DISTINCT r.source_entity_id, e.source_doc_id
+                        FROM RAG.Relationships r
+                        JOIN RAG.Entities e ON r.source_entity_id = e.entity_id
+                        WHERE r.target_entity_id IN ({entity_placeholders})
+                    """
+                    
+                    cursor.execute(relationship_query, entity_ids + entity_ids)
+                    related_entities = cursor.fetchall()
+                    
+                    # Collect document IDs
+                    doc_ids = set()
+                    for entity in relevant_entities:
+                        if entity[2]:  # source_doc_id
+                            doc_ids.add(entity[2])
+                    
+                    for entity in related_entities:
+                        if entity[1]:  # source_doc_id
+                            doc_ids.add(entity[1])
+                    
+                    # Retrieve documents
+                    if doc_ids:
+                        doc_list = list(doc_ids)[:top_k]
+                        doc_placeholders = ','.join(['?' for _ in doc_list])
+                        
+                        doc_query = f"""
+                            SELECT doc_id, text_content
+                            FROM RAG.SourceDocuments
+                            WHERE doc_id IN ({doc_placeholders})
+                              AND text_content IS NOT NULL
+                        """
+                        
+                        cursor.execute(doc_query, doc_list)
+                        doc_results = cursor.fetchall()
+                        
+                        for doc_id, content in doc_results:
+                            retrieved_docs.append(Document(
+                                id=doc_id,
+                                content=content or "",
+                                score=1.0  # Graph-based relevance
+                            ))
+                        
+                        logger.info(f"GraphRAG: Retrieved {len(retrieved_docs)} documents via knowledge graph")
+            
+            # Step 2: Fallback to vector similarity if no graph results
+            if not retrieved_docs:
+                logger.info("GraphRAG: No graph results, falling back to vector similarity")
+                
+                if not self.embedding_func:
+                    logger.warning("GraphRAG: Embedding function not provided.")
+                    return []
+
+                # Generate query embedding
+                query_embedding = self.embedding_func([query_text])[0]
+                query_vector_str = ','.join(map(str, query_embedding))
+                
+                sql_query = f"""
+                    SELECT TOP 20 doc_id, text_content,
+                           VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
+                    FROM RAG.SourceDocuments
+                    WHERE embedding IS NOT NULL
+                      AND LENGTH(embedding) > 1000
+                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.1
+                    ORDER BY score DESC
+                """
+                
+                cursor.execute(sql_query, (query_vector_str, query_vector_str))
+                results = cursor.fetchall()
+                
+                for row in results:
+                    doc_id = row[0]
+                    content = row[1] if row[1] else ""
+                    score = float(row[2]) if row[2] else 0.0
+                    retrieved_docs.append(Document(id=doc_id, content=content, score=score))
+                
+                logger.info(f"GraphRAG: Fallback retrieved {len(retrieved_docs)} documents")
             
         except Exception as e:
-            logger.error(f"GraphRAG: Error during document retrieval: {e}")
+            logger.error(f"GraphRAG: Error during retrieval: {e}")
         finally:
             if cursor:
                 cursor.close()
@@ -261,7 +344,7 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.7) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Runs the full GraphRAG pipeline (query-time).
         """
