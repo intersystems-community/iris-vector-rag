@@ -1,6 +1,6 @@
 """
-Basic RAG Pipeline - Working Version
-Simple implementation that works with IRIS SQL limitations and the Document class
+Basic RAG Pipeline - Final Working Version
+Uses direct SQL construction without parameters to avoid IRIS parsing issues
 """
 
 import os
@@ -9,7 +9,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from typing import List, Dict, Any, Callable
 import logging
-import json
 
 try:
     import iris
@@ -37,7 +36,7 @@ class BasicRAGPipeline:
     def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
         Retrieves documents from IRIS based on vector similarity.
-        Memory-efficient implementation that processes documents in small batches.
+        Uses the old tables without VECTOR columns to avoid all the issues.
         """
         logger.debug(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...'")
         
@@ -49,28 +48,22 @@ class BasicRAGPipeline:
         try:
             cursor = self.iris_connector.cursor()
             
-            # For BasicRAG, we'll use a very simple approach:
-            # Just get a small sample of documents and calculate similarity
-            # This avoids memory issues and IRIS SQL limitations
-            
-            # Get 100 documents with real embeddings (excluding dummy data)
+            # Use the original SourceDocuments table with cosine similarity calculation
+            # We'll calculate cosine similarity manually in SQL
             sql = f"""
-                SELECT TOP 100 doc_id, title, text_content, embedding
+                SELECT doc_id, title, text_content, embedding
                 FROM {self.schema}.SourceDocuments
                 WHERE embedding IS NOT NULL
-                AND embedding NOT LIKE '0.1,0.1,0.1%'
-                ORDER BY doc_id
             """
             
             cursor.execute(sql)
-            sample_docs = cursor.fetchall()
+            all_docs = cursor.fetchall()
             
-            logger.info(f"Processing {len(sample_docs)} sample documents")
-            
-            # Calculate similarities
+            # Calculate similarities in Python
+            import json
             doc_scores = []
             
-            for row in sample_docs:
+            for row in all_docs:
                 doc_id = row[0]
                 title = row[1]
                 content = row[2]
@@ -78,15 +71,10 @@ class BasicRAGPipeline:
                 
                 try:
                     # Parse the stored embedding
-                    if embedding_str and embedding_str.startswith('['):
+                    if embedding_str.startswith('['):
                         doc_embedding = json.loads(embedding_str)
                     else:
-                        doc_embedding = [float(x.strip()) for x in embedding_str.split(',') if x.strip()]
-                    
-                    # Ensure embeddings have the same dimension
-                    if len(doc_embedding) != len(query_embedding):
-                        logger.debug(f"Dimension mismatch for doc {doc_id}: {len(doc_embedding)} vs {len(query_embedding)}")
-                        continue
+                        doc_embedding = [float(x.strip()) for x in embedding_str.split(',')]
                     
                     # Calculate cosine similarity
                     dot_product = sum(a * b for a, b in zip(query_embedding, doc_embedding))
@@ -101,8 +89,8 @@ class BasicRAGPipeline:
                     if similarity > similarity_threshold:
                         doc_scores.append({
                             'doc_id': doc_id,
-                            'title': title or "",
-                            'content': content or "",
+                            'title': title,
+                            'content': content,
                             'score': similarity
                         })
                         
@@ -116,17 +104,15 @@ class BasicRAGPipeline:
             
             # Convert to Document objects
             for doc_data in doc_scores:
-                # Create Document with just the fields it accepts
                 doc = Document(
                     id=doc_data['doc_id'],
-                    content=doc_data['content'],
+                    content=doc_data['content'] or "",
+                    metadata={"title": doc_data['title'] or ""},
                     score=doc_data['score']
                 )
-                # Store title separately if needed
-                doc._title = doc_data['title']
                 retrieved_docs.append(doc)
             
-            logger.info(f"BasicRAG: Retrieved {len(retrieved_docs)} documents above threshold")
+            logger.info(f"BasicRAG: Retrieved {len(retrieved_docs)} documents")
             
         except Exception as e:
             logger.error(f"BasicRAG: Error during document retrieval: {e}", exc_info=True)
@@ -150,10 +136,10 @@ class BasicRAGPipeline:
         # Limit context to prevent token overflow
         context_parts = []
         total_chars = 0
-        max_context_chars = 4000  # Conservative limit
+        max_context_chars = 8000  # Conservative limit
         
         for doc in retrieved_docs:
-            doc_content = doc.content[:1000]  # Limit each document
+            doc_content = doc.content[:2000]  # Limit each document
             if total_chars + len(doc_content) > max_context_chars:
                 break
             context_parts.append(doc_content)
@@ -185,24 +171,16 @@ Answer:"""
         retrieved_documents = self.retrieve_documents(query_text, top_k, similarity_threshold)
         answer = self.generate_answer(query_text, retrieved_documents)
         
-        # Convert documents to dict format, including title if available
-        doc_dicts = []
-        for doc in retrieved_documents:
-            doc_dict = doc.to_dict()
-            if hasattr(doc, '_title'):
-                doc_dict['metadata'] = {'title': doc._title}
-            doc_dicts.append(doc_dict)
-        
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": doc_dicts,
+            "retrieved_documents": [doc.to_dict() for doc in retrieved_documents],
             "similarity_threshold": similarity_threshold,
             "document_count": len(retrieved_documents),
         }
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     print("Running BasicRAGPipeline Demo...")
 
     # Setup

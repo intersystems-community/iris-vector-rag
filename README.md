@@ -16,7 +16,7 @@ The documentation is now organized into logical categories:
 - **📊 Summaries**: High-level project summaries and status reports
 ---
 
-## Project Status (As of May 28, 2025)
+## Project Status (As of May 29, 2025)
 
 🚀 **ENTERPRISE PRODUCTION READY** - Complete 7-technique RAG system with comprehensive RAGAS evaluation:
 
@@ -354,11 +354,20 @@ rag-templates/
 │   ├── RAGDemo.TestBed.cls      # Testing framework
 │   └── python_bridge.py        # Python-ObjectScript bridge
 ├── scripts/                     # Utility and execution scripts
+│   ├── performance/             # Performance optimization scripts
+│   ├── validation/              # Validation and testing scripts
+│   ├── migration/               # Database migration scripts
 │   ├── run_e2e_tests.py
 │   └── run_rag_benchmarks.py
 ├── tests/                       # Pytest test suite
 │   ├── conftest.py
 │   └── test_e2e_rag_pipelines.py
+├── bug_reproductions/           # Bug reproduction scripts for IRIS issues
+│   ├── README.md                # Documentation of known IRIS bugs
+│   ├── bug1_parameter_binding.py
+│   ├── bug2_hnsw_varchar.py
+│   ├── bug3_vector_driver_support.py
+│   └── bug4_stored_procedures.py
 └── ... (other RAG pipeline directories, configuration files, etc.)
 ```
 

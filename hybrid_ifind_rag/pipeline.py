@@ -215,6 +215,9 @@ class HybridiFindRAGPipeline:
             # Convert embedding to string format for SQL
             embedding_str = ','.join(map(str, query_embedding))
             
+            # Use similarity threshold filtering like BasicRAG for better performance
+            similarity_threshold = 0.1
+            
             query_sql = f"""
             SELECT TOP {self.config['max_results_per_method']}
                 d.doc_id as document_id,
@@ -226,11 +229,12 @@ class HybridiFindRAGPipeline:
             FROM RAG.SourceDocuments d
             WHERE d.embedding IS NOT NULL
               AND LENGTH(d.embedding) > 1000
+              AND VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) > ?
             ORDER BY similarity_score DESC
             """
             
             cursor = self.iris_connector.cursor()
-            cursor.execute(query_sql, [embedding_str, embedding_str])
+            cursor.execute(query_sql, [embedding_str, embedding_str, embedding_str, similarity_threshold])
             results = []
             
             for row in cursor.fetchall():
