@@ -18,7 +18,7 @@ except ImportError:
     IRISConnection = Any
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
-from common.iris_connector import get_iris_connection
+from common.iris_connector_jdbc import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
@@ -78,10 +78,15 @@ class BasicRAGPipeline:
                 
                 try:
                     # Parse the stored embedding
-                    if embedding_str and embedding_str.startswith('['):
+                    # Handle JDBC string objects
+                    if hasattr(embedding_str, 'toString'):
+                        embedding_str = str(embedding_str)
+                    
+                    if embedding_str and isinstance(embedding_str, str) and embedding_str.startswith('['):
                         doc_embedding = json.loads(embedding_str)
                     else:
-                        doc_embedding = [float(x.strip()) for x in embedding_str.split(',') if x.strip()]
+                        # Most embeddings are stored as comma-separated values
+                        doc_embedding = [float(x.strip()) for x in str(embedding_str).split(',') if x.strip()]
                     
                     # Ensure embeddings have the same dimension
                     if len(doc_embedding) != len(query_embedding):
@@ -99,15 +104,25 @@ class BasicRAGPipeline:
                         similarity = 0.0
                     
                     if similarity > similarity_threshold:
+                        # Handle JDBC stream for content
+                        if hasattr(content, 'read'):
+                            content_str = content.read()
+                            if isinstance(content_str, bytes):
+                                content_str = content_str.decode('utf-8', errors='ignore')
+                        elif hasattr(content, 'toString'):
+                            content_str = str(content)
+                        else:
+                            content_str = str(content) if content else ""
+                        
                         doc_scores.append({
-                            'doc_id': doc_id,
-                            'title': title or "",
-                            'content': content or "",
+                            'doc_id': str(doc_id) if hasattr(doc_id, 'toString') else doc_id,
+                            'title': str(title) if hasattr(title, 'toString') else (title or ""),
+                            'content': content_str,
                             'score': similarity
                         })
                         
                 except Exception as e:
-                    logger.debug(f"Could not process embedding for doc {doc_id}: {e}")
+                    logger.warning(f"Could not process embedding for doc {doc_id}: {e}")
                     continue
             
             # Sort by score and take top_k
@@ -153,7 +168,17 @@ class BasicRAGPipeline:
         max_context_chars = 4000  # Conservative limit
         
         for doc in retrieved_docs:
-            doc_content = doc.content[:1000]  # Limit each document
+            # Handle JDBC stream objects
+            content = doc.content
+            if hasattr(content, 'read'):
+                # It's a stream, read it
+                content = content.read()
+                if isinstance(content, bytes):
+                    content = content.decode('utf-8', errors='ignore')
+            elif hasattr(content, 'toString'):
+                content = str(content)
+            
+            doc_content = str(content)[:1000] if content else ""  # Limit each document
             if total_chars + len(doc_content) > max_context_chars:
                 break
             context_parts.append(doc_content)

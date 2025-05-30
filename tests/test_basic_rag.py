@@ -97,7 +97,7 @@ def test_retrieve_documents_calls_embedding_and_iris(basic_rag_pipeline_under_te
     assert "VECTOR_COSINE" in executed_sql
     assert "TO_VECTOR(embedding, double, " in executed_sql # Check for stored embedding
     assert "TO_VECTOR(?, double, " in executed_sql      # Check for query embedding
-    assert "FROM RAG.SourceDocuments" in executed_sql
+    assert "FROM RAG.SourceDocuments_V2" in executed_sql
     assert "ORDER BY similarity_score DESC" in executed_sql
     
     # Check that top_k is the first parameter
@@ -110,7 +110,7 @@ def test_retrieve_documents_calls_embedding_and_iris(basic_rag_pipeline_under_te
     assert "VECTOR_COSINE" in executed_sql
     assert "TO_VECTOR(embedding, double, 768)" in executed_sql  # Check for stored embedding
     assert "TO_VECTOR(?, double, 768)" in executed_sql       # Check for query embedding
-    assert "FROM RAG.SourceDocuments" in executed_sql # Check for schema-qualified table
+    assert "FROM RAG.SourceDocuments_V2" in executed_sql # Check for schema-qualified table
     assert "ORDER BY similarity_score DESC" in executed_sql # Alias is similarity_score
     
     # Assert fetchall was called

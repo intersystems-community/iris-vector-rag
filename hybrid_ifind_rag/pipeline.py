@@ -120,7 +120,7 @@ class HybridiFindRAGPipeline:
                 d.text_content as content,
                 '' as metadata,
                 ROW_NUMBER() OVER (ORDER BY d.doc_id) as rank_position
-            FROM RAG.SourceDocuments d
+            FROM RAG.SourceDocuments_V2 d
             WHERE {where_clause}
             ORDER BY d.doc_id
             """
@@ -218,30 +218,63 @@ class HybridiFindRAGPipeline:
             # Use similarity threshold filtering like BasicRAG for better performance
             similarity_threshold = 0.1
             
-            query_sql = f"""
-            SELECT TOP {self.config['max_results_per_method']}
-                d.doc_id as document_id,
-                d.doc_id as title,
-                d.text_content as content,
-                '' as metadata,
-                VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) as similarity_score,
-                ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) DESC) as rank_position
-            FROM RAG.SourceDocuments d
-            WHERE d.embedding IS NOT NULL
-              AND LENGTH(d.embedding) > 1000
-              AND VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) > ?
-            ORDER BY similarity_score DESC
-            """
+            # Check if we're using JDBC (which has issues with parameter binding for vectors)
+            conn_type = type(self.iris_connector).__name__
+            is_jdbc = 'JDBC' in conn_type or hasattr(self.iris_connector, '_jdbc_connection')
             
-            cursor = self.iris_connector.cursor()
-            cursor.execute(query_sql, [embedding_str, embedding_str, embedding_str, similarity_threshold])
+            if is_jdbc:
+                # Use direct SQL for JDBC to avoid parameter binding issues
+                query_sql = f"""
+                SELECT TOP {self.config['max_results_per_method']}
+                    d.doc_id as document_id,
+                    d.doc_id as title,
+                    d.text_content as content,
+                    '' as metadata,
+                    VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR('{embedding_str}')) as similarity_score,
+                    ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR('{embedding_str}')) DESC) as rank_position
+                FROM RAG.SourceDocuments_V2 d
+                WHERE d.embedding IS NOT NULL
+                  AND LENGTH(d.embedding) > 1000
+                  AND VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR('{embedding_str}')) > {similarity_threshold}
+                ORDER BY similarity_score DESC
+                """
+                
+                cursor = self.iris_connector.cursor()
+                cursor.execute(query_sql)  # No parameters for JDBC
+            else:
+                # Use parameter binding for ODBC
+                query_sql = f"""
+                SELECT TOP {self.config['max_results_per_method']}
+                    d.doc_id as document_id,
+                    d.doc_id as title,
+                    d.text_content as content,
+                    '' as metadata,
+                    VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) as similarity_score,
+                    ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) DESC) as rank_position
+                FROM RAG.SourceDocuments_V2 d
+                WHERE d.embedding IS NOT NULL
+                  AND LENGTH(d.embedding) > 1000
+                  AND VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) > ?
+                ORDER BY similarity_score DESC
+                """
+                
+                cursor = self.iris_connector.cursor()
+                cursor.execute(query_sql, [embedding_str, embedding_str, embedding_str, similarity_threshold])
+            
             results = []
             
             for row in cursor.fetchall():
+                # Handle potential stream objects (for JDBC)
+                content = row[2]
+                if hasattr(content, 'read'):
+                    content = content.read()
+                if isinstance(content, bytes):
+                    content = content.decode('utf-8', errors='ignore')
+                
                 results.append({
                     'document_id': row[0],
                     'title': row[1],
-                    'content': row[2],
+                    'content': str(content),
                     'metadata': row[3],
                     'similarity_score': float(row[4]) if row[4] else 0.0,
                     'rank_position': row[5],

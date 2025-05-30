@@ -47,22 +47,9 @@ class ChunkRetrievalService:
         chunk_type_placeholders = ','.join(['?' for _ in chunk_types])
         
         # Build SQL using correct IRIS vector syntax (embedding is already VECTOR type)
-        chunk_type_placeholders = ','.join(['?' for _ in chunk_types])
-        sql_query = f"""
-            SELECT TOP {top_k}
-                chunk_id,
-                chunk_text,
-                doc_id,
-                chunk_type,
-                chunk_index,
-                chunk_metadata,
-                VECTOR_COSINE(embedding, TO_VECTOR(?)) AS score
-            FROM RAG.DocumentChunks
-            WHERE embedding IS NOT NULL
-              AND chunk_type IN ({chunk_type_placeholders})
-              AND VECTOR_COSINE(embedding, TO_VECTOR(?)) > ?
-            ORDER BY score DESC
-        """
+        # Check if we're using JDBC (which has issues with parameter binding for vectors)
+        conn_type = type(self.iris_connector).__name__
+        is_jdbc = 'JDBC' in conn_type or hasattr(self.iris_connector, '_jdbc_connection')
         
         retrieved_chunks: List[Document] = []
         cursor = None
@@ -70,36 +57,77 @@ class ChunkRetrievalService:
         try:
             cursor = self.iris_connector.cursor()
             
-            logger.info(f"Generated SQL query: {sql_query}")
-            logger.debug(f"Executing chunk retrieval query with {len(chunk_types)} chunk types")
-            
-            # Prepare parameters: query_vector_str, chunk_types, query_vector_str again, similarity_threshold
-            params = [query_vector_str] + chunk_types + [query_vector_str, similarity_threshold]
-            cursor.execute(sql_query, params)
+            if is_jdbc:
+                # Use direct SQL for JDBC to avoid parameter binding issues with vectors
+                chunk_type_list = ','.join([f"'{ct}'" for ct in chunk_types])
+                sql_query = f"""
+                    SELECT TOP {top_k}
+                        chunk_id,
+                        chunk_text,
+                        doc_id,
+                        chunk_type,
+                        chunk_index,
+                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_vector_str}')) AS score
+                    FROM RAG.DocumentChunks
+                    WHERE embedding IS NOT NULL
+                      AND chunk_type IN ({chunk_type_list})
+                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_vector_str}')) > {similarity_threshold}
+                    ORDER BY score DESC
+                """
+                logger.info(f"Generated SQL query: {sql_query}")
+                cursor.execute(sql_query)  # No parameters for JDBC
+            else:
+                # Use parameter binding for ODBC
+                chunk_type_placeholders = ','.join(['?' for _ in chunk_types])
+                sql_query = f"""
+                    SELECT TOP {top_k}
+                        chunk_id,
+                        chunk_text,
+                        doc_id,
+                        chunk_type,
+                        chunk_index,
+                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
+                    FROM RAG.DocumentChunks
+                    WHERE embedding IS NOT NULL
+                      AND chunk_type IN ({chunk_type_placeholders})
+                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
+                    ORDER BY score DESC
+                """
+                logger.info(f"Generated SQL query: {sql_query}")
+                # Prepare parameters: query_vector_str, chunk_types, query_vector_str again, similarity_threshold
+                params = [query_vector_str] + chunk_types + [query_vector_str, similarity_threshold]
+                cursor.execute(sql_query, params)
             results = cursor.fetchall()
             
             for row in results:
                 chunk_id = row[0]
                 chunk_text = row[1] if row[1] else ""
+                
+                # Handle potential stream objects (for JDBC)
+                if hasattr(chunk_text, 'read'):
+                    chunk_text = chunk_text.read()
+                if isinstance(chunk_text, bytes):
+                    chunk_text = chunk_text.decode('utf-8', errors='ignore')
+                
                 doc_id = row[2]
                 chunk_type = row[3]
                 chunk_index = row[4]
-                chunk_metadata = row[5]
-                score = float(row[6]) if row[6] else 0.0
+                score = float(row[5]) if row[5] else 0.0
                 
                 # Create Document object with chunk information
-                retrieved_chunks.append(Document(
+                doc = Document(
                     id=chunk_id,
-                    content=chunk_text,
-                    score=score,
-                    metadata={
-                        'doc_id': doc_id,
-                        'chunk_type': chunk_type,
-                        'chunk_index': chunk_index,
-                        'chunk_metadata': chunk_metadata,
-                        'source': 'chunk'
-                    }
-                ))
+                    content=str(chunk_text),
+                    score=score
+                )
+                # Add metadata as an attribute after creation
+                doc.metadata = {
+                    'doc_id': doc_id,
+                    'chunk_type': chunk_type,
+                    'chunk_index': chunk_index,
+                    'source': 'chunk'
+                }
+                retrieved_chunks.append(doc)
             
             logger.info(f"Retrieved {len(retrieved_chunks)} chunks above threshold {similarity_threshold}")
             

@@ -168,13 +168,13 @@ def verify_database_initialized(logger: logging.Logger, min_docs: int = 1000) ->
             with connection.cursor() as cursor:
                 try:
                     # Try with RAG schema qualification first (as in conftest_real_pmc.py)
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
                     count = cursor.fetchone()[0]
-                    logger.info(f"Found {count} documents in RAG.SourceDocuments.")
+                    logger.info(f"Found {count} documents in RAG.SourceDocuments_V2.")
                 except Exception:
                     try:
                         # Try without schema qualification
-                        cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+                        cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2")
                         count = cursor.fetchone()[0]
                         logger.info(f"Found {count} documents in SourceDocuments.")
                     except Exception as e:
@@ -216,7 +216,7 @@ def initialize_database_if_needed(logger: logging.Logger) -> bool:
             with connection.cursor() as cursor:
                 try:
                     # Check if SourceDocuments table exists
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
                     logger.info("Database schema already initialized.")
                     return True
                 except Exception:
@@ -258,12 +258,12 @@ def load_pmc_data_if_needed(logger: logging.Logger, min_docs: int = 1000) -> boo
             with connection.cursor() as cursor:
                 try:
                     # Try with RAG schema qualification first
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
                     count = cursor.fetchone()[0]
                 except Exception:
                     try:
                         # Try without schema qualification
-                        cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+                        cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2")
                         count = cursor.fetchone()[0]
                     except Exception:
                         logger.error("Error querying document count.")
@@ -297,12 +297,12 @@ def load_pmc_data_if_needed(logger: logging.Logger, min_docs: int = 1000) -> boo
             with connection.cursor() as cursor:
                 try:
                     # Try with RAG schema qualification first
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
                     new_count = cursor.fetchone()[0]
                 except Exception:
                     try:
                         # Try without schema qualification
-                        cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+                        cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2")
                         new_count = cursor.fetchone()[0]
                     except Exception:
                         logger.error("Error querying document count after loading.")

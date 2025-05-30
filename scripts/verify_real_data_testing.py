@@ -118,15 +118,15 @@ def verify_document_count(logger: logging.Logger, connection, min_docs: int = 10
         with connection.cursor() as cursor:
             # Try with RAG schema qualification first
             try:
-                cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
                 count = cursor.fetchone()[0]
-                schema = "RAG.SourceDocuments"
+                schema = "RAG.SourceDocuments_V2"
             except Exception:
                 try:
                     # Try without schema qualification
-                    cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+                    cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2")
                     count = cursor.fetchone()[0]
-                    schema = "SourceDocuments"
+                    schema = "SourceDocuments_V2"
                 except Exception as e:
                     logger.error(f"Error querying document count: {e}")
                     return False
@@ -189,15 +189,15 @@ def verify_embeddings(logger: logging.Logger, connection, min_docs: int = 1000) 
         with connection.cursor() as cursor:
             # Try with RAG schema qualification first
             try:
-                cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+                cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
                 count = cursor.fetchone()[0]
-                schema = "RAG.SourceDocuments"
+                schema = "RAG.SourceDocuments_V2"
             except Exception:
                 try:
                     # Try without schema qualification
-                    cursor.execute("SELECT COUNT(*) FROM SourceDocuments WHERE embedding IS NOT NULL")
+                    cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2 WHERE embedding IS NOT NULL")
                     count = cursor.fetchone()[0]
-                    schema = "SourceDocuments"
+                    schema = "SourceDocuments_V2"
                 except Exception as e:
                     logger.error(f"Error querying embedding count: {e}")
                     return False
@@ -294,10 +294,10 @@ def verify_vector_search(logger: logging.Logger, connection) -> bool:
             with connection.cursor() as cursor:
                 # Try with RAG schema qualification first
                 try:
-                    schema = "RAG.SourceDocuments"
+                    schema = "RAG.SourceDocuments_V2"
                     cursor.execute(f"SELECT TOP 1 * FROM {schema} WHERE embedding IS NOT NULL")
                 except Exception:
-                    schema = "SourceDocuments"
+                    schema = "SourceDocuments_V2"
                 
                 # Convert embedding to string
                 query_embedding_str = json.dumps(query_embedding)
@@ -412,7 +412,7 @@ def generate_diagnostics_report(logger: logging.Logger, connection, output_dir: 
                 report["database"]["namespace"] = "Unknown"
         
         # Get table information
-        tables_to_check = ["SourceDocuments", "DocumentTokenEmbeddings"]
+        tables_to_check = ["SourceDocuments_V2", "DocumentTokenEmbeddings"]
         schemas_to_check = ["", "RAG."]
         
         for schema in schemas_to_check:
@@ -436,7 +436,7 @@ def generate_diagnostics_report(logger: logging.Logger, connection, output_dir: 
                             }
                             
                             # For SourceDocuments, get embedding stats
-                            if table == "SourceDocuments":
+                            if table == "SourceDocuments_V2":
                                 try:
                                     cursor.execute(f"SELECT COUNT(*) FROM {full_table_name} WHERE embedding IS NOT NULL")
                                     with_embedding = cursor.fetchone()[0]
@@ -457,7 +457,7 @@ def generate_diagnostics_report(logger: logging.Logger, connection, output_dir: 
                 # Find the SourceDocuments table
                 source_docs_table = None
                 for table_name, table_info in report["tables"].items():
-                    if table_info.get("exists", False) and table_name.endswith("SourceDocuments"):
+                    if table_info.get("exists", False) and table_name.endswith("SourceDocuments_V2"):
                         source_docs_table = table_name
                         break
                 
@@ -490,7 +490,7 @@ def generate_diagnostics_report(logger: logging.Logger, connection, output_dir: 
                         # Find the SourceDocuments table
                         source_docs_table = None
                         for table_name, table_info in report["tables"].items():
-                            if table_info.get("exists", False) and table_name.endswith("SourceDocuments"):
+                            if table_info.get("exists", False) and table_name.endswith("SourceDocuments_V2"):
                                 source_docs_table = table_name
                                 break
                         

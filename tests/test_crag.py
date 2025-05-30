@@ -125,7 +125,7 @@ def test_initial_retrieve(crag_pipeline, mock_iris_connector, mock_embedding_fun
     assert f"SELECT TOP {top_k}" in executed_sql
     assert "VECTOR_COSINE(embedding, TO_VECTOR(" in executed_sql
     assert "'DOUBLE', 768" in executed_sql # Assuming 768 from pipeline.py
-    assert "FROM RAG.SourceDocuments" in executed_sql
+    assert "FROM RAG.SourceDocuments_V2" in executed_sql
     
     mock_cursor.fetchall.assert_called_once()
     assert len(retrieved_docs) == 2 # Based on mock_iris_connector default

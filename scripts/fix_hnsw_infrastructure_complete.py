@@ -105,7 +105,7 @@ class HNSWInfrastructureFixer:
             cursor.execute("""
                 SELECT COLUMN_NAME, DATA_TYPE 
                 FROM INFORMATION_SCHEMA.COLUMNS 
-                WHERE TABLE_SCHEMA = 'RAG_HNSW' AND TABLE_NAME = 'SourceDocuments'
+                WHERE TABLE_SCHEMA = 'RAG_HNSW' AND TABLE_NAME = 'SourceDocuments_V2'
                 ORDER BY ORDINAL_POSITION
             """)
             columns = cursor.fetchall()
@@ -139,7 +139,7 @@ class HNSWInfrastructureFixer:
             cursor = self.connection.cursor()
             
             # Check source data count
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             source_count = cursor.fetchone()[0]
             logger.info(f"Source documents to migrate: {source_count}")
             
@@ -155,7 +155,7 @@ class HNSWInfrastructureFixer:
                 # Fetch batch from source
                 cursor.execute(f"""
                     SELECT doc_id, title, text_content, abstract, authors, keywords, embedding
-                    FROM RAG.SourceDocuments
+                    FROM RAG.SourceDocuments_V2
                     ORDER BY doc_id
                     OFFSET {offset} ROWS FETCH NEXT {batch_size} ROWS ONLY
                 """)
@@ -231,7 +231,7 @@ class HNSWInfrastructureFixer:
                 SELECT INDEX_NAME, INDEX_TYPE 
                 FROM INFORMATION_SCHEMA.STATISTICS 
                 WHERE TABLE_SCHEMA = 'RAG_HNSW' 
-                AND TABLE_NAME = 'SourceDocuments'
+                AND TABLE_NAME = 'SourceDocuments_V2'
                 AND INDEX_NAME = 'idx_hnsw_embedding_vector'
             """)
             
@@ -380,7 +380,7 @@ class HNSWInfrastructureFixer:
                     varchar_sql = """
                     SELECT TOP 10 doc_id, title, 
                            CASE WHEN embedding LIKE ? THEN 1.0 ELSE 0.5 END as similarity
-                    FROM RAG.SourceDocuments 
+                    FROM RAG.SourceDocuments_V2 
                     WHERE embedding IS NOT NULL
                     ORDER BY similarity DESC, doc_id
                     """
@@ -440,7 +440,7 @@ class HNSWInfrastructureFixer:
         cursor = self.connection.cursor()
         
         # Check final document counts
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
         rag_docs = cursor.fetchone()[0]
         
         cursor.execute("SELECT COUNT(*) FROM RAG_HNSW.SourceDocuments")
@@ -450,7 +450,7 @@ class HNSWInfrastructureFixer:
         cursor.execute("""
             SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
             WHERE TABLE_SCHEMA = 'RAG_HNSW' 
-            AND TABLE_NAME = 'SourceDocuments' 
+            AND TABLE_NAME = 'SourceDocuments_V2' 
             AND COLUMN_NAME = 'embedding_vector'
             AND DATA_TYPE LIKE '%VECTOR%'
         """)
@@ -460,7 +460,7 @@ class HNSWInfrastructureFixer:
         cursor.execute("""
             SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS 
             WHERE TABLE_SCHEMA = 'RAG_HNSW' 
-            AND TABLE_NAME = 'SourceDocuments'
+            AND TABLE_NAME = 'SourceDocuments_V2'
             AND INDEX_NAME = 'idx_hnsw_embedding_vector'
         """)
         hnsw_index_exists = cursor.fetchone()[0] > 0

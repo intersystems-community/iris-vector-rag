@@ -95,7 +95,7 @@ class ProductionScaleValidator:
             
             # Get document count
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             doc_count = cursor.fetchone()[0]
             cursor.close()
             
@@ -138,7 +138,7 @@ class ProductionScaleValidator:
                     sql = """
                     SELECT TOP 50 doc_id, title, 
                            VECTOR_DOT_PRODUCT(?, embedding) as similarity
-                    FROM RAG.SourceDocuments 
+                    FROM RAG.SourceDocuments_V2 
                     WHERE embedding IS NOT NULL 
                       AND VECTOR_DOT_PRODUCT(?, embedding) > ?
                     ORDER BY similarity DESC
@@ -210,7 +210,7 @@ class ProductionScaleValidator:
             sql1 = """
             SELECT TOP 10 doc_id, title, text_content,
                    VECTOR_DOT_PRODUCT(?, embedding) as similarity
-            FROM RAG.SourceDocuments 
+            FROM RAG.SourceDocuments_V2 
             WHERE embedding IS NOT NULL 
               AND VECTOR_DOT_PRODUCT(?, embedding) > 0.8
             ORDER BY similarity DESC
@@ -237,7 +237,7 @@ class ProductionScaleValidator:
             sql2 = """
             SELECT TOP 5 doc_id, title, text_content,
                    VECTOR_DOT_PRODUCT(?, embedding) as similarity
-            FROM RAG.SourceDocuments 
+            FROM RAG.SourceDocuments_V2 
             WHERE embedding IS NOT NULL 
               AND VECTOR_DOT_PRODUCT(?, embedding) > 0.7
             ORDER BY similarity DESC
@@ -264,7 +264,7 @@ class ProductionScaleValidator:
             SELECT TOP 15 doc_id, title, 
                    SUBSTRING(text_content, 1, 200) as abstract,
                    VECTOR_DOT_PRODUCT(?, embedding) as similarity
-            FROM RAG.SourceDocuments 
+            FROM RAG.SourceDocuments_V2 
             WHERE embedding IS NOT NULL 
               AND VECTOR_DOT_PRODUCT(?, embedding) > 0.6
             ORDER BY similarity DESC
@@ -379,7 +379,7 @@ Answer:"""
                 sql = """
                 SELECT TOP 10 doc_id, title, text_content,
                        VECTOR_DOT_PRODUCT(?, embedding) as similarity
-                FROM RAG.SourceDocuments 
+                FROM RAG.SourceDocuments_V2 
                 WHERE embedding IS NOT NULL 
                   AND VECTOR_DOT_PRODUCT(?, embedding) > 0.7
                 ORDER BY similarity DESC
@@ -483,7 +483,7 @@ Answer:"""
                 sql = """
                 SELECT TOP 20 doc_id, title,
                        VECTOR_DOT_PRODUCT(?, embedding) as similarity
-                FROM RAG.SourceDocuments 
+                FROM RAG.SourceDocuments_V2 
                 WHERE embedding IS NOT NULL 
                   AND VECTOR_DOT_PRODUCT(?, embedding) > 0.7
                 ORDER BY similarity DESC

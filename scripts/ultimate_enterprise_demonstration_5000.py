@@ -201,9 +201,9 @@ class UltimateEnterpriseDemo:
             
             # Check current database state
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             total_docs = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             docs_with_embeddings = cursor.fetchone()[0]
             cursor.close()
             

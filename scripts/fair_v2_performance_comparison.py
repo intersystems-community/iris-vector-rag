@@ -29,7 +29,7 @@ def test_original_with_full_search():
                    TO_VECTOR(embedding, 'DOUBLE', 384),
                    TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)
                ) as similarity_score
-        FROM RAG.SourceDocuments
+        FROM RAG.SourceDocuments_V2
         WHERE embedding IS NOT NULL
         ORDER BY similarity_score DESC
     """
@@ -84,7 +84,7 @@ def test_python_fallback():
     # Get only 100 documents (what original BasicRAG does)
     sql = """
         SELECT TOP 100 doc_id, title, text_content, embedding
-        FROM RAG.SourceDocuments
+        FROM RAG.SourceDocuments_V2
         WHERE embedding IS NOT NULL
         AND embedding NOT LIKE '0.1,0.1,0.1%'
         ORDER BY doc_id

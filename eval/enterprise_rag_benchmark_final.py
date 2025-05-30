@@ -29,13 +29,13 @@ from plotly.subplots import make_subplots
 from basic_rag.pipeline import BasicRAGPipeline
 from hyde.pipeline import HyDEPipeline
 from crag.pipeline import CRAGPipeline
-from colbert.pipeline_optimized import OptimizedColbertRAGPipeline
+from colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline
 from noderag.pipeline import NodeRAGPipeline
-from graphrag.pipeline import GraphRAGPipeline
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
+from graphrag.pipeline import GraphRAGPipeline  # Updated to use JDBC-aware version
+from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline
 
 # Common utilities
-from common.iris_connector import get_iris_connection
+from common.iris_connector_jdbc import get_iris_connection  # Use JDBC instead of ODBC
 from common.utils import get_embedding_func, get_llm_func
 from dotenv import load_dotenv
 
@@ -69,11 +69,18 @@ class EnterpriseRAGBenchmarkFinal:
         # Initialize pipelines with proper parameters
         self.pipelines = self._initialize_pipelines()
         
-        # Test queries for evaluation
+        # Test queries for evaluation - expanded set
         self.test_queries = [
             "What are the main treatments for diabetes?",
             "How does cancer affect the immune system?",
-            "What are the side effects of chemotherapy?"
+            "What are the side effects of chemotherapy?",
+            "What is the relationship between obesity and diabetes?",
+            "How can diabetes be prevented through lifestyle changes?",
+            "What are the complications of untreated diabetes?",
+            "What role does genetics play in diabetes?",
+            "How is gestational diabetes different from type 2 diabetes?",
+            "What are the latest research findings on diabetes treatment?",
+            "How does diabetes affect cardiovascular health?"
         ]
         
     def _initialize_pipelines(self) -> Dict[str, Any]:
@@ -105,12 +112,16 @@ class EnterpriseRAGBenchmarkFinal:
             logger.error(f"❌ CRAG failed: {e}")
         
         try:
-            # OptimizedColBERT needs specific ColBERT encoders
-            # For now, skip OptimizedColBERT due to dimension mismatch
-            # Token embeddings are 128D but query embeddings are 384D
-            logger.warning("⚠️ OptimizedColBERT skipped due to dimension mismatch (token:128D vs query:384D)")
+            # ColBERT uses standard embedding functions as fallback
+            pipelines['ColBERT'] = ColBERTPipeline(
+                iris_connector=self.connection,
+                colbert_query_encoder_func=self.embedding_func,
+                colbert_doc_encoder_func=self.embedding_func,
+                llm_func=self.llm_func
+            )
+            logger.info("✅ ColBERT initialized (using standard embeddings)")
         except Exception as e:
-            logger.error(f"❌ OptimizedColBERT failed: {e}")
+            logger.error(f"❌ ColBERT failed: {e}")
         
         try:
             pipelines['NodeRAG'] = NodeRAGPipeline(
@@ -129,12 +140,12 @@ class EnterpriseRAGBenchmarkFinal:
             logger.error(f"❌ GraphRAG failed: {e}")
         
         try:
-            pipelines['HybridiFindRAG'] = HybridiFindRAGPipeline(
+            pipelines['HybridIFindRAG'] = HybridIFindRAGPipeline(
                 self.connection, self.embedding_func, self.llm_func
             )
-            logger.info("✅ HybridiFindRAG initialized")
+            logger.info("✅ HybridIFindRAG initialized")
         except Exception as e:
-            logger.error(f"❌ HybridiFindRAG failed: {e}")
+            logger.error(f"❌ HybridIFindRAG failed: {e}")
         
         logger.info(f"🚀 Initialized {len(pipelines)} RAG pipelines")
         return pipelines
@@ -388,7 +399,10 @@ class EnterpriseRAGBenchmarkFinal:
 
 def main():
     """Main function to run the enterprise benchmark"""
-    print("🚀 Enterprise RAG Benchmark - Final Version")
+    print("🚀 Enterprise RAG Benchmark - Final JDBC Version")
+    print("=" * 60)
+    print("📌 Using JDBC connection for all techniques")
+    print("📌 All 7 RAG techniques included")
     print("=" * 60)
     
     # Initialize benchmark
@@ -401,18 +415,26 @@ def main():
     benchmark.create_visualizations(results)
     
     # Print summary
-    print("\n📊 FINAL BENCHMARK SUMMARY")
+    print("\n📊 FINAL BENCHMARK SUMMARY - JDBC")
     print("=" * 60)
     
-    for technique, metrics in results.items():
-        print(f"\n🔹 {technique}:")
-        print(f"   Success Rate: {metrics['success_rate']*100:.1f}%")
-        print(f"   Avg Response Time: {metrics['avg_response_time']:.2f}s")
-        print(f"   Avg Documents: {metrics['avg_documents_retrieved']:.1f}")
-        print(f"   Avg Similarity: {metrics['avg_similarity_score']:.3f}")
-        print(f"   Avg Answer Length: {metrics['avg_answer_length']:.0f} chars")
+    total_techniques = len(results)
+    successful_techniques = sum(1 for m in results.values() if m['success_rate'] > 0)
     
-    print(f"\n🎉 Final benchmark completed! Check the generated visualization files.")
+    print(f"\n✅ Techniques Working: {successful_techniques}/{total_techniques}")
+    
+    for technique, metrics in results.items():
+        status = "✅" if metrics['success_rate'] > 0 else "❌"
+        print(f"\n{status} {technique}:")
+        print(f"   Success Rate: {metrics['success_rate']*100:.1f}%")
+        if metrics['success_rate'] > 0:
+            print(f"   Avg Response Time: {metrics['avg_response_time']:.2f}s")
+            print(f"   Avg Documents: {metrics['avg_documents_retrieved']:.1f}")
+            print(f"   Avg Similarity: {metrics['avg_similarity_score']:.3f}")
+            print(f"   Avg Answer Length: {metrics['avg_answer_length']:.0f} chars")
+    
+    print(f"\n🎉 Final JDBC benchmark completed! Check the generated visualization files.")
+    print(f"📊 Results saved with timestamp in filename")
 
 if __name__ == "__main__":
     main()

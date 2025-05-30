@@ -103,7 +103,7 @@ class EnterpriseChunkingValidation:
             cursor = self.connection.cursor()
             cursor.execute("""
                 SELECT COUNT(*)
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE text_content IS NOT NULL
                 AND LENGTH(text_content) > 100
             """)

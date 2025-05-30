@@ -22,7 +22,12 @@ def get_iris_connection():
     Returns:
         IRISJDBCConnection: A JDBC connection object with cursor() method
     """
-    return _get_jdbc_connection()
+    # Override namespace to USER for compatibility
+    return _get_jdbc_connection(
+        namespace=os.getenv('IRIS_NAMESPACE', 'USER'),
+        username=os.getenv('IRIS_USERNAME', '_SYSTEM'),
+        password=os.getenv('IRIS_PASSWORD', 'SYS')
+    )
 
 # For compatibility with existing code that might import the class
 get_real_iris_connection = get_iris_connection

@@ -51,7 +51,7 @@ def get_document_counts():
         
         # Check main documents table
         try:
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             result = cursor.fetchone()
             counts['documents'] = result[0] if result else 0
         except Exception:

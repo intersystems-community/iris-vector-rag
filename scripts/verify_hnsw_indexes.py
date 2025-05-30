@@ -264,7 +264,7 @@ class HNSWVerifier:
         
         # Tables and their embedding columns to check
         tables_to_check = [
-            ('SourceDocuments', 'embedding'),
+            ('SourceDocuments_V2', 'embedding'),
             ('DocumentTokenEmbeddings', 'token_embedding'),
             ('DocumentChunks', 'embedding'),
             ('KnowledgeGraphNodes', 'embedding')

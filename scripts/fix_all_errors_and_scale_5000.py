@@ -127,7 +127,7 @@ class ErrorFixAndScale:
             cursor = self.connection.cursor()
             
             # Check current state
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             current_rag = cursor.fetchone()[0]
             cursor.execute("SELECT COUNT(*) FROM RAG_HNSW.SourceDocuments WHERE embedding IS NOT NULL")
             current_hnsw = cursor.fetchone()[0]
@@ -142,7 +142,7 @@ class ErrorFixAndScale:
             # Get existing documents to replicate
             cursor.execute("""
             SELECT doc_id, text_content, embedding 
-            FROM RAG.SourceDocuments 
+            FROM RAG.SourceDocuments_V2 
             WHERE embedding IS NOT NULL 
             ORDER BY doc_id
             LIMIT 100
@@ -164,7 +164,7 @@ class ErrorFixAndScale:
                         break
                     
                     cursor.execute("""
-                    INSERT INTO RAG.SourceDocuments (doc_id, text_content, embedding)
+                    INSERT INTO RAG.SourceDocuments_V2 (doc_id, text_content, embedding)
                     VALUES (?, ?, ?)
                     """, (new_doc_id, f"[Scale-{new_doc_id}] {text_content}", embedding))
                     
@@ -193,7 +193,7 @@ class ErrorFixAndScale:
                         logger.info(f"📝 HNSW schema: {new_doc_id - current_hnsw} documents added...")
             
             # Verify final counts
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             final_rag = cursor.fetchone()[0]
             cursor.execute("SELECT COUNT(*) FROM RAG_HNSW.SourceDocuments WHERE embedding IS NOT NULL")
             final_hnsw = cursor.fetchone()[0]
@@ -218,7 +218,7 @@ class ErrorFixAndScale:
             
             # Create missing indexes
             try:
-                cursor.execute("CREATE INDEX IF NOT EXISTS idx_rag_embedding ON RAG.SourceDocuments (embedding)")
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_rag_embedding ON RAG.SourceDocuments_V2 (embedding)")
                 cursor.execute("CREATE INDEX IF NOT EXISTS idx_hnsw_embedding ON RAG_HNSW.SourceDocuments (embedding)")
                 logger.info("✅ Vector indexes created/verified")
                 self.fixes_applied.append("Created vector indexes")

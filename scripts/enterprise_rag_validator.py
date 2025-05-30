@@ -148,9 +148,9 @@ class EnterpriseRAGValidator:
             
             # Check current document count
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             current_docs = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             docs_with_embeddings = cursor.fetchone()[0]
             cursor.close()
             
@@ -175,7 +175,7 @@ class EnterpriseRAGValidator:
             
         try:
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             current_count = cursor.fetchone()[0]
             cursor.close()
             
@@ -234,7 +234,7 @@ class EnterpriseRAGValidator:
                     
                     # Check if target reached
                     cursor = self.connection.cursor()
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
                     current_count = cursor.fetchone()[0]
                     cursor.close()
                     
@@ -251,7 +251,7 @@ class EnterpriseRAGValidator:
             
             # Final verification
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             final_count = cursor.fetchone()[0]
             cursor.close()
             

@@ -98,9 +98,9 @@ class RealPMCIngestionPipeline:
             
             # Check current document count
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             current_docs = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             docs_with_embeddings = cursor.fetchone()[0]
             cursor.close()
             
@@ -196,7 +196,7 @@ class RealPMCIngestionPipeline:
         """Get set of already processed document IDs"""
         try:
             cursor = self.connection.cursor()
-            cursor.execute("SELECT doc_id FROM RAG.SourceDocuments")
+            cursor.execute("SELECT doc_id FROM RAG.SourceDocuments_V2")
             doc_ids = {row[0] for row in cursor.fetchall()}
             cursor.close()
             return doc_ids
@@ -469,9 +469,9 @@ class RealPMCIngestionPipeline:
         
         # Get final database statistics
         cursor = self.connection.cursor()
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
         total_docs = cursor.fetchone()[0]
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
         docs_with_embeddings = cursor.fetchone()[0]
         
         # Check for chunks

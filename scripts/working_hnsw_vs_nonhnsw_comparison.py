@@ -133,14 +133,14 @@ class WorkingHNSWComparison:
             
             # Check current document count using proven pattern
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             current_docs = cursor.fetchone()[0]
             cursor.close()
             
             logger.info(f"✅ Database connected: {current_docs} documents available")
             
             if current_docs == 0:
-                logger.warning("⚠️ No documents found in RAG.SourceDocuments - comparison may not be meaningful")
+                logger.warning("⚠️ No documents found in RAG.SourceDocuments_V2 - comparison may not be meaningful")
             
             # Setup embedding function using proven pattern from enterprise scripts
             try:
@@ -186,7 +186,7 @@ class WorkingHNSWComparison:
             # Check if SourceDocuments table exists in HNSW schema
             cursor.execute("""
                 SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES 
-                WHERE TABLE_SCHEMA = 'RAG_HNSW' AND TABLE_NAME = 'SourceDocuments'
+                WHERE TABLE_SCHEMA = 'RAG_HNSW' AND TABLE_NAME = 'SourceDocuments_V2'
             """)
             table_exists = cursor.fetchone()[0] > 0
             
@@ -203,7 +203,7 @@ class WorkingHNSWComparison:
             cursor.execute("""
                 SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
                 WHERE TABLE_SCHEMA = 'RAG_HNSW' 
-                AND TABLE_NAME = 'SourceDocuments' 
+                AND TABLE_NAME = 'SourceDocuments_V2' 
                 AND COLUMN_NAME = 'embedding_vector'
                 AND DATA_TYPE LIKE '%VECTOR%'
             """)

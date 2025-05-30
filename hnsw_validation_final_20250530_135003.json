@@ -1,0 +1,15 @@
+{
+  "timestamp": "20250530_135003",
+  "results": {
+    "Table Existence": false,
+    "Vector Data Integrity": false,
+    "Vector Search": false,
+    "RAG Pipeline": false,
+    "Performance Metrics": false
+  },
+  "summary": {
+    "total_checks": 5,
+    "passed": 0,
+    "failed": 5
+  }
+}

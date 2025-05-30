@@ -72,7 +72,7 @@ class HyDEPipeline:
         sql_query = f"""
             SELECT TOP {top_k} doc_id, text_content,
                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
-            FROM RAG.SourceDocuments
+            FROM RAG.SourceDocuments_V2
             WHERE embedding IS NOT NULL
               AND LENGTH(embedding) > 1000
               AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
@@ -153,7 +153,7 @@ Answer:"""
 
 if __name__ == '__main__':
     print("Running HyDEPipeline Demo...")
-    from common.iris_connector import get_iris_connection # For demo
+    from common.iris_connector_jdbc import get_iris_connection # For demo
 
     try:
         db_conn = get_iris_connection() # Uses IRIS_CONNECTION_URL or falls back to mock

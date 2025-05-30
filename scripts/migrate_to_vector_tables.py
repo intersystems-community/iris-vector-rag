@@ -24,9 +24,9 @@ def get_table_count(cursor, schema_name, table_name):
         return -1
 
 def migrate_source_documents(conn):
-    """Migrates data from RAG.SourceDocuments to RAG.SourceDocuments_V2."""
-    logging.info("Starting migration for RAG.SourceDocuments...")
-    source_table = "RAG.SourceDocuments"
+    """Migrates data from RAG.SourceDocuments_V2 to RAG.SourceDocuments_V2."""
+    logging.info("Starting migration for RAG.SourceDocuments_V2...")
+    source_table = "RAG.SourceDocuments_V2"
     target_table = "RAG.SourceDocuments_V2"
     
     with conn.cursor() as cursor:
@@ -302,7 +302,7 @@ def verify_migration(conn):
     verification_passed = True
     
     tables_to_verify = [
-        ("RAG.SourceDocuments", "RAG.SourceDocuments_V2", "doc_id", "document_embedding_vector"),
+        ("RAG.SourceDocuments_V2", "RAG.SourceDocuments_V2", "doc_id", "document_embedding_vector"),
         ("RAG.DocumentChunks", "RAG.DocumentChunks_V2", "chunk_id", "chunk_embedding_vector"),
         ("RAG.DocumentTokenEmbeddings", "RAG.DocumentTokenEmbeddings_V2", ["doc_id", "token_sequence_index"], "token_embedding_vector") # Composite key example
     ]
@@ -428,7 +428,7 @@ def main():
 
         # Step 1: Migrate SourceDocuments
         if not migrate_source_documents(conn):
-            logging.error("Failed to migrate RAG.SourceDocuments. Aborting.")
+            logging.error("Failed to migrate RAG.SourceDocuments_V2. Aborting.")
             return 1
         
         # Step 2: Migrate DocumentChunks

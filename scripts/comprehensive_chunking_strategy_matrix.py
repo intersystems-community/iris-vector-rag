@@ -159,7 +159,7 @@ class ChunkingStrategyMatrix:
         try:
             query = f"""
             SELECT TOP {limit} doc_id, title, text_content, abstract
-            FROM RAG.SourceDocuments
+            FROM RAG.SourceDocuments_V2
             WHERE text_content IS NOT NULL
             AND LENGTH(text_content) > 1000
             ORDER BY doc_id

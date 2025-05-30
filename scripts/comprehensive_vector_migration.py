@@ -53,7 +53,7 @@ def format_vector_for_sql(vector_list: list[float]) -> str:
 
 # --- Migration Functions ---
 def migrate_source_documents(conn):
-    logger.info("Starting RAG.SourceDocuments to RAG.SourceDocuments_V2 migration...")
+    logger.info("Starting RAG.SourceDocuments_V2 to RAG.SourceDocuments_V2 migration...")
     start_time = time.time()
     migrated_count = 0
     processed_batches = 0
@@ -62,7 +62,7 @@ def migrate_source_documents(conn):
         # Get total count of documents to migrate for progress reporting
         cursor.execute("""
             SELECT COUNT(*)
-            FROM RAG.SourceDocuments s
+            FROM RAG.SourceDocuments_V2 s
             LEFT JOIN RAG.SourceDocuments_V2 s2 ON s.doc_id = s2.doc_id
             WHERE s.embedding IS NOT NULL AND s.embedding <> '' AND s2.doc_id IS NULL
         """)
@@ -79,7 +79,7 @@ def migrate_source_documents(conn):
         while True:
             select_query = f"""
                 SELECT TOP {BATCH_SIZE} s.doc_id, s.title, s.text_content, s.abstract, s.authors, s.keywords, s.embedding
-                FROM RAG.SourceDocuments s
+                FROM RAG.SourceDocuments_V2 s
                 LEFT JOIN RAG.SourceDocuments_V2 s2 ON s.doc_id = s2.doc_id
                 WHERE s.embedding IS NOT NULL AND s.embedding <> '' AND s2.doc_id IS NULL AND s.doc_id > ?
                 ORDER BY s.doc_id
@@ -127,7 +127,7 @@ def migrate_source_documents(conn):
 
 
     end_time = time.time()
-    logger.info(f"Finished RAG.SourceDocuments migration. Migrated {migrated_count} records in {end_time - start_time:.2f} seconds.")
+    logger.info(f"Finished RAG.SourceDocuments_V2 migration. Migrated {migrated_count} records in {end_time - start_time:.2f} seconds.")
 
 def migrate_document_chunks(conn):
     logger.info("Starting RAG.DocumentChunks to RAG.DocumentChunks_V2 migration...")
@@ -325,11 +325,11 @@ def validate_migration(conn):
     validation_results = {}
     with conn.cursor() as cursor:
         # SourceDocuments
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL AND embedding <> ''")
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL AND embedding <> ''")
         source_docs_count = cursor.fetchone()[0]
         cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE document_embedding_vector IS NOT NULL")
         target_docs_count = cursor.fetchone()[0]
-        validation_results["SourceDocuments"] = {"source_with_embedding": source_docs_count, "target_v2_with_vector": target_docs_count}
+        validation_results["SourceDocuments_V2"] = {"source_with_embedding": source_docs_count, "target_v2_with_vector": target_docs_count}
         logger.info(f"SourceDocuments: Source with embedding: {source_docs_count}, Target_V2 with vector: {target_docs_count}")
 
         # DocumentChunks

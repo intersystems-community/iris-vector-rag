@@ -214,9 +214,9 @@ def _setup_environment(self) -> bool:
             
             # Check current database state
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             total_docs = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             docs_with_embeddings = cursor.fetchone()[0]
             cursor.close()
             
@@ -238,7 +238,7 @@ def _setup_environment(self) -> bool:
             cursor = self.connection.cursor()
             
             # Check current state
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             current_docs = cursor.fetchone()[0]
             
             if current_docs >= self.target_docs:
@@ -251,7 +251,7 @@ def _setup_environment(self) -> bool:
             # Get existing documents
             cursor.execute("""
             SELECT doc_id, text_content, embedding 
-            FROM RAG.SourceDocuments 
+            FROM RAG.SourceDocuments_V2 
             WHERE embedding IS NOT NULL 
             ORDER BY doc_id
             """)
@@ -281,7 +281,7 @@ def _setup_environment(self) -> bool:
                     
                     # Insert into RAG schema
                     cursor.execute("""
-                    INSERT INTO RAG.SourceDocuments (doc_id, text_content, embedding)
+                    INSERT INTO RAG.SourceDocuments_V2 (doc_id, text_content, embedding)
                     VALUES (?, ?, ?)
                     """, (new_doc_id, f"[Replicated-{replication}] {text_content}", embedding))
                     
@@ -297,7 +297,7 @@ def _setup_environment(self) -> bool:
                         logger.info(f"📝 Inserted {new_doc_id - current_docs} new documents...")
             
             # Verify final count
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             final_rag_count = cursor.fetchone()[0]
             cursor.execute("SELECT COUNT(*) FROM RAG_HNSW.SourceDocuments WHERE embedding IS NOT NULL")
             final_hnsw_count = cursor.fetchone()[0]
@@ -389,7 +389,7 @@ def _setup_environment(self) -> bool:
             try:
                 cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_rag_embedding 
-                ON RAG.SourceDocuments (embedding)
+                ON RAG.SourceDocuments_V2 (embedding)
                 """)
                 cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_hnsw_embedding 
