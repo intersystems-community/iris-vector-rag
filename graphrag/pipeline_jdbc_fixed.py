@@ -221,7 +221,7 @@ class JDBCFixedGraphRAGPipeline:
             doc_query = f"""
                 SELECT DISTINCT e.source_doc_id, sd.text_content
                 FROM RAG.Entities e
-                JOIN RAG.SourceDocuments_V2 sd ON e.source_doc_id = sd.doc_id
+                JOIN RAG.SourceDocuments sd ON e.source_doc_id = sd.doc_id
                 WHERE e.entity_id IN ({placeholders})
                   AND sd.text_content IS NOT NULL
                 LIMIT {top_k}
@@ -308,7 +308,7 @@ class JDBCFixedGraphRAGPipeline:
             vector_query = f"""
                 SELECT TOP {top_k} doc_id, text_content,
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
-                FROM RAG.SourceDocuments_V2
+                FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                   AND LENGTH(embedding) > 1000
                   AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.1

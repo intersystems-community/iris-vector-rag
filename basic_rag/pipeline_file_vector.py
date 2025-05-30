@@ -80,7 +80,7 @@ class BasicRAGPipelineFileVector:
                         document_embedding_vector, 
                         TO_VECTOR(RAG.ReadVectorFromFile('{temp_file_path}'), 'DOUBLE')
                     ) as similarity_score
-                FROM {self.schema}.SourceDocuments_V2
+                FROM {self.schema}.SourceDocuments
                 WHERE document_embedding_vector IS NOT NULL
                 AND VECTOR_COSINE(
                     document_embedding_vector, 

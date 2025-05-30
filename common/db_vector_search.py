@@ -21,7 +21,7 @@ def search_source_documents_dynamically(
     """
     # Construct the SQL query using the utility function
     sql = format_vector_search_sql(
-        table_name="SourceDocuments_V2",
+        table_name="SourceDocuments",
         vector_column="embedding",
         vector_string=vector_string,
         embedding_dim=768,

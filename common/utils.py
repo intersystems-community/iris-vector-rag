@@ -193,8 +193,9 @@ def get_llm_func(provider: str = "openai", model_name: str = "gpt-3.5-turbo", **
 
     def query_llm(prompt: str) -> str:
         response = _llm_instance.invoke(prompt)
+        # Ensure the response is always a string
         if hasattr(response, 'content'):
-            return response.content
+            return str(response.content)
         return str(response)
 
     return query_llm

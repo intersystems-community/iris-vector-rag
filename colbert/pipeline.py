@@ -109,7 +109,7 @@ class OptimizedColbertRAGPipeline:
         return limited_docs
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.0) -> List[Document]:
         """
         Optimized document retrieval using ColBERT's MaxSim scoring.
         Uses efficient batching and proper top_k limiting.
@@ -131,79 +131,85 @@ class OptimizedColbertRAGPipeline:
             # Optimized approach: Get a reasonable sample of documents to score
             # Instead of processing ALL documents, we'll use a more efficient strategy
             
-            # Step 1: Get documents that have token embeddings (prioritize these)
+            # Step 1: Get doc_ids and text_content for a sample of documents that have token embeddings
+            # This is still limited to 1000 documents to manage memory and processing time.
             sql_get_docs_with_tokens = """
             SELECT DISTINCT d.doc_id, d.text_content
-            FROM RAG.SourceDocuments_V2 d
+            FROM RAG.SourceDocuments d
             INNER JOIN RAG.DocumentTokenEmbeddings t ON d.doc_id = t.doc_id
             ORDER BY d.doc_id
             LIMIT 1000
             """
             
             cursor.execute(sql_get_docs_with_tokens)
-            docs_with_tokens = cursor.fetchall()
+            docs_data = cursor.fetchall()
             
-            logger.info(f"OptimizedColBERT: Found {len(docs_with_tokens)} documents with token embeddings")
+            logger.info(f"OptimizedColBERT: Found {len(docs_data)} documents with token embeddings")
+
+            if not docs_data:
+                logger.warning("OptimizedColBERT: No documents with token embeddings found in the database.")
+                return []
+
+            doc_ids = [doc_row[0] for doc_row in docs_data]
+            doc_contents = {doc_row[0]: doc_row[1] for doc_row in docs_data}
+
+            # Step 2: Fetch all token embeddings for these doc_ids in a single query
+            # This significantly reduces database round trips.
+            # Using a parameterized query for IN clause to prevent SQL injection and handle large lists.
+            placeholders = ','.join(['?' for _ in doc_ids])
+            sql_fetch_all_tokens = f"""
+            SELECT doc_id, token_sequence_index, token_embedding
+            FROM RAG.DocumentTokenEmbeddings
+            WHERE doc_id IN ({placeholders})
+            ORDER BY doc_id, token_sequence_index
+            """
             
-            # Process documents in batches for efficiency
-            batch_size = 50
-            processed_count = 0
-            
-            for i in range(0, len(docs_with_tokens), batch_size):
-                batch = docs_with_tokens[i:i + batch_size]
+            cursor.execute(sql_fetch_all_tokens, doc_ids)
+            all_token_rows = cursor.fetchall()
+
+            # Group token embeddings by doc_id
+            grouped_doc_token_embeddings = {}
+            for token_row in all_token_rows:
+                doc_id, token_sequence_index, token_embedding_str = token_row
+                if doc_id not in grouped_doc_token_embeddings:
+                    grouped_doc_token_embeddings[doc_id] = []
                 
-                for doc_row in batch:
-                    doc_id, doc_content = doc_row
-                    
-                    # Get token embeddings for this document
-                    sql_fetch_tokens = """
-                    SELECT token_embedding
-                    FROM RAG.DocumentTokenEmbeddings
-                    WHERE doc_id = ?
-                    ORDER BY token_sequence_index
-                    LIMIT 100
-                    """
-                    cursor.execute(sql_fetch_tokens, (doc_id,))
-                    token_rows = cursor.fetchall()
-                    
-                    if not token_rows:
-                        continue
-                    
-                    # Parse token embeddings
-                    current_doc_token_embeddings = []
-                    for token_row in token_rows:
-                        try:
-                            token_embedding_str = token_row[0]
-                            if isinstance(token_embedding_str, str):
-                                # Try CSV format first (most common)
-                                if ',' in token_embedding_str:
-                                    token_embedding = [float(x.strip()) for x in token_embedding_str.split(',')]
-                                else:
-                                    # Try JSON format
-                                    token_embedding = json.loads(token_embedding_str)
-                                current_doc_token_embeddings.append(token_embedding)
-                        except (json.JSONDecodeError, ValueError, TypeError) as e:
-                            logger.debug(f"OptimizedColBERT: Error parsing token embedding for doc {doc_id}: {e}")
-                            continue
-                    
-                    if not current_doc_token_embeddings:
-                        continue
-                    
-                    # Calculate MaxSim score
-                    maxsim_score = self._calculate_maxsim(query_token_embeddings, current_doc_token_embeddings)
-                    
-                    # Only include documents above threshold
-                    if maxsim_score > similarity_threshold:
-                        # Limit document content to prevent memory issues
-                        limited_content = (doc_content or "")[:5000]  # Limit per document
-                        candidate_docs_with_scores.append(
-                            Document(id=doc_id, content=limited_content, score=maxsim_score)
-                        )
-                    
-                    processed_count += 1
+                try:
+                    if isinstance(token_embedding_str, str):
+                        if ',' in token_embedding_str:
+                            token_embedding = [float(x.strip()) for x in token_embedding_str.split(',')]
+                        else:
+                            token_embedding = json.loads(token_embedding_str)
+                        grouped_doc_token_embeddings[doc_id].append(token_embedding)
+                except (json.JSONDecodeError, ValueError, TypeError) as e:
+                    logger.debug(f"OptimizedColBERT: Error parsing token embedding for doc {doc_id}, index {token_sequence_index}: {e}")
+                    continue
+            
+            processed_count = 0
+            above_threshold_count = 0
+
+            # Step 3: Iterate through documents and calculate MaxSim scores
+            for doc_id, doc_content in doc_contents.items():
+                current_doc_token_embeddings = grouped_doc_token_embeddings.get(doc_id, [])
+                
+                if not current_doc_token_embeddings:
+                    continue
+                
+                # Calculate MaxSim score
+                maxsim_score = self._calculate_maxsim(query_token_embeddings, current_doc_token_embeddings)
+                
+                # Only include documents above threshold
+                if maxsim_score > similarity_threshold:
+                    limited_content = (doc_content or "")[:5000]  # Limit per document
+                    candidate_docs_with_scores.append(
+                        Document(id=doc_id, content=limited_content, score=maxsim_score)
+                    )
+                    above_threshold_count += 1
+                
+                processed_count += 1
                 
                 # Early termination if we have enough high-scoring candidates
-                if len(candidate_docs_with_scores) >= top_k * 3:  # Get 3x more than needed for better selection
+                if len(candidate_docs_with_scores) >= top_k * 3:
                     break
 
             cursor.close()
@@ -215,7 +221,7 @@ class OptimizedColbertRAGPipeline:
             # Apply content size limiting
             retrieved_docs = self._limit_content_size(retrieved_docs, max_total_chars=30000)
             
-            logger.info(f"OptimizedColBERT: Processed {processed_count} documents, found {len(retrieved_docs)} above threshold")
+            logger.info(f"OptimizedColBERT: Processed {processed_count} documents, found {above_threshold_count} above threshold, returning {len(retrieved_docs)} final documents.")
             
         except Exception as e:
             logger.error(f"OptimizedColBERT: Error during document retrieval: {e}", exc_info=True)
@@ -247,14 +253,14 @@ class OptimizedColbertRAGPipeline:
 
         prompt = f"""You are a helpful AI assistant. Answer the question based on the provided context.
 If the context does not contain the answer, state that you cannot answer based on the provided information.
-
+ 
 Context:
 {context}
-
+ 
 Question: {query_text}
-
+ 
 Answer:"""
-
+ 
         try:
             answer = self.llm_func(prompt)
             logger.info(f"OptimizedColBERT: Generated answer: '{answer[:100]}...'")
@@ -264,7 +270,7 @@ Answer:"""
             return "I encountered an error while generating the answer."
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.0) -> Dict[str, Any]:
         """
         Runs the full optimized ColBERT pipeline.
         """
@@ -282,44 +288,37 @@ Answer:"""
         }
 
 
-def create_working_128d_encoder():
+def create_colbert_semantic_encoder(model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
     """
-    Creates a working 128D encoder that's compatible with the stored token embeddings.
-    This is a hash-based encoder that produces consistent 128D vectors.
+    Creates a semantic encoder for ColBERT that uses a real embedding model.
+    This replaces the hash-based encoder to capture semantic meaning.
     """
+    embedding_func = get_embedding_func(model_name=model_name)
+
     def encoder(text: str) -> List[List[float]]:
         """
-        Generate 128D token embeddings compatible with stored format.
-        Uses hash-based approach for consistency.
+        Generate token embeddings using a semantic model.
+        For simplicity, this will generate a single embedding for the entire text,
+        but a true ColBERT implementation would generate embeddings for each token.
+        For now, we'll simulate token embeddings by repeating the sentence embedding.
         """
         if not text or not text.strip():
             return []
         
-        # Split into tokens (simple whitespace splitting)
+        # Get a single embedding for the text
+        sentence_embedding = embedding_func([text])[0]
+        
+        # Simulate token embeddings by splitting text and assigning the same embedding
+        # This is a simplification; a real ColBERT would use a token-level encoder.
         tokens = text.strip().split()
         if not tokens:
             return []
         
-        # Limit number of tokens for performance
-        tokens = tokens[:20]  # Max 20 tokens
+        # Limit number of tokens for performance and to match expected ColBERT output structure
+        tokens = tokens[:32] # Max 32 tokens for query, adjust for doc if needed
         
-        embeddings = []
-        for token in tokens:
-            # Create a hash-based 128D embedding
-            hash_obj = hashlib.md5(token.encode())
-            hash_bytes = hash_obj.digest()
-            
-            # Convert hash to 128D float vector
-            embedding = []
-            for i in range(128):
-                byte_val = hash_bytes[i % len(hash_bytes)]
-                # Normalize to [-1, 1] range
-                float_val = (byte_val - 127.5) / 127.5
-                embedding.append(float_val)
-            
-            embeddings.append(embedding)
-        
-        return embeddings
+        # Return a list of embeddings, one for each "token" (though they are identical here)
+        return [sentence_embedding for _ in tokens]
     
     return encoder
 
@@ -335,13 +334,13 @@ def create_colbert_pipeline(iris_connector=None, llm_func=None):
     if llm_func is None:
         llm_func = get_llm_func()
     
-    # Create working 128D encoders
-    encoder_func = create_working_128d_encoder()
+    # Create semantic encoders
+    semantic_encoder = create_colbert_semantic_encoder()
     
     return OptimizedColbertRAGPipeline(
         iris_connector=iris_connector,
-        colbert_query_encoder_func=encoder_func,
-        colbert_doc_encoder_func=encoder_func,
+        colbert_query_encoder_func=semantic_encoder,
+        colbert_doc_encoder_func=semantic_encoder, # Using same for simplicity
         llm_func=llm_func
     )
 
@@ -361,7 +360,7 @@ if __name__ == '__main__':
         test_query = "What are the symptoms of diabetes?"
         logger.info(f"\nExecuting optimized ColBERT pipeline for query: '{test_query}'")
         
-        result = pipeline.run(test_query, top_k=3, similarity_threshold=0.1)
+        result = pipeline.run(test_query, top_k=3, similarity_threshold=0.0)
         
         logger.info("\n--- Optimized ColBERT Pipeline Result ---")
         logger.info(f"Query: {result['query']}")

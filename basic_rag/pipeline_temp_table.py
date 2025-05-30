@@ -73,7 +73,7 @@ class BasicRAGPipelineTempTable:
                     s.title, 
                     s.text_content,
                     VECTOR_COSINE(s.document_embedding_vector, q.vector_data) as similarity_score
-                FROM {self.schema}.SourceDocuments_V2 s, RAG.TempQueryVector q
+                FROM {self.schema}.SourceDocuments s, RAG.TempQueryVector q
                 WHERE s.document_embedding_vector IS NOT NULL
                 AND q.query_id = 1
                 AND VECTOR_COSINE(s.document_embedding_vector, q.vector_data) > {similarity_threshold}

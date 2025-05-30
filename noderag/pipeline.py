@@ -76,27 +76,27 @@ class NodeRAGPipeline:
                 row_count = cursor.fetchone()[0]
                 logger.info(f"NodeRAG: RAG.KnowledgeGraphNodes table exists with {row_count} rows.")
                 
-                # If table exists but has no data, try using RAG.SourceDocuments_V2 instead
+                # If table exists but has no data, try using RAG.SourceDocuments instead
                 if row_count == 0:
-                    logger.warning("NodeRAG: RAG.KnowledgeGraphNodes table has no data. Checking if RAG.SourceDocuments_V2 exists...")
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
+                    logger.warning("NodeRAG: RAG.KnowledgeGraphNodes table has no data. Checking if RAG.SourceDocuments exists...")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
                     source_docs_count = cursor.fetchone()[0]
-                    logger.info(f"NodeRAG: RAG.SourceDocuments_V2 table exists with {source_docs_count} rows.")
+                    logger.info(f"NodeRAG: RAG.SourceDocuments table exists with {source_docs_count} rows.")
                     
                     # Try to directly check if the embeddings are usable for vector search regardless of reported count
                     logger.info("NodeRAG: Attempting vector search test regardless of reported row count")
                     try:
                         # First, try to get a direct count of documents with non-NULL embeddings
                         try:
-                            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
+                            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
                             embedding_count = cursor.fetchone()[0]
-                            logger.info(f"NodeRAG: RAG.SourceDocuments_V2 has {embedding_count} rows with non-NULL embeddings.")
+                            logger.info(f"NodeRAG: RAG.SourceDocuments has {embedding_count} rows with non-NULL embeddings.")
                         except Exception as embedding_count_error:
                             logger.error(f"NodeRAG: Error checking embedding count: {embedding_count_error}")
                         
                         # Try to get a sample document with embedding
                         try:
-                            cursor.execute("SELECT TOP 1 doc_id, embedding FROM RAG.SourceDocuments_V2")
+                            cursor.execute("SELECT TOP 1 doc_id, embedding FROM RAG.SourceDocuments")
                             sample_row = cursor.fetchone()
                             if sample_row:
                                 sample_id, sample_embedding = sample_row
@@ -112,7 +112,7 @@ class NodeRAGPipeline:
                         vector_search_sql = f"""
                             SELECT TOP 1 doc_id,
                                    VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double, 384)) AS score
-                            FROM RAG.SourceDocuments_V2
+                            FROM RAG.SourceDocuments
                             WHERE embedding IS NOT NULL
                               AND LENGTH(embedding) > 1000
                             ORDER BY score DESC
@@ -128,7 +128,7 @@ class NodeRAGPipeline:
                         
                         # Try a direct query to get documents with the highest embedding values
                         try:
-                            cursor.execute("SELECT TOP 5 doc_id, embedding FROM RAG.SourceDocuments_V2 ORDER BY doc_id")
+                            cursor.execute("SELECT TOP 5 doc_id, embedding FROM RAG.SourceDocuments ORDER BY doc_id")
                             rows = cursor.fetchall()
                             logger.info(f"NodeRAG: Found {len(rows)} documents when ordering by doc_id")
                             for row in rows:
@@ -141,7 +141,7 @@ class NodeRAGPipeline:
                         logger.error(f"NodeRAG: Error during vector search testing: {vector_test_error}")
                     
                     if source_docs_count > 0:
-                        logger.info("NodeRAG: Will use RAG.SourceDocuments_V2 for vector search instead of empty KnowledgeGraphNodes.")
+                        logger.info("NodeRAG: Will use RAG.SourceDocuments for vector search instead of empty KnowledgeGraphNodes.")
                         use_source_docs = True
                     else:
                         use_source_docs = False
@@ -149,23 +149,23 @@ class NodeRAGPipeline:
                     use_source_docs = False
             except Exception as table_check_error:
                 logger.error(f"NodeRAG: Error checking RAG.KnowledgeGraphNodes table: {table_check_error}")
-                logger.warning("NodeRAG: Will try using RAG.SourceDocuments_V2 instead.")
+                logger.warning("NodeRAG: Will try using RAG.SourceDocuments instead.")
                 try:
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
                     source_docs_count = cursor.fetchone()[0]
-                    logger.info(f"NodeRAG: RAG.SourceDocuments_V2 table exists with {source_docs_count} rows.")
+                    logger.info(f"NodeRAG: RAG.SourceDocuments table exists with {source_docs_count} rows.")
                     
                     # Check if SourceDocuments has embeddings
                     try:
-                        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
+                        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
                         embedding_count = cursor.fetchone()[0]
-                        logger.info(f"NodeRAG: RAG.SourceDocuments_V2 has {embedding_count} rows with non-NULL embeddings.")
+                        logger.info(f"NodeRAG: RAG.SourceDocuments has {embedding_count} rows with non-NULL embeddings.")
                     except Exception as embedding_check_error:
                         logger.error(f"NodeRAG: Error checking embeddings: {embedding_check_error}")
                     
                     use_source_docs = True
                 except Exception as source_docs_error:
-                    logger.error(f"NodeRAG: Error checking RAG.SourceDocuments_V2 table: {source_docs_error}")
+                    logger.error(f"NodeRAG: Error checking RAG.SourceDocuments table: {source_docs_error}")
                     logger.error("NodeRAG: No suitable table found for vector search.")
                     return []
         except Exception as e:
@@ -186,13 +186,13 @@ class NodeRAGPipeline:
             sql_query = f"""
                 SELECT TOP 20 doc_id AS node_id,
                        VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
-                FROM RAG.SourceDocuments_V2
+                FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                   AND LENGTH(embedding) > 1000
                   AND VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) > ?
                 ORDER BY score DESC
             """
-            logger.info("NodeRAG: Using RAG.SourceDocuments_V2 for vector search.")
+            logger.info("NodeRAG: Using RAG.SourceDocuments for vector search.")
         else:
             sql_query = f"""
                 SELECT TOP 20 node_id,
@@ -222,7 +222,7 @@ class NodeRAGPipeline:
                 fallback_sql = f"""
                 SELECT TOP 20 doc_id AS node_id,
                        VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
-                FROM RAG.SourceDocuments_V2
+                FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                   AND LENGTH(embedding) > 1000
                 ORDER BY score DESC
@@ -314,7 +314,7 @@ class NodeRAGPipeline:
         if use_source_docs:
             sql_fetch_content = f"""
                 SELECT doc_id, text_content
-                FROM RAG.SourceDocuments_V2
+                FROM RAG.SourceDocuments
                 WHERE doc_id IN ({placeholders})
             """
         else:

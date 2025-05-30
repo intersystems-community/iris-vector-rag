@@ -33,7 +33,7 @@ class BasicRAGPipelineV2:
         logger.info(f"BasicRAGPipelineV2 initialized with schema: {schema}")
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
+    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.0) -> List[Document]:
         """
         Retrieves documents from IRIS using native VECTOR search with HNSW index.
         Much faster than manual similarity calculation.
@@ -56,7 +56,7 @@ class BasicRAGPipelineV2:
                     title, 
                     text_content,
                     VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as similarity_score
-                FROM {self.schema}.SourceDocuments_V2
+                FROM {self.schema}.SourceDocuments
                 WHERE document_embedding_vector IS NOT NULL
                 AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
                 ORDER BY similarity_score DESC
@@ -115,14 +115,14 @@ class BasicRAGPipelineV2:
         
         # Create prompt
         prompt = f"""Based on the following context, please answer the question.
-
+ 
 Context:
 {context}
-
+ 
 Question: {query}
-
+ 
 Please provide a comprehensive answer based on the information provided in the context. If the context doesn't contain enough information to fully answer the question, please state what information is available and what is missing.
-
+ 
 Answer:"""
         
         # Generate answer

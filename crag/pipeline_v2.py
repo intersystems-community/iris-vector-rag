@@ -22,7 +22,7 @@ class CRAGPipelineV2:
         self.schema = "RAG"
     
     @timing_decorator
-    def retrieve_documents(self, query: str, top_k: int = 5, similarity_threshold: float = 0.3) -> List[Document]:
+    def retrieve_documents(self, query: str, top_k: int = 5, similarity_threshold: float = 0.0) -> List[Document]:
         """
         Retrieve documents using HNSW-accelerated vector search with corrective mechanisms
         """
@@ -36,7 +36,7 @@ class CRAGPipelineV2:
         sql_query = f"""
             SELECT TOP {top_k * 2} doc_id, title, text_content,
                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) AS score
-            FROM {self.schema}.SourceDocuments_V2
+            FROM {self.schema}.SourceDocuments
             WHERE document_embedding_vector IS NOT NULL
               AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
             ORDER BY score DESC
@@ -73,12 +73,13 @@ class CRAGPipelineV2:
                 cursor.close()
         
         # Corrective step: If not enough high-quality results, lower threshold
-        if len(retrieved_docs) < top_k and similarity_threshold > 0.1:
+        # Ensure the threshold can go below 0.1 if needed
+        if len(retrieved_docs) < top_k and similarity_threshold > 0.0: # Changed 0.1 to 0.0
             print(f"CRAG V2: Applying corrective retrieval with lower threshold")
             additional_docs = self.retrieve_documents(
-                query, 
-                top_k=top_k - len(retrieved_docs), 
-                similarity_threshold=similarity_threshold * 0.7
+                query,
+                top_k=top_k - len(retrieved_docs),
+                similarity_threshold=max(0.0, similarity_threshold * 0.7) # Ensure threshold doesn't go negative
             )
             
             # Add only unique documents

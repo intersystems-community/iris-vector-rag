@@ -1,0 +1,212 @@
+{
+  "timestamp": "2025-05-30 15:25:13",
+  "investigation_type": "vector_indexing_reality_check",
+  "findings": {
+    "database_schema": {
+      "tables": {
+        "RAG.DocumentChunks": {
+          "schema": "RAG",
+          "name": "DocumentChunks",
+          "type": "BASE TABLE"
+        },
+        "RAG.DocumentChunks_OLD": {
+          "schema": "RAG",
+          "name": "DocumentChunks_OLD",
+          "type": "BASE TABLE"
+        },
+        "RAG.DocumentTokenEmbeddings": {
+          "schema": "RAG",
+          "name": "DocumentTokenEmbeddings",
+          "type": "BASE TABLE"
+        },
+        "RAG.DocumentTokenEmbeddings_OLD": {
+          "schema": "RAG",
+          "name": "DocumentTokenEmbeddings_OLD",
+          "type": "BASE TABLE"
+        },
+        "RAG.Entities": {
+          "schema": "RAG",
+          "name": "Entities",
+          "type": "BASE TABLE"
+        },
+        "RAG.KnowledgeGraphEdges": {
+          "schema": "RAG",
+          "name": "KnowledgeGraphEdges",
+          "type": "BASE TABLE"
+        },
+        "RAG.KnowledgeGraphNodes": {
+          "schema": "RAG",
+          "name": "KnowledgeGraphNodes",
+          "type": "BASE TABLE"
+        },
+        "RAG.QueryVectorChunks": {
+          "schema": "RAG",
+          "name": "QueryVectorChunks",
+          "type": "BASE TABLE"
+        },
+        "RAG.QueryVectors": {
+          "schema": "RAG",
+          "name": "QueryVectors",
+          "type": "BASE TABLE"
+        },
+        "RAG.Relationships": {
+          "schema": "RAG",
+          "name": "Relationships",
+          "type": "BASE TABLE"
+        },
+        "RAG.SourceDocuments": {
+          "schema": "RAG",
+          "name": "SourceDocuments",
+          "type": "BASE TABLE"
+        },
+        "RAG.SourceDocuments_OLD": {
+          "schema": "RAG",
+          "name": "SourceDocuments_OLD",
+          "type": "BASE TABLE"
+        },
+        "RAG.TempQueryVector": {
+          "schema": "RAG",
+          "name": "TempQueryVector",
+          "type": "BASE TABLE"
+        },
+        "RAG.TestIdx_FLAT": {
+          "schema": "RAG",
+          "name": "TestIdx_FLAT",
+          "type": "BASE TABLE"
+        },
+        "RAG.TestIdx_HNSW": {
+          "schema": "RAG",
+          "name": "TestIdx_HNSW",
+          "type": "BASE TABLE"
+        },
+        "RAG.TestIdx_IVF": {
+          "schema": "RAG",
+          "name": "TestIdx_IVF",
+          "type": "BASE TABLE"
+        },
+        "RAG.TestIdx_LSH": {
+          "schema": "RAG",
+          "name": "TestIdx_LSH",
+          "type": "BASE TABLE"
+        }
+      },
+      "indexes": {},
+      "vector_columns": {
+        "RAG.DocumentChunks": [
+          {
+            "name": "embedding",
+            "data_type": "varchar",
+            "max_length": 50000,
+            "nullable": "YES"
+          },
+          {
+            "name": "chunk_embedding_vector",
+            "data_type": "varchar",
+            "max_length": 132863,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.DocumentChunks_OLD": [
+          {
+            "name": "embedding",
+            "data_type": "varchar",
+            "max_length": 32000,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.DocumentTokenEmbeddings": [
+          {
+            "name": "token_embedding",
+            "data_type": "varchar",
+            "max_length": 10000,
+            "nullable": "YES"
+          },
+          {
+            "name": "token_embedding_vector",
+            "data_type": "varchar",
+            "max_length": 44287,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.DocumentTokenEmbeddings_OLD": [
+          {
+            "name": "token_embedding",
+            "data_type": "varchar",
+            "max_length": 30000,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.Entities": [
+          {
+            "name": "embedding",
+            "data_type": "longvarchar",
+            "max_length": 2147483647,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.KnowledgeGraphNodes": [
+          {
+            "name": "embedding",
+            "data_type": "longvarchar",
+            "max_length": 2147483647,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.QueryVectors": [
+          {
+            "name": "query_vector",
+            "data_type": "varchar",
+            "max_length": 132863,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.SourceDocuments": [
+          {
+            "name": "embedding",
+            "data_type": "varchar",
+            "max_length": 50000,
+            "nullable": "YES"
+          },
+          {
+            "name": "document_embedding_vector",
+            "data_type": "varchar",
+            "max_length": 132863,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.SourceDocuments_OLD": [
+          {
+            "name": "embedding",
+            "data_type": "varchar",
+            "max_length": 60000,
+            "nullable": "YES"
+          }
+        ],
+        "RAG.TempQueryVector": [
+          {
+            "name": "vector_data",
+            "data_type": "varchar",
+            "max_length": 132863,
+            "nullable": "YES"
+          }
+        ]
+      },
+      "actual_storage_types": {}
+    },
+    "vector_storage": {
+      "sample_embeddings": [],
+      "storage_format": "unknown",
+      "actual_vector_operations": "unknown",
+      "document_count": 0,
+      "error": "[SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.SOURCEDOCUMENTS_V2' not found>]"
+    },
+    "hnsw_indexing": {
+      "hnsw_indexes_found": [],
+      "vector_type_columns": [],
+      "index_usage_evidence": "none",
+      "performance_characteristics": "unknown",
+      "error": "[SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < IDENTIFIER expected, reserved word STATISTICS found ^SELECT INDEX_SCHEMA , INDEX_NAME , TABLE_NAME , COLUMN_NAME , INDEX_TYPE FROM INFORMATION_SCHEMA . STATISTICS>]"
+    }
+  },
+  "error": "'MockEmbeddingModel' object is not callable"
+}

@@ -56,7 +56,7 @@ class BasicRAGPipelineJDBCV2:
                     TO_VECTOR(embedding),
                     TO_VECTOR(?)
                 ) as similarity_score
-            FROM RAG.SourceDocuments_V2
+            FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
             AND VECTOR_COSINE(
                 TO_VECTOR(embedding),

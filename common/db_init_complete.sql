@@ -5,27 +5,29 @@
 -- 1. MAIN DOCUMENT STORAGE
 -- =====================================================
 
+DROP TABLE IF EXISTS RAG.SourceDocuments CASCADE;
 CREATE TABLE RAG.SourceDocuments (
     doc_id VARCHAR(255) PRIMARY KEY,
     text_content TEXT,
-    embedding TEXT,
+    embedding VECTOR(DOUBLE, 384),
     metadata TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for SourceDocuments
 CREATE INDEX IF NOT EXISTS idx_source_docs_id ON RAG.SourceDocuments (doc_id);
-CREATE INDEX IF NOT EXISTS idx_source_docs_embedding ON RAG.SourceDocuments (doc_id) WHERE embedding IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_hnsw_source_embedding ON RAG.SourceDocuments (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
 
 -- =====================================================
 -- 2. DOCUMENT CHUNKING TABLES
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS RAG.DocumentChunks (
+DROP TABLE IF EXISTS RAG.DocumentChunks CASCADE;
+CREATE TABLE RAG.DocumentChunks (
     chunk_id VARCHAR(255) PRIMARY KEY,
     doc_id VARCHAR(255),
     chunk_text TEXT,
-    chunk_embedding TEXT,
+    chunk_embedding VECTOR(DOUBLE, 384),
     chunk_index INTEGER,
     chunk_type VARCHAR(100),
     metadata TEXT,
@@ -36,26 +38,28 @@ CREATE TABLE IF NOT EXISTS RAG.DocumentChunks (
 -- Indexes for DocumentChunks
 CREATE INDEX IF NOT EXISTS idx_chunks_doc_id ON RAG.DocumentChunks (doc_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_type ON RAG.DocumentChunks (chunk_type);
-CREATE INDEX IF NOT EXISTS idx_chunks_embedding ON RAG.DocumentChunks (chunk_id) WHERE chunk_embedding IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_hnsw_chunk_embedding ON RAG.DocumentChunks (chunk_embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
 
 -- =====================================================
 -- 3. KNOWLEDGE GRAPH TABLES
 -- =====================================================
 
 -- Entities table for GraphRAG
-CREATE TABLE IF NOT EXISTS RAG.Entities (
+DROP TABLE IF EXISTS RAG.Entities CASCADE;
+CREATE TABLE RAG.Entities (
     entity_id VARCHAR(255) PRIMARY KEY,
     entity_name VARCHAR(500) NOT NULL,
     entity_type VARCHAR(100),
     description TEXT,
     source_doc_id VARCHAR(255),
-    embedding TEXT,
+    embedding VECTOR(DOUBLE, 384),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(doc_id)
 );
 
 -- Relationships table for GraphRAG
-CREATE TABLE IF NOT EXISTS RAG.Relationships (
+DROP TABLE IF EXISTS RAG.Relationships CASCADE;
+CREATE TABLE RAG.Relationships (
     relationship_id VARCHAR(255) PRIMARY KEY,
     source_entity_id VARCHAR(255),
     target_entity_id VARCHAR(255),
@@ -74,6 +78,7 @@ CREATE INDEX IF NOT EXISTS idx_entities_id ON RAG.Entities (entity_id);
 CREATE INDEX IF NOT EXISTS idx_entities_name ON RAG.Entities (entity_name);
 CREATE INDEX IF NOT EXISTS idx_entities_type ON RAG.Entities (entity_type);
 CREATE INDEX IF NOT EXISTS idx_entities_source_doc ON RAG.Entities (source_doc_id);
+CREATE INDEX IF NOT EXISTS idx_hnsw_entity_embedding ON RAG.Entities (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
 
 -- Indexes for Relationships
 CREATE INDEX IF NOT EXISTS idx_relationships_id ON RAG.Relationships (relationship_id);
@@ -87,17 +92,19 @@ CREATE INDEX IF NOT EXISTS idx_relationships_entities ON RAG.Relationships (sour
 -- =====================================================
 
 -- KnowledgeGraphNodes table for NodeRAG
-CREATE TABLE IF NOT EXISTS RAG.KnowledgeGraphNodes (
+DROP TABLE IF EXISTS RAG.KnowledgeGraphNodes CASCADE;
+CREATE TABLE RAG.KnowledgeGraphNodes (
     node_id VARCHAR(255) PRIMARY KEY,
     node_type VARCHAR(100),
     content TEXT,
-    embedding TEXT,
+    embedding VECTOR(DOUBLE, 384),
     metadata TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- KnowledgeGraphEdges table for NodeRAG
-CREATE TABLE IF NOT EXISTS RAG.KnowledgeGraphEdges (
+DROP TABLE IF EXISTS RAG.KnowledgeGraphEdges CASCADE;
+CREATE TABLE RAG.KnowledgeGraphEdges (
     edge_id VARCHAR(255) PRIMARY KEY,
     source_node_id VARCHAR(255),
     target_node_id VARCHAR(255),
@@ -112,6 +119,7 @@ CREATE TABLE IF NOT EXISTS RAG.KnowledgeGraphEdges (
 -- Indexes for KnowledgeGraphNodes
 CREATE INDEX IF NOT EXISTS idx_kg_nodes_id ON RAG.KnowledgeGraphNodes (node_id);
 CREATE INDEX IF NOT EXISTS idx_kg_nodes_type ON RAG.KnowledgeGraphNodes (node_type);
+CREATE INDEX IF NOT EXISTS idx_hnsw_kg_node_embedding ON RAG.KnowledgeGraphNodes (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
 
 -- Indexes for KnowledgeGraphEdges
 CREATE INDEX IF NOT EXISTS idx_kg_edges_id ON RAG.KnowledgeGraphEdges (edge_id);
@@ -124,11 +132,12 @@ CREATE INDEX IF NOT EXISTS idx_kg_edges_type ON RAG.KnowledgeGraphEdges (edge_ty
 -- =====================================================
 
 -- DocumentTokenEmbeddings for ColBERT
-CREATE TABLE IF NOT EXISTS RAG.DocumentTokenEmbeddings (
+DROP TABLE IF EXISTS RAG.DocumentTokenEmbeddings CASCADE;
+CREATE TABLE RAG.DocumentTokenEmbeddings (
     doc_id VARCHAR(255),
     token_index INTEGER,
     token_text VARCHAR(500),
-    token_embedding TEXT,
+    token_embedding VECTOR(DOUBLE, 128),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (doc_id, token_index),
     FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
@@ -137,6 +146,7 @@ CREATE TABLE IF NOT EXISTS RAG.DocumentTokenEmbeddings (
 -- Indexes for DocumentTokenEmbeddings
 CREATE INDEX IF NOT EXISTS idx_token_embeddings_doc ON RAG.DocumentTokenEmbeddings (doc_id);
 CREATE INDEX IF NOT EXISTS idx_token_embeddings_token ON RAG.DocumentTokenEmbeddings (token_index);
+CREATE INDEX IF NOT EXISTS idx_hnsw_token_embedding ON RAG.DocumentTokenEmbeddings (token_embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
 
 -- =====================================================
 -- 6. PERFORMANCE OPTIMIZATION INDEXES

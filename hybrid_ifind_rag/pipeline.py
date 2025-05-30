@@ -120,7 +120,7 @@ class HybridiFindRAGPipeline:
                 d.text_content as content,
                 '' as metadata,
                 ROW_NUMBER() OVER (ORDER BY d.doc_id) as rank_position
-            FROM RAG.SourceDocuments_V2 d
+            FROM RAG.SourceDocuments d
             WHERE {where_clause}
             ORDER BY d.doc_id
             """
@@ -230,12 +230,10 @@ class HybridiFindRAGPipeline:
                     d.doc_id as title,
                     d.text_content as content,
                     '' as metadata,
-                    VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR('{embedding_str}')) as similarity_score,
-                    ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR('{embedding_str}')) DESC) as rank_position
-                FROM RAG.SourceDocuments_V2 d
+                    VECTOR_COSINE(d.embedding, TO_VECTOR('{embedding_str}')) as similarity_score
+                FROM RAG.SourceDocuments d
                 WHERE d.embedding IS NOT NULL
-                  AND LENGTH(d.embedding) > 1000
-                  AND VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR('{embedding_str}')) > {similarity_threshold}
+                  AND VECTOR_COSINE(d.embedding, TO_VECTOR('{embedding_str}')) > {similarity_threshold}
                 ORDER BY similarity_score DESC
                 """
                 
@@ -249,21 +247,20 @@ class HybridiFindRAGPipeline:
                     d.doc_id as title,
                     d.text_content as content,
                     '' as metadata,
-                    VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) as similarity_score,
-                    ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) DESC) as rank_position
-                FROM RAG.SourceDocuments_V2 d
+                    VECTOR_COSINE(d.embedding, TO_VECTOR(?)) as similarity_score
+                FROM RAG.SourceDocuments d
                 WHERE d.embedding IS NOT NULL
-                  AND LENGTH(d.embedding) > 1000
-                  AND VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) > ?
+                  AND VECTOR_COSINE(d.embedding, TO_VECTOR(?)) > ?
                 ORDER BY similarity_score DESC
                 """
                 
                 cursor = self.iris_connector.cursor()
-                cursor.execute(query_sql, [embedding_str, embedding_str, embedding_str, similarity_threshold])
+                # Parameters: query_embedding_str for VECTOR_COSINE in SELECT, query_embedding_str for VECTOR_COSINE in WHERE, similarity_threshold
+                cursor.execute(query_sql, [embedding_str, embedding_str, similarity_threshold])
             
             results = []
             
-            for row in cursor.fetchall():
+            for rank, row in enumerate(cursor.fetchall(), 1): # Start rank from 1
                 # Handle potential stream objects (for JDBC)
                 content = row[2]
                 if hasattr(content, 'read'):
@@ -277,7 +274,7 @@ class HybridiFindRAGPipeline:
                     'content': str(content),
                     'metadata': row[3],
                     'similarity_score': float(row[4]) if row[4] else 0.0,
-                    'rank_position': row[5],
+                    'rank_position': rank, # Assign rank based on order
                     'method': 'vector'
                 })
             
