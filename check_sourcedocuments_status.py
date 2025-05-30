@@ -17,9 +17,9 @@ def main():
     
     # Check what tables exist
     cursor.execute("""
-        SELECT TABLE_NAME 
-        FROM INFORMATION_SCHEMA.TABLES 
-        WHERE TABLE_SCHEMA = 'SQLUser' 
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = 'RAG'
         AND TABLE_NAME LIKE 'SourceDocuments%'
         ORDER BY TABLE_NAME
     """)
@@ -35,7 +35,7 @@ def main():
         
         # Get row count
         try:
-            cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+            cursor.execute(f"SELECT COUNT(*) FROM RAG.{table_name}")
             count = cursor.fetchone()[0]
             print(f"   Total records: {count:,}")
         except Exception as e:
@@ -44,9 +44,9 @@ def main():
         # Get columns
         try:
             cursor.execute(f"""
-                SELECT COLUMN_NAME, DATA_TYPE 
-                FROM INFORMATION_SCHEMA.COLUMNS 
-                WHERE TABLE_SCHEMA = 'SQLUser' 
+                SELECT COLUMN_NAME, DATA_TYPE
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'RAG'
                 AND TABLE_NAME = '{table_name}'
                 ORDER BY ORDINAL_POSITION
             """)
@@ -60,9 +60,9 @@ def main():
         # Check for indexes
         try:
             cursor.execute(f"""
-                SELECT INDEX_NAME, COLUMN_NAME 
-                FROM INFORMATION_SCHEMA.INDEXES 
-                WHERE TABLE_SCHEMA = 'SQLUser' 
+                SELECT INDEX_NAME, COLUMN_NAME
+                FROM INFORMATION_SCHEMA.INDEXES
+                WHERE TABLE_SCHEMA = 'RAG'
                 AND TABLE_NAME = '{table_name}'
                 ORDER BY INDEX_NAME
             """)
