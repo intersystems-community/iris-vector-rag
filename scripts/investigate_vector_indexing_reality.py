@@ -210,7 +210,7 @@ def analyze_vector_storage_reality(iris_connector) -> Dict[str, Any]:
     
     try:
         # Get document count
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
         doc_count = cursor.fetchone()[0]
         storage_analysis["document_count"] = doc_count
         
@@ -219,7 +219,7 @@ def analyze_vector_storage_reality(iris_connector) -> Dict[str, Any]:
             SELECT TOP 3 doc_id, 
                    SUBSTRING(embedding, 1, 100) as embedding_sample,
                    LENGTH(embedding) as embedding_length
-            FROM RAG.SourceDocuments 
+            FROM RAG.SourceDocuments_V2 
             WHERE embedding IS NOT NULL AND embedding <> ''
         """)
         
@@ -251,7 +251,7 @@ def analyze_vector_storage_reality(iris_connector) -> Dict[str, Any]:
                            TO_VECTOR(embedding, 'DOUBLE', 768),
                            TO_VECTOR('{test_vector}', 'DOUBLE', 768)
                        ) AS score
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE embedding IS NOT NULL AND embedding <> ''
             """)
             

@@ -68,13 +68,13 @@ class ParallelPipelineMonitor:
             cursor = conn.cursor()
             
             # Get current document count
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             total_docs = cursor.fetchone()[0]
             
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE doc_id LIKE 'PMC%'")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE doc_id LIKE 'PMC%'")
             pmc_docs = cursor.fetchone()[0]
             
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             docs_with_embeddings = cursor.fetchone()[0]
             
             cursor.close()

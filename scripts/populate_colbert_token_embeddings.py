@@ -3,7 +3,7 @@
 Populate ColBERT Token Embeddings Script
 
 This script populates the DocumentTokenEmbeddings table with token-level embeddings
-for existing documents in the RAG.SourceDocuments table.
+for existing documents in the RAG.SourceDocuments_V2 table.
 """
 
 import os
@@ -31,7 +31,7 @@ def get_documents_without_token_embeddings(iris_connector, limit: int = 100) -> 
         # First get doc_ids that don't have token embeddings
         query_doc_ids = f"""
         SELECT TOP {limit} s.doc_id
-        FROM RAG.SourceDocuments s
+        FROM RAG.SourceDocuments_V2 s
         LEFT JOIN RAG.DocumentTokenEmbeddings t ON s.doc_id = t.doc_id
         WHERE t.doc_id IS NULL
         """
@@ -44,7 +44,7 @@ def get_documents_without_token_embeddings(iris_connector, limit: int = 100) -> 
         # For each doc_id, fetch the text content separately
         for doc_id in doc_ids:
             try:
-                cursor.execute("SELECT text_content FROM RAG.SourceDocuments WHERE doc_id = ?", (doc_id,))
+                cursor.execute("SELECT text_content FROM RAG.SourceDocuments_V2 WHERE doc_id = ?", (doc_id,))
                 result = cursor.fetchone()
                 
                 if result and result[0]:

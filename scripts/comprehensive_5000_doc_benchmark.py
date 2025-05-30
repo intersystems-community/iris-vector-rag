@@ -205,14 +205,14 @@ class Comprehensive5000DocBenchmark:
             cursor = self.connection.cursor()
             
             # Get current document count
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             current_docs = cursor.fetchone()[0]
             
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             docs_with_embeddings = cursor.fetchone()[0]
             
             # Check database capacity and indexes
-            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES WHERE TABLE_NAME = 'SourceDocuments'")
+            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES WHERE TABLE_NAME = 'SourceDocuments_V2'")
             index_count = cursor.fetchone()[0]
             
             cursor.close()
@@ -244,7 +244,7 @@ class Comprehensive5000DocBenchmark:
             self.monitor.start_monitoring()
             
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             current_count = cursor.fetchone()[0]
             cursor.close()
             
@@ -338,7 +338,7 @@ class Comprehensive5000DocBenchmark:
                     
                     # Check if we've reached target
                     cursor = self.connection.cursor()
-                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+                    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
                     current_count = cursor.fetchone()[0]
                     cursor.close()
                     
@@ -352,9 +352,9 @@ class Comprehensive5000DocBenchmark:
             
             # Final count verification
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             final_count = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             final_with_embeddings = cursor.fetchone()[0]
             cursor.close()
             
@@ -410,7 +410,7 @@ class Comprehensive5000DocBenchmark:
             
             # Get document count
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             doc_count = cursor.fetchone()[0]
             
             if doc_count < 10000:
@@ -448,7 +448,7 @@ class Comprehensive5000DocBenchmark:
                 sql1 = """
                 SELECT doc_id, title,
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE embedding IS NOT NULL
                   AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.7
                 ORDER BY similarity DESC
@@ -464,7 +464,7 @@ class Comprehensive5000DocBenchmark:
                 sql2 = """
                 SELECT doc_id, title,
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE embedding IS NOT NULL
                   AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.8
                 ORDER BY similarity DESC
@@ -810,7 +810,7 @@ class Comprehensive5000DocBenchmark:
                     sql = """
                     SELECT doc_id, title, text_content,
                            VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity
-                    FROM RAG.SourceDocuments
+                    FROM RAG.SourceDocuments_V2
                     WHERE embedding IS NOT NULL
                       AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.75
                     ORDER BY similarity DESC

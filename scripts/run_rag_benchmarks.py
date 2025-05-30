@@ -367,7 +367,7 @@ def ensure_min_documents(conn, min_count: int = MIN_DOCUMENT_COUNT) -> bool:
     try:
         # Check current document count
         with conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2")
             count_result = cursor.fetchone()
             current_count = int(count_result[0]) if count_result else 0
             logger.info(f"Current document count: {current_count}")

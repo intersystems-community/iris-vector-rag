@@ -21,7 +21,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 from common.utils import Document, timing_decorator, get_llm_func, get_embedding_func
-from common.iris_connector import get_iris_connection
+from common.iris_connector_jdbc import get_iris_connection
 
 class OptimizedColbertRAGPipeline:
     def __init__(self, iris_connector: IRISConnection,
@@ -134,7 +134,7 @@ class OptimizedColbertRAGPipeline:
             # Step 1: Get documents that have token embeddings (prioritize these)
             sql_get_docs_with_tokens = """
             SELECT DISTINCT d.doc_id, d.text_content
-            FROM RAG.SourceDocuments d
+            FROM RAG.SourceDocuments_V2 d
             INNER JOIN RAG.DocumentTokenEmbeddings t ON d.doc_id = t.doc_id
             ORDER BY d.doc_id
             LIMIT 1000

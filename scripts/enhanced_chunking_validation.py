@@ -90,7 +90,7 @@ class EnhancedChunkingValidator:
         try:
             cursor.execute("""
                 SELECT TOP ? doc_id, title, text_content
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE text_content IS NOT NULL
                 AND LENGTH(text_content) BETWEEN 500 AND 5000
                 ORDER BY RANDOM()
@@ -191,7 +191,7 @@ class EnhancedChunkingValidator:
             # Get test documents
             cursor.execute("""
                 SELECT TOP 5 doc_id, text_content
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE text_content IS NOT NULL
                 AND LENGTH(text_content) > 1000
                 ORDER BY RANDOM()
@@ -332,7 +332,7 @@ class EnhancedChunkingValidator:
             # Test document for database operations
             cursor.execute("""
                 SELECT TOP 1 doc_id, text_content
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE text_content IS NOT NULL
                 AND LENGTH(text_content) > 500
             """)

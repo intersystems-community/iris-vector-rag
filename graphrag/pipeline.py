@@ -1,7 +1,7 @@
-# graphrag/pipeline_fixed.py
+# graphrag/pipeline.py
 """
-Fixed GraphRAG Pipeline that properly uses the existing knowledge graph data.
-This implementation leverages the 273K+ entities and 183K+ relationships in RAG.Entities and RAG.Relationships.
+GraphRAG Pipeline with JDBC stream handling support.
+This implementation automatically uses the JDBC-fixed version when JDBC connections are detected.
 """
 
 import os
@@ -20,17 +20,51 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
-from common.iris_connector import get_iris_connection
+from common.iris_connector_jdbc import get_iris_connection
 
-class FixedGraphRAGPipeline:
+# Import the JDBC-fixed version
+from .pipeline_jdbc_fixed import JDBCFixedGraphRAGPipeline, create_jdbc_fixed_graphrag_pipeline
+
+class GraphRAGPipeline:
     """
-    Fixed GraphRAG Pipeline that properly uses the existing knowledge graph.
+    GraphRAG Pipeline that automatically handles JDBC connections.
     
-    Key improvements:
-    1. Uses RAG.Entities and RAG.Relationships (not empty KnowledgeGraphNodes)
-    2. Performs actual graph traversal using relationships
-    3. Leverages entity semantic matching
-    4. Implements proper knowledge graph retrieval
+    This is a wrapper that detects if we're using JDBC and delegates to the
+    appropriate implementation.
+    """
+    
+    def __init__(self, iris_connector: IRISConnection,
+                 embedding_func: Callable[[List[str]], List[List[float]]],
+                 llm_func: Callable[[str], str]):
+        # Check if this is a JDBC connection
+        conn_type = type(iris_connector).__name__
+        
+        if 'JDBC' in conn_type or hasattr(iris_connector, '_jdbc_connection'):
+            logger.info("Detected JDBC connection - using JDBC-fixed GraphRAG implementation")
+            self._impl = JDBCFixedGraphRAGPipeline(iris_connector, embedding_func, llm_func)
+        else:
+            logger.info("Using standard GraphRAG implementation")
+            # Fall back to the original implementation
+            from .pipeline_original import OriginalGraphRAGPipeline
+            self._impl = OriginalGraphRAGPipeline(iris_connector, embedding_func, llm_func)
+    
+    def run(self, query_text: str, top_k: int = 20, similarity_threshold: float = 0.1) -> Dict[str, Any]:
+        """Run the GraphRAG pipeline."""
+        return self._impl.run(query_text, top_k, similarity_threshold)
+    
+    def retrieve_documents_via_kg(self, query_text: str, top_k: int = 20) -> List[Document]:
+        """Retrieve documents via knowledge graph."""
+        return self._impl.retrieve_documents_via_kg(query_text, top_k)
+    
+    def generate_answer(self, query_text: str, context_docs: List[Document]) -> str:
+        """Generate answer using LLM."""
+        return self._impl.generate_answer(query_text, context_docs)
+
+# Preserve the original implementation as a backup
+class OriginalGraphRAGPipeline:
+    """
+    Original GraphRAG Pipeline implementation (without JDBC stream handling).
+    Kept for backward compatibility with non-JDBC connections.
     """
     
     def __init__(self, iris_connector: IRISConnection,
@@ -39,7 +73,7 @@ class FixedGraphRAGPipeline:
         self.iris_connector = iris_connector
         self.embedding_func = embedding_func
         self.llm_func = llm_func
-        logger.info("FixedGraphRAGPipeline Initialized - Using RAG.Entities and RAG.Relationships")
+        logger.info("OriginalGraphRAGPipeline Initialized - Using RAG.Entities and RAG.Relationships")
 
     @timing_decorator
     def _find_seed_entities(self, query_text: str, top_k: int = 10) -> List[Tuple[str, str, float]]:
@@ -218,7 +252,7 @@ class FixedGraphRAGPipeline:
             doc_query = f"""
                 SELECT DISTINCT e.source_doc_id, sd.text_content
                 FROM RAG.Entities e
-                JOIN RAG.SourceDocuments sd ON e.source_doc_id = sd.doc_id
+                JOIN RAG.SourceDocuments_V2 sd ON e.source_doc_id = sd.doc_id
                 WHERE e.entity_id IN ({placeholders})
                   AND sd.text_content IS NOT NULL
                 LIMIT {top_k}
@@ -300,7 +334,7 @@ class FixedGraphRAGPipeline:
             vector_query = f"""
                 SELECT TOP {top_k} doc_id, text_content,
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE embedding IS NOT NULL
                   AND LENGTH(embedding) > 1000
                   AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.1
@@ -374,9 +408,9 @@ Answer:"""
     @timing_decorator
     def run(self, query_text: str, top_k: int = 20, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
-        Run the complete fixed GraphRAG pipeline.
+        Run the complete GraphRAG pipeline.
         """
-        logger.info(f"GraphRAG: Running fixed pipeline for query: '{query_text[:50]}...'")
+        logger.info(f"GraphRAG: Running pipeline for query: '{query_text[:50]}...'")
         
         # Retrieve documents using knowledge graph
         retrieved_documents = self.retrieve_documents_via_kg(query_text, top_k)
@@ -393,9 +427,13 @@ Answer:"""
             "method": "knowledge_graph_traversal"
         }
 
-def create_fixed_graphrag_pipeline(iris_connector=None, llm_func=None):
+# Alias for backward compatibility
+FixedGraphRAGPipeline = GraphRAGPipeline
+
+def create_graphrag_pipeline(iris_connector=None, llm_func=None):
     """
-    Factory function to create a fixed GraphRAG pipeline.
+    Factory function to create a GraphRAG pipeline.
+    Automatically detects JDBC connections and uses the appropriate implementation.
     """
     if iris_connector is None:
         iris_connector = get_iris_connection()
@@ -405,18 +443,21 @@ def create_fixed_graphrag_pipeline(iris_connector=None, llm_func=None):
     
     embedding_func = get_embedding_func()
     
-    return FixedGraphRAGPipeline(
+    return GraphRAGPipeline(
         iris_connector=iris_connector,
         embedding_func=embedding_func,
         llm_func=llm_func
     )
 
+# Alias for backward compatibility
+create_fixed_graphrag_pipeline = create_graphrag_pipeline
+
 if __name__ == '__main__':
-    # Test the fixed GraphRAG pipeline
-    print("Testing Fixed GraphRAG Pipeline...")
+    # Test the GraphRAG pipeline
+    print("Testing GraphRAG Pipeline...")
     
     try:
-        pipeline = create_fixed_graphrag_pipeline()
+        pipeline = create_graphrag_pipeline()
         
         test_query = "What are the symptoms of diabetes?"
         print(f"\nTesting query: {test_query}")
@@ -434,6 +475,6 @@ if __name__ == '__main__':
             print(f"Content: {doc['content'][:200]}...")
         
     except Exception as e:
-        print(f"Error testing fixed GraphRAG: {e}")
+        print(f"Error testing GraphRAG: {e}")
         import traceback
         traceback.print_exc()

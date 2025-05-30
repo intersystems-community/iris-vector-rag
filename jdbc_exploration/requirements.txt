@@ -1,0 +1,17 @@
+# JDBC requirements for IRIS connection
+jaydebeapi==1.2.3
+jpype1==1.5.0
+
+# Note: You also need to download the IRIS JDBC driver JAR file:
+# - intersystems-jdbc-3.8.4.jar (or latest version)
+# - Download from: https://github.com/intersystems-community/iris-driver-distribution
+# - Or from WRC (Worldwide Response Center) if you have access
+
+# Installation:
+# pip install -r requirements.txt
+
+# Usage:
+# 1. Download the IRIS JDBC driver JAR
+# 2. Update jdbc_driver_path in the script to point to the JAR file
+# 3. Update connection parameters (host, port, namespace, username, password)
+# 4. Run: python test_jaydebeapi_connection.py

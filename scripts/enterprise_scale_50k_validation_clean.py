@@ -186,14 +186,14 @@ class EnterpriseScaleValidator:
             cursor = self.connection.cursor()
             
             # Get current document count
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             current_docs = cursor.fetchone()[0]
             
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             docs_with_embeddings = cursor.fetchone()[0]
             
             # Check database capacity and indexes
-            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES WHERE TABLE_NAME = 'SourceDocuments'")
+            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES WHERE TABLE_NAME = 'SourceDocuments_V2'")
             index_count = cursor.fetchone()[0]
             
             cursor.close()
@@ -216,7 +216,7 @@ class EnterpriseScaleValidator:
             
             # Get document count
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             doc_count = cursor.fetchone()[0]
             
             logger.info(f"📊 Testing with {doc_count} documents")

@@ -15,7 +15,7 @@ except ImportError:
     IRISConnection = Any # Fallback to Any if the driver isn't available during static analysis
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
-from common.iris_connector import get_iris_connection # For demo
+from common.iris_connector_jdbc import get_iris_connection # For demo
 from common.chunk_retrieval import ChunkRetrievalService # Added for chunk support
 logger = logging.getLogger(__name__) # Added
 
@@ -74,7 +74,7 @@ class CRAGPipeline:
         
         # Chunk support
         self.use_chunks = use_chunks
-        self.chunk_types = chunk_types or ['adaptive']
+        self.chunk_types = chunk_types or ['TEXT']  # Changed from 'adaptive' to match actual data
         self.chunk_service = ChunkRetrievalService(iris_connector) if use_chunks else None
         
         logger.info(f"CRAGPipeline Initialized (use_chunks={use_chunks}, chunk_types={self.chunk_types})")
@@ -140,7 +140,7 @@ class CRAGPipeline:
         sql_query = f"""
             SELECT TOP 20 doc_id, text_content,
                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
-            FROM RAG.SourceDocuments
+            FROM RAG.SourceDocuments_V2
             WHERE embedding IS NOT NULL
               AND LENGTH(embedding) > 1000
               AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
@@ -306,7 +306,7 @@ Answer:"""
 
 if __name__ == '__main__':
     print("Running CRAGPipeline Demo...")
-    from common.iris_connector import get_iris_connection # For demo
+    from common.iris_connector_jdbc import get_iris_connection # For demo
     from common.utils import get_embedding_func, get_llm_func # For demo
     from tests.mocks.db import MockIRISConnector # For demo seeding
 
@@ -329,7 +329,7 @@ if __name__ == '__main__':
         )
 
         # --- Pre-requisite: Ensure DB has data ---
-        # This demo assumes 'common/db_init.sql' has been run and 'SourceDocuments'
+        # This demo assumes 'common/db_init.sql' has been run and 'SourceDocuments_V2'
         # table exists and contains some data with embeddings (as CLOB strings).
         # For a self-contained demo, you might add a small data seeding step here.
         # Example seeding (requires MockIRISConnector or real DB setup):

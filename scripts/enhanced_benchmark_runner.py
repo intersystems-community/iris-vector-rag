@@ -124,7 +124,7 @@ class ProductionBenchmarkRunner:
             
             # Test connection and get document count
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2 WHERE embedding IS NOT NULL")
             doc_count = cursor.fetchone()[0]
             cursor.close()
             

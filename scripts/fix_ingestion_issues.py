@@ -45,7 +45,7 @@ def create_missing_tables():
             token_embedding VARCHAR(32000),
             metadata_json VARCHAR(5000),
             PRIMARY KEY (doc_id, token_sequence_index),
-            FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
+            FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments_V2(doc_id)
         )
         """
         
@@ -74,7 +74,7 @@ def get_current_status():
     
     try:
         # Check SourceDocuments count
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
         doc_count = cursor.fetchone()[0]
         
         # Check DocumentTokenEmbeddings count
@@ -85,7 +85,7 @@ def get_current_status():
             token_count = 0
             
         # Get sample of existing doc_ids
-        cursor.execute("SELECT doc_id FROM RAG.SourceDocuments ORDER BY doc_id LIMIT 10")
+        cursor.execute("SELECT doc_id FROM RAG.SourceDocuments_V2 ORDER BY doc_id LIMIT 10")
         sample_ids = [row[0] for row in cursor.fetchall()]
         
         logger.info(f"📊 Current status:")

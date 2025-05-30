@@ -393,7 +393,7 @@ class ComprehensiveHNSWComparison:
                 raise Exception("Failed to establish database connection")
             
             cursor = self.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments_V2")
             current_docs = cursor.fetchone()[0]
             cursor.close()
             

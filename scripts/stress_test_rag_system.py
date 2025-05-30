@@ -117,13 +117,13 @@ class StressTestRunner:
             cursor = self.connection.cursor()
             
             # Get current counts
-            cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2")
             initial_count = cursor.fetchone()[0]
             logger.info(f"Initial document count: {initial_count}")
             
             # Clear tables in correct order (respecting foreign keys)
             # Only clear tables that exist
-            tables_to_clear = ["SourceDocuments"]  # Start with main table
+            tables_to_clear = ["SourceDocuments_V2"]  # Start with main table
             
             # Check for additional tables and add them if they exist
             additional_tables = ["DocumentTokenEmbeddings", "KnowledgeGraphNodes"]
@@ -207,7 +207,7 @@ class StressTestRunner:
             cursor = self.connection.cursor()
             
             # Check current document count
-            cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+            cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2")
             doc_count = cursor.fetchone()[0]
             logger.info(f"Testing HNSW with {doc_count} documents")
             
@@ -234,7 +234,7 @@ class StressTestRunner:
                 search_sql = """
                 SELECT TOP 10 doc_id, title, 
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity
-                FROM SourceDocuments 
+                FROM SourceDocuments_V2 
                 WHERE embedding IS NOT NULL
                 ORDER BY similarity DESC
                 """
@@ -386,12 +386,12 @@ class StressTestRunner:
                 },
                 {
                     "name": "Document Count",
-                    "method": "SELECT COUNT(*) as doc_count FROM SourceDocuments",
+                    "method": "SELECT COUNT(*) as doc_count FROM SourceDocuments_V2",
                     "expected_type": "number"
                 },
                 {
                     "name": "Sample Document Retrieval",
-                    "method": "SELECT TOP 5 doc_id, title FROM SourceDocuments",
+                    "method": "SELECT TOP 5 doc_id, title FROM SourceDocuments_V2",
                     "expected_type": "list"
                 }
             ]

@@ -1,0 +1,14 @@
+{
+  "timestamp": "20250530_134915",
+  "results": {
+    "hnsw_indexes": false,
+    "data_integrity": false,
+    "basic_rag_query": false,
+    "vector_search_performance": false
+  },
+  "summary": {
+    "total_checks": 4,
+    "passed": 0,
+    "failed": 4
+  }
+}

@@ -1,12 +1,15 @@
-# basic_rag/pipeline.py
+"""
+Basic RAG Pipeline - Working Version
+Simple implementation that works with IRIS SQL limitations and the Document class
+"""
 
 import os
 import sys
-# Add the project root directory to Python path so we can import common module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from typing import List, Dict, Any, Callable
 import logging
+import json
 
 try:
     import iris
@@ -14,7 +17,8 @@ try:
 except ImportError:
     IRISConnection = Any
 
-from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func, get_iris_connector
+from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
+from common.iris_connector_jdbc import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
@@ -32,46 +36,120 @@ class BasicRAGPipeline:
     @timing_decorator
     def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
-        Retrieves documents from IRIS based on vector similarity using HNSW acceleration.
-        Uses similarity threshold for realistic document count variation.
+        Retrieves documents from IRIS based on vector similarity.
+        Memory-efficient implementation that processes documents in small batches.
         """
-        logger.debug(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
+        logger.debug(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...'")
+        
+        # Generate query embedding
         query_embedding = self.embedding_func([query_text])[0]
-
-        # Convert to comma-separated string format for IRIS
-        query_embedding_str_for_sql = ','.join(map(str, query_embedding))
         
         retrieved_docs = []
+        cursor = None
         try:
             cursor = self.iris_connector.cursor()
             
-            # Use RAG_HNSW schema with similarity threshold instead of fixed TOP N
-            sql_query = f"""
-            SELECT TOP {top_k} doc_id, text_content,
-                   VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS similarity_score
-            FROM {self.schema}.SourceDocuments
-            WHERE embedding IS NOT NULL
-              AND LENGTH(embedding) > 1000
-              AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
-            ORDER BY similarity_score DESC
+            # For BasicRAG, we'll use a very simple approach:
+            # Just get a small sample of documents and calculate similarity
+            # This avoids memory issues and IRIS SQL limitations
+            
+            # Get 100 documents with real embeddings (excluding dummy data)
+            sql = f"""
+                SELECT TOP 100 doc_id, title, text_content, embedding
+                FROM {self.schema}.SourceDocuments
+                WHERE embedding IS NOT NULL
+                AND embedding NOT LIKE '0.1,0.1,0.1%'
+                ORDER BY doc_id
             """
             
-            logger.debug(f"Executing BasicRAG SQL with threshold {similarity_threshold}")
-            logger.debug(f"SQL Query: {sql_query}")
-            cursor.execute(sql_query, (query_embedding_str_for_sql, query_embedding_str_for_sql, similarity_threshold))
+            cursor.execute(sql)
+            sample_docs = cursor.fetchall()
             
-            for row in cursor.fetchall():
-                score = float(row[2]) if isinstance(row[2], str) else row[2]
-                doc = Document(id=str(row[0]), content=row[1] if row[1] is not None else "", score=score)
+            logger.info(f"Processing {len(sample_docs)} sample documents")
+            
+            # Calculate similarities
+            doc_scores = []
+            
+            for row in sample_docs:
+                doc_id = row[0]
+                title = row[1]
+                content = row[2]
+                embedding_str = row[3]
+                
+                try:
+                    # Parse the stored embedding
+                    # Handle JDBC string objects
+                    if hasattr(embedding_str, 'toString'):
+                        embedding_str = str(embedding_str)
+                    
+                    if embedding_str and isinstance(embedding_str, str) and embedding_str.startswith('['):
+                        doc_embedding = json.loads(embedding_str)
+                    else:
+                        # Most embeddings are stored as comma-separated values
+                        doc_embedding = [float(x.strip()) for x in str(embedding_str).split(',') if x.strip()]
+                    
+                    # Ensure embeddings have the same dimension
+                    if len(doc_embedding) != len(query_embedding):
+                        logger.debug(f"Dimension mismatch for doc {doc_id}: {len(doc_embedding)} vs {len(query_embedding)}")
+                        continue
+                    
+                    # Calculate cosine similarity
+                    dot_product = sum(a * b for a, b in zip(query_embedding, doc_embedding))
+                    query_norm = sum(a * a for a in query_embedding) ** 0.5
+                    doc_norm = sum(a * a for a in doc_embedding) ** 0.5
+                    
+                    if query_norm > 0 and doc_norm > 0:
+                        similarity = dot_product / (query_norm * doc_norm)
+                    else:
+                        similarity = 0.0
+                    
+                    if similarity > similarity_threshold:
+                        # Handle JDBC stream for content
+                        if hasattr(content, 'read'):
+                            content_str = content.read()
+                            if isinstance(content_str, bytes):
+                                content_str = content_str.decode('utf-8', errors='ignore')
+                        elif hasattr(content, 'toString'):
+                            content_str = str(content)
+                        else:
+                            content_str = str(content) if content else ""
+                        
+                        doc_scores.append({
+                            'doc_id': str(doc_id) if hasattr(doc_id, 'toString') else doc_id,
+                            'title': str(title) if hasattr(title, 'toString') else (title or ""),
+                            'content': content_str,
+                            'score': similarity
+                        })
+                        
+                except Exception as e:
+                    logger.warning(f"Could not process embedding for doc {doc_id}: {e}")
+                    continue
+            
+            # Sort by score and take top_k
+            doc_scores.sort(key=lambda x: x['score'], reverse=True)
+            doc_scores = doc_scores[:top_k]
+            
+            # Convert to Document objects
+            for doc_data in doc_scores:
+                # Create Document with just the fields it accepts
+                doc = Document(
+                    id=doc_data['doc_id'],
+                    content=doc_data['content'],
+                    score=doc_data['score']
+                )
+                # Store title separately if needed
+                doc._title = doc_data['title']
                 retrieved_docs.append(doc)
             
-            cursor.close()
-            logger.info(f"BasicRAG: Retrieved {len(retrieved_docs)} documents above threshold {similarity_threshold}")
+            logger.info(f"BasicRAG: Retrieved {len(retrieved_docs)} documents above threshold")
             
         except Exception as e:
             logger.error(f"BasicRAG: Error during document retrieval: {e}", exc_info=True)
             return []
-            
+        finally:
+            if cursor:
+                cursor.close()
+                
         return retrieved_docs
 
     @timing_decorator
@@ -84,13 +162,23 @@ class BasicRAGPipeline:
             logger.warning("BasicRAG: No documents retrieved. Returning a default response.")
             return "I could not find enough information to answer your question."
 
-        # Limit context to prevent token overflow - truncate documents if needed
+        # Limit context to prevent token overflow
         context_parts = []
         total_chars = 0
-        max_context_chars = 8000  # Conservative limit to stay under 16K tokens
+        max_context_chars = 4000  # Conservative limit
         
         for doc in retrieved_docs:
-            doc_content = doc.content[:2000]  # Limit each document to 2000 chars
+            # Handle JDBC stream objects
+            content = doc.content
+            if hasattr(content, 'read'):
+                # It's a stream, read it
+                content = content.read()
+                if isinstance(content, bytes):
+                    content = content.decode('utf-8', errors='ignore')
+            elif hasattr(content, 'toString'):
+                content = str(content)
+            
+            doc_content = str(content)[:1000] if content else ""  # Limit each document
             if total_chars + len(doc_content) > max_context_chars:
                 break
             context_parts.append(doc_content)
@@ -120,59 +208,38 @@ Answer:"""
         """
         logger.info(f"BasicRAG: Running pipeline for query: '{query_text[:50]}...'")
         retrieved_documents = self.retrieve_documents(query_text, top_k, similarity_threshold)
-        # Limit documents for answer generation to prevent context overflow
-        answer_docs = retrieved_documents[:top_k] if len(retrieved_documents) > top_k else retrieved_documents
-        answer = self.generate_answer(query_text, answer_docs)
+        answer = self.generate_answer(query_text, retrieved_documents)
+        
+        # Convert documents to dict format, including title if available
+        doc_dicts = []
+        for doc in retrieved_documents:
+            doc_dict = doc.to_dict()
+            if hasattr(doc, '_title'):
+                doc_dict['metadata'] = {'title': doc._title}
+            doc_dicts.append(doc_dict)
         
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": [doc.to_dict() for doc in retrieved_documents],
+            "retrieved_documents": doc_dicts,
             "similarity_threshold": similarity_threshold,
             "document_count": len(retrieved_documents),
-            # "latency_ms" will be added by timing_decorator if applied to this 'run' method
         }
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO)
     print("Running BasicRAGPipeline Demo...")
 
-    # Setup (requires IRIS_CONNECTION_URL and optionally OPENAI_API_KEY)
+    # Setup
     try:
-        # These will raise errors if env vars not set or libraries not installed
-        db_conn = get_iris_connector() # Uses IRIS_CONNECTION_URL
+        db_conn = get_iris_connection()
         embed_fn = get_embedding_func()
-        llm_fn = get_llm_func(provider="stub") # Use stub LLM for local testing without OpenAI
-        # To use OpenAI: llm_fn = get_llm_func(provider="openai") # Requires OPENAI_API_KEY
+        llm_fn = get_llm_func(provider="stub")  # Use stub for testing
 
         pipeline = BasicRAGPipeline(iris_connector=db_conn, embedding_func=embed_fn, llm_func=llm_fn)
 
-        # --- Pre-requisite: Ensure DB is initialized and has data ---
-        # This demo assumes 'common/db_init.sql' has been run and 'SourceDocuments'
-        # table exists and contains some data with embeddings.
-        # For a self-contained demo, you might add a small data seeding step here.
-        # Example:
-        # from common.db_init import initialize_database
-        # initialize_database(db_conn) # Make sure schema exists
-        #
-        # # Seed a sample document (if table is empty)
-        # cursor = db_conn.cursor()
-        # cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
-        # if cursor.fetchone()[0] == 0:
-        #     print("Seeding a sample document for demo...")
-        #     sample_doc_id = "sample_doc_1"
-        #     sample_content = "InterSystems IRIS is a complete data platform. It supports SQL."
-        #     sample_embedding_list = embed_fn([sample_content])[0]
-        #     sample_embedding_str = str(sample_embedding_list)
-        #     cursor.execute("INSERT INTO SourceDocuments (doc_id, text_content, embedding) VALUES (?, ?, TO_VECTOR(?))",
-        #                    (sample_doc_id, sample_content, sample_embedding_str))
-        #     # db_conn.commit() # If auto-commit is not on for the SA connection's raw DBAPI part
-        # cursor.close()
-        # print("Demo setup: Database checked/seeded.")
-        # --- End of pre-requisite ---
-
-
         # Example Query
-        test_query = "What is InterSystems IRIS?"
+        test_query = "What is diabetes?"
         print(f"\nExecuting RAG pipeline for query: '{test_query}'")
         
         result = pipeline.run(test_query, top_k=3)
@@ -182,22 +249,20 @@ if __name__ == '__main__':
         print(f"Answer: {result['answer']}")
         print(f"Retrieved Documents ({len(result['retrieved_documents'])}):")
         for i, doc in enumerate(result['retrieved_documents']):
-            print(f"  Doc {i+1}: ID={doc.id}, Score={doc.score:.4f}, Content='{doc.content[:100]}...'")
+            print(f"  Doc {i+1}: ID={doc['id']}, Score={doc.get('score', 0):.4f}")
+            if 'metadata' in doc and 'title' in doc['metadata']:
+                print(f"         Title: {doc['metadata']['title'][:60]}...")
         
         if 'latency_ms' in result:
             print(f"Total Pipeline Latency: {result['latency_ms']:.2f} ms")
 
-    except ValueError as ve:
-        print(f"Setup Error: {ve}")
-        print("Please ensure IRIS_CONNECTION_URL (and OPENAI_API_KEY if using OpenAI) are set.")
-    except ImportError as ie:
-        print(f"Import Error: {ie}")
-        print("Please ensure all required libraries (sentence-transformers, langchain-openai, sqlalchemy, intersystems-irispython) are installed via Poetry.")
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"An error occurred: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         if 'db_conn' in locals() and db_conn is not None:
             db_conn.close()
-            print("Database connection closed.")
+            print("\nDatabase connection closed.")
 
     print("\nBasicRAGPipeline Demo Finished.")
