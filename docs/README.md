@@ -46,6 +46,8 @@ High-level project summaries and status reports:
 ### 📋 Technical Documentation (root level)
 Core technical documentation and specifications:
 
+- [`JDBC_V2_MIGRATION_COMPLETE.md`](JDBC_V2_MIGRATION_COMPLETE.md) - **🆕 JDBC solution for vector parameter binding and V2 table migration**
+- [`JDBC_MIGRATION_COMMIT_SUMMARY.md`](JDBC_MIGRATION_COMMIT_SUMMARY.md) - **🆕 JDBC migration commit summary and implementation details**
 - [`COLBERT_IMPLEMENTATION.md`](COLBERT_IMPLEMENTATION.md) - ColBERT technique implementation details
 - [`CONTEXT_REDUCTION_STRATEGY.md`](CONTEXT_REDUCTION_STRATEGY.md) - Context reduction strategies and implementation
 - [`CONTEXT_REDUCTION_TESTING.md`](CONTEXT_REDUCTION_TESTING.md) - Context reduction testing results
