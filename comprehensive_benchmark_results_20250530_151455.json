@@ -1,0 +1,1319 @@
+{
+  "HyDE": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.9510436534881592,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 60.0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 1.1626238822937012,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What is the role of olfactory perception in honeybee behavior?",
+        "ground_truth": "Olfactory perception plays a crucial role in honeybee behavior, enabling them to identify flowers, communicate through pheromones, and navigate their environment.",
+        "keywords": [
+          "olfactory",
+          "honeybee",
+          "perception",
+          "behavior"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.942270040512085,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do honeybees process neural signals related to smell?",
+        "ground_truth": "Honeybees process olfactory neural signals through their antennal lobes and mushroom bodies, which integrate sensory information for behavioral responses.",
+        "keywords": [
+          "honeybee",
+          "neural",
+          "olfactory",
+          "smell",
+          "signal"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.8578481674194336,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What are the similarities between honeybee and human olfactory systems?",
+        "ground_truth": "Both honeybee and human olfactory systems use similar molecular mechanisms for odor detection and neural processing, despite structural differences.",
+        "keywords": [
+          "honeybee",
+          "human",
+          "olfactory",
+          "similarity",
+          "system"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.8981719017028809,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do microRNAs regulate gene expression?",
+        "ground_truth": "MicroRNAs regulate gene expression by binding to complementary sequences on target mRNAs, leading to translational repression or mRNA degradation.",
+        "keywords": [
+          "microRNA",
+          "gene",
+          "regulation",
+          "expression",
+          "mRNA"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.9942030906677246,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What is the relationship between microRNAs and disease?",
+        "ground_truth": "MicroRNAs are involved in various diseases including cancer, cardiovascular disease, and neurological disorders through dysregulation of gene expression.",
+        "keywords": [
+          "microRNA",
+          "disease",
+          "cancer",
+          "regulation"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.9271419048309326,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do sensory neurons transmit information?",
+        "ground_truth": "Sensory neurons transmit information through electrical signals called action potentials, which travel along axons to relay sensory input to the central nervous system.",
+        "keywords": [
+          "sensory",
+          "neuron",
+          "transmit",
+          "signal",
+          "action potential"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.9194376468658447,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What are the mechanisms of neural plasticity?",
+        "ground_truth": "Neural plasticity involves synaptic changes, neurogenesis, and structural modifications that allow the nervous system to adapt to experience and injury.",
+        "keywords": [
+          "neural",
+          "plasticity",
+          "synapse",
+          "adaptation",
+          "neurogenesis"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.9197847843170166,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do biological systems process sensory information?",
+        "ground_truth": "Biological systems process sensory information through specialized receptors, neural pathways, and brain regions that integrate and interpret sensory inputs.",
+        "keywords": [
+          "biological",
+          "sensory",
+          "process",
+          "receptor",
+          "neural"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.9456920623779297,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What are the latest findings in neuroscience research?",
+        "ground_truth": "Recent neuroscience research has revealed new insights into brain connectivity, neural coding, and the molecular basis of neurological disorders.",
+        "keywords": [
+          "neuroscience",
+          "research",
+          "brain",
+          "neural",
+          "findings"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.943263053894043,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do insects use chemical signals for communication?",
+        "ground_truth": "Insects use chemical signals called pheromones for various forms of communication including mating, alarm signaling, and trail marking.",
+        "keywords": [
+          "insect",
+          "chemical",
+          "signal",
+          "pheromone",
+          "communication"
+        ]
+      }
+    ]
+  },
+  "CRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.19855329990386963,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 61.0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.1871929168701172,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "What is the role of olfactory perception in honeybee behavior?",
+        "ground_truth": "Olfactory perception plays a crucial role in honeybee behavior, enabling them to identify flowers, communicate through pheromones, and navigate their environment.",
+        "keywords": [
+          "olfactory",
+          "honeybee",
+          "perception",
+          "behavior"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.17940616607666016,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "How do honeybees process neural signals related to smell?",
+        "ground_truth": "Honeybees process olfactory neural signals through their antennal lobes and mushroom bodies, which integrate sensory information for behavioral responses.",
+        "keywords": [
+          "honeybee",
+          "neural",
+          "olfactory",
+          "smell",
+          "signal"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.1862049102783203,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "What are the similarities between honeybee and human olfactory systems?",
+        "ground_truth": "Both honeybee and human olfactory systems use similar molecular mechanisms for odor detection and neural processing, despite structural differences.",
+        "keywords": [
+          "honeybee",
+          "human",
+          "olfactory",
+          "similarity",
+          "system"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.2382490634918213,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "How do microRNAs regulate gene expression?",
+        "ground_truth": "MicroRNAs regulate gene expression by binding to complementary sequences on target mRNAs, leading to translational repression or mRNA degradation.",
+        "keywords": [
+          "microRNA",
+          "gene",
+          "regulation",
+          "expression",
+          "mRNA"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.22948718070983887,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "What is the relationship between microRNAs and disease?",
+        "ground_truth": "MicroRNAs are involved in various diseases including cancer, cardiovascular disease, and neurological disorders through dysregulation of gene expression.",
+        "keywords": [
+          "microRNA",
+          "disease",
+          "cancer",
+          "regulation"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.18106889724731445,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "How do sensory neurons transmit information?",
+        "ground_truth": "Sensory neurons transmit information through electrical signals called action potentials, which travel along axons to relay sensory input to the central nervous system.",
+        "keywords": [
+          "sensory",
+          "neuron",
+          "transmit",
+          "signal",
+          "action potential"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.18234968185424805,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "What are the mechanisms of neural plasticity?",
+        "ground_truth": "Neural plasticity involves synaptic changes, neurogenesis, and structural modifications that allow the nervous system to adapt to experience and injury.",
+        "keywords": [
+          "neural",
+          "plasticity",
+          "synapse",
+          "adaptation",
+          "neurogenesis"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.18621397018432617,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "How do biological systems process sensory information?",
+        "ground_truth": "Biological systems process sensory information through specialized receptors, neural pathways, and brain regions that integrate and interpret sensory inputs.",
+        "keywords": [
+          "biological",
+          "sensory",
+          "process",
+          "receptor",
+          "neural"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.23259615898132324,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "What are the latest findings in neuroscience research?",
+        "ground_truth": "Recent neuroscience research has revealed new insights into brain connectivity, neural coding, and the molecular basis of neurological disorders.",
+        "keywords": [
+          "neuroscience",
+          "research",
+          "brain",
+          "neural",
+          "findings"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.18276405334472656,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "contexts": [],
+        "query": "How do insects use chemical signals for communication?",
+        "ground_truth": "Insects use chemical signals called pheromones for various forms of communication including mating, alarm signaling, and trail marking.",
+        "keywords": [
+          "insect",
+          "chemical",
+          "signal",
+          "pheromone",
+          "communication"
+        ]
+      }
+    ]
+  },
+  "ColBERT": {
+    "success_rate": 1.0,
+    "avg_response_time": 1.2414044618606568,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 60.0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 1.6900670528411865,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What is the role of olfactory perception in honeybee behavior?",
+        "ground_truth": "Olfactory perception plays a crucial role in honeybee behavior, enabling them to identify flowers, communicate through pheromones, and navigate their environment.",
+        "keywords": [
+          "olfactory",
+          "honeybee",
+          "perception",
+          "behavior"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.165121078491211,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do honeybees process neural signals related to smell?",
+        "ground_truth": "Honeybees process olfactory neural signals through their antennal lobes and mushroom bodies, which integrate sensory information for behavioral responses.",
+        "keywords": [
+          "honeybee",
+          "neural",
+          "olfactory",
+          "smell",
+          "signal"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.243049144744873,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What are the similarities between honeybee and human olfactory systems?",
+        "ground_truth": "Both honeybee and human olfactory systems use similar molecular mechanisms for odor detection and neural processing, despite structural differences.",
+        "keywords": [
+          "honeybee",
+          "human",
+          "olfactory",
+          "similarity",
+          "system"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.2643661499023438,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do microRNAs regulate gene expression?",
+        "ground_truth": "MicroRNAs regulate gene expression by binding to complementary sequences on target mRNAs, leading to translational repression or mRNA degradation.",
+        "keywords": [
+          "microRNA",
+          "gene",
+          "regulation",
+          "expression",
+          "mRNA"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.2541608810424805,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What is the relationship between microRNAs and disease?",
+        "ground_truth": "MicroRNAs are involved in various diseases including cancer, cardiovascular disease, and neurological disorders through dysregulation of gene expression.",
+        "keywords": [
+          "microRNA",
+          "disease",
+          "cancer",
+          "regulation"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.1222758293151855,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do sensory neurons transmit information?",
+        "ground_truth": "Sensory neurons transmit information through electrical signals called action potentials, which travel along axons to relay sensory input to the central nervous system.",
+        "keywords": [
+          "sensory",
+          "neuron",
+          "transmit",
+          "signal",
+          "action potential"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.1766116619110107,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What are the mechanisms of neural plasticity?",
+        "ground_truth": "Neural plasticity involves synaptic changes, neurogenesis, and structural modifications that allow the nervous system to adapt to experience and injury.",
+        "keywords": [
+          "neural",
+          "plasticity",
+          "synapse",
+          "adaptation",
+          "neurogenesis"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.193192958831787,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do biological systems process sensory information?",
+        "ground_truth": "Biological systems process sensory information through specialized receptors, neural pathways, and brain regions that integrate and interpret sensory inputs.",
+        "keywords": [
+          "biological",
+          "sensory",
+          "process",
+          "receptor",
+          "neural"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.1950099468231201,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "What are the latest findings in neuroscience research?",
+        "ground_truth": "Recent neuroscience research has revealed new insights into brain connectivity, neural coding, and the molecular basis of neurological disorders.",
+        "keywords": [
+          "neuroscience",
+          "research",
+          "brain",
+          "neural",
+          "findings"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.1101899147033691,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "contexts": [],
+        "query": "How do insects use chemical signals for communication?",
+        "ground_truth": "Insects use chemical signals called pheromones for various forms of communication including mating, alarm signaling, and trail marking.",
+        "keywords": [
+          "insect",
+          "chemical",
+          "signal",
+          "pheromone",
+          "communication"
+        ]
+      }
+    ]
+  },
+  "NodeRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 1.9859546422958374,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 85.0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 1.7738137245178223,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "What is the role of olfactory perception in honeybee behavior?",
+        "ground_truth": "Olfactory perception plays a crucial role in honeybee behavior, enabling them to identify flowers, communicate through pheromones, and navigate their environment.",
+        "keywords": [
+          "olfactory",
+          "honeybee",
+          "perception",
+          "behavior"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.8505220413208008,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "How do honeybees process neural signals related to smell?",
+        "ground_truth": "Honeybees process olfactory neural signals through their antennal lobes and mushroom bodies, which integrate sensory information for behavioral responses.",
+        "keywords": [
+          "honeybee",
+          "neural",
+          "olfactory",
+          "smell",
+          "signal"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.816236972808838,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "What are the similarities between honeybee and human olfactory systems?",
+        "ground_truth": "Both honeybee and human olfactory systems use similar molecular mechanisms for odor detection and neural processing, despite structural differences.",
+        "keywords": [
+          "honeybee",
+          "human",
+          "olfactory",
+          "similarity",
+          "system"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 2.0713229179382324,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "How do microRNAs regulate gene expression?",
+        "ground_truth": "MicroRNAs regulate gene expression by binding to complementary sequences on target mRNAs, leading to translational repression or mRNA degradation.",
+        "keywords": [
+          "microRNA",
+          "gene",
+          "regulation",
+          "expression",
+          "mRNA"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 2.1105241775512695,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "What is the relationship between microRNAs and disease?",
+        "ground_truth": "MicroRNAs are involved in various diseases including cancer, cardiovascular disease, and neurological disorders through dysregulation of gene expression.",
+        "keywords": [
+          "microRNA",
+          "disease",
+          "cancer",
+          "regulation"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 2.0517308712005615,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "How do sensory neurons transmit information?",
+        "ground_truth": "Sensory neurons transmit information through electrical signals called action potentials, which travel along axons to relay sensory input to the central nervous system.",
+        "keywords": [
+          "sensory",
+          "neuron",
+          "transmit",
+          "signal",
+          "action potential"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 2.2914278507232666,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "What are the mechanisms of neural plasticity?",
+        "ground_truth": "Neural plasticity involves synaptic changes, neurogenesis, and structural modifications that allow the nervous system to adapt to experience and injury.",
+        "keywords": [
+          "neural",
+          "plasticity",
+          "synapse",
+          "adaptation",
+          "neurogenesis"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 2.0915019512176514,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "How do biological systems process sensory information?",
+        "ground_truth": "Biological systems process sensory information through specialized receptors, neural pathways, and brain regions that integrate and interpret sensory inputs.",
+        "keywords": [
+          "biological",
+          "sensory",
+          "process",
+          "receptor",
+          "neural"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.9320361614227295,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "What are the latest findings in neuroscience research?",
+        "ground_truth": "Recent neuroscience research has revealed new insights into brain connectivity, neural coding, and the molecular basis of neurological disorders.",
+        "keywords": [
+          "neuroscience",
+          "research",
+          "brain",
+          "neural",
+          "findings"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.8704297542572021,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "query": "How do insects use chemical signals for communication?",
+        "ground_truth": "Insects use chemical signals called pheromones for various forms of communication including mating, alarm signaling, and trail marking.",
+        "keywords": [
+          "insect",
+          "chemical",
+          "signal",
+          "pheromone",
+          "communication"
+        ]
+      }
+    ]
+  },
+  "GraphRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.9445165872573853,
+    "avg_documents_retrieved": 6.9,
+    "avg_similarity_score": 0.7050000000000001,
+    "avg_answer_length": 85.0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.8539130687713623,
+        "documents_retrieved": 5,
+        "avg_similarity_score": 0.8,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "67",
+          "73",
+          "73",
+          "72",
+          "65"
+        ],
+        "query": "What is the role of olfactory perception in honeybee behavior?",
+        "ground_truth": "Olfactory perception plays a crucial role in honeybee behavior, enabling them to identify flowers, communicate through pheromones, and navigate their environment.",
+        "keywords": [
+          "olfactory",
+          "honeybee",
+          "perception",
+          "behavior"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.1585731506347656,
+        "documents_retrieved": 7,
+        "avg_similarity_score": 0.7000000000000001,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "84",
+          "82",
+          "68",
+          "84",
+          "87",
+          "80",
+          "77"
+        ],
+        "query": "How do honeybees process neural signals related to smell?",
+        "ground_truth": "Honeybees process olfactory neural signals through their antennal lobes and mushroom bodies, which integrate sensory information for behavioral responses.",
+        "keywords": [
+          "honeybee",
+          "neural",
+          "olfactory",
+          "smell",
+          "signal"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.8818299770355225,
+        "documents_retrieved": 7,
+        "avg_similarity_score": 0.7000000000000001,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "67",
+          "67",
+          "73",
+          "77",
+          "76",
+          "83",
+          "84"
+        ],
+        "query": "What are the similarities between honeybee and human olfactory systems?",
+        "ground_truth": "Both honeybee and human olfactory systems use similar molecular mechanisms for odor detection and neural processing, despite structural differences.",
+        "keywords": [
+          "honeybee",
+          "human",
+          "olfactory",
+          "similarity",
+          "system"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.9297258853912354,
+        "documents_retrieved": 9,
+        "avg_similarity_score": 0.6,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "77",
+          "84",
+          "65",
+          "82",
+          "84",
+          "99",
+          "73",
+          "68",
+          "84"
+        ],
+        "query": "How do microRNAs regulate gene expression?",
+        "ground_truth": "MicroRNAs regulate gene expression by binding to complementary sequences on target mRNAs, leading to translational repression or mRNA degradation.",
+        "keywords": [
+          "microRNA",
+          "gene",
+          "regulation",
+          "expression",
+          "mRNA"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.8874838352203369,
+        "documents_retrieved": 5,
+        "avg_similarity_score": 0.8,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "67",
+          "73",
+          "73",
+          "72",
+          "65"
+        ],
+        "query": "What is the relationship between microRNAs and disease?",
+        "ground_truth": "MicroRNAs are involved in various diseases including cancer, cardiovascular disease, and neurological disorders through dysregulation of gene expression.",
+        "keywords": [
+          "microRNA",
+          "disease",
+          "cancer",
+          "regulation"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.2342462539672852,
+        "documents_retrieved": 7,
+        "avg_similarity_score": 0.7000000000000001,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "84",
+          "82",
+          "68",
+          "84",
+          "87",
+          "80",
+          "77"
+        ],
+        "query": "How do sensory neurons transmit information?",
+        "ground_truth": "Sensory neurons transmit information through electrical signals called action potentials, which travel along axons to relay sensory input to the central nervous system.",
+        "keywords": [
+          "sensory",
+          "neuron",
+          "transmit",
+          "signal",
+          "action potential"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.7311387062072754,
+        "documents_retrieved": 7,
+        "avg_similarity_score": 0.7000000000000001,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "67",
+          "67",
+          "73",
+          "77",
+          "76",
+          "83",
+          "84"
+        ],
+        "query": "What are the mechanisms of neural plasticity?",
+        "ground_truth": "Neural plasticity involves synaptic changes, neurogenesis, and structural modifications that allow the nervous system to adapt to experience and injury.",
+        "keywords": [
+          "neural",
+          "plasticity",
+          "synapse",
+          "adaptation",
+          "neurogenesis"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 1.1655120849609375,
+        "documents_retrieved": 7,
+        "avg_similarity_score": 0.7000000000000001,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "84",
+          "82",
+          "68",
+          "84",
+          "87",
+          "80",
+          "77"
+        ],
+        "query": "How do biological systems process sensory information?",
+        "ground_truth": "Biological systems process sensory information through specialized receptors, neural pathways, and brain regions that integrate and interpret sensory inputs.",
+        "keywords": [
+          "biological",
+          "sensory",
+          "process",
+          "receptor",
+          "neural"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.7232370376586914,
+        "documents_retrieved": 7,
+        "avg_similarity_score": 0.7000000000000001,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "67",
+          "67",
+          "73",
+          "77",
+          "76",
+          "83",
+          "84"
+        ],
+        "query": "What are the latest findings in neuroscience research?",
+        "ground_truth": "Recent neuroscience research has revealed new insights into brain connectivity, neural coding, and the molecular basis of neurological disorders.",
+        "keywords": [
+          "neuroscience",
+          "research",
+          "brain",
+          "neural",
+          "findings"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 0.8795058727264404,
+        "documents_retrieved": 8,
+        "avg_similarity_score": 0.6499999999999999,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'You are a helpful AI assistant with access to a kn...'",
+        "contexts": [
+          "77",
+          "84",
+          "82",
+          "84",
+          "68",
+          "84",
+          "87",
+          "80"
+        ],
+        "query": "How do insects use chemical signals for communication?",
+        "ground_truth": "Insects use chemical signals called pheromones for various forms of communication including mating, alarm signaling, and trail marking.",
+        "keywords": [
+          "insect",
+          "chemical",
+          "signal",
+          "pheromone",
+          "communication"
+        ]
+      }
+    ]
+  },
+  "HybridIFindRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 8.809127449989319,
+    "avg_documents_retrieved": 10.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 85.0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 9.052322149276733,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "70",
+          "84",
+          "67",
+          "82",
+          "73",
+          "65",
+          "73",
+          "84",
+          "72",
+          "65"
+        ],
+        "query": "What is the role of olfactory perception in honeybee behavior?",
+        "ground_truth": "Olfactory perception plays a crucial role in honeybee behavior, enabling them to identify flowers, communicate through pheromones, and navigate their environment.",
+        "keywords": [
+          "olfactory",
+          "honeybee",
+          "perception",
+          "behavior"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 11.387820959091187,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "70",
+          "84",
+          "84",
+          "82",
+          "82",
+          "84",
+          "68",
+          "-1",
+          "84",
+          "87"
+        ],
+        "query": "How do honeybees process neural signals related to smell?",
+        "ground_truth": "Honeybees process olfactory neural signals through their antennal lobes and mushroom bodies, which integrate sensory information for behavioral responses.",
+        "keywords": [
+          "honeybee",
+          "neural",
+          "olfactory",
+          "smell",
+          "signal"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 9.673325061798096,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "70",
+          "84",
+          "67",
+          "82",
+          "67",
+          "65",
+          "73",
+          "73",
+          "77",
+          "84"
+        ],
+        "query": "What are the similarities between honeybee and human olfactory systems?",
+        "ground_truth": "Both honeybee and human olfactory systems use similar molecular mechanisms for odor detection and neural processing, despite structural differences.",
+        "keywords": [
+          "honeybee",
+          "human",
+          "olfactory",
+          "similarity",
+          "system"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 8.33970594406128,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "65",
+          "52",
+          "77",
+          "81",
+          "84",
+          "84",
+          "65",
+          "67",
+          "82",
+          "73"
+        ],
+        "query": "How do microRNAs regulate gene expression?",
+        "ground_truth": "MicroRNAs regulate gene expression by binding to complementary sequences on target mRNAs, leading to translational repression or mRNA degradation.",
+        "keywords": [
+          "microRNA",
+          "gene",
+          "regulation",
+          "expression",
+          "mRNA"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 8.07120418548584,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "52",
+          "-1",
+          "67",
+          "83",
+          "73",
+          "77",
+          "73",
+          "-1",
+          "72",
+          "85"
+        ],
+        "query": "What is the relationship between microRNAs and disease?",
+        "ground_truth": "MicroRNAs are involved in various diseases including cancer, cardiovascular disease, and neurological disorders through dysregulation of gene expression.",
+        "keywords": [
+          "microRNA",
+          "disease",
+          "cancer",
+          "regulation"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 8.521853923797607,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "84",
+          "73",
+          "84",
+          "67",
+          "82",
+          "72",
+          "68",
+          "-1",
+          "84",
+          "68"
+        ],
+        "query": "How do sensory neurons transmit information?",
+        "ground_truth": "Sensory neurons transmit information through electrical signals called action potentials, which travel along axons to relay sensory input to the central nervous system.",
+        "keywords": [
+          "sensory",
+          "neuron",
+          "transmit",
+          "signal",
+          "action potential"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 7.993396997451782,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "67",
+          "84",
+          "67",
+          "84",
+          "67",
+          "87",
+          "73",
+          "83",
+          "77",
+          "79"
+        ],
+        "query": "What are the mechanisms of neural plasticity?",
+        "ground_truth": "Neural plasticity involves synaptic changes, neurogenesis, and structural modifications that allow the nervous system to adapt to experience and injury.",
+        "keywords": [
+          "neural",
+          "plasticity",
+          "synapse",
+          "adaptation",
+          "neurogenesis"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 8.481491088867188,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "72",
+          "67",
+          "84",
+          "73",
+          "82",
+          "84",
+          "68",
+          "84",
+          "84",
+          "67"
+        ],
+        "query": "How do biological systems process sensory information?",
+        "ground_truth": "Biological systems process sensory information through specialized receptors, neural pathways, and brain regions that integrate and interpret sensory inputs.",
+        "keywords": [
+          "biological",
+          "sensory",
+          "process",
+          "receptor",
+          "neural"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 8.208615064620972,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "67",
+          "67",
+          "67",
+          "-1",
+          "67",
+          "-1",
+          "73",
+          "-1",
+          "77",
+          "67"
+        ],
+        "query": "What are the latest findings in neuroscience research?",
+        "ground_truth": "Recent neuroscience research has revealed new insights into brain connectivity, neural coding, and the molecular basis of neurological disorders.",
+        "keywords": [
+          "neuroscience",
+          "research",
+          "brain",
+          "neural",
+          "findings"
+        ]
+      },
+      {
+        "success": true,
+        "response_time": 8.361539125442505,
+        "documents_retrieved": 10,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "Stub LLM response for prompt: 'Based on the following documents retrieved through...'",
+        "contexts": [
+          "83",
+          "72",
+          "77",
+          "86",
+          "84",
+          "84",
+          "82",
+          "-1",
+          "84",
+          "68"
+        ],
+        "query": "How do insects use chemical signals for communication?",
+        "ground_truth": "Insects use chemical signals called pheromones for various forms of communication including mating, alarm signaling, and trail marking.",
+        "keywords": [
+          "insect",
+          "chemical",
+          "signal",
+          "pheromone",
+          "communication"
+        ]
+      }
+    ]
+  }
+}
