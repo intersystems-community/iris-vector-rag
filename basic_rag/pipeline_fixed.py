@@ -31,100 +31,92 @@ class BasicRAGPipelineFixed:
     @timing_decorator
     def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
-        Retrieves documents using Python-based similarity calculation.
+        Retrieves documents using SQL-based vector search with VECTOR_COSINE.
         """
-        logger.debug(f"BasicRAG Fixed: Retrieving documents for query: '{query_text[:50]}...'")
+        logger.debug(f"BasicRAG SQL: Retrieving documents for query: '{query_text[:50]}...' with top_k={top_k}, threshold={similarity_threshold}")
         
-        # Generate query embedding
+        # 1. Generate query embedding
         query_embedding = self.embedding_func([query_text])[0]
+        if not query_embedding or not all(isinstance(x, (float, int)) for x in query_embedding):
+            logger.error(f"BasicRAG SQL: Failed to generate a valid query embedding for: '{query_text[:50]}...'")
+            return []
+        
+        embedding_str = ','.join(map(str, query_embedding))
         
         retrieved_docs = []
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
             
-            # Get documents with embeddings
-            sql = f"""
-                SELECT TOP 100 doc_id, title, text_content, embedding
+            # 2. Construct and execute SQL query for vector search
+            # We fetch TOP top_k results ordered by similarity, then filter by threshold in Python.
+            sql_query = f"""
+                SELECT TOP {top_k} doc_id, title, text_content,
+                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
                 FROM {self.schema}.SourceDocuments
                 WHERE embedding IS NOT NULL
-                AND embedding NOT LIKE '0.1,0.1,0.1%'
-                ORDER BY doc_id
+                  AND embedding NOT LIKE '0.1,0.1,0.1%' -- Project-specific filter for invalid embeddings
+                ORDER BY similarity_score DESC
             """
             
-            cursor.execute(sql)
-            sample_docs = cursor.fetchall()
+            logger.debug(f"BasicRAG SQL: Executing SQL query. Embedding (first 50 chars): {embedding_str[:50]}")
+            cursor.execute(sql_query, (embedding_str,))
+            results = cursor.fetchall()
             
-            logger.info(f"Processing {len(sample_docs)} sample documents")
-            
-            # Calculate similarities
-            doc_scores = []
-            
-            for row in sample_docs:
+            logger.info(f"BasicRAG SQL: Fetched {len(results)} candidate documents from DB.")
+
+            # 3. Process results, handle potential streams, and filter by similarity_threshold
+            for row in results:
                 doc_id = row[0]
                 title = row[1]
-                content = row[2]
-                embedding_str = row[3]
+                raw_text_content = row[2]
+                score = row[3]
+
+                text_content_str = ""
+                if raw_text_content is not None:
+                    if hasattr(raw_text_content, 'read') and callable(raw_text_content.read):
+                        try:
+                            data = raw_text_content.read()
+                            if isinstance(data, bytes):
+                                text_content_str = data.decode('utf-8', errors='replace')
+                            elif isinstance(data, str):
+                                text_content_str = data
+                            else:
+                                text_content_str = str(data)
+                                logger.warning(f"BasicRAG SQL: Unexpected data type from stream read for doc_id {doc_id}: {type(data)}")
+                        except Exception as e_read:
+                            logger.warning(f"BasicRAG SQL: Error reading stream for doc_id {doc_id}: {e_read}")
+                            text_content_str = "[Content Read Error]"
+                    elif isinstance(raw_text_content, bytes):
+                        text_content_str = raw_text_content.decode('utf-8', errors='replace')
+                    else:
+                        text_content_str = str(raw_text_content)
                 
-                try:
-                    # Parse the stored embedding
-                    if embedding_str and embedding_str.startswith('['):
-                        doc_embedding = json.loads(embedding_str)
-                    else:
-                        doc_embedding = [float(x.strip()) for x in embedding_str.split(',') if x.strip()]
-                    
-                    # Ensure embeddings have the same dimension
-                    if len(doc_embedding) != len(query_embedding):
-                        logger.debug(f"Dimension mismatch for doc {doc_id}: {len(doc_embedding)} vs {len(query_embedding)}")
-                        continue
-                    
-                    # Calculate cosine similarity
-                    dot_product = sum(a * b for a, b in zip(query_embedding, doc_embedding))
-                    query_norm = sum(a * a for a in query_embedding) ** 0.5
-                    doc_norm = sum(a * a for a in doc_embedding) ** 0.5
-                    
-                    if query_norm > 0 and doc_norm > 0:
-                        similarity = dot_product / (query_norm * doc_norm)
-                    else:
-                        similarity = 0.0
-                    
-                    if similarity > similarity_threshold:
-                        doc_scores.append({
-                            'doc_id': doc_id,
-                            'title': title or "",
-                            'content': content or "",
-                            'score': similarity
-                        })
-                        
-                except Exception as e:
-                    logger.debug(f"Could not process embedding for doc {doc_id}: {e}")
-                    continue
+                current_score = 0.0
+                if score is not None:
+                    try:
+                        current_score = float(score)
+                    except (ValueError, TypeError):
+                        logger.warning(f"BasicRAG SQL: Could not convert score '{score}' to float for doc_id {doc_id}. Using 0.0.")
+                        current_score = 0.0
+                
+                if current_score >= similarity_threshold:
+                    doc = Document(
+                        id=str(doc_id),
+                        content=text_content_str,
+                        score=current_score
+                    )
+                    doc._title = str(title) if title is not None else ""
+                    retrieved_docs.append(doc)
             
-            # Sort by score and take top_k
-            doc_scores.sort(key=lambda x: x['score'], reverse=True)
-            doc_scores = doc_scores[:top_k]
-            
-            # Convert to Document objects
-            for doc_data in doc_scores:
-                # Create Document with the fields it accepts
-                doc = Document(
-                    id=doc_data['doc_id'],
-                    content=doc_data['content'],
-                    score=doc_data['score']
-                )
-                # Store title as a custom attribute
-                doc._title = doc_data['title']
-                retrieved_docs.append(doc)
-            
-            logger.info(f"BasicRAG Fixed: Retrieved {len(retrieved_docs)} documents above threshold")
+            logger.info(f"BasicRAG SQL: Retrieved {len(retrieved_docs)} documents after applying threshold {similarity_threshold}.")
             
         except Exception as e:
-            logger.error(f"Error retrieving documents: {e}")
+            logger.error(f"BasicRAG SQL: Error retrieving documents: {e}", exc_info=True)
             raise
         finally:
             if cursor:
                 cursor.close()
-                
         return retrieved_docs
 
     @timing_decorator

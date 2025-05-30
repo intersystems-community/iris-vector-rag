@@ -36,115 +36,95 @@ class BasicRAGPipeline:
     @timing_decorator
     def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
-        Retrieves documents from IRIS based on vector similarity.
-        Memory-efficient implementation that processes documents in small batches.
+        Retrieves documents from IRIS based on SQL vector similarity.
         """
-        logger.debug(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...'")
+        logger.debug(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...' using SQL vector search.")
         
         # Generate query embedding
-        query_embedding = self.embedding_func([query_text])[0]
+        query_embedding_list = self.embedding_func([query_text])[0]
+        query_embedding_str = ','.join(map(str, query_embedding_list)) # For SQL query
         
         retrieved_docs = []
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
             
-            # For BasicRAG, we'll use a very simple approach:
-            # Just get a small sample of documents and calculate similarity
-            # This avoids memory issues and IRIS SQL limitations
+            # Check if we're using JDBC (which has issues with parameter binding for vectors)
+            conn_type = type(self.iris_connector).__name__
+            is_jdbc = 'JDBC' in conn_type or hasattr(self.iris_connector, '_jdbc_connection')
             
-            # Get 100 documents with real embeddings (excluding dummy data)
-            sql = f"""
-                SELECT TOP 100 doc_id, title, text_content, embedding
-                FROM {self.schema}.SourceDocuments
-                WHERE embedding IS NOT NULL
-                AND embedding NOT LIKE '0.1,0.1,0.1%'
-                ORDER BY doc_id
-            """
+            params = []
+            if is_jdbc:
+                # Use direct SQL for JDBC to avoid parameter binding issues with TO_VECTOR
+                # The TO_VECTOR function expects a literal string for the vector data in this case.
+                sql = f"""
+                    SELECT TOP {top_k}
+                        doc_id,
+                        title,
+                        text_content,
+                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_embedding_str}')) as similarity_score
+                    FROM {self.schema}.SourceDocuments
+                    WHERE embedding IS NOT NULL
+                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_embedding_str}')) > {similarity_threshold}
+                    ORDER BY similarity_score DESC
+                """
+            else:
+                # Use parameter binding for ODBC
+                sql = f"""
+                    SELECT TOP ?
+                        doc_id,
+                        title,
+                        text_content,
+                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+                    FROM {self.schema}.SourceDocuments
+                    WHERE embedding IS NOT NULL
+                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
+                    ORDER BY similarity_score DESC
+                """
+                params = [top_k, query_embedding_str, query_embedding_str, similarity_threshold]
+
+            logger.debug(f"Executing SQL vector search. JDBC: {is_jdbc}. SQL: {sql[:250]}... Params: {params if not is_jdbc else 'N/A for JDBC direct SQL'}")
+            if is_jdbc:
+                cursor.execute(sql)
+            else:
+                cursor.execute(sql, params)
             
-            cursor.execute(sql)
-            sample_docs = cursor.fetchall()
+            results = cursor.fetchall()
+            logger.info(f"BasicRAG: SQL vector search retrieved {len(results)} documents.")
             
-            logger.info(f"Processing {len(sample_docs)} sample documents")
-            
-            # Calculate similarities
-            doc_scores = []
-            
-            for row in sample_docs:
-                doc_id = row[0]
-                title = row[1]
-                content = row[2]
-                embedding_str = row[3]
+            for row in results:
+                doc_id_raw = row[0]
+                title_raw = row[1]
+                content_raw = row[2]
+                score_raw = row[3]
+
+                # Handle potential JDBC stream objects for content
+                content_str = content_raw
+                if hasattr(content_raw, 'read'):
+                    content_str = content_raw.read()
+                    if isinstance(content_str, bytes):
+                        content_str = content_str.decode('utf-8', errors='ignore')
+                elif hasattr(content_raw, 'toString'): # For other JDBC types like string
+                    content_str = str(content_raw)
+                else:
+                    content_str = str(content_raw) if content_raw else ""
+
+                doc_id_str = str(doc_id_raw) if hasattr(doc_id_raw, 'toString') else str(doc_id_raw)
+                title_str = str(title_raw) if hasattr(title_raw, 'toString') else (str(title_raw) if title_raw else "")
                 
-                try:
-                    # Parse the stored embedding
-                    # Handle JDBC string objects
-                    if hasattr(embedding_str, 'toString'):
-                        embedding_str = str(embedding_str)
-                    
-                    if embedding_str and isinstance(embedding_str, str) and embedding_str.startswith('['):
-                        doc_embedding = json.loads(embedding_str)
-                    else:
-                        # Most embeddings are stored as comma-separated values
-                        doc_embedding = [float(x.strip()) for x in str(embedding_str).split(',') if x.strip()]
-                    
-                    # Ensure embeddings have the same dimension
-                    if len(doc_embedding) != len(query_embedding):
-                        logger.debug(f"Dimension mismatch for doc {doc_id}: {len(doc_embedding)} vs {len(query_embedding)}")
-                        continue
-                    
-                    # Calculate cosine similarity
-                    dot_product = sum(a * b for a, b in zip(query_embedding, doc_embedding))
-                    query_norm = sum(a * a for a in query_embedding) ** 0.5
-                    doc_norm = sum(a * a for a in doc_embedding) ** 0.5
-                    
-                    if query_norm > 0 and doc_norm > 0:
-                        similarity = dot_product / (query_norm * doc_norm)
-                    else:
-                        similarity = 0.0
-                    
-                    if similarity > similarity_threshold:
-                        # Handle JDBC stream for content
-                        if hasattr(content, 'read'):
-                            content_str = content.read()
-                            if isinstance(content_str, bytes):
-                                content_str = content_str.decode('utf-8', errors='ignore')
-                        elif hasattr(content, 'toString'):
-                            content_str = str(content)
-                        else:
-                            content_str = str(content) if content else ""
-                        
-                        doc_scores.append({
-                            'doc_id': str(doc_id) if hasattr(doc_id, 'toString') else doc_id,
-                            'title': str(title) if hasattr(title, 'toString') else (title or ""),
-                            'content': content_str,
-                            'score': similarity
-                        })
-                        
-                except Exception as e:
-                    logger.warning(f"Could not process embedding for doc {doc_id}: {e}")
-                    continue
-            
-            # Sort by score and take top_k
-            doc_scores.sort(key=lambda x: x['score'], reverse=True)
-            doc_scores = doc_scores[:top_k]
-            
-            # Convert to Document objects
-            for doc_data in doc_scores:
-                # Create Document with just the fields it accepts
                 doc = Document(
-                    id=doc_data['doc_id'],
-                    content=doc_data['content'],
-                    score=doc_data['score']
+                    id=doc_id_str,
+                    content=content_str,
+                    score=float(score_raw) if score_raw is not None else 0.0
                 )
-                # Store title separately if needed
-                doc._title = doc_data['title']
+                doc._title = title_str # Store title separately
                 retrieved_docs.append(doc)
             
-            logger.info(f"BasicRAG: Retrieved {len(retrieved_docs)} documents above threshold")
+            logger.info(f"BasicRAG: Processed {len(retrieved_docs)} documents from SQL results.")
             
         except Exception as e:
-            logger.error(f"BasicRAG: Error during document retrieval: {e}", exc_info=True)
+            logger.error(f"BasicRAG: Error during SQL document retrieval: {e}", exc_info=True)
+            # Optionally, could add a fallback here if desired, but instructions are to restore SQL search
             return []
         finally:
             if cursor:

@@ -21,7 +21,7 @@ class NodeRAGPipelineV2:
         self.schema = "RAG"
     
     @timing_decorator
-    def retrieve_documents(self, query: str, top_k: int = 5, similarity_threshold: float = 0.0) -> List[Document]:
+    def retrieve_documents(self, query: str, top_k: int = 5) -> List[Document]:
         """
         Retrieve documents using HNSW-accelerated vector search
         """
@@ -35,9 +35,9 @@ class NodeRAGPipelineV2:
         sql_query = f"""
             SELECT TOP {top_k} doc_id, title, text_content,
                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) AS score
-            FROM {self.schema}.SourceDocuments
+            FROM {self.schema}.SourceDocuments_V2
             WHERE document_embedding_vector IS NOT NULL
-              AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+              AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > 0.1
             ORDER BY score DESC
         """
         
@@ -74,7 +74,7 @@ class NodeRAGPipelineV2:
         return retrieved_docs
     
     @timing_decorator
-    def retrieve_chunks(self, query: str, top_k: int = 10, similarity_threshold: float = 0.0) -> List[Document]:
+    def retrieve_chunks(self, query: str, top_k: int = 10) -> List[Document]:
         """
         Retrieve chunks using HNSW-accelerated vector search
         """
@@ -89,10 +89,10 @@ class NodeRAGPipelineV2:
             SELECT TOP {top_k} c.chunk_id, c.doc_id, c.chunk_text, c.chunk_index,
                    d.title,
                    VECTOR_COSINE(c.chunk_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) AS score
-            FROM {self.schema}.DocumentChunks c
-            JOIN {self.schema}.SourceDocuments d ON c.doc_id = d.doc_id
+            FROM {self.schema}.DocumentChunks_V2 c
+            JOIN {self.schema}.SourceDocuments_V2 d ON c.doc_id = d.doc_id
             WHERE c.chunk_embedding_vector IS NOT NULL
-              AND VECTOR_COSINE(c.chunk_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+              AND VECTOR_COSINE(c.chunk_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > 0.1
             ORDER BY score DESC
         """
         
@@ -203,12 +203,12 @@ class NodeRAGPipelineV2:
         
         prompt = f"""Based on the following documents and text chunks, answer the question comprehensively.
 The context includes both full documents and specific relevant chunks.
- 
+
 Context:
 {context}
- 
+
 Question: {query}
- 
+
 Please provide a detailed answer based on the available information:"""
         
         try:

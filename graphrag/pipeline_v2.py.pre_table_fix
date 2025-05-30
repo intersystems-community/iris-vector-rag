@@ -21,7 +21,7 @@ class GraphRAGPipelineV2:
         self.schema = "RAG"
     
     @timing_decorator
-    def retrieve_entities(self, query: str, top_k: int = 10, similarity_threshold: float = 0.0) -> List[Dict[str, Any]]:
+    def retrieve_entities(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
         """
         Retrieve relevant entities from the knowledge graph using HNSW
         """
@@ -37,7 +37,7 @@ class GraphRAGPipelineV2:
                    VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) AS similarity
             FROM {self.schema}.Entities
             WHERE embedding IS NOT NULL
-              AND VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+              AND VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > 0.1
             ORDER BY similarity DESC
         """
         
@@ -143,7 +143,7 @@ class GraphRAGPipelineV2:
         # Retrieve from _V2 table with VECTOR columns
         sql_query = f"""
             SELECT doc_id, title, text_content
-            FROM {self.schema}.SourceDocuments
+            FROM {self.schema}.SourceDocuments_V2
             WHERE doc_id IN ({placeholders})
         """
         
@@ -235,15 +235,15 @@ class GraphRAGPipelineV2:
         
         # Combine contexts
         prompt = f"""Based on the following knowledge graph information and documents, answer the question.
- 
+
 Knowledge Graph Context:
 {graph_context}
- 
+
 Document Context:
 {doc_context}
- 
+
 Question: {query}
- 
+
 Please provide a comprehensive answer that leverages both the structured knowledge from the graph and the detailed information from the documents:"""
         
         try:

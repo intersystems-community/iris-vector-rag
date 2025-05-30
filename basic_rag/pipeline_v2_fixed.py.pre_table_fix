@@ -60,7 +60,7 @@ class BasicRAGPipelineV2Fixed:
                     title, 
                     text_content,
                     VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as similarity_score
-                FROM {self.schema}.SourceDocuments
+                FROM {self.schema}.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
                 ORDER BY similarity_score DESC

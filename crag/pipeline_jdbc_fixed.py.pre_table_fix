@@ -131,7 +131,7 @@ class JDBCFixedCRAGPipeline:
                     doc_id,
                     text_content,
                     VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_vector_str}')) AS score
-                FROM RAG.SourceDocuments
+                FROM RAG.SourceDocuments_V2
                 WHERE embedding IS NOT NULL
                   AND LENGTH(embedding) > 1000
                 ORDER BY score DESC

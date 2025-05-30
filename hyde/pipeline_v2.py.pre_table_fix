@@ -42,7 +42,7 @@ Hypothetical Answer:"""
             return query
     
     @timing_decorator
-    def retrieve_documents(self, query: str, hypothetical_doc: str, top_k: int = 5, similarity_threshold: float = 0.0) -> List[Document]:
+    def retrieve_documents(self, query: str, hypothetical_doc: str, top_k: int = 5) -> List[Document]:
         """
         Retrieve documents using the hypothetical document embedding with HNSW acceleration
         """
@@ -63,9 +63,9 @@ Hypothetical Answer:"""
                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as query_score,
                    (0.7 * VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{hyde_embedding_str}', 'DOUBLE', 384)) +
                     0.3 * VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384))) as combined_score
-            FROM {self.schema}.SourceDocuments
+            FROM {self.schema}.SourceDocuments_V2
             WHERE document_embedding_vector IS NOT NULL
-              AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{hyde_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+              AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{hyde_embedding_str}', 'DOUBLE', 384)) > 0.1
             ORDER BY combined_score DESC
         """
         

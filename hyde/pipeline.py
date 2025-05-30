@@ -20,11 +20,13 @@ logger = logging.getLogger(__name__)
 class HyDEPipeline:
     def __init__(self, iris_connector: IRISConnection, # Updated type hint
                  embedding_func: Callable[[List[str]], List[List[float]]],
-                 llm_func: Callable[[str], str]):
+                 llm_func: Callable[[str], str],
+                 schema: str = "RAG"): # Added schema
         self.iris_connector = iris_connector
         self.embedding_func = embedding_func
         self.llm_func = llm_func
-        logger.info("HyDEPipeline initialized")
+        self.schema = schema # Store schema
+        logger.info(f"HyDEPipeline initialized with schema: {schema}")
 
     @timing_decorator
     def _generate_hypothetical_document(self, query_text: str) -> str:
@@ -44,61 +46,97 @@ class HyDEPipeline:
         return hypothetical_doc_text
 
     @timing_decorator
-    def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
+    def retrieve_documents(self, hypothetical_doc_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
-        Generates a hypothetical document, embeds it, and retrieves similar actual documents
-        using vector search against the HNSW-accelerated database.
+        Embeds the hypothetical document and retrieves similar actual documents
+        using SQL-based vector search with VECTOR_COSINE.
         """
-        logger.info(f"HyDE: Retrieving documents for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
-
-        # 1. Generate hypothetical document
-        hypothetical_doc_text = self._generate_hypothetical_document(query_text)
-        logger.info(f"HyDE: Generated hypothetical document: '{hypothetical_doc_text[:100]}...'")
-
-        # 2. Embed the hypothetical document
-        hypothetical_doc_embedding = self.embedding_func([hypothetical_doc_text])[0]
-        logger.debug(f"HyDE: Embedding generated for hypothetical document.")
-
-        # 3. Construct and execute SQL query for vector search
-        documents = []
-        if not hypothetical_doc_embedding or not all(isinstance(x, (int, float)) for x in hypothetical_doc_embedding):
-            logger.error("HyDE: Failed to generate a valid embedding for the hypothetical document.")
-            return []
-
-        # Convert embedding to comma-separated string format for IRIS
-        embedding_str = ','.join(map(str, hypothetical_doc_embedding))
-
-        # Use RAG_HNSW schema with similarity threshold
-        sql_query = f"""
-            SELECT TOP {top_k} doc_id, text_content,
-                   VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
-            FROM RAG.SourceDocuments_V2
-            WHERE embedding IS NOT NULL
-              AND LENGTH(embedding) > 1000
-              AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
-            ORDER BY similarity_score DESC
-        """
+        logger.debug(f"HyDE: Retrieving documents for hypothetical_doc: '{hypothetical_doc_text[:50]}...' with top_k={top_k}, threshold={similarity_threshold}")
         
+        # 1. Generate embedding for the hypothetical document
+        hypothetical_doc_embedding = self.embedding_func([hypothetical_doc_text])[0]
+        if not hypothetical_doc_embedding or not all(isinstance(x, (float, int)) for x in hypothetical_doc_embedding):
+            logger.error(f"HyDE: Failed to generate a valid embedding for hypothetical_doc: '{hypothetical_doc_text[:50]}...'")
+            return []
+        
+        embedding_str = ','.join(map(str, hypothetical_doc_embedding))
+        
+        retrieved_docs = []
+        cursor = None
         try:
             cursor = self.iris_connector.cursor()
-            logger.debug(f"HyDE: Executing SQL query with threshold {similarity_threshold}")
-            cursor.execute(sql_query, (embedding_str, embedding_str, similarity_threshold))
+            
+            # 2. Construct and execute SQL query for vector search
+            # We fetch TOP top_k results ordered by similarity, then filter by threshold in Python.
+            sql_query = f"""
+                SELECT TOP {top_k} doc_id, title, text_content,
+                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+                FROM {self.schema}.SourceDocuments
+                WHERE embedding IS NOT NULL
+                  AND embedding NOT LIKE '0.1,0.1,0.1%' -- Project-specific filter for invalid embeddings
+                ORDER BY similarity_score DESC
+            """
+            
+            logger.debug(f"HyDE: Executing SQL query. Embedding (first 50 chars): {embedding_str[:50]}")
+            cursor.execute(sql_query, (embedding_str,))
             results = cursor.fetchall()
             
+            logger.info(f"HyDE: Fetched {len(results)} candidate documents from DB.")
+
+            # 3. Process results, handle potential streams, and filter by similarity_threshold
             for row in results:
                 doc_id = row[0]
-                doc_content = row[1]
-                score = row[2]
-                documents.append(Document(id=str(doc_id), content=doc_content, score=float(score)))
-            
-            cursor.close()
-            logger.info(f"HyDE: Retrieved {len(documents)} documents above threshold {similarity_threshold}")
+                title = row[1] # Assuming title is now fetched as in BasicRAG
+                raw_text_content = row[2]
+                score = row[3]
 
-        except Exception as e:
-            logger.error(f"HyDE: Error during database vector search: {e}", exc_info=True)
-            return []
+                text_content_str = ""
+                if raw_text_content is not None:
+                    if hasattr(raw_text_content, 'read') and callable(raw_text_content.read):
+                        try:
+                            data = raw_text_content.read()
+                            if isinstance(data, bytes):
+                                text_content_str = data.decode('utf-8', errors='replace')
+                            elif isinstance(data, str):
+                                text_content_str = data
+                            else:
+                                text_content_str = str(data)
+                                logger.warning(f"HyDE: Unexpected data type from stream read for doc_id {doc_id}: {type(data)}")
+                        except Exception as e_read:
+                            logger.warning(f"HyDE: Error reading stream for doc_id {doc_id}: {e_read}")
+                            text_content_str = "[Content Read Error]"
+                    elif isinstance(raw_text_content, bytes):
+                        text_content_str = raw_text_content.decode('utf-8', errors='replace')
+                    else:
+                        text_content_str = str(raw_text_content)
+                
+                current_score = 0.0
+                if score is not None:
+                    try:
+                        current_score = float(score)
+                    except (ValueError, TypeError):
+                        logger.warning(f"HyDE: Could not convert score '{score}' to float for doc_id {doc_id}. Using 0.0.")
+                        current_score = 0.0
+                
+                if current_score >= similarity_threshold:
+                    doc = Document(
+                        id=str(doc_id),
+                        content=text_content_str,
+                        score=current_score
+                    )
+                    doc._title = str(title) if title is not None else "" # Store title
+                    retrieved_docs.append(doc)
             
-        return documents
+            logger.info(f"HyDE: Retrieved {len(retrieved_docs)} documents after applying threshold {similarity_threshold}.")
+            
+        except Exception as e:
+            logger.error(f"HyDE: Error retrieving documents: {e}", exc_info=True)
+            # raise # Optionally re-raise, or handle as per HyDE's original error strategy (which was to return [])
+            return [] # Matching original HyDE error handling for this method
+        finally:
+            if cursor:
+                cursor.close()
+        return retrieved_docs
 
     @timing_decorator
     def generate_answer(self, query_text: str, retrieved_docs: List[Document]) -> str:
@@ -127,17 +165,17 @@ Answer:"""
         return answer
 
     @timing_decorator
-    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
+    def run(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.0) -> Dict[str, Any]:
         """
         Runs the full HyDE pipeline.
         """
         print(f"HyDE: Running pipeline for query: '{query_text[:50]}...'")
         
         # Generate the hypothetical document first
-        hypothetical_doc = self._generate_hypothetical_document(query_text)
+        hypothetical_doc_text = self._generate_hypothetical_document(query_text)
         
-        # Then retrieve documents
-        retrieved_documents = self.retrieve_documents(query_text, top_k, similarity_threshold)
+        # Then retrieve documents using the hypothetical document's text
+        retrieved_documents = self.retrieve_documents(hypothetical_doc_text, top_k, similarity_threshold)
         
         # Generate the final answer
         answer = self.generate_answer(query_text, retrieved_documents)
@@ -145,10 +183,22 @@ Answer:"""
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": retrieved_documents,
-            "hypothetical_document": hypothetical_doc,
-            "similarity_threshold": similarity_threshold,
-            "document_count": len(retrieved_documents)
+            "retrieved_documents": [ # Match BasicRAG output structure for documents
+                {
+                    "id": doc.id,
+                    "content": doc.content[:500],  # Truncate for response
+                    "score": doc.score,
+                    "title": getattr(doc, '_title', 'Untitled')
+                }
+                for doc in retrieved_documents
+            ],
+            "hypothetical_document": hypothetical_doc_text, # Keep the text
+            "metadata": { # Match BasicRAG output structure for metadata
+                "top_k": top_k,
+                "similarity_threshold": similarity_threshold,
+                "num_retrieved": len(retrieved_documents),
+                "pipeline": "HyDE"
+            }
         }
 
 if __name__ == '__main__':
@@ -178,12 +228,16 @@ if __name__ == '__main__':
         print("\n--- HyDE Pipeline Result ---")
         print(f"Query: {result['query']}")
         print(f"Answer: {result['answer']}")
-        print(f"Retrieved Documents ({len(result['retrieved_documents'])}):")
-        for i, doc in enumerate(result['retrieved_documents']):
-            print(f"  Doc {i+1}: ID={doc.id}, Score={doc.score:.4f}, Content='{doc.content[:100]}...'")
+        print(f"Hypothetical Document: {result['hypothetical_document'][:200]}...") # Show hypothetical doc
         
-        if 'latency_ms' in result: # Will be added by the run decorator
-             print(f"Total Pipeline Latency (run method): {result['latency_ms']:.2f} ms")
+        retrieved_docs_list = result['retrieved_documents'] # Access the list of dicts
+        print(f"Retrieved Documents ({len(retrieved_docs_list)}):")
+        for i, doc_dict in enumerate(retrieved_docs_list):
+            print(f"  Doc {i+1}: ID={doc_dict['id']}, Score={doc_dict['score']:.4f}, Title='{doc_dict['title'][:50]}', Content='{doc_dict['content'][:50]}...'")
+        
+        print(f"Metadata: {result['metadata']}")
+        # Latency is usually added by the timing_decorator itself if it's part of the result dict directly from run.
+        # If 'run' itself is decorated, its timing would be logged, not typically returned in the dict unless explicitly added.
 
     except ConnectionError as ce:
         print(f"Demo Setup Error: {ce}")

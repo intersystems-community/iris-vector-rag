@@ -1,6 +1,6 @@
 """
-BasicRAG Pipeline - Chunked Vector Version
-Splits long embedding vectors into smaller chunks to work around IRIS parameter limitations
+BasicRAG Pipeline - Temporary Table Version
+Uses temporary tables to handle long embedding vectors with IRIS vector functions
 """
 
 import sys
@@ -16,7 +16,7 @@ from common.iris_connector import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
-class BasicRAGPipelineChunkedVector:
+class BasicRAGPipelineTempTable:
     def __init__(self, iris_connector,
                  embedding_func: Callable[[List[str]], List[List[float]]],
                  llm_func: Callable[[str], str],
@@ -25,85 +25,62 @@ class BasicRAGPipelineChunkedVector:
         self.embedding_func = embedding_func
         self.llm_func = llm_func
         self.schema = schema
-        self.chunk_size = 50  # Number of dimensions per chunk
-        logger.info(f"BasicRAGPipelineChunkedVector initialized with schema: {schema}")
-
-    def _split_vector_to_chunks(self, vector: List[float]) -> List[str]:
-        """Split a vector into smaller chunks."""
-        chunks = []
-        for i in range(0, len(vector), self.chunk_size):
-            chunk = vector[i:i + self.chunk_size]
-            chunk_str = ','.join(map(str, chunk))
-            chunks.append(chunk_str)
-        return chunks
-
-    def _create_vector_table(self, cursor, vector: List[float]):
-        """Create a table with the query vector split into chunks."""
-        # Drop if exists
-        try:
-            cursor.execute("DROP TABLE RAG.QueryVectorChunks")
-        except:
-            pass
-        
-        # Create table
-        cursor.execute("""
-            CREATE TABLE RAG.QueryVectorChunks (
-                chunk_id INTEGER,
-                chunk_data VARCHAR(2000)
-            )
-        """)
-        
-        # Insert chunks
-        chunks = self._split_vector_to_chunks(vector)
-        for i, chunk in enumerate(chunks):
-            cursor.execute(
-                "INSERT INTO RAG.QueryVectorChunks (chunk_id, chunk_data) VALUES (?, ?)",
-                (i, chunk)
-            )
+        logger.info(f"BasicRAGPipelineTempTable initialized with schema: {schema}")
 
     @timing_decorator
     def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
-        Retrieves documents using a chunked vector approach.
+        Retrieves documents using IRIS vector functions with temporary table approach.
         """
-        logger.debug(f"BasicRAG ChunkedVector: Retrieving documents for query: '{query_text[:50]}...'")
+        logger.debug(f"BasicRAG TempTable: Retrieving documents for query: '{query_text[:50]}...'")
         
         # Generate query embedding
         query_embedding = self.embedding_func([query_text])[0]
+        query_embedding_str = ','.join(map(str, query_embedding))
         
         retrieved_docs = []
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
             
-            # Create vector chunks table
-            self._create_vector_table(cursor, query_embedding)
+            # Create a regular table for query vector (IRIS doesn't support TEMPORARY)
+            logger.info("Creating table for query vector...")
             
-            # Build the full vector from chunks
+            # Drop if exists
+            try:
+                cursor.execute("DROP TABLE RAG.TempQueryVector")
+            except:
+                pass  # Table might not exist
+                
             cursor.execute("""
-                SELECT chunk_data 
-                FROM RAG.QueryVectorChunks 
-                ORDER BY chunk_id
+                CREATE TABLE RAG.TempQueryVector (
+                    query_id INTEGER,
+                    vector_data VECTOR(DOUBLE, 384)
+                )
             """)
-            chunks = cursor.fetchall()
             
-            # Reconstruct the vector string
-            full_vector_str = ','.join([chunk[0] for chunk in chunks])
+            # Insert query vector
+            logger.info("Inserting query vector into table...")
+            cursor.execute(
+                "INSERT INTO RAG.TempQueryVector VALUES (1, TO_VECTOR(?, 'DOUBLE'))",
+                (query_embedding_str,)
+            )
             
-            # Now use the reconstructed vector in the query
+            # Perform vector search using join
             sql = f"""
                 SELECT TOP {top_k} 
-                    doc_id, 
-                    title, 
-                    text_content,
-                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{full_vector_str}', 'DOUBLE')) as similarity_score
-                FROM {self.schema}.SourceDocuments
-                WHERE document_embedding_vector IS NOT NULL
-                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{full_vector_str}', 'DOUBLE')) > {similarity_threshold}
+                    s.doc_id, 
+                    s.title, 
+                    s.text_content,
+                    VECTOR_COSINE(s.document_embedding_vector, q.vector_data) as similarity_score
+                FROM {self.schema}.SourceDocuments_V2 s, RAG.TempQueryVector q
+                WHERE s.document_embedding_vector IS NOT NULL
+                AND q.query_id = 1
+                AND VECTOR_COSINE(s.document_embedding_vector, q.vector_data) > {similarity_threshold}
                 ORDER BY similarity_score DESC
             """
             
-            logger.info(f"Executing vector similarity search with chunked approach...")
+            logger.info(f"Executing vector similarity search with temporary table...")
             cursor.execute(sql)
             
             results = cursor.fetchall()
@@ -126,8 +103,8 @@ class BasicRAGPipelineChunkedVector:
                 )
                 retrieved_docs.append(doc)
             
-            # Clean up
-            cursor.execute("DROP TABLE RAG.QueryVectorChunks")
+            # Clean up temporary table
+            cursor.execute("DROP TABLE RAG.TempQueryVector")
             
         except Exception as e:
             logger.error(f"Error retrieving documents: {e}")
@@ -174,7 +151,7 @@ Please provide a comprehensive answer based on the information in the documents.
         """
         Runs the complete RAG pipeline.
         """
-        logger.info(f"Running BasicRAG ChunkedVector pipeline for query: '{query}'")
+        logger.info(f"Running BasicRAG TempTable pipeline for query: '{query}'")
         
         # Retrieve relevant documents
         retrieved_docs = self.retrieve_documents(query, top_k, similarity_threshold)
@@ -198,7 +175,7 @@ Please provide a comprehensive answer based on the information in the documents.
                 "top_k": top_k,
                 "similarity_threshold": similarity_threshold,
                 "num_retrieved": len(retrieved_docs),
-                "pipeline": "BasicRAG_ChunkedVector"
+                "pipeline": "BasicRAG_TempTable"
             }
         }
         
@@ -207,7 +184,7 @@ Please provide a comprehensive answer based on the information in the documents.
 
 # Demo execution
 if __name__ == "__main__":
-    print("Running BasicRAGPipelineChunkedVector Demo...")
+    print("Running BasicRAGPipelineTempTable Demo...")
     
     # Initialize components
     iris_connector = get_iris_connection()
@@ -215,7 +192,7 @@ if __name__ == "__main__":
     llm_func = get_llm_func()
     
     # Create pipeline
-    pipeline = BasicRAGPipelineChunkedVector(
+    pipeline = BasicRAGPipelineTempTable(
         iris_connector=iris_connector,
         embedding_func=embedding_func,
         llm_func=llm_func

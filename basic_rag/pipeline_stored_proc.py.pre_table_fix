@@ -1,6 +1,6 @@
 """
-BasicRAG Pipeline - Chunked Vector Version
-Splits long embedding vectors into smaller chunks to work around IRIS parameter limitations
+BasicRAG Pipeline - Stored Procedure Version
+Uses stored procedures to handle long embedding vectors with IRIS vector functions
 """
 
 import sys
@@ -16,7 +16,7 @@ from common.iris_connector import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
-class BasicRAGPipelineChunkedVector:
+class BasicRAGPipelineStoredProc:
     def __init__(self, iris_connector,
                  embedding_func: Callable[[List[str]], List[List[float]]],
                  llm_func: Callable[[str], str],
@@ -25,88 +25,108 @@ class BasicRAGPipelineChunkedVector:
         self.embedding_func = embedding_func
         self.llm_func = llm_func
         self.schema = schema
-        self.chunk_size = 50  # Number of dimensions per chunk
-        logger.info(f"BasicRAGPipelineChunkedVector initialized with schema: {schema}")
-
-    def _split_vector_to_chunks(self, vector: List[float]) -> List[str]:
-        """Split a vector into smaller chunks."""
-        chunks = []
-        for i in range(0, len(vector), self.chunk_size):
-            chunk = vector[i:i + self.chunk_size]
-            chunk_str = ','.join(map(str, chunk))
-            chunks.append(chunk_str)
-        return chunks
-
-    def _create_vector_table(self, cursor, vector: List[float]):
-        """Create a table with the query vector split into chunks."""
-        # Drop if exists
+        logger.info(f"BasicRAGPipelineStoredProc initialized with schema: {schema}")
+        
+        # Create stored procedure on initialization
+        self._create_stored_procedure()
+    
+    def _create_stored_procedure(self):
+        """Create the stored procedure for vector search if it doesn't exist."""
+        cursor = None
         try:
-            cursor.execute("DROP TABLE RAG.QueryVectorChunks")
-        except:
-            pass
-        
-        # Create table
-        cursor.execute("""
-            CREATE TABLE RAG.QueryVectorChunks (
-                chunk_id INTEGER,
-                chunk_data VARCHAR(2000)
+            cursor = self.iris_connector.cursor()
+            
+            # Drop if exists
+            try:
+                cursor.execute("DROP PROCEDURE RAG.VectorSearch")
+            except:
+                pass  # Procedure might not exist
+            
+            # Create stored procedure
+            create_proc = """
+            CREATE PROCEDURE RAG.VectorSearch(
+                IN query_vector VARCHAR(50000),
+                IN top_k INTEGER,
+                IN threshold DOUBLE
             )
-        """)
-        
-        # Insert chunks
-        chunks = self._split_vector_to_chunks(vector)
-        for i, chunk in enumerate(chunks):
-            cursor.execute(
-                "INSERT INTO RAG.QueryVectorChunks (chunk_id, chunk_data) VALUES (?, ?)",
-                (i, chunk)
-            )
+            LANGUAGE SQL
+            BEGIN
+                -- Create temporary result table
+                CREATE TEMPORARY TABLE TempResults AS
+                SELECT 
+                    doc_id,
+                    title,
+                    text_content,
+                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR(query_vector, 'DOUBLE')) as similarity_score
+                FROM RAG.SourceDocuments_V2
+                WHERE document_embedding_vector IS NOT NULL
+                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(query_vector, 'DOUBLE')) > threshold
+                ORDER BY similarity_score DESC
+                LIMIT top_k;
+                
+                -- Return results
+                SELECT * FROM TempResults;
+                
+                -- Clean up
+                DROP TABLE TempResults;
+            END
+            """
+            
+            cursor.execute(create_proc)
+            logger.info("Created stored procedure RAG.VectorSearch")
+            
+        except Exception as e:
+            logger.warning(f"Could not create stored procedure: {e}")
+            # We'll fall back to direct query if procedure creation fails
+        finally:
+            if cursor:
+                cursor.close()
 
     @timing_decorator
     def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
-        Retrieves documents using a chunked vector approach.
+        Retrieves documents using IRIS vector functions via stored procedure.
         """
-        logger.debug(f"BasicRAG ChunkedVector: Retrieving documents for query: '{query_text[:50]}...'")
+        logger.debug(f"BasicRAG StoredProc: Retrieving documents for query: '{query_text[:50]}...'")
         
         # Generate query embedding
         query_embedding = self.embedding_func([query_text])[0]
+        query_embedding_str = ','.join(map(str, query_embedding))
         
         retrieved_docs = []
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
             
-            # Create vector chunks table
-            self._create_vector_table(cursor, query_embedding)
+            # Try to use stored procedure first
+            try:
+                logger.info("Calling stored procedure for vector search...")
+                cursor.execute(
+                    "CALL RAG.VectorSearch(?, ?, ?)",
+                    (query_embedding_str, top_k, similarity_threshold)
+                )
+                results = cursor.fetchall()
+                
+            except Exception as sp_error:
+                logger.warning(f"Stored procedure failed: {sp_error}")
+                logger.info("Falling back to direct query...")
+                
+                # Fallback: Use direct query with string interpolation
+                sql = f"""
+                    SELECT TOP {top_k} 
+                        doc_id, 
+                        title, 
+                        text_content,
+                        VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) as similarity_score
+                    FROM {self.schema}.SourceDocuments_V2
+                    WHERE document_embedding_vector IS NOT NULL
+                    AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) > {similarity_threshold}
+                    ORDER BY similarity_score DESC
+                """
+                
+                cursor.execute(sql)
+                results = cursor.fetchall()
             
-            # Build the full vector from chunks
-            cursor.execute("""
-                SELECT chunk_data 
-                FROM RAG.QueryVectorChunks 
-                ORDER BY chunk_id
-            """)
-            chunks = cursor.fetchall()
-            
-            # Reconstruct the vector string
-            full_vector_str = ','.join([chunk[0] for chunk in chunks])
-            
-            # Now use the reconstructed vector in the query
-            sql = f"""
-                SELECT TOP {top_k} 
-                    doc_id, 
-                    title, 
-                    text_content,
-                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{full_vector_str}', 'DOUBLE')) as similarity_score
-                FROM {self.schema}.SourceDocuments
-                WHERE document_embedding_vector IS NOT NULL
-                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{full_vector_str}', 'DOUBLE')) > {similarity_threshold}
-                ORDER BY similarity_score DESC
-            """
-            
-            logger.info(f"Executing vector similarity search with chunked approach...")
-            cursor.execute(sql)
-            
-            results = cursor.fetchall()
             logger.info(f"Retrieved {len(results)} documents")
             
             for row in results:
@@ -125,9 +145,6 @@ class BasicRAGPipelineChunkedVector:
                     }
                 )
                 retrieved_docs.append(doc)
-            
-            # Clean up
-            cursor.execute("DROP TABLE RAG.QueryVectorChunks")
             
         except Exception as e:
             logger.error(f"Error retrieving documents: {e}")
@@ -174,7 +191,7 @@ Please provide a comprehensive answer based on the information in the documents.
         """
         Runs the complete RAG pipeline.
         """
-        logger.info(f"Running BasicRAG ChunkedVector pipeline for query: '{query}'")
+        logger.info(f"Running BasicRAG StoredProc pipeline for query: '{query}'")
         
         # Retrieve relevant documents
         retrieved_docs = self.retrieve_documents(query, top_k, similarity_threshold)
@@ -198,7 +215,7 @@ Please provide a comprehensive answer based on the information in the documents.
                 "top_k": top_k,
                 "similarity_threshold": similarity_threshold,
                 "num_retrieved": len(retrieved_docs),
-                "pipeline": "BasicRAG_ChunkedVector"
+                "pipeline": "BasicRAG_StoredProc"
             }
         }
         
@@ -207,7 +224,7 @@ Please provide a comprehensive answer based on the information in the documents.
 
 # Demo execution
 if __name__ == "__main__":
-    print("Running BasicRAGPipelineChunkedVector Demo...")
+    print("Running BasicRAGPipelineStoredProc Demo...")
     
     # Initialize components
     iris_connector = get_iris_connection()
@@ -215,7 +232,7 @@ if __name__ == "__main__":
     llm_func = get_llm_func()
     
     # Create pipeline
-    pipeline = BasicRAGPipelineChunkedVector(
+    pipeline = BasicRAGPipelineStoredProc(
         iris_connector=iris_connector,
         embedding_func=embedding_func,
         llm_func=llm_func
