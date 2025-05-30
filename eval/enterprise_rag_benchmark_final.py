@@ -25,13 +25,13 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-# RAG imports - using existing working pipelines
-from basic_rag.pipeline import BasicRAGPipeline
+# RAG imports - using JDBC-compatible pipelines
+from basic_rag.pipeline_jdbc import BasicRAGPipelineJDBC as BasicRAGPipeline
 from hyde.pipeline import HyDEPipeline
-from crag.pipeline import CRAGPipeline
+from crag.pipeline_jdbc_fixed import JDBCFixedCRAGPipeline as CRAGPipeline
 from colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline
 from noderag.pipeline import NodeRAGPipeline
-from graphrag.pipeline import GraphRAGPipeline  # Updated to use JDBC-aware version
+from graphrag.pipeline_jdbc_fixed import JDBCFixedGraphRAGPipeline as GraphRAGPipeline
 from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline
 
 # Common utilities
