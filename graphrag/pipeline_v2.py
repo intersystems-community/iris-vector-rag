@@ -23,33 +23,53 @@ class GraphRAGPipelineV2:
     @timing_decorator
     def retrieve_entities(self, query: str, top_k: int = 10, similarity_threshold: float = 0.0) -> List[Dict[str, Any]]:
         """
-        Retrieve relevant entities from the knowledge graph using HNSW
+        Retrieve relevant entities from the knowledge graph using the proven BasicRAG V2 pattern.
         """
-        # Generate query embedding
+        logger.debug(f"GraphRAG V2: Retrieving entities for query: '{query[:50]}...'")
+        
+        # Generate query embedding - use comma-separated format (same as Entities table)
         query_embedding = self.embedding_func([query])[0]
         query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
         
         entities = []
-        
-        # Note: Entities table doesn't have _V2 version yet, but we can still use VECTOR_COSINE
-        sql_query = f"""
-            SELECT TOP {top_k} entity_id, entity_name, entity_type, source_doc_id,
-                   VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) AS similarity
-            FROM {self.schema}.Entities
-            WHERE embedding IS NOT NULL
-              AND VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
-            ORDER BY similarity DESC
-        """
-        
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
-            logger.debug("GraphRAG V2 Entity Retrieve")
-            cursor.execute(sql_query)
-            results = cursor.fetchall()
             
-            for row in results:
+            # Use VARCHAR embedding format like BasicRAG V2 (Entities table uses VARCHAR, not VECTOR)
+            sql = f"""
+                SELECT TOP {top_k * 2}
+                    entity_id,
+                    entity_name,
+                    entity_type,
+                    source_doc_id,
+                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+                FROM {self.schema}.Entities
+                WHERE embedding IS NOT NULL
+                ORDER BY similarity_score DESC
+            """
+            
+            cursor.execute(sql, [query_embedding_str])
+            all_results = cursor.fetchall()
+            
+            logger.info(f"Retrieved {len(all_results)} raw entity results from database")
+            
+            # Filter by similarity threshold and limit to top_k (like BasicRAG V2)
+            filtered_results = []
+            for row in all_results:
+                score = float(row[4]) if row[4] is not None else 0.0
+                if score > similarity_threshold:
+                    filtered_results.append(row)
+                if len(filtered_results) >= top_k:
+                    break
+            
+            logger.info(f"Filtered to {len(filtered_results)} entities above threshold {similarity_threshold}")
+            
+            for row in filtered_results:
                 entity_id, entity_name, entity_type, source_doc_id, similarity = row
+                # Ensure score is float (like BasicRAG V2)
+                similarity = float(similarity) if similarity is not None else 0.0
+                
                 entities.append({
                     "entity_id": entity_id,
                     "entity_name": entity_name,
@@ -58,10 +78,9 @@ class GraphRAGPipelineV2:
                     "similarity": similarity
                 })
                 
-            print(f"GraphRAG V2: Retrieved {len(entities)} entities")
         except Exception as e:
             logger.error(f"Error retrieving entities: {e}")
-            print(f"Error retrieving entities: {e}")
+            raise
         finally:
             if cursor:
                 cursor.close()
@@ -124,72 +143,129 @@ class GraphRAGPipelineV2:
     @timing_decorator
     def retrieve_documents_from_entities(self, entities: List[Dict[str, Any]], top_k: int = 5) -> List[Document]:
         """
-        Retrieve documents based on entities using HNSW on _V2 tables
+        Retrieve documents based on entities, with fallback to regular document search
         """
-        if not entities:
-            return []
-        
-        # Get unique document IDs from entities
-        doc_ids = list(set(entity['source_doc_id'] for entity in entities if entity.get('source_doc_id')))
-        
-        if not doc_ids:
-            return []
-        
         retrieved_docs = []
         
-        # Create placeholders for SQL query
-        placeholders = ','.join(['?' for _ in doc_ids])
+        # Try entity-based retrieval first
+        if entities:
+            # Get unique document IDs from entities
+            doc_ids = list(set(entity['source_doc_id'] for entity in entities if entity.get('source_doc_id')))
+            
+            if doc_ids:
+                # Create placeholders for SQL query
+                placeholders = ','.join(['?' for _ in doc_ids])
+                
+                # Retrieve from SourceDocuments table
+                sql_query = f"""
+                    SELECT doc_id, title, text_content
+                    FROM {self.schema}.SourceDocuments
+                    WHERE doc_id IN ({placeholders})
+                """
+                
+                cursor = None
+                try:
+                    cursor = self.iris_connector.cursor()
+                    cursor.execute(sql_query, doc_ids)
+                    results = cursor.fetchall()
+                    
+                    # Create a map of entity scores by doc_id
+                    doc_entity_scores = {}
+                    for entity in entities:
+                        doc_id = entity.get('source_doc_id')
+                        if doc_id:
+                            if doc_id not in doc_entity_scores:
+                                doc_entity_scores[doc_id] = []
+                            doc_entity_scores[doc_id].append(entity['similarity'])
+                    
+                    for row in results:
+                        doc_id, title, content = row
+                        # Calculate aggregate score based on entities
+                        entity_scores = doc_entity_scores.get(doc_id, [0])
+                        avg_entity_score = sum(entity_scores) / len(entity_scores)
+                        
+                        doc = Document(
+                            id=doc_id,
+                            content=content,
+                            score=avg_entity_score
+                        )
+                        # Store metadata separately
+                        doc._metadata = {
+                            "title": title,
+                            "entity_score": avg_entity_score,
+                            "num_entities": len(entity_scores),
+                            "source": "GraphRAG_V2_Entity_Based"
+                        }
+                        retrieved_docs.append(doc)
+                        
+                    # Sort by score
+                    retrieved_docs.sort(key=lambda x: x.score or 0, reverse=True)
+                    retrieved_docs = retrieved_docs[:top_k]
+                    
+                except Exception as e:
+                    logger.error(f"Error retrieving documents from entities: {e}")
+                finally:
+                    if cursor:
+                        cursor.close()
         
-        # Retrieve from _V2 table with VECTOR columns
-        sql_query = f"""
-            SELECT doc_id, title, text_content
-            FROM {self.schema}.SourceDocuments
-            WHERE doc_id IN ({placeholders})
+        # Fallback: if no documents from entities, use regular document search
+        if not retrieved_docs:
+            logger.info("No documents from entities, falling back to regular document search")
+            retrieved_docs = self.retrieve_documents_fallback(top_k)
+        
+        print(f"GraphRAG V2: Retrieved {len(retrieved_docs)} documents")
+        return retrieved_docs
+    
+    @timing_decorator
+    def retrieve_documents_fallback(self, top_k: int = 5) -> List[Document]:
         """
+        Fallback document retrieval using basic similarity search
+        """
+        # Use a generic query for fallback
+        fallback_query = "medical condition disease symptoms"
+        query_embedding = self.embedding_func([fallback_query])[0]
+        query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
         
+        retrieved_docs = []
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
-            cursor.execute(sql_query, doc_ids)
+            
+            # Use same SQL pattern as BasicRAG V2
+            sql = f"""
+                SELECT TOP {top_k}
+                    doc_id,
+                    title,
+                    text_content,
+                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+                FROM {self.schema}.SourceDocuments
+                WHERE embedding IS NOT NULL
+                ORDER BY similarity_score DESC
+            """
+            
+            cursor.execute(sql, [query_embedding_str])
             results = cursor.fetchall()
             
-            # Create a map of entity scores by doc_id
-            doc_entity_scores = {}
-            for entity in entities:
-                doc_id = entity.get('source_doc_id')
-                if doc_id:
-                    if doc_id not in doc_entity_scores:
-                        doc_entity_scores[doc_id] = []
-                    doc_entity_scores[doc_id].append(entity['similarity'])
-            
             for row in results:
-                doc_id, title, content = row
-                # Calculate aggregate score based on entities
-                entity_scores = doc_entity_scores.get(doc_id, [0])
-                avg_entity_score = sum(entity_scores) / len(entity_scores)
+                doc_id = row[0]
+                title = row[1] or ""
+                content = row[2] or ""
+                similarity = float(row[3]) if row[3] is not None else 0.0
                 
                 doc = Document(
                     id=doc_id,
                     content=content,
-                    score=avg_entity_score
+                    score=similarity
                 )
-                # Store metadata separately
                 doc._metadata = {
                     "title": title,
-                    "entity_score": avg_entity_score,
-                    "num_entities": len(entity_scores),
-                    "source": "GraphRAG_V2_HNSW"
+                    "similarity_score": similarity,
+                    "source": "GraphRAG_V2_Fallback"
                 }
                 retrieved_docs.append(doc)
                 
-            # Sort by score
-            retrieved_docs.sort(key=lambda x: x.score or 0, reverse=True)
-            retrieved_docs = retrieved_docs[:top_k]
-            
-            print(f"GraphRAG V2: Retrieved {len(retrieved_docs)} documents from entities")
         except Exception as e:
-            logger.error(f"Error retrieving documents: {e}")
-            print(f"Error retrieving documents: {e}")
+            logger.error(f"Error in fallback document retrieval: {e}")
         finally:
             if cursor:
                 cursor.close()

@@ -17,12 +17,13 @@ logger = logging.getLogger(__name__)
 class BasicRAGPipelineJDBC:
     """Basic RAG pipeline using JDBC connection for vector operations"""
     
-    def __init__(self, iris_connector=None, embedding_func=None, llm_func=None):
+    def __init__(self, iris_connector=None, embedding_func=None, llm_func=None, schema="RAG"):
         """Initialize the pipeline with JDBC connection"""
         # Use provided connector or create new JDBC connection
         self.iris_connector = iris_connector or get_iris_jdbc_connection()
         self.embedding_func = embedding_func
         self.llm_func = llm_func
+        self.schema = schema
         
         # Test connection
         try:
@@ -45,31 +46,30 @@ class BasicRAGPipelineJDBC:
         # Using fixed decimal format to avoid scientific notation issues
         query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
         
-        # SQL query with proper parameter binding
-        sql = """
-            SELECT TOP ? 
-                doc_id, 
-                title, 
+        # SQL query with string formatting (safer for JDBC)
+        sql = f"""
+            SELECT TOP {top_k}
+                doc_id,
+                title,
                 text_content,
                 VECTOR_COSINE(
-                    TO_VECTOR(embedding, 'DOUBLE', 384),
-                    TO_VECTOR(?, 'DOUBLE', 384)
+                    embedding,
+                    TO_VECTOR('[{query_embedding_str}]', 'DOUBLE', 384)
                 ) as similarity_score
             FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
-            AND VECTOR_COSINE(
-                TO_VECTOR(embedding, 'DOUBLE', 384),
-                TO_VECTOR(?, 'DOUBLE', 384)
-            ) > ?
-            ORDER BY similarity_score DESC
+            ORDER BY VECTOR_COSINE(
+                embedding,
+                TO_VECTOR('[{query_embedding_str}]', 'DOUBLE', 384)
+            ) DESC
         """
         
         try:
-            # Execute with parameters - JDBC should handle this correctly!
-            results = self.iris_connector.execute(
-                sql, 
-                [top_k, query_embedding_str, query_embedding_str, similarity_threshold]
-            )
+            # Execute query using cursor directly
+            cursor = self.iris_connector.cursor()
+            cursor.execute(sql)
+            results = cursor.fetchall()
+            cursor.close()
             
             # Format results
             documents = []
@@ -118,13 +118,13 @@ Answer:"""
         answer = self.llm_func(prompt)
         return answer
     
-    def run(self, query: str, top_k: int = 5) -> Dict[str, Any]:
+    def run(self, query: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """Run the complete RAG pipeline"""
         
         start_time = time.time()
         
         # Retrieve documents
-        documents = self.retrieve_documents(query, top_k=top_k)
+        documents = self.retrieve_documents(query, top_k=top_k, similarity_threshold=similarity_threshold)
         retrieval_time = time.time() - start_time
         
         # Generate answer

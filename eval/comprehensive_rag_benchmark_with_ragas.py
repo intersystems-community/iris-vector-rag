@@ -44,18 +44,18 @@ except ImportError:
     RAGAS_AVAILABLE = False
     print("⚠️ RAGAS not installed. Install with: pip install ragas datasets")
 
-# RAG imports - using JDBC-compatible pipelines
-from basic_rag.pipeline_jdbc import BasicRAGPipelineJDBC as BasicRAGPipeline
+# RAG imports - using standard pipelines (not JDBC-specific)
+from basic_rag.pipeline import BasicRAGPipeline
 from hyde.pipeline import HyDEPipeline
-from crag.pipeline_jdbc_fixed import JDBCFixedCRAGPipeline as CRAGPipeline
+from crag.pipeline import CRAGPipeline
 from colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline
 from noderag.pipeline import NodeRAGPipeline
-from graphrag.pipeline_jdbc_fixed import JDBCFixedGraphRAGPipeline as GraphRAGPipeline
+from graphrag import GraphRAGPipeline  # This now uses optimized V3 by default
 from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline
 
 # Common utilities
-from common.iris_connector_jdbc import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func, DEFAULT_EMBEDDING_MODEL
+from common.iris_connector import get_iris_connection
+from common.embedding_utils import get_embedding_model
 from dotenv import load_dotenv
 
 # Langchain for RAGAS LLM/Embeddings
@@ -74,22 +74,26 @@ class ComprehensiveRAGBenchmark:
         load_dotenv()
         
         self.connection = get_iris_connection()
-        self.embedding_func = get_embedding_func()
+        
+        # Get embedding model
+        self.embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
+        self.embedding_func = lambda texts: self.embedding_model.encode(texts)
         
         # Try to use real LLM for better evaluation
         try:
             if os.getenv("OPENAI_API_KEY"):
                 self.llm_func = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, openai_api_key=os.getenv("OPENAI_API_KEY"))
-                self.embedding_func_ragas = HuggingFaceEmbeddings(model_name=DEFAULT_EMBEDDING_MODEL, model_kwargs={'device': 'cpu'})
+                self.embedding_func_ragas = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2', model_kwargs={'device': 'cpu'})
                 self.real_llm = True
                 logger.info("✅ Using OpenAI GPT-3.5-turbo for evaluation and HuggingFaceEmbeddings for RAGAS")
             else:
-                self.llm_func = get_llm_func(provider="stub")
+                # Simple stub LLM
+                self.llm_func = lambda prompt: f"Based on the provided context, this is a response to: {prompt[:100]}..."
                 self.embedding_func_ragas = None # RAGAS won't use this if real_llm is False
                 self.real_llm = False
                 logger.warning("⚠️ Using stub LLM (set OPENAI_API_KEY for real evaluation)")
         except Exception as e:
-            self.llm_func = get_llm_func(provider="stub")
+            self.llm_func = lambda prompt: f"Based on the provided context, this is a response to: {prompt[:100]}..."
             self.embedding_func_ragas = None
             self.real_llm = False
             logger.warning(f"⚠️ LLM setup failed, using stub: {e}")
@@ -228,7 +232,12 @@ class ComprehensiveRAGBenchmark:
             if pipeline_name == 'CRAG':
                 result = pipeline.run(query, top_k=10)
             else:
-                result = pipeline.run(query, top_k=10, similarity_threshold=0.1)
+                # Handle different pipeline signatures
+                if pipeline_name == "GraphRAG":
+                    # GraphRAGPipelineV3 doesn't accept similarity_threshold
+                    result = pipeline.run(query, top_k=10)
+                else:
+                    result = pipeline.run(query, top_k=10, similarity_threshold=0.1)
             
             response_time = time.time() - start_time
             

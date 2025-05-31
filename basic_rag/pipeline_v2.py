@@ -40,38 +40,51 @@ class BasicRAGPipelineV2:
         """
         logger.debug(f"BasicRAG V2: Retrieving documents for query: '{query_text[:50]}...'")
         
-        # Generate query embedding
+        # Generate query embedding - use same format as working techniques
         query_embedding = self.embedding_func([query_text])[0]
-        query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
+        query_embedding_str = f"[{','.join([f'{x:.10f}' for x in query_embedding])}]"
         
         retrieved_docs = []
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
             
-            # Use native VECTOR search with HNSW index
+            # Use same SQL pattern as working techniques (no WHERE threshold, filter in Python)
             sql = f"""
-                SELECT TOP {top_k} 
-                    doc_id, 
-                    title, 
+                SELECT TOP {top_k * 2}
+                    doc_id,
+                    title,
                     text_content,
-                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as similarity_score
+                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
                 FROM {self.schema}.SourceDocuments
-                WHERE document_embedding_vector IS NOT NULL
-                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+                WHERE embedding IS NOT NULL
                 ORDER BY similarity_score DESC
             """
             
-            cursor.execute(sql)
-            results = cursor.fetchall()
+            cursor.execute(sql, [query_embedding_str])
+            all_results = cursor.fetchall()
             
-            logger.info(f"Retrieved {len(results)} documents using HNSW index")
+            logger.info(f"Retrieved {len(all_results)} raw results from database")
             
-            for row in results:
+            # Filter by similarity threshold and limit to top_k (like working techniques)
+            filtered_results = []
+            for row in all_results:
+                score = float(row[3]) if row[3] is not None else 0.0
+                if score > similarity_threshold:
+                    filtered_results.append(row)
+                if len(filtered_results) >= top_k:
+                    break
+            
+            logger.info(f"Filtered to {len(filtered_results)} documents above threshold {similarity_threshold}")
+            
+            for row in filtered_results:
                 doc_id = row[0]
                 title = row[1] or ""
                 content = row[2] or ""
                 similarity = row[3]
+                
+                # Ensure score is float (like working techniques)
+                similarity = float(similarity) if similarity is not None else 0.0
                 
                 doc = Document(
                     id=doc_id,
@@ -107,7 +120,7 @@ class BasicRAGPipelineV2:
             # Get metadata from _metadata attribute if it exists
             metadata = getattr(doc, '_metadata', {})
             title = metadata.get('title', 'Untitled')
-            score = doc.score or 0
+            score = float(doc.score) if doc.score is not None else 0.0
             content_preview = doc.content[:500] if doc.content else ""
             context_parts.append(f"Document {i} (Score: {score:.3f}, Title: {title}):\n{content_preview}...")
         

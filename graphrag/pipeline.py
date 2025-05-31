@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 
 # Import the JDBC-fixed version
 from .pipeline_jdbc_fixed import JDBCFixedGraphRAGPipeline, create_jdbc_fixed_graphrag_pipeline

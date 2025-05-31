@@ -68,7 +68,8 @@ def build_hf_embedder(model_name: str = DEFAULT_EMBEDDING_MODEL):
     
     tokenizer, model = _hf_embedder_cache[model_name]
 
-    @functools.lru_cache(maxsize=128) # Cache individual text embeddings
+    # Removed LRU cache to prevent memory leaks during bulk operations
+    # Cache causes indefinite memory growth when processing thousands of unique texts
     def _embed_single_text(text: str) -> List[float]:
         with torch.no_grad():
             # Validate input text
@@ -108,6 +109,28 @@ def build_hf_embedder(model_name: str = DEFAULT_EMBEDDING_MODEL):
                 return [0.0] * 768  # Return zero vector on error
 
     def embedding_func_hf(texts: List[str]) -> List[List[float]]:
+        # Add memory pressure detection for bulk operations
+        if len(texts) > 10:  # Bulk operation detected
+            try:
+                import psutil
+                import gc
+                process = psutil.Process()
+                memory_mb = process.memory_info().rss / 1024 / 1024
+                
+                # If memory usage exceeds 2GB, force cleanup
+                if memory_mb > 2048:
+                    logger.warning(f"High memory usage detected: {memory_mb:.1f} MB. Forcing cleanup...")
+                    gc.collect()
+                    # Clear torch cache if available
+                    try:
+                        import torch
+                        if torch.cuda.is_available():
+                            torch.cuda.empty_cache()
+                    except ImportError:
+                        pass
+            except ImportError:
+                pass  # psutil not available
+        
         return [_embed_single_text(t) for t in texts]
 
     return embedding_func_hf

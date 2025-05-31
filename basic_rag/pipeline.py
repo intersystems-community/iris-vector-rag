@@ -1,6 +1,6 @@
 """
-Basic RAG Pipeline - Working Version
-Simple implementation that works with IRIS SQL limitations and the Document class
+Basic RAG Pipeline - Verified TO_VECTOR(embedding) Implementation
+Uses verified VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) syntax with HNSW indexes
 """
 
 import os
@@ -9,7 +9,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from typing import List, Dict, Any, Callable
 import logging
-import json
 
 try:
     import iris
@@ -36,63 +35,52 @@ class BasicRAGPipeline:
     @timing_decorator
     def retrieve_documents(self, query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> List[Document]:
         """
-        Retrieves documents from IRIS based on SQL vector similarity.
+        Retrieves documents from IRIS using verified VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) syntax.
+        This leverages HNSW indexes for optimal performance with the proven working approach.
         """
-        logger.debug(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...' using SQL vector search.")
+        logger.debug(f"BasicRAG: Retrieving documents for query: '{query_text[:50]}...'")
         
         # Generate query embedding
-        query_embedding_list = self.embedding_func([query_text])[0]
-        query_embedding_str = ','.join(map(str, query_embedding_list)) # For SQL query
+        query_embedding = self.embedding_func([query_text])[0]
+        query_vector_str = f"[{','.join(map(str, query_embedding))}]"
         
         retrieved_docs = []
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
             
-            # Check if we're using JDBC (which has issues with parameter binding for vectors)
-            conn_type = type(self.iris_connector).__name__
-            is_jdbc = 'JDBC' in conn_type or hasattr(self.iris_connector, '_jdbc_connection')
+            # Use verified working VECTOR_COSINE syntax with TO_VECTOR(embedding)
+            # Note: Avoid using VECTOR_COSINE twice in WHERE clause due to JDBC issues
+            sql = f"""
+                SELECT TOP {int(top_k * 2)}
+                    doc_id,
+                    title,
+                    text_content,
+                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+                FROM {self.schema}.SourceDocuments
+                WHERE embedding IS NOT NULL
+                ORDER BY similarity_score DESC
+            """
             
-            params = []
-            if is_jdbc:
-                # Use direct SQL for JDBC to avoid parameter binding issues with TO_VECTOR
-                # The TO_VECTOR function expects a literal string for the vector data in this case.
-                sql = f"""
-                    SELECT TOP {top_k}
-                        doc_id,
-                        title,
-                        text_content,
-                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_embedding_str}')) as similarity_score
-                    FROM {self.schema}.SourceDocuments
-                    WHERE embedding IS NOT NULL
-                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_embedding_str}')) > {similarity_threshold}
-                    ORDER BY similarity_score DESC
-                """
-            else:
-                # Use parameter binding for ODBC
-                sql = f"""
-                    SELECT TOP ?
-                        doc_id,
-                        title,
-                        text_content,
-                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
-                    FROM {self.schema}.SourceDocuments
-                    WHERE embedding IS NOT NULL
-                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
-                    ORDER BY similarity_score DESC
-                """
-                params = [top_k, query_embedding_str, query_embedding_str, similarity_threshold]
-
-            logger.debug(f"Executing SQL vector search. JDBC: {is_jdbc}. SQL: {sql[:250]}... Params: {params if not is_jdbc else 'N/A for JDBC direct SQL'}")
-            if is_jdbc:
-                cursor.execute(sql)
-            else:
-                cursor.execute(sql, params)
+            logger.debug(f"Executing verified VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) query with HNSW index")
+            cursor.execute(sql, [query_vector_str])
             
-            results = cursor.fetchall()
-            logger.info(f"BasicRAG: SQL vector search retrieved {len(results)} documents.")
+            all_results = cursor.fetchall()
+            logger.info(f"BasicRAG: Verified TO_VECTOR(embedding) approach retrieved {len(all_results)} raw documents")
             
-            for row in results:
+            # Filter by similarity threshold and limit to top_k
+            filtered_results = []
+            for row in all_results:
+                score_raw = row[3]
+                score = float(score_raw) if score_raw is not None else 0.0
+                if score > similarity_threshold:
+                    filtered_results.append(row)
+                if len(filtered_results) >= top_k:
+                    break
+            
+            logger.info(f"BasicRAG: After threshold filtering ({similarity_threshold}): {len(filtered_results)} documents")
+            
+            for row in filtered_results:
                 doc_id_raw = row[0]
                 title_raw = row[1]
                 content_raw = row[2]
@@ -104,11 +92,12 @@ class BasicRAGPipeline:
                     content_str = content_raw.read()
                     if isinstance(content_str, bytes):
                         content_str = content_str.decode('utf-8', errors='ignore')
-                elif hasattr(content_raw, 'toString'): # For other JDBC types like string
+                elif hasattr(content_raw, 'toString'):
                     content_str = str(content_raw)
                 else:
                     content_str = str(content_raw) if content_raw else ""
 
+                # Handle doc_id and title
                 doc_id_str = str(doc_id_raw) if hasattr(doc_id_raw, 'toString') else str(doc_id_raw)
                 title_str = str(title_raw) if hasattr(title_raw, 'toString') else (str(title_raw) if title_raw else "")
                 
@@ -117,14 +106,13 @@ class BasicRAGPipeline:
                     content=content_str,
                     score=float(score_raw) if score_raw is not None else 0.0
                 )
-                doc._title = title_str # Store title separately
+                doc._title = title_str  # Store title separately
                 retrieved_docs.append(doc)
             
-            logger.info(f"BasicRAG: Processed {len(retrieved_docs)} documents from SQL results.")
+            logger.info(f"BasicRAG: Successfully processed {len(retrieved_docs)} documents after threshold filtering")
             
         except Exception as e:
-            logger.error(f"BasicRAG: Error during SQL document retrieval: {e}", exc_info=True)
-            # Optionally, could add a fallback here if desired, but instructions are to restore SQL search
+            logger.error(f"BasicRAG: Error during TO_VECTOR(embedding) document retrieval: {e}", exc_info=True)
             return []
         finally:
             if cursor:
@@ -208,7 +196,7 @@ Answer:"""
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    print("Running BasicRAGPipeline Demo...")
+    print("Running Verified TO_VECTOR(embedding) BasicRAGPipeline Demo...")
 
     # Setup
     try:
@@ -222,7 +210,7 @@ if __name__ == '__main__':
         test_query = "What is diabetes?"
         print(f"\nExecuting RAG pipeline for query: '{test_query}'")
         
-        result = pipeline.run(test_query, top_k=3)
+        result = pipeline.run(test_query, top_k=5)
 
         print("\n--- RAG Pipeline Result ---")
         print(f"Query: {result['query']}")
@@ -245,4 +233,4 @@ if __name__ == '__main__':
             db_conn.close()
             print("\nDatabase connection closed.")
 
-    print("\nBasicRAGPipeline Demo Finished.")
+    print("\nVerified TO_VECTOR(embedding) BasicRAGPipeline Demo Finished.")

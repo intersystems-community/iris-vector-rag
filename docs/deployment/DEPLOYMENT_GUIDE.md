@@ -85,8 +85,15 @@ service = EnhancedChunkingService()
 service.setup_database_schema()
 "
 
-# Setup Hybrid iFind RAG schema
+# Setup Hybrid iFind RAG schema (attempts ObjectScript deployment)
 python scripts/setup_hybrid_ifind_rag.py
+# NOTE: The above script attempts to deploy and compile the necessary ObjectScript class
+# for iFind. Due to potential environment-specific issues with IRIS class resolution
+# via scripted 'docker exec', this step may not fully succeed in making the iFind
+# index operational. If iFind functionality is still missing after this step (e.g.,
+# errors about "Index TEXTCONTENTFTI not found"), refer to
+# 'docs/IFIND_IMPLEMENTATION_NOTES.md' for manual troubleshooting and deployment
+# steps that must be performed directly within an IRIS environment (Studio/Terminal).
 ```
 
 ### 4. Data Loading

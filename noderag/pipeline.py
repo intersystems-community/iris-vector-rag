@@ -185,11 +185,9 @@ class NodeRAGPipeline:
         if use_source_docs:
             sql_query = f"""
                 SELECT TOP 20 doc_id AS node_id,
-                       VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
+                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
-                  AND LENGTH(embedding) > 1000
-                  AND VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) > ?
                 ORDER BY score DESC
             """
             logger.info("NodeRAG: Using RAG.SourceDocuments for vector search.")
@@ -215,16 +213,15 @@ class NodeRAGPipeline:
             logger.debug(f"Parameters: ('{iris_vector_str[:70]}...', threshold: {similarity_threshold})")
 
             try:
-                cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold))
+                cursor.execute(sql_query, (iris_vector_str,))
             except Exception as vector_error:
                 logger.warning(f"NodeRAG: Vector function error: {vector_error}")
                 # Fallback to simpler query without vector comparison in WHERE clause
                 fallback_sql = f"""
                 SELECT TOP 20 doc_id AS node_id,
-                       VECTOR_COSINE(TO_VECTOR(embedding, double), TO_VECTOR(?, double)) AS score
+                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
-                  AND LENGTH(embedding) > 1000
                 ORDER BY score DESC
                 """
                 cursor.execute(fallback_sql, (iris_vector_str,)) # Pass vector string twice and threshold

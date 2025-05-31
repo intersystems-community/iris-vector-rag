@@ -55,11 +55,11 @@ class HyDEPipeline:
         
         # 1. Generate embedding for the hypothetical document
         hypothetical_doc_embedding = self.embedding_func([hypothetical_doc_text])[0]
-        if not hypothetical_doc_embedding or not all(isinstance(x, (float, int)) for x in hypothetical_doc_embedding):
+        if hypothetical_doc_embedding is None or len(hypothetical_doc_embedding) == 0 or not all(isinstance(x, (float, int)) for x in hypothetical_doc_embedding):
             logger.error(f"HyDE: Failed to generate a valid embedding for hypothetical_doc: '{hypothetical_doc_text[:50]}...'")
             return []
         
-        embedding_str = ','.join(map(str, hypothetical_doc_embedding))
+        embedding_str = f"[{','.join(map(str, hypothetical_doc_embedding))}]"
         
         retrieved_docs = []
         cursor = None
@@ -69,11 +69,10 @@ class HyDEPipeline:
             # 2. Construct and execute SQL query for vector search
             # We fetch TOP top_k results ordered by similarity, then filter by threshold in Python.
             sql_query = f"""
-                SELECT TOP {top_k} doc_id, title, text_content,
+                SELECT TOP {int(top_k * 2)} doc_id, title, text_content,
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
                 FROM {self.schema}.SourceDocuments
                 WHERE embedding IS NOT NULL
-                  AND embedding NOT LIKE '0.1,0.1,0.1%' -- Project-specific filter for invalid embeddings
                 ORDER BY similarity_score DESC
             """
             

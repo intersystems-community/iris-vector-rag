@@ -44,59 +44,74 @@ Hypothetical Answer:"""
     @timing_decorator
     def retrieve_documents(self, query: str, hypothetical_doc: str, top_k: int = 5, similarity_threshold: float = 0.0) -> List[Document]:
         """
-        Retrieve documents using the hypothetical document embedding with HNSW acceleration
+        Retrieve documents using the hypothetical document embedding with HNSW acceleration.
+        Uses the proven BasicRAG V2 pattern for reliable results.
         """
-        # Generate embedding for the hypothetical document
-        hyde_embedding = self.embedding_func([hypothetical_doc])[0]
-        hyde_embedding_str = ','.join(map(str, hyde_embedding))
+        logger.debug(f"HyDE V2: Retrieving documents for hypothetical doc: '{hypothetical_doc[:50]}...'")
         
-        # Also generate embedding for the original query for hybrid scoring
-        query_embedding = self.embedding_func([query])[0]
-        query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
+        # Generate embedding for the hypothetical document (primary search)
+        hyde_embedding = self.embedding_func([hypothetical_doc])[0]
+        # Use same format as SourceDocuments (comma-separated, no brackets)
+        hyde_embedding_str = ','.join([f'{x:.10f}' for x in hyde_embedding])
         
         retrieved_docs = []
-        
-        # Retrieve using HNSW on VECTOR column with hybrid scoring
-        sql_query = f"""
-            SELECT TOP {top_k} doc_id, title, text_content,
-                   VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{hyde_embedding_str}', 'DOUBLE', 384)) as hyde_score,
-                   VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as query_score,
-                   (0.7 * VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{hyde_embedding_str}', 'DOUBLE', 384)) +
-                    0.3 * VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384))) as combined_score
-            FROM {self.schema}.SourceDocuments
-            WHERE document_embedding_vector IS NOT NULL
-              AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{hyde_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
-            ORDER BY combined_score DESC
-        """
-        
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
-            logger.debug("HyDE V2 Document Retrieve with HNSW")
-            cursor.execute(sql_query)
-            results = cursor.fetchall()
             
-            for row in results:
-                doc_id, title, content, hyde_score, query_score, combined_score = row
+            # Use same SQL pattern as BasicRAG V2 (no WHERE threshold, filter in Python)
+            sql = f"""
+                SELECT TOP {top_k * 2}
+                    doc_id,
+                    title,
+                    text_content,
+                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+                FROM {self.schema}.SourceDocuments
+                WHERE embedding IS NOT NULL
+                ORDER BY similarity_score DESC
+            """
+            
+            cursor.execute(sql, [hyde_embedding_str])
+            all_results = cursor.fetchall()
+            
+            logger.info(f"Retrieved {len(all_results)} raw results from database")
+            
+            # Filter by similarity threshold and limit to top_k (like BasicRAG V2)
+            filtered_results = []
+            for row in all_results:
+                score = float(row[3]) if row[3] is not None else 0.0
+                if score > similarity_threshold:
+                    filtered_results.append(row)
+                if len(filtered_results) >= top_k:
+                    break
+            
+            logger.info(f"Filtered to {len(filtered_results)} documents above threshold {similarity_threshold}")
+            
+            for row in filtered_results:
+                doc_id = row[0]
+                title = row[1] or ""
+                content = row[2] or ""
+                similarity = row[3]
+                
+                # Ensure score is float (like BasicRAG V2)
+                similarity = float(similarity) if similarity is not None else 0.0
+                
                 doc = Document(
                     id=doc_id,
                     content=content,
-                    score=combined_score
+                    score=similarity
                 )
-                # Store metadata separately
+                # Store metadata separately for later use
                 doc._metadata = {
                     "title": title,
-                    "hyde_score": hyde_score,
-                    "query_score": query_score,
-                    "combined_score": combined_score,
+                    "similarity_score": similarity,
                     "source": "HyDE_V2_HNSW"
                 }
                 retrieved_docs.append(doc)
                 
-            print(f"HyDE V2: Retrieved {len(retrieved_docs)} documents using hypothetical document embedding")
         except Exception as e:
             logger.error(f"Error retrieving documents: {e}")
-            print(f"Error retrieving documents: {e}")
+            raise
         finally:
             if cursor:
                 cursor.close()
@@ -105,43 +120,41 @@ Hypothetical Answer:"""
     
     @timing_decorator
     def generate_answer(self, query: str, documents: List[Document], hypothetical_doc: str) -> str:
-        """
-        Generate answer using retrieved documents and the hypothetical document context
-        """
+        """Generate answer using LLM based on retrieved documents and hypothetical document context."""
         if not documents:
-            return "I couldn't find relevant information to answer your question."
+            return "I couldn't find any relevant information to answer your question."
         
-        # Prepare context from documents
+        # Prepare context from documents (same pattern as BasicRAG V2)
         context_parts = []
-        for i, doc in enumerate(documents[:3], 1):
+        for i, doc in enumerate(documents[:3], 1):  # Use top 3 documents
+            # Get metadata from _metadata attribute if it exists
             metadata = getattr(doc, '_metadata', {})
             title = metadata.get('title', 'Untitled')
-            hyde_score = metadata.get('hyde_score', 0)
-            query_score = metadata.get('query_score', 0)
-            
+            score = float(doc.score) if doc.score is not None else 0.0
             content_preview = doc.content[:500] if doc.content else ""
-            context_parts.append(
-                f"Document {i} (HyDE Score: {hyde_score:.3f}, Query Score: {query_score:.3f}, Title: {title}):\n{content_preview}..."
-            )
+            context_parts.append(f"Document {i} (Score: {score:.3f}, Title: {title}):\n{content_preview}...")
         
         context = "\n\n".join(context_parts)
         
-        # Include the hypothetical document in the prompt for comparison
-        prompt = f"""Based on the following retrieved documents and a hypothetical answer, provide a comprehensive response to the question.
+        # Include the hypothetical document in the prompt for HyDE-specific context
+        prompt = f"""Based on the following context and hypothetical answer, please answer the question.
 
-Hypothetical Answer (generated):
+Hypothetical Answer (generated for guidance):
 {hypothetical_doc[:300]}...
 
 Retrieved Documents:
 {context}
-
+ 
 Question: {query}
-
-Please provide a factual answer based primarily on the retrieved documents, using the hypothetical answer only as a guide for structure and completeness:"""
+ 
+Please provide a comprehensive answer based primarily on the retrieved documents, using the hypothetical answer as guidance for structure and completeness. If the context doesn't contain enough information to fully answer the question, please state what information is available and what is missing.
+ 
+Answer:"""
         
+        # Generate answer
         try:
-            response = self.llm_func(prompt)
-            return response
+            answer = self.llm_func(prompt)
+            return answer
         except Exception as e:
             logger.error(f"Error generating answer: {e}")
             return f"Error generating answer: {str(e)}"

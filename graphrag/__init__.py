@@ -1,27 +1,14 @@
-# graphrag/__init__.py
+"""
+GraphRAG module - Knowledge Graph enhanced RAG
+"""
 
-from .pipeline import FixedGraphRAGPipeline
+# Import the optimized V3 pipeline as the default
+from .pipeline_v3 import GraphRAGPipelineV3 as GraphRAGPipeline
 
-def create_graphrag_pipeline(iris_connector=None, llm_func=None):
-    """
-    Factory function to create a fixed GraphRAG pipeline that properly uses the knowledge graph.
-    """
-    from common.iris_connector import get_iris_connection
-    from common.utils import get_embedding_func, get_llm_func
-    
-    if iris_connector is None:
-        iris_connector = get_iris_connection()
-    
-    if llm_func is None:
-        llm_func = get_llm_func()
-    
-    embedding_func = get_embedding_func()
-    
-    return FixedGraphRAGPipeline(
-        iris_connector=iris_connector,
-        embedding_func=embedding_func,
-        llm_func=llm_func
-    )
+# Also make V2 available for backward compatibility
+from .pipeline_v2 import GraphRAGPipelineV2
 
-# Backward compatibility alias
-GraphRAGPipeline = FixedGraphRAGPipeline
+# Make V3 available explicitly
+from .pipeline_v3 import GraphRAGPipelineV3
+
+__all__ = ['GraphRAGPipeline', 'GraphRAGPipelineV2', 'GraphRAGPipelineV3']

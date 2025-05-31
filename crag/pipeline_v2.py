@@ -3,6 +3,7 @@
 import logging
 from typing import List, Dict, Any, Callable, Optional
 from common.utils import Document, timing_decorator
+from common.jdbc_stream_utils import read_iris_stream
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -22,35 +23,58 @@ class CRAGPipelineV2:
         self.schema = "RAG"
     
     @timing_decorator
-    def retrieve_documents(self, query: str, top_k: int = 5, similarity_threshold: float = 0.0) -> List[Document]:
+    def retrieve_documents(self, query: str, top_k: int = 5, similarity_threshold: float = 0.0, _recursion_depth: int = 0) -> List[Document]:
         """
         Retrieve documents using HNSW-accelerated vector search with corrective mechanisms
         """
+        # Prevent infinite recursion
+        if _recursion_depth > 3:
+            print(f"CRAG V2: Maximum recursion depth reached, returning current results")
+            return []
+            
         # Generate query embedding
         query_embedding = self.embedding_func([query])[0]
         query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
         
         retrieved_docs = []
         
-        # Initial retrieval using HNSW on VECTOR column
-        sql_query = f"""
-            SELECT TOP {top_k * 2} doc_id, title, text_content,
-                   VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) AS score
-            FROM {self.schema}.SourceDocuments
-            WHERE document_embedding_vector IS NOT NULL
-              AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
-            ORDER BY score DESC
-        """
-        
+        # Use the working pattern: TO_VECTOR around VARCHAR embedding column with parameterized query
         cursor = None
         try:
             cursor = self.iris_connector.cursor()
-            logger.debug(f"CRAG V2 Document Retrieve with threshold {similarity_threshold}")
-            cursor.execute(sql_query)
-            results = cursor.fetchall()
+            logger.debug(f"CRAG V2 Document Retrieve with threshold {similarity_threshold}, depth {_recursion_depth}")
+            
+            # Use the exact working pattern from BasicRAG
+            sql_query = f"""
+                SELECT TOP {top_k * 2} doc_id, title, text_content,
+                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+                FROM RAG.SourceDocuments
+                WHERE embedding IS NOT NULL
+                ORDER BY similarity_score DESC
+            """
+            
+            cursor.execute(sql_query, [query_embedding_str])
+            all_results = cursor.fetchall()
 
-            for row in results:
+            # Filter by similarity threshold and limit to top_k
+            filtered_results = []
+            for row in all_results:
+                score = float(row[3]) if row[3] is not None else 0.0
+                if score > similarity_threshold:
+                    filtered_results.append(row)
+                if len(filtered_results) >= top_k:
+                    break
+
+            for row in filtered_results:
                 doc_id, title, content, score = row
+                
+                # Handle potential stream objects for content
+                content = read_iris_stream(content) if content else ""
+                title = read_iris_stream(title) if title else ""
+                
+                # Ensure score is float
+                score = float(score) if score is not None else 0.0
+                
                 doc = Document(
                     id=doc_id,
                     content=content,
@@ -73,13 +97,14 @@ class CRAGPipelineV2:
                 cursor.close()
         
         # Corrective step: If not enough high-quality results, lower threshold
-        # Ensure the threshold can go below 0.1 if needed
-        if len(retrieved_docs) < top_k and similarity_threshold > 0.0: # Changed 0.1 to 0.0
+        # Only apply corrective retrieval if we have some threshold to work with and haven't found enough docs
+        if len(retrieved_docs) < top_k and similarity_threshold > 0.001 and _recursion_depth < 3:
             print(f"CRAG V2: Applying corrective retrieval with lower threshold")
             additional_docs = self.retrieve_documents(
                 query,
                 top_k=top_k - len(retrieved_docs),
-                similarity_threshold=max(0.0, similarity_threshold * 0.7) # Ensure threshold doesn't go negative
+                similarity_threshold=max(0.001, similarity_threshold * 0.5),  # More aggressive threshold reduction
+                _recursion_depth=_recursion_depth + 1
             )
             
             # Add only unique documents
@@ -136,7 +161,7 @@ Please provide a comprehensive answer based on the available information:"""
             logger.error(f"Error generating answer: {e}")
             return f"Error generating answer: {str(e)}"
     
-    def run(self, query: str, top_k: int = 5) -> Dict[str, Any]:
+    def run(self, query: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Execute the CRAG V2 pipeline with HNSW acceleration
         """

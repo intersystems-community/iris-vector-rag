@@ -95,7 +95,7 @@ class JDBCFixedGraphRAGPipeline:
                     embedding_query = f"""
                         SELECT TOP {top_k - len(seed_entities)} 
                                entity_id, entity_name, entity_type,
-                               VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS similarity
+                               VECTOR_COSINE(embedding, TO_VECTOR(?, DOUBLE)) AS similarity
                         FROM RAG.Entities
                         WHERE embedding IS NOT NULL
                           AND LENGTH(embedding) > 100
@@ -306,19 +306,26 @@ class JDBCFixedGraphRAGPipeline:
             query_vector_str = ','.join(map(str, query_embedding))
             
             vector_query = f"""
-                SELECT TOP {top_k} doc_id, text_content,
+                SELECT TOP {int(top_k * 2)} doc_id, text_content,
                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
-                  AND LENGTH(embedding) > 1000
-                  AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > 0.1
                 ORDER BY score DESC
             """
             
-            cursor.execute(vector_query, (query_vector_str, query_vector_str))
-            results = cursor.fetchall()
+            cursor.execute(vector_query, (query_vector_str,))
+            all_results = cursor.fetchall()
             
-            for doc_id, content, score in results:
+            # Filter by similarity threshold and limit to top_k
+            filtered_results = []
+            for row in all_results:
+                score = float(row[2]) if row[2] is not None else 0.0
+                if score > 0.1:  # Use the original threshold
+                    filtered_results.append(row)
+                if len(filtered_results) >= top_k:
+                    break
+            
+            for doc_id, content, score in filtered_results:
                 # Handle JDBC stream objects
                 content_str = read_iris_stream(content)
                 

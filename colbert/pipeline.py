@@ -119,8 +119,14 @@ class OptimizedColbertRAGPipeline:
         # Generate query token embeddings
         query_token_embeddings = self.colbert_query_encoder(query_text)
         
-        if not query_token_embeddings:
-            logger.warning("OptimizedColBERT: Query encoder returned no embeddings.")
+        # Handle the case where query_token_embeddings might be a tuple (tokens, embeddings)
+        if isinstance(query_token_embeddings, tuple):
+            tokens, embeddings = query_token_embeddings
+            if len(tokens) == 0:
+                logger.warning("OptimizedColBERT: Query encoder returned no embeddings.")
+                return []
+        else:
+            logger.warning("OptimizedColBERT: Query encoder returned unexpected format.")
             return []
 
         candidate_docs_with_scores = []

@@ -3,6 +3,7 @@
 import logging
 from typing import List, Dict, Any, Callable, Optional
 from common.utils import Document, timing_decorator
+from common.jdbc_stream_utils import read_iris_stream
 
 logger = logging.getLogger(__name__)
 
@@ -27,17 +28,16 @@ class NodeRAGPipelineV2:
         """
         # Generate query embedding
         query_embedding = self.embedding_func([query])[0]
-        query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
+        query_embedding_str = f"[{','.join([f'{x:.10f}' for x in query_embedding])}]"
         
         retrieved_docs = []
         
         # Retrieve from documents using HNSW on VECTOR column
         sql_query = f"""
-            SELECT TOP {top_k} doc_id, title, text_content,
-                   VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) AS score
+            SELECT TOP {int(top_k * 2)} doc_id, title, text_content,
+                   VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
             FROM {self.schema}.SourceDocuments
-            WHERE document_embedding_vector IS NOT NULL
-              AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+            WHERE embedding IS NOT NULL
             ORDER BY score DESC
         """
         
@@ -45,11 +45,28 @@ class NodeRAGPipelineV2:
         try:
             cursor = self.iris_connector.cursor()
             logger.debug("NodeRAG V2 Document Retrieve with HNSW")
-            cursor.execute(sql_query)
-            results = cursor.fetchall()
+            cursor.execute(sql_query, [query_embedding_str])
+            all_results = cursor.fetchall()
             
-            for row in results:
+            # Filter by similarity threshold and limit to top_k
+            filtered_results = []
+            for row in all_results:
+                score = float(row[3]) if row[3] is not None else 0.0
+                if score > similarity_threshold:
+                    filtered_results.append(row)
+                if len(filtered_results) >= top_k:
+                    break
+            
+            for row in filtered_results:
                 doc_id, title, content, score = row
+                
+                # Handle potential stream objects for content
+                content = read_iris_stream(content) if content else ""
+                title = read_iris_stream(title) if title else ""
+                
+                # Ensure score is float
+                score = float(score) if score is not None else 0.0
+                
                 doc = Document(
                     id=doc_id,
                     content=content,
@@ -80,7 +97,7 @@ class NodeRAGPipelineV2:
         """
         # Generate query embedding
         query_embedding = self.embedding_func([query])[0]
-        query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
+        query_embedding_str = f"[{','.join([f'{x:.10f}' for x in query_embedding])}]"
         
         retrieved_chunks = []
         
@@ -88,11 +105,11 @@ class NodeRAGPipelineV2:
         sql_query = f"""
             SELECT TOP {top_k} c.chunk_id, c.doc_id, c.chunk_text, c.chunk_index,
                    d.title,
-                   VECTOR_COSINE(c.chunk_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) AS score
+                   VECTOR_COSINE(TO_VECTOR(c.embedding), TO_VECTOR(?)) AS score
             FROM {self.schema}.DocumentChunks c
             JOIN {self.schema}.SourceDocuments d ON c.doc_id = d.doc_id
-            WHERE c.chunk_embedding_vector IS NOT NULL
-              AND VECTOR_COSINE(c.chunk_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+            WHERE c.embedding IS NOT NULL
+              AND VECTOR_COSINE(TO_VECTOR(c.embedding), TO_VECTOR(?)) > ?
             ORDER BY score DESC
         """
         
@@ -100,11 +117,19 @@ class NodeRAGPipelineV2:
         try:
             cursor = self.iris_connector.cursor()
             logger.debug("NodeRAG V2 Chunk Retrieve with HNSW")
-            cursor.execute(sql_query)
+            cursor.execute(sql_query, [query_embedding_str, query_embedding_str, similarity_threshold])
             results = cursor.fetchall()
             
             for row in results:
                 chunk_id, doc_id, chunk_text, chunk_index, title, score = row
+                
+                # Handle potential stream objects
+                chunk_text = read_iris_stream(chunk_text) if chunk_text else ""
+                title = read_iris_stream(title) if title else ""
+                
+                # Ensure score is float
+                score = float(score) if score is not None else 0.0
+                
                 chunk = Document(
                     id=chunk_id,
                     content=chunk_text,
@@ -141,13 +166,15 @@ class NodeRAGPipelineV2:
         # Add documents with higher weight
         for doc in documents:
             doc._node_type = "document"
-            doc._adjusted_score = (doc.score or 0) * 1.2  # Boost document scores
+            score = float(doc.score) if doc.score is not None else 0.0
+            doc._adjusted_score = score * 1.2  # Boost document scores
             all_results.append(doc)
         
         # Add chunks
         for chunk in chunks:
             chunk._node_type = "chunk"
-            chunk._adjusted_score = chunk.score or 0
+            score = float(chunk.score) if chunk.score is not None else 0.0
+            chunk._adjusted_score = score
             all_results.append(chunk)
         
         # Sort by adjusted score
@@ -218,7 +245,7 @@ Please provide a detailed answer based on the available information:"""
             logger.error(f"Error generating answer: {e}")
             return f"Error generating answer: {str(e)}"
     
-    def run(self, query: str, top_k: int = 5) -> Dict[str, Any]:
+    def run(self, query: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Execute the NodeRAG V2 pipeline with HNSW acceleration
         """
@@ -237,18 +264,21 @@ Please provide a detailed answer based on the available information:"""
         answer = self.generate_answer(query, merged_nodes)
         
         # Prepare results
+        retrieved_docs_format = [
+            {
+                "id": node.id,
+                "type": getattr(node, '_node_type', 'unknown'),
+                "content": node.content[:200] + "..." if len(node.content) > 200 else node.content,
+                "metadata": getattr(node, '_metadata', {})
+            }
+            for node in merged_nodes
+        ]
+        
         result = {
             "query": query,
             "answer": answer,
-            "retrieved_nodes": [
-                {
-                    "id": node.id,
-                    "type": getattr(node, '_node_type', 'unknown'),
-                    "content": node.content[:200] + "..." if len(node.content) > 200 else node.content,
-                    "metadata": getattr(node, '_metadata', {})
-                }
-                for node in merged_nodes
-            ],
+            "retrieved_nodes": retrieved_docs_format,  # Keep original key
+            "retrieved_documents": retrieved_docs_format,  # Add expected key for compatibility
             "metadata": {
                 "pipeline": "NodeRAG_V2",
                 "uses_hnsw": True,

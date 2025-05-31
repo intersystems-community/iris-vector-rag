@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-05-30T18:51:13.159544",
+  "tests": {
+    "database_connection": {
+      "success": true,
+      "document_count": 1000,
+      "chunk_count": 0,
+      "embedding_count": 0
+    },
+    "framework_initialization": {
+      "scaling_framework": true,
+      "dataset_scaler": true,
+      "orchestrator": true
+    },
+    "ragas_availability": {
+      "success": true,
+      "real_llm": true
+    },
+    "database_stats": {
+      "success": true,
+      "stats": {
+        "document_count": 1000,
+        "chunk_count": 0,
+        "token_embedding_count": 0,
+        "entity_count": 0,
+        "embedding_count": 0,
+        "content_size_bytes": 1493328.0,
+        "content_size_mb": 1.4241485595703125,
+        "timestamp": "2025-05-30T18:51:15.636718"
+      }
+    },
+    "single_technique": {
+      "success": false,
+      "error": "BasicRAGPipelineJDBC.run() got an unexpected keyword argument 'similarity_threshold'"
+    }
+  },
+  "overall_status": "not_ready"
+}

@@ -1,0 +1,28 @@
+version: '3.8' # Specify a compose file version
+
+services:
+  iris_licensed_db: # New service name
+    image: containers.intersystems.com/intersystems/iris-arm64:2025.1 # Corrected image based on running container
+    container_name: iris_db_rag_licensed # Match existing container name
+    ports:
+      - "1972:1972"
+      - "52773:52773"
+    environment:
+      - IRISNAMESPACE=USER
+      - ISC_DEFAULT_PASSWORD=SYS
+      # Add any other necessary environment variables for the licensed version
+    volumes:
+      - rag-templates_iris_db_data_licensed:/usr/irissys/mgr # Reference the exact existing volume
+    stdin_open: true
+    tty: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:52773/csp/sys/UtilHome.csp"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    command: --check-caps false -a "iris session iris -U%SYS '##class(Security.Users).UnExpireUserPasswords(\"*\")'"
+
+volumes:
+  rag-templates_iris_db_data_licensed:
+    external: true # Mark the volume as externally created and managed
