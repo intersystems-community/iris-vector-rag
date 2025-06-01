@@ -18,9 +18,11 @@ import statistics
 from typing import List, Dict, Any
 
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from chunking.enhanced_chunking_service import (
+from chunking.enhanced_chunking_service import ( # Path remains correct
     EnhancedDocumentChunkingService,
     TokenEstimator,
     BiomedicalSemanticAnalyzer,
@@ -30,17 +32,17 @@ from chunking.enhanced_chunking_service import (
     HybridChunkingStrategy,
     ChunkingQuality
 )
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
 
 # Import all RAG techniques for integration testing
-from basic_rag.pipeline import run_basic_rag
-from hyde.pipeline import run_hyde_rag
-from crag.pipeline import run_crag
-from colbert.pipeline_optimized import run_colbert_rag
-from noderag.pipeline import run_noderag
-from graphrag.pipeline import run_graphrag
-from hybrid_ifind_rag.pipeline import run_hybrid_ifind_rag
+from src.deprecated.basic_rag.pipeline import run_basic_rag # Updated import
+from src.experimental.hyde.pipeline import run_hyde_rag # Updated import
+from src.experimental.crag.pipeline import run_crag # Updated import
+from src.working.colbert.pipeline import run_colbert_rag # Updated import
+from src.experimental.noderag.pipeline import run_noderag # Updated import
+from src.experimental.graphrag.pipeline import run_graphrag # Updated import
+from src.experimental.hybrid_ifind_rag.pipeline import run_hybrid_ifind_rag # Updated import
 
 class TestEnhancedChunkingCore:
     """Test core enhanced chunking functionality."""

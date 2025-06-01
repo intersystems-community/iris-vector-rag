@@ -1,0 +1,37 @@
+# Database Configuration
+database:
+  db_host: "localhost"         # Database host address
+  db_port: 1972                # Database port number
+  db_user: "SuperUser"         # Database username (default for docker)
+  db_password: "SYS"           # Database password (default for docker ISC_DEFAULT_PASSWORD)
+  db_namespace: "USER"         # Database namespace
+
+# Default Embedding Model Configuration
+embedding_model:
+  name: "sentence-transformers/all-MiniLM-L6-v2"    # Name of the sentence transformer model
+  dimension: 384               # Embedding dimension
+
+# Default Chunking Parameters
+chunking:
+  chunk_size: 1000             # Target size of text chunks (e.g., in tokens or characters)
+  chunk_overlap: 200           # Number of tokens/characters to overlap between chunks
+
+# Data Directories
+paths:
+  data_dir: "data/"                   # Root directory for all data
+  pmc_sample_dir: "data/pmc_sample/"  # Directory for PMC sample documents
+
+# Logging Configuration
+logging:
+  log_level: "INFO"            # Logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s" # Logging format string
+
+# Test Configuration
+testing:
+  min_docs_e2e: 1000         # Minimum documents required for E2E tests
+
+# ColBERT Specific Configuration
+colbert:
+  document_encoder_model: "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT" # Model for ColBERT document token embeddings
+  # query_encoder_model: "lightonai/GTE-ModernColBERT-v1" # Can be same or different for query side
+  candidate_pool_size: 100 # Number of candidates for Stage 1 retrieval before ColBERT re-ranking

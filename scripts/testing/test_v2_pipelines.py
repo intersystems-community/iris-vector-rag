@@ -7,11 +7,14 @@ import sys
 import time
 from typing import Dict, Any
 
+import os # Added for path manipulation
 # Add the project root to the Python path
-sys.path.insert(0, '.')
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 
 def test_pipeline(pipeline_class, pipeline_name: str, query: str = "What are the symptoms of diabetes?") -> Dict[str, Any]:
     """Test a single pipeline and return results"""
@@ -99,7 +102,7 @@ def main():
     
     # Test BasicRAG V2
     try:
-        from basic_rag.pipeline_v2 import BasicRAGPipelineV2
+        from src.deprecated.basic_rag.pipeline_v2 import BasicRAGPipelineV2 # Updated import
         result = test_pipeline(BasicRAGPipelineV2, "BasicRAG V2", test_query)
         results.append(result)
     except ImportError as e:
@@ -107,7 +110,7 @@ def main():
     
     # Test CRAG V2
     try:
-        from crag.pipeline_v2 import CRAGPipelineV2
+        from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
         result = test_pipeline(CRAGPipelineV2, "CRAG V2", test_query)
         results.append(result)
     except ImportError as e:
@@ -115,7 +118,7 @@ def main():
     
     # Test HyDE V2
     try:
-        from hyde.pipeline_v2 import HyDEPipelineV2
+        from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
         result = test_pipeline(HyDEPipelineV2, "HyDE V2", test_query)
         results.append(result)
     except ImportError as e:
@@ -123,7 +126,7 @@ def main():
     
     # Test NodeRAG V2
     try:
-        from noderag.pipeline_v2 import NodeRAGPipelineV2
+        from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
         result = test_pipeline(NodeRAGPipelineV2, "NodeRAG V2", test_query)
         results.append(result)
     except ImportError as e:
@@ -131,7 +134,7 @@ def main():
     
     # Test GraphRAG V2
     try:
-        from graphrag.pipeline_v2 import GraphRAGPipelineV2
+        from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
         result = test_pipeline(GraphRAGPipelineV2, "GraphRAG V2", test_query)
         results.append(result)
     except ImportError as e:
@@ -139,7 +142,7 @@ def main():
     
     # Test HybridiFindRAG V2
     try:
-        from hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2
+        from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2 # Updated import
         result = test_pipeline(HybridiFindRAGPipelineV2, "HybridiFindRAG V2", test_query)
         results.append(result)
     except ImportError as e:

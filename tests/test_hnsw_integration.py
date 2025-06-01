@@ -17,21 +17,23 @@ import logging
 from typing import List, Dict, Any, Tuple
 
 # Add the project root to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.db_vector_search import search_source_documents_dynamically, search_knowledge_graph_nodes_dynamically
-from basic_rag.pipeline import BasicRAGPipeline
-from common.utils import get_embedding_func, get_llm_func
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.db_vector_search import search_source_documents_dynamically, search_knowledge_graph_nodes_dynamically # Updated import
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import other RAG techniques for integration testing
 try:
-    from noderag.pipeline import NodeRAGPipeline
+    from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
 except ImportError:
     NodeRAGPipeline = None
 
 try:
-    from hyde.pipeline import HydeRAGPipeline  
+    from src.experimental.hyde.pipeline import HyDEPipeline as HydeRAGPipeline # Updated import and aliased
 except ImportError:
     HydeRAGPipeline = None
 

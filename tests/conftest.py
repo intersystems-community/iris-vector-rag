@@ -96,35 +96,70 @@ def llm_client_fixture():
     yield llm_func
 
 @pytest.fixture(scope="session")
-def colbert_query_encoder_fixture():
+def colbert_query_encoder(): # Renamed from colbert_query_encoder_fixture
     """
-    Provides a function that generates token-level embeddings for ColBERT queries.
-    This is a temporary placeholder implementation until we have a proper ColBERT encoder.
+    Provides a function that generates token-level embeddings for ColBERT queries,
+    using the configured ColBERT document encoder model.
     """
     print("\nFixture: Initializing ColBERT query encoder function...")
     
-    # For now, we'll use the regular embedding function but wrap it to return multiple embeddings
-    # (one per token) instead of a single embedding
-    embedding_func = get_embedding_func()
+    from transformers import AutoTokenizer, AutoModel
+    import torch
+    from common.utils import get_config_value # Assuming get_config_value is accessible
+
+    model_name = get_config_value("colbert.document_encoder_model", "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT")
+    print(f"ColBERT Query Encoder Fixture: Loading model {model_name}")
     
-    def colbert_query_encoder(text):
-        # Simple tokenization by splitting on spaces
-        tokens = text.split()
-        if not tokens:
-            tokens = [text]  # If no spaces, use the whole text as one token
-            
-        # Limit tokens to avoid excessive processing
-        tokens = tokens[:20]
+    # Cache model and tokenizer at fixture scope
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
+        model.eval()
+        print(f"ColBERT Query Encoder Fixture: Model {model_name} loaded successfully.")
+    except Exception as e:
+        print(f"FATAL: Could not load ColBERT model {model_name} in fixture: {e}")
+        # Fallback to a dummy encoder if model loading fails, so tests can still run and report errors
+        def dummy_encoder(text):
+            print(f"ERROR: Using dummy ColBERT query encoder due to model load failure for {model_name}.")
+            tokens = text.split()[:5] # simple split
+            return [[0.0] * 768 for _ in tokens] # Return 768-dim zero vectors
+        yield dummy_encoder
+        return
+
+    max_length = 512 # Default max length, can be configured if needed
+
+    def colbert_query_encoder(text: str) -> list[list[float]]:
+        if not text or not isinstance(text, str):
+            print(f"Warning: ColBERT query encoder received invalid text: {text}")
+            return []
+
+        inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=max_length, padding=True)
         
-        # Get embeddings for each token
-        try:
-            token_embeddings = embedding_func(tokens)
-            print(f"Generated {len(token_embeddings)} token embeddings for ColBERT query")
-            return token_embeddings
-        except Exception as e:
-            print(f"Error generating ColBERT token embeddings: {e}")
-            # Return dummy embeddings (3 tokens with 10-dim vectors)
-            return [[0.1] * 10 for _ in range(3)]
+        with torch.no_grad():
+            outputs = model(**inputs)
+        
+        token_embeddings_tensor = None
+        if hasattr(outputs, 'last_hidden_state'): # ColBERT models typically use this when loaded with AutoModel
+            token_embeddings_tensor = outputs.last_hidden_state.squeeze(0)
+        else:
+            print(f"Error: 'last_hidden_state' not found in outputs for ColBERT query model {model_name}.")
+            return [] # Or raise an error
+
+        input_ids_list = inputs["input_ids"].squeeze(0).tolist()
+        tokens_from_tokenizer = tokenizer.convert_ids_to_tokens(input_ids_list)
+        
+        valid_tokens = []
+        valid_embeddings = []
+        attention_mask = inputs.get("attention_mask", torch.ones_like(inputs["input_ids"])).squeeze(0)
+
+        for i, token_str in enumerate(tokens_from_tokenizer):
+            if attention_mask[i].item() == 1: # Only include non-padded tokens
+                if token_str not in [tokenizer.cls_token, tokenizer.sep_token, tokenizer.pad_token]: # Exclude special tokens
+                    valid_tokens.append(token_str)
+                    valid_embeddings.append(token_embeddings_tensor[i].cpu().numpy().tolist())
+        
+        # print(f"Generated {len(valid_embeddings)} token embeddings for ColBERT query (dim: {len(valid_embeddings[0]) if valid_embeddings else 'N/A'}) for tokens: {valid_tokens}")
+        return valid_tokens, valid_embeddings
     
     yield colbert_query_encoder
 

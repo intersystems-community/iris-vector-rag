@@ -12,12 +12,16 @@ from typing import Dict, List, Any, Optional
 import hashlib
 import json
 from functools import lru_cache
+import os # Added for path manipulation
 
-sys.path.insert(0, '.')
+# Add project root to sys.path to allow for absolute imports from src
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 
 class OptimizedHybridiFindRAGPipeline(HybridiFindRAGPipeline):
     """

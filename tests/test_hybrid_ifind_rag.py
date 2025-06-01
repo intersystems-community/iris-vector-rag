@@ -10,8 +10,15 @@ import pytest
 import logging
 from unittest.mock import Mock, patch, MagicMock
 from typing import List, Dict, Any
+import sys # Added for sys.path manipulation
+import os # Added for os.path manipulation
 
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline, create_hybrid_ifind_rag_pipeline
+# Add project root to sys.path to allow for absolute imports from src
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline, create_hybrid_ifind_rag_pipeline # Updated import
 
 logger = logging.getLogger(__name__)
 

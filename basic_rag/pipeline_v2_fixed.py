@@ -18,7 +18,7 @@ except ImportError:
     IRISConnection = Any
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
-from common.iris_connector import get_iris_connection
+from common.iris_connector_jdbc import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
@@ -52,22 +52,23 @@ class BasicRAGPipelineV2Fixed:
         try:
             cursor = self.iris_connector.cursor()
             
-            # Build SQL query as a complete string without parameters
-            # This avoids IRIS parameter parsing issues with colons
+            # Use working VECTOR_COSINE syntax with proper parameter binding
+            # Format vector as JSON array string for TO_VECTOR function
+            query_vector_str = '[' + ','.join(map(str, query_embedding)) + ']'
+            
             sql = f"""
-                SELECT TOP {top_k} 
-                    doc_id, 
-                    title, 
+                SELECT TOP {top_k}
+                    doc_id,
+                    title,
                     text_content,
-                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as similarity_score
+                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
                 FROM {self.schema}.SourceDocuments
-                WHERE document_embedding_vector IS NOT NULL
-                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+                WHERE embedding IS NOT NULL
                 ORDER BY similarity_score DESC
             """
             
-            # Execute without parameters
-            cursor.execute(sql)
+            # Execute with parameter binding
+            cursor.execute(sql, [query_vector_str])
             results = cursor.fetchall()
             
             logger.info(f"Retrieved {len(results)} documents using HNSW index")
@@ -222,12 +223,12 @@ Please provide a comprehensive answer based on the information provided. If the 
             return f"I encountered an error while generating the answer: {str(e)}"
 
     @timing_decorator
-    def run(self, query: str, top_k: int = 5) -> Dict[str, Any]:
+    def run(self, query: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
         """
         Runs the complete RAG pipeline.
         """
         # Retrieve relevant documents
-        documents = self.retrieve_documents(query, top_k=top_k)
+        documents = self.retrieve_documents(query, top_k=top_k, similarity_threshold=similarity_threshold)
         
         # Generate answer
         answer = self.generate_answer(query, documents)

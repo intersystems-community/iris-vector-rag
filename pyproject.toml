@@ -46,6 +46,8 @@ python-dotenv = "^1.0.0" # For managing environment variables (API keys, configs
 pandas = {version = "^2.0.0", optional = true} # For data handling in loader/eval
 tqdm = "^4.66.0" # For progress bars in large-scale processing
 psutil = "^5.9.0" # For memory usage monitoring in large-scale tests
+PyYAML = "^6.0" # For YAML file parsing
+jaydebeapi = "^1.2.3" # For JDBC connections
 
 # Optional dependencies for specific RAG techniques or full feature set
 pytest-mock = "^3.14.0"

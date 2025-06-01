@@ -8,12 +8,14 @@ from typing import Optional
 import contextlib # For redirecting stdout
 
 # Add project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming scripts is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from basic_rag.pipeline import BasicRAGPipeline
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
-from common.utils import get_embedding_func, get_llm_func
-from common.iris_connector_jdbc import get_iris_connection
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from src.common.iris_connector_jdbc import get_iris_connection # Updated import
 
 # Configure logging to capture specific messages for timing
 log_capture_string_io = io.StringIO()

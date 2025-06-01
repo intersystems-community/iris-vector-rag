@@ -46,24 +46,26 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import gc
 
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
-from data.loader import load_documents_to_iris
-from data.pmc_processor import process_pmc_files
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func, get_colbert_doc_encoder_func_adapted # Updated import
+from data.loader import load_documents_to_iris # Path remains correct
+from data.pmc_processor import process_pmc_files # Path remains correct
 
 # Import all RAG pipelines
-from basic_rag.pipeline import BasicRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from crag.pipeline import CRAGPipeline
-from colbert.pipeline_optimized import OptimizedColbertRAGPipeline
-from noderag.pipeline import NodeRAGPipeline
-from graphrag.pipeline import GraphRAGPipeline
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.working.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
 
 # Import chunking service
-from chunking.enhanced_chunking_service import EnhancedChunkingService
+from chunking.enhanced_chunking_service import EnhancedChunkingService # Path remains correct
 
 # Configure logging
 logging.basicConfig(
@@ -168,39 +170,73 @@ class SystemMonitor:
 
 class HNSWSchemaManager:
     """Manages HNSW schema deployment and configuration"""
-    
+
     def __init__(self, connection):
         self.connection = connection
-        
+
     def deploy_hnsw_schema(self) -> bool:
         """Deploy HNSW schema with native VECTOR types and indexes"""
         logger.info("🚀 Deploying HNSW vector database schema...")
-        
         try:
             cursor = self.connection.cursor()
+
+            # Drop existing schema and tables
+            drop_statements = [
+                "DROP TABLE IF EXISTS RAG_HNSW.DocumentChunks CASCADE",
+                "DROP TABLE IF EXISTS RAG_HNSW.DocumentTokenEmbeddings CASCADE",
+                "DROP TABLE IF EXISTS RAG_HNSW.KnowledgeGraphEdges CASCADE",
+                "DROP TABLE IF EXISTS RAG_HNSW.KnowledgeGraphNodes CASCADE",
+                "DROP TABLE IF EXISTS RAG_HNSW.SourceDocuments CASCADE",
+                "DROP SCHEMA IF EXISTS RAG_HNSW CASCADE"
+            ]
+            for stmt in drop_statements:
+                try:
+                    cursor.execute(stmt)
+                    logger.debug(f"Executed: {stmt}")
+                except Exception as e_drop: # nosec
+                    logger.debug(f"Could not execute '{stmt}': {e_drop} (might not exist)")
             
-            # Create HNSW-optimized schema
-            hnsw_schema_sql = """
-            -- HNSW Vector Database Schema for Enterprise RAG
-            -- Native VECTOR types with HNSW indexing for optimal performance
+            cursor.execute("CREATE SCHEMA RAG_HNSW")
+            logger.info("✅ RAG_HNSW schema created.")
+
+            # Create SourceDocuments table
+            create_sourcedocs_sql = """
+CREATE TABLE RAG_HNSW.SourceDocuments (
+    doc_id VARCHAR(255) PRIMARY KEY,
+    title VARCHAR(1000),
+    text_content CLOB,
+    metadata CLOB,
+    embedding_model VARCHAR(255),
+    embedding_dimensions INTEGER,
+    embedding_vector VECTOR(DOUBLE, 768),
+    embedding_str VARCHAR(60000),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)"""
+            cursor.execute(create_sourcedocs_sql.strip())
+            logger.info("✅ RAG_HNSW.SourceDocuments table created.")
+
+            # Create additional tables and indexes using helper methods
+            self._create_additional_tables(cursor)
+            self._create_hnsw_indexes(cursor)
+            self._create_standard_indexes(cursor)
             
-            -- Drop existing schema if exists
-            DROP TABLE IF EXISTS RAG_HNSW.DocumentChunks CASCADE;
-            DROP TABLE IF EXISTS RAG_HNSW.DocumentTokenEmbeddings CASCADE;
-            DROP TABLE IF EXISTS RAG_HNSW.KnowledgeGraphEdges CASCADE;
-            DROP TABLE IF EXISTS RAG_HNSW.KnowledgeGraphNodes CASCADE;
-            DROP TABLE IF EXISTS RAG_HNSW.SourceDocuments CASCADE;
-            DROP SCHEMA IF EXISTS RAG_HNSW CASCADE;
-            
-            -- Create HNSW schema
-            CREATE SCHEMA RAG_HNSW;
-            
-            -- Main documents table with native VECTOR types
-            CREATE TABLE RAG_HNSW.SourceDocuments (
-def _create_additional_tables(self, cursor):
+            self.connection.commit() # Commit all schema changes
+            cursor.close()
+            logger.info("✅ HNSW schema deployment completed successfully.")
+            return True
+        except Exception as e:
+            logger.error(f"❌ HNSW schema deployment failed: {e}")
+            try:
+                self.connection.rollback() # Rollback on error
+            except Exception as rb_e:
+                logger.error(f"Rollback failed: {rb_e}")
+            return False
+
+    def _create_additional_tables(self, cursor):
         """Create additional tables for HNSW schema"""
+        logger.info("🔧 Creating additional HNSW tables...")
         additional_tables_sql = """
-        -- Document chunks table for enhanced chunking with HNSW
         CREATE TABLE RAG_HNSW.DocumentChunks (
             chunk_id VARCHAR(255) PRIMARY KEY,
             doc_id VARCHAR(255),
@@ -210,7 +246,6 @@ def _create_additional_tables(self, cursor):
             start_position INTEGER,
             end_position INTEGER,
             token_count INTEGER,
-            -- Native VECTOR column for chunk-level HNSW indexing
             embedding_vector VECTOR(DOUBLE, 768),
             embedding_str VARCHAR(60000),
             semantic_coherence_score DECIMAL(5,4),
@@ -220,12 +255,10 @@ def _create_additional_tables(self, cursor):
             FOREIGN KEY (doc_id) REFERENCES RAG_HNSW.SourceDocuments(doc_id)
         );
         
-        -- ColBERT token embeddings with HNSW optimization
         CREATE TABLE RAG_HNSW.DocumentTokenEmbeddings (
             doc_id VARCHAR(255),
             token_sequence_index INTEGER,
             token_text VARCHAR(255),
-            -- Native VECTOR for token-level HNSW indexing
             token_embedding_vector VECTOR(DOUBLE, 128),
             token_embedding_str VARCHAR(30000),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -233,19 +266,16 @@ def _create_additional_tables(self, cursor):
             FOREIGN KEY (doc_id) REFERENCES RAG_HNSW.SourceDocuments(doc_id)
         );
         
-        -- Knowledge Graph Nodes with HNSW support
         CREATE TABLE RAG_HNSW.KnowledgeGraphNodes (
             node_id VARCHAR(255) PRIMARY KEY,
             node_name VARCHAR(500),
             node_type VARCHAR(100),
             properties CLOB,
-            -- Native VECTOR for graph node embeddings
             embedding_vector VECTOR(DOUBLE, 768),
             embedding_str VARCHAR(60000),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         
-        -- Knowledge Graph Edges
         CREATE TABLE RAG_HNSW.KnowledgeGraphEdges (
             edge_id VARCHAR(255),
             source_node_id VARCHAR(255),
@@ -259,77 +289,48 @@ def _create_additional_tables(self, cursor):
             FOREIGN KEY (target_node_id) REFERENCES RAG_HNSW.KnowledgeGraphNodes(node_id)
         );
         """
-        
         for statement in additional_tables_sql.split(';'):
             if statement.strip():
                 cursor.execute(statement.strip())
-        
-        logger.info("✅ Additional HNSW tables created")
+        logger.info("✅ Additional HNSW tables created.")
     
     def _create_hnsw_indexes(self, cursor):
         """Create HNSW indexes on VECTOR columns"""
         logger.info("🔧 Creating HNSW indexes...")
-        
         hnsw_indexes = [
-            # Main document embeddings HNSW index
-            """
-            CREATE INDEX idx_hnsw_source_embeddings
-            ON RAG_HNSW.SourceDocuments (embedding_vector)
-            AS HNSW(M=16, efConstruction=200, Distance='COSINE')
-            """,
-            
-            # Document chunks HNSW index
-            """
-            CREATE INDEX idx_hnsw_chunk_embeddings
-            ON RAG_HNSW.DocumentChunks (embedding_vector)
-            AS HNSW(M=16, efConstruction=200, Distance='COSINE')
-            """,
-            
-            # ColBERT token embeddings HNSW index
-            """
-            CREATE INDEX idx_hnsw_token_embeddings
-            ON RAG_HNSW.DocumentTokenEmbeddings (token_embedding_vector)
-            AS HNSW(M=16, efConstruction=200, Distance='COSINE')
-            """,
-            
-            # Knowledge graph nodes HNSW index
-            """
-            CREATE INDEX idx_hnsw_kg_node_embeddings
-            ON RAG_HNSW.KnowledgeGraphNodes (embedding_vector)
-            AS HNSW(M=16, efConstruction=200, Distance='COSINE')
-            """
+            "CREATE INDEX idx_hnsw_source_embeddings ON RAG_HNSW.SourceDocuments (embedding_vector) AS HNSW(M=16, efConstruction=200, Distance='COSINE')",
+            "CREATE INDEX idx_hnsw_chunk_embeddings ON RAG_HNSW.DocumentChunks (embedding_vector) AS HNSW(M=16, efConstruction=200, Distance='COSINE')",
+            "CREATE INDEX idx_hnsw_token_embeddings ON RAG_HNSW.DocumentTokenEmbeddings (token_embedding_vector) AS HNSW(M=16, efConstruction=200, Distance='COSINE')",
+            "CREATE INDEX idx_hnsw_kg_node_embeddings ON RAG_HNSW.KnowledgeGraphNodes (embedding_vector) AS HNSW(M=16, efConstruction=200, Distance='COSINE')"
         ]
-        
         for index_sql in hnsw_indexes:
             try:
                 cursor.execute(index_sql)
-                logger.info(f"✅ HNSW index created successfully")
+                logger.info(f"✅ HNSW index created: {index_sql.splitlines()[1].strip().split()[2]}")
             except Exception as e:
-                logger.warning(f"⚠️ HNSW index creation failed (may not be supported): {e}")
+                logger.warning(f"⚠️ HNSW index creation failed for '{index_sql.splitlines()[1].strip().split()[2]}' (may not be supported or already exists): {e}")
     
     def _create_standard_indexes(self, cursor):
         """Create standard indexes for performance optimization"""
         logger.info("🔧 Creating standard performance indexes...")
-        
         standard_indexes = [
-            "CREATE INDEX idx_source_docs_title ON RAG_HNSW.SourceDocuments(title)",
-            "CREATE INDEX idx_source_docs_model ON RAG_HNSW.SourceDocuments(embedding_model)",
-            "CREATE INDEX idx_source_docs_created ON RAG_HNSW.SourceDocuments(created_at)",
-            "CREATE INDEX idx_chunks_doc_id ON RAG_HNSW.DocumentChunks(doc_id)",
-            "CREATE INDEX idx_chunks_type ON RAG_HNSW.DocumentChunks(chunk_type)",
-            "CREATE INDEX idx_chunks_strategy ON RAG_HNSW.DocumentChunks(strategy_name)",
-            "CREATE INDEX idx_kg_nodes_type ON RAG_HNSW.KnowledgeGraphNodes(node_type)",
-            "CREATE INDEX idx_kg_nodes_name ON RAG_HNSW.KnowledgeGraphNodes(node_name)",
-            "CREATE INDEX idx_kg_edges_type ON RAG_HNSW.KnowledgeGraphEdges(relationship_type)",
-            "CREATE INDEX idx_token_embeddings_doc ON RAG_HNSW.DocumentTokenEmbeddings(doc_id)"
+            "CREATE INDEX IF NOT EXISTS idx_source_docs_title ON RAG_HNSW.SourceDocuments(title)",
+            "CREATE INDEX IF NOT EXISTS idx_source_docs_model ON RAG_HNSW.SourceDocuments(embedding_model)",
+            "CREATE INDEX IF NOT EXISTS idx_source_docs_created ON RAG_HNSW.SourceDocuments(created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_chunks_doc_id ON RAG_HNSW.DocumentChunks(doc_id)",
+            "CREATE INDEX IF NOT EXISTS idx_chunks_type ON RAG_HNSW.DocumentChunks(chunk_type)",
+            "CREATE INDEX IF NOT EXISTS idx_chunks_strategy ON RAG_HNSW.DocumentChunks(strategy_name)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_nodes_type ON RAG_HNSW.KnowledgeGraphNodes(node_type)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_nodes_name ON RAG_HNSW.KnowledgeGraphNodes(node_name)",
+            "CREATE INDEX IF NOT EXISTS idx_kg_edges_type ON RAG_HNSW.KnowledgeGraphEdges(relationship_type)",
+            "CREATE INDEX IF NOT EXISTS idx_token_embeddings_doc ON RAG_HNSW.DocumentTokenEmbeddings(doc_id)"
         ]
-        
         for index_sql in standard_indexes:
             try:
                 cursor.execute(index_sql)
-                logger.info(f"✅ Standard index created")
+                logger.info(f"✅ Standard index processed: {index_sql.split('ON')[0].split()[-1]}") # Log index name
             except Exception as e:
-                logger.warning(f"⚠️ Standard index creation failed: {e}")
+                logger.warning(f"⚠️ Standard index creation/check failed for '{index_sql.split('ON')[0].split()[-1]}': {e}")
 
 class ComprehensiveHNSWComparison:
     """Comprehensive HNSW vs non-HNSW comparison framework"""
@@ -439,49 +440,6 @@ class ComprehensiveHNSWComparison:
         except Exception as e:
             logger.error(f"❌ Chunking service setup failed: {e}")
             return False
-                doc_id VARCHAR(255) PRIMARY KEY,
-                title VARCHAR(1000),
-                text_content CLOB,
-                metadata CLOB,
-                embedding_model VARCHAR(255),
-                embedding_dimensions INTEGER,
-                -- Native VECTOR column for HNSW indexing
-                embedding_vector VECTOR(DOUBLE, 768),
-                -- Backup VARCHAR for fallback compatibility
-                embedding_str VARCHAR(60000),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            """
-            
-            # Execute schema creation
-            for statement in hnsw_schema_sql.split(';'):
-                if statement.strip():
-                    cursor.execute(statement.strip())
-            
-            logger.info("✅ HNSW schema created successfully")
-            
-            # Create additional tables and indexes
-            self._create_additional_tables(cursor)
-            self._create_hnsw_indexes(cursor)
-            self._create_standard_indexes(cursor)
-            
-            cursor.close()
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ HNSW schema deployment failed: {e}")
-            return False
-f.write(f"- **Quality Difference:** {result.retrieval_quality_difference:.3f}\n")
-                f.write(f"- **Memory Overhead:** {result.memory_overhead_mb:.1f}MB\n")
-                f.write(f"- **Recommendation:** {result.recommendation}\n\n")
-            
-            f.write("## Overall Recommendations\n\n")
-            for rec in results["recommendations"]:
-                f.write(f"- {rec}\n")
-        
-        logger.info(f"✅ Markdown report generated: {report_file}")
-
 def main():
     """Main execution function"""
     parser = argparse.ArgumentParser(description="Comprehensive HNSW vs non-HNSW Performance Comparison")

@@ -1203,30 +1203,37 @@ class EnhancedDocumentChunkingService:
         try:
             cursor = connection.cursor()
             
-            # Insert chunks with enhanced schema
+            # Insert chunks into RAG.DocumentChunks with native VECTOR chunk_embedding
+            # Assumes chunk_records contain 'embedding_str' for the vector.
             sql = """
             INSERT INTO RAG.DocumentChunks
-            (chunk_id, doc_id, chunk_index, chunk_type, chunk_text, 
-             start_position, end_position, embedding_str, chunk_metadata, parent_chunk_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (chunk_id, doc_id, chunk_text, chunk_embedding, chunk_index, chunk_type, metadata)
+            VALUES (?, ?, ?, TO_VECTOR(?), ?, ?, ?)
             """
             
-            chunk_params = []
+            data_to_insert = []
             for record in chunk_records:
-                chunk_params.append((
-                    record['chunk_id'],
-                    record['doc_id'],
-                    record['chunk_index'],
-                    record['chunk_type'],
-                    record['chunk_text'],
-                    record['start_position'],
-                    record['end_position'],
-                    record['embedding_str'],
-                    record['chunk_metadata'],
-                    record.get('parent_chunk_id')
+                embedding_str_for_db = None
+                raw_embedding = record.get('embedding_str') # This field should be prepared by chunk_document
+                
+                if raw_embedding:
+                    if isinstance(raw_embedding, list): # Should already be string, but defensive
+                        embedding_str_for_db = '[' + ','.join(map(str, raw_embedding)) + ']'
+                    else:
+                        embedding_str_for_db = str(raw_embedding)
+                
+                data_to_insert.append((
+                    record.get('chunk_id'),
+                    record.get('doc_id'),
+                    record.get('chunk_text'),
+                    embedding_str_for_db,  # Passed to TO_VECTOR(?)
+                    record.get('chunk_index'),
+                    record.get('chunk_type'),
+                    record.get('chunk_metadata') # Maps to 'metadata' column in DDL
                 ))
             
-            cursor.executemany(sql, chunk_params)
+            if data_to_insert:
+                cursor.executemany(sql, data_to_insert)
             connection.commit()
             cursor.close()
             
@@ -1268,7 +1275,6 @@ class EnhancedDocumentChunkingService:
                 SELECT doc_id, title, text_content
                 FROM RAG.SourceDocuments
                 WHERE text_content IS NOT NULL
-                AND LENGTH(text_content) > 100
                 ORDER BY doc_id
                 LIMIT ?
             """, (limit,))
@@ -1303,8 +1309,32 @@ class EnhancedDocumentChunkingService:
             for i in range(0, len(documents), batch_size):
                 batch = documents[i:i + batch_size]
                 
-                for doc_id, title, text_content in batch:
-                    if not text_content or text_content.strip() == "":
+                for doc_id, title, raw_text_content in batch: # Renamed to raw_text_content
+                    text_content_str = ""
+                    if raw_text_content is not None:
+                        if hasattr(raw_text_content, 'read') and callable(raw_text_content.read):
+                            try:
+                                byte_list = []
+                                while True:
+                                    byte_val = raw_text_content.read()
+                                    if byte_val == -1:  # End of stream
+                                        break
+                                    byte_list.append(byte_val)
+                                
+                                if byte_list:
+                                    content_bytes = bytes(byte_list)
+                                    text_content_str = content_bytes.decode('utf-8', errors='replace')
+                                else:
+                                    text_content_str = ""
+                            except Exception as e_read:
+                                logger.warning(f"Could not read content stream for doc_id {doc_id} in chunker: {e_read}")
+                                text_content_str = "[Content Read Error]"
+                        elif isinstance(raw_text_content, bytes):
+                            text_content_str = raw_text_content.decode('utf-8', errors='replace')
+                        else:
+                            text_content_str = str(raw_text_content)
+
+                    if not text_content_str or text_content_str.strip() == "" or text_content_str == "[Content Read Error]":
                         continue
                     
                     try:
@@ -1312,7 +1342,7 @@ class EnhancedDocumentChunkingService:
                         for strategy_name in strategy_names:
                             doc_start_time = time.time()
                             
-                            chunks = self.chunk_document(doc_id, text_content, strategy_name)
+                            chunks = self.chunk_document(doc_id, text_content_str, strategy_name) # Use text_content_str
                             
                             # Calculate quality metrics
                             if chunks:
@@ -1328,7 +1358,7 @@ class EnhancedDocumentChunkingService:
                                 total_biomedical_densities.extend(biomedical_densities)
                                 
                                 # Store chunks (optional - comment out for analysis only)
-                                # self.store_chunks(chunks, connection)
+                                self.store_chunks(chunks, connection) # Uncommented to store chunks
                                 
                                 results["strategy_results"][strategy_name]["chunks"] += len(chunks)
                                 results["strategy_results"][strategy_name]["documents"] += 1

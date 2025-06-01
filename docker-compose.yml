@@ -1,6 +1,6 @@
 services:
   iris_db:
-    image: containers.intersystems.com/intersystems/iris-community-arm64:2025.1
+    image: containers.intersystems.com/intersystems/iris-arm64:2025.1
     container_name: iris_db_rag_standalone
     ports:
       - "1972:1972"   # IRIS SuperServer port (host:container)
@@ -10,6 +10,7 @@ services:
       - ISC_DEFAULT_PASSWORD=SYS
     volumes:
       - iris_db_data:/usr/irissys/mgr # Named volume for IRIS data persistence
+      - ./iris.key:/usr/irissys/mgr/iris.key # Map the license key
     stdin_open: true # Keep container running
     tty: true        # Keep container running
     healthcheck:

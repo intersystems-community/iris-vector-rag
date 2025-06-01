@@ -5,9 +5,12 @@ Token Embedding Backfill Plan - Focused Analysis and Strategy
 
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Ensure project root is in path for generated script and this script
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
+from src.common.iris_connector import get_iris_connection # Updated import
 import json
 from datetime import datetime
 
@@ -269,10 +272,13 @@ Generates ColBERT token embeddings for documents that don't have them
 
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Ensure project root is in path for generated script
+project_root_generated = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if project_root_generated not in sys.path:
+    sys.path.insert(0, project_root_generated)
 
-from common.iris_connector import get_iris_connection
-from colbert.doc_encoder import ColBERTDocumentEncoder
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.working.colbert.doc_encoder import ColBERTDocumentEncoder # Updated import
 import time
 from datetime import datetime
 

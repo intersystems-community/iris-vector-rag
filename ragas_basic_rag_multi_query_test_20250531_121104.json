@@ -1,0 +1,233 @@
+{
+  "timestamp": "20250531_121104",
+  "pipeline_tested": "BasicRAG",
+  "num_queries_tested": 10,
+  "successful_queries": 10,
+  "results_per_query": [
+    {
+      "query": "What are the effects of metformin on type 2 diabetes?",
+      "answer": "Metformin is often prescribed as a first-line medication for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity. This means that metformin can help regulate blood sugar levels and make the body's cells more responsive to insulin, which is essential for managing type 2 diabetes. Additionally, the context mentions that lifestyle changes such as diet and exercise, as well as insulin therapy, are common treatments for type 2 diabetes.",
+      "contexts": [
+        "Diabetes Treatment Review\n\nCommon treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is ...",
+        "",
+        "The raising prevalence of type-2 diabetes mellitus and obesity has been recognized as a major problem for public health, affecting both developed and developing countries. Impaired fasting plasma gluc...",
+        "Nocturnal hypoglycemia frequently occurs in patients with type 1 diabetes mellitus (T1DM). It can be fatal and is believed to promote the development of the hypoglycemia-unawareness syndrome. Whether ...",
+        "Glycemic and Insulin Status in Periodontitis Patients using the Homeostasis Model Assessment (HOMA): A Pilot Study\n\nThis study aimed to compare insulin status and dysglycemia (prediabetes/diabetes) of..."
+      ],
+      "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 2.9578070640563965,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.9468854497016647,
+        "faithfulness": 0.25
+      }
+    },
+    {
+      "query": "How does SGLT2 inhibition affect kidney function?",
+      "answer": "The provided context does not directly address how SGLT2 inhibition affects kidney function. Document 1 discusses the influence of insulin and incretin-based therapies on renal tubular transport, Document 2 discusses urinary Transforming Growth Factor-beta 1 as a marker of response to immunosuppressive treatment in crescentic nephritis, and Document 3 discusses the interplay between complement, inflammation, and bioincompatibility in hemodialysis.\n\nTo fully answer the question on how SGLT2 inhibition affects kidney function, additional information specifically related to SGLT2 inhibitors and their impact on renal function would be needed. SGLT2 inhibitors are a class of medication commonly used in the treatment of type 2 diabetes that work by blocking the reabsorption of glucose in the kidneys, leading to increased glucose excretion in the urine. This mechanism of action has been shown to have beneficial effects on kidney function, particularly in patients with diabetes and chronic kidney disease.\n\nOverall, while the context provides information on various aspects of kidney function and treatment, it does not directly address the impact of SGLT2 inhibition on kidney function.",
+      "contexts": [
+        "The influence of insulin and incretin-based therapies on renal tubular transport\n\nThe tubular function of the kidney is very complex and is finely regulated by many factors. These include a variety of...",
+        "Crescentic nephritis is characterized by formation of cellular crescents that soon become fibrotic and result in irreversible damage, unless an effective immunosuppressive therapy is rapidly commenced...",
+        "The Janus-faced nature of complement in hemodialysis: interplay between complement, inflammation, and bioincompatibility unveiling a self-amplifying loop contributing to organ damage\n\nIn hemodialysis ...",
+        "Editorial: Optimizing outcomes for children with immune-mediated chronic kidney disease\n\n\n\nAuthors: Thomas Renson, Evelien Snauwaert, Lorraine Hamiwka, Susa Benseler, Lovro Lamot\n\nKeywords: immune-med...",
+        "Examining the association between serum galactose-deficient IgA1 and primary IgA nephropathy: a systematic review and meta-analysis\n\nIgA nephropathy (IgAN) is a common primary glomerular disease. The ..."
+      ],
+      "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 4.050086975097656,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.0,
+        "faithfulness": 0.5
+      }
+    },
+    {
+      "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+      "answer": "GLP-1 receptor agonists, such as tirzepatide, are incretin-based therapies used in the management of type 2 diabetes and obesity. These agonists work by binding to the glucagon-like peptide-1 (GLP-1) receptors, which results in beneficial effects beyond improved glycemic control. However, the specific mechanism of action of how GLP-1 receptor agonists affect gastric, biliary, and intestinal motility is not detailed in the provided context. Further information would be needed to fully explain the mechanism of action of GLP-1 receptor agonists in relation to their effects on gastric, biliary, and intestinal motility.",
+      "contexts": [
+        "Physiology and Pharmacology of Effects of GLP-1-based Therapies on Gastric, Biliary and Intestinal Motility\n\nGlucagon-like peptide-1 (GLP-1) receptor agonists and the dual GLP-1- and glucose-dependent...",
+        "The aim of the present study was to describe the activity of a set of opioid drugs, including partial agonists, in a human embryonic kidney cell system stably expressing only the mouse \u03ba-opioid recept...",
+        "The Na A  Here we have tested the role of spinal NKCC1 cotransporters and TRPV1 receptors in referred allodynia in a model of visceral hyperalgesia in mice. Intrathecal (IT) injection of the NKCC1 inh...",
+        "Genetic perturbations of \u03b1-amino-3-hydroxy-5-methyl-4-isoxazolepropionate receptors (AMPARs) are widely used to dissect molecular mechanisms of sensory coding, learning, and memory. In this study, we ...",
+        ""
+      ],
+      "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 2.6766140460968018,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.0,
+        "faithfulness": 0.5
+      }
+    },
+    {
+      "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+      "answer": "The context provided does not contain specific information about the cardiovascular benefits of SGLT2 inhibitors. The documents primarily focus on treatments for diabetes, lipid-lowering medications, and the effects of certain drugs on plasma lipids and insulin sensitivity. Therefore, the information needed to answer the question about the cardiovascular benefits of SGLT2 inhibitors is missing.",
+      "contexts": [
+        "Diabetes Treatment Review\n\nCommon treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is ...",
+        "Microsomal transfer protein inhibitors (MTPi) have the potential to be used as a drug to lower plasma lipids, mainly plasma triglycerides (TG). However, studies with animal models have indicated that ...",
+        "The raising prevalence of type-2 diabetes mellitus and obesity has been recognized as a major problem for public health, affecting both developed and developing countries. Impaired fasting plasma gluc...",
+        "The renin-angiotensin-aldosterone system (RAAS) is involved in the cardiovascular homeostasis as shown by previous studies reporting a positive association between specific RAAS genotypes and an incre...",
+        "First interim results from FINE-REAL: a prospective, non-interventional, phase 4 study providing insights into the use and safety of finerenone in a routine clinical setting\n\nFinerenone, a selective n..."
+      ],
+      "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 2.287207841873169,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.0,
+        "faithfulness": 0.8333333333333334
+      }
+    },
+    {
+      "query": "How do statins prevent cardiovascular disease?",
+      "answer": "The context provided does not directly address how statins prevent cardiovascular disease. The documents focus on the renin-angiotensin-aldosterone system (RAAS) and its genetic polymorphisms, the effects of Candesartan on insulin sensitivity in non-diabetic individuals with dysglycemia and abdominal obesity, and the potential of microsomal triglyceride transfer protein inhibitors (MTPi) in lowering plasma lipids without increasing hepatic triglycerides.\n\nStatins are medications commonly used to lower cholesterol levels in the blood and reduce the risk of cardiovascular disease. They work by inhibiting an enzyme called HMG-CoA reductase, which is involved in the production of cholesterol in the liver. By blocking this enzyme, statins help lower LDL (bad) cholesterol levels and reduce inflammation in the blood vessels, ultimately decreasing the risk of plaque buildup and cardiovascular events.\n\nTherefore, based on the information provided in the context, there is no direct information on how statins prevent cardiovascular disease.",
+      "contexts": [
+        "The renin-angiotensin-aldosterone system (RAAS) is involved in the cardiovascular homeostasis as shown by previous studies reporting a positive association between specific RAAS genotypes and an incre...",
+        "The raising prevalence of type-2 diabetes mellitus and obesity has been recognized as a major problem for public health, affecting both developed and developing countries. Impaired fasting plasma gluc...",
+        "Microsomal transfer protein inhibitors (MTPi) have the potential to be used as a drug to lower plasma lipids, mainly plasma triglycerides (TG). However, studies with animal models have indicated that ...",
+        "Genetic insights into the effect of trace elements on cardiovascular diseases: multi-omics Mendelian randomization combined with linkage disequilibrium score regression analysis\n\nEpidemiological evide...",
+        "Exploring novel markers for coronary heart disease associated with systemic lupus erythematosus: A review\n\nSystemic lupus erythematosus (SLE) is an autoimmune condition that is characterized by the pr..."
+      ],
+      "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 3.461124897003174,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "How do statins prevent cardiovascular disease?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.0,
+        "faithfulness": 0.25
+      }
+    },
+    {
+      "query": "What is the role of ACE inhibitors in heart failure?",
+      "answer": "Based on the context provided, the focus is mainly on the genetic polymorphisms of the renin-angiotensin-aldosterone system (RAAS) and their role in myocardial infarction, the protective effect of UDCA against cardiac fibrosis, and the potential survival benefits of Levosimendan in patients requiring mechanical assist devices for post-cardiotomy heart failure. None of the documents specifically mention the role of ACE inhibitors in heart failure.\n\nTherefore, based on the information available, it is not possible to provide a comprehensive answer regarding the role of ACE inhibitors in heart failure. Additional information from relevant sources or studies would be needed to address this question.",
+      "contexts": [
+        "The renin-angiotensin-aldosterone system (RAAS) is involved in the cardiovascular homeostasis as shown by previous studies reporting a positive association between specific RAAS genotypes and an incre...",
+        "Protective effect of UDCA against IL-11- induced cardiac fibrosis is mediated by TGR5 signalling\n\nCardiac fibrosis occurs in a wide range of cardiac diseases and is characterised by the transdifferent...",
+        "Most case series suggest that less than half of the patients receiving a mechanical cardiac assist device as a bridge to recovery due to severe post-cardiotomy heart failure survive to hospital discha...",
+        "Cardiomyocyte specific CD38 deletion protects heart from acute myocardial infarction by activating Sirt3 signaling pathway\n\nAcute myocardial infarction (AMI) is serious disease with high morbidity and...",
+        "The heart is rich in cardiolipin, a phospholipid acylated in four sites, predominately with linoleic acid. Whether or not aging alters the composition of cardiolipin acyl chains is controversial. We t..."
+      ],
+      "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 2.698075294494629,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "What is the role of ACE inhibitors in heart failure?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.0,
+        "faithfulness": 0.5714285714285714
+      }
+    },
+    {
+      "query": "How do glucocorticoids suppress inflammation?",
+      "answer": "Glucocorticoids suppress inflammation by inhibiting the production of inflammatory mediators, such as cytokines and prostaglandins, and by reducing the migration of inflammatory cells to the site of inflammation. The context mentions that corticosteroids, which are a type of glucocorticoid, have been proven to slow down the impairment of pulmonary function in CF patients, indicating their anti-inflammatory effects. However, the context does not provide specific details on the mechanism of action of glucocorticoids in suppressing inflammation.",
+      "contexts": [
+        "Chronic neutrophil inflammation of the respiratory tract tissues plays a key role in the pathogenesis and in prognosis of cystic fibrosis (CF). It is evident that an anti-inflammatory therapy represen...",
+        "The physiology of the multidrug transporter P-glycoprotein (Pgp) is still poorly understood. We now show evidence that cell lines with a high expression of Pgp display a reduced accumulation of cortis...",
+        "Anti-inflammatory and barrier repair mechanisms of active components in \n\nDaemonorops draco D. draco D. draco D. draco The online version contains supplementary material available at 10.1038/s41598-02...",
+        "Menisoxoisoaporphine A, a novel oxoisoaporphine alkaloid from Menispermi Rhizoma, inhibits inflammation by targeting PDE4B\n\nDysregulated and excessive inflammatory reactions can lead to tissue damage,...",
+        "Modulation of the central nervous system immune response and neuroinflammation via Wnt signaling in health and neurodegenerative diseases\n\nThe immune response in the central nervous system (CNS) is a ..."
+      ],
+      "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 2.57668399810791,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "How do glucocorticoids suppress inflammation?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.0,
+        "faithfulness": 0.14285714285714285
+      }
+    },
+    {
+      "query": "What are the mechanisms of antibiotic resistance?",
+      "answer": "Based on the information provided in the context, the mechanisms of antibiotic resistance include the presence of resistance determinants in the genetic location of MRSA isolates, as studied between 1994 and 2004 in Kuwait hospitals. The resistance determinants in MRSA isolates were determined through curing and transfer experiments, with the isolates showing resistance to aminoglycosides, erythromycin, and other antibacterial agents.\n\nAdditionally, the presence of antibiotic resistance genes (ARGs) in the dust resistome in workplaces and households is highlighted in the pilot study. The ARGs limit the susceptibility of bacteria to antimicrobials, posing a significant problem. However, the specific mechanisms of antibiotic resistance in the indoor dust samples from workplaces and households are not detailed in the provided context.\n\nIn summary, the mechanisms of antibiotic resistance discussed in the context include genetic location of resistance determinants in MRSA isolates and the presence of ARGs in indoor dust samples, but specific details on the mechanisms are lacking.",
+      "contexts": [
+        "Methicillin-resistant  Staphylococcus aureus  Between April 1994 and December 2004, 5644 MRSA isolates obtained from different clinical samples were studied for resistance to antibacterial agents acco...",
+        "Antimicrobial resistance in hypermucoviscous and non-hypermucoviscous \n\nAntimicrobial resistance has recently increased due to emerging carbapenem-resistant  Klebsiella pneumoniae K. pneumoniae K. pne...",
+        "Resistome in the indoor dust samples from workplaces and households: a pilot study\n\nThe antibiotic resistance genes (ARGs) limit the susceptibility of bacteria to antimicrobials, representing a proble...",
+        "To unravel molecular targets involved in glycopeptide resistance, three isogenic strains of  Staphylococcus aureus  S. aureus  In the absence of antibiotic selection pressure, comparison of stable res...",
+        "Daptomycin is a novel cyclic lipopeptide whose bactericidal activity is not affected by current antibiotic resistance mechanisms displayed by  S. aureus  S. aureus  The methicillin-susceptible  S. aur..."
+      ],
+      "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 3.3159842491149902,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "What are the mechanisms of antibiotic resistance?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.0,
+        "faithfulness": 0.6
+      }
+    },
+    {
+      "query": "How do biologics treat rheumatoid arthritis?",
+      "answer": "Biologics are a type of treatment for rheumatoid arthritis (RA) that are derived from living organisms. They work by targeting specific components of the immune system that play a role in the inflammation process seen in RA. In the context provided, Document 3 discusses the effects of various biologic or target synthetic disease-modifying antirheumatic drugs (b/tsDMARDs) on knee symptoms in patients with RA. These drugs include IL-6, JAK, TNF inhibitors, and CTLA4-Ig.\n\nIL-6 inhibitors target interleukin-6, a pro-inflammatory cytokine involved in the immune response. JAK inhibitors work by targeting Janus kinase enzymes, which are involved in the signaling pathways that lead to inflammation. TNF inhibitors target tumor necrosis factor, another pro-inflammatory cytokine that plays a key role in the immune response. CTLA4-Ig is a fusion protein that inhibits T-cell activation, thereby reducing the immune response.\n\nOverall, biologics work by targeting specific molecules or pathways involved in the inflammatory process in RA, ultimately reducing inflammation and slowing down the progression of the disease.",
+      "contexts": [
+        "Analysis of biomarkers in synovial tissue is increasingly used in the evaluation of new targeted therapies for patients with rheumatoid arthritis (RA). This study determined the intrarater and inter-r...",
+        "Usenamine A: a potential therapeutic agent for rheumatoid arthritis and ankylosing spondylitis through its anti-inflammatory activity\n\nUsenamine A (UA) is a natural compound isolated from the lichen  ...",
+        "Effects of IL-6, JAK, TNF inhibitors, and CTLA4-Ig on knee symptoms in patients with rheumatoid arthritis\n\nThis study aims to identify factors influencing the alleviation of knee joint symptoms in pat...",
+        "Rho is a major small GTP-binding protein that is involved in the regulation of various cell functions, including proliferation and cell migration, through activation of multiple signaling molecules in...",
+        "Quantitative traits such as complex diseases are controlled by many small-effect genes that are difficult to identify. Here we present a novel strategy to identify the candidate genes for small-effect..."
+      ],
+      "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 3.6127259731292725,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "How do biologics treat rheumatoid arthritis?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.9646098587294003,
+        "faithfulness": 0.5
+      }
+    },
+    {
+      "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+      "answer": "The context provided does not contain information specifically related to the mechanism of action of levodopa in Parkinson's disease. The context primarily discusses the need for new treatments for Parkinson's disease, such as metformin as an adjunctive therapy and GDNF-transfected macrophages for neuroprotection. Levodopa is a common medication used in the treatment of Parkinson's disease, as it is a precursor to dopamine and helps to replenish dopamine levels in the brain. Levodopa is converted to dopamine in the brain and helps to alleviate symptoms of Parkinson's disease, such as tremors, stiffness, and slowness of movement. Levodopa is often combined with other medications, such as carbidopa, to enhance its effectiveness and reduce side effects.",
+      "contexts": [
+        "Randomized, double-blind, placebo-controlled pilot study of metformin as an adjunctive therapy in Parkinson\u2019s disease\n\nParkinson\u2019s disease (PD) is caused by the progressive loss of dopaminergic neuron...",
+        "Retraction: GDNF-Transfected Macrophages Produce Potent Neuroprotective Effects in Parkinson\u2019s Disease Mouse Model\n\n",
+        "",
+        "The interplay between epitranscriptomic RNA modifications and neurodegenerative disorders: Mechanistic insights and potential therapeutic strategies\n\nNeurodegenerative disorders encompass a group of a...",
+        "Serum glial fibrillary protein reflects early brain injury dynamics and cognitive changes after deep brain stimulation surgery\n\nDeep brain stimulation (DBS) is an efficient treatment for movement diso..."
+      ],
+      "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+      "pipeline_name": "BasicRAG",
+      "execution_time": 3.2453110218048096,
+      "num_docs": 5,
+      "success": true,
+      "ragas_scores": {
+        "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "context_precision": 0.0,
+        "answer_relevancy": 0.0,
+        "faithfulness": 0.3333333333333333
+      }
+    }
+  ],
+  "average_ragas_scores": {
+    "context_precision": 0.0,
+    "answer_relevancy": 0.1911495308431065,
+    "faithfulness": 0.4480952380952381
+  }
+}

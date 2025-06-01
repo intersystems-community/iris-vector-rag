@@ -1,0 +1,204 @@
+# crag/pipeline_v2.py
+
+import logging
+from typing import List, Dict, Any, Callable, Optional
+from common.utils import Document, timing_decorator
+from common.jdbc_stream_utils import read_iris_stream
+import numpy as np
+
+logger = logging.getLogger(__name__)
+
+class CRAGPipelineV2:
+    """
+    Corrective RAG (CRAG) Pipeline V2 with HNSW support
+    
+    This implementation uses native IRIS VECTOR columns and HNSW indexes
+    for accelerated similarity search on the _V2 tables.
+    """
+    
+    def __init__(self, iris_connector, embedding_func: Callable, llm_func: Callable):
+        self.iris_connector = iris_connector
+        self.embedding_func = embedding_func
+        self.llm_func = llm_func
+        self.schema = "RAG"
+    
+    @timing_decorator
+    def retrieve_documents(self, query: str, top_k: int = 5, similarity_threshold: float = 0.0, _recursion_depth: int = 0) -> List[Document]:
+        """
+        Retrieve documents using HNSW-accelerated vector search with corrective mechanisms
+        """
+        # Prevent infinite recursion
+        if _recursion_depth > 3:
+            print(f"CRAG V2: Maximum recursion depth reached, returning current results")
+            return []
+            
+        # Generate query embedding
+        query_embedding = self.embedding_func([query])[0]
+        query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
+        
+        retrieved_docs = []
+        
+        # Use the working pattern: TO_VECTOR around VARCHAR embedding column with parameterized query
+        cursor = None
+        try:
+            cursor = self.iris_connector.cursor()
+            logger.debug(f"CRAG V2 Document Retrieve with threshold {similarity_threshold}, depth {_recursion_depth}")
+            
+            limit_val = int(top_k * 2)
+            
+            # Use standard parameter markers for all dynamic values
+            sql_query = """
+                SELECT TOP ? doc_id, title, text_content,
+                       VECTOR_COSINE(
+                           TO_VECTOR(RAG.SourceDocuments.embedding, 'DOUBLE', 384),
+                           TO_VECTOR(?, 'DOUBLE', 384)
+                       ) as similarity_score
+                FROM RAG.SourceDocuments
+                WHERE RAG.SourceDocuments.embedding IS NOT NULL AND RAG.SourceDocuments.embedding <> ''
+                ORDER BY similarity_score DESC
+            """
+            
+            logger.debug(f"Executing CRAG SQL with params: TOP={limit_val}, EMBED='{query_embedding_str[:50]}...'")
+            cursor.execute(sql_query, [limit_val, query_embedding_str])
+            all_results = cursor.fetchall()
+
+            # Filter by similarity threshold and limit to top_k
+            filtered_results = []
+            for row in all_results:
+                score = float(row[3]) if row[3] is not None else 0.0
+                if score > similarity_threshold:
+                    filtered_results.append(row)
+                if len(filtered_results) >= top_k:
+                    break
+
+            for row in filtered_results:
+                doc_id, title, content, score = row
+                
+                # Handle potential stream objects for content
+                content = read_iris_stream(content) if content else ""
+                title = read_iris_stream(title) if title else ""
+                
+                # Ensure score is float
+                score = float(score) if score is not None else 0.0
+                
+                doc = Document(
+                    id=doc_id,
+                    content=content,
+                    score=score
+                )
+                # Store metadata separately
+                doc._metadata = {
+                    "title": title,
+                    "similarity_score": score,
+                    "source": "CRAG_V2_HNSW"
+                }
+                retrieved_docs.append(doc)
+                
+            print(f"CRAG V2: Initial retrieval found {len(retrieved_docs)} documents above threshold {similarity_threshold}")
+        except Exception as e:
+            logger.error(f"Error retrieving documents: {e}")
+            print(f"Error retrieving documents: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+        
+        # Corrective step: If not enough high-quality results, lower threshold
+        # Only apply corrective retrieval if we have some threshold to work with and haven't found enough docs
+        if len(retrieved_docs) < top_k and similarity_threshold > 0.001 and _recursion_depth < 3:
+            print(f"CRAG V2: Applying corrective retrieval with lower threshold")
+            additional_docs = self.retrieve_documents(
+                query,
+                top_k=top_k - len(retrieved_docs),
+                similarity_threshold=max(0.001, similarity_threshold * 0.5),  # More aggressive threshold reduction
+                _recursion_depth=_recursion_depth + 1
+            )
+            
+            # Add only unique documents
+            existing_ids = {doc.id for doc in retrieved_docs}
+            for doc in additional_docs:
+                if doc.id not in existing_ids:
+                    retrieved_docs.append(doc)
+        
+        # Sort by score and return top_k
+        retrieved_docs.sort(key=lambda x: x.score or 0, reverse=True)
+        return retrieved_docs[:top_k]
+    
+    @timing_decorator
+    def generate_answer(self, query: str, documents: List[Document]) -> str:
+        """
+        Generate answer using retrieved documents with corrective context
+        """
+        if not documents:
+            return "I couldn't find relevant information to answer your question."
+        
+        # Prepare context with corrective information
+        context_parts = []
+        for i, doc in enumerate(documents[:3], 1):
+            metadata = getattr(doc, '_metadata', {})
+            title = metadata.get('title', 'Untitled')
+            score = doc.score or 0
+            
+            # Add confidence indicator based on score
+            confidence = "High" if score > 0.7 else "Medium" if score > 0.5 else "Low"
+            
+            content_preview = doc.content[:500] if doc.content else ""
+            context_parts.append(
+                f"Document {i} (Confidence: {confidence}, Score: {score:.3f}, Title: {title}):\n{content_preview}..."
+            )
+        
+        context = "\n\n".join(context_parts)
+        
+        # Include corrective instructions in the prompt
+        prompt = f"""Based on the following documents with varying confidence levels, answer the question. 
+Pay more attention to high-confidence documents, but consider all provided information.
+If the information seems incomplete or contradictory, acknowledge this in your answer.
+
+Context:
+{context}
+
+Question: {query}
+
+Please provide a comprehensive answer based on the available information:"""
+        
+        try:
+            response = self.llm_func(prompt)
+            return response
+        except Exception as e:
+            logger.error(f"Error generating answer: {e}")
+            return f"Error generating answer: {str(e)}"
+    
+    def run(self, query: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
+        """
+        Execute the CRAG V2 pipeline with HNSW acceleration
+        """
+        print(f"\n{'='*50}")
+        print(f"CRAG V2 Pipeline (HNSW) - Query: {query}")
+        print(f"{'='*50}")
+        
+        # Retrieve documents with corrective mechanisms
+        documents = self.retrieve_documents(query, top_k=top_k)
+        
+        # Generate answer
+        answer = self.generate_answer(query, documents)
+        
+        # Prepare results
+        result = {
+            "query": query,
+            "answer": answer,
+            "retrieved_documents": [
+                {
+                    "id": doc.id,
+                    "content": doc.content[:200] + "..." if len(doc.content) > 200 else doc.content,
+                    "metadata": getattr(doc, '_metadata', {})
+                }
+                for doc in documents
+            ],
+            "metadata": {
+                "pipeline": "CRAG_V2",
+                "uses_hnsw": True,
+                "top_k": top_k,
+                "num_documents_retrieved": len(documents)
+            }
+        }
+        
+        return result

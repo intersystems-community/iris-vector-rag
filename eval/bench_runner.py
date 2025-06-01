@@ -7,9 +7,15 @@ import time
 import logging
 from typing import List, Dict, Any, Callable, Optional
 from datetime import datetime
+import sys # Added
 
-from eval.metrics import (
-    calculate_context_recall, 
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from eval.metrics import ( # Path remains same
+    calculate_context_recall,
     calculate_precision_at_k,
     calculate_latency_percentiles,
     calculate_throughput
@@ -345,78 +351,79 @@ class BenchmarkRunner:
     def _run_basic_rag(self, query: str) -> Dict[str, Any]:
         """Run basic RAG pipeline"""
         try:
-            from basic_rag.pipeline import run_basic_rag_pipeline
-            return run_basic_rag_pipeline(
-                query=query,
+            from src.deprecated.basic_rag.pipeline import BasicRAGPipeline
+            pipeline = BasicRAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
+            return pipeline.run(query=query)
         except ImportError:
             return self._mock_technique_result(query, "basic_rag")
     
     def _run_colbert(self, query: str) -> Dict[str, Any]:
         """Run ColBERT pipeline"""
         try:
-            from colbert.pipeline import run_colbert_pipeline
-            return run_colbert_pipeline(
-                query=query,
+            from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline
+            pipeline = OptimizedColbertRAGPipeline(
                 iris_connector=self.connection,
-                embedding_func=self.embedding_func,
+                colbert_query_encoder_func=self.embedding_func,
+                colbert_doc_encoder_func=self.embedding_func,
                 llm_func=self.llm_func
             )
+            return pipeline.run(query=query)
         except ImportError:
             return self._mock_technique_result(query, "colbert")
     
     def _run_graphrag(self, query: str) -> Dict[str, Any]:
         """Run GraphRAG pipeline"""
         try:
-            from graphrag.pipeline import run_graphrag_pipeline
-            return run_graphrag_pipeline(
-                query=query,
+            from src.experimental.graphrag.pipeline import GraphRAGPipeline
+            pipeline = GraphRAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
+            return pipeline.run(query=query)
         except ImportError:
             return self._mock_technique_result(query, "graphrag")
     
     def _run_noderag(self, query: str) -> Dict[str, Any]:
         """Run NodeRAG pipeline"""
         try:
-            from noderag.pipeline import run_noderag_pipeline
-            return run_noderag_pipeline(
-                query=query,
+            from src.experimental.noderag.pipeline import NodeRAGPipeline
+            pipeline = NodeRAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
+            return pipeline.run(query=query)
         except ImportError:
             return self._mock_technique_result(query, "noderag")
     
     def _run_hyde(self, query: str) -> Dict[str, Any]:
         """Run HyDE pipeline"""
         try:
-            from hyde.pipeline import run_hyde_pipeline
-            return run_hyde_pipeline(
-                query=query,
+            from src.experimental.hyde.pipeline import HyDEPipeline
+            pipeline = HyDEPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
+            return pipeline.run(query=query)
         except ImportError:
             return self._mock_technique_result(query, "hyde")
     
     def _run_crag(self, query: str) -> Dict[str, Any]:
         """Run CRAG pipeline"""
         try:
-            from crag.pipeline import run_crag_pipeline
-            return run_crag_pipeline(
-                query=query,
+            from src.experimental.crag.pipeline import CRAGPipeline
+            pipeline = CRAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
+            return pipeline.run(query=query)
         except ImportError:
             return self._mock_technique_result(query, "crag")
     

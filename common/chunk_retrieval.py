@@ -7,7 +7,7 @@ for use by RAG techniques that benefit from granular document access.
 
 import logging
 from typing import List, Dict, Any, Optional, Tuple
-from common.utils import Document
+from .utils import Document # Changed to relative import
 
 logger = logging.getLogger(__name__)
 
@@ -57,46 +57,34 @@ class ChunkRetrievalService:
         try:
             cursor = self.iris_connector.cursor()
             
-            if is_jdbc:
-                # Use direct SQL for JDBC to avoid parameter binding issues with vectors
-                chunk_type_list = ','.join([f"'{ct}'" for ct in chunk_types])
-                sql_query = f"""
-                    SELECT TOP {top_k}
-                        chunk_id,
-                        chunk_text,
-                        doc_id,
-                        chunk_type,
-                        chunk_index,
-                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_vector_str}')) AS score
-                    FROM RAG.DocumentChunks
-                    WHERE embedding IS NOT NULL
-                      AND chunk_type IN ({chunk_type_list})
-                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR('{query_vector_str}')) > {similarity_threshold}
-                    ORDER BY score DESC
-                """
-                logger.info(f"Generated SQL query: {sql_query}")
-                cursor.execute(sql_query)  # No parameters for JDBC
-            else:
-                # Use parameter binding for ODBC
-                chunk_type_placeholders = ','.join(['?' for _ in chunk_types])
-                sql_query = f"""
-                    SELECT TOP {top_k}
-                        chunk_id,
-                        chunk_text,
-                        doc_id,
-                        chunk_type,
-                        chunk_index,
-                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
-                    FROM RAG.DocumentChunks
-                    WHERE embedding IS NOT NULL
-                      AND chunk_type IN ({chunk_type_placeholders})
-                      AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
-                    ORDER BY score DESC
-                """
-                logger.info(f"Generated SQL query: {sql_query}")
-                # Prepare parameters: query_vector_str, chunk_types, query_vector_str again, similarity_threshold
-                params = [query_vector_str] + chunk_types + [query_vector_str, similarity_threshold]
-                cursor.execute(sql_query, params)
+            # Unified SQL for both JDBC and ODBC, using parameters
+            # Corrected column to chunk_embedding and using "both TO_VECTOR()" principle
+            chunk_type_placeholders = ','.join(['?' for _ in chunk_types])
+            sql_query = f"""
+                SELECT TOP ?
+                    chunk_id,
+                    chunk_text,
+                    doc_id,
+                    chunk_type,
+                    chunk_index,
+                    VECTOR_COSINE(TO_VECTOR(chunk_embedding), TO_VECTOR(?)) AS score
+                FROM RAG.DocumentChunks
+                WHERE chunk_embedding IS NOT NULL
+                  AND chunk_type IN ({chunk_type_placeholders})
+                  AND VECTOR_COSINE(TO_VECTOR(chunk_embedding), TO_VECTOR(?)) > ?
+                ORDER BY score DESC
+            """
+            
+            # Parameters: top_k, query_vector_str (for first VECTOR_COSINE),
+            #             *chunk_types (for IN clause),
+            #             query_vector_str (for second VECTOR_COSINE), similarity_threshold
+            params = [top_k, query_vector_str] + chunk_types + [query_vector_str, similarity_threshold]
+            
+            # Log a representation of parameters for debugging, not the full vector string
+            log_params = [top_k, f"vec_str_len_{len(query_vector_str)}"] + chunk_types + [f"vec_str_len_{len(query_vector_str)}", similarity_threshold]
+            logger.info(f"Executing chunk retrieval. SQL: {sql_query.strip()}, Params: {log_params}")
+            
+            cursor.execute(sql_query, params)
             results = cursor.fetchall()
             
             for row in results:
@@ -323,7 +311,7 @@ class ChunkRetrievalService:
             stats['total_chunks'] = cursor.fetchone()[0]
             
             # Chunks with embeddings
-            cursor.execute("SELECT COUNT(*) FROM RAG.DocumentChunks WHERE embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.DocumentChunks WHERE chunk_embedding IS NOT NULL")
             stats['chunks_with_embeddings'] = cursor.fetchone()[0]
             
             # Unique documents with chunks

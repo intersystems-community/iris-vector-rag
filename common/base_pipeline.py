@@ -8,8 +8,8 @@ import logging
 from typing import Dict, Any, List, Optional, Callable
 from abc import ABC, abstractmethod
 
-from common.connection_manager import get_connection_manager, ConnectionManager
-from common.utils import Document
+from .connection_manager import get_connection_manager, ConnectionManager # Changed to relative import
+from .utils import Document # Changed to relative import
 
 logger = logging.getLogger(__name__)
 

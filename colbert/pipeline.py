@@ -119,8 +119,14 @@ class OptimizedColbertRAGPipeline:
         # Generate query token embeddings
         query_token_embeddings = self.colbert_query_encoder(query_text)
         
-        if not query_token_embeddings:
-            logger.warning("OptimizedColBERT: Query encoder returned no embeddings.")
+        # Handle the case where query_token_embeddings might be a tuple (tokens, embeddings)
+        if isinstance(query_token_embeddings, tuple):
+            tokens, embeddings = query_token_embeddings
+            if len(tokens) == 0:
+                logger.warning("OptimizedColBERT: Query encoder returned no embeddings.")
+                return []
+        else:
+            logger.warning("OptimizedColBERT: Query encoder returned unexpected format.")
             return []
 
         candidate_docs_with_scores = []
@@ -164,43 +170,71 @@ class OptimizedColbertRAGPipeline:
             ORDER BY doc_id, token_sequence_index
             """
             
-            cursor.execute(sql_fetch_all_tokens, doc_ids)
+            # Ensure doc_ids is a tuple for the IN clause, some drivers are picky
+            params_for_in_clause = tuple(doc_ids)
+            cursor.execute(sql_fetch_all_tokens, params_for_in_clause)
             all_token_rows = cursor.fetchall()
+            logger.info(f"OptimizedColBERT: Second query fetched {len(all_token_rows)} token embedding rows for {len(doc_ids)} doc_ids.")
 
             # Group token embeddings by doc_id
             grouped_doc_token_embeddings = {}
             for token_row in all_token_rows:
-                doc_id, token_sequence_index, token_embedding_str = token_row
-                if doc_id not in grouped_doc_token_embeddings:
-                    grouped_doc_token_embeddings[doc_id] = []
+                doc_id_from_token_row, token_sequence_index, token_embedding_str = token_row
+                if doc_id_from_token_row not in grouped_doc_token_embeddings:
+                    grouped_doc_token_embeddings[doc_id_from_token_row] = []
                 
                 try:
                     if isinstance(token_embedding_str, str):
-                        if ',' in token_embedding_str:
-                            token_embedding = [float(x.strip()) for x in token_embedding_str.split(',')]
-                        else:
-                            token_embedding = json.loads(token_embedding_str)
-                        grouped_doc_token_embeddings[doc_id].append(token_embedding)
+                        token_embedding = json.loads(token_embedding_str)
+                        grouped_doc_token_embeddings[doc_id_from_token_row].append(token_embedding)
+                    elif isinstance(token_embedding_str, (list, np.ndarray)):
+                        grouped_doc_token_embeddings[doc_id_from_token_row].append(list(token_embedding_str))
+                    else:
+                        logger.warning(f"OptimizedColBERT: Unexpected type for token embedding: {type(token_embedding_str)} for doc {doc_id_from_token_row}, index {token_sequence_index}. Value: {str(token_embedding_str)[:100]}")
                 except (json.JSONDecodeError, ValueError, TypeError) as e:
-                    logger.debug(f"OptimizedColBERT: Error parsing token embedding for doc {doc_id}, index {token_sequence_index}: {e}")
-                    continue
-            
+                    logger.warning(f"OptimizedColBERT: FAILED to parse token embedding for doc {doc_id_from_token_row}, index {token_sequence_index}. Type: {type(token_embedding_str)}, Value: '{str(token_embedding_str)[:200]}'. Error: {e}")
+                    continue # Skip this problematic token embedding
+
+            logger.info(f"OptimizedColBERT: Grouped token embeddings populated. Number of doc_ids with grouped embeddings: {len(grouped_doc_token_embeddings)}. Keys: {list(grouped_doc_token_embeddings.keys())}")
+            # for d_id_key, embeds_list in grouped_doc_token_embeddings.items(): # Can be too verbose
+            #    logger.debug(f"OptimizedColBERT: Grouped embeds for '{d_id_key}': {len(embeds_list)} embeddings.")
+
             processed_count = 0
             above_threshold_count = 0
 
+            logger.info(f"OptimizedColBERT: Starting document scoring. Number of docs in doc_contents: {len(doc_contents)}. Doc IDs from doc_contents: {list(doc_contents.keys())}")
+            if not query_token_embeddings: # query_token_embeddings is actually (tokens, embeddings)
+                logger.error("OptimizedColBERT: Query encoder returned empty tokens or embeddings before starting scoring loop. Cannot calculate MaxSim.")
+                return []
+            
+            actual_query_embeddings = query_token_embeddings[1] # The second element is the list of embedding vectors
+            if not actual_query_embeddings:
+                logger.error("OptimizedColBERT: Actual query embeddings list is empty before starting scoring loop. Cannot calculate MaxSim.")
+                return []
+
+
             # Step 3: Iterate through documents and calculate MaxSim scores
-            for doc_id, doc_content in doc_contents.items():
-                current_doc_token_embeddings = grouped_doc_token_embeddings.get(doc_id, [])
+            for doc_id_iterate, doc_content_iterate in doc_contents.items():
+                logger.debug(f"OptimizedColBERT: Processing doc_id_iterate '{doc_id_iterate}' (type: {type(doc_id_iterate)}) from doc_contents.")
+                current_doc_token_embeddings = grouped_doc_token_embeddings.get(doc_id_iterate, [])
+                logger.debug(f"OptimizedColBERT: For '{doc_id_iterate}', found {len(current_doc_token_embeddings)} token embeddings in grouped map.")
                 
                 if not current_doc_token_embeddings:
+                    logger.warning(f"OptimizedColBERT: No token embeddings list found or list is empty for doc_id: '{doc_id_iterate}'. Skipping.")
+                    # processed_count += 1 # This was incrementing even if skipped, leading to incorrect "Processed X docs" if all were skipped here.
+                                         # Let's only increment processed_count if we actually attempt a MaxSim.
                     continue
                 
                 # Calculate MaxSim score
-                maxsim_score = self._calculate_maxsim(query_token_embeddings, current_doc_token_embeddings)
+                # query_token_embeddings is a tuple (tokens, embeddings). _calculate_maxsim expects list of embeddings.
+                maxsim_score = self._calculate_maxsim(actual_query_embeddings, current_doc_token_embeddings)
+                logger.info(f"OptimizedColBERT: Doc ID '{doc_id_iterate}', Calculated MaxSim score: {maxsim_score:.4f}")
                 
+                processed_count += 1 # Increment only if MaxSim was calculated
+
                 # Only include documents above threshold
                 if maxsim_score > similarity_threshold:
-                    limited_content = (doc_content or "")[:5000]  # Limit per document
+                    limited_content = (doc_content_iterate or "")[:5000]  # Limit per document
                     candidate_docs_with_scores.append(
                         Document(id=doc_id, content=limited_content, score=maxsim_score)
                     )
@@ -288,22 +322,24 @@ Answer:"""
         }
 
 
-def create_colbert_semantic_encoder(model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+def create_colbert_semantic_encoder(model_name: str = "sentence-transformers/all-MiniLM-L6-v2", embedding_func_override: Callable = None):
     """
     Creates a semantic encoder for ColBERT that uses a real embedding model.
     This replaces the hash-based encoder to capture semantic meaning.
+    Allows overriding the embedding function for testing.
     """
-    embedding_func = get_embedding_func(model_name=model_name)
+    embedding_func = embedding_func_override if embedding_func_override else get_embedding_func(model_name=model_name)
 
-    def encoder(text: str) -> List[List[float]]:
+    def encoder(text: str) -> Tuple[List[str], List[List[float]]]:
         """
         Generate token embeddings using a semantic model.
         For simplicity, this will generate a single embedding for the entire text,
         but a true ColBERT implementation would generate embeddings for each token.
         For now, we'll simulate token embeddings by repeating the sentence embedding.
+        Returns a tuple of (tokens, embeddings).
         """
         if not text or not text.strip():
-            return []
+            return [], []
         
         # Get a single embedding for the text
         sentence_embedding = embedding_func([text])[0]
@@ -312,13 +348,14 @@ def create_colbert_semantic_encoder(model_name: str = "sentence-transformers/all
         # This is a simplification; a real ColBERT would use a token-level encoder.
         tokens = text.strip().split()
         if not tokens:
-            return []
+            return [], []
         
         # Limit number of tokens for performance and to match expected ColBERT output structure
         tokens = tokens[:32] # Max 32 tokens for query, adjust for doc if needed
         
         # Return a list of embeddings, one for each "token" (though they are identical here)
-        return [sentence_embedding for _ in tokens]
+        token_embeddings = [sentence_embedding for _ in tokens]
+        return tokens, token_embeddings
     
     return encoder
 

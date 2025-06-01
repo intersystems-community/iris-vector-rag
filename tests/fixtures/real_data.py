@@ -27,11 +27,9 @@ def real_iris_available() -> bool:
     Returns:
         bool: True if a real IRIS connection can be established, False otherwise
     """
-    # Check if environment variables are set
-    if not os.environ.get("IRIS_HOST"):
-        return False
-    
     # Try to connect
+    # get_iris_connection will use its own defaults (e.g., localhost for IRIS_HOST)
+    # if the environment variables are not explicitly set.
     conn = get_iris_connection(use_mock=False)
     if conn is None:
         return False
@@ -70,7 +68,7 @@ def real_data_available(real_iris_available: bool) -> bool:
     # Check if the SourceDocuments table exists and has data
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
         result = cursor.fetchone()
         cursor.close()
         conn.close()

@@ -1,0 +1,372 @@
+"""
+Hybrid iFind+Graph+Vector RAG Pipeline Implementation (Pre Table Fix Version)
+
+This module implements a sophisticated hybrid RAG pipeline that combines three
+retrieval methods using SQL reciprocal rank fusion:
+
+1. iFind Keyword Search - Exact term matching using IRIS bitmap indexes
+2. Graph-based Retrieval - Relationship discovery through entity graphs  
+3. Vector Similarity Search - Semantic matching with embeddings
+
+The pipeline uses SQL CTEs for efficient reciprocal rank fusion and leverages
+IRIS's unique capabilities for multi-modal retrieval.
+"""
+
+import logging
+import time
+from typing import Dict, List, Any, Optional, Tuple
+import json
+import os # Added
+import sys # Added
+
+# Add the project root directory to Python path
+# Assuming this file is in src/deprecated/hybrid_ifind_rag/
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from src.common.utils import get_embedding_func, get_llm_func # get_iris_connector removed
+# Assuming GraphRAGPipeline will be in src/experimental/graphrag/
+from src.experimental.graphrag.pipeline import GraphRAGPipeline
+
+
+logger = logging.getLogger(__name__)
+
+
+class HybridiFindRAGPipeline: # Name conflict, keeping for archival
+    """
+    Hybrid RAG pipeline combining iFind keyword search, graph retrieval, 
+    and vector similarity search with reciprocal rank fusion. (Pre Table Fix Version)
+    """
+    
+    def __init__(self, iris_connector: Any, embedding_func: Optional[Callable]=None, llm_func: Optional[Callable]=None): # Type hint
+        """
+        Initialize the hybrid RAG pipeline.
+        """
+        self.iris_connector = iris_connector
+        self.embedding_func = embedding_func or get_embedding_func()
+        self.llm_func = llm_func or get_llm_func()
+        
+        self.config = {
+            'ifind_weight': 0.33,
+            'graph_weight': 0.33, 
+            'vector_weight': 0.34,
+            'rrf_k': 60,
+            'max_results_per_method': 20,
+            'final_results_limit': 10
+        }
+        logger.info("Initialized Hybrid iFind+Graph+Vector RAG Pipeline (Pre Table Fix Version)")
+    
+    def update_config(self, **kwargs):
+        self.config.update(kwargs)
+        logger.info(f"Updated configuration: {kwargs}")
+    
+    def _extract_keywords(self, query: str) -> List[str]:
+        import re
+        stop_words = {
+            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 
+            'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be',
+            'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+            'would', 'could', 'should', 'may', 'might', 'can', 'what',
+            'how', 'when', 'where', 'why', 'who'
+        }
+        words = re.findall(r'\b[a-zA-Z0-9]{3,}\b', query.lower())
+        keywords = [word for word in words if word not in stop_words]
+        logger.debug(f"Extracted keywords from '{query}': {keywords}")
+        return keywords
+    
+    def _ifind_keyword_search(self, keywords: List[str]) -> List[Dict[str, Any]]:
+        if not keywords: return []
+        cursor = None
+        try:
+            keyword_conditions = []
+            params = []
+            for i, keyword in enumerate(keywords[:5]):
+                keyword_conditions.append(f"d.text_content LIKE ?") # Was case-sensitive
+                params.append(f"%{keyword}%")
+            
+            if not keyword_conditions: return []
+            where_clause = " OR ".join(keyword_conditions)
+            
+            # This version targets SourceDocuments_V2
+            query_sql = f"""
+            SELECT TOP {self.config['max_results_per_method']}
+                d.doc_id as document_id,
+                d.title as title, -- Assuming title exists in SourceDocuments_V2
+                SUBSTRING(CAST(d.text_content AS VARCHAR(1000)), 1, 1000) as content,
+                '' as metadata,
+                ROW_NUMBER() OVER (ORDER BY d.doc_id) as rank_position
+            FROM RAG.SourceDocuments_V2 d 
+            WHERE {where_clause}
+            ORDER BY d.doc_id
+            """
+            
+            cursor = self.iris_connector.cursor()
+            cursor.execute(query_sql, params)
+            results = []
+            for row in cursor.fetchall():
+                results.append({
+                    'document_id': str(row[0]),
+                    'title': str(row[1] or ""),
+                    'content': str(row[2] or 'Content preview not available'),
+                    'metadata': str(row[3] or ""),
+                    'rank_position': int(row[4]),
+                    'method': 'ifind'
+                })
+            logger.info(f"iFind keyword search (pre_table_fix) returned {len(results)} results")
+            return results
+        except Exception as e:
+            logger.error(f"Error in iFind keyword search (pre_table_fix): {e}", exc_info=True)
+            return []
+        finally:
+            if cursor: cursor.close()
+    
+    def _graph_retrieval(self, query: str) -> List[Dict[str, Any]]:
+        try:
+            graph_pipeline = GraphRAGPipeline(
+                self.iris_connector, self.embedding_func, self.llm_func
+            )
+            documents_objects, method_str = graph_pipeline.retrieve_documents_via_kg(
+                query, top_k=self.config['max_results_per_method']
+            )
+            
+            results = []
+            for i, doc_obj in enumerate(documents_objects):
+                results.append({
+                    'document_id': str(doc_obj.id),
+                    'title': str(doc_obj.metadata.get('title', '') if doc_obj.metadata else ''),
+                    'content': str(doc_obj.content or "")[:1000],
+                    'metadata': json.dumps(doc_obj.metadata or {}),
+                    'rank_position': i + 1,
+                    'method': 'graph'
+                })
+            logger.info(f"Graph retrieval (pre_table_fix) returned {len(results)} results")
+            return results
+        except Exception as e:
+            logger.error(f"Graph retrieval failed (pre_table_fix): {e}", exc_info=True)
+            return []
+    
+    def _vector_similarity_search(self, query: str) -> List[Dict[str, Any]]:
+        cursor = None
+        try:
+            query_embedding = self.embedding_func([query])[0]
+            embedding_str = f"[{','.join(map(str, query_embedding))}]" # Format for TO_VECTOR
+            similarity_threshold = 0.1 # Default from original
+            
+            # This version targets SourceDocuments_V2
+            query_sql = f"""
+            SELECT TOP {self.config['max_results_per_method']}
+                d.doc_id as document_id,
+                d.title as title, -- Assuming title exists
+                SUBSTRING(CAST(d.text_content AS VARCHAR(1000)), 1, 1000) as content,
+                '' as metadata,
+                VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) as similarity_score,
+                ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) DESC) as rank_position
+            FROM RAG.SourceDocuments_V2 d
+            WHERE d.embedding IS NOT NULL
+              AND LENGTH(d.embedding) > 1000 -- Original condition
+              AND VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?)) > ? 
+            ORDER BY similarity_score DESC
+            """
+            
+            cursor = self.iris_connector.cursor()
+            # Parameters: embedding_str (for similarity), embedding_str (for ranking), embedding_str (for WHERE), threshold
+            cursor.execute(query_sql, [embedding_str, embedding_str, embedding_str, similarity_threshold])
+            
+            results = []
+            for row in cursor.fetchall():
+                content_val = row[2]
+                if hasattr(content_val, 'read'): # Handle stream
+                    content_val = content_val.read()
+                if isinstance(content_val, bytes):
+                    content_val = content_val.decode('utf-8', errors='ignore')
+                
+                results.append({
+                    'document_id': str(row[0]),
+                    'title': str(row[1] or ""),
+                    'content': str(content_val or ""),
+                    'metadata': str(row[3] or ""),
+                    'similarity_score': float(row[4]) if row[4] is not None else 0.0,
+                    'rank_position': int(row[5]),
+                    'method': 'vector'
+                })
+            logger.info(f"Vector similarity search (pre_table_fix) returned {len(results)} results")
+            return results
+        except Exception as e:
+            logger.error(f"Error in vector similarity search (pre_table_fix): {e}", exc_info=True)
+            return []
+        finally:
+            if cursor: cursor.close()
+
+    def _reciprocal_rank_fusion(self, ifind_results: List[Dict], 
+                               graph_results: List[Dict], 
+                               vector_results: List[Dict]) -> List[Dict[str, Any]]:
+        doc_scores: Dict[str, float] = {}
+        doc_info: Dict[str, Dict[str, Any]] = {}
+        
+        all_results_lists = [
+            (ifind_results, self.config['ifind_weight']),
+            (graph_results, self.config['graph_weight']),
+            (vector_results, self.config['vector_weight'])
+        ]
+
+        for results_list, weight in all_results_lists:
+            for result_item in results_list:
+                doc_id = str(result_item['document_id'])
+                rank = int(result_item['rank_position'])
+                score_contribution = weight / (self.config['rrf_k'] + rank)
+                
+                if doc_id not in doc_scores:
+                    doc_scores[doc_id] = 0.0
+                    doc_info[doc_id] = result_item
+                doc_scores[doc_id] += score_contribution
+        
+        sorted_docs_by_rrf = sorted(doc_scores.items(), key=lambda item: item[1], reverse=True)
+        
+        final_fused_results = []
+        for doc_id_sorted, rrf_score_val in sorted_docs_by_rrf[:self.config['final_results_limit']]:
+            fused_result = doc_info[doc_id_sorted].copy()
+            fused_result['rrf_score'] = rrf_score_val
+            fused_result['document_id'] = str(fused_result.get('document_id', doc_id_sorted))
+            fused_result['title'] = str(fused_result.get('title', ''))
+            fused_result['content'] = str(fused_result.get('content', ''))[:1000]
+            fused_result['metadata'] = str(fused_result.get('metadata', ''))
+            final_fused_results.append(fused_result)
+        
+        logger.info(f"RRF fusion (pre_table_fix) produced {len(final_fused_results)} final results")
+        return final_fused_results
+    
+    def retrieve_documents(self, query: str) -> List[Dict[str, Any]]: # Simplified signature from original
+        start_time = time.time()
+        try:
+            keywords = self._extract_keywords(query)
+            logger.info("Starting hybrid retrieval (pre_table_fix)...")
+            
+            ifind_start = time.time()
+            ifind_results = self._ifind_keyword_search(keywords)
+            ifind_time = time.time() - ifind_start
+            
+            graph_start = time.time()
+            graph_results = self._graph_retrieval(query)
+            graph_time = time.time() - graph_start
+            
+            vector_start = time.time()
+            vector_results = self._vector_similarity_search(query)
+            vector_time = time.time() - vector_start
+            
+            fusion_start = time.time()
+            fused_results = self._reciprocal_rank_fusion(ifind_results, graph_results, vector_results)
+            fusion_time = time.time() - fusion_start
+            
+            total_retrieval_time = time.time() - start_time
+            
+            logger.info(f"Hybrid retrieval (pre_table_fix) completed in {total_retrieval_time:.3f}s")
+            # Log individual times if needed
+            return fused_results
+        except Exception as e:
+            logger.error(f"Error in hybrid document retrieval (pre_table_fix): {e}", exc_info=True)
+            return []
+            
+    def generate_response(self, query: str, retrieved_docs: List[Dict[str, Any]]) -> str:
+        try:
+            if not retrieved_docs:
+                return "I couldn't find any relevant documents to answer your question."
+            
+            context_parts = []
+            for i, doc in enumerate(retrieved_docs[:5], 1):
+                methods = doc.get('methods_used', ['Unknown']) # methods_used might not be in this version
+                title = doc.get('title', 'N/A')
+                content = str(doc.get('content', ''))[:1000]
+                rrf_score = doc.get('rrf_score', 0.0)
+                context_parts.append(
+                    f"Document {i} (via {', '.join(methods)}, RRF score: {rrf_score:.4f}):\n"
+                    f"Title: {title}\n"
+                    f"Content: {content}..."
+                )
+            context = "\n\n".join(context_parts)
+            
+            prompt = f"""Based on the following documents retrieved through hybrid search, please answer the question.
+Question: {query}
+Retrieved Documents:
+{context}
+Please provide a comprehensive answer. If the documents don't contain enough information, state that clearly."""
+            response = self.llm_func(prompt)
+            logger.info(f"Generated response for query (pre_table_fix): '{query[:50]}...'")
+            return response
+        except Exception as e:
+            logger.error(f"Error generating response (pre_table_fix): {e}", exc_info=True)
+            return f"Error generating response: {str(e)}"
+    
+    def query(self, query_text: str) -> Dict[str, Any]: # Original name was query
+        start_time = time.time()
+        try:
+            logger.info(f"Processing hybrid RAG query (pre_table_fix): '{query_text}'")
+            retrieved_docs = self.retrieve_documents(query_text)
+            response = self.generate_response(query_text, retrieved_docs)
+            total_time = time.time() - start_time
+            
+            return {
+                "query": query_text,
+                "answer": response,
+                "retrieved_documents": retrieved_docs,
+                "metadata": {
+                    "total_time": total_time,
+                    "num_documents": len(retrieved_docs), # Number of final fused documents
+                    "pipeline_version": "HybridiFindRAG_PreTableFix"
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error in HybridiFindRAGPipeline.query (pre_table_fix): {e}", exc_info=True)
+            return {
+                "query": query_text,
+                "answer": "An error occurred processing your query.",
+                "retrieved_documents": [],
+                "metadata": {"error": str(e)}
+            }
+
+# Example usage:
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Adjust imports for __main__ execution
+    current_dir_main_hybrid_ptf = os.path.dirname(os.path.abspath(__file__))
+    path_to_src_main_hybrid_ptf = os.path.abspath(os.path.join(current_dir_main_hybrid_ptf, '../../..'))
+    if path_to_src_main_hybrid_ptf not in sys.path:
+         sys.path.insert(0, path_to_src_main_hybrid_ptf)
+
+    from src.common.iris_connector import get_iris_connection as get_conn_main_hybrid_ptf
+    from src.common.utils import get_embedding_func as get_embed_fn_main_hybrid_ptf, get_llm_func as get_llm_fn_main_hybrid_ptf
+
+    db_conn_main_hybrid_ptf = None
+    try:
+        logger.info("Attempting to run HybridiFindRAGPipeline (PreTableFix Version) example...")
+        db_conn_main_hybrid_ptf = get_conn_main_hybrid_ptf()
+        if db_conn_main_hybrid_ptf is None:
+            raise ConnectionError("Failed to get IRIS connection for HybridiFindRAG (PreTableFix Version) demo.")
+
+        pipeline = HybridiFindRAGPipeline( # This will use the class defined in this file
+            iris_connector=db_conn_main_hybrid_ptf,
+            embedding_func=get_embed_fn_main_hybrid_ptf(),
+            llm_func=get_llm_fn_main_hybrid_ptf(provider="stub")
+        )
+        
+        test_query = "Advancements in renewable energy sources"
+        logger.info(f"Running HybridiFindRAG pipeline (PreTableFix Version) with test query: '{test_query}'")
+        
+        result = pipeline.query(test_query) # Use 'query' method as defined
+        
+        print("\n--- HybridiFindRAG Pipeline (PreTableFix Version) Result ---")
+        print(f"Query: {result['query']}")
+        print(f"Answer: {result['answer']}")
+        print(f"Retrieved Documents ({len(result['retrieved_documents'])}):")
+        for i, doc_res in enumerate(result['retrieved_documents']):
+            print(f"  Doc {i+1}: ID={doc_res.get('document_id', 'N/A')}, RRF Score={doc_res.get('rrf_score', 0.0):.4f}, Method(s)={doc_res.get('methods_used', 'N/A')}")
+            print(f"     Title: {doc_res.get('title', 'N/A')[:60]}...")
+        print(f"Metadata: {result['metadata']}")
+
+    except Exception as e_main_hybrid_ptf:
+        logger.error(f"Error during HybridiFindRAG (PreTableFix Version) demo: {e_main_hybrid_ptf}", exc_info=True)
+    finally:
+        if db_conn_main_hybrid_ptf:
+            db_conn_main_hybrid_ptf.close()
+            logger.info("IRIS connection closed for HybridiFindRAG (PreTableFix Version) demo.")

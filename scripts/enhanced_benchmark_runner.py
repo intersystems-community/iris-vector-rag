@@ -27,15 +27,17 @@ from dataclasses import dataclass, asdict
 import pandas as pd
 
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming scripts is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
-from eval.metrics import calculate_retrieval_metrics, calculate_answer_quality_metrics
-from basic_rag.pipeline import BasicRAGPipeline
-from graphrag.pipeline import GraphRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from crag.pipeline import CRAGPipeline
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from eval.metrics import calculate_retrieval_metrics, calculate_answer_quality_metrics # Path remains same
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(

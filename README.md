@@ -15,33 +15,41 @@ The documentation is now organized into logical categories:
 - **🔧 Fixes**: Technical fixes and troubleshooting documentation
 - **📊 Summaries**: High-level project summaries and status reports
 ---
+## 🧭 Project Orientation & Key Documents
 
-## Project Status (As of May 30, 2025)
+To quickly understand the current state, goals, and ongoing development of this RAG Templates project, please refer to the following key documents:
 
-🚀 **ENTERPRISE PRODUCTION READY** - Complete 7-technique RAG system with JDBC vector solution:
+1.  **This `README.md`**: Provides a general overview, setup instructions, and links to other important resources.
+2.  **[`PROJECT_STATUS_DASHBOARD.md`](PROJECT_STATUS_DASHBOARD.md:1)**: This is the **single source of truth** for the operational status of each RAG technique, known issues, and the progress of the overall project restructuring and improvement plan.
+3.  **[`docs/COMPREHENSIVE_SCALING_EVALUATION_FRAMEWORK.md`](docs/COMPREHENSIVE_SCALING_EVALUATION_FRAMEWORK.md:1)**: Details the new, extensive framework for testing and evaluating RAG pipelines across various data scales, which is a major focus of recent and ongoing work.
+4.  **[`tests/test_e2e_rag_pipelines.py`](tests/test_e2e_rag_pipelines.py:1)**: This script contains the comprehensive end-to-end tests for all core RAG pipelines. It demonstrates how pipelines are currently validated, including RAGAS integration for quality assessment and detailed CSV logging of results.
+5.  **[`test_results/rag_evaluation_log.csv`](test_results/rag_evaluation_log.csv:1)**: (Generated after running tests via `pytest tests/test_e2e_rag_pipelines.py`) This CSV file will contain the most up-to-date, detailed results from individual pipeline evaluations, including parameters used, RAGAS scores, and pass/fail status.
 
-- ✅ **JDBC Migration Complete** - Solved critical vector parameter binding issues
-- ✅ **All 7 RAG Techniques** - 100% success rate with comprehensive RAGAS evaluation
-- ✅ **ColBERT Operational** - Token-level retrieval with 937K+ token embeddings
-- ✅ **GraphRAG Knowledge Graph** - 273K+ entities and relationships
-- ✅ **Production Performance** - 0.14-0.20s vector search response times
-- ✅ **Critical Issues Resolved** - All vector errors eliminated, system fully functional
-- ✅ **Quality Assessment** - Medical domain validation with real OpenAI integration
-- ✅ **Performance Optimization** - Database indexes providing 1.6x-2.6x speedup
-- ✅ **Enterprise Architecture** - Production-ready with comprehensive monitoring
-- 📊 **RAGAS Framework** - Scientific evaluation with fine-grained metrics
+Reviewing these documents will provide a solid understanding of the project's current trajectory and how its components are being managed and validated.
 
-**Current Operational Status:**
-- 🎯 **Complete Portfolio**: All 7 major RAG techniques validated and working
-- 📊 **Data Scale**: 99,990 documents, 937K+ token embeddings, 273K+ entities
-- ⚡ **Performance**: 0.14-0.20s vector search (acceptable for production)
-- 🔧 **JDBC Solution**: Safe parameter binding for vector operations
-- 📈 **System Health**: 100% vector coverage, all pipelines operational
-- ⚠️ **Note**: Using original tables (HNSW migration deferred for future enhancement)
+## Project Status (As of June 1, 2025)
 
-**📊 Latest Results**:
-- **JDBC Solution**: See [`docs/JDBC_V2_MIGRATION_COMPLETE.md`](docs/JDBC_V2_MIGRATION_COMPLETE.md) for the complete JDBC migration and V2 table implementation
-- **7-Technique Evaluation**: See [`FINAL_COLBERT_RECOVERY_AND_7_TECHNIQUE_EVALUATION_SUMMARY.md`](FINAL_COLBERT_RECOVERY_AND_7_TECHNIQUE_EVALUATION_SUMMARY.md) for RAGAS evaluation results
+🚨 **IMPORTANT: For the most accurate and up-to-date status of each RAG technique, please refer to the [PROJECT_STATUS_DASHBOARD.md](PROJECT_STATUS_DASHBOARD.md).** 🚨
+
+**Note on Historical Status Reporting:** Previous versions of this README and other status documents contained inaccuracies regarding the operational status and success rates of various RAG techniques. The [`PROJECT_STATUS_DASHBOARD.md`](PROJECT_STATUS_DASHBOARD.md:1) and its linked `project_status_logs/` provide the corrected, evidence-based status.
+
+**Key Recent Updates:**
+- ✅ **ColBERT Operational & Verified (June 1, 2025)**:
+    - Token-level retrieval with 937K+ token embeddings (using `fjmgAI/reason-colBERT-150M-GTE-ModernColBERT` for 768-dim embeddings).
+    - Successfully fixed issues in `scripts/populate_colbert_token_embeddings_native_vector.py` (interactive loop, SQL stream field handling).
+    - Corrected `colbert_query_encoder` fixture in `tests/conftest.py` for dimension and format consistency.
+    - `test_colbert_with_real_data` E2E test **passing** with 100 documents.
+    - See [`COLBERT_PIPELINE_FIX_SUMMARY.md`](COLBERT_PIPELINE_FIX_SUMMARY.md) for details.
+    - Next Step: Scale ColBERT E2E testing to 1000 documents.
+- **JDBC Migration**: Believed to have solved critical vector parameter binding issues. See [`docs/JDBC_V2_MIGRATION_COMPLETE.md`](docs/JDBC_V2_MIGRATION_COMPLETE.md). However, some techniques like BasicRAG still exhibit vector-related errors (see dashboard).
+- **Data Scale**: Significant data (99,990 documents, 937K+ token embeddings, 273K+ entities) has been processed.
+
+**For detailed status on individual RAG techniques, including BasicRAG, CRAG, GraphRAG, HyDE, HybridIFindRAG, and NodeRAG, please consult the [PROJECT_STATUS_DASHBOARD.md](PROJECT_STATUS_DASHBOARD.md).**
+
+**📊 Key Supporting Documents for Recent Changes**:
+- ColBERT Fixes: See [`COLBERT_PIPELINE_FIX_SUMMARY.md`](COLBERT_PIPELINE_FIX_SUMMARY.md)
+- JDBC Solution: See [`docs/JDBC_V2_MIGRATION_COMPLETE.md`](docs/JDBC_V2_MIGRATION_COMPLETE.md)
+- For historical (potentially outdated) evaluations: See `FINAL_COLBERT_RECOVERY_AND_7_TECHNIQUE_EVALUATION_SUMMARY.md` (Note: cross-reference with dashboard for actual current status).
 
 The project uses a proven local development setup:
 - **Python Environment:** Managed on the host machine using `uv` with dependencies defined in `pyproject.toml`
@@ -79,35 +87,19 @@ For detailed migration instructions, see [`jdbc_exploration/JDBC_MIGRATION_PLAN.
 
 ## RAG Techniques Implemented
 
-**All 7 techniques enterprise validated with comprehensive RAGAS evaluation:**
+This repository contains implementations for various RAG techniques.
+**For the current operational status, known issues, and last successful test date for each technique, please refer to the [PROJECT_STATUS_DASHBOARD.md](PROJECT_STATUS_DASHBOARD.md).**
 
-### 🏆 Production Performance Rankings
+The dashboard provides an accurate, evidence-based overview, superseding any generalized claims found in older documentation.
 
-Based on comprehensive RAGAS evaluation with medical domain questions (May 28, 2025):
-
-1. **🥇 GraphRAG** (1.51s) - **BREAKTHROUGH FIXED** - True knowledge graph traversal with 273K+ entities
-2. **🥈 ColBERT** (1.89s) - **BREAKTHROUGH PERFORMANCE** - Token-level retrieval with 937K+ embeddings
-3. **🥉 BasicRAG** (7.95s) - Reliable production baseline with consistent quality
-4. **🏅 CRAG** (8.26s) - Corrective retrieval with excellent coverage
-5. **🏅 HyDE** (10.11s) - Quality-focused with hypothetical document generation
-6. **🏅 NodeRAG** (15.34s) - Maximum coverage specialist
-7. **🏅 HybridiFindRAG** (24.65s) - **FIXED INTEGRATION** - True multi-modal fusion with proper GraphRAG
-
-### 📋 Technique Details
-
-| Technique | Status | Avg Response Time | Success Rate | Enterprise Ready | Use Case |
-|-----------|--------|-------------------|--------------|------------------|----------|
-| **GraphRAG** | ✅ OPERATIONAL | 1.83s | 100% | ✅ *Knowledge Graph* | True graph-based retrieval |
-| **ColBERT** | ✅ OPERATIONAL | **1.89s** | 100% | ✅ *Token-Level* | Advanced semantic search |
-| **BasicRAG** | ✅ OPERATIONAL | 7.95s | 100% | ✅ *Production Baseline* | Reliable general-purpose |
-| **CRAG** | ✅ OPERATIONAL | 8.26s | 100% | ✅ *Enhanced Coverage* | Corrective retrieval |
-| **HyDE** | ✅ OPERATIONAL | 10.11s | 100% | ✅ *Quality Focused* | High-quality answers |
-| **NodeRAG** | ✅ OPERATIONAL | 15.34s | 100% | ✅ *Maximum Coverage* | Comprehensive retrieval |
-| **HybridiFindRAG** | ✅ OPERATIONAL | 23.88s | 100% | ✅ *IRIS Native* | Multi-modal analysis |
-
-**🔧 ColBERT Performance Breakthrough**: Optimized from 5000+ seconds to 1.89 seconds (2600x improvement) with proper content management and enterprise-grade reliability.
-
-**🚀 GraphRAG Knowledge Graph Fix**: Completely reimplemented to use actual knowledge graph data (273K+ entities, 183K+ relationships) instead of querying empty tables. Performance changed from fake 0.76s to realistic 1.83s with true graph-based retrieval and quality results.
+Key techniques explored include:
+- BasicRAG
+- ColBERT (Recently fixed and verified with 100 documents as of June 1, 2025)
+- CRAG
+- GraphRAG
+- HyDE
+- HybridIFindRAG
+- NodeRAG
 
 ### Enterprise Features:
 - **Real Data Processing**: 1,825+ authentic PMC biomedical articles
@@ -119,12 +111,11 @@ Based on comprehensive RAGAS evaluation with medical domain questions (May 28, 2
 ## Features
 
 ### Core RAG Implementation
-- ✅ **All 7 RAG techniques** implemented with Python and InterSystems IRIS
-- ✅ **100% success rate** with enterprise-scale validation and RAGAS evaluation
-- ✅ **ColBERT token-level retrieval** with 937K+ token embeddings operational
-- ✅ **Enhanced chunking system** with 4 strategies (Recursive, Semantic, Adaptive, Hybrid)
-- ✅ **Hybrid iFind RAG** with native IRIS vector search and ObjectScript integration
-- ✅ **Real semantic search** with meaningful similarity scores (0.8+ for relevant matches)
+- Implementations for 7 RAG techniques using Python and InterSystems IRIS. (See [PROJECT_STATUS_DASHBOARD.md](PROJECT_STATUS_DASHBOARD.md) for current operational status of each).
+- ✅ **ColBERT token-level retrieval** with 937K+ token embeddings operational (as of June 1, 2025, verified with 100 docs).
+- ✅ **Enhanced chunking system** with 4 strategies (Recursive, Semantic, Adaptive, Hybrid).
+- ✅ **Hybrid iFind RAG** implemented (see dashboard for current status).
+- Strives for real semantic search with meaningful similarity scores.
 
 ### Enterprise Validation
 - ✅ **Comprehensive Test-Driven Development (TDD)** approach

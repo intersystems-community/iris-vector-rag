@@ -4,11 +4,13 @@ Fair performance comparison: Original BasicRAG with full vector search vs V2
 
 import sys
 import time
-sys.path.insert(0, '.')
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming scripts is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
-from basic_rag.pipeline_v2 import BasicRAGPipelineV2
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
 
 def test_original_with_full_search():
     """Test original BasicRAG with full vector search (will fail due to IRIS bug)"""

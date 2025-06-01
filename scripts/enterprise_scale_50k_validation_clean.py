@@ -50,15 +50,17 @@ class NumpyEncoder(json.JSONEncoder):
         return super(NumpyEncoder, self).default(obj)
 
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming scripts is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
-from data.loader import load_documents_to_iris
-from data.pmc_processor import process_pmc_files
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from data.loader import load_documents_to_iris # Path remains same
+from data.pmc_processor import process_pmc_files # Path remains same
 
 # Import all RAG pipelines
-from basic_rag.pipeline import BasicRAGPipeline
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(

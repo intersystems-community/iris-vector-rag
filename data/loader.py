@@ -305,7 +305,7 @@ if __name__ == "__main__":
     if stats["success"]:
         print("\n=== Processing and Loading Results ===")
         print(f"Processed {stats['processed_count']} documents from {stats['processed_directory']}")
-        print(f"Successfully loaded {stats['loaded_count']} documents")
+        print(f"Successfully loaded {stats['loaded_doc_count']} documents")
         if stats['error_count'] > 0:
             print(f"Failed to load {stats['error_count']} documents")
         print(f"Total time: {stats['duration_seconds']:.2f} seconds")

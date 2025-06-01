@@ -8,7 +8,7 @@ and creates a detailed plan for restoration after the column mismatch fixes.
 
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))) # Add project root
 
 from common.iris_connector import get_iris_connection
 import json

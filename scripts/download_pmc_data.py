@@ -45,7 +45,7 @@ class PMCDataDownloader:
         
         # Rate limiting for NCBI API (max 3 requests per second)
         self.last_request_time = 0
-        self.min_request_interval = 0.34  # Slightly more than 1/3 second
+        self.min_request_interval = 1.1  # Increased to >1 second to be safer
         
     def rate_limit(self):
         """Enforce rate limiting for NCBI API"""
@@ -143,25 +143,53 @@ class PMCDataDownloader:
                 # Extract individual articles
                 articles = root.findall('.//article')
                 
-                for article in articles:
+                for article_idx, article in enumerate(articles): # Added enumerate for a unique index
                     try:
                         # Extract PMC ID
                         pmc_id_elem = article.find('.//article-id[@pub-id-type="pmc"]')
-                        if pmc_id_elem is not None:
-                            pmc_id = pmc_id_elem.text
-                            if not pmc_id.startswith('PMC'):
-                                pmc_id = 'PMC' + pmc_id
-                        else:
-                            # Fallback to using batch ID
-                            pmc_id = f"PMC{batch_ids[len(articles)]}" if len(articles) < len(batch_ids) else f"PMC{int(time.time())}"
+                        pmc_id_from_xml = None
+                        if pmc_id_elem is not None and pmc_id_elem.text:
+                            pmc_id_from_xml = pmc_id_elem.text.strip()
+                            if not pmc_id_from_xml.startswith('PMC'):
+                                pmc_id_from_xml = 'PMC' + pmc_id_from_xml
                         
-                        # Create directory structure
-                        pmc_dir = self.output_dir / f"{pmc_id[:6]}xxxxxx"
-                        pmc_dir.mkdir(exist_ok=True)
+                        if pmc_id_from_xml:
+                            pmc_id = pmc_id_from_xml
+                        else:
+                            # Fallback to a more unique ID using batch info and article index within batch
+                            # This attempts to use the original requested ID if possible, otherwise generates a unique one.
+                            original_req_id = batch_ids[article_idx] if article_idx < len(batch_ids) else None
+                            if original_req_id and original_req_id.startswith("PMC"):
+                                pmc_id = original_req_id
+                            elif original_req_id:
+                                pmc_id = f"PMC{original_req_id}_gen_{article_idx}"
+                            else: # Fallback if original_req_id is also not available
+                                pmc_id = f"UNKNOWN_PMC_BATCH{batch_num}_ARTICLE{article_idx}_{int(time.time_ns())}"
+                            logger.warning(f"Could not find explicit PMC ID for an article in batch {batch_num}. Using generated ID: {pmc_id}")
+
+                        # Create directory structure based on the first 6 chars of PMC ID (e.g., PMC000, PMC001)
+                        # Ensure pmc_id is long enough and valid for slicing
+                        if pmc_id and len(pmc_id) >= 6 and pmc_id.startswith("PMC"):
+                            # Use a consistent part of the ID for directory naming
+                            # e.g. PMC001xxxxxx from PMC0012345
+                            dir_prefix = pmc_id[:6] # Takes "PMC001" from "PMC0012345"
+                            pmc_dir = self.output_dir / f"{dir_prefix}xxxxxx"
+                        else: # Fallback for malformed or generated IDs
+                            pmc_dir = self.output_dir / "UNKNOWN_PMC_STRUCTURE"
+                            logger.warning(f"PMC ID '{pmc_id}' is malformed for directory structure. Using {pmc_dir}")
+                        
+                        pmc_dir.mkdir(parents=True, exist_ok=True) # Ensure parents=True
                         
                         # Save article XML
                         article_file = pmc_dir / f"{pmc_id}.xml"
                         
+                        # Check if file already exists to prevent overwriting from different batches
+                        # if multiple efetch calls somehow return the same article ID.
+                        if article_file.exists():
+                            logger.warning(f"Article file {article_file} already exists. Skipping to avoid overwrite. This might indicate duplicate processing or non-unique ID generation.")
+                            # Do not increment downloaded_count here if we skip, as it's not a new download to this location.
+                            continue
+
                         # Convert article element back to XML string
                         article_xml = ET.tostring(article, encoding='unicode')
                         
@@ -190,18 +218,21 @@ class PMCDataDownloader:
         logger.info("Downloading Open Access bulk files from PMC FTP...")
         
         # PMC provides bulk downloads of Open Access articles
+        # Updated to try a more recent baseline year, e.g., 2024. This is a guess.
+        # If these also 404, the naming convention or location might have changed more significantly.
+        # For a robust solution, one might need to scrape the FTP directory listing.
         bulk_files = [
-            "oa_comm/xml/oa_comm_xml.PMC000xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC001xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC002xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC003xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC004xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC005xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC006xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC007xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC008xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC009xxxxxx.baseline.2023.tar.gz",
-            "oa_comm/xml/oa_comm_xml.PMC010xxxxxx.baseline.2023.tar.gz",
+            "oa_comm/xml/oa_comm_xml.PMC000xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC001xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC002xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC003xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC004xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC005xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC006xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC007xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC008xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC009xxxxxx.baseline.2024.tar.gz", # Updated year
+            "oa_comm/xml/oa_comm_xml.PMC010xxxxxx.baseline.2024.tar.gz", # Updated year
         ]
         
         total_downloaded = 0

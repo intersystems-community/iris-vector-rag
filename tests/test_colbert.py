@@ -9,10 +9,12 @@ import numpy as np
 from typing import Any # For mock type hints
 
 # Add the project root directory to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from colbert.pipeline import ColbertRAGPipeline
-from common.utils import Document
+from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
+from src.common.utils import Document # Updated import
 
 # Attempt to import for type hinting, but make it optional
 try:
