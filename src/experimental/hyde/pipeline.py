@@ -19,6 +19,7 @@ except ImportError:
 # Adjust imports for new structure (e.g. common/)
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
 from common.iris_connector_jdbc import get_iris_connection # For demo
+from common.jdbc_stream_utils import read_iris_stream # Added for stream handling
 
 logger = logging.getLogger(__name__)
 
@@ -95,25 +96,12 @@ class HyDEPipeline:
                 raw_text_content = row[2]
                 score = row[3]
 
-                text_content_str = ""
-                if raw_text_content is not None:
-                    if hasattr(raw_text_content, 'read') and callable(raw_text_content.read):
-                        try:
-                            data = raw_text_content.read()
-                            if isinstance(data, bytes):
-                                text_content_str = data.decode('utf-8', errors='replace')
-                            elif isinstance(data, str):
-                                text_content_str = data
-                            else:
-                                text_content_str = str(data)
-                                logger.warning(f"HyDE: Unexpected data type from stream read for doc_id {doc_id}: {type(data)}")
-                        except Exception as e_read:
-                            logger.warning(f"HyDE: Error reading stream for doc_id {doc_id}: {e_read}")
-                            text_content_str = "[Content Read Error]"
-                    elif isinstance(raw_text_content, bytes):
-                        text_content_str = raw_text_content.decode('utf-8', errors='replace')
-                    else:
-                        text_content_str = str(raw_text_content)
+                # Use the robust read_iris_stream utility
+                text_content_str = read_iris_stream(raw_text_content)
+                if not text_content_str: # If stream was empty or unreadable
+                    logger.warning(f"HyDE: Content for doc_id {doc_id} is empty or unreadable after stream processing.")
+                    # Decide on a placeholder or skip if content is critical
+                    # For now, let it be an empty string if read_iris_stream returns that.
                 
                 current_score = 0.0
                 if score is not None:
@@ -190,15 +178,7 @@ Answer:"""
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": [
-                {
-                    "id": doc.id,
-                    "content": doc.content[:500], 
-                    "score": doc.score,
-                    "title": getattr(doc, '_title', 'Untitled')
-                }
-                for doc in retrieved_documents
-            ],
+            "retrieved_documents": retrieved_documents, # Return list of Document objects
             "hypothetical_document": hypothetical_doc_text,
             "metadata": {
                 "top_k": top_k,

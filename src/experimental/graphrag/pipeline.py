@@ -460,7 +460,7 @@ Answer:"""
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": [doc.to_dict() for doc in retrieved_documents],
+            "retrieved_documents": retrieved_documents, # Return list of Document objects directly
             "similarity_threshold": similarity_threshold, # This was used in KG retrieval indirectly
             "document_count": len(retrieved_documents),
             "method": actual_method

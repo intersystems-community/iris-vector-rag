@@ -302,16 +302,20 @@ Answer:"""
         # Convert context chunks to document format for compatibility
         retrieved_documents_for_output = []
         for i, chunk_content in enumerate(refined_context_list):
-            retrieved_documents_for_output.append({
-                "id": f"crag_chunk_{i}",
-                "content": chunk_content,
-                "score": 1.0  # CRAG doesn't provide individual scores after processing for these chunks
-            })
+            # Ensure content is a string, provide a default if not
+            content_str = str(chunk_content) if chunk_content is not None else ""
+            retrieved_documents_for_output.append(
+                Document(
+                    id=f"crag_chunk_{i}",
+                    content=content_str,
+                    score=1.0  # CRAG's refined list doesn't have individual scores here
+                )
+            )
 
         return {
             "query": query_text,
             "answer": answer,
-            "retrieved_documents": retrieved_documents_for_output, # Use the formatted list
+            "retrieved_documents": retrieved_documents_for_output, # Now a list of Document objects
             "retrieved_context_chunks": refined_context_list, # Keep original list for inspection
             "initial_threshold": initial_threshold,
             "quality_threshold": quality_threshold,
