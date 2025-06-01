@@ -4,17 +4,21 @@ Validate all 7 RAG techniques are working properly
 """
 
 import sys
-sys.path.append('.')
+import os
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
-from basic_rag.pipeline_v2 import BasicRAGPipelineV2
-from noderag.pipeline_v2 import NodeRAGPipelineV2
-from colbert.pipeline_v2 import ColBERTPipelineV2
-from hyde.pipeline import HyDEPipeline
-from crag.pipeline import CRAGPipeline
-from graphrag.pipeline_v2 import GraphRAGPipelineV2
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
+from src.deprecated.basic_rag.pipeline_v2 import BasicRAGPipelineV2 # Updated import
+from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
+from src.deprecated.colbert.pipeline_v2 import ColBERTPipelineV2 # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
 
 def test_technique(name: str, pipeline, query: str):
     """Test a single RAG technique"""

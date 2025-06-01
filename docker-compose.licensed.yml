@@ -12,7 +12,8 @@ services:
       - ISC_DEFAULT_PASSWORD=SYS
       # Add any other necessary environment variables for the licensed version
     volumes:
-      - rag-templates_iris_db_data_licensed:/usr/irissys/mgr # Reference the exact existing volume
+      - iris_licensed_db_data:/usr/irissys/mgr # New named volume for this service
+      - ./iris.key:/usr/irissys/mgr/iris.key # Map the license key
     stdin_open: true
     tty: true
     healthcheck:
@@ -24,5 +25,4 @@ services:
     command: --check-caps false -a "iris session iris -U%SYS '##class(Security.Users).UnExpireUserPasswords(\"*\")'"
 
 volumes:
-  rag-templates_iris_db_data_licensed:
-    external: true # Mark the volume as externally created and managed
+  iris_licensed_db_data: {} # Defines the new named volume

@@ -1,5 +1,9 @@
 # RAG Templates Documentation
 
+🚨 **IMPORTANT: For the most accurate and up-to-date status of each RAG technique, please refer to the main [PROJECT_STATUS_DASHBOARD.md](../PROJECT_STATUS_DASHBOARD.md).** 🚨
+
+**Note on Historical Status Reporting:** Previous status documents and summaries may contain inaccuracies regarding the operational status and success rates of various RAG techniques. The [`PROJECT_STATUS_DASHBOARD.md`](../PROJECT_STATUS_DASHBOARD.md:1) and its linked `project_status_logs/` provide the corrected, evidence-based status.
+
 This directory contains comprehensive documentation for the RAG Templates project, organized into logical categories for easy navigation.
 
 ## 📁 Documentation Structure
@@ -72,35 +76,29 @@ Core technical documentation and specifications:
 - **Troubleshooting**: Check [`fixes/`](fixes/) directory
 
 ### For Project Managers
-- **Project Status**: See [`summaries/PROJECT_MASTER_SUMMARY.md`](summaries/PROJECT_MASTER_SUMMARY.md)
-- **Progress Tracking**: Review [`summaries/PLAN_STATUS.md`](summaries/PLAN_STATUS.md)
-- **High-Level Summaries**: Browse [`summaries/`](summaries/) directory
+- **Project Status**: See main **[PROJECT_STATUS_DASHBOARD.md](../PROJECT_STATUS_DASHBOARD.md)** (Single Source of Truth)
+- **Progress Tracking**: Review [`summaries/PLAN_STATUS.md`](summaries/PLAN_STATUS.md) (Note: cross-reference with dashboard for actual component status)
+- **High-Level Summaries**: Browse [`summaries/`](summaries/) directory (Note: cross-reference with dashboard for actual component status)
 
-## 🏆 Project Achievements
+## 🏆 Project Goals & Implemented Techniques
 
-✅ **All 7 RAG Techniques Implemented & Validated**:
-1. BasicRAG: 0.45s avg, 5.0 docs avg ✅
-2. HyDE: 0.03s avg, 5.0 docs avg ⚡ (Fastest)
-3. CRAG: 0.56s avg, 18.2 docs avg ✅
-4. ColBERT: 3.09s avg, 5.0 docs avg ✅
-5. NodeRAG: 0.07s avg, 20.0 docs avg ✅
-6. GraphRAG: 0.03s avg, 20.0 docs avg ⚡ (Fastest)
-7. Hybrid iFind RAG: 0.07s avg, 10.0 docs avg ✅ (IRIS Native)
+This project aims to implement and evaluate various RAG techniques. For the current, accurate operational status of each technique, please refer to the **[PROJECT_STATUS_DASHBOARD.md](../PROJECT_STATUS_DASHBOARD.md)**.
 
-✅ **Enterprise Features**:
-- Enhanced chunking system with 4 strategies
-- HNSW vector indexing for scalability
+Key techniques explored include:
+- BasicRAG
+- ColBERT
+- CRAG
+- GraphRAG
+- HyDE
+- HybridIFindRAG
+- NodeRAG
+
+Key enterprise features developed include:
+- Enhanced chunking system with multiple strategies
+- HNSW vector indexing exploration for scalability
 - Native IRIS ObjectScript integration
-- Real data validation up to 50,000 documents
-- Zero external dependencies for chunking
-- Biomedical literature optimization (95%+ accuracy)
-
-✅ **Production Ready**:
-- Comprehensive error handling and monitoring
-- Enterprise-grade validation completed
-- Production deployment guides available
-- All feature branches ready for merging
+- Real data validation efforts
 
 ---
 
-*For the latest updates and project status, see the main [README.md](../README.md) file.*
+*For the latest updates and **actual project status**, see the main **[PROJECT_STATUS_DASHBOARD.md](../PROJECT_STATUS_DASHBOARD.md)** file.*

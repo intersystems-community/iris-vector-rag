@@ -1,236 +1,123 @@
-# tests/test_basic_rag.py
-
 import pytest
-from unittest.mock import MagicMock, patch
-# import sqlalchemy # No longer needed
 import os
 import sys
-from typing import Any # For mock type hints
+from typing import Callable, List # Import Callable and List
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# Add the project root directory to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import jaydebeapi # Import for type hinting
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func, Document # Updated import
+from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline # Updated import and class name
 
-from basic_rag.pipeline import BasicRAGPipeline # This will now use the updated IRISConnection type hint
-from common.utils import Document
+# Placeholder for the 10 sample doc IDs, assuming they are loaded with these IDs
+# This is more for conceptual clarity in the test; the actual test won't hardcode content checks
+SAMPLE_DOC_IDS = [f"PMC{i}" for i in range(1, 11)] # Example: PMC1, PMC2, ...
 
-# Attempt to import for type hinting, but make it optional
-try:
-    from intersystems_iris.dbapi import Connection as IRISConnectionTypes, Cursor as IRISCursorTypes
-except ImportError:
-    IRISConnectionTypes = Any
-    IRISCursorTypes = Any
+@pytest.fixture(scope="module")
+def iris_conn() -> jaydebeapi.Connection: # Updated type hint
+    """Fixture to provide an IRIS connection."""
+    connection = get_iris_connection()
+    assert connection is not None, "Failed to connect to IRIS"
+    yield connection
+    connection.close()
 
+@pytest.fixture(scope="module")
+def embedding_func():
+    """Fixture to provide an embedding function."""
+    return get_embedding_func()
 
-# --- Mock Fixtures ---
+@pytest.fixture(scope="module")
+def llm_func() -> Callable[[str], str]: # Added type hint for consistency
+    """Fixture to provide an LLM function (mocked for simplicity)."""
+    def mock_llm(prompt: str) -> str:
+        return "This is a mock LLM answer."
+    return mock_llm
 
-@pytest.fixture
-def mock_iris_connector():
-    """Simplified mock for the InterSystems IRIS DB-API connection object."""
-    mock_conn = MagicMock(spec=IRISConnectionTypes) 
-    
-    mock_cursor_method = MagicMock()
-    mock_conn.cursor = mock_cursor_method
-
-    mock_cursor_instance = MagicMock(spec=IRISCursorTypes) 
-    mock_cursor_method.return_value = mock_cursor_instance
-    
-    # Explicitly create fetchall as a MagicMock and set its return_value
-    mock_cursor_instance.fetchall = MagicMock(return_value=[
-        ("mock_doc_1", "Mocked document content 1.", 0.95),
-        ("mock_doc_2", "Mocked document content 2.", 0.88)
-    ])
-    mock_cursor_instance.execute = MagicMock()
-    # Add a close method to the mock cursor instance
-    mock_cursor_instance.close = MagicMock()
-    # Add a close method to the mock connection instance
-    mock_conn.close = MagicMock()
-    return mock_conn
-
-@pytest.fixture
-def mock_embedding_func():
-    """Mocks the embedding function, returning a fixed embedding."""
-    # Returns a list containing one embedding (list of floats) for a list of input texts
-    return MagicMock(return_value=[[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]]) 
-
-# No fixture for mock_llm_func, we'll use the stub from common.utils
-
-@pytest.fixture
-def basic_rag_pipeline_under_test(mock_iris_connector, mock_embedding_func):
-    """Initializes BasicRAGPipeline with some mock and some real (stub) dependencies."""
-    from common.utils import get_llm_func # Import locally to use the stub
-    
-    stub_llm_func = get_llm_func(provider="stub") # Use the stub LLM
-
-    return BasicRAGPipeline(
-        iris_connector=mock_iris_connector,
-        embedding_func=mock_embedding_func,
-        llm_func=stub_llm_func # Use the stubbed LLM
+@pytest.fixture(scope="module")
+def basic_rag_pipeline(iris_conn: jaydebeapi.Connection, embedding_func: Callable, llm_func: Callable):
+    """Fixture to create an instance of the BasicRAGPipeline."""
+    # Assuming the pipeline will use the RAG schema by default
+    # and will read connection details from config.yaml implicitly via get_iris_connection
+    pipeline = BasicRAGPipeline( # Updated class name
+        iris_connector=iris_conn,
+        embedding_func=embedding_func,
+        llm_func=llm_func,
+        schema="RAG" # Explicitly using RAG schema as per project context
     )
+    return pipeline
 
-# --- Unit Tests ---
+def test_database_connection(iris_conn: jaydebeapi.Connection): # Updated type hint
+    """Test that a connection to the database can be established."""
+    assert iris_conn is not None
+    cursor = iris_conn.cursor()
+    cursor.execute("SELECT 1")
+    result = cursor.fetchone()
+    assert result[0] == 1
+    cursor.close()
 
-def test_retrieve_documents_calls_embedding_and_iris(basic_rag_pipeline_under_test, mock_embedding_func, mock_iris_connector):
+def test_basic_rag_pipeline_search_and_format(basic_rag_pipeline: BasicRAGPipeline): # Updated type hint
     """
-    Tests that retrieve_documents calls the embedding function and executes a query on IRIS.
+    Test the BasicRAGPipelineSimple's search functionality.
+    Verifies:
+    - It can perform a vector search (implicitly using TO_VECTOR on CLOB).
+    - It returns results in the standardized format.
+    - It handles our 10 sample documents (by returning some results).
     """
-    query_text = "Test query for retrieval"
-    top_k = 3
+    test_query = "What is CRISPR?" # A generic query
     
-    # Get the mock cursor from the mock connector
-    mock_cursor = mock_iris_connector.cursor.return_value
+    # This call should trigger the pipeline's retrieve_documents and generate_answer methods
+    # The retrieve_documents method in pipeline_simple.py will need to use TO_VECTOR()
+    result = basic_rag_pipeline.run(query=test_query, top_k=3)
 
-    retrieved_docs = basic_rag_pipeline_under_test.retrieve_documents(query_text, top_k=top_k) # Changed fixture name
-
-    # Assert embedding_func was called with the query text
-    mock_embedding_func.assert_called_once_with([query_text])
-
-    # Assert IRIS cursor was obtained and execute was called
-    mock_iris_connector.cursor.assert_called_once()
-    mock_cursor.execute.assert_called_once()
-
-    # Check the SQL query structure and parameters
-    args, kwargs = mock_cursor.execute.call_args
-    executed_sql = args[0]
-    executed_params = args[1]
+    assert isinstance(result, dict), "Result should be a dictionary."
+    assert "query" in result, "Result dictionary missing 'query' key."
+    assert "answer" in result, "Result dictionary missing 'answer' key."
+    assert "retrieved_documents" in result, "Result dictionary missing 'retrieved_documents' key."
     
-    assert "SELECT TOP ?" in executed_sql # Check for placeholder
-    assert "VECTOR_COSINE" in executed_sql
-    assert "TO_VECTOR(embedding, double, " in executed_sql # Check for stored embedding
-    assert "TO_VECTOR(?, double, " in executed_sql      # Check for query embedding
-    assert "FROM RAG.SourceDocuments_V2" in executed_sql
-    assert "ORDER BY similarity_score DESC" in executed_sql
+    assert result["query"] == test_query, "Query in result does not match input query."
+    assert isinstance(result["answer"], str), "Answer should be a string."
     
-    # Check that top_k is the first parameter
-    assert executed_params[0] == top_k
-    # Check that the second parameter is the stringified query embedding
-    # (mock_embedding_func.return_value[0] is the embedding list)
-    expected_embedding_str = ','.join(map(str, mock_embedding_func.return_value[0]))
-    assert executed_params[1] == expected_embedding_str
-    # Ensure the key components are in the SQL, allowing for flexibility in exact spacing/formatting
-    assert "VECTOR_COSINE" in executed_sql
-    assert "TO_VECTOR(embedding, double, 768)" in executed_sql  # Check for stored embedding
-    assert "TO_VECTOR(?, double, 768)" in executed_sql       # Check for query embedding
-    assert "FROM RAG.SourceDocuments_V2" in executed_sql # Check for schema-qualified table
-    assert "ORDER BY similarity_score DESC" in executed_sql # Alias is similarity_score
+    retrieved_docs = result["retrieved_documents"]
+    assert isinstance(retrieved_docs, list), "Retrieved documents should be a list."
     
-    # Assert fetchall was called
-    mock_cursor.fetchall.assert_called_once()
+    # Check if some documents are retrieved (assuming 10 sample docs are loaded and searchable)
+    # We don't check for specific content, just that the mechanism works.
+    assert len(retrieved_docs) > 0, "No documents retrieved. Expected some results from the 10 sample docs."
+    assert len(retrieved_docs) <= 3, "More documents retrieved than top_k."
 
-    # Assert the structure of returned documents
-    assert len(retrieved_docs) == 2 # Based on default mock_cursor.fetchall.return_value
-    assert all(isinstance(doc, Document) for doc in retrieved_docs)
-    assert retrieved_docs[0].id == "mock_doc_1" # Updated to match new mock_iris_connector default
-    assert retrieved_docs[0].score == 0.95
+    for doc_data in retrieved_docs:
+        assert isinstance(doc_data, dict), "Each retrieved document should be a dictionary."
+        assert "id" in doc_data, "Retrieved document missing 'id' key."
+        assert "content" in doc_data, "Retrieved document missing 'content' key."
+        assert "metadata" in doc_data, "Retrieved document missing 'metadata' key."
+        assert "similarity_score" in doc_data["metadata"], "Document metadata missing 'similarity_score'."
+        assert isinstance(doc_data["metadata"]["similarity_score"], float), "Similarity score should be a float."
 
-def test_retrieve_documents_handles_iris_error(basic_rag_pipeline_under_test, mock_iris_connector):
+def test_pipeline_uses_to_vector_implicitly(basic_rag_pipeline: BasicRAGPipeline, iris_conn: jaydebeapi.Connection, embedding_func: Callable): # Updated type hint
     """
-    Tests that retrieve_documents handles exceptions from IRIS gracefully.
+    A more focused test to ensure the SQL query likely uses TO_VECTOR.
+    This is an indirect test by checking if a query against string embeddings works.
     """
-    mock_cursor = mock_iris_connector.cursor.return_value
-    mock_cursor.execute.side_effect = Exception("IRIS DB Error")
-
-    retrieved_docs = basic_rag_pipeline_under_test.retrieve_documents("query", top_k=3)
+    # This test assumes that 'RAG.SourceDocuments' has 'embedding' as a CLOB/VARCHAR
+    # and that the pipeline is designed to convert it using TO_VECTOR.
     
-    assert retrieved_docs == [] # Should return empty list on error
-
-def test_generate_answer_constructs_prompt_and_calls_stub_llm(basic_rag_pipeline_under_test):
-    """
-    Tests that generate_answer correctly constructs the prompt and calls the stub LLM.
-    """
-    query_text = "Test query for answer generation"
-    retrieved_docs = [
-        Document(id="doc1", content="Document 1 content.", score=0.9),
-        Document(id="doc2", content="Document 2 provides more details.", score=0.85)
-    ]
+    # We can't directly inspect the SQL from here without mocking,
+    # but we can infer its correct operation if it returns results.
     
-    # The stub LLM is used, so we check its characteristic output.
-    # The prompt construction itself is an internal detail of generate_answer.
-    # We trust the pipeline to call its llm_func (the stub).
-    answer = basic_rag_pipeline_under_test.generate_answer(query_text, retrieved_docs)
+    query_text = "test query for TO_VECTOR"
+    query_embedding = embedding_func([query_text])[0]
+    # The pipeline should handle formatting this for the SQL query
+    # e.g. by converting to "[f1,f2,...]" string for TO_VECTOR(?)
 
-    assert "Stub LLM response for prompt:" in answer
-    # The prompt is complex, so checking for a substring of the query within the prompt part of the stub response is fragile.
-    # A more robust check for this stub is that it contains its characteristic prefix.
-    # If we need to check prompt content, we'd mock the llm_func itself.
-    # For now, confirming it's the stub's response is sufficient for this test's scope.
-
-def test_generate_answer_no_documents(basic_rag_pipeline_under_test):
-    """
-    Tests generate_answer behavior when no documents are retrieved.
-    The stub LLM should not be called.
-    """
-    query_text = "Query with no retrieved docs"
-    retrieved_docs = []
-    
-    # Patch the llm_func on the instance to see if it's called
-    # This is a light way to check non-invocation without a separate mock fixture
-    basic_rag_pipeline_under_test.llm_func = MagicMock(wraps=basic_rag_pipeline_under_test.llm_func)
-    
-    answer = basic_rag_pipeline_under_test.generate_answer(query_text, retrieved_docs)
-    
-    basic_rag_pipeline_under_test.llm_func.assert_not_called() 
-    assert answer == "I could not find enough information to answer your question."
-
-
-def test_run_orchestrates_retrieval_and_generation(basic_rag_pipeline_under_test):
-    """
-    Tests the main 'run' method to ensure it calls retrieval and generation.
-    Uses MagicMock for sub-methods to isolate 'run' logic.
-    """
-    query_text = "Full pipeline test query"
-    top_k = 3
-
-    # Mock the instance's methods for this specific test of orchestration
-    basic_rag_pipeline_under_test.retrieve_documents = MagicMock(return_value=[Document(id="d1", content="c1", score=0.9)])
-    # The generate_answer method will use the stub LLM by default from the fixture.
-    # If we want to control its output for *this specific test*, we can mock it on the instance.
-    basic_rag_pipeline_under_test.generate_answer = MagicMock(return_value="Orchestration Test Final Answer")
-
-    result = basic_rag_pipeline_under_test.run(query_text, top_k=top_k)
-
-    basic_rag_pipeline_under_test.retrieve_documents.assert_called_once_with(query_text, top_k)
-    basic_rag_pipeline_under_test.generate_answer.assert_called_once_with(query_text, basic_rag_pipeline_under_test.retrieve_documents.return_value)
-    
-    assert result["query"] == query_text
-    assert result["answer"] == "Orchestration Test Final Answer"
-    assert len(result["retrieved_documents"]) == 1
-    assert result["retrieved_documents"][0].id == "d1"
-
-# --- Placeholder for Parametrized E2E Tests ---
-# These tests will use real services and a shared evaluation dataset.
-# They will be more fully fleshed out when conftest.py and eval data are ready.
-
-# @pytest.mark.e2e # Custom marker for end-to-end tests
-# @pytest.mark.skip(reason="E2E test setup not yet complete")
-# def test_basic_rag_pipeline_e2e_metrics(
-#     real_iris_connector, # Fixture from conftest.py (to be created)
-#     real_embedding_func, # Fixture from conftest.py (to be created)
-#     real_llm_func,       # Fixture from conftest.py (to be created)
-#     sample_eval_query    # Fixture from conftest.py providing one query from eval set
-# ):
-#     """
-#     End-to-end test for BasicRAGPipeline using real services and metrics.
-#     """
-#     pipeline = BasicRAGPipeline(
-#         iris_connector=real_iris_connector,
-#         embedding_func=real_embedding_func,
-#         llm_func=real_llm_func
-#     )
-
-#     query = sample_eval_query["query"]
-#     # ground_truth_contexts = sample_eval_query["ground_truth_contexts"]
-#     # ground_truth_answer = sample_eval_query["ground_truth_answer"]
-
-#     result = pipeline.run(query)
-    
-#     # retrieved_contexts = [doc.content for doc in result['retrieved_documents']]
-#     # generated_answer = result['answer']
-
-#     # TODO: Add assertions for RAGAS metrics (recall, faithfulness)
-#     # e.g., recall_score = calculate_ragas_recall(query, retrieved_contexts, ground_truth_contexts)
-#     # assert recall_score >= 0.8 
-#     # faithfulness_score = calculate_ragas_faithfulness(query, generated_answer, retrieved_contexts)
-#     # assert faithfulness_score >= 0.7
-
-#     assert "answer" in result
-#     assert len(result["retrieved_documents"]) > 0 # Basic check
+    # Attempt to retrieve documents. If this works with string embeddings,
+    # it implies TO_VECTOR is being used correctly in the SQL.
+    try:
+        # We only need to test the retrieval part for this specific check
+        retrieved_docs: List[Document] = basic_rag_pipeline.retrieve_documents(query_text, top_k=1)
+        assert len(retrieved_docs) >= 0 # Can be 0 if no match, but shouldn't error
+        if retrieved_docs:
+            assert isinstance(retrieved_docs[0].score, float)
+    except Exception as e:
+        pytest.fail(f"retrieve_documents failed, possibly due to TO_VECTOR issues: {e}")

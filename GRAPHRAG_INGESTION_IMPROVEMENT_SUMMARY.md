@@ -69,9 +69,9 @@
 
 ## Code Artifacts Created
 1. `docs/GRAPHRAG_ENTITY_DETECTION_RESEARCH.md` - Research findings
-2. `enhanced_graphrag_ingestion.py` - Medical-specific extractor
-3. `general_graphrag_ingestion.py` - Domain-agnostic extractor
-4. `debug_crag_graphrag.py` - Debugging utilities
+2. `scripts/adhoc_utils/enhanced_graphrag_ingestion.py` - Medical-specific extractor
+3. `scripts/adhoc_utils/general_graphrag_ingestion.py` - Domain-agnostic extractor
+4. `scripts/adhoc_utils/debug_crag_graphrag.py` - Debugging utilities
 
 ## Conclusion
 

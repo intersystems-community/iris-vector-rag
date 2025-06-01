@@ -6,7 +6,7 @@ This script creates proper IRIS vector indexes for dramatic performance improvem
 
 import sys
 import time
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))) # Add project root
 
 from common.iris_connector import get_iris_connection
 

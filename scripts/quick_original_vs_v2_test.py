@@ -4,22 +4,27 @@ Quick test to compare original vs V2 performance on the same query
 
 import sys
 import time
-sys.path.insert(0, '.')
+import os # Added for path manipulation
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import all original pipelines
-from basic_rag.pipeline import BasicRAGPipeline
-from crag.pipeline import CRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from graphrag.pipeline import FixedGraphRAGPipeline
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.graphrag.pipeline import OriginalGraphRAGPipeline as FixedGraphRAGPipeline # Updated import
 
 # Import all V2 pipelines
-from basic_rag.pipeline_v2 import BasicRAGPipelineV2
-from crag.pipeline_v2 import CRAGPipelineV2
-from hyde.pipeline_v2 import HyDEPipelineV2
-from graphrag.pipeline_v2 import GraphRAGPipelineV2
+from src.deprecated.basic_rag.pipeline_v2 import BasicRAGPipelineV2 # Updated import
+from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
+from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
+from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
 
 def test_pipeline_pair(name, original_class, v2_class, query="What are the symptoms of diabetes?"):
     """Test a pair of original and V2 pipelines"""

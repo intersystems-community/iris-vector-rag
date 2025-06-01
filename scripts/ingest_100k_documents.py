@@ -33,13 +33,15 @@ from pathlib import Path
 import signal
 
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
-from data.loader_varchar_fixed import load_documents_to_iris
-from data.pmc_processor import process_pmc_files
-from colbert.doc_encoder import get_colbert_doc_encoder
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from data.loader_varchar_fixed import load_documents_to_iris # Path remains correct
+from data.pmc_processor import process_pmc_files # Path remains correct
+from src.working.colbert.utils import create_colbert_semantic_encoder # Updated import, assuming new location
 
 # Configure comprehensive logging
 logging.basicConfig(
@@ -244,7 +246,7 @@ class MassiveScaleIngestionPipeline:
             # Setup models
             self.embedding_func = get_embedding_func(model_name="intfloat/e5-base-v2", mock=False)
             self.llm_func = get_llm_func(provider="stub")
-            self.colbert_encoder = get_colbert_doc_encoder()
+            self.colbert_encoder = create_colbert_semantic_encoder()
             
             logger.info("✅ Database and models setup completed successfully")
             return True

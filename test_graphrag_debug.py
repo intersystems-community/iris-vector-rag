@@ -1,8 +1,13 @@
 import sys
-sys.path.append('.')
-from graphrag.pipeline_v2 import GraphRAGPipelineV2
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
+import os # Added for path manipulation
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
 import logging
 
 # Enable debug logging

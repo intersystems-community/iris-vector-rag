@@ -18,7 +18,7 @@ import json
 import logging
 from typing import List, Tuple
 
-sys.path.insert(0, '.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))) # Add project root
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func
 

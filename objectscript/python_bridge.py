@@ -10,19 +10,26 @@ import logging
 import traceback
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import os # Added
+import sys # Added
+
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 # Import RAG pipeline modules
-from basic_rag.pipeline import BasicRAGPipeline
-from colbert.pipeline import ColbertRAGPipeline
-from graphrag.pipeline import GraphRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from crag.pipeline import CRAGPipeline
-from noderag.pipeline import NodeRAGPipeline
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
 
 # Import evaluation and benchmarking modules
-from eval.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance
-from eval.bench_runner import run_technique_benchmark
-from common.iris_connector import get_iris_connection
+from eval.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance # Path remains same
+from eval.bench_runner import run_technique_benchmark # Path remains same
+from src.common.iris_connector import get_iris_connection # Updated import
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

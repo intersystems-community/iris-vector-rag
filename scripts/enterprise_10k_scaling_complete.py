@@ -17,11 +17,13 @@ from typing import Dict, List, Any, Tuple, Optional
 import traceback
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = str(Path(__file__).parent.parent)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
-from data.loader_optimized_performance import process_and_load_documents_optimized
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
+from data.loader_optimized_performance import process_and_load_documents_optimized # Path remains correct
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -127,7 +129,11 @@ class Enterprise10KCompleteScaling:
         
         logger.info(f"📁 Found {len(all_files)} potential data files")
         for file in all_files[:5]:  # Show first 5
-def scale_documents_to_10k(self, current_docs: int) -> Dict[str, Any]:
+            logger.info(f"   {file.name}") # Assuming this was the intended content for the loop
+        
+        return [str(f) for f in all_files] # Ensuring this is part of check_available_data_files
+
+    def scale_documents_to_10k(self, current_docs: int) -> Dict[str, Any]: # Corrected indentation
         """Scale documents to 10K using real PMC data"""
         docs_needed = self.target_size - current_docs
         
@@ -193,7 +199,7 @@ def scale_documents_to_10k(self, current_docs: int) -> Dict[str, Any]:
                 'processing_time_seconds': time.time() - start_time
             }
     
-    def scale_chunks_to_10k(self, current_docs: int, target_docs: int) -> Dict[str, Any]:
+    def scale_chunks_to_10k(self, current_docs: int, target_docs: int) -> Dict[str, Any]: # Corrected indentation
         """Scale document chunks proportionally"""
         try:
             logger.info("🔄 Scaling DocumentChunks for new documents...")
@@ -239,13 +245,13 @@ def scale_documents_to_10k(self, current_docs: int) -> Dict[str, Any]:
             logger.error(f"❌ Error scaling chunks: {e}")
             return {'success': False, 'error': str(e)}
     
-    def scale_knowledge_graph_to_10k(self, current_docs: int, target_docs: int) -> Dict[str, Any]:
+    def scale_knowledge_graph_to_10k(self, current_docs: int, target_docs: int) -> Dict[str, Any]: # Corrected indentation
         """Scale knowledge graph entities and relationships"""
         try:
             logger.info("🕸️ Scaling Knowledge Graph for new documents...")
             
             # Import graph ingestion
-            from graphrag.enhanced_graph_ingestion import EnhancedGraphIngestion
+            from src.experimental.graphrag.enhanced_graph_ingestion import EnhancedGraphIngestion # Updated import
             graph_ingestion = EnhancedGraphIngestion(self.connection, self.embedding_func)
             
             # Get documents that don't have graph entities yet
@@ -293,13 +299,13 @@ def scale_documents_to_10k(self, current_docs: int) -> Dict[str, Any]:
         if len(all_files) > 5:
             logger.info(f"   ... and {len(all_files) - 5} more files")
         
-        return [str(f) for f in all_files]
+        return [str(f) for f in all_files] # This line should be part of check_available_data_files, already handled by first search/replace block logic.
     
-    def embedding_func(self, texts: List[str]) -> List[List[float]]:
+    def embedding_func(self, texts: List[str]) -> List[List[float]]: # Corrected indentation
         """Generate embeddings for texts"""
         return self.embedding_model.encode(texts).tolist()
     
-    def colbert_doc_encoder_func(self, text: str) -> Tuple[List[str], List[List[float]]]:
+    def colbert_doc_encoder_func(self, text: str) -> Tuple[List[str], List[List[float]]]: # Corrected indentation
         """Generate ColBERT token embeddings for document"""
         try:
             # Simple tokenization and embedding for ColBERT simulation

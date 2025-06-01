@@ -21,11 +21,13 @@ import json
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector_jdbc import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
-from data.pmc_processor import extract_pmc_metadata, process_pmc_files
+from src.common.iris_connector_jdbc import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func, get_colbert_doc_encoder_func_adapted # Updated import
+from data.pmc_processor import extract_pmc_metadata, process_pmc_files # Path remains correct
 
 # Configure logging
 logging.basicConfig(
@@ -353,7 +355,7 @@ class CompleteRAGSystemFix:
             # Test BasicRAG
             logger.info("   🔬 Testing BasicRAG...")
             try:
-                from basic_rag.pipeline import BasicRAGPipeline
+                from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
                 
                 conn = get_iris_connection()
                 pipeline = BasicRAGPipeline(
@@ -378,7 +380,7 @@ class CompleteRAGSystemFix:
             # Test CRAG
             logger.info("   🔬 Testing CRAG...")
             try:
-                from crag.pipeline_v2 import CRAGPipeline
+                from src.experimental.crag.pipeline import CRAGPipeline # Updated import
                 
                 conn = get_iris_connection()
                 pipeline = CRAGPipeline(
@@ -403,7 +405,7 @@ class CompleteRAGSystemFix:
             # Test NodeRAG
             logger.info("   🔬 Testing NodeRAG...")
             try:
-                from noderag.pipeline_v2 import NodeRAGPipeline
+                from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
                 
                 conn = get_iris_connection()
                 pipeline = NodeRAGPipeline(
@@ -428,7 +430,7 @@ class CompleteRAGSystemFix:
             # Test HybridiFindRAG
             logger.info("   🔬 Testing HybridiFindRAG...")
             try:
-                from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
+                from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
                 
                 conn = get_iris_connection()
                 pipeline = HybridiFindRAGPipeline(
@@ -453,7 +455,7 @@ class CompleteRAGSystemFix:
             # Test HyDE
             logger.info("   🔬 Testing HyDE...")
             try:
-                from hyde.pipeline import HyDEPipeline
+                from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
                 
                 conn = get_iris_connection()
                 pipeline = HyDEPipeline(
@@ -498,12 +500,17 @@ class CompleteRAGSystemFix:
             # Test ColBERT
             logger.info("   🔬 Testing ColBERT...")
             try:
-                from colbert.pipeline import ColBERTPipeline
+                from src.working.colbert.pipeline import ColBERTPipeline # Updated import
                 
                 conn = get_iris_connection()
+                # ColBERT uses specific encoders
+                colbert_query_encoder = get_colbert_query_encoder_func()
+                colbert_doc_encoder = get_colbert_doc_encoder_func_adapted()
+
                 pipeline = ColBERTPipeline(
                     iris_connector=conn,
-                    embedding_func=self.embedding_func,
+                    colbert_query_encoder_func=colbert_query_encoder,
+                    colbert_doc_encoder_func=colbert_doc_encoder,
                     llm_func=self.llm_func
                 )
                 

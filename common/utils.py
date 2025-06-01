@@ -7,8 +7,38 @@ from typing import List, Callable, Any, Optional, Dict, Tuple # Added Tuple
 import os
 import logging # Added for logger usage in get_llm_func
 import numpy as np
+import yaml # Added for config loading
+from pathlib import Path # Added for config path
 
 logger = logging.getLogger(__name__) # Added for logger usage
+
+# --- Config Loading ---
+_config = None
+
+def load_config():
+    global _config
+    if _config is None:
+        try:
+            config_path = Path(__file__).parent.parent / "config" / "config.yaml"
+            with open(config_path, 'r') as f:
+                _config = yaml.safe_load(f)
+            logger.info(f"Successfully loaded config from {config_path}")
+        except Exception as e:
+            logger.error(f"Failed to load config/config.yaml: {e}. Using default values.")
+            _config = {} # Ensure _config is not None
+    return _config
+
+def get_config_value(key_path: str, default: Any = None) -> Any:
+    config = load_config()
+    keys = key_path.split('.')
+    value = config
+    try:
+        for key in keys:
+            value = value[key]
+        return value
+    except (KeyError, TypeError):
+        logger.warning(f"Config key '{key_path}' not found. Returning default: {default}")
+        return default
 
 # --- Dataclasses ---
 @dataclass
@@ -16,6 +46,7 @@ class Document:
     id: str
     content: str
     score: Optional[float] = None # For similarity score from retrieval
+    metadata: Optional[Dict[str, Any]] = None # For title or other metadata
     embedding: Optional[List[float]] = field(default=None, repr=False) # Standard document embedding
     # For ColBERT or other token-level models
     colbert_tokens: Optional[List[str]] = field(default=None, repr=False)
@@ -26,7 +57,7 @@ class Document:
         data = {
             "id": self.id,
             "content": self.content,
-            "score": self.score,
+            "score": float(self.score) if self.score is not None else None,
         }
         if include_embeddings:
             data["embedding"] = self.embedding
@@ -40,12 +71,13 @@ class Document:
 _llm_instance = None
 _current_llm_key = None # For caching LLM instance
 
-DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # 384 dims to match database
+DEFAULT_EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+DEFAULT_EMBEDDING_DIMENSION = 384
 
 # New pure HuggingFace embedder
 _hf_embedder_cache = {}
 
-def build_hf_embedder(model_name: str = DEFAULT_EMBEDDING_MODEL):
+def build_hf_embedder(model_name: str):
     """
     Builds an embedding function using HuggingFace transformers directly.
     Includes tokenization, model inference, mean pooling, and normalization.
@@ -75,7 +107,9 @@ def build_hf_embedder(model_name: str = DEFAULT_EMBEDDING_MODEL):
             # Validate input text
             if not text or not text.strip():
                 logger.warning("Empty or whitespace-only text provided for embedding")
-                return [0.0] * 768  # Return zero vector for e5-base-v2 dimensions
+                # Use configured dimension for zero vector
+                dimension = get_config_value("embedding_model.dimension", DEFAULT_EMBEDDING_DIMENSION)
+                return [0.0] * dimension
             
             try:
                 inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
@@ -106,7 +140,8 @@ def build_hf_embedder(model_name: str = DEFAULT_EMBEDDING_MODEL):
                 
             except Exception as e:
                 logger.error(f"Error generating embedding for text '{text[:50]}...': {e}")
-                return [0.0] * 768  # Return zero vector on error
+                dimension = get_config_value("embedding_model.dimension", DEFAULT_EMBEDDING_DIMENSION)
+                return [0.0] * dimension
 
     def embedding_func_hf(texts: List[str]) -> List[List[float]]:
         # Add memory pressure detection for bulk operations
@@ -136,21 +171,23 @@ def build_hf_embedder(model_name: str = DEFAULT_EMBEDDING_MODEL):
     return embedding_func_hf
 
 
-def get_embedding_func(model_name: str = DEFAULT_EMBEDDING_MODEL, provider: Optional[str] = None, mock: bool = False) -> Callable[[List[str]], List[List[float]]]:
+def get_embedding_func(model_name_override: Optional[str] = None, provider: Optional[str] = None, mock: bool = False) -> Callable[[List[str]], List[List[float]]]:
     """
     Returns a function that takes a list of texts and returns a list of embeddings.
-    Defaults to using build_hf_embedder for real models.
+    Reads model name from config/config.yaml, with override option.
     Supports a "stub" provider or mock=True for testing without real models.
     """
-    if mock or provider == "stub" or model_name == "stub":
-        logger.info("Using stub embedding function.")
-        # The e5-base-v2 model (new default) has 768 dimensions. Stub should match.
+    effective_model_name = model_name_override or get_config_value("embedding_model.name", DEFAULT_EMBEDDING_MODEL_NAME)
+    dimension = get_config_value("embedding_model.dimension", DEFAULT_EMBEDDING_DIMENSION)
+
+    if mock or provider == "stub" or effective_model_name == "stub":
+        logger.info(f"Using stub embedding function with dimension {dimension}.")
         def stub_embed_texts(texts: List[str]) -> List[List[float]]:
-            return [[(len(text) % 100) * 0.01] * 768 for text in texts]
+            return [[(len(text) % 100) * 0.01] * dimension for text in texts]
         return stub_embed_texts
     
-    logger.info(f"Using pure HuggingFace embedder for model: {model_name}")
-    return build_hf_embedder(model_name)
+    logger.info(f"Using pure HuggingFace embedder for model: {effective_model_name}")
+    return build_hf_embedder(effective_model_name)
 
 
 def get_llm_func(provider: str = "openai", model_name: str = "gpt-3.5-turbo", **kwargs) -> Callable[[str], str]:
@@ -341,12 +378,14 @@ def get_iris_connector_for_embedded():
             _iris_connector_embedded = None
     return _iris_connector_embedded
 
-def get_embedding_func_for_embedded(model_name: str = DEFAULT_EMBEDDING_MODEL): # Use new default
+def get_embedding_func_for_embedded(model_name_override: Optional[str] = None):
     global _embedding_model_embedded
-    if _embedding_model_embedded is None: 
-        print(f"IRIS Embedded Python: Loading embedding model {model_name}")
+    if _embedding_model_embedded is None:
+        effective_model_name = model_name_override or get_config_value("embedding_model.name", DEFAULT_EMBEDDING_MODEL_NAME)
+        dimension = get_config_value("embedding_model.dimension", DEFAULT_EMBEDDING_DIMENSION)
+        print(f"IRIS Embedded Python: Loading embedding model {effective_model_name} (dim: {dimension})")
         # This would call build_hf_embedder or similar for embedded context
-        _embedding_model_embedded = lambda texts: [[0.1] * 768 for _ in texts] # Match new default dim
+        _embedding_model_embedded = lambda texts: [[0.1] * dimension for _ in texts]
     return _embedding_model_embedded
 
 
@@ -367,12 +406,16 @@ if __name__ == '__main__':
     print(f"Created Document: {doc}")
 
     try:
-        embed_func = get_embedding_func() # Uses new default "intfloat/e5-base-v2"
+        embed_func = get_embedding_func()
+        config_model_name = get_config_value("embedding_model.name", DEFAULT_EMBEDDING_MODEL_NAME)
+        config_dimension = get_config_value("embedding_model.dimension", DEFAULT_EMBEDDING_DIMENSION)
+        print(f"Testing with embedding model: {config_model_name}, dimension: {config_dimension}")
         sample_texts = ["Hello world", "This is a test."]
         embeddings = embed_func(sample_texts)
-        print(f"Embeddings generated for {len(embeddings)} texts. First embedding dim: {len(embeddings[0])}")
+        print(f"Embeddings generated for {len(embeddings)} texts. First embedding dim: {len(embeddings[0]) if embeddings else 'N/A'}")
         assert len(embeddings) == 2
-        assert len(embeddings[0]) == 768 # e5-base-v2 has 768 dimensions
+        if embeddings and embeddings[0] is not None: # Check if embedding was successful
+            assert len(embeddings[0]) == config_dimension
     except ImportError as e:
         print(f"Skipping embedding test: {e}")
     except Exception as e:

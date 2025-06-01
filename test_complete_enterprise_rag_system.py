@@ -5,6 +5,12 @@ Test all 7 RAG techniques in the complete enterprise system
 
 import sys
 import os
+# Add project root to sys.path
+if '.' not in sys.path:
+    sys.path.insert(0, '.')
+if os.path.abspath('.') not in sys.path: # ensure absolute path is also there
+    sys.path.insert(0, os.path.abspath('.'))
+
 import logging
 from typing import Dict, Any
 from common.iris_connector import get_iris_connection

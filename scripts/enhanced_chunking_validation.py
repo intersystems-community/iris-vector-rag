@@ -19,20 +19,22 @@ from typing import Dict, List, Any
 from datetime import datetime
 
 # Add project root to path
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming scripts is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
+from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService # Path remains same
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
 
-# Import all RAG techniques
-from basic_rag.pipeline import run_basic_rag
-from hyde.pipeline import run_hyde_rag
-from crag.pipeline import run_crag
-from colbert.pipeline_optimized import run_colbert_rag
-from noderag.pipeline import run_noderag
-from graphrag.pipeline import run_graphrag
-from hybrid_ifind_rag.pipeline import run_hybrid_ifind_rag
+# Import all RAG techniques (these will likely need to change to class imports)
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Changed to class
+from src.experimental.hyde.pipeline import HyDEPipeline # Changed to class
+from src.experimental.crag.pipeline import CRAGPipeline # Changed to class
+from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline # Changed to class
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Changed to class
+from src.experimental.graphrag.pipeline import GraphRAGPipeline # Changed to class
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Changed to class
 
 # Configure logging
 logging.basicConfig(
@@ -67,13 +69,13 @@ class EnhancedChunkingValidator:
         
         # RAG techniques mapping
         self.rag_techniques = {
-            "BasicRAG": run_basic_rag,
-            "HyDE": run_hyde_rag,
-            "CRAG": run_crag,
-            "ColBERT": run_colbert_rag,
-            "NodeRAG": run_noderag,
-            "GraphRAG": run_graphrag,
-            "HybridiFindRAG": run_hybrid_ifind_rag
+            "BasicRAG": BasicRAGPipeline,
+            "HyDE": HyDEPipeline,
+            "CRAG": CRAGPipeline,
+            "ColBERT": OptimizedColbertRAGPipeline,
+            "NodeRAG": NodeRAGPipeline,
+            "GraphRAG": GraphRAGPipeline,
+            "HybridiFindRAG": HybridiFindRAGPipeline
         }
     
     def validate_chunking_strategies(self, sample_size: int = 100) -> Dict[str, Any]:
@@ -225,11 +227,13 @@ class EnhancedChunkingValidator:
                     try:
                         start_time = time.time()
                         
-                        # Run RAG technique
-                        result = technique_func(
+                        # Instantiate and Run RAG technique
+                        pipeline_instance = technique_func(
+                            iris_connector=get_iris_connection(), # Assuming constructor takes these
+                            embedding_func=self.embedding_func   # Or they might be passed to run()
+                        )
+                        result = pipeline_instance.run(
                             query=query,
-                            iris_connector=get_iris_connection(),
-                            embedding_func=self.embedding_func,
                             top_k=5
                         )
                         

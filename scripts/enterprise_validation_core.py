@@ -17,14 +17,16 @@ from typing import Dict, List, Any, Tuple, Optional
 import traceback
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = str(Path(__file__).parent.parent)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Import only the core working techniques
-from graphrag.pipeline_v2 import GraphRAGPipelineV2
+from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
 
 load_dotenv()
 
@@ -77,7 +79,7 @@ class EnterpriseCoreValidation:
         
         # Try NodeRAG
         try:
-            from noderag.pipeline_v2 import NodeRAGPipelineV2
+            from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
             self.rag_techniques['NodeRAG'] = {
                 'class': NodeRAGPipelineV2,
                 'description': 'Maximum coverage specialist with comprehensive retrieval'
@@ -88,7 +90,7 @@ class EnterpriseCoreValidation:
         
         # Try HyDE
         try:
-            from hyde.pipeline_v2 import HyDEPipelineV2
+            from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
             self.rag_techniques['HyDE'] = {
                 'class': HyDEPipelineV2,
                 'description': 'Hypothetical document generation for enhanced retrieval'
@@ -99,7 +101,7 @@ class EnterpriseCoreValidation:
         
         # Try CRAG
         try:
-            from crag.pipeline_v2 import CRAGPipelineV2
+            from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
             self.rag_techniques['CRAG'] = {
                 'class': CRAGPipelineV2,
                 'description': 'Corrective retrieval with enhanced coverage'

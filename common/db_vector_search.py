@@ -2,7 +2,7 @@
 import logging
 from typing import List, Any, Tuple
 
-from common.vector_sql_utils import (
+from .vector_sql_utils import ( # Changed to relative import
     format_vector_search_sql,
     execute_vector_search
 )

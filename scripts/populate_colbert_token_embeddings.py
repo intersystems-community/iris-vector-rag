@@ -14,10 +14,12 @@ import json
 from typing import List, Dict, Any
 
 # Add the project root directory to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from colbert.doc_encoder import get_colbert_doc_encoder
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.working.colbert.doc_encoder import get_colbert_doc_encoder # Updated import
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

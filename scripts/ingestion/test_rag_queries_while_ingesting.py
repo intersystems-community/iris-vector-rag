@@ -13,13 +13,13 @@ from typing import Dict, List, Any
 import logging
 
 # Add the project root to the Python path
-project_root = Path(__file__).parent
+project_root = Path(__file__).parent.parent # Corrected path to project root
 sys.path.insert(0, str(project_root))
 
-from common.iris_connector import get_iris_connection, IRISConnectionError
-from basic_rag.pipeline import BasicRAGPipeline
-from colbert.pipeline import ColbertRAGPipeline
-from colbert.pipeline_optimized import OptimizedColbertRAGPipeline
+from src.common.iris_connector import get_iris_connection, IRISConnectionError # Updated import
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
+from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(

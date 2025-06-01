@@ -17,18 +17,20 @@ from typing import Dict, List, Any, Tuple, Optional
 import traceback
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = str(Path(__file__).parent.parent)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Import working RAG techniques (avoiding JDBC dependencies)
-from graphrag.pipeline_v2 import GraphRAGPipelineV2
-from noderag.pipeline_v2 import NodeRAGPipelineV2
-from colbert.pipeline_v2 import ColBERTPipelineV2
-from hyde.pipeline_v2 import HyDEPipelineV2
-from crag.pipeline_v2 import CRAGPipelineV2
+from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
+from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
+from src.deprecated.colbert.pipeline_v2 import ColBERTPipelineV2 # Updated import
+from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
+from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
 
 load_dotenv()
 

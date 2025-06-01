@@ -1,0 +1,14 @@
+{
+  "timestamp": "20250531_120241",
+  "query": "What is diabetes and how is it treated?",
+  "results": {
+    "BasicRAG": {
+      "success": true,
+      "execution_time": 4.088705062866211,
+      "num_docs": 5,
+      "answer_preview": "Diabetes is a medical condition characterized by high levels of glucose in the blood. There are different types of diabetes, with type 2 diabetes being one of the most common forms. \n\nAccording to the",
+      "error": ""
+    }
+  },
+  "ragas_available": true
+}

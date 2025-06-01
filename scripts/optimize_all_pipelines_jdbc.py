@@ -210,16 +210,16 @@ import logging
 from typing import Dict, Any
 
 # Import all pipelines
-from basic_rag.pipeline import BasicRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from crag.pipeline import CRAGPipeline
-from noderag.pipeline import NodeRAGPipeline
-from colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline
-from graphrag.pipeline import GraphRAGPipeline
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
 
-from common.iris_connector_jdbc import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
+from src.common.iris_connector_jdbc import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

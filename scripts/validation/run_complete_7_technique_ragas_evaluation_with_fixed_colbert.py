@@ -6,7 +6,10 @@ Evaluates all 7 RAG techniques including the optimized ColBERT implementation.
 
 import sys
 import os
-sys.path.insert(0, '.')
+# sys.path.insert(0, '.') # Keep if script is in project root, otherwise adjust for project root
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')) # Corrected path
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 import json
 import time
@@ -15,17 +18,17 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Import all RAG pipelines
-from basic_rag.pipeline import BasicRAGPipeline
-from crag.pipeline import CRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from noderag.pipeline import NodeRAGPipeline
-from graphrag.pipeline import GraphRAGPipeline
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
-from colbert.pipeline import create_colbert_pipeline  # Use the fixed implementation
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from src.deprecated.colbert.pipeline import create_colbert_pipeline  # Updated import
 
 # Import evaluation utilities
-from common.iris_connector import get_iris_connection
-from common.utils import get_llm_func, get_embedding_func
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_llm_func, get_embedding_func # Updated import
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

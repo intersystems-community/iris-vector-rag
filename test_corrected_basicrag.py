@@ -5,12 +5,14 @@ Test the corrected BasicRAG pipeline using the verified TO_VECTOR(embedding) app
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath('.'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '.')) # Assuming script is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 import logging
-from basic_rag.pipeline import BasicRAGPipeline
-from common.iris_connector_jdbc import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.common.iris_connector_jdbc import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

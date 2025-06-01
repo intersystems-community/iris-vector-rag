@@ -4,10 +4,12 @@ Test the fixed BasicRAG against working techniques to confirm it's working prope
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '.')) # Assuming script is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +35,7 @@ def test_all_techniques():
     print(f"{'='*50}")
     
     try:
-        from basic_rag.pipeline_minimal_fixed import BasicRAGPipelineMinimal
+        from src.deprecated.basic_rag.pipeline_minimal_fixed import BasicRAGPipelineMinimal # Updated import
         
         pipeline = BasicRAGPipelineMinimal(
             iris_connector=iris_conn,
@@ -65,7 +67,7 @@ def test_all_techniques():
     print(f"{'='*50}")
     
     try:
-        from noderag.pipeline_v2 import NodeRAGPipelineV2
+        from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
         
         pipeline = NodeRAGPipelineV2(
             iris_connector=iris_conn,
@@ -98,7 +100,7 @@ def test_all_techniques():
     print(f"{'='*50}")
     
     try:
-        from crag.pipeline_v2 import CRAGPipelineV2
+        from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
         
         pipeline = CRAGPipelineV2(
             iris_connector=iris_conn,
@@ -130,7 +132,7 @@ def test_all_techniques():
     print(f"{'='*50}")
     
     try:
-        from basic_rag.pipeline_v2 import BasicRAGPipelineV2
+        from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
         
         pipeline = BasicRAGPipelineV2(
             iris_connector=iris_conn,

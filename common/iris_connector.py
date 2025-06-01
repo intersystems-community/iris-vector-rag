@@ -10,87 +10,120 @@ import logging
 import sys
 from typing import Optional, Any, Dict, Union
 from urllib.parse import urlparse
-import iris as intersystems_iris # Import at module level
+# import iris as intersystems_iris # Native driver, will be replaced by JDBC for real connections
+import jaydebeapi # For JDBC connections
 
 logger = logging.getLogger(__name__)
+# Define JDBC constants
+JDBC_DRIVER_CLASS = "com.intersystems.jdbc.IRISDriver"
+# Assuming the JAR is in the project root. Adjust if it's elsewhere.
+JDBC_JAR_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'intersystems-jdbc-3.8.4.jar'))
 
 class IRISConnectionError(Exception):
     """Custom exception for IRIS connection errors."""
     pass
 
-def get_real_iris_connection(config: Optional[Dict[str, Any]] = None) -> "intersystems_iris.dbapi.IRISConnection": # String literal type hint
+def get_real_iris_connection(config: Optional[Dict[str, Any]] = None) -> "jaydebeapi.Connection":
     """
-    Establish a real connection to the IRIS database.
-    Returns a DBAPI-compliant intersystems_iris.dbapi.IRISConnection object.
+    Establish a real connection to the IRIS database using JDBC.
+    Returns a DBAPI-compliant jaydebeapi.Connection object.
     """
-    conn: Optional["intersystems_iris.dbapi.IRISConnection"] = None # String literal type hint
+    conn: Optional["jaydebeapi.Connection"] = None
     try:
         conn_params_dict: Dict[str, Any] = {}
-        connection_url = os.environ.get("IRIS_CONNECTION_URL")
+        # Native driver's IRIS_CONNECTION_URL is not directly applicable to JDBC in the same way.
+        # We will rely on individual parameters or config for JDBC.
+        # connection_url = os.environ.get("IRIS_CONNECTION_URL") # Commented out for JDBC
         
-        if connection_url:
-            logger.info(f"Attempting to connect to IRIS using DSN from IRIS_CONNECTION_URL: {connection_url}")
-            parsed_url = urlparse(connection_url)
-            conn_params_dict = {
-                "hostname": parsed_url.hostname,
-                "port": parsed_url.port,
-                "namespace": parsed_url.path.lstrip('/'),
-                "username": parsed_url.username,
-                "password": parsed_url.password
-            }
-            if not all(conn_params_dict.values()):
-                err_msg = f"Failed to parse all required components from IRIS_CONNECTION_URL: {connection_url}. Parsed: {conn_params_dict}"
-                logger.error(err_msg)
-                raise ValueError(err_msg)
-        else:
-            logger.info("IRIS_CONNECTION_URL not set, using individual parameters/defaults.")
-            conn_params_dict = {
-                "hostname": os.environ.get("IRIS_HOST", "localhost"),
-                "port": int(os.environ.get("IRIS_PORT", "1972")),
-                "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
-                "username": os.environ.get("IRIS_USERNAME", "SuperUser"),
-                "password": os.environ.get("IRIS_PASSWORD", "SYS")
-            }
+        # Prioritize config, then environment variables for JDBC parameters
+        logger.info("Configuring JDBC connection parameters.")
         
-        if config: 
-            conn_params_dict.update(config)
+        # Default values from environment or hardcoded, then override with config
+        conn_params_dict = {
+            "hostname": os.environ.get("IRIS_HOST", "localhost"),
+            "port": int(os.environ.get("IRIS_PORT", "1972")),
+            "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
+            "username": os.environ.get("IRIS_USERNAME", "SuperUser"), # Ensure these are correct for your IRIS instance
+            "password": os.environ.get("IRIS_PASSWORD", "SYS")      # Ensure these are correct for your IRIS instance
+        }
+
+        if config:
+            # Map config keys (e.g., db_host) to expected keys (e.g., hostname)
+            key_mapping = {
+                "db_host": "hostname",
+                "db_port": "port",
+                "db_namespace": "namespace",
+                "db_user": "username",
+                "db_password": "password"
+            }
+            for conf_key, conn_key in key_mapping.items():
+                if conf_key in config and config[conf_key] is not None:
+                    conn_params_dict[conn_key] = config[conf_key]
+            
+            # Ensure port is an integer
             if "port" in conn_params_dict and isinstance(conn_params_dict["port"], str):
                 try:
                     conn_params_dict["port"] = int(conn_params_dict["port"])
                 except ValueError:
-                    logger.error(f"Invalid port value in config: {conn_params_dict['port']}. Using default.")
-                    conn_params_dict["port"] = int(os.environ.get("IRIS_PORT", "1972"))
+                    logger.error(f"Invalid port value in config: {conn_params_dict['port']}. Attempting to use default or previously set env var.")
+                    # If conversion fails, rely on the default from env var if it was set, or the initial default.
+                    # This ensures 'port' key exists and is an int if possible.
+                    conn_params_dict["port"] = int(os.environ.get("IRIS_PORT", "1972")) # Fallback to default if bad string
+            elif "port" not in conn_params_dict : # if port was not in config at all
+                 conn_params_dict["port"] = int(os.environ.get("IRIS_PORT", "1972"))
+
+
+        # Final check for required parameters before attempting connection
+        required_keys = ["hostname", "port", "namespace", "username", "password"]
+        missing_keys = [key for key in required_keys if key not in conn_params_dict or conn_params_dict[key] is None]
+        if missing_keys:
+            err_msg = f"Missing required connection parameters: {', '.join(missing_keys)}. Current params: {conn_params_dict}"
+            logger.error(err_msg)
+            raise ValueError(err_msg)
         
-        logger.info(f"Connecting to IRIS at {conn_params_dict['hostname']}:{conn_params_dict['port']}/{conn_params_dict['namespace']}")
-        # intersystems_iris.connect() returns a DBAPI-compliant IRISConnection object
-        conn = intersystems_iris.connect(**conn_params_dict)
+        jdbc_url = f"jdbc:IRIS://{conn_params_dict['hostname']}:{conn_params_dict['port']}/{conn_params_dict['namespace']}"
+        logger.info(f"Attempting JDBC connection to IRIS URL: {jdbc_url} with user: {conn_params_dict['username']}")
+
+        if not os.path.exists(JDBC_JAR_PATH):
+            logger.error(f"JDBC JAR not found at path: {JDBC_JAR_PATH}")
+            raise IRISConnectionError(f"JDBC JAR not found: {JDBC_JAR_PATH}")
+
+        conn = jaydebeapi.connect(
+            JDBC_DRIVER_CLASS,
+            jdbc_url,
+            [conn_params_dict['username'], conn_params_dict['password']],
+            JDBC_JAR_PATH
+        )
         
         if conn:
-            # Test the DBAPI connection
+            # Test the JDBC connection
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
             cursor.fetchone()
             cursor.close()
-            logger.info("Successfully connected to IRIS (DBAPI connection test successful).")
+            logger.info("Successfully connected to IRIS via JDBC (DBAPI connection test successful).")
             return conn
         else:
             # Should not happen if connect throws error on failure
-            logger.error("intersystems_iris.connect() returned None.")
-            raise IRISConnectionError("intersystems_iris.connect() returned None.")
+            logger.error("jaydebeapi.connect() returned None.")
+            raise IRISConnectionError("jaydebeapi.connect() returned None.")
 
-    except ImportError as e_import:
-        logger.error(f"Failed to import intersystems_iris module: {e_import}")
-        raise IRISConnectionError(f"intersystems_iris module not found: {e_import}")
-    except Exception as e_connect: 
-        logger.error(f"Failed to connect to IRIS: {e_connect}", exc_info=True)
-        if not isinstance(e_connect, IRISConnectionError):
-            raise IRISConnectionError(f"IRIS Connection Error: {e_connect}")
+    except ImportError as e_import: # Catches if jaydebeapi is not installed
+        logger.error(f"Failed to import jaydebeapi module: {e_import}")
+        raise IRISConnectionError(f"jaydebeapi module not found: {e_import}. Please ensure it's installed.")
+    except jaydebeapi.Error as e_jdbc: # Catch specific JayDeBeApi errors
+        logger.error(f"JDBC Connection Error: {e_jdbc}", exc_info=True)
+        raise IRISConnectionError(f"JDBC Connection Error: {e_jdbc}")
+    except Exception as e_connect:
+        logger.error(f"Failed to connect to IRIS via JDBC: {e_connect}", exc_info=True)
+        if not isinstance(e_connect, IRISConnectionError): # Avoid re-wrapping if already our custom type
+            raise IRISConnectionError(f"IRIS JDBC Connection Error: {e_connect}")
         else:
             raise
 
-def get_testcontainer_connection() -> "intersystems_iris.dbapi.IRISConnection": # String literal type hint
+def get_testcontainer_connection() -> "jaydebeapi.Connection": # Updated type hint
     try:
-        from testcontainers.iris import IRISContainer
+        from testcontainers.iris import IRISContainer # This uses native driver by default
         
         is_arm64 = os.uname().machine == 'arm64'
         default_image = "intersystemsdc/iris-community:latest"
@@ -140,11 +173,17 @@ def get_testcontainer_connection() -> "intersystems_iris.dbapi.IRISConnection": 
         raise IRISConnectionError(f"Testcontainers import error: {e}")
     except Exception as e:
         logger.error(f"Failed to create IRIS testcontainer: {e}", exc_info=True)
+        # For testcontainers, it might still use the native driver internally to get connection details.
+        # If the goal is to *also* make testcontainer use JDBC, that's a deeper change in testcontainers.iris itself.
+        # For now, this function might still return a native connection if testcontainers are used.
+        # Or, we can attempt to re-establish via JDBC using details from testcontainer if that's desired.
+        # This part needs clarification if testcontainer MUST use JDBC too.
+        # For now, assume get_real_iris_connection (which is now JDBC) is the primary target.
         raise IRISConnectionError(f"Testcontainer creation/connection error: {e}")
 
-def get_mock_iris_connection() -> Any: 
+def get_mock_iris_connection() -> Any:
     try:
-        from tests.mocks.db import MockIRISConnector 
+        from tests.mocks.db import MockIRISConnector
         logger.info("Using mock IRIS connection")
         return MockIRISConnector()
     except ImportError as e:
@@ -154,7 +193,9 @@ def get_mock_iris_connection() -> Any:
 def get_iris_connection(use_mock: bool = False, use_testcontainer: Optional[bool] = None, config: Optional[Dict[str, Any]] = None) -> Any:
     """
     Get an IRIS database connection.
-    Returns a DBAPI-compliant intersystems_iris.dbapi.IRISConnection object for real/testcontainer, 
+    Attempts real JDBC connection by default. Falls back based on flags or environment.
+    Returns a DBAPI-compliant jaydebeapi.Connection object for real JDBC,
+    a native driver connection for testcontainer (unless testcontainer adapted),
     or MockIRISConnector for mock.
     """
     if use_mock:
@@ -187,20 +228,18 @@ def get_iris_connection(use_mock: bool = False, use_testcontainer: Optional[bool
         conn = get_real_iris_connection(config) # Returns DBAPI IRISConnection
         return conn
     except IRISConnectionError as e_real:
-        logger.warning(f"Real IRIS connection failed ({e_real}).")
-        if "PYTEST_CURRENT_TEST" in os.environ:
-            logger.warning("All real/testcontainer connection attempts failed, falling back to mock connector for Pytest.")
-            return get_mock_iris_connection()
-        else:
-            logger.error("All connection attempts (real/testcontainer) failed and not in Pytest environment.")
-            raise
+        logger.error(f"Real IRIS connection failed: {e_real}")
+        # Removed automatic fallback to mock connector during Pytest.
+        # If a real connection is expected and fails, the error should propagate.
+        logger.error("All connection attempts (real/testcontainer) failed.")
+        raise # Re-raise the original error to make it clear why connection failed.
 
-def setup_docker_test_db(image_name: str = "intersystemsdc/iris-community:latest", 
+def setup_docker_test_db(image_name: str = "intersystemsdc/iris-community:latest",
                          container_name: str = "iris_benchmark_container",
-                         host_port: int = 1972, 
-                         iris_user: str = "test", 
+                         host_port: int = 1972,
+                         iris_user: str = "test",
                          iris_password: str = "test",
-                         iris_namespace: str = "USER") -> Optional["intersystems_iris.dbapi.IRISConnection"]: # String literal type hint
+                         iris_namespace: str = "USER") -> Optional["jaydebeapi.Connection"]: # Updated type hint
     import subprocess
     import time
     

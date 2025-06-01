@@ -24,7 +24,9 @@ from plotly.subplots import make_subplots
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming eval is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 # RAGAS imports
 try:
@@ -45,17 +47,17 @@ except ImportError:
     print("⚠️ RAGAS not installed. Install with: pip install ragas datasets")
 
 # RAG imports - all 7 techniques
-from basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from crag.pipeline_jdbc_fixed import JDBCFixedCRAGPipeline as CRAGPipeline
-from colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline
-from noderag.pipeline import NodeRAGPipeline
-from graphrag.pipeline_jdbc_fixed import JDBCFixedGraphRAGPipeline as GraphRAGPipeline
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline
+from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import (JDBCFixedCRAGPipeline was not found)
+from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import (JDBCFixedGraphRAGPipeline was not found)
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline # Updated import
 
 # Common utilities
-from common.iris_connector_jdbc import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func, DEFAULT_EMBEDDING_MODEL
+from src.common.iris_connector_jdbc import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func, DEFAULT_EMBEDDING_MODEL # Updated import
 from dotenv import load_dotenv
 
 # Langchain for RAGAS LLM/Embeddings

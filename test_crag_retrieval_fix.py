@@ -5,11 +5,14 @@ Test script to verify CRAG retrieval issues and test the fix
 
 import sys
 import os
-sys.path.insert(0, os.path.abspath('.'))
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
-from crag.pipeline_v2 import CRAGPipelineV2
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
 
 def test_crag_retrieval():
     """Test CRAG document retrieval"""

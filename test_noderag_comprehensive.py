@@ -5,11 +5,16 @@ Comprehensive test for NodeRAG functionality
 
 import os
 import sys
+# Old path insert - keep for now if it serves a specific purpose for this test file
 sys.path.insert(0, os.path.abspath('.'))
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
-from noderag.pipeline_v2 import NodeRAGPipelineV2
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
 
 def test_noderag_comprehensive():
     """Test NodeRAG with comprehensive debugging"""

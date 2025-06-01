@@ -7,27 +7,31 @@ import time
 import json
 from datetime import datetime
 from typing import Dict, List, Any
+import os # Added
 
-sys.path.insert(0, '.')
+# sys.path.insert(0, '.') # Keep if script is in project root, otherwise adjust for project root
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming scripts is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import original pipelines
-from basic_rag.pipeline import BasicRAGPipeline
-from crag.pipeline import CRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from noderag.pipeline import NodeRAGPipeline
-from graphrag.pipeline import FixedGraphRAGPipeline
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline as FixedGraphRAGPipeline # Updated import, aliased
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
 
 # Import V2 pipelines
-from basic_rag.pipeline_v2 import BasicRAGPipelineV2
-from crag.pipeline_v2 import CRAGPipelineV2
-from hyde.pipeline_v2 import HyDEPipelineV2
-from noderag.pipeline_v2 import NodeRAGPipelineV2
-from graphrag.pipeline_v2 import GraphRAGPipelineV2
-from hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2
+from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline as HyDEPipelineV2 # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2 # Updated import
 
 # Test queries
 TEST_QUERIES = [

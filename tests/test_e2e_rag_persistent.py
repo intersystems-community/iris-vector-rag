@@ -25,19 +25,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Add the project root directory to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 # Import RAG pipelines
-from basic_rag.pipeline import BasicRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from crag.pipeline import CRAGPipeline
-from colbert.pipeline import ColbertRAGPipeline
-from noderag.pipeline import NodeRAGPipeline
-from graphrag.pipeline import GraphRAGPipeline
+from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
 
 # Import common utilities
-from common.utils import Document, timing_decorator
-from common.iris_connector import get_iris_connection
+from src.common.utils import Document, timing_decorator, get_embedding_func, get_llm_func # Updated import
+from src.common.iris_connector import get_iris_connection # Updated import
 
 # --- Test Fixtures ---
 
@@ -102,7 +104,7 @@ def real_embedding_func():
     """
     Provides a real embedding function for testing.
     """
-    from common.utils import get_embedding_func
+    # get_embedding_func is already imported from src.common.utils
     embed_func = get_embedding_func()
     logger.info(f"Using real embedding function")
     return embed_func
@@ -113,7 +115,7 @@ def real_llm_func():
     Provides a real LLM function for testing.
     Falls back to stub if real LLM is not available.
     """
-    from common.utils import get_llm_func
+    # get_llm_func is already imported from src.common.utils
     try:
         # Try to get a real LLM function (e.g., OpenAI)
         llm_func = get_llm_func(provider="openai")
@@ -130,7 +132,7 @@ def colbert_query_encoder():
     """
     Provides a ColBERT query encoder function for testing.
     """
-    from common.utils import get_embedding_func
+    # get_embedding_func is already imported from src.common.utils
     
     # For testing purposes, we'll use a simple wrapper around the embedding function
     # In a real implementation, this would be a proper ColBERT query encoder

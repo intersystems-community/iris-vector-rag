@@ -13,10 +13,12 @@ from typing import Dict, Any, List, Tuple
 import traceback
 
 # Add parent directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming scripts is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.utils import get_embedding_func, get_llm_func
-from common.simplified_connection_manager import get_simplified_connection_manager
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from src.common.simplified_connection_manager import get_simplified_connection_manager # Updated import
 
 # Setup logging
 logging.basicConfig(
@@ -90,9 +92,9 @@ class PipelineValidator:
             logger.info(f"✅ Import successful: {pipeline_class.__name__}")
             
             # Initialize pipeline
-            if pipeline_name == "basic_rag" and hasattr(module, 'BasicRAGPipeline'):
+            if pipeline_name == "BasicRAG" and hasattr(module, 'BasicRAGPipeline'): # Changed "basic_rag" to "BasicRAG" to match key
                 # Use the refactored version if available
-                from basic_rag.pipeline_refactored import BasicRAGPipeline
+                from src.deprecated.basic_rag.pipeline_refactored import BasicRAGPipeline # Updated import
                 pipeline = BasicRAGPipeline(
                     embedding_func=self.embedding_func,
                     llm_func=self.llm_func
@@ -109,7 +111,7 @@ class PipelineValidator:
                 except:
                     try:
                         # Pattern 2: With iris_connector
-                        from common.iris_connector import get_iris_connection
+                        from src.common.iris_connector import get_iris_connection # Updated import
                         pipeline = pipeline_class(
                             iris_connector=get_iris_connection(),
                             embedding_func=self.embedding_func,
@@ -181,13 +183,13 @@ class PipelineValidator:
         """Validate all RAG pipelines"""
         
         pipelines = [
-            ("BasicRAG", "basic_rag.pipeline"),
-            ("CRAG", "crag.pipeline"),
-            ("HyDE", "hyde.pipeline"),
-            ("ColBERT", "colbert.pipeline"),
-            ("NodeRAG", "noderag.pipeline"),
-            ("GraphRAG", "graphrag.pipeline"),
-            ("Hybrid iFIND", "hybrid_ifind_rag.pipeline")
+            ("BasicRAG", "src.deprecated.basic_rag.pipeline"), # Updated path
+            ("CRAG", "src.experimental.crag.pipeline"), # Updated path
+            ("HyDE", "src.experimental.hyde.pipeline"), # Updated path
+            ("ColBERT", "src.deprecated.colbert.pipeline"), # Updated path (assuming OptimizedColbertRAGPipeline)
+            ("NodeRAG", "src.experimental.noderag.pipeline"), # Updated path
+            ("GraphRAG", "src.experimental.graphrag.pipeline"), # Updated path
+            ("Hybrid iFIND", "src.experimental.hybrid_ifind_rag.pipeline") # Updated path
         ]
         
         all_results = {

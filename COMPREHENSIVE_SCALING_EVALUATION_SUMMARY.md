@@ -28,7 +28,7 @@ I have successfully created a comprehensive scaling and evaluation framework tha
 - Creates detailed reports and analysis
 - Manages the entire evaluation workflow
 
-#### **[`run_comprehensive_scaling_evaluation.py`](run_comprehensive_scaling_evaluation.py)**
+#### **[`run_comprehensive_scaling_evaluation.py`](scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py)**
 - Main execution script with multiple modes
 - Prerequisite checking and validation
 - User-friendly interface with progress tracking
@@ -94,10 +94,10 @@ I have successfully created a comprehensive scaling and evaluation framework tha
 python test_scaling_framework.py
 
 # Run evaluation at current database size
-python run_comprehensive_scaling_evaluation.py --mode current_size
+python scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode current_size
 
 # Run complete scaling and evaluation pipeline
-python run_comprehensive_scaling_evaluation.py --mode comprehensive
+python scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode comprehensive
 ```
 
 ### **Execution Modes**
@@ -274,7 +274,7 @@ The comprehensive scaling and evaluation framework is now **complete and ready f
 
 **Start your evaluation journey today with:**
 ```bash
-python run_comprehensive_scaling_evaluation.py --mode current_size
+python scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode current_size
 ```
 
 ---

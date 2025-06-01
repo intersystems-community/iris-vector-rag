@@ -132,7 +132,8 @@ def generate_document_embeddings(
     connection, 
     embedding_model,
     batch_size: int = 32,
-    limit: Optional[int] = None
+    limit: Optional[int] = None,
+    schema: str = "RAG"  # Added schema parameter
 ) -> Dict[str, Any]:
     """
     Generate document-level embeddings for documents in IRIS.
@@ -153,24 +154,23 @@ def generate_document_embeddings(
     try:
         cursor = connection.cursor()
         
-        # Get documents without embeddings
+        # Get all documents (or limited) to regenerate/generate embeddings
+        # This ensures all embeddings are processed/reprocessed with the current logic
         if limit:
-            sql = """
-                SELECT TOP ? doc_id, content 
-                FROM SourceDocuments 
-                WHERE embedding IS NULL
+            sql = f"""
+                SELECT TOP ? doc_id, text_content
+                FROM {schema}.SourceDocuments
             """
             cursor.execute(sql, (limit,))
         else:
-            sql = """
-                SELECT doc_id, content 
-                FROM SourceDocuments 
-                WHERE embedding IS NULL
+            sql = f"""
+                SELECT doc_id, text_content
+                FROM {schema}.SourceDocuments
             """
             cursor.execute(sql)
             
         rows = cursor.fetchall()
-        logger.info(f"Found {len(rows)} documents without embeddings")
+        logger.info(f"Found {len(rows)} documents to process for embeddings")
         
         # Process in batches
         for i in range(0, len(rows), batch_size):
@@ -218,9 +218,9 @@ def generate_document_embeddings(
                     else:
                         # For real database, use SQL
                         update_cursor.execute(
-                            """
-                            UPDATE SourceDocuments 
-                            SET embedding = ? 
+                            f"""
+                            UPDATE {schema}.SourceDocuments
+                            SET embedding = ?
                             WHERE doc_id = ?
                             """,
                             (embedding_str, doc_id)

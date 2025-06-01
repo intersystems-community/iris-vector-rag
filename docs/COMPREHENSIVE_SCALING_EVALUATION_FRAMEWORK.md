@@ -65,7 +65,7 @@ This framework provides a systematic approach to testing all **7 RAG techniques*
    - Creates comprehensive reports
    - Manages the complete pipeline
 
-4. **[`run_comprehensive_scaling_evaluation.py`](../run_comprehensive_scaling_evaluation.py)**
+4. **[`run_comprehensive_scaling_evaluation.py`](../scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py)**
    - Main execution script
    - Prerequisite checking
    - Multiple execution modes
@@ -106,24 +106,24 @@ This framework provides a systematic approach to testing all **7 RAG techniques*
 
 ```bash
 # Check current status and run evaluation at current size
-python run_comprehensive_scaling_evaluation.py --mode current_size
+python ../scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode current_size
 
 # Run comprehensive scaling and evaluation (recommended)
-python run_comprehensive_scaling_evaluation.py --mode comprehensive
+python ../scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode comprehensive
 
 # Scale dataset only (for preparation)
-python run_comprehensive_scaling_evaluation.py --mode scaling_only
+python ../scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode scaling_only
 ```
 
 ### Advanced Usage
 
 ```bash
 # Skip prerequisite checks
-python run_comprehensive_scaling_evaluation.py --mode current_size --skip-checks
+python ../scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode current_size --skip-checks
 
 # Run with specific configuration
 export OPENAI_API_KEY="your-api-key"
-python run_comprehensive_scaling_evaluation.py --mode comprehensive
+python ../scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode comprehensive
 ```
 
 ## 📈 Dataset Scaling Strategy
@@ -284,7 +284,7 @@ pip install matplotlib seaborn plotly
 ```bash
 # Enable detailed logging
 export LOG_LEVEL=DEBUG
-python run_comprehensive_scaling_evaluation.py --mode current_size
+python ../scripts/adhoc_utils/run_comprehensive_scaling_evaluation.py --mode current_size
 ```
 
 ## 📚 References and Related Work

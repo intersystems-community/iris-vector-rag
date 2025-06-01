@@ -4,7 +4,7 @@ Load 50k unique PMC documents from the already downloaded collection
 """
 
 import sys
-sys.path.append('.')
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))) # Add project root
 
 from common.iris_connector import get_iris_connection
 from common.embedding_utils import get_embedding_model

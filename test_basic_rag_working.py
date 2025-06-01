@@ -6,11 +6,13 @@ Based on evidence from logs, BasicRAG was working earlier but broke due to schem
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '.')) # Assuming script is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 import logging
-from common.iris_connector_jdbc import get_iris_connection
-from common.utils import get_embedding_func, get_llm_func
+from src.common.iris_connector_jdbc import get_iris_connection # Updated import
+from src.common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -21,13 +23,13 @@ def test_current_basic_rag():
     print("=== Testing Current BasicRAG Implementation ===")
     
     try:
-        from basic_rag.pipeline import BasicRAGPipeline
+        from src.deprecated.basic_rag.pipeline import BasicRAGPipeline as DeprecatedBasicRAGPipeline # Updated import
         
         db_conn = get_iris_connection()
         embed_fn = get_embedding_func()
         llm_fn = get_llm_func(provider="stub")
         
-        pipeline = BasicRAGPipeline(
+        pipeline = DeprecatedBasicRAGPipeline( # Updated class name
             iris_connector=db_conn,
             embedding_func=embed_fn,
             llm_func=llm_fn
@@ -62,7 +64,7 @@ def test_pipeline_final():
     print("\n=== Testing BasicRAG pipeline_final.py Implementation ===")
     
     try:
-        from basic_rag.pipeline_final import BasicRAGPipeline
+        from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline # Updated import
         
         db_conn = get_iris_connection()
         embed_fn = get_embedding_func()

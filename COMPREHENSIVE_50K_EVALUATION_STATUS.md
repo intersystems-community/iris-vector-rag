@@ -48,7 +48,7 @@
 
 ### Option 1: Scale to 100K Documents
 ```bash
-python3 scale_to_100k.py --target 100000
+python3 scripts/adhoc_utils/scale_to_100k.py --target 100000
 ```
 - Downloads additional 50k PMC documents
 - Maintains all existing data
@@ -64,7 +64,7 @@ python3 scripts/populate_colbert_token_embeddings.py --limit 50000
 
 ### Option 3: Run Enterprise Benchmarks
 ```bash
-python3 comprehensive_50k_evaluation.py
+python3 scripts/adhoc_utils/comprehensive_50k_evaluation.py
 ```
 - Already completed successfully
 - Results in: `comprehensive_50k_evaluation_20250531_053313.md`
@@ -99,7 +99,7 @@ python3 comprehensive_50k_evaluation.py
 4. **Long-term**: Implement real LLM for production use
 
 ## Files Generated
-- `comprehensive_50k_evaluation.py` - Evaluation script
+- `scripts/adhoc_utils/comprehensive_50k_evaluation.py` - Evaluation script
 - `comprehensive_50k_results_20250531_053313.json` - Raw results
 - `comprehensive_50k_evaluation_20250531_053313.md` - Detailed report
 - `ragas_smoke_test_20250531_052648.json` - RAGAS test results

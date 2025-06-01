@@ -19,7 +19,9 @@ import pandas as pd
 os.environ["TOKENIZERS_PARALLELISM"] = "false" # Suppress parallelism warning
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming eval is in project root
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 # Core imports
 import matplotlib.pyplot as plt
@@ -45,17 +47,17 @@ except ImportError:
     print("⚠️ RAGAS not installed. Install with: pip install ragas datasets")
 
 # RAG imports - using standard pipelines (not JDBC-specific)
-from basic_rag.pipeline import BasicRAGPipeline
-from hyde.pipeline import HyDEPipeline
-from crag.pipeline import CRAGPipeline
-from colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline
-from noderag.pipeline import NodeRAGPipeline
-from graphrag import GraphRAGPipeline  # This now uses optimized V3 by default
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline
+from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+from src.experimental.graphrag.pipeline import GraphRAGPipeline  # Updated import
+from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline # Updated import
 
 # Common utilities
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Langchain for RAGAS LLM/Embeddings

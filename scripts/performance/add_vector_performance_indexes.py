@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 
 # Add project root to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent)) # Go up two levels to project root
 
 from common.iris_connector import get_iris_connection
 

@@ -8,10 +8,12 @@ import sys
 from typing import Any # For mock type hints
 
 # Add the project root directory to Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from hyde.pipeline import HyDEPipeline # This will use the updated IRISConnection type hint
-from common.utils import Document, get_llm_func # For stub LLM
+from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from src.common.utils import Document, get_llm_func # Updated import
 
 # Attempt to import for type hinting, but make it optional
 try:

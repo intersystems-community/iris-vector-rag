@@ -145,7 +145,7 @@ def enhanced_test_data(request):
 
 def test_basic_rag_realistic(enhanced_test_data):
     """Test BasicRAG with realistic document content"""
-    from basic_rag.pipeline import BasicRAGPipeline
+    from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
     from tests.test_simple_retrieval import retrieve_documents_by_fixed_ids
     
     # Create pipeline with mocked embedding and LLM functions
@@ -195,7 +195,7 @@ def test_basic_rag_realistic(enhanced_test_data):
     
 def test_graph_integration(enhanced_test_data):
     """Test GraphRAG with realistic document content"""
-    from graphrag.pipeline import GraphRAGPipeline
+    from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
     from tests.test_simple_retrieval import retrieve_documents_by_fixed_ids
     
     # Create pipeline with mocked functions

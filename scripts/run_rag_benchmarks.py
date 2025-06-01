@@ -65,7 +65,7 @@ logger = logging.getLogger("rag_benchmarks")
 # Import IRIS connector and utility functions
 try:
     from common.iris_connector import get_iris_connection
-    from common.embedding_utils import get_embedding_func
+    import common.embedding_utils as embedding_utils_module
     from common.db_init import initialize_database
 except ImportError as e:
     logger = logging.getLogger("rag_benchmarks")
@@ -77,11 +77,14 @@ except ImportError as e:
         logger.warning("Using mock IRIS connection due to import error")
         return None
         
-    def get_embedding_func(provider="stub"):
-        logger.warning("Using stub embedding function due to import error")
-        def stub_embedding_func(text):
-            return [0.0] * 384  # Return a vector of zeros
-        return stub_embedding_func
+    # Mock for common.embedding_utils module if it failed to import
+    class MockEmbeddingUtils:
+        def get_embedding_func(self, provider="stub"):
+            logger.warning("Using stub embedding_utils.get_embedding_func due to import error")
+            def stub_embedding_func(text):
+                return [0.0] * 384  # Return a vector of zeros
+            return stub_embedding_func
+    embedding_utils_module = MockEmbeddingUtils() # Assign to the alias used in the try block
         
     def initialize_database(conn, force_recreate=False):
         logger.warning("Mock database initialization (no-op)")
@@ -169,12 +172,15 @@ except ImportError as e:
 
 # Import pipeline classes
 try:
-    from basic_rag.pipeline import BasicRAGPipeline
-    from hyde.pipeline import HyDEPipeline
-    from colbert.pipeline import ColbertRAGPipeline
-    from crag.pipeline import CRAGPipeline
-    from noderag.pipeline import NodeRAGPipeline
-    from graphrag.pipeline import GraphRAGPipeline
+    from core_pipelines import (
+        BasicRAGPipeline,
+        HyDEPipeline,
+        OptimizedColbertRAGPipeline, # Renamed
+        CRAGPipeline,
+        NodeRAGPipeline,
+        GraphRAGPipeline,
+        create_colbert_semantic_encoder # Added for ColBERT wrapper
+    )
 except ImportError as e:
     logger = logging.getLogger("rag_benchmarks")
     logger.warning(f"Error importing pipeline classes: {e}")
@@ -197,7 +203,7 @@ except ImportError as e:
     # Use the same mock class for all pipelines
     BasicRAGPipeline = MockPipeline
     HyDEPipeline = MockPipeline
-    ColbertRAGPipeline = MockPipeline
+    OptimizedColbertRAGPipeline = MockPipeline # Renamed
     CRAGPipeline = MockPipeline
     NodeRAGPipeline = MockPipeline
     GraphRAGPipeline = MockPipeline
@@ -285,18 +291,18 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
 
     # ColBERT wrapper
     def colbert_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
-        """Wrapper for ColbertRAGPipeline."""
-        # For ColBERT, we need to create a query encoder that handles token-level embeddings
-        from colbert.query_encoder import ColBERTQueryEncoder
+        """Wrapper for OptimizedColbertRAGPipeline."""
+        # For ColBERT, use the semantic encoder from the core pipeline
         
-        # Pass the potentially stubbed embedding_func to the encoder
-        query_encoder = ColBERTQueryEncoder(embedding_func=embedding_func) 
+        # Pass the potentially stubbed embedding_func to the encoder factory
+        # create_colbert_semantic_encoder is imported at the top from core_pipelines
+        semantic_encoder = create_colbert_semantic_encoder(embedding_func_override=embedding_func)
         
-        # Initialize ColbertRAGPipeline with the needed encoders
-        pipeline = ColbertRAGPipeline(
-            iris_connector=iris_connector, 
-            colbert_query_encoder_func=query_encoder.encode_query,
-            colbert_doc_encoder_func=query_encoder.encode_document,
+        # Initialize OptimizedColbertRAGPipeline with the created encoder
+        pipeline = OptimizedColbertRAGPipeline( # Renamed
+            iris_connector=iris_connector,
+            colbert_query_encoder_func=semantic_encoder, # Use the returned encoder directly
+            colbert_doc_encoder_func=semantic_encoder, # Use the same for doc encoding as per original OptimizedColbertRAGPipeline
             llm_func=llm_func
         )
         
@@ -353,12 +359,13 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
     }
 
 
-def ensure_min_documents(conn, min_count: int = MIN_DOCUMENT_COUNT) -> bool:
+def ensure_min_documents(conn, db_schema: str, min_count: int = MIN_DOCUMENT_COUNT) -> bool:
     """
     Ensure that the database has at least the minimum required documents.
     
     Args:
         conn: IRIS database connection
+        db_schema: The database schema (e.g., "RAG")
         min_count: Minimum number of documents required
         
     Returns:
@@ -367,7 +374,7 @@ def ensure_min_documents(conn, min_count: int = MIN_DOCUMENT_COUNT) -> bool:
     try:
         # Check current document count
         with conn.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM SourceDocuments_V2")
+            cursor.execute(f"SELECT COUNT(*) FROM {db_schema}.SourceDocuments") # Use schema and correct table
             count_result = cursor.fetchone()
             current_count = int(count_result[0]) if count_result else 0
             logger.info(f"Current document count: {current_count}")
@@ -521,7 +528,7 @@ def prepare_colbert_embeddings(iris_conn, args) -> bool:
 
 def initialize_embedding_and_llm(args) -> Tuple[Any, Any]:
     """
-    Initialize embedding and LLM functions.
+    Initialize embedding and LLM functions based on arguments.
     
     Args:
         args: Command line arguments
@@ -529,22 +536,17 @@ def initialize_embedding_and_llm(args) -> Tuple[Any, Any]:
     Returns:
         Tuple of (embedding_func, llm_func)
     """
-    try:
-        # If --use-mock is passed, it implies stubbing for LLM and general embeddings
-        if args.use_mock or args.llm == "stub":
-            logger.info("Using stub for LLM and general embedding function")
-            embedding_func = get_embedding_func(provider="stub")
-            llm_func = get_llm_func(provider="stub")
-        else:
-            logger.info(f"Using real models for LLM ({args.llm}) and default embedding model")
-            embedding_func = get_embedding_func()  # Default real model
-            llm_func = get_llm_func(provider="openai", model_name=args.llm)
-        
-        logger.info(f"Embedding and LLM functions initialized (LLM mode: {args.llm}, Mock mode: {args.use_mock})")
-        return embedding_func, llm_func
-    except Exception as e:
-        logger.error(f"Failed to initialize embedding or LLM functions: {e}")
-        raise
+    logger.info(f"Initializing embedding function with provider: {args.embedding_provider}")
+    # embedding_utils_module is imported and aliased at the top of the script
+    # and includes a mock if the import fails.
+    embedding_func = embedding_utils_module.get_embedding_func(provider=args.embedding_provider)
+    
+    logger.info(f"Initializing LLM function with provider: {args.llm}")
+    # get_llm_func is defined later in this script.
+    llm_func = get_llm_func(provider=args.llm, model_name=getattr(args, 'llm_model_name', 'gpt-3.5-turbo')) # Added model_name
+    
+    logger.info(f"Embedding and LLM functions initialized (LLM provider: {args.llm}, Embedding provider: {args.embedding_provider})")
+    return embedding_func, llm_func
 
 
 def get_llm_func(provider: str = "stub", model_name: str = "gpt-3.5-turbo") -> Any:
@@ -615,19 +617,13 @@ def run_benchmarks(args) -> Optional[str]:
         # Ensure we have enough documents
         if not args.use_mock:
             logger.info("Verifying document count requirement...")
-            if not ensure_min_documents(iris_conn, min_count=args.num_docs):
-                logger.warning("Initial document check failed. Attempting schema initialization.")
-                try:
-                    initialize_database(iris_conn, force_recreate=False)
-                    logger.info("Schema initialization attempted.")
-                    
-                    # Re-check documents
-                    if not ensure_min_documents(iris_conn, min_count=args.num_docs):
-                        logger.error(f"Insufficient documents in database after re-check. Need at least {args.num_docs}.")
-                        return None
-                except Exception as e_init:
-                    logger.error(f"Error during schema initialization: {e_init}")
-                    return None
+            if not ensure_min_documents(iris_conn, db_schema=args.db_schema, min_count=args.num_docs):
+                logger.critical(
+                    f"Initial document check failed. The table {args.db_schema}.SourceDocuments might be missing or empty. "
+                    f"Please ensure the database schema is correctly initialized by running: "
+                    f"python run_db_init_local.py --force-recreate"
+                )
+                return None
         else:
             logger.info("Skipping document count verification for mock run.")
         
@@ -739,6 +735,8 @@ def parse_args():
                         help="IRIS username (if connecting to existing instance)")
     db_group.add_argument("--iris-password", type=str,
                         help="IRIS password (if connecting to existing instance)")
+    db_group.add_argument("--db-schema", type=str, default="RAG",
+                        help="Database schema to use (default: RAG)")
     
     # Benchmark configuration
     bench_group = parser.add_argument_group("Benchmark Configuration")

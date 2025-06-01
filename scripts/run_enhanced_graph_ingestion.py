@@ -4,10 +4,14 @@ Run enhanced graph ingestion to populate entities and relationships from documen
 """
 
 import sys
-sys.path.append('.')
+import os # Added for path manipulation
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
 import spacy
 import re
 from typing import List, Dict, Tuple
@@ -22,31 +26,64 @@ except:
     subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
     nlp = spacy.load("en_core_web_sm")
 
-def extract_entities_and_relationships(text: str, doc_id: str) -> Tuple[List[Dict], List[Dict]]:
-    """Extract entities and relationships from text using NLP"""
+def extract_entities_and_relationships(cursor, text: str, doc_id: str) -> Tuple[List[Dict], List[Dict]]:
+    """Extract entities and relationships from text using NLP, reusing existing entity IDs."""
     doc = nlp(text[:1000000])  # Limit text size for spaCy
     
-    entities = []
-    entity_map = {}
+    entities_to_insert = [] # Entities that are new and need insertion
+    entity_map = {} # Maps entity_name to its entity_id (either existing or new UUID)
     
-    # Extract named entities
+    # Process entities (both NER and regex patterns)
+    # First pass: identify all potential entity names and their types
+    potential_entities = []
     for ent in doc.ents:
         if ent.label_ in ['PERSON', 'ORG', 'GPE', 'DISEASE', 'DRUG', 'CHEMICAL']:
-            entity_id = str(uuid.uuid4())
-            entity_name = ent.text.lower().strip()
-            
-            # Skip if already processed
-            if entity_name in entity_map:
-                continue
-                
-            entity_map[entity_name] = entity_id
-            entities.append({
-                'entity_id': entity_id,
+            potential_entities.append({'name': ent.text.lower().strip(), 'type': ent.label_})
+
+    medical_patterns = [
+        (r'\b(diabetes|cancer|hypertension|asthma|arthritis)\b', 'DISEASE'),
+        (r'\b(insulin|metformin|aspirin|ibuprofen)\b', 'DRUG'),
+        (r'\b(glucose|cholesterol|hemoglobin|protein)\b', 'SUBSTANCE'),
+        (r'\b(heart|liver|kidney|lung|brain)\b', 'ORGAN'),
+        (r'\b(treatment|therapy|surgery|medication)\b', 'TREATMENT')
+    ]
+    for pattern, entity_type in medical_patterns:
+        matches = re.finditer(pattern, text.lower())
+        for match in matches:
+            potential_entities.append({'name': match.group(1).lower().strip(), 'type': entity_type})
+
+    # Second pass: check existence, assign ID (existing or new), and prepare for insertion if new
+    processed_entity_names = set() # To handle duplicates within the same document text
+
+    for pe in potential_entities:
+        entity_name = pe['name']
+        entity_type = pe['type']
+
+        if entity_name in processed_entity_names:
+            continue # Already decided on an ID for this name in this document pass
+        
+        processed_entity_names.add(entity_name)
+
+        # Check if entity (name, type) already exists in DB
+        cursor.execute("SELECT entity_id FROM RAG.Entities WHERE entity_name = ? AND entity_type = ?", (entity_name, entity_type))
+        existing_entity_row = cursor.fetchone()
+        
+        current_entity_id_for_map = None
+        if existing_entity_row:
+            current_entity_id_for_map = existing_entity_row[0]
+            # This entity already exists, no need to add to entities_to_insert
+        else:
+            new_entity_id = str(uuid.uuid4())
+            current_entity_id_for_map = new_entity_id
+            entities_to_insert.append({
+                'entity_id': new_entity_id,
                 'entity_name': entity_name,
-                'entity_type': ent.label_,
+                'entity_type': entity_type,
                 'source_doc_id': doc_id
             })
-    
+        
+        entity_map[entity_name] = current_entity_id_for_map
+            
     # Extract medical terms using patterns
     medical_patterns = [
         (r'\b(diabetes|cancer|hypertension|asthma|arthritis)\b', 'DISEASE'),
@@ -56,21 +93,7 @@ def extract_entities_and_relationships(text: str, doc_id: str) -> Tuple[List[Dic
         (r'\b(treatment|therapy|surgery|medication)\b', 'TREATMENT')
     ]
     
-    for pattern, entity_type in medical_patterns:
-        matches = re.finditer(pattern, text.lower())
-        for match in matches:
-            entity_name = match.group(1)
-            if entity_name not in entity_map:
-                entity_id = str(uuid.uuid4())
-                entity_map[entity_name] = entity_id
-                entities.append({
-                    'entity_id': entity_id,
-                    'entity_name': entity_name,
-                    'entity_type': entity_type,
-                    'source_doc_id': doc_id
-                })
-    
-    # Extract relationships based on sentence co-occurrence
+    # Extract relationships based on sentence co-occurrence using the entity_map
     relationships = []
     sentences = [sent.text.lower() for sent in doc.sents]
     
@@ -106,7 +129,7 @@ def extract_entities_and_relationships(text: str, doc_id: str) -> Tuple[List[Dic
                     'source_doc_id': doc_id
                 })
     
-    return entities, relationships
+    return entities_to_insert, relationships # Return only new entities for insertion
 
 def run_enhanced_graph_ingestion(limit: int = 10):
     """Run enhanced graph ingestion on documents"""
@@ -130,47 +153,77 @@ def run_enhanced_graph_ingestion(limit: int = 10):
     total_entities = 0
     total_relationships = 0
     
-    for idx, (doc_id, title, content) in enumerate(documents, 1):
+    for idx, (doc_id, title, raw_content) in enumerate(documents, 1): # Renamed content to raw_content
         print(f"\n[{idx}/{len(documents)}] Processing: {title[:50]}...")
         
-        # Extract entities and relationships
-        entities, relationships = extract_entities_and_relationships(content, doc_id)
+        content_str = ""
+        if hasattr(raw_content, 'read'):  # Check if it's a Java-style InputStream
+            try:
+                byte_list = []
+                while True:
+                    byte_val = raw_content.read()
+                    if byte_val == -1:
+                        break
+                    byte_list.append(byte_val)
+                if byte_list:
+                    content_bytes = bytes(byte_list)
+                    content_str = content_bytes.decode('utf-8', errors='replace')
+                else:
+                    content_str = "" # Handle case where stream is empty
+            except Exception as e_read:
+                print(f"Warning: Could not read content stream for doc_id {doc_id}: {e_read}")
+                continue # Skip this document if content cannot be read
+        elif isinstance(raw_content, str):
+            content_str = raw_content
+        elif isinstance(raw_content, bytes):
+            try:
+                content_str = raw_content.decode('utf-8', errors='replace')
+            except Exception as e_decode:
+                print(f"Warning: Could not decode bytes content for doc_id {doc_id}: {e_decode}")
+                continue # Skip this document
+        elif raw_content is None:
+            content_str = ""
+        else:
+            print(f"Warning: Unexpected content type for doc_id {doc_id}: {type(raw_content)}. Skipping.")
+            continue
+
+        if not content_str.strip():
+            print(f"Warning: Empty content for doc_id {doc_id} after processing. Skipping.")
+            continue
+
+        # Extract entities and relationships, passing the cursor
+        # entities_to_insert will only contain entities not already in the DB by name/type
+        entities_to_insert, relationships = extract_entities_and_relationships(cursor, content_str, doc_id)
         
-        # Insert entities
-        for entity in entities:
-            # Check if entity already exists
-            cursor.execute("""
-                SELECT COUNT(*) FROM RAG.Entities 
-                WHERE entity_name = ? AND entity_type = ?
-            """, [entity['entity_name'], entity['entity_type']])
+        # Insert new entities
+        for entity_data in entities_to_insert:
+            # Embedding is generated only for new entities
+            embedding = embedding_model.encode([entity_data['entity_name']])[0]
+            # Ensure embedding_str is bracketed for TO_VECTOR(?)
+            embedding_str = "[" + ','.join([f'{x:.10f}' for x in embedding]) + "]"
             
-            if cursor.fetchone()[0] == 0:
-                # Generate embedding
-                embedding = embedding_model.encode([entity['entity_name']])[0]
-                embedding_str = ','.join([f'{x:.10f}' for x in embedding])
-                
-                # Insert entity
-                cursor.execute("""
-                    INSERT INTO RAG.Entities 
-                    (entity_id, entity_name, entity_type, source_doc_id, embedding)
-                    VALUES (?, ?, ?, ?, ?)
-                """, [entity['entity_id'], entity['entity_name'], entity['entity_type'], 
-                      entity['source_doc_id'], embedding_str])
-                total_entities += 1
+            # Insert entity
+            cursor.execute("""
+                INSERT INTO RAG.Entities
+                (entity_id, entity_name, entity_type, source_doc_id, embedding)
+                VALUES (?, ?, ?, ?, TO_VECTOR(?))
+            """, [entity_data['entity_id'], entity_data['entity_name'], entity_data['entity_type'],
+                  entity_data['source_doc_id'], embedding_str])
+            total_entities += 1
         
         # Insert relationships
         for rel in relationships:
             # Check if relationship already exists
             cursor.execute("""
-                SELECT COUNT(*) FROM RAG.Relationships 
-                WHERE source_entity_id = ? AND target_entity_id = ? 
+                SELECT COUNT(*) FROM RAG.EntityRelationships
+                WHERE source_entity_id = ? AND target_entity_id = ?
                 AND relationship_type = ?
             """, [rel['source_entity_id'], rel['target_entity_id'], rel['relationship_type']])
             
             if cursor.fetchone()[0] == 0:
                 cursor.execute("""
-                    INSERT INTO RAG.Relationships 
-                    (relationship_id, source_entity_id, target_entity_id, 
+                    INSERT INTO RAG.EntityRelationships
+                    (relationship_id, source_entity_id, target_entity_id,
                      relationship_type, source_doc_id)
                     VALUES (?, ?, ?, ?, ?)
                 """, [rel['relationship_id'], rel['source_entity_id'], 
@@ -180,13 +233,13 @@ def run_enhanced_graph_ingestion(limit: int = 10):
         
         # Commit after each document
         iris.commit()
-        print(f"  Added {len(entities)} entities, {len(relationships)} relationships")
+        print(f"  Added {len(entities_to_insert)} entities, {len(relationships)} relationships") # Corrected variable name
     
     # Final statistics
     cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
     final_entities = cursor.fetchone()[0]
     
-    cursor.execute("SELECT COUNT(*) FROM RAG.Relationships")
+    cursor.execute("SELECT COUNT(*) FROM RAG.EntityRelationships") # Corrected table name
     final_relationships = cursor.fetchone()[0]
     
     print(f"\n=== Ingestion Complete ===")
@@ -200,7 +253,7 @@ def run_enhanced_graph_ingestion(limit: int = 10):
 
 def test_enhanced_graphrag():
     """Test GraphRAG after enhanced ingestion"""
-    from graphrag.pipeline_v2 import GraphRAGPipelineV2
+    from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
     
     iris = get_iris_connection()
     embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')

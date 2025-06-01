@@ -11,8 +11,15 @@ import time
 from typing import List, Dict, Any, Tuple, Optional, Callable, Union
 import os
 import torch # Added for NaN/Inf check
-from common.utils import Document
-from colbert.doc_encoder import generate_token_embeddings_for_documents as colbert_generate_embeddings
+import sys # Ensure project root is in path
+
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from src.common.utils import Document # Updated import
+from src.working.colbert.doc_encoder import generate_token_embeddings_for_documents as colbert_generate_embeddings # Updated import
 
 logger = logging.getLogger(__name__)
 

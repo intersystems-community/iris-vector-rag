@@ -115,7 +115,7 @@ def initialize_database(iris_connector: Any, force_recreate: bool = False):
                     with open(sql_file_path, 'r', encoding='utf-8') as f:
                         sql_script_content = f.read()
                     
-                    cleaned_sql_script = re.sub(r'--.*?\n', '', sql_script_content) # Remove single-line comments
+                    cleaned_sql_script = re.sub(r'--[^\r\n]*', '', sql_script_content) # Remove single-line comments
                     cleaned_sql_script = re.sub(r'/\*.*?\*/', '', cleaned_sql_script, flags=re.DOTALL) # Remove multi-line comments
                     
                     # Use the new splitting logic

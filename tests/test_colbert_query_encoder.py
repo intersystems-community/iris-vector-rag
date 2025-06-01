@@ -12,9 +12,11 @@ import sys
 import os
 
 # Make sure the project root is in the path
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from colbert.query_encoder import ColBERTQueryEncoder, get_colbert_query_encoder
+from src.working.colbert.query_encoder import ColBERTQueryEncoder, get_colbert_query_encoder # Updated import
 
 
 class TestColBERTQueryEncoder:

@@ -4,11 +4,15 @@ Test GraphRAG with a small number of documents to ensure everything works
 """
 
 import sys
-sys.path.append('.')
+import os # Added for path manipulation
+# Add project root to path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
-from general_graphrag_ingestion import GeneralEntityExtractor
+from src.common.iris_connector import get_iris_connection # Updated import
+from src.common.embedding_utils import get_embedding_model # Updated import
+from general_graphrag_ingestion import GeneralEntityExtractor # Assuming this is a local/root script
 import time
 
 def main():
@@ -140,7 +144,7 @@ def main():
     
     # Test GraphRAG pipeline
     print("\n🧪 Testing GraphRAG pipeline...")
-    from graphrag.pipeline_v2 import GraphRAGPipelineV2
+    from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
     
     def embedding_func(texts):
         return embedding_model.encode(texts)

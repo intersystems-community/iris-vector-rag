@@ -55,8 +55,24 @@ CREATE TABLE RAG.SourceDocuments (
     authors LONGVARCHAR,
     keywords LONGVARCHAR,
     -- Store embedding as comma-separated string - the only approach that works reliably
-    embedding VARCHAR(60000)
+    embedding VARCHAR(60000),
+    source VARCHAR(255) -- Added to track the origin of the document, e.g., for test data
 );
+
+-- Document Chunks table (for CRAG and other chunk-based strategies)
+CREATE TABLE RAG.DocumentChunks (
+    chunk_id VARCHAR(255) PRIMARY KEY,
+    doc_id VARCHAR(255),
+    chunk_text LONGVARCHAR,
+    embedding VARCHAR(60000), -- Storing as comma-separated string
+    chunk_type VARCHAR(50),    -- e.g., 'content', 'summary', 'title'
+    chunk_index INTEGER,       -- Order of the chunk within the document
+    metadata_json CLOB,
+    FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_doc_chunks_doc_id ON RAG.DocumentChunks(doc_id);
+CREATE INDEX idx_doc_chunks_type ON RAG.DocumentChunks(chunk_type);
 
 -- ColBERT token embeddings table
 CREATE TABLE RAG.DocumentTokenEmbeddings (
