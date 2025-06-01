@@ -1,5 +1,49 @@
 # Project Backlog / Future Enhancements
 
+## SQL RAG Library Initiative
+
+### Phase 1: SQL RAG Library - BasicRAG & HyDE Proof of Concept
+
+**Date Added:** 2025-06-01
+
+**Context:**
+The goal is to make RAG techniques accessible directly via SQL stored procedures within InterSystems IRIS, leveraging its native `EMBEDDING` data type and Embedded Python for core logic. This aims to simplify RAG integration and democratize its use for SQL-proficient developers and analysts.
+
+**Detailed Plan:** See [docs/SQL_RAG_LIBRARY_PLAN.md](docs/SQL_RAG_LIBRARY_PLAN.md)
+
+**Key Objectives for Phase 1:**
+*   **Validate Core Architecture:**
+    *   Design and implement the SQL Stored Procedure to Embedded Python interaction model.
+    *   Confirm effective use of IRIS `EMBEDDING` data type for document storage and `TO_VECTOR(?)` for on-the-fly query vectorization.
+*   **Implement `RAG.BasicSearch` Stored Procedure:**
+    *   SQL interface for basic vector search and retrieval.
+    *   Embedded Python module (`rag_py_basic.py`) for core logic.
+    *   Optional LLM call for answer generation, configured via IRIS mechanisms.
+*   **Implement `RAG.HyDESearch` Stored Procedure:**
+    *   SQL interface for HyDE.
+    *   Embedded Python module (`rag_py_hyde.py`) to:
+        *   Generate hypothetical document using a configured LLM.
+        *   Use hypothetical document text for vector search via `TO_VECTOR(?)`.
+        *   Optional LLM call for final answer generation.
+*   **Initial Configuration Management:**
+    *   Develop basic IRIS SQL tables or procedures for managing LLM endpoints/keys and essential pipeline parameters (e.g., table/column names for retrieval).
+*   **Helper Utilities:**
+    *   Create foundational Embedded Python utility functions (e.g., in a `rag_py_utils.py`) for common tasks like fetching configurations from IRIS and making LLM calls (potentially using LiteLLM from the start for flexibility).
+*   **Testing:**
+    *   Unit tests for core Python logic.
+    *   Basic integration tests for the SQL stored procedures.
+*   **Documentation:**
+    *   Update `docs/SQL_RAG_LIBRARY_PLAN.md` with learnings and refined designs from PoC.
+    *   Initial user documentation for the implemented SQL procedures.
+
+**Success Criteria for Phase 1:**
+*   Successfully execute `RAG.BasicSearch` and `RAG.HyDESearch` via SQL.
+*   Demonstrate retrieval of relevant documents based on query text.
+*   Demonstrate (optional) answer generation using a configured LLM.
+*   Configuration for LLMs and basic pipeline parameters is manageable via IRIS.
+*   Core interaction patterns are established and documented.
+
+---
 ## ColBERT Optimizations & Enhancements
 
 ### Investigate `pylate` for ColBERT Re-ranking and 128-dim Embeddings
