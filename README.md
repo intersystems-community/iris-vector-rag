@@ -15,6 +15,17 @@ The documentation is now organized into logical categories:
 - **🔧 Fixes**: Technical fixes and troubleshooting documentation
 - **📊 Summaries**: High-level project summaries and status reports
 ---
+## 🧭 Project Orientation & Key Documents
+
+To quickly understand the current state, goals, and ongoing development of this RAG Templates project, please refer to the following key documents:
+
+1.  **This `README.md`**: Provides a general overview, setup instructions, and links to other important resources.
+2.  **[`PROJECT_STATUS_DASHBOARD.md`](PROJECT_STATUS_DASHBOARD.md:1)**: This is the **single source of truth** for the operational status of each RAG technique, known issues, and the progress of the overall project restructuring and improvement plan.
+3.  **[`docs/COMPREHENSIVE_SCALING_EVALUATION_FRAMEWORK.md`](docs/COMPREHENSIVE_SCALING_EVALUATION_FRAMEWORK.md:1)**: Details the new, extensive framework for testing and evaluating RAG pipelines across various data scales, which is a major focus of recent and ongoing work.
+4.  **[`tests/test_e2e_rag_pipelines.py`](tests/test_e2e_rag_pipelines.py:1)**: This script contains the comprehensive end-to-end tests for all core RAG pipelines. It demonstrates how pipelines are currently validated, including RAGAS integration for quality assessment and detailed CSV logging of results.
+5.  **[`test_results/rag_evaluation_log.csv`](test_results/rag_evaluation_log.csv:1)**: (Generated after running tests via `pytest tests/test_e2e_rag_pipelines.py`) This CSV file will contain the most up-to-date, detailed results from individual pipeline evaluations, including parameters used, RAGAS scores, and pass/fail status.
+
+Reviewing these documents will provide a solid understanding of the project's current trajectory and how its components are being managed and validated.
 
 ## Project Status (As of June 1, 2025)
 
