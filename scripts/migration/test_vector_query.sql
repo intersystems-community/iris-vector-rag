@@ -2,7 +2,7 @@
 
 -- This query FAILS with error:
 -- "Invalid SQL statement - ) expected, : found"
-SELECT TO_VECTOR('0.1:0.2:0.3', 'DOUBLE', 3);
+SELECT TO_VECTOR('0.1:0.2:0.3', 'FLOAT', 3);
 
 -- But this query WORKS:
 SELECT TO_VECTOR('0.1,0.2,0.3', 'DOUBLE', 3);

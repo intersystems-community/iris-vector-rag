@@ -51,7 +51,7 @@ def setup_test_environment(connection):
             id INTEGER PRIMARY KEY,
             name VARCHAR(100),
             embedding_varchar VARCHAR(1000),
-            embedding_vector VECTOR(DOUBLE, 4)
+            embedding_vector VECTOR(FLOAT, 4)
         )
     """)
     
@@ -116,7 +116,7 @@ def test_vector_insertion(connection):
             cursor.execute(f"""
                 INSERT INTO TestVectorBugs.VectorTypeTest 
                 (id, name, embedding_varchar, embedding_vector) 
-                VALUES (?, ?, ?, TO_VECTOR('{vector_str}', 'DOUBLE', 4))
+                VALUES (?, ?, ?, TO_VECTOR('{vector_str}', 'FLOAT', 4))
             """, [id, name, vector_str])
         
         connection.commit()
@@ -170,7 +170,7 @@ def test_vector_retrieval(connection):
         query_vector = "0.15,0.25,0.35,0.45"
         cursor.execute(f"""
             SELECT name, 
-                   VECTOR_COSINE(embedding_vector, TO_VECTOR('{query_vector}', 'DOUBLE', 4)) as score
+                   VECTOR_COSINE(embedding_vector, TO_VECTOR('{query_vector}', 'FLOAT', 4)) as score
             FROM TestVectorBugs.VectorTypeTest
             ORDER BY score DESC
         """)
@@ -268,7 +268,7 @@ def demonstrate_workarounds(connection):
     
     # Use with validation
     safe_str = safe_vector_string(user_vector)
-    cursor.execute(f"... TO_VECTOR('{safe_str}', 'DOUBLE', 4) ...")
+    cursor.execute(f"... TO_VECTOR('{safe_str}', 'FLOAT', 4) ...")
     """)
 
 def main():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Populate ColBERT Token Embeddings - Native VECTOR Version
-Properly populate the DocumentTokenEmbeddings table with native VECTOR(DOUBLE, 128)
+Properly populate the DocumentTokenEmbeddings table with native VECTOR(FLOAT, 128)
 """
 
 import os

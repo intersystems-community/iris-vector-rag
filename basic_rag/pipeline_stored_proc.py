@@ -57,10 +57,10 @@ class BasicRAGPipelineStoredProc:
                     doc_id,
                     title,
                     text_content,
-                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR(query_vector, 'DOUBLE')) as similarity_score
+                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR(query_vector, 'FLOAT')) as similarity_score
                 FROM RAG.SourceDocuments
                 WHERE document_embedding_vector IS NOT NULL
-                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(query_vector, 'DOUBLE')) > threshold
+                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(query_vector, 'FLOAT')) > threshold
                 ORDER BY similarity_score DESC
                 LIMIT top_k;
                 
@@ -117,10 +117,10 @@ class BasicRAGPipelineStoredProc:
                         doc_id, 
                         title, 
                         text_content,
-                        VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) as similarity_score
+                        VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT')) as similarity_score
                     FROM {self.schema}.SourceDocuments
                     WHERE document_embedding_vector IS NOT NULL
-                    AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) > {similarity_threshold}
+                    AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT')) > {similarity_threshold}
                     ORDER BY similarity_score DESC
                 """
                 

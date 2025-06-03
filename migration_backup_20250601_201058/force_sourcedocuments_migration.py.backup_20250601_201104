@@ -1,0 +1,224 @@
+#!/usr/bin/env python3
+"""
+Force SourceDocuments table migration by handling compiled class dependencies.
+This script takes a more aggressive approach to clearing dependencies.
+"""
+
+import iris
+from common.connection_manager import ConnectionManager
+import logging
+import sys
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+def drop_all_rag_procedures(conn):
+    """Drop all RAG.* procedures that might reference SourceDocuments"""
+    logger.info("Dropping all RAG.* procedures...")
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Find all RAG procedures
+        cursor.execute("""
+            SELECT ProcedureName 
+            FROM %Dictionary.CompiledProcedure
+            WHERE ProcedureName LIKE 'RAG.%'
+        """)
+        
+        procedures = cursor.fetchall()
+        dropped_count = 0
+        
+        for proc in procedures:
+            proc_name = proc[0]
+            try:
+                logger.info(f"Dropping procedure: {proc_name}")
+                cursor.execute(f"DROP PROCEDURE {proc_name}")
+                conn.commit()
+                dropped_count += 1
+            except Exception as e:
+                logger.warning(f"Could not drop {proc_name}: {e}")
+        
+        logger.info(f"Dropped {dropped_count} procedures")
+        return dropped_count
+        
+    except Exception as e:
+        logger.error(f"Error dropping procedures: {e}")
+        return 0
+
+def create_sourcedocuments_v2_if_not_exists(conn):
+    """Ensure SourceDocuments_v2 exists"""
+    logger.info("Checking/creating SourceDocuments_v2...")
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Check if SourceDocuments_v2 exists
+        cursor.execute("""
+            SELECT COUNT(*) 
+            FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_SCHEMA = 'SQLUser' 
+            AND TABLE_NAME = 'SourceDocuments_v2'
+        """)
+        
+        if cursor.fetchone()[0] == 0:
+            logger.info("Creating SourceDocuments_v2 table...")
+            cursor.execute("""
+                CREATE TABLE SourceDocuments_v2 (
+                    doc_id VARCHAR(255) PRIMARY KEY,
+                    title VARCHAR(1000),
+                    content CLOB,
+                    metadata VARCHAR(4000),
+                    embedding VECTOR(DOUBLE, 768),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.commit()
+            logger.info("SourceDocuments_v2 created successfully")
+        else:
+            logger.info("SourceDocuments_v2 already exists")
+            
+    except Exception as e:
+        logger.error(f"Error creating SourceDocuments_v2: {e}")
+        raise
+
+def migrate_data_if_needed(conn):
+    """Migrate data from SourceDocuments to SourceDocuments_v2 if needed"""
+    logger.info("Checking if data migration is needed...")
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Check if SourceDocuments has data
+        cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
+        source_count = cursor.fetchone()[0]
+        
+        # Check if SourceDocuments_v2 has data
+        cursor.execute("SELECT COUNT(*) FROM SourceDocuments_v2")
+        target_count = cursor.fetchone()[0]
+        
+        if source_count > 0 and target_count == 0:
+            logger.info(f"Migrating {source_count} documents from SourceDocuments to SourceDocuments_v2...")
+            
+            cursor.execute("""
+                INSERT INTO SourceDocuments_v2 (doc_id, title, content, metadata, embedding, created_at)
+                SELECT doc_id, title, content, metadata, embedding, created_at
+                FROM SourceDocuments
+            """)
+            conn.commit()
+            
+            logger.info(f"Successfully migrated {source_count} documents")
+        else:
+            logger.info(f"No migration needed (source: {source_count}, target: {target_count})")
+            
+    except Exception as e:
+        logger.error(f"Error migrating data: {e}")
+        raise
+
+def rename_tables_with_workaround(conn):
+    """Rename tables using a workaround approach"""
+    logger.info("Attempting table rename with workaround...")
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Step 1: Create a backup of SourceDocuments if it doesn't exist
+        logger.info("Creating SourceDocuments_old as backup...")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS SourceDocuments_old AS
+            SELECT * FROM SourceDocuments
+        """)
+        conn.commit()
+        
+        # Step 2: Drop the original SourceDocuments table
+        logger.info("Dropping original SourceDocuments table...")
+        cursor.execute("DROP TABLE SourceDocuments")
+        conn.commit()
+        
+        # Step 3: Rename SourceDocuments_v2 to SourceDocuments
+        logger.info("Renaming SourceDocuments_v2 to SourceDocuments...")
+        cursor.execute("ALTER TABLE SourceDocuments_v2 RENAME TO SourceDocuments")
+        conn.commit()
+        
+        logger.info("Table rename completed successfully!")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error in rename workaround: {e}")
+        return False
+
+def verify_final_state(conn):
+    """Verify the final state of tables"""
+    logger.info("Verifying final table state...")
+    
+    try:
+        cursor = conn.cursor()
+        
+        # Check what tables exist
+        cursor.execute("""
+            SELECT TABLE_NAME, 
+                   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = t.TABLE_NAME AND TABLE_SCHEMA = 'SQLUser') as column_count
+            FROM INFORMATION_SCHEMA.TABLES t
+            WHERE TABLE_SCHEMA = 'SQLUser' 
+            AND TABLE_NAME IN ('SourceDocuments', 'SourceDocuments_v2', 'SourceDocuments_old')
+        """)
+        
+        tables = cursor.fetchall()
+        logger.info("Current table state:")
+        for table in tables:
+            logger.info(f"  - {table[0]}: {table[1]} columns")
+            
+        # Check SourceDocuments structure
+        cursor.execute("""
+            SELECT COLUMN_NAME, DATA_TYPE 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = 'SQLUser' AND TABLE_NAME = 'SourceDocuments'
+            ORDER BY ORDINAL_POSITION
+        """)
+        
+        columns = cursor.fetchall()
+        logger.info("SourceDocuments columns:")
+        for col in columns:
+            logger.info(f"  - {col[0]}: {col[1]}")
+            
+    except Exception as e:
+        logger.error(f"Error verifying state: {e}")
+
+def main():
+    """Main execution"""
+    logger.info("Starting forced SourceDocuments migration...")
+    
+    conn_manager = ConnectionManager()
+    conn = conn_manager.get_connection()
+    
+    try:
+        # Step 1: Drop all RAG procedures
+        drop_all_rag_procedures(conn)
+        
+        # Step 2: Ensure SourceDocuments_v2 exists
+        create_sourcedocuments_v2_if_not_exists(conn)
+        
+        # Step 3: Migrate data if needed
+        migrate_data_if_needed(conn)
+        
+        # Step 4: Rename tables with workaround
+        if rename_tables_with_workaround(conn):
+            logger.info("Migration completed successfully!")
+        else:
+            logger.error("Migration failed - manual intervention required")
+            sys.exit(1)
+            
+        # Step 5: Verify final state
+        verify_final_state(conn)
+        
+    except Exception as e:
+        logger.error(f"Error in main execution: {e}")
+        sys.exit(1)
+    finally:
+        conn_manager.close_connection(conn)
+    
+    logger.info("SourceDocuments migration process complete")
+
+if __name__ == "__main__":
+    main()

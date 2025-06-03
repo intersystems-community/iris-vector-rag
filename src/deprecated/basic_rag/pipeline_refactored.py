@@ -62,14 +62,14 @@ class BasicRAGPipeline(BaseRAGPipeline):
                     title, 
                     text_content,
                     VECTOR_COSINE(
-                        TO_VECTOR(embedding, 'DOUBLE', 384),
-                        TO_VECTOR(?, 'DOUBLE', 384)
+                        TO_VECTOR(embedding, 'FLOAT', 384),
+                        TO_VECTOR(?, 'FLOAT', 384)
                     ) as similarity_score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 AND VECTOR_COSINE(
-                    TO_VECTOR(embedding, 'DOUBLE', 384),
-                    TO_VECTOR(?, 'DOUBLE', 384)
+                    TO_VECTOR(embedding, 'FLOAT', 384),
+                    TO_VECTOR(?, 'FLOAT', 384)
                 ) > ?
                 ORDER BY similarity_score DESC
             """
@@ -82,14 +82,14 @@ class BasicRAGPipeline(BaseRAGPipeline):
                     title, 
                     text_content,
                     VECTOR_COSINE(
-                        TO_VECTOR(embedding, 'DOUBLE', 384),
-                        TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)
+                        TO_VECTOR(embedding, 'FLOAT', 384),
+                        TO_VECTOR('{query_embedding_str}', 'FLOAT', 384)
                     ) as similarity_score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 AND VECTOR_COSINE(
-                    TO_VECTOR(embedding, 'DOUBLE', 384),
-                    TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)
+                    TO_VECTOR(embedding, 'FLOAT', 384),
+                    TO_VECTOR('{query_embedding_str}', 'FLOAT', 384)
                 ) > {similarity_threshold}
                 ORDER BY similarity_score DESC
             """

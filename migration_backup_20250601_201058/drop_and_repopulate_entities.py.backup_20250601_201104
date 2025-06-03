@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""
+Drop and repopulate Entities table with proper embeddings
+"""
+
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+
+from common.iris_connector import get_iris_connection
+
+def drop_and_repopulate_entities():
+    """Drop and recreate Entities table with proper VECTOR column"""
+    print("🗑️ Dropping and Repopulating Entities Table")
+    print("=" * 60)
+    
+    iris_conn = get_iris_connection()
+    cursor = iris_conn.cursor()
+    
+    try:
+        # Drop existing tables
+        print("📋 Dropping existing tables...")
+        
+        # Drop Relationships first (foreign key dependency)
+        try:
+            cursor.execute("DROP TABLE RAG.Relationships")
+            print("   ✅ Dropped Relationships table")
+        except Exception as e:
+            print(f"   ⚠️ Relationships table: {e}")
+        
+        # Drop Entities
+        try:
+            cursor.execute("DROP TABLE RAG.Entities")
+            print("   ✅ Dropped Entities table")
+        except Exception as e:
+            print(f"   ⚠️ Entities table: {e}")
+        
+        # Create new Entities table with proper VECTOR column
+        print("\n🏗️ Creating new Entities table...")
+        create_entities_sql = """
+        CREATE TABLE RAG.Entities (
+            entity_id VARCHAR(255) PRIMARY KEY,
+            entity_name VARCHAR(500),
+            entity_type VARCHAR(100),
+            source_doc_id VARCHAR(255),
+            embedding VECTOR(DOUBLE, 384)
+        )
+        """
+        cursor.execute(create_entities_sql)
+        print("   ✅ Created Entities table with VECTOR(DOUBLE, 384)")
+        
+        # Create new Relationships table
+        print("\n🔗 Creating new Relationships table...")
+        create_relationships_sql = """
+        CREATE TABLE RAG.Relationships (
+            relationship_id VARCHAR(255) PRIMARY KEY,
+            source_entity_id VARCHAR(255),
+            target_entity_id VARCHAR(255),
+            relationship_type VARCHAR(100),
+            source_doc_id VARCHAR(255),
+            FOREIGN KEY (source_entity_id) REFERENCES RAG.Entities(entity_id),
+            FOREIGN KEY (target_entity_id) REFERENCES RAG.Entities(entity_id)
+        )
+        """
+        cursor.execute(create_relationships_sql)
+        print("   ✅ Created Relationships table")
+        
+        # Commit changes
+        iris_conn.commit()
+        
+        print("\n✅ Successfully dropped and recreated tables")
+        print("   Ready for fresh entity and relationship data")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error dropping and recreating tables: {e}")
+        iris_conn.rollback()
+        return False
+    finally:
+        cursor.close()
+
+def populate_sample_entities():
+    """Populate with a small sample of entities for testing"""
+    print("\n📝 Populating sample entities for testing...")
+    
+    from common.utils import get_embedding_func
+    
+    iris_conn = get_iris_connection()
+    embedding_func = get_embedding_func()
+    cursor = iris_conn.cursor()
+    
+    try:
+        # Sample entities related to diabetes
+        sample_entities = [
+            ("diabetes_1", "diabetes", "DISEASE", "sample_doc_1"),
+            ("insulin_1", "insulin", "HORMONE", "sample_doc_1"),
+            ("glucose_1", "glucose", "SUBSTANCE", "sample_doc_2"),
+            ("pancreas_1", "pancreas", "ORGAN", "sample_doc_2"),
+            ("blood_sugar_1", "blood sugar", "MEASUREMENT", "sample_doc_3"),
+        ]
+        
+        # Generate embeddings and insert
+        for entity_id, entity_name, entity_type, source_doc_id in sample_entities:
+            # Create meaningful text for embedding
+            text = f"{entity_name} ({entity_type})"
+            embedding = embedding_func([text])[0]
+            
+            # Use VECTOR format directly
+            insert_sql = """
+                INSERT INTO RAG.Entities (entity_id, entity_name, entity_type, source_doc_id, embedding)
+                VALUES (?, ?, ?, ?, TO_VECTOR(?))
+            """
+            
+            # Convert embedding to comma-separated string (same format as SourceDocuments)
+            embedding_str = ','.join([f'{x:.10f}' for x in embedding])
+            
+            cursor.execute(insert_sql, [entity_id, entity_name, entity_type, source_doc_id, embedding_str])
+        
+        # Commit
+        iris_conn.commit()
+        
+        # Verify
+        cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
+        count = cursor.fetchone()[0]
+        print(f"   ✅ Inserted {count} sample entities")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error populating sample entities: {e}")
+        iris_conn.rollback()
+        return False
+    finally:
+        cursor.close()
+
+def test_entity_search():
+    """Test entity search with the new setup"""
+    print("\n🔍 Testing entity search...")
+    
+    from common.utils import get_embedding_func
+    
+    iris_conn = get_iris_connection()
+    embedding_func = get_embedding_func()
+    cursor = iris_conn.cursor()
+    
+    try:
+        query = "diabetes"
+        query_embedding = embedding_func([query])[0]
+        query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
+        
+        sql = """
+            SELECT entity_id, entity_name, entity_type,
+                   VECTOR_COSINE(embedding, TO_VECTOR(?)) as similarity_score
+            FROM RAG.Entities
+            ORDER BY similarity_score DESC
+        """
+        
+        cursor.execute(sql, [query_embedding_str])
+        results = cursor.fetchall()
+        
+        print(f"   📊 Found {len(results)} entities for query '{query}':")
+        for entity_id, entity_name, entity_type, similarity in results:
+            print(f"      - {entity_name} ({entity_type}): {similarity:.4f}")
+        
+        return len(results) > 0
+        
+    except Exception as e:
+        print(f"❌ Error testing entity search: {e}")
+        return False
+    finally:
+        cursor.close()
+
+if __name__ == "__main__":
+    print("🚀 Drop and Repopulate Entities for GraphRAG V2")
+    print("=" * 80)
+    
+    # Drop and recreate tables
+    success = drop_and_repopulate_entities()
+    
+    if success:
+        # Populate sample entities
+        sample_success = populate_sample_entities()
+        
+        if sample_success:
+            # Test the setup
+            test_success = test_entity_search()
+            
+            if test_success:
+                print(f"\n🎉 SUCCESS! Entities table ready for GraphRAG V2")
+            else:
+                print(f"\n⚠️ Tables created but search test failed")
+        else:
+            print(f"\n⚠️ Tables created but sample population failed")
+    else:
+        print(f"\n❌ Failed to drop and recreate tables")

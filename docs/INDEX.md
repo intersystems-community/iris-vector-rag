@@ -48,9 +48,8 @@ Welcome to the RAG Templates project documentation. This page serves as a centra
 *   **[`IRIS_SQL_CHANGE_SUGGESTIONS.md`](IRIS_SQL_CHANGE_SUGGESTIONS.md)**: Enhancement requests for InterSystems (historical context).
 *   **[`iris_sql_vector_limitations_bug_report.md`](iris_sql_vector_limitations_bug_report.md)**: Original bug report (historical reference).
 
-### 4.4. Historical Issues (IRIS 2024.1.2 - Resolved)
-*   **[`IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`](IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md)**: Historical postmortem on IRIS 2024.1.2 stored procedure issues (resolved with current approach).
-*   **[`POSTMORTEM_ODBC_SP_ISSUE.md`](POSTMORTEM_ODBC_SP_ISSUE.md)**: Historical ODBC stored procedure issues (resolved with client-side approach).
+### 4.4. Historical Issues & Comprehensive Analysis
+*   **[`IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`](IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md)**: ✅ **UPDATED** - Comprehensive postmortem covering initial IRIS 2024.1.2 stored procedure/compilation challenges and subsequent IRIS 2025.1 vector search syntax, driver, and documentation analysis.
 
 ## 5. Testing & Validation
 

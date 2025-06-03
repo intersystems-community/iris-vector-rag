@@ -58,7 +58,7 @@ class SQLAnalyzer:
                 content = f.read()
             
             # Check for common issues
-            if 'VECTOR(DOUBLE,' in content:
+            if 'VECTOR(FLOAT,' in content:
                 issues.append("Uses VECTOR data type which may not work in Community Edition")
                 recommendations.append("Consider using VARCHAR with TO_VECTOR() conversion")
             
@@ -132,7 +132,7 @@ class VectorCapabilityTester:
                 cursor.execute("""
                     CREATE TABLE test_vector_table (
                         id INTEGER PRIMARY KEY,
-                        embedding VECTOR(DOUBLE, 768)
+                        embedding VECTOR(FLOAT, 768)
                     )
                 """)
                 
@@ -172,7 +172,7 @@ class VectorCapabilityTester:
         try:
             with self.connection.cursor() as cursor:
                 test_embedding = "0.1,0.2,0.3,0.4,0.5"
-                cursor.execute(f"SELECT TO_VECTOR('{test_embedding}', 'DOUBLE', 5) AS vector_result")
+                cursor.execute(f"SELECT TO_VECTOR('{test_embedding}', 'FLOAT', 5) AS vector_result")
                 result = cursor.fetchone()
                 
                 if result:
@@ -200,8 +200,8 @@ class VectorCapabilityTester:
                 
                 cursor.execute(f"""
                     SELECT VECTOR_COSINE(
-                        TO_VECTOR('{embedding1}', 'DOUBLE', 5),
-                        TO_VECTOR('{embedding2}', 'DOUBLE', 5)
+                        TO_VECTOR('{embedding1}', 'FLOAT', 5),
+                        TO_VECTOR('{embedding2}', 'FLOAT', 5)
                     ) AS cosine_similarity
                 """)
                 
@@ -232,9 +232,9 @@ class VectorCapabilityTester:
                     CREATE TABLE test_hnsw_table (
                         id INTEGER PRIMARY KEY,
                         embedding_str VARCHAR(30000),
-                        embedding_vector VECTOR(DOUBLE, 768) COMPUTECODE {
+                        embedding_vector VECTOR(FLOAT, 768) COMPUTECODE {
                             if ({embedding_str} '= "") {
-                                set {embedding_vector} = $$$TO_VECTOR({embedding_str}, "DOUBLE", 768)
+                                set {embedding_vector} = $$$TO_VECTOR({embedding_str}, 'FLOAT', 768)
                             } else {
                                 set {embedding_vector} = ""
                             }
@@ -372,9 +372,9 @@ CREATE TABLE RAG_HNSW.SourceDocuments (
     authors LONGVARCHAR,
     keywords LONGVARCHAR,
     embedding_str VARCHAR(60000) NULL,
-    embedding_vector VECTOR(DOUBLE, 768) COMPUTECODE {
+    embedding_vector VECTOR(FLOAT, 768) COMPUTECODE {
         if ({embedding_str} '= "") {
-            set {embedding_vector} = $$$TO_VECTOR({embedding_str}, "DOUBLE", 768)
+            set {embedding_vector} = $$$TO_VECTOR({embedding_str}, 'FLOAT', 768)
         } else {
             set {embedding_vector} = ""
         }

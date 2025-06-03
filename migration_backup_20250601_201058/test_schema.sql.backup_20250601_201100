@@ -1,0 +1,38 @@
+-- Test Community Edition 2025.1 Vector Search capabilities
+
+-- Test 1: Basic TO_VECTOR function
+SELECT TO_VECTOR('0.1,0.2,0.3,0.4', double) AS test_vector;
+
+-- Test 2: Vector similarity functions
+SELECT VECTOR_COSINE(
+    TO_VECTOR('1.0,0.0,0.0,0.0', double),
+    TO_VECTOR('0.0,1.0,0.0,0.0', double)
+) AS cosine_similarity;
+
+-- Test 3: Create schema
+DROP SCHEMA IF EXISTS RAG CASCADE;
+CREATE SCHEMA RAG;
+
+-- Test 4: Create table with VECTOR column
+CREATE TABLE RAG.TestVectors (
+    id INTEGER PRIMARY KEY,
+    embedding VECTOR(DOUBLE, 4)
+);
+
+-- Test 5: Try to create HNSW index
+CREATE INDEX idx_test_hnsw 
+ON RAG.TestVectors (embedding) 
+USING HNSW;
+
+-- Test 6: Insert test data
+INSERT INTO RAG.TestVectors (id, embedding)
+VALUES (1, TO_VECTOR('0.1,0.2,0.3,0.4', double));
+
+INSERT INTO RAG.TestVectors (id, embedding)
+VALUES (2, TO_VECTOR('0.5,0.6,0.7,0.8', double));
+
+-- Test 7: Vector similarity query
+SELECT id, 
+       VECTOR_COSINE(embedding, TO_VECTOR('0.1,0.2,0.3,0.4', double)) AS similarity
+FROM RAG.TestVectors 
+ORDER BY similarity DESC;

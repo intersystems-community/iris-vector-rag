@@ -55,14 +55,14 @@ class BasicRAGPipelineTempTable:
             cursor.execute("""
                 CREATE TABLE RAG.TempQueryVector (
                     query_id INTEGER,
-                    vector_data VECTOR(DOUBLE, 384)
+                    vector_data VECTOR(FLOAT, 384)
                 )
             """)
             
             # Insert query vector
             logger.info("Inserting query vector into table...")
             cursor.execute(
-                "INSERT INTO RAG.TempQueryVector VALUES (1, TO_VECTOR(?, 'DOUBLE'))",
+                "INSERT INTO RAG.TempQueryVector VALUES (1, TO_VECTOR(?, 'FLOAT'))",
                 (query_embedding_str,)
             )
             

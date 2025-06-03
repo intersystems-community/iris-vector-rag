@@ -16,7 +16,7 @@ CREATE TABLE RAG.DocumentChunks (
     start_position INTEGER,
     end_position INTEGER,
     -- Use proper VECTOR data type (no VARCHAR fallbacks)
-    embedding VECTOR(DOUBLE, 768),
+    embedding VECTOR(FLOAT, 768),
     chunk_metadata CLOB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id),

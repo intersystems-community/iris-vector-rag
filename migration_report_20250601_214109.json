@@ -1,0 +1,39 @@
+{
+  "migration_summary": {
+    "start_time": "2025-06-01T21:41:00.289952",
+    "end_time": "2025-06-01T21:41:09.173666",
+    "duration_seconds": 8.883714,
+    "total_database_changes": 0,
+    "total_sql_files_changed": 0,
+    "total_python_files_changed": 3,
+    "total_objectscript_files_changed": 0,
+    "total_backups_created": 0,
+    "total_errors": 0,
+    "total_warnings": 0
+  },
+  "detailed_changes": {
+    "database_tables": [],
+    "sql_files": [],
+    "python_files": [
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/migrate_vector_data_double_to_float.py",
+        "changes_count": 4,
+        "timestamp": "2025-06-01T21:41:07.116006"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/verify_vector_data_migration.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T21:41:07.116710"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/complete_vector_float_migration.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T21:41:07.117145"
+      }
+    ],
+    "objectscript_files": [],
+    "backups_created": [],
+    "errors": [],
+    "warnings": []
+  }
+}

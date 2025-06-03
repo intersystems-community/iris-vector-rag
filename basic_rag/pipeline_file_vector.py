@@ -78,13 +78,13 @@ class BasicRAGPipelineFileVector:
                     text_content,
                     VECTOR_COSINE(
                         document_embedding_vector, 
-                        TO_VECTOR(RAG.ReadVectorFromFile('{temp_file_path}'), 'DOUBLE')
+                        TO_VECTOR(RAG.ReadVectorFromFile('{temp_file_path}'), 'FLOAT')
                     ) as similarity_score
                 FROM {self.schema}.SourceDocuments
                 WHERE document_embedding_vector IS NOT NULL
                 AND VECTOR_COSINE(
                     document_embedding_vector, 
-                    TO_VECTOR(RAG.ReadVectorFromFile('{temp_file_path}'), 'DOUBLE')
+                    TO_VECTOR(RAG.ReadVectorFromFile('{temp_file_path}'), 'FLOAT')
                 ) > {similarity_threshold}
                 ORDER BY similarity_score DESC
             """

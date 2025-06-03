@@ -208,7 +208,7 @@ CREATE TABLE RAG_HNSW.SourceDocuments (
     metadata CLOB,
     embedding_model VARCHAR(255),
     embedding_dimensions INTEGER,
-    embedding_vector VECTOR(DOUBLE, 768),
+    embedding_vector VECTOR(FLOAT, 768),
     embedding_str VARCHAR(60000),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -246,7 +246,7 @@ CREATE TABLE RAG_HNSW.SourceDocuments (
             start_position INTEGER,
             end_position INTEGER,
             token_count INTEGER,
-            embedding_vector VECTOR(DOUBLE, 768),
+            embedding_vector VECTOR(FLOAT, 768),
             embedding_str VARCHAR(60000),
             semantic_coherence_score DECIMAL(5,4),
             boundary_strength DECIMAL(5,4),
@@ -259,7 +259,7 @@ CREATE TABLE RAG_HNSW.SourceDocuments (
             doc_id VARCHAR(255),
             token_sequence_index INTEGER,
             token_text VARCHAR(255),
-            token_embedding_vector VECTOR(DOUBLE, 128),
+            token_embedding_vector VECTOR(FLOAT, 128),
             token_embedding_str VARCHAR(30000),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (doc_id, token_sequence_index),
@@ -271,7 +271,7 @@ CREATE TABLE RAG_HNSW.SourceDocuments (
             node_name VARCHAR(500),
             node_type VARCHAR(100),
             properties CLOB,
-            embedding_vector VECTOR(DOUBLE, 768),
+            embedding_vector VECTOR(FLOAT, 768),
             embedding_str VARCHAR(60000),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );

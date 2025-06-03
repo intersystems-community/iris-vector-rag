@@ -24,6 +24,7 @@ To quickly understand the current state, goals, and ongoing development of this 
 3.  **[`docs/COMPREHENSIVE_SCALING_EVALUATION_FRAMEWORK.md`](docs/COMPREHENSIVE_SCALING_EVALUATION_FRAMEWORK.md:1)**: Details the new, extensive framework for testing and evaluating RAG pipelines across various data scales, which is a major focus of recent and ongoing work.
 4.  **[`tests/test_e2e_rag_pipelines.py`](tests/test_e2e_rag_pipelines.py:1)**: This script contains the comprehensive end-to-end tests for all core RAG pipelines. It demonstrates how pipelines are currently validated, including RAGAS integration for quality assessment and detailed CSV logging of results.
 5.  **[`test_results/rag_evaluation_log.csv`](test_results/rag_evaluation_log.csv:1)**: (Generated after running tests via `pytest tests/test_e2e_rag_pipelines.py`) This CSV file will contain the most up-to-date, detailed results from individual pipeline evaluations, including parameters used, RAGAS scores, and pass/fail status.
+6.  **[`docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md`](docs/IRIS_POSTMORTEM_CONSOLIDATED_REPORT.md:1)**: Provides a comprehensive analysis of challenges and lessons learned regarding IRIS vector search syntax, compilation, driver interactions, and Stored Procedure usage across different IRIS versions.
 
 Reviewing these documents will provide a solid understanding of the project's current trajectory and how its components are being managed and validated.
 

@@ -147,7 +147,7 @@ class TestHNSWBenchmarkIntegration:
             start_time = time.time()
             hnsw_sql = """
             SELECT TOP 10 doc_id, text_content,
-                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
             FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
             ORDER BY similarity DESC
@@ -160,7 +160,7 @@ class TestHNSWBenchmarkIntegration:
             start_time = time.time()
             sequential_sql = """
             SELECT TOP 10 doc_id, text_content,
-                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
             FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
             AND doc_id LIKE '%'  -- Additional predicate to potentially bypass optimization
@@ -411,7 +411,7 @@ class TestHNSWBenchmarkIntegration:
                 scalability_sql = f"""
                 SELECT TOP 20 doc_id, similarity FROM (
                     SELECT TOP {doc_count} doc_id,
-                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY doc_id  -- Consistent ordering for subset

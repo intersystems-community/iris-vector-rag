@@ -20,8 +20,8 @@ cursor = conn.cursor()
 sql = f"""
     SELECT TOP 3 doc_id, title,
            VECTOR_COSINE(
-               TO_VECTOR(embedding, 'DOUBLE', 384),
-               TO_VECTOR('{embedding_str}', 'DOUBLE', 384)
+               TO_VECTOR(embedding, 'FLOAT', 384),
+               TO_VECTOR('{embedding_str}', 'FLOAT', 384)
            ) as similarity_score
     FROM RAG.SourceDocuments
     WHERE embedding IS NOT NULL

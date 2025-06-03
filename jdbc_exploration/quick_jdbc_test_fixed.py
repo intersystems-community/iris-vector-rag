@@ -122,7 +122,7 @@ try:
     test_vector = "0.1,0.2,0.3"
     cursor.execute("""
         SELECT VECTOR_COSINE(
-            TO_VECTOR(?, 'DOUBLE', 3),
+            TO_VECTOR(?, 'FLOAT', 3),
             TO_VECTOR('1.0,2.0,3.0', 'DOUBLE', 3)
         ) as similarity
     """, [test_vector])
@@ -141,8 +141,8 @@ try:
                     doc_id, 
                     title,
                     VECTOR_COSINE(
-                        TO_VECTOR(embedding, 'DOUBLE', 384),
-                        TO_VECTOR(?, 'DOUBLE', 384)
+                        TO_VECTOR(embedding, 'FLOAT', 384),
+                        TO_VECTOR(?, 'FLOAT', 384)
                     ) as similarity_score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL

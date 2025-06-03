@@ -21,10 +21,10 @@ def fix_pipeline_file(filepath):
     if 'cursor.execute(sql, [' in content:
         print("  📍 Found parameterized query pattern")
         
-        # Replace TO_VECTOR(?, DOUBLE, 384) with TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)
-        content = content.replace("TO_VECTOR(?, DOUBLE, 384)", "TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)")
-        content = content.replace("TO_VECTOR(?, DOUBLE, 128)", "TO_VECTOR('{query_embedding_str}', 'DOUBLE', 128)")
-        content = content.replace("TO_VECTOR(?, DOUBLE)", "TO_VECTOR('{query_embedding_str}', 'DOUBLE')")
+        # Replace TO_VECTOR(?, DOUBLE, 384) with TO_VECTOR('{query_embedding_str}', 'FLOAT', 384)
+        content = content.replace("TO_VECTOR(?, DOUBLE, 384)", "TO_VECTOR('{query_embedding_str}', 'FLOAT', 384)")
+        content = content.replace("TO_VECTOR(?, DOUBLE, 128)", "TO_VECTOR('{query_embedding_str}', 'FLOAT', 128)")
+        content = content.replace("TO_VECTOR(?, DOUBLE)", "TO_VECTOR('{query_embedding_str}', 'FLOAT')")
         
         # Replace similarity threshold placeholder
         content = content.replace(") > ?", ") > {similarity_threshold}")
@@ -40,8 +40,8 @@ def fix_pipeline_file(filepath):
     # Fix entity queries in GraphRAG
     if 'TO_VECTOR(embedding, ?)' in content:
         print("  📍 Found GraphRAG entity query pattern")
-        content = content.replace("TO_VECTOR(embedding, ?)", "TO_VECTOR(embedding, 'DOUBLE', 384)")
-        content = content.replace("TO_VECTOR(?, ?)", "TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)")
+        content = content.replace("TO_VECTOR(embedding, ?)", "TO_VECTOR(embedding, 'FLOAT', 384)")
+        content = content.replace("TO_VECTOR(?, ?)", "TO_VECTOR('{query_embedding_str}', 'FLOAT', 384)")
     
     # Fix any remaining ? placeholders in VECTOR operations
     if 'VECTOR_COSINE' in content and '?' in content:

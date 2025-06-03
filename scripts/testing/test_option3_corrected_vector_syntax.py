@@ -21,8 +21,8 @@ def test_corrected_vector_approaches():
     
     approaches = [
         {
-            "name": "VECTOR(DOUBLE)",
-            "sql": "ALTER TABLE RAG.SourceDocuments ALTER COLUMN embedding VECTOR(DOUBLE)"
+            "name": "VECTOR(FLOAT)",
+            "sql": "ALTER TABLE RAG.SourceDocuments ALTER COLUMN embedding VECTOR(FLOAT)"
         },
         {
             "name": "VECTOR(FLOAT)", 

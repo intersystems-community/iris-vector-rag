@@ -20,7 +20,7 @@ def test_vector_syntax():
         'VECTOR',
         'VECTOR(768)',
         'VECTOR(768, DOUBLE)',
-        'VECTOR(DOUBLE, 768)',
+        'VECTOR(FLOAT, 768)',
         'VECTOR(768, FLOAT)',
         'VECTOR(FLOAT, 768)'
     ]

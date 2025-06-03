@@ -15,7 +15,7 @@ def fix_pipeline_file(filepath):
         content = f.read()
     
     # Pattern to find TO_VECTOR with parameter placeholder
-    # This will match TO_VECTOR(?, 'DOUBLE', 384) or similar
+    # This will match TO_VECTOR(?, 'FLOAT', 384) or similar
     pattern = r"TO_VECTOR\(\s*\?\s*,\s*'DOUBLE'\s*,\s*(\d+)\s*\)"
     
     # Replace with string formatting

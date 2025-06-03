@@ -40,7 +40,7 @@ def create_knowledge_graph_schema():
                 entity_type VARCHAR(100),
                 description TEXT,
                 source_doc_id VARCHAR(255),
-                embedding VECTOR(DOUBLE, 384),
+                embedding VECTOR(FLOAT, 384),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -85,7 +85,7 @@ def create_knowledge_graph_schema():
                 node_id VARCHAR(255) PRIMARY KEY,
                 node_type VARCHAR(100),
                 content TEXT,
-                embedding VECTOR(DOUBLE, 384),
+                embedding VECTOR(FLOAT, 384),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )

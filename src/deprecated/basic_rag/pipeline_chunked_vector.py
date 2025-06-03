@@ -96,10 +96,10 @@ class BasicRAGPipelineChunkedVector:
                     doc_id, 
                     title, 
                     text_content,
-                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{full_vector_str}', 'DOUBLE')) as similarity_score
+                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{full_vector_str}', 'FLOAT')) as similarity_score
                 FROM {self.schema}.SourceDocuments
                 WHERE document_embedding_vector IS NOT NULL
-                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{full_vector_str}', 'DOUBLE')) > {similarity_threshold}
+                AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{full_vector_str}', 'FLOAT')) > {similarity_threshold}
                 ORDER BY similarity_score DESC
             """
             

@@ -122,10 +122,10 @@ class TestHNSWIndexes:
         explain_query = f"""
         EXPLAIN
         SELECT TOP 10 doc_id,
-               VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'DOUBLE', 768)) as similarity
+               VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'FLOAT', 768)) as similarity
         FROM RAG.SourceDocuments
         WHERE embedding IS NOT NULL
-        ORDER BY VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'DOUBLE', 768)) DESC
+        ORDER BY VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'FLOAT', 768)) DESC
         """
         
         try:

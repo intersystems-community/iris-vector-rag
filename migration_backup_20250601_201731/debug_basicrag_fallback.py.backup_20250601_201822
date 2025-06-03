@@ -1,0 +1,376 @@
+#!/usr/bin/env python3
+"""
+Debug BasicRAG Fallback Mechanism
+Tests when and why the fallback is triggered in BasicRAG V2 Fixed
+"""
+
+import os
+import sys
+sys.path.insert(0, os.path.abspath('.'))
+
+import logging
+import json
+from typing import List, Dict, Any
+from common.utils import get_embedding_func, get_llm_func
+from common.iris_connector_jdbc import get_iris_connection
+
+# Set up detailed logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+def test_vector_function_directly():
+    """Test if IRIS vector functions work directly"""
+    logger.info("=== Testing IRIS Vector Functions Directly ===")
+    
+    iris_connector = get_iris_connection()
+    cursor = None
+    
+    try:
+        cursor = iris_connector.cursor()
+        
+        # Test 1: Check if vector functions are available
+        logger.info("Test 1: Checking if VECTOR_COSINE function exists")
+        try:
+            test_sql = "SELECT VECTOR_COSINE(NULL, NULL) as test"
+            cursor.execute(test_sql)
+            logger.info("✓ VECTOR_COSINE function exists")
+        except Exception as e:
+            logger.error(f"✗ VECTOR_COSINE function not available: {e}")
+            return False
+        
+        # Test 2: Check if TO_VECTOR function works
+        logger.info("Test 2: Testing TO_VECTOR function")
+        try:
+            test_vector = "0.1,0.2,0.3"
+            test_sql = f"SELECT TO_VECTOR('{test_vector}', 'DOUBLE', 3) as test_vector"
+            cursor.execute(test_sql)
+            result = cursor.fetchone()
+            logger.info(f"✓ TO_VECTOR works: {result}")
+        except Exception as e:
+            logger.error(f"✗ TO_VECTOR function failed: {e}")
+            return False
+        
+        # Test 3: Check if we have documents with embeddings
+        logger.info("Test 3: Checking for documents with embeddings")
+        try:
+            check_sql = """
+                SELECT TOP 5 doc_id, 
+                       CASE WHEN embedding IS NULL THEN 'NULL' ELSE 'HAS_EMBEDDING' END as embedding_status,
+                       LENGTH(embedding) as embedding_length
+                FROM RAG.SourceDocuments 
+                ORDER BY doc_id
+            """
+            cursor.execute(check_sql)
+            results = cursor.fetchall()
+            
+            logger.info(f"Found {len(results)} documents:")
+            for row in results:
+                logger.info(f"  Doc {row[0]}: {row[1]}, Length: {row[2]}")
+                
+            # Count documents with embeddings
+            count_sql = """
+                SELECT COUNT(*) as total_docs,
+                       SUM(CASE WHEN embedding IS NOT NULL THEN 1 ELSE 0 END) as docs_with_embeddings
+                FROM RAG.SourceDocuments
+            """
+            cursor.execute(count_sql)
+            count_result = cursor.fetchone()
+            logger.info(f"Total docs: {count_result[0]}, With embeddings: {count_result[1]}")
+            
+        except Exception as e:
+            logger.error(f"✗ Error checking documents: {e}")
+            return False
+        
+        return True
+        
+    finally:
+        if cursor:
+            cursor.close()
+
+def test_primary_vector_search():
+    """Test the primary vector search path with a real query"""
+    logger.info("=== Testing Primary Vector Search Path ===")
+    
+    iris_connector = get_iris_connection()
+    embedding_func = get_embedding_func()
+    cursor = None
+    
+    try:
+        cursor = iris_connector.cursor()
+        
+        # Generate a test query embedding
+        test_query = "diabetes symptoms"
+        logger.info(f"Testing with query: '{test_query}'")
+        
+        query_embedding = embedding_func([test_query])[0]
+        logger.info(f"Generated embedding with {len(query_embedding)} dimensions")
+        
+        # Convert to string format (same as in pipeline)
+        query_embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
+        logger.info(f"Embedding string length: {len(query_embedding_str)}")
+        
+        # Test the exact SQL from the pipeline
+        top_k = 5
+        similarity_threshold = 0.1
+        
+        sql = f"""
+            SELECT TOP {top_k} 
+                doc_id, 
+                title, 
+                text_content,
+                VECTOR_COSINE(embedding, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as similarity_score
+            FROM RAG.SourceDocuments
+            WHERE embedding IS NOT NULL
+            AND VECTOR_COSINE(embedding, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > {similarity_threshold}
+            ORDER BY similarity_score DESC
+        """
+        
+        logger.info("Executing primary vector search SQL...")
+        logger.debug(f"SQL: {sql[:200]}...")
+        
+        cursor.execute(sql)
+        results = cursor.fetchall()
+        
+        logger.info(f"✓ Primary vector search succeeded! Retrieved {len(results)} documents")
+        
+        for i, row in enumerate(results):
+            doc_id = row[0]
+            title = row[1] or "No title"
+            similarity = row[3]
+            logger.info(f"  {i+1}. Doc {doc_id}: {title[:50]}... (similarity: {similarity:.4f})")
+        
+        return True, len(results)
+        
+    except Exception as e:
+        logger.error(f"✗ Primary vector search failed: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        return False, str(e)
+        
+    finally:
+        if cursor:
+            cursor.close()
+
+def test_fallback_conditions():
+    """Test what specific conditions trigger the fallback"""
+    logger.info("=== Testing Fallback Conditions ===")
+    
+    iris_connector = get_iris_connection()
+    embedding_func = get_embedding_func()
+    cursor = None
+    
+    try:
+        cursor = iris_connector.cursor()
+        
+        # Test various problematic scenarios
+        test_cases = [
+            {
+                "name": "Empty embedding string",
+                "embedding_str": "",
+                "expected_error": True
+            },
+            {
+                "name": "Invalid embedding format",
+                "embedding_str": "invalid,format,here",
+                "expected_error": True
+            },
+            {
+                "name": "Wrong dimension count",
+                "embedding_str": ','.join(['0.1'] * 100),  # Wrong dimension
+                "expected_error": True
+            },
+            {
+                "name": "Scientific notation",
+                "embedding_str": ','.join([f'{x:.2e}' for x in [0.1] * 384]),
+                "expected_error": True
+            }
+        ]
+        
+        for test_case in test_cases:
+            logger.info(f"Testing: {test_case['name']}")
+            
+            try:
+                sql = f"""
+                    SELECT TOP 1 
+                        doc_id,
+                        VECTOR_COSINE(embedding, TO_VECTOR('{test_case['embedding_str']}', 'DOUBLE', 384)) as similarity_score
+                    FROM RAG.SourceDocuments
+                    WHERE embedding IS NOT NULL
+                    ORDER BY similarity_score DESC
+                """
+                
+                cursor.execute(sql)
+                results = cursor.fetchall()
+                
+                if test_case['expected_error']:
+                    logger.warning(f"  Expected error but query succeeded with {len(results)} results")
+                else:
+                    logger.info(f"  ✓ Query succeeded with {len(results)} results")
+                    
+            except Exception as e:
+                if test_case['expected_error']:
+                    logger.info(f"  ✓ Expected error occurred: {e}")
+                else:
+                    logger.error(f"  ✗ Unexpected error: {e}")
+        
+    except Exception as e:
+        logger.error(f"Error in fallback testing: {e}")
+        
+    finally:
+        if cursor:
+            cursor.close()
+
+def test_with_instrumented_pipeline():
+    """Test the actual pipeline with additional logging to see when fallback occurs"""
+    logger.info("=== Testing Instrumented Pipeline ===")
+    
+    # Import the pipeline
+    from basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed
+    
+    iris_connector = get_iris_connection()
+    embedding_func = get_embedding_func()
+    llm_func = get_llm_func()
+    
+    # Create pipeline
+    pipeline = BasicRAGPipelineV2Fixed(
+        iris_connector=iris_connector,
+        embedding_func=embedding_func,
+        llm_func=llm_func
+    )
+    
+    # Test queries
+    test_queries = [
+        "What are the symptoms of diabetes?",
+        "How is cancer treated?",
+        "What causes heart disease?",
+        "Simple test query",
+        "A very long query that might cause issues with parameter binding or SQL parsing because it contains many words and might exceed certain limits"
+    ]
+    
+    for query in test_queries:
+        logger.info(f"Testing query: '{query}'")
+        
+        try:
+            result = pipeline.run(query, top_k=3)
+            
+            retrieval_method = result['metadata']['retrieval_method']
+            num_docs = result['metadata']['num_documents']
+            
+            logger.info(f"  Result: {retrieval_method}, {num_docs} documents")
+            
+            if retrieval_method == "manual_similarity":
+                logger.warning(f"  ⚠️  FALLBACK TRIGGERED for query: '{query}'")
+            else:
+                logger.info(f"  ✓ Primary path succeeded for query: '{query}'")
+                
+        except Exception as e:
+            logger.error(f"  ✗ Pipeline failed for query '{query}': {e}")
+
+def analyze_embedding_storage_format():
+    """Analyze how embeddings are stored and if that affects vector functions"""
+    logger.info("=== Analyzing Embedding Storage Format ===")
+    
+    iris_connector = get_iris_connection()
+    cursor = None
+    
+    try:
+        cursor = iris_connector.cursor()
+        
+        # Get sample embeddings to analyze format
+        sql = """
+            SELECT TOP 5 
+                doc_id,
+                embedding,
+                LENGTH(embedding) as embedding_length,
+                SUBSTRING(embedding, 1, 100) as embedding_sample
+            FROM RAG.SourceDocuments 
+            WHERE embedding IS NOT NULL
+            AND embedding NOT LIKE '0.1,0.1,0.1%'
+            ORDER BY doc_id
+        """
+        
+        cursor.execute(sql)
+        results = cursor.fetchall()
+        
+        logger.info(f"Found {len(results)} documents with embeddings:")
+        
+        for row in results:
+            doc_id = row[0]
+            embedding = row[1]
+            length = row[2]
+            sample = row[3]
+            
+            logger.info(f"Doc {doc_id}:")
+            logger.info(f"  Length: {length}")
+            logger.info(f"  Sample: {sample}...")
+            
+            # Try to parse the embedding
+            try:
+                if embedding.startswith('['):
+                    parsed = json.loads(embedding)
+                    logger.info(f"  Format: JSON array, {len(parsed)} dimensions")
+                else:
+                    parsed = [float(x.strip()) for x in embedding.split(',') if x.strip()]
+                    logger.info(f"  Format: Comma-separated, {len(parsed)} dimensions")
+                    
+                # Check for scientific notation
+                if any('e' in str(x).lower() for x in parsed[:10]):
+                    logger.warning(f"  ⚠️  Contains scientific notation")
+                    
+            except Exception as e:
+                logger.error(f"  ✗ Failed to parse embedding: {e}")
+        
+    except Exception as e:
+        logger.error(f"Error analyzing embeddings: {e}")
+        
+    finally:
+        if cursor:
+            cursor.close()
+
+def main():
+    """Run all diagnostic tests"""
+    logger.info("Starting BasicRAG Fallback Mechanism Analysis")
+    logger.info("=" * 60)
+    
+    # Test 1: Vector functions
+    vector_functions_work = test_vector_function_directly()
+    
+    # Test 2: Primary vector search
+    if vector_functions_work:
+        primary_success, primary_result = test_primary_vector_search()
+    else:
+        primary_success = False
+        primary_result = "Vector functions not available"
+    
+    # Test 3: Fallback conditions
+    test_fallback_conditions()
+    
+    # Test 4: Embedding storage format
+    analyze_embedding_storage_format()
+    
+    # Test 5: Instrumented pipeline
+    test_with_instrumented_pipeline()
+    
+    # Summary
+    logger.info("=" * 60)
+    logger.info("ANALYSIS SUMMARY:")
+    logger.info(f"Vector functions available: {vector_functions_work}")
+    logger.info(f"Primary vector search works: {primary_success}")
+    if primary_success:
+        logger.info(f"Primary search returned: {primary_result} documents")
+    else:
+        logger.info(f"Primary search error: {primary_result}")
+    
+    # Recommendations
+    logger.info("\nRECOMMENDATIONS:")
+    if vector_functions_work and primary_success:
+        logger.info("✓ Vector functions work - fallback may be unnecessary")
+        logger.info("  Consider removing fallback or making it more specific")
+    elif vector_functions_work and not primary_success:
+        logger.info("⚠️  Vector functions work but primary search fails")
+        logger.info("  Check SQL syntax, parameter binding, or embedding format")
+    else:
+        logger.info("✗ Vector functions don't work - fallback is necessary")
+        logger.info("  Fallback provides essential functionality")
+
+if __name__ == "__main__":
+    main()

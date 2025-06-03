@@ -79,7 +79,7 @@ class FastHNSWValidatorFixed:
                 title VARCHAR(1000),
                 text_content LONGVARCHAR,
                 embedding_varchar VARCHAR(50000),
-                embedding_vector VECTOR(DOUBLE, 384),
+                embedding_vector VECTOR(FLOAT, 384),
                 PRIMARY KEY (doc_id)
             )
             """

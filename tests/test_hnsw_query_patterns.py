@@ -118,7 +118,7 @@ class TestHNSWQueryPatterns:
             with self.measure_query_performance():
                 exact_query_sql = """
                 SELECT TOP 10 doc_id, text_content,
-                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 ORDER BY similarity DESC
@@ -168,7 +168,7 @@ class TestHNSWQueryPatterns:
             with self.measure_query_performance():
                 semantic_query_sql = """
                 SELECT TOP 15 doc_id, text_content,
-                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 ORDER BY similarity DESC
@@ -230,7 +230,7 @@ class TestHNSWQueryPatterns:
             with self.measure_query_performance():
                 dim_query = f"""
                 SELECT TOP {top_k} doc_id,
-                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 ORDER BY similarity DESC
@@ -295,7 +295,7 @@ class TestHNSWQueryPatterns:
                 with self.measure_query_performance():
                     param_query = f"""
                     SELECT TOP {result_size} doc_id,
-                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY similarity DESC
@@ -382,7 +382,7 @@ class TestHNSWQueryPatterns:
                         
                         concurrent_sql = """
                         SELECT TOP 10 doc_id,
-                               VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                               VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                         FROM RAG.SourceDocuments
                         WHERE embedding IS NOT NULL
                         ORDER BY similarity DESC
@@ -524,7 +524,7 @@ class TestHNSWQueryPatterns:
                 with self.measure_query_performance():
                     complexity_sql = """
                     SELECT TOP 15 doc_id,
-                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY similarity DESC

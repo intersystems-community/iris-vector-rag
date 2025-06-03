@@ -79,7 +79,7 @@ class VectorIndexFixer:
             logger.info(f"Step 1: Adding temporary VECTOR column {temp_column}")
             self.cursor.execute(f"""
                 ALTER TABLE RAG.{table_name} 
-                ADD COLUMN {temp_column} VECTOR(DOUBLE, 768)
+                ADD COLUMN {temp_column} VECTOR(FLOAT, 768)
             """)
             
             logger.info(f"Step 2: Converting VARCHAR data to VECTOR format")

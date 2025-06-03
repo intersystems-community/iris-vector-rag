@@ -42,7 +42,7 @@ def main():
             insert_sql = f"""
                 INSERT INTO RAG.SourceDocuments_V2
                 (doc_id, title, document_embedding_vector)
-                VALUES ('{temp_doc_id}', 'Temporary Query Vector', TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384))
+                VALUES ('{temp_doc_id}', 'Temporary Query Vector', TO_VECTOR('{query_embedding_str}', 'FLOAT', 384))
             """
             cursor.execute(insert_sql)
             conn.commit()
@@ -100,7 +100,7 @@ def main():
                 CREATE TABLE IF NOT EXISTS RAG.QueryVectors (
                     query_id VARCHAR(255) PRIMARY KEY,
                     query_text VARCHAR(1000),
-                    query_vector VECTOR(DOUBLE, 384),
+                    query_vector VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
@@ -121,7 +121,7 @@ def main():
             query_id = f"QUERY_{uuid.uuid4().hex[:8]}"
             insert_query_sql = f"""
                 INSERT INTO RAG.QueryVectors (query_id, query_text, query_vector)
-                VALUES ('{query_id}', '{query}', TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384))
+                VALUES ('{query_id}', '{query}', TO_VECTOR('{query_embedding_str}', 'FLOAT', 384))
             """
             cursor.execute(insert_query_sql)
             conn.commit()

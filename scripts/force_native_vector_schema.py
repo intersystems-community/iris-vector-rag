@@ -49,14 +49,14 @@ def force_native_vector_schema():
                 doc_id VARCHAR(255) PRIMARY KEY,
                 title VARCHAR(1000) NULL, -- Added title column
                 text_content TEXT,
-                embedding VECTOR(DOUBLE, 384),
+                embedding VECTOR(FLOAT, 384),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
             
             cursor.execute(create_source_docs)
-            logging.info("✅ Created SourceDocuments with native VECTOR(DOUBLE, 384)")
+            logging.info("✅ Created SourceDocuments with native VECTOR(FLOAT, 384)")
             
             # Step 3: Create DocumentChunks with native VECTOR
             logging.info("--- Step 3: Creating DocumentChunks with native VECTOR ---")
@@ -66,7 +66,7 @@ def force_native_vector_schema():
                 chunk_id VARCHAR(255) PRIMARY KEY,
                 doc_id VARCHAR(255),
                 chunk_text TEXT,
-                chunk_embedding VECTOR(DOUBLE, 384),
+                chunk_embedding VECTOR(FLOAT, 384),
                 chunk_index INTEGER,
                 chunk_type VARCHAR(100),
                 metadata TEXT,
@@ -76,7 +76,7 @@ def force_native_vector_schema():
             """
             
             cursor.execute(create_chunks)
-            logging.info("✅ Created DocumentChunks with native VECTOR(DOUBLE, 384)")
+            logging.info("✅ Created DocumentChunks with native VECTOR(FLOAT, 384)")
 
             # Step 3b: Create DocumentTokenEmbeddings for ColBERT
             logging.info("--- Step 3b: Creating DocumentTokenEmbeddings with native VECTOR ---")
@@ -86,13 +86,13 @@ def force_native_vector_schema():
                 doc_id VARCHAR(255),
                 token_index INTEGER,          -- Index of the token within the document
                 token_text VARCHAR(1000),     -- Optional: the actual token string
-                token_embedding VECTOR(DOUBLE, 768), -- Reverted: Sticking with 768-dim based on observed model output
+                token_embedding VECTOR(FLOAT, 768), -- Reverted: Sticking with 768-dim based on observed model output
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
             )
             """
             cursor.execute(create_token_embeddings)
-            logging.info("✅ Created DocumentTokenEmbeddings with native VECTOR(DOUBLE, 768)")
+            logging.info("✅ Created DocumentTokenEmbeddings with native VECTOR(FLOAT, 768)")
 
             # Step 3c: Create Knowledge Graph Tables
             logging.info("--- Step 3c: Creating Knowledge Graph tables ---")
@@ -105,7 +105,7 @@ def force_native_vector_schema():
                 entity_type VARCHAR(100),
                 description TEXT,
                 source_doc_id VARCHAR(255),
-                embedding VECTOR(DOUBLE, 384),
+                embedding VECTOR(FLOAT, 384),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
@@ -149,7 +149,7 @@ def force_native_vector_schema():
                 node_id VARCHAR(255) PRIMARY KEY,
                 node_type VARCHAR(100),
                 content TEXT,
-                embedding VECTOR(DOUBLE, 384),
+                embedding VECTOR(FLOAT, 384),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )

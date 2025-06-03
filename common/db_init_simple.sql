@@ -5,7 +5,7 @@
 -- IMPORTANT NOTES FOR IRIS COMMUNITY EDITION:
 --
 -- 1. VECTOR TYPE LIMITATION:
---    All VECTOR(DOUBLE, 768) declarations fall back to VARCHAR in Community Edition.
+--    All VECTOR(FLOAT, 768) declarations fall back to VARCHAR in Community Edition.
 --    This is confirmed to be due to Community Edition limitations.
 --
 -- 2. WORKING APPROACH FOR VECTOR OPERATIONS:
@@ -17,8 +17,8 @@
 --    Raw SQL with string interpolation:
 --    f"SELECT TOP 5 doc_id, text_content,
 --       VECTOR_COSINE(
---           TO_VECTOR(embedding, 'DOUBLE', 768),
---           TO_VECTOR('{query_embedding_str}', 'DOUBLE', 768)
+--           TO_VECTOR(embedding, 'FLOAT', 768),
+--           TO_VECTOR('{query_embedding_str}', 'FLOAT', 768)
 --       ) AS score
 --      FROM RAG.SourceDocuments
 --      WHERE embedding IS NOT NULL AND embedding <> ''
@@ -137,8 +137,8 @@ CREATE INDEX idx_kg_nodes_name ON RAG.KnowledgeGraphNodes(node_name);
 -- sql = f"""
 --     SELECT TOP 5 doc_id, title, text_content,
 --            VECTOR_COSINE(
---                TO_VECTOR(embedding, 'DOUBLE', 768),
---                TO_VECTOR('{query_embedding_str}', 'DOUBLE', 768)
+--                TO_VECTOR(embedding, 'FLOAT', 768),
+--                TO_VECTOR('{query_embedding_str}', 'FLOAT', 768)
 --            ) AS similarity_score
 --     FROM RAG.SourceDocuments
 --     WHERE embedding IS NOT NULL AND embedding <> ''

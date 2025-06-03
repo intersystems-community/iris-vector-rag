@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+
+import pytest
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'common'))
+
+from iris_connector import get_iris_connection
+
+def test_hnsw_directly():
+    """Test HNSW functionality directly in IRIS SQL"""
+    
+    print("=== TESTING HNSW IN IRIS SQL SHELL ===")
+    print()
+    
+    # Connect to IRIS using our existing connector
+    conn = get_iris_connection()
+    cursor = conn.cursor()
+    print("✓ Connected to IRIS successfully")
+    print()
+    
+    # Test 1: Create table with VECTOR column
+    print("1. Creating table with VECTOR column:")
+    try:
+        cursor.execute("DROP TABLE IF EXISTS VectorTest")
+        print("   Dropped existing table (if any)")
+    except:
+        pass
+    
+    try:
+        cursor.execute("""
+        CREATE TABLE VectorTest (
+            id INTEGER PRIMARY KEY,
+            test_vector VECTOR(DOUBLE, 384)
+        )
+        """)
+        print("   ✓ Table created successfully")
+    except Exception as e:
+        print(f"   ✗ Error creating table: {e}")
+    
+    print()
+    
+    # Test 2: Create HNSW index
+    print("2. Creating HNSW index:")
+    try:
+        cursor.execute("""
+        CREATE INDEX HNSWTest ON VectorTest (test_vector)
+          AS HNSW(Distance='Cosine')
+        """)
+        print("   ✓ HNSW index created successfully")
+    except Exception as e:
+        print(f"   ✗ Error creating HNSW index: {e}")
+    
+    print()
+    
+    # Test 3: Test vector functions
+    print("3. Testing vector functions:")
+    try:
+        cursor.execute("SELECT TO_VECTOR('0.1,0.2,0.3', 'DOUBLE') as result")
+        result = cursor.fetchone()
+        print(f"   TO_VECTOR result: {result[0]}")
+    except Exception as e:
+        print(f"   ✗ Error with TO_VECTOR: {e}")
+    
+    try:
+        cursor.execute("SELECT VECTOR_COSINE('[0.1,0.2,0.3]', '[0.4,0.5,0.6]') as result")
+        result = cursor.fetchone()
+        print(f"   VECTOR_COSINE result: {result[0]}")
+    except Exception as e:
+        print(f"   ✗ Error with VECTOR_COSINE: {e}")
+    
+    print()
+    
+    # Test 4: Describe table
+    print("4. Describing VectorTest table:")
+    try:
+        cursor.execute("DESCRIBE VectorTest")
+        results = cursor.fetchall()
+        for row in results:
+            print(f"   {row}")
+    except Exception as e:
+        print(f"   ✗ Error describing table: {e}")
+    
+    print()
+    
+    # Test 5: Insert test data
+    print("5. Testing data insertion:")
+    try:
+        test_vector = '[' + ','.join(['0.1'] * 384) + ']'
+        cursor.execute("INSERT INTO VectorTest (id, test_vector) VALUES (1, TO_VECTOR(?, 'DOUBLE'))", (test_vector,))
+        print("   ✓ Test vector inserted successfully")
+    except Exception as e:
+        print(f"   ✗ Error inserting test vector: {e}")
+    
+    print()
+    
+    # Test 6: Query with vector similarity
+    print("6. Testing vector similarity query:")
+    try:
+        test_query_vector = '[' + ','.join(['0.2'] * 384) + ']'
+        cursor.execute("""
+        SELECT id, VECTOR_COSINE(test_vector, TO_VECTOR(?, 'DOUBLE')) as similarity
+        FROM VectorTest
+        ORDER BY similarity DESC
+        """, (test_query_vector,))
+        results = cursor.fetchall()
+        for row in results:
+            print(f"   ID: {row[0]}, Similarity: {row[1]}")
+    except Exception as e:
+        print(f"   ✗ Error with similarity query: {e}")
+    
+    conn.close()
+    print()
+    print("=== HNSW TESTING COMPLETE ===")
+
+if __name__ == "__main__":
+    test_hnsw_directly()

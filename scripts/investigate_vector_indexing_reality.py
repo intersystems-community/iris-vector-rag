@@ -248,8 +248,8 @@ def analyze_vector_storage_reality(iris_connector) -> Dict[str, Any]:
             cursor.execute(f"""
                 SELECT TOP 1 doc_id,
                        VECTOR_COSINE(
-                           TO_VECTOR(embedding, 'DOUBLE', 768),
-                           TO_VECTOR('{test_vector}', 'DOUBLE', 768)
+                           TO_VECTOR(embedding, 'FLOAT', 768),
+                           TO_VECTOR('{test_vector}', 'FLOAT', 768)
                        ) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE embedding IS NOT NULL AND embedding <> ''

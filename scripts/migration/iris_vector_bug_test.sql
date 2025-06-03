@@ -9,7 +9,7 @@ CREATE TABLE VectorTest.Documents (
     doc_id VARCHAR(255) PRIMARY KEY,
     title VARCHAR(1000),
     content LONGVARCHAR,
-    embedding_vector VECTOR(DOUBLE, 384)
+    embedding_vector VECTOR(FLOAT, 384)
 );
 
 -- Create HNSW index
@@ -94,7 +94,7 @@ DELETE FROM VectorTest.Documents WHERE doc_id = '__TEMP_QUERY__';
 CREATE TABLE IF NOT EXISTS VectorTest.QueryVectors (
     query_id VARCHAR(255) PRIMARY KEY,
     query_text VARCHAR(1000),
-    query_vector VECTOR(DOUBLE, 384),
+    query_vector VECTOR(FLOAT, 384),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -89,7 +89,7 @@ class DirectV2ChunkingService:
                 INSERT INTO RAG.DocumentChunks_V2 (
                     chunk_id, doc_id, chunk_text, chunk_index,
                     embedding, chunk_type, chunk_embedding_vector
-                ) VALUES (?, ?, ?, ?, ?, ?, TO_VECTOR('{vector_str}', 'DOUBLE', 384))
+                ) VALUES (?, ?, ?, ?, ?, ?, TO_VECTOR('{vector_str}', 'FLOAT', 384))
                 '''
                 
                 # Execute with the non-vector parameters

@@ -52,7 +52,7 @@ def test_simple_vector_functions():
         sample_embedding = "0.1,0.2,0.3"
         
         try:
-            test_sql = "SELECT TO_VECTOR(?, 'DOUBLE', 3) as test_vector"
+            test_sql = "SELECT TO_VECTOR(?, 'FLOAT', 3) as test_vector"
             cursor.execute(test_sql, [sample_embedding])
             result = cursor.fetchone()
             logger.info(f"  ✓ TO_VECTOR with parameters works: {result}")
@@ -83,8 +83,8 @@ def test_simple_vector_functions():
             try:
                 similarity_sql = """
                     SELECT VECTOR_COSINE(
-                        TO_VECTOR(?, 'DOUBLE', 384), 
-                        TO_VECTOR(?, 'DOUBLE', 384)
+                        TO_VECTOR(?, 'FLOAT', 384), 
+                        TO_VECTOR(?, 'FLOAT', 384)
                     ) as similarity
                 """
                 cursor.execute(similarity_sql, [sample_embedding_str, query_embedding_str])
@@ -105,7 +105,7 @@ def test_simple_vector_functions():
                 SELECT TOP 3 
                     doc_id, 
                     title, 
-                    VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR(?, 'DOUBLE', 384)) as similarity_score
+                    VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 384), TO_VECTOR(?, 'FLOAT', 384)) as similarity_score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 AND embedding NOT LIKE '0.1,0.1,0.1%'
