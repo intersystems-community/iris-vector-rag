@@ -56,7 +56,7 @@ class BasicRAGPipelineTempTable:
             cursor.execute("""
                 CREATE TABLE RAG.TempQueryVector (
                     query_id INTEGER,
-                    vector_data VECTOR(DOUBLE, 384)
+                    vector_data VECTOR(FLOAT, 384)
                 )
             """)
             

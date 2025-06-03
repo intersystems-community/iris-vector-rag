@@ -201,8 +201,8 @@ vector_results AS (
         d.title,
         d.text_content as content, -- Assuming RAG.SourceDocuments.text_content
         '' as metadata, -- Placeholder
-        VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?, 'DOUBLE')) as similarity_score, -- Assuming embedding is string
-        ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?, 'DOUBLE')) DESC) as rank_position
+        VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?, 'FLOAT')) as similarity_score, -- Assuming embedding is string
+        ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?, 'FLOAT')) DESC) as rank_position
     FROM RAG.SourceDocuments d
     WHERE d.embedding IS NOT NULL
     ORDER BY similarity_score DESC

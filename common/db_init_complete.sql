@@ -9,7 +9,7 @@ DROP TABLE IF EXISTS RAG.SourceDocuments CASCADE;
 CREATE TABLE RAG.SourceDocuments (
     doc_id VARCHAR(255) PRIMARY KEY,
     text_content TEXT,
-    embedding VECTOR(DOUBLE, 384),
+    embedding VECTOR(FLOAT, 384),
     metadata TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -27,7 +27,7 @@ CREATE TABLE RAG.DocumentChunks (
     chunk_id VARCHAR(255) PRIMARY KEY,
     doc_id VARCHAR(255),
     chunk_text TEXT,
-    chunk_embedding VECTOR(DOUBLE, 384),
+    chunk_embedding VECTOR(FLOAT, 384),
     chunk_index INTEGER,
     chunk_type VARCHAR(100),
     metadata TEXT,
@@ -52,7 +52,7 @@ CREATE TABLE RAG.Entities (
     entity_type VARCHAR(100),
     description TEXT,
     source_doc_id VARCHAR(255),
-    embedding VECTOR(DOUBLE, 384),
+    embedding VECTOR(FLOAT, 384),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(doc_id)
 );
@@ -97,7 +97,7 @@ CREATE TABLE RAG.KnowledgeGraphNodes (
     node_id VARCHAR(255) PRIMARY KEY,
     node_type VARCHAR(100),
     content TEXT,
-    embedding VECTOR(DOUBLE, 384),
+    embedding VECTOR(FLOAT, 384),
     metadata TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -137,7 +137,7 @@ CREATE TABLE RAG.DocumentTokenEmbeddings (
     doc_id VARCHAR(255),
     token_index INTEGER,
     token_text VARCHAR(500),
-    token_embedding VECTOR(DOUBLE, 128),
+    token_embedding VECTOR(FLOAT, 128),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (doc_id, token_index),
     FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)

@@ -71,7 +71,7 @@ def test_correct_vector_syntax():
                 test_cases = [
                     {
                         "name": "TO_VECTOR with DOUBLE type",
-                        "sql": f"SELECT TO_VECTOR(?, 'DOUBLE', 384) as test_vector",
+                        "sql": f"SELECT TO_VECTOR(?, 'FLOAT', 384) as test_vector",
                         "params": [sample_embedding_str]
                     },
                     {
@@ -106,7 +106,7 @@ def test_correct_vector_syntax():
                 "name": "VECTOR_COSINE with TO_VECTOR",
                 "sql": """
                     SELECT TOP 1 doc_id,
-                           VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR(?, 'DOUBLE', 384)) as similarity
+                           VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 384), TO_VECTOR(?, 'FLOAT', 384)) as similarity
                     FROM RAG.SourceDocuments 
                     WHERE embedding IS NOT NULL
                     AND embedding NOT LIKE '0.1,0.1,0.1%'
@@ -117,7 +117,7 @@ def test_correct_vector_syntax():
                 "name": "VECTOR_DOT_PRODUCT with TO_VECTOR",
                 "sql": """
                     SELECT TOP 1 doc_id,
-                           VECTOR_DOT_PRODUCT(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR(?, 'DOUBLE', 384)) as similarity
+                           VECTOR_DOT_PRODUCT(TO_VECTOR(embedding, 'FLOAT', 384), TO_VECTOR(?, 'FLOAT', 384)) as similarity
                     FROM RAG.SourceDocuments 
                     WHERE embedding IS NOT NULL
                     AND embedding NOT LIKE '0.1,0.1,0.1%'
@@ -146,11 +146,11 @@ def test_correct_vector_syntax():
                     doc_id, 
                     title, 
                     text_content,
-                    VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR(?, 'DOUBLE', 384)) as similarity_score
+                    VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 384), TO_VECTOR(?, 'FLOAT', 384)) as similarity_score
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 AND embedding NOT LIKE '0.1,0.1,0.1%'
-                AND VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), TO_VECTOR(?, 'DOUBLE', 384)) > 0.1
+                AND VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 384), TO_VECTOR(?, 'FLOAT', 384)) > 0.1
                 ORDER BY similarity_score DESC
             """
             

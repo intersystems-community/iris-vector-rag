@@ -171,7 +171,7 @@ class FinalChunkingService:
                 # Use a simple UPDATE with subquery
                 cursor.execute(f'''
                     UPDATE RAG.DocumentChunks_V2 
-                    SET chunk_embedding_vector = TO_VECTOR(embedding, 'DOUBLE', 384)
+                    SET chunk_embedding_vector = TO_VECTOR(embedding, 'FLOAT', 384)
                     WHERE chunk_id IN (
                         SELECT TOP {batch_size} chunk_id 
                         FROM RAG.DocumentChunks_V2 

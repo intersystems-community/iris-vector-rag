@@ -87,7 +87,7 @@ class CompleteRAGSystemFix:
                     text_content LONGVARCHAR,
                     authors LONGVARCHAR,
                     keywords LONGVARCHAR,
-                    embedding VECTOR(DOUBLE, 384),
+                    embedding VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
@@ -101,7 +101,7 @@ class CompleteRAGSystemFix:
                     doc_id VARCHAR(255),
                     chunk_text LONGVARCHAR,
                     chunk_index INTEGER,
-                    embedding VECTOR(DOUBLE, 384),
+                    embedding VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
@@ -115,7 +115,7 @@ class CompleteRAGSystemFix:
                     doc_id VARCHAR(255),
                     token_text VARCHAR(500),
                     token_index INTEGER,
-                    embedding VECTOR(DOUBLE, 384),
+                    embedding VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
@@ -129,7 +129,7 @@ class CompleteRAGSystemFix:
                     entity_name VARCHAR(500),
                     entity_type VARCHAR(100),
                     description LONGVARCHAR,
-                    embedding VECTOR(DOUBLE, 384),
+                    embedding VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """

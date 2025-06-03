@@ -48,7 +48,7 @@ def main():
             json_embedding = json.dumps(query_embedding.tolist())
             sql = f"""
                 SELECT TOP 5 doc_id,
-                VECTOR_COSINE(document_embedding_vector, '{json_embedding}'::VECTOR(DOUBLE, 384)) AS score
+                VECTOR_COSINE(document_embedding_vector, '{json_embedding}'::VECTOR(FLOAT, 384)) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC
@@ -64,7 +64,7 @@ def main():
         try:
             sql = f"""
                 SELECT TOP 5 doc_id,
-                VECTOR_COSINE(document_embedding_vector, CAST('{query_embedding_str}' AS VECTOR(DOUBLE, 384))) AS score
+                VECTOR_COSINE(document_embedding_vector, CAST('{query_embedding_str}' AS VECTOR(FLOAT, 384))) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC
@@ -82,7 +82,7 @@ def main():
             escaped_embedding = query_embedding_str.replace("'", "''")
             sql = f"""
                 SELECT TOP 5 doc_id,
-                VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{escaped_embedding}', 'DOUBLE')) AS score
+                VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{escaped_embedding}', 'FLOAT')) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC
@@ -98,7 +98,7 @@ def main():
         try:
             sql = """
                 SELECT TOP 5 doc_id,
-                VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) AS score
+                VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT')) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC

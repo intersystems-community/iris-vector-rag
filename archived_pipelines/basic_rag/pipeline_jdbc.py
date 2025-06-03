@@ -56,13 +56,13 @@ class BasicRAGPipelineJDBC:
                 text_content,
                 VECTOR_COSINE(
                     embedding,
-                    TO_VECTOR('[{query_embedding_str}]', 'DOUBLE', 384)
+                    TO_VECTOR('[{query_embedding_str}]', 'FLOAT', 384)
                 ) as similarity_score
             FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
             ORDER BY VECTOR_COSINE(
                 embedding,
-                TO_VECTOR('[{query_embedding_str}]', 'DOUBLE', 384)
+                TO_VECTOR('[{query_embedding_str}]', 'FLOAT', 384)
             ) DESC
         """
         

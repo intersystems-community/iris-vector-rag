@@ -32,10 +32,10 @@ def test_direct_sql():
             doc_id, 
             title, 
             text_content,
-            VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) as similarity_score
+            VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT', 384)) as similarity_score
         FROM RAG.SourceDocuments
         WHERE document_embedding_vector IS NOT NULL
-        AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)) > 0.0
+        AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT', 384)) > 0.0
         ORDER BY similarity_score DESC
     """
     
@@ -71,10 +71,10 @@ def test_direct_sql():
                 doc_id, 
                 title, 
                 text_content,
-                VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE', 384)) as similarity_score
+                VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT', 384)) as similarity_score
             FROM RAG.SourceDocuments
             WHERE document_embedding_vector IS NOT NULL
-            AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE', 384)) > 0.0
+            AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT', 384)) > 0.0
             ORDER BY similarity_score DESC
         """
         

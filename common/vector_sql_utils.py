@@ -154,7 +154,7 @@ def format_vector_search_sql(
     select_clause = f"SELECT TOP {top_k} {id_column}"
     if content_column:
         select_clause += f", {content_column}"
-    select_clause += f", VECTOR_COSINE({vector_column}, TO_VECTOR('{vector_string}', 'DOUBLE', {embedding_dim})) AS score"
+    select_clause += f", VECTOR_COSINE({vector_column}, TO_VECTOR('{vector_string}', 'FLOAT', {embedding_dim})) AS score"
 
     # Construct the WHERE clause
     where_clause = f"WHERE {vector_column} IS NOT NULL"

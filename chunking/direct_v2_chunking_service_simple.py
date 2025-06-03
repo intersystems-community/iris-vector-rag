@@ -79,7 +79,7 @@ class DirectV2ChunkingService:
                 # Step 2: Update with vector column using direct SQL
                 update_sql = f'''
                 UPDATE RAG.DocumentChunks_V2 
-                SET chunk_embedding_vector = TO_VECTOR('{embedding_str}', 'DOUBLE', 384)
+                SET chunk_embedding_vector = TO_VECTOR('{embedding_str}', 'FLOAT', 384)
                 WHERE chunk_id = '{chunk_id}'
                 '''
                 

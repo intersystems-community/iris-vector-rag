@@ -31,7 +31,7 @@ def main():
         try:
             sql = f"""
                 SELECT TOP 5 doc_id, title,
-                VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS score
+                VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT')) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC
@@ -47,7 +47,7 @@ def main():
         try:
             sql = """
                 SELECT TOP 5 doc_id, title,
-                VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE', 384)) AS score
+                VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT', 384)) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC
@@ -65,7 +65,7 @@ def main():
         try:
             sql = """
                 SELECT TOP 5 doc_id, title,
-                VECTOR_COSINE(document_embedding_vector, CAST(? AS VECTOR(DOUBLE, 384))) AS score
+                VECTOR_COSINE(document_embedding_vector, CAST(? AS VECTOR(FLOAT, 384))) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC
@@ -85,7 +85,7 @@ def main():
             escaped_embedding = query_embedding_str.replace("'", "''")
             sql = f"""
                 SELECT TOP 5 doc_id, title,
-                VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{escaped_embedding}', 'DOUBLE', 384)) AS score
+                VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{escaped_embedding}', 'FLOAT', 384)) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC

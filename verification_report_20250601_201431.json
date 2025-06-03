@@ -1,0 +1,459 @@
+{
+  "verification_summary": {
+    "start_time": "2025-06-01T20:14:22.355274",
+    "end_time": "2025-06-01T20:14:31.921332",
+    "duration_seconds": 9.566058,
+    "migration_successful": false,
+    "all_tests_passed": false,
+    "vector_double_references_found": 63,
+    "files_checked": 424,
+    "critical_issues_count": 3,
+    "warnings_count": 1
+  },
+  "detailed_results": {
+    "migration_verification": {
+      "vector_double_references": [
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/jdbc_exploration/iris_jdbc_connector.py",
+          "line_number": 206,
+          "content": "TO_VECTOR(?, 'DOUBLE', 3),",
+          "timestamp": "2025-06-01T20:14:22.369379"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/jdbc_exploration/iris_jdbc_connector.py",
+          "line_number": 221,
+          "content": "TO_VECTOR(embedding, 'DOUBLE', 384),",
+          "timestamp": "2025-06-01T20:14:22.369420"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/jdbc_exploration/iris_jdbc_connector.py",
+          "line_number": 222,
+          "content": "TO_VECTOR(?, 'DOUBLE', 384)",
+          "timestamp": "2025-06-01T20:14:22.369444"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/jdbc_exploration/quick_jdbc_test_fixed.py",
+          "line_number": 125,
+          "content": "TO_VECTOR(?, 'DOUBLE', 3),",
+          "timestamp": "2025-06-01T20:14:22.369631"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/jdbc_exploration/quick_jdbc_test_fixed.py",
+          "line_number": 144,
+          "content": "TO_VECTOR(embedding, 'DOUBLE', 384),",
+          "timestamp": "2025-06-01T20:14:22.369659"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/jdbc_exploration/quick_jdbc_test_fixed.py",
+          "line_number": 145,
+          "content": "TO_VECTOR(?, 'DOUBLE', 384)",
+          "timestamp": "2025-06-01T20:14:22.369679"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_integration.py",
+          "line_number": 364,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.371326"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_integration.py",
+          "line_number": 376,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.371360"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_integration.py",
+          "line_number": 451,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.371413"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_query_patterns.py",
+          "line_number": 121,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.372956"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_query_patterns.py",
+          "line_number": 171,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.372998"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_query_patterns.py",
+          "line_number": 233,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.373043"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_query_patterns.py",
+          "line_number": 298,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.373089"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_query_patterns.py",
+          "line_number": 385,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.373140"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_query_patterns.py",
+          "line_number": 527,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.373203"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_performance.py",
+          "line_number": 170,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.373857"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_performance.py",
+          "line_number": 187,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.373885"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_performance.py",
+          "line_number": 256,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.373932"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_performance.py",
+          "line_number": 372,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.373996"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_performance.py",
+          "line_number": 445,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.374043"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_performance.py",
+          "line_number": 534,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.374094"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_indexes.py",
+          "line_number": 125,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.375814"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_indexes.py",
+          "line_number": 128,
+          "content": "ORDER BY VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'DOUBLE', 768)) DESC",
+          "timestamp": "2025-06-01T20:14:22.375840"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_benchmark_integration.py",
+          "line_number": 150,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.379955"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_benchmark_integration.py",
+          "line_number": 163,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.379999"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/tests/test_hnsw_benchmark_integration.py",
+          "line_number": 414,
+          "content": "VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity",
+          "timestamp": "2025-06-01T20:14:22.380136"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/docs/iris_vector_error_example.py",
+          "line_number": 23,
+          "content": "TO_VECTOR(embedding, 'DOUBLE', 384),",
+          "timestamp": "2025-06-01T20:14:22.384444"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/docs/iris_vector_error_example.py",
+          "line_number": 24,
+          "content": "TO_VECTOR('{embedding_str}', 'DOUBLE', 384)",
+          "timestamp": "2025-06-01T20:14:22.384471"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/chunking/direct_v2_chunking_service.py",
+          "line_number": 92,
+          "content": ") VALUES (?, ?, ?, ?, ?, ?, TO_VECTOR('{vector_str}', 'DOUBLE', 384))",
+          "timestamp": "2025-06-01T20:14:22.385068"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/chunking/direct_chunking_final.py",
+          "line_number": 174,
+          "content": "SET chunk_embedding_vector = TO_VECTOR(embedding, 'DOUBLE', 384)",
+          "timestamp": "2025-06-01T20:14:22.385277"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/chunking/update_v2_vectors.py",
+          "line_number": 54,
+          "content": "update_sql = f\"UPDATE RAG.DocumentChunks_V2 SET chunk_embedding_vector = TO_VECTOR(embedding, 'DOUBLE', 384) WHERE chunk_id = '{chunk_id}'\"",
+          "timestamp": "2025-06-01T20:14:22.386694"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/chunking/direct_v2_chunking_service_simple.py",
+          "line_number": 82,
+          "content": "SET chunk_embedding_vector = TO_VECTOR('{embedding_str}', 'DOUBLE', 384)",
+          "timestamp": "2025-06-01T20:14:22.386856"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/common/vector_sql_utils.py",
+          "line_number": 157,
+          "content": "select_clause += f\", VECTOR_COSINE({vector_column}, TO_VECTOR('{vector_string}', 'DOUBLE', {embedding_dim})) AS score\"",
+          "timestamp": "2025-06-01T20:14:22.389826"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/comprehensive_sql_cleanup_and_vector_implementation.py",
+          "line_number": 175,
+          "content": "cursor.execute(f\"SELECT TO_VECTOR('{test_embedding}', 'DOUBLE', 5) AS vector_result\")",
+          "timestamp": "2025-06-01T20:14:22.409140"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/comprehensive_sql_cleanup_and_vector_implementation.py",
+          "line_number": 203,
+          "content": "TO_VECTOR('{embedding1}', 'DOUBLE', 5),",
+          "timestamp": "2025-06-01T20:14:22.409188"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/comprehensive_sql_cleanup_and_vector_implementation.py",
+          "line_number": 204,
+          "content": "TO_VECTOR('{embedding2}', 'DOUBLE', 5)",
+          "timestamp": "2025-06-01T20:14:22.409214"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/comprehensive_sql_cleanup_and_vector_implementation.py",
+          "line_number": 237,
+          "content": "set {embedding_vector} = $$$TO_VECTOR({embedding_str}, \"DOUBLE\", 768)",
+          "timestamp": "2025-06-01T20:14:22.409253"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/comprehensive_sql_cleanup_and_vector_implementation.py",
+          "line_number": 377,
+          "content": "set {embedding_vector} = $$$TO_VECTOR({embedding_str}, \"DOUBLE\", 768)",
+          "timestamp": "2025-06-01T20:14:22.409336"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/convert_varchar_to_vector_columns.py",
+          "line_number": 212,
+          "content": "SET {new_column_name} = TO_VECTOR(?, 'DOUBLE', {dimension})",
+          "timestamp": "2025-06-01T20:14:22.418209"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/investigate_vector_indexing_reality.py",
+          "line_number": 251,
+          "content": "TO_VECTOR(embedding, 'DOUBLE', 768),",
+          "timestamp": "2025-06-01T20:14:22.418522"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/investigate_vector_indexing_reality.py",
+          "line_number": 252,
+          "content": "TO_VECTOR('{test_vector}', 'DOUBLE', 768)",
+          "timestamp": "2025-06-01T20:14:22.418549"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/fair_v2_performance_comparison.py",
+          "line_number": 31,
+          "content": "TO_VECTOR(embedding, 'DOUBLE', 384),",
+          "timestamp": "2025-06-01T20:14:22.420563"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/fair_v2_performance_comparison.py",
+          "line_number": 32,
+          "content": "TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)",
+          "timestamp": "2025-06-01T20:14:22.420584"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_bug_dbapi.py",
+          "line_number": 89,
+          "content": "VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3),",
+          "timestamp": "2025-06-01T20:14:24.245247"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_bug_dbapi.py",
+          "line_number": 98,
+          "content": "SELECT id, name, TO_VECTOR(embedding, 'DOUBLE', 3) as vector_result",
+          "timestamp": "2025-06-01T20:14:24.245289"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_colon_bug.py",
+          "line_number": 78,
+          "content": "VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) AS similarity_score",
+          "timestamp": "2025-06-01T20:14:24.245599"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_colon_bug.py",
+          "line_number": 99,
+          "content": "VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS similarity_score",
+          "timestamp": "2025-06-01T20:14:24.245640"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_hnsw_syntax_systematic.py",
+          "line_number": 50,
+          "content": "VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS similarity_score",
+          "timestamp": "2025-06-01T20:14:24.246015"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_hnsw_syntax_systematic.py",
+          "line_number": 53,
+          "content": "AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) > 0.1",
+          "timestamp": "2025-06-01T20:14:24.246045"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_hnsw_syntax_systematic.py",
+          "line_number": 63,
+          "content": "VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) AS similarity_score",
+          "timestamp": "2025-06-01T20:14:24.246071"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_hnsw_syntax_systematic.py",
+          "line_number": 66,
+          "content": "AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) > ?",
+          "timestamp": "2025-06-01T20:14:24.246098"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_hnsw_syntax_systematic.py",
+          "line_number": 88,
+          "content": "VECTOR_DOT_PRODUCT(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS similarity_score",
+          "timestamp": "2025-06-01T20:14:24.246132"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_hnsw_syntax_systematic.py",
+          "line_number": 100,
+          "content": "VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS similarity_score",
+          "timestamp": "2025-06-01T20:14:24.246158"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_hnsw_syntax_systematic.py",
+          "line_number": 120,
+          "content": "VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) AS similarity_score",
+          "timestamp": "2025-06-01T20:14:24.246184"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_hnsw_syntax_systematic.py",
+          "line_number": 123,
+          "content": "AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) > ?",
+          "timestamp": "2025-06-01T20:14:24.246203"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_bugs_minimal_demo.py",
+          "line_number": 116,
+          "content": "VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3),",
+          "timestamp": "2025-06-01T20:14:24.246468"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_bugs_minimal_demo.py",
+          "line_number": 137,
+          "content": "VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3),",
+          "timestamp": "2025-06-01T20:14:24.246499"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_bugs_minimal_demo.py",
+          "line_number": 138,
+          "content": "TO_VECTOR(?, 'DOUBLE', 3)) as similarity",
+          "timestamp": "2025-06-01T20:14:24.246519"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_bugs_minimal_demo.py",
+          "line_number": 161,
+          "content": "VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384),",
+          "timestamp": "2025-06-01T20:14:24.246547"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_bugs_minimal_demo.py",
+          "line_number": 162,
+          "content": "TO_VECTOR('{long_vector}', 'DOUBLE', 384)) as similarity",
+          "timestamp": "2025-06-01T20:14:24.246566"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/scripts/migration/test_vector_query.sql",
+          "line_number": 5,
+          "content": "SELECT TO_VECTOR('0.1:0.2:0.3', 'DOUBLE', 3);",
+          "timestamp": "2025-06-01T20:14:24.249438"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/src/experimental/hybrid_ifind_rag/schema.sql",
+          "line_number": 204,
+          "content": "VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?, 'DOUBLE')) as similarity_score, -- Assuming embedding is string",
+          "timestamp": "2025-06-01T20:14:30.786412"
+        },
+        {
+          "file_path": "/Users/tdyar/ws/rag-templates/src/experimental/hybrid_ifind_rag/schema.sql",
+          "line_number": 205,
+          "content": "ROW_NUMBER() OVER (ORDER BY VECTOR_COSINE(TO_VECTOR(d.embedding), TO_VECTOR(?, 'DOUBLE')) DESC) as rank_position",
+          "timestamp": "2025-06-01T20:14:30.786453"
+        }
+      ],
+      "files_checked": 424,
+      "remaining_references_found": true
+    },
+    "database_tests": {
+      "connection_test": {
+        "passed": true,
+        "error": null,
+        "timestamp": "2025-06-01T20:14:31.491236"
+      },
+      "vector_float_table_creation": {
+        "passed": false,
+        "error": "java.sql.SQLException: [SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^INSERT INTO RAG . VectorFloatTest ( id , test_vector , description ) VALUES ( :%qpar(1) , TO_VECTOR ( :%qpar(2) , :%qpar>]",
+        "timestamp": "2025-06-01T20:14:31.706834"
+      },
+      "vector_operations": {
+        "passed": false,
+        "error": "java.sql.SQLException: [SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^INSERT INTO RAG . VectorOpsTest ( id , vector1 , vector2 ) VALUES ( :%qpar(1) , TO_VECTOR ( :%qpar(2) , :%qpar>]",
+        "timestamp": "2025-06-01T20:14:31.916423"
+      },
+      "hnsw_indexing": {
+        "passed": false,
+        "error": "java.sql.SQLException: [SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'INDEX_TYPE' not found in the applicable tables^SELECT TABLE_NAME , INDEX_NAME FROM INFORMATION_SCHEMA . INDEXES WHERE INDEX_TYPE =>]",
+        "timestamp": "2025-06-01T20:14:31.920887"
+      }
+    },
+    "rag_pipeline_tests": {
+      "basic_rag_test": {
+        "passed": false,
+        "error": null
+      },
+      "vector_similarity_search": {
+        "passed": false,
+        "error": null
+      },
+      "end_to_end_query": {
+        "passed": false,
+        "error": null
+      }
+    },
+    "overall_status": {
+      "migration_successful": false,
+      "all_tests_passed": false,
+      "critical_issues": [
+        {
+          "issue": "VECTOR(DOUBLE) references still found in codebase",
+          "timestamp": "2025-06-01T20:14:30.792198"
+        },
+        {
+          "issue": "VECTOR(FLOAT) table creation failed: java.sql.SQLException: [SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^INSERT INTO RAG . VectorFloatTest ( id , test_vector , description ) VALUES ( :%qpar(1) , TO_VECTOR ( :%qpar(2) , :%qpar>]",
+          "timestamp": "2025-06-01T20:14:31.706842"
+        },
+        {
+          "issue": "Vector operations failed: java.sql.SQLException: [SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^INSERT INTO RAG . VectorOpsTest ( id , vector1 , vector2 ) VALUES ( :%qpar(1) , TO_VECTOR ( :%qpar(2) , :%qpar>]",
+          "timestamp": "2025-06-01T20:14:31.916431"
+        }
+      ],
+      "warnings": [
+        {
+          "warning": "HNSW indexing test failed: java.sql.SQLException: [SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'INDEX_TYPE' not found in the applicable tables^SELECT TABLE_NAME , INDEX_NAME FROM INFORMATION_SCHEMA . INDEXES WHERE INDEX_TYPE =>]",
+          "timestamp": "2025-06-01T20:14:31.920892"
+        }
+      ]
+    }
+  }
+}

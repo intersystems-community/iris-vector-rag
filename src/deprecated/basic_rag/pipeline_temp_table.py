@@ -56,7 +56,7 @@ class BasicRAGPipelineTempTable:
             cursor.execute("""
                 CREATE TABLE RAG.TempQueryVector (
                     query_id INTEGER,
-                    vector_data VECTOR(DOUBLE, 384)
+                    vector_data VECTOR(FLOAT, 384)
                 )
             """)
             
@@ -64,9 +64,9 @@ class BasicRAGPipelineTempTable:
             logger.info("Inserting query vector into RAG.TempQueryVector...")
             # Ensure the TO_VECTOR function is used correctly if the column is not already VECTOR type
             # Assuming vector_data is VECTOR type, direct insert of string might not work.
-            # The original code used TO_VECTOR(?, 'DOUBLE') which implies the input is a string.
+            # The original code used TO_VECTOR(?, 'FLOAT') which implies the input is a string.
             cursor.execute(
-                "INSERT INTO RAG.TempQueryVector (query_id, vector_data) VALUES (1, TO_VECTOR(?, 'DOUBLE'))",
+                "INSERT INTO RAG.TempQueryVector (query_id, vector_data) VALUES (1, TO_VECTOR(?, 'FLOAT'))",
                 (query_embedding_str,)
             )
             

@@ -78,7 +78,7 @@ def main():
             doc_id VARCHAR(255) PRIMARY KEY,
             title TEXT,
             content TEXT,
-            embedding VECTOR(DOUBLE, 384),  -- Native VECTOR column
+            embedding VECTOR(FLOAT, 384),  -- Native VECTOR column
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -160,7 +160,7 @@ def main():
         
         # This query is more for checking if data is queryable and index is usable
         # rather than a strict performance benchmark here.
-        # Explicitly cast the query vector to the same type as the column: VECTOR(DOUBLE, 384)
+        # Explicitly cast the query vector to the same type as the column: VECTOR(FLOAT, 384)
         sql_test_query = f"""
         SELECT TOP 3 doc_id, title, VECTOR_COSINE(embedding, TO_VECTOR('{query_vector_str}', DOUBLE, 384)) AS similarity
         FROM RAGTEST.SourceDocuments

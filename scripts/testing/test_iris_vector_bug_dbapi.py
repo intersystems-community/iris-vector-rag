@@ -86,7 +86,7 @@ def main():
     # Test 1: Basic TO_VECTOR with literal string
     query1 = """
         SELECT id, name, 
-               VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3), 
+               VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 3), 
                              TO_VECTOR('0.1,0.2,0.3', 'DOUBLE', 3)) as similarity
         FROM TEST_VECTOR.test_embeddings
         WHERE id <= 2
@@ -95,7 +95,7 @@ def main():
     
     # Test 2: Just TO_VECTOR on column
     query2 = """
-        SELECT id, name, TO_VECTOR(embedding, 'DOUBLE', 3) as vector_result
+        SELECT id, name, TO_VECTOR(embedding, 'FLOAT', 3) as vector_result
         FROM TEST_VECTOR.test_embeddings
         WHERE id = 1
     """

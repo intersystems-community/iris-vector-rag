@@ -15,7 +15,7 @@ SCHEMA_NAME = "RAG"
 TABLE_NAME = "SourceDocuments"
 OLD_VARCHAR_COLUMN_NAME = "document_embedding_vector"
 TEMP_VECTOR_COLUMN_NAME = "embedding_vector_new" # Target: VECTOR(FLOAT, 128)
-INTERMEDIATE_TEMP_DOUBLE_COLUMN_NAME = "embedding_vector_temp_double" # Intermediate: VECTOR(DOUBLE, 128)
+INTERMEDIATE_TEMP_DOUBLE_COLUMN_NAME = "embedding_vector_temp_double" # Intermediate: VECTOR(FLOAT, 128)
 FINAL_VECTOR_COLUMN_NAME = "embedding_vector" # This will be the new name for the vector column
 
 # !! IMPORTANT !! If an HNSW index exists on the OLD_VARCHAR_COLUMN_NAME, specify its exact name here.
@@ -126,7 +126,7 @@ def main_migration():
                 logging.info("Data integrity check (counts) passed.")
             else:
                 logging.warning(f"Data integrity check (counts) FAILED or indicates partial migration. Source: {count_source_populated}, Target: {count_target_populated}. "
-                                "This could be due to issues in the 2-stage population (VARCHAR -> VECTOR(DOUBLE) -> VECTOR(FLOAT)). "
+                                "This could be due to issues in the 2-stage population (VARCHAR -> VECTOR(FLOAT) -> VECTOR(FLOAT)). "
                                 "Check logs for errors in Step 2a or 2b.")
                 # Decide if this is a hard stop. For now, it's a warning.
 

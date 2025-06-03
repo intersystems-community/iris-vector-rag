@@ -51,7 +51,7 @@ class V2VectorUpdater:
                 for chunk_id, embedding_str in batch:
                     try:
                         # Use dynamic SQL to avoid parameter issues with TO_VECTOR
-                        update_sql = f"UPDATE RAG.DocumentChunks_V2 SET chunk_embedding_vector = TO_VECTOR(embedding, 'DOUBLE', 384) WHERE chunk_id = '{chunk_id}'"
+                        update_sql = f"UPDATE RAG.DocumentChunks_V2 SET chunk_embedding_vector = TO_VECTOR(embedding, 'FLOAT', 384) WHERE chunk_id = '{chunk_id}'"
                         cursor.execute(update_sql)
                         updated += 1
                         

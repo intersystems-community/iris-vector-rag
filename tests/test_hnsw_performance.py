@@ -167,7 +167,7 @@ class TestHNSWPerformance:
             with self.measure_query_time():
                 hnsw_query = """
                 SELECT TOP 10 doc_id, text_content,
-                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 ORDER BY similarity DESC
@@ -184,7 +184,7 @@ class TestHNSWPerformance:
                 # Use a query that's less likely to use HNSW optimization
                 sequential_query = """
                 SELECT TOP 10 doc_id, text_content,
-                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 AND doc_id LIKE '%'  -- Additional predicate to potentially affect optimization
@@ -253,7 +253,7 @@ class TestHNSWPerformance:
                 scalability_query = f"""
                 SELECT TOP 10 doc_id, text_content, similarity FROM (
                     SELECT TOP {doc_count} doc_id, text_content,
-                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY doc_id  -- Consistent ordering for subset
@@ -369,7 +369,7 @@ class TestHNSWPerformance:
             with self.measure_query_time():
                 param_query = """
                 SELECT TOP ? doc_id, text_content,
-                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 ORDER BY similarity DESC
@@ -442,7 +442,7 @@ class TestHNSWPerformance:
                     
                     concurrent_query = """
                     SELECT TOP 10 doc_id, text_content,
-                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                           VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY similarity DESC
@@ -531,7 +531,7 @@ class TestHNSWPerformance:
             with self.measure_query_time():
                 benchmark_sql = """
                 SELECT TOP 20 doc_id, text_content,
-                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                       VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
                 FROM RAG.SourceDocuments
                 WHERE embedding IS NOT NULL
                 ORDER BY similarity DESC

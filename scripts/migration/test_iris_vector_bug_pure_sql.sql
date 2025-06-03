@@ -36,7 +36,7 @@ VALUES (3, 'test_long', '0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0
 -- IRIS incorrectly interprets 'DOUBLE' as containing a parameter marker
 SELECT 'Test 1: Basic TO_VECTOR with literal string' as test_name;
 SELECT id, name, 
-       VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3), 
+       VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 3), 
                      TO_VECTOR('0.1,0.2,0.3', 'DOUBLE', 3)) as similarity
 FROM TEST_VECTOR.test_embeddings
 WHERE id <= 2;
@@ -44,7 +44,7 @@ WHERE id <= 2;
 -- Test 2: Even simpler - just TO_VECTOR on the column
 -- This also FAILS with the same error
 SELECT 'Test 2: TO_VECTOR on column only' as test_name;
-SELECT id, name, TO_VECTOR(embedding, 'DOUBLE', 3) as vector_result
+SELECT id, name, TO_VECTOR(embedding, 'FLOAT', 3) as vector_result
 FROM TEST_VECTOR.test_embeddings
 WHERE id = 1;
 
@@ -76,7 +76,7 @@ DROP TABLE IF EXISTS TEST_VECTOR.test_embeddings_v2;
 CREATE TABLE TEST_VECTOR.test_embeddings_v2 (
     id INTEGER PRIMARY KEY,
     name VARCHAR(100),
-    embedding_vector VECTOR(DOUBLE, 3)
+    embedding_vector VECTOR(FLOAT, 3)
 );
 
 -- With native VECTOR columns, vector operations should work properly

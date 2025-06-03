@@ -23,7 +23,7 @@ def fix_pipeline_file(filepath):
         content = re.sub(r'TO_VECTOR\(\s*\?\s*,\s*DOUBLE\s*,\s*(\d+)\s*\)', 
                         r"TO_VECTOR('{query_embedding_str}', 'DOUBLE', \1)", content)
         content = re.sub(r'TO_VECTOR\(\s*\?\s*,\s*\'?DOUBLE\'?\s*\)', 
-                        r"TO_VECTOR('{query_embedding_str}', 'DOUBLE')", content)
+                        r"TO_VECTOR('{query_embedding_str}', 'FLOAT')", content)
         content = re.sub(r'TO_VECTOR\(\s*\?\s*\)', 
                         r"TO_VECTOR('{query_embedding_str}')", content)
         changes_made.append("Fixed TO_VECTOR parameterized queries")
@@ -72,7 +72,7 @@ def fix_pipeline_file(filepath):
     
     # Fix 6: Handle GraphRAG entity queries
     if 'TO_VECTOR(embedding, ?)' in content:
-        content = content.replace("TO_VECTOR(embedding, ?)", "TO_VECTOR(embedding, 'DOUBLE', 384)")
+        content = content.replace("TO_VECTOR(embedding, ?)", "TO_VECTOR(embedding, 'FLOAT', 384)")
         changes_made.append("Fixed GraphRAG entity queries")
     
     # Fix 7: Handle any remaining ? in VECTOR operations

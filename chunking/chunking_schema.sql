@@ -20,9 +20,9 @@ CREATE TABLE RAG.DocumentChunks (
     
     -- Embeddings (using same pattern as SourceDocuments)
     embedding_str VARCHAR(60000) NULL,
-    embedding_vector VECTOR(DOUBLE, 768) COMPUTECODE {
+    embedding_vector VECTOR(FLOAT, 768) COMPUTECODE {
         if ({embedding_str} '= "") {
-            set {embedding_vector} = $$$TO_VECTOR({embedding_str}, "DOUBLE", 768)
+            set {embedding_vector} = $$$TO_VECTOR({embedding_str}, 'FLOAT', 768)
         } else {
             set {embedding_vector} = ""
         }
@@ -138,7 +138,7 @@ SELECT
     embedding_str,
     CASE 
         WHEN embedding_str IS NOT NULL AND embedding_str <> '' 
-        THEN TO_VECTOR(embedding_str, 'DOUBLE', 768)
+        THEN TO_VECTOR(embedding_str, 'FLOAT', 768)
         ELSE NULL 
     END AS embedding,
     created_at

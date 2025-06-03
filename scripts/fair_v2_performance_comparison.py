@@ -28,8 +28,8 @@ def test_original_with_full_search():
     sql_query = f"""
         SELECT TOP 5 doc_id, title, text_content,
                VECTOR_COSINE(
-                   TO_VECTOR(embedding, 'DOUBLE', 384),
-                   TO_VECTOR('{query_embedding_str}', 'DOUBLE', 384)
+                   TO_VECTOR(embedding, 'FLOAT', 384),
+                   TO_VECTOR('{query_embedding_str}', 'FLOAT', 384)
                ) as similarity_score
         FROM RAG.SourceDocuments_V2
         WHERE embedding IS NOT NULL

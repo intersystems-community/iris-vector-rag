@@ -361,7 +361,7 @@ class TestHNSWIntegration:
             # Get HNSW results (approximate)
             hnsw_query = """
             SELECT TOP 20 doc_id,
-                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
             FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
             ORDER BY similarity DESC
@@ -373,7 +373,7 @@ class TestHNSWIntegration:
             # Since we can't easily disable HNSW, we'll compare with a shuffled approach
             exact_query = """
             SELECT TOP 20 doc_id,
-                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity  
+                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity  
             FROM RAG.SourceDocuments
             WHERE embedding IS NOT NULL
             AND doc_id LIKE '%'  -- Additional predicate
@@ -448,7 +448,7 @@ class TestHNSWIntegration:
         for iteration in range(3):
             consistency_query = """
             SELECT TOP 15 doc_id,
-                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'DOUBLE', 768)) as similarity
+                   VECTOR_COSINE(embedding, TO_VECTOR(?, 'FLOAT', 768)) as similarity
             FROM RAG.SourceDocuments  
             WHERE embedding IS NOT NULL
             ORDER BY similarity DESC

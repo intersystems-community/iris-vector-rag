@@ -1,0 +1,35 @@
+{
+  "migration_summary": {
+    "start_time": "2025-06-01T20:16:13.609299",
+    "end_time": "2025-06-01T20:16:31.889396",
+    "duration_seconds": 18.280097,
+    "total_database_changes": 0,
+    "total_sql_files_changed": 0,
+    "total_python_files_changed": 1,
+    "total_objectscript_files_changed": 0,
+    "total_backups_created": 1,
+    "total_errors": 0,
+    "total_warnings": 0
+  },
+  "detailed_changes": {
+    "database_tables": [],
+    "sql_files": [],
+    "python_files": [
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/verify_vector_float_migration.py",
+        "changes_count": 19,
+        "timestamp": "2025-06-01T20:16:29.902233"
+      }
+    ],
+    "objectscript_files": [],
+    "backups_created": [
+      {
+        "backup_path": "migration_backup_20250601_201613/verify_vector_float_migration.py.backup_20250601_201629",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/verify_vector_float_migration.py",
+        "timestamp": "2025-06-01T20:16:29.901663"
+      }
+    ],
+    "errors": [],
+    "warnings": []
+  }
+}

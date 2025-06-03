@@ -98,7 +98,7 @@ def test_correct_vector_functions():
                 cursor.execute("""
                     CREATE TABLE test_vector_correct (
                         id INTEGER PRIMARY KEY,
-                        embedding VECTOR(DOUBLE, 5)
+                        embedding VECTOR(FLOAT, 5)
                     )
                 """)
                 
@@ -133,7 +133,7 @@ def test_correct_vector_functions():
                 cursor.execute("""
                     CREATE TABLE test_hnsw_correct (
                         id INTEGER PRIMARY KEY,
-                        embedding VECTOR(DOUBLE, 5)
+                        embedding VECTOR(FLOAT, 5)
                     )
                 """)
                 

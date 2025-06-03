@@ -50,8 +50,8 @@ class CRAGPipelineV2:
             sql_query = """
                 SELECT TOP ? doc_id, title, text_content,
                        VECTOR_COSINE(
-                           TO_VECTOR(RAG.SourceDocuments.embedding, 'DOUBLE', 384),
-                           TO_VECTOR(?, 'DOUBLE', 384)
+                           TO_VECTOR(RAG.SourceDocuments.embedding, 'FLOAT', 384),
+                           TO_VECTOR(?, 'FLOAT', 384)
                        ) as similarity_score
                 FROM RAG.SourceDocuments
                 WHERE RAG.SourceDocuments.embedding IS NOT NULL AND RAG.SourceDocuments.embedding <> ''

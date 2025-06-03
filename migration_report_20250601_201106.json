@@ -1,0 +1,546 @@
+{
+  "migration_summary": {
+    "start_time": "2025-06-01T20:10:58.518957",
+    "end_time": "2025-06-01T20:11:06.817231",
+    "duration_seconds": 8.298274,
+    "total_database_changes": 0,
+    "total_sql_files_changed": 9,
+    "total_python_files_changed": 43,
+    "total_objectscript_files_changed": 0,
+    "total_backups_created": 52,
+    "total_errors": 0,
+    "total_warnings": 0
+  },
+  "detailed_changes": {
+    "database_tables": [],
+    "sql_files": [
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/chunking/chunking_schema.sql",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:00.001636"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/chunking/schema_clean.sql",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:00.002077"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/common/db_init_simple.sql",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:00.002762"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/common/db_init_complete.sql",
+        "changes_count": 5,
+        "timestamp": "2025-06-01T20:11:00.003227"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_schema.sql",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:00.003900"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/migration/test_iris_vector_bug_pure_sql.sql",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:00.004461"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/migration/iris_vector_bug_minimal.sql",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:00.005105"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/migration/iris_vector_bug_test.sql",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:00.005611"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/migration/test_iris_vector_bugs_minimal.sql",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:00.006092"
+      }
+    ],
+    "python_files": [
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/basic_rag/pipeline_temp_table.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.609680"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/drop_and_repopulate_entities.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.610142"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/repopulate_graphrag_with_vectors.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.610786"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/migrate_graphrag_to_vector.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.611462"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/create_graphrag_vector_tables.py",
+        "changes_count": 4,
+        "timestamp": "2025-06-01T20:11:04.612071"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/vector_search_community_vs_licensed_comparison.py",
+        "changes_count": 3,
+        "timestamp": "2025-06-01T20:11:04.613055"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/migrate_vector_double_to_float.py",
+        "changes_count": 12,
+        "timestamp": "2025-06-01T20:11:04.613706"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/migrate_sourcedocuments_native_vector.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.614506"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/force_native_vector_schema.py",
+        "changes_count": 8,
+        "timestamp": "2025-06-01T20:11:04.615232"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/comprehensive_hnsw_vs_nonhnsw_5000_validation.py",
+        "changes_count": 4,
+        "timestamp": "2025-06-01T20:11:04.616015"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/fix_document_chunks_table.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.616449"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/test_correct_vector_syntax.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.617087"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/deploy_and_test_iris_2025_vector_search.py",
+        "changes_count": 4,
+        "timestamp": "2025-06-01T20:11:04.617943"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/schema_migration_vector_and_chunking.py",
+        "changes_count": 4,
+        "timestamp": "2025-06-01T20:11:04.618911"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/corrected_vector_migration.py",
+        "changes_count": 12,
+        "timestamp": "2025-06-01T20:11:04.619752"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/fix_critical_schema_and_hnsw_issues.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.620660"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/test_iris_2025_vector_search.py",
+        "changes_count": 4,
+        "timestamp": "2025-06-01T20:11:04.621542"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/fix_hnsw_infrastructure_complete.py",
+        "changes_count": 3,
+        "timestamp": "2025-06-01T20:11:04.622386"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/corrected_iris_connection_test.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.623377"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/test_vector_schema_step1.py",
+        "changes_count": 6,
+        "timestamp": "2025-06-01T20:11:04.624252"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/fix_vector_columns_urgent.py",
+        "changes_count": 24,
+        "timestamp": "2025-06-01T20:11:04.625018"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/test_vector_syntax.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.625430"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/test_schema_locally.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.626118"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/fresh_1000_doc_setup_and_validation.py",
+        "changes_count": 4,
+        "timestamp": "2025-06-01T20:11:04.626935"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/simple_schema_test.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.627406"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/complete_rag_system_fix.py",
+        "changes_count": 4,
+        "timestamp": "2025-06-01T20:11:04.628605"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/fix_hnsw_and_vector_issues.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.629208"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_hnsw_direct_pytest.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.629873"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_hnsw_with_existing_connector.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.630348"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_hnsw_direct_fixed.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.630934"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_hnsw_direct.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.631321"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archive/migration_backup_20250530_135241/force_sourcedocuments_migration.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.631833"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/archived_pipelines/basic_rag/pipeline_temp_table.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.632282"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/ingestion/create_knowledge_graph_schema.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.632820"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_workaround.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.633543"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_parameter_binding_approach.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.634026"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_option3_corrected_vector_syntax.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.634755"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_working_vector_solution.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.635303"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_option3_hnsw_vector_declaration.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.636011"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_vector_column_type_diagnosis.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.636829"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/migration/create_ragtest_schema.py",
+        "changes_count": 2,
+        "timestamp": "2025-06-01T20:11:04.637541"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/validation/fast_hnsw_validation.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.638357"
+      },
+      {
+        "file_path": "/Users/tdyar/ws/rag-templates/scripts/validation/fast_hnsw_validation_fixed.py",
+        "changes_count": 1,
+        "timestamp": "2025-06-01T20:11:04.638944"
+      }
+    ],
+    "objectscript_files": [],
+    "backups_created": [
+      {
+        "backup_path": "migration_backup_20250601_201058/chunking_schema.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/chunking/chunking_schema.sql",
+        "timestamp": "2025-06-01T20:11:00.001292"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/schema_clean.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/chunking/schema_clean.sql",
+        "timestamp": "2025-06-01T20:11:00.001923"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/db_init_simple.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/common/db_init_simple.sql",
+        "timestamp": "2025-06-01T20:11:00.002470"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/db_init_complete.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/common/db_init_complete.sql",
+        "timestamp": "2025-06-01T20:11:00.003051"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_schema.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_schema.sql",
+        "timestamp": "2025-06-01T20:11:00.003497"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_iris_vector_bug_pure_sql.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/migration/test_iris_vector_bug_pure_sql.sql",
+        "timestamp": "2025-06-01T20:11:00.004293"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/iris_vector_bug_minimal.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/migration/iris_vector_bug_minimal.sql",
+        "timestamp": "2025-06-01T20:11:00.004898"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/iris_vector_bug_test.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/migration/iris_vector_bug_test.sql",
+        "timestamp": "2025-06-01T20:11:00.005470"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_iris_vector_bugs_minimal.sql.backup_20250601_201100",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/migration/test_iris_vector_bugs_minimal.sql",
+        "timestamp": "2025-06-01T20:11:00.005929"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/pipeline_temp_table.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/basic_rag/pipeline_temp_table.py",
+        "timestamp": "2025-06-01T20:11:04.609481"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/drop_and_repopulate_entities.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/drop_and_repopulate_entities.py",
+        "timestamp": "2025-06-01T20:11:04.609972"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/repopulate_graphrag_with_vectors.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/repopulate_graphrag_with_vectors.py",
+        "timestamp": "2025-06-01T20:11:04.610412"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/migrate_graphrag_to_vector.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/migrate_graphrag_to_vector.py",
+        "timestamp": "2025-06-01T20:11:04.611262"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/create_graphrag_vector_tables.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/create_graphrag_vector_tables.py",
+        "timestamp": "2025-06-01T20:11:04.611796"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/vector_search_community_vs_licensed_comparison.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/vector_search_community_vs_licensed_comparison.py",
+        "timestamp": "2025-06-01T20:11:04.612688"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/migrate_vector_double_to_float.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/migrate_vector_double_to_float.py",
+        "timestamp": "2025-06-01T20:11:04.613429"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/migrate_sourcedocuments_native_vector.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/migrate_sourcedocuments_native_vector.py",
+        "timestamp": "2025-06-01T20:11:04.614252"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/force_native_vector_schema.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/force_native_vector_schema.py",
+        "timestamp": "2025-06-01T20:11:04.614789"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/comprehensive_hnsw_vs_nonhnsw_5000_validation.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/comprehensive_hnsw_vs_nonhnsw_5000_validation.py",
+        "timestamp": "2025-06-01T20:11:04.615714"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/fix_document_chunks_table.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/fix_document_chunks_table.py",
+        "timestamp": "2025-06-01T20:11:04.616301"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_correct_vector_syntax.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/test_correct_vector_syntax.py",
+        "timestamp": "2025-06-01T20:11:04.616838"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/deploy_and_test_iris_2025_vector_search.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/deploy_and_test_iris_2025_vector_search.py",
+        "timestamp": "2025-06-01T20:11:04.617633"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/schema_migration_vector_and_chunking.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/schema_migration_vector_and_chunking.py",
+        "timestamp": "2025-06-01T20:11:04.618421"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/corrected_vector_migration.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/corrected_vector_migration.py",
+        "timestamp": "2025-06-01T20:11:04.619340"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/fix_critical_schema_and_hnsw_issues.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/fix_critical_schema_and_hnsw_issues.py",
+        "timestamp": "2025-06-01T20:11:04.620312"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_iris_2025_vector_search.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/test_iris_2025_vector_search.py",
+        "timestamp": "2025-06-01T20:11:04.621295"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/fix_hnsw_infrastructure_complete.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/fix_hnsw_infrastructure_complete.py",
+        "timestamp": "2025-06-01T20:11:04.621984"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/corrected_iris_connection_test.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/corrected_iris_connection_test.py",
+        "timestamp": "2025-06-01T20:11:04.622835"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_vector_schema_step1.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/test_vector_schema_step1.py",
+        "timestamp": "2025-06-01T20:11:04.623833"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/fix_vector_columns_urgent.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/fix_vector_columns_urgent.py",
+        "timestamp": "2025-06-01T20:11:04.624672"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_vector_syntax.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/test_vector_syntax.py",
+        "timestamp": "2025-06-01T20:11:04.625313"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_schema_locally.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/test_schema_locally.py",
+        "timestamp": "2025-06-01T20:11:04.625879"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/fresh_1000_doc_setup_and_validation.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/fresh_1000_doc_setup_and_validation.py",
+        "timestamp": "2025-06-01T20:11:04.626514"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/simple_schema_test.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/simple_schema_test.py",
+        "timestamp": "2025-06-01T20:11:04.627259"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/complete_rag_system_fix.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/complete_rag_system_fix.py",
+        "timestamp": "2025-06-01T20:11:04.628079"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/fix_hnsw_and_vector_issues.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/fix_hnsw_and_vector_issues.py",
+        "timestamp": "2025-06-01T20:11:04.628959"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_hnsw_direct_pytest.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_hnsw_direct_pytest.py",
+        "timestamp": "2025-06-01T20:11:04.629502"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_hnsw_with_existing_connector.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_hnsw_with_existing_connector.py",
+        "timestamp": "2025-06-01T20:11:04.630210"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_hnsw_direct_fixed.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_hnsw_direct_fixed.py",
+        "timestamp": "2025-06-01T20:11:04.630789"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_hnsw_direct.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/test_files/test_hnsw_direct.py",
+        "timestamp": "2025-06-01T20:11:04.631197"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/force_sourcedocuments_migration.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archive/migration_backup_20250530_135241/force_sourcedocuments_migration.py",
+        "timestamp": "2025-06-01T20:11:04.631662"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/pipeline_temp_table.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/archived_pipelines/basic_rag/pipeline_temp_table.py",
+        "timestamp": "2025-06-01T20:11:04.632109"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/create_knowledge_graph_schema.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/ingestion/create_knowledge_graph_schema.py",
+        "timestamp": "2025-06-01T20:11:04.632621"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_iris_vector_workaround.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_iris_vector_workaround.py",
+        "timestamp": "2025-06-01T20:11:04.633087"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_parameter_binding_approach.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_parameter_binding_approach.py",
+        "timestamp": "2025-06-01T20:11:04.633874"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_option3_corrected_vector_syntax.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_option3_corrected_vector_syntax.py",
+        "timestamp": "2025-06-01T20:11:04.634342"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_working_vector_solution.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_working_vector_solution.py",
+        "timestamp": "2025-06-01T20:11:04.635123"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_option3_hnsw_vector_declaration.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_option3_hnsw_vector_declaration.py",
+        "timestamp": "2025-06-01T20:11:04.635624"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/test_vector_column_type_diagnosis.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/testing/test_vector_column_type_diagnosis.py",
+        "timestamp": "2025-06-01T20:11:04.636503"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/create_ragtest_schema.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/migration/create_ragtest_schema.py",
+        "timestamp": "2025-06-01T20:11:04.637208"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/fast_hnsw_validation.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/validation/fast_hnsw_validation.py",
+        "timestamp": "2025-06-01T20:11:04.637917"
+      },
+      {
+        "backup_path": "migration_backup_20250601_201058/fast_hnsw_validation_fixed.py.backup_20250601_201104",
+        "original_path": "/Users/tdyar/ws/rag-templates/scripts/validation/fast_hnsw_validation_fixed.py",
+        "timestamp": "2025-06-01T20:11:04.638718"
+      }
+    ],
+    "errors": [],
+    "warnings": []
+  }
+}

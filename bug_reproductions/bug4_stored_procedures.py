@@ -52,7 +52,7 @@ def setup_test_environment(connection):
             title VARCHAR(200),
             content LONGVARCHAR,
             embedding VARCHAR(1000),
-            embedding_vector VECTOR(DOUBLE, 4)
+            embedding_vector VECTOR(FLOAT, 4)
         )
     """)
     
@@ -69,7 +69,7 @@ def setup_test_environment(connection):
         cursor.execute(f"""
             INSERT INTO TestVectorBugs.Documents 
             (id, title, content, embedding, embedding_vector) 
-            VALUES (?, ?, ?, ?, TO_VECTOR('{embedding}', 'DOUBLE', 4))
+            VALUES (?, ?, ?, ?, TO_VECTOR('{embedding}', 'FLOAT', 4))
         """, [id, title, content, embedding])
     
     connection.commit()
@@ -109,7 +109,7 @@ def test_stored_procedure_creation(connection):
             RETURN SELECT 
                 id as doc_id,
                 title,
-                VECTOR_COSINE(embedding_vector, TO_VECTOR(query_vector, 'DOUBLE', 4)) as similarity
+                VECTOR_COSINE(embedding_vector, TO_VECTOR(query_vector, 'FLOAT', 4)) as similarity
             FROM TestVectorBugs.Documents
             WHERE embedding_vector IS NOT NULL
             ORDER BY similarity DESC
@@ -268,7 +268,7 @@ def test_function_vs_procedure_performance(connection):
         start = time.time()
         cursor.execute(f"""
             SELECT id, title,
-                   VECTOR_COSINE(embedding_vector, TO_VECTOR('{query_vector}', 'DOUBLE', 4)) as score
+                   VECTOR_COSINE(embedding_vector, TO_VECTOR('{query_vector}', 'FLOAT', 4)) as score
             FROM TestVectorBugs.Documents
             ORDER BY score DESC
         """)

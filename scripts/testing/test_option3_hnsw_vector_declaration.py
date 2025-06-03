@@ -51,7 +51,7 @@ def main():
             array_str = '[' + ','.join(map(str, query_embedding.tolist())) + ']'
             sql = f"""
                 SELECT TOP 5 doc_id,
-                VECTOR_COSINE(document_embedding_vector, '{array_str}'::VECTOR(DOUBLE, 384)) AS score
+                VECTOR_COSINE(document_embedding_vector, '{array_str}'::VECTOR(FLOAT, 384)) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC
@@ -95,7 +95,7 @@ def main():
             csv_embedding = ','.join(map(str, query_embedding.tolist()))
             sql = """
                 SELECT TOP 5 doc_id,
-                VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE', 384)) AS score
+                VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT', 384)) AS score
                 FROM RAG.SourceDocuments_V2
                 WHERE document_embedding_vector IS NOT NULL
                 ORDER BY score DESC

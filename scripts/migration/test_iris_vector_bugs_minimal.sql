@@ -20,7 +20,7 @@ VALUES (2, 'test2', '0.4,0.5,0.6');
 
 -- Bug #1: TO_VECTOR() with literal string works
 SELECT id, name, 
-       VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3), 
+       VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 3), 
                      TO_VECTOR('0.1,0.2,0.3', 'DOUBLE', 3)) as similarity
 FROM TEST_VECTOR.test_embeddings;
 
@@ -30,8 +30,8 @@ FROM TEST_VECTOR.test_embeddings;
 /*
 cursor.execute("""
     SELECT id, name, 
-           VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3), 
-                         TO_VECTOR(?, 'DOUBLE', 3)) as similarity
+           VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 3), 
+                         TO_VECTOR(?, 'FLOAT', 3)) as similarity
     FROM TEST_VECTOR.test_embeddings
 """, ['0.1,0.2,0.3'])
 */
@@ -42,8 +42,8 @@ cursor.execute("""
 -- This query would work with short vectors but fail with real embeddings:
 /*
 SELECT id, name, 
-       VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 768), 
-                     TO_VECTOR('<768 comma-separated values>', 'DOUBLE', 768)) as similarity
+       VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 768), 
+                     TO_VECTOR('<768 comma-separated values>', 'FLOAT', 768)) as similarity
 FROM TEST_VECTOR.test_embeddings;
 */
 
@@ -65,13 +65,13 @@ WHERE embedding IS NOT NULL;
 CREATE TABLE TEST_VECTOR.test_embeddings_v2 (
     id INTEGER PRIMARY KEY,
     name VARCHAR(100),
-    embedding_vector VECTOR(DOUBLE, 3)
+    embedding_vector VECTOR(FLOAT, 3)
 );
 
 -- With native VECTOR columns, this should work:
 /*
 SELECT id, name, 
-       VECTOR_COSINE(embedding_vector, TO_VECTOR(?, 'DOUBLE', 3)) as similarity
+       VECTOR_COSINE(embedding_vector, TO_VECTOR(?, 'FLOAT', 3)) as similarity
 FROM TEST_VECTOR.test_embeddings_v2;
 */
 

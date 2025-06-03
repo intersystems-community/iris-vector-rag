@@ -55,13 +55,13 @@ class BasicRAGPipelineDirectSQL:
                     text_content,
                     VECTOR_COSINE(
                         document_embedding_vector, 
-                        TO_VECTOR('{query_embedding_str}', 'DOUBLE')
+                        TO_VECTOR('{query_embedding_str}', 'FLOAT')
                     ) as similarity_score
                 FROM {self.schema}.SourceDocuments
                 WHERE document_embedding_vector IS NOT NULL
                 AND VECTOR_COSINE(
                     document_embedding_vector, 
-                    TO_VECTOR('{query_embedding_str}', 'DOUBLE')
+                    TO_VECTOR('{query_embedding_str}', 'FLOAT')
                 ) > {similarity_threshold}
                 ORDER BY similarity_score DESC
             """

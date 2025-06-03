@@ -113,7 +113,7 @@ def test_bug_1_literal_works(cursor):
     try:
         cursor.execute("""
             SELECT id, name, 
-                   VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3), 
+                   VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 3), 
                                  TO_VECTOR('0.1,0.2,0.3', 'DOUBLE', 3)) as similarity
             FROM TEST_VECTOR.test_embeddings
             WHERE id <= 2
@@ -134,8 +134,8 @@ def test_bug_2_parameter_fails(cursor):
         # This should fail with "colon found" error
         cursor.execute("""
             SELECT id, name, 
-                   VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 3), 
-                                 TO_VECTOR(?, 'DOUBLE', 3)) as similarity
+                   VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 3), 
+                                 TO_VECTOR(?, 'FLOAT', 3)) as similarity
             FROM TEST_VECTOR.test_embeddings
             WHERE id <= 2
         """, ['0.1,0.2,0.3'])
@@ -158,8 +158,8 @@ def test_bug_3_long_vectors_fail(cursor):
         # Build query with string interpolation (no parameters)
         query = f"""
             SELECT id, name, 
-                   VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 384), 
-                                 TO_VECTOR('{long_vector}', 'DOUBLE', 384)) as similarity
+                   VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 384), 
+                                 TO_VECTOR('{long_vector}', 'FLOAT', 384)) as similarity
             FROM TEST_VECTOR.test_embeddings
             WHERE id = 3
         """

@@ -75,7 +75,7 @@ def test_vector_search_bug():
             try:
                 sql_query = f"""
                     SELECT TOP 5 doc_id, 
-                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) AS similarity_score
+                    VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT')) AS similarity_score
                     FROM RAG.SourceDocuments_V2
                     WHERE document_embedding_vector IS NOT NULL
                     ORDER BY similarity_score DESC
@@ -96,7 +96,7 @@ def test_vector_search_bug():
                     print("\n📊 Attempting direct string interpolation...")
                     sql_query_direct = f"""
                         SELECT TOP 5 doc_id,
-                        VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS similarity_score
+                        VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT')) AS similarity_score
                         FROM RAG.SourceDocuments_V2
                         WHERE document_embedding_vector IS NOT NULL
                         ORDER BY similarity_score DESC

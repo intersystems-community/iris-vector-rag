@@ -90,7 +90,7 @@ class Fresh1000DocSetup:
                     doc_id VARCHAR(255) PRIMARY KEY,
                     title VARCHAR(1000),
                     text_content LONGVARCHAR,
-                    embedding VECTOR(DOUBLE, 384),
+                    embedding VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
@@ -104,7 +104,7 @@ class Fresh1000DocSetup:
                     doc_id VARCHAR(255),
                     chunk_text LONGVARCHAR,
                     chunk_index INTEGER,
-                    embedding VECTOR(DOUBLE, 384),
+                    embedding VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
@@ -118,7 +118,7 @@ class Fresh1000DocSetup:
                     doc_id VARCHAR(255),
                     token_text VARCHAR(500),
                     token_index INTEGER,
-                    embedding VECTOR(DOUBLE, 384),
+                    embedding VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
@@ -132,7 +132,7 @@ class Fresh1000DocSetup:
                     entity_name VARCHAR(500),
                     entity_type VARCHAR(100),
                     description LONGVARCHAR,
-                    embedding VECTOR(DOUBLE, 384),
+                    embedding VECTOR(FLOAT, 384),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """

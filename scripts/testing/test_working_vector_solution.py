@@ -34,7 +34,7 @@ def main():
             cursor.execute("""
                 CREATE TABLE RAG.TempQueryVector (
                     id INTEGER,
-                    query_vector VECTOR(DOUBLE, 384)
+                    query_vector VECTOR(FLOAT, 384)
                 )
             """)
             
@@ -42,7 +42,7 @@ def main():
             query_vector_str = ','.join(map(str, query_embedding))
             cursor.execute(f"""
                 INSERT INTO RAG.TempQueryVector (id, query_vector) 
-                VALUES (1, TO_VECTOR('{query_vector_str}', 'DOUBLE', 384))
+                VALUES (1, TO_VECTOR('{query_vector_str}', 'FLOAT', 384))
             """)
             
             # Now use it in the query
@@ -78,8 +78,8 @@ def main():
                 IN top_k INTEGER DEFAULT 5
             )
             BEGIN
-                DECLARE query_vec VECTOR(DOUBLE, 384);
-                SET query_vec = TO_VECTOR(query_vector_str, 'DOUBLE', 384);
+                DECLARE query_vec VECTOR(FLOAT, 384);
+                SET query_vec = TO_VECTOR(query_vector_str, 'FLOAT', 384);
                 
                 SELECT TOP :top_k doc_id, title, text_content,
                        VECTOR_COSINE(document_embedding_vector, query_vec) AS score

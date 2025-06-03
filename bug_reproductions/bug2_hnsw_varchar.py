@@ -65,7 +65,7 @@ def setup_test_tables(connection):
         CREATE TABLE TestVectorBugs.VectorAsVector (
             id INTEGER PRIMARY KEY,
             name VARCHAR(100),
-            embedding VECTOR(DOUBLE, 4)
+            embedding VECTOR(FLOAT, 4)
         )
     """)
     
@@ -75,7 +75,7 @@ def setup_test_tables(connection):
             id INTEGER PRIMARY KEY,
             name VARCHAR(100),
             embedding_varchar VARCHAR(10000),
-            embedding_vector VECTOR(DOUBLE, 4)
+            embedding_vector VECTOR(FLOAT, 4)
         )
     """)
     
@@ -98,14 +98,14 @@ def setup_test_tables(connection):
         # Convert string to vector format
         vector_values = [float(x) for x in embedding.split(',')]
         cursor.execute(
-            f"INSERT INTO TestVectorBugs.VectorAsVector (id, name, embedding) VALUES (?, ?, TO_VECTOR('{embedding}', 'DOUBLE', 4))",
+            f"INSERT INTO TestVectorBugs.VectorAsVector (id, name, embedding) VALUES (?, ?, TO_VECTOR('{embedding}', 'FLOAT', 4))",
             [id, name]
         )
     
     # Insert into mixed table
     for id, name, embedding in test_data:
         cursor.execute(
-            f"INSERT INTO TestVectorBugs.VectorMixed (id, name, embedding_varchar, embedding_vector) VALUES (?, ?, ?, TO_VECTOR('{embedding}', 'DOUBLE', 4))",
+            f"INSERT INTO TestVectorBugs.VectorMixed (id, name, embedding_varchar, embedding_vector) VALUES (?, ?, ?, TO_VECTOR('{embedding}', 'FLOAT', 4))",
             [id, name, embedding]
         )
     
@@ -127,7 +127,7 @@ def test_hnsw_index_creation(connection):
     try:
         cursor.execute("""
             CREATE INDEX idx_hnsw_varchar 
-            ON TestVectorBugs.VectorAsVarchar (TO_VECTOR(embedding, 'DOUBLE', 4))
+            ON TestVectorBugs.VectorAsVarchar (TO_VECTOR(embedding, 'FLOAT', 4))
             AS HNSW(Distance='COSINE')
         """)
         print("   ✅ SUCCESS (unexpected!): HNSW index created on VARCHAR")
@@ -155,7 +155,7 @@ def test_hnsw_index_creation(connection):
     try:
         cursor.execute("""
             CREATE INDEX idx_hnsw_explicit 
-            ON TestVectorBugs.VectorAsVarchar (TO_VECTOR(embedding, 'DOUBLE', 4))
+            ON TestVectorBugs.VectorAsVarchar (TO_VECTOR(embedding, 'FLOAT', 4))
             AS HNSW(Distance='COSINE', Dimension=4)
         """)
         print("   ✅ SUCCESS: HNSW index created with explicit dimensions")
@@ -190,7 +190,7 @@ def test_vector_search_performance(connection):
     try:
         cursor.execute(f"""
             SELECT name, 
-                   VECTOR_COSINE(TO_VECTOR(embedding, 'DOUBLE', 4), TO_VECTOR('{query_vector}', 'DOUBLE', 4)) as score
+                   VECTOR_COSINE(TO_VECTOR(embedding, 'FLOAT', 4), TO_VECTOR('{query_vector}', 'FLOAT', 4)) as score
             FROM TestVectorBugs.VectorAsVarchar
             ORDER BY score DESC
         """)
@@ -207,7 +207,7 @@ def test_vector_search_performance(connection):
     try:
         cursor.execute(f"""
             SELECT name, 
-                   VECTOR_COSINE(embedding, TO_VECTOR('{query_vector}', 'DOUBLE', 4)) as score
+                   VECTOR_COSINE(embedding, TO_VECTOR('{query_vector}', 'FLOAT', 4)) as score
             FROM TestVectorBugs.VectorAsVector
             ORDER BY score DESC
         """)
@@ -235,7 +235,7 @@ def demonstrate_workaround(connection):
                 id INTEGER PRIMARY KEY,
                 name VARCHAR(100),
                 embedding_varchar VARCHAR(10000),  -- Keep original for reference
-                embedding_vector VECTOR(DOUBLE, 4)  -- New VECTOR column
+                embedding_vector VECTOR(FLOAT, 4)  -- New VECTOR column
             )
         """)
         print("   ✅ Created table with VECTOR column")
@@ -244,7 +244,7 @@ def demonstrate_workaround(connection):
         print("\n2. Migrate data from VARCHAR to VECTOR:")
         cursor.execute("""
             INSERT INTO TestVectorBugs.VectorMigrated (id, name, embedding_varchar, embedding_vector)
-            SELECT id, name, embedding, TO_VECTOR(embedding, 'DOUBLE', 4)
+            SELECT id, name, embedding, TO_VECTOR(embedding, 'FLOAT', 4)
             FROM TestVectorBugs.VectorAsVarchar
         """)
         print("   ✅ Data migrated successfully")

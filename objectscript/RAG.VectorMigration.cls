@@ -186,7 +186,7 @@ ClassMethod GetVectorUsingIRISFunctions(vectorValue As %String) As %String [ Sql
         }
         
         // Method 3: Try casting to different vector types to see what works
-        Set sql = "SELECT CAST(? AS VECTOR(DOUBLE, 128)) AS vector_double"
+        Set sql = "SELECT CAST(? AS VECTOR(FLOAT, 128)) AS vector_double"
         Set stmt = ##class(%SQL.Statement).%New()
         Set status = stmt.%Prepare(sql)
         If $$$ISOK(status) {

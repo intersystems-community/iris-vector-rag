@@ -490,7 +490,7 @@ class HNSWInfrastructureFixer:
                 "recommended_action": "Deploy to production" if comparison_results.get("speed_improvement_factor", 1.0) > 1.1 else "Monitor performance"
             },
             "technical_details": {
-                "vector_column_type": "VECTOR(DOUBLE, 768)",
+                "vector_column_type": "VECTOR(FLOAT, 768)",
                 "hnsw_parameters": "M=16, efConstruction=200, Distance='COSINE'",
                 "migration_method": "TO_VECTOR() conversion from VARCHAR embeddings",
                 "index_name": "idx_hnsw_embedding_vector"
@@ -515,7 +515,7 @@ The complete HNSW infrastructure has been deployed with native VECTOR columns, p
 ## Infrastructure Status
 
 - **RAG_HNSW Schema**: ✅ Deployed
-- **Native VECTOR Column**: ✅ VECTOR(DOUBLE, 768) 
+- **Native VECTOR Column**: ✅ VECTOR(FLOAT, 768) 
 - **HNSW Indexes**: ✅ Created with optimal parameters
 - **Data Migration**: ✅ {hnsw_docs} documents migrated
 - **Vector Functions**: ✅ VECTOR_COSINE working
@@ -531,7 +531,7 @@ The complete HNSW infrastructure has been deployed with native VECTOR columns, p
 ## Technical Implementation
 
 ### Schema Deployment
-- Created RAG_HNSW.SourceDocuments with native VECTOR(DOUBLE, 768) column
+- Created RAG_HNSW.SourceDocuments with native VECTOR(FLOAT, 768) column
 - Migrated {hnsw_docs} documents using TO_VECTOR() conversion
 - Deployed HNSW index with M=16, efConstruction=200, Distance='COSINE'
 

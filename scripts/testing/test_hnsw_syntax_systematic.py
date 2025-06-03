@@ -47,10 +47,10 @@ def main():
         (
             f"""
             SELECT doc_id, text_content, 
-            VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS similarity_score 
+            VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT')) AS similarity_score 
             FROM RAG.SourceDocuments_V2 
             WHERE document_embedding_vector IS NOT NULL 
-            AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) > 0.1
+            AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT')) > 0.1
             ORDER BY similarity_score DESC
             """,
             "Option 1: Direct embedding string in TO_VECTOR"
@@ -60,10 +60,10 @@ def main():
         (
             """
             SELECT doc_id, text_content, 
-            VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) AS similarity_score 
+            VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT')) AS similarity_score 
             FROM RAG.SourceDocuments_V2 
             WHERE document_embedding_vector IS NOT NULL 
-            AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) > ?
+            AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT')) > ?
             ORDER BY similarity_score DESC
             """,
             "Option 2: Using parameter placeholders"
@@ -85,7 +85,7 @@ def main():
         (
             f"""
             SELECT doc_id, text_content, 
-            VECTOR_DOT_PRODUCT(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS similarity_score 
+            VECTOR_DOT_PRODUCT(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT')) AS similarity_score 
             FROM RAG.SourceDocuments_V2 
             WHERE document_embedding_vector IS NOT NULL 
             ORDER BY similarity_score DESC
@@ -97,7 +97,7 @@ def main():
         (
             f"""
             SELECT TOP 10 doc_id, text_content, 
-            VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'DOUBLE')) AS similarity_score 
+            VECTOR_COSINE(document_embedding_vector, TO_VECTOR('{query_embedding_str}', 'FLOAT')) AS similarity_score 
             FROM RAG.SourceDocuments_V2 
             WHERE document_embedding_vector IS NOT NULL 
             ORDER BY similarity_score DESC
@@ -117,10 +117,10 @@ def main():
     try:
         sql = """
             SELECT doc_id, text_content, 
-            VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) AS similarity_score 
+            VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT')) AS similarity_score 
             FROM RAG.SourceDocuments_V2 
             WHERE document_embedding_vector IS NOT NULL 
-            AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'DOUBLE')) > ?
+            AND VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, 'FLOAT')) > ?
             ORDER BY similarity_score DESC
         """
         cursor.execute(sql, (query_embedding_str, query_embedding_str, 0.1))
