@@ -86,3 +86,30 @@ from pylate import rank, models
 #     queries_embeddings=queries_embeddings,
 #     documents_embeddings=documents_embeddings,
 # )
+
+---
+## Python Integration / SDK Enhancements
+
+### Implement "VectorStore" Interface
+**Date Added:** 2025-06-03
+
+**Context:**
+The `common/vector_store.py` file was an initial stub. There's an opportunity to define and implement a more comprehensive `VectorStore` abstract base class or interface.
+
+**Goal:**
+Create a Pythonic `VectorStore` interface, similar to those found in libraries like LangChain or LlamaIndex, to abstract the interactions with the InterSystems IRIS vector database. This would provide a standardized way for Python applications to:
+- Add documents/embeddings
+- Delete documents/embeddings
+- Search for similar documents
+- Potentially manage metadata and indexes
+
+**Benefits:**
+- Improved code organization and reusability for Python-based RAG components.
+- Easier integration with Python-centric RAG frameworks or for developers familiar with those patterns.
+- Encapsulates IRIS-specific SQL for vector operations, making Python code cleaner.
+
+**Action Items:**
+- Define the `VectorStore` ABC or Protocol with core methods (`add`, `delete`, `search`, etc.).
+- Implement an `IRISVectorStore` class that fulfills this interface, using the `intersystems-iris` DB-API and appropriate SQL (including `TO_VECTOR` and vector functions).
+- Consider methods for managing HNSW indexes or other IRIS-specific vector features if appropriate at this abstraction level.
+- Create unit tests for the `IRISVectorStore` implementation.
