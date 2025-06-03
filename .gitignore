@@ -122,6 +122,15 @@ Thumbs.db
 
 # Log files at the root
 # *.log # General logs are covered by line 48 under "Unit test / coverage reports"
+# Downloaded HTML documentation files
+*.html
+# Generated backup and report files/directories
+migration_backup_*/
+*_report_*.json
+*_report_*.md
+data_migration_report_*.json
+verification_report_*.json
+verification_report_*.md
 
 # Test and Benchmark Output Directories
 test_logs/
