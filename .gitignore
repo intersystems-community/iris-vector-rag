@@ -202,3 +202,5 @@ cleanup_for_git.py
 # Specific files from your project list (already covered by wildcards above but kept for explicitness if desired)
 # ODBC-2025.1.0.223.0-lnxubuntu2404arm64.tar.gz # Covered by *.tar.gz
 # intersystems_irispython-3.2.0-py3-none-any.whl # Covered by *.whl
+
+temp_iris.key
