@@ -132,6 +132,11 @@ migration_backup_*/
 data_migration_report_*.json
 verification_report_*.json
 verification_report_*.md
+# Specific generated JSON reports now in reports/ directory
+reports/complete_rag_fix_results_*.json
+reports/hnsw_validation_*.json
+reports/ragas_*.json
+reports/vector_indexing_investigation_*.json
 
 # Test and Benchmark Output Directories
 test_logs/
