@@ -46,6 +46,7 @@ nosetests.xml
 coverage.xml
 *.cover
 *.log
+hs_err_pid*.log
 .pytest_cache/
 .hypothesis/
 
