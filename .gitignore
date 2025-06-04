@@ -46,6 +46,7 @@ nosetests.xml
 coverage.xml
 *.cover
 *.log
+hs_err_pid*.log
 .pytest_cache/
 .hypothesis/
 
@@ -131,6 +132,11 @@ migration_backup_*/
 data_migration_report_*.json
 verification_report_*.json
 verification_report_*.md
+# Specific generated JSON reports now in reports/ directory
+reports/complete_rag_fix_results_*.json
+reports/hnsw_validation_*.json
+reports/ragas_*.json
+reports/vector_indexing_investigation_*.json
 
 # Test and Benchmark Output Directories
 test_logs/
@@ -196,3 +202,5 @@ cleanup_for_git.py
 # Specific files from your project list (already covered by wildcards above but kept for explicitness if desired)
 # ODBC-2025.1.0.223.0-lnxubuntu2404arm64.tar.gz # Covered by *.tar.gz
 # intersystems_irispython-3.2.0-py3-none-any.whl # Covered by *.whl
+
+temp_iris.key
