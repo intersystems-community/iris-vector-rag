@@ -113,3 +113,31 @@ Create a Pythonic `VectorStore` interface, similar to those found in libraries l
 - Implement an `IRISVectorStore` class that fulfills this interface, using the `intersystems-iris` DB-API and appropriate SQL (including `TO_VECTOR` and vector functions).
 - Consider methods for managing HNSW indexes or other IRIS-specific vector features if appropriate at this abstraction level.
 - Create unit tests for the `IRISVectorStore` implementation.
+
+---
+## Project Organization & Refactoring
+
+### Refactor Generation Paths for Reports and Logs
+**Date Added:** 2025-06-04
+
+**Context:**
+Currently, many scripts and processes generate report files (various `.json`, `.md` formats) and log files (`.log`) directly into the project's root directory. This clutters the top-level workspace. We have moved/are moving existing files to dedicated `reports/` and `logs/` subdirectories.
+
+**Goal:**
+Update all relevant scripts and application components to ensure that:
+1.  Generated report files are consistently output into the `reports/` directory (or appropriate subdirectories within `reports/`).
+2.  Generated log files are consistently output into the `logs/` directory (or appropriate subdirectories within `logs/`).
+
+**Benefits:**
+- Cleaner and more organized top-level project directory.
+- Easier to locate specific reports and logs.
+- Simplifies `.gitignore` patterns for generated artifacts if they are consistently placed.
+
+**Action Items:**
+- Identify all scripts/processes that generate report files currently outputting to the root.
+  - Patterns include: `*_results_*.json`, `*_report_*.md`, `*_validation_*.json`, `ragas_*.json`, etc.
+- Modify these scripts/processes to use `reports/` as their base output path.
+- Identify all scripts/processes that generate log files currently outputting to the root.
+- Modify these scripts/processes to use `logs/` as their base output path.
+- Verify that `.gitignore` correctly handles any generated files within these new locations if they are not meant to be tracked.
+- Update any documentation or run instructions that might reference old output paths.
