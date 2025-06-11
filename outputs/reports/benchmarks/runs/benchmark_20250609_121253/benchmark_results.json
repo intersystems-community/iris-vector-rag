@@ -1,0 +1,36 @@
+{
+  "summary": {
+    "total_techniques": 1,
+    "successful_techniques": 1,
+    "total_queries": 1,
+    "run_date": "2025-06-09T12:12:53.328376"
+  },
+  "results": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "queries_run": 1,
+      "start_time": "2025-06-09T12:12:53.325566",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 1.6720001585781574,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        }
+      ],
+      "metrics": {
+        "p50": 1.7580986022949219,
+        "p95": 1.7580986022949219,
+        "p99": 1.7580986022949219,
+        "throughput_qps": 525.7996740629309
+      },
+      "duration_seconds": 0.001901865005493164,
+      "end_time": "2025-06-09T12:12:53.328086"
+    }
+  }
+}

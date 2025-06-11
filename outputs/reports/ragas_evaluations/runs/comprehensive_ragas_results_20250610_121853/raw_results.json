@@ -1,0 +1,340 @@
+{
+  "timestamp": "20250610_121853",
+  "evaluation_duration": 291.1475238800049,
+  "pipeline_results": {
+    "BasicRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "The context documents provided do not contain any information regarding the effects of metformin on type 2 diabetes. They only include numerical values without any accompanying explanations or details related to the question. Therefore, I cannot provide a comprehensive answer based on the given context.\n\nTo fully answer the question about the effects of metformin on type 2 diabetes, additional information is needed, such as:\n\n1. Mechanism of action of metformin in the body.\n2. Clinical benefits of metformin for blood sugar control.\n3. Potential side effects or risks associated with metformin use.\n4. Comparisons with other diabetes medications.\n5. Long-term outcomes of metformin treatment in patients with type 2 diabetes.\n\nWithout this information, I cannot provide a complete response.",
+        "contexts": [
+          "67",
+          "68",
+          "87",
+          "71",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 10.299740076065063,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "The context documents provided do not contain any information regarding the effects of SGLT2 inhibition on kidney function. They all simply state the number \"73\" without any additional context or details. \n\nTo fully answer the question about how SGLT2 inhibition affects kidney function, the following information would be needed:\n\n1. Mechanism of action of SGLT2 inhibitors and how they influence renal glucose reabsorption.\n2. Clinical studies or data showing the impact of SGLT2 inhibitors on kidney function parameters such as glomerular filtration rate (GFR).\n3. Information on any protective effects SGLT2 inhibitors may have against diabetic kidney disease or other renal conditions.\n4. Potential side effects or adverse effects related to kidney function when using SGLT2 inhibitors.\n\nSince this information is not present in the context documents, a comprehensive answer cannot be provided.",
+        "contexts": [
+          "73",
+          "73",
+          "73",
+          "73",
+          "73"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 5.934870004653931,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "The context documents provided do not contain any information regarding the mechanism of action of GLP-1 receptor agonists. They only include numerical values without any relevant details or explanations related to the question. \n\nTo fully answer the question about the mechanism of action of GLP-1 receptor agonists, additional information is needed, such as:\n\n1. How GLP-1 receptor agonists stimulate insulin secretion in response to meals.\n2. Their role in inhibiting glucagon release.\n3. The effect on gastric emptying and appetite regulation.\n4. Any impact on weight loss or cardiovascular benefits.\n\nWithout this information, a comprehensive answer cannot be provided.",
+        "contexts": [
+          "71",
+          "84",
+          "71",
+          "73",
+          "78"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 3.2881650924682617,
+        "success": true,
+        "error": null
+      }
+    ],
+    "HyDERAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production and increasing insulin sensitivity in peripheral tissues.\n\n2. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a preferred option for overweight or obese patients with type 2 diabetes.\n\n3. **Improving Lipid Profiles**: Metformin can have a positive effect on lipid levels, often leading to reductions in triglycerides and LDL cholesterol.\n\n4. **Cardiovascular Benefits**: Some studies suggest that metformin may reduce the risk of cardiovascular events in patients with type 2 diabetes.\n\n5. **Potential Cancer Risk Reduction**: There is emerging evidence that metformin may have a protective effect against certain types of cancer, although more research is needed in this area.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its efficacy, safety profile, and additional health benefits.",
+        "contexts": [
+          "67",
+          "68",
+          "71",
+          "87",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 31.311693906784058,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 inhibition has been shown to have beneficial effects on kidney function. It reduces hyperglycemia and promotes glycosuria, which can lead to a decrease in intraglomerular pressure and a reduction in the progression of kidney disease. Additionally, SGLT2 inhibitors may improve renal hemodynamics and have protective effects against kidney injury, potentially slowing the decline in kidney function in patients with diabetes and chronic kidney disease.",
+        "contexts": [
+          "73",
+          "71",
+          "73",
+          "68",
+          "80"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 20.156242847442627,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "GLP-1 receptor agonists work by mimicking the action of the glucagon-like peptide-1 (GLP-1), a hormone that is involved in glucose metabolism. Their mechanism of action includes:\n\n1. **Stimulating Insulin Secretion**: They enhance glucose-dependent insulin secretion from the pancreas, meaning they promote insulin release when blood sugar levels are elevated.\n\n2. **Inhibiting Glucagon Secretion**: GLP-1 receptor agonists reduce the secretion of glucagon, a hormone that raises blood sugar levels, thereby helping to lower blood glucose.\n\n3. **Slowing Gastric Emptying**: They slow down the rate at which food leaves the stomach, which helps to reduce postprandial (after meal) blood sugar spikes.\n\n4. **Promoting Satiety**: These agonists can increase feelings of fullness, which may help reduce food intake and support weight loss.\n\nOverall, GLP-1 receptor agonists are used primarily in the treatment of type 2 diabetes and can also aid in weight management.",
+        "contexts": [
+          "71",
+          "68",
+          "67",
+          "84",
+          "65"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 20.149581909179688,
+        "success": true,
+        "error": null
+      }
+    ],
+    "CRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Error: name '_convert_clob_to_string' is not defined",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0,
+        "success": false,
+        "error": "name '_convert_clob_to_string' is not defined"
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "Error: name '_convert_clob_to_string' is not defined",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0,
+        "success": false,
+        "error": "name '_convert_clob_to_string' is not defined"
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "Error: name '_convert_clob_to_string' is not defined",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0,
+        "success": false,
+        "error": "name '_convert_clob_to_string' is not defined"
+      }
+    ],
+    "ColBERTRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.056514739990234375,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.020331144332885742,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.01982593536376953,
+        "success": true,
+        "error": null
+      }
+    ],
+    "NodeRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.026463985443115234,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.017714977264404297,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.018268108367919922,
+        "success": true,
+        "error": null
+      }
+    ],
+    "GraphRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a commonly prescribed medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly in the liver.\n\n2. **Improving Insulin Sensitivity**: It enhances the sensitivity of muscle cells to insulin, which helps the body use glucose more effectively.\n\n3. **Reducing Absorption of Glucose**: Metformin can decrease the absorption of glucose from the gastrointestinal tract, which contributes to lower blood sugar levels.\n\n4. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a favorable option for overweight individuals with type 2 diabetes.\n\n5. **Cardiovascular Benefits**: Some studies suggest that metformin may have cardiovascular benefits, reducing the risk of heart disease in people with type 2 diabetes.\n\n6. **Potential Cancer Risk Reduction**: There is ongoing research into the potential of metformin to reduce the risk of certain types of cancer, although more evidence is needed in this area.\n\nOverall, metformin is an effective first-line treatment for managing type 2 diabetes, helping to control blood sugar levels and improve overall metabolic health.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@279ad2e3",
+          "com.intersystems.jdbc.IRISInputStream@4450d156",
+          "com.intersystems.jdbc.IRISInputStream@351d0846",
+          "com.intersystems.jdbc.IRISInputStream@35fc6dc4",
+          "com.intersystems.jdbc.IRISInputStream@226a82c4"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 5.23777174949646,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 (Sodium-Glucose Cotransporter 2) inhibition has several effects on kidney function, primarily beneficial in the context of diabetes and chronic kidney disease. Here are the key effects:\n\n1. **Glucose Excretion**: SGLT2 inhibitors promote the excretion of glucose in the urine, which helps lower blood glucose levels. This is particularly beneficial for patients with type 2 diabetes.\n\n2. **Diuretic Effect**: By inhibiting glucose reabsorption in the proximal tubule of the nephron, SGLT2 inhibitors also lead to osmotic diuresis, resulting in increased urine output. This can help reduce fluid overload in patients with heart failure or chronic kidney disease.\n\n3. **Renal Hemodynamics**: SGLT2 inhibitors can improve renal hemodynamics by reducing intraglomerular pressure. This is thought to be due to the reduction in sodium reabsorption, which leads to a decrease in the workload of the kidneys.\n\n4. **Cardiorenal Protection**: These medications have been shown to provide protective effects on the kidneys and heart, reducing the risk of progression of kidney disease and cardiovascular events in patients with diabetes and chronic kidney disease.\n\n5. **Reduction in Albuminuria**: SGLT2 inhibitors can also lead to a reduction in albuminuria, which is a marker of kidney damage. This is beneficial for preserving kidney function over time.\n\nOverall, SGLT2 inhibitors have a multifaceted impact on kidney function, contributing to improved glycemic control, reduced fluid overload, and protective effects against kidney damage.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@255b53dc",
+          "com.intersystems.jdbc.IRISInputStream@6b53e23f",
+          "com.intersystems.jdbc.IRISInputStream@1b68b9a4",
+          "com.intersystems.jdbc.IRISInputStream@3b2c72c2",
+          "com.intersystems.jdbc.IRISInputStream@176d53b2"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 5.478554725646973,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "GLP-1 receptor agonists work by mimicking the action of the glucagon-like peptide-1 (GLP-1), a hormone that is involved in glucose metabolism. Their mechanism of action includes the following key effects:\n\n1. **Stimulating Insulin Secretion**: GLP-1 receptor agonists enhance insulin secretion from the pancreas in response to elevated blood glucose levels. This helps lower blood sugar levels after meals.\n\n2. **Inhibiting Glucagon Secretion**: They reduce the secretion of glucagon, a hormone that raises blood glucose levels, thereby contributing to lower blood sugar levels.\n\n3. **Slowing Gastric Emptying**: These medications slow down the rate at which food leaves the stomach, which helps to reduce postprandial (after meal) blood sugar spikes.\n\n4. **Promoting Satiety**: GLP-1 receptor agonists increase feelings of fullness, which can help reduce food intake and support weight loss.\n\nOverall, GLP-1 receptor agonists are used primarily in the treatment of type 2 diabetes and can also aid in weight management.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@51931956",
+          "com.intersystems.jdbc.IRISInputStream@564718df",
+          "com.intersystems.jdbc.IRISInputStream@18a70f16",
+          "com.intersystems.jdbc.IRISInputStream@c8e4bb0",
+          "com.intersystems.jdbc.IRISInputStream@4206a205"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 4.742449998855591,
+        "success": true,
+        "error": null
+      }
+    ],
+    "HybridIFindRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly in the liver, and improving insulin sensitivity in peripheral tissues.\n\n2. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight neutrality or modest weight loss, making it a preferred option for overweight or obese patients with type 2 diabetes.\n\n3. **Cardiovascular Benefits**: Studies suggest that metformin may have cardiovascular benefits, reducing the risk of heart disease in patients with type 2 diabetes.\n\n4. **Improving Lipid Profiles**: Metformin can help improve lipid levels, including lowering triglycerides and LDL cholesterol, which are important for overall cardiovascular health.\n\n5. **Potential Cancer Risk Reduction**: Some research indicates that metformin may have a protective effect against certain types of cancer, although more studies are needed to confirm this.\n\n6. **Gastrointestinal Side Effects**: Common side effects of metformin include gastrointestinal issues such as nausea, diarrhea, and abdominal discomfort, especially when starting the medication or increasing the dose.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its efficacy, safety profile, and additional health benefits.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@57175e74",
+          "com.intersystems.jdbc.IRISInputStream@c540f5a",
+          "com.intersystems.jdbc.IRISInputStream@1a052a00",
+          "com.intersystems.jdbc.IRISInputStream@61009542",
+          "com.intersystems.jdbc.IRISInputStream@448ff1a8"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 4.195489168167114,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 (Sodium-Glucose Cotransporter 2) inhibition has several effects on kidney function, primarily beneficial in the context of diabetes and chronic kidney disease. Here are the key points regarding its impact:\n\n1. **Glucose Excretion**: SGLT2 inhibitors promote the excretion of glucose in the urine, which helps lower blood glucose levels. This is particularly beneficial for patients with type 2 diabetes.\n\n2. **Diuretic Effect**: By inhibiting SGLT2, these medications also have a mild diuretic effect, leading to increased urine output. This can help reduce fluid overload and lower blood pressure, which is advantageous for kidney health.\n\n3. **Renal Hemodynamics**: SGLT2 inhibitors can improve renal hemodynamics by reducing intraglomerular pressure. This is achieved through the reduction of sodium reabsorption in the proximal tubule, leading to a decrease in hyperfiltration, which is often seen in diabetic nephropathy.\n\n4. **Cardiorenal Protection**: Clinical studies have shown that SGLT2 inhibitors can provide cardiorenal protection, reducing the risk of progression of kidney disease and cardiovascular events in patients with diabetes and chronic kidney disease.\n\n5. **Reduction of Albuminuria**: These inhibitors have been associated with a reduction in albuminuria (the presence of albumin in urine), which is a marker of kidney damage.\n\nOverall, SGLT2 inhibition is considered a promising therapeutic approach for improving kidney function and protecting against the progression of kidney disease, particularly in diabetic patients.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@7f77e91b",
+          "com.intersystems.jdbc.IRISInputStream@7f9fcf7f",
+          "com.intersystems.jdbc.IRISInputStream@6328d34a",
+          "com.intersystems.jdbc.IRISInputStream@15bb6bea",
+          "com.intersystems.jdbc.IRISInputStream@2d2e5f00"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 5.582675218582153,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "GLP-1 receptor agonists are a class of medications that mimic the action of the glucagon-like peptide-1 (GLP-1), a hormone that plays a key role in glucose metabolism. Their mechanism of action includes the following key effects:\n\n1. **Stimulating Insulin Secretion**: GLP-1 receptor agonists enhance the secretion of insulin from the pancreas in response to meals, which helps lower blood glucose levels.\n\n2. **Inhibiting Glucagon Release**: They reduce the secretion of glucagon, a hormone that raises blood glucose levels, thereby contributing to better glycemic control.\n\n3. **Slowing Gastric Emptying**: These medications slow down the rate at which food leaves the stomach, which helps to reduce postprandial (after meal) blood sugar spikes.\n\n4. **Promoting Satiety**: GLP-1 receptor agonists increase feelings of fullness, which can lead to reduced food intake and weight loss, an important benefit for many patients with type 2 diabetes.\n\n5. **Cardiovascular Benefits**: Some GLP-1 receptor agonists have been shown to have cardiovascular protective effects, reducing the risk of major adverse cardiovascular events in patients with type 2 diabetes.\n\nOverall, GLP-1 receptor agonists help improve glycemic control and can aid in weight management, making them a valuable option in the treatment of type 2 diabetes.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@2ea6137",
+          "com.intersystems.jdbc.IRISInputStream@1e67a849",
+          "com.intersystems.jdbc.IRISInputStream@667a738",
+          "com.intersystems.jdbc.IRISInputStream@157632c9",
+          "com.intersystems.jdbc.IRISInputStream@55040f2f"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 7.336993217468262,
+        "success": true,
+        "error": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "BasicRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.8518518518518517,
+      "answer_similarity": null,
+      "answer_correctness": 0.31115921244835926
+    },
+    "HyDERAG": {
+      "answer_relevancy": 0.8903629135094272,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.7541608575564459
+    },
+    "CRAG": {
+      "error": "No successful results",
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "faithfulness": null,
+      "answer_similarity": null,
+      "answer_correctness": null
+    },
+    "ColBERTRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.02159854968818167
+    },
+    "NodeRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.017549777504593893
+    },
+    "GraphRAG": {
+      "answer_relevancy": 0.8903821794588476,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.3333333333333333,
+      "answer_similarity": null,
+      "answer_correctness": 0.47885402538425764
+    },
+    "HybridIFindRAG": {
+      "answer_relevancy": 0.8739336338860321,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.3333333333333333,
+      "answer_similarity": null,
+      "answer_correctness": 0.44526324885814295
+    }
+  }
+}

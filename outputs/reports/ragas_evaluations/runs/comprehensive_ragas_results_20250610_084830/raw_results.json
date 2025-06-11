@@ -1,0 +1,240 @@
+{
+  "timestamp": "20250610_084830",
+  "evaluation_duration": 781.5019979476929,
+  "pipeline_results": {
+    "BasicRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "[Document(page_content='67', metadata={}, id='2297'), Document(page_content='68', metadata={}, id='2458'), Document(page_content='87', metadata={}, id='3292'), Document(page_content='71', metadata={}, id='2915'), Document(page_content='76', metadata={}, id='2674')]",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.18691396713256836,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "[Document(page_content='73', metadata={}, id='2624'), Document(page_content='73', metadata={}, id='2914'), Document(page_content='73', metadata={}, id='2759'), Document(page_content='73', metadata={}, id='3201'), Document(page_content='73', metadata={}, id='2875')]",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.059217214584350586,
+        "success": true,
+        "error": null
+      }
+    ],
+    "HyDERAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly in the liver.\n\n2. **Improving Insulin Sensitivity**: It enhances the sensitivity of muscle cells to insulin, which helps the body use glucose more effectively.\n\n3. **Reducing Absorption of Glucose**: Metformin can decrease the absorption of glucose from the gastrointestinal tract, contributing to lower blood sugar levels.\n\n4. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a favorable option for overweight individuals with type 2 diabetes.\n\n5. **Cardiovascular Benefits**: Some studies suggest that metformin may have cardiovascular benefits, reducing the risk of heart disease in people with type 2 diabetes.\n\n6. **Potential Cancer Risk Reduction**: There is ongoing research into the potential role of metformin in reducing the risk of certain types of cancer, although more evidence is needed.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its effectiveness, safety profile, and additional health benefits.",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 57.058513879776,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 (sodium-glucose co-transporter 2) inhibition has several effects on kidney function, primarily beneficial in the context of diabetes and heart failure. Here are the key points regarding its impact:\n\n1. **Glucose Excretion**: SGLT2 inhibitors promote the excretion of glucose in the urine, which helps lower blood glucose levels. This is particularly beneficial for patients with type 2 diabetes.\n\n2. **Diuretic Effect**: By inhibiting glucose reabsorption in the proximal tubule of the kidney, SGLT2 inhibitors also lead to osmotic diuresis, resulting in increased urine output. This can help reduce fluid overload in patients with heart failure or chronic kidney disease.\n\n3. **Renal Protection**: SGLT2 inhibitors have been shown to provide renal protective effects. They can reduce the progression of kidney disease by lowering intraglomerular pressure and reducing hyperfiltration, which is often seen in diabetic nephropathy.\n\n4. **Reduction in Albuminuria**: These medications can decrease albuminuria (the presence of albumin in urine), which is a marker of kidney damage. This reduction is associated with improved kidney outcomes.\n\n5. **Cardiovascular Benefits**: SGLT2 inhibitors also have cardiovascular benefits, which indirectly support kidney function by reducing the risk of heart failure and other cardiovascular events that can adversely affect kidney health.\n\nOverall, SGLT2 inhibition is associated with improved kidney function and outcomes, particularly in patients with diabetes and those at risk for cardiovascular diseases.",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 51.652263879776,
+        "success": true,
+        "error": null
+      }
+    ],
+    "CRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "[Document(page_content='67', metadata={'similarity_score': 0.6785211563110352, 'retrieval_method': 'initial_vector_similarity'}, id='sample'), Document(page_content='68', metadata={'similarity_score': 0.5278230309486389, 'retrieval_method': 'initial_vector_similarity'}, id='PMC1748704577'), Document(page_content='87', metadata={'similarity_score': 0.4415596127510071, 'retrieval_method': 'initial_vector_similarity'}, id='PMC11650328'), Document(page_content='71', metadata={'similarity_score': 0.43702104687690735, 'retrieval_method': 'initial_vector_similarity'}, id='PMC11630531'), Document(page_content='76', metadata={'similarity_score': 0.43200013041496277, 'retrieval_method': 'initial_vector_similarity'}, id='PMC11651687')]",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.15691375732421875,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "[Document(page_content='73', metadata={'similarity_score': 0.537039041519165, 'retrieval_method': 'initial_vector_similarity'}, id='PMC1748704682')]",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.029211044311523438,
+        "success": true,
+        "error": null
+      }
+    ],
+    "ColBERTRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "[]",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.05565690994262695,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "[]",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.027039051055908203,
+        "success": true,
+        "error": null
+      }
+    ],
+    "NodeRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "[]",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.0403900146484375,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "[]",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.02577495574951172,
+        "success": true,
+        "error": null
+      }
+    ],
+    "GraphRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production and increasing insulin sensitivity in peripheral tissues.\n\n2. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a preferred option for overweight or obese patients with type 2 diabetes.\n\n3. **Improving Lipid Profiles**: Metformin can lead to improvements in lipid levels, including reductions in triglycerides and LDL cholesterol, which are beneficial for cardiovascular health.\n\n4. **Reducing the Risk of Complications**: Long-term use of metformin has been associated with a reduced risk of diabetes-related complications, such as cardiovascular disease.\n\n5. **Potential Benefits Beyond Diabetes**: Some studies suggest that metformin may have additional benefits, such as potential anti-cancer effects and improvements in polycystic ovary syndrome (PCOS).\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its efficacy, safety profile, and additional health benefits.",
+        "contexts": [
+          "67",
+          "68",
+          "87",
+          "71",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 13.843112230300903,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 inhibition has been shown to have beneficial effects on kidney function. It primarily works by reducing glucose reabsorption in the kidneys, leading to increased glucose excretion and a reduction in blood glucose levels. This mechanism not only helps in managing diabetes but also has protective effects on the kidneys.\n\nStudies indicate that SGLT2 inhibitors can lead to improvements in kidney outcomes, including a reduction in the progression of chronic kidney disease (CKD) and a decrease in the risk of kidney failure. They may also help in reducing albuminuria, which is a marker of kidney damage. Additionally, SGLT2 inhibitors can promote diuresis, leading to a reduction in intraglomerular pressure, which can further protect kidney function.\n\nOverall, SGLT2 inhibition is associated with improved kidney function and reduced risk of adverse kidney-related outcomes in patients with diabetes and other kidney conditions.",
+        "contexts": [
+          "73",
+          "73",
+          "73",
+          "73",
+          "80"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 20.245188236236572,
+        "success": true,
+        "error": null
+      }
+    ],
+    "HybridIFindRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly in the liver, and improving insulin sensitivity in peripheral tissues.\n\n2. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight neutrality or modest weight loss, making it a preferred option for overweight or obese patients with type 2 diabetes.\n\n3. **Improving Lipid Profiles**: Metformin can lead to improvements in lipid levels, including reductions in triglycerides and LDL cholesterol, which can help reduce cardiovascular risk.\n\n4. **Potential Cardiovascular Benefits**: Some studies suggest that metformin may have cardiovascular protective effects, reducing the risk of heart disease in patients with type 2 diabetes.\n\n5. **Gastrointestinal Side Effects**: Common side effects of metformin include gastrointestinal issues such as nausea, diarrhea, and abdominal discomfort, especially when starting the medication or increasing the dose.\n\n6. **Risk of Lactic Acidosis**: Although rare, there is a risk of lactic acidosis, a serious condition that can occur in patients with significant renal impairment or other contraindications.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its efficacy, safety profile, and additional health benefits.",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 29.214110851287842,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 (Sodium-Glucose Cotransporter 2) inhibition has several effects on kidney function, primarily beneficial in the context of diabetes and chronic kidney disease. Here are the key points regarding its impact:\n\n1. **Glucose Excretion**: SGLT2 inhibitors promote the excretion of glucose in the urine, which helps lower blood glucose levels. This mechanism reduces the risk of hyperglycemia and its associated complications.\n\n2. **Diuretic Effect**: By inhibiting SGLT2, these medications also have a mild diuretic effect, leading to increased urine output. This can help reduce fluid overload, which is beneficial for patients with heart failure or chronic kidney disease.\n\n3. **Renal Hemodynamics**: SGLT2 inhibitors can improve renal hemodynamics by reducing intraglomerular pressure. This is achieved through a reduction in sodium reabsorption in the proximal tubule, which can lead to improved kidney function over time.\n\n4. **Cardiorenal Protection**: Clinical studies have shown that SGLT2 inhibitors provide cardiorenal protection, reducing the risk of progression of kidney disease and cardiovascular events in patients with type 2 diabetes and chronic kidney disease.\n\n5. **Reduction in Albuminuria**: These inhibitors have been associated with a reduction in albuminuria (the presence of albumin in urine), which is a marker of kidney damage. Lowering albuminuria is a positive indicator of kidney health.\n\n6. **Potential for Slowing Disease Progression**: By addressing factors such as hyperglycemia, hypertension, and albuminuria, SGLT2 inhibitors may slow the progression of kidney disease and improve overall kidney function.\n\nIn summary, SGLT2 inhibition positively affects kidney function by promoting glucose excretion, enhancing diuresis, improving renal hemodynamics, providing cardiorenal protection, and reducing albuminuria, ultimately contributing to better kidney health in at-risk populations.",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 34.0330650806427,
+        "success": true,
+        "error": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "BasicRAG": {
+      "answer_relevancy": 0.08957857110740573,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.014471739643156619
+    },
+    "HyDERAG": {
+      "answer_relevancy": 0.9124874215484189,
+      "context_precision": NaN,
+      "context_recall": NaN,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": NaN
+    },
+    "CRAG": {
+      "answer_relevancy": 0.03815056050285957,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": 0.01869530427811365
+    },
+    "ColBERTRAG": {
+      "answer_relevancy": NaN,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": NaN
+    },
+    "NodeRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": 0.014901710322806266
+    },
+    "GraphRAG": {
+      "answer_relevancy": 0.9124933468545922,
+      "context_precision": NaN,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.44534528295985953
+    },
+    "HybridIFindRAG": {
+      "answer_relevancy": 0.9074661645915633,
+      "context_precision": NaN,
+      "context_recall": 0.0,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": NaN
+    }
+  }
+}

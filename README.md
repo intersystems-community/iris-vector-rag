@@ -24,14 +24,10 @@ print(result["answer"])
 | [📖 User Guide](docs/USER_GUIDE.md) | Installation, configuration, and usage |
 | [🔧 API Reference](docs/API_REFERENCE.md) | Complete API documentation |
 | [🏗️ Developer Guide](docs/DEVELOPER_GUIDE.md) | Architecture and development |
-| [⚙️ Dynamic Pipeline System](docs/DYNAMIC_PIPELINE_SYSTEM.md) | Config-driven pipeline loading and custom pipeline development |
-| [🧪 Testing Guide](docs/TESTING.md) | Testing strategies and execution |
-| [🎯 TDD+RAGAS Integration](docs/TDD_RAGAS_INTEGRATION.md) | Performance testing with RAGAS quality metrics |
-| [💾 LLM Caching Guide](docs/LLM_CACHING_GUIDE.md) | Intelligent LLM response caching with IRIS backend |
-| [🔄 Migration Guide](docs/MIGRATION_GUIDE.md) | Migrate from existing implementations |
-| [🛡️ Security Guide](docs/SECURITY_GUIDE.md) | Production security best practices |
-| [⚡ Performance Guide](docs/PERFORMANCE_GUIDE.md) | Optimization recommendations |
-| [🔍 Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and solutions |
+| [⚙️ Configuration Guide](docs/CONFIGURATION.md) | Configuration, CLI usage, and reconciliation framework |
+| [🛡️ Security Guide](docs/guides/SECURITY_GUIDE.md) | Production security best practices |
+| [⚡ Performance Guide](docs/guides/PERFORMANCE_GUIDE.md) | Optimization recommendations |
+| [🚀 Deployment Guide](docs/guides/DEPLOYMENT_GUIDE.md) | Deployment strategies and best practices |
 
 ## ✨ Features
 
@@ -57,7 +53,7 @@ print(result["answer"])
 - **Fallback Support**: Graceful degradation when services are unavailable
 - **Monitoring**: Built-in performance metrics and health checks
 - **Benchmarking**: RAGAS integration for quality assessment
-- **🛡️ Data Integrity & Self-Healing**: Automated system to ensure 100% data readiness for all RAG tables using `make heal-data` and related targets. See [`docs/SELF_HEALING_SYSTEM.md`](docs/SELF_HEALING_SYSTEM.md) for details.
+- **🛡️ Data Integrity & Reconciliation**: Comprehensive Desired-State Reconciliation architecture that provides automatic data integrity management, schema validation, and state healing capabilities across all RAG pipelines. See [`COMPREHENSIVE_GENERALIZED_RECONCILIATION_DESIGN.md`](COMPREHENSIVE_GENERALIZED_RECONCILIATION_DESIGN.md) for the complete architectural design.
 
 ## 🏗️ Architecture
 
@@ -122,7 +118,7 @@ pip install -e ".[dev]"
 ```
 
 ### IPM Installation Guide
-For detailed IPM installation instructions, see [IPM Installation Guide](docs/IPM_INSTALLATION.md).
+For detailed configuration and setup instructions, see the [Configuration Guide](docs/CONFIGURATION.md).
 
 ## ⚡ Quick Examples
 
@@ -317,17 +313,17 @@ all_pipelines = {name: pipeline_registry.get_pipeline(name)
 
 ### Evaluation with Dynamic Pipelines
 
-The evaluation script [`eval/execute_comprehensive_ragas_evaluation.py`](eval/execute_comprehensive_ragas_evaluation.py) supports dynamic pipeline selection:
+The evaluation script [`scripts/evaluation/execute_comprehensive_ragas_evaluation.py`](scripts/evaluation/execute_comprehensive_ragas_evaluation.py) supports dynamic pipeline selection:
 
 ```bash
 # Evaluate all enabled pipelines from config/pipelines.yaml
-python eval/execute_comprehensive_ragas_evaluation.py --pipelines ALL
+python scripts/evaluation/execute_comprehensive_ragas_evaluation.py --pipelines ALL
 
 # Evaluate specific pipelines by name (defined in config/pipelines.yaml)
-python eval/execute_comprehensive_ragas_evaluation.py --pipelines BasicRAG ColBERTRAG
+python scripts/evaluation/execute_comprehensive_ragas_evaluation.py --pipelines BasicRAG ColBERTRAG
 
 # Evaluate with custom number of queries
-python eval/execute_comprehensive_ragas_evaluation.py --pipelines BasicRAG --num-queries 10
+python scripts/evaluation/execute_comprehensive_ragas_evaluation.py --pipelines BasicRAG --num-queries 10
 ```
 
 The `--pipelines` argument accepts:
@@ -462,7 +458,7 @@ manager.clear_cache()
 - **Scalability**: Persistent cache survives application restarts
 - **Analytics**: Track usage patterns and optimize cache configuration
 
-For detailed configuration and usage examples, see the [LLM Caching Guide](docs/LLM_CACHING_GUIDE.md).
+For detailed configuration and usage examples, see the [Configuration Guide](docs/CONFIGURATION.md).
 
 ## 🧪 Testing
 

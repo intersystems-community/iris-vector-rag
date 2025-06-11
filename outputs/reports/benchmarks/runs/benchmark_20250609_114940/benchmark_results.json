@@ -1,0 +1,1690 @@
+{
+  "summary": {
+    "total_techniques": 6,
+    "successful_techniques": 6,
+    "total_queries": 10,
+    "run_date": "2025-06-09T11:50:02.555834"
+  },
+  "results": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:49:44.432325",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 29.93004210293293,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11630810",
+              "content": 73,
+              "score": 0.12616516649723053,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@3d3fcdb0"
+              }
+            },
+            {
+              "id": "PMC11649800",
+              "content": 82,
+              "score": 0.11797505617141724,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@641147d0"
+              }
+            },
+            {
+              "id": "PMC11646098",
+              "content": 77,
+              "score": 0.10593836009502411,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6e38921c"
+              }
+            },
+            {
+              "id": "PMC11649419",
+              "content": 84,
+              "score": 0.1018485352396965,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@64d7f7e0"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 4
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 15.71495900861919,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649621",
+              "content": 84,
+              "score": 0.1556006371974945,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@27c6e487"
+              }
+            },
+            {
+              "id": "PMC11651898",
+              "content": 72,
+              "score": 0.15220507979393005,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@49070868"
+              }
+            },
+            {
+              "id": "sample",
+              "content": 67,
+              "score": 0.12958252429962158,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6385cb26"
+              }
+            },
+            {
+              "id": "PMC1748704713",
+              "content": 80,
+              "score": 0.1277724653482437,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@38364841"
+              }
+            },
+            {
+              "id": "PMC11651640",
+              "content": 84,
+              "score": 0.11296195536851883,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@28c4711c"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 12.09512515924871,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11619851",
+              "content": 84,
+              "score": 0.17195047438144684,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@59717824"
+              }
+            },
+            {
+              "id": "PMC11650841",
+              "content": 84,
+              "score": 0.1425185203552246,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@146044d7"
+              }
+            },
+            {
+              "id": "PMC1748704855",
+              "content": 73,
+              "score": 0.14139379560947418,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@1e9e725a"
+              }
+            },
+            {
+              "id": "PMC11649915",
+              "content": 72,
+              "score": 0.13761155307292938,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@15d9bc04"
+              }
+            },
+            {
+              "id": "PMC1748704568",
+              "content": 84,
+              "score": 0.13311532139778137,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@473b46c3"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 10.147250024601817,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649732",
+              "content": 65,
+              "score": 0.15507154166698456,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@516be40f"
+              }
+            },
+            {
+              "id": "PMC11650459",
+              "content": 65,
+              "score": 0.15289857983589172,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@3c0a50da"
+              }
+            },
+            {
+              "id": "PMC11649579",
+              "content": 77,
+              "score": 0.15191979706287384,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@646be2c3"
+              }
+            },
+            {
+              "id": "PMC1748704534",
+              "content": 65,
+              "score": 0.14583618938922882,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@797badd3"
+              }
+            },
+            {
+              "id": "PMC11651494",
+              "content": 67,
+              "score": 0.13845199346542358,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@77be656f"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 16.88849995844066,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649395",
+              "content": 70,
+              "score": 0.16680099070072174,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@19dc67c2"
+              }
+            },
+            {
+              "id": "PMC11650407",
+              "content": 73,
+              "score": 0.14973044395446777,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@221af3c0"
+              }
+            },
+            {
+              "id": "PMC1748215533",
+              "content": 65,
+              "score": 0.14056195318698883,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@62bd765"
+              }
+            },
+            {
+              "id": "PMC11650955",
+              "content": 70,
+              "score": 0.13351751863956451,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@23a5fd2"
+              }
+            },
+            {
+              "id": "PMC11651685",
+              "content": 80,
+              "score": 0.13264794647693634,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@78a2da20"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 13.3152911439538,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649383",
+              "content": 84,
+              "score": 0.1730283498764038,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@dd3b207"
+              }
+            },
+            {
+              "id": "PMC11650512",
+              "content": 87,
+              "score": 0.1712893396615982,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@551bdc27"
+              }
+            },
+            {
+              "id": "PMC11736521_gen_109",
+              "content": 71,
+              "score": 0.15249766409397125,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@58fdd99"
+              }
+            },
+            {
+              "id": "PMC1748215585",
+              "content": 66,
+              "score": 0.1488344967365265,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6b1274d2"
+              }
+            },
+            {
+              "id": "PMC1748704860",
+              "content": 87,
+              "score": 0.1481722593307495,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@7bc1a03d"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 11.2162078730762,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11752429_gen_17",
+              "content": 65,
+              "score": 0.1687735766172409,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@70b0b186"
+              }
+            },
+            {
+              "id": "PMC11650017",
+              "content": 67,
+              "score": 0.15517213940620422,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@ba8d91c"
+              }
+            },
+            {
+              "id": "PMC1748704518",
+              "content": 80,
+              "score": 0.15279263257980347,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@7364985f"
+              }
+            },
+            {
+              "id": "PMC11650371",
+              "content": 83,
+              "score": 0.15177211165428162,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@5d20e46"
+              }
+            },
+            {
+              "id": "PMC11651640",
+              "content": 84,
+              "score": 0.14460207521915436,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@709ba3fb"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 8.01375019364059,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650366",
+              "content": 67,
+              "score": 0.17384594678878784,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@3d36e4cd"
+              }
+            },
+            {
+              "id": "PMC1748704552",
+              "content": 73,
+              "score": 0.14644944667816162,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6a472554"
+              }
+            },
+            {
+              "id": "PMC11752436_gen_59",
+              "content": -1,
+              "score": 0.14358249306678772,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@7ff2a664"
+              }
+            },
+            {
+              "id": "PMC11718561_gen_158",
+              "content": -1,
+              "score": 0.14358249306678772,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@525b461a"
+              }
+            },
+            {
+              "id": "PMC11752433_gen_15",
+              "content": -1,
+              "score": 0.14358249306678772,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@58c1c010"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 8.609582902863622,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649783",
+              "content": 77,
+              "score": 0.15361334383487701,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@b7f23d9"
+              }
+            },
+            {
+              "id": "PMC11651898",
+              "content": 72,
+              "score": 0.1530500054359436,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@61d47554"
+              }
+            },
+            {
+              "id": "PMC1748704753",
+              "content": 68,
+              "score": 0.1504640430212021,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@69b794e2"
+              }
+            },
+            {
+              "id": "PMC11651592",
+              "content": 68,
+              "score": 0.1393946260213852,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@3f200884"
+              }
+            },
+            {
+              "id": "PMC11650820",
+              "content": 83,
+              "score": 0.11856681108474731,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@4d339552"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 8.216208079829812,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649384",
+              "content": 65,
+              "score": 0.185848668217659,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@f0f2775"
+              }
+            },
+            {
+              "id": "PMC11577572",
+              "content": 84,
+              "score": 0.16458067297935486,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@5a4aa2f2"
+              }
+            },
+            {
+              "id": "PMC11650203",
+              "content": 65,
+              "score": 0.16289372742176056,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6591f517"
+              }
+            },
+            {
+              "id": "PMC11649902",
+              "content": 70,
+              "score": 0.14612463116645813,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@345965f2"
+              }
+            },
+            {
+              "id": "PMC11651697",
+              "content": 66,
+              "score": 0.14133521914482117,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@429bd883"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        }
+      ],
+      "metrics": {
+        "p50": 11.696577072143555,
+        "p95": 24.110531806945787,
+        "p99": 28.819031715393066,
+        "throughput_qps": 74.07290194970331
+      },
+      "duration_seconds": 0.13500213623046875,
+      "end_time": "2025-06-09T11:49:44.568000"
+    },
+    "hyde": {
+      "pipeline": "hyde",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:49:44.568116",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 10.040332796052098,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@4d49af10"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@279ad2e3"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@58134517"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@4450d156"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@4461c7e3"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@351d0846"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@77e4c80f"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@35fc6dc4"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@7fe8ea47"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@226a82c4"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 9.641750017181039,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@731f8236"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@255b53dc"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@1dd92fe2"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@6b53e23f"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@64d2d351"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@1b68b9a4"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@4f9a3314"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@3b2c72c2"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@491666ad"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@176d53b2"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 9.561415994539857,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@971d0d8"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@51931956"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@2b4a2ec7"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@564718df"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@51b7e5df"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@18a70f16"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@62e136d3"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@c8e4bb0"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@6279cee3"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@4206a205"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 9.265416068956256,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@29ba4338"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@57175e74"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@7bb58ca3"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@c540f5a"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@770c2e6b"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@1a052a00"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@4d826d77"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@61009542"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@77e9807f"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@448ff1a8"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 8.533000014722347,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@1a38c59b"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@7f77e91b"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@44a664f2"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@7f9fcf7f"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@2357d90a"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@6328d34a"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@145eaa29"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@15bb6bea"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@8b96fde"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@2d2e5f00"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 8.265375159680843,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@4c40b76e"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@2ea6137"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@41ee392b"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@1e67a849"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@57d5872c"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@667a738"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@36f0f1be"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@157632c9"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@6ee12bac"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@55040f2f"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 8.766333805397153,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@64c87930"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@400cff1a"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@275710fc"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@525f1e4e"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@75f9eccc"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@52aa2946"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@4de5031f"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@67e2d983"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@5d47c63f"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@5ea434c8"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 8.222957840189338,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@3bbc39f8"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@4ae3c1cd"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@29f69090"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@568bf312"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@ca263c2"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@589b3632"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@45f45fa1"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@4c6e276e"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@534df152"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@52e677af"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 9.306249907240272,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@35083305"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@8e0379d"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@341b80b2"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@55a1c291"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@2145433b"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@2890c451"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@40e6dfe1"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@1b083826"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@105fece7"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@3ec300f1"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 8.130582980811596,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650148",
+              "content": "84",
+              "score": 0.15865285694599152,
+              "title": "com.intersystems.jdbc.IRISInputStream@482cd91f"
+            },
+            {
+              "id": "PMC11650149",
+              "content": "89",
+              "score": 0.149848073720932,
+              "title": "com.intersystems.jdbc.IRISInputStream@123f1134"
+            },
+            {
+              "id": "PMC11651904",
+              "content": "73",
+              "score": 0.14411044120788574,
+              "title": "com.intersystems.jdbc.IRISInputStream@7d68ef40"
+            },
+            {
+              "id": "PMC11649633",
+              "content": "84",
+              "score": 0.14258936047554016,
+              "title": "com.intersystems.jdbc.IRISInputStream@5b0abc94"
+            },
+            {
+              "id": "PMC11651888",
+              "content": "79",
+              "score": 0.13510148227214813,
+              "title": "com.intersystems.jdbc.IRISInputStream@75c072cb"
+            },
+            {
+              "id": "PMC11650212",
+              "content": "68",
+              "score": 0.12453989684581757,
+              "title": "com.intersystems.jdbc.IRISInputStream@1f1c7bf6"
+            },
+            {
+              "id": "PMC11650920",
+              "content": "67",
+              "score": 0.12396702915430069,
+              "title": "com.intersystems.jdbc.IRISInputStream@25b485ba"
+            },
+            {
+              "id": "PMC11651726",
+              "content": "80",
+              "score": 0.12061724811792374,
+              "title": "com.intersystems.jdbc.IRISInputStream@2b546384"
+            },
+            {
+              "id": "PMC11649752",
+              "content": "84",
+              "score": 0.11589226871728897,
+              "title": "com.intersystems.jdbc.IRISInputStream@5d740a0f"
+            },
+            {
+              "id": "PMC11649437",
+              "content": "84",
+              "score": 0.11551762372255325,
+              "title": "com.intersystems.jdbc.IRISInputStream@214b199c"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        }
+      ],
+      "metrics": {
+        "p50": 9.041547775268555,
+        "p95": 9.894907474517822,
+        "p99": 10.042107105255127,
+        "throughput_qps": 110.70767005487471
+      },
+      "duration_seconds": 0.09032797813415527,
+      "end_time": "2025-06-09T11:49:44.658635"
+    },
+    "colbert": {
+      "pipeline": "colbert",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:49:44.658709",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 15226.041333051398,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 8.525707991793752,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 6.704834057018161,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 6.740042008459568,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 5.9735828544944525,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 6.836415966972709,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 6.485542049631476,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 6.927249953150749,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 7.784457877278328,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 7.5349160470068455,
+          "answer": "I could not find enough information to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.0,
+          "document_count": 0
+        }
+      ],
+      "metrics": {
+        "p50": 6.9561004638671875,
+        "p95": 9696.278190612775,
+        "p99": 16037.297363281252,
+        "throughput_qps": 0.5653826544924188
+      },
+      "duration_seconds": 17.68713617324829,
+      "end_time": "2025-06-09T11:50:02.346181"
+    },
+    "crag": {
+      "pipeline": "crag",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:50:02.346299",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 0.3499169833958149,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 0.29587489552795887,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 0.27579208835959435,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 0.2708339598029852,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 0.3001249860972166,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 0.28562499210238457,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 0.2812088932842016,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 0.2919998951256275,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 0.2822501119226217,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 0.3561251796782017,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        }
+      ],
+      "metrics": {
+        "p50": 0.316619873046875,
+        "p95": 0.4511117935180663,
+        "p99": 0.4838991165161133,
+        "throughput_qps": 2801.806279225117
+      },
+      "duration_seconds": 0.0035691261291503906,
+      "end_time": "2025-06-09T11:50:02.350002"
+    },
+    "noderag": {
+      "pipeline": "noderag",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:50:02.350054",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 0.2608329523354769,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 0.2892501652240753,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 0.3398330882191658,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 0.22566597908735275,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 0.22749998606741428,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 0.23537501692771912,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 0.2914159558713436,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 0.2434581983834505,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 0.23108301684260368,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 0.24983403272926807,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        }
+      ],
+      "metrics": {
+        "p50": 0.2579689025878906,
+        "p95": 0.3350615501403808,
+        "p99": 0.3502535820007324,
+        "throughput_qps": 3469.8080741230974
+      },
+      "duration_seconds": 0.0028820037841796875,
+      "end_time": "2025-06-09T11:50:02.353082"
+    },
+    "graphrag": {
+      "pipeline": "graphrag",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:50:02.353131",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 2.467416925355792,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 0.5395831540226936,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 0.5034999921917915,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 0.6122500635683537,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 194.60162497125566,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 0.6648330017924309,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 0.6525409407913685,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 0.6157080642879009,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 0.6251248996704817,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 0.5991670768707991,
+          "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0,
+          "method": "fallback_vector_search"
+        }
+      ],
+      "metrics": {
+        "p50": 0.6660223007202148,
+        "p95": 108.17497968673686,
+        "p99": 177.34292745590213,
+        "throughput_qps": 49.38292303580532
+      },
+      "duration_seconds": 0.2024991512298584,
+      "end_time": "2025-06-09T11:50:02.555794"
+    }
+  }
+}

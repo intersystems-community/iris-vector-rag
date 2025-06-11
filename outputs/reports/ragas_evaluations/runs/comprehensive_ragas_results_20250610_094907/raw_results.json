@@ -1,0 +1,33 @@
+{
+  "timestamp": "20250610_094907",
+  "evaluation_duration": 165.34022188186646,
+  "pipeline_results": {
+    "HyDERAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a commonly prescribed medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly by inhibiting gluconeogenesis in the liver.\n\n2. **Improving Insulin Sensitivity**: It enhances the sensitivity of muscle cells to insulin, which helps the body use glucose more effectively.\n\n3. **Reducing Absorption of Glucose**: Metformin can decrease the absorption of glucose from the gastrointestinal tract, which contributes to lower blood sugar levels.\n\n4. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a favorable option for overweight individuals with type 2 diabetes.\n\n5. **Cardiovascular Benefits**: Some studies suggest that metformin may have cardiovascular benefits, reducing the risk of heart disease in people with type 2 diabetes.\n\n6. **Potential Anti-cancer Effects**: Emerging research indicates that metformin may have potential anti-cancer properties, although more studies are needed to confirm this effect.\n\nOverall, metformin is an effective first-line treatment for type 2 diabetes, helping to control blood sugar levels and improve metabolic health.",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 61.20845174789429,
+        "success": true,
+        "error": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "HyDERAG": {
+      "answer_relevancy": 0.8741335637636838,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": 0.4642923916951186
+    }
+  }
+}

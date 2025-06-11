@@ -1,0 +1,33 @@
+{
+  "timestamp": "20250610_123558",
+  "evaluation_duration": 20.906649112701416,
+  "pipeline_results": {
+    "ColBERTRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "The effects of metformin on type 2 diabetes include improved blood sugar control, reduced insulin resistance, and potential weight loss. Metformin helps lower glucose production in the liver and enhances the sensitivity of muscle cells to insulin, which can lead to better overall glycemic management. Additionally, it may have cardiovascular benefits and is often used as a first-line treatment for type 2 diabetes.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 1.8729960918426514,
+        "success": true,
+        "error": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "ColBERTRAG": {
+      "answer_relevancy": 0.9999999999999997,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.7694950347900664
+    }
+  }
+}

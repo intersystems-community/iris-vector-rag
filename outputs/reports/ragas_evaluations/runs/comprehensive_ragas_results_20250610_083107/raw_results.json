@@ -1,0 +1,27 @@
+{
+  "timestamp": "20250610_083107",
+  "evaluation_duration": 64.86580610275269,
+  "pipeline_results": {
+    "BasicRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "[Document(page_content='67', metadata={}, id='2297'), Document(page_content='68', metadata={}, id='2458'), Document(page_content='87', metadata={}, id='3292'), Document(page_content='71', metadata={}, id='2915'), Document(page_content='76', metadata={}, id='2674')]",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.11936283111572266,
+        "success": true,
+        "error": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "BasicRAG": {
+      "answer_relevancy": 0.11175798646219305,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.00951866491156714
+    }
+  }
+}

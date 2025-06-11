@@ -1,0 +1,892 @@
+{
+  "timestamp": "20250610_071444",
+  "evaluation_duration": 345.47992300987244,
+  "pipeline_results": {
+    "BasicRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.12056303024291992,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='67', metadata={}, id='2297'), Document(page_content='68', metadata={}, id='2458'), Document(page_content='87', metadata={}, id='3292'), Document(page_content='71', metadata={}, id='2915'), Document(page_content='76', metadata={}, id='2674')]"
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.057737112045288086,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='73', metadata={}, id='2624'), Document(page_content='73', metadata={}, id='2914'), Document(page_content='73', metadata={}, id='2759'), Document(page_content='73', metadata={}, id='3201'), Document(page_content='73', metadata={}, id='2875')]"
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.054451942443847656,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='71', metadata={}, id='2915'), Document(page_content='84', metadata={}, id='3107'), Document(page_content='71', metadata={}, id='3061'), Document(page_content='73', metadata={}, id='2875'), Document(page_content='78', metadata={}, id='2519')]"
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 0.055229902267456055,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='73', metadata={}, id='2624'), Document(page_content='84', metadata={}, id='2335'), Document(page_content='73', metadata={}, id='2875'), Document(page_content='67', metadata={}, id='2297'), Document(page_content='65', metadata={}, id='2641')]"
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 0.05243873596191406,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='68', metadata={}, id='3220'), Document(page_content='73', metadata={}, id='2732'), Document(page_content='83', metadata={}, id='2778'), Document(page_content='84', metadata={}, id='3046'), Document(page_content='73', metadata={}, id='2875')]"
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "contexts": [],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 0.013838052749633789,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='65', metadata={}, id='2488'), Document(page_content='67', metadata={}, id='3130'), Document(page_content='67', metadata={}, id='2539'), Document(page_content='73', metadata={}, id='2624'), Document(page_content='67', metadata={}, id='2942')]"
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "contexts": [],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 0.013222217559814453,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='70', metadata={}, id='2494'), Document(page_content='84', metadata={}, id='2946'), Document(page_content='65', metadata={}, id='2641'), Document(page_content='68', metadata={}, id='2971'), Document(page_content='68', metadata={}, id='3220')]"
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "contexts": [],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 0.053037166595458984,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='65', metadata={}, id='3178'), Document(page_content='84', metadata={}, id='2461'), Document(page_content='84', metadata={}, id='2803'), Document(page_content='66', metadata={}, id='3219'), Document(page_content='73', metadata={}, id='2615')]"
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "contexts": [],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 0.014986991882324219,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='84', metadata={}, id='3079'), Document(page_content='85', metadata={}, id='3050'), Document(page_content='80', metadata={}, id='2336'), Document(page_content='80', metadata={}, id='2532'), Document(page_content='67', metadata={}, id='2697')]"
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "contexts": [],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 0.01382303237915039,
+        "success": true,
+        "error": null,
+        "response": "[Document(page_content='80', metadata={}, id='2625'), Document(page_content='80', metadata={}, id='2454'), Document(page_content='68', metadata={}, id='2388'), Document(page_content='84', metadata={}, id='3098'), Document(page_content='71', metadata={}, id='3002')]"
+      }
+    ],
+    "HyDERAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.016314983367919922,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.014232873916625977,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.012686014175415039,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 0.013108968734741211,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 0.012722015380859375,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 0.013159990310668945,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 0.012661933898925781,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 0.012505292892456055,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 0.012827873229980469,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 0.012580156326293945,
+        "success": true,
+        "error": null,
+        "response": null
+      }
+    ],
+    "CRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "contexts": [],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "contexts": [],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "contexts": [],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "contexts": [],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "contexts": [],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 0,
+        "success": false,
+        "error": "page_content must be a string.",
+        "response": "Error: page_content must be a string."
+      }
+    ],
+    "ColBERTRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.02024221420288086,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.017959117889404297,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.017493009567260742,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 0.017673969268798828,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 0.016768932342529297,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "contexts": [],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 0.017264842987060547,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "contexts": [],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 0.016875028610229492,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "contexts": [],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 0.19311785697937012,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "contexts": [],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 0.01837897300720215,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "contexts": [],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 0.017968177795410156,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      }
+    ],
+    "NodeRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.03442502021789551,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.022654056549072266,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.01971888542175293,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 0.02090597152709961,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 0.02440810203552246,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "contexts": [],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 0.025217056274414062,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "contexts": [],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 0.020475149154663086,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "contexts": [],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 0.01941370964050293,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "contexts": [],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 0.01968526840209961,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "contexts": [],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 0.01965498924255371,
+        "success": true,
+        "error": null,
+        "response": "[]"
+      }
+    ],
+    "GraphRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "contexts": [
+          "67",
+          "68",
+          "87",
+          "71",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.020656824111938477,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "contexts": [
+          "73",
+          "73",
+          "73",
+          "73",
+          "80"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.012878894805908203,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "contexts": [
+          "71",
+          "84",
+          "71",
+          "68",
+          "67"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.014184951782226562,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "contexts": [
+          "73",
+          "84",
+          "73",
+          "67",
+          "65"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 0.013529300689697266,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "contexts": [
+          "68",
+          "73",
+          "83",
+          "84",
+          "73"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 0.013041019439697266,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "contexts": [
+          "65",
+          "67",
+          "67",
+          "73",
+          "67"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 0.013141870498657227,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "contexts": [
+          "70",
+          "84",
+          "65",
+          "68",
+          "68"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 0.021416187286376953,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "contexts": [
+          "65",
+          "84",
+          "84",
+          "66",
+          "73"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 0.013670921325683594,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "contexts": [
+          "84",
+          "85",
+          "80",
+          "80",
+          "67"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 0.014927864074707031,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "contexts": [
+          "80",
+          "80",
+          "68",
+          "84",
+          "71"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 0.013673067092895508,
+        "success": true,
+        "error": null,
+        "response": null
+      }
+    ],
+    "HybridIFindRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.025155067443847656,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.017686128616333008,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.01721811294555664,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 0.01755213737487793,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 0.015722990036010742,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 0.016427040100097656,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 0.017200708389282227,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 0.017323017120361328,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 0.017683982849121094,
+        "success": true,
+        "error": null,
+        "response": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "contexts": [
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]",
+          "[Error Reading Streamed dict content]"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 0.016473770141601562,
+        "success": true,
+        "error": null,
+        "response": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "BasicRAG": {
+      "answer_relevancy": NaN,
+      "context_precision": 0.0,
+      "context_recall": NaN,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": NaN
+    },
+    "HyDERAG": {
+      "error": "The metric [answer_relevancy] that is used requires the following additional columns ['response'] to be present in the dataset.",
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "faithfulness": null,
+      "answer_similarity": null,
+      "answer_correctness": null
+    },
+    "CRAG": {
+      "error": "No successful results",
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "faithfulness": null,
+      "answer_similarity": null,
+      "answer_correctness": null
+    },
+    "ColBERTRAG": {
+      "answer_relevancy": NaN,
+      "context_precision": 0.0,
+      "context_recall": NaN,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": NaN
+    },
+    "NodeRAG": {
+      "answer_relevancy": NaN,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": NaN,
+      "answer_similarity": null,
+      "answer_correctness": NaN
+    },
+    "GraphRAG": {
+      "error": "The metric [answer_relevancy] that is used requires the following additional columns ['response'] to be present in the dataset.",
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "faithfulness": null,
+      "answer_similarity": null,
+      "answer_correctness": null
+    },
+    "HybridIFindRAG": {
+      "error": "The metric [answer_relevancy] that is used requires the following additional columns ['response'] to be present in the dataset.",
+      "answer_relevancy": null,
+      "context_precision": null,
+      "context_recall": null,
+      "faithfulness": null,
+      "answer_similarity": null,
+      "answer_correctness": null
+    }
+  }
+}

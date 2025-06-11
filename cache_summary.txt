@@ -1,3 +1,0 @@
-Cache Status: Configured and Ready (iris)
-Cache Backend: iris
-Cache Enabled: True
