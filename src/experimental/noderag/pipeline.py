@@ -263,6 +263,35 @@ Answer:"""
             "similarity_threshold": similarity_threshold, 
             "document_count": len(retrieved_documents)
         }
+def run_noderag(query_text: str, top_k: int = 5, similarity_threshold: float = 0.1) -> Dict[str, Any]:
+    """
+    Helper function to instantiate and run the NodeRAGPipeline.
+    """
+    db_conn = None
+    try:
+        # get_iris_connection is imported from common.iris_connector_jdbc in this file
+        db_conn = get_iris_connection() 
+        embed_fn = get_embedding_func()
+        llm_fn = get_llm_func(provider="stub") # Use stub for this helper context
+        
+        pipeline = NodeRAGPipeline(
+            iris_connector=db_conn,
+            embedding_func=embed_fn,
+            llm_func=llm_fn,
+            graph_lib=None # Assuming no specific graph_lib for this helper
+        )
+        return pipeline.run(query_text, top_k=top_k, similarity_threshold=similarity_threshold)
+    except Exception as e:
+        logger.error(f"Error in run_noderag helper: {e}", exc_info=True)
+        return {
+            "query": query_text,
+            "answer": "Error occurred in NodeRAG pipeline.",
+            "retrieved_documents": [],
+            "error": str(e)
+        }
+    finally:
+        if db_conn:
+            db_conn.close()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')

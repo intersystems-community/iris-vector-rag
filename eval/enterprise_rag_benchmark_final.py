@@ -37,8 +37,8 @@ from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
 from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline # Updated import
 
 # Common utilities
-from src.common.iris_connector_jdbc import get_iris_connection  # Updated import
-from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from common.iris_connector_jdbc import get_iris_connection  # Updated import
+from common.utils import get_embedding_func, get_llm_func # Updated import
 from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)

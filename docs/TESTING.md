@@ -87,7 +87,70 @@ This is the target for full validation (e.g., using [`tests/test_all_with_1000_d
   ```
 The script [`scripts/verify_real_data_testing.py`](scripts/verify_real_data_testing.py:1) can be used to check the database state before running real-data tests.
 
-### 3. Benchmarking
+### 3. TDD+RAGAS Performance Testing
+
+The project now includes comprehensive TDD-based performance testing with RAGAS quality metrics integration. This provides both performance benchmarking and quality assessment using industry-standard RAGAS metrics.
+
+**Key Features:**
+- Performance benchmarking with RAGAS quality metrics (answer relevancy, context precision, faithfulness, context recall)
+- Scalability testing across different document corpus sizes
+- Automated report generation with comprehensive analysis
+- Integration with existing pytest framework and fixtures
+
+**Test Files:**
+- [`tests/test_tdd_performance_with_ragas.py`](tests/test_tdd_performance_with_ragas.py:1) - Main TDD+RAGAS test suite
+- [`scripts/generate_tdd_ragas_performance_report.py`](scripts/generate_tdd_ragas_performance_report.py:1) - Report generation script
+
+**Pytest Markers:**
+- `performance_ragas` - Performance benchmarking tests with RAGAS metrics
+- `scalability_ragas` - Scalability tests with RAGAS quality assessment
+- `tdd_ragas` - General TDD+RAGAS integration tests
+- `ragas_integration` - All RAGAS integration aspects
+
+**Running TDD+RAGAS Tests:**
+
+```bash
+# Run performance benchmarks with RAGAS quality metrics
+make test-performance-ragas-tdd
+
+# Run scalability tests with RAGAS
+make test-scalability-ragas-tdd
+
+# Run all TDD+RAGAS integration tests
+make test-tdd-comprehensive-ragas
+
+# Run with 1000+ documents for comprehensive testing
+make test-1000-enhanced
+
+# Quick TDD+RAGAS test for development
+make test-tdd-ragas-quick
+
+# Run comprehensive tests and generate detailed report
+make ragas-with-tdd
+```
+
+**Direct pytest execution:**
+```bash
+# Run specific test categories
+pytest tests/test_tdd_performance_with_ragas.py -m performance_ragas
+pytest tests/test_tdd_performance_with_ragas.py -m scalability_ragas
+pytest tests/test_tdd_performance_with_ragas.py -m ragas_integration
+
+# Run all TDD+RAGAS tests
+pytest tests/test_tdd_performance_with_ragas.py
+```
+
+**Report Generation:**
+The TDD+RAGAS framework automatically generates comprehensive reports including:
+- Performance analysis (response times, success rates, efficiency metrics)
+- RAGAS quality metrics analysis (answer relevancy, context precision, faithfulness, context recall)
+- Scalability trends and bottleneck analysis
+- Threshold compliance checking
+- Detailed recommendations
+
+Reports are saved to `reports/tdd_ragas_reports/` with timestamped filenames.
+
+### 4. Traditional Benchmarking
 
 Benchmarking aims to compare the performance and quality of different RAG techniques.
 - **Script:** [`scripts/run_rag_benchmarks.py`](scripts/run_rag_benchmarks.py:1)

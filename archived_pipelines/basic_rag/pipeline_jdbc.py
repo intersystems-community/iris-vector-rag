@@ -201,7 +201,7 @@ def compare_odbc_vs_jdbc():
     print("\n🔍 Comparing ODBC vs JDBC Performance")
     print("=" * 50)
     
-    from src.common.utils import get_embedding_func, get_llm_func # Updated import
+    from common.utils import get_embedding_func, get_llm_func # Updated import
     from src.deprecated.basic_rag.pipeline import BasicRAGPipeline as ODBCBasicRAGPipeline  # Updated import and aliased
     
     # Initialize both pipelines
@@ -212,7 +212,7 @@ def compare_odbc_vs_jdbc():
     
     # Note: ODBC pipeline might fail with vector operations
     try:
-        from src.common.iris_connector import get_iris_connection # Updated import
+        from common.iris_connector import get_iris_connection # Updated import
         odbc_pipeline = ODBCBasicRAGPipeline( # Updated class name
             iris_connector=get_iris_connection(),
             embedding_func=get_embedding_func(),

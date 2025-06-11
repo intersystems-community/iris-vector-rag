@@ -10,7 +10,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.common.iris_connector import get_iris_connection # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 import uuid
 
 def populate_sample_relationships():
@@ -78,7 +78,7 @@ def populate_sample_relationships():
 def test_graphrag_with_relationships():
     """Test GraphRAG after adding relationships"""
     from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
-    from src.common.embedding_utils import get_embedding_model # Updated import
+    from common.embedding_utils import get_embedding_model # Updated import
     
     iris = get_iris_connection()
     embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')

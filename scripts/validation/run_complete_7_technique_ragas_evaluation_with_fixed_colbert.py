@@ -27,8 +27,8 @@ from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # 
 from src.deprecated.colbert.pipeline import create_colbert_pipeline  # Updated import
 
 # Import evaluation utilities
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.utils import get_llm_func, get_embedding_func # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.utils import get_llm_func, get_embedding_func # Updated import
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

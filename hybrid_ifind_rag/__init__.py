@@ -14,6 +14,6 @@ and represents the 7th RAG technique in the enterprise RAG templates collection.
 __version__ = "1.0.0"
 __author__ = "RAG Templates Team"
 
-from .pipeline import HybridiFindRAGPipeline
+from .pipeline_v2 import HybridiFindRAGPipelineV2 as HybridiFindRAGPipeline
 
 __all__ = ["HybridiFindRAGPipeline"]

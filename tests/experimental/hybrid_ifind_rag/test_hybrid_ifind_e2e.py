@@ -9,7 +9,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
-from src.common.utils import Document
+from common.utils import Document
 
 @pytest.fixture
 def mock_iris_connector():

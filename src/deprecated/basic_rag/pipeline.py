@@ -10,11 +10,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from typing import List, Dict, Any, Callable
 import logging
 
-try:
-    import iris
-    IRISConnection = iris.IRISConnection
-except ImportError:
-    IRISConnection = Any
+# IRISConnection type hint will be 'Any' as the actual type can vary.
+# The actual connection object is passed in.
+IRISConnection = Any
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
 from common.iris_connector_jdbc import get_iris_connection # Assuming JDBC for consistency
@@ -22,7 +20,7 @@ from common.iris_connector_jdbc import get_iris_connection # Assuming JDBC for c
 logger = logging.getLogger(__name__)
 
 class BasicRAGPipeline: # Name conflict with other versions, keeping for archival accuracy
-    def __init__(self, iris_connector: IRISConnection,
+    def __init__(self, iris_connector: Any, # Changed IRISConnection to Any
                  embedding_func: Callable[[List[str]], List[List[float]]],
                  llm_func: Callable[[str], str],
                  schema: str = "RAG"):
@@ -236,3 +234,31 @@ if __name__ == '__main__':
             print("\nDatabase connection closed.")
 
     print("\nVerified TO_VECTOR(embedding) BasicRAGPipeline Demo Finished.")
+def run_basic_rag(query_text: str, top_k: int = 5, similarity_threshold: float = 0.1, schema: str = "RAG") -> Dict[str, Any]:
+    """
+    Helper function to instantiate and run the BasicRAGPipeline.
+    """
+    db_conn = None
+    try:
+        db_conn = get_iris_connection() # Ensure this matches expected connector type
+        embed_fn = get_embedding_func()
+        llm_fn = get_llm_func(provider="stub") # Use stub for this helper context
+        
+        pipeline = BasicRAGPipeline(
+            iris_connector=db_conn,
+            embedding_func=embed_fn,
+            llm_func=llm_fn,
+            schema=schema
+        )
+        return pipeline.run(query_text, top_k=top_k, similarity_threshold=similarity_threshold)
+    except Exception as e:
+        logger.error(f"Error in run_basic_rag helper: {e}", exc_info=True)
+        return {
+            "query": query_text,
+            "answer": "Error occurred in pipeline.",
+            "retrieved_documents": [],
+            "error": str(e)
+        }
+    finally:
+        if db_conn:
+            db_conn.close()

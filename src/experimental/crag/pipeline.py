@@ -321,6 +321,47 @@ Answer:"""
             "quality_threshold": quality_threshold,
             "document_count": len(retrieved_documents_for_output)
         }
+def run_crag(query_text: str, top_k: int = 5, web_top_k: int = 3, initial_threshold: float = 0.1, quality_threshold: float = 0.75, use_chunks: bool = True) -> Dict[str, Any]:
+    """
+    Helper function to instantiate and run the CRAGPipeline.
+    """
+    db_conn = None
+    try:
+        # get_iris_connection is imported from common.iris_connector_jdbc in this file
+        db_conn = get_iris_connection() 
+        embed_fn = get_embedding_func()
+        # Using stub LLM for this helper, actual LLM can be configured if CRAGPipeline is used directly
+        llm_fn = get_llm_func(provider="stub") 
+        
+        # Mock web search for the helper, can be overridden if CRAGPipeline is used directly
+        mock_web_search = lambda query, num_results: [f"Mock web result {i+1} for '{query}'" for i in range(num_results)]
+
+        pipeline = CRAGPipeline(
+            iris_connector=db_conn,
+            embedding_func=embed_fn,
+            llm_func=llm_fn,
+            web_search_func=mock_web_search, # Provide a default web search for the helper
+            use_chunks=use_chunks
+        )
+        return pipeline.run(
+            query_text, 
+            top_k=top_k, 
+            web_top_k=web_top_k, 
+            initial_threshold=initial_threshold, 
+            quality_threshold=quality_threshold
+        )
+    except Exception as e:
+        logger.error(f"Error in run_crag helper: {e}", exc_info=True)
+        return {
+            "query": query_text,
+            "answer": "Error occurred in CRAG pipeline.",
+            "retrieved_documents": [],
+            "retrieved_context_chunks": [],
+            "error": str(e)
+        }
+    finally:
+        if db_conn:
+            db_conn.close()
 
 if __name__ == '__main__':
     # Setup basic logging for demo

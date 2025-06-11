@@ -1,0 +1,67 @@
+{
+  "validation_type": "quick",
+  "timestamp": "2025-06-07T11:45:52.914891",
+  "results": {
+    "health_check": {
+      "overall_status": "critical",
+      "component_results": {
+        "system_resources": {
+          "status": "healthy",
+          "message": "System resources healthy",
+          "duration_ms": 1001.5072822570801
+        },
+        "database_connectivity": {
+          "status": "critical",
+          "message": "Database connectivity failed: Configuration for backend 'iris' not found.",
+          "duration_ms": 0.011205673217773438
+        },
+        "docker_containers": {
+          "status": "healthy",
+          "message": "IRIS container healthy",
+          "duration_ms": 1044.1510677337646
+        },
+        "vector_performance": {
+          "status": "critical",
+          "message": "Vector performance check failed: Configuration for backend 'iris' not found.",
+          "duration_ms": 0.008821487426757812
+        }
+      }
+    },
+    "system_validation": {
+      "data_integrity": {
+        "success": false,
+        "message": "Data integrity validation failed: Configuration for backend 'iris' not found.",
+        "duration_ms": 0.0040531158447265625
+      },
+      "pipeline_functionality": {
+        "success": false,
+        "message": "Pipeline functionality validation failed: BasicRAGPipeline.__init__() missing 1 required positional argument: 'config_manager'",
+        "duration_ms": 0.010013580322265625
+      },
+      "vector_operations": {
+        "success": false,
+        "message": "Vector operations validation failed: Configuration for backend 'iris' not found.",
+        "duration_ms": 0.00286102294921875
+      },
+      "system_configuration": {
+        "success": false,
+        "message": "Found 4 issues",
+        "duration_ms": 3529.033899307251
+      }
+    }
+  },
+  "overall_status": "FAIL",
+  "summary": {
+    "health_status": "critical",
+    "validations_passed": 0,
+    "validations_total": 4,
+    "recommendations": [
+      "CRITICAL: Fix database_connectivity issues immediately",
+      "CRITICAL: Fix vector_performance issues immediately",
+      "Fix data_integrity validation failures",
+      "Fix pipeline_functionality validation failures",
+      "Fix vector_operations validation failures",
+      "Fix system_configuration validation failures"
+    ]
+  }
+}

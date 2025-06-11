@@ -11,7 +11,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
-from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Test data
 TEST_DOCS_DATA_V2 = [

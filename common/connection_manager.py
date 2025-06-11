@@ -43,12 +43,25 @@ class ConnectionManager:
                 return self.connect()
                 
         elif self.connection_type == "dbapi":
-            # Placeholder for future dbapi implementation
-            logger.warning("dbapi not yet implemented, falling back to ODBC")
-            self.connection_type = "odbc"
-            return self.connect()
+            try:
+                from common.iris_dbapi_connector import get_iris_dbapi_connection
+                self._connection = get_iris_dbapi_connection()
+                if not self._connection: # If get_iris_dbapi_connection returns None
+                    raise ConnectionError("DBAPI connection returned None")
+                logger.info("Established DBAPI connection")
+            except Exception as e:
+                logger.warning(f"DBAPI connection failed: {e}, falling back to ODBC")
+                self.connection_type = "odbc" # Fallback
+                # Clear any partial connection state before retrying
+                if self._connection and hasattr(self._connection, 'close'):
+                    try:
+                        self._connection.close()
+                    except Exception as close_err:
+                        logger.error(f"Error closing partial DBAPI connection during fallback: {close_err}")
+                self._connection = None
+                return self.connect() # Retry with ODBC
             
-        else:  # odbc
+        else:  # odbc (or fallback from dbapi/jdbc)
             from common.iris_connector import get_iris_connection
             self._connection = get_iris_connection()
             logger.info("Established ODBC connection")
@@ -72,15 +85,25 @@ class ConnectionManager:
         if self.connection_type == "jdbc":
             # JDBC connector has execute method
             return self._connection.execute(query, params or [])
-        else:
-            # ODBC uses cursor-based approach
+        else: # Covers ODBC and DBAPI
+            # ODBC and DBAPI use a similar cursor-based approach
             cursor = self._connection.cursor()
             try:
                 if params:
                     cursor.execute(query, params)
                 else:
                     cursor.execute(query)
-                return cursor.fetchall()
+                
+                # For SELECT queries, fetchall. For others (INSERT, UPDATE, DELETE),
+                # fetchall might not be appropriate or available, or might return empty.
+                # Standard DBAPI cursor.description is None for non-SELECT.
+                if cursor.description:
+                    return cursor.fetchall()
+                else:
+                    # For non-SELECT, perhaps return rowcount or an empty list
+                    # For now, returning empty list to maintain consistency with existing behavior
+                    # if fetchall() was called on a non-SELECT for ODBC.
+                    return []
             finally:
                 cursor.close()
     
@@ -99,12 +122,12 @@ class ConnectionManager:
             # Execute in a loop for JDBC
             for params in params_list:
                 self._connection.execute(query, params)
-        else:
-            # ODBC supports executemany
+        else: # Covers ODBC and DBAPI
+            # ODBC and DBAPI support executemany
             cursor = self._connection.cursor()
             try:
                 cursor.executemany(query, params_list)
-                self._connection.commit()
+                self._connection.commit() # Ensure commit for DBAPI as well
             finally:
                 cursor.close()
     
@@ -136,8 +159,8 @@ class ConnectionManager:
                     pass  # No-op for JDBC
                     
             yield JDBCCursorWrapper(self._connection)
-        else:
-            # ODBC native cursor
+        else: # Covers ODBC and DBAPI
+            # ODBC and DBAPI native cursor
             cursor = self._connection.cursor()
             try:
                 yield cursor
@@ -151,8 +174,9 @@ class ConnectionManager:
                 # JDBC connection might not have close method
                 if hasattr(self._connection, 'close'):
                     self._connection.close()
-            else:
-                self._connection.close()
+            else: # Covers ODBC and DBAPI
+                if hasattr(self._connection, 'close'): # Good practice to check for DBAPI too
+                    self._connection.close()
             self._connection = None
             logger.info(f"Closed {self.connection_type.upper()} connection")
     

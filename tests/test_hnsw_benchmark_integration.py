@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func, get_llm_func
-from basic_rag.pipeline import BasicRAGPipeline
+from basic_rag.pipeline_final import BasicRAGPipeline # Corrected import
 from eval.metrics import (
     calculate_hnsw_performance_metrics,
     calculate_hnsw_scalability_metrics,

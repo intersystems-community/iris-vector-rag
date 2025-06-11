@@ -20,8 +20,8 @@ if project_root not in sys.path:
 # from common.utils import Document
 
 # If common is inside src (i.e. project_root/src/common), then:
-from src.common.base_pipeline import BaseRAGPipeline
-from src.common.utils import Document
+from common.base_pipeline import BaseRAGPipeline
+from common.utils import Document
 
 
 logger = logging.getLogger(__name__)
@@ -152,8 +152,8 @@ def test_refactored_pipeline():
     
     # Adjust imports based on new structure
     # Assuming common.utils and common.connection_manager are in src/common/
-    from src.common.utils import get_embedding_func, get_llm_func
-    from src.common.connection_manager import get_connection_manager
+    from common.utils import get_embedding_func, get_llm_func
+    from common.connection_manager import get_connection_manager
     
     try:
         # Test with default connection (ODBC for stability)

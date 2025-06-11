@@ -23,7 +23,15 @@ Enterprise validation reports and testing results:
 - [`ENTERPRISE_CHUNKING_VALIDATION_COMPLETE.md`](validation/ENTERPRISE_CHUNKING_VALIDATION_COMPLETE.md) - Enterprise-scale chunking vs non-chunking validation
 - [`REAL_DATA_VECTOR_SUCCESS_REPORT.md`](validation/REAL_DATA_VECTOR_SUCCESS_REPORT.md) - Real data vector search validation results
 
-### 🚀 Deployment & Operations (`deployment/`)
+### 📊 Evaluation Framework (`evaluation/`)
+Unified RAGAS-based evaluation framework documentation:
+
+- [`EVALUATION_FRAMEWORK_REFACTOR_COMPLETE.md`](EVALUATION_FRAMEWORK_REFACTOR_COMPLETE.md) - **🆕 Unified evaluation framework refactoring complete**
+- [`EVALUATION_FRAMEWORK_MIGRATION.md`](EVALUATION_FRAMEWORK_MIGRATION.md) - **🆕 Migration guide from scattered evaluation to unified framework**
+- [`EVALUATION_BEST_PRACTICES.md`](EVALUATION_BEST_PRACTICES.md) - **🆕 Best practices for RAGAS integration and evaluation**
+- [`EVALUATION_QUICK_START.md`](EVALUATION_QUICK_START.md) - **🆕 Quick start guide for the unified evaluation framework**
+
+### � Deployment & Operations (`deployment/`)
 Production deployment guides and operational documentation:
 
 - [`DEPLOYMENT_GUIDE.md`](deployment/DEPLOYMENT_GUIDE.md) - Complete production deployment guide

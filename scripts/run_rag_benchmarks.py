@@ -64,7 +64,7 @@ logger = logging.getLogger("rag_benchmarks")
 
 # Import IRIS connector and utility functions
 try:
-    from common.iris_connector import get_iris_connection
+    from common.iris_dbapi_connector import get_iris_dbapi_connection
     import common.embedding_utils as embedding_utils_module
     from common.db_init import initialize_database
 except ImportError as e:
@@ -175,7 +175,7 @@ try:
     from core_pipelines import (
         BasicRAGPipeline,
         HyDEPipeline,
-        OptimizedColbertRAGPipeline, # Renamed
+        ColbertRAGPipeline,
         CRAGPipeline,
         NodeRAGPipeline,
         GraphRAGPipeline,
@@ -203,7 +203,7 @@ except ImportError as e:
     # Use the same mock class for all pipelines
     BasicRAGPipeline = MockPipeline
     HyDEPipeline = MockPipeline
-    OptimizedColbertRAGPipeline = MockPipeline # Renamed
+    ColbertRAGPipeline = MockPipeline
     CRAGPipeline = MockPipeline
     NodeRAGPipeline = MockPipeline
     GraphRAGPipeline = MockPipeline
@@ -291,18 +291,18 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
 
     # ColBERT wrapper
     def colbert_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
-        """Wrapper for OptimizedColbertRAGPipeline."""
+        """Wrapper for ColbertRAGPipeline."""
         # For ColBERT, use the semantic encoder from the core pipeline
         
         # Pass the potentially stubbed embedding_func to the encoder factory
         # create_colbert_semantic_encoder is imported at the top from core_pipelines
         semantic_encoder = create_colbert_semantic_encoder(embedding_func_override=embedding_func)
         
-        # Initialize OptimizedColbertRAGPipeline with the created encoder
-        pipeline = OptimizedColbertRAGPipeline( # Renamed
+        # Initialize ColbertRAGPipeline with the created encoder
+        pipeline = ColbertRAGPipeline(
             iris_connector=iris_connector,
             colbert_query_encoder_func=semantic_encoder, # Use the returned encoder directly
-            colbert_doc_encoder_func=semantic_encoder, # Use the same for doc encoding as per original OptimizedColbertRAGPipeline
+            colbert_doc_encoder_func=semantic_encoder, # Use the same for doc encoding as per original ColbertRAGPipeline
             llm_func=llm_func
         )
         
@@ -320,15 +320,20 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
     def noderag_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
         """Wrapper for NodeRAGPipeline."""
         pipeline = NodeRAGPipeline(iris_connector, embedding_func, llm_func)
-        top_k_seeds = kwargs.get("top_k", DEFAULT_TOP_K)
-        return pipeline.run(query, top_k_seeds=top_k_seeds)
+        # NodeRAGPipeline.run expects 'top_k' for the final document count.
+        # The 'top_k_seeds' logic is internal to its retrieval methods.
+        # The wrapper should pass the 'top_k' value intended for the overall pipeline.
+        actual_top_k = kwargs.get("top_k", DEFAULT_TOP_K)
+        return pipeline.run(query, top_k=actual_top_k)
 
     # GraphRAG wrapper
     def graphrag_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
         """Wrapper for GraphRAGPipeline."""
         pipeline = GraphRAGPipeline(iris_connector, embedding_func, llm_func)
-        top_n_start_nodes = kwargs.get("top_k", DEFAULT_TOP_K)
-        return pipeline.run(query, top_n_start_nodes=top_n_start_nodes)
+        # GraphRAGPipeline.execute (which is its run method) calls self.query(query_text, top_k)
+        # The wrapper should pass 'top_k'.
+        actual_top_k = kwargs.get("top_k", DEFAULT_TOP_K)
+        return pipeline.run(query, top_k=actual_top_k)
 
     # Return all wrappers in a dictionary
     return {
@@ -393,87 +398,80 @@ def ensure_min_documents(conn, db_schema: str, min_count: int = MIN_DOCUMENT_COU
 
 
 def setup_database_connection(args) -> Optional[Any]:
-    """
-    Set up and verify the database connection.
-    
-    Args:
-        args: Command line arguments
-        
-    Returns:
-        IRIS database connection or None if connection failed
-    """
+    """Set up and verify the database connection using factory pattern."""
     logger.info("Establishing connection to IRIS database...")
     
-    iris_conn = None
-    if args.use_mock:
-        logger.info("Using mock IRIS connection as requested by --use-mock flag.")
-        try:
-            from common.iris_connector import get_mock_iris_connection
-            iris_conn = get_mock_iris_connection()
-        except Exception as e:
-            logger.warning(f"Error using get_mock_iris_connection: {e}")
-            logger.info("Creating a self-contained mock IRIS connection")
-            
-            # Define a minimal mock IRIS connection and cursor
-            class MockIRISCursor:
-                def __init__(self):
-                    self.results = []
-                    self.current_result = None
+    try:
+        from common.connection_factory import ConnectionFactory
+        
+        if args.use_mock:
+            logger.info("Using mock IRIS connection as requested by --use-mock flag.")
+            try:
+                from common.iris_connector import get_mock_iris_connection
+                iris_conn = get_mock_iris_connection()
+            except Exception as e:
+                logger.warning(f"Error using get_mock_iris_connection: {e}")
+                logger.info("Creating a self-contained mock IRIS connection")
                 
-                def execute(self, query, params=None):
-                    logger.info(f"Mock executing: {query}")
-                    if "COUNT(*)" in query:
-                        self.results = [(1000,)]
-                    else:
+                # Define a minimal mock IRIS connection and cursor
+                class MockIRISCursor:
+                    def __init__(self):
                         self.results = []
-                    return self
+                        self.current_result = None
+                    
+                    def execute(self, query, params=None):
+                        logger.info(f"Mock executing: {query}")
+                        if "COUNT(*)" in query:
+                            self.results = [(1000,)]
+                        else:
+                            self.results = []
+                        return self
+                    
+                    def fetchone(self):
+                        if self.results:
+                            return self.results[0]
+                        return None
+                    
+                    def fetchall(self):
+                        return self.results
+                    
+                    def close(self):
+                        pass
                 
-                def fetchone(self):
-                    if self.results:
-                        return self.results[0]
-                    return None
+                class MockIRISConnection:
+                    def __init__(self):
+                        pass
+                    
+                    def cursor(self):
+                        return MockIRISCursor()
+                    
+                    def close(self):
+                        pass
+                    
+                    def commit(self):
+                        pass
                 
-                def fetchall(self):
-                    return self.results
-                
-                def close(self):
-                    pass
+                iris_conn = MockIRISConnection()
+        else:
+            # Use factory with DBAPI as default (user preference)
+            connection_config = {}
             
-            class MockIRISConnection:
-                def __init__(self):
-                    pass
-                
-                def cursor(self):
-                    return MockIRISCursor()
-                
-                def close(self):
-                    pass
-                
-                def commit(self):
-                    pass
+            # Build config from command line args if provided
+            if hasattr(args, 'iris_host') and args.iris_host:
+                connection_config.update({
+                    'host': args.iris_host,
+                    'port': args.iris_port,
+                    'namespace': args.iris_namespace,
+                    'user': args.iris_user,
+                    'password': args.iris_password
+                })
             
-            iris_conn = MockIRISConnection()
-    elif args.iris_host and args.iris_port and args.iris_namespace and args.iris_user and args.iris_password:
-        logger.info(f"Connecting to existing IRIS instance: {args.iris_host}:{args.iris_port}/{args.iris_namespace}")
-        from common.iris_connector import get_real_iris_connection
-        iris_conn = get_real_iris_connection(config={
-            "hostname": args.iris_host,
-            "port": args.iris_port,
-            "namespace": args.iris_namespace,
-            "username": args.iris_user,
-            "password": args.iris_password
-        })
-    elif args.use_testcontainer:
-        logger.info("Using testcontainer as specified...")
-        iris_conn = get_iris_connection(use_mock=False, use_testcontainer=True)
-    else:
-        # Use default direct connection (e.g. localhost)
-        logger.info("Connecting to IRIS directly (default parameters)...")
-        iris_conn = get_iris_connection(use_mock=False, use_testcontainer=False)
-    
-    # Validate connection
-    if iris_conn is None:
-        error_msg = """
+            # Create DBAPI connection (user preference)
+            iris_conn = ConnectionFactory.create_connection("dbapi", **connection_config)
+            
+        # Validate connection
+        if iris_conn is None:
+            error_msg = """
 ERROR: Failed to establish an IRIS connection. This benchmark requires an IRIS database.
 
 To fix this issue:
@@ -488,12 +486,16 @@ To fix this issue:
 
 See docs/BENCHMARK_SETUP.md for detailed setup instructions.
 """
-        logger.error(error_msg)
-        print(error_msg)
+            logger.error(error_msg)
+            print(error_msg)
+            return None
+        
+        logger.info("IRIS connection established successfully")
+        return iris_conn
+        
+    except Exception as e:
+        logger.error(f"Failed to create database connection: {e}")
         return None
-    
-    logger.info("IRIS connection established successfully")
-    return iris_conn
 
 
 def prepare_colbert_embeddings(iris_conn, args) -> bool:
@@ -611,9 +613,11 @@ def run_benchmarks(args) -> Optional[str]:
     # Set up database connection
     iris_conn = setup_database_connection(args)
     if iris_conn is None:
+        print("DEBUG: run_benchmarks returning None because iris_conn is None")
         return None
     
     try:
+        print("DEBUG: Entered run_benchmarks try block")
         # Ensure we have enough documents
         if not args.use_mock:
             logger.info("Verifying document count requirement...")
@@ -623,6 +627,7 @@ def run_benchmarks(args) -> Optional[str]:
                     f"Please ensure the database schema is correctly initialized by running: "
                     f"python run_db_init_local.py --force-recreate"
                 )
+                print("DEBUG: run_benchmarks returning None due to insufficient documents")
                 return None
         else:
             logger.info("Skipping document count verification for mock run.")
@@ -630,17 +635,23 @@ def run_benchmarks(args) -> Optional[str]:
         # Prepare ColBERT token embeddings if needed
         if not prepare_colbert_embeddings(iris_conn, args):
             logger.error("Failed to prepare ColBERT token embeddings.")
+            print("DEBUG: run_benchmarks returning None due to ColBERT prep failure")
             return None
         
         # Initialize embedding and LLM functions
         try:
             embedding_func, llm_func = initialize_embedding_and_llm(args)
         except Exception:
+            print("DEBUG: run_benchmarks returning None due to initialize_embedding_and_llm failure")
             return None
         
         # Load queries based on dataset type
         queries = load_queries(dataset_type=args.dataset, query_limit=args.num_queries)
         logger.info(f"Loaded {len(queries)} queries from {args.dataset} dataset")
+        if not queries: # Explicit check, though load_queries might return empty list not None
+            logger.error("No queries loaded (explicit check).")
+            print("DEBUG: run_benchmarks returning None due to no queries (explicit check)")
+            return None
         
         # Create pipeline wrappers
         pipeline_wrappers = create_pipeline_wrappers(top_k=args.top_k)
@@ -659,6 +670,7 @@ def run_benchmarks(args) -> Optional[str]:
         
         if not techniques:
             logger.error("No valid techniques specified. Exiting.")
+            print("DEBUG: run_benchmarks returning None due to no valid techniques")
             return None
         
         # Output path for benchmark results
@@ -673,6 +685,7 @@ def run_benchmarks(args) -> Optional[str]:
             techniques=techniques,
             output_path=benchmark_output
         )
+        logger.info(f"--- Intermediate results from run_all_techniques_benchmark: {results}")
         logger.info(f"Successfully ran benchmarks for {len(results)} techniques")
         
         # Generate the comparative analysis report
@@ -699,7 +712,24 @@ def run_benchmarks(args) -> Optional[str]:
         return report_paths.get("markdown")
     
     except Exception as e:
-        logger.error(f"Error running benchmarks: {e}")
+        print(f"DEBUG: In run_benchmarks except block. Error: {e}") # DEBUG PRINT
+        logger.error(f"Error running benchmarks: {e}", exc_info=True)
+        import traceback
+        tb_str = traceback.format_exc()
+        print(f"DEBUG: Full traceback:\n{tb_str}") # DEBUG PRINT
+        logger.error(f"Full traceback:\n{tb_str}")
+        
+        # Attempt to flush logs here to ensure this error gets written
+        if logging.getLogger().handlers:
+            file_handler = next((h for h in logging.getLogger().handlers if isinstance(h, logging.FileHandler)), None)
+            if file_handler and hasattr(file_handler, 'flush'):
+                try:
+                    file_handler.flush()
+                    logger.info("Log file handler flushed within run_benchmarks except block.")
+                    import time
+                    time.sleep(0.1) # Brief pause to allow I/O to complete
+                except Exception as e_flush_except:
+                    print(f"Warning: Could not flush file log handler in run_benchmarks except block: {e_flush_except}")
         return None
     
     finally:
@@ -746,6 +776,8 @@ def parse_args():
                            help="Type of queries to use for benchmarking")
     bench_group.add_argument("--llm", choices=["gpt-3.5-turbo", "gpt-4", "stub"], default=DEFAULT_LLM,
                            help="LLM model to use for generating answers")
+    bench_group.add_argument("--embedding-provider", type=str, default="stub",
+                           help="Embedding provider to use (stub, openai, etc.)")
     bench_group.add_argument("--num-docs", type=int, default=MIN_DOCUMENT_COUNT,
                            help="Expected minimum document count for the benchmark run")
     bench_group.add_argument("--num-queries", type=int, default=DEFAULT_QUERY_LIMIT,
@@ -765,36 +797,94 @@ def parse_args():
 
 def main():
     """Main entry point for the script."""
-    # Parse command line arguments
-    args = parse_args()
-    
-    # Set logging level based on verbosity
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-    
-    logger.info("Starting RAG benchmarking script...")
-    
-    # Record start time
-    start_time = time.time()
-    
-    # Run the benchmarks
-    report_path = run_benchmarks(args)
-    
-    # Calculate duration
-    end_time = time.time()
-    duration = end_time - start_time
-    minutes, seconds = divmod(duration, 60)
-    
-    # Print summary
-    if report_path:
-        print(f"\nBenchmark completed in {int(minutes)} minutes and {seconds:.1f} seconds")
-        print(f"Open this file to view the report: {report_path}")
-    else:
-        print("\nBenchmark failed. Check the logs for details.")
-    
-    # Return success/failure
-    return 0 if report_path else 1
+    # Configure basic logging first to catch early errors if parse_args fails
+    # This will log to console by default if file handler setup fails.
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        # handlers will be added after log file is cleared
+    )
+    logger = logging.getLogger("rag_benchmarks_main") # Use a specific logger for main
+
+    try:
+        # Parse command line arguments
+        args = parse_args()
+        
+        # Setup file logging (now that args are parsed, if output_dir is used for log path)
+        # For simplicity, keeping log_file fixed as "benchmark_run.log"
+        log_file = "benchmark_run.log"
+        # This was moved to if __name__ == "__main__" block
+
+        # Reconfigure logging to include FileHandler
+        # Remove any existing handlers to avoid duplication if basicConfig was called before
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+        
+        logging.basicConfig(
+            level=logging.DEBUG if args.verbose else logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[
+                logging.FileHandler(log_file, mode='w'), # Ensure mode is 'w'
+                logging.StreamHandler()
+            ]
+        )
+        # Update our specific logger instance if needed, or just use root.
+        logger = logging.getLogger("rag_benchmarks") # Main script logger
+
+        logger.info(f"Arguments: {args}") # Log parsed arguments
+
+        # Attempt to flush logs immediately after basicConfig and level setting
+        if logging.getLogger().handlers:
+            file_handler = next((h for h in logging.getLogger().handlers if isinstance(h, logging.FileHandler)), None)
+            if file_handler and hasattr(file_handler, 'flush'):
+                try:
+                    file_handler.flush()
+                except Exception as e_flush:
+                    print(f"Warning: Could not flush file log handler during setup: {e_flush}")
+        
+        logger.info("Starting RAG benchmarking script (main flow)...")
+        
+        # Record start time
+        start_time = time.time()
+        
+        # Run the benchmarks
+        report_path = run_benchmarks(args)
+        
+        # Calculate duration
+        end_time = time.time()
+        duration = end_time - start_time
+        minutes, seconds = divmod(duration, 60)
+        
+        # Print summary
+        if report_path:
+            logger.info(f"Benchmark completed in {int(minutes)} minutes and {seconds:.1f} seconds. Report: {report_path}")
+            print(f"\nBenchmark completed in {int(minutes)} minutes and {seconds:.1f} seconds")
+            print(f"Open this file to view the report: {report_path}")
+        else:
+            logger.error("Benchmark failed (main flow determined this). Check logs.")
+            print("\nBenchmark failed. Check the logs for details.")
+        
+        return 0 if report_path else 1
+
+    except Exception as e:
+        logger.critical(f"--- Unhandled exception in main(): {e} ---", exc_info=True)
+        import traceback
+        logger.critical(f"--- Main() full traceback ---\n{traceback.format_exc()}")
+        return 1 # Indicate failure
+    finally:
+        logging.shutdown() # Flushes and closes all handlers
 
 
 if __name__ == "__main__":
+    # Clear log file at the very beginning of script execution
+    # This ensures it's cleared even if main() or arg parsing fails early.
+    log_file_name = "benchmark_run.log"
+    try:
+        with open(log_file_name, 'w') as lf:
+            lf.write("") # Truncate the file
+        # print(f"Log file {log_file_name} cleared at script start.") # For debugging log clearing
+    except IOError as e_io:
+        print(f"Warning: Could not clear log file {log_file_name} at start: {e_io}")
+
     sys.exit(main())

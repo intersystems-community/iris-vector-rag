@@ -12,9 +12,10 @@ import logging
 import json
 
 try:
-    import iris
-    IRISConnection = iris.IRISConnection
+    # Attempt to import the specific IRISConnection from the intersystems_iris package
+    from intersystems_iris.dbapi import IRISConnection
 except ImportError:
+    # Fallback if intersystems_iris or its dbapi module isn't found
     IRISConnection = Any
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func

@@ -14,8 +14,8 @@ if project_root not in sys.path:
 
 from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
 from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
-from src.common.utils import get_embedding_func, get_llm_func # Updated import
-from src.common.iris_connector_jdbc import get_iris_connection # Updated import
+from common.utils import get_embedding_func, get_llm_func # Updated import
+from common.iris_connector_jdbc import get_iris_connection # Updated import
 
 # Configure logging to capture specific messages for timing
 log_capture_string_io = io.StringIO()

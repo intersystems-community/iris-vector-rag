@@ -25,7 +25,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.common.utils import get_embedding_func, get_llm_func # get_iris_connector removed
+from common.utils import get_embedding_func, get_llm_func # get_iris_connector removed
 # Assuming GraphRAGPipeline will be in src/experimental/graphrag/
 from src.experimental.graphrag.pipeline import GraphRAGPipeline
 
@@ -380,8 +380,8 @@ if __name__ == "__main__":
     if path_to_src_main_hybrid_fixed not in sys.path:
          sys.path.insert(0, path_to_src_main_hybrid_fixed)
 
-    from src.common.iris_connector import get_iris_connection as get_conn_main_hybrid_fixed # Use default connector
-    from src.common.utils import get_embedding_func as get_embed_fn_main_hybrid_fixed, get_llm_func as get_llm_fn_main_hybrid_fixed
+    from common.iris_connector import get_iris_connection as get_conn_main_hybrid_fixed # Use default connector
+    from common.utils import get_embedding_func as get_embed_fn_main_hybrid_fixed, get_llm_func as get_llm_fn_main_hybrid_fixed
 
     db_conn_main_hybrid_fixed = None
     try:

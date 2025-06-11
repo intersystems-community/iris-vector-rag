@@ -54,6 +54,14 @@ This file defines key rules and standards for the RAG templates project.
 
 1. **Use TOP instead of LIMIT**: IRIS SQL uses TOP keyword instead of LIMIT. Always use "SELECT TOP n" syntax rather than "SELECT ... LIMIT n".
 
+## Vector Insertion Rules
+
+1. **Always Use insert_vector Utility**: All vector insertions into IRIS database tables MUST use the `common.db_vector_utils.insert_vector()` utility function for consistency and proper handling of vector formatting, dimension truncation/padding, and TO_VECTOR() syntax.
+
+2. **No Direct Vector SQL**: Never write direct INSERT statements with vector data. Always delegate to the `insert_vector()` utility function to ensure consistent vector handling across the entire codebase.
+
+3. **Consistent Vector Format**: The `insert_vector()` utility handles all vector formatting requirements including proper TO_VECTOR() syntax, dimension validation, and error handling.
+
 ## Performance & Benchmarking Rules
 
 1. **Scale Testing**: Tests should be adaptable to run with 1000 documents by default, but scalable to 92,000+ documents.

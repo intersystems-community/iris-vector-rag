@@ -14,11 +14,11 @@ services:
     stdin_open: true # Keep container running
     tty: true        # Keep container running
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:52773/csp/sys/UtilHome.csp"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+      test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U%SYS", "##class(%SYSTEM.Process).CurrentDirectory()"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     # Disable password expiration for all accounts using Security.Users.UnExpireUserPasswords()
     command: --check-caps false -a "iris session iris -U%SYS '##class(Security.Users).UnExpireUserPasswords(\"*\")'"
 

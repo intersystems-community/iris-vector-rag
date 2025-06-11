@@ -7,8 +7,8 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 import jaydebeapi # Import for type hinting
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.utils import get_embedding_func, get_llm_func, Document # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.utils import get_embedding_func, get_llm_func, Document # Updated import
 from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline # Updated import and class name
 
 # Placeholder for the 10 sample doc IDs, assuming they are loaded with these IDs

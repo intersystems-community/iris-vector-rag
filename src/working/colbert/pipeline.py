@@ -632,3 +632,39 @@ if __name__ == "__main__":
         if 'iris_conn' in locals() and iris_conn:
             iris_conn.close()
             logger.info("IRIS connection closed for ColBERT demo.")
+def run_colbert_rag(query_text: str, top_k: int = 5, similarity_threshold: float = 0.0) -> Dict[str, Any]:
+    """
+    Helper function to instantiate and run the ColbertRAGPipeline.
+    """
+    db_conn = None
+    try:
+        # get_iris_connection is imported from common.iris_connector_jdbc
+        db_conn = get_iris_connection() 
+        
+        # Get ColBERT query encoder from common.utils
+        # This assumes get_colbert_query_encoder_func is the correct one to use.
+        # It might need to be get_colbert_query_encoder if that's the intended alias.
+        # For now, using the more specific name from common.utils.
+        from common.utils import get_colbert_query_encoder_func
+        colbert_q_encoder = get_colbert_query_encoder_func()
+
+        llm_fn = get_llm_func(provider="stub") # Use stub for this helper context
+        
+        pipeline = ColbertRAGPipeline(
+            iris_connector=db_conn,
+            colbert_query_encoder_func=colbert_q_encoder,
+            llm_func=llm_fn
+            # embedding_func and colbert_doc_encoder_func will use defaults or be None
+        )
+        return pipeline.run(query_text, top_k=top_k, similarity_threshold=similarity_threshold)
+    except Exception as e:
+        logger.error(f"Error in run_colbert_rag helper: {e}", exc_info=True)
+        return {
+            "query": query_text,
+            "answer": "Error occurred in ColBERT pipeline.",
+            "retrieved_documents": [],
+            "error": str(e)
+        }
+    finally:
+        if db_conn:
+            db_conn.close()

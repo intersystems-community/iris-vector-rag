@@ -10,11 +10,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 from typing import List, Dict, Any, Callable
 import logging
 
-try:
-    import iris
-    IRISConnection = iris.IRISConnection
-except ImportError:
-    IRISConnection = Any
+# IRISConnection type hint will be 'Any' as the actual type can vary.
+# The actual connection object is passed in.
+IRISConnection = Any
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
 from common.iris_connector import get_iris_connection
@@ -23,7 +21,7 @@ from common.jdbc_stream_utils import read_iris_stream # Added for stream handlin
 logger = logging.getLogger(__name__)
 
 class BasicRAGPipeline:
-    def __init__(self, iris_connector: IRISConnection,
+    def __init__(self, iris_connector: Any, # Changed IRISConnection to Any
                  embedding_func: Callable[[List[str]], List[List[float]]],
                  llm_func: Callable[[str], str],
                  schema: str = "RAG"):

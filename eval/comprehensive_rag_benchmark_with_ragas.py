@@ -56,8 +56,8 @@ from src.experimental.graphrag.pipeline import GraphRAGPipeline  # Updated impor
 from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline # Updated import
 
 # Common utilities
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.embedding_utils import get_embedding_model # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Langchain for RAGAS LLM/Embeddings

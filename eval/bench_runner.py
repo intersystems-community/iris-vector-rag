@@ -241,10 +241,13 @@ def run_all_techniques_benchmark(
             )
             results[tech_name] = tech_result
         except Exception as e:
-            logger.error(f"Error in benchmark for {tech_name}: {str(e)}")
+            logger.error(f"Error in benchmark for {tech_name}: {str(e)}", exc_info=True)
+            import traceback
+            logger.error(f"Full traceback for {tech_name}:\n{traceback.format_exc()}")
             results[tech_name] = {
                 "pipeline": tech_name,
-                "error": str(e)
+                "error": str(e),
+                "traceback": traceback.format_exc() # Optionally store traceback in results
             }
     
     # Calculate summary metrics

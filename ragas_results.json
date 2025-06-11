@@ -1,0 +1,88 @@
+{
+  "pipelines": {
+    "basic": [
+      {
+        "pipeline": "basic",
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a common medication used in the treatment of type 2 diabetes. It is often prescribed as a first-line treatment and works by helping to lower glucose production in the liver and improving insulin sensitivity. This means that metformin helps to lower blood sugar levels in individuals with type 2 diabetes by making the body more responsive to insulin and reducing the amount of glucose produced by the liver. By addressing these underlying issues, metformin can help to improve blood sugar control in patients with type 2 diabetes. It is important to note that metformin is just one component of a comprehensive treatment plan for type 2 diabetes, which may also include lifestyle changes such as diet and exercise, as well as other medications or insulin therapy in some cases.",
+        "contexts": [
+          "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+          "Mutations and deletions in  TP53 TP53 TET2 TP53- TET2 TP53 Tp53/Tet2 TET2/TP53 Tp53/Tet2 TP53/TET2 Tp53/Tet2 Tp53/Tet2 TET2 TP53",
+          "",
+          "To translate, cross-culturally adapt and evaluate the clinimetric properties of the Chelsea Critical Care Physical Assessment for the functional evaluation of patients admitted to intensive care units in Brazil. The steps involved in the translation and cross-cultural adaptation of the instrument included the following: initial translation, synthesis, back-translation, review by an expert committee and pretesting. Intra- and interrater reliability and agreement were analyzed with data generated from physical therapists\u2019 assessments of the same group of patients with the translated and adapted instrument (n = 30). The evaluations were performed by two physical therapists who independently and blindly obtained scores from the patients. Qualitative analysis was performed by the review committee with the expert-adapted and expert-synthesized translation of the Chelsea Critical Care Physical Assessment scale into Portuguese, and the content validity index was calculated. Agreement was achieved between the translations of the Chelsea Critical Care Physical Assessment scale into Brazilian. Conceptual, idiomatic, semantic and experimental equivalences between the original and translated versions were obtained, resulting in the Brazilian version of the instrument, called the\n Avalia\u00e7\u00e3o F\u00edsica em Cuidados Intensivos Chelsea A version of the Chelsea Critical Care Physical Assessment scale can be reliably used in Brazil for functional assessment following its translation and cross-cultural adaptation to Brazilian Portuguese and shows evidence of excellent interrater reliability.",
+          "Pernicious anemia\u00a0is an autoimmune disease characterized by vitamin B12 deficiency due to antibodies that target intrinsic factor and/or parietal cells in the stomach. Hemolytic anemia is rarely seen in vitamin B12 deficiency. This case report highlights a patient with a history of autoimmune thyroid disease who presented with severe hemolytic anemia and vitamin B12 deficiency from pernicious anemia. This report discusses the association of hemolytic anemia with vitamin B12 deficiency, the association of pernicious anemia with other autoimmune diseases, and the treatment of pernicious anemia."
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "response_time": 1.640104055404663,
+        "documents_retrieved": 5,
+        "success": true
+      },
+      {
+        "pipeline": "basic",
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "The context documents provided do not directly address how SGLT2 inhibition affects kidney function. Therefore, we do not have enough information to provide a comprehensive answer to the question. Additional information on SGLT2 inhibition and its impact on kidney function would be necessary to address this question accurately.",
+        "contexts": [
+          "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+          "Mutations and deletions in  TP53 TP53 TET2 TP53- TET2 TP53 Tp53/Tet2 TET2/TP53 Tp53/Tet2 TP53/TET2 Tp53/Tet2 Tp53/Tet2 TET2 TP53",
+          "",
+          "To translate, cross-culturally adapt and evaluate the clinimetric properties of the Chelsea Critical Care Physical Assessment for the functional evaluation of patients admitted to intensive care units in Brazil. The steps involved in the translation and cross-cultural adaptation of the instrument included the following: initial translation, synthesis, back-translation, review by an expert committee and pretesting. Intra- and interrater reliability and agreement were analyzed with data generated from physical therapists\u2019 assessments of the same group of patients with the translated and adapted instrument (n = 30). The evaluations were performed by two physical therapists who independently and blindly obtained scores from the patients. Qualitative analysis was performed by the review committee with the expert-adapted and expert-synthesized translation of the Chelsea Critical Care Physical Assessment scale into Portuguese, and the content validity index was calculated. Agreement was achieved between the translations of the Chelsea Critical Care Physical Assessment scale into Brazilian. Conceptual, idiomatic, semantic and experimental equivalences between the original and translated versions were obtained, resulting in the Brazilian version of the instrument, called the\n Avalia\u00e7\u00e3o F\u00edsica em Cuidados Intensivos Chelsea A version of the Chelsea Critical Care Physical Assessment scale can be reliably used in Brazil for functional assessment following its translation and cross-cultural adaptation to Brazilian Portuguese and shows evidence of excellent interrater reliability.",
+          "Pernicious anemia\u00a0is an autoimmune disease characterized by vitamin B12 deficiency due to antibodies that target intrinsic factor and/or parietal cells in the stomach. Hemolytic anemia is rarely seen in vitamin B12 deficiency. This case report highlights a patient with a history of autoimmune thyroid disease who presented with severe hemolytic anemia and vitamin B12 deficiency from pernicious anemia. This report discusses the association of hemolytic anemia with vitamin B12 deficiency, the association of pernicious anemia with other autoimmune diseases, and the treatment of pernicious anemia."
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "response_time": 1.072019100189209,
+        "documents_retrieved": 5,
+        "success": true
+      },
+      {
+        "pipeline": "basic",
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "The context documents do not provide specific information regarding the mechanism of action of GLP-1 receptor agonists. Therefore, it is not possible to provide a comprehensive answer based on the given information. Additional information from reliable sources will be needed to answer this question accurately.",
+        "contexts": [
+          "Common treatments for type 2 diabetes include lifestyle changes such as diet and exercise, oral medications like metformin, and in some cases, insulin therapy. Metformin is often the first-line medication prescribed for type 2 diabetes. It helps lower glucose production in the liver and improves insulin sensitivity.",
+          "Mutations and deletions in  TP53 TP53 TET2 TP53- TET2 TP53 Tp53/Tet2 TET2/TP53 Tp53/Tet2 TP53/TET2 Tp53/Tet2 Tp53/Tet2 TET2 TP53",
+          "",
+          "To translate, cross-culturally adapt and evaluate the clinimetric properties of the Chelsea Critical Care Physical Assessment for the functional evaluation of patients admitted to intensive care units in Brazil. The steps involved in the translation and cross-cultural adaptation of the instrument included the following: initial translation, synthesis, back-translation, review by an expert committee and pretesting. Intra- and interrater reliability and agreement were analyzed with data generated from physical therapists\u2019 assessments of the same group of patients with the translated and adapted instrument (n = 30). The evaluations were performed by two physical therapists who independently and blindly obtained scores from the patients. Qualitative analysis was performed by the review committee with the expert-adapted and expert-synthesized translation of the Chelsea Critical Care Physical Assessment scale into Portuguese, and the content validity index was calculated. Agreement was achieved between the translations of the Chelsea Critical Care Physical Assessment scale into Brazilian. Conceptual, idiomatic, semantic and experimental equivalences between the original and translated versions were obtained, resulting in the Brazilian version of the instrument, called the\n Avalia\u00e7\u00e3o F\u00edsica em Cuidados Intensivos Chelsea A version of the Chelsea Critical Care Physical Assessment scale can be reliably used in Brazil for functional assessment following its translation and cross-cultural adaptation to Brazilian Portuguese and shows evidence of excellent interrater reliability.",
+          "Pernicious anemia\u00a0is an autoimmune disease characterized by vitamin B12 deficiency due to antibodies that target intrinsic factor and/or parietal cells in the stomach. Hemolytic anemia is rarely seen in vitamin B12 deficiency. This case report highlights a patient with a history of autoimmune thyroid disease who presented with severe hemolytic anemia and vitamin B12 deficiency from pernicious anemia. This report discusses the association of hemolytic anemia with vitamin B12 deficiency, the association of pernicious anemia with other autoimmune diseases, and the treatment of pernicious anemia."
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "response_time": 0.9907371997833252,
+        "documents_retrieved": 5,
+        "success": true
+      }
+    ]
+  },
+  "cache_status": {
+    "cache_available": true,
+    "cache_enabled": true,
+    "cache_configured": true,
+    "cache_backend": "iris",
+    "cache_status": "Configured and Ready (iris)",
+    "details": [
+      "IRIS connection available for cache reuse",
+      "Will reuse existing RAG database connection for cache",
+      "Cache successfully initialized"
+    ]
+  },
+  "timestamp": "2025-06-08T15:12:29.987141",
+  "args": {
+    "pipelines": [
+      "basic"
+    ],
+    "metrics_level": "core",
+    "queries_file": "eval/sample_queries.json",
+    "max_queries": 3,
+    "min_docs": 100,
+    "cache_check": false,
+    "clear_cache": false,
+    "no_cache": false,
+    "no_ragas": false,
+    "output_dir": ".",
+    "verbose": true
+  },
+  "ragas_results": {
+    "ragas_available": true,
+    "metrics_level": "core",
+    "results": "{'answer_relevancy': nan, 'faithfulness': nan}",
+    "num_queries": 3
+  }
+}

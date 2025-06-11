@@ -21,8 +21,8 @@ project_root = str(Path(__file__).parent.parent)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.embedding_utils import get_embedding_model # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Import working RAG techniques (avoiding JDBC dependencies)

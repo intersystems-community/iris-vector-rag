@@ -29,8 +29,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # 
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.embedding_utils import get_embedding_model # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.embedding_utils import get_embedding_model # Updated import
 from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService # Reverted: chunking is at project root
 
 # Import all RAG techniques

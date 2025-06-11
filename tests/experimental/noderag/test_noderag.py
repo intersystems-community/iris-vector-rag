@@ -13,7 +13,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.common.utils import Document # Updated import
+from common.utils import Document # Updated import
 
 # Attempt to import for type hinting, but make it optional
 try:

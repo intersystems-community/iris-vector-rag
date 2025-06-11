@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""
+RAG Control Tool (ragctl) - Standalone executable for RAG pipeline management.
+
+This script provides a convenient entry point for the RAG reconciliation CLI
+without requiring the full module path.
+
+Usage:
+    ./ragctl --help
+    ./ragctl run --pipeline colbert
+    ./ragctl status --pipeline noderag
+    ./ragctl daemon --interval 1800
+"""
+
+import sys
+import os
+
+# Add the current directory to Python path to find iris_rag module
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from iris_rag.cli.reconcile_cli import reconcile
+except ImportError as e:
+    print(f"Error importing iris_rag module: {e}")
+    print("Make sure you're running this script from the rag-templates directory")
+    sys.exit(1)
+
+if __name__ == '__main__':
+    reconcile()

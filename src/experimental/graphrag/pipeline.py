@@ -485,6 +485,62 @@ def create_graphrag_pipeline(iris_connector=None, llm_func=None, embedding_func_
         embedding_func=embedding_function_to_use,
         llm_func=llm_function_to_use
     )
+def run_graphrag(query_text: str, top_k: int = 20, similarity_threshold: float = 0.1) -> Dict[str, Any]:
+    """
+    Helper function to instantiate and run the GraphRAGPipeline.
+    """
+    db_conn = None
+    try:
+        # get_iris_connection is imported from common.iris_connector in this file
+        db_conn = get_iris_connection() 
+        embed_fn = get_embedding_func()
+        llm_fn = get_llm_func(provider="stub") # Use stub for this helper context
+        
+        pipeline = create_graphrag_pipeline(
+            iris_connector=db_conn,
+            embedding_func_override=embed_fn,
+            llm_func=llm_fn
+        )
+        return pipeline.run(query_text, top_k=top_k, similarity_threshold=similarity_threshold)
+    except Exception as e:
+        logger.error(f"Error in run_graphrag helper: {e}", exc_info=True)
+        return {
+            "query": query_text,
+            "answer": "Error occurred in GraphRAG pipeline.",
+            "retrieved_documents": [],
+            "error": str(e)
+        }
+    finally:
+        if db_conn:
+            db_conn.close()
+def run_graphrag(query_text: str, top_k: int = 20, similarity_threshold: float = 0.1) -> Dict[str, Any]:
+    """
+    Helper function to instantiate and run the GraphRAGPipeline.
+    """
+    db_conn = None
+    try:
+        # get_iris_connection is imported from common.iris_connector in this file
+        db_conn = get_iris_connection() 
+        embed_fn = get_embedding_func()
+        llm_fn = get_llm_func(provider="stub") # Use stub for this helper context
+        
+        pipeline = create_graphrag_pipeline(
+            iris_connector=db_conn,
+            embedding_func_override=embed_fn,
+            llm_func=llm_fn
+        )
+        return pipeline.run(query_text, top_k=top_k, similarity_threshold=similarity_threshold)
+    except Exception as e:
+        logger.error(f"Error in run_graphrag helper: {e}", exc_info=True)
+        return {
+            "query": query_text,
+            "answer": "Error occurred in GraphRAG pipeline.",
+            "retrieved_documents": [],
+            "error": str(e)
+        }
+    finally:
+        if db_conn:
+            db_conn.close()
 
 if __name__ == '__main__':
     # Setup basic logging for demo

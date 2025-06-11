@@ -26,8 +26,8 @@ from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipel
 from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
 
 # Import common utilities
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.embedding_utils import get_embedding_model # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.embedding_utils import get_embedding_model # Updated import
 
 def test_technique(technique_name, pipeline_class, iris, embedding_func, llm_func, query):
     """Test a single RAG technique"""

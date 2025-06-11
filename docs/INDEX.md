@@ -89,6 +89,16 @@ Welcome to the RAG Templates project documentation. This page serves as a centra
 *   **[`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)**: The overall initial implementation plan for the project.
 *   **[`DETAILED_IMPLEMENTATION_PLAN.md`](DETAILED_IMPLEMENTATION_PLAN.md)**: A more granular breakdown of implementation tasks and details.
 
-## 9. Archival / Outdated
+## 9. LLM Caching System
+
+*   **[`LLM_CACHING_GUIDE.md`](LLM_CACHING_GUIDE.md)**: ✅ **NEW** - Comprehensive guide for the intelligent LLM response caching layer, including architecture, configuration, and performance optimization.
+*   **[`LLM_CACHE_INTEGRATION_SUMMARY.md`](LLM_CACHE_INTEGRATION_SUMMARY.md)**: ✅ **NEW** - Integration summary documenting how LLM caching is integrated into RAG pipelines with automatic cache management.
+*   **[`LLM_CACHE_MONITORING_IMPLEMENTATION.md`](LLM_CACHE_MONITORING_IMPLEMENTATION.md)**: ✅ **NEW** - Monitoring system implementation for LLM cache performance tracking and health monitoring.
+
+## 10. Data Management & Self-Healing
+
+*   **[`SELF_HEALING_SYSTEM.md`](SELF_HEALING_SYSTEM.md)**: ✅ **NEW** - Describes the automated self-healing data system, its components, `make` targets, and usage for ensuring data integrity and 100% table readiness.
+
+## 11. Archival / Outdated
 
 *   **[`NEXT_TECHNIQUES_SUMMARY.md`](NEXT_TECHNIQUES_SUMMARY.md)**: (Marked as ARCHIVAL - OUTDATED) Early plan for RAG techniques that have since been implemented.

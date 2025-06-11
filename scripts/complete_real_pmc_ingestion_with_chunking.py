@@ -34,8 +34,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func # Updated import (added colbert query encoder for OptimizedColBERT)
+from common.iris_connector import get_iris_connection # Updated import
+from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func # Updated import (added colbert query encoder for OptimizedColBERT)
 from data.loader import load_documents_to_iris # Path remains correct
 from src.working.colbert.doc_encoder import get_colbert_doc_encoder # Updated import
 from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService # Path remains correct

@@ -15,8 +15,8 @@ from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipeline
 from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
 from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
 from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
-from src.common.iris_connector_jdbc import get_iris_connection # Updated import
-from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from common.iris_connector_jdbc import get_iris_connection # Updated import
+from common.utils import get_embedding_func, get_llm_func # Updated import
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

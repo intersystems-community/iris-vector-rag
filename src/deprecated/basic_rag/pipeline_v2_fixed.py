@@ -11,11 +11,9 @@ from typing import List, Dict, Any, Callable
 import logging
 import json
 
-try:
-    import iris
-    IRISConnection = iris.IRISConnection
-except ImportError:
-    IRISConnection = Any
+# IRISConnection type hint will be 'Any' as the actual type can vary.
+# The actual connection object is passed in.
+IRISConnection = Any
 
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
 from common.iris_connector_jdbc import get_iris_connection # Assuming JDBC for consistency
@@ -23,7 +21,7 @@ from common.iris_connector_jdbc import get_iris_connection # Assuming JDBC for c
 logger = logging.getLogger(__name__)
 
 class BasicRAGPipelineV2Fixed:
-    def __init__(self, iris_connector: IRISConnection,
+    def __init__(self, iris_connector: Any, # Changed IRISConnection to Any
                  embedding_func: Callable[[List[str]], List[List[float]]],
                  llm_func: Callable[[str], str],
                  schema: str = "RAG"):

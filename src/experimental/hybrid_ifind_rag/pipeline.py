@@ -1,3 +1,4 @@
+from typing import Callable, Optional, Any
 """
 Hybrid iFind+Graph+Vector RAG Pipeline Implementation
 
@@ -26,7 +27,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Adjust imports for new structure (e.g. src/common/, src/experimental/graphrag)
-from src.common.utils import get_embedding_func, get_llm_func # get_iris_connector removed as it's passed in
+from common.utils import get_embedding_func, get_llm_func # get_iris_connector removed as it's passed in
 from src.experimental.graphrag.pipeline import GraphRAGPipeline # Assuming GraphRAG is moved here
 
 logger = logging.getLogger(__name__)
@@ -438,6 +439,55 @@ Answer:"""
                 "num_fused_results": len(fused_documents)
             }
         }
+def create_hybrid_ifind_rag_pipeline(iris_connector: Any, 
+                                     embedding_func: Optional[Callable] = None, 
+                                     llm_func: Optional[Callable] = None) -> HybridiFindRAGPipeline:
+    """
+    Factory function to create and return an instance of HybridiFindRAGPipeline.
+    """
+    logger.info("Creating HybridiFindRAGPipeline instance via factory function.")
+    return HybridiFindRAGPipeline(
+        iris_connector=iris_connector,
+        embedding_func=embedding_func,
+        llm_func=llm_func
+    )
+def run_hybrid_ifind_rag(query: str, **kwargs) -> Dict[str, Any]:
+    """
+    Helper function to instantiate and run the HybridiFindRAGPipeline using its factory.
+    """
+    db_conn = None
+    try:
+        # Assuming get_iris_connection is available from common.utils or common.iris_connector_jdbc
+        # The main __init__ of HybridiFindRAGPipeline uses get_embedding_func and get_llm_func by default
+        # This helper will rely on those defaults if not overridden via kwargs to create_hybrid_ifind_rag_pipeline
+        
+        # Need to import get_iris_connection if not already available in this scope
+        # For simplicity, assuming it's accessible or the test provides it via kwargs if necessary.
+        # If direct instantiation is preferred:
+        from common.iris_connector_jdbc import get_iris_connection as get_jdbc_conn
+        from common.utils import get_embedding_func, get_llm_func
+
+        db_conn = get_jdbc_conn()
+        embedding_func = get_embedding_func()
+        llm_func = get_llm_func(provider="stub")
+
+        pipeline = create_hybrid_ifind_rag_pipeline(
+            iris_connector=db_conn,
+            embedding_func=embedding_func,
+            llm_func=llm_func
+        )
+        return pipeline.run(query, **kwargs)
+    except Exception as e:
+        logger.error(f"Error in run_hybrid_ifind_rag helper: {e}", exc_info=True)
+        return {
+            "query": query,
+            "answer": "Error occurred in HybridiFindRAG pipeline.",
+            "retrieved_documents": [],
+            "error": str(e)
+        }
+    finally:
+        if db_conn:
+            db_conn.close()
 
 # Example usage:
 if __name__ == "__main__":
@@ -450,8 +500,8 @@ if __name__ == "__main__":
          sys.path.insert(0, path_to_src_main_hybrid)
 
     # These imports are already correct as they use src.common
-    from src.common.iris_connector_jdbc import get_iris_connection as get_jdbc_conn_main_hybrid
-    from src.common.utils import get_embedding_func as get_embed_fn_main_hybrid, get_llm_func as get_llm_fn_main_hybrid
+    from common.iris_connector_jdbc import get_iris_connection as get_jdbc_conn_main_hybrid
+    from common.utils import get_embedding_func as get_embed_fn_main_hybrid, get_llm_func as get_llm_fn_main_hybrid
 
     db_conn_main_hybrid = None
     try:

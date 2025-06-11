@@ -13,8 +13,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.utils import get_embedding_func, get_llm_func # Updated import
 
 def test_pipeline(pipeline_class, pipeline_name: str, query: str = "What are the symptoms of diabetes?") -> Dict[str, Any]:
     """Test a single pipeline and return results"""
