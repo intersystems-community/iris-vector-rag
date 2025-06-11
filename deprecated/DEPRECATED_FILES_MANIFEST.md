@@ -21,3 +21,4 @@ This document lists files that have been moved to the `deprecated/` directory as
 | scripts/migration/fix_v2_pipelines_sql.py | deprecated/scripts/migration/fix_v2_pipelines_sql.py | One-time migration scripts for superseded V2 pipelines. | 2025-06-11 | |
 | scripts/migration/fix_v2_pipelines_params.py | deprecated/scripts/migration/fix_v2_pipelines_params.py | One-time migration scripts for superseded V2 pipelines. | 2025-06-11 | |
 | scripts/migration/fix_all_v2_pipelines.py | deprecated/scripts/migration/fix_all_v2_pipelines.py | One-time migration scripts for superseded V2 pipelines. | 2025-06-11 | |
+| hybrid_ifind_rag/ (entire directory) | deprecated/hybrid_ifind_rag_old_implementation/ | Entire old hybrid IFind RAG implementation superseded by iris_rag/pipelines/hybrid_ifind.py | 2025-06-11 | Contains complete old implementation including pipeline_fixed.py, schema files, and backup versions |
