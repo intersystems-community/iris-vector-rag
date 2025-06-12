@@ -128,6 +128,81 @@ def get_colbert_model(model_name: str = "colbert-ir/colbertv2.0", mock: bool = F
         logger.warning("ColBERT not available. Using mock token embeddings.")
         return MockColBERTModel()
 
+def get_stub_embedding_func(embedding_dim: int = 384) -> Callable[[List[str]], List[List[float]]]:
+    """
+    Returns a stub function for generating embeddings, using MockEmbeddingModel.
+    """
+    mock_model = MockEmbeddingModel(embedding_dim=embedding_dim)
+    def stub_embed(texts: List[str]) -> List[List[float]]:
+        if not texts:
+            return []
+        # Ensure texts is a list of strings
+        if isinstance(texts, str):
+            texts = [texts]
+        elif not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
+            logger.error(f"Invalid input to stub_embed. Expected List[str], got {type(texts)}")
+            # Return a list of empty lists or raise error, depending on desired handling
+            return [[] for _ in range(len(texts))]
+        
+        # MockEmbeddingModel.encode returns np.array, convert to list of lists
+        encoded_embeddings = mock_model.encode(texts)
+        return [emb.tolist() for emb in encoded_embeddings]
+    logger.info(f"Stub embedding function created (dim: {embedding_dim}).")
+    return stub_embed
+
+def get_embedding_func(provider: str = "stub", model_name: str = "intfloat/e5-base-v2", embedding_dim: int = 384) -> Callable[[List[str]], List[List[float]]]:
+    """
+    Get an embedding function based on the provider.
+    This function returns another function that takes a list of texts and returns embeddings.
+    """
+    logger.info(f"Attempting to get embedding function for provider: {provider}, model: {model_name}, dim: {embedding_dim}")
+    if provider == "stub":
+        return get_stub_embedding_func(embedding_dim=embedding_dim)
+    elif provider == "openai":
+        # Placeholder for OpenAI embedding function
+        # You would typically import the OpenAI client and define a function
+        # that calls client.embeddings.create(...)
+        logger.warning("OpenAI embedding provider function not fully implemented, using stub.")
+        return get_stub_embedding_func(embedding_dim=embedding_dim) # Fallback for now
+    elif provider == "huggingface":
+        try:
+            # Use the existing get_embedding_model to load the actual SentenceTransformer model
+            # Assuming mock=False for a real HuggingFace model.
+            # The get_embedding_model handles SentenceTransformer import and errors.
+            actual_model = get_embedding_model(model_name=model_name, mock=False)
+            
+            # Check if the loaded model is a real model or a fallback mock
+            if isinstance(actual_model, MockEmbeddingModel):
+                logger.warning(f"Failed to load real HuggingFace model '{model_name}', falling back to stub embedding function via MockEmbeddingModel.")
+                return get_stub_embedding_func(embedding_dim=embedding_dim)
+
+            def hf_embed(texts: List[str]) -> List[List[float]]:
+                if not texts:
+                    return []
+                if isinstance(texts, str):
+                    texts = [texts]
+                # SentenceTransformer models usually have an .encode() method
+                encoded_embeddings = actual_model.encode(texts)
+                # Ensure it's a list of lists of floats
+                if isinstance(encoded_embeddings, np.ndarray):
+                    return encoded_embeddings.tolist()
+                elif isinstance(encoded_embeddings, list) and all(isinstance(e, np.ndarray) for e in encoded_embeddings):
+                     return [e.tolist() for e in encoded_embeddings]
+                elif isinstance(encoded_embeddings, list) and all(isinstance(e, list) for e in encoded_embeddings):
+                    return encoded_embeddings # Already in correct format
+                else:
+                    logger.error(f"Unexpected embedding format from HuggingFace model {model_name}: {type(encoded_embeddings)}")
+                    return [[] for _ in range(len(texts))]
+            logger.info(f"HuggingFace embedding function created for model: {model_name}")
+            return hf_embed
+        except Exception as e:
+            logger.error(f"Error setting up HuggingFace embedding function for model {model_name}: {e}", exc_info=True)
+            logger.warning("Falling back to stub embedding function due to HuggingFace setup error.")
+            return get_stub_embedding_func(embedding_dim=embedding_dim)
+    else:
+        logger.warning(f"Unknown embedding provider: {provider}. Using stub embedding function.")
+        return get_stub_embedding_func(embedding_dim=embedding_dim)
+
 def generate_document_embeddings(
     connection, 
     embedding_model,

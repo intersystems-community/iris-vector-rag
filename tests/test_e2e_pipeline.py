@@ -9,7 +9,7 @@ import os
 import sys
 from typing import List, Dict, Any, Callable, Tuple
 
-from basic_rag.pipeline_v2 import BasicRAGPipelineV2
+from basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Use fixed and alias
 from common.utils import get_embedding_func, get_llm_func
 
 # Add project root to path

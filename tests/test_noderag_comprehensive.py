@@ -12,9 +12,9 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.utils import get_embedding_func, get_llm_func # Updated import
-from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.utils import get_embedding_func, get_llm_func # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Corrected import path and class name
 
 def test_noderag_comprehensive():
     """Test NodeRAG with comprehensive debugging"""

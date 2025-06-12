@@ -1,0 +1,1058 @@
+{
+  "timestamp": "20250610_173348",
+  "evaluation_duration": 812.820485830307,
+  "pipeline_results": {
+    "BasicRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "The context documents provided do not contain any information regarding the effects of metformin on type 2 diabetes. They only list numbers without any accompanying explanations or details. Therefore, I cannot provide a comprehensive answer based on the given context.\n\nTo fully answer the question about the effects of metformin on type 2 diabetes, the following information would be needed:\n\n1. Mechanism of action of metformin in the body.\n2. Clinical benefits of metformin for managing blood glucose levels.\n3. Potential side effects or risks associated with metformin use.\n4. Comparison of metformin with other diabetes medications.\n5. Long-term effects of metformin on diabetes management and related health outcomes.\n\nWithout this information, I cannot provide a detailed response.",
+        "contexts": [
+          "67",
+          "68",
+          "87",
+          "71",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 3.1073479652404785,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "The context documents provided do not contain any information regarding the effects of SGLT2 inhibition on kidney function. They all simply state the number \"73\" without any additional context or details. \n\nTo comprehensively answer the question about how SGLT2 inhibition affects kidney function, the following information would be necessary:\n\n1. Mechanism of action of SGLT2 inhibitors and how they influence renal glucose and sodium reabsorption.\n2. Clinical studies or trials that demonstrate the effects of SGLT2 inhibitors on kidney function, including any changes in glomerular filtration rate (GFR) or kidney disease progression.\n3. Potential benefits of SGLT2 inhibitors in patients with diabetic kidney disease or other forms of renal impairment.\n4. Any adverse effects or considerations regarding kidney function when using SGLT2 inhibitors.\n\nSince this information is not present in the context documents, a complete answer cannot be provided.",
+        "contexts": [
+          "73",
+          "73",
+          "73",
+          "73",
+          "73"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 3.774761915206909,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "The context documents provided do not contain any information regarding the mechanism of action of GLP-1 receptor agonists. They only include numerical values without any relevant details or explanations related to the question. Therefore, I cannot provide a comprehensive answer based on the given context.\n\nTo fully answer the question about the mechanism of action of GLP-1 receptor agonists, additional information is needed, such as:\n\n1. How GLP-1 receptor agonists interact with GLP-1 receptors in the body.\n2. The physiological effects of GLP-1 receptor activation, including insulin secretion, glucagon suppression, and effects on gastric emptying.\n3. The role of GLP-1 receptor agonists in the management of conditions like type 2 diabetes and obesity.\n\nWithout this information, I cannot provide a complete answer.",
+        "contexts": [
+          "71",
+          "84",
+          "71",
+          "73",
+          "78"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 2.9078190326690674,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "The context documents provided do not contain any information regarding the cardiovascular benefits of SGLT2 inhibitors. They only present numerical values (73, 84, 73, 67, 65) without any accompanying explanations or context that would relate to the question about SGLT2 inhibitors and their cardiovascular benefits.\n\nTo fully answer the question, information such as the mechanisms by which SGLT2 inhibitors improve cardiovascular health, clinical trial results demonstrating their efficacy, and specific cardiovascular outcomes associated with their use would be necessary. Since this information is not present in the provided documents, I cannot provide a comprehensive answer based on the context given.",
+        "contexts": [
+          "73",
+          "84",
+          "73",
+          "67",
+          "65"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 3.587981939315796,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "answer": "The context documents provided do not contain any information regarding how statins prevent cardiovascular disease. They only present numerical values (68, 73, 83, 84, 73) without any accompanying explanations or details related to statins or cardiovascular health.\n\nTo comprehensively answer the question about how statins prevent cardiovascular disease, additional information is needed. Specifically, it would be helpful to include details on the mechanism of action of statins, such as their role in lowering cholesterol levels, reducing inflammation, stabilizing atherosclerotic plaques, and improving endothelial function. \n\nIn summary, the context documents do not provide sufficient information to answer the question about the mechanism by which statins prevent cardiovascular disease.",
+        "contexts": [
+          "68",
+          "73",
+          "83",
+          "84",
+          "73"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 5.092650890350342,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "answer": "The context documents provided do not contain any information regarding the role of ACE inhibitors in heart failure. They only include numerical values without any explanations or relevant details about medical treatments or conditions. \n\nTo fully answer the question about the role of ACE inhibitors in heart failure, additional information is needed, such as:\n\n1. The mechanism of action of ACE inhibitors in the context of heart failure.\n2. The benefits of using ACE inhibitors for patients with heart failure, including effects on mortality and morbidity.\n3. Any potential side effects or contraindications associated with ACE inhibitors in heart failure patients.\n4. Clinical guidelines or recommendations regarding the use of ACE inhibitors in heart failure management.\n\nWithout this information, a comprehensive answer cannot be provided.",
+        "contexts": [
+          "65",
+          "67",
+          "67",
+          "73",
+          "67"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 2.626047134399414,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "answer": "The context documents provided do not contain any information regarding how glucocorticoids suppress inflammation. They only present numerical values without any explanation or context related to glucocorticoids or their mechanisms of action. \n\nTo answer the question comprehensively, additional information is needed about the biological mechanisms by which glucocorticoids exert their anti-inflammatory effects. Typically, glucocorticoids suppress inflammation by:\n\n1. Inhibiting the expression of pro-inflammatory genes.\n2. Reducing the production of inflammatory cytokines and chemokines.\n3. Suppressing the activation and proliferation of immune cells, such as T cells and macrophages.\n4. Enhancing the expression of anti-inflammatory proteins.\n\nSince this information is not present in the provided documents, a complete answer cannot be formulated based on the context given.",
+        "contexts": [
+          "70",
+          "84",
+          "65",
+          "68",
+          "68"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 5.05676794052124,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "answer": "The context documents provided do not contain any information regarding the mechanisms of antibiotic resistance. They only present numerical values without any accompanying explanations or details related to the topic of antibiotic resistance. \n\nTo comprehensively answer the question about the mechanisms of antibiotic resistance, additional information is needed, such as:\n\n1. **Genetic mutations**: Changes in bacterial DNA that confer resistance.\n2. **Horizontal gene transfer**: The acquisition of resistance genes from other bacteria through transformation, transduction, or conjugation.\n3. **Efflux pumps**: Proteins that bacteria use to pump out antibiotics, reducing their effectiveness.\n4. **Enzymatic degradation**: Bacteria producing enzymes that break down antibiotics, rendering them ineffective.\n5. **Alteration of target sites**: Changes in the bacterial structures that antibiotics target, preventing the drugs from binding effectively.\n\nIn summary, the context documents do not provide any relevant information on antibiotic resistance mechanisms, and the answer requires additional details that are not present.",
+        "contexts": [
+          "65",
+          "84",
+          "84",
+          "66",
+          "73"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 4.137807846069336,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "answer": "The context documents provided do not contain any information regarding how biologics treat rheumatoid arthritis. They only include numerical values (84, 85, 80, 80, 67) without any accompanying explanations or details related to the treatment of rheumatoid arthritis or the mechanism of action of biologics.\n\nTo fully answer the question about how biologics treat rheumatoid arthritis, additional information is needed, such as:\n\n1. The mechanism of action of biologics in the immune system.\n2. Specific types of biologics used for rheumatoid arthritis.\n3. The effects of biologics on inflammation and joint damage.\n4. Clinical outcomes associated with the use of biologics in patients with rheumatoid arthritis.\n\nWithout this information, a comprehensive answer cannot be provided.",
+        "contexts": [
+          "84",
+          "85",
+          "80",
+          "80",
+          "67"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 2.9739601612091064,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "answer": "The context documents provided do not contain any information regarding the mechanism of action of levodopa in Parkinson's disease. They consist of numerical values without any relevant details about pharmacology or the treatment of Parkinson's disease. \n\nTo answer the question comprehensively: \n\nLevodopa (L-DOPA) is a precursor to dopamine and is used in the treatment of Parkinson's disease. In patients with Parkinson's, there is a deficiency of dopamine due to the degeneration of dopaminergic neurons in the substantia nigra. Levodopa works by crossing the blood-brain barrier and being converted into dopamine in the brain, which helps to replenish the depleted levels of this neurotransmitter. This increase in dopamine levels helps to alleviate the motor symptoms associated with Parkinson's disease, such as bradykinesia (slowness of movement), rigidity, and tremors.\n\nIn summary, the context documents do not provide any relevant information about levodopa's mechanism of action, and the answer requires knowledge of its pharmacological effects and role in treating Parkinson's disease.",
+        "contexts": [
+          "80",
+          "80",
+          "68",
+          "84",
+          "71"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 5.015143156051636,
+        "success": true,
+        "error": null
+      }
+    ],
+    "HyDERAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production and increasing insulin sensitivity in peripheral tissues.\n\n2. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a preferred option for overweight individuals with type 2 diabetes.\n\n3. **Cardiovascular Benefits**: Metformin has been shown to have cardiovascular protective effects, reducing the risk of heart disease in patients with type 2 diabetes.\n\n4. **Improving Lipid Profiles**: It can help improve lipid levels, including lowering triglycerides and LDL cholesterol.\n\n5. **Potential Cancer Risk Reduction**: Some studies suggest that metformin may have a role in reducing the risk of certain types of cancer, although more research is needed in this area.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its efficacy, safety profile, and additional health benefits.",
+        "contexts": [
+          "67",
+          "68",
+          "71",
+          "87",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 19.94999122619629,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 inhibition has been shown to have beneficial effects on kidney function. It helps to reduce hyperglycemia, lower blood pressure, and promote weight loss, all of which can contribute to improved kidney health. Additionally, SGLT2 inhibitors can reduce the progression of kidney disease by decreasing glomerular hyperfiltration and providing renal protection. They also have been associated with a reduction in the risk of acute kidney injury and may improve overall kidney outcomes in patients with diabetes and chronic kidney disease.",
+        "contexts": [
+          "73",
+          "71",
+          "73",
+          "68",
+          "80"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 21.680207014083862,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "GLP-1 receptor agonists work by mimicking the action of the glucagon-like peptide-1 (GLP-1) hormone, which is involved in glucose metabolism. Their mechanism of action includes:\n\n1. **Stimulating Insulin Secretion**: They enhance glucose-dependent insulin secretion from the pancreas, meaning they promote insulin release when blood glucose levels are elevated.\n\n2. **Inhibiting Glucagon Secretion**: GLP-1 receptor agonists reduce the secretion of glucagon, a hormone that raises blood glucose levels, thereby helping to lower blood sugar.\n\n3. **Slowing Gastric Emptying**: They delay gastric emptying, which helps to reduce the rate at which glucose enters the bloodstream after meals.\n\n4. **Promoting Satiety**: These agonists increase feelings of fullness, which can lead to reduced food intake and assist in weight management.\n\nOverall, GLP-1 receptor agonists are used primarily in the treatment of type 2 diabetes and can also aid in weight loss.",
+        "contexts": [
+          "71",
+          "68",
+          "67",
+          "71",
+          "65"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 22.36074209213257,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "SGLT2 inhibitors have several cardiovascular benefits, including:\n\n1. **Reduction in Heart Failure Hospitalizations**: SGLT2 inhibitors have been shown to significantly reduce the risk of hospitalization for heart failure in patients with type 2 diabetes and those with heart failure.\n\n2. **Cardiovascular Mortality Reduction**: These medications are associated with a decrease in the risk of cardiovascular death, particularly in patients with established cardiovascular disease.\n\n3. **Improved Cardiac Function**: SGLT2 inhibitors can lead to improvements in cardiac function and structure, which may benefit patients with heart failure.\n\n4. **Lower Blood Pressure**: By promoting diuresis, SGLT2 inhibitors can help lower blood pressure, which is beneficial for cardiovascular health.\n\n5. **Weight Loss**: These medications often lead to weight loss, which can improve overall cardiovascular risk profiles.\n\n6. **Renal Protection**: SGLT2 inhibitors provide renal benefits, which is important since kidney health is closely linked to cardiovascular health.\n\nOverall, SGLT2 inhibitors contribute to better cardiovascular outcomes in patients with diabetes and other cardiovascular risk factors.",
+        "contexts": [
+          "73",
+          "71",
+          "68",
+          "67",
+          "65"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 20.51213026046753,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "answer": "Statins prevent cardiovascular disease primarily by lowering cholesterol levels in the blood. They inhibit the enzyme HMG-CoA reductase, which plays a central role in the production of cholesterol in the liver. By reducing cholesterol levels, statins help to decrease the formation of plaques in the arteries, thereby improving blood flow and reducing the risk of heart attacks and strokes. Additionally, statins have anti-inflammatory properties and may stabilize existing plaques, further contributing to cardiovascular protection.",
+        "contexts": [
+          "83",
+          "76",
+          "84",
+          "80",
+          "84"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 20.934468030929565,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "answer": "ACE inhibitors play a crucial role in the management of heart failure. They help to relax blood vessels, reduce blood pressure, and decrease the workload on the heart. By inhibiting the angiotensin-converting enzyme, these medications prevent the conversion of angiotensin I to angiotensin II, a substance that narrows blood vessels. This leads to improved blood flow and reduced symptoms of heart failure. Additionally, ACE inhibitors can help improve heart function, reduce hospitalizations, and increase survival rates in patients with heart failure.",
+        "contexts": [
+          "65",
+          "67",
+          "73",
+          "84",
+          "73"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 14.955810070037842,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "answer": "Glucocorticoids suppress inflammation through several mechanisms:\n\n1. **Inhibition of Pro-inflammatory Cytokines**: Glucocorticoids reduce the production of pro-inflammatory cytokines such as interleukins and tumor necrosis factor-alpha (TNF-\u03b1), which play a key role in the inflammatory response.\n\n2. **Suppression of Immune Cell Activation**: They inhibit the activation and proliferation of immune cells, including T cells and macrophages, which are crucial for initiating and sustaining inflammation.\n\n3. **Induction of Anti-inflammatory Proteins**: Glucocorticoids promote the expression of anti-inflammatory proteins, such as lipocortin-1, which inhibit phospholipase A2 and subsequently reduce the production of inflammatory mediators like prostaglandins and leukotrienes.\n\n4. **Inhibition of NF-\u03baB**: They interfere with the nuclear factor kappa B (NF-\u03baB) signaling pathway, which is a key regulator of inflammation, thereby preventing the transcription of various inflammatory genes.\n\n5. **Stabilization of Cell Membranes**: Glucocorticoids help stabilize lysosomal membranes in immune cells, reducing the release of inflammatory mediators.\n\nOverall, these actions lead to a decrease in inflammation and an overall immunosuppressive effect, which is beneficial in treating various inflammatory and autoimmune conditions.",
+        "contexts": [
+          "84",
+          "65",
+          "84",
+          "70",
+          "84"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 24.273143768310547,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "answer": "The retrieved documents do not provide information on the mechanisms of antibiotic resistance. To answer your question, the mechanisms of antibiotic resistance typically include:\n\n1. **Enzymatic degradation or modification**: Bacteria can produce enzymes that break down or modify antibiotics, rendering them ineffective. For example, beta-lactamases can hydrolyze the beta-lactam ring of penicillins.\n\n2. **Alteration of target sites**: Bacteria can change the structure of the antibiotic's target site, making it less susceptible to the drug. For instance, mutations in ribosomal RNA can confer resistance to macrolides.\n\n3. **Efflux pumps**: Some bacteria possess efflux pumps that actively transport antibiotics out of the cell, reducing the drug's intracellular concentration and effectiveness.\n\n4. **Reduced permeability**: Changes in the bacterial cell membrane or wall can decrease the uptake of antibiotics, preventing them from reaching their target.\n\n5. **Bypass pathways**: Bacteria can develop alternative metabolic pathways that circumvent the effects of antibiotics, allowing them to survive despite the presence of the drug.\n\nThese mechanisms can occur individually or in combination, contributing to the overall resistance of bacterial populations to antibiotics.",
+        "contexts": [
+          "65",
+          "84",
+          "84",
+          "66",
+          "73"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 22.27051305770874,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "answer": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system that contribute to inflammation and joint damage. They are designed to inhibit the activity of certain proteins, such as tumor necrosis factor (TNF) or interleukins, which play a key role in the inflammatory process. By blocking these proteins, biologics help reduce inflammation, alleviate pain, and prevent further joint damage, ultimately improving the quality of life for individuals with rheumatoid arthritis.",
+        "contexts": [
+          "84",
+          "85",
+          "84",
+          "80",
+          "65"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 16.5302517414093,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "answer": "Levodopa, also known as L-DOPA, is a precursor to dopamine and is used in the treatment of Parkinson's disease. Its mechanism of action involves crossing the blood-brain barrier and being converted into dopamine by the enzyme aromatic L-amino acid decarboxylase in the brain. This increase in dopamine levels helps to alleviate the motor symptoms associated with Parkinson's disease, such as bradykinesia, rigidity, and tremors, which result from the degeneration of dopaminergic neurons in the substantia nigra. By replenishing dopamine, levodopa helps to restore the balance of neurotransmitters in the brain, improving motor function and quality of life for patients.",
+        "contexts": [
+          "80",
+          "80",
+          "68",
+          "84",
+          "66"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 18.409013032913208,
+        "success": true,
+        "error": null
+      }
+    ],
+    "CRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes, and its effects can be summarized as follows:\n\n1. **Blood Sugar Control**: Metformin primarily works by decreasing hepatic glucose production, particularly by reducing gluconeogenesis in the liver. This leads to lower blood glucose levels, which is crucial for managing type 2 diabetes.\n\n2. **Improved Insulin Sensitivity**: Metformin enhances insulin sensitivity in peripheral tissues, such as muscle and fat, which helps the body utilize glucose more effectively. This can lead to improved glycemic control and may reduce the need for additional insulin or other medications.\n\n3. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight neutrality or even modest weight loss in some patients. This can be beneficial for individuals with type 2 diabetes who are overweight or obese.\n\n4. **Cardiovascular Benefits**: Some studies suggest that metformin may have cardiovascular benefits, potentially reducing the risk of heart disease in patients with type 2 diabetes. This is particularly important given the increased cardiovascular risk associated with diabetes.\n\n5. **Gastrointestinal Side Effects**: Common side effects of metformin include gastrointestinal issues such as nausea, diarrhea, and abdominal discomfort. These side effects can often be managed by starting with a low dose and gradually increasing it.\n\n6. **Long-term Use and Monitoring**: Metformin is generally considered safe for long-term use, but it requires monitoring for potential side effects, including the rare but serious risk of lactic acidosis, especially in patients with renal impairment.\n\nIn summary, metformin is an effective first-line treatment for type 2 diabetes, offering benefits in blood sugar control, weight management, and potential cardiovascular protection. However, individual responses can vary, and some uncertainty remains regarding its long-term effects and the management of side effects.",
+        "contexts": [
+          "67",
+          "68",
+          "87",
+          "71",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 6.152586936950684,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 (sodium-glucose cotransporter 2) inhibition has been shown to have several effects on kidney function, particularly in the context of diabetes and chronic kidney disease. Here are the key points regarding how SGLT2 inhibition affects kidney function:\n\n1. **Glucose Excretion**: SGLT2 inhibitors promote the excretion of glucose in the urine, which helps to lower blood glucose levels. This mechanism is particularly beneficial for patients with type 2 diabetes, as it can help manage hyperglycemia and reduce the risk of diabetes-related complications, including those affecting the kidneys.\n\n2. **Renal Hemodynamics**: SGLT2 inhibitors can lead to changes in renal hemodynamics. They may reduce intraglomerular pressure by promoting diuresis and natriuresis (excretion of sodium in urine), which can help protect the kidneys from damage associated with high blood pressure and hyperfiltration.\n\n3. **Cardiorenal Protection**: Clinical studies have indicated that SGLT2 inhibitors provide cardiorenal protection, reducing the risk of progression of kidney disease and cardiovascular events. This is particularly relevant for patients with diabetic kidney disease, where SGLT2 inhibitors have been shown to slow the decline in kidney function.\n\n4. **Reduction in Albuminuria**: SGLT2 inhibitors have been associated with a reduction in albuminuria (the presence of albumin in urine), which is a marker of kidney damage. Lowering albuminuria is a positive sign of improved kidney health.\n\n5. **Potential Risks**: While SGLT2 inhibitors have beneficial effects, there may be some risks associated with their use, such as dehydration, urinary tract infections, and potential acute kidney injury in certain populations. Monitoring kidney function is important when initiating therapy.\n\nIn summary, SGLT2 inhibition generally has a protective effect on kidney function, particularly in patients with diabetes and chronic kidney disease. However, the effects can vary based on individual patient factors, and ongoing monitoring is essential to ensure safety and efficacy. If there are specific uncertainties or incomplete aspects regarding SGLT2 inhibition and kidney function, please provide additional context or details for a more tailored response.",
+        "contexts": [
+          "73"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 10.103806018829346,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "GLP-1 receptor agonists are a class of medications that mimic the action of the glucagon-like peptide-1 (GLP-1), a hormone that plays a crucial role in glucose metabolism. Their mechanism of action involves several key processes:\n\n1. **Stimulation of Insulin Secretion**: GLP-1 receptor agonists enhance glucose-dependent insulin secretion from the pancreatic beta cells. This means that they promote insulin release when blood glucose levels are elevated, helping to lower blood sugar levels.\n\n2. **Inhibition of Glucagon Secretion**: These agonists also suppress the secretion of glucagon, a hormone that raises blood glucose levels by promoting glucose production in the liver. By inhibiting glucagon, GLP-1 receptor agonists help to prevent excessive glucose output from the liver.\n\n3. **Slowing Gastric Emptying**: GLP-1 receptor agonists slow down gastric emptying, which helps to reduce the rate at which glucose enters the bloodstream after meals. This contributes to better postprandial (after meal) glucose control.\n\n4. **Promoting Satiety**: These medications also act on the central nervous system to promote feelings of fullness (satiety), which can lead to reduced food intake and weight loss, a beneficial effect for many patients with type 2 diabetes.\n\n5. **Cardiovascular Benefits**: Some GLP-1 receptor agonists have been shown to provide cardiovascular benefits, including reductions in the risk of major adverse cardiovascular events, although the exact mechanisms for these effects are still being studied.\n\nOverall, GLP-1 receptor agonists work through a combination of enhancing insulin secretion, inhibiting glucagon release, slowing gastric emptying, and promoting satiety, making them effective in managing blood glucose levels in individuals with type 2 diabetes. \n\nIf you need more specific details or have further questions, please let me know!",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@279ad2e3",
+          "com.intersystems.jdbc.IRISInputStream@58134517",
+          "com.intersystems.jdbc.IRISInputStream@4450d156",
+          "com.intersystems.jdbc.IRISInputStream@4461c7e3",
+          "com.intersystems.jdbc.IRISInputStream@351d0846"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 6.9205780029296875,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "SGLT2 inhibitors, or sodium-glucose co-transporter 2 inhibitors, have been shown to provide several cardiovascular benefits, particularly in patients with type 2 diabetes and those with heart failure. Here are some of the key cardiovascular benefits associated with SGLT2 inhibitors:\n\n1. **Reduction in Heart Failure Hospitalizations**: SGLT2 inhibitors have been associated with a significant reduction in the risk of hospitalization for heart failure. This is particularly beneficial for patients with existing heart failure or those at high risk.\n\n2. **Cardiovascular Mortality**: Some studies suggest that SGLT2 inhibitors may reduce the risk of cardiovascular mortality in patients with type 2 diabetes, although the extent of this benefit can vary among different populations and specific medications within this class.\n\n3. **Improvement in Cardiac Function**: SGLT2 inhibitors may improve cardiac function and reduce left ventricular hypertrophy, which can be beneficial for patients with heart failure or at risk of developing heart failure.\n\n4. **Weight Loss and Blood Pressure Reduction**: These medications often lead to modest weight loss and a reduction in blood pressure, both of which are favorable for cardiovascular health.\n\n5. **Renal Protection**: While primarily a renal benefit, the protective effects on kidney function can indirectly benefit cardiovascular health, as chronic kidney disease is a significant risk factor for cardiovascular events.\n\n6. **Reduction in Atherosclerotic Events**: Some evidence suggests that SGLT2 inhibitors may reduce the risk of major adverse cardiovascular events, including myocardial infarction and stroke, although results can vary.\n\nIt is important to note that while these benefits are supported by clinical studies, the degree of effectiveness can vary based on individual patient characteristics and the specific SGLT2 inhibitor used. Additionally, ongoing research continues to explore the full range of cardiovascular benefits and mechanisms of action of SGLT2 inhibitors.\n\nIn summary, SGLT2 inhibitors offer several cardiovascular benefits, particularly in reducing heart failure hospitalizations and potentially lowering cardiovascular mortality, but the information is still evolving, and further studies are needed to clarify these effects across different populations.",
+        "contexts": [
+          "73",
+          "84",
+          "67",
+          "65"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 7.242085218429565,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "answer": "Statins are a class of medications commonly used to lower cholesterol levels in the blood, which in turn helps to prevent cardiovascular disease. They work primarily by inhibiting an enzyme called HMG-CoA reductase, which plays a central role in the production of cholesterol in the liver. By reducing cholesterol synthesis, statins effectively lower the levels of low-density lipoprotein (LDL) cholesterol, often referred to as \"bad\" cholesterol.\n\nThe mechanisms through which statins help prevent cardiovascular disease include:\n\n1. **Lowering LDL Cholesterol**: By decreasing the production of cholesterol, statins lower the levels of LDL cholesterol in the bloodstream. High levels of LDL cholesterol are associated with an increased risk of atherosclerosis, which can lead to heart attacks and strokes.\n\n2. **Stabilizing Plaques**: Statins can help stabilize atherosclerotic plaques in the arteries. This stabilization reduces the risk of plaque rupture, which can lead to acute cardiovascular events.\n\n3. **Anti-inflammatory Effects**: Statins have been shown to have anti-inflammatory properties, which may contribute to their cardiovascular protective effects. Inflammation plays a significant role in the development and progression of atherosclerosis.\n\n4. **Improving Endothelial Function**: Statins may improve the function of the endothelium (the inner lining of blood vessels), enhancing vasodilation and reducing the risk of thrombosis (blood clots).\n\n5. **Reducing Oxidative Stress**: Statins may also reduce oxidative stress, which is implicated in the development of cardiovascular disease.\n\nWhile the primary mechanism of action of statins is well understood, ongoing research continues to explore additional benefits and effects of these medications. It is important to note that while statins are effective for many individuals, their use should be guided by a healthcare professional based on individual risk factors and health status.\n\nIf the information provided in the documents is incomplete or uncertain, please clarify or provide additional context for a more accurate response.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@255b53dc",
+          "com.intersystems.jdbc.IRISInputStream@1dd92fe2",
+          "com.intersystems.jdbc.IRISInputStream@6b53e23f",
+          "com.intersystems.jdbc.IRISInputStream@64d2d351",
+          "com.intersystems.jdbc.IRISInputStream@1b68b9a4"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 10.25826120376587,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "answer": "ACE inhibitors, or angiotensin-converting enzyme inhibitors, play a crucial role in the management of heart failure. They are primarily used to improve symptoms, enhance quality of life, and reduce mortality in patients with heart failure, particularly those with reduced ejection fraction.\n\nThe mechanisms by which ACE inhibitors exert their effects include:\n\n1. **Reduction of Afterload**: By inhibiting the conversion of angiotensin I to angiotensin II, ACE inhibitors lead to vasodilation, which reduces systemic vascular resistance (afterload). This makes it easier for the heart to pump blood.\n\n2. **Decreased Preload**: ACE inhibitors also help in reducing fluid retention by decreasing aldosterone secretion, which can lead to a reduction in preload (the volume of blood in the ventricles at the end of diastole). This can alleviate symptoms of congestion in heart failure patients.\n\n3. **Neurohormonal Modulation**: Heart failure is often associated with increased levels of neurohormones like angiotensin II and norepinephrine, which can worsen heart function. ACE inhibitors help to counteract these effects, leading to improved cardiac function and reduced remodeling of the heart.\n\n4. **Improvement in Exercise Tolerance**: By alleviating symptoms and improving hemodynamics, ACE inhibitors can enhance exercise capacity and overall functional status in patients with heart failure.\n\n5. **Mortality Benefit**: Numerous studies have shown that long-term use of ACE inhibitors in heart failure patients is associated with a significant reduction in mortality rates.\n\nWhile the benefits of ACE inhibitors in heart failure are well-documented, it is important to note that individual responses can vary, and some patients may experience side effects such as cough or angioedema. Additionally, the information provided is based on general knowledge and may not encompass all recent findings or specific patient circumstances.\n\nIn summary, ACE inhibitors are a cornerstone in the treatment of heart failure, offering both symptomatic relief and a reduction in mortality, although individual patient factors must be considered in their use.",
+        "contexts": [
+          "65",
+          "67",
+          "73"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 5.660590887069702,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "answer": "It appears that the documents provided are not accessible or readable in their current format, as they seem to be references to input streams rather than actual content. Therefore, I cannot extract specific information from them regarding how glucocorticoids suppress inflammation.\n\nHowever, based on general knowledge, glucocorticoids suppress inflammation through several mechanisms:\n\n1. **Inhibition of Pro-inflammatory Cytokines**: Glucocorticoids reduce the production of pro-inflammatory cytokines such as interleukins and tumor necrosis factor-alpha (TNF-\u03b1), which play a key role in the inflammatory response.\n\n2. **Suppression of Immune Cell Activation**: They inhibit the activation and proliferation of immune cells, including T cells and macrophages, which are crucial for initiating and sustaining inflammation.\n\n3. **Induction of Anti-inflammatory Proteins**: Glucocorticoids promote the expression of anti-inflammatory proteins, such as lipocortin-1, which inhibit phospholipase A2 and subsequently reduce the production of inflammatory mediators like prostaglandins and leukotrienes.\n\n4. **Modulation of Gene Expression**: They bind to glucocorticoid receptors in the cytoplasm, which then translocate to the nucleus and influence the transcription of various genes involved in the inflammatory process, either upregulating anti-inflammatory genes or downregulating pro-inflammatory genes.\n\n5. **Inhibition of the NF-\u03baB Pathway**: Glucocorticoids can inhibit the nuclear factor kappa-light-chain-enhancer of activated B cells (NF-\u03baB) pathway, which is a key regulator of inflammation.\n\nIf you have access to the content of the documents or can provide more specific information, I would be happy to help further.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@51931956",
+          "com.intersystems.jdbc.IRISInputStream@2b4a2ec7",
+          "com.intersystems.jdbc.IRISInputStream@564718df",
+          "com.intersystems.jdbc.IRISInputStream@51b7e5df",
+          "com.intersystems.jdbc.IRISInputStream@18a70f16"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 6.599138021469116,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "answer": "Antibiotic resistance occurs through several mechanisms that bacteria employ to survive exposure to antibiotics. Here are the primary mechanisms:\n\n1. **Enzymatic Degradation or Modification**: Some bacteria produce enzymes that can inactivate antibiotics. For example, beta-lactamases are enzymes that break down beta-lactam antibiotics, rendering them ineffective.\n\n2. **Alteration of Target Sites**: Bacteria can modify the target sites of antibiotics, making them less susceptible to the drug. For instance, mutations in the genes encoding ribosomal proteins can lead to resistance against macrolides and aminoglycosides.\n\n3. **Efflux Pumps**: Many bacteria possess efflux pumps that actively transport antibiotics out of the cell, reducing the intracellular concentration of the drug and thus its effectiveness.\n\n4. **Reduced Permeability**: Some bacteria can alter their cell membrane or wall structure to decrease the permeability to antibiotics, preventing the drug from entering the cell.\n\n5. **Biofilm Formation**: Bacteria can form biofilms, which are protective layers that shield them from antibiotic action. This is particularly relevant in chronic infections where biofilms can develop on medical devices.\n\n6. **Horizontal Gene Transfer**: Bacteria can acquire resistance genes from other bacteria through mechanisms such as transformation, transduction, or conjugation, leading to the spread of resistance traits.\n\n7. **Metabolic Pathway Alteration**: Some bacteria can bypass the metabolic pathways that antibiotics target, allowing them to survive despite the presence of the drug.\n\nWhile these mechanisms are well-documented, the specific details and prevalence of each mechanism can vary among different bacterial species and strains. Therefore, some uncertainty exists regarding the exact mechanisms at play in specific contexts or infections. \n\nIn summary, antibiotic resistance is a complex and multifaceted issue, and ongoing research is essential to fully understand the various mechanisms involved.",
+        "contexts": [
+          "65",
+          "84",
+          "66",
+          "73"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 5.09760308265686,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "answer": "Biologics treat rheumatoid arthritis (RA) by targeting specific components of the immune system that contribute to inflammation and joint damage. These medications are derived from living organisms and are designed to interfere with the processes that lead to the symptoms of RA.\n\n1. **Mechanism of Action**: Biologics can inhibit various pathways involved in the inflammatory response. For example, some biologics target tumor necrosis factor (TNF), a cytokine that plays a key role in promoting inflammation. By blocking TNF, these drugs can reduce inflammation, decrease pain, and prevent further joint damage.\n\n2. **Types of Biologics**: There are several classes of biologics used in the treatment of RA, including:\n   - **TNF inhibitors** (e.g., etanercept, infliximab) that block the action of TNF.\n   - **Interleukin inhibitors** (e.g., tocilizumab, anakinra) that target specific interleukins involved in the inflammatory process.\n   - **B-cell depleting agents** (e.g., rituximab) that reduce the number of B cells, which are involved in the immune response.\n   - **T-cell co-stimulation modulators** (e.g., abatacept) that interfere with the activation of T cells.\n\n3. **Benefits**: The use of biologics can lead to significant improvements in symptoms, including reduced pain and swelling, improved physical function, and a better quality of life. They can also slow the progression of joint damage as seen on imaging studies.\n\n4. **Considerations**: While biologics can be very effective, they may not be suitable for everyone. Patients may experience side effects, and there is a risk of infections due to the immunosuppressive nature of these drugs. Regular monitoring and a thorough discussion with a healthcare provider are essential.\n\nIn summary, biologics treat rheumatoid arthritis by specifically targeting and modulating the immune response that drives inflammation and joint damage. However, the effectiveness and suitability of these treatments can vary among individuals, and ongoing research continues to refine their use in clinical practice.",
+        "contexts": [
+          "84",
+          "85",
+          "80",
+          "67"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 7.137556076049805,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "answer": "Levodopa, also known as L-DOPA, is a precursor to dopamine and is primarily used in the treatment of Parkinson's disease. The mechanism of action of levodopa involves its conversion to dopamine in the brain, which helps to replenish the diminished levels of this neurotransmitter that are characteristic of Parkinson's disease.\n\nIn Parkinson's disease, the degeneration of dopaminergic neurons in the substantia nigra leads to a significant reduction in dopamine levels, resulting in the hallmark symptoms of the disease, such as tremors, rigidity, and bradykinesia. When levodopa is administered, it crosses the blood-brain barrier and is converted to dopamine by the enzyme aromatic L-amino acid decarboxylase (AAAD) in the brain. This increase in dopamine levels helps to alleviate the motor symptoms associated with the disease.\n\nLevodopa is often administered in combination with carbidopa, which inhibits the peripheral conversion of levodopa to dopamine, thereby increasing the amount of levodopa that reaches the brain and reducing side effects such as nausea.\n\nWhile the basic mechanism of action is well understood, there may be some uncertainty regarding the specific pathways and interactions involved in the therapeutic effects of levodopa, as well as the long-term efficacy and potential side effects associated with its use.\n\nIn summary, levodopa acts by replenishing dopamine levels in the brain, which helps to improve motor function in patients with Parkinson's disease. However, further details on its precise mechanisms and long-term effects may require additional information.",
+        "contexts": [
+          "80",
+          "68",
+          "84",
+          "71"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 7.0299482345581055,
+        "success": true,
+        "error": null
+      }
+    ],
+    "ColBERTRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "The effects of metformin on type 2 diabetes include improved blood sugar control, reduced insulin resistance, and potential weight loss. Metformin helps lower glucose production in the liver and enhances the sensitivity of muscle cells to insulin, which can lead to better overall glycemic control. Additionally, it may have cardiovascular benefits and is often used as a first-line treatment for managing type 2 diabetes.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 2.4196929931640625,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "Based on the provided documents, SGLT2 inhibition has a positive effect on kidney function. It helps to reduce the progression of kidney disease by lowering blood glucose levels, reducing hyperfiltration, and promoting diuresis. This can lead to improved kidney outcomes and a reduction in the risk of kidney-related complications. Additionally, SGLT2 inhibitors may have protective effects on the kidneys by reducing inflammation and fibrosis. Overall, SGLT2 inhibition is associated with beneficial effects on kidney function in patients with diabetes and chronic kidney disease.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 2.0647079944610596,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "GLP-1 receptor agonists work by mimicking the action of the glucagon-like peptide-1 (GLP-1) hormone, which is involved in glucose metabolism. Their mechanism of action includes:\n\n1. **Stimulating Insulin Secretion**: They enhance glucose-dependent insulin secretion from the pancreas, meaning they promote insulin release when blood glucose levels are elevated.\n\n2. **Inhibiting Glucagon Secretion**: GLP-1 receptor agonists reduce the secretion of glucagon, a hormone that raises blood glucose levels, thereby helping to lower blood sugar.\n\n3. **Slowing Gastric Emptying**: They slow down the rate at which food leaves the stomach, which helps to reduce postprandial (after meal) blood sugar spikes.\n\n4. **Promoting Satiety**: These agents increase feelings of fullness, which can lead to reduced food intake and assist with weight management.\n\nOverall, GLP-1 receptor agonists help to improve glycemic control in individuals with type 2 diabetes and can also contribute to weight loss.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 5.118127822875977,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "The cardiovascular benefits of SGLT2 inhibitors include a reduction in the risk of major adverse cardiovascular events, improved heart failure outcomes, and potential protective effects on renal function. These medications have been shown to lower hospitalization rates for heart failure and may also contribute to improved overall cardiovascular health in patients with diabetes and other cardiovascular risk factors.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 2.3994970321655273,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "answer": "Statins prevent cardiovascular disease primarily by lowering cholesterol levels in the blood. They inhibit the enzyme HMG-CoA reductase, which plays a central role in the production of cholesterol in the liver. By reducing cholesterol levels, statins help to decrease the formation of plaques in the arteries, which can lead to atherosclerosis\u2014a major risk factor for heart attacks and strokes. Additionally, statins may have other beneficial effects, such as improving endothelial function, reducing inflammation, and stabilizing existing plaques, further contributing to their protective role against cardiovascular disease.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 2.542598247528076,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "answer": "ACE inhibitors play a crucial role in the management of heart failure. They help to relax blood vessels, reduce blood pressure, and decrease the workload on the heart. By inhibiting the angiotensin-converting enzyme, these medications prevent the conversion of angiotensin I to angiotensin II, a substance that narrows blood vessels. This leads to improved blood flow and reduced symptoms of heart failure. Additionally, ACE inhibitors can help to improve heart function and reduce the risk of hospitalization and mortality in patients with heart failure.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 1.9539577960968018,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "answer": "Glucocorticoids suppress inflammation through several mechanisms, including the inhibition of pro-inflammatory cytokine production, the suppression of immune cell activation, and the promotion of anti-inflammatory mediators. They act on glucocorticoid receptors in various immune cells, leading to changes in gene expression that reduce the inflammatory response. Additionally, glucocorticoids can decrease the permeability of blood vessels, limiting the influx of immune cells to sites of inflammation. Overall, their multifaceted actions help to control and reduce inflammation effectively.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 2.4226651191711426,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "answer": "The mechanisms of antibiotic resistance include:\n\n1. **Enzymatic Degradation or Modification**: Bacteria can produce enzymes that chemically modify or degrade antibiotics, rendering them ineffective. For example, beta-lactamases break down penicillins and cephalosporins.\n\n2. **Alteration of Target Sites**: Bacteria can change the structure of the antibiotic's target site, such as ribosomes or cell wall components, so that the antibiotic can no longer bind effectively.\n\n3. **Efflux Pumps**: Some bacteria possess efflux pumps that actively transport antibiotics out of the cell, reducing the intracellular concentration of the drug and its effectiveness.\n\n4. **Reduced Permeability**: Changes in the bacterial cell membrane or cell wall can decrease the uptake of antibiotics, preventing them from reaching their target.\n\n5. **Bypass Pathways**: Bacteria may develop alternative metabolic pathways that bypass the inhibited step targeted by the antibiotic, allowing them to survive despite the presence of the drug.\n\nThese mechanisms can occur individually or in combination, contributing to the overall resistance of bacterial populations to antibiotics.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 3.846588134765625,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "answer": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system that contribute to inflammation and joint damage. They work by inhibiting the activity of certain proteins, such as tumor necrosis factor (TNF) or interleukins, which play a key role in the inflammatory process. By blocking these proteins, biologics help reduce inflammation, alleviate symptoms, and slow the progression of joint damage associated with rheumatoid arthritis. This targeted approach can lead to improved function and quality of life for patients.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 1.4572679996490479,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "answer": "Levodopa, also known as L-DOPA, is a precursor to dopamine and is used in the treatment of Parkinson's disease. Its mechanism of action involves crossing the blood-brain barrier and being converted into dopamine by the enzyme aromatic L-amino acid decarboxylase in the brain. This increase in dopamine levels helps to alleviate the motor symptoms associated with Parkinson's disease, such as bradykinesia, rigidity, and tremors, which are primarily due to the loss of dopaminergic neurons in the substantia nigra. By replenishing dopamine, levodopa helps to restore the balance of neurotransmitters in the brain, improving motor function and quality of life for patients.",
+        "contexts": [
+          "68",
+          "85",
+          "65",
+          "87",
+          "77"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 2.283942699432373,
+        "success": true,
+        "error": null
+      }
+    ],
+    "NodeRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.09201288223266602,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.021942615509033203,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 0.02752995491027832,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 0.022291898727416992,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 0.019591093063354492,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 0.019931316375732422,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 0.01990795135498047,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 0.020522356033325195,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 0.019732952117919922,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 0.018980741500854492,
+        "success": true,
+        "error": null
+      }
+    ],
+    "GraphRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly by inhibiting gluconeogenesis in the liver.\n\n2. **Improving Insulin Sensitivity**: It enhances the sensitivity of muscle cells to insulin, which helps the body utilize glucose more effectively.\n\n3. **Reducing Intestinal Absorption of Glucose**: Metformin can decrease the amount of glucose absorbed from the gastrointestinal tract after meals.\n\n4. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a favorable option for overweight individuals with type 2 diabetes.\n\n5. **Cardiovascular Benefits**: Some studies suggest that metformin may have cardiovascular benefits, reducing the risk of heart disease in people with type 2 diabetes.\n\n6. **Potential Cancer Risk Reduction**: There is ongoing research into the potential role of metformin in reducing the risk of certain cancers, although more evidence is needed in this area.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its effectiveness, safety profile, and additional health benefits.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@57175e74",
+          "com.intersystems.jdbc.IRISInputStream@c540f5a",
+          "com.intersystems.jdbc.IRISInputStream@1a052a00",
+          "com.intersystems.jdbc.IRISInputStream@61009542",
+          "com.intersystems.jdbc.IRISInputStream@448ff1a8"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 4.114521026611328,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 (sodium-glucose co-transporter 2) inhibitors are a class of medications primarily used to treat type 2 diabetes, but they also have significant effects on kidney function. Here are some key points regarding how SGLT2 inhibition affects the kidneys:\n\n1. **Glucose Excretion**: SGLT2 inhibitors promote the excretion of glucose in the urine, which helps lower blood sugar levels. This mechanism reduces the workload on the kidneys.\n\n2. **Diuretic Effect**: By inhibiting glucose reabsorption in the proximal tubule of the nephron, SGLT2 inhibitors also lead to osmotic diuresis, resulting in increased urine output. This can help reduce fluid overload in patients with heart failure or chronic kidney disease.\n\n3. **Renal Protection**: Studies have shown that SGLT2 inhibitors can provide renal protective effects, slowing the progression of chronic kidney disease (CKD). They may reduce the risk of kidney-related complications and improve overall kidney function.\n\n4. **Reduction in Hyperfiltration**: SGLT2 inhibitors can help reduce hyperfiltration in the kidneys, which is a common issue in diabetes. By lowering intraglomerular pressure, these medications can help protect the glomeruli from damage.\n\n5. **Cardiorenal Benefits**: SGLT2 inhibitors have been associated with cardiovascular benefits, which indirectly support kidney health. Improved heart function can lead to better kidney perfusion and function.\n\n6. **Potential Side Effects**: While SGLT2 inhibitors have beneficial effects, they can also lead to side effects such as dehydration, urinary tract infections, and ketoacidosis, which need to be monitored.\n\nIn summary, SGLT2 inhibition positively affects kidney function by promoting glucose excretion, providing renal protection, reducing hyperfiltration, and offering additional cardiovascular benefits.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@7f77e91b",
+          "com.intersystems.jdbc.IRISInputStream@7f9fcf7f",
+          "com.intersystems.jdbc.IRISInputStream@6328d34a",
+          "com.intersystems.jdbc.IRISInputStream@15bb6bea",
+          "com.intersystems.jdbc.IRISInputStream@2d2e5f00"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 7.446690797805786,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "GLP-1 receptor agonists work by mimicking the action of the glucagon-like peptide-1 (GLP-1), a hormone that is involved in glucose metabolism. Their mechanism of action includes the following key effects:\n\n1. **Stimulating Insulin Secretion**: GLP-1 receptor agonists enhance insulin secretion from the pancreas in response to elevated blood glucose levels. This helps lower blood sugar levels after meals.\n\n2. **Inhibiting Glucagon Release**: They reduce the secretion of glucagon, a hormone that raises blood glucose levels, thereby contributing to lower blood sugar levels.\n\n3. **Slowing Gastric Emptying**: These medications slow down the rate at which food leaves the stomach, which helps to reduce postprandial (after meal) blood sugar spikes.\n\n4. **Promoting Satiety**: GLP-1 receptor agonists increase feelings of fullness, which can lead to reduced food intake and weight loss.\n\nOverall, GLP-1 receptor agonists are used primarily in the treatment of type 2 diabetes and can also aid in weight management.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@2ea6137",
+          "com.intersystems.jdbc.IRISInputStream@1e67a849",
+          "com.intersystems.jdbc.IRISInputStream@667a738",
+          "com.intersystems.jdbc.IRISInputStream@157632c9",
+          "com.intersystems.jdbc.IRISInputStream@55040f2f"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 3.7755329608917236,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "SGLT2 inhibitors, a class of medications primarily used to treat type 2 diabetes, have several cardiovascular benefits, including:\n\n1. **Reduction in Heart Failure Risk**: SGLT2 inhibitors have been shown to lower the risk of hospitalization for heart failure in patients with type 2 diabetes and established cardiovascular disease.\n\n2. **Cardiovascular Mortality**: These medications are associated with a reduction in the risk of cardiovascular death, particularly in patients with a history of heart disease.\n\n3. **Improved Cardiac Function**: SGLT2 inhibitors can lead to improvements in cardiac function and structure, which may benefit patients with heart failure.\n\n4. **Weight Loss and Blood Pressure Reduction**: They often promote weight loss and can help lower blood pressure, both of which are beneficial for cardiovascular health.\n\n5. **Renal Protection**: By providing renal protection, SGLT2 inhibitors can help maintain kidney function, which is closely linked to cardiovascular health.\n\nOverall, SGLT2 inhibitors not only help manage blood glucose levels but also provide significant cardiovascular protection, making them a valuable option for patients with type 2 diabetes and cardiovascular risk factors.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@400cff1a",
+          "com.intersystems.jdbc.IRISInputStream@525f1e4e",
+          "com.intersystems.jdbc.IRISInputStream@52aa2946",
+          "com.intersystems.jdbc.IRISInputStream@67e2d983",
+          "com.intersystems.jdbc.IRISInputStream@5ea434c8"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 4.655099153518677,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "answer": "Statins prevent cardiovascular disease primarily by lowering levels of low-density lipoprotein (LDL) cholesterol in the blood. They achieve this through the following mechanisms:\n\n1. **Inhibition of HMG-CoA Reductase**: Statins inhibit the enzyme HMG-CoA reductase, which plays a crucial role in the biosynthesis of cholesterol in the liver. By reducing cholesterol production, statins lower the overall cholesterol levels in the bloodstream.\n\n2. **Increased LDL Receptor Activity**: The reduction in cholesterol levels leads to an upregulation of LDL receptors on liver cells. This increases the clearance of LDL cholesterol from the blood, further lowering its levels.\n\n3. **Anti-inflammatory Effects**: Statins also have anti-inflammatory properties that can stabilize atherosclerotic plaques, reducing the risk of plaque rupture and subsequent cardiovascular events such as heart attacks and strokes.\n\n4. **Improvement of Endothelial Function**: Statins can improve endothelial function, which is important for maintaining vascular health and preventing the development of atherosclerosis.\n\n5. **Reduction of Thrombogenic Factors**: They may also reduce the levels of certain proteins that promote blood clotting, thereby decreasing the risk of thrombosis.\n\nOverall, by lowering LDL cholesterol, reducing inflammation, and improving vascular function, statins significantly decrease the risk of cardiovascular disease.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@4ae3c1cd",
+          "com.intersystems.jdbc.IRISInputStream@568bf312",
+          "com.intersystems.jdbc.IRISInputStream@589b3632",
+          "com.intersystems.jdbc.IRISInputStream@4c6e276e",
+          "com.intersystems.jdbc.IRISInputStream@52e677af"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 7.247045993804932,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "answer": "ACE inhibitors (Angiotensin-Converting Enzyme inhibitors) play a crucial role in the management of heart failure. They work by blocking the conversion of angiotensin I to angiotensin II, a potent vasoconstrictor. This leads to several beneficial effects in heart failure patients:\n\n1. **Vasodilation**: ACE inhibitors cause blood vessels to relax and widen, which reduces blood pressure and decreases the workload on the heart.\n\n2. **Decreased Afterload**: By lowering systemic vascular resistance, ACE inhibitors reduce the afterload (the pressure the heart must work against to pump blood), making it easier for the heart to pump effectively.\n\n3. **Reduced Preload**: They also help decrease fluid retention by reducing aldosterone secretion, which leads to less sodium and water retention, thereby lowering the preload (the volume of blood in the ventricles before contraction).\n\n4. **Improved Cardiac Output**: By reducing both preload and afterload, ACE inhibitors can improve cardiac output and overall heart function.\n\n5. **Mortality Benefit**: Studies have shown that ACE inhibitors can improve survival rates in patients with heart failure, particularly those with reduced ejection fraction.\n\n6. **Symptom Relief**: They can help alleviate symptoms of heart failure, such as shortness of breath and fatigue, improving the quality of life for patients.\n\nOverall, ACE inhibitors are a cornerstone in the pharmacological treatment of heart failure, contributing to better management of the condition and improved patient outcomes.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@8e0379d",
+          "com.intersystems.jdbc.IRISInputStream@55a1c291",
+          "com.intersystems.jdbc.IRISInputStream@2890c451",
+          "com.intersystems.jdbc.IRISInputStream@1b083826",
+          "com.intersystems.jdbc.IRISInputStream@3ec300f1"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 5.234459161758423,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "answer": "Glucocorticoids suppress inflammation through several mechanisms:\n\n1. **Inhibition of Pro-inflammatory Cytokines**: Glucocorticoids reduce the production of pro-inflammatory cytokines such as interleukins (IL-1, IL-6) and tumor necrosis factor-alpha (TNF-\u03b1), which play key roles in the inflammatory response.\n\n2. **Suppression of Immune Cell Activation**: They inhibit the activation and proliferation of immune cells, including T cells and macrophages, thereby reducing the overall immune response.\n\n3. **Induction of Anti-inflammatory Proteins**: Glucocorticoids promote the expression of anti-inflammatory proteins, such as lipocortin-1, which inhibit phospholipase A2 and subsequently reduce the production of inflammatory mediators like prostaglandins and leukotrienes.\n\n4. **Inhibition of NF-kB**: They inhibit the nuclear factor kappa B (NF-kB) signaling pathway, which is crucial for the expression of many inflammatory genes.\n\n5. **Alteration of Gene Expression**: Glucocorticoids bind to glucocorticoid receptors, leading to changes in gene expression that favor anti-inflammatory processes and inhibit pro-inflammatory pathways.\n\nOverall, these actions help to control and reduce inflammation in various conditions, making glucocorticoids effective anti-inflammatory agents.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@123f1134",
+          "com.intersystems.jdbc.IRISInputStream@5b0abc94",
+          "com.intersystems.jdbc.IRISInputStream@1f1c7bf6",
+          "com.intersystems.jdbc.IRISInputStream@2b546384",
+          "com.intersystems.jdbc.IRISInputStream@214b199c"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 4.50956392288208,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "answer": "Antibiotic resistance occurs through several mechanisms that bacteria use to survive exposure to antibiotics. Here are the primary mechanisms:\n\n1. **Enzymatic Degradation or Modification**: Some bacteria produce enzymes that can break down or modify antibiotics, rendering them ineffective. For example, beta-lactamases are enzymes that can hydrolyze the beta-lactam ring of penicillins and cephalosporins.\n\n2. **Alteration of Target Sites**: Bacteria can mutate the target sites of antibiotics, reducing the drug's ability to bind effectively. For instance, mutations in the ribosomal RNA can confer resistance to macrolides and aminoglycosides.\n\n3. **Efflux Pumps**: Many bacteria possess efflux pumps that actively transport antibiotics out of the cell, decreasing the intracellular concentration of the drug. This mechanism is common in resistance to tetracyclines and fluoroquinolones.\n\n4. **Reduced Permeability**: Some bacteria can alter their cell membrane or wall structure to decrease the permeability to antibiotics, preventing the drug from entering the cell. This is often seen in Gram-negative bacteria, which can modify their outer membrane.\n\n5. **Biofilm Formation**: Bacteria can form biofilms, which are protective layers that shield them from antibiotics and the immune system. Biofilms can be particularly resistant to treatment and are often found in chronic infections.\n\n6. **Horizontal Gene Transfer**: Bacteria can acquire resistance genes from other bacteria through mechanisms such as transformation, transduction, or conjugation. This allows for rapid spread of resistance traits within bacterial populations.\n\nThese mechanisms can occur individually or in combination, leading to varying levels of resistance and complicating treatment options.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@2893de87",
+          "com.intersystems.jdbc.IRISInputStream@2c34f934",
+          "com.intersystems.jdbc.IRISInputStream@240237d2",
+          "com.intersystems.jdbc.IRISInputStream@2ed0fbae",
+          "com.intersystems.jdbc.IRISInputStream@14a2f921"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 6.731464147567749,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "answer": "Biologics treat rheumatoid arthritis (RA) by targeting specific components of the immune system that contribute to inflammation and joint damage. These medications are derived from living organisms and are designed to interfere with the processes that lead to the symptoms of RA. \n\n1. **Targeting Cytokines**: Many biologics inhibit cytokines, which are proteins that play a key role in the inflammatory process. For example, tumor necrosis factor (TNF) inhibitors block the action of TNF, a cytokine that promotes inflammation.\n\n2. **B-cell Depletion**: Some biologics, like rituximab, target B-cells, which are involved in the immune response and can contribute to the autoimmune process in RA.\n\n3. **T-cell Modulation**: Other biologics may target T-cells or their activation pathways, helping to reduce the immune response that leads to joint inflammation.\n\n4. **Interleukin Inhibition**: Certain biologics inhibit interleukins (another type of cytokine), such as interleukin-6 (IL-6) inhibitors, which can help reduce inflammation and improve symptoms.\n\nBy specifically targeting these pathways, biologics can help reduce inflammation, prevent joint damage, and improve overall function and quality of life for individuals with rheumatoid arthritis.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@2aece37d",
+          "com.intersystems.jdbc.IRISInputStream@5762806e",
+          "com.intersystems.jdbc.IRISInputStream@5af97850",
+          "com.intersystems.jdbc.IRISInputStream@1d548a08",
+          "com.intersystems.jdbc.IRISInputStream@780cb77"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 5.073111057281494,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "answer": "Levodopa, also known as L-DOPA, is a medication commonly used to treat Parkinson's disease. Its mechanism of action involves the following:\n\n1. **Conversion to Dopamine**: Levodopa is a precursor to dopamine. In the brain, it crosses the blood-brain barrier and is converted into dopamine by the enzyme aromatic L-amino acid decarboxylase. This is particularly important in Parkinson's disease, where there is a deficiency of dopamine due to the degeneration of dopaminergic neurons in the substantia nigra.\n\n2. **Restoration of Dopaminergic Activity**: By increasing the levels of dopamine in the brain, levodopa helps to restore the balance of neurotransmitters that is disrupted in Parkinson's disease. This alleviates symptoms such as bradykinesia (slowness of movement), rigidity, and tremors.\n\n3. **Improvement of Motor Function**: The increase in dopamine levels leads to improved motor control and function, allowing patients to perform daily activities more effectively.\n\nLevodopa is often administered in combination with carbidopa, which inhibits the peripheral conversion of levodopa to dopamine, ensuring that more levodopa reaches the brain and reducing side effects such as nausea.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@50a7bc6e",
+          "com.intersystems.jdbc.IRISInputStream@17c1bced",
+          "com.intersystems.jdbc.IRISInputStream@4034c28c",
+          "com.intersystems.jdbc.IRISInputStream@14ec4505",
+          "com.intersystems.jdbc.IRISInputStream@358c99f5"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 5.416990041732788,
+        "success": true,
+        "error": null
+      }
+    ],
+    "HybridIFindRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly in the liver, and improving insulin sensitivity in peripheral tissues.\n\n2. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight neutrality or modest weight loss, making it a preferred option for overweight or obese patients with type 2 diabetes.\n\n3. **Cardiovascular Benefits**: Studies suggest that metformin may have cardiovascular benefits, reducing the risk of heart disease in patients with type 2 diabetes.\n\n4. **Improving Lipid Profiles**: Metformin can help improve lipid profiles by lowering levels of triglycerides and LDL cholesterol.\n\n5. **Potential Cancer Risk Reduction**: Some research indicates that metformin may have a protective effect against certain types of cancer, although more studies are needed to confirm this.\n\n6. **Gastrointestinal Side Effects**: Common side effects include gastrointestinal issues such as nausea, diarrhea, and abdominal discomfort, especially when starting the medication.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its efficacy, safety profile, and additional health benefits.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@48524010",
+          "com.intersystems.jdbc.IRISInputStream@1a84f40f",
+          "com.intersystems.jdbc.IRISInputStream@7920ba90",
+          "com.intersystems.jdbc.IRISInputStream@3b2da18f",
+          "com.intersystems.jdbc.IRISInputStream@258e2e41"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 7.170053243637085,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "SGLT2 (Sodium-Glucose Cotransporter 2) inhibition has several effects on kidney function, primarily beneficial in the context of diabetes and chronic kidney disease. Here are the key points regarding its impact:\n\n1. **Glucose Excretion**: SGLT2 inhibitors promote the excretion of glucose in the urine, which helps lower blood glucose levels. This mechanism reduces the risk of hyperglycemia and its associated complications.\n\n2. **Diuretic Effect**: By inhibiting glucose reabsorption in the proximal tubule of the kidney, SGLT2 inhibitors also lead to osmotic diuresis, resulting in increased urine output. This can help reduce fluid overload in patients with heart failure or chronic kidney disease.\n\n3. **Renal Protection**: SGLT2 inhibitors have been shown to provide renal protective effects. They can slow the progression of kidney disease by reducing hyperfiltration and glomerular hypertension, which are harmful to kidney function over time.\n\n4. **Reduction in Albuminuria**: These medications can decrease albuminuria (the presence of albumin in urine), which is a marker of kidney damage. Lowering albumin levels can indicate improved kidney health.\n\n5. **Cardiovascular Benefits**: SGLT2 inhibitors also have cardiovascular benefits, which are closely linked to kidney health. Improved cardiovascular outcomes can lead to better overall kidney function.\n\n6. **Potential Risks**: While SGLT2 inhibitors are generally well-tolerated, they can lead to side effects such as urinary tract infections and dehydration, particularly in patients with existing kidney issues.\n\nIn summary, SGLT2 inhibition positively affects kidney function by promoting glucose excretion, providing renal protection, reducing albuminuria, and offering cardiovascular benefits, although careful monitoring is necessary to manage potential risks.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@55a561cf",
+          "com.intersystems.jdbc.IRISInputStream@6f3b5d16",
+          "com.intersystems.jdbc.IRISInputStream@6646153",
+          "com.intersystems.jdbc.IRISInputStream@143640d5",
+          "com.intersystems.jdbc.IRISInputStream@475e586c"
+        ],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 6.8884241580963135,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "GLP-1 receptor agonists are a class of medications that mimic the action of the glucagon-like peptide-1 (GLP-1), a hormone that plays a crucial role in glucose metabolism. Their mechanism of action includes the following key effects:\n\n1. **Stimulating Insulin Secretion**: GLP-1 receptor agonists enhance the secretion of insulin from the pancreas in response to meals, particularly when blood glucose levels are elevated.\n\n2. **Inhibiting Glucagon Release**: They reduce the secretion of glucagon, a hormone that raises blood glucose levels, thereby helping to lower overall blood sugar.\n\n3. **Slowing Gastric Emptying**: These medications slow down the rate at which food leaves the stomach, which helps to reduce postprandial (after meal) blood sugar spikes.\n\n4. **Promoting Satiety**: GLP-1 receptor agonists increase feelings of fullness, which can lead to reduced food intake and weight loss.\n\n5. **Cardiovascular Benefits**: Some GLP-1 receptor agonists have been shown to have cardiovascular protective effects, reducing the risk of major adverse cardiovascular events in patients with type 2 diabetes.\n\nOverall, GLP-1 receptor agonists help to improve glycemic control and can aid in weight management for individuals with type 2 diabetes.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@436a4e4b",
+          "com.intersystems.jdbc.IRISInputStream@3a079870",
+          "com.intersystems.jdbc.IRISInputStream@2aa5fe93",
+          "com.intersystems.jdbc.IRISInputStream@5ad851c9",
+          "com.intersystems.jdbc.IRISInputStream@3c153a1"
+        ],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss.",
+        "execution_time": 4.808507919311523,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "SGLT2 inhibitors, a class of medications primarily used to treat type 2 diabetes, have several cardiovascular benefits, including:\n\n1. **Reduction in Heart Failure Risk**: SGLT2 inhibitors have been shown to significantly reduce the risk of hospitalization for heart failure in patients with type 2 diabetes and established cardiovascular disease.\n\n2. **Cardiovascular Mortality**: These medications are associated with a reduction in cardiovascular mortality, which means they can lower the risk of death from heart-related issues.\n\n3. **Improved Cardiac Function**: SGLT2 inhibitors may improve cardiac function and reduce the burden of heart failure by promoting diuresis (increased urine production), which helps to reduce fluid overload.\n\n4. **Weight Loss and Blood Pressure Reduction**: They often lead to weight loss and modest reductions in blood pressure, both of which are beneficial for cardiovascular health.\n\n5. **Renal Protection**: SGLT2 inhibitors also provide renal protection, which is important since kidney disease is a significant risk factor for cardiovascular events.\n\nOverall, SGLT2 inhibitors not only help manage blood glucose levels but also offer protective benefits for the heart and kidneys, making them a valuable option for patients with type 2 diabetes at risk for cardiovascular disease.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@13acb0d1",
+          "com.intersystems.jdbc.IRISInputStream@37e547da",
+          "com.intersystems.jdbc.IRISInputStream@5db45159",
+          "com.intersystems.jdbc.IRISInputStream@7c417213",
+          "com.intersystems.jdbc.IRISInputStream@6ab7a896"
+        ],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action.",
+        "execution_time": 5.049577951431274,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do statins prevent cardiovascular disease?",
+        "answer": "Statins prevent cardiovascular disease primarily by lowering cholesterol levels in the blood. They inhibit the enzyme HMG-CoA reductase, which plays a central role in the production of cholesterol in the liver. By reducing cholesterol levels, statins help to decrease the formation of plaques in the arteries, which can lead to atherosclerosis\u2014a condition that narrows and hardens the arteries, increasing the risk of heart attacks and strokes.\n\nIn addition to lowering cholesterol, statins have other beneficial effects, including:\n\n1. **Anti-inflammatory Effects**: Statins can reduce inflammation in the blood vessels, which is a contributing factor to cardiovascular disease.\n\n2. **Stabilization of Plaques**: They help stabilize atherosclerotic plaques, making them less likely to rupture and cause blockages.\n\n3. **Improvement of Endothelial Function**: Statins can improve the function of the endothelium (the inner lining of blood vessels), which helps maintain vascular health.\n\n4. **Reduction of Blood Clot Formation**: They may also reduce the risk of blood clots forming, which can lead to heart attacks or strokes.\n\nOverall, the combination of these effects contributes to a significant reduction in the risk of cardiovascular events in individuals at risk.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@45dd4eda",
+          "com.intersystems.jdbc.IRISInputStream@3745e5c6",
+          "com.intersystems.jdbc.IRISInputStream@71c8becc",
+          "com.intersystems.jdbc.IRISInputStream@1a0dcaa",
+          "com.intersystems.jdbc.IRISInputStream@fdefd3f"
+        ],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties.",
+        "execution_time": 4.621349811553955,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the role of ACE inhibitors in heart failure?",
+        "answer": "ACE inhibitors, or angiotensin-converting enzyme inhibitors, play a crucial role in the management of heart failure. They work by blocking the conversion of angiotensin I to angiotensin II, a substance that narrows blood vessels and increases blood pressure. By inhibiting this process, ACE inhibitors help to:\n\n1. **Reduce Blood Pressure**: Lowering blood pressure decreases the workload on the heart, which is beneficial for patients with heart failure.\n\n2. **Decrease Fluid Retention**: They help reduce fluid buildup in the body, which is a common issue in heart failure, leading to symptoms like swelling and shortness of breath.\n\n3. **Improve Heart Function**: ACE inhibitors can enhance the heart's pumping ability and improve overall cardiac output.\n\n4. **Prevent Disease Progression**: They have been shown to improve survival rates and reduce hospitalizations in patients with heart failure, particularly those with reduced ejection fraction.\n\nOverall, ACE inhibitors are a cornerstone in the pharmacological treatment of heart failure, contributing to better management of symptoms and improved quality of life for patients.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@a4102b8",
+          "com.intersystems.jdbc.IRISInputStream@69930714",
+          "com.intersystems.jdbc.IRISInputStream@78047b92",
+          "com.intersystems.jdbc.IRISInputStream@79ca92b9",
+          "com.intersystems.jdbc.IRISInputStream@4f638935"
+        ],
+        "ground_truth": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction.",
+        "execution_time": 5.83306097984314,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do glucocorticoids suppress inflammation?",
+        "answer": "Glucocorticoids suppress inflammation through several mechanisms:\n\n1. **Inhibition of Pro-inflammatory Cytokines**: Glucocorticoids reduce the production of pro-inflammatory cytokines such as interleukins (IL-1, IL-6) and tumor necrosis factor-alpha (TNF-\u03b1). This decreases the inflammatory response.\n\n2. **Suppression of Immune Cell Activation**: They inhibit the activation and proliferation of immune cells, including T cells and macrophages, which play a crucial role in the inflammatory process.\n\n3. **Induction of Anti-inflammatory Proteins**: Glucocorticoids promote the expression of anti-inflammatory proteins, such as lipocortin-1, which inhibits phospholipase A2, leading to decreased production of inflammatory mediators like prostaglandins and leukotrienes.\n\n4. **Inhibition of Gene Expression**: They bind to glucocorticoid receptors in the cytoplasm, which then translocate to the nucleus and modulate the expression of various genes involved in inflammation, either by upregulating anti-inflammatory genes or downregulating pro-inflammatory genes.\n\n5. **Stabilization of Cell Membranes**: Glucocorticoids help stabilize lysosomal membranes in immune cells, reducing the release of enzymes that can contribute to tissue damage and inflammation.\n\nOverall, these actions lead to a significant reduction in the inflammatory response, making glucocorticoids effective in treating various inflammatory and autoimmune conditions.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@6e75aa0d",
+          "com.intersystems.jdbc.IRISInputStream@2cbb3d47",
+          "com.intersystems.jdbc.IRISInputStream@1198b989",
+          "com.intersystems.jdbc.IRISInputStream@add0edd",
+          "com.intersystems.jdbc.IRISInputStream@7ea37dbf"
+        ],
+        "ground_truth": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression.",
+        "execution_time": 5.29600715637207,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What are the mechanisms of antibiotic resistance?",
+        "answer": "Antibiotic resistance occurs through several mechanisms, which can be broadly categorized as follows:\n\n1. **Enzymatic Degradation or Modification**: Bacteria can produce enzymes that chemically modify or degrade antibiotics, rendering them ineffective. For example, beta-lactamases are enzymes that break down penicillin and related antibiotics.\n\n2. **Alteration of Target Sites**: Bacteria can mutate or modify the target sites of antibiotics, preventing the drug from binding effectively. For instance, mutations in ribosomal RNA can confer resistance to macrolides.\n\n3. **Efflux Pumps**: Some bacteria possess efflux pumps that actively transport antibiotics out of the cell, reducing the intracellular concentration of the drug and its effectiveness.\n\n4. **Reduced Permeability**: Changes in the bacterial cell membrane or cell wall can decrease the uptake of antibiotics, making it harder for the drug to enter the bacterial cell.\n\n5. **Biofilm Formation**: Bacteria can form biofilms, which are protective layers that shield them from antibiotics and the immune system, making treatment more difficult.\n\n6. **Horizontal Gene Transfer**: Bacteria can acquire resistance genes from other bacteria through processes such as transformation, transduction, or conjugation, spreading resistance traits within and between species.\n\nThese mechanisms can occur individually or in combination, leading to varying levels of resistance and complicating treatment options.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@290d210d",
+          "com.intersystems.jdbc.IRISInputStream@78dd667e",
+          "com.intersystems.jdbc.IRISInputStream@501edcf1",
+          "com.intersystems.jdbc.IRISInputStream@6b4a4e18",
+          "com.intersystems.jdbc.IRISInputStream@197d671"
+        ],
+        "ground_truth": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell.",
+        "execution_time": 7.312251091003418,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How do biologics treat rheumatoid arthritis?",
+        "answer": "Biologics treat rheumatoid arthritis (RA) by targeting specific components of the immune system that contribute to inflammation and joint damage. These medications are derived from living cells and are designed to interfere with the processes that lead to the symptoms of RA. \n\n1. **Mechanism of Action**: Biologics can inhibit the activity of certain proteins, such as tumor necrosis factor (TNF), interleukins, or B-cells, which play a key role in the inflammatory response. By blocking these proteins, biologics help reduce inflammation, decrease pain, and prevent further joint damage.\n\n2. **Types of Biologics**: There are several classes of biologics used to treat RA, including:\n   - **TNF inhibitors** (e.g., etanercept, infliximab, adalimumab) that block the action of TNF.\n   - **Interleukin inhibitors** (e.g., tocilizumab, anakinra) that target specific interleukins involved in the inflammatory process.\n   - **B-cell depleting agents** (e.g., rituximab) that reduce the number of B-cells, which are involved in the immune response.\n\n3. **Benefits**: Biologics can lead to significant improvements in symptoms and quality of life for many patients with RA. They can help achieve remission or low disease activity, allowing individuals to maintain better function and reduce the risk of joint damage.\n\n4. **Considerations**: While biologics can be very effective, they may also have side effects and increase the risk of infections due to their immunosuppressive effects. Therefore, careful monitoring and a thorough discussion with a healthcare provider are essential when considering biologic therapy for rheumatoid arthritis. \n\nOverall, biologics represent a targeted approach to managing rheumatoid arthritis, offering hope for many patients who do not respond adequately to traditional disease-modifying antirheumatic drugs (DMARDs).",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@79ad8b2f",
+          "com.intersystems.jdbc.IRISInputStream@22635ba0",
+          "com.intersystems.jdbc.IRISInputStream@6a01e23",
+          "com.intersystems.jdbc.IRISInputStream@6293abcc",
+          "com.intersystems.jdbc.IRISInputStream@7fc2413d"
+        ],
+        "ground_truth": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage.",
+        "execution_time": 6.174383878707886,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "What is the mechanism of action of levodopa in Parkinson's disease?",
+        "answer": "Levodopa, also known as L-DOPA, is a medication commonly used to treat Parkinson's disease. Its mechanism of action involves the following key points:\n\n1. **Dopamine Precursor**: Levodopa is a precursor to dopamine, a neurotransmitter that is deficient in the brains of individuals with Parkinson's disease. The loss of dopamine-producing neurons in the substantia nigra leads to the characteristic motor symptoms of the disease.\n\n2. **Conversion to Dopamine**: Once administered, levodopa crosses the blood-brain barrier and is converted into dopamine by the enzyme aromatic L-amino acid decarboxylase (AAAD) in the brain. This increase in dopamine levels helps to alleviate the motor symptoms associated with Parkinson's disease.\n\n3. **Symptom Relief**: By replenishing dopamine levels, levodopa helps improve symptoms such as bradykinesia (slowness of movement), rigidity, and tremors. It is often combined with carbidopa, which inhibits the peripheral conversion of levodopa to dopamine, allowing more levodopa to reach the brain and reducing side effects.\n\n4. **Duration of Action**: The effectiveness of levodopa can vary over time, and patients may experience fluctuations in symptom control, often referred to as \"on-off\" phenomena, where symptoms can suddenly return or improve.\n\nIn summary, levodopa acts primarily as a dopamine precursor, enhancing dopamine levels in the brain to improve motor function in patients with Parkinson's disease.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@70be0a2b",
+          "com.intersystems.jdbc.IRISInputStream@4c15e7fd",
+          "com.intersystems.jdbc.IRISInputStream@23f7d05d",
+          "com.intersystems.jdbc.IRISInputStream@7d3a22a9",
+          "com.intersystems.jdbc.IRISInputStream@60704c"
+        ],
+        "ground_truth": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra.",
+        "execution_time": 5.461420059204102,
+        "success": true,
+        "error": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "BasicRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.6437590187590188,
+      "answer_similarity": null,
+      "answer_correctness": 0.33120406065680913
+    },
+    "HyDERAG": {
+      "answer_relevancy": 0.9600544792581319,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.09333333333333334,
+      "answer_similarity": null,
+      "answer_correctness": 0.7395976886897869
+    },
+    "CRAG": {
+      "answer_relevancy": 0.45235848099276055,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.21650717703349284,
+      "answer_similarity": null,
+      "answer_correctness": 0.49105764569858695
+    },
+    "ColBERTRAG": {
+      "answer_relevancy": 0.9726493800243459,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.7634094080986271
+    },
+    "NodeRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.013650420599222354
+    },
+    "GraphRAG": {
+      "answer_relevancy": 0.9425603287718364,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.07647058823529411,
+      "answer_similarity": null,
+      "answer_correctness": 0.5977234075753428
+    },
+    "HybridIFindRAG": {
+      "answer_relevancy": 0.9494790173346747,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.37708866155157716,
+      "answer_similarity": null,
+      "answer_correctness": 0.5534190926924729
+    }
+  }
+}

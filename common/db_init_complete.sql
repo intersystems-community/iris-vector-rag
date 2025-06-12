@@ -8,7 +8,11 @@
 DROP TABLE IF EXISTS RAG.SourceDocuments CASCADE;
 CREATE TABLE RAG.SourceDocuments (
     doc_id VARCHAR(255) PRIMARY KEY,
+    title TEXT,
+    abstract TEXT,
     text_content TEXT,
+    authors TEXT,
+    keywords TEXT,
     embedding VECTOR(FLOAT, 384),
     metadata TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

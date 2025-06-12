@@ -1,0 +1,67 @@
+{
+  "validation_type": "quick",
+  "timestamp": "2025-06-07T11:46:53.552640",
+  "results": {
+    "health_check": {
+      "overall_status": "critical",
+      "component_results": {
+        "system_resources": {
+          "status": "healthy",
+          "message": "System resources healthy",
+          "duration_ms": 1001.5771389007568
+        },
+        "database_connectivity": {
+          "status": "critical",
+          "message": "Database connectivity failed: Driver not specified for backend 'iris'.",
+          "duration_ms": 0.013113021850585938
+        },
+        "docker_containers": {
+          "status": "healthy",
+          "message": "IRIS container healthy",
+          "duration_ms": 1031.1009883880615
+        },
+        "vector_performance": {
+          "status": "critical",
+          "message": "Vector performance check failed: Driver not specified for backend 'iris'.",
+          "duration_ms": 0.008106231689453125
+        }
+      }
+    },
+    "system_validation": {
+      "data_integrity": {
+        "success": false,
+        "message": "Data integrity validation failed: Driver not specified for backend 'iris'.",
+        "duration_ms": 0.0040531158447265625
+      },
+      "pipeline_functionality": {
+        "success": false,
+        "message": "Pipeline functionality validation failed: BasicRAGPipeline.__init__() missing 1 required positional argument: 'config_manager'",
+        "duration_ms": 0.013113021850585938
+      },
+      "vector_operations": {
+        "success": false,
+        "message": "Vector operations validation failed: Driver not specified for backend 'iris'.",
+        "duration_ms": 0.0021457672119140625
+      },
+      "system_configuration": {
+        "success": false,
+        "message": "Found 4 issues",
+        "duration_ms": 3469.7768688201904
+      }
+    }
+  },
+  "overall_status": "FAIL",
+  "summary": {
+    "health_status": "critical",
+    "validations_passed": 0,
+    "validations_total": 4,
+    "recommendations": [
+      "CRITICAL: Fix database_connectivity issues immediately",
+      "CRITICAL: Fix vector_performance issues immediately",
+      "Fix data_integrity validation failures",
+      "Fix pipeline_functionality validation failures",
+      "Fix vector_operations validation failures",
+      "Fix system_configuration validation failures"
+    ]
+  }
+}

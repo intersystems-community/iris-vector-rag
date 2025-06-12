@@ -13,7 +13,9 @@ from common.iris_connector import (
     get_real_iris_connection,
     get_mock_iris_connection,
     get_iris_connection,
-    IRISConnectionError
+    IRISConnectionError,
+    JDBC_DRIVER_CLASS,  # Added
+    JDBC_JAR_PATH       # Added
 )
 
 # --- Unit Tests (Mock-based) ---
@@ -118,6 +120,75 @@ def test_get_real_iris_connection_connect_error(monkeypatch):
         
         # Verify we got None when not in pytest context
         assert conn is None
+
+@patch('common.iris_connector.os.path.exists')
+@patch('common.iris_connector.jaydebeapi.connect')
+@patch('common.iris_connector.os.environ.get')
+@patch('common.iris_connector.ConfigurationManager') # Applied last, so first arg to test func
+def test_get_real_iris_connection_uses_config_manager_defaults(
+        mock_config_manager_class,
+        mock_os_environ_get,
+        mock_jaydebeapi_connect,
+        mock_os_path_exists
+    ):
+    """
+    Test that get_real_iris_connection (no config arg) sources credentials
+    exclusively from ConfigurationManager, ignoring os.environ.
+    This test is expected to FAIL until get_real_iris_connection is refactored.
+    """
+    # 1. Configure Mock ConfigurationManager
+    mock_cm_instance = MagicMock()
+    def cm_get_side_effect(key):
+        vals = {
+            "database:iris:host": "cm_host",
+            "database:iris:port": 5432, # int
+            "database:iris:namespace": "CM_NS",
+            "database:iris:username": "cm_user",
+            "database:iris:password": "cm_pass"
+        }
+        return vals.get(key)
+    mock_cm_instance.get.side_effect = cm_get_side_effect
+    mock_config_manager_class.return_value = mock_cm_instance # Ensures ConfigurationManager() returns our mock
+
+    # 2. Configure Mock os.environ.get
+    def os_environ_get_side_effect(key, default=None):
+        vals = {
+            "IRIS_HOST": "env_host",
+            "IRIS_PORT": "7777", # string, current code will int() this
+            "IRIS_NAMESPACE": "ENV_NS",
+            "IRIS_USERNAME": "env_user",
+            "IRIS_PASSWORD": "env_pass"
+        }
+        return vals.get(key, default)
+    mock_os_environ_get.side_effect = os_environ_get_side_effect
+
+    # 3. Configure Mock jaydebeapi.connect
+    mock_db_connection = MagicMock()
+    mock_jaydebeapi_connect.return_value = mock_db_connection
+    # Mock the cursor and execute for the connection test within get_real_iris_connection
+    mock_cursor = MagicMock()
+    mock_db_connection.cursor.return_value = mock_cursor
+    mock_cursor.fetchone.return_value = [1] # For "SELECT 1"
+
+    # 4. Configure Mock os.path.exists to pass the JDBC_JAR_PATH check
+    mock_os_path_exists.return_value = True
+
+    # 5. Call get_real_iris_connection without config argument
+    conn = get_real_iris_connection()
+
+    # 6. Assertion (This is expected to FAIL with the current implementation)
+    expected_jdbc_url = "jdbc:IRIS://cm_host:5432/CM_NS"
+    expected_credentials = ["cm_user", "cm_pass"]
+    
+    mock_jaydebeapi_connect.assert_called_once_with(
+        JDBC_DRIVER_CLASS,
+        expected_jdbc_url,
+        expected_credentials,
+        JDBC_JAR_PATH
+    )
+
+    # Also assert that the returned connection is the one from jaydebeapi
+    assert conn == mock_db_connection
 
 # --- Integration Tests (Real IRIS) ---
 

@@ -1,0 +1,85 @@
+# Dynamic Pipeline Configuration
+# This file defines the available RAG pipelines and their configurations
+
+pipelines:
+  - name: "BasicRAG"
+    module: "iris_rag.pipelines.basic"
+    class: "BasicRAGPipeline"
+    enabled: true
+    params:
+      top_k: 5
+      chunk_size: 1000
+      similarity_threshold: 0.7
+
+  - name: "HyDERAG"
+    module: "iris_rag.pipelines.hyde"
+    class: "HyDERAGPipeline"
+    enabled: true
+    params:
+      top_k: 5
+      use_hypothetical_doc: true
+      temperature: 0.1
+
+  - name: "CRAG"
+    module: "iris_rag.pipelines.crag"
+    class: "CRAGPipeline"
+    enabled: true
+    params:
+      top_k: 5
+      confidence_threshold: 0.8
+      use_web_search: false
+
+  - name: "ColBERTRAG"
+    module: "iris_rag.pipelines.colbert"
+    class: "ColBERTRAGPipeline"
+    enabled: true
+    params:
+      top_k: 10
+      max_query_length: 512
+      doc_maxlen: 180
+
+  - name: "NodeRAG"
+    module: "iris_rag.pipelines.noderag"
+    class: "NodeRAGPipeline"
+    enabled: true
+    params:
+      top_k: 5
+      node_chunk_size: 512
+      overlap: 50
+
+  - name: "GraphRAG"
+    module: "iris_rag.pipelines.graphrag"
+    class: "GraphRAGPipeline"
+    enabled: true
+    params:
+      top_k: 5
+      community_level: 2
+      use_global_search: true
+
+  - name: "HybridIFindRAG"
+    module: "iris_rag.pipelines.hybrid_ifind"
+    class: "HybridIFindRAGPipeline"
+    enabled: true
+    params:
+      top_k: 5
+      ifind_weight: 0.3
+      vector_weight: 0.7
+
+  # Example of an external/hypothetical pipeline
+  - name: "AdvancedExternalRAG"
+    module: "external_package.rag_pipelines"
+    class: "AdvancedRAGPipeline"
+    enabled: false
+    params:
+      custom_param: "value"
+      advanced_feature: true
+
+# Framework dependencies (shared across all pipelines)
+framework:
+  llm:
+    model: "gpt-4o-mini"
+    temperature: 0
+    max_tokens: 1024
+  embeddings:
+    model: "text-embedding-3-small"
+    dimension: 1536

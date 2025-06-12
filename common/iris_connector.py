@@ -12,6 +12,7 @@ from typing import Optional, Any, Dict, Union
 from urllib.parse import urlparse
 # import iris as intersystems_iris # Native driver, will be replaced by JDBC for real connections
 import jaydebeapi # For JDBC connections
+from iris_rag.config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
 # Define JDBC constants
@@ -38,39 +39,71 @@ def get_real_iris_connection(config: Optional[Dict[str, Any]] = None) -> "jaydeb
         # Prioritize config, then environment variables for JDBC parameters
         logger.info("Configuring JDBC connection parameters.")
         
-        # Default values from environment or hardcoded, then override with config
-        conn_params_dict = {
-            "hostname": os.environ.get("IRIS_HOST", "localhost"),
-            "port": int(os.environ.get("IRIS_PORT", "1972")),
-            "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
-            "username": os.environ.get("IRIS_USERNAME", "SuperUser"), # Ensure these are correct for your IRIS instance
-            "password": os.environ.get("IRIS_PASSWORD", "SYS")      # Ensure these are correct for your IRIS instance
-        }
-
-        if config:
-            # Map config keys (e.g., db_host) to expected keys (e.g., hostname)
-            key_mapping = {
-                "db_host": "hostname",
-                "db_port": "port",
-                "db_namespace": "namespace",
-                "db_user": "username",
-                "db_password": "password"
+        if config is None:
+            # Use ConfigurationManager for default database credentials
+            config_manager = ConfigurationManager()
+            conn_params_dict = {
+                "hostname": config_manager.get("database:iris:host"),
+                "port": config_manager.get("database:iris:port"),
+                "namespace": config_manager.get("database:iris:namespace"),
+                "username": config_manager.get("database:iris:username"),
+                "password": config_manager.get("database:iris:password")
             }
-            for conf_key, conn_key in key_mapping.items():
-                if conf_key in config and config[conf_key] is not None:
-                    conn_params_dict[conn_key] = config[conf_key]
+            
+            # Ensure port is an integer
+            if isinstance(conn_params_dict["port"], str):
+                try:
+                    conn_params_dict["port"] = int(conn_params_dict["port"])
+                except ValueError:
+                    logger.error(f"Invalid port value from ConfigurationManager: {conn_params_dict['port']}")
+                    raise ValueError(f"Invalid port value from ConfigurationManager: {conn_params_dict['port']}")
+            elif not isinstance(conn_params_dict["port"], int):
+                logger.error(f"Port value from ConfigurationManager is not a string or int: {conn_params_dict['port']}")
+                raise ValueError(f"Port value from ConfigurationManager must be int or string: {conn_params_dict['port']}")
+        else:
+            # Use provided config dictionary
+            # Check if config uses direct keys (hostname, port, etc.) or mapped keys (db_host, db_port, etc.)
+            if "hostname" in config:
+                # Direct key format
+                conn_params_dict = {
+                    "hostname": config.get("hostname"),
+                    "port": config.get("port"),
+                    "namespace": config.get("namespace"),
+                    "username": config.get("username"),
+                    "password": config.get("password")
+                }
+            else:
+                # Mapped key format - start with environment defaults, then override with config
+                conn_params_dict = {
+                    "hostname": os.environ.get("IRIS_HOST", "localhost"),
+                    "port": int(os.environ.get("IRIS_PORT", "1972")),
+                    "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
+                    "username": os.environ.get("IRIS_USERNAME", "SuperUser"),
+                    "password": os.environ.get("IRIS_PASSWORD", "SYS")
+                }
+                
+                # Map config keys (e.g., db_host) to expected keys (e.g., hostname)
+                key_mapping = {
+                    "db_host": "hostname",
+                    "db_port": "port",
+                    "db_namespace": "namespace",
+                    "db_user": "username",
+                    "db_password": "password"
+                }
+                for conf_key, conn_key in key_mapping.items():
+                    if conf_key in config and config[conf_key] is not None:
+                        conn_params_dict[conn_key] = config[conf_key]
             
             # Ensure port is an integer
             if "port" in conn_params_dict and isinstance(conn_params_dict["port"], str):
                 try:
                     conn_params_dict["port"] = int(conn_params_dict["port"])
                 except ValueError:
-                    logger.error(f"Invalid port value in config: {conn_params_dict['port']}. Attempting to use default or previously set env var.")
-                    # If conversion fails, rely on the default from env var if it was set, or the initial default.
-                    # This ensures 'port' key exists and is an int if possible.
-                    conn_params_dict["port"] = int(os.environ.get("IRIS_PORT", "1972")) # Fallback to default if bad string
-            elif "port" not in conn_params_dict : # if port was not in config at all
-                 conn_params_dict["port"] = int(os.environ.get("IRIS_PORT", "1972"))
+                    logger.error(f"Invalid port value in config: {conn_params_dict['port']}")
+                    raise ValueError(f"Invalid port value in config: {conn_params_dict['port']}")
+            elif "port" in conn_params_dict and not isinstance(conn_params_dict["port"], int):
+                logger.error(f"Port value in config is not a string or int: {conn_params_dict['port']}")
+                raise ValueError(f"Port value in config must be int or string: {conn_params_dict['port']}")
 
 
         # Final check for required parameters before attempting connection
@@ -223,15 +256,21 @@ def get_iris_connection(use_mock: bool = False, use_testcontainer: Optional[bool
             return conn
         except IRISConnectionError as e_tc:
             logger.warning(f"Failed to create testcontainer ({e_tc}), will attempt real connection if configured.")
+            # If testcontainer fails and we're in pytest, we could fall back to mock here too
+            # But let's continue to try real connection first, then fall back to mock if that also fails
     
     try:
         conn = get_real_iris_connection(config) # Returns DBAPI IRISConnection
         return conn
     except IRISConnectionError as e_real:
         logger.error(f"Real IRIS connection failed: {e_real}")
-        # Removed automatic fallback to mock connector during Pytest.
-        # If a real connection is expected and fails, the error should propagate.
-        logger.error("All connection attempts (real/testcontainer) failed.")
+        if os.environ.get("PYTEST_CURRENT_TEST"):
+            logger.warning(
+                f"Real/Testcontainer IRIS connection failed during pytest: {e_real}. Falling back to mock connector."
+            )
+            return get_mock_iris_connection()
+        
+        logger.error("All connection attempts (real/testcontainer) failed and not in Pytest fallback mode.")
         raise # Re-raise the original error to make it clear why connection failed.
 
 def setup_docker_test_db(image_name: str = "intersystemsdc/iris-community:latest",

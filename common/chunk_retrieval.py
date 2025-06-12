@@ -67,11 +67,11 @@ class ChunkRetrievalService:
                     doc_id,
                     chunk_type,
                     chunk_index,
-                    VECTOR_COSINE(TO_VECTOR(chunk_embedding), TO_VECTOR(?)) AS score
+                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score
                 FROM RAG.DocumentChunks
-                WHERE chunk_embedding IS NOT NULL
+                WHERE embedding IS NOT NULL
                   AND chunk_type IN ({chunk_type_placeholders})
-                  AND VECTOR_COSINE(TO_VECTOR(chunk_embedding), TO_VECTOR(?)) > ?
+                  AND VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) > ?
                 ORDER BY score DESC
             """
             
@@ -311,7 +311,7 @@ class ChunkRetrievalService:
             stats['total_chunks'] = cursor.fetchone()[0]
             
             # Chunks with embeddings
-            cursor.execute("SELECT COUNT(*) FROM RAG.DocumentChunks WHERE chunk_embedding IS NOT NULL")
+            cursor.execute("SELECT COUNT(*) FROM RAG.DocumentChunks WHERE embedding IS NOT NULL")
             stats['chunks_with_embeddings'] = cursor.fetchone()[0]
             
             # Unique documents with chunks

@@ -1,10 +1,11 @@
 [tool.poetry]
-name = "iris-rag-templates"
+name = "intersystems-iris-rag"
 version = "0.1.0"
 description = "A suite of RAG technique templates for InterSystems IRIS"
 authors = ["Your Name <you@example.com>"] # Placeholder, can be updated
 readme = "README.md"
 packages = [
+    { include = "iris_rag" },
     { include = "common" },
     { include = "basic_rag" },
     { include = "hyde" },
@@ -111,7 +112,7 @@ markers = [
 ]
 testpaths = ["tests"]
 python_files = "test_*.py"
-addopts = "--cov=. --cov-report=term"
+addopts = "--cov=iris_rag --cov-report=term"
 
 # [tool.poetry.scripts]
 # test = "pytest"

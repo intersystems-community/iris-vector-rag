@@ -6,8 +6,8 @@ if project_root not in sys.path:
 
 import logging
 from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.common.iris_connector_jdbc import get_iris_connection # Updated import
-from src.common.utils import get_embedding_func, get_llm_func # Updated import
+from common.iris_connector_jdbc import get_iris_connection # Updated import
+from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

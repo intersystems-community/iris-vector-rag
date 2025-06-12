@@ -182,6 +182,43 @@ def format_vector_for_iris(vector: Union[List, np.ndarray, Any]) -> List[float]:
     except Exception as e:
         raise VectorFormatError(f"Unexpected error formatting vector: {e}")
 
+def pad_vector_to_dimension(vector: List[float], target_dim: int) -> List[float]:
+    """
+    Pad or truncate a vector to match the target dimension.
+    
+    Args:
+        vector: Input vector
+        target_dim: Target dimension
+        
+    Returns:
+        Vector adjusted to target dimension
+        
+    Raises:
+        VectorFormatError: If target dimension is invalid
+    """
+    try:
+        if target_dim <= 0:
+            raise VectorFormatError(f"Invalid target dimension: {target_dim}")
+        
+        current_dim = len(vector)
+        
+        if current_dim == target_dim:
+            return vector.copy()
+        elif current_dim < target_dim:
+            # Pad with zeros
+            padded = vector.copy()
+            padded.extend([0.0] * (target_dim - current_dim))
+            logger.info(f"Padded vector from {current_dim} to {target_dim} dimensions")
+            return padded
+        else:
+            # Truncate
+            truncated = vector[:target_dim]
+            logger.warning(f"Truncated vector from {current_dim} to {target_dim} dimensions")
+            return truncated
+            
+    except Exception as e:
+        raise VectorFormatError(f"Error adjusting vector dimension: {e}")
+
 def validate_vector_for_iris(vector: List[float], expected_dim: int = None) -> bool:
     """
     Validate that a vector is properly formatted for IRIS insertion.
@@ -199,9 +236,19 @@ def validate_vector_for_iris(vector: List[float], expected_dim: int = None) -> b
             logger.error(f"Vector must be a list, got {type(vector)}")
             return False
         
+        # Check for empty vector
+        if len(vector) == 0:
+            logger.error("Vector cannot be empty")
+            return False
+        
         # Check dimension
         if expected_dim and len(vector) != expected_dim:
             logger.error(f"Vector dimension mismatch: expected {expected_dim}, got {len(vector)}")
+            return False
+        
+        # Check reasonable dimension limits
+        if len(vector) > 4096:  # Reasonable upper limit for embeddings
+            logger.error(f"Vector dimension too large: {len(vector)} > 4096")
             return False
         
         # Check each value
@@ -212,12 +259,94 @@ def validate_vector_for_iris(vector: List[float], expected_dim: int = None) -> b
             if not np.isfinite(val):
                 logger.error(f"Vector value at index {i} is not finite: {val}")
                 return False
+            # Check for reasonable value ranges
+            if abs(val) > 1e10:
+                logger.error(f"Vector value at index {i} too large: {val}")
+                return False
         
         return True
         
     except Exception as e:
         logger.error(f"Error validating vector: {e}")
         return False
+
+def create_iris_vector_string(vector: List[float], precision: int = 8) -> str:
+    """
+    Create a properly formatted vector string for IRIS TO_VECTOR() function.
+    
+    IRIS has specific requirements for vector strings:
+    - Must be comma-separated values without brackets for TO_VECTOR()
+    - Must have reasonable precision to avoid length issues
+    - Must handle large dimensions efficiently
+    
+    Args:
+        vector: List of float values
+        precision: Number of decimal places to preserve (default: 8)
+        
+    Returns:
+        Formatted vector string ready for IRIS insertion
+        
+    Raises:
+        VectorFormatError: If vector cannot be formatted
+    """
+    try:
+        if not validate_vector_for_iris(vector):
+            raise VectorFormatError("Vector validation failed")
+        
+        # For very large vectors, use adaptive precision
+        if len(vector) > 1000:
+            precision = min(precision, 6)  # Reduce precision for large vectors
+        elif len(vector) > 2000:
+            precision = min(precision, 4)  # Further reduce for very large vectors
+        
+        # Format values with fixed precision to control string length
+        formatted_values = [f'{x:.{precision}f}' for x in vector]
+        
+        # IRIS TO_VECTOR() expects comma-separated values WITHOUT brackets
+        vector_str = ','.join(formatted_values)
+        
+        # Validate string length for IRIS limits (conservative limit)
+        max_length = 16000  # More conservative limit
+        if len(vector_str) > max_length:
+            # Try with reduced precision
+            if precision > 2:
+                logger.warning(f"Vector string too long ({len(vector_str)}), reducing precision from {precision} to {precision-1}")
+                return create_iris_vector_string(vector, precision - 1)
+            else:
+                # Last resort: truncate the vector
+                logger.warning(f"Vector too large even with minimal precision, truncating from {len(vector)} to 1000 dimensions")
+                truncated_vector = vector[:1000]
+                return create_iris_vector_string(truncated_vector, 4)
+        
+        return vector_str
+        
+    except VectorFormatError:
+        raise
+    except Exception as e:
+        raise VectorFormatError(f"Error creating vector string: {e}")
+
+def create_iris_vector_bracketed_string(vector: List[float], precision: int = 8) -> str:
+    """
+    Create a bracketed vector string for cases where brackets are needed.
+    
+    Args:
+        vector: List of float values
+        precision: Number of decimal places to preserve
+        
+    Returns:
+        Formatted vector string with brackets
+        
+    Raises:
+        VectorFormatError: If vector cannot be formatted
+    """
+    try:
+        vector_str = create_iris_vector_string(vector, precision)
+        return '[' + vector_str + ']'
+        
+    except VectorFormatError:
+        raise
+    except Exception as e:
+        raise VectorFormatError(f"Error creating bracketed vector string: {e}")
 
 def test_vector_formatting():
     """Test the vector formatting functions with various edge cases."""

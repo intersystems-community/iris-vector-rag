@@ -10,7 +10,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.common.utils import Document # Updated import
+from common.utils import Document # Updated import
 # Fixtures like iris_testcontainer_connection, embedding_model_fixture,
 # llm_client_fixture will be automatically provided by pytest from conftest.py
 
@@ -156,7 +156,7 @@ def test_crag_jdbc_e2e_corrective_web_search_triggered(
         except Exception as e:
             logger.warning(f"Could not clear tables (may be normal if first run): {e}")
             iris_testcontainer_connection.rollback() # Rollback on error during clear
-            from src.common.db_init import initialize_database
+            from common.db_init import initialize_database
             try:
                 initialize_database(iris_testcontainer_connection, force_recreate=False)
                 logger.info("Re-ran initialize_database after clear attempt.")

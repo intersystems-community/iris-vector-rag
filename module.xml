@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26" zv="IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2025.1 (Build 1) Mon Dec 2 2024 14:30:00 EST">
+  <Document name="intersystems-iris-rag.ZPM">
+    <Module>
+      <Name>intersystems-iris-rag</Name>
+      <Version>0.1.0</Version>
+      <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend.</Description>
+      <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
+      <Author>InterSystems IRIS RAG Templates Project</Author>
+      <License>MIT</License>
+      <Repository>https://github.com/intersystems/iris-rag-templates</Repository>
+      <Homepage>https://github.com/intersystems/iris-rag-templates</Homepage>
+      
+      <Dependencies>
+        <ModuleReference>
+          <Name>%ZPM</Name>
+          <Version>0.7.0</Version>
+        </ModuleReference>
+      </Dependencies>
+      
+      <Packaging>
+        <Resource Name="RAG.IPMInstaller.CLS" Directory="objectscript/"/>
+        <Resource Name="RAG.VectorMigration.CLS" Directory="objectscript/"/>
+        <Resource Name="RAG.IFindSetup.CLS" Directory="objectscript/"/>
+        <Resource Name="RAG.SourceDocumentsIFind.CLS" Directory="objectscript/"/>
+        <Resource Name="enable_vector_search.cos" Directory="objectscript/"/>
+        <Resource Name="python_bridge.py" Directory="objectscript/"/>
+        <Resource Name="iris_rag" Directory="iris_rag/" Recurse="true"/>
+        <Resource Name="common" Directory="common/" Recurse="true"/>
+        <Resource Name="basic_rag" Directory="basic_rag/" Recurse="true"/>
+        <Resource Name="hyde" Directory="hyde/" Recurse="true"/>
+        <Resource Name="crag" Directory="crag/" Recurse="true"/>
+        <Resource Name="colbert" Directory="colbert/" Recurse="true"/>
+        <Resource Name="noderag" Directory="noderag/" Recurse="true"/>
+        <Resource Name="graphrag" Directory="graphrag/" Recurse="true"/>
+        <Resource Name="hybrid_ifind_rag" Directory="hybrid_ifind_rag/" Recurse="true"/>
+        <Resource Name="chunking" Directory="chunking/" Recurse="true"/>
+        <Resource Name="eval" Directory="eval/" Recurse="true"/>
+        <Resource Name="examples" Directory="examples/" Recurse="true"/>
+        <Resource Name="config" Directory="config/" Recurse="true"/>
+        <Resource Name="docs" Directory="docs/" Recurse="true"/>
+        <Resource Name="README.md" Directory=""/>
+        <Resource Name="pyproject.toml" Directory=""/>
+        <Resource Name="requirements.txt" Directory=""/>
+      </Packaging>
+      
+      <Lifecycle>
+        <Setup>
+          <Invoke Class="RAG.IPMInstaller" Method="Setup"/>
+        </Setup>
+        <Configure>
+          <Invoke Class="RAG.IPMInstaller" Method="Configure"/>
+        </Configure>
+        <Activate>
+          <Invoke Class="RAG.IPMInstaller" Method="Activate"/>
+        </Activate>
+        <Test>
+          <Invoke Class="RAG.IPMInstaller" Method="Test"/>
+        </Test>
+        <Reload>
+          <Invoke Class="RAG.IPMInstaller" Method="Reload"/>
+        </Reload>
+        <Upgrade>
+          <Invoke Class="RAG.IPMInstaller" Method="Upgrade"/>
+        </Upgrade>
+        <UnInstall>
+          <Invoke Class="RAG.IPMInstaller" Method="UnInstall"/>
+        </UnInstall>
+      </Lifecycle>
+      
+      <Parameters>
+        <Parameter Name="PYTHON_PATH" Description="Path to Python executable" Default="python3"/>
+        <Parameter Name="INSTALL_PYTHON_PACKAGE" Description="Install Python package via pip" Default="true"/>
+        <Parameter Name="ENABLE_VECTOR_SEARCH" Description="Enable IRIS Vector Search" Default="true"/>
+        <Parameter Name="CREATE_SAMPLE_DATA" Description="Create sample data for testing" Default="false"/>
+        <Parameter Name="NAMESPACE" Description="Target namespace for installation" Default="USER"/>
+        <Parameter Name="PYTHON_ENVIRONMENT" Description="Python virtual environment path" Default=""/>
+        <Parameter Name="SKIP_DEPENDENCIES" Description="Skip dependency validation" Default="false"/>
+      </Parameters>
+      
+      <SystemRequirements>
+        <SystemRequirement Name="IRIS" Version="2025.1"/>
+        <SystemRequirement Name="Python" Version="3.11"/>
+      </SystemRequirements>
+      
+      <Manifest>
+        <Default Name="SourceDir" Value="${mgrdir}${MODULE}"/>
+        <Default Name="Namespace" Value="USER"/>
+        <Default Name="app" Value="/csp/${MODULE}"/>
+        
+        <Namespace Name="${Namespace}" Code="${Namespace}" Data="${Namespace}" Create="yes" Ensemble="no">
+          <Configuration>
+            <Database Name="${Namespace}" Dir="${MGRDIR}${Namespace}" Create="yes" MountRequired="true"/>
+          </Configuration>
+          
+          <Import File="${SourceDir}objectscript/" Flags="ck" Recurse="true"/>
+          
+          <CSPApplication Url="${app}" Directory="${SourceDir}csp/" ServeFiles="1" Recurse="1" MatchRoles=":%DB_${Namespace}"/>
+        </Namespace>
+      </Manifest>
+    </Module>
+  </Document>
+</Export>

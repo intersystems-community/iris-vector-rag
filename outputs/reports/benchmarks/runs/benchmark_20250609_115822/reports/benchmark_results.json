@@ -1,0 +1,2328 @@
+{
+  "benchmarks": {
+    "basic_rag": {
+      "pipeline": "basic_rag",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:58:26.152266",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 27.49100001528859,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651618",
+              "content": 85,
+              "score": 0.15211664140224457,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@3d3fcdb0"
+              }
+            },
+            {
+              "id": "PMC1748704791",
+              "content": 84,
+              "score": 0.14311178028583527,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@641147d0"
+              }
+            },
+            {
+              "id": "PMC11630108",
+              "content": 79,
+              "score": 0.14171934127807617,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6e38921c"
+              }
+            },
+            {
+              "id": "PMC11649812",
+              "content": 84,
+              "score": 0.12411173433065414,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@64d7f7e0"
+              }
+            },
+            {
+              "id": "PMC11650920",
+              "content": 67,
+              "score": 0.12205545604228973,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@27c6e487"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 15.518124913796782,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651055",
+              "content": 65,
+              "score": 0.13019613921642303,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@49070868"
+              }
+            },
+            {
+              "id": "PMC11223654",
+              "content": 84,
+              "score": 0.12804943323135376,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6385cb26"
+              }
+            },
+            {
+              "id": "PMC11643094",
+              "content": 71,
+              "score": 0.11729871481657028,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@38364841"
+              }
+            },
+            {
+              "id": "PMC1748704941",
+              "content": 68,
+              "score": 0.11499820649623871,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@28c4711c"
+              }
+            },
+            {
+              "id": "PMC11650000",
+              "content": 69,
+              "score": 0.10819027572870255,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@59717824"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 11.931541142985225,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649435",
+              "content": 84,
+              "score": 0.13819921016693115,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@146044d7"
+              }
+            },
+            {
+              "id": "PMC1748704893",
+              "content": 73,
+              "score": 0.1191866472363472,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@1e9e725a"
+              }
+            },
+            {
+              "id": "PMC1748704458",
+              "content": 65,
+              "score": 0.11125245690345764,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@15d9bc04"
+              }
+            },
+            {
+              "id": "PMC11650159",
+              "content": 73,
+              "score": 0.10836582630872726,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@473b46c3"
+              }
+            },
+            {
+              "id": "PMC1748215524",
+              "content": 80,
+              "score": 0.10235756635665894,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@516be40f"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 10.513875167816877,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC1748704753",
+              "content": 68,
+              "score": 0.1584138572216034,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@3c0a50da"
+              }
+            },
+            {
+              "id": "PMC11650559",
+              "content": 84,
+              "score": 0.14332999289035797,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@646be2c3"
+              }
+            },
+            {
+              "id": "PMC1748704549",
+              "content": 77,
+              "score": 0.14015652239322662,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@797badd3"
+              }
+            },
+            {
+              "id": "PMC1748704844",
+              "content": 75,
+              "score": 0.137590229511261,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@77be656f"
+              }
+            },
+            {
+              "id": "PMC11650940",
+              "content": 83,
+              "score": 0.13391940295696259,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@19dc67c2"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 9.629541076719761,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC1748704503",
+              "content": 70,
+              "score": 0.1198415607213974,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@221af3c0"
+              }
+            },
+            {
+              "id": "PMC11649785",
+              "content": 76,
+              "score": 0.10646965354681015,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@62bd765"
+              }
+            },
+            {
+              "id": "PMC11649690",
+              "content": 80,
+              "score": 0.10241509974002838,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@23a5fd2"
+              }
+            },
+            {
+              "id": "PMC11651490",
+              "content": 83,
+              "score": 0.10059019923210144,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@78a2da20"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 4
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 9.428333025425673,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651445",
+              "content": 67,
+              "score": 0.16794000566005707,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@dd3b207"
+              }
+            },
+            {
+              "id": "PMC11650937",
+              "content": 85,
+              "score": 0.13957931101322174,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@551bdc27"
+              }
+            },
+            {
+              "id": "PMC1748704985",
+              "content": 67,
+              "score": 0.1358744204044342,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@58fdd99"
+              }
+            },
+            {
+              "id": "PMC11649530",
+              "content": 65,
+              "score": 0.11566277593374252,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6b1274d2"
+              }
+            },
+            {
+              "id": "PMC1748215585",
+              "content": 66,
+              "score": 0.112952820956707,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@7bc1a03d"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 8.728250162675977,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC1748704807",
+              "content": 84,
+              "score": 0.14599457383155823,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@70b0b186"
+              }
+            },
+            {
+              "id": "PMC1748704769",
+              "content": 84,
+              "score": 0.13414697349071503,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@ba8d91c"
+              }
+            },
+            {
+              "id": "PMC1748704864",
+              "content": 82,
+              "score": 0.12882526218891144,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@7364985f"
+              }
+            },
+            {
+              "id": "PMC11649686",
+              "content": 77,
+              "score": 0.12841182947158813,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@5d20e46"
+              }
+            },
+            {
+              "id": "PMC11641292",
+              "content": 84,
+              "score": 0.12836670875549316,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@709ba3fb"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 8.346333168447018,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650841",
+              "content": 84,
+              "score": 0.16419103741645813,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@3d36e4cd"
+              }
+            },
+            {
+              "id": "PMC1748704664",
+              "content": 84,
+              "score": 0.12023065984249115,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6a472554"
+              }
+            },
+            {
+              "id": "PMC11388927",
+              "content": 67,
+              "score": 0.1173105239868164,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@7ff2a664"
+              }
+            },
+            {
+              "id": "PMC1748704552",
+              "content": 73,
+              "score": 0.11219650506973267,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@525b461a"
+              }
+            },
+            {
+              "id": "PMC1748704989",
+              "content": 67,
+              "score": 0.10874682664871216,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@58c1c010"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 7.874957984313369,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651483",
+              "content": 84,
+              "score": 0.13193967938423157,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@b7f23d9"
+              }
+            },
+            {
+              "id": "PMC11649792",
+              "content": 79,
+              "score": 0.13136564195156097,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@61d47554"
+              }
+            },
+            {
+              "id": "PMC11619822",
+              "content": 82,
+              "score": 0.12444571405649185,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@69b794e2"
+              }
+            },
+            {
+              "id": "PMC11650159",
+              "content": 73,
+              "score": 0.11987680941820145,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@3f200884"
+              }
+            },
+            {
+              "id": "PMC11650005",
+              "content": 82,
+              "score": 0.1165323480963707,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@4d339552"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 7.3852080386132,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11640628",
+              "content": 65,
+              "score": 0.16973234713077545,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@f0f2775"
+              }
+            },
+            {
+              "id": "PMC11619879",
+              "content": 87,
+              "score": 0.15809524059295654,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@5a4aa2f2"
+              }
+            },
+            {
+              "id": "PMC11650128",
+              "content": 65,
+              "score": 0.15100184082984924,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@6591f517"
+              }
+            },
+            {
+              "id": "PMC11162398",
+              "content": 80,
+              "score": 0.14617283642292023,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@345965f2"
+              }
+            },
+            {
+              "id": "PMC11619830",
+              "content": 84,
+              "score": 0.14201918244361877,
+              "metadata": {
+                "title": "com.intersystems.jdbc.IRISInputStream@429bd883"
+              }
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5
+        }
+      ],
+      "metrics": {
+        "p50": 9.557485580444336,
+        "p95": 22.15541601181029,
+        "p99": 26.471068859100342,
+        "throughput_qps": 85.01094482188316
+      },
+      "duration_seconds": 0.11763191223144531,
+      "end_time": "2025-06-09T11:58:26.270154"
+    },
+    "hyde": {
+      "pipeline": "hyde",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:58:26.270240",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 9.052625158801675,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@4d49af10"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@279ad2e3"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@58134517"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@4450d156"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@4461c7e3"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@351d0846"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@77e4c80f"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@35fc6dc4"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@7fe8ea47"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@226a82c4"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 8.725583087652922,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@731f8236"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@255b53dc"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@1dd92fe2"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@6b53e23f"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@64d2d351"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@1b68b9a4"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@4f9a3314"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@3b2c72c2"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@491666ad"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@176d53b2"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 8.96754115819931,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@971d0d8"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@51931956"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@2b4a2ec7"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@564718df"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@51b7e5df"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@18a70f16"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@62e136d3"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@c8e4bb0"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@6279cee3"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@4206a205"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 8.615332888439298,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@29ba4338"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@57175e74"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@7bb58ca3"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@c540f5a"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@770c2e6b"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@1a052a00"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@4d826d77"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@61009542"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@77e9807f"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@448ff1a8"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 7.67229194752872,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@1a38c59b"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@7f77e91b"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@44a664f2"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@7f9fcf7f"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@2357d90a"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@6328d34a"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@145eaa29"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@15bb6bea"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@8b96fde"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@2d2e5f00"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 7.9113750252872705,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@4c40b76e"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@2ea6137"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@41ee392b"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@1e67a849"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@57d5872c"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@667a738"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@36f0f1be"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@157632c9"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@6ee12bac"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@55040f2f"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 7.931541185826063,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@64c87930"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@400cff1a"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@275710fc"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@525f1e4e"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@75f9eccc"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@52aa2946"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@4de5031f"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@67e2d983"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@5d47c63f"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@5ea434c8"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 8.435291005298495,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@3bbc39f8"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@4ae3c1cd"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@29f69090"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@568bf312"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@ca263c2"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@589b3632"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@45f45fa1"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@4c6e276e"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@534df152"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@52e677af"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 7.192582823336124,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@35083305"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@8e0379d"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@341b80b2"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@55a1c291"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@2145433b"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@2890c451"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@40e6dfe1"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@1b083826"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@105fece7"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@3ec300f1"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 7.238958962261677,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649608",
+              "content": "",
+              "score": 0.15812520682811737,
+              "title": "com.intersystems.jdbc.IRISInputStream@482cd91f"
+            },
+            {
+              "id": "PMC1748704763",
+              "content": "",
+              "score": 0.11255305260419846,
+              "title": "com.intersystems.jdbc.IRISInputStream@123f1134"
+            },
+            {
+              "id": "PMC11642831",
+              "content": "",
+              "score": 0.11243604868650436,
+              "title": "com.intersystems.jdbc.IRISInputStream@7d68ef40"
+            },
+            {
+              "id": "PMC11190297",
+              "content": "",
+              "score": 0.11033060401678085,
+              "title": "com.intersystems.jdbc.IRISInputStream@5b0abc94"
+            },
+            {
+              "id": "PMC11651642",
+              "content": "",
+              "score": 0.10987704992294312,
+              "title": "com.intersystems.jdbc.IRISInputStream@75c072cb"
+            },
+            {
+              "id": "PMC1748704560",
+              "content": "",
+              "score": 0.106468565762043,
+              "title": "com.intersystems.jdbc.IRISInputStream@1f1c7bf6"
+            },
+            {
+              "id": "PMC1748704873",
+              "content": "",
+              "score": 0.10564512014389038,
+              "title": "com.intersystems.jdbc.IRISInputStream@25b485ba"
+            },
+            {
+              "id": "PMC1748704612",
+              "content": "",
+              "score": 0.10482217371463776,
+              "title": "com.intersystems.jdbc.IRISInputStream@2b546384"
+            },
+            {
+              "id": "PMC11650833",
+              "content": "",
+              "score": 0.10477960109710693,
+              "title": "com.intersystems.jdbc.IRISInputStream@5d740a0f"
+            },
+            {
+              "id": "PMC11651550",
+              "content": "",
+              "score": 0.10458090901374817,
+              "title": "com.intersystems.jdbc.IRISInputStream@214b199c"
+            }
+          ],
+          "hypothetical_document": "Stub LLM response for: Write a short, concise passage that directly answe...",
+          "metadata": {
+            "top_k": 5,
+            "similarity_threshold": 0.0,
+            "num_retrieved": 10,
+            "pipeline": "HyDE"
+          }
+        }
+      ],
+      "metrics": {
+        "p50": 8.206009864807129,
+        "p95": 9.040427207946777,
+        "p99": 9.07355785369873,
+        "throughput_qps": 121.55852586916451
+      },
+      "duration_seconds": 0.08226490020751953,
+      "end_time": "2025-06-09T11:58:26.352669"
+    },
+    "colbert": {
+      "pipeline": "colbert",
+      "queries_run": 10,
+      "start_time": "2025-06-09T11:58:26.352739",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 13831.750791985542,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11118550",
+              "content": "Dyspnea is a key symptom of de novo acute hypoxemic respiratory failure. This study explores dyspnea and its association with intubation and mortality in this population. This was a secondary analysis of a multicenter, randomized, controlled trial. Dyspnea was quantified by a visual analog scale (dyspnea-VAS) from zero to 100\ufffdmm. Dyspnea was measured in 259 of the 310 patients included. Factors associated with intubation were assessed with a competing risks model taking into account ICU discharge. The Cox model was used to evaluate factors associated with 90-day mortality. At baseline (randomization in the parent trial), median dyspnea-VAS was 46 (interquartile range, 16\ufffd65) mm and was\ufffd\ufffd\ufffd40\ufffdmm in 146 patients (56%). The intubation rate was 45%. Baseline variables independently associated with intubation were moderate (dyspnea-VAS 40\ufffd64\ufffdmm) and severe (dyspnea-VAS\ufffd\ufffd\ufffd65\ufffdmm) dyspnea at baseline (sHR 1.96 and 2.61,  p p p 2 2 p p p p 2 2 p p In patients admitted to the ICU for de novo acute hypoxemic respiratory failure, dyspnea is associated with a higher risk of intubation and with a higher mortality. Trial registration The online version contains supplementary material available at 10.1186/s13054-024-04903-5.",
+              "score": 0.07900159806013107
+            },
+            {
+              "id": "pmc11344719",
+              "content": "Inhibitors of the interaction between Neuropilin-1 (NRP-1) and Vascular Endothelial Growth Factor-A 165 165 2 2 50 50 2 2 50 165 The online version contains supplementary material available at 10.1007/s00726-024-03411-8.",
+              "score": 0.07900159806013107
+            },
+            {
+              "id": "pmc11583430",
+              "content": "The disruption of glucose (Glu) metabolism in the human body can lead to conditions such as diabetes and hyperglycemia. Therefore, accurately determining Glu levels is crucial for clinical diagnosis and other applications. Carbon dots (CDs) are a novel category of carbon nanomaterials that exhibit outstanding optical properties, excellent biocompatibility, high water solubility, low production costs, and straightforward synthesis. Recently, researchers have developed various carbon dot sensors for fast and real-time Glu monitoring. In this context, we provide a comprehensive introduction to Glu and CDs for the first time. We categorize the synthetic methods for CDs and the sensing mechanisms, further classifying the applications of carbon dot probes into single-probe sensing, ratiometric sensing, and visual detection. Finally, we discuss the future development needs for CD-based Glu sensors. This review aims to offer insights into advancing Glu sensors and modern medical treatments.",
+              "score": 0.07900159806013107
+            },
+            {
+              "id": "pmc11590662",
+              "content": "Oxytocin supplementation improves obstructive sleep apnea (OSA), and animal studies suggest involvement of oxytocin in respiratory control. However, the relationship between endogenous oxytocin signaling and human sleep status remains undetermined. In this study, we approached the contribution of the intrinsic oxytocin-oxytocin receptor (OXTR) system to OSA by genetic association analysis. We analyzed the relationship between  OXTR The OXTR rs2254298 A allele was more frequent in those with OSA symptoms than in those without ( P P P P The OXTR gene may contribute to OSA symptoms via the respiratory control system, although it could be in linkage disequilibrium with a true causal gene.",
+              "score": 0.07900159806013107
+            },
+            {
+              "id": "pmc11604051",
+              "content": "To assess whether simultaneous normalization of late-night salivary cortisol (LNSC) and mean urinary free cortisol (mUFC) in patients with Cushing disease treated with osilodrostat is associated with better clinical outcomes than control of mUFC or LNSC alone. Pooled data from two phase III osilodrostat studies (LINC 3 and LINC 4) were analyzed. Both comprised a 48-week core phase and an optional open-label extension. Changes in cardiovascular/metabolic-related parameters, physical manifestations of hypercortisolism, and quality of life (QoL) were evaluated across the following patient subgroups: both LNSC and mUFC controlled, only mUFC controlled, only LNSC controlled, and neither controlled. Of 160 patients included in the analysis, 85.0% had both LNSC and mUFC uncontrolled at baseline. At week 72, 48.6% of patients had both LNSC and mUFC controlled; these patients generally exhibited greater improvements in cardiovascular/metabolic-related parameters than those with only mUFC controlled or both LNSC and mUFC uncontrolled: systolic/diastolic blood pressure, \ufffd7.4%/\ufffd4.9%, \ufffd6.0%/\ufffd5.5%, and 2.3%/0.8%, respectively; fasting plasma glucose, \ufffd5.0%, \ufffd4.8%, and 1.9%; glycated hemoglobin, \ufffd5.1%, \ufffd4.8%, and \ufffd1.3%. Weight, waist circumference, and body mass index improved with control of LNSC and/or mUFC; physical manifestations of hypercortisolism generally improved regardless of LNSC/mUFC control. Patients with both LNSC and mUFC controlled or only mUFC controlled had the greatest improvement from baseline to week 72 in QoL. In osilodrostat-treated patients with Cushing disease, normalization of LNSC and mUFC led to improvements in long-term outcomes, indicating that treatment should aim for normalization of both parameters for optimal patient outcomes. NCT02180217 (LINC 3); NCT02697734 (LINC 4)",
+              "score": 0.07900159806013107
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 14998.549042036757,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11016520",
+              "content": "Subarachnoid hemorrhage (SAH) is a form of severe acute stroke with very high mortality and disability rates. Early brain injury (EBI) and delayed cerebral ischemia (DCI) contribute to the poor prognosis of patients with SAH. Currently, some researchers have started to focus on changes in amino acid metabolism that occur in brain tissues after SAH. Taurine is a sulfur-containing amino acid that is semi-essential in animals, and it plays important roles in various processes, such as neurodevelopment, osmotic pressure regulation, and membrane stabilization. In acute stroke, such as cerebral hemorrhage, taurine plays a neuroprotective role. However, the role of taurine after subarachnoid hemorrhage has rarely been reported. In the present study, we established a mouse model of SAH. We found that taurine administration effectively improved the sensorimotor function of these mice. In addition, taurine treatment alleviated sensorimotor neuron damage and reduced the proportion of apoptotic cells. Furthermore, taurine treatment enhanced the polarization of astrocytes toward the neuroprotective phenotype while inhibiting their polarization toward the neurotoxic phenotype. This study is the first to reveal the relationship between taurine and astrocyte polarization and may provide a new strategy for SAH research and clinical treatment.",
+              "score": -0.036305010318756104
+            },
+            {
+              "id": "pmc11255010",
+              "content": "Primary glomerular disease (PGD) is an idiopathic cause of renal glomerular lesions that is characterized by proteinuria or hematuria and is the leading cause of chronic kidney disease (CKD). The identification of circulating biomarkers for the diagnosis of PGD requires a thorough understanding of the metabolic defects involved. In this study, ultra-high performance liquid chromatography\ufffdtandem mass spectrometry was performed to characterize the amino acid (AA) profiles of patients with pathologically diagnosed PGD, including minimal change disease (MCD), focal segmental glomerular sclerosis (FSGS), membranous nephropathy, and immunoglobulin A nephropathy. The plasma concentrations of asparagine and ornithine were low, and that of aspartic acid was high, in patients with all the pathologic types of PGD, compared to healthy controls. Two distinct diagnostic models were generated using the differential plasma AA profiles using logistic regression and receiver operating characteristic analyses, with areas under the curves of 1.000 and accuracies up to 100.0% in patients with MCD and FSGS. In conclusion, the progression of PGD is associated with alterations in AA profiles, The present findings provide a theoretical basis for the use of AAs as a non-invasive, real-time, rapid, and simple biomarker for the diagnosis of various pathologic types of PGD. The online version contains supplementary material available at 10.1007/s00726-024-03407-4.",
+              "score": -0.036305010318756104
+            },
+            {
+              "id": "pmc11344719",
+              "content": "Inhibitors of the interaction between Neuropilin-1 (NRP-1) and Vascular Endothelial Growth Factor-A 165 165 2 2 50 50 2 2 50 165 The online version contains supplementary material available at 10.1007/s00726-024-03411-8.",
+              "score": -0.036305010318756104
+            },
+            {
+              "id": "pmc11570632",
+              "content": "Overexpression of mitotic arrest deficiency 2 (MAD2/MAD2L1), a pivotal component of the spindle assembly checkpoint (SAC), resulted in many types of cancer. Here we show that the depletion of tumor susceptibility gene 101 (TSG101), causes synthetic dosage lethality (SDL) in MAD2-overexpressing cells, and we term this cell death MAD2-overexpressing interphase cell death (MOID). The induction of MOID depends on PML and DAXX mediating mitochondrial AIFM1-release. MAD2, TSG101, and AIF-PML-DAXX axis regulate mitochondria, PML nuclear bodies (NBs), and autophagy with close inter-dependent protein stability in survival cells. Loss of C-terminal phosphorylation(s) of TSG101 and closed (C-)MAD2-overexpression contribute to induce MOID. In survival cells, both MAD2 and TSG101 localize at PML NBs in interphase, and TSG101 Y390 phosphorylation is required for localization of TSG101 to PML NBs. PML release from PML NBs through PML deSUMOylation contributes to induce MOID. The post-transcriptional/translational cell death machinery and the non-canonical transcriptional regulation are intricately linked to MOID, and ER-MAM, may serve as a crucial intersection for MOID signaling.",
+              "score": -0.036305010318756104
+            },
+            {
+              "id": "pmc11604051",
+              "content": "To assess whether simultaneous normalization of late-night salivary cortisol (LNSC) and mean urinary free cortisol (mUFC) in patients with Cushing disease treated with osilodrostat is associated with better clinical outcomes than control of mUFC or LNSC alone. Pooled data from two phase III osilodrostat studies (LINC 3 and LINC 4) were analyzed. Both comprised a 48-week core phase and an optional open-label extension. Changes in cardiovascular/metabolic-related parameters, physical manifestations of hypercortisolism, and quality of life (QoL) were evaluated across the following patient subgroups: both LNSC and mUFC controlled, only mUFC controlled, only LNSC controlled, and neither controlled. Of 160 patients included in the analysis, 85.0% had both LNSC and mUFC uncontrolled at baseline. At week 72, 48.6% of patients had both LNSC and mUFC controlled; these patients generally exhibited greater improvements in cardiovascular/metabolic-related parameters than those with only mUFC controlled or both LNSC and mUFC uncontrolled: systolic/diastolic blood pressure, \ufffd7.4%/\ufffd4.9%, \ufffd6.0%/\ufffd5.5%, and 2.3%/0.8%, respectively; fasting plasma glucose, \ufffd5.0%, \ufffd4.8%, and 1.9%; glycated hemoglobin, \ufffd5.1%, \ufffd4.8%, and \ufffd1.3%. Weight, waist circumference, and body mass index improved with control of LNSC and/or mUFC; physical manifestations of hypercortisolism generally improved regardless of LNSC/mUFC control. Patients with both LNSC and mUFC controlled or only mUFC controlled had the greatest improvement from baseline to week 72 in QoL. In osilodrostat-treated patients with Cushing disease, normalization of LNSC and mUFC led to improvements in long-term outcomes, indicating that treatment should aim for normalization of both parameters for optimal patient outcomes. NCT02180217 (LINC 3); NCT02697734 (LINC 4)",
+              "score": -0.036305010318756104
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 14332.385499961674,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11016520",
+              "content": "Subarachnoid hemorrhage (SAH) is a form of severe acute stroke with very high mortality and disability rates. Early brain injury (EBI) and delayed cerebral ischemia (DCI) contribute to the poor prognosis of patients with SAH. Currently, some researchers have started to focus on changes in amino acid metabolism that occur in brain tissues after SAH. Taurine is a sulfur-containing amino acid that is semi-essential in animals, and it plays important roles in various processes, such as neurodevelopment, osmotic pressure regulation, and membrane stabilization. In acute stroke, such as cerebral hemorrhage, taurine plays a neuroprotective role. However, the role of taurine after subarachnoid hemorrhage has rarely been reported. In the present study, we established a mouse model of SAH. We found that taurine administration effectively improved the sensorimotor function of these mice. In addition, taurine treatment alleviated sensorimotor neuron damage and reduced the proportion of apoptotic cells. Furthermore, taurine treatment enhanced the polarization of astrocytes toward the neuroprotective phenotype while inhibiting their polarization toward the neurotoxic phenotype. This study is the first to reveal the relationship between taurine and astrocyte polarization and may provide a new strategy for SAH research and clinical treatment.",
+              "score": -0.04372427240014076
+            },
+            {
+              "id": "pmc11344719",
+              "content": "Inhibitors of the interaction between Neuropilin-1 (NRP-1) and Vascular Endothelial Growth Factor-A 165 165 2 2 50 50 2 2 50 165 The online version contains supplementary material available at 10.1007/s00726-024-03411-8.",
+              "score": -0.04372427240014076
+            },
+            {
+              "id": "pmc11583430",
+              "content": "The disruption of glucose (Glu) metabolism in the human body can lead to conditions such as diabetes and hyperglycemia. Therefore, accurately determining Glu levels is crucial for clinical diagnosis and other applications. Carbon dots (CDs) are a novel category of carbon nanomaterials that exhibit outstanding optical properties, excellent biocompatibility, high water solubility, low production costs, and straightforward synthesis. Recently, researchers have developed various carbon dot sensors for fast and real-time Glu monitoring. In this context, we provide a comprehensive introduction to Glu and CDs for the first time. We categorize the synthetic methods for CDs and the sensing mechanisms, further classifying the applications of carbon dot probes into single-probe sensing, ratiometric sensing, and visual detection. Finally, we discuss the future development needs for CD-based Glu sensors. This review aims to offer insights into advancing Glu sensors and modern medical treatments.",
+              "score": -0.04372427240014076
+            },
+            {
+              "id": "pmc11590662",
+              "content": "Oxytocin supplementation improves obstructive sleep apnea (OSA), and animal studies suggest involvement of oxytocin in respiratory control. However, the relationship between endogenous oxytocin signaling and human sleep status remains undetermined. In this study, we approached the contribution of the intrinsic oxytocin-oxytocin receptor (OXTR) system to OSA by genetic association analysis. We analyzed the relationship between  OXTR The OXTR rs2254298 A allele was more frequent in those with OSA symptoms than in those without ( P P P P The OXTR gene may contribute to OSA symptoms via the respiratory control system, although it could be in linkage disequilibrium with a true causal gene.",
+              "score": -0.04372427240014076
+            },
+            {
+              "id": "pmc11604051",
+              "content": "To assess whether simultaneous normalization of late-night salivary cortisol (LNSC) and mean urinary free cortisol (mUFC) in patients with Cushing disease treated with osilodrostat is associated with better clinical outcomes than control of mUFC or LNSC alone. Pooled data from two phase III osilodrostat studies (LINC 3 and LINC 4) were analyzed. Both comprised a 48-week core phase and an optional open-label extension. Changes in cardiovascular/metabolic-related parameters, physical manifestations of hypercortisolism, and quality of life (QoL) were evaluated across the following patient subgroups: both LNSC and mUFC controlled, only mUFC controlled, only LNSC controlled, and neither controlled. Of 160 patients included in the analysis, 85.0% had both LNSC and mUFC uncontrolled at baseline. At week 72, 48.6% of patients had both LNSC and mUFC controlled; these patients generally exhibited greater improvements in cardiovascular/metabolic-related parameters than those with only mUFC controlled or both LNSC and mUFC uncontrolled: systolic/diastolic blood pressure, \ufffd7.4%/\ufffd4.9%, \ufffd6.0%/\ufffd5.5%, and 2.3%/0.8%, respectively; fasting plasma glucose, \ufffd5.0%, \ufffd4.8%, and 1.9%; glycated hemoglobin, \ufffd5.1%, \ufffd4.8%, and \ufffd1.3%. Weight, waist circumference, and body mass index improved with control of LNSC and/or mUFC; physical manifestations of hypercortisolism generally improved regardless of LNSC/mUFC control. Patients with both LNSC and mUFC controlled or only mUFC controlled had the greatest improvement from baseline to week 72 in QoL. In osilodrostat-treated patients with Cushing disease, normalization of LNSC and mUFC led to improvements in long-term outcomes, indicating that treatment should aim for normalization of both parameters for optimal patient outcomes. NCT02180217 (LINC 3); NCT02697734 (LINC 4)",
+              "score": -0.04372427240014076
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 17148.741292068735,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11016520",
+              "content": "Subarachnoid hemorrhage (SAH) is a form of severe acute stroke with very high mortality and disability rates. Early brain injury (EBI) and delayed cerebral ischemia (DCI) contribute to the poor prognosis of patients with SAH. Currently, some researchers have started to focus on changes in amino acid metabolism that occur in brain tissues after SAH. Taurine is a sulfur-containing amino acid that is semi-essential in animals, and it plays important roles in various processes, such as neurodevelopment, osmotic pressure regulation, and membrane stabilization. In acute stroke, such as cerebral hemorrhage, taurine plays a neuroprotective role. However, the role of taurine after subarachnoid hemorrhage has rarely been reported. In the present study, we established a mouse model of SAH. We found that taurine administration effectively improved the sensorimotor function of these mice. In addition, taurine treatment alleviated sensorimotor neuron damage and reduced the proportion of apoptotic cells. Furthermore, taurine treatment enhanced the polarization of astrocytes toward the neuroprotective phenotype while inhibiting their polarization toward the neurotoxic phenotype. This study is the first to reveal the relationship between taurine and astrocyte polarization and may provide a new strategy for SAH research and clinical treatment.",
+              "score": -0.04261857643723488
+            },
+            {
+              "id": "pmc11344719",
+              "content": "Inhibitors of the interaction between Neuropilin-1 (NRP-1) and Vascular Endothelial Growth Factor-A 165 165 2 2 50 50 2 2 50 165 The online version contains supplementary material available at 10.1007/s00726-024-03411-8.",
+              "score": -0.04261857643723488
+            },
+            {
+              "id": "pmc11432759",
+              "content": "Triple-negative breast cancer (TNBC) presents a significant medical challenge due to its highly invasive nature, high rate of metastasis, and lack of drug-targetable receptors, which together lead to poor prognosis and limited treatment options. The traditional treatment guidelines for early TNBC are based on a multimodal approach integrating chemotherapy, surgery, and radiation and are associated with low overall survival and high relapse rates. Therefore, the approach to treating early TNBC has shifted towards neoadjuvant treatment (NAC), given to the patient before surgery and which aims to reduce tumour size, reduce the risk of recurrence, and improve the pathological complete response (pCR) rate. However, recent studies have shown that NAC is associated with only 30% of patients achieving pCR. Thus, novel predictive biomarkers are essential if treatment decisions are to be optimised and chemotherapy toxicities minimised. Given the heterogeneity of TNBC, mass spectrometry-based proteomics technologies offer valuable tools for the discovery of targetable biomarkers for prognosis and prediction of toxicity. These biomarkers can serve as critical targets for therapeutic intervention. This review aims to provide a comprehensive overview of TNBC diagnosis and treatment, highlighting the need for a new approach. Specifically, it highlights how mass spectrometry-based can address key unmet clinical needs by identifying novel protein biomarkers to distinguish and early prognostication between TNBC patient groups who are being treated with NAC. By integrating proteomic insights, we anticipate enhanced treatment personalisation, improved clinical outcomes, and ultimately, increased survival rates for TNBC patients.",
+              "score": -0.04261857643723488
+            },
+            {
+              "id": "pmc11604051",
+              "content": "To assess whether simultaneous normalization of late-night salivary cortisol (LNSC) and mean urinary free cortisol (mUFC) in patients with Cushing disease treated with osilodrostat is associated with better clinical outcomes than control of mUFC or LNSC alone. Pooled data from two phase III osilodrostat studies (LINC 3 and LINC 4) were analyzed. Both comprised a 48-week core phase and an optional open-label extension. Changes in cardiovascular/metabolic-related parameters, physical manifestations of hypercortisolism, and quality of life (QoL) were evaluated across the following patient subgroups: both LNSC and mUFC controlled, only mUFC controlled, only LNSC controlled, and neither controlled. Of 160 patients included in the analysis, 85.0% had both LNSC and mUFC uncontrolled at baseline. At week 72, 48.6% of patients had both LNSC and mUFC controlled; these patients generally exhibited greater improvements in cardiovascular/metabolic-related parameters than those with only mUFC controlled or both LNSC and mUFC uncontrolled: systolic/diastolic blood pressure, \ufffd7.4%/\ufffd4.9%, \ufffd6.0%/\ufffd5.5%, and 2.3%/0.8%, respectively; fasting plasma glucose, \ufffd5.0%, \ufffd4.8%, and 1.9%; glycated hemoglobin, \ufffd5.1%, \ufffd4.8%, and \ufffd1.3%. Weight, waist circumference, and body mass index improved with control of LNSC and/or mUFC; physical manifestations of hypercortisolism generally improved regardless of LNSC/mUFC control. Patients with both LNSC and mUFC controlled or only mUFC controlled had the greatest improvement from baseline to week 72 in QoL. In osilodrostat-treated patients with Cushing disease, normalization of LNSC and mUFC led to improvements in long-term outcomes, indicating that treatment should aim for normalization of both parameters for optimal patient outcomes. NCT02180217 (LINC 3); NCT02697734 (LINC 4)",
+              "score": -0.04261857643723488
+            },
+            {
+              "id": "pmc11619818",
+              "content": "To evaluate the effect of a mouthwash containing  Lespedeza cuneata A total of 84 subjects among 103 participants were recruited from the M Dental Clinic (Busan, South Korea) in this randomised, double-blind, placebo-controlled study. The participants were divided into two groups: 41 in the saline-gargle group (saline group) and 43 in the LCE-gargle group (LCE group). A week before the experiment, scaling and oral health education were conducted to standardise the subjects\ufffd oral condition. For clinical evaluation, halitosis and HCB were evaluated pre-gargle (baseline), immediately after gargling (treatment), and 5 days after gargling (5 days post-treatment). Statistical analysis was performed using SPSS for Windows. The level of subjective improvement was statistically significantly greater in the LCE group than the saline group (p < 0.05). Compared with the saline group, the LCE group showed reduced halitosis after 5 days of application. Furthermore, halitosis statistically significantly decreased over time (p < 0.05). Moreover, the LCE group showed a statistically significant decrease in the number of all six HCBs (p < 0.05). LCE gargle was effective in reducing halitosis both subjectively and objectively, suggesting an antibacterial effect on HCBs in the oral cavity. Thus, LCE, which can be used as a safe mouthwash ingredient, can promote oral health and will be valuable for the oral healthcare product industry. It might also be helpful for people suffering from halitosis.",
+              "score": -0.04261857643723488
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 17292.526917066425,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11016520",
+              "content": "Subarachnoid hemorrhage (SAH) is a form of severe acute stroke with very high mortality and disability rates. Early brain injury (EBI) and delayed cerebral ischemia (DCI) contribute to the poor prognosis of patients with SAH. Currently, some researchers have started to focus on changes in amino acid metabolism that occur in brain tissues after SAH. Taurine is a sulfur-containing amino acid that is semi-essential in animals, and it plays important roles in various processes, such as neurodevelopment, osmotic pressure regulation, and membrane stabilization. In acute stroke, such as cerebral hemorrhage, taurine plays a neuroprotective role. However, the role of taurine after subarachnoid hemorrhage has rarely been reported. In the present study, we established a mouse model of SAH. We found that taurine administration effectively improved the sensorimotor function of these mice. In addition, taurine treatment alleviated sensorimotor neuron damage and reduced the proportion of apoptotic cells. Furthermore, taurine treatment enhanced the polarization of astrocytes toward the neuroprotective phenotype while inhibiting their polarization toward the neurotoxic phenotype. This study is the first to reveal the relationship between taurine and astrocyte polarization and may provide a new strategy for SAH research and clinical treatment.",
+              "score": 0.012641068547964096
+            },
+            {
+              "id": "pmc11344719",
+              "content": "Inhibitors of the interaction between Neuropilin-1 (NRP-1) and Vascular Endothelial Growth Factor-A 165 165 2 2 50 50 2 2 50 165 The online version contains supplementary material available at 10.1007/s00726-024-03411-8.",
+              "score": 0.012641068547964096
+            },
+            {
+              "id": "pmc11583430",
+              "content": "The disruption of glucose (Glu) metabolism in the human body can lead to conditions such as diabetes and hyperglycemia. Therefore, accurately determining Glu levels is crucial for clinical diagnosis and other applications. Carbon dots (CDs) are a novel category of carbon nanomaterials that exhibit outstanding optical properties, excellent biocompatibility, high water solubility, low production costs, and straightforward synthesis. Recently, researchers have developed various carbon dot sensors for fast and real-time Glu monitoring. In this context, we provide a comprehensive introduction to Glu and CDs for the first time. We categorize the synthetic methods for CDs and the sensing mechanisms, further classifying the applications of carbon dot probes into single-probe sensing, ratiometric sensing, and visual detection. Finally, we discuss the future development needs for CD-based Glu sensors. This review aims to offer insights into advancing Glu sensors and modern medical treatments.",
+              "score": 0.012641068547964096
+            },
+            {
+              "id": "pmc11590662",
+              "content": "Oxytocin supplementation improves obstructive sleep apnea (OSA), and animal studies suggest involvement of oxytocin in respiratory control. However, the relationship between endogenous oxytocin signaling and human sleep status remains undetermined. In this study, we approached the contribution of the intrinsic oxytocin-oxytocin receptor (OXTR) system to OSA by genetic association analysis. We analyzed the relationship between  OXTR The OXTR rs2254298 A allele was more frequent in those with OSA symptoms than in those without ( P P P P The OXTR gene may contribute to OSA symptoms via the respiratory control system, although it could be in linkage disequilibrium with a true causal gene.",
+              "score": 0.012641068547964096
+            },
+            {
+              "id": "pmc11604051",
+              "content": "To assess whether simultaneous normalization of late-night salivary cortisol (LNSC) and mean urinary free cortisol (mUFC) in patients with Cushing disease treated with osilodrostat is associated with better clinical outcomes than control of mUFC or LNSC alone. Pooled data from two phase III osilodrostat studies (LINC 3 and LINC 4) were analyzed. Both comprised a 48-week core phase and an optional open-label extension. Changes in cardiovascular/metabolic-related parameters, physical manifestations of hypercortisolism, and quality of life (QoL) were evaluated across the following patient subgroups: both LNSC and mUFC controlled, only mUFC controlled, only LNSC controlled, and neither controlled. Of 160 patients included in the analysis, 85.0% had both LNSC and mUFC uncontrolled at baseline. At week 72, 48.6% of patients had both LNSC and mUFC controlled; these patients generally exhibited greater improvements in cardiovascular/metabolic-related parameters than those with only mUFC controlled or both LNSC and mUFC uncontrolled: systolic/diastolic blood pressure, \ufffd7.4%/\ufffd4.9%, \ufffd6.0%/\ufffd5.5%, and 2.3%/0.8%, respectively; fasting plasma glucose, \ufffd5.0%, \ufffd4.8%, and 1.9%; glycated hemoglobin, \ufffd5.1%, \ufffd4.8%, and \ufffd1.3%. Weight, waist circumference, and body mass index improved with control of LNSC and/or mUFC; physical manifestations of hypercortisolism generally improved regardless of LNSC/mUFC control. Patients with both LNSC and mUFC controlled or only mUFC controlled had the greatest improvement from baseline to week 72 in QoL. In osilodrostat-treated patients with Cushing disease, normalization of LNSC and mUFC led to improvements in long-term outcomes, indicating that treatment should aim for normalization of both parameters for optimal patient outcomes. NCT02180217 (LINC 3); NCT02697734 (LINC 4)",
+              "score": 0.012641068547964096
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 16885.64412482083,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11016520",
+              "content": "Subarachnoid hemorrhage (SAH) is a form of severe acute stroke with very high mortality and disability rates. Early brain injury (EBI) and delayed cerebral ischemia (DCI) contribute to the poor prognosis of patients with SAH. Currently, some researchers have started to focus on changes in amino acid metabolism that occur in brain tissues after SAH. Taurine is a sulfur-containing amino acid that is semi-essential in animals, and it plays important roles in various processes, such as neurodevelopment, osmotic pressure regulation, and membrane stabilization. In acute stroke, such as cerebral hemorrhage, taurine plays a neuroprotective role. However, the role of taurine after subarachnoid hemorrhage has rarely been reported. In the present study, we established a mouse model of SAH. We found that taurine administration effectively improved the sensorimotor function of these mice. In addition, taurine treatment alleviated sensorimotor neuron damage and reduced the proportion of apoptotic cells. Furthermore, taurine treatment enhanced the polarization of astrocytes toward the neuroprotective phenotype while inhibiting their polarization toward the neurotoxic phenotype. This study is the first to reveal the relationship between taurine and astrocyte polarization and may provide a new strategy for SAH research and clinical treatment.",
+              "score": -0.007829738780856133
+            },
+            {
+              "id": "pmc11035400",
+              "content": "Alzheimer\ufffds disease (AD) is the most prevalent type of dementia caused by the accumulation of amyloid beta (A\ufffd) peptides. The extracellular deposition of A\ufffd peptides in human AD brain causes neuronal death. Therefore, it has been found that A\ufffd peptide degradation is a possible therapeutic target for AD. CathD has been known to breakdown amyloid beta peptides. However, the structural role of CathD is not yet clear. Hence, for the purpose of gaining a deeper comprehension of the structure of CathD, the present computational investigation was performed using virtual screening technique to predict CathD's active site residues and substrate binding mode. Ligand-based virtual screening was implemented on small molecules from ZINC database against crystal structure of CathD. Further, molecular docking was utilised to investigate the binding mechanism of CathD with substrates and virtually screened inhibitors. Localised compounds obtained through screening performed by PyRx and AutoDock 4.2 with CathD receptor and the compounds having highest binding affinities were picked as; ZINC00601317, ZINC04214975 and ZINCC12500925 as our top choices. The hydrophobic residues Viz .",
+              "score": -0.007829738780856133
+            },
+            {
+              "id": "pmc11118550",
+              "content": "Dyspnea is a key symptom of de novo acute hypoxemic respiratory failure. This study explores dyspnea and its association with intubation and mortality in this population. This was a secondary analysis of a multicenter, randomized, controlled trial. Dyspnea was quantified by a visual analog scale (dyspnea-VAS) from zero to 100\ufffdmm. Dyspnea was measured in 259 of the 310 patients included. Factors associated with intubation were assessed with a competing risks model taking into account ICU discharge. The Cox model was used to evaluate factors associated with 90-day mortality. At baseline (randomization in the parent trial), median dyspnea-VAS was 46 (interquartile range, 16\ufffd65) mm and was\ufffd\ufffd\ufffd40\ufffdmm in 146 patients (56%). The intubation rate was 45%. Baseline variables independently associated with intubation were moderate (dyspnea-VAS 40\ufffd64\ufffdmm) and severe (dyspnea-VAS\ufffd\ufffd\ufffd65\ufffdmm) dyspnea at baseline (sHR 1.96 and 2.61,  p p p 2 2 p p p p 2 2 p p In patients admitted to the ICU for de novo acute hypoxemic respiratory failure, dyspnea is associated with a higher risk of intubation and with a higher mortality. Trial registration The online version contains supplementary material available at 10.1186/s13054-024-04903-5.",
+              "score": -0.007829738780856133
+            },
+            {
+              "id": "pmc11344719",
+              "content": "Inhibitors of the interaction between Neuropilin-1 (NRP-1) and Vascular Endothelial Growth Factor-A 165 165 2 2 50 50 2 2 50 165 The online version contains supplementary material available at 10.1007/s00726-024-03411-8.",
+              "score": -0.007829738780856133
+            },
+            {
+              "id": "pmc11590662",
+              "content": "Oxytocin supplementation improves obstructive sleep apnea (OSA), and animal studies suggest involvement of oxytocin in respiratory control. However, the relationship between endogenous oxytocin signaling and human sleep status remains undetermined. In this study, we approached the contribution of the intrinsic oxytocin-oxytocin receptor (OXTR) system to OSA by genetic association analysis. We analyzed the relationship between  OXTR The OXTR rs2254298 A allele was more frequent in those with OSA symptoms than in those without ( P P P P The OXTR gene may contribute to OSA symptoms via the respiratory control system, although it could be in linkage disequilibrium with a true causal gene.",
+              "score": -0.007829738780856133
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 15081.838541897014,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11016520",
+              "content": "Subarachnoid hemorrhage (SAH) is a form of severe acute stroke with very high mortality and disability rates. Early brain injury (EBI) and delayed cerebral ischemia (DCI) contribute to the poor prognosis of patients with SAH. Currently, some researchers have started to focus on changes in amino acid metabolism that occur in brain tissues after SAH. Taurine is a sulfur-containing amino acid that is semi-essential in animals, and it plays important roles in various processes, such as neurodevelopment, osmotic pressure regulation, and membrane stabilization. In acute stroke, such as cerebral hemorrhage, taurine plays a neuroprotective role. However, the role of taurine after subarachnoid hemorrhage has rarely been reported. In the present study, we established a mouse model of SAH. We found that taurine administration effectively improved the sensorimotor function of these mice. In addition, taurine treatment alleviated sensorimotor neuron damage and reduced the proportion of apoptotic cells. Furthermore, taurine treatment enhanced the polarization of astrocytes toward the neuroprotective phenotype while inhibiting their polarization toward the neurotoxic phenotype. This study is the first to reveal the relationship between taurine and astrocyte polarization and may provide a new strategy for SAH research and clinical treatment.",
+              "score": 0.019141895696520805
+            },
+            {
+              "id": "pmc11162398",
+              "content": "Periodontitis is an inflammatory condition of supporting structures of teeth leading to attachment and bone loss. Cigarette smoking is the single most important and modifiable risk factor with 5 to 20-fold susceptibility for periodontal diseases. Reverse smoking is a peculiar habit of smoking where the lit end is kept inside the mouth, which is predominant in the northern coastal districts of Andhra Pradesh. Polyamines are biologically active amines involved in tissue regeneration and modulation of inflammation. The study aimed to evaluate polyamines and check their utility as a marker in detection of periodontitis among different groups. Total polyamine levels showed significant increase in reverse smokers with periodontitis when compared to the other groups. Qualitative analysis by thin layer chromatography showed three polyamine bands with varying intensity among the different groups. Mass spectrometric and NMR analyses of the three bands identified them as N1, N8-diacetyl spermidine,  N N N The online version contains supplementary material available at 10.1007/s00726-024-03396-4.",
+              "score": 0.019141895696520805
+            },
+            {
+              "id": "pmc11220105",
+              "content": "This study aims to identify factors influencing the alleviation of knee joint symptoms in patients with rheumatoid arthritis treated with biologic or target synthetic disease-modifying antirheumatic drugs (b/tsDMARDs). Among 2321 patients who started b/tsDMARDs between 2010 and 2023, we focused on 295 patients who had knee swelling or tenderness at the initiation of b/tsDMARDs and continued b/tsDMARDs at least 3 months, with recorded knee symptoms 6 months later. Symptom relief after 6 months was 78.2% for interleukin 6 (IL-6) inhibitors, 68.6% for Janus kinase (JAK) inhibitors, 65.8% for tumor necrosis factor (TNF) inhibitors, and 57.6% for cytotoxic T lymphocyte-associated antigen-4-Ig (CTLA4-Ig). The initial use of b/tsDMARDs and the use of IL-6 inhibitors in comparison to CTLA4-Ig emerged as a significant factor associated with the improvement of knee joint symptoms. Among 141 patients who underwent knee radiography at baseline and two years later, the deterioration in knee joint radiographs was 7.7% for IL-6 inhibitors, 6.3% for JAK inhibitors, 21.9% for TNF inhibitors, and 25.9% for CTLA4-Ig. The use of IL-6 inhibitors was a significant factor associated with the improvement of knee joint symptoms and the inhibition of joint destruction compared to CTLA4-Ig.",
+              "score": 0.019141895696520805
+            },
+            {
+              "id": "pmc11344719",
+              "content": "Inhibitors of the interaction between Neuropilin-1 (NRP-1) and Vascular Endothelial Growth Factor-A 165 165 2 2 50 50 2 2 50 165 The online version contains supplementary material available at 10.1007/s00726-024-03411-8.",
+              "score": 0.019141895696520805
+            },
+            {
+              "id": "pmc11604051",
+              "content": "To assess whether simultaneous normalization of late-night salivary cortisol (LNSC) and mean urinary free cortisol (mUFC) in patients with Cushing disease treated with osilodrostat is associated with better clinical outcomes than control of mUFC or LNSC alone. Pooled data from two phase III osilodrostat studies (LINC 3 and LINC 4) were analyzed. Both comprised a 48-week core phase and an optional open-label extension. Changes in cardiovascular/metabolic-related parameters, physical manifestations of hypercortisolism, and quality of life (QoL) were evaluated across the following patient subgroups: both LNSC and mUFC controlled, only mUFC controlled, only LNSC controlled, and neither controlled. Of 160 patients included in the analysis, 85.0% had both LNSC and mUFC uncontrolled at baseline. At week 72, 48.6% of patients had both LNSC and mUFC controlled; these patients generally exhibited greater improvements in cardiovascular/metabolic-related parameters than those with only mUFC controlled or both LNSC and mUFC uncontrolled: systolic/diastolic blood pressure, \ufffd7.4%/\ufffd4.9%, \ufffd6.0%/\ufffd5.5%, and 2.3%/0.8%, respectively; fasting plasma glucose, \ufffd5.0%, \ufffd4.8%, and 1.9%; glycated hemoglobin, \ufffd5.1%, \ufffd4.8%, and \ufffd1.3%. Weight, waist circumference, and body mass index improved with control of LNSC and/or mUFC; physical manifestations of hypercortisolism generally improved regardless of LNSC/mUFC control. Patients with both LNSC and mUFC controlled or only mUFC controlled had the greatest improvement from baseline to week 72 in QoL. In osilodrostat-treated patients with Cushing disease, normalization of LNSC and mUFC led to improvements in long-term outcomes, indicating that treatment should aim for normalization of both parameters for optimal patient outcomes. NCT02180217 (LINC 3); NCT02697734 (LINC 4)",
+              "score": 0.019141895696520805
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 10116.360584041104,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11258901",
+              "content": "Corynebacterium glutamicum cis,cis C. glutamicum Acinetobacter baylyi C. glutamicum C. glutamicum ubiC C. glutamicum C. glutamicum C. glutamicum High-throughput screening of promoter libraries in  Corynebacterium glutamicum",
+              "score": -0.050044503062963486
+            },
+            {
+              "id": "pmc11388927",
+              "content": "Chain elongating bacteria are a unique guild of strictly anaerobic bacteria that have garnered interest for sustainable chemical manufacturing from carbon-rich wet and gaseous waste streams. They produce C 6 8 6 8 9 12 6 In this work, the authors use constraint-based metabolic modelling and enzyme cost minimization to assess the feasibility of using metabolic engineering to expand the product spectrum of anaerobic chain elongating bacteria.",
+              "score": -0.050044503062963486
+            },
+            {
+              "id": "pmc11584510",
+              "content": "Our study aimed to assess whether there was a relationship between graduating from higher-ranked medical schools and the rate of prescribing antibiotics among Medicare Part D providers in the USA. The study obtained data from the Medicare Part D Prescribers (FY2013-2021) and the Doctor and Clinicians National repositories. A regression model was fitted to assess the relationship between provider medical school ranking and the rate of antibiotic days supplied per 100 beneficiaries at the provider level. A total of 197\ufffd540 providers were included. No association was found between the medical school ranking and the rate of antibiotics days supplied per 100 beneficiaries. Instead, the type of provider is associated with the prescription rates. Hospitalists and Emergency Medicine providers had fewer days supplied per 100 beneficiaries than Family Medicine providers. In contrast, students, more experienced providers (>20\ufffdyears since medical school graduation) and females had more days supplied per 100 beneficiaries. Our study highlights the need for robust outpatient stewardship interventions and incorporating an outcome-based approach to antibiotic stewardship curricula in medical and mid-level provider schools.",
+              "score": -0.050044503062963486
+            },
+            {
+              "id": "pmc11604056",
+              "content": "AmpC \ufffd-lactamases are neglected compared with ESBL as a cause of third-generation cephalosporin (3GC) resistance in Enterobacterales in low- and middle-income countries and the burden is unknown. The aim of this study was to investigate the presence of AmpC \ufffd-lactamase-producing  Escherichia coli Klebsiella pneumoniae Stored clinical isolates of  E. coli K. pneumoniae ampC Of 126 isolates collected between 2010 and 2020, 31 (24.6%) and 16 (12.7%) were phenotypically AmpC and inducible AmpC positive by MASTDISCS testing, respectively. All inducible AmpC isolates were ceftriaxone susceptible and 97.7% of AmpC/inducible AmpC isolates tested against cefoxitin were resistant. Through WGS, 17 and eight different STs were detected for the AmpC/inducible AmpC  E. coli K. pneumoniae bla CMY-2 bla DHA-1 Though uncommon, AmpC and inducible AmpC \ufffd-lactamases in  E. coli K. pneumoniae",
+              "score": -0.050044503062963486
+            },
+            {
+              "id": "pmc11619830",
+              "content": "To examine the anti-caries effect of mouthwashes containing  Cibotium barometz J. Smith A randomised, blinded clinical trial was conducted on 76 study participants. The differences between the 3 gargle groups (saline gargle: SAL; chlorhexidine gargle: CHX;  CB The O\ufffdLeary index, caries activity, and saliva tests, gradually improved in group CB at one and two weeks. In the case of bacterial tests, unlike SAL and CHX, only in group CB did the decrease occur one and two weeks later. The caries-related indicators decreased significantly over time in group CB compared to SAL and CHX groups, and there was also a statistically significant difference in interaction between groups and time (p<0.05). The mouthwash containing  CB",
+              "score": -0.050044503062963486
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 16554.947208147496,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11220105",
+              "content": "This study aims to identify factors influencing the alleviation of knee joint symptoms in patients with rheumatoid arthritis treated with biologic or target synthetic disease-modifying antirheumatic drugs (b/tsDMARDs). Among 2321 patients who started b/tsDMARDs between 2010 and 2023, we focused on 295 patients who had knee swelling or tenderness at the initiation of b/tsDMARDs and continued b/tsDMARDs at least 3 months, with recorded knee symptoms 6 months later. Symptom relief after 6 months was 78.2% for interleukin 6 (IL-6) inhibitors, 68.6% for Janus kinase (JAK) inhibitors, 65.8% for tumor necrosis factor (TNF) inhibitors, and 57.6% for cytotoxic T lymphocyte-associated antigen-4-Ig (CTLA4-Ig). The initial use of b/tsDMARDs and the use of IL-6 inhibitors in comparison to CTLA4-Ig emerged as a significant factor associated with the improvement of knee joint symptoms. Among 141 patients who underwent knee radiography at baseline and two years later, the deterioration in knee joint radiographs was 7.7% for IL-6 inhibitors, 6.3% for JAK inhibitors, 21.9% for TNF inhibitors, and 25.9% for CTLA4-Ig. The use of IL-6 inhibitors was a significant factor associated with the improvement of knee joint symptoms and the inhibition of joint destruction compared to CTLA4-Ig.",
+              "score": 0.0009129223763011396
+            },
+            {
+              "id": "pmc11619819",
+              "content": "Periodontitis is associated with numerous systemic diseases, and it has been shown that these associations are partly causal in nature. It is assumed that such interactions between periodontal and systemic diseases are also mediated via adipokines. Apelin, an adipokine about which there is little research in the dental field, is also produced together with its receptor in periodontal cells. The aim of this review was to summarize the currently available literature on the apelin-APJ system to better understand the pathomechanistic relationship between periodontitis and obesity and to determine the potential clinical relevance of apelin for diagnostics and therapy. In vitro studies suggest that apelin can enhance bacterial-induced synthesis of proinflammatory and proteolytic molecules, indicating a significant etiopathogenic role of this adipokine. Since serum levels of apelin are elevated in diabetes and/or obesity, it is possible that such systemic diseases promote the development and progression of periodontitis via apelin. On the other hand, it is also conceivable that apelin from the periodontium influences such systemic diseases. Further research is needed to better understand the role of apelin in the periodontium and the entire oral cavity, but also in the interactions between periodontal and systemic diseases. In particular, clinical intervention studies are needed to further decipher the etiopathogenic role of apelin in periodontitis.",
+              "score": 0.0009129223763011396
+            },
+            {
+              "id": "pmc11619824",
+              "content": "To investigate the association between plasma antibody levels against  Porphyromonas gingivalis This study was a subset of the Uonuma cohort study, including 3091 participants aged 60\ufffd79 years. Data were collected, including AF history as a dependent variable, plasma immunoglobulin G antibody levels against PG as an independent variable, and previously reported AF risk factors and demographic information as covariates. The median age of the participants was 69 years. Of the 3091 participants, 1411 (45.6%) were men, and 56 (1.8%) had an AF history. AF prevalence was significantly higher in participants with higher antibody levels against PG than in those with lower antibody levels (3.0% vs 1.4%; p = 0.005). Multivariable logistic regression analysis showed that participants with higher antibody levels against PG had twofold higher odds of having AF (odds ratio = 2.13; 95% confidence interval = 1.23\ufffd3.69). Restricted cubic spline analysis indicated a nonlinear relationship between antibody levels against PG and AF history. Plasma antibody levels against PG were associated with AF history in community-dwelling older individuals in Japan.",
+              "score": 0.0009129223763011396
+            },
+            {
+              "id": "pmc11619827",
+              "content": "This study evaluated the therapeutic efficacy of combining Neodymium-doped Yttrium Aluminum Garnet (Nd:YAG) laser with subgingival curettage and root planing (SRP) in generalised stage III/grade C periodontitis patients and its effects on cytokine dynamics and microbial community. Fifteen patients diagnosed with stage III/grade C periodontitis were included in the cohort. The right and left sides of the mouth were randomly assigned either the conventional SRP (control) group or the SRP supplemented with Nd:YAG laser group (experimental group, 160 mJ, 4 W) in a split-mouth design. Clinical periodontal indices were recorded at baseline and at the 6-week follow-up post-treatment. ELISA was utilised to measure IL-1\ufffd and TNF-\ufffd levels in gingival crevicular fluid. The subgingival microbiota\ufffds composition and variations were characterised using 16S rDNA amplicon sequencing, while quantitative real-time polymerase chain reaction (qRT-PCR) was employed to analyse the changes in the red-complex bacteria in subgingival plaque. The SRP+Nd group exhibited a statistically significant reduction in record probing depth (PD) and bleeding on probing (BOP) compared to the SRP group after treatment (p<0.05). The SRP+Nd group showed a markedly lower IL-1\ufffd level than the SRP group (p<0.05). Furthermore, there was no statistically significant difference in the dominant subgingival microbiota composition and level of the red-complex bacteria between the two groups (p>0.05). The adjunctive use of Nd:YAG laser with SRP demonstrates promising short-term therapeutic benefits for patients with extensive stage III/grade C periodontitis. Both SRP as a standalone treatment and its combination with Nd:YAG laser effectively facilitate a transition in the dominant bacterial community from periodontitis-associated to periodontal health-associated microbiota.",
+              "score": 0.0009129223763011396
+            },
+            {
+              "id": "pmc11619833",
+              "content": "Periodontal disease (PD) and Alzheimer\ufffds disease (AD) are inflammatory diseases affecting the adult population of the world. PD is mainly caused by infection with  Porphyromonas gingivalis P. gingivalis P. gingivalis P. gingivalis",
+              "score": 0.0009129223763011396
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 12710.436583030969,
+          "answer": "Stub LLM response for: You are a helpful AI assistant. Answer the questio...",
+          "retrieved_documents": [
+            {
+              "id": "pmc11016520",
+              "content": "Subarachnoid hemorrhage (SAH) is a form of severe acute stroke with very high mortality and disability rates. Early brain injury (EBI) and delayed cerebral ischemia (DCI) contribute to the poor prognosis of patients with SAH. Currently, some researchers have started to focus on changes in amino acid metabolism that occur in brain tissues after SAH. Taurine is a sulfur-containing amino acid that is semi-essential in animals, and it plays important roles in various processes, such as neurodevelopment, osmotic pressure regulation, and membrane stabilization. In acute stroke, such as cerebral hemorrhage, taurine plays a neuroprotective role. However, the role of taurine after subarachnoid hemorrhage has rarely been reported. In the present study, we established a mouse model of SAH. We found that taurine administration effectively improved the sensorimotor function of these mice. In addition, taurine treatment alleviated sensorimotor neuron damage and reduced the proportion of apoptotic cells. Furthermore, taurine treatment enhanced the polarization of astrocytes toward the neuroprotective phenotype while inhibiting their polarization toward the neurotoxic phenotype. This study is the first to reveal the relationship between taurine and astrocyte polarization and may provide a new strategy for SAH research and clinical treatment.",
+              "score": 0.01543610729277134
+            },
+            {
+              "id": "pmc11035400",
+              "content": "Alzheimer\ufffds disease (AD) is the most prevalent type of dementia caused by the accumulation of amyloid beta (A\ufffd) peptides. The extracellular deposition of A\ufffd peptides in human AD brain causes neuronal death. Therefore, it has been found that A\ufffd peptide degradation is a possible therapeutic target for AD. CathD has been known to breakdown amyloid beta peptides. However, the structural role of CathD is not yet clear. Hence, for the purpose of gaining a deeper comprehension of the structure of CathD, the present computational investigation was performed using virtual screening technique to predict CathD's active site residues and substrate binding mode. Ligand-based virtual screening was implemented on small molecules from ZINC database against crystal structure of CathD. Further, molecular docking was utilised to investigate the binding mechanism of CathD with substrates and virtually screened inhibitors. Localised compounds obtained through screening performed by PyRx and AutoDock 4.2 with CathD receptor and the compounds having highest binding affinities were picked as; ZINC00601317, ZINC04214975 and ZINCC12500925 as our top choices. The hydrophobic residues Viz .",
+              "score": 0.01543610729277134
+            },
+            {
+              "id": "pmc11344719",
+              "content": "Inhibitors of the interaction between Neuropilin-1 (NRP-1) and Vascular Endothelial Growth Factor-A 165 165 2 2 50 50 2 2 50 165 The online version contains supplementary material available at 10.1007/s00726-024-03411-8.",
+              "score": 0.01543610729277134
+            },
+            {
+              "id": "pmc11590662",
+              "content": "Oxytocin supplementation improves obstructive sleep apnea (OSA), and animal studies suggest involvement of oxytocin in respiratory control. However, the relationship between endogenous oxytocin signaling and human sleep status remains undetermined. In this study, we approached the contribution of the intrinsic oxytocin-oxytocin receptor (OXTR) system to OSA by genetic association analysis. We analyzed the relationship between  OXTR The OXTR rs2254298 A allele was more frequent in those with OSA symptoms than in those without ( P P P P The OXTR gene may contribute to OSA symptoms via the respiratory control system, although it could be in linkage disequilibrium with a true causal gene.",
+              "score": 0.01543610729277134
+            },
+            {
+              "id": "pmc11604051",
+              "content": "To assess whether simultaneous normalization of late-night salivary cortisol (LNSC) and mean urinary free cortisol (mUFC) in patients with Cushing disease treated with osilodrostat is associated with better clinical outcomes than control of mUFC or LNSC alone. Pooled data from two phase III osilodrostat studies (LINC 3 and LINC 4) were analyzed. Both comprised a 48-week core phase and an optional open-label extension. Changes in cardiovascular/metabolic-related parameters, physical manifestations of hypercortisolism, and quality of life (QoL) were evaluated across the following patient subgroups: both LNSC and mUFC controlled, only mUFC controlled, only LNSC controlled, and neither controlled. Of 160 patients included in the analysis, 85.0% had both LNSC and mUFC uncontrolled at baseline. At week 72, 48.6% of patients had both LNSC and mUFC controlled; these patients generally exhibited greater improvements in cardiovascular/metabolic-related parameters than those with only mUFC controlled or both LNSC and mUFC uncontrolled: systolic/diastolic blood pressure, \ufffd7.4%/\ufffd4.9%, \ufffd6.0%/\ufffd5.5%, and 2.3%/0.8%, respectively; fasting plasma glucose, \ufffd5.0%, \ufffd4.8%, and 1.9%; glycated hemoglobin, \ufffd5.1%, \ufffd4.8%, and \ufffd1.3%. Weight, waist circumference, and body mass index improved with control of LNSC and/or mUFC; physical manifestations of hypercortisolism generally improved regardless of LNSC/mUFC control. Patients with both LNSC and mUFC controlled or only mUFC controlled had the greatest improvement from baseline to week 72 in QoL. In osilodrostat-treated patients with Cushing disease, normalization of LNSC and mUFC led to improvements in long-term outcomes, indicating that treatment should aim for normalization of both parameters for optimal patient outcomes. NCT02180217 (LINC 3); NCT02697734 (LINC 4)",
+              "score": 0.01543610729277134
+            }
+          ],
+          "similarity_threshold": -1.0,
+          "document_count": 5
+        }
+      ],
+      "metrics": {
+        "p50": 15729.124426841736,
+        "p95": 17227.82109975815,
+        "p99": 17279.576060771942,
+        "throughput_qps": 0.06600742284811266
+      },
+      "duration_seconds": 151.4981129169464,
+      "end_time": "2025-06-09T12:00:57.850985"
+    },
+    "crag": {
+      "pipeline": "crag",
+      "queries_run": 10,
+      "start_time": "2025-06-09T12:00:57.851057",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 7.902875076979399,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 5.286125000566244,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 4.860457964241505,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 5.030417116358876,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 4.915124969556928,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 4.926333902403712,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 5.308500025421381,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 5.232457770034671,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 4.911458119750023,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 4.869333002716303,
+          "answer": "I could not find enough information to answer your question based on the available context.",
+          "retrieved_documents": [],
+          "retrieved_context_chunks": [],
+          "initial_threshold": 0.01,
+          "quality_threshold": 0.75,
+          "document_count": 0
+        }
+      ],
+      "metrics": {
+        "p50": 5.024552345275879,
+        "p95": 6.780815124511716,
+        "p99": 7.716026306152344,
+        "throughput_qps": 184.335841361367
+      },
+      "duration_seconds": 0.054248809814453125,
+      "end_time": "2025-06-09T12:00:57.905491"
+    },
+    "noderag": {
+      "pipeline": "noderag",
+      "queries_run": 10,
+      "start_time": "2025-06-09T12:00:57.905590",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 14.259457821026444,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 11.943292105570436,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 11.045250110328197,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 11.795375030487776,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 11.179542168974876,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 11.61058316938579,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 11.227082926779985,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 11.490583186969161,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 11.395124951377511,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 11.633124900981784,
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents": [],
+          "similarity_threshold": 0.1,
+          "document_count": 0
+        }
+      ],
+      "metrics": {
+        "p50": 11.569976806640625,
+        "p95": 13.241827487945555,
+        "p99": 14.075672626495361,
+        "throughput_qps": 84.75447434412996
+      },
+      "duration_seconds": 0.11798787117004395,
+      "end_time": "2025-06-09T12:00:58.023755"
+    },
+    "graphrag": {
+      "pipeline": "graphrag",
+      "queries_run": 10,
+      "start_time": "2025-06-09T12:00:58.023820",
+      "parameters": {
+        "top_k": 5
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of metformin on type 2 diabetes?",
+          "latency_ms": 391.0512081347406,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651618",
+              "content": "Understanding accurate methods for predicting yields in complex agricultural systems is critical for effective nutrient management and crop growth. Machine learning has proven to be an important tool in this context. Numerous studies have investigated its potential for predicting yields under different conditions. Among these algorithms, Random Forest (RF) has gained prominence due to its ability to manage large data sets with high dimensions, as well as its ability to uncover complicated non-linear relationships and interactions between variables. RF is particularly suitable for scenarios with categorical variables and missing data. Given the complex web of management practices and their nonlinear effects on yield prediction, it is important to investigate new machine learning algorithms. In this context, our study focused on the evaluation of gradient boosting methods, particularly Extreme Gradient Boosting (XGB) and Gradient Boosting Regressor (GBR), as potential candidates for yield estimation of the maize hybrid Zhengdan 958. Our aim was not only to evaluate and compare these algorithms with existing approaches, but also to comprehensively analyze the resulting model uncertainties. Our approach includes comparing multiple machine learning algorithms, developing and selecting suitable features, fine-tuning the models by training and adjusting the hyperparameters, and visualizing the results. Using a recent dataset of over 1700 maize yield data pairs, our evaluation included a spectrum of algorithms. Our results show robust prediction accuracy for all algorithms. In particular, the predictions of XGB ( RMSE R MAE RMSE R MAE",
+              "score": 0.15211664140224457
+            },
+            {
+              "id": "PMC1748704791",
+              "content": "Terminology in the field of movement disorders has evolved multiple times over the years. Traditionally, classification schema have utilized a two-category approach, with a hyper- and hypokinetic branchpoint as the first step towards describing movement disorders and elucidating phenomenological diagnoses. However, this terminology falls short, as it does not adequately capture the complexity of several abnormalities of movement- including ataxia and rigidity- at the electrophysiologic and phenotypic levels. Rather, these movement disorders are characterized by mixed hyper- and hypokinetic phenomena. We propose a third category, mixed, which would optimally classify the full range of movements.",
+              "score": 0.14311178028583527
+            },
+            {
+              "id": "PMC11630108",
+              "content": "Orbital decompression is widely performed for the management of proptosis for\ncosmetic and functional cases of Graves orbitopathy. The main side effects\ninclude dry eye, diplopia, and numbness. Blindness after orbital decompression\nis extremely rare. The mechanisms of vision loss after decompression are not\nwell described in the literature. Considering the devastating effect and rarity\nof this complication, this study presented two cases of blindness after orbital\ndecompression. In both cases, vision loss was provoked by slight bleeding in the\norbital apex.",
+              "score": 0.14171934127807617
+            },
+            {
+              "id": "PMC11649812",
+              "content": "The Golgi apparatus serves multiple crucial roles in the cell. These roles include the addition and subsequent modification of glycans, not only to newly-made proteins arriving from the endoplasmic reticulum, but also to precursors during the biosynthesis of glycolipids. New research by Brauer et al, (",
+              "score": 0.12411173433065414
+            },
+            {
+              "id": "PMC11650920",
+              "content": "Climate heating has the potential to drive changes in ecosystems at multiple levels of biological organization. Temperature directly affects the inherent physiology of plants and animals, resulting in changes in rates of photosynthesis and respiration, and trophic interactions. Predicting temperaturedependent changes in physiological and trophic processes, however, is challenging because environmental conditions and ecosystem structure vary across biogeographical regions of the globe. To realistically predict the effects of projected climate heating on wildlife populations, mechanistic tools are required to incorporate the inherent physiological effects of temperature changes, as well as the associated effects on food availability within and across comparable ecosystems. Here we applied an agentbased bioenergetics model to explore the combined effects of projected temperature increases for 2100 (1.4, 2.7, and 4.4C), and associated changes in prey availability, on threespined stickleback ( Gasterosteus aculeatus",
+              "score": 0.12205545604228973
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "How does SGLT2 inhibition affect kidney function?",
+          "latency_ms": 315.9294999204576,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651055",
+              "content": "A novel photochromic system was discovered, in which leucomethylene blue, reduced by  l",
+              "score": 0.13019613921642303
+            },
+            {
+              "id": "PMC11223654",
+              "content": "To determine the performance of a sophorolipid biosurfactant production process, it is important to have accurate and specific analytical techniques in place. Among the most popular are the anthrone assay, gravimetric quantification (hexane:ethyl acetate extraction), and high-performance liquid chromatography (HPLC). The choice of analytical tool varies depending on cost, availability, and ease of use; however, these techniques have never been compared directly against one another. In this work, 75 fermentation broths with varying product/substrate concentrations were comprehensively tested with the 3 techniques and compared. HPLCultraviolet detection (198nm) was capable of quantifying C18:1 subterminal hydroxyl diacetylated lactonic sophorolipid down to a lower limit of 0.3g/L with low variability (<3.21%). Gravimetric quantification of the broths following liquid:liquid extraction with hexane and ethyl acetate showed some linearity ( R R",
+              "score": 0.12804943323135376
+            },
+            {
+              "id": "PMC11643094",
+              "content": "Glucose-sensing ChREBP and MondoA are transcriptional factors involved in lipogenic, inflammatory, and insulin signaling pathways implicated in metabolic disorders; however, limited ocular studies have been conducted on these proteins. We aimed to investigate the potential role of ChREBP in pathogenesis of diabetic retinopathy (DR). We used diabetic human and mouse retinal cryosections analyzed by immunohistochemistry. qRT-PCR was performed to quantify gene expression. To explore the role of ChREBP in rods, we generated caChREBP",
+              "score": 0.11729871481657028
+            },
+            {
+              "id": "PMC1748704941",
+              "content": "Developmental stuttering is a speech disorder characterized by the repetition, prolongation, and blocking of speech sounds. It has been suggested that a decline in executive function is a background factor for preschool children who stutter. Executive function is defined as goal-oriented thought, action, and emotion regulation. At present, there are few previous studies that have comprehensively investigated the subcomponents of executive function in preschool children who stutter through behavioral experiments. We herein conducted age- and gender-matched casecontrol study to explore the characteristics of the subcomponents of executive function in preschool children who stutter compared with preschool children who do not. Consequently, we found lower performance in verbal and visual working memories in preschool children who stutter. The results of this study indicated that children who stutter show declines not only in verbal short-term memory performance, as has been pointed out in the past, but also in the performance of the entire working memory system, including central executive function.",
+              "score": 0.11499820649623871
+            },
+            {
+              "id": "PMC11650000",
+              "content": "EEG slowing is reported in various neurological disorders including Alzheimers, Parkinsons and Epilepsy. Here, we investigate alpha rhythm slowing in individuals with refractory temporal lobe epilepsy compared with healthy controls, using scalp EEG and magnetoencephalography. We retrospectively analysed data from 17 (46) healthy controls and 22 (24) individuals with temporal lobe epilepsy who underwent scalp EEG and magnetoencephalography recordings as part of presurgical evaluation. Resting-state, eyes-closed recordings were source reconstructed using the standardized low-resolution brain electrographic tomography method. We extracted slow 69Hz and fast 1011Hz alpha relative band power and calculated the alpha power ratio by dividing slow alpha by fast alpha. This ratio was computed for all brain regions in all individuals. Alpha oscillations were slower in individuals with temporal lobe epilepsy than controls ( P <",
+              "score": 0.10819027572870255
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+          "latency_ms": 633.9942500926554,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11649435",
+              "content": "The immune system plays a crucial role in the development of kidney diseases. Chronic kidney disease (CKD) can lead to various complications, potentially affecting multiple systems throughout the body. Currently, the description of the immune system in human CKD is not comprehensive enough. Constructing a CKD kidney atlas using single-cell RNA sequencing (scRNA-seq) can provide deeper insights into the composition and functional changes of immune cells in CKD, facilitating the discovery of new therapeutic targets. We processed and integrated scRNA-seq datasets from healthy and CKD kidneys from three independent cohorts using the same approach (including 42 normal samples and 23 chronic kidney disease samples). Subsequently, we conducted gene enrichment and intercellular communication analysis to construct an immune cell atlas of the kidneys in CKD patients. We identified nine major kidney cell clusters. Further clustering analysis of different immune cell clusters revealed that, compared to normal kidneys, CKD patients kidneys had decreased CD16+ NK cells while CD4+ naive helper T cells and CCR7+ DC increased. Partial activation of the WNT signaling pathway was observed in T cells and NK cells of CKD patients, while some metabolism-related genes were inhibited. Myeloid cell subgroups also exhibited abnormal signaling pathway alterations. Additionally, we discovered a unique population of SPP1 macrophages in CKD, which are recruited by chemokines released from aPT and aTAL cell subpopulations. These SPP1 macrophages may promote cellular fibrosis through the signaling of SPP1, FN1, and various receptors. We established a human CKD kidney immune cell atlas and identified SPP1 macrophages as a unique cell type in CKD. The interaction between SPP1 macrophages and damaged cells may serve as a potential therapeutic target for treating CKD in the future.",
+              "score": 0.13819921016693115
+            },
+            {
+              "id": "PMC1748704893",
+              "content": "It has been reported that various physiological and psychological changes occur after consuming delicious food. Additionally, research on task performance efficiency following the consumption of delicious food has garnered significant attention. In particular, studies on physiological states have been actively conducted in recent years, with an increasing number of studies utilizing brain activity measurements. Therefore, in this study, we aimed to investigate the physiological changes that occur after consuming delicious food by administering a cognitive task, the Stroop task, and measuring brain activity during the task. In this study, two experiments were conducted to better understand the effects of consuming delicious food. Before starting the two experiments, we evaluated the taste of fried rice in a preliminary experiment and selected three types of them (delicious, slightly delicious, and normal) for the main experiment. In Experiment 1, 20 healthy students (1926years old, 11 females) were divided into two groups: 10 students in group 1 ate delicious fried rice and 10 students in group 2 ate normal fried rice. One experimental block included recording the EEG, performing the Stroop task, eating the given sample, and answering the questionnaire. Results of data analysis indicated that group 1 was significantly shorter (high work efficiency) than group 2 in terms of task work time. Concerning brain activity, group 1 showed lower theta and alpha amplitudes in the frontal regions (high arousal), and alpha band activity was lower in the left frontal region than in the right region (high approach motivation). In Experiment 2, 28 healthy students were asked to eat delicious fried rice and slightly delicious fried rice on different days. The daily experimental flow was set up as in Experiment 1. Results of data analysis showed that deliciousness and EEG were negatively correlated at theta and alpha band. This study provides novel evidence that eating delicious food increases work efficiency, arousal, and motivation for the task and decreases theta and alpha activities in limited brain regions. The observed neural profiles may enhance attentional states in high-demand occupational settings, while providing preliminary insights into neurophysiological mechanisms that might underlie food-related motivational processes.",
+              "score": 0.1191866472363472
+            },
+            {
+              "id": "PMC1748704458",
+              "content": "Atherosclerosis (AS) is increasingly recognized as a chronic inflammatory disease that significantly compromises vascular health and serves as a major contributor to cardiovascular diseases. KLRD1 is a gene that encodes a protein involved in the immune system, specifically in the function of natural killer (NK) cells. KLRD1 was identified as a focal point through an integrative analysis of DEGs across multiple datasets ( GSE43292 GSE9820 GSE9820 Among 340 DEGs linked with KLRD1, 13 were identified as hub genes through LASSO and SVM-RFE analyses. Functional assays highlighted KLRD1's role in mononuclear cell differentiation, regulation of cellcell adhesion, regulation of T cell activation. A Lollipop was created to display the expression patterns of Correlation Coefficient. T cells CD8, Plasma cells, Dendritic cells activated, T cells CD4 memory resting, T cells CD4 memory activated, T cells gamma delta. This research elucidates the complex relationship between KLRD1 and AS, underscoring its potential as a novel biomarker for diagnosing and monitoring the disease. The online version contains supplementary material available at 10.1186/s13019-025-03473-z.",
+              "score": 0.11125245690345764
+            },
+            {
+              "id": "PMC11650159",
+              "content": "Individuals with major depressive disorder (MDD) can experience reduced motivation and cognitive function, leading to challenges with goal-directed behavior. When selecting goals, people maximize expected value by selecting actions that maximize potential reward while minimizing associated costs, including effort costs and the opportunity cost of time. In MDD, differential weighing of costs and benefits are theorized mechanisms underlying changes in goal-directed cognition and may contribute to symptom heterogeneity. We used the Effort Foraging Task to quantify cognitive and physical effort costs, and patch leaving thresholds in low effort conditions (reflecting perceived opportunity cost of time) and investigated their shared versus distinct relationships to clinical features in participants with MDD ( N N Contrary to our predictions, none of the decision-making measures differed with MDD diagnosis. However, each of the measures was related to symptom severity, over and above effects of ability (i.e. performance). Greater anxiety symptoms were selectively associated with  lower Markers of effort-based decision-making may inform understanding of MDD heterogeneity. Increased willingness to exert cognitive effort may contribute to anxiety symptoms such as worry. Decreased leaving threshold associations with symptom severity are consistent with reward rate-based accounts of reduced vigor in MDD. Future research should address subtypes of depression with or without anxiety, which may relate differentially to cognitive effort decisions.",
+              "score": 0.10836582630872726
+            },
+            {
+              "id": "PMC1748215524",
+              "content": "Preclinical studies of tifcemalimab (anti-BTLA antibody) in combination with toripalimab (anti-PD-1 antibody) demonstrated synergistic anti-tumor effects. We present the outcomes of tifcemalimab with or without toripalimab in lymphoma patients. This is a 2-part, phase I study ( NCT04477772",
+              "score": 0.10235756635665894
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+          "latency_ms": 360.41145818307996,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC1748704753",
+              "content": "Discovered almost 130years ago by P. Sabatier, CO 2 2 2 2 2 \n x 4 2 \n x 2 2",
+              "score": 0.1584138572216034
+            },
+            {
+              "id": "PMC11650559",
+              "content": "There is a scarcity of information regarding the effect of upperbody eccentric exercise on biomarkers of muscle damage. This study sought to investigate the effect of eccentric arm cycling on muscle damage [exerciseinduced muscle damage (EIMD)]. Ten subjects performed a 15min eccentric arm cycling protocol (cadence 497rpm, power absorbed 24834W). Maximal voluntary contraction (MVC) of the elbow flexors was evaluated at rest and at 5min, 24h, and 48h postexercise. In addition, blood samples were drawn at rest and thereafter at 30min, 24h, and 48h intervals after exercise for quantification of creatine kinase (CK), myoglobin, lactate dehydrogenase (LDH) and endothelin (ET1) concentrations. Delayed onset muscle soreness (DOMS) was assessed using a category ratio scale (010). Myoglobin was increased from baseline at 30min postexercise (+114%, 46.0822.17g/L,  p p p p p p p Eccentric arm cycling incites EIMD with reduced MVC and elevation of myoglobin, CK and LDH.",
+              "score": 0.14332999289035797
+            },
+            {
+              "id": "PMC1748704549",
+              "content": "Mating is a fundamental behavior of animals in perpetuating species. The mating behaviors of insects are complex and primarily regulated by small molecules called neuropeptides. Here, we highlight what is already known about insect mating behaviors and the role played by neuropeptides. In our findings, we note that the mating process of insects entails mate attraction, courtship, copulation, and post-mating behaviors. The 18 neuropeptides discussed in this review are known to regulate mating behaviors and greatly vary among insects. The Neuropeptides vary in mechanistic aspects, and some work closely with other physiological and neurocircuit systems. Moreover, many details about neuropeptides remain unknown, especially in many economically important insects. Given their significance in successful mating and reproduction, neuropeptides remain potential targets for developing safe and sustainable pest control products.",
+              "score": 0.14015652239322662
+            },
+            {
+              "id": "PMC1748704844",
+              "content": "Kimuras disease is a rare, chronic inflammatory condition with a high recurrence rate, primarily affecting young to middle-aged Asian males. It typically manifests as masses in the head and neck, accompanied with regional lymphadenopathy. This report describes the case of a 50-year-old man initially diagnosed with Kimuras disease 13 years ago, following surgical removal of a left submandibular mass. Subsequent recurrences involved the parotid and contralateral submandibular regions, requiring radiotherapy and intermittent oral prednisone therapy. After 6 years, he developed progressive proptosis and visual impairment, revealing multiple orbital masses bilaterally. A puncture examination of the left submandibular mass was indicative of Kimuras disease. Throughout the follow-up period, the eosinophil levels correlated with prednisone use. This case highlights the diseases capacity for multisite recurrence within the head and neck over an extended duration. The extensive orbital involvement without renal manifestations is a rare presentation. Long-term follow-up is crucial in Kimuras disease management, and oral prednisone can effectively control disease progression.",
+              "score": 0.137590229511261
+            },
+            {
+              "id": "PMC11650940",
+              "content": "Social behavior is a key adaptation for groupliving primates. It is important to assess changes to social behavior in humanimpacted landscape zones to better understand the impact of anthropogenic disturbance on primate species. We investigated social behavior rate and type in three species of platyrrhines across 100m anthropogenic edge and interior zones of a fragmented forest in Costa Rica, La Suerte Biological Research Station (LSBRS). Following results from other sites, we predicted that spider monkeys ( Ateles geoffroyi Cebus imitator Alouatta palliata",
+              "score": 0.13391940295696259
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "How do statins prevent cardiovascular disease?",
+          "latency_ms": 589.3550831824541,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC1748704503",
+              "content": "Family planning refers to a conscious effort done by a couple to limit or space the number of children they have through the use of contraceptives. Effective family planning can prevent abortions, maternal morbidity, and maternal deaths. It contributes to broader public health goals, including improved maternal and child health outcomes. Studies have shown that medical students need more knowledge regarding family planning. Enhancing their understanding of family planning can positively influence their future clinical practice and patient counseling, leading to better healthcare delivery in their communities. Thus, this study aimed to assess the knowledge and attitude of medical students in Egypt towards family planning and the factors affecting them. This was a multi-centric descriptive cross-sectional study with an analytical component. We used a multistage stratified cluster sampling method. Twelve Egyptian medical universities were chosen to ensure the representation of governmental, private and Al-Azhar medical schools. The estimated sample size was 1072. Our tool was a self-administered questionnaire used from a previously published study, which showed acceptable reliability: =0.825 for knowledge and 0.906 for attitude. We analyzed data using IBM Statistical Package for Social Science (SPSS) software version 25. Results were statistically significant if the  p We surveyed 926 medical students, aged 17 to 27 years (mean 21.421.90 years), with a balanced gender distribution (52.15% males). The majority showed poor knowledge about family planning (85.9%), and inappropriate attitudes (52.7%). We also found that gender significantly influenced knowledge levels ( p p p Our overall scores of knowledge and attitude towards family planning were low. Female gender was a significant predictor of good knowledge. Academic year significantly affected the attitude with higher appropriate attitudes among 4th-year students. Stakeholders concerned with family planning should work together to bring behavioral changes towards family planning by providing information, education and communication. The online version contains supplementary material available at 10.1186/s12889-024-20827-9.",
+              "score": 0.1198415607213974
+            },
+            {
+              "id": "PMC11649785",
+              "content": "Low Voltage Ride Through (LVRT) is considered one of the main and serious problems facing the electrical grid. It occurs due to three-phase symmetric faults and asymmetric faults such as a double line to ground fault that applies in this system. This paper applies Static Synchronous Compensators (STATCOM) to improve the LVRT capability and dynamic performance of an electrical grid linked to a Photovoltaic (PV)/Wind hybrid system through grid disturbances. A hybrid power system containing a PV station that produces 1MW and a wind farm from type Doubly Fed Induction Generator (DFIG) that produces 9MW is connected to STATCOM with 48 pulses at PCC bus and energized load. It compensates reactive power to improve LVRT that occurred due to fault. The applied STATCOM controller adjusts the voltage of the PCC bus during an occuring fault on the grid by compensating reactive power. STATCOM is controlled by a ProportionalIntegralDerivative (PID) and is compared with STATCOM controlled by Artificial Intelligence Control (AIC)-based on ProportionalIntegral Fuzzy Logic Control (PI FLC). The Lightning Attachment Procedure Optimization Algorithm (LAPO) optimization method is used to adjust the parameters of the PI controller to reduce error signals. A simulation model of the suggested hybrid power system has been performed using Matlab/Simulink. The simulation results of STATCOM proved powerful and the effectiveness of STATCOM with PI FLC in reducing voltage dip, compensating active power of wind and PV farm, protecting DC-link voltage of PV and wind from overvoltage and oscillation that happens at three-phase fault and double line to ground fault as compared with PID STATCOM in enhancement LVRT capability, and power quality.",
+              "score": 0.10646965354681015
+            },
+            {
+              "id": "PMC11649690",
+              "content": "Plant endogenous signaling peptides shape growth, development and adaptations to biotic and abiotic stress. Here, we identify C-TERMINALLY ENCODED PEPTIDEs (CEPs) as immune-modulatory phytocytokines in  Arabidopsis thaliana Pseudomonas syringae . tomato",
+              "score": 0.10241509974002838
+            },
+            {
+              "id": "PMC11651490",
+              "content": "Splenic metastases concomitant with abscesses are rare and challenging for clinicians. The primary treatment options include splenectomy and ultrasound-guided percutaneous perforation and drainage. A case of splenic abscess in a colon cancer patient with splenic metastasis who developed chills and fever for approximately 2 weeks. However, the best broad-spectrum antibiotics are ineffective. Moreover, the patient had a high bleeding risk for percutaneous perforation due to a low platelet count. Colon cancer, splenic metastasis, splenic abscess, thrombocytopenia. Ultrasound-guided percutaneous splenic abscess perforation and drainage were performed after platelet transfusion and stimulation of platelet production in the bone marrow. His fever was immediately relieved at night and thrombocytopenia did not relapse thereafter. His platelet count increased rapidly and reached 12110 Spleen metastasis in tumor patients necessitates vigilance for the potential development of spleen abscess. A less invasive procedure can be feasible in cases of low platelet count without significant coagulation dysfunction. When there is no alternative therapeutic schedule, doctors should fully evaluate the risks and benefits.",
+              "score": 0.10059019923210144
+            },
+            {
+              "id": "PMC11649800",
+              "content": "RETINOBLASTOMA-RELATED (RBR) proteins orchestrate cell division, differentiation, and survival in response to environmental and developmental cues through proteinprotein interactions that are governed by multisite phosphorylation. Here we explore, using a large collection of transgenic RBR phosphovariants to complement protein function in  Arabidopsis thaliana",
+              "score": 0.09670846909284592
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What is the role of ACE inhibitors in heart failure?",
+          "latency_ms": 439.1197089571506,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651445",
+              "content": "Continuing medical education (CME) is the foremost among the learning strategies that enhance knowledge and skills within the medical profession. This study aimed to evaluate primary healthcare professionals CME in Abha City. A total of 267 primary health care (PHC) professionals. The researcher designed a data collection sheet that comprised personal characteristics and aspects of CME. About two-thirds of participants (65.5%) attended CME courses during the last year. The main criteria for attending CME courses were their topics (43.4%), convenience of time (41.2%), and interests (31.5%). About 16.1% of participants found that previously attended CME courses were not useful because of being a waste of time (12.7%), not obtaining any benefit (7.9%), and wasting of money (3.7%). On the other hand, 83.9% found that previously attended CME courses were useful because of their improved knowledge (68.9%) and skills (47.6%), while 30.7% stated that attending CME courses was to fulfill the required CME hours. Lectures were the most preferred educational method(48.3%). Hospital consultants were mostly preferred speakers (53.6%), followed by PHC physicians (34.1%) and university staff (25.8%). The main participants source of information (95.5%), followed by textbooks (25.1%) and their colleagues at PHC (12.4%). About 31.5% of participants had no or low improvement in their knowledge, 38.6% underwent intermediate improvement and 30% had high improvement. Regarding improved skills, 43.4% had no or low improvement, 45.3% had intermediate improvement and 11.2% had high improvement. The main barriers against attending CME courses were the lack of time (44.9%) and the high workload (41.2%). CME attendance differed significantly according to participants position ( P",
+              "score": 0.16794000566005707
+            },
+            {
+              "id": "PMC11650937",
+              "content": "Understanding diet selectivity is a longstanding goal in primate ecology. Deciphering when and why primates consume different resources can provide insights into their nutritional ecology as well as adaptations to food scarcity. Plant pith, the spongy interior of plant stems, is occasionally eaten by primates, but the context is poorly understood. We examine the ecological, mechanical, chemical, and nutritional basis of plant pith selection by a wild, frugivorousomnivorous primate ( Cebus imitator Bursera simaruba",
+              "score": 0.13957931101322174
+            },
+            {
+              "id": "PMC1748704985",
+              "content": "Calcium carbonate is a compound that is widely distributed\nthroughout\nthe Earth as a natural mineral and a material produced by biological\nactivities. The crystal structure of calcium carbonate has three polymorphs:\nthe most thermodynamically stable calcite, followed by aragonite and\nvaterite. Of the three crystalline phases, the formation process and\nstructure of the most unstable, vaterite, remain mysterious. In this\nstudy, the pathway for forming the vaterite crystal structure from\namorphous CaCO 3 3 3 3",
+              "score": 0.1358744204044342
+            },
+            {
+              "id": "PMC11649530",
+              "content": "Abnormal regional variations in electrical and calcium homeostasis properties have been implicated in catecholaminergic polymorphic ventricular tachycardias (CPVT) attributable to abnormal RyR2-mediated store Ca We performed in vivo and ex vivo studies including high throughput mapping of Ca m RyR2 ISO-challenged  RyR2 RyR2 RyR2 RyR2 V m RyR2 The pro-arrhythmic  RyR2 V m RyR2",
+              "score": 0.11566277593374252
+            },
+            {
+              "id": "PMC1748215585",
+              "content": "Brain abscesses can lead to severe clinical outcomes, including death. Most studies on brain abscesses focus either on patient cohorts including postsurgical/posttraumatic abscesses. This study aimed to assess the clinical presentation and postoperative outcomes in a homogeneous group of patients with primary, pyogenic brain abscesses who underwent surgical treatment. We retrospectively analyzed consecutive patients with pyogenic brain abscesses treated surgically at our center from 2008 to 2023. The primary endpoint was a modified Rankin Scale (mRS) score of3 at discharge. Secondary endpoint was preoperative clinical status (mRS3). We statistically correlated clinical, radiographic, and microbiological parameters with these endpoints. A total of 60 patients (36.7% female) with a mean age of 48.520.8years were included in this study. Six patients (10.0%) had an unfavorable postoperative outcome, including two deaths (3.3%). Significant risk factors for poor outcomes included preoperative disturbance of consciousness (DOC) ( p p p p p p Preoperative DOC and elevated CRP levels were identified as predictors of unfavorable outcomes. Elevated leukocyte count was a predictor for poor preoperative status.",
+              "score": 0.112952820956707
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "How do glucocorticoids suppress inflammation?",
+          "latency_ms": 594.0957909915596,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC1748704807",
+              "content": "The study aimed to create and validate a straightforward nomogram to predict portal vein thrombosis (PVT) in cirrhotic patient post-splenectomy, and investigate the predictive potential of systemic inflammation markers. One objective of the study was to develop a predictive model utilizing these markers to detect high-risk individuals early on. A retrospective analysis was conducted on 184 cases of patients with cirrhosis who underwent splenectomy at The First Affiliated Hospital of University of South China from January 2015 to September 2023. The cohort was randomly divided into training ( n n According to univariate and multivariate logistic regression analysis, we found six prediction indexes of PVT in patients with cirrhosis after splenectomy: postoperative neutrophil-to-lymphocyte ratio (NLR), postoperative derived NLR (dNLR), C-reactive protein to albumin ratio (CAR), portal vein diameter (DPV), platelet change value (PVB), and D-dimer ( p Postoperative NLR, dNLR, CAR, PVB, DPV, and D-dimer were identified as the independent risk factors of PVT in cirrhotic patients post splenectomy. We had successfully established and validated a novel predictive model with good performance, based on systemic inflammatory indices in predicting PVT in cirrhosis after splenectomy.",
+              "score": 0.14599457383155823
+            },
+            {
+              "id": "PMC1748704769",
+              "content": "Today, there is an emphasis on considering the individual needs and preferences of the patient in education and care. This study aims to assess the effect of individualized education on hemodialysis adequacy (Kt/V) and interdialytic weight gain (IDWG) in patients undergoing hemodialysis (HD).   102 HD patients were randomly assigned to the intervention or control groups. Patients in the intervention group (n=51) received individualized education. The control group (n=51) received routine education. The patients dialysis adequacy (Kt/V) and IDWG were assessed before the intervention, immediately, and three months after the last session of individualized education. Data were analyzed using SPSS software.   A significant increase in Kt/V was found in the intervention group compared with the control group immediately and three months after the intervention ( P P  The results highlighted the importance of individualized education for improving HD adequacy and lowering IDWG in HD patients. Moreover, it is recommended to tailor the patients education based on their own needs, rather than a one-size-fits-all approach.",
+              "score": 0.13414697349071503
+            },
+            {
+              "id": "PMC1748704864",
+              "content": "Reactive thrombocytosis frequently occurs after splenectomy. While splenectomy-induced reactive thrombocytosis (SI-RT) might be linked to thromboembolic risks, the causative relationship remains unclear. A 72-year-old male with hypertension underwent elective splenectomy for a large splenic hematoma. Postoperative recovery was uneventful until day 11, when he developed sudden epigastric pain and vomiting. Laboratory findings revealed significant thrombocytosis (platelet count: 972K/L) and elevated troponin levels, with an electrocardiogram confirming an acute ST-segment elevation myocardial infarction. Coronary angiography identified triple-vessel disease with total occlusion of the proximal left anterior descending artery. The patient was successfully treated with a drug-eluting stent. The patient was discharged in stable condition after receiving appropriate post-procedural management and showed no further complications at 5 months. SI-RT can cause severe thromboembolic complications despite the lack of conclusive evidence linking it to such events, and prophylactic anticoagulants are not routinely recommended. These considerations highlight the need for vigilant inpatient monitoring and thorough patient education at discharge to promptly address potential complications, as well as the importance of establishing guidelines for antiplatelet therapy in SI-RT patients without contraindications to minimize risks.",
+              "score": 0.12882526218891144
+            },
+            {
+              "id": "PMC11649686",
+              "content": "Moringa Moringaceae Moringa oleifera M. peregrina M. stenopetala Moringa peregrina M. stenopetala M. oleifera M. peregrina M. oleifera M. peregrina M. stenopetala M. oleifera M. stenopetala Moringa Moringa peregrina Moringa",
+              "score": 0.12841182947158813
+            },
+            {
+              "id": "PMC11641292",
+              "content": "To develop an evidence-based Clinical Practice Guideline (CPG) on caries management for the Malaysian population using the ADAPTE trans-contextual adaptation framework. A systematic search was conducted to identify all CPGs related to caries management on guideline repository websites and other platforms. The search findings were screened and the quality of the identified guidelines was evaluated using the AGREE II tool. The currency and the content of the recommendations were assessed by multidisciplinary experts for local adaptation. Following an extensive assessment, six high-quality CPGs were selected for adaptation. Subsequent to the content assessment, the multidisciplinary experts agreed to adopt 24 recommendations, adapt 55, and exclude two recommendations. The adaptation process generated 21 recommendations for caries management in Malaysia. The formulation of the final evidence-based recommendations for caries management in Malaysia was based on the feedback given by the external reviewers. The use of the trans-contextual adaptation process is feasible for the development of local guidelines when there are scarce resources and insufficient local evidence. The involvement of the multidisciplinary experts ensures the comprehensiveness of the CPG in terms of its quality and validity and subsequently promotes adherence and ownership of the CPG at the local settings.",
+              "score": 0.12836670875549316
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What are the mechanisms of antibiotic resistance?",
+          "latency_ms": 776.2255419511348,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11650841",
+              "content": "The main obstacle facing the utilization of microbial enzymes in industrial applications is the high cost of production substrates. As a result of the mentioned different wastes (coffee powder waste, dates nawah powder, molokhia stems, pea peels, lemon peels, and corn cobs) were investigated as low-cost nutritional substrates for the production of microbial -galactosidase in this study. The purification of the enzyme and its kinetic and thermodynamics were investigated. -galactosidase was effectively produced by  Aspergillus foetidus A. foetidus a d 1/2",
+              "score": 0.16419103741645813
+            },
+            {
+              "id": "PMC1748704664",
+              "content": "The widespread prevalence of atrial fibrillation (AF) has necessitated the exploration of novel methods for the control of heart rhythm. A relatively recent technique for pulmonary vein isolation (PVI) is pulsed field ablation (PFA), which selectively damage cardiomyocytes by delivering microsecond high-voltage currents. Real-world data is essential to explore the differences in efficacy between procedures performed using different approaches. The objective of the study was to evaluate the rate of arrhythmia recurrence in patients diagnosed with AF who underwent PVI using either radiofrequency energy (RF) or a technique based on electroporation. This retrospective, single-center analysis included 210 patients with paroxysmal (76.2%) or persistent AF who underwent PVI in an academic hospital. 108 patients underwent PFA and 102 RF ablation, which were performed with a very-high-power, short-duration applications (performed with QDot MicroTM, Biosense Webster, Inc., Irvine, California, United States) or an ablation index-guided ThermoCool Smarttouch SF catheter (Biosense Webster, Inc.) while the PFA ones were performed with FarawaveTM Nav catheter (Boston Scientific). A primary end point was freedom from arrhythmia recurrence. Personal or telephone follow-up was collected at least 5 months after PVI. Consecutive patients were included into this analysis according to clinical criteria qualifying them for PVI procedure. There were no significant differences between patients characteristics like mean age in PFA and RF groups [PFA: 67 years (59-74) vs. RF: 67 years (61-72); p= 0.89] and sex [PFA: 41.7% females vs. RF: 43.1% females; p=0.89]. Procedural times were significantly reduced with PFA [55 min (45-70)] compared to RF [115 min (100-135)] (p<0.001), while duration of fluoroscopy exposure was notably longer [ PFA: 1100s (800-1400) vs. RF: 159s (88-335); p<0.001]. In patients who underwent PVI with PFA administered remifentanil [PFA: 0.2mg (0.15-0.3) vs. RF:0.5mg (0.3-0.6)] and heparin [PFA:18 IU (15-20) vs. RF: 21IU (17-24)] were lower than those required for RF ablation (p<0.001). The PFA procedures were performed under deep sedation and RF were performed under conscious sedation. The efficacy of the two methods did not differ by atrial arrhythmias recurrence rate during blanking period [PFA: 32.4% vs. RF: 28.4% p=0.55] and afterwards [PFA: 34.3% vs. RF 33.3%, p=1.0]. The overall reported adverse events occurred with similar frequency in both groups. Regardless of the selected method, the efficacy of the procedure, and consequently the absence of arrhythmia recurrence, remains at a comparable level. There was no significant difference in occurrence postoperative adverse events between PFA and RF. The recurrences rates of arrhythmia The recurrences rates of arrhythmia",
+              "score": 0.12023065984249115
+            },
+            {
+              "id": "PMC11388927",
+              "content": "Chain elongating bacteria are a unique guild of strictly anaerobic bacteria that have garnered interest for sustainable chemical manufacturing from carbon-rich wet and gaseous waste streams. They produce C 6 8 6 8 9 12 6 In this work, the authors use constraint-based metabolic modelling and enzyme cost minimization to assess the feasibility of using metabolic engineering to expand the product spectrum of anaerobic chain elongating bacteria.",
+              "score": 0.1173105239868164
+            },
+            {
+              "id": "PMC1748704552",
+              "content": "Immunoassays for cardiac troponin, such as the Elecsys 131 134 138 142 146 150 154 157",
+              "score": 0.11219650506973267
+            },
+            {
+              "id": "PMC1748704989",
+              "content": "Cardiac arrhythmias, particularly atrial fibrillation, are highly prevalent and represent a growing global health burden. Cardiac ablation is a commonly used procedure for the treatment of cardiac arrhythmias, often requiring anaesthesia to ensure patient safety and procedural success. Despite its widespread use, there is no consensus on the optimal anaesthetic strategy, and existing literature mainly addresses isolated techniques or specific populations. The aim of this scoping review is to systematically map the current evidence on anaesthetic methods used during cardiac ablation procedures. A scoping review will be conducted in accordance with the Preferred Reporting Items for Systematic Reviews and MetaAnalyses extension for scoping reviews (PRISMAScR) guidelines. A comprehensive search strategy will be applied across multiple databases, including Medline, EMBASE, Cochrane, Scopus and Google Scholar. Eligible studies will include all research on adult patients undergoing cardiac ablation, focusing on any anaesthetic or sedative techniques used. Study selection and data extraction will be performed by independent reviewers, and results will be summarized descriptively. In the final review, findings will be presented through a descriptive and narrative summary, supplemented by tables, figures and graphs where applicable. This scoping review will provide a structured overview of the landscape of anaesthesia methods in cardiac ablations. The findings will help uncover knowledge gaps and inform future research and clinical decisionmaking regarding anaesthesia strategies in the management of cardiac arrhythmias.",
+              "score": 0.10874682664871216
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "How do biologics treat rheumatoid arthritis?",
+          "latency_ms": 960.7497919350863,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11651483",
+              "content": "This case report aims to enhance understanding of pancreatobiliary maljunction (PBM) and promote more proactive treatment. The patient, a 24-year-old Chinese female, was admitted to the hospital on April 7, 2020, due to recurrent abdominal pain for over 2 years, with a recent episode accompanied by nausea and vomiting for 1 day. She had a previous history of gallstones. The initial diagnosis upon admission was biliary acute pancreatitis. During the emergency endoscopic retrograde cholangiopancreatography (ERCP) procedure, anatomical abnormalities were discovered. Intraoperative endoscopic ultrasonography led to a diagnosis of complex PBM (JSPBM, type D)+choledochal cyst (Todani, Ic)+incomplete pancreatic divisum+early chronic pancreatitis. These diagnoses were confirmed by postoperative magnetic resonance cholangiopancreatography. After multiple conservative treatments such as ERCP with accessory pancreatic duct stent placement, the patient underwent surgical treatment in April 2021, which included laparoscopic left hemihepatectomy+choledochal cyst excision+cholecystectomy+hepatic portal cholangioplasty. The patient has not experienced any abdominal pain since the surgery and is currently under regular follow-up. Endoscopic ultrasound is effective for the diagnoses of complex PBM and incomplete pancreatic divisum. ERCP with pancreatic duct stent placement and surgical procedure is reliable for relieving the patients symptoms.",
+              "score": 0.13193967938423157
+            },
+            {
+              "id": "PMC11649792",
+              "content": "Outcome evaluation is of major importance to provide data to analyze the value of the chosen treatment concept. Despite an increasing effort of analyzing outcome after treatment of different pelvic ring injuries, a mixture of different outcome parameters is in use. The Majeed score is most frequently used for mid- to long-term evaluation and the quality of life is analyzed using the SF-36 score. The lack in nearly all studies is that different treatment concepts are used, and only selected evaluation parameters are reported. Until today, no well-accepted standardized measurement instruments are available to analyze the clinical and radiological results after pelvic ring injuries. Overall, stability-based long-term sequelae can be expected with increasing complaints from stable type A injuries to completely unstable type C injuries. Beside a fracture-type specific treatment, concomitant injuries of other injury regions and associated local pelvic injuries (complex pelvic trauma) seem to additionally influence the results. Results of treatment of specific fracture types are sparse as a wide range of different injury types and different treatment concepts are analyzed within these analyses. A sufficient pelvic outcome instrument which addresses relevant pelvic outcome parameters is still missing. Thus, future evaluation of long-term results after pelvic ring. injuries should include prospective, multicenter outcome studies with comparable parameters.",
+              "score": 0.13136564195156097
+            },
+            {
+              "id": "PMC11619822",
+              "content": "Resins composites are widely used in modern dentistry because of their aesthetic and physical properties. However, discoloration of anterior tooth restorations is a common complaint. Understanding the factors affecting the colour stability of resin composites can lead to longer-lasting repairs. This study aimed to evaluate and compare the colour changes of nanocomposite-based bulk-fill and universal resin composites after immersion in coffee using various polishing systems. A total of 160 samples were prepared using four different composite groups, with 40 pieces for each combined group. Based on the finishing procedure, the samples were divided into four subgroups for each composite group. Three different polishing procedures were applied to the samples according to the manufacturers instructions. The control group was not subjected to any treatment. Initial colour measurements were performed using a VITA Easyshade V spectrophotometer. After the initial measurements, the samples were immersed in a Nescafe coffee solution for seven days, followed by colour measurements. Data were analysed using the KolmogorovSmirnov test and two-way analysis of variance. Tukeys honest significant difference (HSD) test was used to determine differences between subgroups. The results indicate that bulk-fill resins exhibit more discolouration than universal composites; however, this difference was not statistically significant. The resin group with the smallest discolouration was Ceram X, and the most effective polishing method was Twist polishing. Final surface polishing significantly reduced the composites discolouration. These findings support the selection of appropriate materials and polishing techniques to achieve aesthetic outcomes and colour stability in dental restorations.",
+              "score": 0.12444571405649185
+            },
+            {
+              "id": "PMC11650159",
+              "content": "Individuals with major depressive disorder (MDD) can experience reduced motivation and cognitive function, leading to challenges with goal-directed behavior. When selecting goals, people maximize expected value by selecting actions that maximize potential reward while minimizing associated costs, including effort costs and the opportunity cost of time. In MDD, differential weighing of costs and benefits are theorized mechanisms underlying changes in goal-directed cognition and may contribute to symptom heterogeneity. We used the Effort Foraging Task to quantify cognitive and physical effort costs, and patch leaving thresholds in low effort conditions (reflecting perceived opportunity cost of time) and investigated their shared versus distinct relationships to clinical features in participants with MDD ( N N Contrary to our predictions, none of the decision-making measures differed with MDD diagnosis. However, each of the measures was related to symptom severity, over and above effects of ability (i.e. performance). Greater anxiety symptoms were selectively associated with  lower Markers of effort-based decision-making may inform understanding of MDD heterogeneity. Increased willingness to exert cognitive effort may contribute to anxiety symptoms such as worry. Decreased leaving threshold associations with symptom severity are consistent with reward rate-based accounts of reduced vigor in MDD. Future research should address subtypes of depression with or without anxiety, which may relate differentially to cognitive effort decisions.",
+              "score": 0.11987680941820145
+            },
+            {
+              "id": "PMC11650005",
+              "content": "Robotic cholecystectomy (RC) using the da Vinci surgical system has been introduced as a potential alternative to the gold standard laparoscopic cholecystectomy (LC) for gallbladder removal. This systematic review aims to evaluate and compare the postoperative outcomes (operative time, bile leak, and postoperative complications) and cost-effectiveness between da Vinci RC and LC. A comprehensive search of electronic databases, including EMBASE, MEDLINE, Cochrane Library, and PubMed, used Medical Subject Headings terms and Boolean operators to identify relevant studies. Comparative trials assessing postoperative outcomes and costs between RC and LC were included. Data were extracted independently by researchers and analyzed using the RevMan 5.4 software (The Cochrane Collaboration, London, UK). The analysis included six studies with a total of 1,013 patients, comprising three randomized controlled trials (RCTs) and three cohorts conducted across Switzerland, Taiwan, the USA, and Italy. Results showed that LC had a significantly shorter operation duration than RC (standardized mean difference: 0.27; 95% CI, 0.05-0.49; p = 0.01). No significant differences were observed between RC and LC in terms of bile leak rates (odds ratio, 0.37; 95% CI, 0.06-2.21; p = 0.27) or postoperative complications (odds ratio, 0.50; 95% CI, 0.18-1.37; p = 0.18). Cost analysis revealed that RC was more cost-effective than LC (standardized mean difference, 3.16; 95% CI, 0.39-5.93; p = 0.03), with substantial heterogeneity noted among the studies. The findings suggest that RC does not provide significant clinical advantages over LC in postoperative outcomes and incurs higher costs. Due to the heterogeneity and the limited number of RCTs included, a major multicenter RCTis recommended to validate these results further. In conclusion, LC remains the preferred approach due to its shorter operative time and cost-effectiveness, with no significant differences in clinical outcomes compared to da Vinci RC. Further research with larger, multicenter trials is warranted to confirm these findings and guide clinical decision-making.",
+              "score": 0.1165323480963707
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        },
+        {
+          "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+          "latency_ms": 714.6644580643624,
+          "answer": "Stub LLM response for: You are a helpful AI assistant with access to a kn...",
+          "retrieved_documents": [
+            {
+              "id": "PMC11640628",
+              "content": "A questionnaire survey was recently undertaken among French dental students (FDSs) to investigate their practices, knowledge and opinions in various domains of minimal intervention (MI) in cariology. The present work focuses on management of deep carious lesions (DCLs). The questionnaire was administered (Spring 2018) to all the fifth-year students of the 16 French dental schools. Descriptive analyses were performed. Among 1370 FDSs (response rate: 84.5%), hardness was the most commonly reported criterion for assessing the endpoint of carious tissue removal (53.9%), followed by firm dentin (40.0%). Regarding FDSs opinion of leaving carious dentine under a restoration, 41.9% of the respondents agreed that carious tissues should always be removed completely. For an asymptomatic tooth with DCLs and exposed pulp, direct pulp capping was mainly chosen (93.9%). In a clinical case correctly diagnosed as a reversible pulpitis by 79.7% of respondents, nearly half of FDSs chose a one-step complete excavation (48.3%) followed by selective excavation (25.1%), then two-step complete excavation (20.9%) and a minority (5.7%) opted for pulpal therapy (biopulpotomy or endodontic treatment). The present results suggest an inadequate dissemination of MI concepts among FDSs towards DCL management. The present results show the need for a harmonisation and a reinforcement of teaching evidence-based MI according to the latest European recommendations.",
+              "score": 0.16973234713077545
+            },
+            {
+              "id": "PMC11619879",
+              "content": "While the objective of partial pulpotomy is to preserve the vitality and function of the pulp tissue, the preoperative pulp status is the main prognostic factor for its success. To date, however, there is little data on long-term success rates. Therefore, the aim of this prospective pilot study was to assess the long-term outcome of partial pulpotomy in permanent teeth after carious pulp exposure without signs or symptoms of irreversible pulpitis, verified clinically, radiographically, and via MMP-9 levels. Patients in whom permanent teeth with extremely deep carious lesions were diagnosed as completely asymptomatic (n = 8) or with signs of reversible pulpitis (n = 10) underwent non-selective caries removal followed by a blood test to assess the level of MMP-9. The teeth were thereafter partially pulpotomised, MTA-capped, and immediately restored with composite resin. Follow-up examinations were performed by endodontically experienced examiners focusing on clinical and radiographic assessment. One patient could not be contacted and was lost to follow-up. Overall, the follow-up period ranged from 28 years (mean = 4.4 years). The majority of teeth remained functional and without pathology; one tooth was classified as having failed because of a vertical root fracture. There was no statistically significant difference in the groups success rate (p = 0.3). The estimated overall survival rate was 94.1% (95% CI: 0.84-1.00) after 4 years according to the Kaplan-Meier method. Pulp vitality in permanent teeth can be preserved with high success rates by means of partial pulpotomy after carious pulp exposure in asymptomatic teeth or in teeth with reversible pulpitis.",
+              "score": 0.15809524059295654
+            },
+            {
+              "id": "PMC11650128",
+              "content": "Amyotrophic lateral sclerosis (ALS) is a motor neuron disease characterized by the progressive degeneration of the upper and lower motor neurons. This disease is mostly observed in patients of the 6th decade or above, and it is extremely rare to observe this pathology in patients less than 50 years of age. This manuscript depicts the magnetic resonance imaging findings of ALS showing a wine glass sign in a 31-year-old female from a rural area with complaints of progressive limb weakness and muscle wasting.",
+              "score": 0.15100184082984924
+            },
+            {
+              "id": "PMC11162398",
+              "content": "Periodontitis is an inflammatory condition of supporting structures of teeth leading to attachment and bone loss. Cigarette smoking is the single most important and modifiable risk factor with 5 to 20-fold susceptibility for periodontal diseases. Reverse smoking is a peculiar habit of smoking where the lit end is kept inside the mouth, which is predominant in the northern coastal districts of Andhra Pradesh. Polyamines are biologically active amines involved in tissue regeneration and modulation of inflammation. The study aimed to evaluate polyamines and check their utility as a marker in detection of periodontitis among different groups. Total polyamine levels showed significant increase in reverse smokers with periodontitis when compared to the other groups. Qualitative analysis by thin layer chromatography showed three polyamine bands with varying intensity among the different groups. Mass spectrometric and NMR analyses of the three bands identified them as N1, N8-diacetyl spermidine,  N N N The online version contains supplementary material available at 10.1007/s00726-024-03396-4.",
+              "score": 0.14617283642292023
+            },
+            {
+              "id": "PMC11619830",
+              "content": "To examine the anti-caries effect of mouthwashes containing  Cibotium barometz J. Smith A randomised, blinded clinical trial was conducted on 76 study participants. The differences between the 3 gargle groups (saline gargle: SAL; chlorhexidine gargle: CHX;  CB The OLeary index, caries activity, and saliva tests, gradually improved in group CB at one and two weeks. In the case of bacterial tests, unlike SAL and CHX, only in group CB did the decrease occur one and two weeks later. The caries-related indicators decreased significantly over time in group CB compared to SAL and CHX groups, and there was also a statistically significant difference in interaction between groups and time (p<0.05). The mouthwash containing  CB",
+              "score": 0.14201918244361877
+            }
+          ],
+          "similarity_threshold": 0.1,
+          "document_count": 5,
+          "method": "fallback_vector_search"
+        }
+      ],
+      "metrics": {
+        "p50": 591.7630195617676,
+        "p95": 877.7501463890073,
+        "p99": 944.1787219047546,
+        "throughput_qps": 1.7312324007741193
+      },
+      "duration_seconds": 5.776232004165649,
+      "end_time": "2025-06-09T12:01:03.800217"
+    }
+  },
+  "comparison": {
+    "rankings": {
+      "p50": [
+        "crag",
+        "hyde",
+        "basic_rag",
+        "noderag",
+        "graphrag",
+        "colbert"
+      ],
+      "throughput_qps": [
+        "crag",
+        "hyde",
+        "basic_rag",
+        "noderag",
+        "graphrag",
+        "colbert"
+      ],
+      "p95": [
+        "crag",
+        "hyde",
+        "noderag",
+        "basic_rag",
+        "graphrag",
+        "colbert"
+      ],
+      "p99": [
+        "crag",
+        "hyde",
+        "noderag",
+        "basic_rag",
+        "graphrag",
+        "colbert"
+      ]
+    },
+    "percentage_diff": {
+      "p50": {
+        "crag_vs_hyde": 38.76984761102314,
+        "crag_vs_basic_rag": 47.428093895776684,
+        "crag_vs_noderag": 56.572494230135185,
+        "crag_vs_graphrag": 99.15091815825247,
+        "crag_vs_colbert": 99.96805574036466,
+        "hyde_vs_basic_rag": 14.140494424626437,
+        "hyde_vs_noderag": 29.074967029343885,
+        "hyde_vs_graphrag": 98.61329458017094,
+        "hyde_vs_colbert": 99.947829201155,
+        "basic_rag_vs_noderag": 17.394081767227167,
+        "basic_rag_vs_graphrag": 98.38491334123546,
+        "basic_rag_vs_colbert": 99.93923701459101,
+        "noderag_vs_graphrag": 98.0448293617251,
+        "noderag_vs_colbert": 99.9264423340253,
+        "graphrag_vs_colbert": 96.23778791811245
+      },
+      "throughput_qps": {
+        "crag_vs_hyde": 51.64369594262006,
+        "crag_vs_basic_rag": 116.83777512129949,
+        "crag_vs_noderag": 117.49393502566625,
+        "crag_vs_graphrag": 10547.6658638633,
+        "crag_vs_colbert": 279165.321092047,
+        "hyde_vs_basic_rag": 42.991618460254344,
+        "hyde_vs_noderag": 43.42431689871436,
+        "hyde_vs_graphrag": 6921.502475046661,
+        "hyde_vs_colbert": 184058.87278144233,
+        "basic_rag_vs_noderag": 0.3026040568806385,
+        "basic_rag_vs_graphrag": 4810.429401845216,
+        "basic_rag_vs_colbert": 128689.97717801953,
+        "noderag_vs_graphrag": 4795.615072027999,
+        "noderag_vs_colbert": 128301.42924403437,
+        "graphrag_vs_colbert": 2522.7844173795374
+      },
+      "p95": {
+        "crag_vs_hyde": 24.994527708256992,
+        "crag_vs_noderag": 48.792452320614345,
+        "crag_vs_basic_rag": 69.39432272047117,
+        "crag_vs_graphrag": 99.22747775635156,
+        "crag_vs_colbert": 99.96064032076228,
+        "hyde_vs_noderag": 31.728251133187186,
+        "hyde_vs_basic_rag": 59.19540755575235,
+        "hyde_vs_graphrag": 98.97004549128948,
+        "hyde_vs_colbert": 99.94752425651741,
+        "noderag_vs_basic_rag": 40.232097285436694,
+        "noderag_vs_graphrag": 98.49138988555896,
+        "noderag_vs_colbert": 99.9231369573014,
+        "basic_rag_vs_graphrag": 97.47588580839822,
+        "basic_rag_vs_colbert": 99.87139745715075,
+        "graphrag_vs_colbert": 94.90504259763105
+      },
+      "p99": {
+        "crag_vs_hyde": 14.961402896582676,
+        "crag_vs_noderag": 45.18182888377163,
+        "crag_vs_basic_rag": 70.85109654157507,
+        "crag_vs_graphrag": 99.18277905155644,
+        "crag_vs_colbert": 99.95534597446711,
+        "hyde_vs_noderag": 35.537305431364565,
+        "hyde_vs_basic_rag": 65.72273714372744,
+        "hyde_vs_graphrag": 99.03899996439297,
+        "hyde_vs_colbert": 99.94748969638036,
+        "noderag_vs_basic_rag": 46.82620221564508,
+        "noderag_vs_graphrag": 98.50921522589499,
+        "noderag_vs_colbert": 99.91854156272704,
+        "basic_rag_vs_graphrag": 97.19639214007084,
+        "basic_rag_vs_colbert": 99.84680718574343,
+        "graphrag_vs_colbert": 94.5358687123799
+      }
+    },
+    "best_technique": {
+      "retrieval_quality": null,
+      "answer_quality": null,
+      "performance": "crag"
+    }
+  },
+  "benchmark_metrics": {},
+  "generated_at": "2025-06-09T12:01:03.925045",
+  "charts": [
+    {
+      "type": "radar",
+      "path": "benchmark_results/benchmark_20250609_115822/reports/radar_comparison.png"
+    },
+    {
+      "type": "bar",
+      "metric": "throughput_qps",
+      "path": "benchmark_results/benchmark_20250609_115822/reports/bar_throughput_qps.png"
+    }
+  ]
+}

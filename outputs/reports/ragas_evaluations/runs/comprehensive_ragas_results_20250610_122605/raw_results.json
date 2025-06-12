@@ -1,0 +1,171 @@
+{
+  "timestamp": "20250610_122605",
+  "evaluation_duration": 210.2871789932251,
+  "pipeline_results": {
+    "BasicRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "The context documents provided do not contain any information regarding the effects of metformin on type 2 diabetes. They only include numerical values without any accompanying explanations or details related to the question. Therefore, I cannot provide a comprehensive answer based on the given context.\n\nTo fully answer the question about the effects of metformin on type 2 diabetes, additional information is needed, such as:\n\n1. Mechanism of action of metformin in the body.\n2. Clinical benefits of metformin for blood sugar control.\n3. Potential side effects or risks associated with metformin use.\n4. Comparisons with other diabetes medications.\n5. Long-term outcomes of metformin treatment in patients with type 2 diabetes.\n\nWithout this information, I cannot provide a complete response.",
+        "contexts": [
+          "67",
+          "68",
+          "87",
+          "71",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 3.054871082305908,
+        "success": true,
+        "error": null
+      }
+    ],
+    "HyDERAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production and increasing insulin sensitivity in peripheral tissues.\n\n2. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a preferred option for overweight individuals with type 2 diabetes.\n\n3. **Improving Lipid Profiles**: Metformin can have a positive effect on lipid levels, often leading to reductions in triglycerides and LDL cholesterol.\n\n4. **Cardiovascular Benefits**: Some studies suggest that metformin may reduce the risk of cardiovascular events in patients with type 2 diabetes.\n\n5. **Potential Cancer Risk Reduction**: There is ongoing research into the potential role of metformin in reducing the risk of certain types of cancer, although more evidence is needed.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its efficacy, safety profile, and additional health benefits.",
+        "contexts": [
+          "67",
+          "68",
+          "71",
+          "87",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 21.828956842422485,
+        "success": true,
+        "error": null
+      }
+    ],
+    "CRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes, and its effects can be summarized as follows:\n\n1. **Blood Sugar Control**: Metformin primarily works by decreasing hepatic glucose production, particularly by reducing gluconeogenesis in the liver. This leads to lower blood glucose levels, which is crucial for managing type 2 diabetes.\n\n2. **Improved Insulin Sensitivity**: Metformin enhances insulin sensitivity in peripheral tissues, such as muscle and fat, which helps the body utilize glucose more effectively. This can lead to improved glycemic control.\n\n3. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight neutrality or modest weight loss, making it a favorable option for overweight or obese patients with type 2 diabetes.\n\n4. **Cardiovascular Benefits**: Some studies suggest that metformin may have cardiovascular benefits, potentially reducing the risk of heart disease in patients with type 2 diabetes.\n\n5. **Gastrointestinal Side Effects**: Common side effects of metformin include gastrointestinal issues such as nausea, diarrhea, and abdominal discomfort. These side effects can often be managed by starting with a low dose and gradually increasing it.\n\n6. **Risk of Lactic Acidosis**: Although rare, there is a risk of lactic acidosis, particularly in patients with renal impairment or other contraindications. Regular monitoring of kidney function is recommended for patients on metformin.\n\n7. **Long-term Use**: Metformin is generally considered safe for long-term use, and it is often the first-line treatment for type 2 diabetes due to its efficacy and safety profile.\n\nIn conclusion, metformin is effective in managing type 2 diabetes by lowering blood sugar levels, improving insulin sensitivity, and offering potential cardiovascular benefits, while also being associated with some gastrointestinal side effects and a rare risk of lactic acidosis. If there are specific uncertainties or incomplete aspects regarding metformin's effects, please let me know for further clarification.",
+        "contexts": [
+          "67",
+          "68",
+          "87",
+          "71",
+          "76"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 8.743401050567627,
+        "success": true,
+        "error": null
+      }
+    ],
+    "ColBERTRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.03546285629272461,
+        "success": true,
+        "error": null
+      }
+    ],
+    "NodeRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.03462100028991699,
+        "success": true,
+        "error": null
+      }
+    ],
+    "GraphRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a commonly prescribed medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly in the liver.\n\n2. **Improving Insulin Sensitivity**: It enhances the sensitivity of muscle cells to insulin, which helps the body use glucose more effectively.\n\n3. **Reducing Absorption of Glucose**: Metformin can decrease the absorption of glucose from the gastrointestinal tract, which contributes to lower blood sugar levels.\n\n4. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a favorable option for overweight individuals with type 2 diabetes.\n\n5. **Cardiovascular Benefits**: Some studies suggest that metformin may have cardiovascular benefits, reducing the risk of heart disease in people with type 2 diabetes.\n\n6. **Potential Cancer Risk Reduction**: There is ongoing research into the potential role of metformin in reducing the risk of certain cancers, although more evidence is needed in this area.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its effectiveness, safety profile, and additional health benefits.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@279ad2e3",
+          "com.intersystems.jdbc.IRISInputStream@4450d156",
+          "com.intersystems.jdbc.IRISInputStream@351d0846",
+          "com.intersystems.jdbc.IRISInputStream@35fc6dc4",
+          "com.intersystems.jdbc.IRISInputStream@226a82c4"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 5.07520318031311,
+        "success": true,
+        "error": null
+      }
+    ],
+    "HybridIFindRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Metformin is a widely used medication for the management of type 2 diabetes. Its primary effects include:\n\n1. **Lowering Blood Sugar Levels**: Metformin helps to reduce blood glucose levels by decreasing hepatic glucose production, particularly in the liver, and improving insulin sensitivity in peripheral tissues.\n\n2. **Weight Management**: Unlike some other diabetes medications, metformin is associated with weight loss or weight neutrality, making it a preferred option for overweight or obese patients with type 2 diabetes.\n\n3. **Cardiovascular Benefits**: Studies suggest that metformin may have cardiovascular benefits, reducing the risk of heart disease in patients with type 2 diabetes.\n\n4. **Improving Lipid Profiles**: Metformin can help improve lipid profiles by lowering levels of triglycerides and LDL cholesterol.\n\n5. **Potential Cancer Risk Reduction**: Some research indicates that metformin may have a protective effect against certain types of cancer, although more studies are needed to confirm this.\n\n6. **Gastrointestinal Side Effects**: Common side effects include gastrointestinal issues such as nausea, diarrhea, and abdominal discomfort, especially when starting the medication.\n\nOverall, metformin is considered a first-line treatment for type 2 diabetes due to its efficacy, safety profile, and additional health benefits.",
+        "contexts": [
+          "com.intersystems.jdbc.IRISInputStream@255b53dc",
+          "com.intersystems.jdbc.IRISInputStream@6b53e23f",
+          "com.intersystems.jdbc.IRISInputStream@1b68b9a4",
+          "com.intersystems.jdbc.IRISInputStream@3b2c72c2",
+          "com.intersystems.jdbc.IRISInputStream@176d53b2"
+        ],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 6.136899709701538,
+        "success": true,
+        "error": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "BasicRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 1.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.14033592447016838
+    },
+    "HyDERAG": {
+      "answer_relevancy": 0.8740820168267444,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.4384516431170461
+    },
+    "CRAG": {
+      "answer_relevancy": 0.9247669577543604,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.920666312853623
+    },
+    "ColBERTRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.015357333946704715
+    },
+    "NodeRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.01440362579015078
+    },
+    "GraphRAG": {
+      "answer_relevancy": 0.8741094438333198,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.33743043046825283
+    },
+    "HybridIFindRAG": {
+      "answer_relevancy": 0.8741032140338613,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.40954255507672677
+    }
+  }
+}

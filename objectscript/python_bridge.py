@@ -29,7 +29,7 @@ from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
 # Import evaluation and benchmarking modules
 from eval.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance # Path remains same
 from eval.bench_runner import run_technique_benchmark # Path remains same
-from src.common.iris_connector import get_iris_connection # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

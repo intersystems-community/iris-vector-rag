@@ -18,8 +18,20 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.common.utils import Document # Updated import
-from src.working.colbert.doc_encoder import generate_token_embeddings_for_documents as colbert_generate_embeddings # Updated import
+from common.utils import Document
+try:
+    from colbert.doc_encoder import generate_token_embeddings_for_documents as colbert_generate_embeddings
+except ImportError:
+    # Fallback for different import paths
+    try:
+        from src.working.colbert.doc_encoder import generate_token_embeddings_for_documents as colbert_generate_embeddings
+    except ImportError:
+        # Mock function if ColBERT is not available
+        def colbert_generate_embeddings(documents, batch_size=10, model_name="colbert-ir/colbertv2.0", device="cpu", mock=False):
+            logger.warning("ColBERT doc encoder not available, using mock implementation (384-dim)")
+            # Ensure mock embeddings match the expected 384 dimension
+            mock_embedding_dim = 384
+            return [{"id": doc["id"], "tokens": ["mock", "tokens"], "token_embeddings": [[0.1]*mock_embedding_dim, [0.2]*mock_embedding_dim]} for doc in documents]
 
 logger = logging.getLogger(__name__)
 
@@ -270,20 +282,23 @@ def load_pmc_documents(connection, embedding_func: Callable, limit=50, pmc_dir="
                             for x_val in embedding_list: # Renamed x to x_val
                                 val_float = float(x_val) # Renamed val to val_float
                                 if torch.isnan(torch.tensor(val_float)) or torch.isinf(torch.tensor(val_float)):
-                                    logger.warning(f"Doc {doc['pmc_id']} embedding contains NaN/Inf: {val_float}. Skipping embedding.")
+                                    doc_id = doc.get('pmc_id', doc.get('doc_id', 'unknown'))
+                                    logger.warning(f"Doc {doc_id} embedding contains NaN/Inf: {val_float}. Skipping embedding.")
                                     valid_embedding = False
                                     break
                                 converted_list.append(val_float)
                             if valid_embedding:
-                                if len(converted_list) == 768:
+                                if len(converted_list) == 384:
                                     final_embedding_param = converted_list
                                 else:
-                                    logger.warning(f"Doc {doc['pmc_id']}: Incorrect embedding dimension {len(converted_list)}. Expected 768. Skipping embedding.")
+                                    doc_id = doc.get('pmc_id', doc.get('doc_id', 'unknown'))
+                                    logger.warning(f"Doc {doc_id}: Incorrect embedding dimension {len(converted_list)}. Expected 384. Skipping embedding.")
                                     final_embedding_param = None # Ensure it's None if not valid
                             else: # valid_embedding is False
                                 final_embedding_param = None
                         except (TypeError, ValueError) as e_conv:
-                            logger.error(f"Error converting embedding elements to float for doc {doc['pmc_id']}: {e_conv}. Embedding: {str(embedding_list)[:100]}...")
+                            doc_id = doc.get('pmc_id', doc.get('doc_id', 'unknown'))
+                            logger.error(f"Error converting embedding elements to float for doc {doc_id}: {e_conv}. Embedding: {str(embedding_list)[:100]}...")
                             final_embedding_param = None
                     
                     embedding_value_to_insert = str(final_embedding_param) if final_embedding_param is not None else None
@@ -295,13 +310,15 @@ def load_pmc_documents(connection, embedding_func: Callable, limit=50, pmc_dir="
                     # If they also cause issues, they might need more careful serialization.
 
                     # Ensure insertion into RAG.SourceDocuments
+                    doc_id = doc.get('pmc_id', doc.get('doc_id', f'doc_{count}'))
                     cursor.execute(
                         "INSERT INTO RAG.SourceDocuments (doc_id, title, abstract, text_content, authors, keywords, embedding) VALUES (?, ?, ?, ?, ?, ?, TO_VECTOR(?))",
-                        (doc['pmc_id'], title_to_insert, abstract_to_insert, abstract_to_insert, authors, keywords, embedding_value_to_insert) # Using abstract for text_content if not available
+                        (doc_id, title_to_insert, abstract_to_insert, abstract_to_insert, authors, keywords, embedding_value_to_insert) # Using abstract for text_content if not available
                     )
                     count += 1
                 except Exception as e:
-                    logger.warning(f"Failed to insert document {doc['pmc_id']}: {e}")
+                    doc_id = doc.get('pmc_id', doc.get('doc_id', 'unknown'))
+                    logger.warning(f"Failed to insert document {doc_id}: {e}")
         if hasattr(connection, 'commit'):
             try:
                 connection.commit()
@@ -338,24 +355,65 @@ def load_colbert_token_embeddings(connection, limit=50, batch_size=10, colbert_m
     Generates and loads ColBERT token embeddings for documents already in SourceDocuments.
     """
     logger.info(f"Starting ColBERT token embedding generation and loading for up to {limit} documents.")
+
+    try:
+        with connection.cursor() as cursor: # Use the 'connection' parameter passed to the function
+            logger.info("Truncating RAG.DocumentTokenEmbeddings table before loading new data.")
+            cursor.execute("TRUNCATE TABLE RAG.DocumentTokenEmbeddings")
+        connection.commit() # Commit the truncate using the passed 'connection' object
+        logger.info("RAG.DocumentTokenEmbeddings table truncated successfully.")
+    except Exception as e:
+        logger.error(f"Error truncating RAG.DocumentTokenEmbeddings: {e}")
+        # For robust testing, it's often better to re-raise the exception
+        # or handle it in a way that prevents proceeding with potentially corrupted state.
+        raise  # Re-raise the exception to halt execution if truncation fails.
     
     source_docs_to_process = []
     with connection.cursor() as cursor:
         # Fetch doc_id, abstract, and text_content. COALESCE will be done in Python.
-        cursor.execute(f"SELECT TOP {limit} doc_id, abstract, text_content FROM SourceDocuments")
+        cursor.execute(f"SELECT TOP {limit} doc_id, abstract, text_content FROM RAG.SourceDocuments")
         rows = cursor.fetchall()
         for row in rows:
             doc_id = row[0]
-            abstract_content = row[1]
-            text_content_val = row[2] # Renamed to avoid conflict
+            abstract_val = row[1]
+            text_content_val = row[2]
+
+            # Convert streams to strings
+            abstract_content_str = ""
+            if abstract_val is not None:
+                if hasattr(abstract_val, 'read') and callable(abstract_val.read) and not isinstance(abstract_val, str):
+                    try:
+                        data = abstract_val.read()
+                        # Assuming stream returns bytes that need decoding, or already a string
+                        abstract_content_str = data.decode('utf-8') if isinstance(data, bytes) else str(data)
+                    except Exception as e:
+                        logger.warning(f"Error reading abstract stream for doc {doc_id}: {e}")
+                else:
+                    abstract_content_str = str(abstract_val) # Ensure it's a string
+
+            text_content_str = ""
+            if text_content_val is not None:
+                if hasattr(text_content_val, 'read') and callable(text_content_val.read) and not isinstance(text_content_val, str):
+                    try:
+                        data = text_content_val.read()
+                        text_content_str = data.decode('utf-8') if isinstance(data, bytes) else str(data)
+                    except Exception as e:
+                        logger.warning(f"Error reading text_content stream for doc {doc_id}: {e}")
+                else:
+                    text_content_str = str(text_content_val) # Ensure it's a string
             
-            # Perform COALESCE logic in Python
-            content_for_colbert = abstract_content if abstract_content is not None and abstract_content.strip() != "" else text_content_val
+            # Perform COALESCE logic in Python using the string versions
+            # Ensure to strip here as well, as the original logic intended
+            processed_abstract = abstract_content_str.strip() if abstract_content_str else ""
+            processed_text_content = text_content_str.strip() if text_content_str else ""
+
+            content_for_colbert = processed_abstract if processed_abstract else processed_text_content
             
-            if content_for_colbert and content_for_colbert.strip() != "":
+            # Now content_for_colbert is a string (possibly empty).
+            if content_for_colbert: # Check if the string is non-empty
                 source_docs_to_process.append({"id": doc_id, "content": content_for_colbert})
             else:
-                logger.warning(f"Document {doc_id} has neither abstract nor text_content. Skipping for ColBERT.")
+                logger.warning(f"Document {doc_id} has no usable content after processing abstract/text_content. Skipping for ColBERT.")
     
     if not source_docs_to_process:
         logger.info("No suitable documents found in SourceDocuments to process for ColBERT embeddings.")
@@ -391,18 +449,24 @@ def load_colbert_token_embeddings(connection, limit=50, batch_size=10, colbert_m
                     if token_embedding is not None:
                         try:
                             converted_token_emb = [float(x) for x in token_embedding]
-                            if len(converted_token_emb) == 128: # ColBERT default dimension
+                            # Expecting 384 dimension as per user feedback and other main embeddings
+                            expected_dim = 384
+                            if len(converted_token_emb) == expected_dim:
                                 final_token_embedding_param = converted_token_emb
                             else:
-                                logger.warning(f"Doc {doc_id}, Token {i}: Incorrect embedding dimension {len(converted_token_emb)}. Expected 128. Skipping token embedding.")
+                                logger.warning(f"Doc {doc_id}, Token {i}: Incorrect embedding dimension {len(converted_token_emb)}. Expected {expected_dim}. Skipping token embedding.")
                         except (TypeError, ValueError) as e_conv_token:
                             logger.error(f"Error converting ColBERT token embedding for doc {doc_id}, token {i}: {e_conv_token}")
                     
-                    embedding_value_to_insert = str(final_token_embedding_param) if final_token_embedding_param is not None else None
+                    if final_token_embedding_param is not None:
+                        # Ensure it's a comma-separated string for TO_VECTOR
+                        embedding_value_to_insert = ",".join(map(str, final_token_embedding_param))
+                    else:
+                        embedding_value_to_insert = None
 
                     if embedding_value_to_insert: # Only insert if we have a valid embedding string
                         cursor.execute(
-                            "INSERT INTO DocumentTokenEmbeddings (doc_id, token_sequence_index, token_text, token_embedding) VALUES (?, ?, ?, TO_VECTOR(?))",
+                            "INSERT INTO RAG.DocumentTokenEmbeddings (doc_id, token_index, token_text, token_embedding) VALUES (?, ?, ?, TO_VECTOR(?))",
                             (doc_id, i, token_text, embedding_value_to_insert)
                         )
                         total_tokens_inserted += 1

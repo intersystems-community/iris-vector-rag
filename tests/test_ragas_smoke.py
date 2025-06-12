@@ -27,8 +27,8 @@ from ragas.metrics import (
 )
 from datasets import Dataset
 
-from src.common.iris_connector import get_iris_connection # Updated import
-from src.common.embedding_utils import get_embedding_model # Updated import
+from common.iris_connector import get_iris_connection # Updated import
+from common.embedding_utils import get_embedding_model # Updated import
 
 # Import all V2 pipelines
 from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
@@ -231,7 +231,7 @@ def main():
         return embedding_model.encode(texts)
     
     # Use real OpenAI LLM for RAGAS evaluation
-    from src.common.utils import get_llm_func # Updated import
+    from common.utils import get_llm_func # Updated import
     llm_func = get_llm_func(provider="openai", model_name="gpt-3.5-turbo")
     
     # Test only BasicRAG pipeline

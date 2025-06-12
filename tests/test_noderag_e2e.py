@@ -9,9 +9,9 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
-from src.common.utils import get_embedding_func, get_llm_func, Document # Updated import
-from src.common.jdbc_stream_utils import read_iris_stream # Updated import
+from src.experimental.noderag.pipeline import NodeRAGPipeline # Corrected import path and class name
+from common.utils import get_embedding_func, get_llm_func, Document # Updated import
+from common.jdbc_stream_utils import read_iris_stream # Updated import
 
 # Test Data for NodeRAG
 # Document 1: Alpha Protocol

@@ -1,0 +1,417 @@
+{
+  "test_start_time": "2025-06-07T16:28:32.919419",
+  "document_count": 1005,
+  "pipeline_tests": {
+    "basic": {
+      "pipeline_type": "basic",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Setup failed: Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+      "total_time": 0.09232306480407715
+    },
+    "colbert": {
+      "pipeline_type": "colbert",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Setup failed: Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+      "total_time": 0.09684014320373535
+    },
+    "chunked": {
+      "pipeline_type": "chunked",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Setup failed: Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+      "total_time": 0.09887981414794922
+    },
+    "crag": {
+      "pipeline_type": "crag",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Setup failed: Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+      "total_time": 0.09385180473327637
+    },
+    "hyde": {
+      "pipeline_type": "hyde",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Setup failed: Pipeline not ready. Issues: Embedding issues: document_embeddings",
+      "total_time": 0.09443306922912598
+    },
+    "graphrag": {
+      "pipeline_type": "graphrag",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Setup failed: Pipeline not ready. Issues: Table issues: DocumentEntities, EntityRelationships; Embedding issues: document_embeddings, entity_embeddings",
+      "total_time": 0.10362005233764648
+    },
+    "hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Setup failed: Pipeline not ready. Issues: Embedding issues: document_embeddings",
+      "total_time": 0.16478991508483887
+    }
+  },
+  "validation_tests": {
+    "status_check_basic": {
+      "pipeline_type": "basic",
+      "status_check_success": true,
+      "overall_valid": false,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 1006 rows",
+          "details": {
+            "row_count": 1006
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": false,
+          "message": "Invalid embedding format in RAG.SourceDocuments.embedding",
+          "details": {
+            "sample_embedding": "-.082727640867233276367,-.13540939986705780029,-.11319414526224136352,.024636680260300636291,.014980"
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 2.657363176345825
+    },
+    "status_check_colbert": {
+      "pipeline_type": "colbert",
+      "status_check_success": true,
+      "overall_valid": false,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 1006 rows",
+          "details": {
+            "row_count": 1006
+          }
+        },
+        "DocumentTokenEmbeddings": {
+          "valid": false,
+          "message": "Table RAG.DocumentTokenEmbeddings has 0 rows, but requires at least 1",
+          "details": {
+            "row_count": 0,
+            "min_required": 1
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": false,
+          "message": "Invalid embedding format in RAG.SourceDocuments.embedding",
+          "details": {
+            "sample_embedding": "-.082727640867233276367,-.13540939986705780029,-.11319414526224136352,.024636680260300636291,.014980"
+          }
+        },
+        "token_embeddings": {
+          "valid": false,
+          "message": "No data in table RAG.DocumentTokenEmbeddings",
+          "details": {
+            "total_rows": 0,
+            "rows_with_embeddings": 0
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 2.708117961883545
+    },
+    "status_check_chunked": {
+      "pipeline_type": "chunked",
+      "status_check_success": true,
+      "overall_valid": false,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 1006 rows",
+          "details": {
+            "row_count": 1006
+          }
+        },
+        "DocumentChunks": {
+          "valid": false,
+          "message": "Table RAG.DocumentChunks has 0 rows, but requires at least 1",
+          "details": {
+            "row_count": 0,
+            "min_required": 1
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": false,
+          "message": "Invalid embedding format in RAG.SourceDocuments.embedding",
+          "details": {
+            "sample_embedding": "-.082727640867233276367,-.13540939986705780029,-.11319414526224136352,.024636680260300636291,.014980"
+          }
+        },
+        "chunk_embeddings": {
+          "valid": false,
+          "message": "Error validating embeddings: [SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'EMBEDDING' not found in the applicable tables^SELECT COUNT ( * ) AS total_rows , COUNT ( embedding )>]",
+          "details": {
+            "error": "[SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'EMBEDDING' not found in the applicable tables^SELECT COUNT ( * ) AS total_rows , COUNT ( embedding )>]"
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 2.7561070919036865
+    },
+    "status_check_crag": {
+      "pipeline_type": "crag",
+      "status_check_success": true,
+      "overall_valid": false,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 1006 rows",
+          "details": {
+            "row_count": 1006
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": false,
+          "message": "Invalid embedding format in RAG.SourceDocuments.embedding",
+          "details": {
+            "sample_embedding": "-.082727640867233276367,-.13540939986705780029,-.11319414526224136352,.024636680260300636291,.014980"
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 2.8009321689605713
+    },
+    "status_check_hyde": {
+      "pipeline_type": "hyde",
+      "status_check_success": true,
+      "overall_valid": false,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 1006 rows",
+          "details": {
+            "row_count": 1006
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": false,
+          "message": "Invalid embedding format in RAG.SourceDocuments.embedding",
+          "details": {
+            "sample_embedding": "-.082727640867233276367,-.13540939986705780029,-.11319414526224136352,.024636680260300636291,.014980"
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 2.846402168273926
+    },
+    "status_check_graphrag": {
+      "pipeline_type": "graphrag",
+      "status_check_success": true,
+      "overall_valid": false,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 1006 rows",
+          "details": {
+            "row_count": 1006
+          }
+        },
+        "DocumentEntities": {
+          "valid": false,
+          "message": "Table RAG.DocumentEntities does not exist or is not accessible: [SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.DOCUMENTENTITIES' not found>]",
+          "details": {
+            "error": "[SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.DOCUMENTENTITIES' not found>]"
+          }
+        },
+        "EntityRelationships": {
+          "valid": false,
+          "message": "Table RAG.EntityRelationships does not exist or is not accessible: [SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.ENTITYRELATIONSHIPS' not found>]",
+          "details": {
+            "error": "[SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.ENTITYRELATIONSHIPS' not found>]"
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": false,
+          "message": "Invalid embedding format in RAG.SourceDocuments.embedding",
+          "details": {
+            "sample_embedding": "-.082727640867233276367,-.13540939986705780029,-.11319414526224136352,.024636680260300636291,.014980"
+          }
+        },
+        "entity_embeddings": {
+          "valid": false,
+          "message": "Error validating embeddings: [SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.DOCUMENTENTITIES' not found>]",
+          "details": {
+            "error": "[SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.DOCUMENTENTITIES' not found>]"
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 2.8935251235961914
+    },
+    "status_check_hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "status_check_success": true,
+      "overall_valid": false,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 1006 rows",
+          "details": {
+            "row_count": 1006
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": false,
+          "message": "Invalid embedding format in RAG.SourceDocuments.embedding",
+          "details": {
+            "sample_embedding": "-.082727640867233276367,-.13540939986705780029,-.11319414526224136352,.024636680260300636291,.014980"
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 2.938601016998291
+    },
+    "error_quality_colbert": {
+      "pipeline_type": "colbert",
+      "has_summary": true,
+      "has_suggestions": true,
+      "has_specific_issues": true,
+      "message_quality_score": 3
+    },
+    "error_quality_chunked": {
+      "pipeline_type": "chunked",
+      "has_summary": true,
+      "has_suggestions": true,
+      "has_specific_issues": true,
+      "message_quality_score": 3
+    }
+  },
+  "setup_tests": {
+    "setup_basic": {
+      "pipeline_type": "basic",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+      "remaining_issues": [
+        "Setup process failed"
+      ],
+      "setup_time": 0.04308724403381348
+    },
+    "setup_colbert": {
+      "pipeline_type": "colbert",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+      "remaining_issues": [
+        "Setup process failed"
+      ],
+      "setup_time": 0.04500913619995117
+    },
+    "setup_chunked": {
+      "pipeline_type": "chunked",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+      "remaining_issues": [
+        "Setup process failed"
+      ],
+      "setup_time": 0.047039031982421875
+    },
+    "setup_crag": {
+      "pipeline_type": "crag",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+      "remaining_issues": [
+        "Setup process failed"
+      ],
+      "setup_time": 0.04363083839416504
+    },
+    "setup_hyde": {
+      "pipeline_type": "hyde",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Pipeline not ready. Issues: Embedding issues: document_embeddings",
+      "remaining_issues": [
+        "document_embeddings"
+      ],
+      "setup_time": 0.04459214210510254
+    },
+    "setup_graphrag": {
+      "pipeline_type": "graphrag",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Pipeline not ready. Issues: Table issues: DocumentEntities, EntityRelationships; Embedding issues: document_embeddings, entity_embeddings",
+      "remaining_issues": [
+        "DocumentEntities",
+        "EntityRelationships",
+        "document_embeddings",
+        "entity_embeddings"
+      ],
+      "setup_time": 0.05524611473083496
+    },
+    "setup_hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Pipeline not ready. Issues: Embedding issues: document_embeddings",
+      "remaining_issues": [
+        "document_embeddings"
+      ],
+      "setup_time": 0.048867225646972656
+    }
+  },
+  "performance_metrics": {
+    "avg_total_time": 0.10639112336294991,
+    "avg_execution_time": 0,
+    "avg_setup_time": 0,
+    "max_total_time": 0.16478991508483887,
+    "min_total_time": 0.09232306480407715,
+    "avg_validation_time": 2.800149815423148,
+    "avg_setup_orchestration_time": 0.046781676156180244
+  },
+  "reliability_metrics": {
+    "total_pipelines_tested": 7,
+    "successful_validations": 0,
+    "successful_setups": 0,
+    "successful_executions": 0,
+    "success_rate": 0.0
+  },
+  "errors": [
+    "Pipeline test failed for basic: Setup failed: Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+    "Pipeline test failed for colbert: Setup failed: Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+    "Pipeline test failed for chunked: Setup failed: Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+    "Pipeline test failed for crag: Setup failed: Setup failed: [SQLCODE: <-400>:<Fatal error occurred>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Unexpected error occurred:  <VECTOR>%C0o+19^%sqlcq.USER.cls47.1>]",
+    "Pipeline test failed for hyde: Setup failed: Pipeline not ready. Issues: Embedding issues: document_embeddings",
+    "Pipeline test failed for graphrag: Setup failed: Pipeline not ready. Issues: Table issues: DocumentEntities, EntityRelationships; Embedding issues: document_embeddings, entity_embeddings",
+    "Pipeline test failed for hybrid_ifind: Setup failed: Pipeline not ready. Issues: Embedding issues: document_embeddings"
+  ],
+  "summary": {
+    "overall_success": false,
+    "validation_system_working": true,
+    "setup_system_working": true,
+    "all_pipelines_tested": true,
+    "error_count": 7,
+    "recommendations": [
+      "Some pipelines failed - investigate error logs",
+      "Errors encountered - review error details"
+    ]
+  },
+  "test_end_time": "2025-06-07T16:28:37.210860"
+}

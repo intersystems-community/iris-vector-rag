@@ -126,6 +126,7 @@ Thumbs.db
 # Downloaded HTML documentation files
 *.html
 # Generated backup and report files/directories
+docs/RSQL.pdf
 migration_backup_*/
 *_report_*.json
 *_report_*.md
@@ -135,17 +136,21 @@ verification_report_*.md
 # Specific generated JSON reports now in reports/ directory
 reports/complete_rag_fix_results_*.json
 reports/hnsw_validation_*.json
-reports/ragas_*.json
 reports/vector_indexing_investigation_*.json
 
 # Test and Benchmark Output Directories
 test_logs/
 test_results/
-benchmark_results/
+
+# Generated Reports
+# Generated RAGAS Evaluation Results
+reports/ragas_evaluations/
+
+# Generated Benchmark Results
+reports/benchmarks/
 
 # Specific generated files (if they appear in root and not in the above dirs)
 test_results_1000_docs.json
-benchmark_results_*.json
 enterprise_validation_*.json
 enterprise_scale_validation_*.json
 production_validation_results_*.json

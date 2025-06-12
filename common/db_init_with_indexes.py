@@ -11,7 +11,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from .iris_connector import get_iris_connection # Changed to relative import
+from .iris_connection_manager import get_iris_connection
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

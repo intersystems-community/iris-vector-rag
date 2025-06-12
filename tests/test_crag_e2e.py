@@ -10,7 +10,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.common.utils import Document # Updated import
+from common.utils import Document # Updated import
 # Fixtures like iris_testcontainer_connection, embedding_model_fixture,
 # llm_client_fixture will be automatically provided by pytest from conftest.py
 

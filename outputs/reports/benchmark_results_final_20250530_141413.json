@@ -1,0 +1,656 @@
+{
+  "HyDE": {
+    "success_rate": 1.0,
+    "avg_response_time": 3.4264885902404787,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 60.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 3.0318992137908936,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 2.330718994140625,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 3.4998419284820557,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      },
+      {
+        "success": true,
+        "response_time": 6.901305198669434,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What is the relationship between obesity and diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 3.3031928539276123,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How can diabetes be prevented through lifestyle changes?"
+      },
+      {
+        "success": true,
+        "response_time": 4.2614428997039795,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the complications of untreated diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 2.859313726425171,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What role does genetics play in diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 2.571294069290161,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How is gestational diabetes different from type 2 diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 2.790457010269165,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the latest research findings on diabetes treatment?"
+      },
+      {
+        "success": true,
+        "response_time": 2.7154200077056885,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How does diabetes affect cardiovascular health?"
+      }
+    ]
+  },
+  "CRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.22100477218627929,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 61.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.3352799415588379,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.22331881523132324,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 0.1990950107574463,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      },
+      {
+        "success": true,
+        "response_time": 0.21649885177612305,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "What is the relationship between obesity and diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.19760823249816895,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "How can diabetes be prevented through lifestyle changes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.20549225807189941,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "What are the complications of untreated diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.22885727882385254,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "What role does genetics play in diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.19622516632080078,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "How is gestational diabetes different from type 2 diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.2107551097869873,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "What are the latest research findings on diabetes treatment?"
+      },
+      {
+        "success": true,
+        "response_time": 0.19691705703735352,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 61,
+        "answer": "I couldn't find relevant information to answer your question.",
+        "documents": [],
+        "query": "How does diabetes affect cardiovascular health?"
+      }
+    ]
+  },
+  "ColBERT": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.02097177505493164,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 60.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.0854949951171875,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.035302162170410156,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 0.010092020034790039,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      },
+      {
+        "success": true,
+        "response_time": 0.010805130004882812,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What is the relationship between obesity and diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.02292490005493164,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How can diabetes be prevented through lifestyle changes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.00832223892211914,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the complications of untreated diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.0075380802154541016,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What role does genetics play in diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.01366877555847168,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How is gestational diabetes different from type 2 diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.008350372314453125,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the latest research findings on diabetes treatment?"
+      },
+      {
+        "success": true,
+        "response_time": 0.007219076156616211,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How does diabetes affect cardiovascular health?"
+      }
+    ]
+  },
+  "NodeRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.01925067901611328,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 85.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.009884357452392578,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.006014823913574219,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 0.09268593788146973,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      },
+      {
+        "success": true,
+        "response_time": 0.010715246200561523,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What is the relationship between obesity and diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.013230085372924805,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How can diabetes be prevented through lifestyle changes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.011560916900634766,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the complications of untreated diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.009755134582519531,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What role does genetics play in diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.012402057647705078,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How is gestational diabetes different from type 2 diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.014284133911132812,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the latest research findings on diabetes treatment?"
+      },
+      {
+        "success": true,
+        "response_time": 0.011974096298217773,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How does diabetes affect cardiovascular health?"
+      }
+    ]
+  },
+  "GraphRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.5328230857849121,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 85.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.5922677516937256,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.42905497550964355,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 0.477100133895874,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      },
+      {
+        "success": true,
+        "response_time": 0.4373760223388672,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What is the relationship between obesity and diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.42770934104919434,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How can diabetes be prevented through lifestyle changes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.44391417503356934,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the complications of untreated diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.7138187885284424,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What role does genetics play in diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.4424870014190674,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How is gestational diabetes different from type 2 diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.4606966972351074,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the latest research findings on diabetes treatment?"
+      },
+      {
+        "success": true,
+        "response_time": 0.9038059711456299,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find relevant information in the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How does diabetes affect cardiovascular health?"
+      }
+    ]
+  },
+  "HybridIFindRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.52757568359375,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 63.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.4409017562866211,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.48614501953125,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 0.4560079574584961,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      },
+      {
+        "success": true,
+        "response_time": 0.44225001335144043,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "What is the relationship between obesity and diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.451923131942749,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "How can diabetes be prevented through lifestyle changes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.44759202003479004,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "What are the complications of untreated diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.7194178104400635,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "What role does genetics play in diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.469027042388916,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "How is gestational diabetes different from type 2 diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.44168901443481445,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "What are the latest research findings on diabetes treatment?"
+      },
+      {
+        "success": true,
+        "response_time": 0.9208030700683594,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 63,
+        "answer": "I couldn't find any relevant documents to answer your question.",
+        "documents": [],
+        "query": "How does diabetes affect cardiovascular health?"
+      }
+    ]
+  }
+}

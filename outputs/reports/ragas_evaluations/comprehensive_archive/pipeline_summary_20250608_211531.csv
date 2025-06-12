@@ -1,0 +1,8 @@
+Pipeline,Success_Rate,Avg_Response_Time,Std_Response_Time,Avg_Documents_Retrieved,Avg_Answer_Length,Avg_Answer_Relevancy,Avg_Context_Precision,Avg_Context_Recall,Avg_Faithfulness,Avg_Answer_Similarity,Avg_Answer_Correctness
+basic,1.0,3.8495460086398654,0.6005740968003908,10.0,1712.111111111111,,,,,,
+hyde,1.0,5.235265360938178,1.4829654906948435,10.0,432.22222222222223,,,,,,
+crag,1.0,3.0738306840260825,1.040325030710289,10.0,1263.0,,,,,,
+colbert,0.0,0.0,0.0,0.0,0.0,,,,,,
+noderag,1.0,0.8750769297281901,0.22728301584393001,10.0,208.88888888888889,,,,,,
+graphrag,1.0,0.8625365893046061,0.18168489396365053,10.0,213.55555555555554,,,,,,
+hybrid_ifind,1.0,1.1968761814965143,0.598332953779185,10.0,390.0,,,,,,

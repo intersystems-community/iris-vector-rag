@@ -1,0 +1,157 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-06-07T15:08:35.068342",
+    "total_execution_time": 17.65707802772522,
+    "document_count": 1005,
+    "target_document_count": 1000,
+    "techniques_tested": 7,
+    "successful_tests": 3,
+    "success_rate": 42.857142857142854
+  },
+  "technique_results": {
+    "iris_rag_basic": {
+      "technique": "iris_rag_basic",
+      "success": false,
+      "error": "iris_rag.pipelines.basic.BasicRAGPipeline.query() got multiple values for keyword argument 'top_k'",
+      "performance": {},
+      "query_results": []
+    },
+    "ColBERT": {
+      "technique": "ColBERT",
+      "success": false,
+      "error": "ColBERT: Too few documents retrieved (0)",
+      "performance": {},
+      "query_results": []
+    },
+    "CRAG": {
+      "technique": "CRAG",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 4.5342137813568115,
+        "avg_query_time": 1.5111546516418457
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 1.3255021572113037,
+          "retrieved_count": 18,
+          "answer_length": 215,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 0.8437139987945557,
+          "retrieved_count": 19,
+          "answer_length": 111,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 2.3642477989196777,
+          "retrieved_count": 18,
+          "answer_length": 717,
+          "success": true
+        }
+      ]
+    },
+    "GraphRAG": {
+      "technique": "GraphRAG",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 3.672758102416992,
+        "avg_query_time": 1.2241727511088054
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 0.7435250282287598,
+          "retrieved_count": 5,
+          "answer_length": 210,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 1.312385082244873,
+          "retrieved_count": 5,
+          "answer_length": 243,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 1.6166081428527832,
+          "retrieved_count": 5,
+          "answer_length": 465,
+          "success": true
+        }
+      ]
+    },
+    "HyDE": {
+      "technique": "HyDE",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 6.220906972885132,
+        "avg_query_time": 2.073575496673584
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 2.1416890621185303,
+          "retrieved_count": 10,
+          "answer_length": 497,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 2.0278542041778564,
+          "retrieved_count": 10,
+          "answer_length": 117,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 2.0511832237243652,
+          "retrieved_count": 10,
+          "answer_length": 526,
+          "success": true
+        }
+      ]
+    },
+    "NodeRAG": {
+      "technique": "NodeRAG",
+      "success": false,
+      "error": "NodeRAG: Too few documents retrieved (0)",
+      "performance": {},
+      "query_results": []
+    },
+    "HybridIFindRAG": {
+      "technique": "HybridIFindRAG",
+      "success": false,
+      "error": "HybridiFindRAGPipeline.run() missing 1 required positional argument: 'query'",
+      "performance": {},
+      "query_results": []
+    }
+  },
+  "performance_summary": {
+    "fastest_technique": "GraphRAG",
+    "slowest_technique": "HyDE",
+    "avg_times": {
+      "CRAG": 1.5111546516418457,
+      "GraphRAG": 1.2241727511088054,
+      "HyDE": 2.073575496673584
+    },
+    "retrieval_counts": {
+      "CRAG": 18.333333333333332,
+      "GraphRAG": 5.0,
+      "HyDE": 10.0
+    },
+    "answer_lengths": {
+      "CRAG": 347.6666666666667,
+      "GraphRAG": 306.0,
+      "HyDE": 380.0
+    }
+  },
+  "validation_status": "PARTIAL"
+}

@@ -171,33 +171,65 @@ def build_hf_embedder(model_name: str):
     return embedding_func_hf
 
 
-def get_embedding_func(model_name_override: Optional[str] = None, provider: Optional[str] = None, mock: bool = False) -> Callable[[List[str]], List[List[float]]]:
+def get_embedding_func(model_name_override: Optional[str] = None, provider: Optional[str] = None, mock: bool = False) -> Callable:
     """
-    Returns a function that takes a list of texts and returns a list of embeddings.
+    Returns a function that takes either a single text string or a list of texts and returns embeddings.
     Reads model name from config/config.yaml, with override option.
     Supports a "stub" provider or mock=True for testing without real models.
+    
+    The returned function handles both:
+    - Single string: embedding_func("text") -> List[float]
+    - List of strings: embedding_func(["text1", "text2"]) -> List[List[float]]
     """
     effective_model_name = model_name_override or get_config_value("embedding_model.name", DEFAULT_EMBEDDING_MODEL_NAME)
     dimension = get_config_value("embedding_model.dimension", DEFAULT_EMBEDDING_DIMENSION)
 
     if mock or provider == "stub" or effective_model_name == "stub":
         logger.info(f"Using stub embedding function with dimension {dimension}.")
-        def stub_embed_texts(texts: List[str]) -> List[List[float]]:
+        def stub_embed_texts(texts) -> List[List[float]]:
+            # Handle both single string and list of strings
+            if isinstance(texts, str):
+                return [(len(texts) % 100) * 0.01] * dimension
             return [[(len(text) % 100) * 0.01] * dimension for text in texts]
         return stub_embed_texts
     
     logger.info(f"Using pure HuggingFace embedder for model: {effective_model_name}")
-    return build_hf_embedder(effective_model_name)
+    base_embedder = build_hf_embedder(effective_model_name)
+    
+    def flexible_embedder(texts):
+        """Wrapper that handles both single strings and lists of strings"""
+        if isinstance(texts, str):
+            # Single string input - return single embedding
+            result = base_embedder([texts])
+            return result[0] if result else [0.0] * dimension
+        else:
+            # List input - return list of embeddings
+            return base_embedder(texts)
+    
+    return flexible_embedder
 
 
-def get_llm_func(provider: str = "openai", model_name: str = "gpt-3.5-turbo", **kwargs) -> Callable[[str], str]:
+def get_llm_func(provider: str = "openai", model_name: str = "gpt-3.5-turbo",
+                enable_cache: Optional[bool] = None, **kwargs) -> Callable[[str], str]:
     """
     Returns a function that takes a prompt string and returns an LLM completion string.
     Supports 'openai' or a 'stub' for testing.
+    
+    Args:
+        provider: LLM provider (openai, stub, etc.)
+        model_name: Model name
+        enable_cache: Override cache enable/disable (None = use config default)
+        **kwargs: Additional LLM parameters
+    
+    Returns:
+        LLM function (automatically cached if enabled)
     """
     global _llm_instance, _current_llm_key
     
-    llm_key = f"{provider}_{model_name}"
+    # Setup caching if enabled
+    cache_enabled = _setup_caching_if_needed(enable_cache)
+    
+    llm_key = f"{provider}_{model_name}_{cache_enabled}"
 
     if provider == "openai" and not os.getenv("OPENAI_API_KEY"):
         try:
@@ -291,20 +323,55 @@ def get_colbert_query_encoder_func(model_name: str = "stub_colbert_query_encoder
     """
     Returns a mock ColBERT query encoder function.
     Takes a text string and returns mock query token embeddings.
+    Uses embedding dimension from config to match stored token embeddings.
     Expected output: List[List[float]] -> [token_embedding_vector, ...]
     """
-    logger.info(f"Using mock ColBERT query encoder: {model_name}")
+    # Get embedding dimension from config to match stored token embeddings
+    embedding_dimension = get_config_value("embedding_model.dimension", 384)
+    logger.info(f"Using mock ColBERT query encoder: {model_name} with {embedding_dimension}D embeddings")
 
     def mock_colbert_query_encode(text: str) -> List[List[float]]:
         tokens = text.split()[:32]  # Limit to first 32 query tokens
         if not tokens:
             return []
         
+        import numpy as np
+        import hashlib
+        
         query_embeddings = []
+        embedding_dimension = get_config_value("embedding_model.dimension", 384)
+        
         for i, token_str in enumerate(tokens):
-            # Create a simple mock embedding based on token index and length
-            mock_embedding = [((i % 10) + len(token_str) % 10) * 0.01] * 128  # 128-dim
+            # Create semantically meaningful embeddings based on token content
+            # Use hash of token for deterministic but varied embeddings
+            token_hash = int(hashlib.md5(token_str.encode()).hexdigest()[:8], 16)
+            np.random.seed(token_hash % 10000)  # Deterministic but varied seed
+            
+            # Generate diverse embedding with semantic variation
+            base_embedding = np.random.randn(embedding_dimension)
+            
+            # Add position-based variation to distinguish token positions
+            position_factor = (i + 1) / len(tokens)  # 0.x to 1.0
+            base_embedding += np.random.randn(embedding_dimension) * position_factor * 0.3
+            
+            # Add token length influence for semantic diversity
+            length_factor = min(len(token_str) / 10.0, 1.0)  # 0.0 to 1.0
+            base_embedding += np.random.randn(embedding_dimension) * length_factor * 0.2
+            
+            # Normalize to unit vector (important for cosine similarity)
+            norm = np.linalg.norm(base_embedding)
+            if norm > 0:
+                base_embedding = base_embedding / norm
+            
+            # Ensure embeddings are diverse (avoid near-identical values)
+            mock_embedding = base_embedding.tolist()
             query_embeddings.append(mock_embedding)
+            
+            # Log first few tokens for debugging
+            if i < 3:
+                logger.debug(f"ColBERT Mock: Token '{token_str}' -> embedding range [{min(mock_embedding):.4f}, {max(mock_embedding):.4f}]")
+        
+        logger.info(f"ColBERT Mock: Generated {len(query_embeddings)} diverse token embeddings")
         return query_embeddings
 
     return mock_colbert_query_encode
@@ -398,6 +465,30 @@ def get_llm_func_for_embedded(provider: str = "stub", model_name: str = "stub-mo
         else:
             _llm_embedded = lambda prompt: "Error: LLM not configured for embedded"
     return _llm_embedded
+def get_colbert_query_encoder():
+    """
+    Get ColBERT query encoder function.
+    For now, this returns the same embedding function as a placeholder.
+    In a full implementation, this would use a specialized ColBERT model.
+    """
+    # For now, use the same embedding function as a placeholder
+    # In a real implementation, this would use a ColBERT-specific model
+    embedding_func = get_embedding_func()
+    
+    def colbert_query_encoder(query_text: str):
+        """
+        Encode a query using ColBERT-style encoding.
+        For now, this is a placeholder that uses standard embeddings.
+        """
+        # In a real ColBERT implementation, this would:
+        # 1. Tokenize the query
+        # 2. Generate token-level embeddings
+        # 3. Return a matrix of embeddings
+        
+        # Placeholder: return standard embedding
+        return embedding_func(query_text)
+    
+    return colbert_query_encoder
 
 
 if __name__ == '__main__':
@@ -451,3 +542,34 @@ if __name__ == '__main__':
     assert timed_result['latency_ms'] > 0
         
     print("common.utils tests finished.")
+
+def _setup_caching_if_needed(enable_cache: Optional[bool] = None) -> bool:
+    """
+    Setup LLM caching if needed and return whether caching is enabled.
+    
+    Args:
+        enable_cache: Override cache enable/disable (None = use config default)
+    
+    Returns:
+        True if caching is enabled, False otherwise
+    """
+    try:
+        from common.llm_cache_manager import setup_langchain_cache, is_langchain_cache_configured
+        from common.llm_cache_config import load_cache_config
+        
+        # Load configuration
+        config = load_cache_config()
+        
+        # Determine if caching should be enabled
+        cache_enabled = enable_cache if enable_cache is not None else config.enabled
+        
+        # Setup cache if enabled and not already configured
+        if cache_enabled and not is_langchain_cache_configured():
+            setup_langchain_cache(config)
+            logger.info("LLM caching initialized")
+        
+        return cache_enabled
+        
+    except Exception as e:
+        logger.warning(f"Failed to setup LLM caching: {e}")
+        return False
