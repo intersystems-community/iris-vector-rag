@@ -14,6 +14,7 @@ from .validation.factory import ValidatedPipelineFactory, create_validated_pipel
 from .validation.validator import PreConditionValidator
 from .validation.orchestrator import SetupOrchestrator
 from .validation.requirements import get_pipeline_requirements
+from common.utils import get_llm_func  # Import get_llm_func
 
 # Package version
 __version__ = "0.1.0"

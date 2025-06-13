@@ -10,7 +10,6 @@ import pytest
 from typing import Optional
 
 from common.iris_connector import get_iris_connection
-from data.loader import process_and_load_documents
 
 # --- Constants ---
 
