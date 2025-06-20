@@ -1,5 +1,6 @@
 # tests/conftest.py
 # Common test fixtures for RAG template tests.
+# Integrated with the new test mode framework for seamless mock control.
 
 import pytest
 import numpy as np
@@ -18,6 +19,16 @@ logger = logging.getLogger(__name__)
 
 # Make sure the project root is in the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+
+# Import test mode framework for integration
+try:
+    from tests.test_modes import MockController, TestMode
+    from tests.conftest_test_modes import configure_test_mode
+    TEST_MODE_FRAMEWORK_AVAILABLE = True
+    logger.info("✅ Test mode framework integration enabled")
+except ImportError as e:
+    TEST_MODE_FRAMEWORK_AVAILABLE = False
+    logger.warning(f"⚠️ Test mode framework not available: {e}")
 
 from common.utils import Document
 from common.utils import get_iris_connector, get_embedding_func, get_llm_func
@@ -39,6 +50,42 @@ from tests.fixtures.real_data import (
     use_real_data,
     iris_connection
 )
+
+# --- Test Mode Integration ---
+
+@pytest.fixture(scope="session", autouse=True)
+def test_mode_integration():
+    """
+    Auto-configure test mode integration.
+    This fixture runs automatically and sets up the test mode framework.
+    Only auto-detects mode if not explicitly set by tests.
+    """
+    if TEST_MODE_FRAMEWORK_AVAILABLE:
+        # Check if mode is already explicitly set by environment or tests
+        explicit_mode = os.environ.get("RAG_TEST_MODE")
+        if not explicit_mode:
+            # Only auto-detect if not explicitly set
+            current_mode = MockController.get_test_mode()
+        else:
+            # Use explicitly set mode
+            try:
+                current_mode = TestMode(explicit_mode)
+                MockController.set_test_mode(current_mode)
+            except ValueError:
+                current_mode = MockController.get_test_mode()
+        
+        logger.info(f"🧪 Test Mode: {current_mode.value.upper()}")
+        logger.info(f"🎭 Mocks Disabled: {MockController.are_mocks_disabled()}")
+        logger.info(f"🗄️  Real Database Required: {MockController.require_real_database()}")
+        logger.info(f"📊 Real Data Required: {MockController.require_real_data()}")
+        
+        # Set environment variables for other modules
+        os.environ["RAG_TEST_MODE"] = current_mode.value
+        os.environ["RAG_MOCKS_DISABLED"] = str(MockController.are_mocks_disabled())
+    else:
+        logger.info("🧪 Test Mode: LEGACY (test mode framework not available)")
+    
+    yield
 
 # --- Fixtures for Real Dependencies (for e2e metrics tests) ---
 

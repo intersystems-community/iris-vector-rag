@@ -35,7 +35,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, project_root)
 
 # Import RAGAS components
 from ragas import evaluate
@@ -148,10 +149,11 @@ def validate_dataset_completeness(iris_connector) -> None:
         cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
         total_docs = cursor.fetchone()[0]
         
-        # Check documents with embeddings
+        # Check documents with embeddings (main document embeddings, not token embeddings)
         cursor.execute("""
-            SELECT COUNT(DISTINCT doc_id) 
-            FROM RAG.DocumentTokenEmbeddings
+            SELECT COUNT(*) 
+            FROM RAG.SourceDocuments 
+            WHERE embedding IS NOT NULL AND embedding != ''
         """)
         docs_with_embeddings = cursor.fetchone()[0]
         

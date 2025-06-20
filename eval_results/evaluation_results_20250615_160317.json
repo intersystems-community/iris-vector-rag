@@ -1,0 +1,935 @@
+{
+  "HyDE": {
+    "pipeline_name": "HyDE",
+    "success_rate": 0,
+    "avg_response_time": 0,
+    "avg_documents_retrieved": 0,
+    "avg_similarity_score": 0,
+    "avg_answer_length": 0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 2.5590858459472656,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 0
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 3.5827560424804688,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 0
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 2.9574780464172363,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 0
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 3.169853925704956,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 0
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 7.829808235168457,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 0
+      },
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 6.605292081832886,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 1
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 2.7933411598205566,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 1
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 2.1008541584014893,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 1
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 2.681303024291992,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 1
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 3.4669570922851562,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 1
+      },
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 2.3659629821777344,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 2
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 3.9380042552948,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 2
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 2.4081950187683105,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 2
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 3.389256000518799,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 2
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 6.833629369735718,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HyDE",
+        "iteration": 2
+      }
+    ]
+  },
+  "ColBERT": {
+    "pipeline_name": "ColBERT",
+    "success_rate": 0,
+    "avg_response_time": 0,
+    "avg_documents_retrieved": 0,
+    "avg_similarity_score": 0,
+    "avg_answer_length": 0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 0.12619590759277344,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 0
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 0.052021026611328125,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 0
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 0.05111193656921387,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 0
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 0.05298614501953125,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 0
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 0.05527019500732422,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 0
+      },
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 0.01501607894897461,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 1
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 0.015331745147705078,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 1
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 0.020380020141601562,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 1
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 0.024496793746948242,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 1
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 0.016581296920776367,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 1
+      },
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 0.023296117782592773,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 2
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 0.02504587173461914,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 2
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 0.02606797218322754,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 2
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 0.02119898796081543,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 2
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 0.024747133255004883,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()",
+        "pipeline_name": "ColBERT",
+        "iteration": 2
+      }
+    ]
+  },
+  "HybridIFind": {
+    "pipeline_name": "HybridIFind",
+    "success_rate": 0,
+    "avg_response_time": 0,
+    "avg_documents_retrieved": 0,
+    "avg_similarity_score": 0,
+    "avg_answer_length": 0,
+    "ragas_scores": null,
+    "individual_results": [
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 0.14392399787902832,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 0
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 0.02899909019470215,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 0
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 0.02797698974609375,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 0
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 0.027534961700439453,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 0
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 0.02885293960571289,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 0
+      },
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 0.022265195846557617,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 1
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 0.030158042907714844,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 1
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 0.02736830711364746,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 1
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 0.013995885848999023,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 1
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 0.018433809280395508,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 1
+      },
+      {
+        "query": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "keywords": [
+          "metformin",
+          "diabetes",
+          "glucose",
+          "insulin"
+        ],
+        "response_time": 0.026911020278930664,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 2
+      },
+      {
+        "query": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "keywords": [
+          "SGLT2",
+          "kidney",
+          "nephroprotection",
+          "albuminuria"
+        ],
+        "response_time": 0.039138078689575195,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 2
+      },
+      {
+        "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety.",
+        "keywords": [
+          "GLP-1",
+          "insulin",
+          "glucagon",
+          "satiety"
+        ],
+        "response_time": 0.023051977157592773,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 2
+      },
+      {
+        "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure.",
+        "keywords": [
+          "SGLT2",
+          "cardiovascular",
+          "heart failure",
+          "events"
+        ],
+        "response_time": 0.021924972534179688,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 2
+      },
+      {
+        "query": "How do statins prevent cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "ground_truth": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation.",
+        "keywords": [
+          "statins",
+          "cholesterol",
+          "atherosclerotic",
+          "HMG-CoA"
+        ],
+        "response_time": 0.02648615837097168,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "success": false,
+        "error": "object of type 'NoneType' has no len()",
+        "pipeline_name": "HybridIFind",
+        "iteration": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "test_timestamp": "2025-06-19T12:39:36.709712",
+  "total_pipelines": 7,
+  "status_counts": {
+    "broken": 7
+  },
+  "working_pipelines": [],
+  "broken_pipelines": [
+    "BasicRAG",
+    "HyDERAG",
+    "CRAG",
+    "ColBERTRAG",
+    "NodeRAG",
+    "GraphRAG",
+    "HybridIFindRAG"
+  ],
+  "partial_pipelines": [],
+  "details_by_pipeline": {
+    "BasicRAG": {
+      "status": "broken",
+      "notes": [
+        "Initialization failed: get_embedding_func() got an unexpected keyword argument 'model_name'"
+      ],
+      "initialization_error": "get_embedding_func() got an unexpected keyword argument 'model_name'",
+      "query_error": null
+    },
+    "HyDERAG": {
+      "status": "broken",
+      "notes": [
+        "Initialization failed: get_embedding_func() got an unexpected keyword argument 'model_name'"
+      ],
+      "initialization_error": "get_embedding_func() got an unexpected keyword argument 'model_name'",
+      "query_error": null
+    },
+    "CRAG": {
+      "status": "broken",
+      "notes": [
+        "Initialization failed: get_embedding_func() got an unexpected keyword argument 'model_name'"
+      ],
+      "initialization_error": "get_embedding_func() got an unexpected keyword argument 'model_name'",
+      "query_error": null
+    },
+    "ColBERTRAG": {
+      "status": "broken",
+      "notes": [
+        "Initialization failed: get_embedding_func() got an unexpected keyword argument 'model_name'"
+      ],
+      "initialization_error": "get_embedding_func() got an unexpected keyword argument 'model_name'",
+      "query_error": null
+    },
+    "NodeRAG": {
+      "status": "broken",
+      "notes": [
+        "Initialization failed: get_embedding_func() got an unexpected keyword argument 'model_name'"
+      ],
+      "initialization_error": "get_embedding_func() got an unexpected keyword argument 'model_name'",
+      "query_error": null
+    },
+    "GraphRAG": {
+      "status": "broken",
+      "notes": [
+        "Initialization failed: get_embedding_func() got an unexpected keyword argument 'model_name'"
+      ],
+      "initialization_error": "get_embedding_func() got an unexpected keyword argument 'model_name'",
+      "query_error": null
+    },
+    "HybridIFindRAG": {
+      "status": "broken",
+      "notes": [
+        "Initialization failed: get_embedding_func() got an unexpected keyword argument 'model_name'"
+      ],
+      "initialization_error": "get_embedding_func() got an unexpected keyword argument 'model_name'",
+      "query_error": null
+    }
+  }
+}

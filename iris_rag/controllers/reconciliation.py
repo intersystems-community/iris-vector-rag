@@ -25,7 +25,7 @@ from iris_rag.controllers.reconciliation_components.models import (
     QualityIssues
 )
 from iris_rag.controllers.reconciliation_components.state_observer import StateObserver
-from iris_rag.controllers.reconciliation_components.drift_analyzer import DriftAnalyzer
+from iris_rag.controllers.reconciliation_components.pipeline_drift_analyzer import PipelineDriftAnalyzer
 from iris_rag.controllers.reconciliation_components.document_service import DocumentService
 from iris_rag.controllers.reconciliation_components.remediation_engine import RemediationEngine
 from iris_rag.controllers.reconciliation_components.convergence_verifier import ConvergenceVerifier
@@ -62,8 +62,8 @@ class ReconciliationController:
             self.embedding_validator
         )
         
-        # Initialize DriftAnalyzer
-        self.drift_analyzer = DriftAnalyzer()
+        # Initialize PipelineDriftAnalyzer with connection manager
+        self.drift_analyzer = PipelineDriftAnalyzer(self.connection_manager)
         
         # Initialize DocumentService
         self.document_service = DocumentService(self.connection_manager, self.config_manager)
@@ -126,8 +126,8 @@ class ReconciliationController:
             # Phase 2: Get desired state for the specific pipeline
             desired_state = self.state_observer.get_desired_state(pipeline_type)
             
-            # Phase 3: Analyze drift
-            drift_analysis = self.drift_analyzer.analyze_drift(current_state, desired_state)
+            # Phase 3: Analyze drift with pipeline-specific detection
+            drift_analysis = self.drift_analyzer.analyze_pipeline_drift(current_state, desired_state, pipeline_type)
             
             # Phase 4: Reconcile drift (if needed)
             actions_taken = []
@@ -190,8 +190,8 @@ class ReconciliationController:
             # Phase 2: Get desired state for the specific pipeline
             desired_state = self.state_observer.get_desired_state(pipeline_type)
             
-            # Phase 3: Analyze drift
-            drift_analysis = self.drift_analyzer.analyze_drift(current_state, desired_state)
+            # Phase 3: Analyze drift with pipeline-specific detection
+            drift_analysis = self.drift_analyzer.analyze_pipeline_drift(current_state, desired_state, pipeline_type)
             
             logger.info(f"Drift analysis completed for {pipeline_type}: "
                        f"{len(drift_analysis.issues)} issues detected")
@@ -219,7 +219,7 @@ class ReconciliationController:
         try:
             current_state = self.state_observer.observe_current_state()
             desired_state = self.state_observer.get_desired_state(pipeline_type)
-            drift_analysis = self.drift_analyzer.analyze_drift(current_state, desired_state)
+            drift_analysis = self.drift_analyzer.analyze_pipeline_drift(current_state, desired_state, pipeline_type)
             daemon_status = self.daemon_controller.get_status()
             
             return {

@@ -1,0 +1,401 @@
+{
+  "timestamp": "2025-06-20T07:25:15.348220",
+  "evaluation_type": "REAL_PIPELINE_EVALUATION",
+  "test_queries": [
+    "What are the main causes of heart disease?",
+    "How does insulin work in the body?",
+    "What are the symptoms of diabetes?",
+    "What treatments are available for cancer?",
+    "How do vaccines prevent infections?"
+  ],
+  "pipeline_results": {
+    "BasicRAG": {
+      "status": "success",
+      "queries_tested": 5,
+      "successful_queries": 5,
+      "failed_queries": 0,
+      "avg_response_time_ms": 3826.9,
+      "retrieval_success_rate": 1.0,
+      "answer_success_rate": 1.0,
+      "combined_score": 1.0,
+      "query_results": [
+        {
+          "query": "What are the main causes of heart disease?",
+          "answer": "The main causes of heart disease can vary based on the specific condition being discussed in the context documents. In Document 1, the focus is on acute myocardial infarction (AMI), which is a serious...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 2974.609851837158,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How does insulin work in the body?",
+          "answer": "Insulin is a hormone produced by the pancreas that plays a crucial role in regulating blood sugar levels in the body. In the context documents provided, insulin therapy is mentioned as a treatment for...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 5077.444076538086,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What are the symptoms of diabetes?",
+          "answer": "Based on the information provided in the context documents, the symptoms of diabetes can vary depending on the type of diabetes. In the case of type 2 diabetes mellitus, symptoms can include fluctuati...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 2994.0860271453857,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What treatments are available for cancer?",
+          "answer": "Based on the information provided in the context documents, there are several treatment options available for different types of cancer:\n\n1. HER2-Positive Breast Cancer: Treatment options for HER2-pos...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 5115.308046340942,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How do vaccines prevent infections?",
+          "answer": "Vaccines prevent infections by stimulating the immune system to produce a protective response against specific pathogens. In the context documents provided, different vaccine candidates are discussed ...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 2973.2210636138916,
+          "has_answer": true,
+          "has_retrieval": true
+        }
+      ]
+    },
+    "HyDE": {
+      "status": "success",
+      "queries_tested": 5,
+      "successful_queries": 5,
+      "failed_queries": 0,
+      "avg_response_time_ms": 4885.8,
+      "retrieval_success_rate": 1.0,
+      "answer_success_rate": 1.0,
+      "combined_score": 1.0,
+      "query_results": [
+        {
+          "query": "What are the main causes of heart disease?",
+          "answer": "The main causes of heart disease include dyslipidemia, acute kidney injury, and inflammation markers like the neutrophil-to-lymphocyte ratio (NLR). These factors can contribute to cardiovascular event...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 5158.712148666382,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How does insulin work in the body?",
+          "answer": "Insulin helps regulate blood sugar levels in the body by allowing cells to take in glucose from the bloodstream and use it for energy. It also helps lower glucose production in the liver and improves ...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 3617.871046066284,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What are the symptoms of diabetes?",
+          "answer": "The symptoms of diabetes can include fluctuating blood glucose concentrations, episodes of unpredictable hypoglycemia, neurological features, swelling in the abdomen, painless firm swelling in the hyp...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 6003.161907196045,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What treatments are available for cancer?",
+          "answer": "Based on the retrieved documents, treatments available for cancer include curative treatment with systemic and local combined therapy, perioperative chemotherapy followed by surgical resection or live...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 5640.237808227539,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How do vaccines prevent infections?",
+          "answer": "Vaccines prevent infections by stimulating the immune system to produce a specific response against a particular pathogen. This response can include the production of antibodies, activation of T cells...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 4009.1488361358643,
+          "has_answer": true,
+          "has_retrieval": true
+        }
+      ]
+    },
+    "CRAG": {
+      "status": "success",
+      "queries_tested": 5,
+      "successful_queries": 5,
+      "failed_queries": 0,
+      "avg_response_time_ms": 2127.8,
+      "retrieval_success_rate": 1.0,
+      "answer_success_rate": 1.0,
+      "combined_score": 1.0,
+      "query_results": [
+        {
+          "query": "What are the main causes of heart disease?",
+          "answer": "The main causes of heart disease can vary depending on the specific condition being considered. In the provided documents, the causes of heart disease mentioned include factors such as CD38 deficiency...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 3082.296133041382,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How does insulin work in the body?",
+          "answer": "Insulin works in the body by regulating blood sugar levels through facilitating the uptake of glucose into cells. This process helps to lower blood glucose levels by allowing cells to use glucose for ...",
+          "retrieved_documents_count": 4,
+          "response_time_ms": 2040.8811569213867,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What are the symptoms of diabetes?",
+          "answer": "Based on the provided documents, the symptoms of diabetes were not explicitly mentioned. Document 1 discussed a case of a patient with type 2 diabetes mellitus who experienced recurrent and severe hyp...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 1333.277940750122,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What treatments are available for cancer?",
+          "answer": "Based on the provided documents, the available treatments for cancer include chemotherapy, radiation therapy, and surgical procedures. Additionally, specific treatments are mentioned for different typ...",
+          "retrieved_documents_count": 4,
+          "response_time_ms": 1907.0820808410645,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How do vaccines prevent infections?",
+          "answer": "Vaccines work by stimulating the immune system to recognize and fight specific pathogens. When a vaccine is administered, it contains either weakened or inactivated parts of the pathogen or a similar ...",
+          "retrieved_documents_count": 4,
+          "response_time_ms": 2275.590181350708,
+          "has_answer": true,
+          "has_retrieval": true
+        }
+      ]
+    },
+    "GraphRAG": {
+      "status": "success",
+      "queries_tested": 5,
+      "successful_queries": 5,
+      "failed_queries": 0,
+      "avg_response_time_ms": 777.1,
+      "retrieval_success_rate": 1.0,
+      "answer_success_rate": 1.0,
+      "combined_score": 1.0,
+      "query_results": [
+        {
+          "query": "What are the main causes of heart disease?",
+          "answer": "The main causes of heart disease include CD38 deficiency, hemodynamic forces such as wall shear stress, and multisystem complications in conditions like myotonic dystrophy type 1.",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 758.0928802490234,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How does insulin work in the body?",
+          "answer": "Insulin helps lower glucose levels in the body by allowing cells to take in glucose from the bloodstream and use it for energy. It also helps regulate the production of glucose in the liver and improv...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 735.3129386901855,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What are the symptoms of diabetes?",
+          "answer": "Some common symptoms of diabetes include frequent urination, excessive thirst, unexplained weight loss, extreme fatigue, blurred vision, slow healing of wounds, and tingling or numbness in hands and f...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 732.5379848480225,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What treatments are available for cancer?",
+          "answer": "Based on the retrieved documents, treatments for cancer include systemic therapies such as trastuzumab and alectinib, as well as local consolidative therapy and combined systemic and local treatment w...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 750.4942417144775,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How do vaccines prevent infections?",
+          "answer": "Vaccines prevent infections by introducing a weakened or inactive form of a pathogen into the body, stimulating the immune system to produce antibodies against the pathogen. This immune response creat...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 908.9431762695312,
+          "has_answer": true,
+          "has_retrieval": true
+        }
+      ]
+    },
+    "ColBERT": {
+      "status": "failed",
+      "error": "All queries failed",
+      "query_results": [
+        {
+          "query": "What are the main causes of heart disease?",
+          "error": "Vector search failed: Database operation failed during similarity_search: DatabaseError",
+          "response_time_ms": 0,
+          "has_answer": false,
+          "has_retrieval": false
+        },
+        {
+          "query": "How does insulin work in the body?",
+          "error": "Vector search failed: Database operation failed during similarity_search: DatabaseError",
+          "response_time_ms": 0,
+          "has_answer": false,
+          "has_retrieval": false
+        },
+        {
+          "query": "What are the symptoms of diabetes?",
+          "error": "Vector search failed: Database operation failed during similarity_search: DatabaseError",
+          "response_time_ms": 0,
+          "has_answer": false,
+          "has_retrieval": false
+        },
+        {
+          "query": "What treatments are available for cancer?",
+          "error": "Vector search failed: Database operation failed during similarity_search: DatabaseError",
+          "response_time_ms": 0,
+          "has_answer": false,
+          "has_retrieval": false
+        },
+        {
+          "query": "How do vaccines prevent infections?",
+          "error": "Vector search failed: Database operation failed during similarity_search: DatabaseError",
+          "response_time_ms": 0,
+          "has_answer": false,
+          "has_retrieval": false
+        }
+      ]
+    },
+    "NodeRAG": {
+      "status": "success",
+      "queries_tested": 5,
+      "successful_queries": 5,
+      "failed_queries": 0,
+      "avg_response_time_ms": 18.1,
+      "retrieval_success_rate": 0.0,
+      "answer_success_rate": 1.0,
+      "combined_score": 0.5,
+      "query_results": [
+        {
+          "query": "What are the main causes of heart disease?",
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents_count": 0,
+          "response_time_ms": 19.97518539428711,
+          "has_answer": true,
+          "has_retrieval": false
+        },
+        {
+          "query": "How does insulin work in the body?",
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents_count": 0,
+          "response_time_ms": 26.515960693359375,
+          "has_answer": true,
+          "has_retrieval": false
+        },
+        {
+          "query": "What are the symptoms of diabetes?",
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents_count": 0,
+          "response_time_ms": 18.337011337280273,
+          "has_answer": true,
+          "has_retrieval": false
+        },
+        {
+          "query": "What treatments are available for cancer?",
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents_count": 0,
+          "response_time_ms": 13.193130493164062,
+          "has_answer": true,
+          "has_retrieval": false
+        },
+        {
+          "query": "How do vaccines prevent infections?",
+          "answer": "I could not find enough information from the knowledge graph to answer your question.",
+          "retrieved_documents_count": 0,
+          "response_time_ms": 12.625932693481445,
+          "has_answer": true,
+          "has_retrieval": false
+        }
+      ]
+    },
+    "HybridIFind": {
+      "status": "success",
+      "queries_tested": 5,
+      "successful_queries": 5,
+      "failed_queries": 0,
+      "avg_response_time_ms": 1049.2,
+      "retrieval_success_rate": 1.0,
+      "answer_success_rate": 1.0,
+      "combined_score": 1.0,
+      "query_results": [
+        {
+          "query": "What are the main causes of heart disease?",
+          "answer": "The main causes of heart disease can include factors such as genetic predisposition, environmental factors, metabolic enzyme dysregulation (such as CD38), hemodynamic forces affecting heart developmen...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 753.4408569335938,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How does insulin work in the body?",
+          "answer": "Insulin helps regulate blood sugar levels in the body by allowing cells to take in glucose from the bloodstream and use it for energy. It also helps store excess glucose in the liver for later use. In...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 1572.633981704712,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What are the symptoms of diabetes?",
+          "answer": "Some symptoms of diabetes include fluctuating blood glucose concentration, episodes of unpredictable hypoglycemia, values inferior to 0.3 g/l associated with neurological features, painless swelling i...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 778.1260013580322,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "What treatments are available for cancer?",
+          "answer": "Based on the retrieved documents, the available treatments for cancer include:\n1. Systemic and local treatment with curative intent for patients with oligometastatic gastroesophageal cancer, including...",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 1308.039903640747,
+          "has_answer": true,
+          "has_retrieval": true
+        },
+        {
+          "query": "How do vaccines prevent infections?",
+          "answer": "Vaccines prevent infections by stimulating the immune system to produce antibodies or activate T cells specific to the pathogen, providing protection against future exposure to the infectious agent.",
+          "retrieved_documents_count": 3,
+          "response_time_ms": 833.6100578308105,
+          "has_answer": true,
+          "has_retrieval": true
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_pipelines_tested": 7,
+    "successful_pipelines": 6,
+    "failed_pipelines": 1,
+    "avg_combined_score": 0.917,
+    "avg_response_time_ms": 2114.2,
+    "pipeline_rankings": [
+      [
+        "BasicRAG",
+        1.0
+      ],
+      [
+        "HyDE",
+        1.0
+      ],
+      [
+        "CRAG",
+        1.0
+      ],
+      [
+        "GraphRAG",
+        1.0
+      ],
+      [
+        "HybridIFind",
+        1.0
+      ],
+      [
+        "NodeRAG",
+        0.5
+      ]
+    ],
+    "best_pipeline": "BasicRAG",
+    "worst_pipeline": "NodeRAG"
+  }
+}

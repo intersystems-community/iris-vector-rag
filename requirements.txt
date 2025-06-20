@@ -1,3 +1,8 @@
+# NOTE: This project uses uv for dependency management.
+# Dependencies are defined in pyproject.toml
+# This requirements.txt is kept for compatibility.
+# To install: make install (which uses uv sync)
+
 # Core IRIS and ML dependencies
 intersystems-irispython==5.1.2
 sqlalchemy>=2.0.0

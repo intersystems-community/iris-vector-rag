@@ -286,7 +286,8 @@ def process_and_load_documents(
     connection=None, 
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
     colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None,
-    limit: int = 1000, 
+    db_config: Optional[Dict[str, Any]] = None, # Added db_config parameter
+    limit: int = 1000,
     batch_size: int = 50,
     use_mock: bool = False
 ) -> Dict[str, Any]:
@@ -298,7 +299,8 @@ def process_and_load_documents(
     # Create connection if not provided
     conn_provided = connection is not None
     if not connection:
-        connection = get_iris_connection(use_mock=use_mock)
+        # Pass db_config to get_iris_connection
+        connection = get_iris_connection(config=db_config, use_mock=use_mock)
         if not connection:
             return {
                 "success": False,

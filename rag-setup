@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+# RAG Templates Unified Setup Script
+# Detects environment and launches appropriate CLI (Python or Node.js)
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Check if Python is available and has the required modules
+check_python() {
+    if command -v python3 >/dev/null 2>&1; then
+        if python3 -c "import iris_rag.cli" >/dev/null 2>&1; then
+            echo "python3"
+            return 0
+        fi
+    fi
+    
+    if command -v python >/dev/null 2>&1; then
+        if python -c "import iris_rag.cli" >/dev/null 2>&1; then
+            echo "python"
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Check if Node.js is available and has the required modules
+check_nodejs() {
+    if command -v node >/dev/null 2>&1; then
+        # Check if we're in the nodejs directory or can find the setup wizard
+        if [ -f "nodejs/src/cli/setup-wizard.js" ]; then
+            echo "nodejs/src/cli/setup-wizard.js"
+            return 0
+        elif [ -f "src/cli/setup-wizard.js" ]; then
+            echo "src/cli/setup-wizard.js"
+            return 0
+        fi
+    fi
+    
+    return 1
+}
+
+# Show help
+show_help() {
+    echo -e "${BLUE}🚀 RAG Templates Unified Setup${NC}"
+    echo ""
+    echo "This script automatically detects your environment and launches the appropriate"
+    echo "setup wizard (Python or Node.js) for RAG Templates with InterSystems IRIS."
+    echo ""
+    echo -e "${CYAN}Usage:${NC}"
+    echo "  ./rag-setup                     # Interactive setup wizard"
+    echo "  ./rag-setup --ifind-only        # IFind optimization only"
+    echo "  ./rag-setup --python             # Force Python CLI"
+    echo "  ./rag-setup --nodejs             # Force Node.js CLI"
+    echo "  ./rag-setup --help               # Show this help"
+    echo ""
+    echo -e "${CYAN}Options:${NC}"
+    echo "  --ifind-only    Setup only IFind optimization"
+    echo "  --python        Force use of Python CLI"
+    echo "  --nodejs        Force use of Node.js CLI"
+    echo "  --help, -h      Show this help"
+    echo ""
+}
+
+# Main execution
+main() {
+    local force_python=false
+    local force_nodejs=false
+    local extra_args=()
+    
+    # Parse arguments
+    for arg in "$@"; do
+        case $arg in
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            --python)
+                force_python=true
+                ;;
+            --nodejs)
+                force_nodejs=true
+                ;;
+            *)
+                extra_args+=("$arg")
+                ;;
+        esac
+    done
+    
+    echo -e "${BLUE}🚀 RAG Templates Unified Setup${NC}"
+    echo -e "${CYAN}Detecting environment...${NC}"
+    echo ""
+    
+    # Determine which CLI to use
+    if [ "$force_python" = true ]; then
+        echo -e "${YELLOW}Forcing Python CLI...${NC}"
+        if python_cmd=$(check_python); then
+            echo -e "${GREEN}✅ Using Python CLI${NC}"
+            exec $python_cmd -m iris_rag.cli reconcile setup "${extra_args[@]}"
+        else
+            echo -e "${RED}❌ Python CLI not available${NC}"
+            echo "Please install the Python package: pip install -e ."
+            exit 1
+        fi
+    elif [ "$force_nodejs" = true ]; then
+        echo -e "${YELLOW}Forcing Node.js CLI...${NC}"
+        if setup_script=$(check_nodejs); then
+            echo -e "${GREEN}✅ Using Node.js CLI${NC}"
+            exec node "$setup_script" "${extra_args[@]}"
+        else
+            echo -e "${RED}❌ Node.js CLI not available${NC}"
+            echo "Please install Node.js dependencies: cd nodejs && npm install"
+            exit 1
+        fi
+    else
+        # Auto-detect best available option
+        if python_cmd=$(check_python); then
+            echo -e "${GREEN}✅ Python environment detected${NC}"
+            echo -e "${CYAN}Launching Python CLI...${NC}"
+            exec $python_cmd -m iris_rag.cli reconcile setup "${extra_args[@]}"
+        elif setup_script=$(check_nodejs); then
+            echo -e "${GREEN}✅ Node.js environment detected${NC}"
+            echo -e "${CYAN}Launching Node.js CLI...${NC}"
+            exec node "$setup_script" "${extra_args[@]}"
+        else
+            echo -e "${RED}❌ No suitable environment found${NC}"
+            echo ""
+            echo "Please install either:"
+            echo "• Python: pip install -e ."
+            echo "• Node.js: cd nodejs && npm install"
+            echo ""
+            echo "Then run this script again."
+            exit 1
+        fi
+    fi
+}
+
+# Run main function with all arguments
+main "$@"

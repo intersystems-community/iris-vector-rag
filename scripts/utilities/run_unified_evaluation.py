@@ -15,8 +15,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from eval.unified_ragas_evaluation_framework import UnifiedRAGASEvaluationFramework
-from eval.config_manager import ConfigManager
+from utilities.evaluation.unified_ragas_evaluation_framework import UnifiedRAGASEvaluationFramework
+from utilities.evaluation.config_manager import ConfigManager
 
 def setup_logging(level: str = "INFO"):
     """Setup logging configuration"""

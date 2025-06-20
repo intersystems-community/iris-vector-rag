@@ -32,6 +32,15 @@ testing:
 
 # ColBERT Specific Configuration
 colbert:
+  # Backend selection: "native" for our real ColBERT, "pylate" for external library
+  backend: "native"
+  
+  # ColBERT configuration
+  token_dimension: 768  # Dimension for token embeddings
+  model_name: "bert-base-uncased"  # HuggingFace model name
+  device: "cpu"  # Device to run on ("cpu" or "cuda")
+  
+  # Legacy configuration (still supported)
   document_encoder_model: "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT" # Model for ColBERT document token embeddings
   # query_encoder_model: "lightonai/GTE-ModernColBERT-v1" # Can be same or different for query side
   candidate_pool_size: 100 # Number of candidates for Stage 1 retrieval before ColBERT re-ranking

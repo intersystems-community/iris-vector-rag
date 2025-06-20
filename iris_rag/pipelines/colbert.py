@@ -1,3 +1,4 @@
+print("DEBUG: EXECUTING LATEST iris_rag/pipelines/colbert.py")
 """
 ColBERT RAG Pipeline implementation for iris_rag package.
 
@@ -44,25 +45,76 @@ class ColBERTRAGPipeline(RAGPipeline):
             vector_store: Optional VectorStore instance
         """
         super().__init__(connection_manager, config_manager, vector_store)
-        self.embedding_func = embedding_func
         
-        self.colbert_query_encoder = colbert_query_encoder
+        # Initialize schema manager for dimension management
+        from ..storage.schema_manager import SchemaManager
+        self.schema_manager = SchemaManager(connection_manager, config_manager)
+        
+        # Get dimensions from schema manager
+        self.doc_embedding_dim = self.schema_manager.get_vector_dimension("SourceDocuments")
+        self.token_embedding_dim = self.schema_manager.get_vector_dimension("DocumentTokenEmbeddings")
+        
+        logger.info(f"ColBERT: Document embeddings = {self.doc_embedding_dim}D, Token embeddings = {self.token_embedding_dim}D")
+        
+        # Store embedding functions with proper naming
+        self.doc_embedding_func = embedding_func  # 384D for document-level retrieval
+        self.colbert_query_encoder = colbert_query_encoder  # 768D for token-level scoring
         self.llm_func = llm_func
         
-        # Get embedding function from config if not provided
+        # Get ColBERT interface from config if not provided
         if not self.colbert_query_encoder:
-            from common.utils import get_colbert_query_encoder_func
-            self.colbert_query_encoder = get_colbert_query_encoder_func()
+            from ..embeddings.colbert_interface import get_colbert_interface_from_config
+            self.colbert_interface = get_colbert_interface_from_config(
+                config_manager, connection_manager
+            )
+            # Wrap interface methods for backwards compatibility
+            self.colbert_query_encoder = self.colbert_interface.encode_query
+        else:
+            # If custom encoder provided, use RAG Templates interface for other operations
+            from ..embeddings.colbert_interface import RAGTemplatesColBERTInterface
+            self.colbert_interface = RAGTemplatesColBERTInterface(self.token_embedding_dim)
         
         if not self.llm_func:
             from common.utils import get_llm_func
             self.llm_func = get_llm_func()
             
-        if not self.embedding_func:
+        if not self.doc_embedding_func:
             from common.utils import get_embedding_func
-            self.embedding_func = get_embedding_func()
+            self.doc_embedding_func = get_embedding_func()
         
-        logger.info("ColBERTRAGPipeline initialized with iris_rag architecture")
+        # Validate dimensions match expectations
+        self._validate_embedding_dimensions()
+        
+        logger.info("ColBERTRAGPipeline initialized with proper dimension handling")
+    
+    def _validate_embedding_dimensions(self):
+        """
+        Validate that embedding functions produce the expected dimensions.
+        """
+        try:
+            # Test document embedding function
+            if self.doc_embedding_func:
+                test_doc_embedding = self.doc_embedding_func("test")
+                if len(test_doc_embedding) != self.doc_embedding_dim:
+                    logger.warning(f"ColBERT: Document embedding function produces {len(test_doc_embedding)}D, expected {self.doc_embedding_dim}D")
+            
+            # Test ColBERT query encoder  
+            if self.colbert_query_encoder:
+                test_token_embeddings = self.colbert_query_encoder("test")
+                if test_token_embeddings and len(test_token_embeddings[0]) != self.token_embedding_dim:
+                    logger.warning(f"ColBERT: Token embedding function produces {len(test_token_embeddings[0])}D, expected {self.token_embedding_dim}D")
+                    
+        except Exception as e:
+            logger.warning(f"ColBERT: Could not validate embedding dimensions: {e}")
+
+    def _format_vector_for_sql(self, vector: List[float]) -> str:
+        """Formats a vector list into a comma-separated string for IRIS SQL."""
+        if not vector:
+            # Return a string representation of an empty list,
+            # or handle as an error if empty vectors are not expected.
+            # For TO_VECTOR, an empty list might be valid for an empty vector.
+            return "[]"
+        return "[" + ",".join(f"{x:.15g}" for x in vector) + "]"
     
     def validate_setup(self) -> bool:
         """
@@ -150,8 +202,15 @@ class ColBERTRAGPipeline(RAGPipeline):
             if not query_token_embeddings:
                 raise ValueError("ColBERT query encoder returned empty token embeddings")
             
-            # Stage 2: Retrieve candidate documents using ColBERT V2 hybrid approach
-            retrieved_docs = self._retrieve_documents_with_colbert(query, query_token_embeddings, top_k)
+            # Stage 2: Use IRISVectorStore for ColBERT search (with query_text for proper doc-level embedding)
+            search_results = self.vector_store.colbert_search(
+                query_token_embeddings=query_token_embeddings,
+                k=top_k,
+                query_text=query  # Pass query text for proper 384D document embedding generation
+            )
+            
+            # Convert results to Document list for compatibility
+            retrieved_docs = [doc for doc, score in search_results]
             
             # Stage 3: Generate answer using LLM
             answer = self._generate_answer(query, retrieved_docs)
@@ -192,18 +251,28 @@ class ColBERTRAGPipeline(RAGPipeline):
         cursor = connection.cursor()
         
         try:
-            # Generate query token embeddings first
-            query_token_embeddings = self.colbert_query_encoder(query_text)
-            if not query_token_embeddings:
-                logger.warning("ColBERT HNSW: No query token embeddings generated")
+            # For HNSW stage against RAG.SourceDocuments, use the standard document embedding function (384D)
+            if not self.doc_embedding_func:
+                logger.error("ColBERT HNSW: Document embedding_func is not initialized.")
                 return []
+
+            doc_level_query_embedding = self.doc_embedding_func(query_text) # This should be 384D
             
-            # Calculate average embedding for document-level search
-            import numpy as np
-            avg_embedding = np.mean(query_token_embeddings, axis=0)
-            query_vector_str = f"[{','.join([f'{float(x):.10f}' for x in avg_embedding])}]"
+            if not doc_level_query_embedding or \
+               not isinstance(doc_level_query_embedding, list) or \
+               not all(isinstance(x, float) for x in doc_level_query_embedding):
+                 logger.error(f"ColBERT HNSW: Failed to generate valid List[float] document-level query embedding. Type: {type(doc_level_query_embedding)}")
+                 return []
             
-            logger.info(f"ColBERT HNSW: Searching for candidates with query: '{query_text[:50]}...'")
+            query_vector_dim = len(doc_level_query_embedding)
+            # Validate dimension matches expected document embedding dimension
+            if query_vector_dim != self.doc_embedding_dim:
+                 logger.error(f"ColBERT HNSW: Document-level query embedding dimension is {query_vector_dim}, expected {self.doc_embedding_dim}.")
+                 return []
+
+            query_vector_str = self._format_vector_for_sql(doc_level_query_embedding)
+            
+            logger.info(f"ColBERT HNSW: Searching for candidates with query '{query_text[:50]}...' using {query_vector_dim}D embedding.")
             
             # First, verify we have medical documents in SourceDocuments
             count_sql = """
@@ -223,26 +292,31 @@ class ColBERTRAGPipeline(RAGPipeline):
                 return []
             
             # Perform HNSW search on SourceDocuments with enhanced logging
-            # Note: Removed LENGTH() check as it's not supported for CLOB fields in IRIS
-            sql = f"""
-                SELECT TOP {k} doc_id,
-                       VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score,
-                       SUBSTRING(text_content, 1, 100) AS content_preview
-                FROM RAG.SourceDocuments
-                WHERE embedding IS NOT NULL
-                  AND text_content IS NOT NULL
-                ORDER BY score DESC
-            """
+            # Use vector_sql_utils to construct the query properly
+            from common.vector_sql_utils import format_vector_search_sql, execute_vector_search
             
-            cursor.execute(sql, [query_vector_str])
-            results = cursor.fetchall()
+            # Remove this redundant line - use the already formatted query_vector_str from above
+            
+            sql = format_vector_search_sql(
+                table_name="RAG.SourceDocuments",
+                vector_column="embedding", 
+                vector_string=query_vector_str,
+                embedding_dim=query_vector_dim,
+                top_k=k,
+                id_column="doc_id",
+                content_column="text_content"
+            )
+            
+            # Use execute_vector_search utility 
+            results = execute_vector_search(cursor, sql)
             
             # Extract document IDs and log content for debugging
             candidate_doc_ids = []
             for i, row in enumerate(results):
                 doc_id = row[0]
-                score = row[1]
+                title = row[1] if len(row) > 1 else "No title"
                 content_preview = row[2] if len(row) > 2 else "No preview"
+                score = row[3] if len(row) > 3 else 0.0
                 
                 candidate_doc_ids.append(doc_id)
                 
@@ -548,8 +622,25 @@ class ColBERTRAGPipeline(RAGPipeline):
             num_candidates = self.config_manager.get('pipelines:colbert:num_candidates', 30)
             logger.debug(f"ColBERT V2: Using {num_candidates} candidates for retrieval")
             
-            # Stage 1: Retrieve candidate documents using HNSW
-            candidate_doc_ids = self._retrieve_candidate_documents_hnsw(query_text, k=num_candidates)
+            # Stage 1: Use vector store for candidate retrieval (replacing broken SQL)
+            # Convert query text to document-level embedding (384D) for candidate retrieval
+            doc_level_query_embedding = self.doc_embedding_func(query_text)
+            
+            # Validate document embedding dimension
+            if len(doc_level_query_embedding) != self.doc_embedding_dim:
+                logger.error(f"ColBERT: Document embedding dimension mismatch: got {len(doc_level_query_embedding)}, expected {self.doc_embedding_dim}")
+                return []
+            
+            logger.debug(f"ColBERT: Using {self.doc_embedding_dim}D document embedding for candidate retrieval")
+            
+            # Use vector store for reliable candidate retrieval (use specific method to avoid interface confusion)
+            candidate_results = self.vector_store.similarity_search_by_embedding(
+                query_embedding=doc_level_query_embedding,
+                top_k=num_candidates
+            )
+            
+            # Extract document IDs from results
+            candidate_doc_ids = [int(doc.id) for doc, score in candidate_results if doc.id.isdigit()]
             
             if not candidate_doc_ids:
                 logger.warning("ColBERT V2: No candidate documents found via HNSW search")
@@ -566,14 +657,20 @@ class ColBERTRAGPipeline(RAGPipeline):
             
             logger.info(f"ColBERT V2: Loaded token embeddings for {len(doc_embeddings_map)} documents")
             
-            # Stage 3: Calculate MaxSim scores for candidates
+            # Stage 3: Calculate MaxSim scores for candidates using token embeddings
             doc_scores = []
             for doc_id in candidate_doc_ids:
                 if doc_id in doc_embeddings_map:
                     doc_token_embeddings = np.array(doc_embeddings_map[doc_id])
+                    
+                    # Validate token embedding dimensions
+                    if doc_token_embeddings.shape[1] != self.token_embedding_dim:
+                        logger.warning(f"ColBERT: Token embedding dimension mismatch for doc {doc_id}: got {doc_token_embeddings.shape[1]}, expected {self.token_embedding_dim}")
+                        continue
+                    
                     maxsim_score = self._calculate_maxsim_score(query_token_embeddings, doc_token_embeddings)
                     doc_scores.append((doc_id, maxsim_score))
-                    logger.debug(f"ColBERT V2: Doc {doc_id} MaxSim score: {maxsim_score:.4f}")
+                    logger.debug(f"ColBERT V2: Doc {doc_id} MaxSim score: {maxsim_score:.4f} (token dims: {doc_token_embeddings.shape})")
             
             if not doc_scores:
                 logger.warning("ColBERT V2: No valid MaxSim scores calculated")
@@ -767,61 +864,49 @@ class ColBERTRAGPipeline(RAGPipeline):
             return None
     
     
-    def _fallback_to_basic_retrieval(self, query_token_embeddings: List[List[float]], top_k: int) -> List[Document]:
+    def _fallback_to_basic_retrieval(self, query_text: str, top_k: int) -> List[Document]:
         """
-        Fallback to basic vector retrieval when token embeddings are not available.
+        Fallback to basic vector retrieval using proper document-level embeddings.
         
         Args:
-            query_token_embeddings: List of query token embeddings
+            query_text: Original query text  
             top_k: Number of documents to retrieve
             
         Returns:
             List of retrieved documents
         """
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-        
         try:
-            # Use average of query token embeddings as document-level embedding
-            import numpy as np
-            avg_embedding = np.mean(query_token_embeddings, axis=0)
-            query_vector_str = f"[{','.join(map(str, avg_embedding))}]"
+            # Use proper document embedding function (384D) instead of averaging token embeddings
+            doc_level_embedding = self.doc_embedding_func(query_text)
             
-            # Query using basic vector similarity
-            sql = f"""
-                SELECT TOP {top_k}
-                    doc_id,
-                    text_content,
-                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
-                FROM RAG.SourceDocuments
-                WHERE embedding IS NOT NULL
-                ORDER BY similarity_score DESC
-            """
+            # Validate dimension matches expected document dimension
+            if len(doc_level_embedding) != self.doc_embedding_dim:
+                logger.error(f"ColBERT fallback: Document embedding dimension {len(doc_level_embedding)} doesn't match expected {self.doc_embedding_dim}")
+                return []
             
-            cursor.execute(sql, (query_vector_str,))
-            results = cursor.fetchall()
+            logger.debug(f"ColBERT fallback: Using proper {self.doc_embedding_dim}D document embedding")
             
-            retrieved_docs = []
-            for row in results:
-                # Convert CLOB to string if necessary
-                from iris_rag.storage.clob_handler import convert_clob_to_string
-                page_content = convert_clob_to_string(row[1])
-                
-                doc = Document(
-                    id=row[0],
-                    page_content=page_content,
-                    metadata={
-                        "similarity_score": float(row[2]),
-                        "retrieval_method": "colbert_fallback_basic"
-                    }
-                )
-                retrieved_docs.append(doc)
+            # Use vector store for consistent search
+            search_results = self.vector_store.similarity_search_by_embedding(
+                query_embedding=doc_level_embedding,
+                top_k=top_k
+            )
             
-            logger.debug(f"ColBERT fallback: Retrieved {len(retrieved_docs)} documents")
-            return retrieved_docs
+            # Convert results to Document list
+            documents = [doc for doc, score in search_results]
             
-        finally:
-            cursor.close()
+            # Add fallback metadata
+            for doc in documents:
+                if doc.metadata is None:
+                    doc.metadata = {}
+                doc.metadata["retrieval_method"] = "colbert_fallback_basic"
+            
+            logger.debug(f"ColBERT fallback: Retrieved {len(documents)} documents using proper document embeddings")
+            return documents
+            
+        except Exception as e:
+            logger.error(f"ColBERT fallback failed: {e}")
+            return []
     
     def _generate_answer(self, query: str, documents: List[Document]) -> str:
         """
@@ -877,8 +962,10 @@ Answer:"""
         try:
             logger.info("Setting up ColBERT database tables and indexes...")
             
-            # Get token embedding dimension from config
-            token_dimension = self.config_manager.get("pipelines:colbert:token_embedding_dimension", 384)
+            # Get token embedding dimension from schema manager
+            from ..storage.schema_manager import SchemaManager
+            schema_manager = SchemaManager(self.connection_manager, self.config_manager)
+            token_dimension = schema_manager.get_vector_dimension("DocumentTokenEmbeddings")
             
             # Create DocumentTokenEmbeddings table if it doesn't exist
             create_token_table_sql = f"""

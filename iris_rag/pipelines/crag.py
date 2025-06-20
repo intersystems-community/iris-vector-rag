@@ -336,11 +336,11 @@ class CRAGPipeline(RAGPipeline):
             # Try chunk-based retrieval with parameterized query
             chunk_sql = f"""
                 SELECT TOP {top_k}
-                    source_doc_id,
+                    doc_id,
                     chunk_text,
-                    VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
-                FROM RAG.ChunkedDocuments
-                WHERE embedding IS NOT NULL
+                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?)) as similarity_score
+                FROM RAG.DocumentChunks
+                WHERE chunk_embedding IS NOT NULL
                 ORDER BY similarity_score DESC
             """
             
@@ -360,7 +360,7 @@ class CRAGPipeline(RAGPipeline):
                     metadata={
                         "similarity_score": float(row[2]),
                         "retrieval_method": "chunk_based_enhancement",
-                        "source_doc_id": row[0]
+                        "doc_id": row[0]
                     }
                 )
                 enhanced_docs.append(doc)
@@ -430,9 +430,9 @@ class CRAGPipeline(RAGPipeline):
                     SELECT TOP {top_k * 2}
                         doc_id,
                         text_content,
-                        VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) as similarity_score
+                        VECTOR_COSINE(embedding, TO_VECTOR(?)) as similarity_score
                     FROM RAG.SourceDocuments
-                    WHERE embedding IS NOT NULL AND embedding <> ''
+                    WHERE embedding IS NOT NULL
                     ORDER BY similarity_score DESC
                 """
                 

@@ -1,24 +1,59 @@
 # Docker Troubleshooting Guide for RAG Templates
 
-## Issue: "Not supported URL scheme http+docker"
+This guide provides comprehensive troubleshooting steps for Docker-related issues in the RAG Templates project. The project uses InterSystems IRIS running in a Docker container with Python development on the host machine.
 
-This error indicates a Docker daemon connectivity problem. Here are multiple solutions to resolve this issue.
+## Table of Contents
 
-## Quick Docker Fixes
+1. [Project Docker Architecture](#project-docker-architecture)
+2. [Common Docker Issues](#common-docker-issues)
+3. [IRIS-Specific Docker Issues](#iris-specific-docker-issues)
+4. [Diagnostic Commands](#diagnostic-commands)
+5. [Container Management](#container-management)
+6. [Network and Port Issues](#network-and-port-issues)
+7. [Volume and Data Persistence Issues](#volume-and-data-persistence-issues)
+8. [Resource and Performance Issues](#resource-and-performance-issues)
+9. [Alternative Setup Options](#alternative-setup-options)
 
-### 1. Check Docker Daemon Status
+## Project Docker Architecture
+
+The RAG Templates project uses a hybrid architecture:
+- **IRIS Database**: Runs in a Docker container using [`docker-compose.yml`](docker-compose.yml) or [`docker-compose.iris-only.yml`](docker-compose.iris-only.yml)
+- **Python Application**: Runs on the host machine, connects to IRIS via JDBC
+- **Data Persistence**: Uses Docker named volumes for IRIS data
+
+### Key Files
+- [`docker-compose.yml`](docker-compose.yml): Main Docker configuration
+- [`docker-compose.iris-only.yml`](docker-compose.iris-only.yml): IRIS-only configuration (commonly used)
+- [`.dockerignore`](.dockerignore): Files excluded from Docker context
+
+## Common Docker Issues
+
+### 1. Docker Daemon Not Running
+
+**Symptoms:**
+- `Cannot connect to the Docker daemon`
+- `docker: command not found`
+- `Not supported URL scheme http+docker`
+
+**Solutions:**
+
+#### Check Docker Status
 ```bash
 # Check if Docker daemon is running
 sudo systemctl status docker
 
-# If not running, start it
+# Start Docker if not running
 sudo systemctl start docker
 
 # Enable Docker to start on boot
 sudo systemctl enable docker
+
+# Verify Docker is working
+docker --version
+docker ps
 ```
 
-### 2. Fix Docker Socket Permissions
+#### Fix Docker Permissions
 ```bash
 # Add your user to docker group
 sudo usermod -aG docker $USER
@@ -26,39 +61,448 @@ sudo usermod -aG docker $USER
 # Apply group changes (logout/login or use newgrp)
 newgrp docker
 
-# Fix socket permissions
-sudo chmod 666 /var/run/docker.sock
+# Test Docker without sudo
+docker ps
 ```
 
-### 3. Restart Docker Service
+#### Restart Docker Service
 ```bash
 # Restart Docker daemon
 sudo systemctl restart docker
 
-# Verify Docker is working
-docker --version
-docker ps
+# Check Docker status
+docker info
 ```
 
-### 4. Alternative Docker Setup (if above fails)
+### 2. Docker Installation Issues
+
+**Symptoms:**
+- `docker: command not found`
+- Conflicting Docker installations
+
+**Solutions:**
+
+#### Clean Installation (Ubuntu/Debian)
 ```bash
-# Remove any conflicting Docker installations
+# Remove conflicting installations
 sudo apt-get remove docker docker-engine docker.io containerd runc
 
-# Install Docker using official script
+# Install using official script
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# Start Docker
+# Start and enable Docker
 sudo systemctl start docker
 sudo systemctl enable docker
+
+# Test installation
+docker run hello-world
 ```
 
-## Fallback: Manual IRIS Setup (No Docker)
+#### macOS Installation
+```bash
+# Install Docker Desktop for Mac
+# Download from: https://docs.docker.com/desktop/mac/install/
 
-If Docker continues to fail, here's how to set up IRIS manually:
+# Or using Homebrew
+brew install --cask docker
 
-### Option 1: Use Local IRIS Installation
+# Start Docker Desktop application
+open /Applications/Docker.app
+```
+
+### 3. Docker Compose Issues
+
+**Symptoms:**
+- `docker-compose: command not found`
+- Version compatibility issues
+
+**Solutions:**
+
+#### Install Docker Compose
+```bash
+# Install Docker Compose (Linux)
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Verify installation
+docker-compose --version
+```
+
+#### Use Docker Compose Plugin
+```bash
+# Modern Docker installations include compose as a plugin
+docker compose --version
+
+# Use 'docker compose' instead of 'docker-compose'
+docker compose -f docker-compose.iris-only.yml up -d
+```
+
+## IRIS-Specific Docker Issues
+
+### 1. IRIS Container Startup Failures
+
+**Symptoms:**
+- Container exits immediately
+- IRIS fails to start
+- License key issues
+
+**Diagnostic Commands:**
+```bash
+# Check container status
+docker-compose -f docker-compose.iris-only.yml ps
+
+# View container logs
+docker-compose -f docker-compose.iris-only.yml logs iris_db
+
+# Check container health
+docker inspect iris_db_rag_standalone --format='{{.State.Health.Status}}'
+```
+
+**Solutions:**
+
+#### License Key Issues
+```bash
+# Ensure iris.key file exists (if using licensed version)
+ls -la iris.key
+
+# Check volume mount in docker-compose file
+# Verify this line exists in docker-compose.yml:
+# - ./iris.key:/usr/irissys/mgr/iris.key
+```
+
+#### Memory and Resource Issues
+```bash
+# Check available system resources
+docker system df
+free -h
+
+# Increase Docker memory limits (Docker Desktop)
+# Go to Docker Desktop > Settings > Resources > Advanced
+# Increase Memory to at least 4GB for IRIS
+```
+
+#### Architecture Compatibility
+```bash
+# Check your system architecture
+uname -m
+
+# For ARM64 systems (Apple Silicon), ensure using ARM64 image:
+# image: containers.intersystems.com/intersystems/iris-arm64:2025.1
+
+# For x86_64 systems, use:
+# image: containers.intersystems.com/intersystems/iris:2025.1
+```
+
+### 2. IRIS Connection Issues
+
+**Symptoms:**
+- Cannot connect to IRIS from Python
+- Connection timeouts
+- Authentication failures
+
+**Diagnostic Commands:**
+```bash
+# Test IRIS connectivity
+docker exec iris_db_rag_standalone iris session iris -U%SYS
+
+# Check IRIS processes
+docker exec iris_db_rag_standalone iris list
+
+# Test network connectivity
+telnet localhost 1972
+telnet localhost 52773
+```
+
+**Solutions:**
+
+#### Port Conflicts
+```bash
+# Check if ports are in use
+netstat -tulpn | grep :1972
+netstat -tulpn | grep :52773
+
+# Kill processes using the ports
+sudo lsof -ti:1972 | xargs kill -9
+sudo lsof -ti:52773 | xargs kill -9
+
+# Or modify port mappings in docker-compose.yml:
+# ports:
+#   - "1973:1972"   # Use different host port
+#   - "52774:52773"
+```
+
+#### Password Expiration Issues
+```bash
+# The project handles this automatically, but if needed:
+docker exec iris_db_rag_standalone iris session iris -U%SYS \
+  "##class(Security.Users).UnExpireUserPasswords(\"*\")"
+```
+
+### 3. IRIS Health Check Failures
+
+**Symptoms:**
+- Container shows as unhealthy
+- Health check timeouts
+
+**Solutions:**
+
+#### Check Health Check Configuration
+```yaml
+# Verify healthcheck in docker-compose.yml:
+healthcheck:
+  test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U%SYS", "##class(%SYSTEM.Process).CurrentDirectory()"]
+  interval: 15s
+  timeout: 10s
+  retries: 5
+  start_period: 60s
+```
+
+#### Manual Health Check
+```bash
+# Test health check command manually
+docker exec iris_db_rag_standalone /usr/irissys/bin/iris session iris -U%SYS "##class(%SYSTEM.Process).CurrentDirectory()"
+```
+
+## Diagnostic Commands
+
+### Container Status and Logs
+```bash
+# List all containers
+docker ps -a
+
+# Check specific container status
+docker-compose -f docker-compose.iris-only.yml ps
+
+# View container logs
+docker logs iris_db_rag_standalone
+docker-compose -f docker-compose.iris-only.yml logs -f
+
+# Follow logs in real-time
+docker logs -f iris_db_rag_standalone
+```
+
+### Container Inspection
+```bash
+# Inspect container configuration
+docker inspect iris_db_rag_standalone
+
+# Check container resource usage
+docker stats iris_db_rag_standalone
+
+# Execute commands in container
+docker exec -it iris_db_rag_standalone bash
+docker exec -it iris_db_rag_standalone iris session iris
+```
+
+### Network Diagnostics
+```bash
+# List Docker networks
+docker network ls
+
+# Inspect network configuration
+docker network inspect bridge
+
+# Test connectivity from container
+docker exec iris_db_rag_standalone ping host.docker.internal
+```
+
+### Volume and Storage
+```bash
+# List Docker volumes
+docker volume ls
+
+# Inspect volume details
+docker volume inspect iris_db_data
+
+# Check volume usage
+docker system df -v
+```
+
+## Container Management
+
+### Starting and Stopping Containers
+```bash
+# Start IRIS container
+docker-compose -f docker-compose.iris-only.yml up -d
+
+# Stop IRIS container
+docker-compose -f docker-compose.iris-only.yml down
+
+# Restart IRIS container
+docker-compose -f docker-compose.iris-only.yml restart
+
+# Stop and remove containers, networks, volumes
+docker-compose -f docker-compose.iris-only.yml down -v
+```
+
+### Container Cleanup
+```bash
+# Remove stopped containers
+docker container prune
+
+# Remove unused images
+docker image prune
+
+# Remove unused volumes
+docker volume prune
+
+# Complete system cleanup (use with caution)
+docker system prune -a --volumes
+```
+
+### Rebuilding Containers
+```bash
+# Pull latest images
+docker-compose -f docker-compose.iris-only.yml pull
+
+# Force recreate containers
+docker-compose -f docker-compose.iris-only.yml up -d --force-recreate
+
+# Rebuild from scratch
+docker-compose -f docker-compose.iris-only.yml down -v
+docker-compose -f docker-compose.iris-only.yml up -d
+```
+
+## Network and Port Issues
+
+### Port Conflicts
+**Problem:** Ports 1972 or 52773 already in use
+
+**Solutions:**
+```bash
+# Find processes using the ports
+sudo lsof -i :1972
+sudo lsof -i :52773
+
+# Kill conflicting processes
+sudo kill -9 <PID>
+
+# Or modify docker-compose.yml to use different ports:
+ports:
+  - "1973:1972"   # IRIS SuperServer
+  - "52774:52773" # Management Portal
+```
+
+### Network Connectivity Issues
+**Problem:** Cannot connect to IRIS from host
+
+**Solutions:**
+```bash
+# Check Docker network configuration
+docker network inspect bridge
+
+# Test connectivity
+telnet localhost 1972
+
+# Verify container is listening on correct ports
+docker exec iris_db_rag_standalone netstat -tulpn | grep :1972
+```
+
+### Firewall Issues
+```bash
+# Check firewall status (Ubuntu/Debian)
+sudo ufw status
+
+# Allow Docker ports if needed
+sudo ufw allow 1972
+sudo ufw allow 52773
+
+# For macOS, check System Preferences > Security & Privacy > Firewall
+```
+
+## Volume and Data Persistence Issues
+
+### Data Loss After Container Restart
+**Problem:** IRIS data not persisting between container restarts
+
+**Solutions:**
+```bash
+# Verify volume configuration in docker-compose.yml:
+volumes:
+  - iris_db_data:/usr/irissys/mgr
+
+# Check if volume exists
+docker volume ls | grep iris_db_data
+
+# Inspect volume
+docker volume inspect iris_db_data
+```
+
+### Volume Permission Issues
+```bash
+# Check volume permissions
+docker exec iris_db_rag_standalone ls -la /usr/irissys/mgr
+
+# Fix permissions if needed
+docker exec iris_db_rag_standalone chown -R irisowner:irisowner /usr/irissys/mgr
+```
+
+### Volume Backup and Restore
+```bash
+# Backup IRIS data
+docker run --rm -v iris_db_data:/data -v $(pwd):/backup alpine \
+  tar czf /backup/iris_backup.tar.gz -C /data .
+
+# Restore IRIS data
+docker run --rm -v iris_db_data:/data -v $(pwd):/backup alpine \
+  tar xzf /backup/iris_backup.tar.gz -C /data
+```
+
+## Resource and Performance Issues
+
+### Memory Issues
+**Symptoms:**
+- Container killed by OOM killer
+- IRIS startup failures
+- Poor performance
+
+**Solutions:**
+```bash
+# Check system memory
+free -h
+
+# Check Docker memory limits
+docker stats iris_db_rag_standalone
+
+# Increase Docker memory (Docker Desktop)
+# Settings > Resources > Advanced > Memory: 4GB+
+
+# Monitor container memory usage
+docker exec iris_db_rag_standalone cat /proc/meminfo
+```
+
+### CPU Issues
+```bash
+# Check CPU usage
+docker stats iris_db_rag_standalone
+
+# Limit CPU usage in docker-compose.yml:
+deploy:
+  resources:
+    limits:
+      cpus: '2.0'
+      memory: 4G
+```
+
+### Disk Space Issues
+```bash
+# Check Docker disk usage
+docker system df
+
+# Clean up unused resources
+docker system prune -a
+
+# Check available disk space
+df -h
+```
+
+## Alternative Setup Options
+
+### 1. Local IRIS Installation (No Docker)
+
+If Docker continues to fail, install IRIS directly:
+
 ```bash
 # Download IRIS Community Edition
 wget https://download.intersystems.com/download/iris-community-2025.1.0.225.1-lnxubuntux64.tar.gz
@@ -70,13 +514,8 @@ sudo ./irisinstall
 
 # Start IRIS
 sudo iris start IRIS
-```
 
-### Option 2: Use TO_VECTOR() Workaround (Continue Local Development)
-Since we have a working local system with TO_VECTOR() workaround, let's continue with RAG fixes:
-
-```bash
-# Continue with local development
+# Test connection
 python3 -c "
 import sys
 sys.path.append('.')
@@ -87,119 +526,121 @@ conn.close()
 "
 ```
 
-## Quick Recovery Plan
+### 2. Cloud IRIS Instance
 
-### Immediate Action: Continue RAG Development Locally
+Use InterSystems Cloud:
+
 ```bash
-# 1. Verify local system is working
-python3 tests/test_basic_rag_retrieval.py
-
-# 2. Continue fixing remaining RAG techniques
-python3 tests/test_crag_retrieval.py
-python3 tests/test_colbert_retrieval.py  
-python3 tests/test_noderag_retrieval.py
-
-# 3. Run comprehensive benchmark
-python3 eval/enterprise_rag_benchmark_final.py
-```
-
-### Docker-Free IRIS Setup Script
-```bash
-#!/bin/bash
-# Alternative setup without Docker
-
-echo "🔧 Setting up IRIS without Docker..."
-
-# Check if IRIS is already installed
-if command -v iris &> /dev/null; then
-    echo "✅ IRIS already installed"
-    iris start IRIS
-else
-    echo "❌ IRIS not found. Please install IRIS Community Edition manually"
-    echo "Download from: https://www.intersystems.com/products/intersystems-iris/try-iris/"
-    exit 1
-fi
-
-# Initialize database
-python3 common/db_init_with_indexes.py
-
-# Verify setup
-python3 scripts/verify_native_vector_schema.py
-
-echo "✅ IRIS setup complete without Docker"
-```
-
-## Remote Server Alternative Setup
-
-### Option 1: Use Cloud IRIS Instance
-```bash
-# Connect to InterSystems Cloud
 # Sign up at: https://cloud.intersystems.com/
 
-# Use cloud connection string in config
+# Configure connection environment variables
 export IRIS_HOST="your-cloud-instance.intersystems.com"
 export IRIS_PORT="443"
 export IRIS_USERNAME="your-username"
 export IRIS_PASSWORD="your-password"
+export IRIS_NAMESPACE="USER"
 ```
 
-### Option 2: Simplified Remote Setup
+### 3. Remote IRIS Server
+
 ```bash
-# Skip Docker, use direct IRIS installation
+# Connect to remote server
 ssh user@remote-server
 
-# Install IRIS directly
+# Install IRIS on remote server
 wget https://download.intersystems.com/download/iris-community-2025.1.0.225.1-lnxubuntux64.tar.gz
 tar -xzf iris-community-*.tar.gz
 sudo ./iris-community-*/irisinstall
 
-# Clone and setup project
-git clone your-repo
-cd rag-templates
-git checkout feature/enterprise-rag-system-complete
-
-# Install Python dependencies
-pip3 install -r requirements.txt
-
-# Initialize without Docker
-python3 common/db_init_with_indexes.py
+# Configure local connection to remote IRIS
+export IRIS_HOST="remote-server-ip"
+export IRIS_PORT="1972"
+export IRIS_USERNAME="SuperUser"
+export IRIS_PASSWORD="SYS"
 ```
 
-## Recommended Immediate Action
+## Quick Recovery Checklist
 
-**Priority 1: Continue RAG Development Locally**
+When encountering Docker issues, follow this checklist:
+
+### 1. Basic Docker Health Check
 ```bash
-# Test current working techniques
-python3 tests/test_basic_rag_retrieval.py
-python3 tests/test_hybrid_ifind_rag_retrieval.py  
-python3 tests/test_hyde_retrieval.py
+# Check Docker daemon
+sudo systemctl status docker
 
-# Fix remaining techniques
-python3 tests/test_crag_retrieval.py
-python3 tests/test_colbert_retrieval.py
-python3 tests/test_noderag_retrieval.py
-```
-
-**Priority 2: Docker Fix (Parallel)**
-```bash
-# Try quick Docker fix
-sudo systemctl restart docker
-sudo chmod 666 /var/run/docker.sock
-
-# Test Docker
+# Test Docker functionality
 docker run hello-world
+
+# Check Docker Compose
+docker-compose --version
 ```
 
-**Priority 3: Remote Deployment (Later)**
+### 2. IRIS Container Health Check
 ```bash
-# Once Docker is fixed OR using manual IRIS setup
-./scripts/remote_setup.sh
+# Check container status
+docker-compose -f docker-compose.iris-only.yml ps
+
+# View recent logs
+docker-compose -f docker-compose.iris-only.yml logs --tail=50
+
+# Test IRIS connectivity
+telnet localhost 1972
 ```
 
-## Next Steps
+### 3. Quick Fixes
+```bash
+# Restart Docker daemon
+sudo systemctl restart docker
 
-1. **Immediate**: Continue RAG development locally with working system
-2. **Parallel**: Fix Docker daemon issue  
-3. **Later**: Deploy to remote server once Docker is resolved
+# Restart IRIS container
+docker-compose -f docker-compose.iris-only.yml restart
 
-The key is to not let Docker issues block RAG development progress!
+# Clean restart
+docker-compose -f docker-compose.iris-only.yml down
+docker-compose -f docker-compose.iris-only.yml up -d
+```
+
+### 4. Emergency Fallback
+```bash
+# Continue development with local IRIS
+python3 tests/test_basic_rag_retrieval.py
+
+# Or use mock connections for development
+export USE_MOCK_IRIS=true
+python3 tests/test_basic_rag_retrieval.py
+```
+
+## Getting Help
+
+### Log Collection for Support
+```bash
+# Collect comprehensive logs
+mkdir -p debug_logs
+docker-compose -f docker-compose.iris-only.yml logs > debug_logs/docker_logs.txt
+docker inspect iris_db_rag_standalone > debug_logs/container_inspect.json
+docker system info > debug_logs/docker_info.txt
+docker version > debug_logs/docker_version.txt
+```
+
+### Useful Resources
+- [Docker Documentation](https://docs.docker.com/)
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [InterSystems IRIS Documentation](https://docs.intersystems.com/iris20251/csp/docbook/DocBook.UI.Page.cls)
+- [Project README](../README.md)
+- [Deployment Guide](DEPLOYMENT_GUIDE.md)
+
+### Common Environment Variables
+```bash
+# IRIS connection settings
+export IRIS_HOST="localhost"
+export IRIS_PORT="1972"
+export IRIS_USERNAME="SuperUser"
+export IRIS_PASSWORD="SYS"
+export IRIS_NAMESPACE="USER"
+
+# Docker settings
+export DOCKER_HOST="unix:///var/run/docker.sock"
+export COMPOSE_PROJECT_NAME="rag-templates"
+```
+
+Remember: The key is to not let Docker issues block RAG development progress. Use alternative setups when needed and return to Docker troubleshooting when time permits.

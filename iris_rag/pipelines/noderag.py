@@ -130,7 +130,7 @@ class NodeRAGPipeline(RAGPipeline):
                 # Use SourceDocuments as fallback
                 sql_query = f"""
                     SELECT TOP {candidate_pool_size} doc_id AS node_id,
-                           VECTOR_COSINE(TO_VECTOR(embedding), TO_VECTOR(?)) AS score,
+                           VECTOR_COSINE(embedding, TO_VECTOR(?)) AS score,
                            title, SUBSTRING(text_content, 1, 300) AS content_sample
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
@@ -141,11 +141,11 @@ class NodeRAGPipeline(RAGPipeline):
                 self.logger.info("NodeRAG: Using KnowledgeGraphNodes for vector search")
                 sql_query = f"""
                     SELECT TOP {candidate_pool_size} kg.node_id,
-                           VECTOR_COSINE(TO_VECTOR(kg.embedding), TO_VECTOR(?)) AS score,
-                           kg.node_name, kg.node_name AS content_sample
+                           VECTOR_COSINE(kg.embedding, TO_VECTOR(?)) AS score,
+                           kg.content, kg.content AS content_sample
                     FROM RAG.KnowledgeGraphNodes kg
                     WHERE kg.embedding IS NOT NULL
-                      AND VECTOR_COSINE(TO_VECTOR(kg.embedding), TO_VECTOR(?)) > ?
+                      AND VECTOR_COSINE(kg.embedding, TO_VECTOR(?)) > ?
                     ORDER BY score DESC
                 """
                 cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold))
@@ -208,9 +208,10 @@ class NodeRAGPipeline(RAGPipeline):
             # Still filter out obviously irrelevant content
             filtered_nodes = []
             for result in candidate_results:
+                from common.iris_stream_reader import read_iris_stream
                 node_id = str(result[0])
-                title = result[2] if len(result) > 2 and result[2] else ""
-                content = result[3] if len(result) > 3 and result[3] else ""
+                title = read_iris_stream(result[2]) if len(result) > 2 and result[2] else ""
+                content = read_iris_stream(result[3]) if len(result) > 3 and result[3] else ""
                 
                 # Basic relevance check - avoid completely unrelated content
                 combined_text = (title + " " + content).lower()
@@ -231,10 +232,11 @@ class NodeRAGPipeline(RAGPipeline):
         filtered_count = 0
         
         for result in candidate_results:
+            from common.iris_stream_reader import read_iris_stream
             node_id = str(result[0])
             score = result[1] if len(result) > 1 else 0.0
-            title = result[2] if len(result) > 2 and result[2] else ""
-            content = result[3] if len(result) > 3 and result[3] else ""
+            title = read_iris_stream(result[2]) if len(result) > 2 and result[2] else ""
+            content = read_iris_stream(result[3]) if len(result) > 3 and result[3] else ""
             
             # Combine title and content for analysis
             combined_text = (title + " " + content).lower()
@@ -417,12 +419,12 @@ class NodeRAGPipeline(RAGPipeline):
                 """
             else:
                 # Use KnowledgeGraphNodes - since there's no source_doc_id field, use node content directly
-                # Note: KnowledgeGraphNodes schema: ['node_id', 'node_name', 'embedding', 'node_type']
+                # Note: KnowledgeGraphNodes schema: ['node_id', 'content', 'embedding', 'node_type']
                 sql_query = f"""
                     SELECT kg.node_id,
-                           COALESCE(kg.node_name, '') AS full_content,
-                           kg.node_name,
-                           kg.node_name AS title
+                           COALESCE(kg.content, '') AS full_content,
+                           kg.content,
+                           kg.content AS title
                     FROM RAG.KnowledgeGraphNodes kg
                     WHERE kg.node_id IN ({placeholders})
                 """
@@ -436,24 +438,26 @@ class NodeRAGPipeline(RAGPipeline):
                 node_id = row[0]
                 
                 if kg_count == 0:
-                    # SourceDocuments fallback: row[1] is text_content
-                    actual_content_column_value = row[1] or ""
+                    # SourceDocuments fallback: row[1] is text_content (may be JDBC stream)
+                    from common.iris_stream_reader import read_iris_stream
+                    actual_content_column_value = read_iris_stream(row[1]) or ""
                     page_content = str(actual_content_column_value)
                     metadata = {"source": "noderag_sourcedocs", "node_id": node_id}
                 else:
-                    # KnowledgeGraphNodes: enhanced content retrieval
-                    full_content = row[1] or ""  # COALESCE result
-                    node_name = row[2] if len(row) > 2 else ""
-                    title = row[3] if len(row) > 3 else ""
+                    # KnowledgeGraphNodes: enhanced content retrieval (handle JDBC streams)
+                    from common.iris_stream_reader import read_iris_stream
+                    full_content = read_iris_stream(row[1]) or ""  # Handle stream objects
+                    content = read_iris_stream(row[2]) if len(row) > 2 else ""
+                    title = read_iris_stream(row[3]) if len(row) > 3 else ""
                     
-                    # Use full content if available, otherwise fallback to node_name
+                    # Use full content if available, otherwise fallback to content
                     if full_content and len(full_content.strip()) > 10:
                         page_content = str(full_content)
                         content_source = "full_text"
-                    elif node_name:
-                        page_content = str(node_name)
-                        content_source = "node_name_fallback"
-                        self.logger.warning(f"NodeRAG: Using node_name fallback for node {node_id}")
+                    elif content:
+                        page_content = str(content)
+                        content_source = "content_fallback"
+                        self.logger.debug(f"NodeRAG: Using content fallback for node {node_id}")
                     else:
                         page_content = f"Node {node_id}"
                         content_source = "minimal_fallback"
@@ -463,7 +467,7 @@ class NodeRAGPipeline(RAGPipeline):
                         "source": "noderag_kg",
                         "node_id": node_id,
                         "content_source": content_source,
-                        "node_name": node_name,
+                        "content": content,
                         "title": title
                     }
                 

@@ -85,6 +85,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# uv
+uv.lock
 venv_community_test/
 venv_pyodbc_test/
 venv_specific_wheel_test/
@@ -210,3 +213,21 @@ cleanup_for_git.py
 # intersystems_irispython-3.2.0-py3-none-any.whl # Covered by *.whl
 
 temp_iris.key
+
+# Temporary evaluation results (keep only latest)
+comprehensive_ragas_results_*/
+!comprehensive_ragas_results/evaluation_results_*.json
+!comprehensive_ragas_results/performance_comparison_*.png
+
+# Temporary test outputs
+post_installation_results_*.json
+quick_pipeline_test.py
+run_with_iris.py
+test_smart_connection.py
+testing_system_analysis.md
+
+# Status/fix documentation (superseded by current docs)
+*_FIX_SUMMARY.md
+*_TEST_RESULTS.md
+COMPREHENSIVE_*.md
+PIPELINE_*.md

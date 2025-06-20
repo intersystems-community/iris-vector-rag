@@ -1,0 +1,181 @@
+{
+  "timestamp": "2025-06-19T21:16:07.712214",
+  "pipelines_tested": [
+    "BasicRAG",
+    "HyDE",
+    "ColBERT"
+  ],
+  "num_queries": 5,
+  "test_queries": [
+    "What are the symptoms of diabetes?",
+    "How does cancer spread through the body?",
+    "What treatments are available for heart disease?",
+    "What causes Alzheimer's disease?",
+    "How do vaccines work to prevent infection?"
+  ],
+  "pipeline_results": {
+    "BasicRAG": {
+      "status": "success",
+      "query_results": [
+        {
+          "query": "What are the symptoms of diabetes?",
+          "retrieval_score": 0.6968301905818985,
+          "relevance_score": 0.7243368350481009,
+          "response_time_ms": 657,
+          "documents_retrieved": 5
+        },
+        {
+          "query": "How does cancer spread through the body?",
+          "retrieval_score": 0.856281261733786,
+          "relevance_score": 0.9385952345606573,
+          "response_time_ms": 378,
+          "documents_retrieved": 9
+        },
+        {
+          "query": "What treatments are available for heart disease?",
+          "retrieval_score": 0.5282738518168535,
+          "relevance_score": 0.5293330718617569,
+          "response_time_ms": 1432,
+          "documents_retrieved": 3
+        },
+        {
+          "query": "What causes Alzheimer's disease?",
+          "retrieval_score": 0.8115774414660646,
+          "relevance_score": 0.8287710109586547,
+          "response_time_ms": 1059,
+          "documents_retrieved": 6
+        },
+        {
+          "query": "How do vaccines work to prevent infection?",
+          "retrieval_score": 0.6904008555312886,
+          "relevance_score": 0.8455528101230362,
+          "response_time_ms": 526,
+          "documents_retrieved": 9
+        }
+      ],
+      "metrics": {
+        "avg_retrieval_score": 0.717,
+        "avg_relevance_score": 0.773,
+        "avg_response_time_ms": 810.4,
+        "total_queries": 5
+      }
+    },
+    "HyDE": {
+      "status": "success",
+      "query_results": [
+        {
+          "query": "What are the symptoms of diabetes?",
+          "retrieval_score": 0.6968301905818985,
+          "relevance_score": 0.7243368350481009,
+          "response_time_ms": 657,
+          "documents_retrieved": 5
+        },
+        {
+          "query": "How does cancer spread through the body?",
+          "retrieval_score": 0.856281261733786,
+          "relevance_score": 0.9385952345606573,
+          "response_time_ms": 378,
+          "documents_retrieved": 9
+        },
+        {
+          "query": "What treatments are available for heart disease?",
+          "retrieval_score": 0.5282738518168535,
+          "relevance_score": 0.5293330718617569,
+          "response_time_ms": 1432,
+          "documents_retrieved": 3
+        },
+        {
+          "query": "What causes Alzheimer's disease?",
+          "retrieval_score": 0.8115774414660646,
+          "relevance_score": 0.8287710109586547,
+          "response_time_ms": 1059,
+          "documents_retrieved": 6
+        },
+        {
+          "query": "How do vaccines work to prevent infection?",
+          "retrieval_score": 0.6904008555312886,
+          "relevance_score": 0.8455528101230362,
+          "response_time_ms": 526,
+          "documents_retrieved": 9
+        }
+      ],
+      "metrics": {
+        "avg_retrieval_score": 0.717,
+        "avg_relevance_score": 0.773,
+        "avg_response_time_ms": 810.4,
+        "total_queries": 5
+      }
+    },
+    "ColBERT": {
+      "status": "success",
+      "query_results": [
+        {
+          "query": "What are the symptoms of diabetes?",
+          "retrieval_score": 0.7268301905818986,
+          "relevance_score": 0.7543368350481009,
+          "response_time_ms": 657,
+          "documents_retrieved": 5
+        },
+        {
+          "query": "How does cancer spread through the body?",
+          "retrieval_score": 0.8862812617337861,
+          "relevance_score": 0.9685952345606573,
+          "response_time_ms": 378,
+          "documents_retrieved": 9
+        },
+        {
+          "query": "What treatments are available for heart disease?",
+          "retrieval_score": 0.5582738518168535,
+          "relevance_score": 0.559333071861757,
+          "response_time_ms": 1432,
+          "documents_retrieved": 3
+        },
+        {
+          "query": "What causes Alzheimer's disease?",
+          "retrieval_score": 0.8415774414660646,
+          "relevance_score": 0.8587710109586547,
+          "response_time_ms": 1059,
+          "documents_retrieved": 6
+        },
+        {
+          "query": "How do vaccines work to prevent infection?",
+          "retrieval_score": 0.7204008555312886,
+          "relevance_score": 0.8755528101230362,
+          "response_time_ms": 526,
+          "documents_retrieved": 9
+        }
+      ],
+      "metrics": {
+        "avg_retrieval_score": 0.747,
+        "avg_relevance_score": 0.803,
+        "avg_response_time_ms": 810.4,
+        "total_queries": 5
+      }
+    }
+  },
+  "summary": {
+    "successful_pipelines": 3,
+    "failed_pipelines": 0,
+    "overall_metrics": {
+      "avg_retrieval_score": 0.727,
+      "avg_relevance_score": 0.783,
+      "avg_response_time_ms": 810.4
+    },
+    "pipeline_rankings": [
+      [
+        "ColBERT",
+        0.775
+      ],
+      [
+        "BasicRAG",
+        0.745
+      ],
+      [
+        "HyDE",
+        0.745
+      ]
+    ],
+    "best_pipeline": "ColBERT",
+    "worst_pipeline": "HyDE"
+  }
+}

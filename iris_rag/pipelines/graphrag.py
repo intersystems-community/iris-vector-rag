@@ -191,11 +191,19 @@ class GraphRAGPipeline(RAGPipeline):
             # Find related documents through graph traversal
             relevant_docs = self._graph_based_retrieval(query_entities, top_k)
             
-            # If no graph-based results, fallback to vector search
+            # If no graph-based results, FAIL instead of silent fallback
             if not relevant_docs:
-                logger.info("GraphRAG: No results from graph-based retrieval, falling back to vector search.")
-                query_embedding = self.embedding_manager.embed_text(query_text)
-                relevant_docs = self._vector_fallback_retrieval(query_embedding, top_k)
+                logger.error("GraphRAG: Graph-based retrieval failed - insufficient graph data. GraphRAG requires populated knowledge graph.")
+                # Return failure result instead of falling back to vector search
+                return {
+                    "query": query_text,
+                    "answer": "GraphRAG failed: Insufficient knowledge graph data for graph-based retrieval. Please use BasicRAG or ensure knowledge graph is properly populated.",
+                    "retrieved_documents": [],
+                    "num_documents_retrieved": 0,
+                    "processing_time": time.time() - start_time,
+                    "pipeline_type": "graphrag",
+                    "failure_reason": "insufficient_graph_data"
+                }
             
             # Generate answer if LLM function is available
             answer = None
@@ -251,8 +259,8 @@ class GraphRAGPipeline(RAGPipeline):
             search_sql_stage1 = f"""
             SELECT TOP {top_k} d.doc_id, COUNT(*) as entity_matches
             FROM RAG.SourceDocuments d
-            JOIN RAG.DocumentEntities e ON d.doc_id = e.document_id
-            WHERE e.entity_text IN ({entity_placeholders})
+            JOIN RAG.DocumentEntities e ON d.doc_id = e.doc_id
+            WHERE e.entity_name IN ({entity_placeholders})
             GROUP BY d.doc_id
             ORDER BY entity_matches DESC
             """

@@ -68,7 +68,8 @@ except ImportError as e:
 # Import utilities
 from common.utils import get_embedding_func, get_llm_func
 from common.iris_connection_manager import get_iris_connection
-from data.loader import process_and_load_documents
+# Import data loading from pmc_processor instead
+from data.pmc_processor import process_pmc_files
 
 # Test configuration
 # Resolve PMC data directory path relative to project root
@@ -161,24 +162,8 @@ class ComprehensiveE2ETestRunner:
     
     def load_additional_documents(self, needed_count: int):
         """Load additional PMC documents if needed"""
-        logger.info(f"Attempting to load {needed_count} additional documents...")
-        
-        try:
-            # Use the data loader to load more documents from the 1000+ PMC dataset
-            result = process_and_load_documents(
-                pmc_directory=TEST_CONFIG["pmc_data_directory"],  # Use configurable PMC data path
-                limit=needed_count,
-                batch_size=50,
-                use_mock=False
-            )
-            
-            if result.get('success', False):
-                logger.info(f"Successfully loaded {result.get('loaded_count', 0)} additional documents")
-            else:
-                logger.warning(f"Document loading had issues: {result.get('error', 'Unknown error')}")
-                
-        except Exception as e:
-            logger.warning(f"Failed to load additional documents: {e}")
+        logger.info(f"Need {needed_count} additional documents")
+        logger.warning("Skipping document loading - please run 'python scripts/load_data_with_embeddings.py --limit 1000' separately")
     
     def test_iris_rag_basic_pipeline(self) -> Dict[str, Any]:
         """Test the new iris_rag BasicRAGPipeline"""

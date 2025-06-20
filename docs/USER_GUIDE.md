@@ -4,570 +4,521 @@ Complete guide for installing, configuring, and using RAG Templates with InterSy
 
 ## Table of Contents
 
+- [Quick Start](#quick-start)
+- [System Requirements](#system-requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Basic Usage](#basic-usage)
-- [Pipeline Types](#pipeline-types)
+- [Using the CLI Tool (ragctl)](#using-the-cli-tool-ragctl)
 - [Document Management](#document-management)
-- [Querying](#querying)
-- [Personal Assistant Integration](#personal-assistant-integration)
-- [Examples](#examples)
+- [Querying Your Data](#querying-your-data)
+- [Available RAG Techniques](#available-rag-techniques)
+- [Common Use Cases](#common-use-cases)
+- [Troubleshooting](#troubleshooting)
+- [Getting Help](#getting-help)
+
+## Quick Start
+
+Get up and running in 5 minutes:
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd rag-templates
+
+# 2. Set up the Python virtual environment and install dependencies
+make setup-env  # This will create .venv and install core dependencies
+make install    # This will install all dependencies from requirements.txt
+
+# 3. Activate the virtual environment (if not already done by make setup-env/install)
+#    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# 4. Start the database
+docker-compose up -d
+
+# 4. Initialize and load sample data
+make setup-db
+make load-data
+
+# 5. Test your installation
+make validate-iris-rag
+```
+
+## System Requirements
+
+### Minimum Requirements
+- **Operating System**: macOS, Linux, or Windows with WSL2
+- **Python**: Version 3.11 or higher
+- **Memory**: 2GB available RAM
+- **Storage**: 5GB free disk space
+- **Docker**: For running InterSystems IRIS database
+
+### Recommended Requirements
+- **Memory**: 4GB+ available RAM for better performance
+- **Storage**: 10GB+ for larger document collections
+- **Internet**: For downloading models and API access
+
+### Required Software
+- **Docker and Docker Compose**: For database management
+- **Git**: For cloning the repository
 
 ## Installation
 
-### Prerequisites
+### Step 1: Install Prerequisites
 
-- **Python**: 3.11 or higher
-- **InterSystems IRIS**: 2025.1 or higher
-- **Memory**: 2GB+ available RAM
-- **Storage**: 5GB+ for documents and embeddings
+#### Install Docker
+- **macOS**: Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop)
+- **Linux**: Follow the [official Docker installation guide](https://docs.docker.com/engine/install/)
+- **Windows**: Install Docker Desktop with WSL2 backend
 
-### Package Installation
+### Step 2: Get the Code
 
-#### From PyPI (Recommended)
 ```bash
-pip install intersystems-iris-rag
+# Clone the repository
+git clone <repository-url>
+cd rag-templates
+
+# Make CLI tools executable (if applicable, e.g. ragctl)
+# chmod +x ragctl # Assuming ragctl is a script
 ```
 
-#### From Source
+### Step 3: Set Up Python Virtual Environment
+
+#### Option 1: Using Make (Recommended)
 ```bash
-git clone https://github.com/your-org/intersystems-iris-rag.git
-cd intersystems-iris-rag
+# Create Python virtual environment (.venv) and install dependencies
+make setup-env
+make install
+
+# Activate the environment for your current session
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+#### Option 2: Manual Setup
+```bash
+# Create Python virtual environment
+python3 -m venv .venv
+
+# Activate the environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Install the project in editable mode (optional, for development)
 pip install -e .
 ```
 
-#### Development Installation
+### Step 4: Start the Database
+
 ```bash
-git clone https://github.com/your-org/intersystems-iris-rag.git
-cd intersystems-iris-rag
-pip install -e ".[dev]"
+# Start InterSystems IRIS database
+docker-compose up -d
+
+# Verify it's running
+docker ps | grep iris_db_rag_standalone
 ```
 
-### IRIS Database Setup
+### Step 5: Initialize the System
 
-#### Option 1: Docker (Recommended)
 ```bash
-# Start IRIS container
-docker run -d \
-  --name iris-rag \
-  -p 1972:1972 \
-  -p 52773:52773 \
-  intersystemsdc/iris-community:latest
+# Set up database schema
+make setup-db
 
-# Verify connection
-docker exec iris-rag iris session iris -U USER
-```
+# Load sample documents for testing
+make load-data
 
-#### Option 2: Local Installation
-Download and install IRIS from [InterSystems Developer Community](https://community.intersystems.com/).
-
-### JDBC Driver Setup
-
-Download the IRIS JDBC driver:
-```bash
-curl -L -o intersystems-jdbc-3.8.4.jar \
-  https://github.com/intersystems-community/iris-driver-distribution/raw/main/JDBC/JDK18/intersystems-jdbc-3.8.4.jar
-```
-
-Install Java dependencies:
-```bash
-pip install jaydebeapi jpype1
+# Verify everything works
+make validate-iris-rag
 ```
 
 ## Configuration
 
-### Configuration File
+### Basic Configuration
 
-Create a `config.yaml` file:
+The system uses a main configuration file at [`config/config.yaml`](../config/config.yaml). For most users, the default settings work well.
 
+#### Database Settings
 ```yaml
-# Database Configuration
 database:
-  iris:
-    host: localhost
-    port: 1972
-    namespace: USER
-    username: demo
-    password: demo
-    driver: intersystems.jdbc
+  db_host: "localhost"
+  db_port: 1972
+  db_user: "SuperUser"
+  db_password: "SYS"
+  db_namespace: "USER"
+```
 
-# Storage Configuration
-storage:
-  iris:
-    table_name: rag_documents
-    vector_dimension: 384
-
-# Self-Healing Schema Management
-
-The RAG Templates framework includes automatic schema management that ensures data integrity when configuration changes occur.
-
-## Automatic Schema Validation
-
-When you change embedding models or vector configurations, the system automatically:
-
-1. **Detects Configuration Changes**: Compares current database schema with new configuration
-2. **Validates Vector Dimensions**: Ensures vector columns match the embedding model dimensions  
-3. **Performs Automatic Migration**: Updates database schema when needed
-4. **Preserves System Integrity**: Maintains consistent data structures
-
-## Configuration Changes That Trigger Schema Updates
-
-### Embedding Model Changes
-
+#### Embedding Model Settings
 ```yaml
-# Changing from one model to another triggers automatic migration
-embeddings:
-  model: "all-mpnet-base-v2"  # 768 dimensions (was all-MiniLM-L6-v2: 384 dimensions)
-```
-
-### Vector Data Type Changes
-
-```yaml
-storage:
-  iris:
-    vector_data_type: "DOUBLE"  # Changed from "FLOAT"
-```
-
-## User-Visible Effects
-
-### Initial Setup
-- On first run, the system automatically creates required database tables
-- Schema metadata is initialized to track configuration state
-- No user intervention required
-
-### Configuration Updates
-- When you update embedding models, the system detects the change
-- Automatic migration occurs on next pipeline execution
-- Brief processing delay during migration (data may be regenerated)
-- System logs migration progress and completion
-
-### Data Integrity Assurance
-- The system prevents data corruption from schema mismatches
-- Automatic validation before any vector operations
-- Clear error messages if manual intervention is needed
-
-## Monitoring Schema Health
-
-You can check schema status using the self-healing system:
-
-```bash
-# Check current schema status
-make check-readiness
-
-# Trigger manual schema validation
-make heal-data
-```
-
-The system will report any schema issues and automatically resolve them when possible.
-# Embedding Configuration
-embeddings:
-  primary_backend: sentence_transformers
-  fallback_backends: [openai]
+embedding_model:
+  name: "sentence-transformers/all-MiniLM-L6-v2"
   dimension: 384
-  
-  sentence_transformers:
-    model_name: all-MiniLM-L6-v2
-    
-  openai:
-    api_key: ${OPENAI_API_KEY}
-    model_name: text-embedding-ada-002
-
-# Pipeline Configuration
-pipelines:
-  basic:
-    chunk_size: 1000
-    chunk_overlap: 200
-    default_top_k: 5
-    embedding_batch_size: 32
 ```
 
 ### Environment Variables
 
-Set environment variables for sensitive data:
+For sensitive information like API keys, use environment variables:
 
 ```bash
-# Database credentials
-export RAG_DATABASE__IRIS__HOST=localhost
-export RAG_DATABASE__IRIS__PORT=1972
-export RAG_DATABASE__IRIS__USERNAME=demo
-export RAG_DATABASE__IRIS__PASSWORD=demo
+# LLM API Keys (optional, for advanced features)
+export OPENAI_API_KEY=your-openai-api-key
 
-# API keys
-export RAG_OPENAI__API_KEY=your-openai-api-key
-
-# Optional: Override config file location
-export RAG_CONFIG_PATH=/path/to/config.yaml
+# Database connection (only if different from defaults)
+export IRIS_HOST=localhost
+export IRIS_PORT=1972
+export IRIS_USERNAME=SuperUser
+export IRIS_PASSWORD=SYS
 ```
 
-### Configuration Validation
+### Automatic Schema Management
 
-Validate your configuration:
-
-```python
-from rag_templates.config import ConfigurationManager
-
-config = ConfigurationManager("config.yaml")
-try:
-    config.validate()
-    print("✅ Configuration is valid")
-except Exception as e:
-    print(f"❌ Configuration error: {e}")
-```
+The system automatically manages database schema changes when you update configurations. You don't need to manually handle database migrations - the system detects changes and updates the schema automatically.
 
 ## Basic Usage
 
-### Quick Start
+### Using Python
 
 ```python
-from rag_templates import create_pipeline
+from iris_rag.pipelines.factory import create_pipeline
+from common.utils import get_llm_func
+from common.iris_connection_manager import get_iris_connection
 
 # Create a basic RAG pipeline
 pipeline = create_pipeline(
     pipeline_type="basic",
-    config_path="config.yaml"
+    llm_func=get_llm_func(),
+    external_connection=get_iris_connection()
 )
 
-# Load documents
-pipeline.load_documents("./documents")
-
-# Query the pipeline
-result = pipeline.execute("What is machine learning?")
+# Ask a question
+result = pipeline.run("What is machine learning?", top_k=5)
 print(f"Answer: {result['answer']}")
+print(f"Found {len(result['retrieved_documents'])} relevant documents")
 ```
 
-### Manual Setup
+### Quick Test
 
-For more control over the initialization:
-
-```python
-from rag_templates.core import ConnectionManager, ConfigurationManager
-from rag_templates.pipelines import BasicRAGPipeline
-
-# Initialize managers
-config_manager = ConfigurationManager("config.yaml")
-connection_manager = ConnectionManager(config_manager)
-
-# Create pipeline
-pipeline = BasicRAGPipeline(
-    connection_manager=connection_manager,
-    config_manager=config_manager
-)
-
-# Initialize storage schema
-pipeline.storage.initialize_schema()
+```bash
+# Test that everything is working
+make test-pipeline PIPELINE=basic
 ```
 
-## Pipeline Types
+## Using the CLI Tool (ragctl)
 
-### Basic RAG
-Standard retrieval-augmented generation with vector similarity search.
+The [`ragctl`](../ragctl) command-line tool provides easy access to common operations.
 
-```python
-pipeline = create_pipeline("basic", config_path="config.yaml")
+### Basic Commands
+
+```bash
+# Check system status
+./ragctl status
+
+# Validate configuration
+./ragctl validate
+
+# Run reconciliation (data integrity check)
+./ragctl run --pipeline basic
+
+# Get help
+./ragctl --help
 ```
 
-**Features:**
-- Document chunking with overlap
-- Vector embeddings
-- Similarity search
-- Context-aware answer generation
+### Alternative CLI Access
 
-### ColBERT
-Token-level retrieval with late interaction.
+```bash
+# Using Python module
+python -m iris_rag.cli --help
 
-```python
-# Note: ColBERT requires additional configuration
-pipeline = create_pipeline("colbert", config_path="config.yaml")
+# Direct execution
+python iris_rag/cli/__main__.py --help
 ```
-
-**Features:**
-- Token-level embeddings
-- Late interaction scoring
-- High precision retrieval
-
-### CRAG (Corrective RAG)
-Self-correcting RAG with retrieval evaluation.
-
-```python
-pipeline = create_pipeline("crag", config_path="config.yaml")
-```
-
-**Features:**
-- Retrieval quality assessment
-- Automatic correction
-- Fallback strategies
-
-### Additional Pipelines
-- **GraphRAG**: Knowledge graph-enhanced retrieval
-- **HyDE**: Hypothetical document embeddings
-- **NodeRAG**: Node-based document representation
 
 ## Document Management
 
-### Loading Documents
+### Loading Your Documents
 
-#### From Directory
-```python
-# Load all documents from a directory
-pipeline.load_documents("./documents")
+#### From a Directory
+```bash
+# Load documents from a folder
+make load-data
 
-# Load with specific options
-pipeline.load_documents(
-    "./documents",
-    chunk_documents=True,
-    generate_embeddings=True
-)
+# Load from a specific directory
+python -c "
+from data.loader import process_and_load_documents
+result = process_and_load_documents('path/to/your/documents', limit=100)
+print(f'Loaded: {result}')
+"
 ```
 
-#### From File List
-```python
-from rag_templates.core.models import Document
-
-# Create documents manually
-documents = [
-    Document(
-        page_content="Machine learning is...",
-        metadata={"source": "ml_intro.txt", "topic": "AI"}
-    ),
-    Document(
-        page_content="Deep learning involves...",
-        metadata={"source": "dl_guide.txt", "topic": "AI"}
-    )
-]
-
-# Load documents directly
-pipeline.load_documents(
-    documents_path="",  # Not used when providing documents
-    documents=documents
-)
-```
-
-#### Supported File Formats
+#### Supported File Types
 - **Text files**: `.txt`, `.md`
-- **Documents**: `.pdf`, `.docx` (with appropriate parsers)
+- **PDF documents**: `.pdf` (requires additional setup)
+- **Word documents**: `.docx` (requires additional setup)
 - **Structured data**: `.json`, `.csv`
 
-### Document Chunking
-
-Configure chunking strategies:
-
-```yaml
-pipelines:
-  basic:
-    chunk_size: 1000        # Characters per chunk
-    chunk_overlap: 200      # Overlap between chunks
-    chunking_strategy: recursive  # recursive, semantic, adaptive
+#### Check What's Loaded
+```bash
+# See how many documents are in the system
+make check-data
 ```
 
-### Managing Storage
-
-```python
-# Get document count
-count = pipeline.get_document_count()
-print(f"Documents in storage: {count}")
-
-# Clear all documents (use with caution!)
-pipeline.clear_knowledge_base()
+#### Clear All Data
+```bash
+# Remove all documents (use with caution!)
+make clear-rag-data
 ```
 
-## Querying
+## Querying Your Data
 
-### Basic Queries
+### Simple Queries
 
 ```python
-# Simple query
-result = pipeline.execute("What is photosynthesis?")
+from iris_rag import create_pipeline
+
+# Create a pipeline
+pipeline = create_pipeline("basic")
+
+# Ask questions
+result = pipeline.run("What is photosynthesis?")
 print(result["answer"])
 ```
 
 ### Advanced Queries
 
 ```python
-# Query with custom parameters
-result = pipeline.execute(
+# Get more detailed results
+result = pipeline.run(
     "Explain machine learning algorithms",
-    top_k=10,                    # Retrieve more documents
-    include_sources=True,        # Include source information
-    similarity_threshold=0.7,    # Minimum similarity score
-    metadata_filter={            # Filter by metadata
-        "topic": "AI"
-    }
+    top_k=10,  # Get more source documents
+    include_sources=True  # Include source information
 )
 
-# Access detailed results
-print(f"Answer: {result['answer']}")
-print(f"Retrieved {len(result['retrieved_documents'])} documents")
-print(f"Sources: {result['sources']}")
-print(f"Processing time: {result['metadata']['processing_time']:.2f}s")
-```
-
-### Custom Prompts
-
-```python
-custom_prompt = """
-Based on the following context, answer the question in a technical manner:
-
-Context: {context}
-
-Question: {query}
-
-Provide a detailed technical explanation with examples.
-"""
-
-result = pipeline.execute(
-    "How does neural network training work?",
-    custom_prompt=custom_prompt
-)
-```
-
-### Retrieval Only
-
-```python
-# Get relevant documents without generating an answer
-documents = pipeline.query(
-    "machine learning algorithms",
-    top_k=5
-)
-
-for doc in documents:
+# See what sources were used
+for doc in result['retrieved_documents']:
     print(f"Source: {doc.metadata.get('source', 'Unknown')}")
-    print(f"Content: {doc.page_content[:200]}...")
+    print(f"Content preview: {doc.page_content[:100]}...")
 ```
 
-## Personal Assistant Integration
+### Using Make Commands
 
-### Drop-in Replacement
+```bash
+# Test a specific pipeline
+make test-pipeline PIPELINE=basic
 
-Replace existing Personal Assistant RAG initialization:
+# Run comprehensive tests
+make test-1000
+```
+
+## Available RAG Techniques
+
+The system supports multiple RAG (Retrieval Augmented Generation) techniques:
+
+### Basic RAG
+- **Best for**: General question answering
+- **How to use**: `create_pipeline("basic")`
+- **Features**: Standard vector similarity search
+
+### ColBERT
+- **Best for**: High-precision retrieval
+- **How to use**: `create_pipeline("colbert")`
+- **Features**: Token-level embeddings with late interaction
+
+### CRAG (Corrective RAG)
+- **Best for**: Self-correcting answers
+- **How to use**: `create_pipeline("crag")`
+- **Features**: Automatic quality assessment and correction
+
+### Other Techniques
+- **GraphRAG**: Knowledge graph-enhanced retrieval
+- **HyDE**: Hypothetical document embeddings
+- **NodeRAG**: Node-based document representation
+- **Hybrid iFindRAG**: Combines multiple search strategies
+
+### Testing All Techniques
+
+```bash
+# Validate all available techniques
+make validate-all-pipelines
+
+# Test all techniques with sample data
+make auto-setup-all
+```
+
+## Common Use Cases
+
+### 1. Document Q&A System
 
 ```python
-from rag_templates.adapters import PersonalAssistantAdapter
+# Load your company documents
+pipeline = create_pipeline("basic")
 
-# Initialize adapter
-adapter = PersonalAssistantAdapter()
-
-# Use existing PA configuration format
-pipeline = adapter.initialize_iris_rag_pipeline(
-    config_path="pa_config.yaml",
-    pa_specific_config={
-        "iris_host": "localhost",
-        "iris_port": 1972,
-        "embedding_model": "all-MiniLM-L6-v2"
-    }
-)
-
-# Query using PA interface
-response = adapter.query("How does photosynthesis work?")
+# Ask questions about your documents
+answer = pipeline.run("What is our return policy?")
+print(answer["answer"])
 ```
 
-### Configuration Translation
-
-The adapter automatically translates PA configuration:
+### 2. Research Assistant
 
 ```python
-# PA configuration is automatically converted
-pa_config = {
-    "pa_db_host": "iris-server",
-    "pa_api_key": "secret-key",
-    "pa_model": "gpt-3.5-turbo"
-}
+# Use CRAG for self-correcting research
+pipeline = create_pipeline("crag")
 
-# Becomes RAG templates configuration
-rag_config = {
-    "database": {"iris": {"host": "iris-server"}},
-    "openai": {"api_key": "secret-key"},
-    "llm": {"model": "gpt-3.5-turbo"}
-}
+# Ask complex research questions
+result = pipeline.run("What are the latest developments in AI?")
+print(result["answer"])
 ```
 
-## Examples
-
-### Complete Workflow
+### 3. Technical Documentation Search
 
 ```python
-from rag_templates import create_pipeline
-import logging
+# Use ColBERT for precise technical queries
+pipeline = create_pipeline("colbert")
 
-# Enable logging
-logging.basicConfig(level=logging.INFO)
-
-# Create pipeline
-pipeline = create_pipeline("basic", config_path="config.yaml")
-
-# Load documents
-print("Loading documents...")
-pipeline.load_documents("./medical_papers")
-
-# Query the system
-queries = [
-    "What are the symptoms of diabetes?",
-    "How is cancer diagnosed?",
-    "What are the side effects of chemotherapy?"
-]
-
-for query in queries:
-    print(f"\nQuery: {query}")
-    result = pipeline.execute(query)
-    print(f"Answer: {result['answer']}")
-    print(f"Sources: {len(result['retrieved_documents'])} documents")
+# Search technical documentation
+result = pipeline.run("How do I configure the database connection?")
+print(result["answer"])
 ```
 
-### Batch Processing
+### 4. Batch Processing
 
-```python
-import json
-from pathlib import Path
-
-# Process multiple queries
-queries = [
-    "What is machine learning?",
-    "How does deep learning work?",
-    "What are neural networks?"
-]
-
-results = []
-for query in queries:
-    result = pipeline.execute(query)
-    results.append({
-        "query": query,
-        "answer": result["answer"],
-        "num_sources": len(result["retrieved_documents"]),
-        "processing_time": result["metadata"]["processing_time"]
-    })
-
-# Save results
-with open("batch_results.json", "w") as f:
-    json.dump(results, f, indent=2)
+```bash
+# Process multiple queries efficiently
+make eval-all-ragas-1000
 ```
 
-### Performance Monitoring
+## Troubleshooting
 
-```python
-import time
-from collections import defaultdict
+### Common Issues
 
-# Monitor performance
-stats = defaultdict(list)
+#### "Connection failed" Error
+```bash
+# Check if IRIS database is running
+docker ps | grep iris_db_rag_standalone
 
-for i in range(10):
-    start_time = time.time()
-    result = pipeline.execute("What is artificial intelligence?")
-    end_time = time.time()
-    
-    stats["response_time"].append(end_time - start_time)
-    stats["num_documents"].append(len(result["retrieved_documents"]))
+# If not running, start it
+docker-compose up -d
 
-# Calculate averages
-avg_response_time = sum(stats["response_time"]) / len(stats["response_time"])
-avg_documents = sum(stats["num_documents"]) / len(stats["num_documents"])
-
-print(f"Average response time: {avg_response_time:.2f}s")
-print(f"Average documents retrieved: {avg_documents:.1f}")
+# Test connection
+make test-dbapi
 ```
 
-## Next Steps
+#### "No documents found" Error
+```bash
+# Check if documents are loaded
+make check-data
 
-- **[API Reference](API_REFERENCE.md)**: Detailed API documentation
-- **[Developer Guide](DEVELOPER_GUIDE.md)**: Architecture and extension patterns
-- **[Performance Guide](PERFORMANCE_GUIDE.md)**: Optimization recommendations
-- **[Troubleshooting](TROUBLESHOOTING.md)**: Common issues and solutions
+# If no documents, load sample data
+make load-data
+```
+
+#### "Pipeline not found" Error
+```bash
+# Validate all pipelines
+make validate-all-pipelines
+
+# Auto-setup missing pipelines
+make auto-setup-all
+```
+
+#### Memory Issues
+- Reduce batch sizes in configuration
+- Use smaller embedding models
+- Process fewer documents at once
+
+#### Slow Performance
+```bash
+# Check system status
+make status
+
+# Run performance optimization
+make heal-data
+```
+
+### Getting Detailed Logs
+
+```bash
+# View database logs
+docker-compose logs -f
+
+# Check system readiness
+make check-readiness
+
+# Run comprehensive validation
+make validate-all
+```
+
+### Self-Healing Features
+
+The system includes automatic problem detection and fixing:
+
+```bash
+# Automatically fix common issues
+make heal-data
+
+# Check what was fixed
+make check-readiness
+```
+
+## Getting Help
+
+### Documentation
+- **[Developer Guide](DEVELOPER_GUIDE.md)**: Technical details and architecture
+- **[Configuration Guide](CONFIGURATION.md)**: Advanced configuration options
+- **[Performance Guide](guides/PERFORMANCE_GUIDE.md)**: Optimization tips
+- **[Security Guide](guides/SECURITY_GUIDE.md)**: Security best practices
+
+### Command Reference
+```bash
+# See all available commands
+make help
+
+# Get CLI help
+./ragctl --help
+
+# Test specific components
+make validate-iris-rag
+make test-dbapi
+make check-data
+```
+
+### Quick Diagnostics
+
+```bash
+# Complete system check
+make status
+
+# Validate everything is working
+make validate-all
+
+# Run a quick test
+make test-pipeline PIPELINE=basic
+```
+
+### Environment Information
+
+```bash
+# Check your environment
+make env-info
+
+# Verify conda environment
+conda info --envs
+
+# Check Python packages
+pip list | grep -E "(iris|torch|transformers)"
+```
+
+### Support Resources
+
+1. **Check the logs**: Most issues are explained in the system logs
+2. **Run diagnostics**: Use `make status` to identify problems
+3. **Use self-healing**: Run `make heal-data` to fix common issues
+4. **Validate setup**: Use `make validate-all` to ensure everything is configured correctly
+
+### Performance Tips
+
+- Start with the Basic RAG pipeline for testing
+- Use `make load-data` to load sample documents before testing
+- Run `make heal-data` if you encounter data consistency issues
+- Use `make validate-all-pipelines` to ensure all techniques are properly configured
+
+The system is designed to be self-healing and will automatically detect and fix many common issues. When in doubt, run the validation and healing commands to restore the system to a working state.

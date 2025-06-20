@@ -177,7 +177,7 @@ class ConfigurationManager:
         """
         default_config = {
             'model': 'all-MiniLM-L6-v2',
-            'dimension': 384,
+            'dimension': None,  # Will be determined by model or schema manager
             'provider': 'sentence-transformers'
         }
         
@@ -185,6 +185,21 @@ class ConfigurationManager:
         user_config = self.get("embeddings", {})
         if isinstance(user_config, dict):
             default_config.update(user_config)
+        
+        # If dimension is not explicitly set, determine from model or use default
+        if not default_config['dimension']:
+            # Use direct config lookup instead of dimension utils to avoid circular dependency
+            model_name = default_config['model']
+            if model_name == 'sentence-transformers/all-MiniLM-L6-v2' or model_name == 'all-MiniLM-L6-v2':
+                default_config['dimension'] = 384
+            elif model_name == 'text-embedding-ada-002':
+                default_config['dimension'] = 1536
+            elif model_name == 'all-mpnet-base-v2':
+                default_config['dimension'] = 768
+            else:
+                # Check config file directly for dimension
+                direct_dimension = self.get("embedding_model.dimension", 384)
+                default_config['dimension'] = direct_dimension
         
         return default_config
 

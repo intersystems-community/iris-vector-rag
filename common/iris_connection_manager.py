@@ -1,20 +1,37 @@
 """
-IRIS Connection Manager - DBAPI First Architecture
+IRIS Connection Manager - DBAPI First Architecture with Smart Environment Detection
 
 This module provides a unified connection manager that prioritizes DBAPI connections
-over JDBC, making DBAPI the default for all RAG operations.
+over JDBC, with automatic environment detection for optimal package availability.
 
 Connection Priority:
 1. DBAPI (intersystems-irispython package) - DEFAULT
 2. JDBC (fallback for specific use cases)
 3. Mock (for testing without database)
+
+Environment Priority:
+1. UV environment (.venv) if available and has IRIS packages
+2. Current environment if it has IRIS packages  
+3. System Python as fallback
 """
 
 import os
+import sys
 import logging
 from typing import Optional, Any, Dict, Union
 
 logger = logging.getLogger(__name__)
+
+# Smart environment detection
+def _detect_best_iris_environment():
+    """Detect the best environment for IRIS connections."""
+    try:
+        from .environment_manager import EnvironmentManager
+        env_manager = EnvironmentManager()
+        return env_manager.ensure_iris_available()
+    except ImportError:
+        # Fallback if environment manager not available
+        return True
 
 class IRISConnectionManager:
     """
@@ -72,7 +89,7 @@ class IRISConnectionManager:
     
     def _get_dbapi_connection(self, config: Optional[Dict[str, Any]] = None) -> Any:
         """
-        Get DBAPI connection using intersystems-irispython package.
+        Get DBAPI connection using intersystems-irispython package with smart environment detection.
         
         Args:
             config: Optional configuration dictionary
@@ -81,28 +98,40 @@ class IRISConnectionManager:
             DBAPI connection object
         """
         try:
-            import irisnative
+            # Check environment first
+            if not _detect_best_iris_environment():
+                logger.warning("IRIS packages may not be available in current environment")
+            
+            # Import the IRIS module 
+            import iris
+            
+            # Verify iris.connect is available
+            if not hasattr(iris, 'connect'):
+                raise AttributeError(
+                    "iris module imported but doesn't have 'connect' method. "
+                    "This usually means the intersystems-irispython package is not properly installed "
+                    "or the wrong iris module is being imported."
+                )
             
             # Get connection parameters
             conn_params = self._get_connection_params(config)
             
-            # Create an IRIS native connection first
-            iris_native_connection = irisnative.createConnection(
-                conn_params["hostname"],
-                conn_params["port"],
-                conn_params["namespace"],
-                conn_params["username"],
-                conn_params["password"]
+            # Create an IRIS connection using the correct parameters
+            connection = iris.connect(
+                hostname=conn_params["hostname"],
+                port=conn_params["port"],
+                namespace=conn_params["namespace"],
+                username=conn_params["username"],
+                password=conn_params["password"]
             )
-            
-            # The iris_native_connection object itself should be DBAPI compliant
-            connection = iris_native_connection
             
             logger.debug(f"DBAPI connection established to {conn_params['hostname']}:{conn_params['port']}")
             return connection
             
         except ImportError as e:
             raise ImportError(f"intersystems-irispython package not available. Install with: pip install intersystems-irispython. Error: {e}")
+        except AttributeError as e:
+            raise ImportError(f"IRIS DBAPI not properly configured: {e}")
         except Exception as e:
             raise ConnectionError(f"Failed to create DBAPI connection: {e}")
     
@@ -221,6 +250,20 @@ class IRISConnectionManager:
 
 
 # Convenience functions for backward compatibility
+def get_iris_dbapi_connection(config: Optional[Dict[str, Any]] = None) -> Any:
+    """
+    Get DBAPI connection specifically.
+    """
+    manager = IRISConnectionManager()
+    return manager._get_dbapi_connection(config)
+
+def get_iris_jdbc_connection(config: Optional[Dict[str, Any]] = None) -> Any:
+    """
+    Get JDBC connection specifically.
+    """
+    manager = IRISConnectionManager()
+    return manager._get_jdbc_connection(config)
+
 def get_iris_connection(config: Optional[Dict[str, Any]] = None, prefer_dbapi: bool = True) -> Any:
     """
     Get an IRIS database connection, preferring DBAPI by default.
