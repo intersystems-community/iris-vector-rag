@@ -1,0 +1,219 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-06-19T12:40:07.947342",
+    "pipeline_types": [
+      "basic",
+      "hyde",
+      "crag",
+      "colbert",
+      "noderag",
+      "graphrag",
+      "hybrid_ifind"
+    ],
+    "test_query": "What is IRIS?"
+  },
+  "results": [
+    {
+      "pipeline_type": "basic",
+      "pipeline_name": "BasicRAG",
+      "status": "broken",
+      "initialization": {
+        "success": false,
+        "error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 113, in _create_dbapi_connection\n    connection = iris.connect(\n                 ^^^^^^^^^^^^\nAttributeError: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 83, in get_connection\n    connection = self._create_dbapi_connection()\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 129, in _create_dbapi_connection\n    raise ConnectionError(f\"DBAPI connection failed: {e}\")\nConnectionError: DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 78, in _get_connection\n    self._connection = self.connection_manager.get_connection(\"iris\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 93, in get_connection\n    raise ConnectionError(f\"Failed to connect to IRIS backend '{backend_name}': {e}\")\nConnectionError: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 70, in __init__\n    self._get_connection()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 80, in _get_connection\n    raise VectorStoreConnectionError(f\"Failed to get IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/test_all_pipelines_status.py\", line 75, in test_pipeline\n    pipeline = create_pipeline(\n               ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 86, in create_pipeline\n    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 94, in _create_pipeline_legacy\n    return BasicRAGPipeline(\n           ^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/pipelines/basic.py\", line 42, in __init__\n    super().__init__(connection_manager, config_manager, vector_store)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/base.py\", line 30, in __init__\n    self.vector_store = IRISVectorStore(connection_manager, config_manager)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 72, in __init__\n    raise VectorStoreConnectionError(f\"Failed to initialize IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n"
+      },
+      "query_test": {
+        "success": false,
+        "response": null,
+        "error": null
+      },
+      "notes": [
+        "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+      ]
+    },
+    {
+      "pipeline_type": "hyde",
+      "pipeline_name": "HyDERAG",
+      "status": "broken",
+      "initialization": {
+        "success": false,
+        "error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 113, in _create_dbapi_connection\n    connection = iris.connect(\n                 ^^^^^^^^^^^^\nAttributeError: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 83, in get_connection\n    connection = self._create_dbapi_connection()\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 129, in _create_dbapi_connection\n    raise ConnectionError(f\"DBAPI connection failed: {e}\")\nConnectionError: DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 78, in _get_connection\n    self._connection = self.connection_manager.get_connection(\"iris\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 93, in get_connection\n    raise ConnectionError(f\"Failed to connect to IRIS backend '{backend_name}': {e}\")\nConnectionError: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 70, in __init__\n    self._get_connection()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 80, in _get_connection\n    raise VectorStoreConnectionError(f\"Failed to get IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/test_all_pipelines_status.py\", line 75, in test_pipeline\n    pipeline = create_pipeline(\n               ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 86, in create_pipeline\n    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 117, in _create_pipeline_legacy\n    return HyDERAGPipeline(\n           ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/pipelines/hyde.py\", line 41, in __init__\n    super().__init__(connection_manager, config_manager, vector_store)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/base.py\", line 30, in __init__\n    self.vector_store = IRISVectorStore(connection_manager, config_manager)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 72, in __init__\n    raise VectorStoreConnectionError(f\"Failed to initialize IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n"
+      },
+      "query_test": {
+        "success": false,
+        "response": null,
+        "error": null
+      },
+      "notes": [
+        "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+      ]
+    },
+    {
+      "pipeline_type": "crag",
+      "pipeline_name": "CRAG",
+      "status": "broken",
+      "initialization": {
+        "success": false,
+        "error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 113, in _create_dbapi_connection\n    connection = iris.connect(\n                 ^^^^^^^^^^^^\nAttributeError: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 83, in get_connection\n    connection = self._create_dbapi_connection()\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 129, in _create_dbapi_connection\n    raise ConnectionError(f\"DBAPI connection failed: {e}\")\nConnectionError: DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 78, in _get_connection\n    self._connection = self.connection_manager.get_connection(\"iris\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 93, in get_connection\n    raise ConnectionError(f\"Failed to connect to IRIS backend '{backend_name}': {e}\")\nConnectionError: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 70, in __init__\n    self._get_connection()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 80, in _get_connection\n    raise VectorStoreConnectionError(f\"Failed to get IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/test_all_pipelines_status.py\", line 75, in test_pipeline\n    pipeline = create_pipeline(\n               ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 86, in create_pipeline\n    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 109, in _create_pipeline_legacy\n    return CRAGPipeline(\n           ^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/pipelines/crag.py\", line 69, in __init__\n    super().__init__(connection_manager, config_manager, vector_store)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/base.py\", line 30, in __init__\n    self.vector_store = IRISVectorStore(connection_manager, config_manager)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 72, in __init__\n    raise VectorStoreConnectionError(f\"Failed to initialize IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n"
+      },
+      "query_test": {
+        "success": false,
+        "response": null,
+        "error": null
+      },
+      "notes": [
+        "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+      ]
+    },
+    {
+      "pipeline_type": "colbert",
+      "pipeline_name": "ColBERTRAG",
+      "status": "broken",
+      "initialization": {
+        "success": false,
+        "error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 113, in _create_dbapi_connection\n    connection = iris.connect(\n                 ^^^^^^^^^^^^\nAttributeError: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 83, in get_connection\n    connection = self._create_dbapi_connection()\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 129, in _create_dbapi_connection\n    raise ConnectionError(f\"DBAPI connection failed: {e}\")\nConnectionError: DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 78, in _get_connection\n    self._connection = self.connection_manager.get_connection(\"iris\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 93, in get_connection\n    raise ConnectionError(f\"Failed to connect to IRIS backend '{backend_name}': {e}\")\nConnectionError: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 70, in __init__\n    self._get_connection()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 80, in _get_connection\n    raise VectorStoreConnectionError(f\"Failed to get IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/test_all_pipelines_status.py\", line 75, in test_pipeline\n    pipeline = create_pipeline(\n               ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 86, in create_pipeline\n    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 100, in _create_pipeline_legacy\n    return ColBERTRAGPipeline(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/pipelines/colbert.py\", line 47, in __init__\n    super().__init__(connection_manager, config_manager, vector_store)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/base.py\", line 30, in __init__\n    self.vector_store = IRISVectorStore(connection_manager, config_manager)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 72, in __init__\n    raise VectorStoreConnectionError(f\"Failed to initialize IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n"
+      },
+      "query_test": {
+        "success": false,
+        "response": null,
+        "error": null
+      },
+      "notes": [
+        "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+      ]
+    },
+    {
+      "pipeline_type": "noderag",
+      "pipeline_name": "NodeRAG",
+      "status": "broken",
+      "initialization": {
+        "success": false,
+        "error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 113, in _create_dbapi_connection\n    connection = iris.connect(\n                 ^^^^^^^^^^^^\nAttributeError: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 83, in get_connection\n    connection = self._create_dbapi_connection()\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 129, in _create_dbapi_connection\n    raise ConnectionError(f\"DBAPI connection failed: {e}\")\nConnectionError: DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 78, in _get_connection\n    self._connection = self.connection_manager.get_connection(\"iris\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 93, in get_connection\n    raise ConnectionError(f\"Failed to connect to IRIS backend '{backend_name}': {e}\")\nConnectionError: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 70, in __init__\n    self._get_connection()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 80, in _get_connection\n    raise VectorStoreConnectionError(f\"Failed to get IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/test_all_pipelines_status.py\", line 75, in test_pipeline\n    pipeline = create_pipeline(\n               ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 86, in create_pipeline\n    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 138, in _create_pipeline_legacy\n    return NodeRAGPipeline(\n           ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/pipelines/noderag.py\", line 43, in __init__\n    super().__init__(connection_manager, config_manager, vector_store)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/base.py\", line 30, in __init__\n    self.vector_store = IRISVectorStore(connection_manager, config_manager)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 72, in __init__\n    raise VectorStoreConnectionError(f\"Failed to initialize IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n"
+      },
+      "query_test": {
+        "success": false,
+        "response": null,
+        "error": null
+      },
+      "notes": [
+        "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+      ]
+    },
+    {
+      "pipeline_type": "graphrag",
+      "pipeline_name": "GraphRAG",
+      "status": "broken",
+      "initialization": {
+        "success": false,
+        "error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 113, in _create_dbapi_connection\n    connection = iris.connect(\n                 ^^^^^^^^^^^^\nAttributeError: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 83, in get_connection\n    connection = self._create_dbapi_connection()\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 129, in _create_dbapi_connection\n    raise ConnectionError(f\"DBAPI connection failed: {e}\")\nConnectionError: DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 78, in _get_connection\n    self._connection = self.connection_manager.get_connection(\"iris\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 93, in get_connection\n    raise ConnectionError(f\"Failed to connect to IRIS backend '{backend_name}': {e}\")\nConnectionError: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 70, in __init__\n    self._get_connection()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 80, in _get_connection\n    raise VectorStoreConnectionError(f\"Failed to get IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/test_all_pipelines_status.py\", line 75, in test_pipeline\n    pipeline = create_pipeline(\n               ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 86, in create_pipeline\n    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 124, in _create_pipeline_legacy\n    return GraphRAGPipeline(\n           ^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/pipelines/graphrag.py\", line 42, in __init__\n    super().__init__(connection_manager, config_manager, vector_store)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/base.py\", line 30, in __init__\n    self.vector_store = IRISVectorStore(connection_manager, config_manager)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 72, in __init__\n    raise VectorStoreConnectionError(f\"Failed to initialize IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n"
+      },
+      "query_test": {
+        "success": false,
+        "response": null,
+        "error": null
+      },
+      "notes": [
+        "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+      ]
+    },
+    {
+      "pipeline_type": "hybrid_ifind",
+      "pipeline_name": "HybridIFindRAG",
+      "status": "broken",
+      "initialization": {
+        "success": false,
+        "error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "traceback": "Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 113, in _create_dbapi_connection\n    connection = iris.connect(\n                 ^^^^^^^^^^^^\nAttributeError: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 83, in get_connection\n    connection = self._create_dbapi_connection()\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 129, in _create_dbapi_connection\n    raise ConnectionError(f\"DBAPI connection failed: {e}\")\nConnectionError: DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 78, in _get_connection\n    self._connection = self.connection_manager.get_connection(\"iris\")\n                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/connection.py\", line 93, in get_connection\n    raise ConnectionError(f\"Failed to connect to IRIS backend '{backend_name}': {e}\")\nConnectionError: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 70, in __init__\n    self._get_connection()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 80, in _get_connection\n    raise VectorStoreConnectionError(f\"Failed to get IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/test_all_pipelines_status.py\", line 75, in test_pipeline\n    pipeline = create_pipeline(\n               ^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 86, in create_pipeline\n    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 131, in _create_pipeline_legacy\n    return HybridIFindRAGPipeline(\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/pipelines/hybrid_ifind.py\", line 41, in __init__\n    super().__init__(connection_manager, config_manager, vector_store)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/core/base.py\", line 30, in __init__\n    self.vector_store = IRISVectorStore(connection_manager, config_manager)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/storage/vector_store_iris.py\", line 72, in __init__\n    raise VectorStoreConnectionError(f\"Failed to initialize IRIS connection: {e}\")\niris_rag.core.vector_store_exceptions.VectorStoreConnectionError: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'\n"
+      },
+      "query_test": {
+        "success": false,
+        "response": null,
+        "error": null
+      },
+      "notes": [
+        "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+      ]
+    }
+  ],
+  "summary": {
+    "test_timestamp": "2025-06-19T12:40:07.947221",
+    "total_pipelines": 7,
+    "status_counts": {
+      "broken": 7
+    },
+    "working_pipelines": [],
+    "broken_pipelines": [
+      "BasicRAG",
+      "HyDERAG",
+      "CRAG",
+      "ColBERTRAG",
+      "NodeRAG",
+      "GraphRAG",
+      "HybridIFindRAG"
+    ],
+    "partial_pipelines": [],
+    "details_by_pipeline": {
+      "BasicRAG": {
+        "status": "broken",
+        "notes": [
+          "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+        ],
+        "initialization_error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "query_error": null
+      },
+      "HyDERAG": {
+        "status": "broken",
+        "notes": [
+          "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+        ],
+        "initialization_error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "query_error": null
+      },
+      "CRAG": {
+        "status": "broken",
+        "notes": [
+          "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+        ],
+        "initialization_error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "query_error": null
+      },
+      "ColBERTRAG": {
+        "status": "broken",
+        "notes": [
+          "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+        ],
+        "initialization_error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "query_error": null
+      },
+      "NodeRAG": {
+        "status": "broken",
+        "notes": [
+          "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+        ],
+        "initialization_error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "query_error": null
+      },
+      "GraphRAG": {
+        "status": "broken",
+        "notes": [
+          "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+        ],
+        "initialization_error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "query_error": null
+      },
+      "HybridIFindRAG": {
+        "status": "broken",
+        "notes": [
+          "Initialization failed: Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'"
+        ],
+        "initialization_error": "Failed to initialize IRIS connection: Failed to get IRIS connection: Failed to connect to IRIS backend 'iris': DBAPI connection failed: module 'iris' has no attribute 'connect'",
+        "query_error": null
+      }
+    }
+  }
+}

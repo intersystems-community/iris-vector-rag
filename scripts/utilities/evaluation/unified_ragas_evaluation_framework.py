@@ -22,9 +22,24 @@ from enum import Enum
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Add project root to path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+# Correctly navigate three levels up from scripts/utilities/evaluation to the workspace root
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+
+from common.iris_connection_manager import IRISConnectionManager
+from .config_manager import ConfigManager # This is scripts.utilities.evaluation.config_manager
+from iris_rag.config.manager import ConfigurationManager as IrisConfigManager # This is iris_rag.config.manager
+
+# Import RAG pipeline classes
+from iris_rag.pipelines.basic import BasicRAGPipeline
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Corrected class name
+from iris_rag.pipelines.crag import CRAGPipeline
+from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Corrected class name
+from iris_rag.pipelines.noderag import NodeRAGPipeline
+from iris_rag.embeddings.manager import EmbeddingManager # Added for NodeRAG
 
 # Visualization imports
 import matplotlib.pyplot as plt
@@ -95,7 +110,7 @@ from common.embedding_utils import get_embedding_model
 from common.utils import get_embedding_func, get_llm_func
 
 # Configuration management
-from eval.config_manager import ConfigManager, ComprehensiveConfig
+from .config_manager import ConfigManager, ComprehensiveConfig
 
 # LangChain for RAGAS
 try:
@@ -201,28 +216,43 @@ class UnifiedRAGASEvaluationFramework:
         
         # Extract legacy config for backward compatibility
         self.config = self.comprehensive_config.evaluation
+
+        # Create results directory first
+        self._setup_results_directory() # Uses self.comprehensive_config.output.results_dir
         
         # Setup logging
-        self._setup_logging()
+        self._setup_logging() # Uses self.comprehensive_config.output.results_dir
         
-        # Initialize connections
-        self.connections = self._initialize_connections()
-        
+        # Initialize ConfigManager (can be useful for other operations if needed)
+        # The main config object (self.comprehensive_config) is already loaded and passed in.
+        self.config_manager = ConfigManager()
+
+        # Note: The comprehensive_config is passed in directly to __init__.
+        # The logic for deciding which config file to load (dev, specific, or default)
+        # is handled by the calling script (run_unified_evaluation.py) before this class is instantiated.
+        # self.comprehensive_config is already set from the __init__ parameter.
+
+        # Extract legacy evaluation-specific config for backward compatibility
+        # This assumes self.comprehensive_config is correctly populated by the caller.
+        self.config = self.comprehensive_config.evaluation
+
+        # Initialize ConnectionManager and database connection
+        self.db_connection_manager: Optional[IRISConnectionManager] = None
+        self.db_connection: Optional[Any] = None
+        self._initialize_db_connection_and_manager() # Uses self.comprehensive_config.database
+
         # Initialize embedding and LLM functions
-        self.embedding_func, self.llm_func = self._initialize_models()
+        self.embedding_func, self.llm_func = self._initialize_models() # Uses self.comprehensive_config
         
         # Initialize RAGAS components
-        self.ragas_llm, self.ragas_embeddings = self._initialize_ragas()
+        self.ragas_llm, self.ragas_embeddings = self._initialize_ragas() # Uses self.comprehensive_config
         
         # Initialize pipelines
-        self.pipelines = self._initialize_pipelines()
+        self.pipelines = self._initialize_pipelines() # Uses self.db_connection_manager, self.config_manager, etc.
         
         # Load test queries
-        self.test_queries = self._load_test_queries()
-        
-        # Create results directory
-        self._setup_results_directory()
-        
+        self.test_queries = self._load_test_queries() # Uses self.comprehensive_config
+
     def _setup_logging(self):
         """Setup logging configuration"""
         log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -231,31 +261,38 @@ class UnifiedRAGASEvaluationFramework:
             format=log_format,
             handlers=[
                 logging.StreamHandler(),
-                logging.FileHandler(f"{self.config.results_dir}/evaluation.log")
+                logging.FileHandler(f"{self.comprehensive_config.output.results_dir}/evaluation.log")
             ]
         )
         
     def _setup_results_directory(self):
         """Create results directory if it doesn't exist"""
-        Path(self.config.results_dir).mkdir(parents=True, exist_ok=True)
-        
-    def _initialize_connections(self) -> Dict[str, Any]:
-        """Initialize database connections"""
-        connections = {}
-        
+        Path(self.comprehensive_config.output.results_dir).mkdir(parents=True, exist_ok=True)
+
+    def _initialize_db_connection_and_manager(self) -> None:
+        """Initialize IRISConnectionManager and the database connection."""
+        db_conf_obj = self.comprehensive_config.database
         try:
-            if self.config.connection_type == ConnectionType.DBAPI:
-                from common.iris_dbapi_connector import get_iris_dbapi_connection
-                connections['dbapi'] = get_iris_dbapi_connection()
-                logger.info("✅ DBAPI connection initialized")
-            else:
-                from common.iris_connector_jdbc import get_iris_connection
-                connections['jdbc'] = get_iris_connection()
-                logger.info("✅ JDBC connection initialized")
-        except Exception as e:
-            logger.error(f"❌ Connection initialization failed: {e}")
+            db_params_dict = asdict(db_conf_obj)
+            prefer_dbapi_flag = (db_conf_obj.connection_type.lower() == "dbapi")
+
+            self.db_connection_manager = IRISConnectionManager(prefer_dbapi=prefer_dbapi_flag)
+            self.db_connection = self.db_connection_manager.get_connection(config=db_params_dict)
             
-        return connections
+            connection_type_used = self.db_connection_manager.get_connection_type()
+            if self.db_connection:
+                if connection_type_used == "DBAPI":
+                    logger.info("✅ DBAPI connection initialized and stored via IRISConnectionManager")
+                elif connection_type_used == "JDBC":
+                    logger.info("✅ JDBC connection initialized and stored via IRISConnectionManager")
+                else:
+                    logger.warning(f"⚠️ Connection established (type: {connection_type_used}), stored.")
+            else:
+                logger.error(f"❌ Failed to establish database connection via IRISConnectionManager.")
+        except Exception as e:
+            logger.error(f"❌ Database connection and manager initialization failed: {e}", exc_info=True)
+            self.db_connection_manager = None
+            self.db_connection = None
         
     def _initialize_models(self) -> Tuple[Callable, Callable]:
         """Initialize embedding and LLM functions"""
@@ -311,44 +348,53 @@ class UnifiedRAGASEvaluationFramework:
     def _initialize_pipelines(self) -> Dict[str, Any]:
         """Initialize all RAG pipelines with standardized parameters"""
         pipelines = {}
-        connection = list(self.connections.values())[0] if self.connections else None
         
-        if not connection:
-            logger.error("❌ No database connection available")
+        if not self.db_connection_manager or not self.db_connection:
+            logger.error("❌ Database connection manager or connection not initialized. Cannot initialize pipelines.")
             return pipelines
         
+        # ConfigManager instance is self.config_manager
+        # ComprehensiveConfig instance is self.comprehensive_config
+
         # Define available pipeline configurations
+        # Note: Ensure class names BasicRAGPipeline, CRAGPipeline, etc. are correctly imported
         available_pipelines = {
             "BasicRAG": (BasicRAGPipeline, {
-                "iris_connector": connection,
-                "embedding_func": self.embedding_func,
-                "llm_func": self.llm_func,
-                "schema": self.comprehensive_config.database.schema
+                "connection_manager": self.db_connection_manager,
+                "config_manager": IrisConfigManager(),
+                "llm_func": self.llm_func
             }),
-            "HyDE": (HyDEPipeline, {
-                "iris_connector": connection,
-                "embedding_func": self.embedding_func,
+            "HyDE": (HyDERAGPipeline, {
+                "connection_manager": self.db_connection_manager,
+                "config_manager": IrisConfigManager(),
                 "llm_func": self.llm_func
             }),
             "CRAG": (CRAGPipeline, {
-                "iris_connector": connection,
-                "embedding_func": self.embedding_func,
-                "llm_func": self.llm_func
+                "connection_manager": self.db_connection_manager,
+                "config_manager": IrisConfigManager(),
+                "llm_func": self.llm_func,
+                "embedding_func": self.embedding_func
             }),
-            "ColBERT": (ColBERTPipeline, {
-                "iris_connector": connection,
-                "colbert_query_encoder_func": self.embedding_func,
-                "colbert_doc_encoder_func": self.embedding_func,
+            "ColBERT": (ColBERTRAGPipeline, {
+                "connection_manager": self.db_connection_manager,
+                "config_manager": IrisConfigManager(),
+                "colbert_query_encoder": self.embedding_func,
                 "llm_func": self.llm_func
             }),
             "NodeRAG": (NodeRAGPipeline, {
-                "iris_connector": connection,
-                "embedding_func": self.embedding_func,
+                "connection_manager": self.db_connection_manager,
+                "config_manager": IrisConfigManager(),
+                "embedding_manager": EmbeddingManager(IrisConfigManager()),
                 "llm_func": self.llm_func
             }),
             "GraphRAG": (GraphRAGPipeline, {
-                "iris_connector": connection,
-                "embedding_func": self.embedding_func,
+                "connection_manager": self.db_connection_manager,
+                "config_manager": IrisConfigManager(),
+                "llm_func": self.llm_func
+            }),
+            "HybridIFind": (HybridIFindRAGPipeline, {
+                "connection_manager": self.db_connection_manager,
+                "config_manager": IrisConfigManager(),
                 "llm_func": self.llm_func
             })
         }
@@ -458,8 +504,8 @@ class UnifiedRAGASEvaluationFramework:
             # Run pipeline with standardized parameters
             result = pipeline.run(
                 query,
-                top_k=self.config.top_k,
-                similarity_threshold=self.config.similarity_threshold
+                top_k=self.comprehensive_config.retrieval.top_k,
+                similarity_threshold=self.comprehensive_config.retrieval.similarity_threshold
             )
             
             response_time = time.time() - start_time
@@ -468,8 +514,11 @@ class UnifiedRAGASEvaluationFramework:
             documents = result.get('retrieved_documents', [])
             answer = result.get('answer', '')
             
-            # Extract contexts for RAGAS
-            contexts = self._extract_contexts(documents)
+            # Extract contexts for RAGAS - prefer pre-extracted contexts
+            contexts = result.get('contexts')
+            if contexts is None:
+                # Fall back to extracting from documents if contexts not provided
+                contexts = self._extract_contexts(documents)
             
             # Calculate similarity scores
             similarity_scores = self._extract_similarity_scores(documents)
@@ -650,33 +699,41 @@ class UnifiedRAGASEvaluationFramework:
                 )
         
         # Save results
-        if self.config.save_results:
+        if self.comprehensive_config.output.save_results:
             self._save_results(all_results, timestamp)
         
         # Create visualizations
-        if self.config.create_visualizations:
+        if self.comprehensive_config.output.create_visualizations:
             self._create_visualizations(all_results, timestamp)
         
         # Perform statistical analysis
-        if self.config.enable_statistical_testing and SCIPY_AVAILABLE:
+        if self.comprehensive_config.evaluation.enable_statistical_testing and SCIPY_AVAILABLE:
             self._perform_statistical_analysis(all_results, timestamp)
         
         return all_results
     
     def _save_results(self, results: Dict[str, PipelineMetrics], timestamp: str):
         """Save evaluation results to JSON"""
-        results_file = f"{self.config.results_dir}/evaluation_results_{timestamp}.json"
+        results_file = f"{self.comprehensive_config.output.results_dir}/evaluation_results_{timestamp}.json"
         
         # Convert to serializable format
         serializable_results = {}
         for name, metrics in results.items():
             data = asdict(metrics)
-            # Convert QueryResult objects to dicts
-            if data['individual_results']:
-                data['individual_results'] = [asdict(r) for r in data['individual_results']]
+            # individual_results are already converted to dicts by asdict(metrics)
+            # No need for: data['individual_results'] = [asdict(r) for r in data['individual_results']]
+            
             # Convert RAGAS results to serializable format
-            if data['ragas_scores'] is not None:
-                data['ragas_scores'] = {k: float(v) for k, v in data['ragas_scores'].items()}
+            if data.get('ragas_scores') is not None: # Use .get for safety
+                # Ensure values are float or handle other potential types if necessary
+                serializable_ragas_scores = {}
+                for k, v in data['ragas_scores'].items():
+                    try:
+                        serializable_ragas_scores[k] = float(v)
+                    except (ValueError, TypeError):
+                        logger.warning(f"Could not convert RAGAS score {k}={v} to float. Storing as string.")
+                        serializable_ragas_scores[k] = str(v) # Store as string if not floatable
+                data['ragas_scores'] = serializable_ragas_scores
             serializable_results[name] = data
         
         with open(results_file, 'w') as f:
@@ -733,7 +790,7 @@ class UnifiedRAGASEvaluationFramework:
         ax4.tick_params(axis='x', rotation=45)
         
         plt.tight_layout()
-        plt.savefig(f"{self.config.results_dir}/performance_comparison_{timestamp}.png", 
+        plt.savefig(f"{self.comprehensive_config.output.results_dir}/performance_comparison_{timestamp}.png",
                    dpi=300, bbox_inches='tight')
         plt.close()
     
@@ -773,7 +830,7 @@ class UnifiedRAGASEvaluationFramework:
         ax.grid(True, alpha=0.3)
         
         plt.tight_layout()
-        plt.savefig(f"{self.config.results_dir}/ragas_comparison_{timestamp}.png", 
+        plt.savefig(f"{self.comprehensive_config.output.results_dir}/ragas_comparison_{timestamp}.png",
                    dpi=300, bbox_inches='tight')
         plt.close()
     
@@ -824,7 +881,7 @@ class UnifiedRAGASEvaluationFramework:
         ax.grid(True)
         
         plt.tight_layout()
-        plt.savefig(f"{self.config.results_dir}/spider_chart_{timestamp}.png",
+        plt.savefig(f"{self.comprehensive_config.output.results_dir}/spider_chart_{timestamp}.png",
                    dpi=300, bbox_inches='tight')
         plt.close()
     
@@ -872,7 +929,7 @@ class UnifiedRAGASEvaluationFramework:
         analysis_results['pairwise_comparisons'] = comparisons
         
         # Save statistical analysis
-        stats_file = f"{self.config.results_dir}/statistical_analysis_{timestamp}.json"
+        stats_file = f"{self.comprehensive_config.output.results_dir}/statistical_analysis_{timestamp}.json"
         with open(stats_file, 'w') as f:
             json.dump(analysis_results, f, indent=2, default=str)
         
@@ -885,11 +942,11 @@ class UnifiedRAGASEvaluationFramework:
             f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             "",
             "## Configuration",
-            f"- Top K: {self.config.top_k}",
-            f"- Similarity Threshold: {self.config.similarity_threshold}",
-            f"- Connection Type: {self.config.connection_type.value}",
-            f"- Chunking Method: {self.config.chunking_method.value}",
-            f"- Number of Iterations: {self.config.num_iterations}",
+            f"- Top K: {self.comprehensive_config.retrieval.top_k}",
+            f"- Similarity Threshold: {self.comprehensive_config.retrieval.similarity_threshold}",
+            f"- Connection Type: {self.comprehensive_config.database.connection_type if isinstance(self.comprehensive_config.database.connection_type, str) else self.comprehensive_config.database.connection_type.value}",
+            f"- Chunking Method: {self.comprehensive_config.chunking.method if isinstance(self.comprehensive_config.chunking.method, str) else self.comprehensive_config.chunking.method.value}",
+            f"- Number of Iterations: {self.comprehensive_config.evaluation.num_iterations}",
             "",
             "## Results Summary",
             ""
@@ -962,7 +1019,7 @@ class UnifiedRAGASEvaluationFramework:
         report_content = "\n".join(report_lines)
         
         # Save report
-        report_file = f"{self.config.results_dir}/evaluation_report_{timestamp}.md"
+        report_file = f"{self.comprehensive_config.output.results_dir}/evaluation_report_{timestamp}.md"
         with open(report_file, 'w') as f:
             f.write(report_content)
         

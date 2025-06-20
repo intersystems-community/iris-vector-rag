@@ -78,13 +78,9 @@ class ConnectionManager:
             
             logger.info(f"Establishing connection for backend '{backend_name}' using {connection_type.upper()}")
             
-            if connection_type == "dbapi":
-                # Use native IRIS DBAPI (preferred)
-                connection = self._create_dbapi_connection()
-            else:
-                # Fallback to JDBC
-                from common.iris_connector import get_iris_connection
-                connection = get_iris_connection()
+            # For now, always use the common iris_connection_manager which works
+            from common.iris_connection_manager import get_iris_connection
+            connection = get_iris_connection()
             
             self._connections[backend_name] = connection
             return connection
@@ -95,7 +91,8 @@ class ConnectionManager:
     def _create_dbapi_connection(self):
         """Create a native IRIS DBAPI connection."""
         try:
-            import intersystems_iris.dbapi._DBAPI as dbapi
+            # Import the correct IRIS DBAPI module that has connect()
+            from intersystems_iris.dbapi import _DBAPI as iris
             
             # Get database configuration
             db_config = self.config_manager.get("database")
@@ -109,13 +106,13 @@ class ConnectionManager:
                     "db_password": os.getenv("IRIS_PASSWORD", "SYS")
                 }
             
-            # Create DBAPI connection
-            connection = dbapi.connect(
-                hostname=db_config.get("db_host", "localhost"),
-                port=db_config.get("db_port", 1972),
-                namespace=db_config.get("db_namespace", "USER"),
-                username=db_config.get("db_user", "_SYSTEM"),
-                password=db_config.get("db_password", "SYS")
+            # Create DBAPI connection using iris module
+            connection = iris.connect(
+                db_config.get("db_host", "localhost"),
+                db_config.get("db_port", 1972),
+                db_config.get("db_namespace", "USER"),
+                db_config.get("db_user", "_SYSTEM"),
+                db_config.get("db_password", "SYS")
             )
             
             logger.info("✅ Successfully connected to IRIS using native DBAPI")
@@ -123,7 +120,7 @@ class ConnectionManager:
             
         except ImportError as e:
             logger.error(f"Native IRIS DBAPI not available: {e}")
-            raise ImportError("intersystems_iris package not installed. Install with: pip install intersystems-iris")
+            raise ImportError("iris package not installed. Install with: pip install intersystems-irispython")
         except Exception as e:
             logger.error(f"Failed to create DBAPI connection: {e}")
             raise ConnectionError(f"DBAPI connection failed: {e}")

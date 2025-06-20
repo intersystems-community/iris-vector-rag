@@ -177,7 +177,7 @@ class EmbeddingManager:
                 # Convert hash to numbers and normalize
                 hash_numbers = [int(text_hash[i:i+2], 16) for i in range(0, len(text_hash), 2)]
                 
-                # Pad or truncate to desired dimension (384 for compatibility)
+                # Pad or truncate to desired dimension (get from config or use 384 fallback)
                 target_dim = self.embedding_config.get("dimension", 384)
                 while len(hash_numbers) < target_dim:
                     hash_numbers.extend(hash_numbers[:target_dim - len(hash_numbers)])
@@ -255,13 +255,35 @@ class EmbeddingManager:
         if dimension:
             return dimension
         
+        # Try to get from embedding config's model mapping
+        model_name = self.embedding_config.get("sentence_transformers", {}).get(
+            "model_name", "all-MiniLM-L6-v2"
+        )
+        
+        # Use direct model-to-dimension mapping instead of dimension utils
+        known_dimensions = {
+            'sentence-transformers/all-MiniLM-L6-v2': 384,
+            'all-MiniLM-L6-v2': 384,
+            'all-mpnet-base-v2': 768,
+            'text-embedding-ada-002': 1536,
+            'text-embedding-3-small': 1536,
+            'text-embedding-3-large': 3072,
+            'bert-base-uncased': 768,
+            'bert-large-uncased': 1024,
+        }
+        
+        if model_name in known_dimensions:
+            return known_dimensions[model_name]
+        
         # Otherwise, generate a test embedding to determine dimension
         try:
             test_embedding = self.embed_text("test")
             return len(test_embedding)
         except Exception as e:
-            logger.warning(f"Could not determine embedding dimension: {e}")
-            return 384  # Default dimension
+            # HARD FAIL - no fallback dimensions to hide configuration issues
+            error_msg = f"CRITICAL: Cannot determine embedding dimension: {e}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
     
     def is_available(self, backend_name: Optional[str] = None) -> bool:
         """

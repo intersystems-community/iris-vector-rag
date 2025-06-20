@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide provides comprehensive performance optimization strategies for RAG templates in production environments. It covers pipeline optimization, IRIS database tuning, vector search performance, memory management, scaling strategies, and monitoring best practices.
+This guide provides comprehensive performance optimization strategies for the RAG templates system in production environments. It covers pipeline optimization, IRIS database tuning, vector search performance, memory management, scaling strategies, and monitoring best practices using the actual [`iris_rag`](../../iris_rag/) architecture.
 
 ## Table of Contents
 
@@ -19,116 +19,120 @@ This guide provides comprehensive performance optimization strategies for RAG te
 
 ### RAG Pipeline Architecture
 
-The RAG templates use a modular architecture with clear separation between retrieval, augmentation, and generation phases. Each pipeline inherits from [`RAGPipeline`](../rag_templates/core/base.py) base class.
+The RAG templates use a modular architecture with clear separation between retrieval, augmentation, and generation phases. Each pipeline inherits from [`RAGPipeline`](../../iris_rag/core/base.py) base class and uses the [`ConnectionManager`](../../iris_rag/core/connection.py) for database operations.
 
 #### Performance Characteristics by Technique
 
-| Technique | Avg Response Time | Scalability | Best Use Case |
-|-----------|------------------|-------------|---------------|
-| BasicRAG | 20-30ms (100 docs) | Linear | Simple queries, fast responses |
-| CRAG | 2.33s (V2) | Good | Complex reasoning, accuracy critical |
-| HyDE | 5.56s (V2) | Good | Hypothetical document expansion |
-| GraphRAG | 1.63s (V2) | Excellent | Knowledge graph queries |
-| **ColBERT** | **~0.039s per doc (Optimized)** | **Excellent** | **Token-level matching, enterprise-ready** |
-| NodeRAG | Variable | Good | SQL-based reasoning |
+Based on recent benchmark results from [`outputs/reports/benchmarks/`](../../outputs/reports/benchmarks/):
 
-**🚀 ColBERT Performance Breakthrough (June 2025)**: The [`_retrieve_documents_with_colbert`](../iris_rag/pipelines/colbert.py) method has been optimized with **~99.4% performance improvement**, transforming from I/O-bound to compute-bound behavior through batch loading and single-pass parsing optimizations.
+| Technique | Throughput (QPS) | Scalability | Best Use Case |
+|-----------|------------------|-------------|---------------|
+| BasicRAG | 73.30 q/s | Linear | Simple queries, fast responses |
+| HyDE | 122.37 q/s | Good | Hypothetical document expansion |
+| ColBERT | 4.23 q/s | Excellent | Token-level matching, high accuracy |
+| CRAG | Variable | Good | Complex reasoning, accuracy critical |
+| NodeRAG | Variable | Good | SQL-based reasoning |
+| GraphRAG | Variable | Excellent | Knowledge graph queries |
+
+**🚀 ColBERT Performance Notes**: While ColBERT shows lower throughput due to its sophisticated token-level matching, it provides superior accuracy for complex queries. The [`ColBERTRAGPipeline`](../../iris_rag/pipelines/colbert.py) implementation uses optimized batch processing for token embeddings.
 
 ### Pipeline Optimization Strategies
 
-#### 0. ColBERT Performance Breakthrough (June 2025)
+#### 1. Use iris_rag Architecture
 
-**Major Achievement**: The [`_retrieve_documents_with_colbert`](../iris_rag/pipelines/colbert.py) method has been dramatically optimized, achieving a **~99.4% performance improvement**.
-
-**Key Optimizations Implemented:**
-
-1. **Batch Loading of Token Embeddings**: All 206,306+ token embeddings are now loaded from [`RAG.DocumentTokenEmbeddings`](../iris_rag/storage/iris.py) in a **single SQL query**, eliminating the N+1 query problem.
-
-2. **Efficient Single-Pass Parsing**: Each embedding string is parsed into a numerical array **only once** during the batch load, dramatically reducing computational overhead.
-
-3. **In-Memory Processing**: MaxSim calculations are performed on pre-loaded and pre-parsed in-memory data.
-
-**Performance Impact:**
-- **Before**: ~6-9 seconds per document (I/O-bound behavior)
-- **After**: ~0.039 seconds per document (compute-bound behavior)
-- **Improvement**: ~99.4% reduction in retrieval processing time
-- **Database Queries**: Reduced from O(n) to O(1) for token embeddings
-
-**Behavioral Shift:**
-- **Previous**: I/O-bound with inefficient database access patterns
-- **Current**: Compute-bound focused on MaxSim calculations
-- **Result**: Enterprise-ready performance for large document collections
-
-This optimization demonstrates that with proper engineering, even the most complex RAG techniques can achieve production-ready performance while maintaining their advanced semantic capabilities.
-
-#### 1. Use V2 Implementations
-
-V2 pipelines provide significant performance improvements by using native VECTOR columns:
+The current system uses the [`iris_rag`](../../iris_rag/) package architecture with optimized implementations:
 
 ```python
-# V2 pipelines avoid IRIS SQL parser bugs and provide:
-# - 2-6x faster performance for most techniques
-# - True vector search across entire corpus
-# - Better scalability for large document collections
+from iris_rag.pipelines.basic import BasicRAGPipeline
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline
+from iris_rag.core.connection import ConnectionManager
+from iris_rag.config.manager import ConfigurationManager
 
-# Example: CRAG V2 vs Original
-# Original: 13.51s → V2: 2.33s (5.80x faster)
+# Initialize with proper configuration
+config_manager = ConfigurationManager()
+connection_manager = ConnectionManager(config_manager)
+
+# Create optimized pipeline
+pipeline = BasicRAGPipeline(
+    connection_manager=connection_manager,
+    config_manager=config_manager
+)
 ```
 
-#### 2. Optimize Document Sampling
+#### 2. Leverage Vector Database Optimizations
 
-For techniques that sample documents, optimize batch sizes:
+The system uses native IRIS VECTOR columns with proper indexing:
 
 ```python
-# BasicRAG optimization
-class OptimizedBasicRAG(BasicRAG):
-    def __init__(self, sample_size=500):  # Increased from 100
-        self.sample_size = sample_size
+# Vector operations use the insert_vector utility for consistency
+from common.db_vector_utils import insert_vector
+
+# All vector insertions use standardized format
+success = insert_vector(
+    cursor=cursor,
+    table_name="RAG.SourceDocuments",
+    vector_column_name="document_embedding_vector",
+    vector_data=embedding,
+    target_dimension=384,
+    key_columns={"doc_id": doc_id}
+)
+```
+
+#### 3. Optimize Configuration Parameters
+
+Key performance parameters in [`config/config.yaml`](../../config/config.yaml):
+
+```yaml
+# Pipeline Configuration
+pipelines:
+  basic:
+    chunk_size: 1000              # Optimize for your document size
+    chunk_overlap: 200            # Balance context vs performance
+    default_top_k: 5              # Limit retrieved documents
+    embedding_batch_size: 32      # Batch embeddings for efficiency
+  colbert:
+    candidate_pool_size: 100      # Stage 1 retrieval size
     
-    def retrieve_documents(self, query_text, top_k=5):
-        # Use larger sample for better coverage
-        sql = f"""
-            SELECT TOP {self.sample_size} doc_id, title, text_content, embedding
-            FROM {self.schema}.SourceDocuments_V2
-            WHERE document_embedding_vector IS NOT NULL
-            ORDER BY NEWID()  -- Random sampling
-        """
+# Storage Backend Configuration
+storage:
+  backends:
+    iris:
+      vector_dimension: 384       # Match your embedding model
+      
+# Testing Configuration
+testing:
+  min_docs_e2e: 1000             # Minimum for meaningful tests
 ```
 
-#### 3. Implement Result Caching
+#### 4. Implement LLM Caching
 
-Cache frequently accessed results to reduce computation:
+The system includes built-in LLM caching for performance:
 
 ```python
-from functools import lru_cache
-import hashlib
+from common.llm_cache_manager import get_global_cache_manager
 
-class CachedRAGPipeline(RAGPipeline):
-    @lru_cache(maxsize=1000)
-    def _cached_embedding(self, text):
-        """Cache embeddings for frequently used queries"""
-        return self.embedding_func([text])[0]
-    
-    @lru_cache(maxsize=500)
-    def _cached_similarity_search(self, query_hash, top_k):
-        """Cache similarity search results"""
-        # Implementation depends on specific technique
-        pass
+# LLM caching is automatically enabled
+cache_manager = get_global_cache_manager()
+
+# Monitor cache performance
+cache_stats = cache_manager.get_cache_stats()
+print(f"Cache hit rate: {cache_stats['metrics']['hit_rate']:.2%}")
+print(f"Average cached response time: {cache_stats['metrics']['avg_response_time_cached']:.2f}ms")
 ```
 
-#### 4. Batch Processing Optimization
+#### 5. Batch Processing Optimization
 
 Optimize batch sizes based on available memory and document characteristics:
 
 ```python
 def optimize_batch_size(document_count, available_memory_gb):
     """Calculate optimal batch size based on system resources"""
-    base_batch_size = 50
+    base_batch_size = 32  # From config.yaml embedding_batch_size
     
     if available_memory_gb >= 32:
-        return min(200, document_count // 10)
+        return min(128, document_count // 10)
     elif available_memory_gb >= 16:
-        return min(100, document_count // 20)
+        return min(64, document_count // 20)
     else:
         return base_batch_size
 ```
@@ -137,10 +141,10 @@ def optimize_batch_size(document_count, available_memory_gb):
 
 ### Essential Performance Indexes
 
-Create these indexes for optimal performance:
+Create these indexes for optimal performance with the current schema:
 
 ```sql
--- Critical performance indexes for token operations
+-- Critical performance indexes for token operations (ColBERT)
 CREATE INDEX idx_token_embeddings_doc_sequence 
 ON RAG.DocumentTokenEmbeddings (doc_id, token_sequence_index);
 
@@ -151,9 +155,13 @@ ON RAG.DocumentTokenEmbeddings (token_sequence_index);
 CREATE INDEX idx_source_docs_doc_id_title 
 ON RAG.SourceDocuments (doc_id, title);
 
--- Vector search optimization (V2 tables)
+-- Vector search optimization for current tables
 CREATE INDEX idx_document_vector_embedding 
-ON RAG.SourceDocuments_V2 (document_embedding_vector) USING HNSW;
+ON RAG.SourceDocuments (document_embedding_vector) USING HNSW;
+
+-- Additional performance indexes
+CREATE INDEX idx_source_docs_embedding_not_null
+ON RAG.SourceDocuments (doc_id) WHERE document_embedding_vector IS NOT NULL;
 ```
 
 ### HNSW Index Configuration
@@ -161,12 +169,20 @@ ON RAG.SourceDocuments_V2 (document_embedding_vector) USING HNSW;
 For production deployments with IRIS Enterprise Edition:
 
 ```sql
--- HNSW index with optimized parameters
-CREATE INDEX idx_vector_hnsw ON RAG.SourceDocuments_V2 (document_embedding_vector) 
+-- HNSW index with optimized parameters for current schema
+CREATE INDEX idx_vector_hnsw ON RAG.SourceDocuments (document_embedding_vector) 
 USING HNSW WITH (
     M = 16,           -- Number of connections (higher = better recall, more memory)
     EF_CONSTRUCTION = 200,  -- Construction parameter (higher = better quality)
     EF_SEARCH = 100   -- Search parameter (higher = better recall, slower search)
+);
+
+-- For ColBERT token embeddings (if using HNSW)
+CREATE INDEX idx_token_vector_hnsw ON RAG.DocumentTokenEmbeddings (token_embedding_vector)
+USING HNSW WITH (
+    M = 8,            -- Lower M for token embeddings (more numerous)
+    EF_CONSTRUCTION = 100,
+    EF_SEARCH = 50
 );
 ```
 
@@ -174,36 +190,39 @@ USING HNSW WITH (
 
 #### Use Proper Vector Search Syntax
 
+Always use the [`common.db_vector_utils.insert_vector()`](../../common/db_vector_utils.py) utility for vector operations:
+
 ```sql
--- Optimized V2 vector search (avoids parser bugs)
+-- Optimized vector search with current schema
 SELECT TOP 10 doc_id, title, text_content,
        VECTOR_COSINE(document_embedding_vector, 
-                     TO_VECTOR(:query_embedding, DOUBLE, 384)) AS similarity
-FROM RAG.SourceDocuments_V2
+                     TO_VECTOR(?, DOUBLE, 384)) AS similarity
+FROM RAG.SourceDocuments
 WHERE document_embedding_vector IS NOT NULL
 ORDER BY similarity DESC;
 ```
 
+**Important**: Always use `TOP` instead of `LIMIT` for IRIS SQL compatibility.
+
 #### Connection Pool Configuration
 
-```python
-from rag_templates.core.connection import ConnectionManager
+Use the [`ConnectionManager`](../../iris_rag/core/connection.py) with proper configuration:
 
-# Optimize connection pooling
-config = {
-    "database:iris": {
-        "driver": "intersystems_iris.dbapi._DBAPI",
-        "host": "localhost",
-        "port": 1972,
-        "namespace": "USER",
-        "username": "demo",
-        "password": "demo",
-        "pool_size": 10,        # Connection pool size
-        "max_overflow": 20,     # Additional connections
-        "pool_timeout": 30,     # Connection timeout
-        "pool_recycle": 3600    # Recycle connections hourly
-    }
-}
+```python
+from iris_rag.core.connection import ConnectionManager
+from iris_rag.config.manager import ConfigurationManager
+
+# Configuration from config.yaml
+config_manager = ConfigurationManager()
+connection_manager = ConnectionManager(config_manager)
+
+# Database configuration in config/config.yaml:
+# database:
+#   db_host: "localhost"
+#   db_port: 1972
+#   db_user: "SuperUser"
+#   db_password: "SYS"
+#   db_namespace: "USER"
 ```
 
 ### Database Maintenance
@@ -211,15 +230,17 @@ config = {
 Regular maintenance tasks for optimal performance:
 
 ```sql
--- Update table statistics
-UPDATE STATISTICS FOR TABLE RAG.SourceDocuments_V2;
+-- Update table statistics for current schema
+UPDATE STATISTICS FOR TABLE RAG.SourceDocuments;
+UPDATE STATISTICS FOR TABLE RAG.DocumentTokenEmbeddings;
 
 -- Rebuild indexes periodically
-REBUILD INDEX idx_vector_hnsw ON RAG.SourceDocuments_V2;
+REBUILD INDEX idx_vector_hnsw ON RAG.SourceDocuments;
+REBUILD INDEX idx_token_embeddings_doc_sequence ON RAG.DocumentTokenEmbeddings;
 
 -- Monitor index usage
 SELECT * FROM INFORMATION_SCHEMA.INDEX_USAGE 
-WHERE TABLE_NAME LIKE 'SourceDocuments%';
+WHERE TABLE_NAME IN ('SourceDocuments', 'DocumentTokenEmbeddings');
 ```
 
 ## Vector Search Performance
@@ -316,7 +337,7 @@ def optimized_vector_search(query_embedding, top_k=10, similarity_threshold=0.7)
             SELECT doc_id, title, text_content,
                    VECTOR_COSINE(document_embedding_vector, 
                                 TO_VECTOR(?, DOUBLE, 384)) AS similarity
-            FROM RAG.SourceDocuments_V2
+            FROM RAG.SourceDocuments
             WHERE document_embedding_vector IS NOT NULL
         ) ranked
         WHERE similarity >= ?
@@ -509,179 +530,157 @@ class AutoScalingRAG:
 
 ## Performance Monitoring
 
-### Key Performance Indicators (KPIs)
+### Built-in Monitoring System
 
-#### Response Time Metrics
+The system includes comprehensive monitoring via [`iris_rag.monitoring`](../../iris_rag/monitoring/):
+
+#### Performance Monitor Usage
 
 ```python
-import time
-from dataclasses import dataclass
-from typing import List
+from iris_rag.monitoring.performance_monitor import PerformanceMonitor, QueryPerformanceData
+from iris_rag.monitoring.metrics_collector import MetricsCollector
+from iris_rag.config.manager import ConfigurationManager
+from datetime import datetime
 
-@dataclass
-class PerformanceMetrics:
-    query_time: float
-    retrieval_time: float
-    generation_time: float
-    total_time: float
-    documents_retrieved: int
-    memory_usage: float
+# Initialize monitoring
+config_manager = ConfigurationManager()
+perf_monitor = PerformanceMonitor(config_manager)
+metrics_collector = MetricsCollector()
 
-class PerformanceMonitor:
-    def __init__(self):
-        self.metrics: List[PerformanceMetrics] = []
-    
-    def measure_query_performance(self, rag_pipeline, query):
-        """Comprehensive performance measurement"""
-        start_time = time.time()
-        
-        # Measure retrieval phase
-        retrieval_start = time.time()
-        documents = rag_pipeline.query(query)
-        retrieval_time = time.time() - retrieval_start
-        
-        # Measure generation phase
-        generation_start = time.time()
-        result = rag_pipeline.execute(query)
-        generation_time = time.time() - generation_start
-        
-        total_time = time.time() - start_time
-        
-        metrics = PerformanceMetrics(
-            query_time=total_time,
-            retrieval_time=retrieval_time,
-            generation_time=generation_time,
-            total_time=total_time,
-            documents_retrieved=len(documents),
-            memory_usage=self._get_memory_usage()
-        )
-        
-        self.metrics.append(metrics)
-        return result, metrics
+# Start real-time monitoring
+perf_monitor.start_monitoring()
+metrics_collector.start_collection()
+
+# Record query performance
+query_data = QueryPerformanceData(
+    query_text="What is machine learning?",
+    pipeline_type="basic_rag",
+    execution_time_ms=150.5,
+    retrieval_time_ms=45.2,
+    generation_time_ms=105.3,
+    documents_retrieved=5,
+    tokens_generated=150,
+    timestamp=datetime.now(),
+    success=True
+)
+
+perf_monitor.record_query_performance(query_data)
+
+# Get performance summary
+summary = perf_monitor.get_performance_summary(time_window_minutes=60)
+print(f"Average response time: {summary['execution_time_stats']['avg_ms']:.2f}ms")
+print(f"Success rate: {summary['success_rate']:.1f}%")
 ```
+
+#### Key Performance Indicators (KPIs)
+
+The monitoring system tracks:
+
+- **Query Performance**: Execution time, retrieval time, generation time
+- **System Metrics**: CPU usage, memory usage, disk usage
+- **Database Metrics**: Document counts, vector query performance
+- **Cache Performance**: LLM cache hit rates and speedup ratios
 
 ### Real-time Monitoring Dashboard
 
 ```python
-def generate_performance_report(metrics: List[PerformanceMetrics]):
-    """Generate comprehensive performance report"""
-    if not metrics:
-        return "No metrics available"
-    
-    total_queries = len(metrics)
-    avg_response_time = sum(m.total_time for m in metrics) / total_queries
-    p95_response_time = sorted([m.total_time for m in metrics])[int(0.95 * total_queries)]
-    
-    report = f"""
-    Performance Report
-    ==================
-    Total Queries: {total_queries}
-    Average Response Time: {avg_response_time:.3f}s
-    P95 Response Time: {p95_response_time:.3f}s
-    Average Documents Retrieved: {sum(m.documents_retrieved for m in metrics) / total_queries:.1f}
-    Average Memory Usage: {sum(m.memory_usage for m in metrics) / total_queries:.2f}GB
-    """
-    
-    return report
+# Get real-time status
+status = perf_monitor.get_real_time_status()
+print(f"Monitoring active: {status['monitoring_active']}")
+print(f"Recent queries (5min): {status['recent_performance']['total_queries']}")
+
+# Export metrics for analysis
+perf_monitor.export_metrics(
+    filepath="outputs/performance_metrics.json",
+    time_window_minutes=60
+)
+
+# Collect cache metrics
+cache_metrics = metrics_collector.collect_cache_metrics()
+print(f"LLM Cache hit rate: {cache_metrics['llm_cache_hit_rate']:.2%}")
+print(f"Cache speedup: {cache_metrics['llm_cache_speedup_ratio']:.1f}x")
 ```
 
 ### Alerting System
 
+The [`PerformanceMonitor`](../../iris_rag/monitoring/performance_monitor.py) includes built-in threshold checking:
+
 ```python
-class PerformanceAlerting:
-    def __init__(self, thresholds):
-        self.thresholds = thresholds
-        self.alert_history = []
-    
-    def check_alerts(self, metrics: PerformanceMetrics):
-        """Check for performance threshold violations"""
-        alerts = []
-        
-        if metrics.total_time > self.thresholds.get('max_response_time', 10.0):
-            alerts.append(f"High response time: {metrics.total_time:.2f}s")
-        
-        if metrics.memory_usage > self.thresholds.get('max_memory_gb', 16.0):
-            alerts.append(f"High memory usage: {metrics.memory_usage:.2f}GB")
-        
-        for alert in alerts:
-            self._send_alert(alert)
-    
-    def _send_alert(self, message):
-        """Send alert notification"""
-        print(f"ALERT: {message}")
-        # Implement actual alerting (email, Slack, etc.)
+# Configure performance thresholds
+perf_monitor.thresholds = {
+    'query_time_warning_ms': 1000,
+    'query_time_critical_ms': 5000,
+    'retrieval_time_warning_ms': 500,
+    'retrieval_time_critical_ms': 2000,
+    'generation_time_warning_ms': 3000,
+    'generation_time_critical_ms': 10000
+}
+
+# Alerts are automatically logged when thresholds are exceeded
+# Check logs for performance warnings and critical alerts
 ```
 
 ## Benchmarking & Testing
 
-### Performance Regression Testing
+### Available Benchmarking Tools
 
-```python
-class PerformanceRegressionTest:
-    def __init__(self, baseline_metrics):
-        self.baseline = baseline_metrics
-    
-    def run_regression_test(self, rag_pipeline, test_queries):
-        """Run performance regression test"""
-        current_metrics = []
-        
-        for query in test_queries:
-            start_time = time.time()
-            result = rag_pipeline.execute(query)
-            end_time = time.time()
-            
-            current_metrics.append(end_time - start_time)
-        
-        return self._compare_with_baseline(current_metrics)
-    
-    def _compare_with_baseline(self, current_metrics):
-        """Compare current performance with baseline"""
-        current_avg = sum(current_metrics) / len(current_metrics)
-        baseline_avg = sum(self.baseline) / len(self.baseline)
-        
-        regression_threshold = 1.2  # 20% slower is regression
-        
-        if current_avg > baseline_avg * regression_threshold:
-            return {
-                'status': 'REGRESSION',
-                'current_avg': current_avg,
-                'baseline_avg': baseline_avg,
-                'degradation': (current_avg / baseline_avg - 1) * 100
-            }
-        
-        return {'status': 'PASS', 'current_avg': current_avg, 'baseline_avg': baseline_avg}
+The system includes comprehensive benchmarking capabilities:
+
+#### Make Commands for Testing
+
+```bash
+# Run comprehensive tests with 1000 documents
+make test-1000
+
+# Run RAGAS evaluation on all pipelines
+make eval-all-ragas-1000
+
+# Quick performance debugging
+make ragas-debug
+
+# Full benchmark suite
+make ragas-full
+
+# Individual pipeline testing
+make debug-ragas-basic
+make debug-ragas-colbert
+make debug-ragas-hyde
 ```
 
-### Load Testing Framework
+#### Benchmark Scripts
+
+Key benchmarking scripts in [`scripts/utilities/evaluation/`](../../scripts/utilities/evaluation/):
+
+- [`comprehensive_rag_benchmark_with_ragas.py`](../../scripts/utilities/evaluation/comprehensive_rag_benchmark_with_ragas.py) - Full RAGAS evaluation
+- [`enterprise_rag_benchmark_final.py`](../../scripts/utilities/evaluation/enterprise_rag_benchmark_final.py) - Enterprise-scale benchmarks
+
+#### Benchmark Results
+
+Results are stored in [`outputs/reports/benchmarks/`](../../outputs/reports/benchmarks/) with:
+- JSON results files
+- Markdown reports
+- Performance visualizations (radar charts, bar charts)
+
+### Performance Regression Testing
+
+Use the built-in monitoring system for regression testing:
 
 ```python
-import concurrent.futures
-import random
+from iris_rag.monitoring.performance_monitor import PerformanceMonitor
 
-class LoadTester:
-    def __init__(self, rag_pipeline, test_queries):
-        self.rag_pipeline = rag_pipeline
-        self.test_queries = test_queries
-    
-    def run_load_test(self, concurrent_users=10, duration_seconds=60):
-        """Run load test with concurrent users"""
-        results = []
-        start_time = time.time()
-        
-        with concurrent.futures.ThreadPoolExecutor(max_workers=concurrent_users) as executor:
-            futures = []
-            
-            while time.time() - start_time < duration_seconds:
-                query = random.choice(self.test_queries)
-                future = executor.submit(self._execute_query, query)
-                futures.append(future)
-                
-                time.sleep(0.1)  # 10 QPS per user
-            
-            for future in concurrent.futures.as_completed(futures):
-                results.append(future.result())
-        
-        return self._analyze_load_test_results(results)
+# Establish baseline
+baseline_summary = perf_monitor.get_performance_summary(time_window_minutes=60)
+baseline_avg = baseline_summary['execution_time_stats']['avg_ms']
+
+# After changes, compare performance
+current_summary = perf_monitor.get_performance_summary(time_window_minutes=60)
+current_avg = current_summary['execution_time_stats']['avg_ms']
+
+regression_threshold = 1.2  # 20% slower is regression
+if current_avg > baseline_avg * regression_threshold:
+    print(f"REGRESSION DETECTED: {current_avg:.2f}ms vs {baseline_avg:.2f}ms baseline")
+else:
+    print(f"Performance OK: {current_avg:.2f}ms vs {baseline_avg:.2f}ms baseline")
 ```
 
 ## Troubleshooting Performance Issues
@@ -695,18 +694,24 @@ class LoadTester:
 ```sql
 -- Check if HNSW indexes exist
 SELECT * FROM INFORMATION_SCHEMA.INDEXES 
-WHERE TABLE_NAME = 'SourceDocuments_V2' 
+WHERE TABLE_NAME = 'SourceDocuments' 
 AND INDEX_TYPE = 'HNSW';
 
 -- Check vector search query plans
-EXPLAIN SELECT * FROM RAG.SourceDocuments_V2 
+EXPLAIN SELECT * FROM RAG.SourceDocuments 
 WHERE VECTOR_COSINE(document_embedding_vector, TO_VECTOR(?, DOUBLE, 384)) > 0.7;
+
+-- Check for NULL embeddings
+SELECT COUNT(*) as total_docs,
+       COUNT(document_embedding_vector) as embedded_docs
+FROM RAG.SourceDocuments;
 ```
 
 **Solutions**:
 - Create HNSW indexes on vector columns
 - Optimize HNSW parameters (M, EF_CONSTRUCTION, EF_SEARCH)
-- Use V2 pipelines to avoid SQL parser bugs
+- Ensure all documents have embeddings
+- Use proper vector search syntax with `TO_VECTOR()`
 
 #### 2. Memory Leaks
 
@@ -730,31 +735,61 @@ print(f"Peak memory usage: {peak / 1024 / 1024:.1f} MB")
 - Implement proper garbage collection
 - Clear embedding caches periodically
 - Use memory pools for large operations
+- Monitor with built-in [`MetricsCollector`](../../iris_rag/monitoring/metrics_collector.py)
 
 #### 3. Database Connection Issues
 
 **Symptoms**: Connection timeouts, pool exhaustion
 **Diagnosis**:
 ```python
-# Monitor connection pool status
-def check_connection_pool_health(connection_manager):
-    active_connections = len(connection_manager._connections)
-    print(f"Active connections: {active_connections}")
-    
-    # Test connection health
-    for name, conn in connection_manager._connections.items():
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            print(f"Connection {name}: Healthy")
-        except Exception as e:
-            print(f"Connection {name}: Unhealthy - {e}")
+# Monitor connection pool status using ConnectionManager
+from iris_rag.core.connection import ConnectionManager
+
+def check_connection_health(connection_manager):
+    try:
+        connection = connection_manager.get_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        print("Connection: Healthy")
+        return True
+    except Exception as e:
+        print(f"Connection: Unhealthy - {e}")
+        return False
 ```
 
 **Solutions**:
-- Increase connection pool size
+- Use proper [`ConnectionManager`](../../iris_rag/core/connection.py) configuration
 - Implement connection health checks
 - Add connection retry logic
+- Monitor database metrics with built-in monitoring
+
+#### 4. ColBERT Token Embedding Performance
+
+**Symptoms**: Slow ColBERT queries, high memory usage
+**Diagnosis**:
+```sql
+-- Check token embedding count
+SELECT COUNT(*) FROM RAG.DocumentTokenEmbeddings;
+
+-- Check for missing token embeddings
+SELECT d.doc_id, d.title
+FROM RAG.SourceDocuments d
+LEFT JOIN RAG.DocumentTokenEmbeddings t ON d.doc_id = t.doc_id
+WHERE t.doc_id IS NULL;
+
+-- Check token embedding distribution
+SELECT doc_id, COUNT(*) as token_count
+FROM RAG.DocumentTokenEmbeddings
+GROUP BY doc_id
+ORDER BY token_count DESC
+LIMIT 10;
+```
+
+**Solutions**:
+- Ensure all documents have token embeddings
+- Use batch processing for token embedding generation
+- Implement proper indexing on token tables
+- Consider token embedding caching strategies
 
 ### Performance Profiling
 
@@ -780,24 +815,56 @@ def profile_rag_pipeline(rag_pipeline, query):
 
 ### Optimization Checklist
 
-- [ ] Use V2 pipelines for better performance
-- [ ] Create appropriate database indexes
+- [ ] Use [`iris_rag`](../../iris_rag/) architecture for optimized implementations
+- [ ] Create appropriate database indexes (HNSW for vectors)
 - [ ] Configure HNSW parameters for your use case
-- [ ] Implement embedding caching
-- [ ] Optimize batch sizes for your hardware
+- [ ] Implement LLM caching with [`llm_cache_manager`](../../common/llm_cache_manager.py)
+- [ ] Optimize batch sizes in [`config.yaml`](../../config/config.yaml)
 - [ ] Monitor memory usage and implement cleanup
-- [ ] Set up performance monitoring and alerting
+- [ ] Set up performance monitoring with [`iris_rag.monitoring`](../../iris_rag/monitoring/)
 - [ ] Run regular performance regression tests
 - [ ] Profile slow operations to identify bottlenecks
-- [ ] Configure connection pooling appropriately
+- [ ] Use [`ConnectionManager`](../../iris_rag/core/connection.py) for database connections
+- [ ] Always use [`insert_vector`](../../common/db_vector_utils.py) utility for vector operations
+- [ ] Follow IRIS SQL rules (use `TOP` instead of `LIMIT`)
 
 ## Conclusion
 
-This performance guide provides a comprehensive framework for optimizing RAG templates in production environments. The key to success is:
+This performance guide provides a comprehensive framework for optimizing the RAG templates system in production environments. The key to success is:
 
-1. **Start with V2 pipelines** for immediate performance gains
-2. **Monitor continuously** to identify bottlenecks early
+1. **Use the iris_rag architecture** for optimized, production-ready implementations
+2. **Monitor continuously** with built-in monitoring tools
 3. **Scale incrementally** based on actual usage patterns
-4. **Test regularly** to prevent performance regressions
+4. **Test regularly** with comprehensive benchmarking tools
+5. **Follow best practices** for IRIS database optimization
 
-For specific implementation details, refer to the existing performance documentation and benchmark results in the project.
+For specific implementation details, refer to the actual code in [`iris_rag/`](../../iris_rag/) and benchmark results in [`outputs/reports/benchmarks/`](../../outputs/reports/benchmarks/).
+
+### Quick Start Commands
+
+```bash
+# Set up environment
+make setup-env
+make install
+make setup-db
+
+# Run performance tests
+make test-1000
+make ragas-full
+
+# Monitor performance
+python -c "
+from iris_rag.monitoring.performance_monitor import PerformanceMonitor
+monitor = PerformanceMonitor()
+monitor.start_monitoring()
+print('Performance monitoring started')
+"
+```
+
+### Additional Resources
+
+- [Configuration Guide](../../config/config.yaml) - System configuration options
+- [Monitoring Documentation](../../iris_rag/monitoring/) - Built-in monitoring capabilities
+- [Benchmark Results](../../outputs/reports/benchmarks/) - Historical performance data
+- [Testing Guide](../../Makefile) - Available testing commands
+- [Database Utilities](../../common/db_vector_utils.py) - Vector operation utilities

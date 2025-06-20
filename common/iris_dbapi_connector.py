@@ -31,33 +31,10 @@ def _get_iris_dbapi_module():
     except ImportError as e:
         logger.warning(f"Failed to import 'iris' module: {e}")
     
-    # Fallback attempts for older or alternative package structures
-    try:
-        import intersystems_iris.dbapi._DBAPI as irisdbapi_alt
-        logger.info("Successfully imported 'intersystems_iris.dbapi._DBAPI' (working fallback)")
-        return irisdbapi_alt
-    except ImportError as e2:
-        logger.warning(f"Failed to import 'intersystems_iris.dbapi._DBAPI': {e2}")
-    
-    try:
-        import intersystems_iris.dbapi as irisdbapi_alt2
-        logger.info("Successfully imported 'intersystems_iris.dbapi' (fallback)")
-        return irisdbapi_alt2
-    except ImportError as e3:
-        logger.warning(f"Failed to import 'intersystems_iris.dbapi': {e3}")
-    
-    try:
-        import irisnative.dbapi as irisdbapi_native
-        logger.info("Successfully imported 'irisnative.dbapi' (fallback)")
-        return irisdbapi_native
-    except ImportError as e4:
-        logger.warning(f"Failed to import 'irisnative.dbapi': {e4}")
-    
     # All import attempts failed
     logger.error(
         "InterSystems IRIS DBAPI module could not be imported. "
-        "Checked 'iris' (primary), 'intersystems_iris.dbapi._DBAPI', "
-        "'intersystems_iris.dbapi', and 'irisnative.dbapi'. "
+        "The 'iris' module was found but doesn't have the expected 'connect' method. "
         "Please ensure the 'intersystems-irispython' package is installed correctly. "
         "DBAPI connections will not be available."
     )
@@ -95,19 +72,16 @@ def get_iris_dbapi_connection():
     try:
         logger.info(f"Attempting IRIS connection to {host}:{port}/{namespace} as user {user}")
         
-        # Try different connection approaches to handle SSL issues
-        try:
-            # First try: Use the working connection format with SSL disabled
-            conn = irisdbapi.connect(host, port, namespace, user, password, ssl=False)
-            logger.info("Successfully connected to IRIS using DBAPI interface (SSL disabled).")
-            return conn
-        except Exception as ssl_error:
-            logger.warning(f"SSL disabled connection failed: {ssl_error}")
-            
-            # Second try: Use the original working format
-            conn = irisdbapi.connect(host, port, namespace, user, password)
-            logger.info("Successfully connected to IRIS using DBAPI interface.")
-            return conn
+        # Use the correct connection parameters format
+        conn = irisdbapi.connect(
+            hostname=host,
+            port=port,
+            namespace=namespace,
+            username=user,
+            password=password
+        )
+        logger.info("Successfully connected to IRIS using DBAPI interface.")
+        return conn
         
     except Exception as e:
         logger.error(f"DBAPI connection failed: {e}")

@@ -60,25 +60,67 @@ def insert_vector(
 
     column_names_sql = ", ".join(other_column_names + [vector_column_name])
     
-    placeholders_list = ["?" for _ in other_column_names] + ["TO_VECTOR(?, FLOAT)"]
+    placeholders_list = ["?" for _ in other_column_names] + [f"TO_VECTOR(?, FLOAT, {target_dimension})"]
     placeholders_sql = ", ".join(placeholders_list)
 
-    sql_query = f"INSERT INTO {table_name} ({column_names_sql}) VALUES ({placeholders_sql})"
+    # Use MERGE for upsert functionality to handle duplicates
+    # Build MERGE statement for IRIS
+    key_conditions = " AND ".join([f"target.{col} = source.{col}" for col in key_columns.keys()])
+    update_assignments = ", ".join([f"{col} = source.{col}" for col in other_column_names if col not in key_columns])
     
+    # Separate approach: try INSERT first, if it fails due to constraint, try UPDATE
+    sql_query = f"INSERT INTO {table_name} ({column_names_sql}) VALUES ({placeholders_sql})"
     params = other_column_values + [embedding_str]
     
     try:
-        logger.debug(f"DB Vector Util: Executing SQL: {sql_query}")
-        logger.debug(f"DB Vector Util: With params (vector string truncated for log): {other_column_values + [embedding_str[:100] + '...'] if len(embedding_str) > 100 else params}")
+        logger.debug(f"DB Vector Util: Executing INSERT: {sql_query}")
+        logger.debug(f"DB Vector Util: Parameters: {params}")
+        logger.debug(f"DB Vector Util: Embedding string length: {len(embedding_str)} chars")
+        logger.debug(f"DB Vector Util: Vector dimension: {target_dimension}")
         cursor.execute(sql_query, params)
         return True
     except Exception as e:
-        logger.error(
-            f"DB Vector Util: Error inserting vector into table '{table_name}', column '{vector_column_name}': {e}"
-        )
-        logger.error(f"DB Vector Util: Key columns: {key_columns}")
-        logger.error(f"DB Vector Util: Failing embedding string (first 100 chars): {embedding_str[:100] if 'embedding_str' in locals() else 'NOT_SET'}")
-        # Consider re-raising or logging traceback for more detailed debugging if needed
-        # import traceback
-        # logger.error(f"Traceback: {traceback.format_exc()}")
-        return False
+        # Check if it's a unique constraint violation
+        if "UNIQUE" in str(e) or "constraint failed" in str(e):
+            logger.debug(f"DB Vector Util: INSERT failed due to duplicate key, attempting UPDATE...")
+            
+            # Build UPDATE statement
+            set_clauses = []
+            update_params = []
+            
+            # Add non-key columns to SET clause
+            for col in other_column_names:
+                if col not in key_columns:
+                    set_clauses.append(f"{col} = ?")
+                    update_params.append(all_columns_dict[col])
+            
+            # Add vector column to SET clause
+            set_clauses.append(f"{vector_column_name} = TO_VECTOR(?, FLOAT, {target_dimension})")
+            update_params.append(embedding_str)
+            
+            # Add key columns to WHERE clause
+            where_clauses = []
+            for col, val in key_columns.items():
+                where_clauses.append(f"{col} = ?")
+                update_params.append(val)
+            
+            if set_clauses and where_clauses:
+                update_sql = f"UPDATE {table_name} SET {', '.join(set_clauses)} WHERE {' AND '.join(where_clauses)}"
+                
+                try:
+                    logger.debug(f"DB Vector Util: Executing UPDATE: {update_sql}")
+                    cursor.execute(update_sql, update_params)
+                    return True
+                except Exception as update_error:
+                    logger.error(f"DB Vector Util: UPDATE also failed: {update_error}")
+                    return False
+            else:
+                logger.error(f"DB Vector Util: Could not build UPDATE statement")
+                return False
+        else:
+            logger.error(
+                f"DB Vector Util: Error inserting vector into table '{table_name}', column '{vector_column_name}': {e}"
+            )
+            logger.error(f"DB Vector Util: Key columns: {key_columns}")
+            logger.error(f"DB Vector Util: Failing embedding string (first 100 chars): {embedding_str[:100] if 'embedding_str' in locals() else 'NOT_SET'}")
+            return False

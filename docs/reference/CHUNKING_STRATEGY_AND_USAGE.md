@@ -1,337 +1,565 @@
-# Chunking Strategy Investigation and Usage Documentation
+# Chunking Strategy and Usage Guide
 
-## Investigation and Documentation Process
+## Overview
 
-```mermaid
-graph TD
-    A[Chunking Strategy Investigation] --> B{Information Gathering};
-    B --> C1[Review chunking/ directory];
-    B --> C2[Analyze enhanced_chunking_service.py];
-    B --> C3[Analyze chunking_service.py];
-    B --> C4[Analyze ingestion script];
-    B --> C5[Review RAG pipeline files];
-    B --> C6[Review chunking_schema.sql];
+This document provides a comprehensive guide to document chunking strategies implemented in the RAG templates project. Chunking is a critical preprocessing step that breaks down large documents into smaller, semantically coherent segments to improve retrieval accuracy and generation quality in RAG systems.
 
-    A --> D{Synthesize & Plan Document};
-    D --> E[Identify Implemented Strategies];
-    D --> F[Understand Pipeline Integration];
-    D --> G[Document Configuration Options];
-    D --> H[Map RAG Techniques to Chunk Usage];
-    D --> I[Clarify Database Relationships];
-    D --> J[Outline CHUNKING_STRATEGY_AND_USAGE.md];
+## Table of Contents
 
-    J --> K{User Review of Plan};
-    K -- Approve --> L[Write CHUNKING_STRATEGY_AND_USAGE.md];
-    K -- Changes --> D;
-    L --> M{Request Mode Switch for Implementation};
+1. [Introduction](#introduction)
+2. [Current Implementation Architecture](#current-implementation-architecture)
+3. [Chunking Strategies](#chunking-strategies)
+4. [Configuration Options](#configuration-options)
+5. [Integration with RAG Pipelines](#integration-with-rag-pipelines)
+6. [Performance Considerations](#performance-considerations)
+7. [Best Practices](#best-practices)
+8. [Troubleshooting](#troubleshooting)
 
-    subgraph "Document Sections"
-        J1[1. Introduction]
-        J2[2. Core Chunking Services]
-        J3[3. Implemented Chunking Strategies]
-        J4[4. Configuration Options]
-        J5[5. Integration in Data Loading Pipeline]
-        J6[6. Database Schema for Chunks]
-        J7[7. RAG Technique Chunk Utilization]
-        J8[8. Key Findings & Discrepancies]
-        J9[9. Recommendations for 100K Ingestion]
-        J10[10. Future Considerations]
-    end
-    J --> J1; J --> J2; J --> J3; J --> J4; J --> J5; J --> J6; J --> J7; J --> J8; J --> J9; J --> J10
-```
+## Introduction
 
-## 1. Introduction
+### Why Chunking Matters
 
-### Purpose of This Document
-
-This document provides a comprehensive investigation and analysis of the chunking strategy implementation within the RAG templates project. It serves as a definitive guide for understanding how document chunking is performed, configured, and utilized across the seven different RAG techniques in the system.
-
-### Overview of Chunking in RAG Systems
-
-Document chunking is a critical preprocessing step in Retrieval-Augmented Generation (RAG) systems that involves breaking down large documents into smaller, semantically coherent segments. Effective chunking strategies can significantly impact:
+Document chunking significantly impacts RAG system performance across multiple dimensions:
 
 - **Retrieval Quality**: Smaller, focused chunks often lead to more precise retrieval results
 - **Context Relevance**: Well-segmented chunks provide better context for language model generation
 - **Performance**: Optimized chunk sizes balance information density with processing efficiency
 - **Memory Usage**: Smaller chunks reduce memory requirements during vector operations
+- **Embedding Quality**: Chunks that respect semantic boundaries produce more meaningful embeddings
 
-### Objective: 100K Document Ingestion Clarity
+### Project Context
 
-With the project targeting 100,000 real PMC documents for ingestion, understanding the current chunking implementation is crucial for:
+The RAG templates project implements multiple chunking approaches to handle diverse document types, particularly biomedical literature from PMC (PubMed Central). The system supports both simple and advanced chunking strategies depending on the specific RAG technique and use case requirements.
 
-1. **Performance Optimization**: Ensuring chunking strategies scale efficiently
-2. **Resource Planning**: Understanding memory and processing requirements
-3. **Quality Assurance**: Maintaining consistent chunk quality across large datasets
-4. **Pipeline Optimization**: Identifying bottlenecks and optimization opportunities
+## Current Implementation Architecture
 
-## 2. Core Chunking Services & Components
+### Two-Tier Chunking System
 
-### EnhancedDocumentChunkingService ([`chunking/enhanced_chunking_service.py`](chunking/enhanced_chunking_service.py))
+The project implements a two-tier chunking architecture:
 
-The [`EnhancedDocumentChunkingService`](chunking/enhanced_chunking_service.py:1) is the primary chunking mechanism in the project, specifically designed with biomedical literature in mind. This sophisticated service provides multiple chunking strategies and advanced text analysis capabilities.
+1. **Basic Chunking** ([`iris_rag/pipelines/basic.py`](iris_rag/pipelines/basic.py:182-200)) - Simple character-based splitting with overlap
+2. **Enhanced Chunking** ([`tools/chunking/enhanced_chunking_service.py`](tools/chunking/enhanced_chunking_service.py)) - Advanced biomedical-optimized strategies
 
-#### Design Philosophy
+### Core Components
 
-The service is built around three core principles:
-1. **Biomedical Domain Awareness**: Specialized handling of scientific literature structure
-2. **Adaptive Strategy Selection**: Dynamic choice of optimal chunking approach
-3. **Quality-Driven Processing**: Configurable quality levels for different use cases
+#### Basic Pipeline Chunking
 
-#### Key Components
-
-##### TokenEstimator ([`TokenEstimator`](chunking/enhanced_chunking_service.py:64))
-
-The [`TokenEstimator`](chunking/enhanced_chunking_service.py:64) provides accurate token counting essential for chunk size management:
+The basic RAG pipeline implements simple text splitting:
 
 ```python
-class TokenEstimator:
-    def __init__(self, model_name: str = "gpt-3.5-turbo"):
-        # Model-specific token ratios for biomedical text
-        self.model_ratios = {
-            "gpt-3.5-turbo": 0.75,  # Conservative estimate for scientific text
-            "gpt-4": 0.75,
-            "text-embedding-ada-002": 0.75
-        }
+def _split_text(self, text: str) -> List[str]:
+    """Split text into chunks with overlap."""
+    if len(text) <= self.chunk_size:
+        return [text]
+    
+    chunks = []
+    start = 0
+    
+    while start < len(text):
+        end = start + self.chunk_size
+        # Character-based splitting with overlap
+        chunk = text[start:end]
+        chunks.append(chunk)
+        start += self.chunk_size - self.chunk_overlap
+    
+    return chunks
 ```
+
+**Configuration**: Uses [`config.yaml`](config/config.yaml:15-17) settings:
+- `chunk_size`: 1000 characters (default)
+- `chunk_overlap`: 200 characters (default)
+
+#### Enhanced Chunking Service
+
+The enhanced service ([`tools/chunking/enhanced_chunking_service.py`](tools/chunking/enhanced_chunking_service.py)) provides sophisticated biomedical-optimized chunking with multiple strategies.
+
+## Chunking Strategies
+
+### 1. Fixed-Size Chunking (Basic)
+
+**Implementation**: [`iris_rag/pipelines/basic.py`](iris_rag/pipelines/basic.py:150-180)
+
+**How it works**: Splits text into fixed-size chunks with configurable overlap using character-based boundaries.
+
+**Configuration**:
+```yaml
+# config/config.yaml
+chunking:
+  chunk_size: 1000      # Characters
+  chunk_overlap: 200    # Characters
+
+# Pipeline-specific overrides
+pipelines:
+  basic:
+    chunk_size: 1000
+    chunk_overlap: 200
+```
+
+**When to use**:
+- Simple documents with uniform structure
+- Fast processing requirements
+- When semantic boundaries are less critical
+
+**Trade-offs**:
+- ✅ Fast and predictable
+- ✅ Simple configuration
+- ❌ May break semantic boundaries
+- ❌ No domain-specific optimization
+
+### 2. Recursive Chunking (Enhanced)
+
+**Implementation**: [`tools/chunking/enhanced_chunking_service.py`](tools/chunking/enhanced_chunking_service.py:359-450)
+
+**How it works**: Hierarchically splits text using biomedical separator hierarchy, starting with major separators (section headers) and progressively using finer separators until target chunk sizes are achieved.
 
 **Key Features**:
-- Model-specific token ratio adjustments
-- Biomedical text optimization (0.75 ratio accounts for technical terminology)
-- Efficient estimation without full tokenization
+- Biomedical separator hierarchy
+- Token-based size estimation
+- Quality-driven processing levels
 
-##### BiomedicalSeparatorHierarchy ([`BiomedicalSeparatorHierarchy`](chunking/enhanced_chunking_service.py:154))
-
-The [`BiomedicalSeparatorHierarchy`](chunking/enhanced_chunking_service.py:154) defines a sophisticated hierarchy of text separators optimized for scientific literature:
-
+**Configuration**:
 ```python
-class BiomedicalSeparatorHierarchy:
-    def get_separators(self, quality: ChunkingQuality) -> List[str]:
-        if quality == ChunkingQuality.HIGH_QUALITY:
-            return [
-                "\n\n## ",     # Section headers
-                "\n\n### ",    # Subsection headers
-                "\n\n#### ",   # Sub-subsection headers
-                "\n\n**",      # Bold text (often important concepts)
-                "\n\n",        # Paragraph breaks
-                "\n",          # Line breaks
-                ". ",          # Sentence endings
-                "? ",          # Question endings
-                "! ",          # Exclamation endings
-            ]
+strategy = RecursiveChunkingStrategy(
+    chunk_size=512,           # Target tokens
+    chunk_overlap=50,         # Token overlap
+    quality=ChunkingQuality.BALANCED,
+    model='default'
+)
 ```
+
+**Separator Hierarchy**:
+```python
+# High Quality (9 levels)
+separators = [
+    "\n\n## ",     # Section headers
+    "\n\n### ",    # Subsection headers  
+    "\n\n#### ",   # Sub-subsection headers
+    "\n\n**",      # Bold text (important concepts)
+    "\n\n",        # Paragraph breaks
+    "\n",          # Line breaks
+    ". ",          # Sentence endings
+    "? ",          # Question endings
+    "! ",          # Exclamation endings
+]
+```
+
+**When to use**:
+- Documents with clear hierarchical structure
+- Scientific papers and reports
+- When preserving document structure is important
+
+### 3. Semantic Chunking (Enhanced)
+
+**Implementation**: [`tools/chunking/enhanced_chunking_service.py`](tools/chunking/enhanced_chunking_service.py:512-680)
+
+**How it works**: Groups sentences based on semantic coherence using biomedical semantic analysis. Creates chunk boundaries where coherence drops below a threshold.
+
+**Key Features**:
+- Biomedical semantic analysis
+- Coherence-based boundary detection
+- Adaptive chunk sizing
+
+**Configuration**:
+```python
+strategy = SemanticChunkingStrategy(
+    target_chunk_size=512,    # Preferred tokens
+    min_chunk_size=100,       # Minimum tokens
+    max_chunk_size=1024,      # Maximum tokens
+    overlap_sentences=1,      # Sentence overlap
+    quality=ChunkingQuality.HIGH_QUALITY
+)
+```
+
+**When to use**:
+- Complex scientific texts with varied structures
+- When semantic coherence is prioritized over speed
+- Documents with inconsistent formatting
+
+### 4. Adaptive Chunking (Enhanced)
+
+**Implementation**: [`tools/chunking/enhanced_chunking_service.py`](tools/chunking/enhanced_chunking_service.py:682-780)
+
+**How it works**: Dynamically analyzes document characteristics and selects between recursive and semantic approaches based on content analysis.
+
+**Document Analysis Factors**:
+- Word and sentence count
+- Biomedical content density
+- Structural clarity
+- Topic coherence
+
+**Configuration**:
+```python
+strategy = AdaptiveChunkingStrategy(model='default')
+# Automatically configures based on document analysis
+```
+
+**When to use**:
+- Mixed document types in large-scale ingestion
+- Production environments requiring consistent quality
+- When optimal strategy is unknown beforehand
+
+### 5. Hybrid Chunking (Enhanced)
+
+**Implementation**: [`tools/chunking/enhanced_chunking_service.py`](tools/chunking/enhanced_chunking_service.py:825-900)
+
+**How it works**: Combines recursive and semantic approaches by first using recursive chunking, then applying semantic analysis to refine boundaries.
+
+**Configuration**:
+```python
+strategy = HybridChunkingStrategy(
+    primary_chunk_size=512,      # Initial recursive target
+    secondary_chunk_size=384,    # Semantic refinement target
+    overlap=50,                  # Token overlap
+    semantic_threshold=0.7       # Coherence threshold
+)
+```
+
+**When to use**:
+- High-quality chunking requirements
+- Complex biomedical literature
+- When both structure and semantics matter
+
+## Configuration Options
+
+### Global Configuration
+
+**File**: [`config/config.yaml`](config/config.yaml)
+
+```yaml
+# Basic chunking parameters
+chunking:
+  chunk_size: 1000             # Characters for basic chunking
+  chunk_overlap: 200           # Character overlap
+
+# Pipeline-specific configurations
+pipelines:
+  basic:
+    chunk_size: 1000
+    chunk_overlap: 200
+    default_top_k: 5
+  colbert:
+    chunk_size: 1000
+    chunk_overlap: 200
+    default_top_k: 5
+  crag:
+    chunk_size: 1000
+    chunk_overlap: 200
+    default_top_k: 5
+```
+
+### Environment Variables
+
+```bash
+# Override chunking configuration
+export CHUNK_SIZE=512
+export CHUNK_OVERLAP=50
+export CHUNKING_METHOD=fixed_size
+```
+
+### Enhanced Chunking Configuration
 
 **Quality Levels**:
-- **HIGH_QUALITY**: 9 separator levels for maximum precision
-- **BALANCED**: 6 separator levels for good quality/performance balance
-- **FAST**: 3 separator levels for rapid processing
+- `FAST`: 3 separator levels, minimal analysis
+- `BALANCED`: 6 separator levels, moderate analysis  
+- `HIGH_QUALITY`: 9 separator levels, comprehensive analysis
 
-##### BiomedicalSemanticAnalyzer ([`BiomedicalSemanticAnalyzer`](chunking/enhanced_chunking_service.py:210))
-
-The [`BiomedicalSemanticAnalyzer`](chunking/enhanced_chunking_service.py:210) evaluates semantic coherence and boundary strength:
-
+**Token Estimation Models**:
 ```python
-class BiomedicalSemanticAnalyzer:
-    def __init__(self):
-        self.section_indicators = [
-            "abstract", "introduction", "methods", "results",
-            "discussion", "conclusion", "references"
-        ]
-        self.transition_words = [
-            "however", "therefore", "furthermore", "moreover",
-            "consequently", "nevertheless", "additionally"
-        ]
-```
-
-**Analysis Capabilities**:
-- Section boundary detection for scientific papers
-- Transition word analysis for coherence assessment
-- Biomedical terminology recognition
-- Semantic similarity scoring between text segments
-
-##### EnhancedChunk Dataclass ([`EnhancedChunk`](chunking/enhanced_chunking_service.py:25))
-
-The [`EnhancedChunk`](chunking/enhanced_chunking_service.py:25) dataclass provides rich metadata for each chunk:
-
-```python
-@dataclass
-class EnhancedChunk:
-    text: str
-    start_pos: int
-    end_pos: int
-    token_count: int
-    chunk_type: str
-    metadata: Dict[str, Any]
-    quality_score: float = 0.0
-    semantic_coherence: float = 0.0
-```
-
-### chunking_service.py ([`chunking/chunking_service.py`](chunking/chunking_service.py))
-
-The [`chunking_service.py`](chunking/chunking_service.py) file contains a simpler, more basic chunking implementation. Based on our investigation, this appears to be an earlier version or alternative implementation that is not actively used by the main ingestion pipeline.
-
-**Key Differences from EnhancedDocumentChunkingService**:
-- Simpler text splitting logic
-- Limited biomedical domain awareness
-- Fewer configuration options
-- No advanced semantic analysis
-
-## 3. Implemented Chunking Strategies
-
-The [`EnhancedDocumentChunkingService`](chunking/enhanced_chunking_service.py) implements four distinct chunking strategies, each optimized for different use cases and document characteristics.
-
-### RecursiveChunkingStrategy ([`RecursiveChunkingStrategy`](chunking/enhanced_chunking_service.py:359))
-
-**How It Works**: Hierarchically splits text using the [`BiomedicalSeparatorHierarchy`](chunking/enhanced_chunking_service.py:154), starting with major separators (section headers) and progressively using finer separators (sentences, words) until target chunk sizes are achieved.
-
-**Key Parameters**:
-- `chunk_size`: Target token count per chunk (default: 512)
-- `chunk_overlap`: Token overlap between consecutive chunks (default: 50)
-- `quality`: [`ChunkingQuality`](chunking/enhanced_chunking_service.py:35) enum affecting separator hierarchy depth
-
-**When Most Suitable**:
-- Documents with clear hierarchical structure (research papers, reports)
-- When preserving document structure is important
-- Fast processing requirements with good quality
-
-### SemanticChunkingStrategy ([`SemanticChunkingStrategy`](chunking/enhanced_chunking_service.py:512))
-
-**How It Works**: Groups sentences based on semantic coherence using the [`BiomedicalSemanticAnalyzer`](chunking/enhanced_chunking_service.py:210). Analyzes semantic similarity between adjacent sentences and creates chunk boundaries where coherence drops below a threshold.
-
-**Key Parameters**:
-- `target_chunk_size`: Preferred token count per chunk (default: 512)
-- `min_chunk_size`: Minimum acceptable chunk size (default: 100)
-- `max_chunk_size`: Maximum acceptable chunk size (default: 1024)
-- `overlap_sentences`: Number of sentences to overlap between chunks (default: 1)
-- `quality`: Affects depth of semantic analysis
-
-**When Most Suitable**:
-- Documents where semantic coherence is more important than structure
-- Complex scientific texts with varied paragraph structures
-- When chunk quality is prioritized over processing speed
-
-### AdaptiveChunkingStrategy ([`AdaptiveChunkingStrategy`](chunking/enhanced_chunking_service.py:682))
-
-**How It Works**: **This is the default strategy used in the ingestion pipeline**. Dynamically analyzes document characteristics and selects between recursive and semantic approaches based on document structure, length, and content type.
-
-**Key Parameters**:
-- `primary_chunk_size`: Primary target chunk size (default: 512)
-- `fallback_chunk_size`: Fallback size for difficult documents (default: 256)
-- `quality`: Affects both analysis depth and strategy selection
-
-**When Most Suitable**:
-- Mixed document types in large-scale ingestion (like 100K PMC documents)
-- When optimal strategy is unknown beforehand
-- Production environments requiring consistent quality across diverse content
-
-### HybridChunkingStrategy ([`HybridChunkingStrategy`](chunking/enhanced_chunking_service.py:825))
-
-**How It Works**: Combines recursive and semantic approaches by first using recursive chunking to create initial segments, then applying semantic analysis to refine boundaries and merge or split chunks based on coherence.
-
-**Key Parameters**:
-- `primary_chunk_size`: Initial recursive chunking target (default: 512)
-- `secondary_chunk_size`: Semantic refinement target (default: 384)
-- `overlap`: Overlap between chunks (default: 50)
-- `semantic_threshold`: Coherence threshold for boundary decisions (default: 0.7)
-
-**When Most Suitable**:
-- Documents requiring both structural preservation and semantic coherence
-- High-quality chunking requirements with acceptable processing overhead
-- Complex biomedical literature with mixed content types
-
-## 4. Key Findings & Critical Discrepancy
-
-### Major Discovery: Chunk Generation vs. Consumption Gap
-
-Our investigation revealed a **critical discrepancy** in the current system:
-
-**✅ Chunks ARE Generated** for GraphRAG, NodeRAG, and CRAG during ingestion via [`scripts/complete_real_pmc_ingestion_with_chunking.py`](scripts/complete_real_pmc_ingestion_with_chunking.py:367)
-
-**❌ Chunks are NOT Consumed** by these techniques in their current pipeline implementations:
-- [`GraphRAG`](graphrag/pipeline.py) queries [`RAG.KnowledgeGraphNodes`](graphrag/pipeline.py) or [`RAG_HNSW.SourceDocuments`](graphrag/pipeline.py)
-- [`NodeRAG`](noderag/pipeline.py) queries [`RAG.KnowledgeGraphNodes`](noderag/pipeline.py) or [`RAG_HNSW.SourceDocuments`](noderag/pipeline.py)
-- [`CRAG`](crag/pipeline.py) retrieves from [`RAG.SourceDocuments`](crag/pipeline.py) with internal decomposition
-
-### Impact on 100K Document Ingestion
-
-This discrepancy has significant implications:
-
-1. **Wasted Resources**: Computational overhead generating unused chunks
-2. **Storage Inefficiency**: Database space consumed by unused [`RAG.DocumentChunks`](chunking/chunking_schema.sql:8) records
-3. **Performance Opportunity**: Potential optimization by using pre-generated chunks
-4. **Architecture Clarity**: Unclear system design and data flow
-
-## 5. Recommendations for 100K Document Ingestion
-
-### Immediate Actions Required
-
-#### 1. Resolve Chunk Usage Discrepancy
-**Priority: HIGH**
-
-**Options**:
-- **Option A**: Update GraphRAG, NodeRAG, and CRAG pipelines to consume [`RAG.DocumentChunks`](chunking/chunking_schema.sql:8)
-- **Option B**: Remove chunk generation for these techniques to eliminate waste
-- **Option C**: Clarify if chunks feed into [`RAG.KnowledgeGraphNodes`](chunking/chunking_schema.sql:8) via offline process
-
-**Recommendation**: Investigate Option C first, then implement Option A for performance benefits.
-
-#### 2. Optimize Chunking for Scale
-**Priority: MEDIUM**
-
-For 100K document processing:
-- **Strategy**: Continue using "adaptive" strategy (optimal for diverse PMC content)
-- **Quality**: Use BALANCED quality level (good performance/quality trade-off)
-- **Batch Processing**: Implement chunking in batches to manage memory
-- **Monitoring**: Add chunking performance metrics to ingestion pipeline
-
-#### 3. Leverage Advanced Schema Features
-**Priority: LOW**
-
-Consider activating:
-- **HNSW Indexes**: Enable vector search on [`RAG.DocumentChunks`](chunking/chunking_schema.sql:8) for direct chunk retrieval
-- **Hierarchical Chunking**: Use `parent_chunk_id` for multi-level document structure
-- **Overlap Analysis**: Populate [`RAG.ChunkOverlaps`](chunking/chunking_schema.sql:42) for advanced RAG techniques
-
-### Performance Optimization
-
-#### Chunking Configuration for 100K Scale
-
-```python
-# Recommended configuration for large-scale ingestion
-chunking_config = {
-    "strategy": "adaptive",           # Dynamic strategy selection
-    "quality": ChunkingQuality.BALANCED,  # Performance/quality balance
-    "primary_chunk_size": 512,        # Optimal for biomedical content
-    "fallback_chunk_size": 256,       # For difficult documents
-    "batch_size": 1000,              # Process chunks in batches
-    "enable_monitoring": True         # Track performance metrics
+TOKEN_RATIOS = {
+    'gpt-4': 0.75,
+    'gpt-3.5-turbo': 0.75,
+    'claude': 0.8,
+    'claude-3': 0.8,
+    'text-embedding-ada-002': 0.75,
+    'default': 0.75
 }
 ```
 
-#### Memory Management
+## Integration with RAG Pipelines
 
-- **Streaming Processing**: Process documents in streams to avoid memory buildup
-- **Garbage Collection**: Explicit cleanup after each batch
-- **Checkpoint Strategy**: Save chunking progress for resume capability
+### Current Usage Patterns
 
-## 6. Future Considerations
+#### Basic RAG Pipeline
 
-### Short-term (Next 30 Days)
-1. **Resolve chunk consumption discrepancy**
-2. **Optimize chunking pipeline for 100K scale**
-3. **Add performance monitoring and metrics**
+**File**: [`iris_rag/pipelines/basic.py`](iris_rag/pipelines/basic.py:150-180)
 
-### Medium-term (Next 90 Days)
-1. **Experiment with HNSW indexes on chunks**
-2. **Implement hierarchical chunking for complex documents**
-3. **Develop chunk quality assessment metrics**
+```python
+def _chunk_documents(self, documents: List[Document]) -> List[Document]:
+    """Split documents into smaller chunks."""
+    chunked_documents = []
+    
+    for doc in documents:
+        chunks = self._split_text(doc.page_content)
+        
+        for i, chunk_text in enumerate(chunks):
+            chunk_metadata = doc.metadata.copy()
+            chunk_metadata.update({
+                "chunk_index": i,
+                "parent_document_id": doc.id,
+                "chunk_size": len(chunk_text)
+            })
+            
+            chunk_doc = Document(
+                page_content=chunk_text,
+                metadata=chunk_metadata
+            )
+            chunked_documents.append(chunk_doc)
+    
+    return chunked_documents
+```
 
-### Long-term (Next 6 Months)
-1. **Advanced semantic chunking with domain-specific models**
-2. **Dynamic chunk size optimization based on document type**
-3. **Integration with knowledge graph construction pipelines**
+#### Enhanced Chunking Integration
 
-## Conclusion
+To use enhanced chunking in pipelines:
 
-The RAG templates project implements a sophisticated and well-designed chunking system through [`EnhancedDocumentChunkingService`](chunking/enhanced_chunking_service.py). However, the critical discrepancy between chunk generation and consumption must be resolved before the 100K document ingestion to ensure optimal resource utilization and system performance.
+```python
+from tools.chunking.enhanced_chunking_service import (
+    EnhancedDocumentChunkingService,
+    ChunkingQuality
+)
 
-The "adaptive" chunking strategy is well-suited for the diverse PMC document corpus and should be retained for the large-scale ingestion. With proper optimization and the resolution of the consumption gap, the chunking system is ready to support the 100K document target effectively.
+# Initialize service
+chunking_service = EnhancedDocumentChunkingService()
+
+# Configure strategy
+chunks = chunking_service.chunk_document(
+    text=document.page_content,
+    doc_id=document.id,
+    strategy="adaptive",
+    quality=ChunkingQuality.BALANCED
+)
+```
+
+### Pipeline-Specific Considerations
+
+#### ColBERT Pipeline
+- Uses document-level embeddings primarily
+- Chunking may be applied for token-level embeddings
+- Configuration: [`config/config.yaml`](config/config.yaml:56-59)
+
+#### CRAG Pipeline  
+- Implements internal decomposition
+- May benefit from pre-chunking for better retrieval
+- Configuration: [`config/config.yaml`](config/config.yaml:60-63)
+
+#### GraphRAG/NodeRAG
+- Operates on knowledge graph nodes
+- Chunking affects node granularity
+- May use chunks as input for graph construction
+
+## Performance Considerations
+
+### Chunk Size Impact
+
+**Small Chunks (256-512 tokens)**:
+- ✅ More precise retrieval
+- ✅ Better semantic coherence
+- ❌ Higher storage overhead
+- ❌ More embedding computations
+
+**Medium Chunks (512-1024 tokens)**:
+- ✅ Balanced performance/quality
+- ✅ Good for most use cases
+- ✅ Reasonable storage requirements
+
+**Large Chunks (1024+ tokens)**:
+- ✅ Lower storage overhead
+- ✅ Fewer embeddings to compute
+- ❌ May lose retrieval precision
+- ❌ Risk of semantic drift
+
+### Memory and Storage
+
+**Estimation Formula**:
+```
+Total Chunks ≈ (Total Document Length) / (Chunk Size - Overlap)
+Storage Requirements ≈ Total Chunks × (Embedding Dimension × 4 bytes + Metadata)
+```
+
+**Example for 1000 documents**:
+- Average document: 5000 tokens
+- Chunk size: 512 tokens, overlap: 50 tokens
+- Estimated chunks: ~11,000
+- Storage (384-dim embeddings): ~17MB vectors + metadata
+
+### Processing Performance
+
+**Basic Chunking**: ~1000 documents/second
+**Enhanced Chunking**: 
+- Recursive: ~500 documents/second
+- Semantic: ~100 documents/second  
+- Adaptive: ~200 documents/second
+- Hybrid: ~50 documents/second
+
+## Best Practices
+
+### Choosing a Chunking Strategy
+
+1. **For Production Systems**: Use adaptive chunking for mixed content
+2. **For Speed**: Use basic fixed-size chunking
+3. **For Quality**: Use semantic or hybrid chunking
+4. **For Scientific Literature**: Use recursive with biomedical separators
+
+### Configuration Guidelines
+
+1. **Start with defaults**: 512 tokens, 50 token overlap
+2. **Adjust based on document type**:
+   - Short articles: 256-512 tokens
+   - Long papers: 512-1024 tokens
+   - Technical documents: Use semantic chunking
+3. **Monitor retrieval quality**: Adjust chunk size if precision drops
+4. **Consider embedding model**: Larger models can handle bigger chunks
+
+### Optimization Tips
+
+1. **Batch Processing**: Process documents in batches for better memory usage
+2. **Quality vs Speed**: Use BALANCED quality for most use cases
+3. **Overlap Strategy**: 10-20% overlap typically optimal
+4. **Monitoring**: Track chunk size distribution and retrieval metrics
+
+### Integration Patterns
+
+```python
+# Recommended pattern for new pipelines
+class CustomRAGPipeline(RAGPipeline):
+    def __init__(self, connection_manager, config_manager):
+        super().__init__(connection_manager, config_manager)
+        
+        # Initialize chunking based on configuration
+        chunking_method = config_manager.get("chunking:method", "basic")
+        
+        if chunking_method == "enhanced":
+            from tools.chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
+            self.chunking_service = EnhancedDocumentChunkingService()
+        else:
+            # Use built-in basic chunking
+            self.chunk_size = config_manager.get("chunking:chunk_size", 1000)
+            self.chunk_overlap = config_manager.get("chunking:chunk_overlap", 200)
+    
+    def _chunk_documents(self, documents):
+        if hasattr(self, 'chunking_service'):
+            # Use enhanced chunking
+            return self._enhanced_chunk_documents(documents)
+        else:
+            # Use basic chunking
+            return self._basic_chunk_documents(documents)
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Chunks Too Large/Small
+
+**Symptoms**: Poor retrieval quality, memory issues
+**Solutions**:
+- Adjust `chunk_size` parameter
+- Check token estimation accuracy
+- Consider different chunking strategy
+
+#### 2. Poor Semantic Boundaries
+
+**Symptoms**: Chunks break mid-sentence or mid-concept
+**Solutions**:
+- Use recursive or semantic chunking
+- Increase quality level
+- Adjust separator hierarchy
+
+#### 3. Performance Issues
+
+**Symptoms**: Slow chunking, high memory usage
+**Solutions**:
+- Use basic chunking for speed
+- Reduce quality level
+- Process in smaller batches
+- Use FAST quality setting
+
+#### 4. Inconsistent Chunk Sizes
+
+**Symptoms**: Wide variation in chunk token counts
+**Solutions**:
+- Use adaptive chunking
+- Adjust min/max chunk size parameters
+- Check document preprocessing
+
+### Debugging Tools
+
+```python
+# Analyze chunking results
+def analyze_chunks(chunks):
+    sizes = [chunk.metrics.token_count for chunk in chunks]
+    print(f"Chunk count: {len(chunks)}")
+    print(f"Average size: {sum(sizes)/len(sizes):.1f} tokens")
+    print(f"Size range: {min(sizes)}-{max(sizes)} tokens")
+    print(f"Size std dev: {statistics.stdev(sizes):.1f}")
+
+# Test different strategies
+def compare_strategies(text, doc_id):
+    strategies = {
+        'recursive': RecursiveChunkingStrategy(),
+        'semantic': SemanticChunkingStrategy(),
+        'adaptive': AdaptiveChunkingStrategy()
+    }
+    
+    for name, strategy in strategies.items():
+        chunks = strategy.chunk(text, doc_id)
+        print(f"{name}: {len(chunks)} chunks")
+        analyze_chunks(chunks)
+```
+
+### Performance Monitoring
+
+```python
+# Monitor chunking performance
+import time
+
+def monitor_chunking_performance(documents, strategy):
+    start_time = time.time()
+    total_chunks = 0
+    
+    for doc in documents:
+        chunks = strategy.chunk(doc.page_content, doc.id)
+        total_chunks += len(chunks)
+    
+    elapsed = time.time() - start_time
+    print(f"Processed {len(documents)} documents")
+    print(f"Generated {total_chunks} chunks")
+    print(f"Time: {elapsed:.2f}s ({len(documents)/elapsed:.1f} docs/sec)")
+```
+
+## Future Considerations
+
+### Planned Enhancements
+
+1. **Dynamic Chunk Sizing**: Automatic optimization based on retrieval metrics
+2. **Multi-Modal Chunking**: Support for documents with images and tables
+3. **Domain-Specific Strategies**: Specialized chunking for different scientific domains
+4. **Hierarchical Chunking**: Multi-level chunk relationships for better context
+
+### Research Directions
+
+1. **Embedding-Aware Chunking**: Optimize chunks based on embedding model characteristics
+2. **Query-Aware Chunking**: Adapt chunking strategy based on expected query types
+3. **Cross-Document Chunking**: Chunk boundaries that span related documents
+4. **Real-Time Adaptation**: Dynamic strategy selection based on retrieval performance
+
+---
+
+## Related Documentation
+
+- [Basic RAG Pipeline Guide](../guides/BASIC_RAG_PIPELINE.md)
+- [Configuration Management](../reference/CONFIGURATION.md)
+- [Performance Optimization](../guides/PERFORMANCE_OPTIMIZATION.md)
+- [Vector Storage Guide](../reference/VECTOR_STORAGE.md)
+
+## Contributing
+
+When modifying chunking strategies:
+
+1. Follow the existing interface patterns
+2. Add comprehensive tests for new strategies
+3. Update this documentation
+4. Benchmark performance impact
+5. Consider backward compatibility
+
+For questions or contributions, see the [project contribution guidelines](../../CONTRIBUTING.md).

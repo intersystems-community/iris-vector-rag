@@ -1,0 +1,127 @@
+{
+  "test_timestamp": "2025-06-19T12:41:52.324992",
+  "test_type": "mock_connection_test",
+  "total_pipelines": 7,
+  "status_counts": {
+    "initialization_only": 7
+  },
+  "working_pipelines": [],
+  "broken_pipelines": [],
+  "partial_pipelines": [],
+  "initialization_only": [
+    "BasicRAG",
+    "HyDERAG",
+    "CRAG",
+    "ColBERTRAG",
+    "NodeRAG",
+    "GraphRAG",
+    "HybridIFindRAG"
+  ],
+  "details_by_pipeline": {
+    "BasicRAG": {
+      "status": "initialization_only",
+      "notes": [
+        "Missing methods: ingest, clear, get_documents",
+        "Ingestion failed: <iris_rag.pipelines.basic.BasicRAGPipeline object at 0x10568aab0> does not have the attribute '_store_embeddings'",
+        "Query failed: <iris_rag.pipelines.basic.BasicRAGPipeline object at 0x10568aab0> does not have the attribute 'retrieve'"
+      ],
+      "initialization_error": null,
+      "query_error": "<iris_rag.pipelines.basic.BasicRAGPipeline object at 0x10568aab0> does not have the attribute 'retrieve'",
+      "missing_methods": [
+        "ingest",
+        "clear",
+        "get_documents"
+      ]
+    },
+    "HyDERAG": {
+      "status": "initialization_only",
+      "notes": [
+        "Missing methods: ingest, clear, get_documents",
+        "Ingestion failed: <iris_rag.pipelines.hyde.HyDERAGPipeline object at 0x3330d9910> does not have the attribute '_store_embeddings'",
+        "Query failed: <iris_rag.pipelines.hyde.HyDERAGPipeline object at 0x3330d9910> does not have the attribute 'retrieve'"
+      ],
+      "initialization_error": null,
+      "query_error": "<iris_rag.pipelines.hyde.HyDERAGPipeline object at 0x3330d9910> does not have the attribute 'retrieve'",
+      "missing_methods": [
+        "ingest",
+        "clear",
+        "get_documents"
+      ]
+    },
+    "CRAG": {
+      "status": "initialization_only",
+      "notes": [
+        "Missing methods: ingest, clear, get_documents",
+        "Ingestion failed: <iris_rag.pipelines.crag.CRAGPipeline object at 0x3312bb1a0> does not have the attribute '_store_embeddings'",
+        "Query failed: <iris_rag.pipelines.crag.CRAGPipeline object at 0x3312bb1a0> does not have the attribute 'retrieve'"
+      ],
+      "initialization_error": null,
+      "query_error": "<iris_rag.pipelines.crag.CRAGPipeline object at 0x3312bb1a0> does not have the attribute 'retrieve'",
+      "missing_methods": [
+        "ingest",
+        "clear",
+        "get_documents"
+      ]
+    },
+    "ColBERTRAG": {
+      "status": "initialization_only",
+      "notes": [
+        "Missing methods: ingest, clear, get_documents",
+        "Ingestion failed: <iris_rag.pipelines.colbert.ColBERTRAGPipeline object at 0x1056cc1d0> does not have the attribute '_store_embeddings'",
+        "Query failed: <iris_rag.pipelines.colbert.ColBERTRAGPipeline object at 0x1056cc1d0> does not have the attribute 'retrieve'"
+      ],
+      "initialization_error": null,
+      "query_error": "<iris_rag.pipelines.colbert.ColBERTRAGPipeline object at 0x1056cc1d0> does not have the attribute 'retrieve'",
+      "missing_methods": [
+        "ingest",
+        "clear",
+        "get_documents"
+      ]
+    },
+    "NodeRAG": {
+      "status": "initialization_only",
+      "notes": [
+        "Missing methods: ingest, clear, get_documents",
+        "Ingestion failed: <iris_rag.pipelines.noderag.NodeRAGPipeline object at 0x105657f80> does not have the attribute '_store_embeddings'",
+        "Query failed: <iris_rag.pipelines.noderag.NodeRAGPipeline object at 0x105657f80> does not have the attribute 'retrieve'"
+      ],
+      "initialization_error": null,
+      "query_error": "<iris_rag.pipelines.noderag.NodeRAGPipeline object at 0x105657f80> does not have the attribute 'retrieve'",
+      "missing_methods": [
+        "ingest",
+        "clear",
+        "get_documents"
+      ]
+    },
+    "GraphRAG": {
+      "status": "initialization_only",
+      "notes": [
+        "Missing methods: ingest, clear, get_documents",
+        "Ingestion failed: <iris_rag.pipelines.graphrag.GraphRAGPipeline object at 0x345f992b0> does not have the attribute '_store_embeddings'",
+        "Query failed: <iris_rag.pipelines.graphrag.GraphRAGPipeline object at 0x345f992b0> does not have the attribute 'retrieve'"
+      ],
+      "initialization_error": null,
+      "query_error": "<iris_rag.pipelines.graphrag.GraphRAGPipeline object at 0x345f992b0> does not have the attribute 'retrieve'",
+      "missing_methods": [
+        "ingest",
+        "clear",
+        "get_documents"
+      ]
+    },
+    "HybridIFindRAG": {
+      "status": "initialization_only",
+      "notes": [
+        "Missing methods: ingest, clear, get_documents",
+        "Ingestion failed: <iris_rag.pipelines.hybrid_ifind.HybridIFindRAGPipeline object at 0x345f992b0> does not have the attribute '_store_embeddings'",
+        "Query failed: <iris_rag.pipelines.hybrid_ifind.HybridIFindRAGPipeline object at 0x345f992b0> does not have the attribute 'retrieve'"
+      ],
+      "initialization_error": null,
+      "query_error": "<iris_rag.pipelines.hybrid_ifind.HybridIFindRAGPipeline object at 0x345f992b0> does not have the attribute 'retrieve'",
+      "missing_methods": [
+        "ingest",
+        "clear",
+        "get_documents"
+      ]
+    }
+  }
+}

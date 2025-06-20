@@ -110,6 +110,30 @@ CREATE TABLE RAG.KnowledgeGraphEdges (
     FOREIGN KEY (target_node_id) REFERENCES RAG.KnowledgeGraphNodes(node_id)
 );
 
+-- Document Entities table for GraphRAG
+CREATE TABLE RAG.DocumentEntities (
+    entity_id VARCHAR(255) PRIMARY KEY,
+    doc_id VARCHAR(255),
+    entity_name VARCHAR(500),
+    entity_type VARCHAR(100),
+    embedding VARCHAR(60000), -- Store as comma-separated string
+    confidence_score FLOAT,
+    entity_description CLOB,
+    FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id) ON DELETE CASCADE
+);
+
+-- Entity Relationships table for GraphRAG
+CREATE TABLE RAG.EntityRelationships (
+    relationship_id VARCHAR(255) PRIMARY KEY,
+    source_entity_id VARCHAR(255),
+    target_entity_id VARCHAR(255),
+    relationship_type VARCHAR(100),
+    confidence_score FLOAT,
+    relationship_description CLOB,
+    FOREIGN KEY (source_entity_id) REFERENCES RAG.DocumentEntities(entity_id) ON DELETE CASCADE,
+    FOREIGN KEY (target_entity_id) REFERENCES RAG.DocumentEntities(entity_id) ON DELETE CASCADE
+);
+
 -- Standard indexes for non-vector columns
 CREATE INDEX idx_source_docs_title ON RAG.SourceDocuments(title);
 CREATE INDEX idx_kg_nodes_type ON RAG.KnowledgeGraphNodes(node_type);

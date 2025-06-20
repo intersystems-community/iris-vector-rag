@@ -168,33 +168,20 @@ class HybridIFindRAGPipeline(RAGPipeline):
         logger.info(f"Processing Hybrid IFind query: {query_text}")
         
         try:
-            # Perform vector search
+            # Use IRISVectorStore for hybrid search (replaces broken SQL)
             query_embedding = self.embedding_manager.embed_text(query_text)
-            vector_results = self._vector_search(query_embedding, top_k * 2)  # Get more for fusion
             
-            # Perform IFind text search
-            ifind_results = self._ifind_search(query_text, top_k * 2)  # Get more for fusion
+            # Use vector store hybrid search method
+            search_results = self.vector_store.hybrid_search(
+                query_embedding=query_embedding,
+                query_text=query_text,
+                k=top_k,
+                vector_weight=self.vector_weight,
+                ifind_weight=self.ifind_weight
+            )
             
-            # Fuse results using hybrid ranking
-            fused_results = self._fuse_results(vector_results, ifind_results, top_k)
-            
-            # Convert to Document objects for standardized return format
-            retrieved_documents = []
-            for doc_dict in fused_results:
-                doc = Document(
-                    id=doc_dict["doc_id"],
-                    page_content=str(doc_dict["content"]),  # VectorStore guarantees string content
-                    metadata={
-                        "title": str(doc_dict.get("title", "")),
-                        "hybrid_score": doc_dict.get("hybrid_score", 0.0),
-                        "vector_score": doc_dict.get("vector_score", 0.0),
-                        "ifind_score": doc_dict.get("ifind_score", 0.0),
-                        "has_vector": doc_dict.get("has_vector", False),
-                        "has_ifind": doc_dict.get("has_ifind", False),
-                        "search_type": doc_dict.get("search_type", "hybrid")
-                    }
-                )
-                retrieved_documents.append(doc)
+            # Convert results to Document list for compatibility
+            retrieved_documents = [doc for doc, score in search_results]
             
             # Generate answer if LLM function is available
             answer = None
@@ -209,8 +196,8 @@ class HybridIFindRAGPipeline(RAGPipeline):
                 "query": query_text,
                 "answer": answer,
                 "retrieved_documents": retrieved_documents,
-                "vector_results_count": len(vector_results),
-                "ifind_results_count": len(ifind_results),
+                "vector_results_count": len(retrieved_documents),  # Using hybrid results
+                "ifind_results_count": 0,  # No separate IFind results yet
                 "num_documents_retrieved": len(retrieved_documents),
                 "processing_time": end_time - start_time,
                 "pipeline_type": "hybrid_ifind_rag"
@@ -260,8 +247,9 @@ class HybridIFindRAGPipeline(RAGPipeline):
                 logger.info("IFind index created successfully")
             
         except Exception as e:
-            logger.warning(f"Could not create IFind index: {e}")
-            # Continue without IFind - will fallback to regular text search
+            logger.error(f"HybridIFind: Could not create IFind index - {e}. HybridIFind requires working IFind functionality.")
+            # FAIL instead of silent fallback
+            raise RuntimeError(f"HybridIFind pipeline failed: Cannot create IFind indexes. Please use BasicRAG or fix IFind configuration. Error: {e}")
         finally:
             cursor.close()
     
@@ -271,17 +259,24 @@ class HybridIFindRAGPipeline(RAGPipeline):
         cursor = connection.cursor()
         
         try:
-            search_sql = f"""
-            SELECT TOP {top_k}
-                doc_id, title, text_content,
-                VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?)) as vector_score
-            FROM RAG.SourceDocuments
-            WHERE embedding IS NOT NULL
-            ORDER BY vector_score DESC
-            """
+            # Use vector_sql_utils for proper parameter handling
+            from common.vector_sql_utils import format_vector_search_sql, execute_vector_search
             
-            cursor.execute(search_sql, [str(query_embedding)])
-            results = cursor.fetchall()
+            # Format vector with brackets for vector_sql_utils
+            query_vector_str = f"[{','.join(f'{x:.10f}' for x in query_embedding)}]"
+            
+            sql = format_vector_search_sql(
+                table_name="RAG.SourceDocumentsIFind",
+                vector_column="embedding",
+                vector_string=query_vector_str,
+                embedding_dim=len(query_embedding),
+                top_k=top_k,
+                id_column="doc_id",
+                content_column="text_content"
+            )
+            
+            # Use execute_vector_search utility 
+            results = execute_vector_search(cursor, sql)
             
             documents = []
             for row in results:
@@ -308,9 +303,9 @@ class HybridIFindRAGPipeline(RAGPipeline):
             ifind_sql = f"""
             SELECT TOP {top_k}
                 doc_id, title, text_content,
-                $SCORE(text_content) as ifind_score
-            FROM RAG.SourceDocuments
-            WHERE $FIND(text_content, ?)
+                1.0 as ifind_score
+            FROM RAG.SourceDocumentsIFind
+            WHERE %CONTAINS(text_content, ?)
             ORDER BY ifind_score DESC
             """
             
@@ -333,31 +328,9 @@ class HybridIFindRAGPipeline(RAGPipeline):
                 return documents
                 
             except Exception as ifind_error:
-                logger.warning(f"IFind search failed, falling back to LIKE search: {ifind_error}")
-                
-                # Fallback to simple text search
-                like_sql = f"""
-                SELECT TOP {top_k}
-                    doc_id, title, text_content,
-                    1.0 as text_score
-                FROM RAG.SourceDocuments
-                WHERE text_content LIKE ?
-                """
-                
-                cursor.execute(like_sql, [f"%{query_text}%"])
-                results = cursor.fetchall()
-                
-                documents = []
-                for row in results:
-                    documents.append({
-                        "doc_id": row[0],
-                        "title": row[1],
-                        "content": row[2],
-                        "ifind_score": 1.0,
-                        "search_type": "text_fallback"
-                    })
-                
-                return documents
+                logger.error(f"HybridIFind: IFind search failed - {ifind_error}. HybridIFind requires working IFind indexes.")
+                # FAIL instead of falling back to LIKE search
+                raise RuntimeError(f"HybridIFind pipeline failed: IFind search not working. Please use BasicRAG or ensure IFind indexes are properly configured. Error: {ifind_error}")
             
         finally:
             cursor.close()

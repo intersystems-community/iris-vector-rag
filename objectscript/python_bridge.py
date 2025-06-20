@@ -18,18 +18,49 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# Import RAG pipeline modules
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Import RAG pipeline modules (legacy imports with fallback)
+try:
+    from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+    from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
+    from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
+    from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+    from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+    from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+    LEGACY_IMPORTS_AVAILABLE = True
+except ImportError:
+    LEGACY_IMPORTS_AVAILABLE = False
+    logger.warning("Legacy pipeline imports not available, using new framework")
+
+# Import new Library Consumption Framework APIs
+try:
+    from rag_templates.simple import RAG as SimpleRAG
+    from rag_templates.standard import ConfigurableRAG
+    from rag_templates.core.config_manager import ConfigurationManager
+    NEW_FRAMEWORK_AVAILABLE = True
+except ImportError:
+    NEW_FRAMEWORK_AVAILABLE = False
+    logger.warning("New Library Consumption Framework not available")
 
 # Import evaluation and benchmarking modules
-from eval.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance # Path remains same
-from eval.bench_runner import run_technique_benchmark # Path remains same
-from common.iris_connector import get_iris_connection # Updated import
+try:
+    from eval.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance # Path remains same
+    from eval.bench_runner import run_technique_benchmark # Path remains same
+    EVAL_MODULES_AVAILABLE = True
+except ImportError:
+    EVAL_MODULES_AVAILABLE = False
+    logger.warning("Evaluation modules not available")
+
+# Import connection utilities
+try:
+    from common.iris_connector import get_iris_connection # Updated import
+    CONNECTION_UTILS_AVAILABLE = True
+except ImportError:
+    CONNECTION_UTILS_AVAILABLE = False
+    logger.warning("Connection utilities not available")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -81,6 +112,45 @@ def invoke_basic_rag(query: str, config: str) -> str:
     def _execute():
         config_dict = json.loads(config) if isinstance(config, str) else config
         
+        # Try new framework first, fallback to legacy
+        if NEW_FRAMEWORK_AVAILABLE:
+            try:
+                # Use new Simple API for basic RAG
+                if not config_dict.get("embedding_func") and not config_dict.get("llm_func"):
+                    # Zero-config case - use Simple API
+                    global _simple_rag_instance
+                    if _simple_rag_instance is None:
+                        _simple_rag_instance = SimpleRAG()
+                    answer = _simple_rag_instance.query(query)
+                    return {
+                        "query": query,
+                        "answer": answer,
+                        "retrieved_documents": [],
+                        "framework": "new_simple_api"
+                    }
+                else:
+                    # Configured case - use Standard API
+                    standard_config = {"technique": "basic"}
+                    if config_dict.get("embedding_func"):
+                        standard_config["embedding_provider"] = "custom"
+                    if config_dict.get("llm_func"):
+                        standard_config["llm_provider"] = "custom"
+                    
+                    rag_instance = ConfigurableRAG(standard_config)
+                    answer = rag_instance.query(query)
+                    return {
+                        "query": query,
+                        "answer": answer,
+                        "retrieved_documents": [],
+                        "framework": "new_standard_api"
+                    }
+            except Exception as e:
+                logger.warning(f"New framework failed, falling back to legacy: {e}")
+        
+        # Legacy implementation
+        if not LEGACY_IMPORTS_AVAILABLE or not CONNECTION_UTILS_AVAILABLE:
+            raise ImportError("Neither new framework nor legacy imports available")
+        
         # Initialize pipeline
         iris_connector = get_iris_connection()
         pipeline = BasicRAGPipeline(
@@ -91,6 +161,7 @@ def invoke_basic_rag(query: str, config: str) -> str:
         
         # Execute pipeline
         result = pipeline.run(query)
+        result["framework"] = "legacy"
         return result
     
     execution_result = _safe_execute(_execute)
@@ -461,32 +532,438 @@ def health_check() -> str:
         }
         
         # Check database connection
-        try:
-            iris_connector = get_iris_connection()
-            cursor = iris_connector.cursor()
-            cursor.execute("SELECT 1 AS test")
-            result = cursor.fetchone()
-            health["components"]["database"] = "healthy" if result[0] == 1 else "unhealthy"
-        except Exception as e:
-            health["components"]["database"] = f"unhealthy: {str(e)}"
+        if CONNECTION_UTILS_AVAILABLE:
+            try:
+                iris_connector = get_iris_connection()
+                cursor = iris_connector.cursor()
+                cursor.execute("SELECT 1 AS test")
+                result = cursor.fetchone()
+                health["components"]["database"] = "healthy" if result[0] == 1 else "unhealthy"
+            except Exception as e:
+                health["components"]["database"] = f"unhealthy: {str(e)}"
+                health["status"] = "degraded"
+        else:
+            health["components"]["database"] = "unavailable: connection utils not imported"
             health["status"] = "degraded"
         
-        # Check pipeline imports
-        pipeline_classes = [
-            BasicRAGPipeline, ColbertRAGPipeline, GraphRAGPipeline,
-            HyDEPipeline, CRAGPipeline, NodeRAGPipeline
-        ]
+        # Check new framework availability
+        health["components"]["new_framework"] = "healthy" if NEW_FRAMEWORK_AVAILABLE else "unavailable"
+        health["components"]["legacy_pipelines"] = "healthy" if LEGACY_IMPORTS_AVAILABLE else "unavailable"
+        health["components"]["evaluation_modules"] = "healthy" if EVAL_MODULES_AVAILABLE else "unavailable"
         
-        for pipeline_class in pipeline_classes:
-            try:
-                # Try to instantiate with minimal config
-                pipeline_class.__name__  # Just check the class exists
-                health["components"][pipeline_class.__name__] = "healthy"
-            except Exception as e:
-                health["components"][pipeline_class.__name__] = f"unhealthy: {str(e)}"
-                health["status"] = "degraded"
+        # Check legacy pipeline imports if available
+        if LEGACY_IMPORTS_AVAILABLE:
+            pipeline_classes = [
+                BasicRAGPipeline, ColbertRAGPipeline, GraphRAGPipeline,
+                HyDEPipeline, CRAGPipeline, NodeRAGPipeline
+            ]
+            
+            for pipeline_class in pipeline_classes:
+                try:
+                    # Try to instantiate with minimal config
+                    pipeline_class.__name__  # Just check the class exists
+                    health["components"][pipeline_class.__name__] = "healthy"
+                except Exception as e:
+                    health["components"][pipeline_class.__name__] = f"unhealthy: {str(e)}"
+                    health["status"] = "degraded"
         
         return health
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+# ============================================================================
+# SIMPLE API INTEGRATION (Phase 5: Library Consumption Framework Parity)
+# ============================================================================
+
+# Global Simple RAG instance for reuse
+_simple_rag_instance = None
+
+def invoke_simple_rag(query: str) -> str:
+    """
+    Zero-config RAG invocation from ObjectScript using Simple API.
+    
+    Args:
+        query: The search query
+        
+    Returns:
+        JSON string with results
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        global _simple_rag_instance
+        
+        # Initialize Simple RAG instance if needed
+        if _simple_rag_instance is None:
+            _simple_rag_instance = SimpleRAG()
+        
+        # Execute query
+        answer = _simple_rag_instance.query(query)
+        return answer
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def add_documents_simple(documents: str) -> str:
+    """
+    Add documents using Simple API from ObjectScript.
+    
+    Args:
+        documents: JSON string containing list of documents
+        
+    Returns:
+        JSON string with results
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        global _simple_rag_instance
+        
+        # Initialize Simple RAG instance if needed
+        if _simple_rag_instance is None:
+            _simple_rag_instance = SimpleRAG()
+        
+        # Parse documents
+        docs_list = json.loads(documents) if isinstance(documents, str) else documents
+        
+        # Add documents
+        _simple_rag_instance.add_documents(docs_list)
+        
+        return {
+            "message": f"Successfully added {len(docs_list)} documents",
+            "document_count": len(docs_list)
+        }
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def configure_simple_rag(config: str) -> str:
+    """
+    Configure Simple API from ObjectScript.
+    
+    Args:
+        config: JSON string containing configuration overrides
+        
+    Returns:
+        JSON string with results
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        global _simple_rag_instance
+        
+        # Parse configuration
+        config_dict = json.loads(config) if isinstance(config, str) else config
+        
+        # Initialize Simple RAG instance if needed
+        if _simple_rag_instance is None:
+            _simple_rag_instance = SimpleRAG()
+        
+        # Apply configuration
+        for key, value in config_dict.items():
+            _simple_rag_instance.set_config(key, value)
+        
+        return {
+            "message": "Configuration applied successfully",
+            "applied_configs": list(config_dict.keys())
+        }
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def get_simple_rag_status() -> str:
+    """
+    Get Simple API status from ObjectScript.
+    
+    Returns:
+        JSON string with status information
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        global _simple_rag_instance
+        
+        if _simple_rag_instance is None:
+            return {
+                "initialized": False,
+                "document_count": 0,
+                "status": "not_initialized"
+            }
+        
+        return {
+            "initialized": True,
+            "document_count": _simple_rag_instance.get_document_count(),
+            "status": "ready",
+            "representation": str(_simple_rag_instance)
+        }
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+# ============================================================================
+# STANDARD API INTEGRATION (Phase 5: Library Consumption Framework Parity)
+# ============================================================================
+
+# Global Standard RAG instances for reuse (keyed by technique)
+_standard_rag_instances = {}
+
+def invoke_configurable_rag(query: str, config: str) -> str:
+    """
+    Advanced RAG with technique selection from ObjectScript.
+    
+    Args:
+        query: The search query
+        config: JSON configuration string with technique and options
+        
+    Returns:
+        JSON string with results
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        # Parse configuration
+        config_dict = json.loads(config) if isinstance(config, str) else config
+        technique = config_dict.get("technique", "basic").lower()
+        
+        global _standard_rag_instances
+        
+        # Get or create instance for this technique
+        instance_key = f"{technique}_{hash(json.dumps(config_dict, sort_keys=True))}"
+        
+        if instance_key not in _standard_rag_instances:
+            _standard_rag_instances[instance_key] = ConfigurableRAG(config_dict)
+        
+        rag_instance = _standard_rag_instances[instance_key]
+        
+        # Execute query
+        answer = rag_instance.query(query)
+        return answer
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def invoke_configurable_rag_with_options(query: str, config: str, options: str) -> str:
+    """
+    Advanced RAG with technique selection and query options from ObjectScript.
+    
+    Args:
+        query: The search query
+        config: JSON configuration string with technique and options
+        options: JSON string with query options
+        
+    Returns:
+        JSON string with results
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        # Parse configuration and options
+        config_dict = json.loads(config) if isinstance(config, str) else config
+        options_dict = json.loads(options) if isinstance(options, str) else options
+        technique = config_dict.get("technique", "basic").lower()
+        
+        global _standard_rag_instances
+        
+        # Get or create instance for this technique
+        instance_key = f"{technique}_{hash(json.dumps(config_dict, sort_keys=True))}"
+        
+        if instance_key not in _standard_rag_instances:
+            _standard_rag_instances[instance_key] = ConfigurableRAG(config_dict)
+        
+        rag_instance = _standard_rag_instances[instance_key]
+        
+        # Execute query with options
+        result = rag_instance.query(query, options_dict)
+        return result
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def get_available_techniques() -> str:
+    """
+    Get available RAG techniques from ObjectScript.
+    
+    Returns:
+        JSON string with list of available techniques
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        # Create a temporary instance to get available techniques
+        temp_config = {"technique": "basic"}
+        temp_rag = ConfigurableRAG(temp_config)
+        
+        techniques = temp_rag.get_available_techniques()
+        return techniques
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def switch_technique(technique: str, config: str) -> str:
+    """
+    Switch RAG technique from ObjectScript.
+    
+    Args:
+        technique: Name of the new technique
+        config: JSON string with technique configuration
+        
+    Returns:
+        JSON string with results
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        # Parse configuration
+        config_dict = json.loads(config) if isinstance(config, str) else config
+        
+        # Create new instance with the technique
+        full_config = {"technique": technique}
+        full_config.update(config_dict)
+        
+        global _standard_rag_instances
+        
+        # Create new instance
+        instance_key = f"{technique}_{hash(json.dumps(full_config, sort_keys=True))}"
+        _standard_rag_instances[instance_key] = ConfigurableRAG(full_config)
+        
+        return {
+            "message": f"Switched to technique: {technique}",
+            "technique": technique,
+            "instance_key": instance_key
+        }
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def get_technique_info(technique: str) -> str:
+    """
+    Get technique information from ObjectScript.
+    
+    Args:
+        technique: Name of the technique
+        
+    Returns:
+        JSON string with technique information
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        # Create a temporary instance to get technique info
+        temp_config = {"technique": "basic"}
+        temp_rag = ConfigurableRAG(temp_config)
+        
+        info = temp_rag.get_technique_info(technique)
+        return info
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+# ============================================================================
+# CONFIGURATION BRIDGE FUNCTIONS (Phase 5: Library Consumption Framework Parity)
+# ============================================================================
+
+def load_configuration(config_path: str) -> str:
+    """
+    Load configuration from file for ObjectScript.
+    
+    Args:
+        config_path: Path to configuration file
+        
+    Returns:
+        JSON string with results
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        # Try to load configuration
+        config_manager = ConfigurationManager(config_path)
+        
+        return {
+            "message": f"Configuration loaded from: {config_path}",
+            "config_path": config_path,
+            "config": config_manager.to_dict()
+        }
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def validate_configuration(config: str) -> str:
+    """
+    Validate configuration from ObjectScript.
+    
+    Args:
+        config: JSON string with configuration to validate
+        
+    Returns:
+        JSON string with validation results
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        # Parse configuration
+        config_dict = json.loads(config) if isinstance(config, str) else config
+        
+        # Create temporary configuration manager
+        config_manager = ConfigurationManager()
+        
+        # Apply configuration and validate
+        for key, value in config_dict.items():
+            if isinstance(value, dict):
+                for sub_key, sub_value in value.items():
+                    config_manager.set(f"{key}:{sub_key}", sub_value)
+            else:
+                config_manager.set(key, value)
+        
+        # Validate
+        config_manager.validate()
+        
+        return {
+            "valid": True,
+            "message": "Configuration validation passed"
+        }
+    
+    execution_result = _safe_execute(_execute)
+    return json.dumps(execution_result)
+
+
+def get_default_configuration() -> str:
+    """
+    Get default configuration for ObjectScript.
+    
+    Returns:
+        JSON string with default configuration
+    """
+    def _execute():
+        if not NEW_FRAMEWORK_AVAILABLE:
+            raise ImportError("New Library Consumption Framework not available")
+        
+        # Create configuration manager with defaults
+        config_manager = ConfigurationManager()
+        
+        return config_manager.to_dict()
     
     execution_result = _safe_execute(_execute)
     return json.dumps(execution_result)

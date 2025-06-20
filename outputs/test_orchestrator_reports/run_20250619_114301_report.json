@@ -1,0 +1,48 @@
+{
+    "run_id": "run_20250619_114301",
+    "start_time": "2025-06-19T11:43:01.915937",
+    "end_time": "2025-06-19T11:43:01.920827",
+    "total_duration": 0.00489,
+    "environment_info": {
+        "python_version": "3.12.9 | packaged by Anaconda, Inc. | (main, Feb  6 2025, 12:55:12) [Clang 14.0.6 ]",
+        "platform": "macOS-15.3.2-arm64-arm-64bit",
+        "conda_env": "base",
+        "project_root": "/Users/tdyar/ws/rag-templates",
+        "cwd": "/Users/tdyar/ws/rag-templates",
+        "user": "tdyar",
+        "orchestrator_version": "1.0.0"
+    },
+    "summary": {
+        "PENDING": 0,
+        "RUNNING": 0,
+        "SUCCESS": 0,
+        "FAILURE": 0,
+        "SKIPPED": 1,
+        "TIMEOUT": 0,
+        "ERROR": 1
+    },
+    "results": [
+        {
+            "target_id": "check-data",
+            "status": "SKIPPED",
+            "start_time": "2025-06-19T11:43:01.916366",
+            "end_time": "2025-06-19T11:43:01.916366",
+            "duration": 0,
+            "return_code": null,
+            "stdout": "",
+            "stderr": "Marked as not runnable",
+            "error_message": null
+        },
+        {
+            "target_id": "validate-iris-rag",
+            "status": "ERROR",
+            "start_time": "2025-06-19T11:43:01.916397",
+            "end_time": "2025-06-19T11:43:01.920794",
+            "duration": 0.004396915435791016,
+            "return_code": null,
+            "stdout": "",
+            "stderr": "Error executing target 'validate-iris-rag': [Errno 2] No such file or directory: 'conda run -n iris_vector --no-capture-output'\nTraceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/run_comprehensive_system_tests.py\", line 517, in execute_target\n    process = subprocess.run(\n              ^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/subprocess.py\", line 550, in run\n    with Popen(*popenargs, **kwargs) as process:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/subprocess.py\", line 1028, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/subprocess.py\", line 1963, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'conda run -n iris_vector --no-capture-output'\n",
+            "error_message": null
+        }
+    ]
+}

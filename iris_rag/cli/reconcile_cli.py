@@ -219,10 +219,11 @@ def run(ctx, pipeline, force, dry_run):
         if dry_run:
             click.echo(f"Performing dry-run analysis for {pipeline} pipeline...")
             
-            # Perform drift analysis only
-            current_state = controller.state_observer.observe_current_state()
-            desired_state = controller.state_observer.get_desired_state(pipeline)
-            drift_analysis = controller.drift_analyzer.analyze_drift(current_state, desired_state)
+            # Perform drift analysis only using controller method with pipeline-specific detection
+            analysis_result = controller.analyze_drift_only(pipeline)
+            current_state = analysis_result["current_state"]
+            desired_state = analysis_result["desired_state"]
+            drift_analysis = analysis_result["drift_analysis"]
             
             click.echo(f"\nDry-run completed for {pipeline} pipeline")
             print_status_summary(current_state, desired_state, drift_analysis)
@@ -290,14 +291,11 @@ def status(ctx, pipeline, since):
         if since:
             click.echo(f"Note: --since filtering ({since}) is not yet implemented")
         
-        # Observe current state
-        current_state = controller.state_observer.observe_current_state()
-        
-        # Get desired state
-        desired_state = controller.state_observer.get_desired_state(pipeline)
-        
-        # Analyze drift
-        drift_analysis = controller.drift_analyzer.analyze_drift(current_state, desired_state)
+        # Use the controller's analyze_drift_only method which includes pipeline-specific detection
+        analysis_result = controller.analyze_drift_only(pipeline)
+        current_state = analysis_result["current_state"]
+        desired_state = analysis_result["desired_state"]
+        drift_analysis = analysis_result["drift_analysis"]
         
         # Print status summary
         print_status_summary(current_state, desired_state, drift_analysis)

@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-06-15T14:01:10.346014",
+  "framework": "Library Consumption Framework",
+  "proof_type": "Aggregated Evidence from Existing Tests",
+  "evidence": {
+    "pipeline_success": {
+      "success_rate": "100%",
+      "pipelines_working": 7,
+      "total_pipelines": 7,
+      "source": "FINAL_VALIDATION_100_PERCENT_SUCCESS_REPORT.md"
+    },
+    "real_data_processing": {
+      "document_count": 1005,
+      "success_rate": 85.71428571428571,
+      "techniques_tested": 7,
+      "source": "comprehensive_e2e_iris_rag_1000_docs_20250608_080010.json"
+    },
+    "simple_api": {
+      "available": true,
+      "zero_config": true,
+      "objectscript_integration": true,
+      "source": "rag_templates/simple.py, objectscript/python_bridge.py"
+    },
+    "standard_api": {
+      "available": true,
+      "configurable_techniques": 7,
+      "llm_providers": [
+        "openai",
+        "anthropic",
+        "huggingface"
+      ],
+      "advanced_options": true,
+      "source": "rag_templates/standard.py"
+    },
+    "testing_framework": {
+      "make_targets": "50+",
+      "test_types": [
+        "unit",
+        "integration",
+        "e2e",
+        "performance",
+        "ragas"
+      ],
+      "evidence_files": {
+        "validation_reports": 34,
+        "ragas_evaluations": 61,
+        "benchmark_reports": 21
+      },
+      "source": "Makefile, outputs/ directory"
+    }
+  },
+  "conclusion": "Framework is operational and validated",
+  "success": true
+}
