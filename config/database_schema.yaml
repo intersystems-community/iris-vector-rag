@@ -1,0 +1,142 @@
+# RAG Templates Database Schema Configuration
+# Centralized definition of all table and column names for consistency
+
+schema:
+  name: "RAG"
+  description: "Main schema for RAG Templates data"
+
+tables:
+  # Main document storage
+  source_documents:
+    name: "SourceDocuments"
+    description: "Primary document storage with embeddings"
+    columns:
+      id: "doc_id"
+      title: "title"
+      content: "text_content"
+      authors: "authors"
+      keywords: "keywords"
+      embedding: "embedding"
+      metadata: "metadata"
+      created_at: "created_at"
+    indexes:
+      - name: "idx_sourcedocs_embedding"
+        columns: ["embedding"]
+        type: "vector"
+      - name: "idx_sourcedocs_id"
+        columns: ["doc_id"]
+        type: "primary"
+
+  # Document chunks for CRAG/NodeRAG
+  document_chunks:
+    name: "DocumentChunks"    # Current actual table name
+    alias: "ChunkedDocuments" # Alternative name
+    description: "Document chunks for CRAG and NodeRAG pipelines"
+    columns:
+      id: "chunk_id"          # Standardized ID column
+      doc_id: "doc_id"
+      content: "chunk_text"
+      embedding: "chunk_embedding"
+      index: "chunk_index"
+      type: "chunk_type"
+      metadata: "metadata"
+      created_at: "created_at"
+    indexes:
+      - name: "idx_chunks_doc_id"
+        columns: ["doc_id"]
+      - name: "idx_chunks_embedding"
+        columns: ["chunk_embedding"]
+        type: "vector"
+
+  # Entities for GraphRAG
+  document_entities:
+    name: "Entities"
+    description: "Extracted entities for GraphRAG pipeline"
+    columns:
+      entity_id: "entity_id"
+      doc_id: "source_doc_id"
+      entity_text: "entity_name"
+      entity_type: "entity_type"
+      description: "description"
+      embedding: "embedding"
+      created_at: "created_at"
+    indexes:
+      - name: "idx_entities_doc_id"
+        columns: ["source_doc_id"]
+      - name: "idx_entities_type"
+        columns: ["entity_type"]
+
+  # Token embeddings for ColBERT
+  document_token_embeddings:
+    name: "DocumentTokenEmbeddings"
+    description: "Token-level embeddings for ColBERT pipeline"
+    columns:
+      doc_id: "doc_id"
+      token_index: "token_index"
+      token_text: "token_text"
+      token_embedding: "token_embedding"
+      metadata: "metadata_json"
+      created_at: "created_at"
+    indexes:
+      - name: "idx_tokens_doc_id"
+        columns: ["doc_id"]
+      - name: "idx_tokens_embedding"
+        columns: ["token_embedding"]
+        type: "vector"
+
+  # IFind optimization  
+  ifind_index:
+    name: "SourceDocuments"  # Use main table for now since IFind table doesn't exist
+    description: "Uses main SourceDocuments table for IFind operations"
+    columns:
+      doc_id: "doc_id"
+      content: "text_content"
+      created_at: "created_at"
+    indexes:
+      - name: "idx_ifind_doc_id"
+        columns: ["doc_id"]
+        type: "primary"
+
+# Column name mappings for standardization
+column_mappings:
+  # Standardize document ID column names
+  document_id_variants:
+    - "doc_id"
+    - "document_id"
+    - "pmc_id"
+  standard: "doc_id"
+
+  # Standardize content column names
+  content_variants:
+    - "text_content"
+    - "content"
+    - "chunk_text"
+    - "full_text"
+  standard: "text_content"
+
+  # Standardize embedding column names
+  embedding_variants:
+    - "embedding"
+    - "chunk_embedding"
+    - "token_embedding"
+  standard: "embedding"
+
+# Data types and constraints
+data_types:
+  doc_id: "VARCHAR(255)"
+  text_content: "LONGVARCHAR"
+  embedding: "VARCHAR(32000)"  # IRIS vector format
+  vector_dimension: 384  # all-MiniLM-L6-v2 model
+  colbert_token_dimension: 768  # ColBERT token embeddings
+  timestamp: "TIMESTAMP"
+  metadata: "VARCHAR(4000)"
+
+# Testing configuration
+testing:
+  sample_sizes:
+    small: 10
+    medium: 100
+    large: 1000
+  test_tables:
+    prefix: "TEST_"
+    cleanup_after: true

@@ -1,0 +1,43 @@
+# Default configuration for iris_rag package
+database:
+  iris:
+    driver: "intersystems_iris.dbapi._DBAPI"
+    host: "localhost"
+    port: 1972
+    namespace: "USER"
+    username: "_SYSTEM"
+    password: "SYS"
+
+storage:
+  iris:
+    table_name: "RAG.SourceDocuments"
+    vector_dimension: 384
+
+# Vector index configuration for optimal HNSW performance
+vector_index:
+  type: "HNSW"                    # Index type: HNSW for high-performance vector search
+  M: 16                          # Number of bi-directional links for each node (higher = better recall, more memory)
+  efConstruction: 200            # Size of dynamic candidate list (higher = better quality, slower build)
+  Distance: "COSINE"             # Distance metric: COSINE, EUCLIDEAN, or DOT
+
+pipelines:
+  basic:
+    chunk_size: 1000
+    chunk_overlap: 200
+    default_top_k: 5
+    embedding_batch_size: 32
+  colbert:
+    token_embedding_dimension: 384
+    max_tokens_per_document: 512
+    token_embedding_batch_size: 16
+    use_colbert_tokenizer: true
+
+embeddings:
+  default_provider: "sentence_transformers"
+  sentence_transformers:
+    model_name: "all-MiniLM-L6-v2"
+    device: "cpu"
+  colbert:
+    model_name: "colbert-ir/colbertv2.0"
+    token_dimension: 384
+    device: "cpu"

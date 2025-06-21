@@ -1,0 +1,79 @@
+# Production Environment State Specification
+# Declares the desired state for production RAG system
+
+state:
+  # Document requirements
+  document_count: 50000  # Target 50k documents
+  document_source: "/data/pmc_full_corpus"
+  document_selection:
+    strategy: "quality_filtered"
+    criteria:
+      min_length: 500
+      max_length: 50000
+      has_abstract: true
+      has_references: true
+      publication_year_min: 2018
+  
+  # Embedding configuration
+  embedding_model: "all-MiniLM-L6-v2"
+  embedding_dimension: 384
+  force_regenerate: false
+  
+  # Strict quality requirements
+  min_embedding_diversity: 0.3  # High diversity required
+  max_contamination_ratio: 0.001  # Very low mock tolerance
+  validation_mode: "strict"
+  
+  # Pipeline configuration
+  pipeline_type: "colbert"  # Best quality pipeline
+  chunk_size: 512
+  chunk_overlap: 128  # More overlap for better context
+  
+# Production reconciliation settings
+reconciliation:
+  # Run reconciliation every hour
+  interval_hours: 1
+  
+  # Careful remediation
+  auto_retry: false  # Manual intervention for failures
+  max_retries: 1
+  
+  # Allow time for large corpus
+  convergence_timeout: 3600  # 1 hour
+  
+  # Batch processing
+  batch_size: 1000
+  parallel_workers: 4
+  
+  # Monitoring
+  alert_on_drift: true
+  drift_threshold: 0.05  # Alert if >5% drift
+  
+# Quality monitoring
+monitoring:
+  # Track embedding quality
+  track_diversity: true
+  diversity_sample_size: 1000
+  
+  # Mock detection
+  detect_contamination: true
+  contamination_check_interval: 300  # Every 5 minutes
+  
+  # Performance metrics
+  track_query_latency: true
+  latency_p99_target: 500  # 500ms p99
+  
+# Backup and recovery
+backup:
+  enabled: true
+  schedule: "daily"
+  retention_days: 30
+  
+# MCP integration settings
+mcp:
+  # Ensure MCP servers see consistent state
+  state_sync_interval: 60  # Sync every minute
+  
+  # Coordinate with Node.js MCP servers
+  broadcast_state_changes: true
+  state_change_webhook: "http://mcp-coordinator:8080/state-change"

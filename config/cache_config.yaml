@@ -1,0 +1,95 @@
+# LLM Cache Configuration
+# Configuration for the lightweight LLM caching layer using IRIS backend
+
+llm_cache:
+  # Enable/disable LLM response caching
+  enabled: true
+  
+  # Cache backend type: 'memory', 'iris'
+  # Using 'iris' to leverage existing IRIS database infrastructure
+  backend: "iris"
+  
+  # Time-to-live for cache entries in seconds (1 hour default)
+  ttl_seconds: 3600
+  
+  # Normalize prompts for better cache hits
+  normalize_prompts: false
+  
+  # Maximum cache size for memory backend (not applicable to IRIS)
+  max_cache_size: 1000
+  
+  # IRIS-specific configuration
+  iris:
+    # Table name for storing cache entries
+    table_name: "llm_cache"
+    
+    # Connection timeout for cache operations
+    connection_timeout: 30
+    
+    # Schema for cache table (optional, uses default if not specified)
+    schema: "RAG"
+    
+    # Batch size for cache cleanup operations
+    cleanup_batch_size: 1000
+    
+    # Enable automatic cleanup of expired entries
+    auto_cleanup: true
+    
+    # Cleanup interval in seconds (24 hours)
+    cleanup_interval: 86400
+  
+  # Memory cache configuration (development/testing)
+  memory:
+    max_size: 1000
+    
+  # Cache key generation settings
+  key_generation:
+    # Include model parameters in cache key
+    include_temperature: true
+    include_max_tokens: true
+    include_model_name: true
+    
+    # Hash algorithm for cache keys
+    hash_algorithm: "sha256"
+    
+    # Prompt normalization options
+    normalize_whitespace: true
+    normalize_case: false
+  
+  # Monitoring and metrics
+  monitoring:
+    # Enable cache performance metrics
+    enabled: true
+    
+    # Log cache hits/misses (debug level)
+    log_operations: false
+    
+    # Track cache statistics
+    track_stats: true
+    
+    # Export metrics interval (seconds)
+    metrics_interval: 300
+  
+  # Error handling
+  error_handling:
+    # Graceful fallback when cache is unavailable
+    graceful_fallback: true
+    
+    # Retry attempts for cache operations
+    max_retries: 3
+    
+    # Retry delay in seconds
+    retry_delay: 1
+    
+    # Timeout for cache operations
+    operation_timeout: 10
+
+# Environment variable overrides
+# The following environment variables can override these settings:
+# LLM_CACHE_ENABLED - Enable/disable caching
+# LLM_CACHE_BACKEND - Cache backend type (memory, iris)
+# LLM_CACHE_TTL - TTL in seconds
+# LLM_CACHE_TABLE - IRIS table name
+# LLM_CACHE_NORMALIZE_PROMPTS - Enable prompt normalization
+# LLM_CACHE_MAX_SIZE - Max cache size for memory backend
+# LLM_CACHE_IRIS_SCHEMA - IRIS schema name

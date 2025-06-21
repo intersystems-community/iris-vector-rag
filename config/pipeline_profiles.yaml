@@ -1,0 +1,100 @@
+# Pipeline-specific configuration profiles
+# Use these for different development and deployment scenarios
+
+profiles:
+  # Minimal setup for HyDE development
+  hyde_dev:
+    state:
+      document_count: 100
+      pipeline_type: hyde
+      embedding_model: all-MiniLM-L6-v2
+      embedding_dimension: 384
+      force_regenerate: false
+    required_tables:
+      - RAG.SourceDocuments
+    required_data:
+      - document_embeddings
+    
+  # ColBERT development setup
+  colbert_dev:
+    state:
+      document_count: 500
+      pipeline_type: colbert
+      embedding_model: all-MiniLM-L6-v2
+      embedding_dimension: 384
+      force_regenerate: false
+    required_tables:
+      - RAG.SourceDocuments
+      - RAG.DocumentTokenEmbeddings
+    required_data:
+      - document_embeddings
+      - token_embeddings
+    
+  # CRAG development setup
+  crag_dev:
+    state:
+      document_count: 500
+      pipeline_type: crag
+      embedding_model: all-MiniLM-L6-v2
+      embedding_dimension: 384
+      chunk_size: 512
+      chunk_overlap: 50
+    required_tables:
+      - RAG.SourceDocuments
+      - RAG.ChunkedDocuments
+    required_data:
+      - document_embeddings
+      - chunked_embeddings
+    
+  # GraphRAG development setup
+  graphrag_dev:
+    state:
+      document_count: 500
+      pipeline_type: graphrag
+      embedding_model: all-MiniLM-L6-v2
+      embedding_dimension: 384
+    required_tables:
+      - RAG.SourceDocuments
+      - RAG.DocumentEntities
+      - RAG.KnowledgeGraphNodes
+    required_data:
+      - document_embeddings
+      - entity_extraction
+      - graph_embeddings
+    
+  # Lightweight testing (basic + hyde)
+  lightweight_test:
+    state:
+      document_count: 50
+      pipeline_type: basic
+      embedding_model: all-MiniLM-L6-v2
+      embedding_dimension: 384
+      validation_mode: relaxed
+    required_tables:
+      - RAG.SourceDocuments
+    required_data:
+      - document_embeddings
+    
+  # Full production setup
+  production:
+    state:
+      document_count: 5000
+      pipeline_type: all
+      embedding_model: all-MiniLM-L6-v2
+      embedding_dimension: 384
+      force_regenerate: false
+      min_embedding_diversity: 0.2
+      max_contamination_ratio: 0.01
+      validation_mode: strict
+    required_tables:
+      - RAG.SourceDocuments
+      - RAG.DocumentTokenEmbeddings
+      - RAG.ChunkedDocuments
+      - RAG.DocumentEntities
+      - RAG.KnowledgeGraphNodes
+    required_data:
+      - document_embeddings
+      - token_embeddings
+      - chunked_embeddings
+      - entity_extraction
+      - graph_embeddings

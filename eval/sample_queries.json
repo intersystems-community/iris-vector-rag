@@ -1,0 +1,92 @@
+[
+  {
+    "query": "What are the effects of metformin on type 2 diabetes?",
+    "ground_truth_contexts": [
+      "Metformin is a first-line medication for the treatment of type 2 diabetes.",
+      "Metformin works by reducing glucose production in the liver and increasing insulin sensitivity.",
+      "Metformin improves glycemic control without causing weight gain."
+    ],
+    "ground_truth_answer": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues."
+  },
+  {
+    "query": "How does SGLT2 inhibition affect kidney function?",
+    "ground_truth_contexts": [
+      "SGLT2 inhibitors reduce glomerular hyperfiltration in diabetic kidney disease.",
+      "Studies show SGLT2 inhibitors decrease albuminuria in patients with type 2 diabetes.",
+      "SGLT2 inhibitors have nephroprotective effects independent of glycemic control."
+    ],
+    "ground_truth_answer": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control."
+  },
+  {
+    "query": "What is the mechanism of action of GLP-1 receptor agonists?",
+    "ground_truth_contexts": [
+      "GLP-1 receptor agonists stimulate insulin secretion in a glucose-dependent manner.",
+      "GLP-1 receptor agonists suppress glucagon secretion from pancreatic alpha cells.",
+      "GLP-1 receptor agonists slow gastric emptying and promote satiety."
+    ],
+    "ground_truth_answer": "GLP-1 receptor agonists work by stimulating insulin secretion, suppressing glucagon secretion, slowing gastric emptying, and promoting satiety, ultimately improving glycemic control and often leading to weight loss."
+  },
+  {
+    "query": "What are the cardiovascular benefits of SGLT2 inhibitors?",
+    "ground_truth_contexts": [
+      "SGLT2 inhibitors reduce the risk of major adverse cardiovascular events in patients with type 2 diabetes.",
+      "SGLT2 inhibitors significantly decrease the risk of hospitalization for heart failure.",
+      "Cardiovascular benefits of SGLT2 inhibitors appear to be independent of their glucose-lowering effects."
+    ],
+    "ground_truth_answer": "SGLT2 inhibitors provide cardiovascular benefits by reducing major adverse cardiovascular events and hospitalization for heart failure, effects that appear to be independent of their glucose-lowering action."
+  },
+  {
+    "query": "How do statins prevent cardiovascular disease?",
+    "ground_truth_contexts": [
+      "Statins inhibit HMG-CoA reductase, the rate-limiting enzyme in cholesterol synthesis.",
+      "By lowering LDL cholesterol, statins reduce the formation of atherosclerotic plaques.",
+      "Statins also have pleiotropic effects including anti-inflammatory and plaque-stabilizing properties."
+    ],
+    "ground_truth_answer": "Statins prevent cardiovascular disease by inhibiting HMG-CoA reductase to lower LDL cholesterol, reducing atherosclerotic plaque formation, and through pleiotropic effects such as anti-inflammatory and plaque-stabilizing properties."
+  },
+  {
+    "query": "What is the role of ACE inhibitors in heart failure?",
+    "ground_truth_contexts": [
+      "ACE inhibitors block the conversion of angiotensin I to angiotensin II, reducing vasoconstriction and aldosterone production.",
+      "In heart failure, ACE inhibitors decrease afterload and preload, improving cardiac output.",
+      "ACE inhibitors have been shown to reduce mortality and hospitalizations in patients with heart failure with reduced ejection fraction."
+    ],
+    "ground_truth_answer": "ACE inhibitors treat heart failure by blocking the conversion of angiotensin I to angiotensin II, which reduces vasoconstriction and aldosterone production, decreases afterload and preload, improves cardiac output, and ultimately reduces mortality and hospitalizations in patients with heart failure with reduced ejection fraction."
+  },
+  {
+    "query": "How do glucocorticoids suppress inflammation?",
+    "ground_truth_contexts": [
+      "Glucocorticoids bind to cytoplasmic glucocorticoid receptors, which then translocate to the nucleus.",
+      "In the nucleus, glucocorticoid receptors bind to glucocorticoid response elements and suppress the transcription of pro-inflammatory genes.",
+      "Glucocorticoids also induce the transcription of anti-inflammatory proteins like lipocortin-1."
+    ],
+    "ground_truth_answer": "Glucocorticoids suppress inflammation by binding to cytoplasmic glucocorticoid receptors that translocate to the nucleus, where they suppress pro-inflammatory gene transcription and induce anti-inflammatory protein expression."
+  },
+  {
+    "query": "What are the mechanisms of antibiotic resistance?",
+    "ground_truth_contexts": [
+      "Bacteria can develop antibiotic resistance through mutations in genes targeted by antibiotics.",
+      "Horizontal gene transfer allows bacteria to acquire resistance genes from other bacteria via plasmids, transposons, or phages.",
+      "Bacteria can express efflux pumps that actively remove antibiotics from the cell."
+    ],
+    "ground_truth_answer": "Bacteria develop antibiotic resistance through target gene mutations, horizontal gene transfer of resistance genes via plasmids or transposons, and expression of efflux pumps that remove antibiotics from the cell."
+  },
+  {
+    "query": "How do biologics treat rheumatoid arthritis?",
+    "ground_truth_contexts": [
+      "Biologic agents like TNF inhibitors block the activity of tumor necrosis factor, a key pro-inflammatory cytokine in rheumatoid arthritis.",
+      "IL-6 receptor antagonists prevent IL-6 from binding to its receptor, interrupting inflammatory signaling.",
+      "B-cell depleting therapies like rituximab reduce autoantibody production by eliminating B cells."
+    ],
+    "ground_truth_answer": "Biologics treat rheumatoid arthritis by targeting specific components of the immune system, such as blocking TNF or IL-6 signaling, or depleting B cells to reduce autoantibody production, thereby interrupting the inflammatory cascade that causes joint damage."
+  },
+  {
+    "query": "What is the mechanism of action of levodopa in Parkinson's disease?",
+    "ground_truth_contexts": [
+      "Levodopa is a dopamine precursor that crosses the blood-brain barrier, unlike dopamine itself.",
+      "Once in the brain, levodopa is converted to dopamine by dopa decarboxylase.",
+      "The increased dopamine levels in the striatum help compensate for the loss of dopaminergic neurons in the substantia nigra."
+    ],
+    "ground_truth_answer": "Levodopa treats Parkinson's disease by crossing the blood-brain barrier and being converted to dopamine in the brain, helping to replenish depleted dopamine levels in the striatum and compensate for the loss of dopaminergic neurons in the substantia nigra."
+  }
+]

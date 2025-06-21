@@ -1,0 +1,25 @@
+/// Enable Vector Search in IRIS
+ClassMethod EnableVectorSearch() As %Status
+{
+    write "Checking Vector Search configuration...", !
+    
+    // Check if Vector Search is available
+    try {
+        set enabled = ##class(%SYSTEM.SQL).GetVectorSearchEnabled()
+        write "Vector Search currently enabled: ", enabled, !
+        
+        if 'enabled {
+            write "Enabling Vector Search...", !
+            set result = ##class(%SYSTEM.SQL).SetVectorSearchEnabled(1)
+            write "Enable result: ", result, !
+            
+            set enabled = ##class(%SYSTEM.SQL).GetVectorSearchEnabled()
+            write "Vector Search now enabled: ", enabled, !
+        }
+    } catch ex {
+        write "Error checking/enabling Vector Search: ", ex.DisplayString(), !
+        return $$$ERROR($$$GeneralError, "Vector Search not available")
+    }
+    
+    return $$$OK
+}

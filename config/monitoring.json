@@ -1,0 +1,74 @@
+{
+  "created_at": "2025-06-07T11:39:00Z",
+  "log_retention_days": 30,
+  "performance_thresholds": {
+    "vector_query_max_ms": 100,
+    "ingestion_rate_min_docs_per_sec": 10,
+    "memory_usage_max_percent": 85,
+    "disk_usage_max_percent": 90,
+    "query_success_rate_min_percent": 95,
+    "response_time_p95_max_ms": 500,
+    "response_time_p99_max_ms": 1000
+  },
+  "alert_settings": {
+    "enable_alerts": true,
+    "alert_log_file": "logs/alerts.log",
+    "critical_threshold_breaches": 3,
+    "alert_cooldown_minutes": 15,
+    "notification_channels": {
+      "email": {
+        "enabled": false,
+        "recipients": []
+      },
+      "webhook": {
+        "enabled": false,
+        "url": ""
+      }
+    }
+  },
+  "health_check_schedule": {
+    "interval_minutes": 15,
+    "full_check_interval_hours": 6,
+    "quick_check_interval_minutes": 5,
+    "enable_continuous_monitoring": true
+  },
+  "metrics_collection": {
+    "collection_interval_seconds": 60,
+    "buffer_size": 10000,
+    "export_interval_hours": 24,
+    "export_format": "json",
+    "export_directory": "reports/metrics"
+  },
+  "validation_settings": {
+    "auto_validation_enabled": true,
+    "validation_interval_hours": 12,
+    "quick_validation_interval_hours": 2,
+    "comprehensive_validation_duration_minutes": 10,
+    "test_queries": [
+      "What is machine learning?",
+      "Explain neural networks",
+      "How does deep learning work?",
+      "What are the applications of artificial intelligence?",
+      "Describe natural language processing"
+    ]
+  },
+  "dashboard_settings": {
+    "refresh_interval_seconds": 30,
+    "max_recent_queries": 100,
+    "display_metrics_window_minutes": 60,
+    "enable_real_time_updates": true
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "max_file_size_mb": 100,
+    "backup_count": 5,
+    "log_files": {
+      "system": "logs/system.log",
+      "performance": "logs/performance/performance.log",
+      "health": "logs/health_checks/health.log",
+      "validation": "logs/validation/validation.log",
+      "alerts": "logs/alerts.log"
+    }
+  }
+}

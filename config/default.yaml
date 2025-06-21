@@ -1,0 +1,85 @@
+# Default RAG Templates Configuration
+# This file provides default configuration values for the RAG templates system
+
+# Database Configuration
+database:
+  iris:
+    driver: "intersystems_iris.dbapi._DBAPI"
+    host: "localhost"
+    port: 1972
+    namespace: "USER"
+    username: "_SYSTEM"
+    password: "SYS"
+    connection_timeout: 30
+    max_retries: 3
+    retry_delay: 1
+
+# Embedding Configuration
+embeddings:
+  default_model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 384
+  batch_size: 32
+  cache_embeddings: true
+
+# Pipeline Configuration
+pipelines:
+  basic_rag:
+    retrieval_limit: 5
+    similarity_threshold: 0.7
+    max_context_length: 4000
+  
+  colbert:
+    max_query_length: 32
+    doc_maxlen: 180
+    mask_punctuation: true
+    num_candidates: 30
+    token_embedding_dimension: 384
+  
+  hyde:
+    num_hypothetical_docs: 3
+    hypothesis_length: 100
+
+# Vector Search Configuration
+vector_search:
+  hnsw:
+    ef_construction: 200
+    m: 16
+    ef_search: 100
+  similarity_metric: "cosine"
+
+# Monitoring Configuration
+monitoring:
+  health_checks:
+    enabled: true
+    interval_seconds: 300
+  performance:
+    enabled: true
+    track_queries: true
+    track_embeddings: true
+  alerts:
+    enabled: false
+    email_notifications: false
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/iris_rag.log"
+  max_file_size: "10MB"
+  backup_count: 5
+
+# RAGAS Evaluation Configuration
+ragas:
+  llm:
+    model: "gpt-4o-mini"
+    temperature: 0
+    max_tokens: 2048  # Increased from default 1000 to prevent LLMDidNotFinishException
+  embeddings:
+    model: "text-embedding-3-small"
+
+# Storage Configuration
+storage:
+  document_table: "SourceDocuments"
+  chunk_table: "DocumentChunks"
+  embedding_table: "DocumentEmbeddings"
+  vector_column: "embedding_vector"

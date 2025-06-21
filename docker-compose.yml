@@ -1,14 +1,26 @@
 services:
-  iris:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: final
-    restart: always
-    command: --check-caps false --ISCAgent false
+  iris_db:
+    image: containers.intersystems.com/intersystems/iris-arm64:2025.1
+    container_name: iris_db_rag_standalone
     ports:
-      - 1972
-      - 52773
-      - 53773
+      - "1972:1972"   # IRIS SuperServer port (host:container)
+      - "52773:52773" # IRIS Management Portal (host:container)
+    environment:
+      - IRISNAMESPACE=USER
+      - ISC_DEFAULT_PASSWORD=SYS
     volumes:
-      - ./:/home/irisowner/dev
+      - iris_db_data:/usr/irissys/mgr # Named volume for IRIS data persistence
+      - ./iris.key:/usr/irissys/mgr/iris.key # Map the license key
+    stdin_open: true # Keep container running
+    tty: true        # Keep container running
+    healthcheck:
+      test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U%SYS", "##class(%SYSTEM.Process).CurrentDirectory()"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    # Disable password expiration for all accounts using Security.Users.UnExpireUserPasswords()
+    command: --check-caps false -a "iris session iris -U%SYS '##class(Security.Users).UnExpireUserPasswords(\"*\")'"
+
+volumes:
+  iris_db_data: {} # Defines the named volume for IRIS data
