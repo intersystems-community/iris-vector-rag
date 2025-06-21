@@ -1,6 +1,6 @@
-# RAG Templates - Library Consumption Framework
+# RAG Templates - Enterprise RAG Framework
 
-A **dead-simple** library for building Retrieval Augmented Generation (RAG) applications with InterSystems IRIS. Transform from complex setup to immediate productivity with zero-configuration APIs.
+**Production-ready RAG applications with InterSystems IRIS.** Zero-configuration APIs, enterprise-grade architecture, and seamless LangChain integration.
 
 ## 🚀 Quick Start
 
@@ -8,427 +8,181 @@ A **dead-simple** library for building Retrieval Augmented Generation (RAG) appl
 ```python
 from rag_templates import RAG
 
-# Dead simple - works out of the box
+# Works immediately - no setup required
 rag = RAG()
 rag.add_documents(["Your documents here"])
 answer = rag.query("What is machine learning?")
 print(answer)
 ```
 
-### JavaScript - Zero Configuration
+### JavaScript - Zero Configuration  
 ```javascript
 import { RAG } from '@rag-templates/core';
 
-// Dead simple - works out of the box
 const rag = new RAG();
 await rag.addDocuments(["Your documents here"]);
 const answer = await rag.query("What is machine learning?");
 console.log(answer);
 ```
 
-### MCP Server - Zero Configuration
-```javascript
-import { createMCPServer } from '@rag-templates/mcp';
-
-// Trivial MCP server creation
-const server = createMCPServer({
-    name: "my-rag-server",
-    description: "RAG-powered MCP server"
-});
-
-server.start();
+### ObjectScript Integration
+```objectscript
+// Direct IRIS integration via Embedded Python
+Set bridge = ##class(RAG.PythonBridge).%New()
+Set result = bridge.Query("What is machine learning?", "basic")
+Write result.answer
 ```
 
 ## 📦 Installation
 
-### Python
 ```bash
-# Install uv (Python package manager)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install rag-templates
+# Python
 pip install rag-templates
-```
 
-### JavaScript/Node.js
-```bash
+# JavaScript/Node.js  
 npm install @rag-templates/core
-# Optional: MCP integration
-npm install @rag-templates/mcp
 ```
 
-## 🛠️ Interactive Setup (Cross-Language CLI)
+## 🏗️ Core Architecture
 
-RAG Templates provides interactive setup wizards for both Python and JavaScript environments:
+### Schema Manager
+Centralized schema management with automatic migration support:
+- **Universal dimension authority** for all vector tables
+- **Automatic schema detection** and migration
+- **Customizable table names** and field configurations
+- **Version tracking** and rollback capabilities
 
-### Unified Setup Script
-```bash
-# Auto-detects environment and launches appropriate CLI
-./rag-setup                    # Full interactive setup
-./rag-setup --ifind-only      # IFind optimization only
-./rag-setup --python          # Force Python CLI
-./rag-setup --nodejs          # Force Node.js CLI
-```
-
-### Python CLI
-```bash
-python -m iris_rag.cli reconcile setup   # Full setup wizard
-```
-
-### JavaScript CLI
-```bash
-npm run setup                  # Full setup wizard
-npm run setup:ifind           # IFind optimization only
-node src/cli/setup-wizard.js  # Direct execution
-```
-
-### What the Setup Wizard Configures:
-- **IRIS Database Connection**: Interactive connection configuration and testing
-- **RAG Pipeline Types**: Choose from 7 pipeline architectures (Vector, ColBERT, GraphRAG, etc.)
-- **IFind Optimization**: Full-text search with 70% storage reduction
-- **Cross-Language Support**: Works seamlessly with both Python and JavaScript
-- **Enterprise Features**: Overlay architecture for existing IRIS content
-
-## ✅ Post-Installation Verification
-
-After installation, verify everything works correctly:
-
-### Environment Setup and Verification
-```bash
-# 1. Set up environment with uv and install dependencies
-make setup-env  # Verifies uv is installed
-make install    # Uses uv sync to install all dependencies
-
-# 2. Verify package installation
-make validate-iris-rag
-
-# 3. Test database connectivity
-make test-dbapi
-
-# 4. Run basic functionality tests
-make test-unit
-```
-
-### Full End-to-End Validation
-```bash
-# 1. Load test data (1000+ documents)
-make load-1000
-
-# 2. Run comprehensive E2E tests
-make test-1000
-
-# 3. Validate all RAG techniques (uv handles environment automatically)
-uv run pytest tests/test_*_e2e.py -v
-```
-
-### Performance Testing
-```bash
-# Run RAGAs evaluation with real data
-make test-ragas-1000-enhanced
-
-# Benchmark all techniques
-make eval-all-ragas-1000
-```
-
-### Comprehensive System Test Workup
-```bash
-# Run comprehensive system test workup across all categories
-make test-system-workup
-
-# Run with verbose output for detailed debugging
-make test-system-workup-verbose
-```
-
-**📋 For detailed test categorization and troubleshooting, see [Existing Tests Guide](docs/EXISTING_TESTS_GUIDE.md)**
-
-## 🎯 Library Consumption Philosophy
-
-This framework transforms RAG from **complex setup** to **dead-simple consumption**:
-
-- **Zero Configuration**: Works immediately with sensible defaults
-- **Progressive Complexity**: Simple → Standard → Enterprise APIs
-- **Language Parity**: Python and JavaScript feature equivalence
-- **MCP-First Design**: Trivial MCP server creation
-- **Enterprise Ready**: Scales from prototypes to production
-
-## 📚 Documentation Hub
-
-| Guide | Description |
-|-------|-------------|
-| **[📖 Library Consumption Guide](docs/LIBRARY_CONSUMPTION_GUIDE.md)** | Complete guide for consuming rag-templates as a library |
-| **[🔗 MCP Integration Guide](docs/MCP_INTEGRATION_GUIDE.md)** | Step-by-step MCP server creation |
-| **[📋 API Reference](docs/API_REFERENCE.md)** | Complete API documentation (Python & JavaScript) |
-| **[🧪 Existing Tests Guide](docs/EXISTING_TESTS_GUIDE.md)** | Test categorization and validation commands |
-| **[🔄 Migration Guide](docs/MIGRATION_GUIDE.md)** | Migrate from complex setup to Simple API |
-| **[💡 Examples](docs/EXAMPLES.md)** | Comprehensive usage examples |
-| **[🔧 Troubleshooting](docs/TROUBLESHOOTING.md)** | Common issues and solutions |
-
-## 🏗️ Three-Tier API Design
-
-### 1. Simple API (Zero Configuration)
-
-**Perfect for**: Prototypes, demos, learning, simple applications
-
-#### Python
+### IRISVectorStore Interface
+LangChain-compatible vector store with enterprise features:
 ```python
-from rag_templates import RAG
+from rag_templates.storage import IRISVectorStore
 
-rag = RAG()  # Zero config
-rag.add_documents(["Document 1", "Document 2"])
-answer = rag.query("Your question")
+# Drop-in LangChain replacement
+vector_store = IRISVectorStore(connection_manager, config_manager)
+retriever = vector_store.as_retriever(search_kwargs={"k": 5})
 ```
 
-#### JavaScript
-```javascript
-import { RAG } from '@rag-templates/core';
-
-const rag = new RAG();  // Zero config
-await rag.addDocuments(["Document 1", "Document 2"]);
-const answer = await rag.query("Your question");
-```
-
-### 2. Standard API (Basic Configuration)
-
-**Perfect for**: Production applications, technique selection, custom configuration
-
-#### Python
+### Configuration System
+Environment-aware configuration with validation:
 ```python
-from rag_templates import ConfigurableRAG
+from rag_templates.config import ConfigurationManager
 
+config = ConfigurationManager()
+# Supports RAG_DATABASE__IRIS__HOST env vars
+# Automatic YAML loading with schema validation
+```
+
+## 🛠️ Available RAG Techniques
+
+| Technique | Description | Best For | Status |
+|-----------|-------------|----------|---------|
+| **basic** | Standard vector similarity | General purpose, fast queries | ✅ Production |
+| **colbert** | Token-level embeddings with MaxSim | High precision retrieval | ✅ Production* |
+| **crag** | Corrective RAG with self-correction | Accuracy-critical applications | ✅ Production |
+| **hyde** | Hypothetical Document Embeddings | Complex reasoning tasks | ✅ Production |
+| **graphrag** | Graph-based knowledge retrieval | Structured knowledge bases | ✅ Production |
+| **hybrid_ifind** | Multi-modal search combination | Enterprise search | ✅ Production |
+| **noderag** | Node-based structured retrieval | Hierarchical data | ✅ Production |
+
+*ColBERT: Includes experimental [Pylate integration](https://github.com/lightonai/pylate) with pluggable backend support (`native`/`pylate`).
+
+## 🎯 Developer Experience
+
+### Three-Tier API Design
+
+**Simple API** - Zero configuration for prototypes:
+```python
+rag = RAG()  # Works immediately
+```
+
+**Standard API** - Production configuration:
+```python
 rag = ConfigurableRAG({
     'technique': 'colbert',
-    'llm_provider': 'openai',
-    'embedding_model': 'text-embedding-3-small'
-})
-
-result = rag.query("Question", {
-    'max_results': 5,
-    'include_sources': True
+    'llm_provider': 'openai'
 })
 ```
 
-#### JavaScript
-```javascript
-import { ConfigurableRAG } from '@rag-templates/core';
-
-const rag = new ConfigurableRAG({
-    technique: 'colbert',
-    llmProvider: 'openai',
-    embeddingModel: 'text-embedding-3-small'
-});
-
-const result = await rag.query("Question", {
-    maxResults: 5,
-    includeSources: true
-});
-```
-
-### 3. Enterprise API (Full Control)
-
-**Perfect for**: Enterprise deployments, advanced features, custom pipelines
-
-#### Python
+**Enterprise API** - Full control:
 ```python
-from rag_templates import ConfigurableRAG
-from rag_templates.config import ConfigManager
-
 config = ConfigManager.from_file('enterprise-config.yaml')
 rag = ConfigurableRAG(config)
-
-result = rag.query("Complex query", {
-    'pipeline_config': {
-        'caching': True,
-        'monitoring': True,
-        'reconciliation': True
-    }
-})
 ```
+
+### Key Configuration Options
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RAG_DATABASE__IRIS__HOST` | IRIS database host | `localhost` |
+| `RAG_EMBEDDING__MODEL` | Embedding model name | `all-MiniLM-L6-v2` |
+| `RAG_LLM__PROVIDER` | LLM provider | `openai` |
+| `RAG_TECHNIQUE` | RAG technique to use | `basic` |
 
 ## 🔗 MCP Integration
 
-### Simple MCP Server
+Create MCP servers in minutes:
 ```javascript
 import { createMCPServer } from '@rag-templates/mcp';
 
 const server = createMCPServer({
     name: "knowledge-server",
-    description: "Company knowledge base"
+    description: "Company knowledge base",
+    ragConfig: { technique: 'graphrag' }
 });
 
 server.start();
 ```
 
-### Advanced MCP Server
-```javascript
-import { createMCPServer, RAG } from '@rag-templates/mcp';
+## 📚 Documentation
 
-const rag = new RAG({
-    technique: 'graphrag',
-    dataSource: './knowledge-base'
-});
+| Guide | Description |
+|-------|-------------|
+| **[📖 User Guide](docs/USER_GUIDE.md)** | Complete usage guide and best practices |
+| **[📋 Documentation](docs/README.md)** | Additional documentation and guides |
 
-const server = createMCPServer({
-    name: "advanced-rag-server",
-    rag: rag,
-    tools: ['search_knowledge', 'add_documents', 'get_stats']
-});
+## ✅ Verification
 
-server.start();
+```bash
+# Quick setup and validation
+make setup-env && make install
+make validate-iris-rag && make test-unit
+
+# Full end-to-end testing with 1000+ documents
+make load-1000 && make test-1000
+
+# Performance benchmarking
+make test-ragas-1000-enhanced
 ```
-
-## 🛠️ Available RAG Techniques
-
-| Technique | Description | Best For |
-|-----------|-------------|----------|
-| **basic** | Standard vector similarity | General purpose, fast queries |
-| **colbert** | Token-level embeddings | High precision retrieval |
-| **crag** | Corrective RAG with self-correction | Accuracy-critical applications |
-| **hyde** | Hypothetical Document Embeddings | Complex reasoning tasks |
-| **graphrag** | Graph-based knowledge retrieval | Structured knowledge bases |
-| **hybrid_ifind** | Multi-modal search combination | Enterprise search |
-| **noderag** | Node-based structured retrieval | Hierarchical data |
 
 ## 🌟 Key Features
 
-### Dead-Simple Philosophy
-- **Zero Setup**: No complex configuration files
-- **Immediate Productivity**: Working RAG in 3 lines of code
-- **Sensible Defaults**: Production-ready out of the box
-- **Progressive Enhancement**: Add complexity only when needed
+- **Zero Configuration**: Production-ready defaults, works immediately
+- **Enterprise Architecture**: Schema management, migrations, monitoring
+- **LangChain Compatible**: Drop-in replacement for existing workflows  
+- **Multi-Language**: Python, JavaScript, and ObjectScript support
+- **MCP-First Design**: Trivial MCP server creation
+- **Advanced RAG**: 7+ sophisticated retrieval techniques
+- **Performance Optimized**: Built-in caching and optimization
 
-### Language Parity
-- **Python & JavaScript**: Feature-equivalent APIs
-- **Consistent Patterns**: Same concepts across languages
-- **Cross-Platform**: Works everywhere Python/Node.js runs
+## 📚 References & Research
 
-### MCP-First Design
-- **Trivial Server Creation**: MCP servers in minutes
-- **Zero-Config Tools**: Automatic tool generation
-- **Environment-Based Config**: No hardcoded secrets
-- **Production Ready**: Docker, logging, error handling
+### RAG Technique Papers & Implementations
 
-### Enterprise Features
-- **Advanced RAG Techniques**: 7+ sophisticated implementations
-- **Caching & Performance**: Built-in optimization
-- **Monitoring & Observability**: Production metrics
-- **Security**: Secure parameter binding, input validation
+| Technique | Original Paper | Key Repository | Additional Resources |
+|-----------|---------------|----------------|---------------------|
+| **Basic RAG** | [Retrieval-Augmented Generation](https://arxiv.org/abs/2005.11401) | [Facebook Research](https://github.com/facebookresearch/RAG) | [LangChain RAG](https://python.langchain.com/docs/tutorials/rag/) |
+| **ColBERT** | [ColBERT: Efficient and Effective Passage Retrieval](https://arxiv.org/abs/2004.12832) | [Stanford ColBERT](https://github.com/stanford-futuredata/ColBERT) | [Pylate Integration](https://github.com/lightonai/pylate) |
+| **CRAG** | [Corrective Retrieval Augmented Generation](https://arxiv.org/abs/2401.15884) | [CRAG Implementation](https://github.com/HuskyInSalt/CRAG) | [LangGraph CRAG](https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_crag/) |
+| **HyDE** | [Precise Zero-Shot Dense Retrieval](https://arxiv.org/abs/2212.10496) | [HyDE Official](https://github.com/texttron/hyde) | [LangChain HyDE](https://python.langchain.com/docs/how_to/hyde/) |
+| **GraphRAG** | [From Local to Global: A Graph RAG Approach](https://arxiv.org/abs/2404.16130) | [Microsoft GraphRAG](https://github.com/microsoft/graphrag) | [Neo4j GraphRAG](https://github.com/neo4j/neo4j-graphrag-python) |
+| **NodeRAG** | [Hierarchical Text Retrieval](https://arxiv.org/abs/2310.20501) | [NodeRAG Implementation](https://github.com/microsoft/noderag) | [Hierarchical Retrieval](https://python.langchain.com/docs/how_to/parent_document_retriever/) |
 
-## 📈 Migration Path
+### Core Technologies
 
-### From Complex Setup → Simple API
-
-**Before (Complex)**:
-```python
-# 50+ lines of setup code
-from iris_rag.pipelines.factory import create_pipeline
-from common.utils import get_llm_func
-from common.iris_connector import get_iris_connection
-
-pipeline = create_pipeline(
-    pipeline_type="basic",
-    llm_func=get_llm_func(),
-    external_connection=get_iris_connection()
-)
-result = pipeline.run("What is ML?", top_k=5)
-```
-
-**After (Simple)**:
-```python
-# 3 lines of code
-from rag_templates import RAG
-
-rag = RAG()
-answer = rag.query("What is ML?")
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-```bash
-# Database (optional - uses defaults)
-export IRIS_HOST=localhost
-export IRIS_PORT=52773
-export IRIS_USERNAME=demo
-export IRIS_PASSWORD=demo
-
-# LLM Provider (optional - uses defaults)
-export OPENAI_API_KEY=your-key
-export LLM_MODEL=gpt-4o-mini
-```
-
-### Configuration Files (Optional)
-```yaml
-# simple-config.yaml
-technique: "colbert"
-llm_provider: "anthropic"
-embedding_model: "text-embedding-3-large"
-data_source: "./documents"
-```
-
-## 🚀 Examples
-
-### Basic Document Q&A
-```python
-from rag_templates import RAG
-
-rag = RAG()
-rag.add_documents([
-    "Machine learning is a subset of AI.",
-    "Deep learning uses neural networks.",
-    "NLP enables language understanding."
-])
-
-answer = rag.query("What is machine learning?")
-print(answer)  # "Machine learning is a subset of AI..."
-```
-
-### Advanced Technique Selection
-```python
-from rag_templates import ConfigurableRAG
-
-rag = ConfigurableRAG({
-    'technique': 'colbert',
-    'llm_provider': 'openai',
-    'max_results': 10
-})
-
-result = rag.query("Explain neural networks", {
-    'include_sources': True,
-    'min_similarity': 0.8
-})
-
-print(f"Answer: {result.answer}")
-print(f"Sources: {len(result.sources)}")
-```
-
-### MCP Server for Claude Desktop
-```javascript
-// server.js
-import { createMCPServer } from '@rag-templates/mcp';
-
-const server = createMCPServer({
-    name: "company-knowledge",
-    description: "Company knowledge base search",
-    ragConfig: {
-        technique: 'graphrag',
-        dataSource: './company-docs'
-    }
-});
-
-server.start();
-```
-
-```json
-// claude_desktop_config.json
-{
-  "mcpServers": {
-    "company-knowledge": {
-      "command": "node",
-      "args": ["server.js"]
-    }
-  }
-}
-```
+- **Vector Databases**: [InterSystems IRIS Vector Search](https://docs.intersystems.com/iris20241/csp/docbook/DocBook.UI.Page.cls?KEY=GSQL_vecsearch)
+- **Embeddings**: [Sentence Transformers](https://github.com/UKPLab/sentence-transformers), [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings)
+- **LLM Integration**: [LangChain](https://github.com/langchain-ai/langchain), [OpenAI API](https://platform.openai.com/docs/api-reference)
+- **Evaluation**: [RAGAS Framework](https://github.com/explodinggradients/ragas)
 
 ## 🤝 Contributing
 
@@ -436,15 +190,8 @@ We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for deta
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/your-org/rag-templates/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/rag-templates/discussions)
-- **Email**: support@your-org.com
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Transform your RAG development from complex to dead-simple. Start building in minutes, not hours.**
+**Transform your RAG development from complex to enterprise-ready. Start building in minutes, scale to production.**
