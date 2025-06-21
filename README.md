@@ -1,234 +1,197 @@
- [![Gitter](https://img.shields.io/badge/Available%20on-Intersystems%20Open%20Exchange-00b2a9.svg)](https://openexchange.intersystems.com/package/intersystems-iris-dev-template)
- [![Quality Gate Status](https://community.objectscriptquality.com/api/project_badges/measure?project=intersystems_iris_community%2Fintersystems-iris-dev-template&metric=alert_status)](https://community.objectscriptquality.com/dashboard?id=intersystems_iris_community%2Fintersystems-iris-dev-template)
- [![Reliability Rating](https://community.objectscriptquality.com/api/project_badges/measure?project=intersystems_iris_community%2Fintersystems-iris-dev-template&metric=reliability_rating)](https://community.objectscriptquality.com/dashboard?id=intersystems_iris_community%2Fintersystems-iris-dev-template)
+# RAG Templates - Enterprise RAG Framework
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat&logo=AdGuard)](LICENSE)
-# intersystems-iris-dev-template
-This is a basic template for a development environment to work with ObjectScript in InterSystems IRIS. It helps you edit, compile, commit/push, debug and test your ObjectScript code. It also aids in packaging your application as a module installable with IPM.
-The template is embedded python compatible.
+**Production-ready RAG applications with InterSystems IRIS.** Zero-configuration APIs, enterprise-grade architecture, and seamless LangChain integration.
 
-## Description
-This repository provides a ready-to-go development environment for coding productively with InterSystems ObjectScript. This template:
-* Runs InterSystems IRIS Community Edition in a docker container
-* Creates a new namespace and database IRISAPP
-* Loads the ObjectScript code into IRISAPP database using Package Manager
-* Promotes development with the 'Package First' paradigm. [Watch the video](https://www.youtube.com/watch?v=havPyPbUj1I)
-* Provides a unit testing environment: sample unit tests, tests module enablement
-* Ready for embedded python development: ENV varialbes are set up, CallIn service is On, all modules in requirements.txt will be installed during docker build.
+## 🚀 Quick Start
 
-## Usage
-Start a new dev repository with InterSystems IRIS using this one as a template.
-Once you clone the new repo to your laptop and open VSCode (with the [InterSystems ObjectScript Extension Pack](https://marketplace.visualstudio.com/items?itemName=intersystems-community.objectscript-pack) installed) you'll be able to start development immediately.
+### Python - Zero Configuration
+```python
+from rag_templates import RAG
 
-## Prerequisites
-Make sure you have [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and [Docker desktop](https://www.docker.com/products/docker-desktop) installed.
-
-## Installation
-
-Clone/git pull the repo into any local directory
-
-```
-$ git clone https://github.com/intersystems-community/intersystems-iris-dev-template.git
+# Works immediately - no setup required
+rag = RAG()
+rag.add_documents(["Your documents here"])
+answer = rag.query("What is machine learning?")
+print(answer)
 ```
 
-Open the terminal in this directory and call the command to build and run InterSystems IRIS in container:
-*Note: Users running containers on a Linux CLI, should use "docker compose" instead of "docker-compose"*
-*See [Install the Compose plugin](https://docs.docker.com/compose/install/linux/)*
+### JavaScript - Zero Configuration  
+```javascript
+import { RAG } from '@rag-templates/core';
 
-
-
-```
-$ docker-compose up -d
-```
-
-To open IRIS Terminal do:
-
-```
-$ docker-compose exec iris iris session iris -U IRISAPP
-IRISAPP>
+const rag = new RAG();
+await rag.addDocuments(["Your documents here"]);
+const answer = await rag.query("What is machine learning?");
+console.log(answer);
 ```
 
-To exit the terminal, do any of the following:
-
-```
-Enter HALT or H (not case-sensitive)
-```
-
-## What does it do
-THe sample repository contains two simplest examples of ObjectScript classes: ObjectScript method that returns value and method that creates a persistent record.
-
-1. Open IRIS terminal and run the ObjectScript Test() method to see if runs the script and returns values from IRIS:
-
-```
-$ docker-compose exec iris iris session iris -U IRISAPP
-IRISAPP>write ##class(dc.sample.ObjectScript).Test()
-It works!
-42
+### ObjectScript Integration
+```objectscript
+// Direct IRIS integration via Embedded Python
+Set bridge = ##class(RAG.PythonBridge).%New()
+Set result = bridge.Query("What is machine learning?", "basic")
+Write result.answer
 ```
 
+## 📦 Installation
 
+```bash
+# Python
+pip install rag-templates
 
-2. Class `dc.sample.PersistentClass` contains a method `CreateRecord` that creates an object with one property, `Test`, and returns its id.
-
-Open IRIS terminal and run:
-
-```
-IRISAPP>write ##class(dc.sample.PersistentClass).CreateRecord(.id)
-1
-IRISAPP>write id
-1
+# JavaScript/Node.js  
+npm install @rag-templates/core
 ```
 
-In your case the value of id could be different. And it will be different with every call of the method.
+## 🏗️ Core Architecture
 
-You can check whether the record exists and try to right the property of the object by its id.
+### Schema Manager
+Centralized schema management with automatic migration support:
+- **Universal dimension authority** for all vector tables
+- **Automatic schema detection** and migration
+- **Customizable table names** and field configurations
+- **Version tracking** and rollback capabilities
 
-```
-IRISAPP>write ##class(dc.sample.PersistentClass).ReadProperty(id)
-Test string
-```
+### IRISVectorStore Interface
+LangChain-compatible vector store with enterprise features:
+```python
+from rag_templates.storage import IRISVectorStore
 
-## How to start the development
-
-This repository is ready to code in VSCode with the ObjectScript plugin.
-
-Install [VSCode](https://code.visualstudio.com/), [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker) and the [InterSystems ObjectScript Extension Pack](https://marketplace.visualstudio.com/items?itemName=intersystems-community.objectscript-pack) plugin and open the folder in VSCode.
-
-Open the `/src/cls/PackageSample/ObjectScript.cls` class and make changes - it will be compiled in the running IRIS docker container.
-
-![docker_compose](https://user-images.githubusercontent.com/2781759/76656929-0f2e5700-6547-11ea-9cc9-486a5641c51d.gif)
-
-Feel free to delete the PackageSample folder and place your ObjectScript classes in the form
-`/src/organisation/package/Classname.cls`
-
-[Read more about folder setup for InterSystems ObjectScript](https://community.intersystems.com/post/simplified-objectscript-source-folder-structure-package-manager) and here on the [naming convention](https://community.intersystems.com/post/naming-convention-objectscript-packages-classes-and-package-manager-modules-names)
-
-## Running unit tests
-
-The template contains two test classes: `TestObjectScript.cls` and `TestPersistentClass.cls `
-
-To run the unit tests we can use the Package Manager environment.
-
-```
-IRISAPP>zpm
-
-=============================================================================
-|| Welcome to the Package Manager Shell (ZPM).                             ||
-|| Enter q/quit to exit the shell. Enter ?/help to view available commands ||
-=============================================================================
-zpm:IRISAPP>load /home/irisowner/dev
-
-[IRISAPP|dc-sample]     Reload START (/home/irisowner/dev/)
-[IRISAPP|dc-sample]     requirements.txt START
-[IRISAPP|dc-sample]     requirements.txt SUCCESS
-[IRISAPP|dc-sample]     Reload SUCCESS
-[dc-sample]     Module object refreshed.
-[IRISAPP|dc-sample]     Validate START
-[IRISAPP|dc-sample]     Validate SUCCESS
-[IRISAPP|dc-sample]     Compile START
-[IRISAPP|dc-sample]     Compile SUCCESS
-[IRISAPP|dc-sample]     Activate START
-[IRISAPP|dc-sample]     Configure START
-[IRISAPP|dc-sample]     Configure SUCCESS
-[IRISAPP|dc-sample]     Activate SUCCESS
-zpm:IRISAPP>test dc-sample
-
-[IRISAPP|dc-sample]     Reload START (/home/irisowner/dev/)
-[IRISAPP|dc-sample]     Reload SUCCESS
-[dc-sample]     Module object refreshed.
-[IRISAPP|dc-sample]     Validate START
-[IRISAPP|dc-sample]     Validate SUCCESS
-[IRISAPP|dc-sample]     Compile START
-[IRISAPP|dc-sample]     Compile SUCCESS
-[IRISAPP|dc-sample]     Activate START
-[IRISAPP|dc-sample]     Configure START
-[IRISAPP|dc-sample]     Configure SUCCESS
-[IRISAPP|dc-sample]     Activate SUCCESS
-[IRISAPP|dc-sample]     Test STARTHello World!
-This is InterSystems IRIS with version IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2023.2 (Build 221U) Fri Jul 21 2023 15:12:42 EDT
-Current time is: 16 Aug 2023 14:32:10
-Use the following URL to view the result:
-http://172.31.0.2:52773/csp/sys/%25UnitTest.Portal.Indices.cls?Index=2&$NAMESPACE=IRISAPP
-All PASSED
-
-[IRISAPP|dc-sample]     Test SUCCESS
-zpm:IRISAPP>
+# Drop-in LangChain replacement
+vector_store = IRISVectorStore(connection_manager, config_manager)
+retriever = vector_store.as_retriever(search_kwargs={"k": 5})
 ```
 
-In case of test errors, you can find more details back in the UnitTest portal, which can be easily opened via ObjectScript menu in VSCode:
+### Configuration System
+Environment-aware configuration with validation:
+```python
+from rag_templates.config import ConfigurationManager
 
-![vscvode unittest](https://user-images.githubusercontent.com/2781759/152678943-7d9d9696-e26a-449f-b1d7-f924528c8e3a.png)
-
-If you have installed the [_InterSystems Testing Manager for VS Code_ extension](https://openexchange.intersystems.com/package/InterSystems-Testing-Manager-for-VS-Code)
-you can also run unit tests directly from VSCode :
-![vscvode unittest](https://raw.githubusercontent.com/intersystems-community/intersystems-testingmanager/main/images/README/Overview-Client.gif)
-
-## What else is inside the repository
-
-### .github folder
-
-Contains two GitHub actions workflows:
-1. `github-registry.yml`
-    Once changes pushed to the repo, the action builds the docker image on Github side and pushes the image to Github registry that can be very convenient to further cloud deployement, e.g. kubernetes.
-2. `objectscript-qaulity.yml`
-    with every push to master or main branch the workflow launches the repo test on objectscript issues with Objectscript Quality tool, [see the examples](https://community.objectscriptquality.com/projects?sort=-analysis_date). This works if the repo is open-source only.
-
-Both workflows are repo agnostic: so they work with any repository where they exist.
-
-### .vscode folder
-Contains two files to setup vscode environment:
-
-#### .vscode/settings.json
-
-Settings file to let you immediately code in VSCode with [VSCode ObjectScript plugin](https://marketplace.visualstudio.com/items?itemName=daimor.vscode-objectscript))
-
-#### .vscode/launch.json
-
-Config file if you want to debug with VSCode ObjectScript
-
-### src folder
-
-Contains source files.
-src/iris contains InterSystems IRIS Objectscript code
-
-### tests folder
-Contains unit tests for the ObjectScript classes
-
-### dev.md
-
-Contains a set of useful commands that will help during the development
-
-### docker-compose.yml
-
-A docker engine helper file to manage images building and rule ports mapping an the host to container folders(volumes) mapping
-
-### Dockerfile
-
-The simplest dockerfile which starts IRIS and imports code from /src folder into it.
-Use the related docker-compose.yml to easily setup additional parametes like port number and where you map keys and host folders.
-
-
-### iris.script
-
-Contains objectscript commands that are feeded to iris during the image building
-
-### module.xml
-
-IPM Module's description of the code in the repository.
-It describes what is loaded with the method, how it is being tested and what apps neeed to be created, what files need to be copied.
-
-[Read about all the files in this artilce](https://community.intersystems.com/post/dockerfile-and-friends-or-how-run-and-collaborate-objectscript-projects-intersystems-iris)
-
-
-
-## Troubleshooting
-
-If you have issues with docker image building here are some recipes that could help.
-
-1. You are out of free space in docker. You can expand the amount of space or clean up maually via docker desktop. Or you can call the following line to clean up:
-```
-docker system prune -f
+config = ConfigurationManager()
+# Supports RAG_DATABASE__IRIS__HOST env vars
+# Automatic YAML loading with schema validation
 ```
 
-2. We use multi-stage image building which in some cases doesn't work. Switch the target to [builder](https://github.com/intersystems-community/intersystems-iris-dev-template/blob/6ab6791983e5783118efce1777a7671046652e4c/docker-compose.yml#L7) from final in the docker compose and try again.
+## 🛠️ Available RAG Techniques
 
+| Technique | Description | Best For | Status |
+|-----------|-------------|----------|---------|
+| **basic** | Standard vector similarity | General purpose, fast queries | ✅ Production |
+| **colbert** | Token-level embeddings with MaxSim | High precision retrieval | ✅ Production* |
+| **crag** | Corrective RAG with self-correction | Accuracy-critical applications | ✅ Production |
+| **hyde** | Hypothetical Document Embeddings | Complex reasoning tasks | ✅ Production |
+| **graphrag** | Graph-based knowledge retrieval | Structured knowledge bases | ✅ Production |
+| **hybrid_ifind** | Multi-modal search combination | Enterprise search | ✅ Production |
+| **noderag** | Node-based structured retrieval | Hierarchical data | ✅ Production |
+
+*ColBERT: Includes experimental [Pylate integration](https://github.com/lightonai/pylate) with pluggable backend support (`native`/`pylate`).
+
+## 🎯 Developer Experience
+
+### Three-Tier API Design
+
+**Simple API** - Zero configuration for prototypes:
+```python
+rag = RAG()  # Works immediately
+```
+
+**Standard API** - Production configuration:
+```python
+rag = ConfigurableRAG({
+    'technique': 'colbert',
+    'llm_provider': 'openai'
+})
+```
+
+**Enterprise API** - Full control:
+```python
+config = ConfigManager.from_file('enterprise-config.yaml')
+rag = ConfigurableRAG(config)
+```
+
+### Key Configuration Options
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RAG_DATABASE__IRIS__HOST` | IRIS database host | `localhost` |
+| `RAG_EMBEDDING__MODEL` | Embedding model name | `all-MiniLM-L6-v2` |
+| `RAG_LLM__PROVIDER` | LLM provider | `openai` |
+| `RAG_TECHNIQUE` | RAG technique to use | `basic` |
+
+## 🔗 MCP Integration
+
+Create MCP servers in minutes:
+```javascript
+import { createMCPServer } from '@rag-templates/mcp';
+
+const server = createMCPServer({
+    name: "knowledge-server",
+    description: "Company knowledge base",
+    ragConfig: { technique: 'graphrag' }
+});
+
+server.start();
+```
+
+## 📚 Documentation
+
+| Guide | Description |
+|-------|-------------|
+| **[📖 User Guide](docs/USER_GUIDE.md)** | Complete usage guide and best practices |
+| **[📋 Documentation](docs/README.md)** | Additional documentation and guides |
+
+## ✅ Verification
+
+```bash
+# Quick setup and validation
+make setup-env && make install
+make validate-iris-rag && make test-unit
+
+# Full end-to-end testing with 1000+ documents
+make load-1000 && make test-1000
+
+# Performance benchmarking
+make test-ragas-1000-enhanced
+```
+
+## 🌟 Key Features
+
+- **Zero Configuration**: Production-ready defaults, works immediately
+- **Enterprise Architecture**: Schema management, migrations, monitoring
+- **LangChain Compatible**: Drop-in replacement for existing workflows  
+- **Multi-Language**: Python, JavaScript, and ObjectScript support
+- **MCP-First Design**: Trivial MCP server creation
+- **Advanced RAG**: 7+ sophisticated retrieval techniques
+- **Performance Optimized**: Built-in caching and optimization
+
+## 📚 References & Research
+
+### RAG Technique Papers & Implementations
+
+| Technique | Original Paper | Key Repository | Additional Resources |
+|-----------|---------------|----------------|---------------------|
+| **Basic RAG** | [Retrieval-Augmented Generation](https://arxiv.org/abs/2005.11401) | [Facebook Research](https://github.com/facebookresearch/RAG) | [LangChain RAG](https://python.langchain.com/docs/tutorials/rag/) |
+| **ColBERT** | [ColBERT: Efficient and Effective Passage Retrieval](https://arxiv.org/abs/2004.12832) | [Stanford ColBERT](https://github.com/stanford-futuredata/ColBERT) | [Pylate Integration](https://github.com/lightonai/pylate) |
+| **CRAG** | [Corrective Retrieval Augmented Generation](https://arxiv.org/abs/2401.15884) | [CRAG Implementation](https://github.com/HuskyInSalt/CRAG) | [LangGraph CRAG](https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_crag/) |
+| **HyDE** | [Precise Zero-Shot Dense Retrieval](https://arxiv.org/abs/2212.10496) | [HyDE Official](https://github.com/texttron/hyde) | [LangChain HyDE](https://python.langchain.com/docs/how_to/hyde/) |
+| **GraphRAG** | [From Local to Global: A Graph RAG Approach](https://arxiv.org/abs/2404.16130) | [Microsoft GraphRAG](https://github.com/microsoft/graphrag) | [Neo4j GraphRAG](https://github.com/neo4j/neo4j-graphrag-python) |
+| **NodeRAG** | [Hierarchical Text Retrieval](https://arxiv.org/abs/2310.20501) | [NodeRAG Implementation](https://github.com/microsoft/noderag) | [Hierarchical Retrieval](https://python.langchain.com/docs/how_to/parent_document_retriever/) |
+
+### Core Technologies
+
+- **Vector Databases**: [InterSystems IRIS Vector Search](https://docs.intersystems.com/iris20241/csp/docbook/DocBook.UI.Page.cls?KEY=GSQL_vecsearch)
+- **Embeddings**: [Sentence Transformers](https://github.com/UKPLab/sentence-transformers), [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings)
+- **LLM Integration**: [LangChain](https://github.com/langchain-ai/langchain), [OpenAI API](https://platform.openai.com/docs/api-reference)
+- **Evaluation**: [RAGAS Framework](https://github.com/explodinggradients/ragas)
+
+## 🤝 Contributing
+
+We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+**Transform your RAG development from complex to enterprise-ready. Start building in minutes, scale to production.**
