@@ -441,31 +441,31 @@ demo-ultimate-flow-quick:
 # Repository Synchronization
 sync-docs:
 	@echo "🔄 Synchronizing documentation from sanitized repository..."
-	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-docs
+	$(PYTHON_RUN) scripts/sync_repositories.py --sync-docs
 
 sync-docs-push:
 	@echo "🔄 Synchronizing documentation and pushing to GitLab..."
-	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-docs --push
+	$(PYTHON_RUN) scripts/sync_repositories.py --sync-docs --push
 
 sync-all:
 	@echo "🔄 Synchronizing all content (docs + source code) from sanitized repository..."
-	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-all
+	$(PYTHON_RUN) scripts/sync_repositories.py --sync-all
 
 sync-all-push:
 	@echo "🔄 Synchronizing all content and pushing to GitLab..."
-	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-all --push
+	$(PYTHON_RUN) scripts/sync_repositories.py --sync-all --push
 
 sync-check:
 	@echo "🔍 Checking repository synchronization status..."
-	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --validate-sync
+	$(PYTHON_RUN) scripts/sync_repositories.py --validate-sync
 
 sync-dry-run:
 	@echo "📝 Preview of repository synchronization (dry run)..."
-	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-docs --dry-run
+	$(PYTHON_RUN) scripts/sync_repositories.py --sync-docs --dry-run
 
 sync-all-dry-run:
 	@echo "📝 Preview of comprehensive synchronization (dry run)..."
-	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-all --dry-run
+	$(PYTHON_RUN) scripts/sync_repositories.py --sync-all --dry-run
 # Quick pipeline testing
 test-pipeline:
 	@if [ -z "$(PIPELINE)" ]; then \

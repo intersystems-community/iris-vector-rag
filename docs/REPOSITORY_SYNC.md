@@ -37,12 +37,12 @@ python scripts/sync_repositories.py --sync-docs
 python scripts/sync_repositories.py --sync-docs --push
 
 # Comprehensive synchronization
-python scripts/sync_repositories_enhanced.py --sync-all
-python scripts/sync_repositories_enhanced.py --sync-all --push
+python scripts/sync_repositories.py --sync-all
+python scripts/sync_repositories.py --sync-all --push
 
 # Validation and dry runs
-python scripts/sync_repositories_enhanced.py --validate-sync
-python scripts/sync_repositories_enhanced.py --sync-all --dry-run
+python scripts/sync_repositories.py --validate-sync
+python scripts/sync_repositories.py --sync-all --dry-run
 ```
 
 ## Configuration
@@ -79,10 +79,9 @@ files_to_sync:
 
 ### Components
 
-1. **`scripts/sync_repositories.py`**: Documentation synchronization script
-2. **`scripts/sync_repositories_enhanced.py`**: Comprehensive synchronization script
-3. **`config/sync_config.yaml`**: Configuration file with directory sync support
-4. **Makefile targets**: Convenient command aliases for sync operations
+1. **`scripts/sync_repositories.py`**: Unified synchronization script supporting both documentation-only and comprehensive sync
+2. **`config/sync_config.yaml`**: Configuration file with directory sync support
+3. **Makefile targets**: Convenient command aliases for sync operations
 
 ### Classes
 
@@ -151,8 +150,7 @@ python scripts/sync_repositories.py --config-file custom_sync.yaml --sync-docs
 
 ```
 ├── scripts/
-│   ├── sync_repositories.py          # Documentation sync script
-│   └── sync_repositories_enhanced.py # Comprehensive sync script
+│   └── sync_repositories.py          # Unified sync script (docs + source code)
 ├── config/
 │   └── sync_config.yaml              # Configuration with directory sync
 ├── docs/
