@@ -16,12 +16,11 @@ The repository synchronization system automates the process of:
 ### Using Makefile (Recommended)
 
 ```bash
-# Documentation Sync
-make sync-dry-run          # Preview documentation sync (dry run)
-make sync-docs             # Synchronize documentation files
+# Repository Synchronization
+make sync-dry-run          # Preview synchronization (dry run)
+make sync-docs             # Synchronize documentation files only
 make sync-docs-push        # Synchronize documentation and push to GitLab
 
-# Comprehensive Sync (Documentation + Source Code)
 make sync-all-dry-run      # Preview comprehensive sync (dry run)
 make sync-all              # Synchronize all content (docs + source code)
 make sync-all-push         # Synchronize all content and push to GitLab
@@ -33,11 +32,11 @@ make sync-check            # Check synchronization status
 ### Using Script Directly
 
 ```bash
-# Documentation synchronization (legacy script)
+# Documentation synchronization
 python scripts/sync_repositories.py --sync-docs
 python scripts/sync_repositories.py --sync-docs --push
 
-# Comprehensive synchronization (enhanced script)
+# Comprehensive synchronization
 python scripts/sync_repositories_enhanced.py --sync-all
 python scripts/sync_repositories_enhanced.py --sync-all --push
 
@@ -80,10 +79,10 @@ files_to_sync:
 
 ### Components
 
-1. **`scripts/sync_repositories.py`**: Legacy documentation synchronization script
-2. **`scripts/sync_repositories_enhanced.py`**: Enhanced comprehensive synchronization script
-3. **`config/sync_config.yaml`**: Enhanced configuration file with directory sync support
-4. **Makefile targets**: Convenient command aliases for both sync modes
+1. **`scripts/sync_repositories.py`**: Documentation synchronization script
+2. **`scripts/sync_repositories_enhanced.py`**: Comprehensive synchronization script
+3. **`config/sync_config.yaml`**: Configuration file with directory sync support
+4. **Makefile targets**: Convenient command aliases for sync operations
 
 ### Classes
 
@@ -94,7 +93,6 @@ files_to_sync:
 ### Key Features
 
 - **YAML Configuration**: Flexible, version-controlled configuration with directory sync support
-- **Dual Sync Modes**: Documentation-only sync and comprehensive source code sync
 - **Content Filtering**: Intelligent filtering to exclude internal/private content from public sync
 - **Directory Synchronization**: Comprehensive directory-level sync with pattern matching
 - **Dry Run Mode**: Preview changes without applying them
@@ -153,13 +151,13 @@ python scripts/sync_repositories.py --config-file custom_sync.yaml --sync-docs
 
 ```
 ├── scripts/
-│   ├── sync_repositories.py          # Legacy documentation sync script
-│   └── sync_repositories_enhanced.py # Enhanced comprehensive sync script
+│   ├── sync_repositories.py          # Documentation sync script
+│   └── sync_repositories_enhanced.py # Comprehensive sync script
 ├── config/
-│   └── sync_config.yaml              # Enhanced configuration with directory sync
+│   └── sync_config.yaml              # Configuration with directory sync
 ├── docs/
 │   └── REPOSITORY_SYNC.md            # This documentation
-└── Makefile                          # Convenient targets for both sync modes
+└── Makefile                          # Convenient targets for sync operations
 ```
 
 ## Exit Codes

@@ -30,7 +30,7 @@ help:
 	@echo "  make test-integration - Run integration tests"
 	@echo "  make test-e2e         - Run end-to-end tests"
 	@echo "  make test-install     - Post-installation validation"
-	@echo "  make test-1000        - Run comprehensive test with 1000 docs (legacy)"
+	@echo "  make test-1000        - Run comprehensive test with 1000 docs"
 	@echo "  make eval-all-ragas-1000 - Run comprehensive RAGAS evaluation on all 7 pipelines with 1000 docs (RECOMMENDED)"
 	@echo "  make test-ragas-1000-enhanced  - [DEPRECATED] Use eval-all-ragas-1000 instead"
 	@echo "  make validate-iris-rag - Validate iris_rag package"
