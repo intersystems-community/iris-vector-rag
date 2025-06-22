@@ -13,6 +13,11 @@ Welcome to the Enterprise RAG Framework documentation. This directory contains c
 - [`USER_GUIDE.md`](USER_GUIDE.md) - Getting started guide for end users
 - [`README.md`](README.md) - This documentation index
 
+### Development & Operations
+- [`REPOSITORY_SYNC.md`](REPOSITORY_SYNC.md) - Repository synchronization between internal and public repositories
+- [`CONFIGURATION.md`](CONFIGURATION.md) - Configuration system and environment setup
+- [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) - Developer onboarding and contribution guide
+
 ## RAG Techniques Implemented
 
 This framework implements multiple advanced RAG techniques:
