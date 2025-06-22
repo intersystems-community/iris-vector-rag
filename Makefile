@@ -100,6 +100,15 @@ help:
 	@echo "  make lint             - Run code linting"
 	@echo "  make format           - Format code"
 	@echo ""
+	@echo "Repository Synchronization:"
+	@echo "  make sync-docs        - Sync documentation from sanitized repository"
+	@echo "  make sync-docs-push   - Sync documentation and push to GitLab"
+	@echo "  make sync-all         - Sync all content (docs + source code) from sanitized repository"
+	@echo "  make sync-all-push    - Sync all content and push to GitLab"
+	@echo "  make sync-check       - Check synchronization status"
+	@echo "  make sync-dry-run     - Preview documentation sync (dry run)"
+	@echo "  make sync-all-dry-run - Preview comprehensive sync (dry run)"
+	@echo ""
 	@echo "Docker:"
 	@echo "  make docker-up        - Start IRIS container"
 	@echo "  make docker-down      - Stop IRIS container"
@@ -428,6 +437,35 @@ demo-ultimate-flow:
 demo-ultimate-flow-quick:
 	@echo "🚀 Running quick ultimate demonstration..."
 	$(PYTHON_RUN) scripts/ultimate_zero_to_ragas_demo.py
+
+# Repository Synchronization
+sync-docs:
+	@echo "🔄 Synchronizing documentation from sanitized repository..."
+	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-docs
+
+sync-docs-push:
+	@echo "🔄 Synchronizing documentation and pushing to GitLab..."
+	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-docs --push
+
+sync-all:
+	@echo "🔄 Synchronizing all content (docs + source code) from sanitized repository..."
+	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-all
+
+sync-all-push:
+	@echo "🔄 Synchronizing all content and pushing to GitLab..."
+	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-all --push
+
+sync-check:
+	@echo "🔍 Checking repository synchronization status..."
+	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --validate-sync
+
+sync-dry-run:
+	@echo "📝 Preview of repository synchronization (dry run)..."
+	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-docs --dry-run
+
+sync-all-dry-run:
+	@echo "📝 Preview of comprehensive synchronization (dry run)..."
+	$(PYTHON_RUN) scripts/sync_repositories_enhanced.py --sync-all --dry-run
 # Quick pipeline testing
 test-pipeline:
 	@if [ -z "$(PIPELINE)" ]; then \
