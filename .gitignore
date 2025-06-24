@@ -1,24 +1,12 @@
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -26,71 +14,68 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+lib/    
 lib64/
 parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# Virtual environments
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
+# PyInstaller
+*.manifest
+*.spec
 
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-package-lock.json
-yarn.lock
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Logs
-*.log
-iris-main.log
-logs/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
-.pytest_cache/
-
-# Git
-.git/
-
-# Coverage reports
+# Unit test / coverage reports
 htmlcov/
+.tox/
+.nox/
 .coverage
 .coverage.*
+.cache
+nosetests.xml
 coverage.xml
 *.cover
+*.log
+hs_err_pid*.log
+.pytest_cache/
 .hypothesis/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
 
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pyenv
-.python-version
+# IPython
+profile_default/
+ipython_config.py
 
 # Environments
 .env
@@ -101,23 +86,148 @@ ENV/
 env.bak/
 venv.bak/
 
-# Development tools and binaries
-tools/bin/
-tools/lib/
-tools/chunking/
+# uv
+uv.lock
+venv_community_test/
+venv_pyodbc_test/
+venv_specific_wheel_test/
 
-# JAR files
-*.jar
+# Docker
+docker-compose.override.yml
+docker-compose.yml.override
 
-# Binary files
-*.so
-*.dll
-*.dylib
+# IRIS specific runtime data / large files
+iris_container_data/
+iris_data_odbc_test/
+temp_pmc_download/
+data/pmc_oas_downloaded/
 
-# Cache and temporary directories
-__pycache__/
-.pytest_cache/
-*.pyc
-*.pyo
-*.pyd
-.cache/
+# Downloaded archives/installers
+*.tar.gz
+*.zip
+*.whl 
+ODBCinstall
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*~
+*.bak
+
+# Log files at the root
+# *.log # General logs are covered by line 48 under "Unit test / coverage reports"
+# Downloaded HTML documentation files
+*.html
+# Generated backup and report files/directories
+docs/RSQL.pdf
+migration_backup_*/
+*_report_*.json
+*_report_*.md
+data_migration_report_*.json
+verification_report_*.json
+verification_report_*.md
+# Specific generated JSON reports now in reports/ directory
+reports/complete_rag_fix_results_*.json
+reports/hnsw_validation_*.json
+reports/vector_indexing_investigation_*.json
+
+# Test and Benchmark Output Directories
+test_logs/
+test_results/
+temp_graphrag_data/
+
+# Generated Reports
+# Generated RAGAS Evaluation Results
+reports/ragas_evaluations/
+
+# Generated Benchmark Results
+reports/benchmarks/
+
+# Specific generated files (if they appear in root and not in the above dirs)
+test_results_1000_docs.json
+enterprise_validation_*.json
+enterprise_scale_validation_*.json
+production_validation_results_*.json
+colbert_performance_comparison_*.json
+stress_test_report_*.md
+ingestion_report_*.json
+real_pmc_completion_report_*.json
+WORKING_HNSW_COMPARISON_REPORT_*.md
+
+# Investigation and experimental directories
+investigation/
+scripts_to_review/
+debug_archive/
+archive/
+
+# Additional temporary files and patterns
+*_comparison_*.json
+*_chunking_*.json
+explore_*.py
+research_*.py
+test_*_integration.py
+
+# Workspace files
+*.code-workspace
+
+# IRIS configuration files
+*.cpf
+iris.key
+
+# Active ingestion data
+ingestion_checkpoint.pkl
+data/pmc_100k_downloaded/
+
+# Temporary development scripts
+scripts/test_*.py
+scripts/simple_*.py
+scripts/corrected_*.py
+scripts/fix_*.py
+scripts/minimal_*.py
+scripts/monitor_*_fixed.py
+scripts/monitor_*_timing_fixed.py
+scripts/verify_*_fix.py
+scripts/convert_*.py
+scripts/configure_*.py
+scripts/deploy_*.py
+scripts/final_*.py
+scripts/query_*.py
+scripts/read_*.py
+scripts/schema_migration_*.py
+scripts/setup_ingestion_*.py
+scripts/vector_*.py
+cleanup_for_git.py
+
+# Specific files from your project list (already covered by wildcards above but kept for explicitness if desired)
+# ODBC-2025.1.0.223.0-lnxubuntu2404arm64.tar.gz # Covered by *.tar.gz
+# intersystems_irispython-3.2.0-py3-none-any.whl # Covered by *.whl
+
+temp_iris.key
+
+# Temporary evaluation results (keep only latest)
+comprehensive_ragas_results_*/
+!comprehensive_ragas_results/evaluation_results_*.json
+!comprehensive_ragas_results/performance_comparison_*.png
+
+# Temporary test outputs
+post_installation_results_*.json
+quick_pipeline_test.py
+run_with_iris.py
+test_smart_connection.py
+testing_system_analysis.md
+
+# Status/fix documentation (superseded by current docs)
+*_FIX_SUMMARY.md
+*_TEST_RESULTS.md
+COMPREHENSIVE_*.md
+PIPELINE_*.md

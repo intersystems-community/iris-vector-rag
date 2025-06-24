@@ -1,0 +1,223 @@
+# Repository Synchronization Configuration
+# This file defines how documentation and files are synchronized between
+# the internal GitLab repository and the public GitHub repository
+
+# Repository paths (relative to project root)
+repositories:
+  internal_repo_path: "."
+  sanitized_repo_path: "../rag-templates-sanitized"
+
+# Git configuration
+git:
+  branch: "main"
+  commit_message_template: "sync: update source code and documentation from sanitized repository"
+
+# Files to synchronize from sanitized to internal repository
+files_to_sync:
+  # Documentation files
+  - source: "README.md"
+    target: "README.md"
+    description: "Main project README with architecture overview"
+  
+  - source: "docs/README.md"
+    target: "docs/README.md"
+    description: "Documentation directory README"
+  
+  - source: "rag_templates/README.md"
+    target: "rag_templates/README.md"
+    description: "RAG templates module README"
+
+  - source: "docs/USER_GUIDE.md"
+    target: "docs/USER_GUIDE.md"
+    description: "User guide documentation"
+
+  # Project configuration files
+  - source: "pyproject.toml"
+    target: "pyproject.toml"
+    description: "Python project configuration"
+
+  - source: "setup.py"
+    target: "setup.py"
+    description: "Python setup script"
+
+  - source: "requirements.txt"
+    target: "requirements.txt"
+    description: "Python dependencies"
+
+  # Docker and deployment files
+  - source: "docker-compose.yml"
+    target: "docker-compose.yml"
+    description: "Docker Compose configuration"
+
+  - source: "Dockerfile"
+    target: "Dockerfile"
+    description: "Docker container definition"
+
+  - source: "Dockerfile_mini"
+    target: "Dockerfile_mini"
+    description: "Minimal Docker container definition"
+
+  - source: ".dockerignore"
+    target: ".dockerignore"
+    description: "Docker ignore patterns"
+
+  - source: ".gitignore"
+    target: ".gitignore"
+    description: "Git ignore patterns"
+
+  - source: ".gitattributes"
+    target: ".gitattributes"
+    description: "Git attributes configuration"
+
+  # Core application files
+  - source: "activate_env.sh"
+    target: "activate_env.sh"
+    description: "Environment activation script"
+
+  - source: "App.Installer.cls"
+    target: "App.Installer.cls"
+    description: "IRIS application installer"
+
+  - source: "iris.script"
+    target: "iris.script"
+    description: "IRIS initialization script"
+
+  - source: "module.xml"
+    target: "module.xml"
+    description: "IRIS module definition"
+
+# Directories to synchronize (with filtering)
+directories_to_sync:
+  # Core Python packages
+  - source: "common/"
+    target: "common/"
+    description: "Common utilities and database connectors"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+      - "*.log"
+      - "CLEANUP_SUMMARY.md"
+
+  - source: "iris_rag/"
+    target: "iris_rag/"
+    description: "Main IRIS RAG framework package"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+      - "*.log"
+
+  - source: "rag_templates/"
+    target: "rag_templates/"
+    description: "RAG templates module"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+      - "*.log"
+
+  # Configuration and schema
+  - source: "config/"
+    target: "config/"
+    description: "Configuration files and examples"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+      - "monitoring.json"  # Internal monitoring config
+
+  - source: "schema/"
+    target: "schema/"
+    description: "Database schema definitions"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+
+  # Sample data and evaluation
+  - source: "data/"
+    target: "data/"
+    description: "Sample data and datasets"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+      - "pmc_oas_downloaded/"  # Large dataset not for public repo
+
+  - source: "eval/"
+    target: "eval/"
+    description: "Evaluation scripts and queries"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+
+  # Node.js/JavaScript components
+  - source: "nodejs/"
+    target: "nodejs/"
+    description: "Node.js MCP server and JavaScript APIs"
+    exclude_patterns:
+      - "node_modules/"
+      - "*.log"
+      - "coverage/"
+
+  # ObjectScript components
+  - source: "objectscript/"
+    target: "objectscript/"
+    description: "ObjectScript integration components"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+
+  # Source code (InterSystems specific)
+  - source: "src/"
+    target: "src/"
+    description: "InterSystems source code components"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+
+  # Tools and utilities
+  - source: "tools/"
+    target: "tools/"
+    description: "Development and utility tools"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+
+  # Public tests (filtered)
+  - source: "tests/"
+    target: "tests/"
+    description: "Test suites and examples"
+    exclude_patterns:
+      - "*.pyc"
+      - "__pycache__/"
+      - "*.log"
+      - "reports/"
+      - "working/"
+      - "temp_*/"
+      - "validation/"  # Internal validation reports
+
+# Scripts to exclude (most are internal/private)
+excluded_scripts:
+  - "scripts/utilities/"  # Internal utilities
+  - "scripts/data_processing/"  # Internal data processing
+  - "scripts/performance/"  # Internal performance scripts
+  - "scripts/validation/"  # Internal validation scripts
+
+# Scripts to include (public examples and essential tools)
+included_scripts:
+  - source: "scripts/examples/"
+    target: "scripts/examples/"
+    description: "Example scripts for users"
+
+# Validation settings
+validation:
+  # Fail if sync percentage is below this threshold
+  min_sync_percentage: 85.0  # Lower threshold due to filtering
+  
+  # Files that are allowed to be missing (won't count against sync percentage)
+  allowed_missing_files:
+    - "scripts/utilities/"
+    - "scripts/data_processing/"
+    - "scripts/performance/"
+    - "scripts/validation/"
+
+# Logging configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(levelname)s - %(message)s"
