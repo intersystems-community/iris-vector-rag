@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """
-Enhanced Repository Synchronization Script
+Corrected Repository Synchronization Script
 
-Automates the synchronization of source code, documentation, and selected files between
-the internal GitLab repository and the public GitHub repository.
+HARDCODED CORRECT DIRECTION: FROM internal GitLab repository TO public GitHub repository
 
 This script handles:
-1. Copying updated files and directories from sanitized repository
+1. Copying updated files and directories from internal GitLab repo to public GitHub repo
 2. Filtering out internal/private content using exclude patterns
-3. Staging and committing changes to internal repository
-4. Pushing to internal GitLab repository
-5. Comprehensive validation of sync status
+3. Staging and committing changes to public repository
+4. Pushing to public GitHub repository
 
 Usage:
-    python scripts/sync_repositories_enhanced.py --sync-all
-    python scripts/sync_repositories_enhanced.py --sync-all --push
-    python scripts/sync_repositories_enhanced.py --validate-sync
+    python scripts/sync_to_public.py --sync-all
+    python scripts/sync_to_public.py --sync-all --push
+    python scripts/sync_to_public.py --validate-sync
 """
 
 import os
@@ -24,7 +22,6 @@ import argparse
 import subprocess
 import shutil
 import logging
-import yaml
 import fnmatch
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Set
@@ -41,14 +38,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SyncConfig:
     """Configuration for repository synchronization."""
-    internal_repo_path: str
-    sanitized_repo_path: str
+    source_repo_path: str  # Internal GitLab repo (source)
+    target_repo_path: str  # Public GitHub repo (target)
     files_to_sync: List[Dict[str, str]]
     directories_to_sync: List[Dict[str, any]]
-    git_branch: str = "feature/enterprise-rag-system-complete"
-    commit_message_template: str = "sync: update source code and documentation from sanitized repository"
-    excluded_scripts: List[str] = None
-    included_scripts: List[Dict[str, str]] = None
+    git_branch: str = "main"
+    commit_message_template: str = "sync: update from internal repository"
 
 @dataclass
 class SyncResult:
@@ -60,23 +55,23 @@ class SyncResult:
     error_message: Optional[str] = None
     changes_detected: bool = False
 
-class EnhancedRepositorySynchronizer:
-    """Handles comprehensive synchronization between internal and sanitized repositories."""
+class PublicRepositorySynchronizer:
+    """Handles synchronization FROM internal GitLab repo TO public GitHub repo."""
     
     def __init__(self, config: SyncConfig):
         self.config = config
-        self.internal_repo = Path(config.internal_repo_path)
-        self.sanitized_repo = Path(config.sanitized_repo_path)
+        self.source_repo = Path(config.source_repo_path)  # Internal GitLab repo
+        self.target_repo = Path(config.target_repo_path)  # Public GitHub repo
         
         # Validate paths
-        if not self.internal_repo.exists():
-            raise ValueError(f"Internal repository path does not exist: {config.internal_repo_path}")
-        if not self.sanitized_repo.exists():
-            raise ValueError(f"Sanitized repository path does not exist: {config.sanitized_repo_path}")
+        if not self.source_repo.exists():
+            raise ValueError(f"Source repository path does not exist: {config.source_repo_path}")
+        if not self.target_repo.exists():
+            raise ValueError(f"Target repository path does not exist: {config.target_repo_path}")
     
     def sync_all_content(self, dry_run: bool = False) -> SyncResult:
         """
-        Synchronize all content (files and directories) from sanitized to internal repository.
+        Synchronize all content FROM internal repo TO public repo.
         
         Args:
             dry_run: If True, only show what would be synced without making changes
@@ -84,7 +79,7 @@ class EnhancedRepositorySynchronizer:
         Returns:
             SyncResult with details of the synchronization
         """
-        logger.info("🔄 Starting comprehensive content synchronization...")
+        logger.info("🔄 Starting synchronization FROM internal GitLab TO public GitHub...")
         
         files_synced = []
         directories_synced = []
@@ -100,11 +95,6 @@ class EnhancedRepositorySynchronizer:
             dir_result = self._sync_directories(dry_run)
             directories_synced.extend(dir_result.directories_synced)
             changes_detected = changes_detected or dir_result.changes_detected
-            
-            # Sync included scripts
-            script_result = self._sync_included_scripts(dry_run)
-            directories_synced.extend(script_result.directories_synced)
-            changes_detected = changes_detected or script_result.changes_detected
             
             if dry_run:
                 return SyncResult(
@@ -140,15 +130,15 @@ class EnhancedRepositorySynchronizer:
             )
     
     def _sync_files(self, dry_run: bool = False) -> SyncResult:
-        """Synchronize individual files."""
+        """Synchronize individual files FROM source TO target."""
         logger.info("📄 Synchronizing individual files...")
         
         files_synced = []
         changes_detected = False
         
         for file_mapping in self.config.files_to_sync:
-            source_path = self.sanitized_repo / file_mapping["source"]
-            target_path = self.internal_repo / file_mapping["target"]
+            source_path = self.source_repo / file_mapping["source"]
+            target_path = self.target_repo / file_mapping["target"]
             
             if not source_path.exists():
                 logger.warning(f"⚠️ Source file not found: {source_path}")
@@ -164,7 +154,7 @@ class EnhancedRepositorySynchronizer:
                     # Ensure target directory exists
                     target_path.parent.mkdir(parents=True, exist_ok=True)
                     
-                    # Copy file
+                    # Copy file FROM source TO target
                     shutil.copy2(source_path, target_path)
                     logger.info(f"✅ Synced: {file_mapping['source']} → {file_mapping['target']}")
                     files_synced.append(file_mapping["target"])
@@ -179,15 +169,15 @@ class EnhancedRepositorySynchronizer:
         )
     
     def _sync_directories(self, dry_run: bool = False) -> SyncResult:
-        """Synchronize directories with filtering."""
+        """Synchronize directories FROM source TO target with filtering."""
         logger.info("📁 Synchronizing directories...")
         
         directories_synced = []
         changes_detected = False
         
         for dir_mapping in self.config.directories_to_sync:
-            source_dir = self.sanitized_repo / dir_mapping["source"]
-            target_dir = self.internal_repo / dir_mapping["target"]
+            source_dir = self.source_repo / dir_mapping["source"]
+            target_dir = self.target_repo / dir_mapping["target"]
             exclude_patterns = dir_mapping.get("exclude_patterns", [])
             
             if not source_dir.exists():
@@ -202,53 +192,13 @@ class EnhancedRepositorySynchronizer:
                     logger.info(f"📝 Would sync directory: {dir_mapping['source']} → {dir_mapping['target']}")
                     self._preview_directory_changes(source_dir, target_dir, exclude_patterns)
                 else:
-                    # Sync directory with filtering
+                    # Sync directory with filtering FROM source TO target
                     synced = self._sync_directory_with_filtering(source_dir, target_dir, exclude_patterns)
                     if synced:
                         logger.info(f"✅ Synced directory: {dir_mapping['source']} → {dir_mapping['target']}")
                         directories_synced.append(dir_mapping["target"])
             else:
                 logger.debug(f"📁 No changes: {dir_mapping['source']}")
-        
-        return SyncResult(
-            success=True,
-            files_synced=[],
-            directories_synced=directories_synced,
-            changes_detected=changes_detected
-        )
-    
-    def _sync_included_scripts(self, dry_run: bool = False) -> SyncResult:
-        """Synchronize included script directories."""
-        if not self.config.included_scripts:
-            return SyncResult(success=True, files_synced=[], directories_synced=[], changes_detected=False)
-        
-        logger.info("📜 Synchronizing included scripts...")
-        
-        directories_synced = []
-        changes_detected = False
-        
-        for script_mapping in self.config.included_scripts:
-            source_dir = self.sanitized_repo / script_mapping["source"]
-            target_dir = self.internal_repo / script_mapping["target"]
-            
-            if not source_dir.exists():
-                logger.warning(f"⚠️ Source script directory not found: {source_dir}")
-                continue
-            
-            # Check if directory sync is needed
-            if self._directory_sync_needed(source_dir, target_dir, ["*.pyc", "__pycache__/"]):
-                changes_detected = True
-                
-                if dry_run:
-                    logger.info(f"📝 Would sync scripts: {script_mapping['source']} → {script_mapping['target']}")
-                else:
-                    # Sync script directory
-                    synced = self._sync_directory_with_filtering(source_dir, target_dir, ["*.pyc", "__pycache__/"])
-                    if synced:
-                        logger.info(f"✅ Synced scripts: {script_mapping['source']} → {script_mapping['target']}")
-                        directories_synced.append(script_mapping["target"])
-            else:
-                logger.debug(f"📜 No changes: {script_mapping['source']}")
         
         return SyncResult(
             success=True,
@@ -305,7 +255,7 @@ class EnhancedRepositorySynchronizer:
         return files
     
     def _sync_directory_with_filtering(self, source_dir: Path, target_dir: Path, exclude_patterns: List[str]) -> bool:
-        """Synchronize directory with filtering, returns True if changes were made."""
+        """Synchronize directory with filtering FROM source TO target, returns True if changes were made."""
         changes_made = False
         
         # Ensure target directory exists
@@ -314,7 +264,7 @@ class EnhancedRepositorySynchronizer:
         # Get source files (filtered)
         source_files = self._get_filtered_files(source_dir, exclude_patterns)
         
-        # Copy/update files from source
+        # Copy/update files FROM source TO target
         for rel_path_str in source_files:
             source_file = source_dir / rel_path_str
             target_file = target_dir / rel_path_str
@@ -375,11 +325,11 @@ class EnhancedRepositorySynchronizer:
     
     def commit_and_push(self, sync_result: SyncResult, push: bool = False) -> SyncResult:
         """
-        Commit synced content and optionally push to remote.
+        Commit synced content to public repo and optionally push to GitHub.
         
         Args:
             sync_result: Result from sync_all_content
-            push: Whether to push to remote repository
+            push: Whether to push to GitHub
             
         Returns:
             Updated SyncResult with commit information
@@ -389,9 +339,9 @@ class EnhancedRepositorySynchronizer:
             return sync_result
         
         try:
-            # Change to internal repository directory
+            # Change to target repository directory (public GitHub repo)
             original_cwd = os.getcwd()
-            os.chdir(self.internal_repo)
+            os.chdir(self.target_repo)
             
             # Stage all changes
             all_changes = sync_result.files_synced + sync_result.directories_synced
@@ -430,7 +380,7 @@ class EnhancedRepositorySynchronizer:
             
             # Extract commit hash
             commit_hash = result.stdout.strip().split()[1] if result.stdout else None
-            logger.info(f"✅ Committed changes: {commit_hash}")
+            logger.info(f"✅ Committed changes to public repo: {commit_hash}")
             
             # Push if requested
             if push:
@@ -440,7 +390,7 @@ class EnhancedRepositorySynchronizer:
                     text=True,
                     check=True
                 )
-                logger.info(f"🚀 Pushed to {self.config.git_branch}")
+                logger.info(f"🚀 Pushed to public GitHub repository on {self.config.git_branch}")
             
             sync_result.commit_hash = commit_hash
             return sync_result
@@ -459,111 +409,6 @@ class EnhancedRepositorySynchronizer:
             return sync_result
         finally:
             os.chdir(original_cwd)
-    
-    def validate_sync_status(self) -> Dict[str, any]:
-        """
-        Validate the current synchronization status between repositories.
-        
-        Returns:
-            Dictionary with validation results
-        """
-        logger.info("🔍 Validating comprehensive synchronization status...")
-        
-        validation_results = {
-            "files_in_sync": [],
-            "files_out_of_sync": [],
-            "directories_in_sync": [],
-            "directories_out_of_sync": [],
-            "missing_content": [],
-            "total_files": len(self.config.files_to_sync),
-            "total_directories": len(self.config.directories_to_sync),
-            "sync_percentage": 0.0
-        }
-        
-        # Validate individual files
-        for file_mapping in self.config.files_to_sync:
-            source_path = self.sanitized_repo / file_mapping["source"]
-            target_path = self.internal_repo / file_mapping["target"]
-            
-            if not source_path.exists():
-                validation_results["missing_content"].append({
-                    "type": "file",
-                    "item": file_mapping["source"],
-                    "location": "sanitized_repo"
-                })
-                continue
-            
-            if not target_path.exists():
-                validation_results["missing_content"].append({
-                    "type": "file",
-                    "item": file_mapping["target"],
-                    "location": "internal_repo"
-                })
-                continue
-            
-            if self._files_differ(source_path, target_path):
-                validation_results["files_out_of_sync"].append({
-                    "source": file_mapping["source"],
-                    "target": file_mapping["target"]
-                })
-            else:
-                validation_results["files_in_sync"].append({
-                    "source": file_mapping["source"],
-                    "target": file_mapping["target"]
-                })
-        
-        # Validate directories
-        for dir_mapping in self.config.directories_to_sync:
-            source_dir = self.sanitized_repo / dir_mapping["source"]
-            target_dir = self.internal_repo / dir_mapping["target"]
-            exclude_patterns = dir_mapping.get("exclude_patterns", [])
-            
-            if not source_dir.exists():
-                validation_results["missing_content"].append({
-                    "type": "directory",
-                    "item": dir_mapping["source"],
-                    "location": "sanitized_repo"
-                })
-                continue
-            
-            if not target_dir.exists():
-                validation_results["missing_content"].append({
-                    "type": "directory",
-                    "item": dir_mapping["target"],
-                    "location": "internal_repo"
-                })
-                continue
-            
-            if self._directory_sync_needed(source_dir, target_dir, exclude_patterns):
-                validation_results["directories_out_of_sync"].append({
-                    "source": dir_mapping["source"],
-                    "target": dir_mapping["target"]
-                })
-            else:
-                validation_results["directories_in_sync"].append({
-                    "source": dir_mapping["source"],
-                    "target": dir_mapping["target"]
-                })
-        
-        # Calculate sync percentage
-        total_items = validation_results["total_files"] + validation_results["total_directories"]
-        in_sync_items = len(validation_results["files_in_sync"]) + len(validation_results["directories_in_sync"])
-        missing_items = len(validation_results["missing_content"])
-        
-        if total_items > 0:
-            valid_items = total_items - missing_items
-            if valid_items > 0:
-                validation_results["sync_percentage"] = (in_sync_items / valid_items) * 100
-        
-        # Log results
-        logger.info(f"📊 Sync Status: {validation_results['sync_percentage']:.1f}%")
-        logger.info(f"   ✅ Files in sync: {len(validation_results['files_in_sync'])}")
-        logger.info(f"   ⚠️ Files out of sync: {len(validation_results['files_out_of_sync'])}")
-        logger.info(f"   ✅ Directories in sync: {len(validation_results['directories_in_sync'])}")
-        logger.info(f"   ⚠️ Directories out of sync: {len(validation_results['directories_out_of_sync'])}")
-        logger.info(f"   ❌ Missing content: {len(validation_results['missing_content'])}")
-        
-        return validation_results
     
     def _files_differ(self, file1: Path, file2: Path) -> bool:
         """Check if two files have different content."""
@@ -588,96 +433,123 @@ class EnhancedRepositorySynchronizer:
             # If we can't read the files, assume they're different
             return True
 
-def load_enhanced_config_from_yaml(config_path: str) -> SyncConfig:
-    """Load enhanced synchronization configuration from YAML file."""
-    config_file = Path(config_path)
-    
-    if not config_file.exists():
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    
-    try:
-        with open(config_file, 'r', encoding='utf-8') as f:
-            config_data = yaml.safe_load(f)
-        
-        # Determine paths relative to script location
-        script_dir = Path(__file__).parent.parent  # Go up from scripts/ to project root
-        
-        # Resolve repository paths
-        internal_repo_path = str(script_dir / config_data['repositories']['internal_repo_path'])
-        sanitized_repo_path = str(script_dir / config_data['repositories']['sanitized_repo_path'])
-        
-        # Extract git configuration
-        git_config = config_data.get('git', {})
-        branch = git_config.get('branch', 'feature/enterprise-rag-system-complete')
-        commit_message_template = git_config.get('commit_message_template', 'sync: update source code and documentation from sanitized repository')
-        
-        # Extract files and directories to sync
-        files_to_sync = config_data.get('files_to_sync', [])
-        directories_to_sync = config_data.get('directories_to_sync', [])
-        excluded_scripts = config_data.get('excluded_scripts', [])
-        included_scripts = config_data.get('included_scripts', [])
-        
-        return SyncConfig(
-            internal_repo_path=internal_repo_path,
-            sanitized_repo_path=sanitized_repo_path,
-            files_to_sync=files_to_sync,
-            directories_to_sync=directories_to_sync,
-            git_branch=branch,
-            commit_message_template=commit_message_template,
-            excluded_scripts=excluded_scripts,
-            included_scripts=included_scripts
-        )
-        
-    except yaml.YAMLError as e:
-        raise ValueError(f"Invalid YAML configuration: {e}")
-    except KeyError as e:
-        raise ValueError(f"Missing required configuration key: {e}")
-
-def get_enhanced_default_config() -> SyncConfig:
-    """Get enhanced default synchronization configuration."""
-    # Try to load from default config file first
+def get_default_config() -> SyncConfig:
+    """Get default synchronization configuration with HARDCODED CORRECT DIRECTION."""
     script_dir = Path(__file__).parent.parent  # Go up from scripts/ to project root
-    default_config_path = script_dir / "config" / "sync_config.yaml"
     
-    if default_config_path.exists():
-        try:
-            return load_enhanced_config_from_yaml(str(default_config_path))
-        except Exception as e:
-            logger.warning(f"Failed to load default config file: {e}")
-            logger.info("Falling back to minimal defaults")
+    # HARDCODED CORRECT DIRECTION:
+    # SOURCE: Internal GitLab repository (current directory)
+    # TARGET: Public GitHub repository (../rag-templates-sanitized)
+    source_repo_path = str(script_dir)  # Internal GitLab repo
+    target_repo_path = str(script_dir.parent / "rag-templates-sanitized")  # Public GitHub repo
     
-    # Fallback to minimal defaults
-    internal_repo_path = str(script_dir)
-    sanitized_repo_path = str(script_dir.parent / "rag-templates-sanitized")
-    
-    # Define minimal files to synchronize
+    # Define files to synchronize FROM internal TO public
     files_to_sync = [
         {"source": "README.md", "target": "README.md"},
         {"source": "docs/README.md", "target": "docs/README.md"},
-        {"source": "rag_templates/README.md", "target": "rag_templates/README.md"}
+        {"source": "docs/MCP_INTEGRATION_GUIDE.md", "target": "docs/MCP_INTEGRATION_GUIDE.md"},
+        {"source": "pyproject.toml", "target": "pyproject.toml"},
+        {"source": "setup.py", "target": "setup.py"},
+        {"source": "requirements.txt", "target": "requirements.txt"},
+        {"source": "docker-compose.yml", "target": "docker-compose.yml"},
+        {"source": "Dockerfile", "target": "Dockerfile"},
+        {"source": "Dockerfile_mini", "target": "Dockerfile_mini"},
+        {"source": ".dockerignore", "target": ".dockerignore"},
+        {"source": ".gitignore", "target": ".gitignore"},
+        {"source": ".gitattributes", "target": ".gitattributes"},
+        {"source": "activate_env.sh", "target": "activate_env.sh"},
+        {"source": "App.Installer.cls", "target": "App.Installer.cls"},
+        {"source": "iris.script", "target": "iris.script"},
+        {"source": "module.xml", "target": "module.xml"},
+    ]
+    
+    # Define directories to synchronize FROM internal TO public
+    directories_to_sync = [
+        {
+            "source": "common/",
+            "target": "common/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "CLEANUP_SUMMARY.md"]
+        },
+        {
+            "source": "iris_rag/",
+            "target": "iris_rag/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log"]
+        },
+        {
+            "source": "rag_templates/",
+            "target": "rag_templates/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log"]
+        },
+        {
+            "source": "config/",
+            "target": "config/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "monitoring.json", "sync_config.yaml"]
+        },
+        {
+            "source": "schema/",
+            "target": "schema/",
+            "exclude_patterns": ["*.pyc", "__pycache__/"]
+        },
+        {
+            "source": "data/",
+            "target": "data/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "pmc_oas_downloaded/", "pmc_100k_downloaded/"]
+        },
+        {
+            "source": "eval/",
+            "target": "eval/",
+            "exclude_patterns": ["*.pyc", "__pycache__/"]
+        },
+        {
+            "source": "nodejs/",
+            "target": "nodejs/",
+            "exclude_patterns": ["node_modules/", "*.log", "coverage/"]
+        },
+        {
+            "source": "objectscript/",
+            "target": "objectscript/",
+            "exclude_patterns": ["*.pyc", "__pycache__/"]
+        },
+        {
+            "source": "src/",
+            "target": "src/",
+            "exclude_patterns": ["*.pyc", "__pycache__/"]
+        },
+        {
+            "source": "tests/",
+            "target": "tests/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "reports/", "working/", "temp_*/", "validation/"]
+        },
+        {
+            "source": "scripts/examples/",
+            "target": "scripts/examples/",
+            "exclude_patterns": ["*.pyc", "__pycache__/"]
+        },
     ]
     
     return SyncConfig(
-        internal_repo_path=internal_repo_path,
-        sanitized_repo_path=sanitized_repo_path,
+        source_repo_path=source_repo_path,
+        target_repo_path=target_repo_path,
         files_to_sync=files_to_sync,
-        directories_to_sync=[]
+        directories_to_sync=directories_to_sync,
+        git_branch="master",
+        commit_message_template="sync: update from internal GitLab repository"
     )
 
 def main():
-    """Main entry point for the enhanced synchronization script."""
+    """Main entry point for the corrected synchronization script."""
     parser = argparse.ArgumentParser(
-        description="Enhanced synchronization between internal and sanitized repositories"
+        description="Synchronization FROM internal GitLab repository TO public GitHub repository"
     )
     parser.add_argument(
         "--sync-all",
         action="store_true",
-        help="Synchronize all content (files and directories)"
+        help="Synchronize all content FROM internal TO public"
     )
     parser.add_argument(
         "--push",
         action="store_true",
-        help="Push changes to remote repository after committing"
+        help="Push changes to GitHub after committing"
     )
     parser.add_argument(
         "--validate-sync",
@@ -689,11 +561,6 @@ def main():
         action="store_true",
         help="Show what would be synced without making changes"
     )
-    parser.add_argument(
-        "--config-file",
-        type=str,
-        help="Path to custom configuration file (YAML format)"
-    )
     
     args = parser.parse_args()
     
@@ -702,27 +569,14 @@ def main():
         sys.exit(1)
     
     try:
-        # Load configuration
-        if args.config_file:
-            config = load_enhanced_config_from_yaml(args.config_file)
-        else:
-            config = get_enhanced_default_config()
+        # Load configuration with HARDCODED CORRECT DIRECTION
+        config = get_default_config()
         
         # Initialize synchronizer
-        synchronizer = EnhancedRepositorySynchronizer(config)
-        
-        if args.validate_sync:
-            validation_results = synchronizer.validate_sync_status()
-            
-            if validation_results["sync_percentage"] >= 95.0:
-                logger.info("🎉 Repository is well synchronized!")
-                sys.exit(0)
-            else:
-                logger.warning(f"⚠️ Synchronization needed: {validation_results['sync_percentage']:.1f}% in sync")
-                sys.exit(1)
+        synchronizer = PublicRepositorySynchronizer(config)
         
         if args.sync_all:
-            # Perform comprehensive synchronization
+            # Perform synchronization FROM internal TO public
             sync_result = synchronizer.sync_all_content(dry_run=args.dry_run)
             
             if not sync_result.success:
@@ -738,11 +592,11 @@ def main():
                     sys.exit(0)
             
             if sync_result.files_synced or sync_result.directories_synced:
-                # Commit and optionally push
+                # Commit and optionally push to GitHub
                 final_result = synchronizer.commit_and_push(sync_result, push=args.push)
                 
                 if final_result.success:
-                    logger.info("🎉 Comprehensive synchronization completed successfully!")
+                    logger.info("🎉 Synchronization FROM internal TO public completed successfully!")
                     if final_result.commit_hash:
                         logger.info(f"📝 Commit: {final_result.commit_hash}")
                     
