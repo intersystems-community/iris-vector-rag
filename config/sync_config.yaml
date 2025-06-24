@@ -9,7 +9,7 @@ repositories:
 
 # Git configuration
 git:
-  branch: "feature/enterprise-rag-system-complete"
+  branch: "main"
   commit_message_template: "sync: update source code and documentation from sanitized repository"
 
 # Files to synchronize from sanitized to internal repository
