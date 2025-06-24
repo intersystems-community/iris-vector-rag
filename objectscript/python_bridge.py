@@ -56,23 +56,11 @@ except ImportError:
 
 # Import connection utilities
 try:
-    from common.iris_connection_manager import get_iris_connection # Updated import
+    from common.iris_connector import get_iris_connection # Updated import
     CONNECTION_UTILS_AVAILABLE = True
 except ImportError:
     CONNECTION_UTILS_AVAILABLE = False
     logger.warning("Connection utilities not available")
-
-# Import IrisSQLTool and SQL RAG Pipeline
-try:
-    from iris_rag.tools.iris_sql_tool import IrisSQLTool
-    from iris_rag.pipelines.sql_rag import SQLRAGPipeline
-    from common.utils import get_llm_func
-    IRIS_SQL_TOOL_AVAILABLE = True
-    SQL_RAG_PIPELINE_AVAILABLE = True
-except ImportError:
-    IRIS_SQL_TOOL_AVAILABLE = False
-    SQL_RAG_PIPELINE_AVAILABLE = False
-    logger.warning("IrisSQLTool and SQL RAG Pipeline not available")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -331,99 +319,6 @@ def invoke_noderag(query: str, config: str) -> str:
     return json.dumps(execution_result)
 
 
-def invoke_iris_sql_search(query: str) -> str:
-    """
-    Invoke IRIS SQL Tool for rewriting and executing SQL queries from ObjectScript.
-    
-    Args:
-        query: The SQL query to rewrite and execute
-        
-    Returns:
-        JSON string with results including:
-        - original_query: The original SQL query
-        - rewritten_query: The IRIS-compliant rewritten query
-        - explanation: Explanation of changes made
-        - results: List of result dictionaries
-        - success: Boolean indicating if the operation was successful
-        - error: Error message if operation failed
-    """
-    def _execute():
-        if not IRIS_SQL_TOOL_AVAILABLE:
-            raise ImportError("IrisSQLTool not available - missing imports")
-        
-        if not CONNECTION_UTILS_AVAILABLE:
-            raise ImportError("Connection utilities not available")
-        
-        # Initialize IRIS connection and LLM function
-        iris_connector = get_iris_connection()
-        llm_func = get_llm_func()
-        
-        # Initialize IrisSQLTool
-        sql_tool = IrisSQLTool(
-            iris_connector=iris_connector,
-            llm_func=llm_func
-        )
-        
-        # Execute SQL search
-        result = sql_tool.search(query)
-        return result
-    
-    execution_result = _safe_execute(_execute)
-    return json.dumps(execution_result)
-
-
-def invoke_sql_rag(query: str, config: str) -> str:
-    """
-    Invoke SQL RAG pipeline from ObjectScript.
-    
-    This pipeline converts natural language questions into SQL queries,
-    executes them against IRIS database, and uses the results as context
-    for generating comprehensive answers.
-    
-    Args:
-        query: The natural language question
-        config: JSON configuration string
-        
-    Returns:
-        JSON string with results including:
-        - query: Original question
-        - answer: Generated answer based on SQL results
-        - retrieved_documents: List of documents (SQL results formatted as documents)
-        - sql_query: The generated SQL query
-        - sql_results: Raw SQL results
-        - execution_time: Time taken to execute the pipeline
-    """
-    def _execute():
-        config_dict = json.loads(config) if isinstance(config, str) else config
-        
-        if not SQL_RAG_PIPELINE_AVAILABLE:
-            raise ImportError("SQL RAG Pipeline not available - missing imports")
-        
-        if not CONNECTION_UTILS_AVAILABLE:
-            raise ImportError("Connection utilities not available")
-        
-        # Initialize connection and configuration managers
-        from iris_rag.core.connection_manager import ConnectionManager
-        from iris_rag.core.config_manager import ConfigurationManager
-        
-        config_manager = ConfigurationManager()
-        connection_manager = ConnectionManager(config_manager)
-        
-        # Initialize SQL RAG pipeline
-        pipeline = SQLRAGPipeline(
-            connection_manager=connection_manager,
-            config_manager=config_manager,
-            llm_func=config_dict.get("llm_func")
-        )
-        
-        # Execute pipeline
-        result = pipeline.execute(query)
-        return result
-    
-    execution_result = _safe_execute(_execute)
-    return json.dumps(execution_result)
-
-
 def run_benchmarks(pipeline_names: str) -> str:
     """
     Run benchmarks for specified RAG pipelines from ObjectScript.
@@ -614,18 +509,6 @@ def get_available_pipelines() -> str:
                 "name": "NodeRAG",
                 "description": "Node-based retrieval-augmented generation",
                 "class": "NodeRAGPipeline"
-            },
-            "iris_sql_tool": {
-                "name": "IRIS SQL Tool",
-                "description": "SQL query rewriting and execution tool for IRIS database",
-                "class": "IrisSQLTool",
-                "available": IRIS_SQL_TOOL_AVAILABLE
-            },
-            "sql_rag": {
-                "name": "SQL RAG",
-                "description": "Natural language to SQL RAG pipeline for IRIS database",
-                "class": "SQLRAGPipeline",
-                "available": SQL_RAG_PIPELINE_AVAILABLE
             }
         }
         return pipelines

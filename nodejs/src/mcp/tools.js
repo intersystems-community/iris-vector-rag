@@ -1,70 +1,9 @@
 /**
  * MCP Tools for RAG Templates Library Consumption Framework.
- *
+ * 
  * This module provides RAG tool definitions with JSON schema validation
  * following support-tools-mcp patterns and conventions.
  */
-
-const { spawn } = require('child_process');
-const path = require('path');
-
-/**
- * Call Python bridge function via child process.
- *
- * @param {string} functionName - Name of the Python function to call
- * @param {string} query - Query parameter to pass to the function
- * @returns {Promise<Object>} Result from Python function
- */
-async function callPythonBridge(functionName, query) {
-    return new Promise((resolve, reject) => {
-        // Get the project root directory (assuming we're in nodejs/src/mcp/)
-        const projectRoot = path.resolve(__dirname, '../../..');
-        const pythonScript = path.join(projectRoot, 'objectscript', 'python_bridge.py');
-        
-        // Spawn Python process to call the bridge function
-        const pythonProcess = spawn('python3', ['-c', `
-import sys
-import os
-sys.path.insert(0, '${projectRoot}')
-from objectscript.python_bridge import ${functionName}
-result = ${functionName}('${query.replace(/'/g, "\\'")}')
-print(result)
-        `], {
-            cwd: projectRoot,
-            stdio: ['pipe', 'pipe', 'pipe']
-        });
-        
-        let stdout = '';
-        let stderr = '';
-        
-        pythonProcess.stdout.on('data', (data) => {
-            stdout += data.toString();
-        });
-        
-        pythonProcess.stderr.on('data', (data) => {
-            stderr += data.toString();
-        });
-        
-        pythonProcess.on('close', (code) => {
-            if (code !== 0) {
-                reject(new Error(`Python process exited with code ${code}: ${stderr}`));
-                return;
-            }
-            
-            try {
-                // Parse the JSON response from Python
-                const result = JSON.parse(stdout.trim());
-                resolve(result);
-            } catch (error) {
-                reject(new Error(`Failed to parse Python response: ${error.message}. Output: ${stdout}`));
-            }
-        });
-        
-        pythonProcess.on('error', (error) => {
-            reject(new Error(`Failed to spawn Python process: ${error.message}`));
-        });
-    });
-}
 
 /**
  * Create RAG tools for MCP integration.
@@ -324,36 +263,6 @@ function createRAGTools(ragInstance, enabledTools = []) {
                     throw new Error(`Failed to get configuration: ${error.message}`);
                 }
             }
-        },
-        
-        iris_sql_search: {
-            description: "Execute and rewrite SQL queries for InterSystems IRIS",
-            inputSchema: {
-                type: "object",
-                properties: {
-                    query: {
-                        type: "string",
-                        description: "SQL query to rewrite and execute"
-                    }
-                },
-                required: ["query"],
-                additionalProperties: false
-            },
-            async handler(params) {
-                const { query } = params;
-                
-                if (!query || typeof query !== 'string') {
-                    throw new Error('Query parameter is required and must be a string');
-                }
-                
-                try {
-                    // Call Python bridge function via child process
-                    const result = await callPythonBridge('invoke_iris_sql_search', query);
-                    return result;
-                } catch (error) {
-                    throw new Error(`IRIS SQL search failed: ${error.message}`);
-                }
-            }
         }
     };
     
@@ -374,7 +283,7 @@ function createRAGTools(ragInstance, enabledTools = []) {
 
 /**
  * Get the schema for a specific tool.
- *
+ * 
  * @param {string} toolName - Name of the tool
  * @returns {Object} Tool schema
  */
@@ -407,21 +316,6 @@ function getToolSchema(toolName) {
                         type: "boolean",
                         description: "Whether to include source information",
                         default: false
-                    }
-                },
-                required: ["query"],
-                additionalProperties: false
-            }
-        },
-        iris_sql_search: {
-            name: "iris_sql_search",
-            description: "Execute and rewrite SQL queries for InterSystems IRIS",
-            inputSchema: {
-                type: "object",
-                properties: {
-                    query: {
-                        type: "string",
-                        description: "SQL query to rewrite and execute"
                     }
                 },
                 required: ["query"],

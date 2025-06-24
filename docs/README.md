@@ -13,11 +13,6 @@ Welcome to the Enterprise RAG Framework documentation. This directory contains c
 - [`USER_GUIDE.md`](USER_GUIDE.md) - Getting started guide for end users
 - [`README.md`](README.md) - This documentation index
 
-### Development & Operations
-- [`REPOSITORY_SYNC.md`](REPOSITORY_SYNC.md) - Repository synchronization between internal and public repositories
-- [`CONFIGURATION.md`](CONFIGURATION.md) - Configuration system and environment setup
-- [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) - Developer onboarding and contribution guide
-
 ## RAG Techniques Implemented
 
 This framework implements multiple advanced RAG techniques:
@@ -31,41 +26,6 @@ This framework implements multiple advanced RAG techniques:
 | **HyDE** | ✅ Production | Hypothetical document embeddings for improved retrieval |
 | **CRAG** | ✅ Production | Corrective retrieval-augmented generation with self-correction |
 | **Hybrid IFind** | ✅ Production | Hybrid information finding combining multiple search approaches |
-
-## References
-
-### RAG Techniques
-
-Each RAG technique implemented in this framework is based on established research and implementations:
-
-#### Basic RAG
-- [RAG: Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401) - Original RAG paper by Facebook AI Research
-
-#### ColBERT
-- [ColBERT: Efficient and Effective Passage Retrieval](https://arxiv.org/abs/2004.12832) - Original ColBERT paper
-- [Stanford ColBERT](https://github.com/stanford-futuredata/ColBERT) - Official implementation
-
-#### NodeRAG
-- [Hierarchical Text Retrieval - NodeRAG](https://arxiv.org/abs/2310.20501) - NodeRAG research paper
-- [NodeRAG Implementation](https://github.com/microsoft/noderag) - Microsoft's official implementation
-
-#### GraphRAG
-- [From Local to Global: A Graph RAG Approach](https://arxiv.org/abs/2404.16130) - Microsoft GraphRAG paper
-- [Microsoft GraphRAG](https://github.com/microsoft/graphrag) - Official Microsoft implementation
-- [Neo4j GraphRAG](https://github.com/neo4j/neo4j-graphrag-python) - Neo4j's GraphRAG implementation
-
-#### HyDE
-- [Precise Zero-Shot Dense Retrieval - HyDE](https://arxiv.org/abs/2212.10496) - Original HyDE paper
-- [HyDE Official](https://github.com/texttron/hyde) - Official implementation
-
-#### CRAG
-- [Corrective Retrieval Augmented Generation](https://arxiv.org/abs/2401.15884) - CRAG research paper
-- [CRAG Implementation](https://github.com/HuskyInSalt/CRAG) - Community implementation
-
-#### Hybrid IFind
-- [InterSystems IFind Documentation](https://github.com/intersystems/iris-ifind) - InterSystems IFind implementation and documentation
-
-*Note: Hybrid IFind is a single, unified pipeline that combines IRIS IFind keyword search with vector similarity search using Reciprocal Rank Fusion (RRF) for optimal retrieval performance. This integrated approach leverages both semantic understanding through vector embeddings and precise keyword matching through IRIS's native IFind capabilities.*
 
 ## Architecture Overview
 

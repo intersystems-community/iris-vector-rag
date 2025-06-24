@@ -1,12 +1,7 @@
 """
-Hybrid IFind RAG Pipeline - Single Unified Implementation.
+Hybrid IFind RAG Pipeline implementation.
 
-This module provides the single, unified RAG implementation that combines:
-1. Vector similarity search for semantic matching
-2. IRIS IFind keyword search for precise text matching
-3. Reciprocal Rank Fusion (RRF) for optimal result combination
-
-This is the only active Hybrid IFind implementation in the codebase.
+This module provides a RAG implementation that combines vector search with IRIS IFind text search.
 """
 
 import logging
@@ -24,16 +19,12 @@ logger = logging.getLogger(__name__)
 
 class HybridIFindRAGPipeline(RAGPipeline):
     """
-    Hybrid IFind RAG Pipeline - Single Unified Implementation.
+    Hybrid IFind RAG pipeline implementation.
     
-    This is the only active Hybrid IFind implementation in the codebase.
-    It provides a unified pipeline that combines:
+    This pipeline combines:
     1. Vector similarity search for semantic matching
-    2. IRIS IFind text search for precise keyword matching
-    3. Reciprocal Rank Fusion (RRF) for optimal result combination
-    
-    The pipeline integrates these search methods seamlessly to provide
-    superior retrieval performance compared to individual approaches.
+    2. IRIS IFind text search for keyword matching
+    3. Hybrid ranking and result fusion
     """
     
     def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager,
