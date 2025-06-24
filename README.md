@@ -120,6 +120,10 @@ rag = ConfigurableRAG(config)
 
 ## 🔗 MCP Integration
 
+The Multi-Cloud Platform (MCP) integration allows you to easily deploy and manage RAG services as microservices. This design enables flexible deployment across various environments and seamless integration with existing enterprise systems.
+
+### Creating MCP Servers
+
 Create MCP servers in minutes:
 ```javascript
 import { createMCPServer } from '@rag-templates/mcp';
@@ -133,11 +137,18 @@ const server = createMCPServer({
 server.start();
 ```
 
+### IRIS SQL Tool Integration
+
+The IRIS SQL tool provides direct SQL access and advanced vector search capabilities within your MCP-deployed RAG services. It allows for efficient data manipulation and retrieval directly from InterSystems IRIS databases, leveraging its powerful SQL and vector functionalities. This integration streamlines data management for RAG applications, enabling complex queries and high-performance vector lookups.
+
+For detailed setup and usage, refer to the [MCP Integration Guide](docs/MCP_INTEGRATION_GUIDE.md).
+
 ## 📚 Documentation
 
 | Guide | Description |
 |-------|-------------|
 | **[📖 User Guide](docs/USER_GUIDE.md)** | Complete usage guide and best practices |
+| **[🔗 MCP Integration Guide](docs/MCP_INTEGRATION_GUIDE.md)** | Multi-Cloud Platform integration, MCP server creation, and IRIS SQL tool usage |
 | **[📋 Documentation](docs/README.md)** | Additional documentation and guides |
 
 ## ✅ Verification
