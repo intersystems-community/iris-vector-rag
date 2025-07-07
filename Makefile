@@ -1,4 +1,8 @@
 # RAG Templates Makefile
+
+# Use the bash terminal
+SHELL := /bin/bash
+
 # Standardized commands for development, testing, and data management
 # Uses Python virtual environment (.venv) for consistent dependency management
 
@@ -225,7 +229,7 @@ validate-all-pipelines:
 # Data management (DBAPI-first)
 load-data:
 	@echo "Loading sample PMC documents using DBAPI..."
-	uv run python -c "from data.loader_fixed import process_and_load_documents; result = process_and_load_documents('data/sample_10_docs', limit=10, use_mock=False); print(f'Loaded: {result}')"
+	uv run python -c "from data.loader_fixed import process_and_load_documents; result = process_and_load_documents('data/sample_10_docs', limit=10); print(f'Loaded: {result}')"
 
 load-1000:
 	@echo "Loading 1000+ PMC documents with ColBERT token embeddings for comprehensive testing..."
@@ -332,7 +336,7 @@ auto-setup-pipeline:
 		exit 1; \
 	fi
 	@echo "Auto-setting up $(PIPELINE) pipeline with validation and embedding generation..."
-	@uv run python scripts/validate_pipeline.py setup $(PIPELINE)
+	@uv run python scripts/utilities/validate_pipeline.py setup $(PIPELINE)
 
 # Demonstration targets (removed duplicate - see self-healing demonstration targets section)
 
