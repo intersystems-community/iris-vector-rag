@@ -327,7 +327,7 @@ validate-pipeline:
 		exit 1; \
 	fi
 	@echo "Validating $(PIPELINE) pipeline with pre-condition checks..."
-	@uv run python scripts/validate_pipeline.py validate $(PIPELINE)
+	@PYTHONPATH=$(PWD) uv run python scripts/utilities/validate_pipeline.py validate $(PIPELINE)
 
 auto-setup-pipeline:
 	@if [ -z "$(PIPELINE)" ]; then \
@@ -336,7 +336,7 @@ auto-setup-pipeline:
 		exit 1; \
 	fi
 	@echo "Auto-setting up $(PIPELINE) pipeline with validation and embedding generation..."
-	@uv run python scripts/utilities/validate_pipeline.py setup $(PIPELINE)
+	@PYTHONPATH=$(PWD) uv run python scripts/utilities/validate_pipeline.py setup $(PIPELINE)
 
 # Demonstration targets (removed duplicate - see self-healing demonstration targets section)
 
