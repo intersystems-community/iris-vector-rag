@@ -33,16 +33,6 @@ Set result = bridge.Query("What is machine learning?", "basic")
 Write result.answer
 ```
 
-## 📦 Installation
-
-```bash
-# Python
-pip install rag-templates
-
-# JavaScript/Node.js  
-npm install @rag-templates/core
-```
-
 ## 🏗️ Core Architecture
 
 ### Schema Manager
