@@ -239,7 +239,7 @@ class IRISVectorStore(VectorStore):
                         update_sql = f"""
                         UPDATE {self.table_name}
                         SET text_content = ?, metadata = ?, embedding = TO_VECTOR(?)
-                        WHERE id = ?
+                        WHERE doc_id = ?
                         """
                         embedding_str = json.dumps(embeddings[i])
                         cursor.execute(update_sql, [doc.page_content, metadata_json, embedding_str, doc.id])
@@ -247,21 +247,21 @@ class IRISVectorStore(VectorStore):
                         update_sql = f"""
                         UPDATE {self.table_name}
                         SET text_content = ?, metadata = ?
-                        WHERE id = ?
+                        WHERE doc_id = ?
                         """
                         cursor.execute(update_sql, [doc.page_content, metadata_json, doc.id])
                 else:
                     # Insert new document
                     if embeddings:
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (id, text_content, metadata, embedding)
+                        INSERT INTO {self.table_name} (doc_id, text_content, metadata, embedding)
                         VALUES (?, ?, ?, TO_VECTOR(?))
                         """
                         embedding_str = json.dumps(embeddings[i])
                         cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json, embedding_str])
                     else:
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (id, text_content, metadata)
+                        INSERT INTO {self.table_name} (doc_id, text_content, metadata)
                         VALUES (?, ?, ?)
                         """
                         cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json])
@@ -275,6 +275,7 @@ class IRISVectorStore(VectorStore):
         except Exception as e:
             connection.rollback()
             sanitized_error = self._sanitize_error_message(e, "add_documents")
+            print(e)
             logger.error(sanitized_error)
             raise VectorStoreDataError(f"Failed to add documents: {sanitized_error}")
         finally:
