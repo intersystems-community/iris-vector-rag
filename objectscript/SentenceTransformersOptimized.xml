@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26">
+<Class name="%Embedding.SentenceTransformersOptimized">
+<Description>
+Optimized version of %Embedding.SentenceTransformers with model caching.
+Extends the %Embedding.Interface class, using Hugging Face's SentenceTransformers package
+with intelligent model caching to prevent reloading on every embedding generation.
+</Description>
+<Super>%Embedding.Interface</Super>
+<TimeCreated>66911,48609.416206</TimeCreated>
+
+<Method name="IsValidConfig">
+<Description><![CDATA[
+Validates %Embedding.Config's Configuration property. 
+{ 
+"modelName" : <Name of sentence_transformers model>,
+"hfCachePath" : <Path to cache folder where models will be downloaded>, 
+"hfToken" : <Optional token to access gated hugging face models>, 
+"checkTokenCount": <Optional, whether to check token count of input>, 
+"maxTokens": <Optional, token threshold for input>
+"pythonPath": <Optional, path to use to retrieve python packages>}
+Also checks if the python package 'sentence_transformers' is installed. ]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[config:%DynamicObject,&errorMsg:%String]]></FormalSpec>
+<ReturnType>%Boolean</ReturnType>
+<Implementation><![CDATA[
+    // TODO: Warn if CUDA/MPS is not enabled / installed
+    if config.%Get("modelName") = "" {
+        set errorMsg = $$$Text("'modelName' not set", "%SQL.VECTOR")
+        return 0
+    }
+    if config.%Get("hfCachePath") = "" {
+        set errorMsg = $$$Text("'hfCachePath' not set", "%SQL.VECTOR")
+        return 0
+    }
+    try {
+        do ..CheckInstall(config.%Get("pythonPath", ""))
+    } catch e {
+        set errorMsg = $$$FormatText($$$Text("%1. Install python package 'sentence_transformers'","%SQL.VECTOR"),e.Data)
+        return 0
+    }
+    try {
+        do ..DownloadModel(config.%Get("modelName"), config.%Get("hfCachePath"), config.%Get("hfToken",""),config.%Get("pythonPath", ""))
+    } catch e {
+        set errorMsg = $$$FormatText($$$Text("%1. Error downloading model","%SQL.VECTOR"),e.Data)
+        return 0
+    }
+    return 1
+]]></Implementation>
+</Method>
+
+<Method name="Embedding">
+<Description>
+Generates embeddings locally using sentence_transformers with optimized model caching</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>input:%String,configuration:%String</FormalSpec>
+<ReturnType>%Vector</ReturnType>
+<Implementation><![CDATA[
+    try {
+        set config = [].%FromJSON(configuration)
+        set inputData = $SELECT($ISOBJECT(input)=1:input.%ToJSON(), 1:input)
+        set embeddingsPy = ..EmbeddingPyOptimized(config.%Get("modelName"), inputData_"", config.%Get("hfCachePath"), config.%Get("hfToken", ""), config.%Get("checkTokenCount", 0), config.%Get("maxTokens", -1),config.%Get("pythonPath", ""))
+        return ##class(%Library.Vector).DisplayToLogical(embeddingsPy)
+    } catch e {
+        $$$ThrowStatus($$$ERROR($$$EmbeddingGeneralError,e.Data))
+    }
+]]></Implementation>
+</Method>
+
+<Method name="EmbeddingPyOptimized">
+<Description>
+Optimized embedded python function that uses sentence_transformers with intelligent model caching.
+Models are cached globally and reused across calls to prevent expensive reloading.
+Example modelName: sentence-transformers/all-MiniLM-L6-v2</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>modelName:%String,input:%String,cacheFolder:%String,token:%String,checkTokenCount:%Boolean,maxTokens:%Integer,pythonPath:%String=""</FormalSpec>
+<Language>python</Language>
+<Implementation><![CDATA[
+    if pythonPath:
+        import sys
+        sys.path.append(pythonPath)
+    
+    import os 
+    import stat
+    import platform
+    import threading
+    from sentence_transformers import SentenceTransformer
+    
+    # Global model cache with thread safety
+    if not hasattr(EmbeddingPyOptimized, '_model_cache'):
+        EmbeddingPyOptimized._model_cache = {}
+        EmbeddingPyOptimized._cache_lock = threading.Lock()
+    
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    
+    if token:
+        os.environ["HF_TOKEN"] = token
+    else:
+        os.environ["HF_TOKEN"] = "." # Set to some dummy value to prevent unintended access to local storage, caused by a sentence_transformers package bug
+
+    # Create cache key from model name and cache folder
+    cache_key = f"{modelName}:{cacheFolder}"
+    
+    # Thread-safe model loading and caching
+    with EmbeddingPyOptimized._cache_lock:
+        if cache_key not in EmbeddingPyOptimized._model_cache:
+            print(f"Loading SentenceTransformer model: {modelName} (cache folder: {cacheFolder})")
+            
+            # The code here ensures there is no unexpected 'Access Denied' when sentence_transformers downloads models or updates any cache
+            current_os = platform.system()
+            old_umask = None
+            old_permissions = None
+            
+            if current_os == "Linux" or current_os == "Darwin":
+                # Set umask on Linux or Mac
+                old_umask = os.umask(0o002)
+            elif current_os == "Windows":
+                # Save the current permissions on Windows and set folder to writable
+                old_permissions = os.stat(cacheFolder).st_mode
+                os.chmod(cacheFolder, old_permissions | stat.S_IWRITE) 
+
+            try:
+                model = SentenceTransformer(modelName, cache_folder=cacheFolder, trust_remote_code=True)
+                EmbeddingPyOptimized._model_cache[cache_key] = model
+                print(f"Successfully cached SentenceTransformer model: {modelName}")
+            finally:
+                # Revert umask on Linux or Mac
+                if (current_os == "Linux" or current_os == "Darwin") and old_umask is not None:
+                    os.umask(old_umask)
+                # Revert folder permissions on Windows
+                elif current_os == "Windows" and old_permissions is not None:
+                    os.chmod(cacheFolder, old_permissions)
+        else:
+            print(f"Using cached SentenceTransformer model: {modelName}")
+    
+    # Get the cached model
+    model = EmbeddingPyOptimized._model_cache[cache_key]
+    
+    # Check token count if needed
+    if checkTokenCount:
+        tokenCount = len(model[0].tokenizer(input, return_attention_mask=False, return_token_type_ids=False).input_ids)
+        if maxTokens == -1:
+            if tokenCount > model.max_seq_length:
+                # maxTokens not provided, check against model's max token count
+                raise Exception(f"Input has a token count of {tokenCount}, which exceeds the model's maximum token count of {model.max_seq_length}")
+        elif tokenCount > maxTokens:
+            # maxTokens provided by user
+            raise Exception(f"Input has a token count of {tokenCount}, which exceeds maxTokens {maxTokens}")
+
+    # Generate embeddings using cached model
+    embeddings = model.encode([input])[0]
+
+    return str(embeddings.tolist())
+]]></Implementation>
+</Method>
+
+<Method name="EmbeddingPy">
+<Description>
+Legacy embedded python function - kept for backward compatibility.
+For optimal performance, use EmbeddingPyOptimized instead.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>modelName:%String,input:%String,cacheFolder:%String,token:%String,checkTokenCount:%Boolean,maxTokens:%Integer,pythonPath:%String=""</FormalSpec>
+<Language>python</Language>
+<Implementation><![CDATA[
+    # Delegate to optimized version for backward compatibility
+    return EmbeddingPyOptimized(modelName, input, cacheFolder, token, checkTokenCount, maxTokens, pythonPath)
+]]></Implementation>
+</Method>
+
+<Method name="ClearModelCache">
+<Description>
+Utility method to clear the model cache. Useful for memory management or when switching between different model configurations.</Description>
+<ClassMethod>1</ClassMethod>
+<Language>python</Language>
+<Implementation><![CDATA[
+    if hasattr(EmbeddingPyOptimized, '_model_cache'):
+        with EmbeddingPyOptimized._cache_lock:
+            cache_size = len(EmbeddingPyOptimized._model_cache)
+            EmbeddingPyOptimized._model_cache.clear()
+            print(f"Cleared {cache_size} cached SentenceTransformer models")
+    else:
+        print("No model cache to clear")
+]]></Implementation>
+</Method>
+
+<Method name="GetCacheInfo">
+<Description>
+Returns information about the current model cache state.</Description>
+<ClassMethod>1</ClassMethod>
+<Language>python</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+    import json
+    
+    if hasattr(EmbeddingPyOptimized, '_model_cache'):
+        with EmbeddingPyOptimized._cache_lock:
+            cache_info = {
+                "cached_models": list(EmbeddingPyOptimized._model_cache.keys()),
+                "cache_size": len(EmbeddingPyOptimized._model_cache),
+                "memory_usage_mb": "Not available - requires psutil"
+            }
+            return json.dumps(cache_info, indent=2)
+    else:
+        return json.dumps({"cached_models": [], "cache_size": 0}, indent=2)
+]]></Implementation>
+</Method>
+
+<Method name="DownloadModel">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>modelName:%String,cacheFolder:%String,token:%String,pythonPath:%String=""</FormalSpec>
+<Language>python</Language>
+<Implementation><![CDATA[
+    if pythonPath:
+        import sys
+        sys.path.append(pythonPath)
+    import stat
+    import os
+    import platform
+    from huggingface_hub import hf_hub_download
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    
+    if token:
+        os.environ["HF_TOKEN"] = token
+    else:
+        os.environ["HF_TOKEN"] = "." # Set to some dummy value to prevent unintended access to local storage, caused by a sentence_transformers package bug
+        token = None
+    
+    # The code here ensures there is no unexpected 'Access Denied' when sentence_transformers downloads models or updates any cache
+    current_os = platform.system()
+    if current_os == "Linux" or current_os == "Darwin":
+        # Set umask on Linux or Mac
+        old_umask = os.umask(0o002)
+    elif current_os == "Windows":
+        # Save the current permissions on Windows and set folder to writable
+        old_permissions = os.stat(cacheFolder).st_mode
+        os.chmod(cacheFolder, old_permissions | stat.S_IWRITE) 
+
+    hf_hub_download(
+            modelName,
+            filename="modules.json",
+            token=token,
+            cache_dir=cacheFolder,
+        )
+
+     # Revert umask on Linux or Mac
+    if (current_os == "Linux" or current_os == "Darwin") and old_umask is not None:
+        os.umask(old_umask)
+    # Revert folder permissions on Windows
+    elif current_os == "Windows" and old_permissions is not None:
+        os.chmod(cacheFolder, old_permissions)
+]]></Implementation>
+</Method>
+
+<Method name="CheckInstall">
+<Description>
+Throws an error if python package 'sentence_transformers' is not installed.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pythonPath:%String=""</FormalSpec>
+<Language>python</Language>
+<Implementation><![CDATA[
+    if pythonPath:
+        import sys
+        sys.path.append(pythonPath)
+    import sentence_transformers
+]]></Implementation>
+</Method>
+
+<Method name="GetVectorLength">
+<Description>
+Retrieves a model's vector length using the sentence_transformers package with caching</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>modelName:%String,pythonPath:%String="",cacheFolder:%String=""</FormalSpec>
+<Language>python</Language>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+    if pythonPath:
+        import sys
+        sys.path.append(pythonPath)
+    from sentence_transformers import SentenceTransformer
+    
+    # Use the same caching mechanism for consistency
+    if not hasattr(EmbeddingPyOptimized, '_model_cache'):
+        EmbeddingPyOptimized._model_cache = {}
+        EmbeddingPyOptimized._cache_lock = threading.Lock()
+    
+    cache_key = f"{modelName}:{cacheFolder}"
+    
+    with EmbeddingPyOptimized._cache_lock:
+        if cache_key not in EmbeddingPyOptimized._model_cache:
+            model = SentenceTransformer(modelName, cache_folder=cacheFolder, trust_remote_code=True)
+            EmbeddingPyOptimized._model_cache[cache_key] = model
+        else:
+            model = EmbeddingPyOptimized._model_cache[cache_key]
+    
+    return model.get_sentence_embedding_dimension()
+]]></Implementation>
+</Method>
+
+<Method name="GetMaxTokens">
+<Description>
+Helper function to retrieve a model's maximum input tokens using the sentence_transformers package with caching</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>modelName:%String,pythonPath:%String="",cacheFolder:%String=""</FormalSpec>
+<Language>python</Language>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+    if pythonPath:
+        import sys
+        sys.path.append(pythonPath)
+    from sentence_transformers import SentenceTransformer
+    import threading
+    
+    # Use the same caching mechanism for consistency
+    if not hasattr(EmbeddingPyOptimized, '_model_cache'):
+        EmbeddingPyOptimized._model_cache = {}
+        EmbeddingPyOptimized._cache_lock = threading.Lock()
+    
+    cache_key = f"{modelName}:{cacheFolder}"
+    
+    with EmbeddingPyOptimized._cache_lock:
+        if cache_key not in EmbeddingPyOptimized._model_cache:
+            model = SentenceTransformer(modelName, cache_folder=cacheFolder, trust_remote_code=True)
+            EmbeddingPyOptimized._model_cache[cache_key] = model
+        else:
+            model = EmbeddingPyOptimized._model_cache[cache_key]
+    
+    return model.max_seq_length
+]]></Implementation>
+</Method>
+</Class>
+</Export>
