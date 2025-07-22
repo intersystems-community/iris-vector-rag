@@ -6,7 +6,7 @@
       <Version>0.1.0</Version>
       <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend.</Description>
       <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
-      <Author>InterSystems IRIS RAG Templates Project</Author>
+      <Author><![CDATA[InterSystems IRIS RAG Templates Project]]></Author>
       <License>MIT</License>
       <Repository>https://github.com/intersystems/iris-rag-templates</Repository>
       <Homepage>https://github.com/intersystems/iris-rag-templates</Homepage>
@@ -95,7 +95,7 @@
           
           <Import File="${SourceDir}objectscript/" Flags="ck" Recurse="true"/>
           
-          <CSPApplication Url="${app}" Directory="${SourceDir}csp/" ServeFiles="1" Recurse="1" MatchRoles=":%DB_${Namespace}"/>
+          <CSPApplication Url="${app}" Directory="${SourceDir}csp/" ServeFiles="1" Recurse="1" MatchRoles=""/>
         </Namespace>
       </Manifest>
     </Module>
