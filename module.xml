@@ -98,4 +98,8 @@
           <Import File="${SourceDir}objectscript/" Flags="ck" Recurse="true"/>
           
           <CSPApplication Url="${app}" Directory="${SourceDir}csp/" ServeFiles="1" Recurse="1" MatchRoles=":%DB_${Namespace}"/>
-"/>
+        </Namespace>
+      </Manifest>
+    </Module>
+  </Document>
+</Export>
