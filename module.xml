@@ -8,8 +8,8 @@
       <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
       <Author>
         <Organization>InterSystems Corporation</Organization>
+        <License>MIT</License>
       </Author>
-      <License>MIT</License>
       <Repository>https://github.com/intersystems/iris-rag-templates</Repository>
       <Homepage>https://github.com/intersystems/iris-rag-templates</Homepage>
       
@@ -20,31 +20,30 @@
         </ModuleReference>
       </Dependencies>
       
-      <Packaging>
-        <Resource Name="RAG.IPMInstaller.CLS" Directory="objectscript/"/>
-        <Resource Name="RAG.VectorMigration.CLS" Directory="objectscript/"/>
-        <Resource Name="RAG.IFindSetup.CLS" Directory="objectscript/"/>
-        <Resource Name="RAG.SourceDocumentsIFind.CLS" Directory="objectscript/"/>
-        <Resource Name="enable_vector_search.cos" Directory="objectscript/"/>
-        <Resource Name="python_bridge.py" Directory="objectscript/"/>
-        <Resource Name="iris_rag" Directory="iris_rag/" Recurse="true"/>
-        <Resource Name="common" Directory="common/" Recurse="true"/>
-        <Resource Name="basic_rag" Directory="basic_rag/" Recurse="true"/>
-        <Resource Name="hyde" Directory="hyde/" Recurse="true"/>
-        <Resource Name="crag" Directory="crag/" Recurse="true"/>
-        <Resource Name="colbert" Directory="colbert/" Recurse="true"/>
-        <Resource Name="noderag" Directory="noderag/" Recurse="true"/>
-        <Resource Name="graphrag" Directory="graphrag/" Recurse="true"/>
-        <Resource Name="hybrid_ifind_rag" Directory="hybrid_ifind_rag/" Recurse="true"/>
-        <Resource Name="chunking" Directory="chunking/" Recurse="true"/>
-        <Resource Name="eval" Directory="eval/" Recurse="true"/>
-        <Resource Name="examples" Directory="examples/" Recurse="true"/>
-        <Resource Name="config" Directory="config/" Recurse="true"/>
-        <Resource Name="docs" Directory="docs/" Recurse="true"/>
-        <Resource Name="README.md" Directory=""/>
-        <Resource Name="pyproject.toml" Directory=""/>
-        <Resource Name="requirements.txt" Directory=""/>
-      </Packaging>
+      <Packaging>module</Packaging>
+      <Resource Name="RAG.IPMInstaller.CLS" Directory="objectscript/"/>
+      <Resource Name="RAG.VectorMigration.CLS" Directory="objectscript/"/>
+      <Resource Name="RAG.IFindSetup.CLS" Directory="objectscript/"/>
+      <Resource Name="RAG.SourceDocumentsIFind.CLS" Directory="objectscript/"/>
+      <Resource Name="enable_vector_search.cos" Directory="objectscript/"/>
+      <Resource Name="python_bridge.py" Directory="objectscript/"/>
+      <Resource Name="iris_rag" Directory="iris_rag/" Recurse="true"/>
+      <Resource Name="common" Directory="common/" Recurse="true"/>
+      <Resource Name="basic_rag" Directory="basic_rag/" Recurse="true"/>
+      <Resource Name="hyde" Directory="hyde/" Recurse="true"/>
+      <Resource Name="crag" Directory="crag/" Recurse="true"/>
+      <Resource Name="colbert" Directory="colbert/" Recurse="true"/>
+      <Resource Name="noderag" Directory="noderag/" Recurse="true"/>
+      <Resource Name="graphrag" Directory="graphrag/" Recurse="true"/>
+      <Resource Name="hybrid_ifind_rag" Directory="hybrid_ifind_rag/" Recurse="true"/>
+      <Resource Name="chunking" Directory="chunking/" Recurse="true"/>
+      <Resource Name="eval" Directory="eval/" Recurse="true"/>
+      <Resource Name="examples" Directory="examples/" Recurse="true"/>
+      <Resource Name="config" Directory="config/" Recurse="true"/>
+      <Resource Name="docs" Directory="docs/" Recurse="true"/>
+      <Resource Name="README.md" Directory=""/>
+      <Resource Name="pyproject.toml" Directory=""/>
+      <Resource Name="requirements.txt" Directory=""/>
       
       <Lifecycle>
         <Setup>
@@ -80,10 +79,7 @@
         <Parameter Name="SKIP_DEPENDENCIES" Description="Skip dependency validation" Default="false"/>
       </Parameters>
       
-      <SystemRequirements>
-        <SystemRequirement Name="IRIS" Version="2025.1"/>
-        <SystemRequirement Name="Python" Version="3.11"/>
-      </SystemRequirements>
+      <SystemRequirements Version=">=2025.1" />
       
       <Manifest>
         <Default Name="SourceDir" Value="${mgrdir}${MODULE}"/>
