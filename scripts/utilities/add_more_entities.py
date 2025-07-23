@@ -6,7 +6,6 @@ Uses schema manager and data sync manager for proper entity population.
 NO hardcoded SQL - delegates to proper data management authorities.
 """
 
-import os
 import sys
 import logging
 from pathlib import Path

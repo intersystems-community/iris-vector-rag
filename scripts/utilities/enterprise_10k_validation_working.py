@@ -29,7 +29,7 @@ from dotenv import load_dotenv
 from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
 from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
 from src.deprecated.colbert.pipeline_v2 import ColBERTPipelineV2 # Updated import
-from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
+from src.deprecated.hyde.pipeline_v2 import HyDERAGPipelineV2 # Updated import
 from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
 
 load_dotenv()
@@ -80,7 +80,7 @@ class Enterprise10KValidationWorking:
                 'description': 'Token-level semantic matching with fine-grained relevance'
             },
             'HyDE': {
-                'class': HyDEPipelineV2,
+                'class': HyDERAGPipelineV2,
                 'description': 'Hypothetical document generation for enhanced retrieval'
             },
             'CRAG': {

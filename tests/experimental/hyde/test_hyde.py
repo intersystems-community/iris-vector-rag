@@ -66,8 +66,8 @@ def mock_llm_for_hyde():
 
 @pytest.fixture
 def hyde_pipeline(mock_iris_connector, mock_embedding_func, mock_llm_for_hyde):
-    """Initializes HyDEPipeline with mock dependencies."""
-    return HyDEPipeline(
+    """Initializes HyDERAGPipeline with mock dependencies."""
+    return HyDERAGPipeline(
         iris_connector=mock_iris_connector,
         embedding_func=mock_embedding_func,
         llm_func=mock_llm_for_hyde 

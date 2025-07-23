@@ -19,17 +19,14 @@ from typing import Dict, List, Any, Optional, Tuple
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import the module to test
-from scripts.run_rag_benchmarks import (
-    load_queries,
+from scripts.utilities.run_rag_benchmarks import (
     create_pipeline_wrappers,
     ensure_min_documents,
     setup_database_connection,
     prepare_colbert_embeddings,
     initialize_embedding_and_llm,
-    get_llm_func,
     run_benchmarks,
     parse_args,
-    main
 )
 
 
@@ -207,9 +204,6 @@ class TestMetricsCalculation:
                                 mock_relevance.return_value = 0.85
                                 mock_latency.return_value = {"p50": 100, "p95": 150, "p99": 200}
                                 mock_throughput.return_value = 10.0
-                                
-                                # Import the function that uses these metrics
-                                from eval.bench_runner import run_all_techniques_benchmark
                                 
                                 # Mock the run_all_techniques_benchmark function
                                 with patch('scripts.run_rag_benchmarks.run_all_techniques_benchmark') as mock_run:

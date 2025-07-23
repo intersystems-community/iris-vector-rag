@@ -18,20 +18,20 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import original pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as FixedGraphRAGPipeline # Updated import, aliased
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline as FixedGraphRAGPipeline # Updated import, aliased
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 # Import V2 pipelines
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline as HyDEPipelineV2 # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
-from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipelineV2 # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipelineV2 # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipelineV2 # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridIFindRAGPipelineV2 # Updated import
 
 # Test queries
 TEST_QUERIES = [
@@ -83,14 +83,14 @@ def run_performance_comparison():
         "BasicRAG_V2": BasicRAGPipelineV2(iris_connector, embedding_func, llm_func),
         "CRAG_Original": CRAGPipeline(iris_connector, embedding_func, llm_func),
         "CRAG_V2": CRAGPipelineV2(iris_connector, embedding_func, llm_func),
-        "HyDE_Original": HyDEPipeline(iris_connector, embedding_func, llm_func),
-        "HyDE_V2": HyDEPipelineV2(iris_connector, embedding_func, llm_func),
+        "HyDE_Original": HyDERAGPipeline(iris_connector, embedding_func, llm_func),
+        "HyDE_V2": HyDERAGPipelineV2(iris_connector, embedding_func, llm_func),
         "NodeRAG_Original": NodeRAGPipeline(iris_connector, embedding_func, llm_func),
         "NodeRAG_V2": NodeRAGPipelineV2(iris_connector, embedding_func, llm_func),
         "GraphRAG_Original": FixedGraphRAGPipeline(iris_connector, embedding_func, llm_func),
         "GraphRAG_V2": GraphRAGPipelineV2(iris_connector, embedding_func, llm_func),
-        "HybridiFindRAG_Original": HybridiFindRAGPipeline(iris_connector, embedding_func, llm_func),
-        "HybridiFindRAG_V2": HybridiFindRAGPipelineV2(iris_connector, embedding_func, llm_func)
+        "HybridiFindRAG_Original": HybridIFindRAGPipeline(iris_connector, embedding_func, llm_func),
+        "HybridiFindRAG_V2": HybridIFindRAGPipelineV2(iris_connector, embedding_func, llm_func)
     }
     
     results = {}

@@ -15,15 +15,15 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import all original pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.graphrag.pipeline import OriginalGraphRAGPipeline as FixedGraphRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import OriginalGraphRAGPipeline as FixedGraphRAGPipeline # Updated import
 
 # Import all V2 pipelines
-from src.deprecated.basic_rag.pipeline_v2 import BasicRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic_v2 import BasicRAGPipelineV2 # Updated import
 from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
-from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
+from src.deprecated.hyde.pipeline_v2 import HyDERAGPipelineV2 # Updated import
 from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
 
 def test_pipeline_pair(name, original_class, v2_class, query="What are the symptoms of diabetes?"):
@@ -106,7 +106,7 @@ def main():
     results.append(("CRAG", orig_time, v2_time))
     
     # HyDE
-    orig_time, v2_time = test_pipeline_pair("HyDE", HyDEPipeline, HyDEPipelineV2)
+    orig_time, v2_time = test_pipeline_pair("HyDE", HyDERAGPipeline, HyDERAGPipelineV2)
     results.append(("HyDE", orig_time, v2_time))
     
     # GraphRAG

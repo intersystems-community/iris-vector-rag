@@ -4,7 +4,6 @@ Check ingestion checkpoint status
 """
 
 import pickle
-import sys
 import os
 from dataclasses import dataclass
 from typing import Dict, List, Any

@@ -14,8 +14,6 @@ import time
 
 from ..core.base import RAGPipeline
 from ..core.models import Document
-from ..core.connection import ConnectionManager
-from ..config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
 

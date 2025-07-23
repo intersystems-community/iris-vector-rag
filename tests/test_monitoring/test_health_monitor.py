@@ -5,7 +5,7 @@ Tests for the Health Monitor module.
 import pytest
 import time
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from iris_rag.monitoring.health_monitor import HealthMonitor, HealthCheckResult
 from iris_rag.config.manager import ConfigurationManager

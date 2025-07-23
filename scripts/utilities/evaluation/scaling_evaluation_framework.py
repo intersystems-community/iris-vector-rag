@@ -10,16 +10,10 @@ import json
 import time
 import logging
 import psutil
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, List, Any, Optional
 import traceback
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -38,7 +32,6 @@ try:
         faithfulness,
         answer_similarity,
         answer_correctness,
-        context_relevancy
     )
     from datasets import Dataset
     RAGAS_AVAILABLE = True
@@ -47,16 +40,16 @@ except ImportError:
     print("⚠️ RAGAS not installed. Install with: pip install ragas datasets")
 
 # RAG imports - all 7 techniques
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import (JDBCFixedCRAGPipeline was not found)
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import (JDBCFixedGraphRAGPipeline was not found)
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import (JDBCFixedCRAGPipeline was not found)
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import (JDBCFixedGraphRAGPipeline was not found)
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline as HybridIFindRAGPipeline # Updated import
 
 # Common utilities
-from common.iris_connector_jdbc import get_iris_connection # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func, DEFAULT_EMBEDDING_MODEL_NAME # Updated import
 from dotenv import load_dotenv
 
@@ -82,6 +75,7 @@ class ScalingEvaluationFramework:
         try:
             if os.getenv("OPENAI_API_KEY"):
                 self.llm_func = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0, openai_api_key=os.getenv("OPENAI_API_KEY"))
+                DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
                 self.embedding_func_ragas = HuggingFaceEmbeddings(model_name=DEFAULT_EMBEDDING_MODEL, model_kwargs={'device': 'cpu'})
                 self.real_llm = True
                 logger.info("✅ Using OpenAI GPT-3.5-turbo for RAGAS evaluation")
@@ -238,7 +232,7 @@ class ScalingEvaluationFramework:
                     self.connection, self.embedding_func, self.llm_func, schema="RAG"
                 )
             elif technique_name == 'HyDE':
-                return HyDEPipeline(
+                return HyDERAGPipeline(
                     self.connection, self.embedding_func, self.llm_func
                 )
             elif technique_name == 'CRAG':
@@ -246,7 +240,7 @@ class ScalingEvaluationFramework:
                     self.connection, self.embedding_func, self.llm_func
                 )
             elif technique_name == 'ColBERT':
-                return ColBERTPipeline(
+                return ColBERTRAGPipeline(
                     iris_connector=self.connection,
                     colbert_query_encoder_func=self.embedding_func,
                     colbert_doc_encoder_func=self.embedding_func,
@@ -398,7 +392,6 @@ class ScalingEvaluationFramework:
                 faithfulness,
                 answer_similarity,
                 answer_correctness,
-                context_relevancy
             ]
             
             # Run RAGAS evaluation

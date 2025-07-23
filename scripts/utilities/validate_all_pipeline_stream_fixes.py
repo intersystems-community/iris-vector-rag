@@ -14,12 +14,12 @@ from typing import Dict, Any, List
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func, get_llm_func
 
 # Import all pipeline classes
 from basic_rag.pipeline import BasicRAGPipeline
-from hyde.pipeline import HyDEPipeline
+from hyde.pipeline import HyDERAGPipeline
 from noderag.pipeline import NodeRAGPipeline
 from graphrag.pipeline import GraphRAGPipeline
 from crag.pipeline import CRAGPipeline
@@ -180,7 +180,7 @@ def main():
     # Define pipelines to test
     pipelines_to_test = [
         (BasicRAGPipeline, "BasicRAG"),
-        (HyDEPipeline, "HyDE"),
+        (HyDERAGPipeline, "HyDE"),
         (NodeRAGPipeline, "NodeRAG"),
         (GraphRAGPipeline, "GraphRAG"),
         (CRAGPipeline, "CRAG")

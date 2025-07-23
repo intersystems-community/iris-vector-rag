@@ -103,9 +103,9 @@ def main():
         ("CRAG V2", "crag.pipeline_v2", "CRAGPipelineV2"),
         ("NodeRAG V2", "noderag.pipeline_v2", "NodeRAGPipelineV2"),
         ("ColBERT V2", "colbert.pipeline_v2", "ColBERTPipelineV2"),
-        ("HyDE V2", "hyde.pipeline_v2", "HyDEPipelineV2"),
+        ("HyDE V2", "hyde.pipeline_v2", "HyDERAGPipelineV2"),
         ("GraphRAG V2", "graphrag.pipeline_v2", "GraphRAGPipelineV2"),
-        ("HybridIFindRAG V2", "hybrid_ifind_rag.pipeline_v2", "HybridiFindRAGPipelineV2"),
+        ("HybridIFindRAG V2", "hybrid_ifind_rag.pipeline_v2", "HybridIFindRAGPipelineV2"),
     ]
     
     results = []

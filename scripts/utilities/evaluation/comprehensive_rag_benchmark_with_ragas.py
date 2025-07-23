@@ -47,13 +47,13 @@ except ImportError:
     print("⚠️ RAGAS not installed. Install with: pip install ragas datasets")
 
 # RAG imports - using standard pipelines (not JDBC-specific)
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline  # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline  # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline as HybridIFindRAGPipeline # Updated import
 
 # Common utilities
 from common.iris_connector import get_iris_connection # Updated import
@@ -170,7 +170,7 @@ class ComprehensiveRAGBenchmark:
             logger.error(f"❌ BasicRAG failed: {e}")
         
         try:
-            pipelines['HyDE'] = HyDEPipeline(
+            pipelines['HyDE'] = HyDERAGPipeline(
                 self.connection, self.embedding_func, self.llm_func
             )
             logger.info("✅ HyDE initialized")

@@ -8,8 +8,7 @@ automatic migration capabilities for vector dimensions and other schema changes.
 
 import logging
 import json
-from typing import Dict, Any, Optional, List
-from datetime import datetime
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 

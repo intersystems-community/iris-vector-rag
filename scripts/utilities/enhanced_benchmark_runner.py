@@ -34,10 +34,10 @@ if project_root not in sys.path:
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 from eval.metrics import calculate_retrieval_metrics, calculate_answer_quality_metrics # Path remains same
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(
@@ -304,7 +304,7 @@ class ProductionBenchmarkRunner:
                     llm_func=self.llm_func
                 )
             elif technique == "hyde":
-                pipeline = HyDEPipeline(
+                pipeline = HyDERAGPipeline(
                     iris_connector=self.connection,
                     embedding_func=self.embedding_func,
                     llm_func=self.llm_func

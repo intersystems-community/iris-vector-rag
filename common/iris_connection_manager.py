@@ -16,9 +16,8 @@ Environment Priority:
 """
 
 import os
-import sys
 import logging
-from typing import Optional, Any, Dict, Union
+from typing import Optional, Any, Dict
 
 logger = logging.getLogger(__name__)
 

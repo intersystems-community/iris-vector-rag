@@ -6,11 +6,10 @@ This script monitors ingestion performance in real-time to validate
 that the new indexes are providing the expected performance improvements.
 """
 
-import logging
 import time
 import sys
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
 # Add the project root to the path

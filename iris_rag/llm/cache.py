@@ -17,7 +17,7 @@ import time
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 from functools import wraps
 
 logger = logging.getLogger(__name__)

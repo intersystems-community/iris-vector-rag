@@ -6,7 +6,7 @@ New code should import directly from the eval.comparative package.
 """
 
 # Re-export everything from the package
-from eval.comparative import (
+from scripts.utilities.evaluation.comparative import (
     calculate_technique_comparison,
     calculate_statistical_significance,
     generate_comparison_chart,

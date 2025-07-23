@@ -12,7 +12,7 @@ from datetime import datetime
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 
 def check_tables_exist():
     """Check if all required tables exist."""

@@ -17,13 +17,13 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import all RAG techniques
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipelineV2 # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipelineV2 # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipelineV2 # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipelineV2 # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 # Import common utilities
 from common.iris_connector import get_iris_connection # Updated import
@@ -168,9 +168,9 @@ def main():
         ("CRAG V2", CRAGPipelineV2),
         ("ColBERT V2", ColBERTPipelineV2),
         ("NodeRAG V2", NodeRAGPipelineV2),
-        ("HyDE", HyDEPipeline),
+        ("HyDE", HyDERAGPipeline),
         ("GraphRAG V2", GraphRAGPipelineV2),
-        ("HybridIFindRAG", HybridiFindRAGPipeline)
+        ("HybridIFindRAG", HybridIFindRAGPipeline)
     ]
     
     # Test results

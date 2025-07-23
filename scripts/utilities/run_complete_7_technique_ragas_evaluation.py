@@ -19,13 +19,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import all RAG pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
-from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColbertRAGPipeline # Updated import
 
 # RAGAS imports
 from ragas import evaluate
@@ -84,7 +84,7 @@ def initialize_all_pipelines():
         print("✅ BasicRAG initialized")
         
         # 2. HyDE
-        pipelines['HyDE'] = HyDEPipeline(iris_connector, embedding_func, llm_func)
+        pipelines['HyDE'] = HyDERAGPipeline(iris_connector, embedding_func, llm_func)
         print("✅ HyDE initialized")
         
         # 3. CRAG
@@ -100,7 +100,7 @@ def initialize_all_pipelines():
         print("✅ GraphRAG initialized")
         
         # 6. HybridiFindRAG
-        pipelines['HybridiFindRAG'] = HybridiFindRAGPipeline(iris_connector, embedding_func, llm_func)
+        pipelines['HybridiFindRAG'] = HybridIFindRAGPipeline(iris_connector, embedding_func, llm_func)
         print("✅ HybridiFindRAG initialized")
         
         # 7. ColBERT (with special handling)

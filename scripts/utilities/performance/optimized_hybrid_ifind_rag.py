@@ -6,11 +6,9 @@ Implements concurrent execution and caching for dramatic performance improvement
 
 import sys
 import time
-import threading
 import concurrent.futures
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 import hashlib
-import json
 from functools import lru_cache
 import os # Added for path manipulation
 
@@ -19,11 +17,11 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
-class OptimizedHybridiFindRAGPipeline(HybridiFindRAGPipeline):
+class OptimizedHybridIFindRAGPipeline(HybridIFindRAGPipeline):
     """
     Optimized HybridiFindRAG with:
     1. Query Parallelization: Concurrent execution of retrieval methods
@@ -265,7 +263,7 @@ def test_optimized_pipeline():
     embedding_func = get_embedding_func()
     llm_func = get_llm_func()
     
-    pipeline = OptimizedHybridiFindRAGPipeline(
+    pipeline = OptimizedHybridIFindRAGPipeline(
         iris_connector=iris_connector,
         embedding_func=embedding_func,
         llm_func=llm_func

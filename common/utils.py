@@ -482,6 +482,7 @@ def get_iris_connector(db_url: Optional[str] = None):
             
     print(f"Connecting to IRIS at: {db_url}")
     try:
+        import sqlalchemy
         engine = sqlalchemy.create_engine(db_url)
         connection = engine.connect()
         return connection
@@ -541,6 +542,7 @@ def get_llm_func_for_embedded(provider: str = "stub", model_name: str = "stub-mo
         else:
             _llm_embedded = lambda prompt: "Error: LLM not configured for embedded"
     return _llm_embedded
+
 def get_colbert_query_encoder():
     """
     Get ColBERT query encoder function.

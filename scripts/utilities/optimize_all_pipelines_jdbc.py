@@ -180,7 +180,7 @@ def update_pipeline_imports():
                 if 'from common.iris_connector import' in content:
                     content = content.replace(
                         'from common.iris_connector import',
-                        'from common.iris_connector_jdbc import'
+                        'from common.iris_connector import'
                     )
                     
                     with open(pipeline_path, 'w') as f:
@@ -210,15 +210,15 @@ import logging
 from typing import Dict, Any
 
 # Import all pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
-from common.iris_connector_jdbc import get_iris_connection # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 logging.basicConfig(level=logging.INFO)
@@ -272,7 +272,7 @@ def main():
         logger.error(f"Failed to initialize BasicRAG: {e}")
     
     try:
-        pipelines["HyDE"] = HyDEPipeline(conn, embedding_func, llm_func)
+        pipelines["HyDE"] = HyDERAGPipeline(conn, embedding_func, llm_func)
     except Exception as e:
         logger.error(f"Failed to initialize HyDE: {e}")
     
@@ -299,7 +299,7 @@ def main():
         logger.error(f"Failed to initialize GraphRAG: {e}")
     
     try:
-        pipelines["HybridIFind"] = HybridiFindRAGPipeline(conn, embedding_func, llm_func)
+        pipelines["HybridIFind"] = HybridIFindRAGPipeline(conn, embedding_func, llm_func)
     except Exception as e:
         logger.error(f"Failed to initialize HybridIFind: {e}")
     

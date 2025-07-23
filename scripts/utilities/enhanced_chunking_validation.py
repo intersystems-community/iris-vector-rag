@@ -28,13 +28,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 
 # Import all RAG techniques (these will likely need to change to class imports)
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Changed to class
-from src.experimental.hyde.pipeline import HyDEPipeline # Changed to class
-from src.experimental.crag.pipeline import CRAGPipeline # Changed to class
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline # Changed to class
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Changed to class
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Changed to class
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Changed to class
+from iris_rag.pipelines.basic import BasicRAGPipeline # Changed to class
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Changed to class
+from iris_rag.pipelines.crag import CRAGPipeline # Changed to class
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Changed to class
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Changed to class
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Changed to class
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Changed to class
 
 # Configure logging
 logging.basicConfig(
@@ -70,12 +70,12 @@ class EnhancedChunkingValidator:
         # RAG techniques mapping
         self.rag_techniques = {
             "BasicRAG": BasicRAGPipeline,
-            "HyDE": HyDEPipeline,
+            "HyDE": HyDERAGPipeline,
             "CRAG": CRAGPipeline,
-            "ColBERT": OptimizedColbertRAGPipeline,
+            "ColBERT": ColBERTRAGPipeline,
             "NodeRAG": NodeRAGPipeline,
             "GraphRAG": GraphRAGPipeline,
-            "HybridiFindRAG": HybridiFindRAGPipeline
+            "HybridiFindRAG": HybridIFindRAGPipeline
         }
     
     def validate_chunking_strategies(self, sample_size: int = 100) -> Dict[str, Any]:

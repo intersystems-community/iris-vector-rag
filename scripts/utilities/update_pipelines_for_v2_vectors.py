@@ -60,7 +60,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from typing import List, Dict, Any
 import time
 import logging
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +184,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from typing import List, Dict, Any
 import time
 import logging
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 import numpy as np
 
 logger = logging.getLogger(__name__)

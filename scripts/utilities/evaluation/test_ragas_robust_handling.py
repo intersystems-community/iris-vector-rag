@@ -16,7 +16,7 @@ from typing import Dict, Any
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from eval.debug_basicrag_ragas_context import RAGASContextDebugHarness
+from scripts.utilities.evaluation.debug_basicrag_ragas_context import RAGASContextDebugHarness
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

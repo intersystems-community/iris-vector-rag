@@ -67,7 +67,7 @@ echo "3. Validating Data..."
 echo "--------------------"
 
 python -c "
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 conn = get_iris_connection()
 cursor = conn.cursor()
 
@@ -110,7 +110,7 @@ echo "5. Checking Performance..."
 echo "-------------------------"
 
 python -c "
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 import time
 
 conn = get_iris_connection()
@@ -150,14 +150,14 @@ import uvicorn
 
 # Import pipelines
 from basic_rag.pipeline import BasicRAGPipeline
-from hyde.pipeline import HyDEPipeline
+from hyde.pipeline import HyDERAGPipeline
 from crag.pipeline import CRAGPipeline
 from noderag.pipeline import NodeRAGPipeline
-from colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline
+from colbert.pipeline import ColBERTRAGPipeline as ColBERTPipeline
 from graphrag.pipeline import GraphRAGPipeline
-from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
 
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func, get_llm_func
 
 app = FastAPI(title="Enterprise RAG System", version="1.0.0-JDBC")
@@ -172,12 +172,12 @@ async def startup_event():
     llm_func = get_llm_func()
     
     pipelines["basic_rag"] = BasicRAGPipeline(conn, embedding_func, llm_func)
-    pipelines["hyde"] = HyDEPipeline(conn, embedding_func, llm_func)
+    pipelines["hyde"] = HyDERAGPipeline(conn, embedding_func, llm_func)
     pipelines["crag"] = CRAGPipeline(conn, embedding_func, llm_func)
     pipelines["noderag"] = NodeRAGPipeline(conn, embedding_func, llm_func)
     pipelines["colbert"] = ColBERTPipeline(conn, embedding_func, embedding_func, llm_func)
     pipelines["graphrag"] = GraphRAGPipeline(conn, embedding_func, llm_func)
-    pipelines["hybrid"] = HybridiFindRAGPipeline(conn, embedding_func, llm_func)
+    pipelines["hybrid"] = HybridIFindRAGPipeline(conn, embedding_func, llm_func)
 
 class QueryRequest(BaseModel):
     query: str

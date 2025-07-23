@@ -10,7 +10,7 @@ from typing import Any # For mock type hints
 # Add the project root directory to Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # This will now use the updated IRISConnection type hint
+from iris_rag.pipelines.basic import BasicRAGPipeline # This will now use the updated IRISConnection type hint
 from src.common.utils import Document
 
 # Attempt to import for type hinting, but make it optional

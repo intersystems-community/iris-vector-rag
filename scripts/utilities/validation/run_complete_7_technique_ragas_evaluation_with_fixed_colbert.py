@@ -18,13 +18,13 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Import all RAG pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
-from src.deprecated.colbert.pipeline import create_colbert_pipeline  # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import create_colbert_pipeline  # Updated import
 
 # Import evaluation utilities
 from common.iris_connector import get_iris_connection # Updated import
@@ -77,7 +77,7 @@ def create_all_pipelines():
         logger.info("✅ CRAG pipeline created")
         
         # 3. HyDE
-        pipelines['HyDE'] = HyDEPipeline(
+        pipelines['HyDE'] = HyDERAGPipeline(
             iris_connector=iris_conn,
             embedding_func=embedding_func,
             llm_func=llm_func
@@ -101,7 +101,7 @@ def create_all_pipelines():
         logger.info("✅ GraphRAG pipeline created")
         
         # 6. HybridiFindRAG
-        pipelines['HybridiFindRAG'] = HybridiFindRAGPipeline(
+        pipelines['HybridiFindRAG'] = HybridIFindRAGPipeline(
             iris_connector=iris_conn,
             embedding_func=embedding_func,
             llm_func=llm_func

@@ -102,7 +102,7 @@ def main():
     
     # Test BasicRAG V2
     try:
-        from src.deprecated.basic_rag.pipeline_v2 import BasicRAGPipelineV2 # Updated import
+        from iris_rag.pipelines.basic_v2 import BasicRAGPipelineV2 # Updated import
         result = test_pipeline(BasicRAGPipelineV2, "BasicRAG V2", test_query)
         results.append(result)
     except ImportError as e:
@@ -118,8 +118,8 @@ def main():
     
     # Test HyDE V2
     try:
-        from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
-        result = test_pipeline(HyDEPipelineV2, "HyDE V2", test_query)
+        from src.deprecated.hyde.pipeline_v2 import HyDERAGPipelineV2 # Updated import
+        result = test_pipeline(HyDERAGPipelineV2, "HyDE V2", test_query)
         results.append(result)
     except ImportError as e:
         print(f"\n❌ Could not import HyDE V2: {e}")
@@ -142,8 +142,8 @@ def main():
     
     # Test HybridiFindRAG V2
     try:
-        from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2 # Updated import
-        result = test_pipeline(HybridiFindRAGPipelineV2, "HybridiFindRAG V2", test_query)
+        from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridIFindRAGPipelineV2 # Updated import
+        result = test_pipeline(HybridIFindRAGPipelineV2, "HybridiFindRAG V2", test_query)
         results.append(result)
     except ImportError as e:
         print(f"\n❌ Could not import HybridiFindRAG V2: {e}")

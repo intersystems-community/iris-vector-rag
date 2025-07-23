@@ -23,8 +23,8 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from src.deprecated.colbert.pipeline import ColbertRAGPipeline # Updated import - Original pipeline likely deprecated
-from src.working.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import - Optimized is now the working version
+from iris_rag.pipelines.colbert import ColbertRAGPipeline # Updated import - Original pipeline likely deprecated
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import - Optimized is now the working version
 from src.working.colbert.utils import check_hnsw_token_index_exists, create_hnsw_token_index # Assuming utils for HNSW functions
 
 # Configure logging
@@ -211,7 +211,7 @@ def run_performance_comparison():
         logger.info("Testing Optimized ColBERT Pipeline")
         logger.info("="*50)
         
-        optimized_pipeline = OptimizedColbertRAGPipeline(
+        optimized_pipeline = ColBERTRAGPipeline(
             iris_connector=iris_connector,
             colbert_query_encoder_func=mock_encoder,
             colbert_doc_encoder_func=mock_encoder,

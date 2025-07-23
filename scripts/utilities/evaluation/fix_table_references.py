@@ -3,8 +3,6 @@
 Fix table references in pipelines to use existing table names
 """
 
-import os
-import sys
 import re
 from pathlib import Path
 

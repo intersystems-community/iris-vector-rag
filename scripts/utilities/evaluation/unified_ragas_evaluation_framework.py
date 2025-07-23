@@ -80,9 +80,9 @@ except ImportError:
     BasicRAGPipeline = None
     
 try:
-    from core_pipelines.hyde_pipeline import HyDEPipeline
+    from core_pipelines.hyde_pipeline import HyDERAGPipeline
 except ImportError:
-    HyDEPipeline = None
+    HyDERAGPipeline = None
     
 try:
     from core_pipelines.crag_pipeline import CRAGPipeline

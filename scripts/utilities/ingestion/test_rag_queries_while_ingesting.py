@@ -5,7 +5,6 @@ Tests multiple RAG techniques with various query types.
 """
 
 import sys
-import os
 import time
 import json
 from pathlib import Path
@@ -16,10 +15,10 @@ import logging
 project_root = Path(__file__).parent.parent # Corrected path to project root
 sys.path.insert(0, str(project_root))
 
-from common.iris_connector import get_iris_connection, IRISConnectionError # Updated import
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
+from common.iris_connector import get_iris_connection
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColbertRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(
@@ -145,7 +144,7 @@ def test_optimized_colbert_rag(queries: List[str]) -> Dict[str, Any]:
     
     try:
         conn = get_iris_connection()
-        pipeline = OptimizedColbertRAGPipeline(conn)
+        pipeline = ColBERTRAGPipeline(conn)
         
         results = {}
         for i, query in enumerate(queries):

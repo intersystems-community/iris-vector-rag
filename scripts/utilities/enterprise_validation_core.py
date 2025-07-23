@@ -90,9 +90,9 @@ class EnterpriseCoreValidation:
         
         # Try HyDE
         try:
-            from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
+            from src.deprecated.hyde.pipeline_v2 import HyDERAGPipelineV2 # Updated import
             self.rag_techniques['HyDE'] = {
-                'class': HyDEPipelineV2,
+                'class': HyDERAGPipelineV2,
                 'description': 'Hypothetical document generation for enhanced retrieval'
             }
             logger.info("✅ HyDE imported successfully")

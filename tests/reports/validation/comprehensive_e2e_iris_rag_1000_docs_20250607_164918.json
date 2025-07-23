@@ -154,7 +154,7 @@
     "HybridIFindRAG": {
       "technique": "HybridIFindRAG",
       "success": false,
-      "error": "HybridiFindRAGPipeline.run() missing 1 required positional argument: 'query'",
+      "error": "HybridIFindRAGPipeline.run() missing 1 required positional argument: 'query'",
       "performance": {},
       "query_results": []
     }

@@ -354,7 +354,7 @@ class BenchmarkRunner:
     def _run_basic_rag(self, query: str) -> Dict[str, Any]:
         """Run basic RAG pipeline"""
         try:
-            from src.deprecated.basic_rag.pipeline import BasicRAGPipeline
+            from iris_rag.pipelines.basic import BasicRAGPipeline
             pipeline = BasicRAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
@@ -367,8 +367,8 @@ class BenchmarkRunner:
     def _run_colbert(self, query: str) -> Dict[str, Any]:
         """Run ColBERT pipeline"""
         try:
-            from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline
-            pipeline = OptimizedColbertRAGPipeline(
+            from iris_rag.pipelines.colbert import ColBERTRAGPipeline
+            pipeline = ColBERTRAGPipeline(
                 iris_connector=self.connection,
                 colbert_query_encoder_func=self.embedding_func,
                 colbert_doc_encoder_func=self.embedding_func,
@@ -381,7 +381,7 @@ class BenchmarkRunner:
     def _run_graphrag(self, query: str) -> Dict[str, Any]:
         """Run GraphRAG pipeline"""
         try:
-            from src.experimental.graphrag.pipeline import GraphRAGPipeline
+            from iris_rag.pipelines.graphrag import GraphRAGPipeline
             pipeline = GraphRAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
@@ -394,7 +394,7 @@ class BenchmarkRunner:
     def _run_noderag(self, query: str) -> Dict[str, Any]:
         """Run NodeRAG pipeline"""
         try:
-            from src.experimental.noderag.pipeline import NodeRAGPipeline
+            from iris_rag.pipelines.noderag import NodeRAGPipeline
             pipeline = NodeRAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
@@ -407,8 +407,8 @@ class BenchmarkRunner:
     def _run_hyde(self, query: str) -> Dict[str, Any]:
         """Run HyDE pipeline"""
         try:
-            from src.experimental.hyde.pipeline import HyDEPipeline
-            pipeline = HyDEPipeline(
+            from iris_rag.pipelines.hyde import HyDERAGPipeline
+            pipeline = HyDERAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
@@ -420,7 +420,7 @@ class BenchmarkRunner:
     def _run_crag(self, query: str) -> Dict[str, Any]:
         """Run CRAG pipeline"""
         try:
-            from src.experimental.crag.pipeline import CRAGPipeline
+            from iris_rag.pipelines.crag import CRAGPipeline
             pipeline = CRAGPipeline(
                 iris_connector=self.connection,
                 embedding_func=self.embedding_func,

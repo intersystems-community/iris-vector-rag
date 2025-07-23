@@ -69,7 +69,7 @@ from common.utils import load_config
 
 # Import RAG pipelines
 from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDEPipeline
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipeline
 from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColbertRAGPipeline
 from iris_rag.pipelines.noderag import NodeRAGPipeline
@@ -415,7 +415,7 @@ def test_basic_rag_with_real_data(real_iris_connection, real_embedding_func, rea
 @pytest.mark.requires_1000_docs
 def test_hyde_with_real_data(real_iris_connection, real_embedding_func, real_llm_func, sample_medical_queries):
     logger.info("Running test_hyde_with_real_data")
-    pipeline = HyDEPipeline(
+    pipeline = HyDERAGPipeline(
         iris_connector=real_iris_connection,
         embedding_func=real_embedding_func,
         llm_func=real_llm_func
@@ -560,7 +560,7 @@ def test_all_pipelines_with_same_query(
             embedding_func=real_embedding_func,
             llm_func=real_llm_func
         ),
-        "HyDE": HyDEPipeline(
+        "HyDE": HyDERAGPipeline(
             iris_connector=real_iris_connection,
             embedding_func=real_embedding_func,
             llm_func=real_llm_func

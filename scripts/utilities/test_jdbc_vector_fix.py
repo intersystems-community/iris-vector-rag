@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import logging
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func
 
 logging.basicConfig(level=logging.INFO)

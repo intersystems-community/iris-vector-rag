@@ -26,12 +26,12 @@ from common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Import all 7 RAG techniques
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline as HyDEPipelineV2 # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipelineV2 # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipelineV2 # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipelineV2 # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipelineV2 # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipelineV2 # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
 from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridIFindRAGPipelineV2 # Updated import
 
 load_dotenv()
@@ -69,7 +69,7 @@ class Enterprise10KValidation:
                 'description': 'Reliable production baseline with vector similarity search'
             },
             'HyDE': {
-                'class': HyDEPipelineV2,
+                'class': HyDERAGPipelineV2,
                 'description': 'Hypothetical document generation for enhanced retrieval'
             },
             'CRAG': {

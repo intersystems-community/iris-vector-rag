@@ -25,7 +25,7 @@ def test_hyde_document_retrieval():
         embed_fn = get_embedding_func()
         llm_fn = get_llm_func(provider="stub") 
 
-        pipeline = HyDEPipeline(
+        pipeline = HyDERAGPipeline(
             iris_connector=db_conn,
             embedding_func=embed_fn,
             llm_func=llm_fn

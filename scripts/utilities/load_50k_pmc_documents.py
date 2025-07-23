@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from common.iris_connector import get_iris_connection
 from common.embedding_utils import get_embedding_model
 from data.pmc_processor import process_pmc_files
-from data.loader import load_documents_to_iris
+from data.loader_fixed import load_documents_to_iris
 import os
 import time
 

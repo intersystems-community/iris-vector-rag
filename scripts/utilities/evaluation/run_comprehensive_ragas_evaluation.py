@@ -23,7 +23,7 @@ load_dotenv()
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from eval.comprehensive_ragas_evaluation import ComprehensiveRAGASEvaluationFramework
+from scripts.utilities.evaluation.comprehensive_ragas_evaluation import ComprehensiveRAGASEvaluationFramework
 
 
 def print_flush(message: str):

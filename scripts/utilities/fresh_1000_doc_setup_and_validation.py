@@ -23,7 +23,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # 
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from common.iris_connector_jdbc import get_iris_connection # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 from data.pmc_processor import extract_pmc_metadata, process_pmc_files # Path remains same
 
@@ -250,7 +250,7 @@ class Fresh1000DocSetup:
             # Test BasicRAG
             logger.info("   🔬 Testing BasicRAG...")
             try:
-                from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+                from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
                 
                 conn = get_iris_connection()
                 pipeline = BasicRAGPipeline(
@@ -275,10 +275,10 @@ class Fresh1000DocSetup:
             # Test HyDE
             logger.info("   🔬 Testing HyDE...")
             try:
-                from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+                from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
                 
                 conn = get_iris_connection()
-                pipeline = HyDEPipeline(
+                pipeline = HyDERAGPipeline(
                     iris_connector=conn,
                     embedding_func=self.embedding_func,
                     llm_func=self.llm_func
@@ -300,7 +300,7 @@ class Fresh1000DocSetup:
             # Test CRAG
             logger.info("   🔬 Testing CRAG...")
             try:
-                from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+                from iris_rag.pipelines.crag import CRAGPipeline # Updated import
                 
                 conn = get_iris_connection()
                 pipeline = CRAGPipeline(
@@ -325,7 +325,7 @@ class Fresh1000DocSetup:
             # Test NodeRAG
             logger.info("   🔬 Testing NodeRAG...")
             try:
-                from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+                from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
                 
                 conn = get_iris_connection()
                 pipeline = NodeRAGPipeline(
@@ -350,10 +350,10 @@ class Fresh1000DocSetup:
             # Test HybridiFindRAG
             logger.info("   🔬 Testing HybridiFindRAG...")
             try:
-                from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+                from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
                 
                 conn = get_iris_connection()
-                pipeline = HybridiFindRAGPipeline(
+                pipeline = HybridIFindRAGPipeline(
                     iris_connector=conn,
                     embedding_func=self.embedding_func,
                     llm_func=self.llm_func

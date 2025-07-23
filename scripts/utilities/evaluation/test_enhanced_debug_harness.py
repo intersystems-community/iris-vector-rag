@@ -14,7 +14,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from eval.debug_basicrag_ragas_context import RAGASContextDebugHarness
+from scripts.utilities.evaluation.debug_basicrag_ragas_context import RAGASContextDebugHarness
 
 def test_enhanced_logging():
     """Test the enhanced logging and debugging features."""

@@ -8,8 +8,7 @@ import os
 import sys
 import subprocess
 import json
-from typing import Dict, Any, Optional, List
-from pathlib import Path
+from typing import Dict, Any, Optional
 
 
 class IPMIntegration:

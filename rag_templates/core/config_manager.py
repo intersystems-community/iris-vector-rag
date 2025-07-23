@@ -13,8 +13,8 @@ sensible defaults for immediate usability.
 import os
 import yaml
 import logging
-from typing import Any, Optional, Dict, Union
-from .errors import ConfigurationError, handle_configuration_fallback
+from typing import Any, Optional, Dict
+from .errors import ConfigurationError
 
 logger = logging.getLogger(__name__)
 

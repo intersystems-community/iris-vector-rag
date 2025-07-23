@@ -36,19 +36,19 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func # Updated import (added colbert query encoder for OptimizedColBERT)
-from data.loader import load_documents_to_iris # Path remains correct
+from data.loader_fixed import load_documents_to_iris # Path remains correct
 from src.working.colbert.doc_encoder import get_colbert_doc_encoder # Updated import
-from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService # Path remains correct
+from tools.chunking.enhanced_chunking_service import EnhancedDocumentChunkingService # Path remains correct
 from data.pmc_processor import extract_pmc_metadata # Path remains correct
 
 # Import all RAG techniques
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
-from src.working.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(
@@ -155,17 +155,17 @@ class RealPMCIngestionPipeline:
                     embedding_func=self.embedding_func,
                     llm_func=self.llm_func
                 ),
-                'HyDE': HyDEPipeline(
+                'HyDE': HyDERAGPipeline(
                     iris_connector=self.connection,
                     embedding_func=self.embedding_func,
                     llm_func=self.llm_func
                 ),
-                'HybridiFindRAG': HybridiFindRAGPipeline(
+                'HybridiFindRAG': HybridIFindRAGPipeline(
                     iris_connector=self.connection,
                     embedding_func=self.embedding_func,
                     llm_func=self.llm_func
                 ),
-                'OptimizedColBERT': OptimizedColbertRAGPipeline(
+                'OptimizedColBERT': ColBERTRAGPipeline(
                     iris_connector=self.connection,
                     colbert_query_encoder_func=get_colbert_query_encoder_func(), # Use imported function
                     colbert_doc_encoder_func=self.colbert_encoder, # This was already get_colbert_doc_encoder()

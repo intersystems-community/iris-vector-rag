@@ -56,11 +56,11 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from data.loader import load_documents_to_iris # Path remains same
+from data.loader_fixed import load_documents_to_iris # Path remains same
 from data.pmc_processor import process_pmc_files # Path remains same
 
 # Import all RAG pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(

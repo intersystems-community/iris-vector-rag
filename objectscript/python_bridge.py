@@ -24,12 +24,12 @@ logger = logging.getLogger(__name__)
 
 # Import RAG pipeline modules (legacy imports with fallback)
 try:
-    from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-    from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
-    from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-    from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-    from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-    from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+    from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+    from iris_rag.pipelines.colbert import ColbertRAGPipeline # Updated import
+    from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+    from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+    from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+    from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
     LEGACY_IMPORTS_AVAILABLE = True
 except ImportError:
     LEGACY_IMPORTS_AVAILABLE = False
@@ -257,7 +257,7 @@ def invoke_hyde(query: str, config: str) -> str:
         
         # Initialize pipeline
         iris_connector = get_iris_connection()
-        pipeline = HyDEPipeline(
+        pipeline = HyDERAGPipeline(
             iris_connector=iris_connector,
             embedding_func=config_dict.get("embedding_func"),
             llm_func=config_dict.get("llm_func")
@@ -603,7 +603,7 @@ def get_available_pipelines() -> str:
             "hyde": {
                 "name": "HyDE",
                 "description": "Hypothetical document embeddings",
-                "class": "HyDEPipeline"
+                "class": "HyDERAGPipeline"
             },
             "crag": {
                 "name": "CRAG",
@@ -672,7 +672,7 @@ def health_check() -> str:
         if LEGACY_IMPORTS_AVAILABLE:
             pipeline_classes = [
                 BasicRAGPipeline, ColbertRAGPipeline, GraphRAGPipeline,
-                HyDEPipeline, CRAGPipeline, NodeRAGPipeline
+                HyDERAGPipeline, CRAGPipeline, NodeRAGPipeline
             ]
             
             for pipeline_class in pipeline_classes:

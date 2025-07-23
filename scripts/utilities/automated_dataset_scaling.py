@@ -5,21 +5,19 @@ Systematically scales dataset from 1K to 50K documents with performance monitori
 """
 
 import sys
-import os
 import json
 import time
 import logging
 import psutil
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, Any
 import traceback
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.iris_connector_jdbc import get_iris_connection
-from data.loader import process_and_load_documents
+from common.iris_connector import get_iris_connection
 from dotenv import load_dotenv
 
 load_dotenv()

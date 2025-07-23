@@ -75,8 +75,8 @@ import logging
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from colbert.pipeline import OptimizedColbertRAGPipeline
-from common.iris_connector_jdbc import get_iris_connection
+from colbert.pipeline import ColBERTRAGPipeline
+from common.iris_connector import get_iris_connection
 from common.utils import get_colbert_query_encoder_func, get_colbert_doc_encoder_func, get_llm_func
 
 # Setup logging
@@ -96,7 +96,7 @@ def test_colbert_stream_handling():
         llm_func = get_llm_func()
         
         # Create pipeline
-        pipeline = OptimizedColbertRAGPipeline(
+        pipeline = ColBERTRAGPipeline(
             iris_connector=iris_connector,
             colbert_query_encoder_func=colbert_query_encoder,
             colbert_doc_encoder_func=colbert_doc_encoder,

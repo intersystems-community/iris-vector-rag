@@ -23,13 +23,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func, get_llm_func
 from iris_rag.pipelines.basic import BasicRAGPipeline
-from eval.metrics import (
+from scripts.utilities.evaluation.metrics import (
     calculate_hnsw_performance_metrics,
     calculate_hnsw_scalability_metrics,
     calculate_hnsw_index_effectiveness_metrics,
     calculate_latency_percentiles
 )
-from eval.comparative.analysis import calculate_technique_comparison
+from scripts.utilities.evaluation.comparative.analysis import calculate_technique_comparison
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -363,7 +363,7 @@ class ComprehensiveE2ETestRunner:
         # These should ideally be empty if all pipelines have dedicated iris_rag test methods.
         legacy_pipelines_to_compare = [
             # ("GraphRAG", GraphRAGPipeline), # Example: if still needing legacy run
-            # ("HyDE", HyDEPipeline)          # Example: if still needing legacy run
+            # ("HyDE", HyDERAGPipeline)          # Example: if still needing legacy run
         ]
 
         all_results = {}

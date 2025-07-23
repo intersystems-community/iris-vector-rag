@@ -12,13 +12,13 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
-from src.deprecated.basic_rag.pipeline_v2 import BasicRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic_v2 import BasicRAGPipelineV2 # Updated import
 from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
 from src.deprecated.colbert.pipeline_v2 import ColBERTPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
 from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 def test_technique(name: str, pipeline, query: str):
     """Test a single RAG technique"""
@@ -109,7 +109,7 @@ def main():
     
     # 4. HyDE
     try:
-        hyde = HyDEPipeline(iris, embedding_func, llm_func)
+        hyde = HyDERAGPipeline(iris, embedding_func, llm_func)
         pipelines.append(("HyDE", hyde))
     except Exception as e:
         print(f"Failed to initialize HyDE: {e}")
@@ -130,7 +130,7 @@ def main():
     
     # 7. Hybrid iFIND RAG
     try:
-        hybrid = HybridiFindRAGPipeline(iris, embedding_func, llm_func)
+        hybrid = HybridIFindRAGPipeline(iris, embedding_func, llm_func)
         pipelines.append(("Hybrid iFIND RAG", hybrid))
     except Exception as e:
         print(f"Failed to initialize Hybrid iFIND RAG: {e}")

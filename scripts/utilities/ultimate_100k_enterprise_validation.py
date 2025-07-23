@@ -40,13 +40,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func, get_colbert_doc_encoder_func_adapted # Updated import
 
 # Import all RAG pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.working.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 # Configure comprehensive logging
 logging.basicConfig(
@@ -330,7 +330,7 @@ class Ultimate100kEnterpriseValidator:
             # HyDE
             if "HyDE" not in skip_techniques:
                 try:
-                    pipelines["HyDE"] = HyDEPipeline(
+                    pipelines["HyDE"] = HyDERAGPipeline(
                         iris_connector=self.connection,
                         embedding_func=self.embedding_func,
                         llm_func=self.llm_func
@@ -353,7 +353,7 @@ class Ultimate100kEnterpriseValidator:
             # OptimizedColBERT
             if "OptimizedColBERT" not in skip_techniques:
                 try:
-                    pipelines["OptimizedColBERT"] = OptimizedColbertRAGPipeline(
+                    pipelines["OptimizedColBERT"] = ColBERTRAGPipeline(
                         iris_connector=self.connection,
                         colbert_query_encoder_func=mock_colbert_encoder,
                         colbert_doc_encoder_func=mock_colbert_encoder,
@@ -387,7 +387,7 @@ class Ultimate100kEnterpriseValidator:
             # Hybrid iFind RAG
             if "HybridiFindRAG" not in skip_techniques:
                 try:
-                    pipelines["HybridiFindRAG"] = HybridiFindRAGPipeline(
+                    pipelines["HybridiFindRAG"] = HybridIFindRAGPipeline(
                         iris_connector=self.connection,
                         embedding_func=self.embedding_func,
                         llm_func=self.llm_func

@@ -10,7 +10,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipelineV2 # Updated import
 
 def test_original_with_full_search():
     """Test original BasicRAG with full vector search (will fail due to IRIS bug)"""

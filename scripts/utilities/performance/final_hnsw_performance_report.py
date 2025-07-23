@@ -11,7 +11,7 @@ import sys
 import time
 import json
 import logging
-from typing import Dict, List
+from typing import Dict
 
 sys.path.insert(0, '.')
 from common.iris_connector import get_iris_connection

@@ -91,7 +91,7 @@ def start_fresh_migration():
         
         # Import and run the data loader
         try:
-            from data.loader import main as loader_main
+            from data.loader_fixed import main as loader_main
             
             # Set environment variables for native VECTOR mode
             os.environ["USE_NATIVE_VECTOR"] = "true"

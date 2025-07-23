@@ -28,16 +28,16 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 
 # RAG imports - using JDBC-compatible pipelines
-from src.deprecated.basic_rag.pipeline_jdbc import BasicRAGPipelineJDBC as BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import (JDBCFixedCRAGPipeline was not found, main CRAGPipeline is JDBC-aware)
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import (JDBCFixedGraphRAGPipeline was not found, main GraphRAGPipeline is JDBC-aware)
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline as HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic_jdbc import BasicRAGPipelineJDBC as BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import (JDBCFixedCRAGPipeline was not found, main CRAGPipeline is JDBC-aware)
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import (JDBCFixedGraphRAGPipeline was not found, main GraphRAGPipeline is JDBC-aware)
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline as HybridIFindRAGPipeline # Updated import
 
 # Common utilities
-from common.iris_connector_jdbc import get_iris_connection  # Updated import
+from common.iris_connector import get_iris_connection  # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 from dotenv import load_dotenv
 
@@ -98,7 +98,7 @@ class EnterpriseRAGBenchmarkFinal:
             logger.error(f"❌ BasicRAG failed: {e}")
         
         try:
-            pipelines['HyDE'] = HyDEPipeline(
+            pipelines['HyDE'] = HyDERAGPipeline(
                 self.connection, self.embedding_func, self.llm_func
             )
             logger.info("✅ HyDE initialized")
