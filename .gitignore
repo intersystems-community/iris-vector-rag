@@ -1,6 +1,7 @@
 nodejs/node_modules/
 .vscode/
 outputs/
+specs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
