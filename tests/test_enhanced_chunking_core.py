@@ -20,7 +20,7 @@ from typing import List, Dict, Any
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from chunking.enhanced_chunking_service import (
+from tools.chunking.enhanced_chunking_service import (
     EnhancedDocumentChunkingService,
     TokenEstimator,
     BiomedicalSemanticAnalyzer,

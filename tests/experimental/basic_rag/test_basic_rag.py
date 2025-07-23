@@ -9,7 +9,7 @@ if project_root not in sys.path:
 import jaydebeapi # Import for type hinting
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func, Document # Updated import
-from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline # Updated import and class name
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import and class name
 
 # Placeholder for the 10 sample doc IDs, assuming they are loaded with these IDs
 # This is more for conceptual clarity in the test; the actual test won't hardcode content checks

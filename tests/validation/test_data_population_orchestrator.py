@@ -1,6 +1,6 @@
 import pytest
 from unittest import mock
-from rag_templates.validation.data_population_orchestrator import DataPopulationOrchestrator
+from iris_rag.validation.data_population_orchestrator import DataPopulationOrchestrator
 
 @pytest.fixture
 def db_connection_mock():

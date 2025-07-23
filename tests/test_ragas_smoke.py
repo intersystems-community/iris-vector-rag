@@ -31,13 +31,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 
 # Import all V2 pipelines
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline as HyDEPipelineV2 # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipelineV2 # Updated import
-from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2 # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipelineV2
+from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDEPipelineV2
+from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipelineV2
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTPipelineV2
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline as HybridiFindRAGPipelineV2
+from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipelineV2
 
 # Test query (will be loaded from file)
 # TEST_QUERY = "What is diabetes and how is it treated?"

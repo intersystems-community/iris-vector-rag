@@ -9,7 +9,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Corrected import path and class name
+from iris_rag.pipelines.noderag import NodeRAGPipeline
 from common.utils import get_embedding_func, get_llm_func, Document # Updated import
 from common.jdbc_stream_utils import read_iris_stream # Updated import
 

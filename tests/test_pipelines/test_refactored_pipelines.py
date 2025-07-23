@@ -273,38 +273,48 @@ class TestHybridIFindRAGPipeline:
 class TestStandardizedInterface:
     """Test that all pipelines conform to standardized interface."""
     
-    @pytest.mark.parametrize("pipeline_class", [
-        CRAGPipeline,
-        NodeRAGPipeline, 
-        GraphRAGPipeline,
-        HybridIFindRAGPipeline
-    ])
-    def test_all_pipelines_have_execute_method(self, pipeline_class, mock_connection_manager, mock_config_manager):
-        """Test all pipelines have execute method."""
-        with patch.multiple(
-            'iris_rag.pipelines.crag',
-            RetrievalEvaluator=Mock()
-        ), patch.multiple(
-            'iris_rag.pipelines.noderag',
-            EmbeddingManager=Mock()
-        ), patch.multiple(
-            'iris_rag.pipelines.graphrag',
-            IRISStorage=Mock(),
-            EmbeddingManager=Mock(),
-            SchemaManager=Mock()
-        ), patch.multiple(
-            'iris_rag.pipelines.hybrid_ifind',
-            IRISStorage=Mock(),
-            EmbeddingManager=Mock()
-        ), patch('common.utils.get_llm_func', return_value=lambda x: "test"):
-            
-            pipeline = pipeline_class(
+    def test_crag_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
+        """Test CRAG pipeline has execute method."""
+        with patch('iris_rag.pipelines.crag.RetrievalEvaluator'):
+            pipeline = CRAGPipeline(
                 connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager
             )
-            
-            assert hasattr(pipeline, 'execute')
-            assert callable(getattr(pipeline, 'execute'))
+        assert hasattr(pipeline, 'execute')
+        assert callable(getattr(pipeline, 'execute'))
+
+    def test_noderag_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
+        """Test NodeRAG pipeline has execute method."""
+        with patch('iris_rag.pipelines.noderag.EmbeddingManager'):
+            pipeline = NodeRAGPipeline(
+                connection_manager=mock_connection_manager,
+                config_manager=mock_config_manager
+            )
+        assert hasattr(pipeline, 'execute')
+        assert callable(getattr(pipeline, 'execute'))
+
+    def test_graphrag_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
+        """Test GraphRAG pipeline has execute method."""
+        with patch('iris_rag.pipelines.graphrag.IRISStorage'), \
+             patch('iris_rag.pipelines.graphrag.EmbeddingManager'), \
+             patch('iris_rag.pipelines.graphrag.SchemaManager'):
+            pipeline = GraphRAGPipeline(
+                connection_manager=mock_connection_manager,
+                config_manager=mock_config_manager
+            )
+        assert hasattr(pipeline, 'execute')
+        assert callable(getattr(pipeline, 'execute'))
+
+    def test_hybrid_ifind_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
+        """Test HybridIFindRAG pipeline has execute method."""
+        with patch('iris_rag.pipelines.hybrid_ifind.IRISStorage'), \
+             patch('iris_rag.pipelines.hybrid_ifind.EmbeddingManager'):
+            pipeline = HybridIFindRAGPipeline(
+                connection_manager=mock_connection_manager,
+                config_manager=mock_config_manager
+            )
+        assert hasattr(pipeline, 'execute')
+        assert callable(getattr(pipeline, 'execute'))
     
     def test_evaluation_framework_compatibility(self, mock_connection_manager, mock_config_manager, mock_vector_store):
         """Test that pipelines work with evaluation framework's standardized call."""

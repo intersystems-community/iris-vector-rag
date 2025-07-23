@@ -1,7 +1,7 @@
 import pytest
 import os
 from unittest import mock
-from rag_templates.validation.environment_validator import EnvironmentValidator
+from iris_rag.validation.environment_validator import EnvironmentValidator
 
 @pytest.fixture
 def validator():
@@ -206,8 +206,8 @@ def test_verify_package_dependencies_version_specifier_tilde_equal(validator, mo
     assert not validator.verify_package_dependencies()
     assert validator.results['package_dependencies']['packages']['numpy']['status'] == 'fail'
 # Tests for test_ml_ai_function_availability
-@mock.patch('rag_templates.validation.environment_validator.EnvironmentValidator._get_embedding_model')
-@mock.patch('rag_templates.validation.environment_validator.EnvironmentValidator._get_llm')
+@mock.patch('iris_rag.validation.environment_validator.EnvironmentValidator._get_embedding_model')
+@mock.patch('iris_rag.validation.environment_validator.EnvironmentValidator._get_llm')
 def test_ml_ai_functions_all_available(mock_get_llm, mock_get_embedding_model, validator):
     """Test test_ml_ai_function_availability when all functions are available and working."""
     # Mock embedding model
@@ -233,8 +233,8 @@ def test_ml_ai_functions_all_available(mock_get_llm, mock_get_embedding_model, v
     mock_embedding_model_instance.embed_query.assert_called_once_with('sample text for embedding')
     mock_llm_instance.invoke.assert_called_once_with('sample prompt for llm')
 
-@mock.patch('rag_templates.validation.environment_validator.EnvironmentValidator._get_embedding_model')
-@mock.patch('rag_templates.validation.environment_validator.EnvironmentValidator._get_llm')
+@mock.patch('iris_rag.validation.environment_validator.EnvironmentValidator._get_embedding_model')
+@mock.patch('iris_rag.validation.environment_validator.EnvironmentValidator._get_llm')
 def test_ml_ai_functions_embedding_fails(mock_get_llm, mock_get_embedding_model, validator):
     """Test test_ml_ai_function_availability when embedding model fails."""
     mock_get_embedding_model.return_value.embed_query.side_effect = Exception("Embedding error")
@@ -255,8 +255,8 @@ def test_ml_ai_functions_embedding_fails(mock_get_llm, mock_get_embedding_model,
     assert "Embedding error" in results['embedding_model_status']['details']
     assert results['llm_status']['status'] == 'pass' # LLM should still be checked if embedding fails first
 
-@mock.patch('rag_templates.validation.environment_validator.EnvironmentValidator._get_embedding_model')
-@mock.patch('rag_templates.validation.environment_validator.EnvironmentValidator._get_llm')
+@mock.patch('iris_rag.validation.environment_validator.EnvironmentValidator._get_embedding_model')
+@mock.patch('iris_rag.validation.environment_validator.EnvironmentValidator._get_llm')
 def test_ml_ai_functions_llm_fails(mock_get_llm, mock_get_embedding_model, validator):
     """Test test_ml_ai_function_availability when LLM fails."""
     mock_embedding_model_instance = mock.Mock()
@@ -277,8 +277,8 @@ def test_ml_ai_functions_llm_fails(mock_get_llm, mock_get_embedding_model, valid
     assert results['llm_status']['status'] == 'fail'
     assert "LLM error" in results['llm_status']['details']
 
-@mock.patch('rag_templates.validation.environment_validator.EnvironmentValidator._get_embedding_model', return_value=None)
-@mock.patch('rag_templates.validation.environment_validator.EnvironmentValidator._get_llm', return_value=None)
+@mock.patch('iris_rag.validation.environment_validator.EnvironmentValidator._get_embedding_model', return_value=None)
+@mock.patch('iris_rag.validation.environment_validator.EnvironmentValidator._get_llm', return_value=None)
 def test_ml_ai_functions_models_not_configured(mock_get_llm, mock_get_embedding_model, validator):
     """Test test_ml_ai_function_availability when models are not configured (return None)."""
     validator.config = {

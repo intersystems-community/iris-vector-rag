@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from typing import List, Dict, Any
 
 # Import functions to test from our new package structure
-from eval.comparative import (
+from scripts.utilities.evaluation.comparative import (
     calculate_technique_comparison,
     calculate_statistical_significance,
     generate_comparison_chart,

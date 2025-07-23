@@ -9,7 +9,7 @@ import os
 import sys
 from typing import List, Dict, Any, Callable, Tuple
 
-from basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Use fixed and alias
+from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipelineV2
 from common.utils import get_embedding_func, get_llm_func
 
 # Add project root to path
@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from common.iris_connector import get_iris_connection
 from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists
-from data.loader import process_and_load_documents
+from data.loader_fixed import process_and_load_documents
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")

@@ -1,0 +1,64 @@
+{
+  "timestamp": "20250619_130810",
+  "evaluation_duration": 40.6573429107666,
+  "pipeline_results": {
+    "BasicRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "Based on the provided context documents, there is no specific information available regarding the effects of metformin on type 2 diabetes. To provide a comprehensive answer, the following information would be helpful:\n\n1. Mechanism of action of metformin in the body.\n2. Clinical outcomes associated with metformin use in type 2 diabetes patients, such as blood sugar control, weight management, and cardiovascular benefits.\n3. Potential side effects or contraindications of metformin.\n4. Comparison of metformin with other diabetes medications.\n5. Long-term effects of metformin on diabetes progression and complications.\n\nWithout this information, I cannot provide a detailed answer regarding the effects of metformin on type 2 diabetes.",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 4.640630006790161,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "Based on the provided context documents, there is no specific information available regarding the effects of SGLT2 inhibition on kidney function. To provide a comprehensive answer, the following information would be helpful:\n\n1. Mechanism of action of SGLT2 inhibitors and how they influence renal glucose and sodium reabsorption.\n2. Clinical studies or trials that demonstrate the impact of SGLT2 inhibitors on kidney function parameters such as glomerular filtration rate (GFR), albuminuria, or progression of kidney disease.\n3. Potential benefits or risks associated with SGLT2 inhibition in patients with chronic kidney disease or diabetes.\n4. Any long-term effects of SGLT2 inhibitors on kidney health and function.\n\nWithout this information, it is not possible to fully answer the question regarding the effects of SGLT2 inhibition on kidney function.",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 3.4226109981536865,
+        "success": true,
+        "error": null
+      }
+    ],
+    "ColBERTRAG": [
+      {
+        "question": "What are the effects of metformin on type 2 diabetes?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Metformin helps treat type 2 diabetes by reducing glucose production in the liver and increasing insulin sensitivity in peripheral tissues.",
+        "execution_time": 0.04558587074279785,
+        "success": true,
+        "error": null
+      },
+      {
+        "question": "How does SGLT2 inhibition affect kidney function?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "SGLT2 inhibitors protect kidney function by reducing hyperfiltration, decreasing albuminuria, and providing nephroprotection through mechanisms independent of glycemic control.",
+        "execution_time": 0.01672196388244629,
+        "success": true,
+        "error": null
+      }
+    ]
+  },
+  "ragas_results": {
+    "BasicRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.14285714285714285,
+      "answer_similarity": null,
+      "answer_correctness": 0.23082481565774382
+    },
+    "ColBERTRAG": {
+      "answer_relevancy": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "faithfulness": 0.0,
+      "answer_similarity": null,
+      "answer_correctness": 0.02190823379710708
+    }
+  }
+}

@@ -5,7 +5,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Corrected import path and class name
+from iris_rag.experimental.graphrag.pipeline import GraphRAGPipeline # Corrected import path and class name
 from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 import logging

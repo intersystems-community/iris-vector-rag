@@ -55,25 +55,23 @@ class TestEmbeddingGeneration:
         assert len(tokens) == len(embeddings)
         assert embeddings.shape[1] >= 64  # Should have a reasonable embedding dimension
 
-    @pytest.mark.parametrize("use_mock", [True])  # Start with just mock for simplicity
-    def test_generate_document_embeddings(self, use_mock):
-        """Test that we can generate document-level embeddings."""
-        # Get a connection (real or mock)
-        connection = get_iris_connection(use_mock=use_mock)
+    def test_generate_document_embeddings_mock(self):
+        """Test that we can generate document-level embeddings with a mock connection."""
+        # Get a connection (mock)
+        connection = get_iris_connection(use_mock=True)
         assert connection is not None
         
-        # If using mock, we need to add some documents
-        if use_mock:
-            cursor = connection.cursor()
-            mock_docs = [
-                ("doc1", "Test Title 1", "Test Content 1", "[]", "[]"),
-                ("doc2", "Test Title 2", "Test Content 2", "[]", "[]")
-            ]
-            cursor.executemany(
-                "INSERT INTO SourceDocuments (doc_id, title, content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
-                mock_docs
-            )
-            cursor.close()
+        # Add some documents
+        cursor = connection.cursor()
+        mock_docs = [
+            ("doc1", "Test Title 1", "Test Content 1", "[]", "[]"),
+            ("doc2", "Test Title 2", "Test Content 2", "[]", "[]")
+        ]
+        cursor.executemany(
+            "INSERT INTO SourceDocuments (doc_id, title, content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
+            mock_docs
+        )
+        cursor.close()
         
         # Get an embedding model
         model = get_embedding_model(mock=True)
@@ -86,25 +84,23 @@ class TestEmbeddingGeneration:
         assert stats["type"] == "document_embeddings"
         assert stats["processed_count"] > 0
 
-    @pytest.mark.parametrize("use_mock", [True])  # Start with just mock for simplicity
-    def test_generate_token_embeddings(self, use_mock):
-        """Test that we can generate token-level embeddings."""
-        # Get a connection (real or mock)
-        connection = get_iris_connection(use_mock=use_mock)
+    def test_generate_token_embeddings_mock(self):
+        """Test that we can generate token-level embeddings with a mock connection."""
+        # Get a connection (mock)
+        connection = get_iris_connection(use_mock=True)
         assert connection is not None
         
-        # If using mock, we need to add some documents
-        if use_mock:
-            cursor = connection.cursor()
-            mock_docs = [
-                ("doc1", "Test Title 1", "Test Content 1", "[]", "[]"),
-                ("doc2", "Test Title 2", "Test Content 2", "[]", "[]")
-            ]
-            cursor.executemany(
-                "INSERT INTO SourceDocuments (doc_id, title, content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
-                mock_docs
-            )
-            cursor.close()
+        # Add some documents
+        cursor = connection.cursor()
+        mock_docs = [
+            ("doc1", "Test Title 1", "Test Content 1", "[]", "[]"),
+            ("doc2", "Test Title 2", "Test Content 2", "[]", "[]")
+        ]
+        cursor.executemany(
+            "INSERT INTO SourceDocuments (doc_id, title, content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
+            mock_docs
+        )
+        cursor.close()
         
         # Get a token encoder model
         model = get_colbert_model(mock=True)

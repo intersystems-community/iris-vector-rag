@@ -5,8 +5,8 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 import logging
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from common.iris_connector_jdbc import get_iris_connection # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Configure basic logging
