@@ -2,6 +2,7 @@ nodejs/node_modules/
 .vscode/
 outputs/
 specs/
+eval_results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
