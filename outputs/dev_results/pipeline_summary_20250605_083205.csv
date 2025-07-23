@@ -1,5 +1,0 @@
-Pipeline,Success_Rate,Avg_Response_Time,Std_Response_Time,Avg_Documents_Retrieved,Avg_Answer_Length,Avg_Answer_Relevancy,Avg_Context_Precision,Avg_Context_Recall,Avg_Faithfulness,Avg_Answer_Similarity,Avg_Answer_Correctness
-BasicRAG,1.0,0.027280902862548827,0.03764745561270821,0.0,60.0,,,,,,
-HyDE,1.0,1.4876031398773193,0.3864960553932068,0.0,60.0,,,,,,
-CRAG,0.0,0.0,0.0,0.0,0.0,,,,,,
-NodeRAG,1.0,0.0018532633781433105,0.0006310668230564241,0.0,85.0,,,,,,
