@@ -110,7 +110,7 @@ rag = ConfigurableRAG(config)
 
 ## 🔗 MCP Integration
 
-The Multi-Cloud Platform (MCP) integration allows you to easily deploy and manage RAG services as microservices. This design enables flexible deployment across various environments and seamless integration with existing enterprise systems.
+The Model Context Protocol (MCP) integration allows you to easily deploy and manage RAG services as "microservices". This design enables flexible deployment across various environments and seamless integration with existing enterprise systems.
 
 ### Creating MCP Servers
 
