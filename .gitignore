@@ -3,6 +3,7 @@ nodejs/node_modules/
 outputs/
 specs/
 eval_results/
+comprehensive_ragas_results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
