@@ -14,11 +14,11 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 from common.iris_connector import get_iris_connection # Updated import
 from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists # Updated import
-from data.loader import process_and_load_documents # Corrected path
+from data.loader_fixed import process_and_load_documents
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")

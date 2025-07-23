@@ -8,13 +8,13 @@ import json
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
-from eval.metrics import calculate_benchmark_metrics
-from eval.comparative.visualization import (
-    generate_radar_chart, 
-    generate_bar_chart, 
+from ..metrics import calculate_benchmark_metrics
+from .visualization import (
+    generate_radar_chart,
+    generate_bar_chart,
     generate_comparative_bar_chart
 )
-from eval.comparative.reference_data import REFERENCE_BENCHMARKS
+from .reference_data import REFERENCE_BENCHMARKS
 
 def generate_combined_report(benchmarks: Dict[str, Dict[str, Any]], 
                             output_dir: str = None,
@@ -47,7 +47,7 @@ def generate_combined_report(benchmarks: Dict[str, Dict[str, Any]],
     }
     
     # 1. Calculate comparisons
-    from eval.comparative.analysis import calculate_technique_comparison
+    from .analysis import calculate_technique_comparison
     comparison = calculate_technique_comparison(benchmarks)
     
     # 2. Extract metrics for visualization
@@ -79,7 +79,7 @@ def generate_combined_report(benchmarks: Dict[str, Dict[str, Any]],
     # Radar chart for overall comparison
     try:
         # Create normalized metrics for radar chart
-        from eval.metrics import normalize_metrics
+        from ..metrics import normalize_metrics
         normalized_metrics = {}
         for tech, metrics in all_metrics.items():
             normalized_metrics[tech] = normalize_metrics(metrics, invert_latency=True, scale_to_unit=True)

@@ -22,7 +22,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from chunking.enhanced_chunking_service import ( # Path remains correct
+from tools.chunking.enhanced_chunking_service import (
     EnhancedDocumentChunkingService,
     TokenEstimator,
     BiomedicalSemanticAnalyzer,
@@ -36,13 +36,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 
 # Import all RAG techniques for integration testing
-from src.deprecated.basic_rag.pipeline import run_basic_rag # Updated import
-from src.experimental.hyde.pipeline import run_hyde_rag # Updated import
-from src.experimental.crag.pipeline import run_crag # Updated import
-from src.working.colbert.pipeline import run_colbert_rag # Updated import
-from src.experimental.noderag.pipeline import run_noderag # Updated import
-from src.experimental.graphrag.pipeline import run_graphrag # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import run_hybrid_ifind_rag # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline
+from iris_rag.pipelines.hyde import HyDERAGPipeline
+from iris_rag.pipelines.crag import CRAGPipeline
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline
+from iris_rag.pipelines.noderag import NodeRAGPipeline
+from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
 
 class TestEnhancedChunkingCore:
     """Test core enhanced chunking functionality."""

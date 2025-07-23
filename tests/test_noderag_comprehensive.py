@@ -14,7 +14,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Corrected import path and class name
+from iris_rag.experimental.noderag.pipeline import NodeRAGPipeline # Corrected import path and class name
 
 def test_noderag_comprehensive():
     """Test NodeRAG with comprehensive debugging"""

@@ -23,17 +23,17 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.db_vector_search import search_source_documents_dynamically, search_knowledge_graph_nodes_dynamically # Updated import
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import other RAG techniques for integration testing
 try:
-    from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+    from iris_rag.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
 except ImportError:
     NodeRAGPipeline = None
 
 try:
-    from src.experimental.hyde.pipeline import HyDEPipeline as HydeRAGPipeline # Updated import and aliased
+    from iris_rag.experimental.hyde.pipeline import HyDEPipeline as HydeRAGPipeline # Updated import and aliased
 except ImportError:
     HydeRAGPipeline = None
 

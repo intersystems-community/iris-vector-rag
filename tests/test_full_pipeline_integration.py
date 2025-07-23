@@ -195,7 +195,7 @@ def test_basic_rag_realistic(enhanced_test_data):
     
 def test_graph_integration(enhanced_test_data):
     """Test GraphRAG with realistic document content"""
-    from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
+    from iris_rag.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
     from tests.test_simple_retrieval import retrieve_documents_by_fixed_ids
     
     # Create pipeline with mocked functions

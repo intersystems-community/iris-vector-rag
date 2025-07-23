@@ -7,7 +7,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.experimental.graphrag.pipeline import create_graphrag_pipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline
 
 # According to .clinerules, tests use real data and pytest fixtures.
 # We assume the database is populated by fixtures in a main conftest.py

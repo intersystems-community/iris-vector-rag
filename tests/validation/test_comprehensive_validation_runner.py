@@ -1,9 +1,9 @@
 import pytest
 from unittest import mock
-from rag_templates.validation.comprehensive_validation_runner import ComprehensiveValidationRunner
-from rag_templates.validation.environment_validator import EnvironmentValidator
-from rag_templates.validation.data_population_orchestrator import DataPopulationOrchestrator
-from rag_templates.validation.end_to_end_validator import EndToEndValidator
+from iris_rag.validation.comprehensive_validation_runner import ComprehensiveValidationRunner
+from iris_rag.validation.environment_validator import EnvironmentValidator
+from iris_rag.validation.data_population_orchestrator import DataPopulationOrchestrator
+from iris_rag.validation.end_to_end_validator import EndToEndValidator
 
 @pytest.fixture
 def mock_config():
@@ -16,9 +16,9 @@ def mock_db_connection():
 @pytest.fixture
 def runner(mock_config, mock_db_connection):
     # Patch the constructors of the sub-validators to use mocks
-    with mock.patch('rag_templates.validation.comprehensive_validation_runner.EnvironmentValidator') as MockEnvValidator, \
-         mock.patch('rag_templates.validation.comprehensive_validation_runner.DataPopulationOrchestrator') as MockDataOrchestrator, \
-         mock.patch('rag_templates.validation.comprehensive_validation_runner.EndToEndValidator') as MockE2EValidator:
+    with mock.patch('iris_rag.validation.comprehensive_validation_runner.EnvironmentValidator') as MockEnvValidator, \
+         mock.patch('iris_rag.validation.comprehensive_validation_runner.DataPopulationOrchestrator') as MockDataOrchestrator, \
+         mock.patch('iris_rag.validation.comprehensive_validation_runner.EndToEndValidator') as MockE2EValidator:
         
         # Configure the mock instances that will be created
         mock_env_validator_instance = MockEnvValidator.return_value

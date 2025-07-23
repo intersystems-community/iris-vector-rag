@@ -68,12 +68,12 @@ if str(project_root) not in sys.path:
 from common.utils import load_config 
 
 # Import RAG pipelines
-from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline
-from src.experimental.hyde.pipeline import HyDEPipeline
-from src.experimental.crag.pipeline import CRAGPipeline
-from src.working.colbert.pipeline import ColbertRAGPipeline
-from src.experimental.noderag.pipeline import NodeRAGPipeline
-from src.experimental.graphrag.pipeline import GraphRAGPipeline
+from iris_rag.pipelines.basic import BasicRAGPipeline
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDEPipeline
+from iris_rag.pipelines.crag import CRAGPipeline
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColbertRAGPipeline
+from iris_rag.pipelines.noderag import NodeRAGPipeline
+from iris_rag.pipelines.graphrag import GraphRAGPipeline
 
 # Import common utilities
 from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func

@@ -1,6 +1,6 @@
 import pytest
 from unittest import mock
-from rag_templates.validation.end_to_end_validator import EndToEndValidator
+from iris_rag.validation.end_to_end_validator import EndToEndValidator
 
 @pytest.fixture
 def db_connection_mock():

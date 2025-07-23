@@ -9,6 +9,9 @@ import os
 import sys
 import json
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(

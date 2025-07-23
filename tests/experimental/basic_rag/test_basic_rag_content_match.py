@@ -10,9 +10,9 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent.parent))
 
-from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline
+from iris_rag.pipelines.basic import BasicRAGPipeline
 from common.utils import get_embedding_func, get_llm_func
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 
 
 def test_basic_rag_with_matching_content():
