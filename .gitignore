@@ -1,4 +1,5 @@
 nodejs/node_modules/
+nodejs/coverage/
 .vscode/
 outputs/
 specs/
