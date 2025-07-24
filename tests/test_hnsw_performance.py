@@ -20,7 +20,7 @@ from contextlib import contextmanager
 # Add the project root to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from common.iris_connector import get_iris_connection,
+from common.iris_connector import get_iris_connection
 from iris_rag.pipelines.basic import BasicRAGPipeline
 from common.utils import get_embedding_func, get_llm_func
 
