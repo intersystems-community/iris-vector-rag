@@ -1,0 +1,213 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-07-24T11:49:12.113641",
+    "total_execution_time": 67.31634497642517,
+    "document_count": 10,
+    "target_document_count": 1000,
+    "techniques_tested": 7,
+    "successful_tests": 5,
+    "success_rate": 71.42857142857143
+  },
+  "technique_results": {
+    "iris_rag_basic": {
+      "technique": "iris_rag_basic",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 11.76163625717163,
+        "avg_query_time": 3.215475161870321
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 3.4743378162384033,
+          "retrieved_count": 5,
+          "answer_length": 784,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 2.557521104812622,
+          "retrieved_count": 5,
+          "answer_length": 1410,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 3.6145665645599365,
+          "retrieved_count": 5,
+          "answer_length": 1462,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_colbert": {
+      "technique": "iris_rag_colbert",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 10.294983863830566,
+        "avg_query_time": 2.786949952443441
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 1.91697096824646,
+          "retrieved_count": 5,
+          "answer_length": 122,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 4.576526165008545,
+          "retrieved_count": 5,
+          "answer_length": 104,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 1.8673527240753174,
+          "retrieved_count": 5,
+          "answer_length": 112,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_crag": {
+      "technique": "iris_rag_crag",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 6.981074333190918,
+        "avg_query_time": 1.9837227662404378
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 1.9733679294586182,
+          "retrieved_count": 5,
+          "answer_length": 691,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 2.2958052158355713,
+          "retrieved_count": 5,
+          "answer_length": 819,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 1.681995153427124,
+          "retrieved_count": 5,
+          "answer_length": 569,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_noderag": {
+      "technique": "iris_rag_noderag",
+      "success": false,
+      "error": "iris_rag_noderag: Too few documents retrieved (0)\nassert 0 >= 1\n +  where 0 = len([])",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hybrid_ifind": {
+      "technique": "iris_rag_hybrid_ifind",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 4.9947381019592285,
+        "avg_query_time": 1.0503373940785725
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 0.9472751617431641,
+          "retrieved_count": 5,
+          "answer_length": 317,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 1.1416523456573486,
+          "retrieved_count": 5,
+          "answer_length": 398,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 1.062084674835205,
+          "retrieved_count": 5,
+          "answer_length": 424,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_graphrag": {
+      "technique": "iris_rag_graphrag",
+      "success": false,
+      "error": "iris_rag_graphrag: Too few documents retrieved (0)\nassert 0 >= 1\n +  where 0 = len([])",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hyde": {
+      "technique": "iris_rag_hyde",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 24.27846598625183,
+        "avg_query_time": 7.511667013168335
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 7.631332159042358,
+          "retrieved_count": 5,
+          "answer_length": 535,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 10.585027694702148,
+          "retrieved_count": 5,
+          "answer_length": 374,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 4.318641185760498,
+          "retrieved_count": 5,
+          "answer_length": 222,
+          "success": true
+        }
+      ]
+    }
+  },
+  "performance_summary": {
+    "fastest_technique": "iris_rag_hybrid_ifind",
+    "slowest_technique": "iris_rag_hyde",
+    "avg_times": {
+      "iris_rag_basic": 3.215475161870321,
+      "iris_rag_colbert": 2.786949952443441,
+      "iris_rag_crag": 1.9837227662404378,
+      "iris_rag_hybrid_ifind": 1.0503373940785725,
+      "iris_rag_hyde": 7.511667013168335
+    },
+    "retrieval_counts": {
+      "iris_rag_basic": 5.0,
+      "iris_rag_colbert": 5.0,
+      "iris_rag_crag": 5.0,
+      "iris_rag_hybrid_ifind": 5.0,
+      "iris_rag_hyde": 5.0
+    },
+    "answer_lengths": {
+      "iris_rag_basic": 1218.6666666666667,
+      "iris_rag_colbert": 112.66666666666667,
+      "iris_rag_crag": 693.0,
+      "iris_rag_hybrid_ifind": 379.6666666666667,
+      "iris_rag_hyde": 377.0
+    }
+  },
+  "validation_status": "PARTIAL"
+}

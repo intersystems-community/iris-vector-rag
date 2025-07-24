@@ -27,7 +27,7 @@ def real_iris_available() -> bool:
     # Try to connect
     # get_iris_connection will use its own defaults (e.g., localhost for IRIS_HOST)
     # if the environment variables are not explicitly set.
-    conn = get_iris_connection(use_mock=False)
+    conn = get_iris_connection()
     if conn is None:
         return False
     
@@ -58,7 +58,7 @@ def real_data_available(real_iris_available: bool) -> bool:
         return False
     
     # Connect to IRIS
-    conn = get_iris_connection(use_mock=False)
+    conn = get_iris_connection()
     if conn is None:
         return False
     

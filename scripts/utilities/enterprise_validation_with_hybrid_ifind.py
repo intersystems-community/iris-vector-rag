@@ -161,7 +161,7 @@ def main():
     try:
         # Get IRIS connection
         logger.info("Connecting to IRIS database...")
-        iris_connection = get_iris_connection(use_mock=True)
+        iris_connection = get_iris_connection()
         
         # Get functions
         embedding_func = get_embedding_func()

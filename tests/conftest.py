@@ -98,7 +98,7 @@ def iris_connection_real():
     print("\nFixture: Attempting to establish real IRIS connection...")
     
     # Use our new connection function
-    conn = get_iris_connection(use_mock=False)
+    conn = get_iris_connection()
     
     if conn:
         print("Fixture: Real IRIS connection established.")
@@ -664,7 +664,7 @@ def iris_connection_auto(use_testcontainer, iris_testcontainer_connection, reque
     # If force_mock, always use mock
     if force_mock:
         logger.info("Using mock connection due to force_mock marker")
-        return get_iris_connection(use_mock=True)
+        return get_iris_connection()
     
     # If force_real, try real connection or skip
     if force_real:

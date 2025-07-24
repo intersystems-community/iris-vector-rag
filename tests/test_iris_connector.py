@@ -22,7 +22,7 @@ def test_get_iris_connection_no_mock_no_real_outside_pytest():
     with patch('common.iris_connector.get_real_iris_connection', return_value=None):
         # Ensure PYTEST_CURRENT_TEST is not in environ
         with patch.dict(os.environ, {}, clear=True):
-            conn = get_iris_connection(use_mock=False)
+            conn = get_iris_connection()
             assert conn is None
 
 def test_get_real_iris_connection_success(monkeypatch):
@@ -38,7 +38,7 @@ def test_get_real_iris_connection_success(monkeypatch):
                         lambda *args, **kwargs: mock_conn)
     
     # Call the main connection function
-    conn = get_iris_connection(use_mock=False)
+    conn = get_iris_connection()
     
     # Verify we got our mock connection back
     assert conn is mock_conn
@@ -70,7 +70,7 @@ def test_get_real_iris_connection_connect_error(monkeypatch):
     
     # Call the function with different environment setup
     with patch.dict(os.environ, {}, clear=True):  # Clear pytest env var
-        conn = get_iris_connection(use_mock=False)
+        conn = get_iris_connection()
         
         # Verify we got None when not in pytest context
         assert conn is None

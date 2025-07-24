@@ -54,7 +54,7 @@ class TestEmbeddingGeneration:
     def test_generate_document_embeddings_mock(self):
         """Test that we can generate document-level embeddings with a mock connection."""
         # Get a connection (mock)
-        connection = get_iris_connection(use_mock=True)
+        connection = get_iris_connection()
         assert connection is not None
         
         # Add some documents
@@ -83,7 +83,7 @@ class TestEmbeddingGeneration:
     def test_generate_token_embeddings_mock(self):
         """Test that we can generate token-level embeddings with a mock connection."""
         # Get a connection (mock)
-        connection = get_iris_connection(use_mock=True)
+        connection = get_iris_connection()
         assert connection is not None
         
         # Add some documents
