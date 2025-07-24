@@ -37,15 +37,6 @@ from common.utils import Document
 from common.utils import get_iris_connector, get_embedding_func, get_llm_func
 from common.iris_connector import get_iris_connection
 
-# Import standardized mocks from the mocks module
-from tests.mocks.db import MockIRISConnector, MockIRISCursor
-from tests.mocks.models import (
-    mock_embedding_func, 
-    mock_llm_func,
-    mock_colbert_doc_encoder,
-    mock_colbert_query_encoder
-)
-
 # Import real data fixtures
 from tests.fixtures.real_data import (
     real_iris_available,
