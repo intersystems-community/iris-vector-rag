@@ -8,9 +8,8 @@ This script tests the IPM integration functionality without relying on pytest.
 import sys
 import os
 import tempfile
-import json
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -19,7 +18,6 @@ sys.path.insert(0, str(project_root))
 def test_ipm_integration_import():
     """Test that IPM integration can be imported."""
     try:
-        from iris_rag.utils.ipm_integration import IPMIntegration
         print("✅ IPMIntegration import successful")
         return True
     except ImportError as e:

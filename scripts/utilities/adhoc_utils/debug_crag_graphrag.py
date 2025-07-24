@@ -14,8 +14,8 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 from common.utils import get_llm_func # Updated import
 
-from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
-from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
 
 def test_crag():
     """Test CRAG with detailed output"""
@@ -33,7 +33,7 @@ def test_crag():
     llm_func = get_llm_func(provider="openai", model_name="gpt-3.5-turbo")
     
     # Initialize pipeline
-    pipeline = CRAGPipelineV2(iris, embedding_func, llm_func)
+    pipeline = CRAGPipeline(iris, embedding_func, llm_func)
     
     # Test query
     query = "What is diabetes and how is it treated?"
@@ -75,7 +75,7 @@ def test_graphrag():
     llm_func = get_llm_func(provider="openai", model_name="gpt-3.5-turbo")
     
     # Initialize pipeline
-    pipeline = GraphRAGPipelineV2(iris, embedding_func, llm_func)
+    pipeline = GraphRAGPipeline(iris, embedding_func, llm_func)
     
     # Test query
     query = "What is diabetes and how is it treated?"

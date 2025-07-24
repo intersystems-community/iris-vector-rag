@@ -4,7 +4,6 @@ Verify that the DocumentChunks table fix is working properly.
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add the project root to the Python path

@@ -6,7 +6,7 @@ Query and display the current database schema for the 100K document ingestion.
 import os
 import sys
 import logging
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

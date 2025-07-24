@@ -33,17 +33,11 @@ import os
 import sys
 import logging
 import time
-import json
 import argparse
 import psutil
-import numpy as np
 import threading
-import statistics
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import gc
+from typing import List
+from dataclasses import dataclass
 
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -51,21 +45,10 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from common.iris_connector import get_iris_connection # Updated import
-from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func, get_colbert_doc_encoder_func_adapted # Updated import
-from data.loader_fixed import load_documents_to_iris # Path remains correct
-from data.pmc_processor import process_pmc_files # Path remains correct
-
-# Import all RAG pipelines
-from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
-from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
-from iris_rag.pipelines.crag import CRAGPipeline # Updated import
-from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
-from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
-from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
-from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
+from common.utils import get_embedding_func, get_llm_func
 
 # Import chunking service
-from chunking.enhanced_chunking_service import EnhancedChunkingService # Path remains correct
+from tools.chunking.enhanced_chunking_service import EnhancedChunkingService # Path remains correct
 
 # Configure logging
 logging.basicConfig(

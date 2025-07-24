@@ -11,7 +11,7 @@ import os
 import argparse
 import logging
 import json
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -34,27 +34,7 @@ class DataPopulationManager:
         self.db_connection = None
         self.orchestrator = None
         
-    def initialize_connections(self):
-        """Initialize database connection and orchestrator."""
-        try:
-            from common.iris_connection_manager import get_iris_connection
-            from rag_templates.validation.data_population_orchestrator import DataPopulationOrchestrator
-            
-            self.db_connection = get_iris_connection()
-            if not self.db_connection:
-                raise Exception("Could not establish database connection")
-            
-            self.orchestrator = DataPopulationOrchestrator(
-                config=self.config,
-                db_connection=self.db_connection
-            )
-            
-            logger.info("Database connection and orchestrator initialized successfully")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize connections: {e}")
-            return False
+
     
     def check_status(self) -> Dict[str, Any]:
         """
@@ -64,7 +44,7 @@ class DataPopulationManager:
             Dictionary with status information
         """
         try:
-            from scripts.table_status_detector import TableStatusDetector
+            from scripts.utilities.table_status_detector import TableStatusDetector
             
             if not self.db_connection:
                 if not self.initialize_connections():

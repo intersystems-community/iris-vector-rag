@@ -7,7 +7,6 @@ Uses IRIS backup utilities that work with active databases.
 import subprocess
 import datetime
 import json
-import os
 from pathlib import Path
 
 def create_backup_directory():

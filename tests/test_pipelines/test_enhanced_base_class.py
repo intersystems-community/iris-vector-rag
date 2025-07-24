@@ -2,8 +2,7 @@
 Tests for enhanced RAGPipeline base class with VectorStore integration.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from iris_rag.core.models import Document
 from iris_rag.core.base import RAGPipeline
 from iris_rag.pipelines.basic import BasicRAGPipeline

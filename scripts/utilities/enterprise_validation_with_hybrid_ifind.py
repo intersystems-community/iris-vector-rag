@@ -25,7 +25,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from common.iris_connector import get_iris_connection # Updated import
-from common.utils import get_embedding_func, get_llm_func # Updated import
+from common.utils import get_embedding_func # Updated import
 from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
 from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
 from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import

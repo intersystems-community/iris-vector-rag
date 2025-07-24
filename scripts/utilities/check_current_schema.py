@@ -1,4 +1,4 @@
-import sys, os
+import sys
 sys.path.insert(0, '.')
 from common.iris_connector import get_iris_connection
 

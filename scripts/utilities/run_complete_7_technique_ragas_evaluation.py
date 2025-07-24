@@ -25,7 +25,7 @@ from iris_rag.pipelines.crag import CRAGPipeline # Updated import
 from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
 from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
 from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
-from iris_rag.pipelines.colbert import ColbertRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
 
 # RAGAS imports
 from ragas import evaluate
@@ -56,7 +56,7 @@ def create_working_colbert_pipeline():
         return [embedding]
     
     # Create pipeline
-    pipeline = ColbertRAGPipeline(conn, working_128d_encoder, working_128d_encoder, llm_func)
+    pipeline = ColBERTRAGPipeline(conn, working_128d_encoder, working_128d_encoder, llm_func)
     
     # Override run method to limit content and avoid context overflow
     original_run = pipeline.run

@@ -8,9 +8,7 @@ import sys
 import os
 import json
 import glob
-import time
 import xml.etree.ElementTree as ET
-from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath('.'))

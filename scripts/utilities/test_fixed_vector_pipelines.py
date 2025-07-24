@@ -111,10 +111,10 @@ def test_fixed_pipelines():
     # Test CRAG with correct class name
     logger.info("   🔬 Testing CRAG...")
     try:
-        from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipelineV2 # Updated import
+        from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipeline # Updated import
         
         conn = get_iris_connection()
-        pipeline = CRAGPipelineV2(
+        pipeline = CRAGPipeline(
             iris_connector=conn,
             embedding_func=embedding_func,
             llm_func=llm_func

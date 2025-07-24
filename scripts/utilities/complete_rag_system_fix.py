@@ -27,7 +27,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func, get_colbert_doc_encoder_func_adapted # Updated import
-from data.pmc_processor import extract_pmc_metadata, process_pmc_files # Path remains correct
+from data.pmc_processor import process_pmc_files # Path remains correct
 
 # Configure logging
 logging.basicConfig(

@@ -9,7 +9,6 @@ retrieval when used in RAGAS evaluation context.
 import logging
 import sys
 import os
-from typing import List, Dict, Any, Optional
 from unittest.mock import Mock, patch
 
 # Add project root to path

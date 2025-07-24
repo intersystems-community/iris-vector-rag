@@ -31,13 +31,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 
 # Import all V2 pipelines
-from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipelineV2
+from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipeline
 from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2
 from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipelineV2
-from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipelineV2
+from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipeline
 from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTPipelineV2
 from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline as HybridIFindRAGPipelineV2
-from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipelineV2
+from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipeline
 
 # Test query (will be loaded from file)
 # TEST_QUERY = "What is diabetes and how is it treated?"
@@ -236,7 +236,7 @@ def main():
     
     # Test only BasicRAG pipeline
     pipelines = [
-        (BasicRAGPipelineV2, "BasicRAG"),
+        (BasicRAGPipeline, "BasicRAG"),
     ]
     
     all_pipeline_runs = [] # To store results for RAGAS evaluation

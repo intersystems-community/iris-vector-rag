@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # Import RAG pipeline modules (legacy imports with fallback)
 try:
     from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
-    from iris_rag.pipelines.colbert import ColbertRAGPipeline # Updated import
+    from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
     from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
     from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
     from iris_rag.pipelines.crag import CRAGPipeline # Updated import
@@ -47,8 +47,8 @@ except ImportError:
 
 # Import evaluation and benchmarking modules
 try:
-    from eval.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance # Path remains same
-    from eval.bench_runner import run_technique_benchmark # Path remains same
+    from scripts.utilities.evaluation.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance # Path remains same
+    from scripts.utilities.evaluation.bench_runner import run_technique_benchmark # Path remains same
     EVAL_MODULES_AVAILABLE = True
 except ImportError:
     EVAL_MODULES_AVAILABLE = False
@@ -196,7 +196,7 @@ def invoke_colbert(query: str, config: str) -> str:
         
         # Initialize pipeline
         iris_connector = get_iris_connection()
-        pipeline = ColbertRAGPipeline(
+        pipeline = ColBERTRAGPipeline(
             iris_connector=iris_connector,
             colbert_query_encoder_func=config_dict.get("colbert_query_encoder_func"),
             colbert_doc_encoder_func=config_dict.get("colbert_doc_encoder_func"),
@@ -671,7 +671,7 @@ def health_check() -> str:
         # Check legacy pipeline imports if available
         if LEGACY_IMPORTS_AVAILABLE:
             pipeline_classes = [
-                BasicRAGPipeline, ColbertRAGPipeline, GraphRAGPipeline,
+                BasicRAGPipeline, ColBERTRAGPipeline, GraphRAGPipeline,
                 HyDERAGPipeline, CRAGPipeline, NodeRAGPipeline
             ]
             

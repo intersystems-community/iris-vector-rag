@@ -37,7 +37,6 @@ if project_root not in sys.path:
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func # Updated import (added colbert query encoder for OptimizedColBERT)
 from data.loader_fixed import load_documents_to_iris # Path remains correct
-from src.working.colbert.doc_encoder import get_colbert_doc_encoder # Updated import
 from tools.chunking.enhanced_chunking_service import EnhancedDocumentChunkingService # Path remains correct
 from data.pmc_processor import extract_pmc_metadata # Path remains correct
 
@@ -111,7 +110,6 @@ class RealPMCIngestionPipeline:
             # Setup models
             self.embedding_func = get_embedding_func(model_name="intfloat/e5-base-v2", mock=False)
             self.llm_func = get_llm_func(provider="stub")
-            self.colbert_encoder = get_colbert_doc_encoder()
             
             # Setup chunking service
             self.chunking_service = EnhancedDocumentChunkingService(

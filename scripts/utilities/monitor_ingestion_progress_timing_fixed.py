@@ -9,7 +9,6 @@ import time
 import json
 import datetime
 import sys
-import os
 from pathlib import Path
 
 # Add the project root to the Python path

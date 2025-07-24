@@ -13,7 +13,7 @@ API across different ColBERT backends.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -250,8 +250,6 @@ class PylateColBERTInterface(ColBERTInterface):
         """Ensure model and tokenizer are loaded."""
         if self._model is None:
             try:
-                # Try to import pylate
-                import pylate
                 from transformers import AutoTokenizer, AutoModel
                 
                 logger.info(f"Loading pylate model: {self.model_name}")

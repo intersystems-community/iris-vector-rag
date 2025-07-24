@@ -99,12 +99,12 @@ def main():
     
     # Define all techniques to test
     techniques = [
-        ("BasicRAG V2", "basic_rag.pipeline_v2", "BasicRAGPipelineV2"),
-        ("CRAG V2", "crag.pipeline_v2", "CRAGPipelineV2"),
+        ("BasicRAG V2", "basic_rag.pipeline_v2", "BasicRAGPipeline"),
+        ("CRAG V2", "crag.pipeline_v2", "CRAGPipeline"),
         ("NodeRAG V2", "noderag.pipeline_v2", "NodeRAGPipelineV2"),
         ("ColBERT V2", "colbert.pipeline_v2", "ColBERTPipelineV2"),
         ("HyDE V2", "hyde.pipeline_v2", "HyDERAGPipelineV2"),
-        ("GraphRAG V2", "graphrag.pipeline_v2", "GraphRAGPipelineV2"),
+        ("GraphRAG V2", "graphrag.pipeline_v2", "GraphRAGPipeline"),
         ("HybridIFindRAG V2", "hybrid_ifind_rag.pipeline_v2", "HybridIFindRAGPipelineV2"),
     ]
     

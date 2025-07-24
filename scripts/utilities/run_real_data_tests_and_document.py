@@ -19,18 +19,12 @@ import logging
 import subprocess
 import time
 import datetime
-from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
-
-# Import project modules
-from common.iris_connector import get_iris_connection
-from common.embedding_utils import get_embedding_model
-from data.loader_fixed import process_and_load_documents
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

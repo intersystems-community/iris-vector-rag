@@ -10,7 +10,6 @@ This script demonstrates the LLM cache monitoring capabilities by:
 
 import sys
 import os
-import time
 from datetime import datetime
 
 # Add project root to sys.path
@@ -185,7 +184,7 @@ def demonstrate_dashboard_display(cache_manager: LangchainCacheManager):
     metrics_module.get_global_cache_manager = lambda: cache_manager
     
     try:
-        from scripts.monitoring_dashboard import MonitoringDashboard
+        from scripts.utilities.monitoring_dashboard import MonitoringDashboard
         
         # Create dashboard instance (with mocked dependencies)
         class MockHealthMonitor:
@@ -199,7 +198,7 @@ def demonstrate_dashboard_display(cache_manager: LangchainCacheManager):
                 pass
         
         # Mock the imports to avoid full initialization
-        import scripts.monitoring_dashboard as dashboard_module
+        import scripts.utilities.monitoring_dashboard as dashboard_module
         dashboard_module.HealthMonitor = MockHealthMonitor
         dashboard_module.PerformanceMonitor = MockPerformanceMonitor
         

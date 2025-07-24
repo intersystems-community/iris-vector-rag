@@ -5,7 +5,7 @@ Final validation report script to test all pipeline fixes and generate comprehen
 import sys
 import os
 import time
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))

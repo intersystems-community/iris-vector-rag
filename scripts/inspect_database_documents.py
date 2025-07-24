@@ -4,7 +4,6 @@ Script to inspect documents in the RAG.SourceDocuments table.
 This helps diagnose retrieval issues by showing what's actually stored.
 """
 
-import os
 import sys
 from pathlib import Path
 

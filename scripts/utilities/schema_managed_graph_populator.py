@@ -6,7 +6,6 @@ This script properly uses the schema manager to populate GraphRAG data
 without hardcoded table names or column references.
 """
 
-import os
 import sys
 import logging
 from pathlib import Path

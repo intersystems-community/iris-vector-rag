@@ -5,7 +5,6 @@ Schema-Manager-Based Data Utilities
 Provides data management operations using schema manager instead of hardcoded SQL.
 """
 
-import os
 import sys
 import logging
 from pathlib import Path

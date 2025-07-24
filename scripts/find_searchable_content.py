@@ -4,10 +4,8 @@ Script to find what content we can actually search in the database.
 Focuses on finding appropriate test queries based on available data.
 """
 
-import os
 import sys
 from pathlib import Path
-import random
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

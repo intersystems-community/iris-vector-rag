@@ -10,7 +10,7 @@ sys.path.append('.')
 from common.iris_connector import get_iris_connection
 from common.embedding_utils import get_embedding_model
 import re
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Tuple
 import uuid
 import time
 from collections import defaultdict

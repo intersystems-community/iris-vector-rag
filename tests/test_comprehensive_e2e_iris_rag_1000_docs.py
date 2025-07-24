@@ -33,7 +33,7 @@ import json
 import time
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, Any
 from pathlib import Path
 
 # Configure logging
@@ -68,8 +68,6 @@ except ImportError as e:
 # Import utilities
 from common.utils import get_embedding_func, get_llm_func
 from common.iris_connection_manager import get_iris_connection
-# Import data loading from pmc_processor instead
-from data.pmc_processor import process_pmc_files
 
 # Test configuration
 # Resolve PMC data directory path relative to project root

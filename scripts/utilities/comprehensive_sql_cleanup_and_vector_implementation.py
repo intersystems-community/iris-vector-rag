@@ -6,14 +6,12 @@ This script examines all SQL files, cleans them up, and attempts to implement
 actual working HNSW vector indexing in IRIS.
 """
 
-import os
 import sys
 import json
-import time
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Any
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

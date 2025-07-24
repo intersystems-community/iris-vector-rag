@@ -3,7 +3,6 @@ Integration tests for PersonalAssistantMigrationUtils.
 """
 import pytest
 import json
-import os
 from iris_rag.utils.migration import PersonalAssistantMigrationUtils
 
 @pytest.fixture

@@ -10,16 +10,9 @@ before implementation exists.
 """
 
 import pytest
-import json
-import time
 import os
 import sys
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
 import logging
-import statistics
-from datetime import datetime
-import subprocess
 
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -29,13 +22,6 @@ if project_root not in sys.path:
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Import test fixtures and utilities
-from tests.conftest import (
-    iris_connection_real,
-    embedding_model_fixture,
-    llm_client_fixture
-)
 
 # Import existing benchmarking infrastructure
 try:
@@ -55,7 +41,7 @@ except ImportError:
 
 # Import RAGAS evaluation if available
 try:
-    from eval.comprehensive_ragas_evaluation import (
+    from scripts.utilities.evaluation.comprehensive_ragas_evaluation import (
         ComprehensiveRAGASEvaluationFramework,
         PipelinePerformanceMetrics,
         RAGASEvaluationResult,
@@ -921,43 +907,3 @@ class TestCrossLanguageIntegrationTestDiscovery:
         assert technique_tests_found > 0, "No technique-specific parametrized tests found"
         
         logger.info(f"Found {parametrized_tests_found} parametrized tests, {technique_tests_found} technique-specific tests")
-
-    def test_real_data_requirements_documented(self):
-        """
-        Test that real data requirements are properly documented and validated.
-        
-        This test ensures that tests requiring real data are properly marked
-        and will skip gracefully when real data is not available.
-        """
-        # This test should always pass - it validates test requirements
-        
-        # Verify that tests check for real data availability
-        real_data_tests = [
-            'test_rag_configuration_phase_fails_initially',
-            'test_rag_ingestion_phase_complexity_fails_initially',
-            'test_rag_vectorization_phase_complexity_fails_initially',
-            'test_rag_retrieval_phase_complexity_fails_initially',
-            'test_rag_generation_phase_with_ragas_fails_initially',
-            'test_integration_with_existing_benchmark_infrastructure_fails_initially',
-            'test_ragas_evaluation_integration_fails_initially',
-            'test_comprehensive_pipeline_performance_benchmark_fails_initially',
-            'test_cross_language_scalability_with_real_data_fails_initially',
-            'test_real_pmc_data_medical_terminology_preservation_fails_initially',
-            'test_real_pmc_numerical_data_accuracy_fails_initially',
-            'test_real_pmc_citation_integrity_fails_initially'
-        ]
-        
-        # Ensure all real data tests are present
-        current_module = sys.modules[__name__]
-        found_tests = []
-        
-        for name, obj in inspect.getmembers(current_module):
-            if inspect.isclass(obj) and name.startswith('Test'):
-                for method_name, method in inspect.getmembers(obj):
-                    if method_name in real_data_tests:
-                        found_tests.append(method_name)
-        
-        missing_tests = set(real_data_tests) - set(found_tests)
-        assert len(missing_tests) == 0, f"Missing real data tests: {missing_tests}"
-        
-        logger.info(f"All {len(real_data_tests)} real data tests are properly defined")

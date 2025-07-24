@@ -5,17 +5,13 @@ These tests verify that we can correctly generate both document-level
 and token-level embeddings for documents in the database.
 """
 
-import pytest
 import os
 import sys
-import numpy as np
-from unittest.mock import MagicMock, patch
 
 # Make sure the project root is in the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from common.iris_connector import get_iris_connection
-from common.utils import Document
 
 # Import our embedding generation functions
 # This will fail initially since we haven't moved these functions out of 

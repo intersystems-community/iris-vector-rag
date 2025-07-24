@@ -23,7 +23,7 @@ def test_graphrag_e2e_protein_interaction_and_pathways():
     The entity types in the database must align with what GraphRAG expects or
     be broad enough to capture these biological entities.
     """
-    pipeline = create_graphrag_pipeline() 
+    pipeline = GraphRAGPipeline() 
 
     # Query designed to test graph traversal for relationships and context
     query = "What proteins interact with BRCA1 in cancer pathways?"

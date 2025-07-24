@@ -11,7 +11,6 @@ import time
 import logging
 import traceback
 import numpy as np
-import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Tuple, Optional, Callable, Union
@@ -43,9 +42,7 @@ from iris_rag.embeddings.manager import EmbeddingManager # Added for NodeRAG
 
 # Visualization imports
 import matplotlib.pyplot as plt
-import seaborn as sns
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 # RAGAS imports
 try:
@@ -66,48 +63,15 @@ except ImportError:
 
 # Statistical analysis
 try:
-    from scipy import stats
-    from scipy.stats import ttest_ind, mannwhitneyu
+    from scipy.stats import ttest_ind
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
     print("⚠️ SciPy not available for statistical testing")
 
-# Core pipeline imports - FIXED PATHS
-try:
-    from core_pipelines.basic_rag_pipeline import BasicRAGPipeline
-except ImportError:
-    BasicRAGPipeline = None
-    
-try:
-    from core_pipelines.hyde_pipeline import HyDERAGPipeline
-except ImportError:
-    HyDERAGPipeline = None
-    
-try:
-    from core_pipelines.crag_pipeline import CRAGPipeline
-except ImportError:
-    CRAGPipeline = None
-    
-try:
-    from core_pipelines.colbert_pipeline import ColBERTPipeline
-except ImportError:
-    ColBERTPipeline = None
-    
-try:
-    from core_pipelines.noderag_pipeline import NodeRAGPipeline
-except ImportError:
-    NodeRAGPipeline = None
-    
-try:
-    from core_pipelines.graphrag_pipeline import GraphRAGPipeline
-except ImportError:
-    GraphRAGPipeline = None
-
 # Common utilities - FIXED PATHS
-from common.iris_dbapi_connector import get_iris_dbapi_connection
 from common.embedding_utils import get_embedding_model
-from common.utils import get_embedding_func, get_llm_func
+from common.utils import get_llm_func
 
 # Configuration management
 from .config_manager import ConfigManager, ComprehensiveConfig

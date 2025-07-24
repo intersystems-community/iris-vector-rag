@@ -5,9 +5,7 @@ This module provides fixtures that help tests determine if real data is availabl
 and control whether to use real or mock resources based on that.
 """
 
-import os
 import pytest
-from typing import Optional
 
 from common.iris_connector import get_iris_connection
 

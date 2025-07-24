@@ -20,13 +20,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 
 # Import all V2 pipelines
-from iris_rag.pipelines.basic import BasicRAGPipelineV2 # Updated import
-from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipelineV2 # Updated import
-from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipelineV2 # Updated import
-from iris_rag.pipelines.colbert import ColBERTRAGPipelineV2 # Updated import
-from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridIFindRAGPipelineV2 # Updated import
-from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
 
 # Comprehensive test queries
 TEST_QUERIES = [
@@ -269,13 +269,13 @@ def main():
     
     # Test all pipelines
     pipelines = [
-        (BasicRAGPipelineV2, "BasicRAG"),
-        (NodeRAGPipelineV2, "NodeRAG"),
-        (GraphRAGPipelineV2, "GraphRAG"),
-        (ColBERTPipelineV2, "ColBERT"),
-        (HyDERAGPipelineV2, "HyDE"),
-        (CRAGPipelineV2, "CRAG"),
-        (HybridIFindRAGPipelineV2, "HybridiFindRAG"),
+        (BasicRAGPipeline, "BasicRAG"),
+        (NodeRAGPipeline, "NodeRAG"),
+        (GraphRAGPipeline, "GraphRAG"),
+        (ColBERTRAGPipeline, "ColBERT"),
+        (HyDERAGPipeline, "HyDE"),
+        (CRAGPipeline, "CRAG"),
+        (HybridIFindRAGPipeline, "HybridiFindRAG"),
     ]
     
     all_results = {}

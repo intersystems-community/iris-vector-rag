@@ -6,7 +6,7 @@ import pytest
 import logging
 import os
 import sys
-from typing import List, Dict, Any, Callable, Tuple
+from typing import List, Tuple
 
 # Add project root to path to allow direct execution and imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

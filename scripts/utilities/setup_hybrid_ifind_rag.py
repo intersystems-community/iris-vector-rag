@@ -8,7 +8,6 @@ graph-based retrieval, and vector similarity search.
 """
 
 import sys
-import os
 import logging
 import time
 from pathlib import Path

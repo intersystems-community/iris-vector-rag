@@ -33,7 +33,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from eval.metrics import calculate_retrieval_metrics, calculate_answer_quality_metrics # Path remains same
+from scripts.utilities.evaluation.metrics import calculate_retrieval_metrics, calculate_answer_quality_metrics # Path remains same
 from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
 from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
 from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import

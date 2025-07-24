@@ -12,12 +12,11 @@ import os
 import json
 import time
 import logging
-from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
+from tools.chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
 from common.iris_connector import get_iris_connection
 from common.embedding_utils import get_embedding_model
 

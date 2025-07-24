@@ -73,7 +73,7 @@ def test_all_techniques():
         ("BasicRAG", "BasicRAGPipeline", "basic_rag.pipeline"),
         ("HyDE", "HyDERAGPipeline", "hyde.pipeline"),
         ("HybridIFindRAG", "HybridIFindRAGPipeline", "iris_rag.pipelines.hybrid_ifind"),
-        ("CRAG", "CRAGPipelineV2", "crag.pipeline_v2"),
+        ("CRAG", "CRAGPipeline", "crag.pipeline_v2"),
         ("NodeRAG", "NodeRAGPipelineV2", "noderag.pipeline_v2"),
     ]
     

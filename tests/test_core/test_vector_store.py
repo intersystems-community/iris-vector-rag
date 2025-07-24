@@ -3,7 +3,7 @@ Defines the contract tests for any VectorStore implementation.
 """
 import abc
 import pytest
-from typing import List, Tuple, Any, Dict
+from typing import Any, Dict
 
 # Placeholder for Document and VectorStoreError until actual definitions are available
 # These would typically be imported from iris_rag.core.models and iris_rag.storage.vector_store.exceptions

@@ -14,7 +14,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from eval.metrics import ( # Path remains same
+from scripts.utilities.evaluation.metrics import ( # Path remains same
     calculate_context_recall,
     calculate_precision_at_k,
     calculate_latency_percentiles,

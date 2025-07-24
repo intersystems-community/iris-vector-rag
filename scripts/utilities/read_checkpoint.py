@@ -4,7 +4,6 @@ Read ingestion checkpoint to understand the structure.
 """
 
 import pickle
-import os
 from pathlib import Path
 
 checkpoint_file = Path("ingestion_checkpoint.pkl")

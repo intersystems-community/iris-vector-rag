@@ -14,7 +14,6 @@ import os
 import time
 import numpy as np
 import logging
-from typing import List, Dict, Any, Tuple
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -28,12 +27,12 @@ from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import other RAG techniques for integration testing
 try:
-    from iris_rag.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+    from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
 except ImportError:
     NodeRAGPipeline = None
 
 try:
-    from iris_rag.experimental.hyde.pipeline import HyDEPipeline as HydeRAGPipeline # Updated import and aliased
+    from iris_rag.pipelines.hyde import HyDEPipeline as HydeRAGPipeline # Updated import and aliased
 except ImportError:
     HydeRAGPipeline = None
 

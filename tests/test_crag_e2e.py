@@ -3,7 +3,6 @@ import logging
 import sys # Added import
 import os # Added import
 from typing import List, Dict, Any, Callable
-from unittest.mock import MagicMock # For spying on the mock web search
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:

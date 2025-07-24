@@ -11,7 +11,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from iris_rag.pipelines.basic import BasicRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
 
 def test_basic_rag():
     """Test BasicRAG to see if it works"""
@@ -23,7 +23,7 @@ def test_basic_rag():
     llm_func = get_llm_func()
     
     # Create BasicRAG pipeline
-    basic_rag_pipeline = BasicRAGPipelineV2(
+    basic_rag_pipeline = BasicRAGPipeline(
         iris_connector=iris_conn,
         embedding_func=embedding_func,
         llm_func=llm_func

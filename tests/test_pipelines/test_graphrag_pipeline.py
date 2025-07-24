@@ -1,7 +1,7 @@
 import pytest
 import os
 import shutil
-from typing import List, Dict, Any, Generator
+from typing import Dict, Any
 
 from iris_rag.core.connection import ConnectionManager
 from iris_rag.config.manager import ConfigurationManager

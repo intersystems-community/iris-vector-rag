@@ -102,48 +102,48 @@ def main():
     
     # Test BasicRAG V2
     try:
-        from iris_rag.pipelines.basic_v2 import BasicRAGPipelineV2 # Updated import
-        result = test_pipeline(BasicRAGPipelineV2, "BasicRAG V2", test_query)
+        from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+        result = test_pipeline(BasicRAGPipeline, "BasicRAG V2", test_query)
         results.append(result)
     except ImportError as e:
         print(f"\n❌ Could not import BasicRAG V2: {e}")
     
     # Test CRAG V2
     try:
-        from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
-        result = test_pipeline(CRAGPipelineV2, "CRAG V2", test_query)
+        from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+        result = test_pipeline(CRAGPipeline, "CRAG V2", test_query)
         results.append(result)
     except ImportError as e:
         print(f"\n❌ Could not import CRAG V2: {e}")
     
     # Test HyDE V2
     try:
-        from src.deprecated.hyde.pipeline_v2 import HyDERAGPipelineV2 # Updated import
-        result = test_pipeline(HyDERAGPipelineV2, "HyDE V2", test_query)
+        from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+        result = test_pipeline(HyDERAGPipeline, "HyDE V2", test_query)
         results.append(result)
     except ImportError as e:
         print(f"\n❌ Could not import HyDE V2: {e}")
     
     # Test NodeRAG V2
     try:
-        from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
-        result = test_pipeline(NodeRAGPipelineV2, "NodeRAG V2", test_query)
+        from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+        result = test_pipeline(NodeRAGPipeline, "NodeRAG V2", test_query)
         results.append(result)
     except ImportError as e:
         print(f"\n❌ Could not import NodeRAG V2: {e}")
     
     # Test GraphRAG V2
     try:
-        from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
-        result = test_pipeline(GraphRAGPipelineV2, "GraphRAG V2", test_query)
+        from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+        result = test_pipeline(GraphRAGPipeline, "GraphRAG V2", test_query)
         results.append(result)
     except ImportError as e:
         print(f"\n❌ Could not import GraphRAG V2: {e}")
     
     # Test HybridiFindRAG V2
     try:
-        from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridIFindRAGPipelineV2 # Updated import
-        result = test_pipeline(HybridIFindRAGPipelineV2, "HybridiFindRAG V2", test_query)
+        from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
+        result = test_pipeline(HybridIFindRAGPipeline, "HybridiFindRAG V2", test_query)
         results.append(result)
     except ImportError as e:
         print(f"\n❌ Could not import HybridiFindRAG V2: {e}")

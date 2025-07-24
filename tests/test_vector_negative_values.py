@@ -7,7 +7,6 @@ vectors contain negative values, causing SQLCODE: <-104> during reconciliation.
 
 import pytest
 import logging
-from typing import List
 from common.db_vector_utils import insert_vector
 from common.iris_connector import get_iris_connection
 

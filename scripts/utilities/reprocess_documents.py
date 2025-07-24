@@ -17,7 +17,7 @@ import os
 import sys
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 
 # Add project root to Python path for imports
 project_root = Path(__file__).parent.parent

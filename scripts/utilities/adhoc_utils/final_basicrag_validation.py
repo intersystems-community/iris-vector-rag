@@ -30,9 +30,9 @@ def final_validation():
     print("FINAL BASICRAG VALIDATION - TESTING MULTIPLE QUERIES")
     print("="*80)
     
-    from basic_rag.pipeline_v2 import BasicRAGPipelineV2
+    from basic_rag.pipeline_v2 import BasicRAGPipeline
     
-    pipeline = BasicRAGPipelineV2(
+    pipeline = BasicRAGPipeline(
         iris_connector=iris_conn,
         embedding_func=embedding_func,
         llm_func=llm_func

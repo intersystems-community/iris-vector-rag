@@ -16,7 +16,7 @@ sys.path.insert(0, str(project_root))
 import logging
 import hashlib
 import re
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 from common.iris_connection_manager import get_iris_connection
 from common.utils import get_embedding_func
 from common.db_vector_utils import insert_vector

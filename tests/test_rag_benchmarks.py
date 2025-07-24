@@ -9,11 +9,8 @@ in the Red-Green-Refactor cycle.
 
 import os
 import sys
-import json
 import pytest
-import tempfile
-from unittest.mock import patch, MagicMock, mock_open
-from typing import Dict, List, Any, Optional, Tuple
+from unittest.mock import patch, MagicMock
 
 # Add the parent directory to the Python path to allow importing from scripts
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

@@ -16,8 +16,7 @@ import logging
 import sys
 import os
 import json
-import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -364,7 +363,7 @@ class HNSWAndChunkingFixer:
             logger.info("🧪 Testing chunking pipeline...")
             
             # Import chunking service
-            from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
+            from tools.chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
             
             # Create service with proper embedding function
             chunking_service = EnhancedDocumentChunkingService(

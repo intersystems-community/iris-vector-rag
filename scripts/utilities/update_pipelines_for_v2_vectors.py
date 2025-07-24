@@ -64,7 +64,7 @@ from common.iris_connector import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
-class BasicRAGPipelineV2Vector:
+class BasiCRAGPipelineVector:
     """BasicRAG using native VECTOR columns with HNSW indexes"""
     
     def __init__(self, iris_connector=None, embedding_func=None, llm_func=None):

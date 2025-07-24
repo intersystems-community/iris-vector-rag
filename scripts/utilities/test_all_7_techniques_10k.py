@@ -11,9 +11,8 @@ import time
 import logging
 import psutil
 import gc
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, Any
 import traceback
 
 # Add project root to path
@@ -26,13 +25,13 @@ from common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Import all 7 RAG techniques
-from iris_rag.pipelines.basic import BasicRAGPipelineV2 # Updated import
-from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipelineV2 # Updated import
-from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipelineV2 # Updated import
-from iris_rag.pipelines.colbert import ColBERTRAGPipelineV2 # Updated import
-from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
-from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridIFindRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 load_dotenv()
 
@@ -65,31 +64,31 @@ class Enterprise10KValidation:
         # RAG technique configurations
         self.rag_techniques = {
             'BasicRAG': {
-                'class': BasicRAGPipelineV2,
+                'class': BasicRAGPipeline,
                 'description': 'Reliable production baseline with vector similarity search'
             },
             'HyDE': {
-                'class': HyDERAGPipelineV2,
+                'class': HyDERAGPipeline,
                 'description': 'Hypothetical document generation for enhanced retrieval'
             },
             'CRAG': {
-                'class': CRAGPipelineV2,
+                'class': CRAGPipeline,
                 'description': 'Corrective retrieval with enhanced coverage'
             },
             'ColBERT': {
-                'class': ColBERTPipelineV2,
+                'class': ColBERTRAGPipeline,
                 'description': 'Token-level semantic matching with fine-grained relevance'
             },
             'NodeRAG': {
-                'class': NodeRAGPipelineV2,
+                'class': NodeRAGPipeline,
                 'description': 'Maximum coverage specialist with comprehensive retrieval'
             },
             'GraphRAG': {
-                'class': GraphRAGPipelineV2,
+                'class': GraphRAGPipeline,
                 'description': 'Ultra-fast graph-based retrieval with entity relationships'
             },
             'HybridIFindRAG': {
-                'class': HybridIFindRAGPipelineV2,
+                'class': HybridIFindRAGPipeline,
                 'description': 'Multi-modal fusion approach combining multiple strategies'
             }
         }

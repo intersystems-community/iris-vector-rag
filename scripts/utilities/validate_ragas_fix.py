@@ -10,7 +10,6 @@ extraction with the fixed pipelines.
 import os
 import sys
 import logging
-from typing import List, Dict, Any
 
 # Load environment variables
 from dotenv import load_dotenv

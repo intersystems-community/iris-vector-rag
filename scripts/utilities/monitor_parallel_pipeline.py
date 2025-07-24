@@ -9,7 +9,6 @@ to provide real-time status updates and coordination.
 import os
 import sys
 import time
-import json
 import psutil
 from datetime import datetime, timedelta
 from pathlib import Path

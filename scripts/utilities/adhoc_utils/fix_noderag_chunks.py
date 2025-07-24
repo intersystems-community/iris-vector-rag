@@ -141,7 +141,7 @@ def populate_document_chunks():
 
 def test_noderag():
     """Test NodeRAG after fixing chunks"""
-    from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
+    from iris_rag.pipelines.noderag import NodeRAGPipelineV2 # Updated import
     from common.utils import get_llm_func # Updated import
     
     try:

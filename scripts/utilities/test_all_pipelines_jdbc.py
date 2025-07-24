@@ -89,7 +89,7 @@ def main():
         logger.error(f"Failed to initialize NodeRAG: {e}")
     
     try:
-        pipelines["ColBERT"] = ColBERTPipeline(
+        pipelines["ColBERT"] = ColBERTRAGPipeline(
             conn, embedding_func, embedding_func, llm_func
         )
     except Exception as e:

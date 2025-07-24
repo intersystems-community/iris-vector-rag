@@ -20,7 +20,7 @@ import time
 import logging
 import traceback
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 import statistics
 
@@ -31,7 +31,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
-from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService # Reverted: chunking is at project root
+from tools.chunking.enhanced_chunking_service import EnhancedDocumentChunkingService # Reverted: chunking is at project root
 
 # Import all RAG techniques
 from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import

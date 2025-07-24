@@ -24,11 +24,10 @@ import json
 import argparse
 import psutil
 import numpy as np
-import threading
 import signal
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
+from datetime import datetime
 import gc
 
 # Add project root to path
@@ -37,7 +36,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from common.iris_connector import get_iris_connection # Updated import
-from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func, get_colbert_doc_encoder_func_adapted # Updated import
+from common.utils import get_embedding_func, get_llm_func
 
 # Import all RAG pipelines
 from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import

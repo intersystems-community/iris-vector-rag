@@ -8,10 +8,9 @@ scalability testing across different document counts.
 import json
 import os
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pytest
 

@@ -3,8 +3,6 @@ import logging
 import sys
 from pathlib import Path
 
-import os # Moved import os to the top
-
 # Add project root to sys.path to allow imports from common
 project_root = Path(__file__).resolve().parent.parent
 # Ensure project_root is at the very beginning
