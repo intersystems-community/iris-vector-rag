@@ -8,7 +8,6 @@ real-time performance metrics and progress updates.
 
 import time
 import os
-import sys
 from datetime import datetime
 
 def monitor_ingestion_progress():

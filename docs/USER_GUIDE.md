@@ -244,7 +244,7 @@ make load-data
 
 # Load from a specific directory
 python -c "
-from data.loader import process_and_load_documents
+from data.loader_fixed import process_and_load_documents
 result = process_and_load_documents('path/to/your/documents', limit=100)
 print(f'Loaded: {result}')
 "

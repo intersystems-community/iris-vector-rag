@@ -22,8 +22,7 @@ import re
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any, Union
-import tempfile
+from typing import Dict, Tuple
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
@@ -690,7 +689,7 @@ class VectorMigrationVerifier:
             llm_func = get_llm_func()
             
             # Import and initialize a basic RAG pipeline
-            from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline
+            from iris_rag.pipelines.basic import BasicRAGPipeline
             
             pipeline = BasicRAGPipeline(
                 iris_connector=connection,

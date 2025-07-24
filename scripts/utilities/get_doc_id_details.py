@@ -1,4 +1,3 @@
-import textwrap
 try:
     from common.iris_connector import get_iris_connection, IRISConnectionError
     DB_CONNECTION_AVAILABLE = True

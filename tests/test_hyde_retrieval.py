@@ -5,8 +5,8 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 import logging
-from iris_rag.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from common.iris_connector_jdbc import get_iris_connection # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Configure basic logging
@@ -25,7 +25,7 @@ def test_hyde_document_retrieval():
         embed_fn = get_embedding_func()
         llm_fn = get_llm_func(provider="stub") 
 
-        pipeline = HyDEPipeline(
+        pipeline = HyDERAGPipeline(
             iris_connector=db_conn,
             embedding_func=embed_fn,
             llm_func=llm_fn

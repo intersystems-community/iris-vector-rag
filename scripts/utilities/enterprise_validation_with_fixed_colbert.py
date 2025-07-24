@@ -19,13 +19,13 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func, get_colbert_doc_encoder_func_adapted # Updated import
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.working.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -156,7 +156,7 @@ def run_enterprise_validation():
         
         # Optimized ColBERT
         try:
-            pipelines["OptimizedColBERT"] = OptimizedColbertRAGPipeline(
+            pipelines["OptimizedColBERT"] = ColBERTRAGPipeline(
                 iris_connector=iris_connector,
                 colbert_query_encoder_func=mock_colbert_encoder,
                 colbert_doc_encoder_func=mock_colbert_encoder,
@@ -168,7 +168,7 @@ def run_enterprise_validation():
         
         # HyDE
         try:
-            pipelines["HyDE"] = HyDEPipeline(
+            pipelines["HyDE"] = HyDERAGPipeline(
                 iris_connector=iris_connector,
                 embedding_func=embedding_func,
                 llm_func=llm_func
@@ -212,7 +212,7 @@ def run_enterprise_validation():
         
         # Hybrid iFind+Graph+Vector RAG
         try:
-            pipelines["Hybrid iFind RAG"] = HybridiFindRAGPipeline(
+            pipelines["Hybrid iFind RAG"] = HybridIFindRAGPipeline(
                 iris_connector=iris_connector,
                 embedding_func=embedding_func,
                 llm_func=llm_func

@@ -20,13 +20,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 
 # Import all V2 pipelines
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline as HyDEPipelineV2 # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipelineV2 # Updated import
-from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2 # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
 
 # Comprehensive test queries
 TEST_QUERIES = [
@@ -269,13 +269,13 @@ def main():
     
     # Test all pipelines
     pipelines = [
-        (BasicRAGPipelineV2, "BasicRAG"),
-        (NodeRAGPipelineV2, "NodeRAG"),
-        (GraphRAGPipelineV2, "GraphRAG"),
-        (ColBERTPipelineV2, "ColBERT"),
-        (HyDEPipelineV2, "HyDE"),
-        (CRAGPipelineV2, "CRAG"),
-        (HybridiFindRAGPipelineV2, "HybridiFindRAG"),
+        (BasicRAGPipeline, "BasicRAG"),
+        (NodeRAGPipeline, "NodeRAG"),
+        (GraphRAGPipeline, "GraphRAG"),
+        (ColBERTRAGPipeline, "ColBERT"),
+        (HyDERAGPipeline, "HyDE"),
+        (CRAGPipeline, "CRAG"),
+        (HybridIFindRAGPipeline, "HybridiFindRAG"),
     ]
     
     all_results = {}

@@ -15,8 +15,7 @@ Objectives:
 import time
 import json
 import logging
-import numpy as np
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 import sys
 import os
 

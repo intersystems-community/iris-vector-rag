@@ -16,7 +16,7 @@ import sys
 import time
 import json
 import logging
-from typing import List, Tuple
+import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))) # Add project root
 from common.iris_connector import get_iris_connection

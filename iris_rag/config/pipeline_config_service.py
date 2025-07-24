@@ -7,8 +7,7 @@ pipeline configurations from YAML files.
 
 import logging
 import yaml
-from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List
 
 from ..core.exceptions import PipelineConfigurationError
 from ..utils.project_root import resolve_project_relative_path

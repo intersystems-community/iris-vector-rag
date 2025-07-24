@@ -12,7 +12,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
-from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
 
 def test_graphrag_data():
     """Test if GraphRAG tables have data"""
@@ -72,7 +72,7 @@ def test_entity_retrieval():
     print("\n=== Testing Entity Retrieval ===\n")
     
     # Create pipeline
-    graphrag = GraphRAGPipelineV2(iris, embedding_func, lambda x: x)
+    graphrag = GraphRAGPipeline(iris, embedding_func, lambda x: x)
     
     # Test query
     query = "diabetes"
@@ -106,7 +106,7 @@ def test_full_pipeline():
     print("\n=== Testing Full GraphRAG Pipeline ===\n")
     
     # Create pipeline
-    graphrag = GraphRAGPipelineV2(iris, embedding_func, llm_func)
+    graphrag = GraphRAGPipeline(iris, embedding_func, llm_func)
     
     # Test query
     query = "What is diabetes and how is it treated?"

@@ -17,7 +17,7 @@ import time
 import warnings
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 from functools import wraps
 
 logger = logging.getLogger(__name__)
@@ -154,61 +154,6 @@ class FileCache(CacheBackend):
             for file_path in cache_files[:len(cache_files) - self.max_files + 1]:
                 file_path.unlink(missing_ok=True)
 
-
-class RedisCache(CacheBackend):
-    """Redis cache backend."""
-    
-    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0, 
-                 password: Optional[str] = None, prefix: str = "llm_cache:"):
-        try:
-            import redis
-            self.redis = redis.Redis(
-                host=host, port=port, db=db, password=password,
-                decode_responses=False  # We'll handle encoding ourselves
-            )
-            self.prefix = prefix
-            # Test connection
-            self.redis.ping()
-            logger.info("Redis cache backend initialized")
-        except ImportError:
-            raise ImportError("Redis not available. Install with: pip install redis")
-        except Exception as e:
-            raise ConnectionError(f"Failed to connect to Redis: {e}")
-    
-    def _make_key(self, key: str) -> str:
-        return f"{self.prefix}{key}"
-    
-    def get(self, key: str) -> Optional[Any]:
-        try:
-            data = self.redis.get(self._make_key(key))
-            if data:
-                return pickle.loads(data)
-        except Exception as e:
-            logger.warning(f"Failed to get from Redis cache: {e}")
-        return None
-    
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
-        try:
-            data = pickle.dumps(value)
-            self.redis.set(self._make_key(key), data, ex=ttl)
-        except Exception as e:
-            logger.warning(f"Failed to set in Redis cache: {e}")
-    
-    def delete(self, key: str) -> None:
-        try:
-            self.redis.delete(self._make_key(key))
-        except Exception as e:
-            logger.warning(f"Failed to delete from Redis cache: {e}")
-    
-    def clear(self) -> None:
-        try:
-            keys = self.redis.keys(f"{self.prefix}*")
-            if keys:
-                self.redis.delete(*keys)
-        except Exception as e:
-            logger.warning(f"Failed to clear Redis cache: {e}")
-
-
 class LLMCache:
     """Main LLM cache class."""
     
@@ -314,12 +259,6 @@ def get_global_cache() -> LLMCache:
         
         if cache_type == "memory":
             backend = MemoryCache(max_size=int(os.getenv("LLM_CACHE_SIZE", "1000")))
-        elif cache_type == "redis":
-            backend = RedisCache(
-                host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", "6379")),
-                password=os.getenv("REDIS_PASSWORD")
-            )
         else:  # file
             cache_dir = os.getenv("LLM_CACHE_DIR", ".llm_cache")
             backend = FileCache(cache_dir=cache_dir)

@@ -25,9 +25,7 @@ import argparse
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
-import tempfile
-import subprocess
+from typing import Dict, List, Optional
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent

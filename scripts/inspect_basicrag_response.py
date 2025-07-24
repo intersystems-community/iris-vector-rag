@@ -7,7 +7,6 @@ This helps understand why contexts aren't being extracted in RAGAs evaluation.
 import os
 import sys
 import json
-import pprint
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -26,7 +25,7 @@ from iris_rag.storage.vector_store_iris import IRISVectorStore
 from iris_rag.core.models import Document
 
 # LangChain imports for LLM
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 
 def create_sample_documents():
     """Create some sample documents for testing."""

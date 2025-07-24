@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from common.iris_connector import get_real_iris_connection
+from common.iris_connector import get_iris_connection
 
 def setup_ingestion():
     """Setup the database for document ingestion with Community Edition."""
@@ -26,7 +26,7 @@ def setup_ingestion():
         
         # Test connection
         print("\n1. Connecting to Community Edition...")
-        conn = get_real_iris_connection()
+        conn = get_iris_connection()
         cursor = conn.cursor()
         print("✅ Connected to IRIS Community Edition")
         

@@ -16,8 +16,6 @@ The fix involves:
 import os
 import sys
 import logging
-import time
-from typing import Any, Dict, List
 
 # Load environment variables
 from dotenv import load_dotenv

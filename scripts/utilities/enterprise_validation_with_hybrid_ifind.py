@@ -25,14 +25,14 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from common.iris_connector import get_iris_connection # Updated import
-from common.utils import get_embedding_func, get_llm_func # Updated import
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from common.utils import get_embedding_func # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -161,7 +161,7 @@ def main():
     try:
         # Get IRIS connection
         logger.info("Connecting to IRIS database...")
-        iris_connection = get_iris_connection(use_mock=True)
+        iris_connection = get_iris_connection()
         
         # Get functions
         embedding_func = get_embedding_func()
@@ -185,7 +185,7 @@ def main():
         # 2. HyDE
         if "--skip-hyde" not in sys.argv:
             try:
-                techniques['HyDE'] = HyDEPipeline(
+                techniques['HyDE'] = HyDERAGPipeline(
                     iris_connector=iris_connection,
                     embedding_func=embedding_func,
                     llm_func=llm_func
@@ -213,7 +213,7 @@ def main():
                 mock_query_encoder = create_mock_colbert_encoder()
                 mock_doc_encoder = create_mock_colbert_encoder()
                 
-                techniques['ColBERT'] = OptimizedColbertRAGPipeline(
+                techniques['ColBERT'] = ColBERTRAGPipeline(
                     iris_connector=iris_connection,
                     query_encoder=mock_query_encoder,
                     doc_encoder=mock_doc_encoder,
@@ -250,7 +250,7 @@ def main():
         # 7. Hybrid iFind+Graph+Vector RAG
         if "--skip-hybrid" not in sys.argv:
             try:
-                techniques['Hybrid iFind RAG'] = HybridiFindRAGPipeline(
+                techniques['Hybrid iFind RAG'] = HybridIFindRAGPipeline(
                     iris_connector=iris_connection,
                     embedding_func=embedding_func,
                     llm_func=llm_func

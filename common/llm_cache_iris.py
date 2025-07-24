@@ -6,10 +6,9 @@ leveraging the existing IRIS infrastructure for persistent cache storage.
 """
 
 import json
-import time
 import hashlib
 import logging
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 from datetime import datetime, timedelta
 
 from common.llm_cache_config import CacheConfig

@@ -8,13 +8,12 @@ including payload/metadata support for searchable chunk metadata.
 import sys
 import os
 import logging
-from typing import List
 import numpy as np
 
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from common.vector_store import IRISVectorStore, VectorPoint, VectorSearchResult, create_vector_store
+from common.vector_store import VectorPoint, create_vector_store
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -16,8 +16,6 @@ import os
 import sys
 import time
 import logging
-from datetime import datetime
-from pathlib import Path
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -210,7 +208,7 @@ class Complete10KScaler:
         
         try:
             # Import chunking service
-            from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
+            from tools.chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
             
             # Create chunking service
             chunking_service = EnhancedDocumentChunkingService(embedding_func=self.embedding_func)

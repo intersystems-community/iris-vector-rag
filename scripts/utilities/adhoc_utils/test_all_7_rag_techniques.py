@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 def test_basic_rag():
     """Test BasicRAG pipeline."""
     try:
-        from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
+        from iris_rag.pipelines import BasicRAGPipeline # Updated import
         
         iris = get_iris_connection()
         embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
@@ -44,7 +44,7 @@ def test_basic_rag():
         def llm_func(prompt):
             return f"BasicRAG response to: {prompt[:50]}..."
         
-        pipeline = BasicRAGPipelineV2(iris, embedding_func, llm_func)
+        pipeline = BasicRAGPipeline(iris, embedding_func, llm_func)
         result = pipeline.run("diabetes treatment", top_k=3)
         
         iris.close()
@@ -56,7 +56,7 @@ def test_basic_rag():
 def test_node_rag():
     """Test NodeRAG pipeline."""
     try:
-        from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
+        from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
         
         iris = get_iris_connection()
         embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
@@ -67,7 +67,7 @@ def test_node_rag():
         def llm_func(prompt):
             return f"NodeRAG response to: {prompt[:50]}..."
         
-        pipeline = NodeRAGPipelineV2(iris, embedding_func, llm_func)
+        pipeline = NodeRAGPipeline(iris, embedding_func, llm_func)
         result = pipeline.run("diabetes treatment", top_k=3)
         
         iris.close()
@@ -79,7 +79,7 @@ def test_node_rag():
 def test_graph_rag():
     """Test GraphRAG pipeline."""
     try:
-        from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+        from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
         
         iris = get_iris_connection()
         embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
@@ -90,7 +90,7 @@ def test_graph_rag():
         def llm_func(prompt):
             return f"GraphRAG response to: {prompt[:50]}..."
         
-        pipeline = GraphRAGPipelineV2(iris, embedding_func, llm_func)
+        pipeline = GraphRAGPipeline(iris, embedding_func, llm_func)
         result = pipeline.run("diabetes treatment", top_k=3)
         
         iris.close()
@@ -102,7 +102,7 @@ def test_graph_rag():
 def test_colbert():
     """Test ColBERT pipeline."""
     try:
-        from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipelineV2 # Updated import
+        from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
         
         iris = get_iris_connection()
         embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
@@ -113,7 +113,7 @@ def test_colbert():
         def llm_func(prompt):
             return f"ColBERT response to: {prompt[:50]}..."
         
-        pipeline = ColBERTPipelineV2(iris, embedding_func, llm_func)
+        pipeline = ColBERTRAGPipeline(iris, embedding_func, llm_func)
         result = pipeline.run("diabetes treatment", top_k=3)
         
         iris.close()
@@ -125,7 +125,7 @@ def test_colbert():
 def test_hyde():
     """Test HyDE pipeline."""
     try:
-        from src.experimental.hyde.pipeline import HyDEPipeline as HyDEPipelineV2 # Updated import
+        from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
         
         iris = get_iris_connection()
         embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
@@ -136,7 +136,7 @@ def test_hyde():
         def llm_func(prompt):
             return f"HyDE response to: {prompt[:50]}..."
         
-        pipeline = HyDEPipelineV2(iris, embedding_func, llm_func)
+        pipeline = HyDERAGPipeline(iris, embedding_func, llm_func)
         result = pipeline.run("diabetes treatment", top_k=3)
         
         iris.close()
@@ -148,7 +148,7 @@ def test_hyde():
 def test_crag():
     """Test CRAG pipeline."""
     try:
-        from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
+        from iris_rag.pipelines.crag import CRAGPipeline # Updated import
         
         iris = get_iris_connection()
         embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
@@ -159,7 +159,7 @@ def test_crag():
         def llm_func(prompt):
             return f"CRAG response to: {prompt[:50]}..."
         
-        pipeline = CRAGPipelineV2(iris, embedding_func, llm_func)
+        pipeline = CRAGPipeline(iris, embedding_func, llm_func)
         result = pipeline.run("diabetes treatment", top_k=3)
         
         iris.close()
@@ -171,7 +171,7 @@ def test_crag():
 def test_hybrid_ifind_rag():
     """Test Hybrid iFindRAG pipeline."""
     try:
-        from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2 # Updated import
+        from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
         
         iris = get_iris_connection()
         embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
@@ -182,7 +182,7 @@ def test_hybrid_ifind_rag():
         def llm_func(prompt):
             return f"Hybrid iFindRAG response to: {prompt[:50]}..."
         
-        pipeline = HybridiFindRAGPipelineV2(iris, embedding_func, llm_func)
+        pipeline = HybridIFindRAGPipeline(iris, embedding_func, llm_func)
         result = pipeline.run("diabetes treatment", top_k=3)
         
         iris.close()

@@ -22,9 +22,9 @@ from plotly.subplots import make_subplots
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from eval.scaling_evaluation_framework import ScalingEvaluationFramework
-from scripts.automated_dataset_scaling import AutomatedDatasetScaling
-from common.iris_connector_jdbc import get_iris_connection
+from scripts.utilities.evaluation.scaling_evaluation_framework import ScalingEvaluationFramework
+from scripts.utilities.automated_dataset_scaling import AutomatedDatasetScaling
+from common.iris_connector import get_iris_connection
 from dotenv import load_dotenv
 
 load_dotenv()

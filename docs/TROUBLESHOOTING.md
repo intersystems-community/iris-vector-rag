@@ -587,7 +587,7 @@ docker-compose -f docker-compose.iris-only.yml logs -f
 #### Test Connection Manually
 ```python
 # Test IRIS connection directly
-import intersystems_iris as iris
+import iris as iris
 
 try:
     connection = iris.connect(
@@ -621,7 +621,7 @@ rag = ConfigurableRAG({
 
 # Fix 3: Wait for database startup
 import time
-import intersystems_iris as iris
+import iris as iris
 
 def wait_for_iris(max_attempts=30):
     for attempt in range(max_attempts):
@@ -685,7 +685,7 @@ rag = ConfigurableRAG({
 })
 
 # Or create namespace programmatically
-import intersystems_iris as iris
+import iris as iris
 
 def create_namespace_if_not_exists(namespace_name):
     try:

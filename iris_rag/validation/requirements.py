@@ -5,9 +5,8 @@ This module defines the data and embedding requirements for different RAG pipeli
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from dataclasses import dataclass
-
 
 @dataclass
 class EmbeddingRequirement:

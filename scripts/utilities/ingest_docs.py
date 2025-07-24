@@ -6,9 +6,8 @@ import argparse
 from xml.etree import ElementTree as ET
 import time
 from sentence_transformers import SentenceTransformer
-import datetime
 import sys
-from typing import List, Dict, Any, Optional, Iterator
+from typing import List, Dict, Any, Optional
 
 # Add project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

@@ -12,7 +12,7 @@ import logging
 import time
 import sys
 import os
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 import statistics
 
 # Add project root to sys.path

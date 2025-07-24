@@ -4,7 +4,6 @@
 Quick data status checker for RAG Templates scaling.
 """
 
-import os
 import sys
 from pathlib import Path
 

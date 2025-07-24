@@ -6,9 +6,7 @@ This script compiles and deploys the ObjectScript wrapper classes
 to the IRIS database for RAG pipeline integration.
 """
 
-import os
 import sys
-import subprocess
 import logging
 from pathlib import Path
 

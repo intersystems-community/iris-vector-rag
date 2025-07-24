@@ -6,6 +6,8 @@ This script creates the proper IRIS vector index that will automatically start b
 
 import sys
 import time
+import os
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))) # Add project root
 
 from common.iris_connector import get_iris_connection

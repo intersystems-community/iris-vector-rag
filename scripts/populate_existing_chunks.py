@@ -9,7 +9,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 import logging
-from typing import List, Dict
+from typing import List
 from common.database_schema_manager import get_schema_manager
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func

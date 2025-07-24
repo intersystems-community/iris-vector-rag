@@ -77,7 +77,7 @@ def populate_sample_relationships():
 
 def test_graphrag_with_relationships():
     """Test GraphRAG after adding relationships"""
-    from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
+    from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
     from common.embedding_utils import get_embedding_model # Updated import
     
     iris = get_iris_connection()
@@ -92,7 +92,7 @@ def test_graphrag_with_relationships():
     print("\n=== Testing GraphRAG with Relationships ===\n")
     
     # Create pipeline
-    graphrag = GraphRAGPipelineV2(iris, embedding_func, llm_func)
+    graphrag = GraphRAGPipeline(iris, embedding_func, llm_func)
     
     # Test query
     query = "What is diabetes and how is it related to insulin?"

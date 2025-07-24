@@ -23,7 +23,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from scripts.ingest_100k_documents import MassiveScaleIngestionPipeline
+from scripts.utilities.ingest_100k_documents import MassiveScaleIngestionPipeline
 from common.iris_connector import get_iris_connection
 
 # Configure logging

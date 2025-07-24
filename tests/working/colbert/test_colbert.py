@@ -13,7 +13,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColbertRAGPipeline
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTRAGPipeline
 from common.utils import Document # Updated import
 
 # Attempt to import for type hinting, but make it optional
@@ -82,8 +82,8 @@ def mock_llm_func():
 
 @pytest.fixture
 def colbert_rag_pipeline(mock_iris_connector_for_colbert, mock_colbert_query_encoder, mock_colbert_doc_encoder, mock_llm_func):
-    """Initializes ColbertRAGPipeline with mock dependencies."""
-    return ColbertRAGPipeline(
+    """Initializes ColBERTRAGPipeline with mock dependencies."""
+    return ColBERTRAGPipeline(
         iris_connector=mock_iris_connector_for_colbert,
         colbert_query_encoder_func=mock_colbert_query_encoder,
         colbert_doc_encoder_func=mock_colbert_doc_encoder,
@@ -99,15 +99,15 @@ def test_calculate_cosine_similarity():
     vec3 = [1.0, 1.0]
     vec4 = [-1.0, 0.0]
     
-    assert ColbertRAGPipeline(None, None, None, None)._calculate_cosine_similarity(vec1, vec2) == pytest.approx(0.0)
-    assert ColbertRAGPipeline(None, None, None, None)._calculate_cosine_similarity(vec1, vec1) == pytest.approx(1.0)
-    assert ColbertRAGPipeline(None, None, None, None)._calculate_cosine_similarity(vec1, vec3) == pytest.approx(1.0 / np.sqrt(2))
-    assert ColbertRAGPipeline(None, None, None, None)._calculate_cosine_similarity(vec1, vec4) == pytest.approx(-1.0)
-    assert ColbertRAGPipeline(None, None, None, None)._calculate_cosine_similarity([], []) == 0.0 # Test empty vectors
+    assert ColBERTRAGPipeline(None, None, None, None)._calculate_cosine_similarity(vec1, vec2) == pytest.approx(0.0)
+    assert ColBERTRAGPipeline(None, None, None, None)._calculate_cosine_similarity(vec1, vec1) == pytest.approx(1.0)
+    assert ColBERTRAGPipeline(None, None, None, None)._calculate_cosine_similarity(vec1, vec3) == pytest.approx(1.0 / np.sqrt(2))
+    assert ColBERTRAGPipeline(None, None, None, None)._calculate_cosine_similarity(vec1, vec4) == pytest.approx(-1.0)
+    assert ColBERTRAGPipeline(None, None, None, None)._calculate_cosine_similarity([], []) == 0.0 # Test empty vectors
 
 def test_calculate_maxsim():
     """Tests the MaxSim calculation."""
-    pipeline = ColbertRAGPipeline(None, None, None, None) # No real dependencies needed for this method
+    pipeline = ColBERTRAGPipeline(None, None, None, None) # No real dependencies needed for this method
     
     query_embeds = [[1.0, 0.0], [0.0, 1.0]] # Query tokens Q1, Q2
     doc_embeds = [[1.0, 0.1], [0.1, 1.0], [0.5, 0.5]] # Doc tokens D1, D2, D3

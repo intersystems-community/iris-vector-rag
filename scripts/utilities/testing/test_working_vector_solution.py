@@ -7,7 +7,6 @@ import sys
 sys.path.insert(0, '.')
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func
-import json
 
 def main():
     print("🔍 Testing Working Vector Solution")

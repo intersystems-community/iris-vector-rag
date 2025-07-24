@@ -5,15 +5,12 @@ Scales the RAG system to 10,000 documents with all 7 techniques operational and 
 """
 
 import sys
-import os
-import json
 import time
 import logging
 import psutil
-import gc
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, List, Any, Tuple
 import traceback
 
 # Add project root to path
@@ -198,108 +195,6 @@ class Enterprise10KCompleteScaling:
                 'error': str(e),
                 'processing_time_seconds': time.time() - start_time
             }
-    
-    def scale_chunks_to_10k(self, current_docs: int, target_docs: int) -> Dict[str, Any]: # Corrected indentation
-        """Scale document chunks proportionally"""
-        try:
-            logger.info("🔄 Scaling DocumentChunks for new documents...")
-            
-            # Import chunking pipeline
-            from chunking.chunking_pipeline import ChunkingPipeline
-            chunking_pipeline = ChunkingPipeline(self.connection)
-            
-            # Get documents that don't have chunks yet
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                SELECT doc_id, text_content 
-                FROM RAG.SourceDocuments s
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM RAG.DocumentChunks c 
-                    WHERE c.doc_id = s.doc_id
-                )
-                LIMIT ?
-            """, (target_docs - current_docs,))
-            
-            docs_to_chunk = cursor.fetchall()
-            cursor.close()
-            
-            if not docs_to_chunk:
-                return {'success': True, 'chunks_added': 0, 'message': 'No new documents to chunk'}
-            
-            chunks_added = 0
-            for doc_id, text_content in docs_to_chunk:
-                try:
-                    result = chunking_pipeline.process_document(doc_id, text_content)
-                    if result.get('success'):
-                        chunks_added += result.get('chunks_created', 0)
-                except Exception as e:
-                    logger.error(f"Error chunking document {doc_id}: {e}")
-            
-            return {
-                'success': True,
-                'chunks_added': chunks_added,
-                'documents_processed': len(docs_to_chunk)
-            }
-            
-        except Exception as e:
-            logger.error(f"❌ Error scaling chunks: {e}")
-            return {'success': False, 'error': str(e)}
-    
-    def scale_knowledge_graph_to_10k(self, current_docs: int, target_docs: int) -> Dict[str, Any]: # Corrected indentation
-        """Scale knowledge graph entities and relationships"""
-        try:
-            logger.info("🕸️ Scaling Knowledge Graph for new documents...")
-            
-            # Import graph ingestion
-            from src.experimental.graphrag.enhanced_graph_ingestion import EnhancedGraphIngestion # Updated import
-            graph_ingestion = EnhancedGraphIngestion(self.connection, self.embedding_func)
-            
-            # Get documents that don't have graph entities yet
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                SELECT doc_id, text_content 
-                FROM RAG.SourceDocuments s
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM RAG.KnowledgeGraphEntities e 
-                    WHERE e.source_doc_id = s.doc_id
-                )
-                LIMIT ?
-            """, (target_docs - current_docs,))
-            
-            docs_to_process = cursor.fetchall()
-            cursor.close()
-            
-            if not docs_to_process:
-                return {'success': True, 'entities_added': 0, 'relationships_added': 0}
-            
-            entities_added = 0
-            relationships_added = 0
-            
-            for doc_id, text_content in docs_to_process:
-                try:
-                    result = graph_ingestion.process_document_for_graph(doc_id, text_content)
-                    if result.get('success'):
-                        entities_added += result.get('entities_created', 0)
-                        relationships_added += result.get('relationships_created', 0)
-                except Exception as e:
-                    logger.error(f"Error processing graph for document {doc_id}: {e}")
-            
-            return {
-                'success': True,
-                'entities_added': entities_added,
-                'relationships_added': relationships_added,
-                'documents_processed': len(docs_to_process)
-            }
-            
-        except Exception as e:
-            logger.error(f"❌ Error scaling knowledge graph: {e}")
-            return {'success': False, 'error': str(e)}
-            logger.info(f"   � {file.name}")
-        
-        if len(all_files) > 5:
-            logger.info(f"   ... and {len(all_files) - 5} more files")
-        
-        return [str(f) for f in all_files] # This line should be part of check_available_data_files, already handled by first search/replace block logic.
     
     def embedding_func(self, texts: List[str]) -> List[List[float]]: # Corrected indentation
         """Generate embeddings for texts"""

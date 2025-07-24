@@ -15,8 +15,7 @@ Based on IRIS 2025.1 Vector Search capabilities documented in:
 import os
 import sys
 import logging
-import time
-from typing import Dict, List, Any
+from typing import Dict, List
 
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

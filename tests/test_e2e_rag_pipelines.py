@@ -15,7 +15,7 @@ import pytest
 import os
 import sys
 import logging
-from typing import List, Dict, Any, Callable, Optional
+from typing import List, Dict, Any, Optional
 import time
 import csv
 import datetime
@@ -27,8 +27,6 @@ from ragas import evaluate
 from ragas.metrics import (
     faithfulness,
     answer_relevancy,
-    context_recall, # Not used currently as it requires ground truths
-    context_precision, # Not used currently as it requires ground truths
 )
 
 # Configure logging
@@ -69,14 +67,14 @@ from common.utils import load_config
 
 # Import RAG pipelines
 from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDEPipeline
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipeline
 from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColbertRAGPipeline
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTRAGPipeline
 from iris_rag.pipelines.noderag import NodeRAGPipeline
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
 
 # Import common utilities
-from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
+from common.utils import Document, get_embedding_func, get_llm_func
 
 # Import fixtures for real data testing (os and json already imported above)
 
@@ -415,7 +413,7 @@ def test_basic_rag_with_real_data(real_iris_connection, real_embedding_func, rea
 @pytest.mark.requires_1000_docs
 def test_hyde_with_real_data(real_iris_connection, real_embedding_func, real_llm_func, sample_medical_queries):
     logger.info("Running test_hyde_with_real_data")
-    pipeline = HyDEPipeline(
+    pipeline = HyDERAGPipeline(
         iris_connector=real_iris_connection,
         embedding_func=real_embedding_func,
         llm_func=real_llm_func
@@ -464,7 +462,7 @@ def test_crag_with_real_data(real_iris_connection, real_embedding_func, real_llm
 def test_colbert_with_real_data(real_iris_connection, real_embedding_func, real_llm_func, colbert_query_encoder, sample_medical_queries):
     logger.info("Running test_colbert_with_real_data")
     # colbert_query_encoder fixture is defined in conftest_common.py
-    pipeline = ColbertRAGPipeline(
+    pipeline = ColBERTRAGPipeline(
         iris_connector=real_iris_connection,
         llm_func=real_llm_func,
         colbert_query_encoder_func=colbert_query_encoder, 
@@ -560,7 +558,7 @@ def test_all_pipelines_with_same_query(
             embedding_func=real_embedding_func,
             llm_func=real_llm_func
         ),
-        "HyDE": HyDEPipeline(
+        "HyDE": HyDERAGPipeline(
             iris_connector=real_iris_connection,
             embedding_func=real_embedding_func,
             llm_func=real_llm_func
@@ -572,7 +570,7 @@ def test_all_pipelines_with_same_query(
             web_search_func=web_search_func,
             chunk_types=['adaptive']
         ),
-        "ColBERT": ColbertRAGPipeline(
+        "ColBERT": ColBERTRAGPipeline(
             iris_connector=real_iris_connection,
             llm_func=real_llm_func,
             colbert_query_encoder_func=colbert_query_encoder,

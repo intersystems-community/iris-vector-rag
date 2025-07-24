@@ -15,8 +15,7 @@ Critical for enterprise RAG operations - VARCHAR embeddings are unacceptable.
 import os
 import sys
 import logging
-import json
-from typing import Dict, List, Any
+from typing import Dict, List
 
 # Add the project root to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

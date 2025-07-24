@@ -9,7 +9,7 @@ import os
 import sys
 from typing import List, Dict, Any, Callable, Tuple
 
-from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipelineV2
+from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipeline
 from common.utils import get_embedding_func, get_llm_func
 
 # Add project root to path
@@ -105,7 +105,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # Initialize the RAG pipeline
     test_embedding_func = get_embedding_func()
     test_llm_func = get_llm_func()
-    pipeline = BasicRAGPipelineV2(
+    pipeline = BasicRAGPipeline(
         iris_connector=conn,
         embedding_func=test_embedding_func,
         llm_func=test_llm_func
@@ -181,7 +181,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # For this test, we'll rely on the answer content check above.
     # logger.debug(f"Retrieved IDs for irrelevant query: {retrieved_ids_c}")
 
-    logger.info("✅ End-to-end pipeline test passed successfully with BasicRAGPipelineV2.")
+    logger.info("✅ End-to-end pipeline test passed successfully with BasicRAGPipeline.")
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@ import shutil
 import logging
 import fnmatch
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Set
+from typing import List, Dict, Optional, Set
 from dataclasses import dataclass
 from datetime import datetime
 

@@ -9,10 +9,7 @@ on all main RAG tables before resuming large-scale ingestion.
 import os
 import sys
 import time
-import numpy as np
-from typing import Dict, List, Tuple, Any
-import sqlalchemy as sa
-from sqlalchemy import text
+from typing import Dict, Any
 import logging
 
 # Add project root to path

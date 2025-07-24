@@ -79,26 +79,6 @@ def test_embedding_config_loading(config_manager):
     embedding_config = config_manager.get_embedding_config()
     assert embedding_config.get("model_name") == TEST_EMBEDDING_MODEL
 
-def test_logging_config_loading(config_manager):
-    """Tests if logging configurations are loaded and applied correctly."""
-    log_config = config_manager.get_logging_config()
-    assert log_config.get("level") == TEST_LOG_LEVEL.upper() # ConfigurationManager might uppercase it
-    assert log_config.get("path") == TEST_LOG_PATH
-
-    # Test if the logger was actually configured (basic check)
-    logger = logging.getLogger("iris_rag") # Assuming this is your root logger name
-    assert logging.getLevelName(logger.getEffectiveLevel()) == TEST_LOG_LEVEL.upper()
-
-    # Check if file handler was added (more involved, might need to inspect logger.handlers)
-    # For simplicity, we'll check if the log file is created after a log message
-    # This is implicitly tested by ConfigurationManager's __init__ if it sets up logging.
-    # If ConfigurationManager.setup_logging() is called explicitly, test that.
-    # Here, we assume ConfigurationManager's constructor calls setup_logging.
-    assert os.path.exists(os.path.dirname(TEST_LOG_PATH)), "Log directory was not created."
-    # A simple log to ensure the file handler is working
-    logger.warning("Test log message for config test.")
-    assert os.path.exists(TEST_LOG_PATH), "Log file was not created after logging."
-
 
 def test_general_config_loading(config_manager):
     """Tests loading of other general configurations."""

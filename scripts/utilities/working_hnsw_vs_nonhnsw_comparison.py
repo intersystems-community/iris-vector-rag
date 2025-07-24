@@ -18,8 +18,7 @@ import time
 import json
 import argparse
 import numpy as np
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from dataclasses import dataclass, asdict
 
 # Custom JSON encoder for numpy types (learned from enterprise scripts)
@@ -44,13 +43,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import RAG pipelines that actually work (proven from enterprise validation)
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
 
 # Configure logging (same pattern as working scripts)
 logging.basicConfig(
@@ -384,12 +383,12 @@ class WorkingHNSWComparison:
         # Define techniques to test (using proven working set from enterprise scripts)
         techniques = [
             ("BasicRAG", BasicRAGPipeline),
-            ("HyDE", HyDEPipeline),
+            ("HyDE", HyDERAGPipeline),
             ("CRAG", CRAGPipeline),
             ("NodeRAG", NodeRAGPipeline),
             ("GraphRAG", GraphRAGPipeline),
-            ("HybridiFindRAG", HybridiFindRAGPipeline),
-            ("OptimizedColBERT", OptimizedColbertRAGPipeline)
+            ("HybridiFindRAG", HybridIFindRAGPipeline),
+            ("OptimizedColBERT", ColBERTRAGPipeline)
         ]
         
         # Test each technique using proven patterns

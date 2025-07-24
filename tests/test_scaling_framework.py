@@ -7,19 +7,17 @@ Validates that all components are working correctly
 import sys
 import os
 import json
-import time
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from eval.scaling_evaluation_framework import ScalingEvaluationFramework
-from scripts.automated_dataset_scaling import AutomatedDatasetScaling
-from eval.comprehensive_scaling_orchestrator import ComprehensiveScalingOrchestrator
-from common.iris_connector_jdbc import get_iris_connection
+from scripts.utilities.evaluation.scaling_evaluation_framework import ScalingEvaluationFramework
+from scripts.utilities.automated_dataset_scaling import AutomatedDatasetScaling
+from scripts.utilities.evaluation.comprehensive_scaling_orchestrator import ComprehensiveScalingOrchestrator
+from common.iris_connector import get_iris_connection
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -147,8 +145,6 @@ def test_ragas_availability():
     logger.info("🔍 Testing RAGAS availability...")
     
     try:
-        from ragas import evaluate
-        from ragas.metrics import answer_relevancy, context_precision, faithfulness
         logger.info("✅ RAGAS library available")
         
         # Check if OpenAI API key is available

@@ -12,10 +12,10 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # 
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from common.iris_connector_jdbc import get_iris_connection # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 
 # Configure logging to capture specific messages for timing
 log_capture_string_io = io.StringIO()
@@ -37,8 +37,8 @@ string_io_handler = logging.StreamHandler(log_capture_string_io)
 string_io_handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 string_io_handler.setFormatter(formatter)
-logging.getLogger('hybrid_ifind_rag.pipeline').addHandler(string_io_handler)
-logging.getLogger('hybrid_ifind_rag.pipeline').propagate = False # Prevent duplication to root logger for these specific logs
+logging.getLogger('iris_rag.pipelines.hybrid_ifind').addHandler(string_io_handler)
+logging.getLogger('iris_rag.pipelines.hybrid_ifind').propagate = False # Prevent duplication to root logger for these specific logs
 
 
 # Regex to extract vector_time from HybridIFindRAG logs
@@ -83,13 +83,13 @@ def run_quick_performance_test():
         )
 
         # Initialize HybridIFindRAG Pipeline
-        hybrid_ifind_rag_pipeline = HybridiFindRAGPipeline(
+        hybrid_ifind_rag_pipeline = HybridIFindRAGPipeline(
             iris_connector=db_conn,
             embedding_func=embed_fn,
             llm_func=llm_fn_stub
         )
         # Ensure hybrid pipeline logger is set up to capture its specific logs
-        hybrid_pipeline_logger = logging.getLogger('hybrid_ifind_rag.pipeline')
+        hybrid_pipeline_logger = logging.getLogger('iris_rag.pipelines.hybrid_ifind')
         hybrid_pipeline_logger.handlers.clear() # Clear any previous handlers if re-running
         hybrid_pipeline_logger.addHandler(string_io_handler)
         hybrid_pipeline_logger.setLevel(logging.INFO)

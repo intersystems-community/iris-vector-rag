@@ -13,16 +13,13 @@ Usage:
     python scripts/optimized_download.py --target 100000 --workers 4
 """
 
-import os
 import sys
 import logging
 import time
-import requests
 import argparse
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
-import json
 
 # Configure logging
 logging.basicConfig(

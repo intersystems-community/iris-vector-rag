@@ -9,7 +9,6 @@ Current Status: 939 documents (0.94% of target)
 Target: 100,000 documents with full enterprise validation
 """
 
-import os
 import sys
 import json
 import time
@@ -17,7 +16,7 @@ import logging
 import argparse
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

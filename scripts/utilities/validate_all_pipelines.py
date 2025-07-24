@@ -94,7 +94,7 @@ class PipelineValidator:
             # Initialize pipeline
             if pipeline_name == "BasicRAG" and hasattr(module, 'BasicRAGPipeline'): # Changed "basic_rag" to "BasicRAG" to match key
                 # Use the refactored version if available
-                from src.deprecated.basic_rag.pipeline_refactored import BasicRAGPipeline # Updated import
+                from iris_rag.pipelines.basic_refactored import BasicRAGPipeline # Updated import
                 pipeline = BasicRAGPipeline(
                     embedding_func=self.embedding_func,
                     llm_func=self.llm_func
@@ -183,13 +183,13 @@ class PipelineValidator:
         """Validate all RAG pipelines"""
         
         pipelines = [
-            ("BasicRAG", "src.deprecated.basic_rag.pipeline"), # Updated path
-            ("CRAG", "src.experimental.crag.pipeline"), # Updated path
-            ("HyDE", "src.experimental.hyde.pipeline"), # Updated path
-            ("ColBERT", "src.deprecated.colbert.pipeline"), # Updated path (assuming OptimizedColbertRAGPipeline)
-            ("NodeRAG", "src.experimental.noderag.pipeline"), # Updated path
-            ("GraphRAG", "src.experimental.graphrag.pipeline"), # Updated path
-            ("Hybrid iFIND", "src.experimental.hybrid_ifind_rag.pipeline") # Updated path
+            ("BasicRAG", "iris_rag.pipelines.basic"), # Updated path
+            ("CRAG", "iris_rag.pipelines.crag"), # Updated path
+            ("HyDE", "iris_rag.pipelines.hyde"), # Updated path
+            ("ColBERT", "iris_rag.pipelines.colbert"), # Updated path (assuming ColBERTRAGPipeline)
+            ("NodeRAG", "iris_rag.pipelines.noderag"), # Updated path
+            ("GraphRAG", "iris_rag.pipelines.graphrag"), # Updated path
+            ("Hybrid iFIND", "iris_rag.pipelines.hybrid_ifind") # Updated path
         ]
         
         all_results = {

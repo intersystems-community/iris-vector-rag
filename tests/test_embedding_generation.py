@@ -5,17 +5,13 @@ These tests verify that we can correctly generate both document-level
 and token-level embeddings for documents in the database.
 """
 
-import pytest
 import os
 import sys
-import numpy as np
-from unittest.mock import MagicMock, patch
 
 # Make sure the project root is in the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from common.iris_connector import get_iris_connection
-from common.utils import Document
 
 # Import our embedding generation functions
 # This will fail initially since we haven't moved these functions out of 
@@ -58,7 +54,7 @@ class TestEmbeddingGeneration:
     def test_generate_document_embeddings_mock(self):
         """Test that we can generate document-level embeddings with a mock connection."""
         # Get a connection (mock)
-        connection = get_iris_connection(use_mock=True)
+        connection = get_iris_connection()
         assert connection is not None
         
         # Add some documents
@@ -87,7 +83,7 @@ class TestEmbeddingGeneration:
     def test_generate_token_embeddings_mock(self):
         """Test that we can generate token-level embeddings with a mock connection."""
         # Get a connection (mock)
-        connection = get_iris_connection(use_mock=True)
+        connection = get_iris_connection()
         assert connection is not None
         
         # Add some documents

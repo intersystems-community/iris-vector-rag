@@ -23,7 +23,7 @@ from dataclasses import dataclass, asdict
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from scripts.comprehensive_5000_doc_benchmark import Comprehensive5000DocBenchmark
+from scripts.utilities.comprehensive_5000_doc_benchmark import Comprehensive5000DocBenchmark
 
 # Configure logging
 logging.basicConfig(

@@ -4,13 +4,15 @@ Fair performance comparison: Original BasicRAG with full vector search vs V2
 
 import sys
 import time
+import os
+
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) # Assuming scripts is in project root
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
 
 def test_original_with_full_search():
     """Test original BasicRAG with full vector search (will fail due to IRIS bug)"""
@@ -56,7 +58,7 @@ def test_v2_with_native_vector():
     embedding_func = get_embedding_func()
     llm_func = get_llm_func()
     
-    pipeline = BasicRAGPipelineV2(iris_connector, embedding_func, llm_func)
+    pipeline = BasicRAGPipeline(iris_connector, embedding_func, llm_func)
     
     query = "What are the symptoms of diabetes?"
     

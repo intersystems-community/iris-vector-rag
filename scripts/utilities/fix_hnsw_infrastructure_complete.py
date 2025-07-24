@@ -18,9 +18,7 @@ import sys
 import logging
 import time
 import json
-import numpy as np
-from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict,  Any
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

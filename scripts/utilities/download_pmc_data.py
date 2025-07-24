@@ -18,9 +18,7 @@ import requests
 import xml.etree.ElementTree as ET
 from pathlib import Path
 import argparse
-from typing import List, Dict, Any
-import json
-import gzip
+from typing import List
 from urllib.parse import urlencode
 import tarfile
 

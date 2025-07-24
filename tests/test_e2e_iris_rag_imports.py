@@ -1,5 +1,3 @@
-import pytest
-
 def test_core_module_imports():
     """Tests imports from iris_rag.core module."""
     from iris_rag.core import base

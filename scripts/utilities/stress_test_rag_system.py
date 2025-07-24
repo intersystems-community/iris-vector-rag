@@ -18,18 +18,17 @@ import time
 import logging
 import json
 import psutil
-import gc
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from common.iris_connector import get_iris_connection
-from data.loader import process_and_load_documents
+from data.loader_fixed import process_and_load_documents
 from common.utils import get_embedding_func, get_llm_func
-from eval.bench_runner import BenchmarkRunner
-from eval.metrics import calculate_retrieval_metrics, calculate_answer_quality_metrics
+from scripts.utilities.evaluation.bench_runner import BenchmarkRunner
+from scripts.utilities.evaluation.metrics import calculate_retrieval_metrics, calculate_answer_quality_metrics
 
 # Configure logging
 logging.basicConfig(

@@ -26,11 +26,11 @@ from common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Import working RAG techniques (avoiding JDBC dependencies)
-from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
-from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
-from src.deprecated.colbert.pipeline_v2 import ColBERTPipelineV2 # Updated import
-from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
-from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
 
 load_dotenv()
 
@@ -68,23 +68,23 @@ class Enterprise10KValidationWorking:
         # Working RAG techniques (avoiding problematic imports)
         self.rag_techniques = {
             'GraphRAG': {
-                'class': GraphRAGPipelineV2,
+                'class': GraphRAGPipeline,
                 'description': 'Ultra-fast graph-based retrieval with entity relationships'
             },
             'NodeRAG': {
-                'class': NodeRAGPipelineV2,
+                'class': NodeRAGPipeline,
                 'description': 'Maximum coverage specialist with comprehensive retrieval'
             },
             'ColBERT': {
-                'class': ColBERTPipelineV2,
+                'class': ColBERTRAGPipeline,
                 'description': 'Token-level semantic matching with fine-grained relevance'
             },
             'HyDE': {
-                'class': HyDEPipelineV2,
+                'class': HyDERAGPipeline,
                 'description': 'Hypothetical document generation for enhanced retrieval'
             },
             'CRAG': {
-                'class': CRAGPipelineV2,
+                'class': CRAGPipeline,
                 'description': 'Corrective retrieval with enhanced coverage'
             }
         }

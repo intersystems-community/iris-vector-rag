@@ -49,9 +49,9 @@ class ConnectionFactory:
     @staticmethod
     def _create_jdbc_connection(**config) -> IRISConnectorInterface:
         """Create JDBC connection (enterprise/legacy)."""
-        from .iris_connector import get_real_iris_connection
+        from .iris_connector import get_iris_connection
         
-        connection = get_real_iris_connection(config)
+        connection = get_iris_connection(config)
         return JDBCConnectorWrapper(connection)
     
     @staticmethod

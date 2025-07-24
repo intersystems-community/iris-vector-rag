@@ -8,7 +8,7 @@ relevant metadata (abstract, author, title, keywords).
 import os
 import logging
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Any, Generator, Optional
+from typing import Dict, Any, Generator
 import time
 
 logger = logging.getLogger(__name__)

@@ -7,9 +7,8 @@ Properly populate the DocumentTokenEmbeddings table with VECTOR data type
 import os
 import sys
 import logging
-import json
 import numpy as np
-from typing import List, Dict, Any
+from typing import List
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

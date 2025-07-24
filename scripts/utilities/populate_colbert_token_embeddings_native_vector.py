@@ -7,9 +7,8 @@ Properly populate the DocumentTokenEmbeddings table with native VECTOR(FLOAT, 12
 import os
 import sys
 import logging
-import json
 import numpy as np
-from typing import List, Dict, Any
+from typing import List
 import argparse
 
 # Add project root to path

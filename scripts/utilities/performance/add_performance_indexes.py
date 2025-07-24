@@ -6,7 +6,6 @@ This script adds critical indexes to speed up ingestion performance,
 specifically targeting the token embedding table bottleneck.
 """
 
-import logging
 import sys
 import os
 from datetime import datetime

@@ -15,7 +15,6 @@ def scale_documents_to_target(target: int = 50000):
     """Scale documents to target count by duplicating existing ones"""
     iris = get_iris_connection()
     cursor = iris.cursor()
-    embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
     
     print(f"=== Scaling Documents to {target:,} ===\n")
     

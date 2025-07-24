@@ -10,14 +10,13 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Any
 import logging
 
 # Add the project root to the path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from eval.fix_ragas_results_keys import fix_ragas_results_file
+from scripts.utilities.evaluation.fix_ragas_results_keys import fix_ragas_results_file
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

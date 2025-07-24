@@ -14,15 +14,13 @@ import os
 import json
 import glob
 import time
-from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath('.'))
 
 from common.iris_connector import get_iris_connection
 from sentence_transformers import SentenceTransformer
-import numpy as np
 import re
 
 class ScaleTo10KPipeline:

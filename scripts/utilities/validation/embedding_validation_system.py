@@ -5,12 +5,12 @@ Implements robust validation and safe embedding generation for IRIS Community Ed
 """
 
 import sys
-import json
 import logging
 import re
 import numpy as np
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple
 from datetime import datetime
+import os
 
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))) # Add project root

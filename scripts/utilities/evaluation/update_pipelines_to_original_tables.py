@@ -4,7 +4,6 @@ Update all pipelines to use original table names instead of V2
 """
 
 import os
-import sys
 import re
 from pathlib import Path
 

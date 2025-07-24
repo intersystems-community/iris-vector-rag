@@ -4,7 +4,6 @@ Performance Benchmarking for RAG Templates
 Generates detailed performance metrics and identifies bottlenecks.
 """
 
-import os
 import sys
 import time
 import json
@@ -12,7 +11,7 @@ import psutil
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Tuple
+from typing import Dict, Any, Tuple
 from dataclasses import dataclass, asdict
 
 # Add project root to path

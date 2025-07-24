@@ -8,7 +8,6 @@ graph-based retrieval, and vector similarity search.
 """
 
 import sys
-import os
 import logging
 import time
 from pathlib import Path
@@ -549,7 +548,7 @@ def main():
     try:
         # Create IRIS connection
         logger.info("Connecting to IRIS database...")
-        iris_connector = get_iris_connection(use_mock=True)  # Use mock for testing
+        iris_connector = get_iris_connection()  # Use mock for testing
         
         # Create setup manager
         setup_manager = HybridiFindRAGSetup(iris_connector)

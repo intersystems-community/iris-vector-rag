@@ -6,9 +6,8 @@ Enhanced ingestion script that populates GraphRAG tables with entities and relat
 import sys
 import logging
 import re
-import time
 from pathlib import Path
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))

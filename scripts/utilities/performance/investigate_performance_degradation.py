@@ -6,8 +6,6 @@ This script analyzes the current database state and performance metrics
 to identify the root cause of recurring performance degradation.
 """
 
-import logging
-import time
 import sys
 import os
 from datetime import datetime

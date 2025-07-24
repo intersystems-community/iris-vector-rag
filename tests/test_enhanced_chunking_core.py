@@ -14,8 +14,6 @@ import sys
 import os
 import json
 import time
-import statistics
-from typing import List, Dict, Any
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -28,7 +26,6 @@ from tools.chunking.enhanced_chunking_service import (
     SemanticChunkingStrategy,
     AdaptiveChunkingStrategy,
     HybridChunkingStrategy,
-    ChunkingQuality
 )
 from common.iris_connector import get_iris_connection
 from common.embedding_utils import get_embedding_model

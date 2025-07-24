@@ -21,7 +21,7 @@ def test_logging_with_real_imports():
     
     # Step 1: Import setup_logging and call it (as done in run_comprehensive_ragas_evaluation.py)
     print("\n1. Setting up logging with verbose=True...")
-    from eval.run_comprehensive_ragas_evaluation import setup_logging
+    from scripts.utilities.evaluation.run_comprehensive_ragas_evaluation import setup_logging
     setup_logging(verbose=True)
     
     # Step 2: Get initial logger and test it
@@ -39,7 +39,7 @@ def test_logging_with_real_imports():
         print(f"⚠️  Import failed: {e}")
         # Try alternative import path
         try:
-            from eval.comprehensive_ragas_evaluation import ComprehensiveRAGASEvaluationFramework
+            from scripts.utilities.evaluation.comprehensive_ragas_evaluation import ComprehensiveRAGASEvaluationFramework
             print("✅ Successfully imported ComprehensiveRAGASEvaluationFramework (alternative path)")
         except ImportError as e2:
             print(f"❌ Both import attempts failed: {e2}")

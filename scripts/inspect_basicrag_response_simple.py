@@ -4,12 +4,10 @@ Simplified script to inspect BasicRAG pipeline response structure.
 This version mocks the database and focuses on response structure analysis.
 """
 
-import os
 import sys
 import json
 from pathlib import Path
-from typing import List, Dict, Any, Optional
-from unittest.mock import Mock, MagicMock
+from typing import List, Dict, Any
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

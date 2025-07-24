@@ -9,7 +9,7 @@ import time
 import psutil
 import docker
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from dataclasses import dataclass
 
 from ..core.connection import ConnectionManager

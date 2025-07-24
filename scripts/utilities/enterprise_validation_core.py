@@ -5,7 +5,6 @@ Tests the core working RAG techniques without import conflicts
 """
 
 import sys
-import os
 import json
 import time
 import logging
@@ -13,7 +12,7 @@ import psutil
 import gc
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any, Tuple, Optional
+from typing import Dict, Any
 import traceback
 
 # Add project root to path
@@ -26,7 +25,7 @@ from common.embedding_utils import get_embedding_model # Updated import
 from dotenv import load_dotenv
 
 # Import only the core working techniques
-from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
 
 load_dotenv()
 
@@ -64,7 +63,7 @@ class EnterpriseCoreValidation:
         # Core working techniques
         self.rag_techniques = {
             'GraphRAG': {
-                'class': GraphRAGPipelineV2,
+                'class': GraphRAGPipeline,
                 'description': 'Ultra-fast graph-based retrieval with entity relationships'
             }
         }
@@ -79,7 +78,7 @@ class EnterpriseCoreValidation:
         
         # Try NodeRAG
         try:
-            from src.deprecated.noderag.pipeline_v2 import NodeRAGPipelineV2 # Updated import
+            from iris_rag.pipelines.noderag import NodeRAGPipelineV2 # Updated import
             self.rag_techniques['NodeRAG'] = {
                 'class': NodeRAGPipelineV2,
                 'description': 'Maximum coverage specialist with comprehensive retrieval'
@@ -90,9 +89,9 @@ class EnterpriseCoreValidation:
         
         # Try HyDE
         try:
-            from src.deprecated.hyde.pipeline_v2 import HyDEPipelineV2 # Updated import
+            from iris_rag.pipelines.hyde import HyDERAGPipelineV2 # Updated import
             self.rag_techniques['HyDE'] = {
-                'class': HyDEPipelineV2,
+                'class': HyDERAGPipelineV2,
                 'description': 'Hypothetical document generation for enhanced retrieval'
             }
             logger.info("✅ HyDE imported successfully")
@@ -101,9 +100,9 @@ class EnterpriseCoreValidation:
         
         # Try CRAG
         try:
-            from src.deprecated.crag.pipeline_v2 import CRAGPipelineV2 # Updated import
+            from iris_rag.pipelines.crag import CRAGPipeline # Updated import
             self.rag_techniques['CRAG'] = {
-                'class': CRAGPipelineV2,
+                'class': CRAGPipeline,
                 'description': 'Corrective retrieval with enhanced coverage'
             }
             logger.info("✅ CRAG imported successfully")

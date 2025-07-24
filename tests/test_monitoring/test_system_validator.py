@@ -4,7 +4,7 @@ Tests for the System Validator module.
 
 import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from iris_rag.monitoring.system_validator import SystemValidator, ValidationResult
 from iris_rag.config.manager import ConfigurationManager

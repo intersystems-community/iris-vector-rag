@@ -1,12 +1,11 @@
 import sys
 import os
 import logging
-import time # Added for timing if needed, though service logs time
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
+from tools.chunking.enhanced_chunking_service import EnhancedDocumentChunkingService
 from common.utils import get_embedding_func # Needed by EnhancedDocumentChunkingService constructor
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

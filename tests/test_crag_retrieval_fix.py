@@ -24,7 +24,7 @@ def test_crag_retrieval():
     llm_func = get_llm_func()
     
     # Create CRAG pipeline
-    crag_pipeline = CRAGPipelineV2(
+    crag_pipeline = CRAGPipeline(
         iris_connector=iris_conn,
         embedding_func=embedding_func,
         llm_func=llm_func

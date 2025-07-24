@@ -92,9 +92,9 @@ except ImportError as e:
 
 # Import evaluation modules
 try:
-    from eval.bench_runner import run_all_techniques_benchmark, load_benchmark_results
-    from eval.comparative import generate_combined_report
-    from eval.metrics import (
+    from scripts.utilities.evaluation.bench_runner import run_all_techniques_benchmark, load_benchmark_results
+    from scripts.utilities.evaluation.comparative import generate_combined_report
+    from scripts.utilities.evaluation.metrics import (
         calculate_context_recall,
         calculate_precision_at_k,
         calculate_answer_faithfulness,
@@ -104,7 +104,7 @@ try:
 
     # Import or define calculate_latency_percentiles based on numpy availability
     try:
-        from eval.metrics import calculate_latency_percentiles
+        from scripts.utilities.evaluation.metrics import calculate_latency_percentiles
     except (ImportError, AttributeError):
         # Define a fallback if the imported function requires numpy and it's not available
         def calculate_latency_percentiles(latencies: List[float]) -> Dict[str, float]:
@@ -172,10 +172,10 @@ except ImportError as e:
 
 # Import pipeline classes
 try:
-    from core_pipelines import (
+    from iris_rag.pipelines import (
         BasicRAGPipeline,
-        HyDEPipeline,
-        ColbertRAGPipeline,
+        HyDERAGPipeline,
+        ColBERTRAGPipeline,
         CRAGPipeline,
         NodeRAGPipeline,
         GraphRAGPipeline,
@@ -202,8 +202,8 @@ except ImportError as e:
     
     # Use the same mock class for all pipelines
     BasicRAGPipeline = MockPipeline
-    HyDEPipeline = MockPipeline
-    ColbertRAGPipeline = MockPipeline
+    HyDERAGPipeline = MockPipeline
+    ColBERTRAGPipeline = MockPipeline
     CRAGPipeline = MockPipeline
     NodeRAGPipeline = MockPipeline
     GraphRAGPipeline = MockPipeline
@@ -284,25 +284,25 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
 
     # HyDE wrapper
     def hyde_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
-        """Wrapper for HyDEPipeline."""
-        pipeline = HyDEPipeline(iris_connector, embedding_func, llm_func)
+        """Wrapper for HyDERAGPipeline."""
+        pipeline = HyDERAGPipeline(iris_connector, embedding_func, llm_func)
         top_k = kwargs.get("top_k", DEFAULT_TOP_K)
         return pipeline.run(query, top_k=top_k)
 
     # ColBERT wrapper
     def colbert_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
-        """Wrapper for ColbertRAGPipeline."""
+        """Wrapper for ColBERTRAGPipeline."""
         # For ColBERT, use the semantic encoder from the core pipeline
         
         # Pass the potentially stubbed embedding_func to the encoder factory
         # create_colbert_semantic_encoder is imported at the top from core_pipelines
         semantic_encoder = create_colbert_semantic_encoder(embedding_func_override=embedding_func)
         
-        # Initialize ColbertRAGPipeline with the created encoder
-        pipeline = ColbertRAGPipeline(
+        # Initialize ColBERTRAGPipeline with the created encoder
+        pipeline = ColBERTRAGPipeline(
             iris_connector=iris_connector,
             colbert_query_encoder_func=semantic_encoder, # Use the returned encoder directly
-            colbert_doc_encoder_func=semantic_encoder, # Use the same for doc encoding as per original ColbertRAGPipeline
+            colbert_doc_encoder_func=semantic_encoder, # Use the same for doc encoding as per original ColBERTRAGPipeline
             llm_func=llm_func
         )
         
@@ -405,53 +405,7 @@ def setup_database_connection(args) -> Optional[Any]:
         from common.connection_factory import ConnectionFactory
         
         if args.use_mock:
-            logger.info("Using mock IRIS connection as requested by --use-mock flag.")
-            try:
-                from common.iris_connector import get_mock_iris_connection
-                iris_conn = get_mock_iris_connection()
-            except Exception as e:
-                logger.warning(f"Error using get_mock_iris_connection: {e}")
-                logger.info("Creating a self-contained mock IRIS connection")
-                
-                # Define a minimal mock IRIS connection and cursor
-                class MockIRISCursor:
-                    def __init__(self):
-                        self.results = []
-                        self.current_result = None
-                    
-                    def execute(self, query, params=None):
-                        logger.info(f"Mock executing: {query}")
-                        if "COUNT(*)" in query:
-                            self.results = [(1000,)]
-                        else:
-                            self.results = []
-                        return self
-                    
-                    def fetchone(self):
-                        if self.results:
-                            return self.results[0]
-                        return None
-                    
-                    def fetchall(self):
-                        return self.results
-                    
-                    def close(self):
-                        pass
-                
-                class MockIRISConnection:
-                    def __init__(self):
-                        pass
-                    
-                    def cursor(self):
-                        return MockIRISCursor()
-                    
-                    def close(self):
-                        pass
-                    
-                    def commit(self):
-                        pass
-                
-                iris_conn = MockIRISConnection()
+            print("Mock not supported anymore")
         else:
             # Use factory with DBAPI as default (user preference)
             connection_config = {}

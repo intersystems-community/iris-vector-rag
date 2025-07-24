@@ -9,7 +9,7 @@ This module tests that all refactored pipelines:
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 from iris_rag.core.models import Document
 from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.pipelines.noderag import NodeRAGPipeline

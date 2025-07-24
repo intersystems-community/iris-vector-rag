@@ -4,7 +4,6 @@ Comprehensive Evaluation Report Generator
 Combines RAGAS evaluation results with performance benchmarks.
 """
 
-import os
 import sys
 import json
 import logging

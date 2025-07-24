@@ -45,17 +45,9 @@ import sys
 import logging
 import time
 import json
-import argparse
-import psutil
-import numpy as np
-import threading
-import statistics
 import traceback
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import gc
+from typing import Dict, List, Any
+from dataclasses import dataclass
 from datetime import datetime
 
 # Add project root to path
@@ -65,15 +57,6 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func, get_colbert_query_encoder_func, get_colbert_doc_encoder_func_adapted # Updated import
-
-# Import all RAG pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.working.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(

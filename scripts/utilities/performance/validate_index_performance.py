@@ -6,7 +6,6 @@ This script tests ingestion performance before and after index creation
 to confirm the performance improvements are working as expected.
 """
 
-import logging
 import time
 import sys
 import os

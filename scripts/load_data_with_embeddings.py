@@ -4,10 +4,8 @@ Load data with proper embeddings using vector SQL utilities
 """
 
 import sys
-import os
 import logging
 from pathlib import Path
-import time
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))

@@ -6,8 +6,8 @@ following TDD principles to ensure robust pipeline creation.
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
-from typing import Dict, Any, Optional
+from unittest.mock import Mock
+from typing import Dict, Any
 
 from iris_rag.pipelines.factory import PipelineFactory
 from iris_rag.config.pipeline_config_service import PipelineConfigService

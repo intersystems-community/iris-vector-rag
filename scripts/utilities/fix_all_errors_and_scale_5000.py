@@ -31,13 +31,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import all RAG pipelines
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 # Configure logging
 logging.basicConfig(
@@ -327,12 +327,12 @@ class ErrorFixAndScale:
         
         techniques = [
             ("BasicRAG", BasicRAGPipeline),
-            ("HyDE", HyDEPipeline),
+            ("HyDE", HyDERAGPipeline),
             ("CRAG", CRAGPipeline),
-            ("OptimizedColBERT", OptimizedColbertRAGPipeline),
+            ("OptimizedColBERT", ColBERTRAGPipeline),
             ("NodeRAG", NodeRAGPipeline),
             ("GraphRAG", GraphRAGPipeline),
-            ("HybridiFindRAG", HybridiFindRAGPipeline)
+            ("HybridiFindRAG", HybridIFindRAGPipeline)
         ]
         
         test_query = "What are the latest advances in diabetes treatment?"

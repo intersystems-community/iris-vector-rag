@@ -20,10 +20,10 @@ def test_basic_connection():
     print("=== TESTING BASIC CONNECTION TO LICENSED IRIS ===")
     
     try:
-        import intersystems_iris
+        import iris
         print("✅ intersystems_iris module imported successfully")
     except ImportError as e:
-        print(f"❌ Failed to import intersystems_iris: {e}")
+        print(f"❌ Failed to import iris: {e}")
         return False
     
     # Connection parameters for licensed container
@@ -38,7 +38,7 @@ def test_basic_connection():
     print(f"Attempting connection to: {conn_params['hostname']}:{conn_params['port']}/{conn_params['namespace']}")
     
     try:
-        conn = intersystems_iris.connect(**conn_params)
+        conn = iris.connect(**conn_params)
         print("✅ Connection established successfully")
         
         # Test basic SQL
@@ -66,7 +66,7 @@ def test_vector_operations():
     print("\n=== TESTING VECTOR OPERATIONS ===")
     
     try:
-        import intersystems_iris
+        import iris
         
         # Connection parameters
         conn_params = {
@@ -77,7 +77,7 @@ def test_vector_operations():
             "password": "SYS"
         }
         
-        conn = intersystems_iris.connect(**conn_params)
+        conn = iris.connect(**conn_params)
         cursor = conn.cursor()
         
         # Create test table with VECTOR column

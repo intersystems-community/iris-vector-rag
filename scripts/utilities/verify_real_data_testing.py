@@ -68,7 +68,7 @@ def verify_database_connection(logger: logging.Logger) -> Tuple[bool, Any]:
     
     try:
         # Try to get a real connection (not a mock)
-        connection = get_iris_connection(use_mock=False)
+        connection = get_iris_connection()
         
         if connection is None:
             logger.error("Failed to connect to IRIS database.")

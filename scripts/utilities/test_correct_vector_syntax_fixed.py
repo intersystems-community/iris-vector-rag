@@ -20,7 +20,7 @@ def test_corrected_vector_syntax():
     print('=== TESTING CORRECTED TO_VECTOR SYNTAX ===')
     
     try:
-        import intersystems_iris
+        import iris
         
         # Connection parameters for licensed container
         conn_params = {
@@ -31,7 +31,7 @@ def test_corrected_vector_syntax():
             "password": "SYS"
         }
         
-        conn = intersystems_iris.connect(**conn_params)
+        conn = iris.connect(**conn_params)
         cursor = conn.cursor()
         
         # Test different VECTOR column definitions
@@ -144,7 +144,7 @@ def test_vector_search_functions():
     print('\n=== TESTING VECTOR SEARCH FUNCTIONS ===')
     
     try:
-        import intersystems_iris
+        import iris
         
         conn_params = {
             "hostname": "localhost",
@@ -154,7 +154,7 @@ def test_vector_search_functions():
             "password": "SYS"
         }
         
-        conn = intersystems_iris.connect(**conn_params)
+        conn = iris.connect(**conn_params)
         cursor = conn.cursor()
         
         # Create test table

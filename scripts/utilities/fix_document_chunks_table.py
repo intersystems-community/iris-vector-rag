@@ -4,7 +4,6 @@ Fix DocumentChunks table warning by creating the missing table if needed.
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add the project root to the Python path

@@ -162,14 +162,14 @@ def test_hybrid_ifind_rag_with_optimizations():
     print(f"\n🧪 Testing HybridiFindRAG with optimizations...")
     
     try:
-        from hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline
+        from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
         from common.utils import get_llm_func
         
         iris_connector = get_iris_connection()
         embedding_func = get_embedding_func()
         llm_func = get_llm_func()
         
-        pipeline = HybridiFindRAGPipeline(
+        pipeline = HybridIFindRAGPipeline(
             iris_connector=iris_connector,
             embedding_func=embedding_func,
             llm_func=llm_func

@@ -12,6 +12,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Any
 
 # Constants
 PROJECT_ROOT = Path(__file__).resolve().parent.parent

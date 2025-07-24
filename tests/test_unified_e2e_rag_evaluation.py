@@ -20,7 +20,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import the unified framework
-from eval.unified_ragas_evaluation_framework import (
+from scripts.utilities.evaluation.unified_ragas_evaluation_framework import (
     UnifiedRAGASEvaluationFramework,
     EvaluationConfig,
     ConnectionType,
@@ -28,10 +28,6 @@ from eval.unified_ragas_evaluation_framework import (
     QueryResult,
     PipelineMetrics
 )
-
-# Import common utilities
-from common.iris_dbapi_connector import get_iris_dbapi_connection
-from common.utils import get_embedding_func, get_llm_func
 
 logger = logging.getLogger(__name__)
 
@@ -503,7 +499,7 @@ class TestRAGASIntegration:
     
     def test_ragas_availability_check(self):
         """Test RAGAS availability detection"""
-        from eval.unified_ragas_evaluation_framework import RAGAS_AVAILABLE
+        from scripts.utilities.evaluation.unified_ragas_evaluation_framework import RAGAS_AVAILABLE
         # Should be boolean
         assert isinstance(RAGAS_AVAILABLE, bool)
     
@@ -551,7 +547,7 @@ class TestStatisticalAnalysis:
     
     def test_scipy_availability_check(self):
         """Test SciPy availability detection"""
-        from eval.unified_ragas_evaluation_framework import SCIPY_AVAILABLE
+        from scripts.utilities.evaluation.unified_ragas_evaluation_framework import SCIPY_AVAILABLE
         assert isinstance(SCIPY_AVAILABLE, bool)
     
     @pytest.mark.skipif(not pytest.importorskip("scipy", reason="SciPy not available"), reason="SciPy not installed")

@@ -9,7 +9,6 @@ import time
 import json
 import datetime
 import sys
-import os
 import pickle
 from pathlib import Path
 from dataclasses import dataclass

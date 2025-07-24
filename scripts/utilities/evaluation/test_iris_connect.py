@@ -45,9 +45,9 @@ try:
                 
     else:
         print("'iris' module DOES NOT HAVE 'connect' attribute.")
-        print("Attempting to import intersystems_iris.dbapi as fallback1...")
+        print("Attempting to import iris.dbapi as fallback1...")
         try:
-            import intersystems_iris.dbapi as irisdbapi_alt
+            import iris.dbapi as irisdbapi_alt
             print(f"Location of imported 'intersystems_iris.dbapi': {irisdbapi_alt.__file__ if hasattr(irisdbapi_alt, '__file__') else 'Unknown'}")
             if hasattr(irisdbapi_alt, 'connect'):
                 print("Successfully imported 'intersystems_iris.dbapi' and it HAS 'connect'.")
@@ -57,7 +57,7 @@ try:
             print(f"Failed to import 'intersystems_iris.dbapi': {e_alt}")
             print("Attempting to import irisnative.dbapi as fallback2...")
             try:
-                import irisnative.dbapi as irisdbapi_native
+                import iris as irisdbapi_native
                 print(f"Location of imported 'irisnative.dbapi': {irisdbapi_native.__file__ if hasattr(irisdbapi_native, '__file__') else 'Unknown'}")
                 if hasattr(irisdbapi_native, 'connect'):
                     print("Successfully imported 'irisnative.dbapi' and it HAS 'connect'.")

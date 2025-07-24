@@ -16,11 +16,10 @@ import sys
 import json
 import logging
 import argparse
-import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
+from typing import List
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent

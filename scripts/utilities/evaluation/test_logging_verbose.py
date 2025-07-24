@@ -14,7 +14,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import the setup_logging function
-from eval.run_comprehensive_ragas_evaluation import setup_logging
+from scripts.utilities.evaluation.run_comprehensive_ragas_evaluation import setup_logging
 
 def test_logging_setup():
     """Test the setup_logging function with verbose=True"""

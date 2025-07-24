@@ -1,5 +1,3 @@
-import pytest
-import json
 from unittest.mock import patch
 
 # Add project root to sys.path to allow imports
@@ -9,9 +7,9 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+from common.utils import get_embedding_func
+
 from iris_rag.pipelines.noderag import NodeRAGPipeline
-from common.utils import get_embedding_func, get_llm_func, Document # Updated import
-from common.jdbc_stream_utils import read_iris_stream # Updated import
 
 # Test Data for NodeRAG
 # Document 1: Alpha Protocol
@@ -161,7 +159,7 @@ def test_noderag_e2e_relationship_query(iris_testcontainer_connection):
         print("Setting up NodeRAG test data in testcontainer...")
         setup_test_data_noderag(iris_testcontainer_connection, real_embedding_function)
         
-        pipeline = NodeRAGPipelineV2(
+        pipeline = NodeRAGPipeline(
             iris_connector=iris_testcontainer_connection,
             embedding_func=real_embedding_function,
             llm_func=mock_llm_function

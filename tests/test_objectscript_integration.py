@@ -6,9 +6,7 @@ for Embedded Python integration following TDD methodology.
 """
 
 import pytest
-import os
 import json
-from unittest.mock import Mock, patch, MagicMock
 from common.iris_connector import get_iris_connection
 
 

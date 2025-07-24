@@ -5,19 +5,18 @@ Quick RAG Diagnostic - Test each technique individually
 
 import sys
 import os
-from pathlib import Path
 
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')) # Corrected path
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
@@ -60,11 +59,11 @@ def main():
     # Test each technique
     techniques = [
         ("BasicRAG", BasicRAGPipeline, connection, embedding_func, llm_func, "RAG"),
-        ("HyDE", HyDEPipeline, connection, embedding_func, llm_func),
+        ("HyDE", HyDERAGPipeline, connection, embedding_func, llm_func),
         ("CRAG", CRAGPipeline, connection, embedding_func, llm_func),
         ("NodeRAG", NodeRAGPipeline, connection, embedding_func, llm_func),
         ("GraphRAG", GraphRAGPipeline, connection, embedding_func, llm_func),
-        ("HybridiFindRAG", HybridiFindRAGPipeline, connection, embedding_func, llm_func),
+        ("HybridiFindRAG", HybridIFindRAGPipeline, connection, embedding_func, llm_func),
     ]
     
     for technique_info in techniques:

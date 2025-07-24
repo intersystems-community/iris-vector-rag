@@ -253,7 +253,7 @@ def run_enhanced_graph_ingestion(limit: int = 10):
 
 def test_enhanced_graphrag():
     """Test GraphRAG after enhanced ingestion"""
-    from src.deprecated.graphrag.pipeline_v2 import GraphRAGPipelineV2 # Updated import
+    from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
     
     iris = get_iris_connection()
     embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
@@ -266,7 +266,7 @@ def test_enhanced_graphrag():
     
     print("\n=== Testing Enhanced GraphRAG ===\n")
     
-    graphrag = GraphRAGPipelineV2(iris, embedding_func, llm_func)
+    graphrag = GraphRAGPipeline(iris, embedding_func, llm_func)
     
     queries = [
         "What is diabetes and its treatment?",

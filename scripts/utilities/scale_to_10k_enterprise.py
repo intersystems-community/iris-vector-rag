@@ -20,7 +20,6 @@ import traceback
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from common.iris_connector import get_iris_connection
-from data.loader_optimized_performance import process_and_load_documents
 from dotenv import load_dotenv
 
 load_dotenv()

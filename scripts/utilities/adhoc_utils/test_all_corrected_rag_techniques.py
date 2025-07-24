@@ -10,12 +10,12 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 import logging
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
-from common.iris_connector_jdbc import get_iris_connection # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipeline # Updated import
+from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 logging.basicConfig(level=logging.INFO)
@@ -43,9 +43,9 @@ def test_all_corrected_techniques():
         all_techniques = [
             ("BasicRAG", BasicRAGPipeline(db_conn, embed_fn, llm_fn)),
             ("NodeRAG", NodeRAGPipelineV2(db_conn, embed_fn, llm_fn)),
-            ("CRAG", CRAGPipelineV2(db_conn, embed_fn, llm_fn)),
-            ("HyDE", HyDEPipeline(db_conn, embed_fn, llm_fn)),
-            ("GraphRAG", GraphRAGPipelineV2(db_conn, embed_fn, llm_fn))
+            ("CRAG", CRAGPipeline(db_conn, embed_fn, llm_fn)),
+            ("HyDE", HyDERAGPipeline(db_conn, embed_fn, llm_fn)),
+            ("GraphRAG", GraphRAGPipeline(db_conn, embed_fn, llm_fn))
         ]
 
         techniques_to_test = all_techniques
@@ -57,7 +57,7 @@ def test_all_corrected_techniques():
             print(f"\n🚀 Testing {name}...")
             try:
                 if name == "GraphRAG":
-                    # GraphRAGPipelineV2.run does not take similarity_threshold
+                    # GraphRAGPipeline.run does not take similarity_threshold
                     result = pipeline.run(test_query, top_k=5)
                 else:
                     result = pipeline.run(test_query, top_k=5, similarity_threshold=0.1)

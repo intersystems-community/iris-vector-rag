@@ -37,15 +37,6 @@ from common.utils import Document
 from common.utils import get_iris_connector, get_embedding_func, get_llm_func
 from common.iris_connector import get_iris_connection
 
-# Import standardized mocks from the mocks module
-from tests.mocks.db import MockIRISConnector, MockIRISCursor
-from tests.mocks.models import (
-    mock_embedding_func, 
-    mock_llm_func,
-    mock_colbert_doc_encoder,
-    mock_colbert_query_encoder
-)
-
 # Import real data fixtures
 from tests.fixtures.real_data import (
     real_iris_available,
@@ -107,7 +98,7 @@ def iris_connection_real():
     print("\nFixture: Attempting to establish real IRIS connection...")
     
     # Use our new connection function
-    conn = get_iris_connection(use_mock=False)
+    conn = get_iris_connection()
     
     if conn:
         print("Fixture: Real IRIS connection established.")
@@ -673,7 +664,7 @@ def iris_connection_auto(use_testcontainer, iris_testcontainer_connection, reque
     # If force_mock, always use mock
     if force_mock:
         logger.info("Using mock connection due to force_mock marker")
-        return get_iris_connection(use_mock=True)
+        return get_iris_connection()
     
     # If force_real, try real connection or skip
     if force_real:

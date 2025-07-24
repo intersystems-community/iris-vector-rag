@@ -130,7 +130,7 @@ make load-1000
 
 # Alternative: Direct loading
 python -c "
-from data.loader import process_and_load_documents
+from data.loader_fixed import process_and_load_documents
 result = process_and_load_documents('data/pmc_oas_downloaded', limit=1000, batch_size=50, use_mock=False)
 print(f'Loaded: {result}')
 "
@@ -162,8 +162,8 @@ result = pipeline.query("your query", top_k=20)
 
 ```python
 # Hybrid iFind RAG deployment
-from iris_rag.pipelines.hybrid_ifind import HybridiFindRAGPipeline
-pipeline = HybridiFindRAGPipeline()
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
+pipeline = HybridIFindRAGPipeline()
 result = pipeline.query("your query", top_k=10)
 ```
 

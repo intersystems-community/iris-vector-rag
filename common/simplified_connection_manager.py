@@ -3,7 +3,6 @@ Simplified connection manager that uses ODBC for now
 Will be updated to support JDBC and dbapi when available
 """
 
-import os
 import logging
 from typing import Any, List, Optional, Dict
 from contextlib import contextmanager

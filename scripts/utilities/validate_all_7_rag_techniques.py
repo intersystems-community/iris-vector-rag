@@ -9,6 +9,7 @@ import time
 import traceback
 import json
 from datetime import datetime
+import os
 
 # Add current directory to path
 # sys.path.append('.') # Keep if script is in project root, otherwise adjust for project root
@@ -17,13 +18,13 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # Import all RAG techniques
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipelineV2 # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
-from src.experimental.hybrid_ifind_rag.pipeline import HybridiFindRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
+from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline # Updated import
 
 # Import common utilities
 from common.iris_connector import get_iris_connection # Updated import
@@ -164,13 +165,13 @@ def main():
     
     # Define all 7 RAG techniques
     techniques = [
-        ("BasicRAG V2", BasicRAGPipelineV2),
-        ("CRAG V2", CRAGPipelineV2),
-        ("ColBERT V2", ColBERTPipelineV2),
-        ("NodeRAG V2", NodeRAGPipelineV2),
-        ("HyDE", HyDEPipeline),
-        ("GraphRAG V2", GraphRAGPipelineV2),
-        ("HybridIFindRAG", HybridiFindRAGPipeline)
+        ("BasicRAG", BasicRAGPipeline),
+        ("CRAG", CRAGPipeline),
+        ("ColBERT", ColBERTRAGPipeline),
+        ("NodeRAG", NodeRAGPipeline),
+        ("HyDE", HyDERAGPipeline),
+        ("GraphRAG", GraphRAGPipeline),
+        ("HybridIFindRAG", HybridIFindRAGPipeline)
     ]
     
     # Test results

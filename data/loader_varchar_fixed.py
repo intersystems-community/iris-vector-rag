@@ -9,7 +9,7 @@ import logging
 import time
 import json
 import numpy as np
-from typing import List, Dict, Any, Generator, Optional, Tuple, Callable
+from typing import List, Dict, Any, Optional, Tuple, Callable
 import os
 import sys
 
@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from common.iris_connector import get_iris_connection
-from common.vector_format_fix import format_vector_for_iris, validate_vector_for_iris, VectorFormatError
+from common.vector_format_fix import format_vector_for_iris,  VectorFormatError
 from data.pmc_processor import process_pmc_files
 
 logger = logging.getLogger(__name__)

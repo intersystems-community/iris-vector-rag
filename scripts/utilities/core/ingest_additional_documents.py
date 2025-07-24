@@ -22,7 +22,7 @@ from pathlib import Path
 # Assumes 'core_scripts' is at the project root level, alongside 'common', 'data', etc.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func
 from data.pmc_processor import process_pmc_files # Used to iterate over PMC documents
 
