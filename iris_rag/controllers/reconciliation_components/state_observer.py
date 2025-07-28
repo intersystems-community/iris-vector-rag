@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Optional
 
 from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.validation.embedding_validator import EmbeddingValidator
 from iris_rag.controllers.reconciliation_components.models import (
     SystemState,
@@ -33,7 +33,7 @@ class StateObserver:
     - Quality analysis using EmbeddingValidator
     """
     
-    def __init__(self, config_manager: ConfigurationManager, connection_manager: ConnectionManager, embedding_validator: EmbeddingValidator):
+    def __init__(self, config_manager: ConfigurationManager, iris_connector, embedding_validator: EmbeddingValidator):
         """
         Initialize the StateObserver.
         
@@ -43,7 +43,7 @@ class StateObserver:
             embedding_validator: Validator for embedding quality analysis
         """
         self.config_manager = config_manager
-        self.connection_manager = connection_manager
+        self.iris_connector = iris_connector
         self.embedding_validator = embedding_validator
         
         logger.debug("StateObserver initialized")
@@ -59,7 +59,7 @@ class StateObserver:
         
         try:
             # Get database connection
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             # Query total documents

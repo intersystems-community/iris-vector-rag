@@ -1,0 +1,185 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-07-27T13:50:59.011063",
+    "total_execution_time": 44.75861716270447,
+    "document_count": 2,
+    "target_document_count": 2,
+    "techniques_tested": 7,
+    "successful_tests": 4,
+    "success_rate": 57.14285714285714
+  },
+  "technique_results": {
+    "iris_rag_basic": {
+      "technique": "iris_rag_basic",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 6.651444911956787,
+        "avg_query_time": 1.388762633005778
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 1.7710788249969482,
+          "retrieved_count": 2,
+          "answer_length": 395,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 1.4276318550109863,
+          "retrieved_count": 2,
+          "answer_length": 401,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 0.9675772190093994,
+          "retrieved_count": 2,
+          "answer_length": 393,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_colbert": {
+      "technique": "iris_rag_colbert",
+      "success": false,
+      "error": "iris_rag_colbert: Answer too short (48 chars)\nassert 48 >= 50\n +  where 48 = len('No relevant documents found to answer the query.')",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_crag": {
+      "technique": "iris_rag_crag",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 6.664422988891602,
+        "avg_query_time": 1.504301389058431
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 1.0149438381195068,
+          "retrieved_count": 2,
+          "answer_length": 457,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 1.6525230407714844,
+          "retrieved_count": 2,
+          "answer_length": 734,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 1.8454372882843018,
+          "retrieved_count": 2,
+          "answer_length": 1198,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_noderag": {
+      "technique": "iris_rag_noderag",
+      "success": false,
+      "error": "iris_rag_noderag: Too few documents retrieved (0)\nassert 0 >= 1\n +  where 0 = len([])",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hybrid_ifind": {
+      "technique": "iris_rag_hybrid_ifind",
+      "success": false,
+      "error": "iris_rag_hybrid_ifind: Result missing 'retrieved_documents' field\nassert 'retrieved_documents' in {'answer': None, 'error': \"'Document' object has no attribute 'content'\", 'pipeline_type': 'hybrid_ifind_rag', 'query': 'What are the effects of BRCA1 mutations on breast cancer risk?'}",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_graphrag": {
+      "technique": "iris_rag_graphrag",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 4.28839898109436,
+        "avg_query_time": 0.5666825771331787
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 0.5992147922515869,
+          "retrieved_count": 2,
+          "answer_length": 97,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 0.5410487651824951,
+          "retrieved_count": 2,
+          "answer_length": 129,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 0.5597841739654541,
+          "retrieved_count": 2,
+          "answer_length": 103,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_hyde": {
+      "technique": "iris_rag_hyde",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 15.003661632537842,
+        "avg_query_time": 4.2999827067057295
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 3.0381147861480713,
+          "retrieved_count": 2,
+          "answer_length": 88,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 4.332543134689331,
+          "retrieved_count": 2,
+          "answer_length": 217,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 5.529290199279785,
+          "retrieved_count": 2,
+          "answer_length": 207,
+          "success": true
+        }
+      ]
+    }
+  },
+  "performance_summary": {
+    "fastest_technique": "iris_rag_graphrag",
+    "slowest_technique": "iris_rag_hyde",
+    "avg_times": {
+      "iris_rag_basic": 1.388762633005778,
+      "iris_rag_crag": 1.504301389058431,
+      "iris_rag_graphrag": 0.5666825771331787,
+      "iris_rag_hyde": 4.2999827067057295
+    },
+    "retrieval_counts": {
+      "iris_rag_basic": 2.0,
+      "iris_rag_crag": 2.0,
+      "iris_rag_graphrag": 2.0,
+      "iris_rag_hyde": 2.0
+    },
+    "answer_lengths": {
+      "iris_rag_basic": 396.3333333333333,
+      "iris_rag_crag": 796.3333333333334,
+      "iris_rag_graphrag": 109.66666666666667,
+      "iris_rag_hyde": 170.66666666666666
+    }
+  },
+  "validation_status": "PARTIAL"
+}

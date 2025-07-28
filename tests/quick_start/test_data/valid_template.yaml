@@ -2,7 +2,8 @@
 metadata:
   profile: "valid_template"
   description: "Valid template for testing schema validation"
-  version: "1.0"
+  version: "1.0.0"
+  schema_version: "2024.1"
 
 database:
   iris:
@@ -47,7 +48,7 @@ sample_data:
 mcp_server:
   enabled: true
   port: 8080
-  enabled_tools:
-    - "rag_basic"
-    - "rag_hyde"
-    - "rag_health_check"
+  tools:
+    - "basic"
+    - "hyde"
+    - "health_check"

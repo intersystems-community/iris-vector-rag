@@ -14,8 +14,8 @@ from collections import deque, defaultdict
 import json
 import os
 
-from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
+from common.iris_connection_manager import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,6 @@ class PerformanceMonitor:
             config_manager: Configuration manager instance
         """
         self.config_manager = config_manager or ConfigurationManager()
-        self.connection_manager = ConnectionManager(self.config_manager)
         
         # Metrics storage
         self.metrics_buffer = deque(maxlen=10000)  # Keep last 10k metrics
@@ -134,6 +133,22 @@ class PerformanceMonitor:
         
         # Check for performance issues
         self._check_performance_thresholds(query_data)
+    
+    def record_request(self, technique: str, query: str, execution_time: float, success: bool = True, error: str = None):
+        """Record a request for MCP bridge compatibility."""
+        query_data = QueryPerformanceData(
+            query_text=query,
+            pipeline_type=technique,
+            execution_time_ms=execution_time * 1000,  # Convert to ms
+            retrieval_time_ms=0,  # Will be updated if available
+            generation_time_ms=0,  # Will be updated if available
+            documents_retrieved=0,  # Will be updated if available
+            tokens_generated=0,  # Will be updated if available
+            timestamp=datetime.now(),
+            success=success,
+            error_message=error
+        )
+        self.record_query_performance(query_data)
     
     def _check_performance_thresholds(self, query_data: QueryPerformanceData):
         """Check if performance metrics exceed thresholds."""
@@ -292,7 +307,7 @@ class PerformanceMonitor:
     def _collect_database_metrics(self):
         """Collect database performance metrics."""
         try:
-            connection = self.connection_manager.get_connection('iris')
+            connection = get_iris_connection()
             
             with connection.cursor() as cursor:
                 # Document counts

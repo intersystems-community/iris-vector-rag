@@ -39,25 +39,27 @@ You are an expert in converting natural language questions into SQL queries for 
 The database contains the following key tables and schema:
 - RAG.SourceDocuments: Contains medical documents with fields like doc_id, title, text_content, source_file, page_number
 - RAG.DocumentChunks: Contains chunked document content with fields like chunk_id, doc_id, chunk_text, chunk_index
-- Additional tables may exist for specific medical data
 
 Your task is to convert the natural language question into an IRIS-compliant SQL query that will retrieve relevant information.
 
-Key IRIS SQL Rules:
+CRITICAL IRIS SQL Rules:
 1. Use TOP instead of LIMIT: "SELECT TOP n" instead of "SELECT ... LIMIT n"
-2. Use SUBSTRING for text search in STREAM fields
-3. Use proper IRIS schema references (e.g., RAG.SourceDocuments)
-4. Handle case-insensitive searches with UPPER() function
-5. Use appropriate WHERE clauses to filter relevant data
+2. NEVER use UPPER(), LOWER(), or other string functions on text_content or chunk_text fields (they are STREAM fields)
+3. Use simple LIKE patterns for text search: WHERE text_content LIKE '%keyword%'
+4. Use proper IRIS schema references (e.g., RAG.SourceDocuments)
+5. For multiple keywords, use multiple LIKE conditions with OR
+6. Always qualify column names with table aliases when joining tables
+
+Example patterns:
+- Simple search: SELECT TOP 10 doc_id, title, text_content FROM RAG.SourceDocuments WHERE text_content LIKE '%aspirin%'
+- Multiple keywords: WHERE text_content LIKE '%diabetes%' OR text_content LIKE '%cardiovascular%'
+- With chunks: SELECT TOP 10 c.chunk_id, c.chunk_text FROM RAG.DocumentChunks c WHERE c.chunk_text LIKE '%keyword%'
 
 Natural Language Question:
 {question}
 
-Please provide:
-1. An IRIS-compliant SQL query that will retrieve relevant information
-2. A brief explanation of what the query does
+Generate a simple, working IRIS SQL query that searches for relevant content. Focus on basic LIKE patterns and avoid complex functions.
 
-Format your response as:
 SQL_QUERY:
 [Your SQL query here]
 
@@ -88,17 +90,17 @@ Guidelines:
 Answer:
 """
 
-    def __init__(self, connection_manager, config_manager, llm_func=None, **kwargs):
+    def __init__(self, config_manager, llm_func=None, vector_store=None, **kwargs):
         """
         Initialize the SQL RAG Pipeline.
         
         Args:
-            connection_manager: Database connection manager
             config_manager: Configuration manager
             llm_func: LLM function for generating SQL and answers
+            vector_store: Optional VectorStore instance
             **kwargs: Additional keyword arguments
         """
-        super().__init__(connection_manager, config_manager, **kwargs)
+        super().__init__(config_manager, vector_store, **kwargs)
         
         self.llm_func = llm_func
         self._sql_tool = None
@@ -123,8 +125,8 @@ Answer:
             IrisSQLTool instance
         """
         if self._sql_tool is None:
-            # Get IRIS connection from connection manager
-            iris_connector = self.connection_manager.get_connection("iris")
+            # Get IRIS connection from vector store
+            iris_connector = self.vector_store._connection
             self._sql_tool = IrisSQLTool(
                 iris_connector=iris_connector,
                 llm_func=self.llm_func
@@ -155,47 +157,39 @@ Answer:
         try:
             logger.info(f"SQLRAGPipeline: Processing question: {query_text[:100]}...")
             
-            # Step 1: Convert natural language question to SQL
+            # Step 1: Convert natural language question to SQL (optimized - direct generation)
+            sql_generation_start = time.time()
             sql_query = self._generate_sql_query(query_text)
-            logger.debug(f"SQLRAGPipeline: Generated SQL: {sql_query[:200]}...")
+            sql_generation_time = time.time() - sql_generation_start
+            logger.debug(f"SQLRAGPipeline: Generated SQL in {sql_generation_time:.3f}s: {sql_query[:200]}...")
             
-            # Step 2: Execute SQL query using IrisSQLTool
-            sql_result = self.sql_tool.search(sql_query)
-            
-            if not sql_result["success"]:
-                logger.error(f"SQLRAGPipeline: SQL execution failed: {sql_result['error']}")
-                return {
-                    "query": query_text,
-                    "answer": f"I encountered an error while searching the database: {sql_result['error']}",
-                    "retrieved_documents": [],
-                    "sql_query": sql_query,
-                    "sql_results": [],
-                    "execution_time": time.time() - start_time,
-                    "success": False,
-                    "error": sql_result["error"]
-                }
-            
-            sql_results = sql_result["results"]
-            logger.info(f"SQLRAGPipeline: Retrieved {len(sql_results)} results from SQL query")
+            # Step 2: Execute SQL query directly (optimized - skip rewriting)
+            sql_execution_start = time.time()
+            sql_results = self._execute_sql_direct(sql_query)
+            sql_execution_time = time.time() - sql_execution_start
+            logger.info(f"SQLRAGPipeline: Executed SQL in {sql_execution_time:.3f}s, retrieved {len(sql_results)} results")
             
             # Step 3: Generate answer using SQL results as context
+            answer_generation_start = time.time()
             answer = self._generate_answer_from_sql_results(
                 question=query_text,
-                sql_query=sql_result["rewritten_query"] or sql_query,
+                sql_query=sql_query,
                 sql_results=sql_results
             )
+            answer_generation_time = time.time() - answer_generation_start
+            logger.debug(f"SQLRAGPipeline: Generated answer in {answer_generation_time:.3f}s")
             
             # Step 4: Format SQL results as documents for consistency with RAG interface
             retrieved_documents = self._format_sql_results_as_documents(sql_results)
             
             execution_time = time.time() - start_time
-            logger.info(f"SQLRAGPipeline: Completed in {execution_time:.2f} seconds")
+            logger.info(f"SQLRAGPipeline: Completed in {execution_time:.2f}s (SQL gen: {sql_generation_time:.3f}s, SQL exec: {sql_execution_time:.3f}s, Answer gen: {answer_generation_time:.3f}s)")
             
             return {
                 "query": query_text,
                 "answer": answer,
                 "retrieved_documents": retrieved_documents,
-                "sql_query": sql_result["rewritten_query"] or sql_query,
+                "sql_query": sql_query,
                 "sql_results": sql_results,
                 "execution_time": execution_time,
                 "success": True,
@@ -231,18 +225,14 @@ Answer:
             List of Document objects representing the SQL results
         """
         try:
-            # Generate SQL query with TOP clause for limiting results
+            # Generate SQL query with TOP clause for limiting results (optimized)
             sql_query = self._generate_sql_query(query_text, top_k=top_k)
             
-            # Execute SQL query
-            sql_result = self.sql_tool.search(sql_query)
-            
-            if not sql_result["success"]:
-                logger.error(f"SQLRAGPipeline query failed: {sql_result['error']}")
-                return []
+            # Execute SQL query directly (optimized - skip rewriting)
+            sql_results = self._execute_sql_direct(sql_query)
             
             # Convert SQL results to Document objects
-            documents = self._format_sql_results_as_documents(sql_result["results"])
+            documents = self._format_sql_results_as_documents(sql_results)
             
             logger.info(f"SQLRAGPipeline query: Retrieved {len(documents)} documents")
             return documents
@@ -251,30 +241,181 @@ Answer:
             logger.error(f"SQLRAGPipeline query error: {e}", exc_info=True)
             return []
 
-    def load_documents(self, documents_path: str, **kwargs) -> None:
+    def load_documents(self, documents_path: str, **kwargs) -> dict:
         """
-        Load documents into the database.
+        Load documents into the database with conditional chunking support.
         
-        Note: For SQL RAG, this would typically involve loading data into database tables
-        rather than a vector store. This implementation delegates to the vector store
-        for consistency with the RAG interface.
+        SQL RAG uses conditional chunking based on document type and size.
+        Large documents are chunked for better SQL query performance, while
+        small structured documents are kept intact.
         
         Args:
             documents_path: Path to documents to load
-            **kwargs: Additional keyword arguments
+            **kwargs: Additional keyword arguments including:
+                - auto_chunk: Whether to enable automatic chunking (default: conditional)
+                - chunking_strategy: Strategy to use ('fixed_size', 'semantic', 'hybrid')
+                
+        Returns:
+            Dictionary with loading results including chunking information
         """
         logger.info(f"SQLRAGPipeline: Loading documents from {documents_path}")
         
-        # For SQL RAG, we might want to load documents into database tables
-        # For now, we'll use the standard vector store approach for consistency
-        try:
-            # This would be implemented based on specific requirements
-            # for loading data into SQL tables vs vector store
-            logger.warning("SQLRAGPipeline: Document loading not yet implemented for SQL tables")
+        # Get chunking configuration from pipeline overrides
+        chunking_config = self.config_manager.get_config("pipeline_overrides:sql_rag:chunking", {})
+        
+        # SQL RAG uses conditional chunking by default
+        auto_chunk = kwargs.get('auto_chunk', chunking_config.get('enabled', True))
+        chunking_strategy = kwargs.get('chunking_strategy', chunking_config.get('strategy', 'fixed_size'))
+        
+        logger.info(f"SQLRAGPipeline: Using chunking - enabled: {auto_chunk}, strategy: {chunking_strategy}")
+        
+        # Load documents from path
+        from ..core.models import Document
+        import os
+        
+        documents = []
+        if os.path.isfile(documents_path):
+            # Single file
+            with open(documents_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+                # Determine if chunking should be applied based on document characteristics
+                should_chunk = self._should_chunk_document(content, documents_path)
+                
+                documents.append(Document(
+                    id=os.path.basename(documents_path),
+                    page_content=content,
+                    metadata={
+                        "source": documents_path,
+                        "should_chunk": should_chunk,
+                        "doc_type": self._determine_document_type(documents_path, content)
+                    }
+                ))
+        elif os.path.isdir(documents_path):
+            # Directory of files
+            for filename in os.listdir(documents_path):
+                if filename.endswith(('.txt', '.md', '.json', '.csv', '.sql')):
+                    filepath = os.path.join(documents_path, filename)
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        
+                        # Determine if chunking should be applied
+                        should_chunk = self._should_chunk_document(content, filepath)
+                        
+                        documents.append(Document(
+                            id=filename,
+                            page_content=content,
+                            metadata={
+                                "source": filepath,
+                                "should_chunk": should_chunk,
+                                "doc_type": self._determine_document_type(filepath, content)
+                            }
+                        ))
+        
+        if not documents:
+            logger.warning(f"SQLRAGPipeline: No documents found at {documents_path}")
+            return {
+                "documents_loaded": 0,
+                "chunks_created": 0,
+                "chunking_enabled": auto_chunk,
+                "chunking_strategy": chunking_strategy
+            }
+        
+        # Apply conditional chunking logic
+        chunked_documents = []
+        non_chunked_documents = []
+        
+        for doc in documents:
+            if auto_chunk and doc.metadata.get('should_chunk', True):
+                chunked_documents.append(doc)
+            else:
+                non_chunked_documents.append(doc)
+        
+        total_chunks_created = 0
+        
+        # Process documents that should be chunked
+        if chunked_documents:
+            result_chunked = self.vector_store.add_documents(
+                documents=chunked_documents,
+                auto_chunk=True,
+                chunking_strategy=chunking_strategy
+            )
+            total_chunks_created += result_chunked.get('chunks_created', 0)
+            logger.info(f"SQLRAGPipeline: Processed {len(chunked_documents)} documents with chunking")
+        
+        # Process documents that should not be chunked
+        if non_chunked_documents:
+            result_non_chunked = self.vector_store.add_documents(
+                documents=non_chunked_documents,
+                auto_chunk=False,
+                chunking_strategy=chunking_strategy
+            )
+            total_chunks_created += result_non_chunked.get('chunks_created', 0)
+            logger.info(f"SQLRAGPipeline: Processed {len(non_chunked_documents)} documents without chunking")
+        
+        logger.info(f"SQLRAGPipeline: Loaded {len(documents)} documents, created {total_chunks_created} chunks")
+        
+        return {
+            "documents_loaded": len(documents),
+            "chunks_created": total_chunks_created,
+            "chunking_enabled": auto_chunk,
+            "chunking_strategy": chunking_strategy,
+            "chunked_documents": len(chunked_documents),
+            "non_chunked_documents": len(non_chunked_documents)
+        }
+    
+    def _should_chunk_document(self, content: str, filepath: str) -> bool:
+        """
+        Determine if a document should be chunked based on its characteristics.
+        
+        Args:
+            content: Document content
+            filepath: Path to the document
             
-        except Exception as e:
-            logger.error(f"SQLRAGPipeline: Error loading documents: {e}", exc_info=True)
-            raise
+        Returns:
+            True if document should be chunked, False otherwise
+        """
+        # Get chunking thresholds from configuration
+        size_threshold = self.config_manager.get_config("pipeline_overrides:sql_rag:chunking:size_threshold", 2000)
+        
+        # Don't chunk small documents
+        if len(content) < size_threshold:
+            return False
+        
+        # Don't chunk structured data files
+        if filepath.endswith(('.json', '.csv', '.sql')):
+            return False
+        
+        # Don't chunk if content appears to be structured (e.g., contains many tables)
+        if content.count('|') > len(content) / 100:  # High ratio of pipe characters suggests tables
+            return False
+        
+        # Chunk large text documents
+        return True
+    
+    def _determine_document_type(self, filepath: str, content: str) -> str:
+        """
+        Determine the type of document based on file extension and content.
+        
+        Args:
+            filepath: Path to the document
+            content: Document content
+            
+        Returns:
+            Document type string
+        """
+        if filepath.endswith('.json'):
+            return 'json'
+        elif filepath.endswith('.csv'):
+            return 'csv'
+        elif filepath.endswith('.sql'):
+            return 'sql'
+        elif filepath.endswith('.md'):
+            return 'markdown'
+        elif content.count('|') > len(content) / 100:
+            return 'table'
+        else:
+            return 'text'
 
     def _generate_sql_query(self, question: str, top_k: Optional[int] = None) -> str:
         """
@@ -392,6 +533,59 @@ Answer:
         except Exception as e:
             logger.error(f"Error generating answer from SQL results: {e}")
             return f"I found {len(sql_results)} results in the database, but encountered an error generating a comprehensive answer. Please try rephrasing your question."
+
+    def _execute_sql_direct(self, sql_query: str) -> List[Dict]:
+        """
+        Execute SQL query directly without rewriting (performance optimization).
+        
+        Args:
+            sql_query: The SQL query to execute
+            
+        Returns:
+            List of dictionaries representing the query results
+            
+        Raises:
+            RuntimeError: If query execution fails
+        """
+        try:
+            # Get IRIS connection from vector store
+            iris_connector = self.vector_store._connection
+            cursor = iris_connector.cursor()
+            
+            logger.debug(f"SQLRAGPipeline: Executing SQL directly: {sql_query[:200]}...")
+            
+            # Execute the query
+            cursor.execute(sql_query)
+            
+            # Fetch all results
+            rows = cursor.fetchall()
+            
+            # Get column names
+            column_names = [desc[0] for desc in cursor.description] if cursor.description else []
+            
+            # Convert to list of dictionaries
+            results = []
+            for row in rows:
+                row_dict = {}
+                for i, value in enumerate(row):
+                    column_name = column_names[i] if i < len(column_names) else f"column_{i}"
+                    row_dict[column_name] = value
+                results.append(row_dict)
+            
+            cursor.close()
+            
+            logger.debug(f"SQLRAGPipeline: Direct SQL execution returned {len(results)} rows")
+            return results
+            
+        except Exception as e:
+            logger.error(f"SQLRAGPipeline: Direct SQL execution failed: {e}")
+            # Ensure cursor is closed on error
+            try:
+                if 'cursor' in locals():
+                    cursor.close()
+            except:
+                pass
+            raise RuntimeError(f"SQL execution failed: {e}") from e
 
     def _format_sql_results_as_documents(self, sql_results: List[Dict]) -> List[Document]:
         """

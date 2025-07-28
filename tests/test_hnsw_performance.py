@@ -290,7 +290,7 @@ class TestHNSWPerformance:
         cursor.close()
     
     @pytest.mark.requires_1000_docs
-    def test_hnsw_integration_with_basic_rag(self, iris_connection, embedding_func, llm_func, sample_queries):
+    def test_hnsw_integration_with_basic_rag(self, iris_connection, embedding_func, llm_func, sample_queries, real_config_manager):
         """
         TDD: Test that initially fails - verify HNSW works correctly with BasicRAG pipeline.
         
@@ -299,8 +299,7 @@ class TestHNSWPerformance:
         """
         # Create BasicRAG pipeline
         rag_pipeline = BasicRAGPipeline(
-            iris_connector=iris_connection,
-            embedding_func=embedding_func,
+            config_manager=real_config_manager,
             llm_func=llm_func
         )
         

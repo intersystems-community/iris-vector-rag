@@ -1,0 +1,178 @@
+{
+  "test_start_time": "2025-07-25T13:21:48.768009",
+  "document_count": 9999,
+  "pipeline_tests": {
+    "basic": {
+      "pipeline_type": "basic",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "total_time": 0.0010039806365966797
+    },
+    "colbert": {
+      "pipeline_type": "colbert",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "total_time": 0.0009369850158691406
+    },
+    "crag": {
+      "pipeline_type": "crag",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "total_time": 0.0009160041809082031
+    },
+    "hyde": {
+      "pipeline_type": "hyde",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "total_time": 0.0009038448333740234
+    },
+    "graphrag": {
+      "pipeline_type": "graphrag",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "total_time": 0.0009050369262695312
+    },
+    "hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "total_time": 0.0009872913360595703
+    }
+  },
+  "validation_tests": {
+    "status_check_basic": {
+      "pipeline_type": "basic",
+      "status_check_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "validation_time": 0.00115203857421875
+    },
+    "status_check_colbert": {
+      "pipeline_type": "colbert",
+      "status_check_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "validation_time": 0.0021622180938720703
+    },
+    "status_check_crag": {
+      "pipeline_type": "crag",
+      "status_check_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "validation_time": 0.003141164779663086
+    },
+    "status_check_hyde": {
+      "pipeline_type": "hyde",
+      "status_check_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "validation_time": 0.0041162967681884766
+    },
+    "status_check_graphrag": {
+      "pipeline_type": "graphrag",
+      "status_check_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "validation_time": 0.005071163177490234
+    },
+    "status_check_hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "status_check_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "validation_time": 0.006231069564819336
+    }
+  },
+  "setup_tests": {
+    "setup_basic": {
+      "pipeline_type": "basic",
+      "setup_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "setup_time": 0.0009431838989257812
+    },
+    "setup_colbert": {
+      "pipeline_type": "colbert",
+      "setup_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "setup_time": 0.0009310245513916016
+    },
+    "setup_crag": {
+      "pipeline_type": "crag",
+      "setup_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "setup_time": 0.0014240741729736328
+    },
+    "setup_hyde": {
+      "pipeline_type": "hyde",
+      "setup_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "setup_time": 0.0010988712310791016
+    },
+    "setup_graphrag": {
+      "pipeline_type": "graphrag",
+      "setup_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "setup_time": 0.0010149478912353516
+    },
+    "setup_hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "setup_success": false,
+      "error": "ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+      "setup_time": 0.0010380744934082031
+    }
+  },
+  "performance_metrics": {
+    "avg_total_time": 0.0009421904881795248,
+    "avg_execution_time": 0,
+    "avg_setup_time": 0,
+    "max_total_time": 0.0010039806365966797,
+    "min_total_time": 0.0009038448333740234,
+    "avg_validation_time": 0.003645658493041992,
+    "avg_setup_orchestration_time": 0.0010750293731689453
+  },
+  "reliability_metrics": {
+    "total_pipelines_tested": 6,
+    "successful_validations": 0,
+    "successful_setups": 0,
+    "successful_executions": 0,
+    "success_rate": 0.0
+  },
+  "errors": [
+    "Validation failed for basic: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Validation failed for colbert: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Validation failed for crag: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Validation failed for hyde: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Validation failed for graphrag: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Validation failed for hybrid_ifind: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Setup failed for basic: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Setup failed for colbert: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Setup failed for crag: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Setup failed for hyde: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Setup failed for graphrag: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Setup failed for hybrid_ifind: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Pipeline test failed for basic: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Pipeline test failed for colbert: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Pipeline test failed for crag: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Pipeline test failed for hyde: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Pipeline test failed for graphrag: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given",
+    "Pipeline test failed for hybrid_ifind: ValidatedPipelineFactory.__init__() takes 2 positional arguments but 3 were given"
+  ],
+  "summary": {
+    "overall_success": false,
+    "validation_system_working": true,
+    "setup_system_working": true,
+    "all_pipelines_tested": false,
+    "error_count": 18,
+    "recommendations": [
+      "Some pipelines failed - investigate error logs",
+      "Errors encountered - review error details"
+    ]
+  },
+  "test_end_time": "2025-07-25T13:21:48.808350"
+}

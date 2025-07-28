@@ -1,0 +1,68 @@
+# Chunking Configuration Template for RAG Templates
+# This configuration drives automatic chunking in IRISVectorStore
+
+storage:
+  iris:
+    # Standard IRIS connection settings
+    host: localhost
+    port: 1972
+    namespace: USER
+    username: _SYSTEM
+    password: SYS
+    
+  # Automatic Chunking Configuration
+  chunking:
+    # Enable/disable automatic chunking in IRISVectorStore
+    enabled: true
+    
+    # Default chunking strategy: fixed_size, semantic, hybrid
+    strategy: fixed_size
+    
+    # Document size threshold (characters) - documents above this get chunked
+    threshold: 1000
+    
+    # Strategy-specific parameters
+    fixed_size:
+      chunk_size: 512
+      overlap: 50
+      
+    semantic:
+      # Semantic chunking uses sentence boundaries and coherence
+      min_chunk_size: 200
+      max_chunk_size: 800
+      coherence_threshold: 0.7
+      
+    hybrid:
+      # Combines fixed_size and semantic approaches
+      base_chunk_size: 512
+      semantic_adjustment: true
+      max_deviation: 200
+      
+  # Per-pipeline chunking overrides
+  pipeline_overrides:
+    # ColBERT uses token-level embeddings - disable chunking
+    colbert:
+      chunking:
+        enabled: false
+        
+    # SQL RAG may not need chunking for structured queries
+    sql_rag:
+      chunking:
+        enabled: false
+        
+    # GraphRAG might use different chunking for entity extraction
+    graphrag:
+      chunking:
+        strategy: semantic
+        threshold: 800
+        
+# Embedding configuration
+embeddings:
+  model: sentence-transformers/all-MiniLM-L6-v2
+  dimension: 384
+  
+# LLM configuration  
+llm:
+  model: gpt-3.5-turbo
+  temperature: 0.1
+  max_tokens: 1000

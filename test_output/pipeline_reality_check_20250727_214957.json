@@ -1,0 +1,218 @@
+{
+  "timestamp": "2025-07-27T21:49:57.393033",
+  "document_count": 15,
+  "total_pipelines_tested": 8,
+  "successful_pipelines": 8,
+  "failed_pipelines": 0,
+  "pipeline_results": [
+    {
+      "pipeline_name": "BasicRAG",
+      "success": true,
+      "execution_time": 3.4619839191436768,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "The context documents provided do not contain any information related to the effects of metformin. Therefore, we are unable to provide a comprehensive answer to the question based on the information given. Additional information regarding the effects of metformin would be needed to answer the question accurately.",
+      "retrieved_docs_count": 3,
+      "performance_metrics": {
+        "execution_time": 3.4619839191436768,
+        "retrieved_docs_count": 3,
+        "answer_length": 314,
+        "has_answer": true,
+        "has_retrieved_docs": true
+      }
+    },
+    {
+      "pipeline_name": "HyDERAG",
+      "success": true,
+      "execution_time": 9.48718786239624,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "Based on the provided documents, there is no information given about the effects of metformin.",
+      "retrieved_docs_count": 3,
+      "performance_metrics": {
+        "execution_time": 9.48718786239624,
+        "retrieved_docs_count": 3,
+        "answer_length": 94,
+        "has_answer": true,
+        "has_retrieved_docs": true
+      }
+    },
+    {
+      "pipeline_name": "SQLRAG",
+      "success": true,
+      "execution_time": 2.310534715652466,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "Based on the database query results, no relevant information was found regarding the effects of metformin in the provided dataset. It is possible that the specific details about the effects of metformin may not be included in the source documents queried. To obtain a comprehensive understanding of the effects of metformin, it is recommended to consult reliable medical sources, clinical studies, or healthcare professionals.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 2.310534715652466,
+        "retrieved_docs_count": 0,
+        "answer_length": 426,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "ColBERT",
+      "success": true,
+      "execution_time": 0.6340429782867432,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "Based on the documents provided, there is no relevant information on the effects of metformin.",
+      "retrieved_docs_count": 3,
+      "performance_metrics": {
+        "execution_time": 0.6340429782867432,
+        "retrieved_docs_count": 3,
+        "answer_length": 94,
+        "has_answer": true,
+        "has_retrieved_docs": true
+      }
+    },
+    {
+      "pipeline_name": "GraphRAG",
+      "success": true,
+      "execution_time": 0.8917620182037354,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "GraphRAG failed: Insufficient knowledge graph data for graph-based retrieval. Please use BasicRAG or ensure knowledge graph is properly populated.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 0.8917620182037354,
+        "retrieved_docs_count": 0,
+        "answer_length": 146,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "NodeRAG",
+      "success": true,
+      "execution_time": 0.7922890186309814,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "I could not find enough information from the knowledge graph to answer your question.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 0.7922890186309814,
+        "retrieved_docs_count": 0,
+        "answer_length": 85,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "CRAG",
+      "success": true,
+      "execution_time": 1.306061029434204,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "Metformin is a commonly prescribed medication for the treatment of type 2 diabetes. It works by decreasing glucose production in the liver and increasing insulin sensitivity in the muscles. Some of the effects of metformin include lowering blood sugar levels, reducing insulin resistance, and improving overall glucose metabolism in the body. Additionally, metformin has been shown to have some potential benefits beyond its primary use in diabetes management, such as weight loss and potential cardiovascular protective effects.\n\nHowever, it is important to note that the effects of metformin may vary from person to person and additional research is needed to fully understand its mechanisms of action and potential side effects. It is always recommended to consult with a healthcare provider before starting or changing any medication regimen.",
+      "retrieved_docs_count": 3,
+      "performance_metrics": {
+        "execution_time": 1.306061029434204,
+        "retrieved_docs_count": 3,
+        "answer_length": 846,
+        "has_answer": true,
+        "has_retrieved_docs": true
+      }
+    },
+    {
+      "pipeline_name": "HybridIFind",
+      "success": true,
+      "execution_time": 1.367579698562622,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "Based on the provided documents, there is no information available about the effects of metformin.",
+      "retrieved_docs_count": 3,
+      "performance_metrics": {
+        "execution_time": 1.367579698562622,
+        "retrieved_docs_count": 3,
+        "answer_length": 98,
+        "has_answer": true,
+        "has_retrieved_docs": true
+      }
+    }
+  ],
+  "test_queries": [
+    "What are the effects of metformin?"
+  ],
+  "summary": {
+    "pipeline_summary": {
+      "BasicRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 3.4619839191436768,
+        "status": "WORKING"
+      },
+      "HyDERAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 9.48718786239624,
+        "status": "WORKING"
+      },
+      "SQLRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 2.310534715652466,
+        "status": "WORKING"
+      },
+      "ColBERT": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 0.6340429782867432,
+        "status": "WORKING"
+      },
+      "GraphRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 0.8917620182037354,
+        "status": "WORKING"
+      },
+      "NodeRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 0.7922890186309814,
+        "status": "WORKING"
+      },
+      "CRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 1.306061029434204,
+        "status": "WORKING"
+      },
+      "HybridIFind": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 1.367579698562622,
+        "status": "WORKING"
+      }
+    },
+    "total_tests_run": 8,
+    "total_successful_tests": 8,
+    "total_failed_tests": 0,
+    "overall_success_rate": 1.0
+  },
+  "recommendations": [
+    "CRITICAL: Only 15 documents available. Need to ingest at least 1000 PMC documents for proper testing.",
+    "Run data ingestion script to load more PMC documents before comprehensive testing.",
+    "Working pipelines that can be used immediately: BasicRAG, HyDERAG, SQLRAG, ColBERT, GraphRAG, NodeRAG, CRAG, HybridIFind",
+    "Next steps: 1) Fix data ingestion, 2) Fix broken pipelines, 3) Re-run comprehensive test"
+  ]
+}

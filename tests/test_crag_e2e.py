@@ -9,7 +9,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from iris_rag.pipelines.crag import CRAGPipeline
-from common.utils import Document # Updated import
+from iris_rag.core.models import Document
 # Fixtures like iris_testcontainer_connection, embedding_model_fixture,
 # llm_client_fixture will be automatically provided by pytest from conftest.py
 
@@ -38,10 +38,9 @@ TEST_CHUNKS_FOR_CRAG = [
 ]
 
 # Mock web search results to be returned by our placeholder
-# Helper to create Document objects and assign metadata, as Document dataclass doesn't take it in __init__
+# Helper to create Document objects with metadata
 def _create_mock_web_doc_with_metadata(id_val: str, content_val: str, score_val: float, metadata_dict: Dict[str, Any]) -> Document:
-    doc = Document(id=id_val, content=content_val, score=score_val)
-    doc.metadata = metadata_dict # Dynamically assign metadata attribute
+    doc = Document(page_content=content_val, metadata=metadata_dict, id=id_val, score=score_val)
     return doc
 
 MOCK_WEB_SEARCH_RESULTS = [
@@ -57,9 +56,11 @@ def placeholder_web_search_func(query: str) -> List[Document]:
     return []
 
 def insert_crag_test_data(iris_conn, embedding_func: Callable, chunks_data: List[Dict[str, Any]]):
-    """Helper to insert test chunks into RAG.DocumentChunks and corresponding SourceDocuments."""
-    logger.info(f"Inserting {len(chunks_data)} test chunks for CRAG JDBC E2E test.")
+    """Helper to insert test chunks into RAG.DocumentChunks and corresponding SourceDocuments using Vector Store interface."""
+    from common.db_vector_utils import insert_vector
     
+    logger.info(f"Inserting {len(chunks_data)} test chunks for CRAG JDBC E2E test.")
+
     source_docs_to_insert = {}
     for chunk_data in chunks_data:
         if chunk_data["doc_id"] not in source_docs_to_insert:
@@ -67,24 +68,35 @@ def insert_crag_test_data(iris_conn, embedding_func: Callable, chunks_data: List
                 "id": chunk_data["doc_id"],
                 "title": f"Test Source Document {chunk_data['doc_id']}",
                 "content": f"Full content for document {chunk_data['doc_id']}.",
-                "embedding_str": ','.join([f'{0.1:.10f}'] * 384), # Placeholder, not used by chunk query
+                "embedding": [0.1] * 384,  # Placeholder embedding as list, not used by chunk query
                 "source": "CRAG_E2E_TEST_DOC"
             }
 
     with iris_conn.cursor() as cursor:
-        # Insert SourceDocuments first
+        # Insert SourceDocuments first using insert_vector utility
         for doc_id, doc_data in source_docs_to_insert.items():
             try:
-                sql_source = "INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, embedding, source) VALUES (?, ?, ?, ?, ?)"
-                cursor.execute(sql_source, [doc_data["id"], doc_data["title"], doc_data["content"], doc_data["embedding_str"], doc_data["source"]])
+                # Use insert_vector utility for proper vector handling
+                success = insert_vector(
+                    cursor=cursor,
+                    table_name="RAG.SourceDocuments",
+                    vector_column_name="embedding",
+                    vector_data=doc_data["embedding"],
+                    target_dimension=384,  # Standard embedding dimension
+                    key_columns={"doc_id": doc_data["id"]},
+                    additional_data={
+                        "title": doc_data["title"],
+                        "text_content": doc_data["content"],
+                        "source": doc_data["source"]
+                    }
+                )
+                if not success:
+                    logger.warning(f"SourceDocument {doc_id} insertion returned False - may already exist.")
             except Exception as e:
-                if "PRIMARY KEY constraint" in str(e) or "unique constraint" in str(e).lower() or "duplicate key" in str(e).lower():
-                    logger.warning(f"SourceDocument {doc_id} already exists. Skipping insertion.")
-                else:
-                    logger.error(f"Failed to insert SourceDocument {doc_id}: {e}")
-                    raise
+                logger.error(f"Failed to insert SourceDocument {doc_id}: {e}")
+                raise
         
-        # Insert DocumentChunks
+        # Insert DocumentChunks using insert_vector utility
         chunk_texts_to_embed = [chunk["chunk_text"] for chunk in chunks_data]
         if not chunk_texts_to_embed:
             logger.info("No chunk texts to embed for DocumentChunks.")
@@ -94,37 +106,31 @@ def insert_crag_test_data(iris_conn, embedding_func: Callable, chunks_data: List
         embeddings = embedding_func(chunk_texts_to_embed)
 
         for i, chunk_data in enumerate(chunks_data):
-            embedding_vector_str = ','.join([f'{x:.10f}' for x in embeddings[i]])
             metadata_json_str = f'{{"expected_score_initial": {chunk_data.get("expected_score_initial", 0.0)}}}'
             try:
-                sql_chunk = """
-                INSERT INTO RAG.DocumentChunks 
-                    (chunk_id, doc_id, chunk_text, embedding, chunk_type, chunk_index, metadata_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """
-                cursor.execute(sql_chunk, [
-                    chunk_data["chunk_id"], chunk_data["doc_id"], chunk_data["chunk_text"],
-                    embedding_vector_str, chunk_data["chunk_type"], 
-                    chunk_data["chunk_index"], metadata_json_str
-                ])
-                logger.debug(f"Inserted DocumentChunk: {chunk_data['chunk_id']}")
-            except Exception as e:
-                if "PRIMARY KEY constraint" in str(e) or "unique constraint" in str(e).lower() or "duplicate key" in str(e).lower():
-                    logger.warning(f"DocumentChunk {chunk_data['chunk_id']} already exists. Attempting update.")
-                    update_sql_chunk = """
-                    UPDATE RAG.DocumentChunks 
-                    SET doc_id = ?, chunk_text = ?, embedding = ?, chunk_type = ?, chunk_index = ?, metadata_json = ?
-                    WHERE chunk_id = ?
-                    """
-                    cursor.execute(update_sql_chunk, [
-                        chunk_data["doc_id"], chunk_data["chunk_text"], embedding_vector_str,
-                        chunk_data["chunk_type"], chunk_data["chunk_index"], metadata_json_str,
-                        chunk_data["chunk_id"]
-                    ])
-                    logger.debug(f"Updated DocumentChunk: {chunk_data['chunk_id']}")
+                # Use insert_vector utility for proper vector handling
+                success = insert_vector(
+                    cursor=cursor,
+                    table_name="RAG.DocumentChunks",
+                    vector_column_name="chunk_embedding",
+                    vector_data=embeddings[i],
+                    target_dimension=384,  # Standard embedding dimension
+                    key_columns={"chunk_id": chunk_data["chunk_id"]},
+                    additional_data={
+                        "doc_id": chunk_data["doc_id"],
+                        "chunk_text": chunk_data["chunk_text"],
+                        "chunk_type": chunk_data["chunk_type"],
+                        "chunk_index": chunk_data["chunk_index"],
+                        "metadata": metadata_json_str
+                    }
+                )
+                if success:
+                    logger.debug(f"Inserted DocumentChunk: {chunk_data['chunk_id']}")
                 else:
-                    logger.error(f"Failed to insert/update DocumentChunk {chunk_data['chunk_id']}: {e}")
-                    raise
+                    logger.warning(f"DocumentChunk {chunk_data['chunk_id']} insertion returned False - may already exist.")
+            except Exception as e:
+                logger.error(f"Failed to insert DocumentChunk {chunk_data['chunk_id']}: {e}")
+                raise
     iris_conn.commit()
     logger.info("Test data insertion for CRAG (SourceDocuments and DocumentChunks) complete.")
 
@@ -146,6 +152,23 @@ def test_crag_jdbc_e2e_corrective_web_search_triggered(
     caplog.set_level(logging.INFO) 
     
     logger.info("Preparing database for CRAG JDBC E2E corrective web search test.")
+    
+    # Always use SchemaManager to ensure proper schema (following Database Schema Management Rules)
+    from iris_rag.storage.schema_manager import SchemaManager
+    from iris_rag.config.manager import ConfigurationManager
+    
+    # Initialize components
+    connection_manager = type('ConnectionManager', (), {
+        'get_connection': lambda self: iris_testcontainer_connection
+    })()
+    config_manager = ConfigurationManager()
+    
+    # Create and use schema manager to ensure proper schema
+    schema_manager = SchemaManager(connection_manager, config_manager)
+    schema_manager.ensure_table_schema('SourceDocuments')
+    schema_manager.ensure_table_schema('DocumentChunks')
+    logger.info("Ensured proper table schemas using SchemaManager.")
+    
     with iris_testcontainer_connection.cursor() as cursor:
         logger.info("Clearing RAG.DocumentChunks and RAG.SourceDocuments for test data.")
         try:
@@ -153,20 +176,9 @@ def test_crag_jdbc_e2e_corrective_web_search_triggered(
             cursor.execute("DELETE FROM RAG.SourceDocuments WHERE doc_id LIKE 'doc_A' OR doc_id LIKE 'doc_B' OR doc_id LIKE 'doc_C'")
             iris_testcontainer_connection.commit()
         except Exception as e:
-            logger.warning(f"Could not clear tables (may be normal if first run): {e}")
-            iris_testcontainer_connection.rollback() # Rollback on error during clear
-            from common.db_init import initialize_database
-            try:
-                initialize_database(iris_testcontainer_connection, force_recreate=False)
-                logger.info("Re-ran initialize_database after clear attempt.")
-                # Try clearing again after ensuring schema exists
-                cursor.execute("DELETE FROM RAG.DocumentChunks WHERE chunk_id LIKE 'crag_chunk_%'")
-                cursor.execute("DELETE FROM RAG.SourceDocuments WHERE doc_id LIKE 'doc_A' OR doc_id LIKE 'doc_B' OR doc_id LIKE 'doc_C'")
-                iris_testcontainer_connection.commit()
-            except Exception as e_init:
-                 logger.error(f"Failed to initialize_database or clear after init: {e_init}")
-                 iris_testcontainer_connection.rollback()
-                 raise 
+            logger.warning(f"Could not clear tables: {e}")
+            iris_testcontainer_connection.rollback()
+            raise
     
     insert_crag_test_data(iris_testcontainer_connection, embedding_model_fixture, TEST_CHUNKS_FOR_CRAG)
 
@@ -174,8 +186,7 @@ def test_crag_jdbc_e2e_corrective_web_search_triggered(
     web_search_spy = mocker.MagicMock(side_effect=placeholder_web_search_func)
 
     pipeline = CRAGPipeline( # Updated class name
-        iris_connector=iris_testcontainer_connection,
-        embedding_func=embedding_model_fixture,
+        config_manager=config_manager,
         llm_func=llm_client_fixture,
         web_search_func=web_search_spy # Pass the spied mock
     )
@@ -192,15 +203,30 @@ def test_crag_jdbc_e2e_corrective_web_search_triggered(
     # (0.35 + 0.15 + 0.20) / 3 = 0.7 / 3 = 0.23 -> "disoriented", should trigger web search.
 
     logger.info(f"Running CRAG pipeline (run method) with query: '{query}', top_k={test_top_k}")
-    
-    result_data = pipeline.run(query_text=query, top_k=test_top_k)
+
+    result_data = pipeline.run(query, top_k=test_top_k)
     
     final_documents = result_data.get("retrieved_documents", [])
     answer = result_data.get("answer", "")
 
     logger.info(f"Final retrieved documents count: {len(final_documents)}")
-    for i, doc_dict in enumerate(final_documents):
-        logger.info(f"  Doc {i}: ID={doc_dict.get('id')}, Score={doc_dict.get('score')}, Source={doc_dict.get('metadata',{}).get('source')}, Content='{doc_dict.get('content','')[:50]}...'")
+    for i, doc in enumerate(final_documents):
+        # Handle Document objects properly
+        if hasattr(doc, 'page_content'):
+            content = doc.page_content[:50] if doc.page_content else ""
+            metadata = getattr(doc, 'metadata', {})
+            score = metadata.get('similarity_score', 'N/A')
+            source = metadata.get('source', 'N/A')
+            doc_id = metadata.get('doc_id', 'N/A')
+        else:
+            # Fallback for dict-like objects
+            content = doc.get('content', '')[:50] if hasattr(doc, 'get') else str(doc)[:50]
+            metadata = doc.get('metadata', {}) if hasattr(doc, 'get') else {}
+            score = doc.get('score', 'N/A') if hasattr(doc, 'get') else 'N/A'
+            source = metadata.get('source', 'N/A')
+            doc_id = doc.get('id', 'N/A') if hasattr(doc, 'get') else 'N/A'
+        
+        logger.info(f"  Doc {i}: ID={doc_id}, Score={score}, Source={source}, Content='{content}...'")
 
     # 1. Verify web search was called
     web_search_spy.assert_called_once_with(query)
@@ -209,7 +235,16 @@ def test_crag_jdbc_e2e_corrective_web_search_triggered(
     # 2. Verify web search results are present in the final documents
     # The pipeline._decompose_recompose_filter might filter some, but some should remain.
     mock_web_search_ids = {doc.id for doc in MOCK_WEB_SEARCH_RESULTS}
-    final_doc_ids = {doc_dict.get("id") for doc_dict in final_documents}
+    
+    # Handle both Document objects and dictionary objects in final_documents
+    final_doc_ids = set()
+    for doc in final_documents:
+        if hasattr(doc, 'id'):
+            final_doc_ids.add(doc.id)
+        elif hasattr(doc, 'get'):
+            final_doc_ids.add(doc.get("id"))
+        elif hasattr(doc, 'metadata') and isinstance(doc.metadata, dict):
+            final_doc_ids.add(doc.metadata.get("doc_id"))
     
     assert any(web_id in final_doc_ids for web_id in mock_web_search_ids), \
         f"Expected at least one web search result ID in final documents. Web IDs: {mock_web_search_ids}, Final IDs: {final_doc_ids}"

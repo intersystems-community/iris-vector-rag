@@ -12,7 +12,8 @@ from typing import List, Dict, Any, Optional, Tuple
 
 from ..core.vector_store import VectorStore
 from ..core.models import Document
-from ..core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
+# Removed circular import - connection sharing handled via dependency injection
 from ..config.manager import ConfigurationManager
 from ..core.vector_store_exceptions import (
     VectorStoreError,
@@ -35,31 +36,75 @@ class IRISVectorStore(VectorStore):
     to ensure all returned content is in string format.
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager):
+    def __init__(self, config_manager: ConfigurationManager, schema_manager=None, connection_manager=None, embedding_manager=None):
         """
-        Initialize IRIS vector store with connection and configuration managers.
+        Initialize IRIS vector store with configuration and connection managers.
         
         Args:
-            connection_manager: Manager for database connections
             config_manager: Manager for configuration settings
+            schema_manager: Optional SchemaManager instance
+            connection_manager: Optional IRISConnectionManager instance
+            embedding_manager: Optional EmbeddingManager instance for automatic embedding generation
             
         Raises:
             VectorStoreConnectionError: If connection cannot be established
             VectorStoreConfigurationError: If configuration is invalid
         """
-        self.connection_manager = connection_manager
+        from common.iris_connection_manager import IRISConnectionManager
+
         self.config_manager = config_manager
-        self._connection = None
+        
+        # Use shared connection for transaction consistency
+        if connection_manager:
+            self.connection_manager = connection_manager
+            self._connection = self.connection_manager.get_connection()
+        else:
+            # Create new connection using standard connection manager
+            self._connection = get_iris_connection()
+            # Create a mock connection manager for compatibility
+            self.connection_manager = type('ConnectionManager', (), {
+                'get_connection': lambda: self._connection
+            })()
+        
+        self.embedding_manager = embedding_manager
         
         # Get storage configuration
         self.storage_config = self.config_manager.get("storage:iris", {})
         self.table_name = self.storage_config.get("table_name", "RAG.SourceDocuments")
         
-        # Get vector dimension from schema manager (single source of truth)
-        from .schema_manager import SchemaManager
-        self.schema_manager = SchemaManager(connection_manager, config_manager)
+        # Get chunking configuration
+        self.chunking_config = self.config_manager.get("storage:chunking", {})
+        self.auto_chunk = self.chunking_config.get("enabled", False)
+        
+        # Initialize chunking service if enabled
+        self.chunking_service = None
+        if self.auto_chunk:
+            try:
+                from tools.chunking.chunking_service import DocumentChunkingService
+                self.chunking_service = DocumentChunkingService()
+                logger.info(f"Chunking service initialized with strategy: {self.chunking_config.get('strategy', 'fixed_size')}")
+            except ImportError as e:
+                logger.warning(f"Could not import DocumentChunkingService: {e}")
+                self.auto_chunk = False
+        
+        # Get schema info from schema manager (single source of truth)
+        if schema_manager:
+            self.schema_manager = schema_manager
+        else:
+            from .schema_manager import SchemaManager
+            self.schema_manager = SchemaManager(self.connection_manager, config_manager)
+            
         table_short_name = self.table_name.replace("RAG.", "")
-        self.vector_dimension = self.schema_manager.get_vector_dimension(table_short_name)
+        
+        table_config = self.schema_manager.get_table_config(table_short_name)
+        if not table_config:
+            raise VectorStoreConfigurationError(f"No schema configuration found for table: {table_short_name}")
+            
+        columns = table_config.get("columns", {})
+        self.vector_dimension = table_config.get("dimension")
+        self.id_column = columns.get("id", "ID")
+        self.embedding_column = columns.get("embedding", "embedding")
+        self.content_column = columns.get("content", "TEXT_CONTENT")
         
         # Validate table name for security
         self._validate_table_name(self.table_name)
@@ -81,7 +126,7 @@ class IRISVectorStore(VectorStore):
         """Get or create database connection."""
         if self._connection is None:
             try:
-                self._connection = self.connection_manager.get_connection("iris")
+                self._connection = self.connection_manager.get_connection()
             except Exception as e:
                 raise VectorStoreConnectionError(f"Failed to get IRIS connection: {e}")
         return self._connection
@@ -183,24 +228,28 @@ class IRISVectorStore(VectorStore):
                 metadata = {}
             
             return Document(
-                id=processed_data.get('doc_id', processed_data.get('id', '')),
                 page_content=processed_data.get('text_content', processed_data.get('page_content', '')),
-                metadata=metadata
+                metadata=metadata,
+                id=processed_data.get('doc_id', processed_data.get('id', ''))
             )
         except Exception as e:
             raise VectorStoreCLOBError(f"Failed to process document data: {e}")
     
     def add_documents(
-        self, 
-        documents: List[Document], 
-        embeddings: Optional[List[List[float]]] = None
+        self,
+        documents: List[Document],
+        embeddings: Optional[List[List[float]]] = None,
+        auto_chunk: Optional[bool] = None,
+        chunking_strategy: Optional[str] = None
     ) -> List[str]:
         """
-        Add documents to the IRIS vector store.
+        Add documents to the IRIS vector store with optional automatic chunking.
         
         Args:
             documents: List of Document objects to add
             embeddings: Optional pre-computed embeddings for the documents
+            auto_chunk: Override automatic chunking setting for this operation
+            chunking_strategy: Override chunking strategy for this operation
         
         Returns:
             List of document IDs that were added
@@ -220,6 +269,135 @@ class IRISVectorStore(VectorStore):
             if not isinstance(doc.page_content, str):
                 raise VectorStoreDataError("Document page_content must be a string")
         
+        # Determine if we should chunk documents
+        should_chunk = auto_chunk if auto_chunk is not None else self.auto_chunk
+        
+        # If chunking is enabled, process documents through chunking service
+        if should_chunk and self.chunking_service:
+            return self._add_documents_with_chunking(
+                documents, embeddings, chunking_strategy
+            )
+        else:
+            # Use original add_documents logic
+            return self._add_documents_direct(documents, embeddings)
+    
+    def _add_documents_with_chunking(
+        self,
+        documents: List[Document],
+        embeddings: Optional[List[List[float]]] = None,
+        chunking_strategy: Optional[str] = None
+    ) -> List[str]:
+        """
+        Add documents with automatic chunking enabled.
+        
+        Args:
+            documents: List of Document objects to chunk and add
+            embeddings: Optional pre-computed embeddings (will be used if available)
+            chunking_strategy: Strategy to use for chunking
+            
+        Returns:
+            List of chunk IDs that were added
+        """
+        strategy = chunking_strategy or self.chunking_config.get("strategy", "fixed_size")
+        threshold = self.chunking_config.get("threshold", 1000)
+        
+        all_chunk_ids = []
+        
+        for i, doc in enumerate(documents):
+            # Get embedding for this document if available
+            doc_embedding = embeddings[i] if embeddings and i < len(embeddings) else None
+            
+            # Check if document needs chunking
+            if len(doc.page_content) <= threshold:
+                # Document is small enough, add directly
+                if doc_embedding:
+                    chunk_ids = self._add_documents_direct([doc], [doc_embedding])
+                elif hasattr(self, 'embedding_manager') and self.embedding_manager:
+                    generated_embedding = self.embedding_manager.embed_text(doc.page_content)
+                    chunk_ids = self._add_documents_direct([doc], [generated_embedding])
+                else:
+                    # Fall back to adding without embeddings
+                    logger.warning(f"No embeddings available for document {doc.id}, adding without embeddings")
+                    chunk_ids = self._add_documents_direct([doc], None)
+                all_chunk_ids.extend(chunk_ids)
+            else:
+                # Document needs chunking
+                try:
+                    chunk_records = self.chunking_service.chunk_document(
+                        doc_id=doc.id,
+                        text=doc.page_content,
+                        strategy_name=strategy
+                    )
+                    
+                    # Convert chunk records to Document objects
+                    chunk_documents = []
+                    for chunk_record in chunk_records:
+                        chunk_metadata = doc.metadata.copy()
+                        chunk_metadata.update({
+                            "chunk_id": chunk_record["chunk_id"],
+                            "chunk_index": chunk_record["chunk_index"],
+                            "chunk_type": chunk_record["chunk_type"],
+                            "original_doc_id": doc.id,
+                            "is_chunk": True
+                        })
+                        
+                        chunk_doc = Document(
+                            page_content=chunk_record["chunk_text"],
+                            metadata=chunk_metadata,
+                            id=chunk_record["chunk_id"]
+                        )
+                        chunk_documents.append(chunk_doc)
+                    
+                    # Generate embeddings for chunk documents
+                    if hasattr(self, 'embedding_manager') and self.embedding_manager:
+                        chunk_texts = [chunk_doc.page_content for chunk_doc in chunk_documents]
+                        chunk_embeddings = self.embedding_manager.embed_texts(chunk_texts)
+                        chunk_ids = self._add_documents_direct(chunk_documents, chunk_embeddings)
+                    elif doc_embedding:
+                        # Use the original document embedding for all chunks (not ideal but better than no embeddings)
+                        logger.warning(f"Using original document embedding for all chunks of {doc.id}")
+                        chunk_embeddings = [doc_embedding] * len(chunk_documents)
+                        chunk_ids = self._add_documents_direct(chunk_documents, chunk_embeddings)
+                    else:
+                        # Fall back to adding without embeddings
+                        logger.warning(f"No embeddings available for chunks of document {doc.id}, adding without embeddings")
+                        chunk_ids = self._add_documents_direct(chunk_documents, None)
+                    all_chunk_ids.extend(chunk_ids)
+                    
+                    logger.info(f"Document {doc.id} chunked into {len(chunk_documents)} chunks using {strategy} strategy")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to chunk document {doc.id}: {e}")
+                    # Fall back to adding the original document
+                    if doc_embedding:
+                        chunk_ids = self._add_documents_direct([doc], [doc_embedding])
+                    elif hasattr(self, 'embedding_manager') and self.embedding_manager:
+                        generated_embedding = self.embedding_manager.embed_text(doc.page_content)
+                        chunk_ids = self._add_documents_direct([doc], [generated_embedding])
+                    else:
+                        # Fall back to adding without embeddings
+                        logger.warning(f"No embeddings available for document {doc.id}, adding without embeddings")
+                        chunk_ids = self._add_documents_direct([doc], None)
+                    all_chunk_ids.extend(chunk_ids)
+        
+        return all_chunk_ids
+    
+    def _add_documents_direct(
+        self,
+        documents: List[Document],
+        embeddings: Optional[List[List[float]]] = None
+    ) -> List[str]:
+        """
+        Add documents directly without chunking (original implementation).
+        
+        Args:
+            documents: List of Document objects to add
+            embeddings: Optional pre-computed embeddings for the documents
+            
+        Returns:
+            List of document IDs that were added
+        """
+        
         connection = self._get_connection()
         cursor = connection.cursor()
         
@@ -228,8 +406,8 @@ class IRISVectorStore(VectorStore):
             for i, doc in enumerate(documents):
                 metadata_json = json.dumps(doc.metadata)
                 
-                # Check if document exists
-                check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE id = ?"
+                # Check if document exists using the correct ID column
+                check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE {self.id_column} = ?"
                 cursor.execute(check_sql, [doc.id])
                 exists = cursor.fetchone()[0] > 0
                 
@@ -238,42 +416,42 @@ class IRISVectorStore(VectorStore):
                     if embeddings:
                         update_sql = f"""
                         UPDATE {self.table_name}
-                        SET text_content = ?, metadata = ?, embedding = TO_VECTOR(?)
-                        WHERE doc_id = ?
+                        SET {self.content_column} = ?, metadata = ?, {self.embedding_column} = TO_VECTOR(?)
+                        WHERE {self.id_column} = ?
                         """
                         embedding_str = json.dumps(embeddings[i])
                         cursor.execute(update_sql, [doc.page_content, metadata_json, embedding_str, doc.id])
                     else:
                         update_sql = f"""
                         UPDATE {self.table_name}
-                        SET text_content = ?, metadata = ?
-                        WHERE doc_id = ?
+                        SET {self.content_column} = ?, metadata = ?
+                        WHERE {self.id_column} = ?
                         """
                         cursor.execute(update_sql, [doc.page_content, metadata_json, doc.id])
                 else:
-                    # Insert new document
+                    # Insert new document with explicit ID
                     if embeddings:
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (doc_id, text_content, metadata, embedding)
+                        INSERT INTO {self.table_name} ({self.id_column}, {self.content_column}, metadata, {self.embedding_column})
                         VALUES (?, ?, ?, TO_VECTOR(?))
                         """
                         embedding_str = json.dumps(embeddings[i])
                         cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json, embedding_str])
                     else:
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (doc_id, text_content, metadata)
+                        INSERT INTO {self.table_name} ({self.id_column}, {self.content_column}, metadata)
                         VALUES (?, ?, ?)
                         """
                         cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json])
                 
                 added_ids.append(doc.id)
             
-            connection.commit()
+            # With autocommit enabled, no need for explicit commit
             logger.info(f"Added {len(added_ids)} documents to {self.table_name}")
             return added_ids
             
         except Exception as e:
-            connection.rollback()
+            # With autocommit enabled, no need for explicit rollback
             sanitized_error = self._sanitize_error_message(e, "add_documents")
             print(e)
             logger.error(sanitized_error)
@@ -342,8 +520,8 @@ class IRISVectorStore(VectorStore):
         cursor = connection.cursor()
         
         try:
-            # Use the new parameter-based vector_sql_utils functions
-            from common.vector_sql_utils import format_vector_search_sql_with_params, execute_vector_search_with_params
+            # Use the driver-aware vector search utility
+            from common.vector_sql_utils import execute_driver_aware_vector_search
             
             # Format embedding as bracket-delimited string for IRIS
             embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
@@ -371,25 +549,34 @@ class IRISVectorStore(VectorStore):
             
             logger.debug(f"Vector search: query={len(query_embedding)}D, expected={expected_dimension}D, table={table_short_name}")
             
-            # Format the SQL using the new parameter-based function
-            sql = format_vector_search_sql_with_params(
+            # Execute the search using the driver-aware utility
+            # Try to get driver type from connection manager, fall back to auto-detection
+            driver_type = None
+            if hasattr(self.connection_manager, 'get_driver_type'):
+                try:
+                    driver_type = self.connection_manager.get_driver_type()
+                except Exception as e:
+                    logger.debug(f"Failed to get driver type from connection manager: {e}")
+                    driver_type = None
+            
+            rows = execute_driver_aware_vector_search(
+                cursor=cursor,
                 table_name=self.table_name,
-                vector_column="embedding",
+                vector_column=self.embedding_column,
+                vector_string=embedding_str,
                 embedding_dim=expected_dimension,
                 top_k=top_k,
-                id_column="doc_id",
-                content_column="text_content",
-                additional_where=additional_where
+                id_column=self.id_column,
+                content_column=self.content_column,
+                additional_where=additional_where,
+                driver_type=driver_type  # Will auto-detect if None
             )
-            
-            # Execute using the parameter-based function
-            rows = execute_vector_search_with_params(cursor, sql, embedding_str)
             
             # Now fetch metadata for the returned documents
             if rows:
                 doc_ids = [row[0] for row in rows]
                 placeholders = ','.join(['?' for _ in doc_ids])
-                metadata_sql = f"SELECT doc_id, metadata FROM {self.table_name} WHERE doc_id IN ({placeholders})"
+                metadata_sql = f"SELECT ID, metadata FROM {self.table_name} WHERE ID IN ({placeholders})"
                 cursor.execute(metadata_sql, doc_ids)
                 metadata_map = {row[0]: row[1] for row in cursor.fetchall()}
             
@@ -439,9 +626,9 @@ class IRISVectorStore(VectorStore):
         try:
             placeholders = ','.join(['?' for _ in ids])
             select_sql = f"""
-            SELECT doc_id, text_content, metadata
+            SELECT {self.id_column}, {self.content_column}, metadata
             FROM {self.table_name}
-            WHERE doc_id IN ({placeholders})
+            WHERE {self.id_column} IN ({placeholders})
             """
             
             cursor.execute(select_sql, ids)
@@ -580,11 +767,11 @@ class IRISVectorStore(VectorStore):
             # Use provided metadata or empty dict
             metadata = metadatas[i] if metadatas and i < len(metadatas) else {}
             
-            # Create Document object
+            # Create Document object using positional arguments
             doc = Document(
-                id=doc_id,
-                page_content=text,
-                metadata=metadata
+                text,  # page_content (positional)
+                metadata,  # metadata (positional)
+                doc_id  # id (positional)
             )
             documents.append(doc)
         

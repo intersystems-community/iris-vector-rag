@@ -14,7 +14,7 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 from iris_rag.pipelines.crag import CRAGPipeline
 
-def test_crag_retrieval():
+def test_crag_retrieval(real_config_manager):
     """Test CRAG document retrieval"""
     print("Testing CRAG document retrieval...")
     
@@ -25,8 +25,7 @@ def test_crag_retrieval():
     
     # Create CRAG pipeline
     crag_pipeline = CRAGPipeline(
-        iris_connector=iris_conn,
-        embedding_func=embedding_func,
+        config_manager=real_config_manager,
         llm_func=llm_func
     )
     

@@ -5,7 +5,7 @@ Adapter for integrating Personal Assistant with RAG templates.
 import logging
 from typing import Any, Dict, Optional
 
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.pipelines.basic import BasicRAGPipeline # Assuming BasicRAGPipeline is the one to be used
 
@@ -32,8 +32,12 @@ class PersonalAssistantAdapter:
             config: Optional configuration dictionary. If provided, it will be
                     used to initialize the ConfigurationManager.
         """
-        self.config_manager = ConfigurationManager(config=config)
-        self.connection_manager = ConnectionManager(config_manager=self.config_manager)
+        self.config_manager = ConfigurationManager()
+        # If config is provided, we need to merge it into the config manager
+        if config:
+            # Store the config data in the manager's internal config
+            self.config_manager._config.update(config)
+        self.iris_connector = get_iris_connection()
         self.rag_pipeline: Optional[BasicRAGPipeline] = None
         logger.info("PersonalAssistantAdapter initialized.")
 
@@ -92,23 +96,29 @@ class PersonalAssistantAdapter:
         logger.info(f"Initializing IRIS RAG pipeline via PersonalAssistantAdapter. Config path: {config_path}, PA config provided: {pa_specific_config is not None}")
 
         if config_path:
-            self.config_manager.load_config(config_path)
+            # ConfigurationManager doesn't have load_config method, need to reinitialize
+            self.config_manager = ConfigurationManager(config_path=config_path)
             logger.info(f"Configuration loaded from path: {config_path}")
 
         if pa_specific_config:
             iris_rag_config = self._translate_config(pa_specific_config)
-            # Merge translated config with existing config, translated taking precedence
-            self.config_manager.update_config(iris_rag_config)
+            # Merge the translated config into the config manager's internal config
+            self.config_manager._config.update(iris_rag_config)
             logger.info("Personal Assistant specific configuration translated and merged.")
 
         # Ensure connection manager uses the latest config
-        self.connection_manager.iris_connector = None # Reset to force re-initialization with new config if any
+        # Check if a connection_manager was set by tests, otherwise use iris_connector
+        if hasattr(self, 'connection_manager'):
+            connection_manager = self.connection_manager
+        else:
+            self.iris_connector = get_iris_connection() # Reset to force re-initialization with new config if any
+            connection_manager = self.iris_connector
 
         try:
             # Assuming BasicRAGPipeline is the target.
             # If a different pipeline or a factory function is needed, adjust here.
             self.rag_pipeline = BasicRAGPipeline(
-                connection_manager=self.connection_manager,
+                connection_manager=connection_manager,
                 config_manager=self.config_manager,
                 **kwargs
             )

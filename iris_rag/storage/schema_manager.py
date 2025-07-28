@@ -125,6 +125,13 @@ class SchemaManager:
         self._table_configs = {
             "SourceDocuments": {
                 "embedding_column": "embedding",
+                "content_column": "text_content",
+                "id_column": "doc_id",
+                "columns": {
+                    "id": "doc_id",
+                    "content": "text_content",
+                    "embedding": "embedding"
+                },
                 "uses_document_embeddings": True,
                 "default_model": self.base_embedding_model,
                 "dimension": self.base_embedding_dimension
@@ -140,11 +147,58 @@ class SchemaManager:
                 "embedding_column": "embedding",
                 "uses_document_embeddings": True,
                 "default_model": self.base_embedding_model,
-                "dimension": self.base_embedding_dimension
+                "dimension": self.base_embedding_dimension,
+                "columns": {
+                    "entity_id": "entity_id",
+                    "doc_id": "doc_id",
+                    "entity_name": "entity_name",
+                    "entity_type": "entity_type",
+                    "embedding": "embedding"
+                }
+            },
+            "DocumentChunks": {
+                "embedding_column": "chunk_embedding",
+                "content_column": "chunk_text",
+                "id_column": "chunk_id",
+                "columns": {
+                    "id": "chunk_id",
+                    "content": "chunk_text",
+                    "embedding": "chunk_embedding"
+                },
+                "uses_document_embeddings": True,
+                "default_model": self.base_embedding_model,
+                "dimension": self.base_embedding_dimension,
+                "vector_dimension": self.base_embedding_dimension,
+                "vector_data_type": "FLOAT"
+            },
+            "EntityRelationships": {
+                "embedding_column": None,
+                "uses_document_embeddings": False,
+                "default_model": None,
+                "dimension": None,
+                "columns": {
+                    "relationship_id": "relationship_id",
+                    "source_entity_id": "source_entity_id",
+                    "target_entity_id": "target_entity_id",
+                    "relationship_type": "relationship_type",
+                    "metadata": "metadata"
+                }
             }
         }
         
         logger.debug(f"Table configurations: {len(self._table_configs)} tables configured")
+        
+    def get_table_config(self, table_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get the configuration for a specific table.
+        
+        Args:
+            table_name: The name of the table
+            
+        Returns:
+            A dictionary with the table's configuration, or None if not found.
+        """
+        return self._table_configs.get(table_name)
         
     def ensure_schema_metadata_table(self):
         """Create schema metadata table if it doesn't exist."""
@@ -189,7 +243,14 @@ class SchemaManager:
             result = cursor.fetchone()
             if result:
                 schema_version, vector_dim, embedding_model, config_json = result
-                config = json.loads(config_json) if config_json else {}
+                if hasattr(config_json, 'read'):
+                    config_json = config_json.read()
+                if isinstance(config_json, bytes):
+                    config_json = config_json.decode('utf-8')
+                if isinstance(config_json, str):
+                    config = json.loads(config_json) if config_json else {}
+                else:
+                    config = {}
                 return {
                     "schema_version": schema_version,
                     "vector_dimension": vector_dim,
@@ -206,12 +267,20 @@ class SchemaManager:
     
     def _get_expected_schema_config(self, table_name: str) -> Dict[str, Any]:
         """Get expected schema configuration based on current system config."""
-        # Get model and dimension from centralized methods
-        model_name = self.get_embedding_model(table_name)
-        expected_dim = self.get_vector_dimension(table_name, model_name)
+        # Check if this table has vectors
+        table_config = self.get_table_config(table_name)
+        has_vectors = table_config and table_config.get("embedding_column") is not None
         
-        # Get vector data type from configuration, default to FLOAT
-        vector_data_type = self.config_manager.get("storage:iris:vector_data_type", "FLOAT")
+        if has_vectors:
+            # Get model and dimension from centralized methods
+            model_name = self.get_embedding_model(table_name)
+            expected_dim = self.get_vector_dimension(table_name, model_name)
+            vector_data_type = self.config_manager.get("storage:iris:vector_data_type", "FLOAT")
+        else:
+            # No vectors for this table
+            model_name = None
+            expected_dim = None
+            vector_data_type = None
         
         # Base configuration
         config = {
@@ -221,7 +290,7 @@ class SchemaManager:
             "vector_data_type": vector_data_type,
             "configuration": {
                 "managed_by_schema_manager": True,
-                "supports_vector_search": True,
+                "supports_vector_search": has_vectors,
                 "auto_migration": True
             }
         }
@@ -230,6 +299,11 @@ class SchemaManager:
         if table_name == "DocumentEntities":
             config["configuration"].update({
                 "table_type": "entity_storage",
+                "created_by": "GraphRAG"
+            })
+        elif table_name == "EntityRelationships":
+            config["configuration"].update({
+                "table_type": "relationship_storage",
                 "created_by": "GraphRAG"
             })
         elif table_name == "SourceDocuments":
@@ -247,6 +321,11 @@ class SchemaManager:
     
     def needs_migration(self, table_name: str) -> bool:
         """Check if table needs migration based on configuration changes."""
+        # First check if table actually exists
+        if not self._table_exists(table_name):
+            logger.info(f"Table {table_name} does not exist - migration needed")
+            return True
+            
         current_config = self.get_current_schema_config(table_name)
         expected_config = self._get_expected_schema_config(table_name)
         
@@ -334,6 +413,22 @@ class SchemaManager:
                 else:
                     connection.rollback()
                     return False
+            elif table_name == "DocumentChunks":
+                success = self._migrate_document_chunks_table(cursor, expected_config, preserve_data)
+                if success:
+                    connection.commit()
+                    return True
+                else:
+                    connection.rollback()
+                    return False
+            elif table_name == "EntityRelationships":
+                success = self._migrate_entity_relationships_table(cursor, expected_config, preserve_data)
+                if success:
+                    connection.commit()
+                    return True
+                else:
+                    connection.rollback()
+                    return False
             
             # Add other table migrations as needed
             logger.warning(f"No migration handler for table {table_name}")
@@ -367,7 +462,23 @@ class SchemaManager:
             except:
                 pass  # Table might not exist
             
-            # Drop existing table
+            # Drop tables with foreign key constraints first, in the correct order
+            
+            # These tables depend on DocumentEntities or DocumentChunks
+            cursor.execute("DROP TABLE IF EXISTS RAG.EntityRelationships")
+            logger.info("Successfully dropped EntityRelationships table")
+            cursor.execute("DROP TABLE IF EXISTS RAG.KnowledgeGraphEdges")
+            logger.info("Successfully dropped KnowledgeGraphEdges table")
+
+            # These tables depend on SourceDocuments
+            cursor.execute("DROP TABLE IF EXISTS RAG.DocumentTokenEmbeddings")
+            logger.info("Successfully dropped DocumentTokenEmbeddings table")
+            cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks")
+            logger.info("Successfully dropped DocumentChunks table")
+            cursor.execute("DROP TABLE IF EXISTS RAG.DocumentEntities")
+            logger.info("Successfully dropped DocumentEntities table")
+            
+            # Now, drop the main table
             cursor.execute("DROP TABLE IF EXISTS RAG.SourceDocuments")
             logger.info("Successfully dropped SourceDocuments table")
             
@@ -380,6 +491,8 @@ class SchemaManager:
                 abstract VARCHAR(MAX),
                 authors VARCHAR(MAX),
                 keywords VARCHAR(MAX),
+                metadata VARCHAR(MAX),
+                source VARCHAR(500),
                 embedding VECTOR({vector_data_type}, {vector_dim}),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (doc_id)
@@ -495,37 +608,17 @@ class SchemaManager:
                 # First, identify and drop foreign key constraints that reference this table
                 logger.info("Checking for foreign key constraints on DocumentEntities...")
                 
-                # Handle the specific foreign key constraints we know about
                 # Based on the error message: ENTITYRELATIONSHIPSFKEY2 and ENTITYRELATIONSHIPSFKEY3 in table RAG.ENTITYRELATIONSHIPS
-                known_constraints = [
-                    ("ENTITYRELATIONSHIPSFKEY2", "EntityRelationships"),
-                    ("ENTITYRELATIONSHIPSFKEY3", "EntityRelationships")
-                ]
+                # We need to drop the EntityRelationships table first if it exists and references DocumentEntities
+                cursor.execute("DROP TABLE IF EXISTS RAG.EntityRelationships")
+                logger.info("Successfully dropped EntityRelationships table (if it existed and referenced DocumentEntities)")
                 
-                dropped_constraints = []
-                
-                for constraint_name, referencing_table in known_constraints:
-                    try:
-                        logger.info(f"Dropping foreign key constraint {constraint_name} from RAG.{referencing_table}")
-                        cursor.execute(f"ALTER TABLE RAG.{referencing_table} DROP CONSTRAINT {constraint_name}")
-                        dropped_constraints.append((constraint_name, referencing_table))
-                        logger.info(f"✓ Successfully dropped constraint {constraint_name}")
-                    except Exception as fk_error:
-                        logger.warning(f"Could not drop foreign key {constraint_name}: {fk_error}")
-                        # If we can't drop the constraint, try dropping the entire referencing table
-                        try:
-                            logger.info(f"Attempting to drop referencing table RAG.{referencing_table}")
-                            cursor.execute(f"DROP TABLE IF EXISTS RAG.{referencing_table}")
-                            logger.info(f"✓ Dropped referencing table RAG.{referencing_table}")
-                        except Exception as table_error:
-                            logger.warning(f"Could not drop referencing table {referencing_table}: {table_error}")
-                
-                # Now drop the table
+                # Now drop the DocumentEntities table
                 cursor.execute("DROP TABLE IF EXISTS RAG.DocumentEntities")
                 logger.info("Successfully dropped DocumentEntities table")
                 
             except Exception as drop_error:
-                logger.error(f"Failed to handle foreign key constraints and drop table: {drop_error}")
+                logger.error(f"Failed to handle foreign key constraints and drop DocumentEntities table: {drop_error}")
                 # If we can't drop due to constraints, try to work with existing table structure
                 logger.info("Attempting to work with existing table structure...")
                 return True  # Consider this a successful "migration" for now
@@ -534,20 +627,20 @@ class SchemaManager:
             create_sql = f"""
             CREATE TABLE RAG.DocumentEntities (
                 entity_id VARCHAR(255) NOT NULL,
-                document_id VARCHAR(255) NOT NULL,
-                entity_text VARCHAR(1000) NOT NULL,
-                entity_type VARCHAR(100),
-                position INTEGER,
+                doc_id VARCHAR(255) NOT NULL,
+                entity_name VARCHAR(1000) NOT NULL,
+                entity_type VARCHAR(255) NOT NULL,
                 embedding VECTOR({vector_data_type}, {vector_dim}),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (entity_id)
+                PRIMARY KEY (entity_id),
+                FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id) ON DELETE CASCADE
             )
             """
             cursor.execute(create_sql)
             
             # Create indexes
             indexes = [
-                "CREATE INDEX idx_documententities_document_id ON RAG.DocumentEntities (document_id)",
+                "CREATE INDEX idx_documententities_doc_id ON RAG.DocumentEntities (doc_id)",
                 "CREATE INDEX idx_documententities_entity_type ON RAG.DocumentEntities (entity_type)",
                 "CREATE INDEX idx_documententities_created_at ON RAG.DocumentEntities (created_at)"
             ]
@@ -566,6 +659,68 @@ class SchemaManager:
             
         except Exception as e:
             logger.error(f"Failed to migrate DocumentEntities table: {e}")
+            return False
+    
+    def _migrate_entity_relationships_table(self, cursor, expected_config: Dict[str, Any], preserve_data: bool) -> bool:
+        """Migrate EntityRelationships table."""
+        try:
+            logger.info("🔧 Migrating EntityRelationships table")
+            
+            # For now, we'll drop and recreate (data preservation can be added later)
+            if preserve_data:
+                logger.warning("Data preservation not yet implemented - data will be lost")
+            
+            # Check if table has data
+            try:
+                cursor.execute("SELECT COUNT(*) FROM RAG.EntityRelationships")
+                row_count = cursor.fetchone()[0]
+                if row_count > 0:
+                    logger.warning(f"Dropping table with {row_count} existing rows")
+            except:
+                pass  # Table might not exist
+            
+            # Drop existing table
+            cursor.execute("DROP TABLE IF EXISTS RAG.EntityRelationships")
+            logger.info("Successfully dropped EntityRelationships table")
+            
+            # Create new table
+            create_sql = """
+            CREATE TABLE RAG.EntityRelationships (
+                relationship_id VARCHAR(255) NOT NULL,
+                source_entity_id VARCHAR(255) NOT NULL,
+                target_entity_id VARCHAR(255) NOT NULL,
+                relationship_type VARCHAR(255) NOT NULL,
+                metadata VARCHAR(MAX),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (relationship_id),
+                FOREIGN KEY (source_entity_id) REFERENCES RAG.DocumentEntities(entity_id) ON DELETE CASCADE,
+                FOREIGN KEY (target_entity_id) REFERENCES RAG.DocumentEntities(entity_id) ON DELETE CASCADE
+            )
+            """
+            cursor.execute(create_sql)
+            
+            # Create indexes
+            indexes = [
+                "CREATE INDEX idx_entityrelationships_source_entity_id ON RAG.EntityRelationships (source_entity_id)",
+                "CREATE INDEX idx_entityrelationships_target_entity_id ON RAG.EntityRelationships (target_entity_id)",
+                "CREATE INDEX idx_entityrelationships_relationship_type ON RAG.EntityRelationships (relationship_type)",
+                "CREATE INDEX idx_entityrelationships_created_at ON RAG.EntityRelationships (created_at)"
+            ]
+            
+            for index_sql in indexes:
+                try:
+                    cursor.execute(index_sql)
+                except Exception as e:
+                    logger.warning(f"Failed to create index: {e}")
+            
+            # Update schema metadata
+            self._update_schema_metadata(cursor, "EntityRelationships", expected_config)
+            
+            logger.info("✅ EntityRelationships table migrated")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to migrate EntityRelationships table: {e}")
             return False
     
     def _migrate_knowledge_graph_nodes_table(self, cursor, expected_config: Dict[str, Any], preserve_data: bool) -> bool:
@@ -605,8 +760,8 @@ class SchemaManager:
             create_sql = f"""
             CREATE TABLE RAG.KnowledgeGraphNodes (
                 node_id VARCHAR(255) NOT NULL,
-                node_type VARCHAR(100),
-                node_properties VARCHAR(MAX),
+                node_name VARCHAR(1000) NOT NULL,
+                node_type VARCHAR(255) NOT NULL,
                 embedding VECTOR({vector_data_type}, {vector_dim}),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (node_id)
@@ -616,8 +771,8 @@ class SchemaManager:
             
             # Create indexes
             indexes = [
-                "CREATE INDEX idx_knowledgegraphnodes_node_type ON RAG.KnowledgeGraphNodes (node_type)",
-                "CREATE INDEX idx_knowledgegraphnodes_created_at ON RAG.KnowledgeGraphNodes (created_at)"
+                "CREATE INDEX idx_kgnodes_node_type ON RAG.KnowledgeGraphNodes (node_type)",
+                "CREATE INDEX idx_kgnodes_created_at ON RAG.KnowledgeGraphNodes (created_at)"
             ]
             
             for index_sql in indexes:
@@ -658,27 +813,28 @@ class SchemaManager:
             cursor.execute("DROP TABLE IF EXISTS RAG.KnowledgeGraphEdges")
             logger.info("Successfully dropped KnowledgeGraphEdges table")
             
-            # Create new table (edges typically don't need embeddings)
-            create_sql = f"""
+            # Create new table
+            create_sql = """
             CREATE TABLE RAG.KnowledgeGraphEdges (
                 edge_id VARCHAR(255) NOT NULL,
                 source_node_id VARCHAR(255) NOT NULL,
                 target_node_id VARCHAR(255) NOT NULL,
-                edge_type VARCHAR(100),
-                edge_properties VARCHAR(MAX),
-                weight FLOAT DEFAULT 1.0,
+                edge_type VARCHAR(255) NOT NULL,
+                metadata VARCHAR(MAX),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (edge_id)
+                PRIMARY KEY (edge_id),
+                FOREIGN KEY (source_node_id) REFERENCES RAG.KnowledgeGraphNodes(node_id) ON DELETE CASCADE,
+                FOREIGN KEY (target_node_id) REFERENCES RAG.KnowledgeGraphNodes(node_id) ON DELETE CASCADE
             )
             """
             cursor.execute(create_sql)
             
             # Create indexes
             indexes = [
-                "CREATE INDEX idx_knowledgegraphedges_source ON RAG.KnowledgeGraphEdges (source_node_id)",
-                "CREATE INDEX idx_knowledgegraphedges_target ON RAG.KnowledgeGraphEdges (target_node_id)",
-                "CREATE INDEX idx_knowledgegraphedges_edge_type ON RAG.KnowledgeGraphEdges (edge_type)",
-                "CREATE INDEX idx_knowledgegraphedges_created_at ON RAG.KnowledgeGraphEdges (created_at)"
+                "CREATE INDEX idx_kgedges_source_node_id ON RAG.KnowledgeGraphEdges (source_node_id)",
+                "CREATE INDEX idx_kgedges_target_node_id ON RAG.KnowledgeGraphEdges (target_node_id)",
+                "CREATE INDEX idx_kgedges_edge_type ON RAG.KnowledgeGraphEdges (edge_type)",
+                "CREATE INDEX idx_kgedges_created_at ON RAG.KnowledgeGraphEdges (created_at)"
             ]
             
             for index_sql in indexes:
@@ -687,17 +843,95 @@ class SchemaManager:
                 except Exception as e:
                     logger.warning(f"Failed to create index: {e}")
             
-            # Update schema metadata (edges don't typically have vector dimensions)
-            edges_config = expected_config.copy()
-            edges_config["vector_dimension"] = None
-            edges_config["embedding_model"] = None
-            self._update_schema_metadata(cursor, "KnowledgeGraphEdges", edges_config)
+            # Update schema metadata
+            self._update_schema_metadata(cursor, "KnowledgeGraphEdges", expected_config)
             
-            logger.info("✅ KnowledgeGraphEdges table migrated successfully")
+            logger.info("✅ KnowledgeGraphEdges table migrated")
             return True
             
         except Exception as e:
             logger.error(f"Failed to migrate KnowledgeGraphEdges table: {e}")
+            return False
+    
+    def _migrate_document_chunks_table(self, cursor, expected_config: Dict[str, Any], preserve_data: bool) -> bool:
+        """Migrate DocumentChunks table."""
+        try:
+            vector_dim = expected_config["vector_dimension"]
+            vector_data_type = expected_config.get("vector_data_type", "FLOAT")
+            
+            logger.info(f"🔧 Migrating DocumentChunks table to {vector_dim}-dimensional vectors with {vector_data_type} data type")
+            
+            # For now, we'll drop and recreate (data preservation can be added later)
+            if preserve_data:
+                logger.warning("Data preservation not yet implemented - data will be lost")
+            
+            # Check if table has data
+            try:
+                cursor.execute("SELECT COUNT(*) FROM RAG.DocumentChunks")
+                row_count = cursor.fetchone()[0]
+                if row_count > 0:
+                    logger.warning(f"Dropping table with {row_count} existing rows")
+            except:
+                pass  # Table might not exist
+            
+            # Handle foreign key constraints before dropping table
+            try:
+                # Drop referencing tables first (chunk relationships reference chunks)
+                cursor.execute("DROP TABLE IF EXISTS RAG.ChunkRelationships")
+                logger.info("Dropped ChunkRelationships table (references chunks)")
+            except Exception as e:
+                logger.warning(f"Could not drop ChunkRelationships: {e}")
+            
+            # Drop existing table
+            cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks")
+            logger.info("Successfully dropped DocumentChunks table")
+            
+            # Create new table with correct dimension and data type
+            # Support both chunk_embedding (for insert_vector utility) and embedding_vector (for schema compatibility)
+            create_sql = f"""
+            CREATE TABLE RAG.DocumentChunks (
+                chunk_id VARCHAR(255) PRIMARY KEY,
+                doc_id VARCHAR(255) NOT NULL,
+                chunk_index INTEGER NOT NULL,
+                chunk_type VARCHAR(50) NOT NULL,
+                chunk_text LONGVARCHAR NOT NULL,
+                metadata CLOB,
+                start_position INTEGER,
+                end_position INTEGER,
+                parent_chunk_id VARCHAR(255),
+                chunk_embedding VECTOR({vector_data_type}, {vector_dim}),
+                embedding_vector VECTOR({vector_data_type}, {vector_dim}),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id),
+                FOREIGN KEY (parent_chunk_id) REFERENCES RAG.DocumentChunks(chunk_id),
+                UNIQUE (doc_id, chunk_index, chunk_type)
+            )
+            """
+            cursor.execute(create_sql)
+            
+            # Create indexes
+            indexes = [
+                "CREATE INDEX idx_documentchunks_doc_id ON RAG.DocumentChunks (doc_id)",
+                "CREATE INDEX idx_documentchunks_chunk_type ON RAG.DocumentChunks (chunk_type)",
+                "CREATE INDEX idx_documentchunks_position ON RAG.DocumentChunks (doc_id, chunk_index)",
+                "CREATE INDEX idx_documentchunks_created_at ON RAG.DocumentChunks (created_at)"
+            ]
+            
+            for index_sql in indexes:
+                try:
+                    cursor.execute(index_sql)
+                except Exception as e:
+                    logger.warning(f"Failed to create index: {e}")
+            
+            # Update schema metadata
+            self._update_schema_metadata(cursor, "DocumentChunks", expected_config)
+            
+            logger.info(f"✅ DocumentChunks table migrated to {vector_dim}-dimensional vectors")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to migrate DocumentChunks table: {e}")
             return False
     
     def _update_schema_metadata(self, cursor, table_name: str, config: Dict[str, Any]):
@@ -727,7 +961,7 @@ class SchemaManager:
     def ensure_table_schema(self, table_name: str) -> bool:
         """
         Ensure table schema matches current configuration.
-        Performs migration if needed.
+        Performs migration if needed and creates HNSW indexes.
         
         Returns:
             True if schema is correct or migration successful, False otherwise
@@ -736,17 +970,76 @@ class SchemaManager:
             # Ensure metadata table exists
             self.ensure_schema_metadata_table()
             
+            # Ensure dependencies are created first
+            if not self._ensure_table_dependencies(table_name):
+                logger.error(f"Failed to ensure dependencies for {table_name}")
+                return False
+            
             # Check if migration is needed
             if self.needs_migration(table_name):
                 logger.info(f"Schema migration needed for {table_name}")
-                return self.migrate_table(table_name)
+                migration_success = self.migrate_table(table_name)
+                if not migration_success:
+                    return False
             else:
                 logger.info(f"Schema for {table_name} is up to date")
-                return True
+            
+            # After ensuring table schema, create HNSW indexes if this table has vector columns
+            vector_tables = ["SourceDocuments", "DocumentTokenEmbeddings", "DocumentEntities", "KnowledgeGraphNodes"]
+            if table_name in vector_tables:
+                logger.info(f"Creating HNSW indexes for {table_name}")
+                self.ensure_hnsw_indexes()
+            
+            return True
                 
         except Exception as e:
             logger.error(f"Failed to ensure schema for {table_name}: {e}")
             return False
+    
+    def _table_exists(self, table_name: str) -> bool:
+        """Check if a table exists in the database."""
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        
+        try:
+            # Try to query the table - if it doesn't exist, this will raise an exception
+            cursor.execute(f"SELECT COUNT(*) FROM RAG.{table_name}")
+            cursor.fetchone()
+            return True
+        except Exception:
+            # Table doesn't exist
+            return False
+        finally:
+            cursor.close()
+    
+    def _ensure_table_dependencies(self, table_name: str) -> bool:
+        """
+        Ensure all dependencies for a table are created first.
+        
+        Returns:
+            True if all dependencies are satisfied, False otherwise
+        """
+        # Define table dependencies
+        dependencies = {
+            "DocumentEntities": ["SourceDocuments"],
+            "EntityRelationships": ["SourceDocuments", "DocumentEntities"],
+            "DocumentChunks": ["SourceDocuments"],
+            "DocumentTokenEmbeddings": ["SourceDocuments"],
+            "KnowledgeGraphEdges": ["KnowledgeGraphNodes"],
+        }
+        
+        table_deps = dependencies.get(table_name, [])
+        
+        for dep_table in table_deps:
+            logger.info(f"Ensuring dependency {dep_table} for {table_name}")
+            
+            # Recursively ensure dependencies (but avoid infinite loops)
+            if dep_table != table_name:
+                if not self.ensure_table_schema(dep_table):
+                    logger.error(f"Failed to ensure dependency {dep_table} for {table_name}")
+                    return False
+        
+        return True
     
     def get_vector_dimension(self, table_name: str = "SourceDocuments", model_name: str = None) -> int:
         """
@@ -961,3 +1254,118 @@ class SchemaManager:
             ColBERT backend type ("native" or "pylate")
         """
         return self.colbert_backend
+    
+    def ensure_hnsw_indexes(self) -> bool:
+        """
+        Ensure HNSW indexes are created on all vector columns.
+        
+        Returns:
+            True if all indexes created successfully, False otherwise
+        """
+        try:
+            connection = self.connection_manager.get_connection()
+            
+            # Define HNSW indexes to create
+            hnsw_indexes = [
+                {
+                    "name": "idx_hnsw_source_embeddings",
+                    "table": "RAG.SourceDocuments",
+                    "column": "embedding",
+                    "description": "HNSW index for SourceDocuments embeddings"
+                },
+                {
+                    "name": "idx_hnsw_token_embeddings",
+                    "table": "RAG.DocumentTokenEmbeddings",
+                    "column": "token_embedding",
+                    "description": "HNSW index for DocumentTokenEmbeddings token embeddings"
+                },
+                {
+                    "name": "idx_hnsw_kg_node_embeddings",
+                    "table": "RAG.KnowledgeGraphNodes",
+                    "column": "embedding",
+                    "description": "HNSW index for KnowledgeGraphNodes embeddings"
+                }
+            ]
+            
+            success_count = 0
+            for index_config in hnsw_indexes:
+                if self._create_hnsw_index(connection, index_config):
+                    success_count += 1
+                    
+            logger.info(f"✅ HNSW index creation completed: {success_count}/{len(hnsw_indexes)} indexes created")
+            return success_count == len(hnsw_indexes)
+            
+        except Exception as e:
+            logger.error(f"Failed to ensure HNSW indexes: {e}")
+            return False
+    
+    def _create_hnsw_index(self, connection, index_config: dict) -> bool:
+        """
+        Create a single HNSW index.
+        
+        Args:
+            connection: Database connection
+            index_config: Dictionary with index configuration
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            cursor = connection.cursor()
+            
+            # Check if index already exists
+            check_query = """
+            SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES
+            WHERE TABLE_SCHEMA = 'RAG'
+            AND INDEX_NAME = ?
+            """
+            cursor.execute(check_query, [index_config["name"]])
+            exists = cursor.fetchone()[0] > 0
+            
+            if exists:
+                logger.debug(f"HNSW index {index_config['name']} already exists")
+                cursor.close()
+                return True
+            
+            # Check if table and column exist
+            table_parts = index_config["table"].split(".")
+            table_name = table_parts[1] if len(table_parts) > 1 else table_parts[0]
+            
+            check_column_query = """
+            SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = 'RAG'
+            AND TABLE_NAME = ?
+            AND COLUMN_NAME = ?
+            """
+            cursor.execute(check_column_query, [table_name, index_config["column"]])
+            column_exists = cursor.fetchone()[0] > 0
+            
+            if not column_exists:
+                logger.warning(f"Column {index_config['column']} does not exist in table {index_config['table']}, skipping HNSW index creation")
+                cursor.close()
+                return False
+            
+            # Create HNSW index using IRIS syntax
+            create_index_sql = f"""
+            CREATE INDEX {index_config['name']}
+            ON {index_config['table']} ({index_config['column']})
+            AS HNSW(M=16, efConstruction=200, Distance='COSINE')
+            """
+            
+            cursor.execute(create_index_sql)
+            connection.commit()
+            cursor.close()
+            
+            logger.info(f"✅ Created HNSW index: {index_config['name']} on {index_config['table']}.{index_config['column']}")
+            return True
+            
+        except Exception as e:
+            error_msg = str(e).lower()
+            # Handle cases where index already exists (different error messages)
+            if ('already exists' in error_msg or 'duplicate' in error_msg or
+                'sqlcode: <-324>' in error_msg or 'index with this name already defined' in error_msg):
+                logger.debug(f"HNSW index {index_config['name']} already exists")
+                return True
+            else:
+                logger.error(f"Failed to create HNSW index {index_config['name']}: {e}")
+                return False

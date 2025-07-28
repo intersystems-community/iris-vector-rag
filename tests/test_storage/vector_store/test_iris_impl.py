@@ -13,7 +13,7 @@ from iris_rag.core.vector_store_exceptions import (
     VectorStoreConfigurationError
 )
 from iris_rag.storage.vector_store_iris import IRISVectorStore
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection, IRISConnectionManager
 from iris_rag.config.manager import ConfigurationManager
 from tests.test_core.test_vector_store import VectorStoreContractTests
 
@@ -36,8 +36,8 @@ class MockIRISVectorStore:
     Mock implementation for testing CLOB handling.
     This simulates the behavior we expect from the real IRISVectorStore.
     """
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager):
-        self.connection_manager = connection_manager
+    def __init__(self, iris_connector, config_manager: ConfigurationManager):
+        self.iris_connector = iris_connector
         self.config_manager = config_manager
         
         # Get storage configuration and validate table name
@@ -46,7 +46,7 @@ class MockIRISVectorStore:
         self._validate_table_name(self.table_name)
         
         # Simulate a connection failure for bad configs
-        if hasattr(connection_manager, 'fail_connection') and connection_manager.fail_connection:
+        if hasattr(iris_connector, 'fail_connection') and iris_connector.fail_connection:
             raise VectorStoreConnectionError("Failed to connect to bad_host")
         self._documents: Dict[str, Document] = {} # In-memory store for now
         self._vectors: Dict[str, List[float]] = {} # In-memory vectors
@@ -215,7 +215,7 @@ class TestIRISVectorStore(VectorStoreContractTests):
     @pytest.fixture
     def mock_connection_manager(self):
         """Provides a mock connection manager."""
-        mock_cm = Mock(spec=ConnectionManager)
+        mock_cm = Mock(spec=IRISConnectionManager)
         mock_connection = Mock()
         mock_cm.get_connection.return_value = mock_connection
         return mock_cm
@@ -237,7 +237,7 @@ class TestIRISVectorStore(VectorStoreContractTests):
         This will be replaced by the actual IRISVectorStore once it's working.
         """
         return MockIRISVectorStore(
-            connection_manager=mock_connection_manager,
+            iris_connector=None,
             config_manager=mock_config_manager
         )
 
@@ -416,11 +416,11 @@ class TestIRISVectorStore(VectorStoreContractTests):
     def test_raises_connection_error_on_connection_failure(self, mock_config_manager):
         """Tests that a VectorStoreConnectionError is raised on connection failure."""
         # Create a connection manager that will fail
-        bad_connection_manager = Mock(spec=ConnectionManager)
+        bad_connection_manager = Mock()
         bad_connection_manager.fail_connection = True
         
         with pytest.raises(VectorStoreConnectionError):
-            MockIRISVectorStore(connection_manager=bad_connection_manager, config_manager=mock_config_manager)
+            MockIRISVectorStore(config_manager=mock_config_manager, connection_manager=bad_connection_manager)
 
     def test_raises_data_error_on_malformed_data(self, vector_store: MockIRISVectorStore):
         """Tests that a VectorStoreDataError is raised when adding malformed data."""

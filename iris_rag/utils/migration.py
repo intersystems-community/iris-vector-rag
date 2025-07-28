@@ -109,8 +109,12 @@ class PersonalAssistantMigrationUtils:
             for legacy_field, legacy_value in legacy_record.items():
                 if legacy_field in data_mapping_rules:
                     rag_field = data_mapping_rules[legacy_field]
-                    # Assuming RAG Document has 'doc_id', 'content', and 'metadata'
-                    if rag_field in ["doc_id", "content"]: # Direct fields in a potential Document model
+                    # Handle nested metadata fields with dot notation
+                    if rag_field.startswith("metadata."):
+                        # Extract the actual metadata field name (remove "metadata." prefix)
+                        metadata_field = rag_field[9:]  # Remove "metadata." prefix
+                        metadata[metadata_field] = legacy_value
+                    elif rag_field in ["doc_id", "content"]: # Direct fields in a potential Document model
                         rag_record[rag_field] = legacy_value
                     else: # Assume other mapped fields go into metadata
                         metadata[rag_field] = legacy_value

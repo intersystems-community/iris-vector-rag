@@ -130,8 +130,9 @@ make load-1000
 
 # Alternative: Direct loading
 python -c "
-from data.loader_fixed import process_and_load_documents
-result = process_and_load_documents('data/pmc_oas_downloaded', limit=1000, batch_size=50, use_mock=False)
+from data.unified_loader import process_and_load_documents_unified
+config = {'embedding_column_type': 'VECTOR', 'batch_size': 50}
+result = process_and_load_documents_unified(config=config, pmc_directory='data/pmc_oas_downloaded', limit=1000)
 print(f'Loaded: {result}')
 "
 

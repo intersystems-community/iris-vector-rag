@@ -147,7 +147,7 @@ def mock_llm_for_noderag_test(prompt: str) -> str:
     return "Based on the provided context, I cannot definitively answer the question. (NodeRAG Test)"
 
 
-def test_noderag_e2e_relationship_query(iris_testcontainer_connection):
+def test_noderag_e2e_relationship_query(iris_container):
     """
     Tests the NodeRAG V2 pipeline's end-to-end flow, focusing on its ability
     to retrieve and use related nodes (documents and chunks) for answering.
@@ -157,11 +157,10 @@ def test_noderag_e2e_relationship_query(iris_testcontainer_connection):
 
     try:
         print("Setting up NodeRAG test data in testcontainer...")
-        setup_test_data_noderag(iris_testcontainer_connection, real_embedding_function)
+        setup_test_data_noderag(iris_container, real_embedding_function)
         
         pipeline = NodeRAGPipeline(
-            iris_connector=iris_testcontainer_connection,
-            embedding_func=real_embedding_function,
+            config_manager=real_config_manager,
             llm_func=mock_llm_function
         )
 
@@ -232,4 +231,4 @@ def test_noderag_e2e_relationship_query(iris_testcontainer_connection):
 
     finally:
         print("Cleaning up NodeRAG test data from testcontainer...")
-        cleanup_test_data_noderag(iris_testcontainer_connection)
+        cleanup_test_data_noderag(iris_container)

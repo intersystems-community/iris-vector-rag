@@ -12,8 +12,8 @@ from datetime import datetime
 from typing import Dict, Optional, Any
 from dataclasses import dataclass
 
-from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
+from common.iris_connection_manager import get_iris_connection
 from common.llm_cache_manager import get_global_cache_manager
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,6 @@ class HealthMonitor:
             config_manager: Configuration manager instance
         """
         self.config_manager = config_manager or ConfigurationManager()
-        self.connection_manager = ConnectionManager(self.config_manager)
         self.docker_client = None
         
         try:
@@ -127,7 +126,7 @@ class HealthMonitor:
         
         try:
             # Test connection
-            connection = self.connection_manager.get_connection('iris')
+            connection = get_iris_connection()
             
             with connection.cursor() as cursor:
                 # Basic connectivity test
@@ -259,7 +258,7 @@ class HealthMonitor:
         start_time = time.time()
         
         try:
-            connection = self.connection_manager.get_connection('iris')
+            connection = get_iris_connection()
             
             with connection.cursor() as cursor:
                 # Check if we have enough data for testing

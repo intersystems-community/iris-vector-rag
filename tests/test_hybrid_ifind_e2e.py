@@ -17,8 +17,11 @@ def mock_llm_func():
     return MagicMock(return_value="Generated answer based on hybrid context.")
 
 @pytest.fixture
-def hybrid_pipeline(mock_iris_connector, mock_embedding_func, mock_llm_func):
-    return HybridIFindRAGPipeline(mock_iris_connector, mock_embedding_func, mock_llm_func)
+def hybrid_pipeline(mock_config_manager, mock_llm_func):
+    return HybridIFindRAGPipeline(
+        config_manager=mock_config_manager,
+        llm_func=mock_llm_func
+    )
 
 def test_hybrid_ifind_rag_e2e_combined_retrieval(hybrid_pipeline, mock_llm_func):
     query = "What are the treatments for neurodegenerative diseases and their link to protein aggregation?"

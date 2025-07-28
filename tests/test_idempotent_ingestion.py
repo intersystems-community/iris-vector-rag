@@ -12,8 +12,10 @@ from typing import List, Tuple
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from common.iris_connector import get_iris_connection
-from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists
-from data.loader_fixed import process_and_load_documents
+from iris_rag.storage.schema_manager import SchemaManager
+from iris_rag.config.manager import ConfigurationManager
+from common.iris_connection_manager import IRISConnectionManager
+from data.unified_loader import process_and_load_documents_unified
 
 # Configure logging for tests
 logger = logging.getLogger(__name__)
@@ -33,12 +35,14 @@ def db_connection():
     Initializes the database schema once per module.
     """
     logger.info("Setting up database schema for idempotent ingestion tests...")
-    create_schema_if_not_exists("RAG") # Ensure schema exists
-    success = initialize_complete_rag_database("RAG") # Re-initialize tables
-    if not success:
-        pytest.fail("Failed to initialize RAG database for tests.")
+    config_manager = ConfigurationManager()
+    connection_manager = IRISConnectionManager(config_manager=config_manager)
+    schema_manager = SchemaManager(connection_manager, config_manager)
+    schema_manager.ensure_table_schema("SourceDocuments")
+    schema_manager.ensure_table_schema("DocumentTokenEmbeddings")
+    schema_manager.ensure_table_schema("DocumentEntities")
     
-    conn = get_iris_connection()
+    conn = connection_manager.get_connection()
     yield conn
     logger.info("Closing database connection for idempotent ingestion tests.")
     conn.close()
@@ -93,13 +97,16 @@ def test_idempotent_document_and_token_ingestion(db_connection):
     # For testing, we don't need real embedding functions, as we're testing DB constraints
     # and data consistency, not embedding quality.
     # The loader.py script handles None for embedding_func and colbert_doc_encoder_func.
-    ingestion_stats_1 = process_and_load_documents(
+    loader_config = {
+        "limit": len(TEST_DOC_FILES),
+        "batch_size": 10,
+        "embedding_column_type": "VECTOR"
+    }
+    ingestion_stats_1 = process_and_load_documents_unified(
+        config=loader_config,
         pmc_directory=SAMPLE_DOC_DIR,
-        connection=conn,
-        embedding_func=None, 
-        colbert_doc_encoder_func=None,
-        limit=len(TEST_DOC_FILES), # Process only our test files
-        batch_size=10 
+        embedding_func=None,
+        colbert_doc_encoder_func=None
     )
     
     logger.info(f"First ingestion stats: {ingestion_stats_1}")
@@ -129,13 +136,16 @@ def test_idempotent_document_and_token_ingestion(db_connection):
 
     # --- Second Ingestion ---
     logger.info(f"Starting second ingestion for the same documents: {TEST_DOC_FILES}")
-    ingestion_stats_2 = process_and_load_documents(
+    loader_config = {
+        "limit": len(TEST_DOC_FILES),
+        "batch_size": 10,
+        "embedding_column_type": "VECTOR"
+    }
+    ingestion_stats_2 = process_and_load_documents_unified(
+        config=loader_config,
         pmc_directory=SAMPLE_DOC_DIR,
-        connection=conn,
         embedding_func=None,
-        colbert_doc_encoder_func=None,
-        limit=len(TEST_DOC_FILES),
-        batch_size=10
+        colbert_doc_encoder_func=None
     )
     logger.info(f"Second ingestion stats: {ingestion_stats_2}")
     # The second run should "succeed" in terms of script execution, but primary key violations
@@ -172,9 +182,13 @@ if __name__ == "__main__":
     logger.info("Running idempotent ingestion test directly (not via pytest)...")
     
     # Manual setup for direct run
-    create_schema_if_not_exists("RAG")
-    initialize_complete_rag_database("RAG")
-    temp_conn = get_iris_connection()
+    config_manager = ConfigurationManager()
+    connection_manager = IRISConnectionManager(config_manager=config_manager)
+    schema_manager = SchemaManager(connection_manager, config_manager)
+    schema_manager.ensure_table_schema("SourceDocuments")
+    schema_manager.ensure_table_schema("DocumentTokenEmbeddings")
+    schema_manager.ensure_table_schema("DocumentEntities")
+    temp_conn = connection_manager.get_connection()
     
     try:
         test_idempotent_document_and_token_ingestion(temp_conn)

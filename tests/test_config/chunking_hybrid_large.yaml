@@ -1,0 +1,29 @@
+# Test configuration for hybrid chunking
+storage:
+  chunking:
+    enabled: true
+    strategy: "hybrid"
+    chunk_size: 2000
+    chunk_overlap: 400
+    similarity_threshold: 0.7
+    min_chunk_size: 500
+    max_chunk_size: 2500
+    auto_chunk: true
+
+pipelines:
+  basic:
+    default_top_k: 8
+    chunking_strategy: "hybrid"
+  hyde:
+    top_k: 8
+    use_hypothetical_doc: true
+    chunking_strategy: "hybrid"
+  sql_rag:
+    chunking_strategy: "hybrid"
+  colbert:
+    chunking_strategy: "hybrid"
+
+embeddings:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 384
+  provider: "sentence-transformers"

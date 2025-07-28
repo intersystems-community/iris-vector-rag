@@ -1,0 +1,185 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-07-27T12:42:11.235810",
+    "total_execution_time": 45.19292998313904,
+    "document_count": 2,
+    "target_document_count": 2,
+    "techniques_tested": 7,
+    "successful_tests": 4,
+    "success_rate": 57.14285714285714
+  },
+  "technique_results": {
+    "iris_rag_basic": {
+      "technique": "iris_rag_basic",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 7.637040138244629,
+        "avg_query_time": 1.402694304784139
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 1.4140090942382812,
+          "retrieved_count": 2,
+          "answer_length": 417,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 1.4273319244384766,
+          "retrieved_count": 2,
+          "answer_length": 505,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 1.3667418956756592,
+          "retrieved_count": 2,
+          "answer_length": 387,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_colbert": {
+      "technique": "iris_rag_colbert",
+      "success": false,
+      "error": "[SQLCODE: <-306>:<Column with this name already exists>]\r\n[Location: <ServerLoop>]\r\n[%msg: <Column of name 'INDEX' already exists>]",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_crag": {
+      "technique": "iris_rag_crag",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 4.483698844909668,
+        "avg_query_time": 0.856713612874349
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 1.1029539108276367,
+          "retrieved_count": 2,
+          "answer_length": 517,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 0.7218971252441406,
+          "retrieved_count": 2,
+          "answer_length": 346,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 0.7452898025512695,
+          "retrieved_count": 2,
+          "answer_length": 338,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_noderag": {
+      "technique": "iris_rag_noderag",
+      "success": false,
+      "error": "NodeRAGPipeline.__init__() got an unexpected keyword argument 'connection_manager'",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hybrid_ifind": {
+      "technique": "iris_rag_hybrid_ifind",
+      "success": false,
+      "error": "iris_rag_hybrid_ifind: Result missing 'retrieved_documents' field\nassert 'retrieved_documents' in {'answer': None, 'error': \"'Document' object has no attribute 'content'\", 'pipeline_type': 'hybrid_ifind_rag', 'query': 'What are the effects of BRCA1 mutations on breast cancer risk?'}",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_graphrag": {
+      "technique": "iris_rag_graphrag",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 5.194750070571899,
+        "avg_query_time": 0.8193420569101969
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 0.7054898738861084,
+          "retrieved_count": 2,
+          "answer_length": 99,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 1.0345590114593506,
+          "retrieved_count": 2,
+          "answer_length": 227,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 0.7179772853851318,
+          "retrieved_count": 2,
+          "answer_length": 120,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_hyde": {
+      "technique": "iris_rag_hyde",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 15.764016151428223,
+        "avg_query_time": 4.341695308685303
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 4.850872039794922,
+          "retrieved_count": 2,
+          "answer_length": 296,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 4.028206825256348,
+          "retrieved_count": 2,
+          "answer_length": 120,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 4.146007061004639,
+          "retrieved_count": 2,
+          "answer_length": 104,
+          "success": true
+        }
+      ]
+    }
+  },
+  "performance_summary": {
+    "fastest_technique": "iris_rag_graphrag",
+    "slowest_technique": "iris_rag_hyde",
+    "avg_times": {
+      "iris_rag_basic": 1.402694304784139,
+      "iris_rag_crag": 0.856713612874349,
+      "iris_rag_graphrag": 0.8193420569101969,
+      "iris_rag_hyde": 4.341695308685303
+    },
+    "retrieval_counts": {
+      "iris_rag_basic": 2.0,
+      "iris_rag_crag": 2.0,
+      "iris_rag_graphrag": 2.0,
+      "iris_rag_hyde": 2.0
+    },
+    "answer_lengths": {
+      "iris_rag_basic": 436.3333333333333,
+      "iris_rag_crag": 400.3333333333333,
+      "iris_rag_graphrag": 148.66666666666666,
+      "iris_rag_hyde": 173.33333333333334
+    }
+  },
+  "validation_status": "PARTIAL"
+}

@@ -10,7 +10,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTRAGPipeline
+from iris_rag.pipelines.colbert.pipeline import ColBERTRAGPipeline
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Test data
@@ -107,7 +107,7 @@ def test_colbert_v2_e2e_fine_grained_match(iris_testcontainer_connection): # Rem
         
         # Instantiate ColBERTPipelineV2 directly with real iris_connector, real embedding_func, and mock llm_func
         pipeline = ColBERTRAGPipeline( # Updated class name
-            iris_connector=iris_testcontainer_connection,
+            config_manager=real_config_manager,
             colbert_query_encoder_func=real_embedding_function, # Parameter name changed in ColBERTRAGPipeline
             llm_func=mock_llm_function
             # embedding_func is also a param in ColBERTRAGPipeline, might need to pass real_embedding_function again or ensure default is okay

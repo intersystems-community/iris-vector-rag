@@ -12,6 +12,7 @@ from .core.config_manager import ConfigurationManager
 from .core.pipeline_factory import PipelineFactory
 from .core.technique_registry import TechniqueRegistry
 from .core.errors import RAGFrameworkError, ConfigurationError, InitializationError
+from iris_rag.core.models import Document
 
 logger = logging.getLogger(__name__)
 
@@ -275,7 +276,7 @@ class ConfigurableRAG:
                 details={"technique": self._technique, "error": str(e)}
             ) from e
     
-    def _process_documents(self, documents: Union[List[str], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    def _process_documents(self, documents: Union[List[str], List[Dict[str, Any]]]) -> List[Document]:
         """
         Process input documents into the format expected by the pipeline.
         
@@ -283,37 +284,36 @@ class ConfigurableRAG:
             documents: List of document texts or document dictionaries
             
         Returns:
-            List of processed document dictionaries
+            List of processed Document objects
         """
         processed = []
         
         for i, doc in enumerate(documents):
             if isinstance(doc, str):
                 # Convert string to document format
-                processed_doc = {
-                    "page_content": doc,
-                    "metadata": {
-                        "source": f"standard_api_doc_{i}",
-                        "document_id": f"doc_{i}",
-                        "added_via": "standard_api",
-                        "technique": self._technique
-                    }
+                metadata = {
+                    "source": f"standard_api_doc_{i}",
+                    "document_id": f"doc_{i}",
+                    "added_via": "standard_api",
+                    "technique": self._technique
                 }
+                processed_doc = Document(page_content=doc, metadata=metadata)
             elif isinstance(doc, dict):
                 # Ensure required fields exist
                 if "page_content" not in doc:
                     raise ValueError(f"Document {i} missing 'page_content' field")
                 
-                processed_doc = doc.copy()
-                if "metadata" not in processed_doc:
-                    processed_doc["metadata"] = {}
-                
-                # Add default metadata
-                processed_doc["metadata"].update({
-                    "document_id": processed_doc["metadata"].get("document_id", f"doc_{i}"),
+                metadata = doc.get("metadata", {})
+                metadata.update({
+                    "document_id": metadata.get("document_id", f"doc_{i}"),
                     "added_via": "standard_api",
                     "technique": self._technique
                 })
+                
+                processed_doc = Document(
+                    page_content=doc["page_content"],
+                    metadata=metadata
+                )
             else:
                 raise ValueError(f"Document {i} must be string or dictionary, got {type(doc)}")
             

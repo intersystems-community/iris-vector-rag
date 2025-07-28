@@ -1,6 +1,6 @@
 services:
   iris_db:
-    image: intersystemsdc/iris-community:latest
+    image: ${IRIS_DOCKER_IMAGE:-containers.intersystems.com/intersystems/iris-arm64:latest-em}
     container_name: iris_db_rag_standalone_community
     ports:
       - "1972:1972"   # IRIS SuperServer port (host:container)
@@ -13,7 +13,7 @@ services:
     stdin_open: true # Keep container running
     tty: true        # Keep container running
     healthcheck:
-      test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U%SYS", "##class(%SYSTEM.Process).CurrentDirectory()"]
+      test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U%SYS", "##class(%SYSTEM.SQL).Execute(\"SELECT TO_VECTOR('[1,2,3]')\")"]
       interval: 15s
       timeout: 10s
       retries: 5

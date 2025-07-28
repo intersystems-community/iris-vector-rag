@@ -11,9 +11,9 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import json
 
-from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
 from .health_monitor import HealthMonitor
+from common.iris_connection_manager import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,6 @@ class SystemValidator:
             config_manager: Configuration manager instance
         """
         self.config_manager = config_manager or ConfigurationManager()
-        self.connection_manager = ConnectionManager(self.config_manager)
         self.health_monitor = HealthMonitor(self.config_manager)
     
     def validate_data_integrity(self) -> ValidationResult:
@@ -51,7 +50,7 @@ class SystemValidator:
         test_name = "data_integrity"
         
         try:
-            connection = self.connection_manager.get_connection('iris')
+            connection = get_iris_connection()
             issues = []
             details = {}
             
@@ -156,7 +155,7 @@ class SystemValidator:
         try:
             from ..pipelines.basic import BasicRAGPipeline
             
-            pipeline = BasicRAGPipeline(self.connection_manager)
+            pipeline = BasicRAGPipeline(config_manager=self.config_manager)
             results = []
             issues = []
             
@@ -228,7 +227,7 @@ class SystemValidator:
         test_name = "vector_operations"
         
         try:
-            connection = self.connection_manager.get_connection('iris')
+            connection = get_iris_connection()
             details = {}
             issues = []
             

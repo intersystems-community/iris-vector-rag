@@ -1,0 +1,38 @@
+{
+  "pipeline_results": {
+    "basic": {
+      "load_time": 0.2742598056793213,
+      "documents_processed": 50,
+      "queries_tested": 3,
+      "successful_queries": 3,
+      "success_rate": 1.0,
+      "query_results": [
+        {
+          "query": "What are the main findings about COVID-19 treatment?",
+          "answer_length": 57,
+          "query_time": 0.07576799392700195,
+          "success": true
+        },
+        {
+          "query": "How does machine learning apply to medical diagnosis?",
+          "answer_length": 57,
+          "query_time": 0.04546189308166504,
+          "success": true
+        },
+        {
+          "query": "What are the latest developments in cancer research?",
+          "answer_length": 57,
+          "query_time": 0.010824918746948242,
+          "success": true
+        }
+      ],
+      "chunking_config": {
+        "chunking_strategy": "fixed_size",
+        "auto_chunk": true
+      },
+      "success": true
+    }
+  },
+  "performance_metrics": {},
+  "errors": []
+}

@@ -172,31 +172,66 @@ class TestSchemaValidation:
         
         assert "required" in str(exc_info.value).lower() or "missing" in str(exc_info.value).lower()
 
-    def test_validate_configuration_with_environment_variables(self, schema_validator):
-        """Test validation works with environment variable placeholders."""
-        config = {
-            "metadata": {
-                "version": "1.0.0",
-                "schema_version": "2024.1"
-            },
-            "database": {
-                "iris": {
-                    "host": "${IRIS_HOST:-localhost}",
-                    "port": "${IRIS_PORT:-1972}",
-                    "namespace": "${IRIS_NAMESPACE:-USER}"
-                }
-            },
-            "storage": {
-                "iris": {
-                    "table_name": "${IRIS_TABLE_NAME:-RAG.SourceDocuments}",
-                    "vector_dimension": "${VECTOR_DIMENSION:-384}"
-                }
-            }
-        }
+    def test_validate_configuration_with_environment_variables(self, temp_template_dir):
+        """Test validation works with environment variable placeholders through template engine."""
+        from quick_start.config.template_engine import ConfigurationTemplateEngine
+        from quick_start.config.interfaces import ConfigurationContext
         
-        # Should validate successfully even with environment variable placeholders
-        result = schema_validator.validate_configuration(config, 'base_config')
-        assert result is True
+        # Create a template with environment variables
+        template_content = """
+metadata:
+  version: "1.0.0"
+  schema_version: "2024.1"
+
+database:
+  iris:
+    host: "${IRIS_HOST:-localhost}"
+    port: "${IRIS_PORT:-1972}"
+    namespace: "${IRIS_NAMESPACE:-USER}"
+    username: "${IRIS_USERNAME:-admin}"
+    password: "${IRIS_PASSWORD:-password}"
+
+storage:
+  data_directory: "${DATA_DIR:-./data}"
+
+vector_index:
+  dimension: "${VECTOR_DIMENSION:-1536}"
+  metric: "cosine"
+
+embeddings:
+  provider: "openai"
+  model: "text-embedding-ada-002"
+  dimension: 1536
+
+llm:
+  provider: "openai"
+  model: "gpt-3.5-turbo"
+  temperature: 0.7
+  max_tokens: 1000
+"""
+        
+        # Write template file
+        template_file = temp_template_dir / "env_vars_template.yaml"
+        template_file.write_text(template_content)
+        
+        # Create template engine with validation enabled
+        engine = ConfigurationTemplateEngine(template_dir=temp_template_dir)
+        engine.enable_schema_validation = True
+        
+        context = ConfigurationContext(
+            profile="env_vars_template",
+            environment="development",
+            overrides={},
+            template_path=temp_template_dir,
+            environment_variables={}
+        )
+        
+        # Should resolve and validate successfully with environment variables processed
+        config = engine.resolve_template(context)
+        assert config is not None
+        assert config["database"]["iris"]["host"] == "localhost"  # Default value
+        assert config["database"]["iris"]["port"] == 1972  # Converted to int
+        assert config["storage"]["data_directory"] == "./data"  # Default value
 
     def test_template_engine_with_schema_validation_enabled(self, template_engine_with_validation, temp_template_dir):
         """Test template engine with schema validation enabled."""
@@ -230,7 +265,7 @@ class TestSchemaValidation:
 
     def test_schema_validation_can_be_disabled(self, temp_template_dir):
         """Test that schema validation can be disabled."""
-        engine = ConfigurationTemplateEngine()
+        engine = ConfigurationTemplateEngine(template_dir=temp_template_dir)
         engine.enable_schema_validation = False
         
         context = ConfigurationContext(
@@ -304,27 +339,77 @@ class TestSchemaValidation:
 
     def test_schema_version_compatibility(self, schema_validator):
         """Test schema version compatibility checking."""
-        # Test with supported schema version
+        # Test with supported schema version - complete valid configuration
         config_v1 = {
             "metadata": {
                 "version": "1.0.0",
                 "schema_version": "2024.1"
             },
-            "database": {"iris": {"host": "localhost", "port": 1972, "namespace": "USER"}},
-            "storage": {"iris": {"table_name": "RAG.SourceDocuments", "vector_dimension": 384}}
+            "database": {
+                "iris": {
+                    "host": "localhost",
+                    "port": 1972,
+                    "namespace": "USER",
+                    "username": "admin",
+                    "password": "password"
+                }
+            },
+            "storage": {
+                "data_directory": "./data"
+            },
+            "vector_index": {
+                "dimension": 1536,
+                "metric": "cosine"
+            },
+            "embeddings": {
+                "provider": "openai",
+                "model": "text-embedding-ada-002",
+                "dimension": 1536
+            },
+            "llm": {
+                "provider": "openai",
+                "model": "gpt-3.5-turbo",
+                "temperature": 0.7,
+                "max_tokens": 1000
+            }
         }
         
         result = schema_validator.validate_configuration(config_v1, 'base_config')
         assert result is True
         
-        # Test with unsupported schema version
+        # Test with unsupported schema version - complete valid configuration
         config_unsupported = {
             "metadata": {
                 "version": "1.0.0",
                 "schema_version": "2025.1"  # Future version
             },
-            "database": {"iris": {"host": "localhost", "port": 1972, "namespace": "USER"}},
-            "storage": {"iris": {"table_name": "RAG.SourceDocuments", "vector_dimension": 384}}
+            "database": {
+                "iris": {
+                    "host": "localhost",
+                    "port": 1972,
+                    "namespace": "USER",
+                    "username": "admin",
+                    "password": "password"
+                }
+            },
+            "storage": {
+                "data_directory": "./data"
+            },
+            "vector_index": {
+                "dimension": 1536,
+                "metric": "cosine"
+            },
+            "embeddings": {
+                "provider": "openai",
+                "model": "text-embedding-ada-002",
+                "dimension": 1536
+            },
+            "llm": {
+                "provider": "openai",
+                "model": "gpt-3.5-turbo",
+                "temperature": 0.7,
+                "max_tokens": 1000
+            }
         }
         
         with pytest.raises(ValidationError) as exc_info:
@@ -334,25 +419,46 @@ class TestSchemaValidation:
 
     def test_custom_validation_rules(self, schema_validator):
         """Test custom validation rules beyond basic JSON schema."""
-        # Test vector dimension validation
+        # Test with a complete valid config but with invalid vector dimension
         config_invalid_vector_dim = {
             "metadata": {
                 "version": "1.0.0",
                 "schema_version": "2024.1"
             },
-            "database": {"iris": {"host": "localhost", "port": 1972, "namespace": "USER"}},
-            "storage": {
+            "database": {
                 "iris": {
-                    "table_name": "RAG.SourceDocuments",
-                    "vector_dimension": 0  # Invalid dimension
+                    "host": "localhost",
+                    "port": 1972,
+                    "namespace": "USER",
+                    "username": "admin",
+                    "password": "password"
                 }
+            },
+            "storage": {
+                "data_directory": "./data"
+            },
+            "vector_index": {
+                "dimension": 0,  # Invalid dimension - should be >= 1
+                "metric": "cosine"
+            },
+            "embeddings": {
+                "provider": "openai",
+                "model": "text-embedding-ada-002",
+                "dimension": 1536
+            },
+            "llm": {
+                "provider": "openai",
+                "model": "gpt-3.5-turbo",
+                "temperature": 0.7,
+                "max_tokens": 1000
             }
         }
         
         with pytest.raises(ValidationError) as exc_info:
             schema_validator.validate_configuration(config_invalid_vector_dim, 'base_config')
         
-        assert "vector_dimension" in str(exc_info.value).lower()
+        # Should fail due to invalid vector dimension
+        assert "dimension" in str(exc_info.value).lower()
 
     def test_validation_error_details(self, schema_validator):
         """Test that validation errors provide detailed information."""

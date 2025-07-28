@@ -1,0 +1,142 @@
+# Enterprise-Scale RAG Testing Makefile
+# 
+# This Makefile provides targets for enterprise-scale testing with 1000+ documents
+# and performance benchmarking for production deployment validation.
+
+.PHONY: test-enterprise test-1000 test-scale benchmark-enterprise setup-enterprise-data clean-test-output help
+
+# Default target
+help:
+	@echo "Enterprise-Scale RAG Testing Targets:"
+	@echo ""
+	@echo "  test-1000              Run tests with 1000+ documents (standard scale)"
+	@echo "  test-enterprise        Run full enterprise-scale tests (92K+ documents)"
+	@echo "  test-scale             Run scale testing with current document count"
+	@echo "  test-enterprise-ragas  Run enterprise tests with RAGAS evaluation"
+	@echo "  benchmark-enterprise   Run performance benchmarks for enterprise deployment"
+	@echo "  setup-enterprise-data  Setup enterprise-scale test data"
+	@echo "  clean-test-output      Clean test output logs"
+	@echo ""
+	@echo "Environment Variables:"
+	@echo "  RAG_SCALE_TEST_MODE    Set to 'enterprise' for 92K+ doc testing"
+	@echo "  RAG_SCALE_TEST_DOCS    Custom document count for testing"
+	@echo "  IRIS_DOCKER_IMAGE      Set to enterprise edition for large-scale testing"
+	@echo ""
+
+# Ensure test output directory exists
+test_output:
+	@mkdir -p test_output
+
+# Standard 1000+ document testing
+test-1000: test_output
+	@echo "Running enterprise-scale tests with 1000+ documents..."
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/conftest_1000docs.py -v | tee test_output/test_1000_setup.log
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py::TestEnterpriseScaleRAGWithRAGAS::test_document_count_validation -v | tee test_output/test_1000_validation.log
+
+# Enterprise-scale testing with RAGAS evaluation
+test-enterprise-ragas: test_output
+	@echo "Running enterprise-scale tests with RAGAS evaluation..."
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py -v -m scale_1000 | tee test_output/test_enterprise_ragas.log
+
+# Full enterprise-scale testing (92K+ documents)
+test-enterprise: test_output
+	@echo "Running full enterprise-scale tests (92K+ documents)..."
+	@echo "WARNING: This requires IRIS Enterprise edition and significant resources"
+	@export RAG_SCALE_TEST_MODE=enterprise && \
+	export RAG_SCALE_TEST_DOCS=92000 && \
+	export IRIS_DOCKER_IMAGE=intersystemsdc/iris-ml:latest && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py -v -m scale_enterprise | tee test_output/test_enterprise_full.log
+
+# Scale testing with current document count
+test-scale: test_output
+	@echo "Running scale testing with current document count..."
+	@uv run pytest tests/test_enterprise_scale_with_ragas.py::TestEnterpriseScaleRAGWithRAGAS::test_document_count_validation -v | tee test_output/test_scale_current.log
+
+# Performance benchmarking for enterprise deployment
+benchmark-enterprise: test_output
+	@echo "Running enterprise performance benchmarks..."
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py::test_enterprise_comparative_ragas_evaluation -v | tee test_output/benchmark_enterprise.log
+	@uv run pytest tests/test_enterprise_scale_with_ragas.py::test_enterprise_ragas_quality_benchmarks -v | tee test_output/benchmark_quality.log
+
+# Individual technique testing
+test-technique-%: test_output
+	@echo "Testing individual technique: $*"
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py -k "test_enterprise_scale_rag_with_ragas and $*" -v | tee test_output/test_technique_$*.log
+
+# Setup enterprise-scale test data
+setup-enterprise-data:
+	@echo "Setting up enterprise-scale test data..."
+	@echo "This will load additional PMC documents for testing"
+	@# Add data loading commands here when available
+	@echo "Data setup completed (placeholder - implement actual data loading)"
+
+# Clean test output logs
+clean-test-output:
+	@echo "Cleaning test output logs..."
+	@rm -rf test_output/*.log
+	@echo "Test output logs cleaned"
+
+# Quick enterprise validation
+test-enterprise-quick: test_output
+	@echo "Running quick enterprise validation..."
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py::TestEnterpriseScaleRAGWithRAGAS::test_document_count_validation -v | tee test_output/test_enterprise_quick.log
+
+# Memory usage testing
+test-enterprise-memory: test_output
+	@echo "Running enterprise memory usage tests..."
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py -k "memory" -v | tee test_output/test_enterprise_memory.log
+
+# Concurrent testing
+test-enterprise-concurrent: test_output
+	@echo "Running enterprise concurrent tests..."
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py -k "concurrent" -v | tee test_output/test_enterprise_concurrent.log
+
+# All enterprise tests
+test-enterprise-all: test-enterprise-ragas benchmark-enterprise
+	@echo "All enterprise tests completed"
+	@echo "Results available in test_output/ directory"
+
+# Validate enterprise readiness
+validate-enterprise-readiness: test_output
+	@echo "Validating enterprise readiness..."
+	@export RAG_SCALE_TEST_MODE=standard && \
+	export RAG_SCALE_TEST_DOCS=1000 && \
+	uv run pytest tests/test_enterprise_scale_with_ragas.py::TestEnterpriseScaleRAGWithRAGAS::test_document_count_validation -v
+	@uv run pytest tests/test_enterprise_scale_with_ragas.py::test_enterprise_comparative_ragas_evaluation -v
+	@echo "Enterprise readiness validation completed"
+
+# Generate enterprise test report
+generate-enterprise-report: test_output
+	@echo "Generating enterprise test report..."
+	@echo "Enterprise Test Report - $(shell date)" > test_output/enterprise_report.md
+	@echo "=================================" >> test_output/enterprise_report.md
+	@echo "" >> test_output/enterprise_report.md
+	@echo "## Test Results Summary" >> test_output/enterprise_report.md
+	@echo "" >> test_output/enterprise_report.md
+	@if [ -f test_output/test_enterprise_ragas.log ]; then \
+		echo "### RAGAS Evaluation Results" >> test_output/enterprise_report.md; \
+		grep -E "(PASSED|FAILED|ERROR)" test_output/test_enterprise_ragas.log | tail -10 >> test_output/enterprise_report.md; \
+		echo "" >> test_output/enterprise_report.md; \
+	fi
+	@if [ -f test_output/benchmark_enterprise.log ]; then \
+		echo "### Performance Benchmark Results" >> test_output/enterprise_report.md; \
+		grep -E "(duration|score|technique)" test_output/benchmark_enterprise.log | tail -10 >> test_output/enterprise_report.md; \
+		echo "" >> test_output/enterprise_report.md; \
+	fi
+	@echo "Report generated: test_output/enterprise_report.md"

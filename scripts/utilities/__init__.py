@@ -1,1 +1,1 @@
-# scripts module
+# Utilities package

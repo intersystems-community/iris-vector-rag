@@ -6,8 +6,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from iris_rag.pipelines.graphrag import GraphRAGPipeline # Corrected import path and class name
-from common.iris_connector import get_iris_connection # Updated import
-from common.embedding_utils import get_embedding_model # Updated import
+from iris_rag.config.manager import ConfigurationManager
 import logging
 
 # Enable debug logging
@@ -17,17 +16,16 @@ try:
     print('=== Testing GraphRAG Pipeline Step by Step ===')
     
     # Initialize components
-    iris = get_iris_connection()
-    embedding_model = get_embedding_model('sentence-transformers/all-MiniLM-L6-v2')
-    
-    def embedding_func(texts):
-        return embedding_model.encode(texts)
+    config_manager = ConfigurationManager()
     
     def llm_func(prompt):
         return f'Based on the provided context, this is a response to: {prompt[:100]}...'
     
     # Create GraphRAG pipeline
-    graphrag = GraphRAGPipeline(iris, embedding_func, llm_func)
+    graphrag = GraphRAGPipeline(
+        config_manager=config_manager,
+        llm_func=llm_func
+    )
     
     # Test query
     query = 'What is diabetes and how is it treated?'

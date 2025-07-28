@@ -21,7 +21,7 @@ class TestHealthMonitor:
     @pytest.fixture
     def health_monitor(self, mock_config_manager):
         """Create a HealthMonitor instance for testing."""
-        with patch('iris_rag.monitoring.health_monitor.ConnectionManager'):
+        with patch('iris_rag.monitoring.health_monitor.get_iris_connection'):
             with patch('docker.from_env'):
                 monitor = HealthMonitor(mock_config_manager)
                 return monitor

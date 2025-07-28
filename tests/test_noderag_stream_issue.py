@@ -16,7 +16,7 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
 from iris_rag.pipelines.noderag import NodeRAGPipeline # Corrected import path and class name
 
-def test_noderag_current_state():
+def test_noderag_current_state(real_config_manager):
     """Test NodeRAG current state to identify stream issues"""
     print("Testing NodeRAG Current State...")
     
@@ -27,8 +27,7 @@ def test_noderag_current_state():
     
     # Create NodeRAG pipeline
     pipeline = NodeRAGPipeline(
-        iris_connector=iris_conn,
-        embedding_func=embedding_func,
+        config_manager=real_config_manager,
         llm_func=llm_func
     )
     

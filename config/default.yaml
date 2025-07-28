@@ -83,3 +83,75 @@ storage:
   chunk_table: "DocumentChunks"
   embedding_table: "DocumentEmbeddings"
   vector_column: "embedding_vector"
+  
+  # Chunking Configuration
+  chunking:
+    enabled: true
+    strategy: "fixed_size"
+    threshold: 1000
+    chunk_size: 512
+    overlap: 50
+    strategies:
+      fixed_size:
+        chunk_size: 512
+        overlap_size: 50
+        preserve_sentences: true
+        min_chunk_size: 100
+      semantic:
+        similarity_threshold: 0.7
+        min_chunk_size: 200
+        max_chunk_size: 1000
+      hybrid:
+        max_chunk_size: 800
+        primary_strategy: "semantic"
+        fallback_strategy: "fixed_size"
+
+# Pipeline-specific Configuration Overrides
+pipeline_overrides:
+  # Basic RAG - uses default chunking
+  basic:
+    chunking:
+      enabled: true
+      strategy: "fixed_size"
+  
+  # CRAG - uses default chunking
+  crag:
+    chunking:
+      enabled: true
+      strategy: "fixed_size"
+  
+  # GraphRAG - uses semantic chunking for better entity extraction
+  graphrag:
+    chunking:
+      enabled: true
+      strategy: "semantic"
+  
+  # HyDE - uses default chunking
+  hyde:
+    chunking:
+      enabled: true
+      strategy: "fixed_size"
+  
+  # NodeRAG - uses default chunking
+  noderag:
+    chunking:
+      enabled: true
+      strategy: "fixed_size"
+  
+  # Hybrid IFind - uses hybrid chunking
+  hybrid_ifind:
+    chunking:
+      enabled: true
+      strategy: "hybrid"
+  
+  # SQL RAG - uses conditional chunking
+  sqlrag:
+    chunking:
+      enabled: true
+      strategy: "fixed_size"
+      size_threshold: 2000  # Only chunk documents larger than 2KB
+  
+  # ColBERT - disables chunking due to token-level embeddings
+  colbert:
+    chunking:
+      enabled: false

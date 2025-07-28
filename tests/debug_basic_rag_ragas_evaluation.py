@@ -49,7 +49,7 @@ def test_ragas_evaluation_with_basic_rag():
         # Import basic RAG components
         from iris_rag.pipelines.basic import BasicRAGPipeline
         from iris_rag.core.models import Document
-        from iris_rag.core.connection import ConnectionManager
+        from common.iris_connection_manager import get_iris_connection
         from iris_rag.config.manager import ConfigurationManager
         
         # Create mock LLM function for answer generation
@@ -57,7 +57,7 @@ def test_ragas_evaluation_with_basic_rag():
             return "Diabetes is a metabolic disorder characterized by high blood sugar levels that affects how the body processes glucose."
         
         # Create mock components
-        mock_connection_manager = Mock(spec=ConnectionManager)
+        mock_connection_manager = Mock()
         mock_config_manager = Mock(spec=ConfigurationManager)
         mock_config_manager.get.return_value = {
             "chunk_size": 1000,

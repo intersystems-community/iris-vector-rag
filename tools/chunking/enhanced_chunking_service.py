@@ -28,6 +28,9 @@ from enum import Enum
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from common.iris_connector import get_iris_connection
+from common.db_vector_utils import insert_vector
+from iris_rag.storage.schema_manager import SchemaManager
+from iris_rag.config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
 
@@ -1194,45 +1197,94 @@ class EnhancedDocumentChunkingService:
         return suggestions
     
     def store_chunks(self, chunk_records: List[Dict[str, Any]], connection=None) -> bool:
-        """Store enhanced chunk records in the database."""
+        """Store enhanced chunk records in the database using proper architecture patterns."""
         conn_provided = connection is not None
         if not connection:
             connection = get_iris_connection()
         
         try:
+            # Initialize schema manager to ensure table exists
+            connection_manager = type('ConnectionManager', (), {
+                'get_connection': lambda self: connection
+            })()
+            config_manager = ConfigurationManager()
+            schema_manager = SchemaManager(connection_manager, config_manager)
+            
+            # Ensure DocumentChunks table exists
+            schema_manager.ensure_table_schema('DocumentChunks')
+            
             cursor = connection.cursor()
             
-            # Insert chunks into RAG.DocumentChunks with native VECTOR chunk_embedding
-            # Assumes chunk_records contain 'embedding_str' for the vector.
-            sql = """
-            INSERT INTO RAG.DocumentChunks
-            (chunk_id, doc_id, chunk_text, chunk_embedding, chunk_index, chunk_type, metadata)
-            VALUES (?, ?, ?, TO_VECTOR(?), ?, ?, ?)
-            """
-            
-            data_to_insert = []
+            # Insert chunks using proper vector insertion utility
             for record in chunk_records:
-                embedding_str_for_db = None
-                raw_embedding = record.get('embedding_str') # This field should be prepared by chunk_document
+                # Prepare non-vector data
+                chunk_data = {
+                    'chunk_id': record.get('chunk_id'),
+                    'doc_id': record.get('doc_id'),
+                    'chunk_text': record.get('chunk_text'),
+                    'chunk_index': record.get('chunk_index'),
+                    'chunk_type': record.get('chunk_type'),
+                    'metadata': record.get('chunk_metadata')
+                }
                 
-                if raw_embedding:
-                    if isinstance(raw_embedding, list): # Should already be string, but defensive
-                        embedding_str_for_db = '[' + ','.join(map(str, raw_embedding)) + ']'
+                # Handle vector data using insert_vector utility
+                embedding_str = record.get('embedding_str')
+                if embedding_str:
+                    # Convert embedding to proper format if needed
+                    if isinstance(embedding_str, list):
+                        embedding_vector = embedding_str
                     else:
-                        embedding_str_for_db = str(raw_embedding)
-                
-                data_to_insert.append((
-                    record.get('chunk_id'),
-                    record.get('doc_id'),
-                    record.get('chunk_text'),
-                    embedding_str_for_db,  # Passed to TO_VECTOR(?)
-                    record.get('chunk_index'),
-                    record.get('chunk_type'),
-                    record.get('chunk_metadata') # Maps to 'metadata' column in DDL
-                ))
+                        # Parse comma-separated string to list
+                        try:
+                            embedding_vector = [float(x.strip()) for x in str(embedding_str).split(',')]
+                        except (ValueError, AttributeError):
+                            logger.warning(f"Invalid embedding format for chunk {chunk_data['chunk_id']}")
+                            embedding_vector = None
+                    
+                    # Use insert_vector utility for proper vector handling
+                    if embedding_vector:
+                        # Prepare key columns (identifying columns)
+                        key_columns = {
+                            'chunk_id': chunk_data['chunk_id']
+                        }
+                        
+                        # Prepare additional data (non-vector columns)
+                        additional_data = {
+                            'doc_id': chunk_data['doc_id'],
+                            'chunk_text': chunk_data['chunk_text'],
+                            'chunk_index': chunk_data['chunk_index'],
+                            'chunk_type': chunk_data['chunk_type'],
+                            'metadata': chunk_data['metadata']
+                        }
+                        
+                        success = insert_vector(
+                            cursor=cursor,
+                            table_name='RAG.DocumentChunks',
+                            vector_column_name='chunk_embedding',
+                            vector_data=embedding_vector,
+                            target_dimension=384,  # Default embedding dimension
+                            key_columns=key_columns,
+                            additional_data=additional_data
+                        )
+                        if not success:
+                            logger.error(f"Failed to insert chunk {chunk_data['chunk_id']} with vector")
+                            return False
+                else:
+                    # Insert without vector data
+                    sql = """
+                    INSERT INTO RAG.DocumentChunks
+                    (chunk_id, doc_id, chunk_text, chunk_index, chunk_type, metadata)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """
+                    cursor.execute(sql, (
+                        chunk_data['chunk_id'],
+                        chunk_data['doc_id'],
+                        chunk_data['chunk_text'],
+                        chunk_data['chunk_index'],
+                        chunk_data['chunk_type'],
+                        chunk_data['metadata']
+                    ))
             
-            if data_to_insert:
-                cursor.executemany(sql, data_to_insert)
             connection.commit()
             cursor.close()
             

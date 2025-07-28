@@ -1,8 +1,6 @@
-version: '3.8' # Specify a compose file version
-
 services:
   iris_licensed_db: # New service name
-    image: containers.intersystems.com/intersystems/iris-arm64:2025.1 # Corrected image based on running container
+    image: ${IRIS_DOCKER_IMAGE:-containers.intersystems.com/intersystems/iris-arm64:latest-em}
     container_name: iris_db_rag_licensed # Match existing container name
     ports:
       - "1972:1972"

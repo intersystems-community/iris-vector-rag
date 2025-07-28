@@ -20,9 +20,10 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from common.iris_connector import get_iris_connection # Updated import
+from common.iris_connection_manager import get_iris_dbapi_connection # Updated import
 from common.db_vector_search import search_source_documents_dynamically, search_knowledge_graph_nodes_dynamically # Updated import
 from iris_rag.pipelines.basic import BasicRAGPipeline
+from iris_rag.config.manager import ConfigurationManager
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import other RAG techniques for integration testing
@@ -51,7 +52,7 @@ class TestHNSWIntegration:
     @pytest.fixture
     def iris_connection(self):
         """Create an IRIS connection for testing."""
-        connection = get_iris_connection()
+        connection = get_iris_dbapi_connection()
         yield connection
         connection.close()
     
@@ -92,9 +93,9 @@ class TestHNSWIntegration:
         
         Tests that HNSW doesn't degrade retrieval quality in BasicRAG pipeline.
         """
+        config_manager = ConfigurationManager()
         pipeline = BasicRAGPipeline(
-            iris_connector=iris_connection,
-            embedding_func=embedding_func,
+            config_manager=config_manager,
             llm_func=llm_func
         )
         
@@ -174,8 +175,9 @@ class TestHNSWIntegration:
             start_time = time.time()
             
             # TDD: This should fail initially if vector search doesn't work with HNSW
+            config_manager = ConfigurationManager()
             search_results = search_source_documents_dynamically(
-                iris_connector=iris_connection,
+                config_manager=config_manager,
                 top_k=15,
                 vector_string=embedding_str
             )
@@ -242,8 +244,9 @@ class TestHNSWIntegration:
         start_time = time.time()
         
         # TDD: This should fail initially if KG integration doesn't work
+        config_manager = ConfigurationManager()
         kg_results = search_knowledge_graph_nodes_dynamically(
-            iris_connector=iris_connection,
+            config_manager=config_manager,
             top_k=10,
             vector_string=embedding_str
         )
@@ -279,9 +282,9 @@ class TestHNSWIntegration:
         if NodeRAGPipeline is None:
             pytest.skip("NodeRAG pipeline not available")
         
+        config_manager = ConfigurationManager()
         pipeline = NodeRAGPipeline(
-            iris_connector=iris_connection,
-            embedding_func=embedding_func,
+            config_manager=config_manager,
             llm_func=llm_func
         )
         
@@ -313,9 +316,9 @@ class TestHNSWIntegration:
         if HydeRAGPipeline is None:
             pytest.skip("HyDE pipeline not available")
         
+        config_manager = ConfigurationManager()
         pipeline = HydeRAGPipeline(
-            iris_connector=iris_connection,
-            embedding_func=embedding_func,
+            config_manager=config_manager,
             llm_func=llm_func
         )
         

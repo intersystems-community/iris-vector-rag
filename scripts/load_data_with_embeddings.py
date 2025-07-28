@@ -10,10 +10,12 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from common.iris_connection_manager import get_iris_connection
+from common.iris_connection_manager import get_iris_connection, IRISConnectionManager
 from common.utils import get_embedding_func
 from common.db_vector_utils import insert_vector
 from data.pmc_processor import process_pmc_files
+from iris_rag.storage.schema_manager import SchemaManager
+from iris_rag.config.manager import ConfigurationManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -100,6 +102,43 @@ def load_documents_with_embeddings(directory: str, limit: int = 100):
         cursor.close()
         connection.close()
 
+def clear_existing_data():
+    """Clear existing data using proper schema management"""
+    logger.info("Clearing existing data...")
+    
+    # Initialize schema manager
+    config_manager = ConfigurationManager()
+    connection_manager = IRISConnectionManager(config_manager)
+    schema_manager = SchemaManager(connection_manager, config_manager)
+    
+    # Ensure tables exist before clearing
+    schema_manager.ensure_table_schema('SourceDocuments')
+    
+    # Get connection and clear data
+    conn = get_iris_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Only clear tables that exist - use safe deletion
+        try:
+            cursor.execute("DELETE FROM RAG.DocumentChunks")
+            logger.info("Cleared DocumentChunks table")
+        except Exception as e:
+            logger.info(f"DocumentChunks table not found or already empty: {e}")
+        
+        try:
+            cursor.execute("DELETE FROM RAG.SourceDocuments")
+            logger.info("Cleared SourceDocuments table")
+        except Exception as e:
+            logger.info(f"SourceDocuments table not found or already empty: {e}")
+        
+        conn.commit()
+        logger.info("✓ Data clearing completed")
+        
+    finally:
+        cursor.close()
+        conn.close()
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -108,15 +147,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Clear existing data first
-    logger.info("Clearing existing data...")
-    conn = get_iris_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM RAG.DocumentTokenEmbeddings")
-    cursor.execute("DELETE FROM RAG.DocumentChunks")
-    cursor.execute("DELETE FROM RAG.SourceDocuments")
-    conn.commit()
-    cursor.close()
-    conn.close()
+    clear_existing_data()
     
     # Load new data
     load_documents_with_embeddings(args.directory, args.limit)

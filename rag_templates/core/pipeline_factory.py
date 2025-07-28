@@ -257,10 +257,8 @@ class PipelineFactory:
         """Get or create connection manager."""
         if "connection_manager" not in self._component_cache:
             try:
-                from iris_rag.core.connection import ConnectionManager
-                self._component_cache["connection_manager"] = ConnectionManager(
-                    self.config_manager
-                )
+                from common.iris_connection_manager import get_iris_connection
+                self._component_cache["connection_manager"] = get_iris_connection()
             except ImportError:
                 logger.warning("ConnectionManager not available, using mock")
                 # Create a mock connection manager for testing

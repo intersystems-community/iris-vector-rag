@@ -20,7 +20,7 @@ class TestSystemValidator:
     @pytest.fixture
     def system_validator(self, mock_config_manager):
         """Create a SystemValidator instance for testing."""
-        with patch('iris_rag.monitoring.system_validator.ConnectionManager'):
+        with patch('iris_rag.monitoring.system_validator.get_iris_connection'):
             with patch('iris_rag.monitoring.system_validator.HealthMonitor'):
                 validator = SystemValidator(mock_config_manager)
                 return validator

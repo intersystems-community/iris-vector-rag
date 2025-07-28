@@ -75,7 +75,7 @@ def extract_pmc_metadata(xml_file_path: str) -> Dict[str, Any]:
             content += f"\n\nKeywords: {', '.join(keywords)}"
         
         return {
-            "doc_id": pmc_id,
+            "pmc_id": pmc_id,
             "title": title,
             "content": content,
             "abstract": abstract,
@@ -92,7 +92,7 @@ def extract_pmc_metadata(xml_file_path: str) -> Dict[str, Any]:
         logger.error(f"Error processing {xml_file_path}: {e}")
         pmc_id = os.path.basename(xml_file_path).replace('.xml', '')
         return {
-            "doc_id": pmc_id,
+            "pmc_id": pmc_id,
             "title": "Error",
             "content": f"Failed to process: {str(e)}",
             "abstract": f"Failed to process: {str(e)}",

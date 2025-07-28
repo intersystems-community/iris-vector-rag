@@ -133,6 +133,19 @@ class ConfigurationManager:
                 return default # Key path not found, return default
         return value
 
+    def get_config(self, key_string: str, default: Optional[Any] = None) -> Any:
+        """
+        Alias for get() method for backward compatibility.
+        
+        Args:
+            key_string: The configuration key string.
+            default: The default value to return if the key is not found.
+
+        Returns:
+            The configuration value, or the default if not found.
+        """
+        return self.get(key_string, default)
+
     def get_vector_index_config(self) -> Dict[str, Any]:
         """
         Get vector index configuration with HNSW parameters.
@@ -355,6 +368,44 @@ class ConfigurationManager:
                 }
             }
         }
+
+    def get_database_config(self) -> Dict[str, Any]:
+        """
+        Get database configuration.
+        
+        Returns:
+            Dictionary containing database configuration
+        """
+        return self.get("database", {})
+    
+    def get_default_table_name(self) -> str:
+        """
+        Get the default table name for RAG operations.
+        
+        Returns:
+            Default table name
+        """
+        return self.get("default_table_name", "SourceDocuments")
+    
+    def get_logging_config(self) -> Dict[str, Any]:
+        """
+        Get logging configuration.
+        
+        Returns:
+            Dictionary containing logging configuration with defaults
+        """
+        default_config = {
+            "level": "INFO",
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            "path": "logs/iris_rag.log"
+        }
+        
+        # Get user-defined config and merge with defaults
+        user_config = self.get("logging", {})
+        if isinstance(user_config, dict):
+            default_config.update(user_config)
+        
+        return default_config
 
     # Placeholder for future validation method
     def validate(self):

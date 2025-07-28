@@ -1,10 +1,8 @@
 def test_core_module_imports():
     """Tests imports from iris_rag.core module."""
     from iris_rag.core import base
-    from iris_rag.core import connection
     from iris_rag.core import models
     assert base is not None, "iris_rag.core.base failed to import"
-    assert connection is not None, "iris_rag.core.connection failed to import"
     assert models is not None, "iris_rag.core.models failed to import"
 
 def test_embeddings_module_imports():
@@ -40,8 +38,8 @@ def test_top_level_package_import():
 
 def test_specific_class_function_imports():
     """Tests direct import of key classes and functions."""
-    from iris_rag.core.connection import ConnectionManager
-    assert ConnectionManager is not None
+    from common.iris_connection_manager import get_iris_connection
+    assert get_iris_connection is not None
 
     from iris_rag.embeddings.manager import EmbeddingManager
     assert EmbeddingManager is not None

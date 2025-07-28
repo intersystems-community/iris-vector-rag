@@ -10,7 +10,6 @@ import time
 from typing import List, Dict, Any, Optional, Callable
 from ..core.base import RAGPipeline
 from ..core.models import Document
-from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
 from ..embeddings.manager import EmbeddingManager
 
@@ -22,23 +21,25 @@ class BasicRAGPipeline(RAGPipeline):
     Basic RAG pipeline implementation.
     
     This pipeline implements the standard RAG approach:
-    1. Document ingestion and embedding
+    1. Document ingestion with automatic chunking via IRISVectorStore
     2. Vector similarity search for retrieval
     3. Context augmentation and LLM generation
+    
+    Note: Chunking is now handled automatically by the IRISVectorStore layer,
+    making this pipeline chunking-agnostic and configuration-driven.
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager,
+    def __init__(self, config_manager: ConfigurationManager,
                  llm_func: Optional[Callable[[str], str]] = None, vector_store=None):
         """
         Initialize the Basic RAG Pipeline.
         
         Args:
-            connection_manager: Manager for database connections
             config_manager: Manager for configuration settings
             llm_func: Optional LLM function for answer generation
             vector_store: Optional VectorStore instance
         """
-        super().__init__(connection_manager, config_manager, vector_store)
+        super().__init__(config_manager, vector_store)
         self.llm_func = llm_func
         
         # Initialize components
@@ -46,8 +47,6 @@ class BasicRAGPipeline(RAGPipeline):
         
         # Get pipeline configuration
         self.pipeline_config = self.config_manager.get("pipelines:basic", {})
-        self.chunk_size = self.pipeline_config.get("chunk_size", 1000)
-        self.chunk_overlap = self.pipeline_config.get("chunk_overlap", 200)
         self.default_top_k = self.pipeline_config.get("default_top_k", 5)
     
     def load_documents(self, documents_path: str, **kwargs) -> None:
@@ -58,35 +57,33 @@ class BasicRAGPipeline(RAGPipeline):
             documents_path: Path to documents or directory of documents
             **kwargs: Additional arguments including:
                 - documents: List of Document objects (if providing directly)
-                - chunk_documents: Whether to chunk documents (default: True)
+                - auto_chunk: Whether to enable automatic chunking (default: True)
+                - chunking_strategy: Strategy to use for chunking (default: from config)
                 - generate_embeddings: Whether to generate embeddings (default: True)
         """
         start_time = time.time()
         
-        # Handle direct document input
-        if "documents" in kwargs:
-            documents = kwargs["documents"]
-            if not isinstance(documents, list):
-                raise ValueError("Documents must be provided as a list")
-        else:
-            # Load documents from path
-            documents = self._load_documents_from_path(documents_path)
-        
-        # Process documents
-        chunk_documents = kwargs.get("chunk_documents", True)
+        # Check if we need custom embedding generation
         generate_embeddings = kwargs.get("generate_embeddings", True)
         
-        if chunk_documents:
-            documents = self._chunk_documents(documents)
-        
         if generate_embeddings:
-            self._generate_and_store_embeddings(documents)
+            # Custom logic for BasicRAG with embedding generation
+            documents = self._get_documents(documents_path, **kwargs)
+            
+            # Get chunking configuration
+            pipeline_name = self._get_pipeline_name()
+            chunking_config = self._get_chunking_config(pipeline_name)
+            
+            auto_chunk = kwargs.get("auto_chunk", chunking_config.get("enabled", True))
+            chunking_strategy = kwargs.get("chunking_strategy", chunking_config.get("strategy", "fixed_size"))
+            
+            self._generate_and_store_embeddings(documents, auto_chunk, chunking_strategy)
         else:
-            # Store documents without embeddings using vector store
-            self._store_documents(documents)
+            # Use default implementation for non-embedding case
+            super().load_documents(documents_path, **kwargs)
         
         processing_time = time.time() - start_time
-        logger.info(f"Loaded {len(documents)} documents in {processing_time:.2f} seconds")
+        logger.info(f"Loaded documents in {processing_time:.2f} seconds")
     
     def _load_documents_from_path(self, documents_path: str) -> List[Document]:
         """
@@ -146,86 +143,14 @@ class BasicRAGPipeline(RAGPipeline):
             metadata=metadata
         )
     
-    def _chunk_documents(self, documents: List[Document]) -> List[Document]:
+    def _generate_and_store_embeddings(self, documents: List[Document], auto_chunk: bool = True, chunking_strategy: Optional[str] = None) -> None:
         """
-        Split documents into smaller chunks.
-        
-        Args:
-            documents: List of documents to chunk
-            
-        Returns:
-            List of chunked documents
-        """
-        chunked_documents = []
-        
-        for doc in documents:
-            chunks = self._split_text(doc.page_content)
-            
-            for i, chunk_text in enumerate(chunks):
-                chunk_metadata = doc.metadata.copy()
-                chunk_metadata.update({
-                    "chunk_index": i,
-                    "parent_document_id": doc.id,
-                    "chunk_size": len(chunk_text)
-                })
-                
-                chunk_doc = Document(
-                    page_content=chunk_text,
-                    metadata=chunk_metadata
-                )
-                chunked_documents.append(chunk_doc)
-        
-        logger.info(f"Chunked {len(documents)} documents into {len(chunked_documents)} chunks")
-        return chunked_documents
-    
-    def _split_text(self, text: str) -> List[str]:
-        """
-        Split text into chunks with overlap.
-        
-        Args:
-            text: Text to split
-            
-        Returns:
-            List of text chunks
-        """
-        if len(text) <= self.chunk_size:
-            return [text]
-        
-        chunks = []
-        start = 0
-        
-        while start < len(text):
-            end = start + self.chunk_size
-            
-            # If this is not the last chunk, try to break at a sentence or word boundary
-            if end < len(text):
-                # Look for sentence boundary
-                sentence_end = text.rfind('.', start, end)
-                if sentence_end > start:
-                    end = sentence_end + 1
-                else:
-                    # Look for word boundary
-                    word_end = text.rfind(' ', start, end)
-                    if word_end > start:
-                        end = word_end
-            
-            chunk = text[start:end].strip()
-            if chunk:
-                chunks.append(chunk)
-            
-            # Move start position with overlap
-            start = end - self.chunk_overlap
-            if start <= 0:
-                start = end
-        
-        return chunks
-    
-    def _generate_and_store_embeddings(self, documents: List[Document]) -> None:
-        """
-        Generate embeddings for documents and store them.
+        Generate embeddings for documents and store them using automatic chunking.
         
         Args:
             documents: List of documents to process
+            auto_chunk: Whether to enable automatic chunking
+            chunking_strategy: Strategy to use for chunking (optional)
         """
         # Extract text content
         texts = [doc.page_content for doc in documents]
@@ -239,9 +164,32 @@ class BasicRAGPipeline(RAGPipeline):
             batch_embeddings = self.embedding_manager.embed_texts(batch_texts)
             all_embeddings.extend(batch_embeddings)
         
-        # Store documents with embeddings using vector store
-        self._store_documents(documents, all_embeddings)
-        logger.info(f"Generated and stored embeddings for {len(documents)} documents")
+        # Store documents with embeddings using vector store's automatic chunking
+        self.vector_store.add_documents(
+            documents,
+            embeddings=all_embeddings,
+            auto_chunk=auto_chunk,
+            chunking_strategy=chunking_strategy
+        )
+        logger.info(f"Generated and stored embeddings for {len(documents)} documents with auto_chunk={auto_chunk}")
+    
+    def _store_documents_with_chunking(self, documents: List[Document], auto_chunk: bool = True, chunking_strategy: Optional[str] = None) -> List[str]:
+        """
+        Store documents using vector store's automatic chunking without pre-computed embeddings.
+        
+        Args:
+            documents: List of Document objects to store
+            auto_chunk: Whether to enable automatic chunking
+            chunking_strategy: Strategy to use for chunking (optional)
+            
+        Returns:
+            List of document IDs that were stored
+        """
+        return self.vector_store.add_documents(
+            documents,
+            auto_chunk=auto_chunk,
+            chunking_strategy=chunking_strategy
+        )
     
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
         """

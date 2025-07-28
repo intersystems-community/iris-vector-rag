@@ -10,6 +10,7 @@ import logging
 from typing import List, Union, Optional, Dict, Any
 from .core.config_manager import ConfigurationManager
 from .core.errors import RAGFrameworkError, InitializationError, ConfigurationError
+from iris_rag.core.models import Document
 
 logger = logging.getLogger(__name__)
 
@@ -151,12 +152,12 @@ class RAG:
         """
         try:
             # Import here to avoid circular imports and defer heavy imports
-            from iris_rag.core.connection import ConnectionManager
+            from common.iris_connection_manager import get_iris_connection
             from iris_rag.pipelines.basic import BasicRAGPipeline
             from common.utils import get_embedding_func, get_llm_func
             
             # Initialize connection manager
-            connection_manager = ConnectionManager(self._config_manager)
+            connection = get_iris_connection()
             
             # Get embedding and LLM functions
             embedding_func = get_embedding_func()
@@ -164,7 +165,6 @@ class RAG:
             
             # Initialize the basic RAG pipeline
             self._pipeline = BasicRAGPipeline(
-                connection_manager=connection_manager,
                 config_manager=self._config_manager,
                 llm_func=llm_func
             )
@@ -185,7 +185,7 @@ class RAG:
                 details={"error": str(e)}
             ) from e
     
-    def _process_documents(self, documents: Union[List[str], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    def _process_documents(self, documents: Union[List[str], List[Dict[str, Any]]]) -> List[Document]:
         """
         Process input documents into the format expected by the pipeline.
         
@@ -193,35 +193,38 @@ class RAG:
             documents: List of document texts or document dictionaries
             
         Returns:
-            List of processed document dictionaries
+            List of processed Document objects
         """
         processed = []
         
         for i, doc in enumerate(documents):
             if isinstance(doc, str):
                 # Convert string to document format
-                processed_doc = {
-                    "page_content": doc,
-                    "metadata": {
-                        "source": f"simple_api_doc_{i}",
-                        "document_id": f"doc_{i}",
-                        "added_via": "simple_api"
-                    }
+                metadata = {
+                    "source": f"simple_api_doc_{i}",
+                    "document_id": f"doc_{i}",
+                    "added_via": "simple_api"
                 }
+                processed_doc = Document(page_content=doc, metadata=metadata)
             elif isinstance(doc, dict):
                 # Ensure required fields exist
                 if "page_content" not in doc:
                     raise ValueError(f"Document {i} missing 'page_content' field")
                 
-                processed_doc = doc.copy()
-                if "metadata" not in processed_doc:
-                    processed_doc["metadata"] = {}
-                
-                # Add default metadata
-                processed_doc["metadata"].update({
-                    "document_id": processed_doc["metadata"].get("document_id", f"doc_{i}"),
+                metadata = doc.get("metadata", {})
+                metadata.update({
+                    "document_id": metadata.get("document_id", f"doc_{i}"),
                     "added_via": "simple_api"
                 })
+                
+                # Use explicit id if provided, otherwise use document_id from metadata, otherwise default
+                doc_id = doc.get("id") or metadata.get("document_id", f"doc_{i}")
+                
+                processed_doc = Document(
+                    page_content=doc["page_content"],
+                    metadata=metadata,
+                    id=doc_id
+                )
             else:
                 raise ValueError(f"Document {i} must be string or dictionary, got {type(doc)}")
             

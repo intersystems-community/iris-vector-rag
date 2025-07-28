@@ -1,0 +1,214 @@
+{
+  "test_start_time": "2025-07-27T15:35:18.922132",
+  "document_count": 2808,
+  "pipeline_tests": {
+    "basic": {
+      "pipeline_type": "basic",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "total_time": 0.0031299591064453125
+    },
+    "colbert": {
+      "pipeline_type": "colbert",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "total_time": 0.0028541088104248047
+    },
+    "crag": {
+      "pipeline_type": "crag",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "total_time": 0.0010318756103515625
+    },
+    "hyde": {
+      "pipeline_type": "hyde",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "total_time": 0.0009799003601074219
+    },
+    "graphrag": {
+      "pipeline_type": "graphrag",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "total_time": 0.0020990371704101562
+    },
+    "hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "total_time": 0.0017170906066894531
+    }
+  },
+  "validation_tests": {
+    "status_check_basic": {
+      "pipeline_type": "basic",
+      "status_check_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "validation_time": 0.0015909671783447266
+    },
+    "status_check_colbert": {
+      "pipeline_type": "colbert",
+      "status_check_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "validation_time": 0.002701997756958008
+    },
+    "status_check_crag": {
+      "pipeline_type": "crag",
+      "status_check_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "validation_time": 0.004549980163574219
+    },
+    "status_check_hyde": {
+      "pipeline_type": "hyde",
+      "status_check_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "validation_time": 0.00557398796081543
+    },
+    "status_check_graphrag": {
+      "pipeline_type": "graphrag",
+      "status_check_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "validation_time": 0.0065670013427734375
+    },
+    "status_check_hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "status_check_success": false,
+      "error": "'IRISConnectionManager' object has no attribute 'get'",
+      "validation_time": 0.007537841796875
+    },
+    "error_quality_colbert": {
+      "pipeline_type": "colbert",
+      "has_summary": true,
+      "has_suggestions": true,
+      "has_specific_issues": true,
+      "message_quality_score": 3
+    },
+    "error_quality_crag": {
+      "pipeline_type": "crag",
+      "has_summary": true,
+      "has_suggestions": true,
+      "has_specific_issues": true,
+      "message_quality_score": 3
+    }
+  },
+  "setup_tests": {
+    "setup_basic": {
+      "pipeline_type": "basic",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.4741859436035156
+    },
+    "setup_colbert": {
+      "pipeline_type": "colbert",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.4700920581817627
+    },
+    "setup_crag": {
+      "pipeline_type": "crag",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.4628679752349854
+    },
+    "setup_hyde": {
+      "pipeline_type": "hyde",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.5148801803588867
+    },
+    "setup_graphrag": {
+      "pipeline_type": "graphrag",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Pipeline not ready. Issues: Table issues: DocumentEntities, EntityRelationships; Embedding issues: entity_embeddings, chunk_embeddings_optional",
+      "remaining_issues": [
+        "DocumentEntities",
+        "EntityRelationships",
+        "entity_embeddings",
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 40.76404881477356
+    },
+    "setup_hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.4244260787963867
+    }
+  },
+  "performance_metrics": {
+    "avg_total_time": 0.0019686619440714517,
+    "avg_execution_time": 0,
+    "avg_setup_time": 0,
+    "max_total_time": 0.0031299591064453125,
+    "min_total_time": 0.0009799003601074219,
+    "avg_validation_time": 0.004753629366556804,
+    "avg_setup_orchestration_time": 8.01841684182485
+  },
+  "reliability_metrics": {
+    "total_pipelines_tested": 6,
+    "successful_validations": 0,
+    "successful_setups": 0,
+    "successful_executions": 0,
+    "success_rate": 0.0
+  },
+  "errors": [
+    "Validation failed for basic: 'IRISConnectionManager' object has no attribute 'get'",
+    "Validation failed for colbert: 'IRISConnectionManager' object has no attribute 'get'",
+    "Validation failed for crag: 'IRISConnectionManager' object has no attribute 'get'",
+    "Validation failed for hyde: 'IRISConnectionManager' object has no attribute 'get'",
+    "Validation failed for graphrag: 'IRISConnectionManager' object has no attribute 'get'",
+    "Validation failed for hybrid_ifind: 'IRISConnectionManager' object has no attribute 'get'",
+    "Pipeline test failed for basic: 'IRISConnectionManager' object has no attribute 'get'",
+    "Pipeline test failed for colbert: 'IRISConnectionManager' object has no attribute 'get'",
+    "Pipeline test failed for crag: 'IRISConnectionManager' object has no attribute 'get'",
+    "Pipeline test failed for hyde: 'IRISConnectionManager' object has no attribute 'get'",
+    "Pipeline test failed for graphrag: 'IRISConnectionManager' object has no attribute 'get'",
+    "Pipeline test failed for hybrid_ifind: 'IRISConnectionManager' object has no attribute 'get'"
+  ],
+  "summary": {
+    "overall_success": false,
+    "validation_system_working": true,
+    "setup_system_working": true,
+    "all_pipelines_tested": false,
+    "error_count": 12,
+    "recommendations": [
+      "Some pipelines failed - investigate error logs",
+      "Errors encountered - review error details"
+    ]
+  },
+  "pmc_document_count": 2,
+  "test_end_time": "2025-07-27T15:36:14.349226"
+}

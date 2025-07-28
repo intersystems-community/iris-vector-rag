@@ -1,0 +1,186 @@
+{
+  "title": "Enhanced MCP Tool Schemas for IRIS RAG System",
+  "description": "Comprehensive tool schemas with detailed parameter descriptions for all RAG techniques and utility tools",
+  "version": "2.0.0",
+  "tools": {
+    "rag_health_check": {
+      "name": "rag_health_check",
+      "description": "Check health status of RAG system components including database connectivity, embedding models, LLM availability, and vector store status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "include_details": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include detailed component status information in the health check response, such as version numbers, connection details, and performance metrics."
+          }
+        }
+      }
+    },
+    "rag_list_techniques": {
+      "name": "rag_list_techniques",
+      "description": "List all available RAG techniques with their descriptions and capabilities. Useful for discovering what RAG methods are available and their current status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "description": "No parameters required. Returns a comprehensive list of all implemented RAG techniques."
+      }
+    },
+    "rag_performance_metrics": {
+      "name": "rag_performance_metrics",
+      "description": "Get performance metrics for RAG techniques including execution times, retrieval quality scores, and system resource usage.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "technique": {
+            "type": "string",
+            "description": "Specific RAG technique to get metrics for (e.g., \"basic\", \"crag\", \"hyde\"). Leave empty to get metrics for all techniques."
+          },
+          "time_range": {
+            "type": "string",
+            "enum": ["1h", "24h", "7d", "30d"],
+            "default": "24h",
+            "description": "Time range for performance metrics: \"1h\" (last hour), \"24h\" (last day), \"7d\" (last week), \"30d\" (last month)"
+          }
+        }
+      }
+    }
+  },
+  "parameter_guidelines": {
+    "query": {
+      "description": "All RAG technique tools require a 'query' parameter",
+      "constraints": {
+        "minLength": 1,
+        "maxLength": 2048,
+        "type": "string"
+      },
+      "examples": [
+        "What are the symptoms of diabetes?",
+        "How does machine learning work?",
+        "Explain the process of photosynthesis"
+      ]
+    },
+    "options": {
+      "description": "Common configuration options available across all RAG techniques",
+      "parameters": {
+        "top_k": {
+          "description": "Number of documents to retrieve",
+          "range": "1-50",
+          "default": 5,
+          "impact": "Higher values provide more context but may introduce noise"
+        },
+        "temperature": {
+          "description": "LLM generation randomness control",
+          "range": "0.0-2.0",
+          "default": 0.7,
+          "values": {
+            "0.0": "Deterministic output",
+            "0.7": "Balanced creativity",
+            "2.0": "Very creative/random"
+          }
+        },
+        "max_tokens": {
+          "description": "Maximum response length",
+          "range": "50-4096",
+          "default": 1024,
+          "impact": "Controls the length of generated answers"
+        },
+        "include_sources": {
+          "description": "Include source references",
+          "type": "boolean",
+          "default": true,
+          "impact": "Useful for citation and verification"
+        }
+      }
+    },
+    "technique_params": {
+      "description": "Technique-specific parameters that vary by RAG method",
+      "by_technique": {
+        "crag": {
+          "confidence_threshold": "Retrieval quality threshold (0.0-1.0)",
+          "correction_strategy": "How to handle poor retrievals (rewrite/expand/filter)"
+        },
+        "colbert": {
+          "max_query_length": "Query length limit for processing (32-512 tokens)",
+          "interaction_threshold": "Token interaction strength threshold (0.0-1.0)"
+        },
+        "graphrag": {
+          "max_hops": "Graph traversal depth limit (1-5 hops)",
+          "entity_threshold": "Entity extraction confidence threshold (0.0-1.0)"
+        },
+        "hybrid_ifind": {
+          "vector_weight": "Weight for vector similarity (0.0-1.0)",
+          "keyword_weight": "Weight for keyword matching (0.0-1.0)"
+        },
+        "hyde": {
+          "hypothetical_doc_length": "Target length for hypothetical document (50-500 tokens)",
+          "use_query_expansion": "Whether to expand query with hypothetical terms"
+        },
+        "noderag": {
+          "max_depth": "Document hierarchy traversal depth (1-10)",
+          "node_similarity_threshold": "Node inclusion threshold (0.0-1.0)"
+        },
+        "sqlrag": {
+          "query_complexity": "SQL query complexity level (simple/moderate/complex)",
+          "enable_query_optimization": "Whether to optimize generated SQL queries"
+        }
+      }
+    }
+  },
+  "usage_examples": {
+    "basic_query": {
+      "tool": "rag_basic",
+      "parameters": {
+        "query": "What are the main causes of diabetes?",
+        "options": {
+          "top_k": 5,
+          "temperature": 0.7,
+          "include_sources": true
+        }
+      }
+    },
+    "advanced_crag": {
+      "tool": "rag_crag",
+      "parameters": {
+        "query": "Explain machine learning algorithms",
+        "options": {
+          "top_k": 10,
+          "temperature": 0.5,
+          "max_tokens": 2048
+        },
+        "technique_params": {
+          "confidence_threshold": 0.9,
+          "correction_strategy": "expand"
+        }
+      }
+    },
+    "health_check": {
+      "tool": "rag_health_check",
+      "parameters": {
+        "include_details": true
+      }
+    }
+  },
+  "best_practices": {
+    "parameter_selection": [
+      "Start with default values and adjust based on results",
+      "Use higher top_k for complex queries requiring more context",
+      "Lower temperature for factual queries, higher for creative tasks",
+      "Enable include_sources for queries requiring citations"
+    ],
+    "technique_selection": [
+      "Use basic RAG for straightforward factual queries",
+      "Use CRAG when retrieval quality is uncertain",
+      "Use HyDE for queries where hypothetical examples help",
+      "Use GraphRAG for queries involving entity relationships",
+      "Use Hybrid iFind when both semantic and keyword matching are important",
+      "Use ColBERT for queries requiring fine-grained relevance scoring"
+    ],
+    "performance_optimization": [
+      "Monitor execution times with rag_performance_metrics",
+      "Use rag_health_check to verify system status",
+      "Adjust top_k based on performance vs. quality trade-offs",
+      "Consider technique-specific parameters for optimization"
+    ]
+  }
+}

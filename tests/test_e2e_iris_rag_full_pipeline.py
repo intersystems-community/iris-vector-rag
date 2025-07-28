@@ -3,7 +3,7 @@ import os
 import glob
 import xml.etree.ElementTree as ET
 from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.embeddings.manager import EmbeddingManager
 from iris_rag.storage.iris import IRISStorage
 from iris_rag.pipelines.basic import BasicRAGPipeline
@@ -39,7 +39,7 @@ def config_manager():
 @pytest.fixture(scope="module")
 def connection_manager(config_manager):
     """Fixture for ConnectionManager."""
-    return ConnectionManager(config_manager)
+    return get_iris_connection()
 
 @pytest.fixture(scope="module")
 def embedding_manager(config_manager):
@@ -54,7 +54,7 @@ def vector_storage(connection_manager, embedding_manager, config_manager):
     try:
         storage.create_table(if_not_exists=True) # Assuming this also clears if it exists, or add a clear method
         # Clear table before tests in this module
-        with connection_manager.get_connection() as conn:
+        with connection_manager as conn:
             with conn.cursor() as cursor:
                 cursor.execute(f"DELETE FROM {storage.table_name}")
             conn.commit()
@@ -73,11 +73,10 @@ def mock_llm_func(query: str, context: str) -> str:
 def basic_rag_pipeline(connection_manager, embedding_manager, vector_storage, config_manager):
     """Fixture for BasicRAGPipeline."""
     return BasicRAGPipeline(
-        connection_manager=connection_manager,
+        config_manager=real_config_manager,
         embedding_manager=embedding_manager,
         vector_storage=vector_storage,
-        llm_func=mock_llm_func,
-        config_manager=config_manager
+        llm_func=mock_llm_func
     )
 
 @pytest.fixture(scope="module")

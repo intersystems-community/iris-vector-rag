@@ -1,0 +1,19 @@
+{
+  "pipeline_results": {
+    "basic": {
+      "success": false,
+      "error": "Document.__init__() got an unexpected keyword argument 'doc_id'",
+      "chunking_config": {
+        "chunking_strategy": "fixed_size",
+        "auto_chunk": true
+      }
+    }
+  },
+  "performance_metrics": {},
+  "errors": [
+    {
+      "pipeline": "basic",
+      "error": "Document.__init__() got an unexpected keyword argument 'doc_id'"
+    }
+  ]
+}

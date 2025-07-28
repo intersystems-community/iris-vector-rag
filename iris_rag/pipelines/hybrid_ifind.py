@@ -14,7 +14,7 @@ import time
 from typing import List, Dict, Any, Optional, Callable
 from ..core.base import RAGPipeline
 from ..core.models import Document
-from ..core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from ..config.manager import ConfigurationManager
 from ..storage.iris import IRISStorage
 from ..embeddings.manager import EmbeddingManager
@@ -36,22 +36,23 @@ class HybridIFindRAGPipeline(RAGPipeline):
     superior retrieval performance compared to individual approaches.
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager,
-                 vector_store=None, llm_func: Optional[Callable[[str], str]] = None):
+    def __init__(self, config_manager: ConfigurationManager,
+                 vector_store=None, llm_func: Optional[Callable[[str], str]] = None,
+                 connection_manager=None):
         """
         Initialize the Hybrid IFind RAG Pipeline.
         
         Args:
-            connection_manager: Manager for database connections
             config_manager: Manager for configuration settings
             vector_store: Optional VectorStore instance
             llm_func: Optional LLM function for answer generation
+            connection_manager: Optional IRISConnectionManager instance
         """
-        super().__init__(connection_manager, config_manager, vector_store)
+        super().__init__(config_manager, vector_store, connection_manager)
         self.llm_func = llm_func
         
         # Initialize components
-        self.storage = IRISStorage(connection_manager, config_manager)
+        self.storage = IRISStorage(config_manager)
         self.embedding_manager = EmbeddingManager(config_manager)
         
         # Get pipeline configuration
@@ -77,70 +78,58 @@ class HybridIFindRAGPipeline(RAGPipeline):
         top_k = kwargs.get("top_k", 5)
         return self.query(query_text, top_k)
     
-    def load_documents(self, documents_path: str, **kwargs) -> None:
+    # HybridIFind uses the base class load_documents implementation
+    # with a custom _preprocess_documents hook to ensure IFind indexes
+    # Pipeline-specific configuration is handled via pipeline_overrides:hybrid_ifind:chunking
+    
+    def _preprocess_documents(self, documents: List[Document]) -> List[Document]:
         """
-        Load documents into the knowledge base (required abstract method).
+        Preprocess documents for HybridIFind - ensures IFind indexes are built after loading.
         
         Args:
-            documents_path: Path to documents or directory
-            **kwargs: Additional keyword arguments including:
-                - documents: List of Document objects (if providing directly)
-                - chunk_documents: Whether to chunk documents (default: True)
-                - generate_embeddings: Whether to generate embeddings (default: True)
-        """
-        # Handle direct document input
-        if "documents" in kwargs:
-            documents = kwargs["documents"]
-            if not isinstance(documents, list):
-                raise ValueError("Documents must be provided as a list")
-        else:
-            # Load documents from path - basic implementation
-            import os
-            documents = []
+            documents: List of documents to preprocess
             
-            if os.path.isfile(documents_path):
-                with open(documents_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                doc = Document(
-                    page_content=content,
-                    metadata={"source": documents_path}
-                )
-                documents.append(doc)
-            elif os.path.isdir(documents_path):
-                for filename in os.listdir(documents_path):
-                    file_path = os.path.join(documents_path, filename)
-                    if os.path.isfile(file_path):
-                        try:
-                            with open(file_path, 'r', encoding='utf-8') as f:
-                                content = f.read()
-                            doc = Document(
-                                page_content=content,
-                                metadata={"source": file_path, "filename": filename}
-                            )
-                            documents.append(doc)
-                        except Exception as e:
-                            logger.warning(f"Failed to load file {file_path}: {e}")
-        
-        # Use the ingest_documents method
-        result = self.ingest_documents(documents)
-        logger.info(f"Hybrid IFind: Loaded {len(documents)} documents - {result}")
-    
-    def ingest_documents(self, documents: List[Document]) -> Dict[str, Any]:
+        Returns:
+            List of preprocessed documents
         """
-        Ingest documents with IFind indexing support.
+        # Call parent preprocessing first
+        processed_docs = super()._preprocess_documents(documents)
+        
+        # Ensure IFind indexes are built after document loading
+        self._ensure_ifind_indexes()
+        
+        return processed_docs
+    
+    def ingest_documents(self, documents: List[Document], auto_chunk: bool = True,
+                        chunking_strategy: str = "hybrid") -> Dict[str, Any]:
+        """
+        Ingest documents with automatic chunking and IFind indexing support.
         
         Args:
             documents: List of documents to ingest
+            auto_chunk: Whether to enable automatic chunking
+            chunking_strategy: Strategy to use ('fixed_size', 'semantic', 'hybrid')
             
         Returns:
-            Dictionary with ingestion results
+            Dictionary with ingestion results including chunking information
         """
         start_time = time.time()
-        logger.info(f"Starting Hybrid IFind ingestion of {len(documents)} documents")
+        logger.info(f"Starting Hybrid IFind ingestion of {len(documents)} documents with chunking: {auto_chunk}")
         
         try:
-            # Store documents (this will also create IFind indexes if configured)
-            result = self.storage.store_documents(documents)
+            # Get chunking configuration from pipeline overrides
+            chunking_config = self.config_manager.get_config("pipeline_overrides:hybrid_ifind:chunking", {})
+            
+            # Use provided parameters or fall back to config
+            auto_chunk = chunking_config.get('enabled', auto_chunk)
+            chunking_strategy = chunking_config.get('strategy', chunking_strategy)
+            
+            # Use vector store to add documents with chunking
+            result = self.vector_store.add_documents(
+                documents=documents,
+                auto_chunk=auto_chunk,
+                chunking_strategy=chunking_strategy
+            )
             
             # Ensure IFind indexes are built
             self._ensure_ifind_indexes()
@@ -148,7 +137,9 @@ class HybridIFindRAGPipeline(RAGPipeline):
             end_time = time.time()
             result.update({
                 "processing_time": end_time - start_time,
-                "pipeline_type": "hybrid_ifind_rag"
+                "pipeline_type": "hybrid_ifind_rag",
+                "chunking_enabled": auto_chunk,
+                "chunking_strategy": chunking_strategy
             })
             
             logger.info(f"Hybrid IFind ingestion completed: {result}")
@@ -159,7 +150,9 @@ class HybridIFindRAGPipeline(RAGPipeline):
             return {
                 "status": "error",
                 "error": str(e),
-                "pipeline_type": "hybrid_ifind_rag"
+                "pipeline_type": "hybrid_ifind_rag",
+                "chunking_enabled": auto_chunk,
+                "chunking_strategy": chunking_strategy
             }
     
     def query(self, query_text: str, top_k: int = 5) -> Dict[str, Any]:
@@ -199,6 +192,15 @@ class HybridIFindRAGPipeline(RAGPipeline):
                 prompt = self._build_prompt(query_text, context)
                 answer = self.llm_func(prompt)
             
+            # Ensure answer is never None
+            if answer is None:
+                if not self.llm_func:
+                    answer = "No LLM function available for answer generation."
+                elif not retrieved_documents:
+                    answer = "No documents retrieved to generate an answer."
+                else:
+                    answer = "Unable to generate answer from retrieved documents."
+            
             end_time = time.time()
             
             result = {
@@ -219,14 +221,15 @@ class HybridIFindRAGPipeline(RAGPipeline):
             logger.error(f"Hybrid IFind query failed: {e}")
             return {
                 "query": query_text,
-                "answer": None,
+                "answer": f"Hybrid IFind pipeline error: {e}",
+                "retrieved_documents": [],
                 "error": str(e),
                 "pipeline_type": "hybrid_ifind_rag"
             }
     
     def _ensure_ifind_indexes(self):
         """Ensure IFind indexes are created for text search."""
-        connection = self.connection_manager.get_connection()
+        connection = get_iris_connection()
         cursor = connection.cursor()
         
         try:
@@ -264,24 +267,34 @@ class HybridIFindRAGPipeline(RAGPipeline):
     
     def _vector_search(self, query_embedding: List[float], top_k: int) -> List[Dict[str, Any]]:
         """Perform vector similarity search."""
-        connection = self.connection_manager.get_connection()
+        connection = get_iris_connection()
         cursor = connection.cursor()
         
         try:
             # Use vector_sql_utils for proper parameter handling
             from common.vector_sql_utils import format_vector_search_sql, execute_vector_search
             
+            # Get column names from schema manager
+            table_config = self.schema_manager.get_table_config("SourceDocumentsIFind")
+            if not table_config:
+                # Fallback to default SourceDocuments config
+                table_config = self.schema_manager.get_table_config("SourceDocuments")
+            
+            id_column = table_config.get("id_column", "ID")
+            embedding_column = table_config.get("embedding_column", "embedding")
+            content_column = table_config.get("content_column", "TEXT_CONTENT")
+            
             # Format vector with brackets for vector_sql_utils
             query_vector_str = f"[{','.join(f'{x:.10f}' for x in query_embedding)}]"
             
             sql = format_vector_search_sql(
                 table_name="RAG.SourceDocumentsIFind",
-                vector_column="embedding",
+                vector_column=embedding_column,
                 vector_string=query_vector_str,
                 embedding_dim=len(query_embedding),
                 top_k=top_k,
-                id_column="doc_id",
-                content_column="text_content"
+                id_column=id_column,
+                content_column=content_column
             )
             
             # Use execute_vector_search utility 
@@ -304,7 +317,7 @@ class HybridIFindRAGPipeline(RAGPipeline):
     
     def _ifind_search(self, query_text: str, top_k: int) -> List[Dict[str, Any]]:
         """Perform IFind text search."""
-        connection = self.connection_manager.get_connection()
+        connection = get_iris_connection()
         cursor = connection.cursor()
         
         try:

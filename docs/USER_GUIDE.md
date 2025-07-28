@@ -244,8 +244,9 @@ make load-data
 
 # Load from a specific directory
 python -c "
-from data.loader_fixed import process_and_load_documents
-result = process_and_load_documents('path/to/your/documents', limit=100)
+from data.unified_loader import process_and_load_documents_unified
+config = {'embedding_column_type': 'VECTOR', 'batch_size': 50}
+result = process_and_load_documents_unified(config=config, pmc_directory='path/to/your/documents', limit=100)
 print(f'Loaded: {result}')
 "
 ```

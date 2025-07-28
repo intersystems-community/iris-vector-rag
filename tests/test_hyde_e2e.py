@@ -7,6 +7,7 @@ import pytest
 import logging
 import os
 import sys
+from pathlib import Path
 
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -16,8 +17,10 @@ if project_root not in sys.path:
 from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipeline
 from common.utils import get_embedding_func, get_llm_func # Updated import
 from common.iris_connector import get_iris_connection # Updated import
-from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists # Updated import
-from data.loader_fixed import process_and_load_documents # Path remains correct
+from iris_rag.storage.schema_manager import SchemaManager
+from iris_rag.config.manager import ConfigurationManager
+from common.iris_connection_manager import IRISConnectionManager
+from data.unified_loader import process_and_load_documents_unified
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
@@ -35,12 +38,19 @@ def hyde_e2e_db_connection():
     Ensures test-specific documents are cleared before ingestion for idempotency.
     """
     logger.info("Setting up database for HyDE E2E pipeline tests...")
-    create_schema_if_not_exists("RAG") # Ensure schema exists
-    success_init = initialize_complete_rag_database("RAG") # Initialize tables and HNSW indexes
-    if not success_init:
-        pytest.fail("Failed to initialize RAG database for HyDE E2E tests.")
+    config_manager = ConfigurationManager()
+    connection_manager = IRISConnectionManager(config_manager=config_manager)
+    schema_manager = SchemaManager(connection_manager, config_manager)
+    schema_manager.ensure_table_schema("SourceDocuments")
+    schema_manager.ensure_table_schema("DocumentTokenEmbeddings")
+    schema_manager.ensure_table_schema("DocumentEntities")
 
-    conn = get_iris_connection()
+    # Clear checkpoint file
+    checkpoint_file = Path("data/unified_checkpoint.json")
+    if checkpoint_file.exists():
+        checkpoint_file.unlink()
+
+    conn = connection_manager.get_connection()
 
     logger.info("Attempting to delete DOCA and DOCB if they exist to ensure clean test data ingestion for HyDE.")
     try:
@@ -72,19 +82,22 @@ def hyde_e2e_db_connection():
 
     logger.info(f"HyDE E2E: Ingesting E2E test documents from {TEST_E2E_DOC_DIR}")
     e2e_embedding_func = get_embedding_func() # Use real embedding function
-    ingestion_stats = process_and_load_documents(
+    loader_config = {
+        "limit": 2,
+        "batch_size": 2,
+        "embedding_column_type": "VECTOR"
+    }
+    ingestion_stats = process_and_load_documents_unified(
+        config=loader_config,
         pmc_directory=TEST_E2E_DOC_DIR,
-        connection=conn,
         embedding_func=e2e_embedding_func,
-        colbert_doc_encoder_func=None,
-        limit=2,
-        batch_size=2
+        colbert_doc_encoder_func=None
     )
-    if not ingestion_stats["success"] or ingestion_stats["loaded_doc_count"] != 2:
+    if not ingestion_stats["success"] or int(ingestion_stats["loaded_doc_count"]) != 2:
         pytest.fail(f"HyDE E2E: Failed to ingest E2E test documents. Stats: {ingestion_stats}")
     
     logger.info("HyDE E2E: Test documents ingested successfully.")
-    yield conn
+    yield conn, config_manager
     
     logger.info("HyDE E2E: Closing database connection.")
     conn.close()
@@ -95,7 +108,7 @@ def test_hyde_e2e_abstract_query_cellular_energy(hyde_e2e_db_connection):
     Tests the HyDE pipeline with an abstract query related to cellular energy,
     expecting to retrieve DOCA (Mitochondrial DNA).
     """
-    conn = hyde_e2e_db_connection
+    conn, config_manager = hyde_e2e_db_connection
 
     # Initialize the HyDE pipeline
     test_embedding_func = get_embedding_func()
@@ -106,8 +119,7 @@ def test_hyde_e2e_abstract_query_cellular_energy(hyde_e2e_db_connection):
         pytest.skip("LLM function not available, skipping HyDE test that requires it.")
 
     pipeline = HyDERAGPipeline(
-        iris_connector=conn,
-        embedding_func=test_embedding_func,
+        config_manager=config_manager,
         llm_func=test_llm_func
     )
 
@@ -132,7 +144,7 @@ def test_hyde_e2e_abstract_query_cellular_energy(hyde_e2e_db_connection):
     retrieved_docs = results["retrieved_documents"]
     assert len(retrieved_docs) > 0, f"HyDE retrieved no documents for abstract query: {abstract_query}"
     
-    retrieved_ids = [doc["id"] for doc in retrieved_docs]
+    retrieved_ids = [doc.metadata.get("doc_id", doc.id) for doc in retrieved_docs]
     logger.info(f"HyDE retrieved doc IDs: {retrieved_ids}, Answer: {results['answer'][:100]}...")
 
     assert "DOCA" in retrieved_ids, \
@@ -153,7 +165,7 @@ def test_hyde_e2e_abstract_query_genetic_modification(hyde_e2e_db_connection):
     Tests the HyDE pipeline with an abstract query related to genetic modification,
     expecting to retrieve DOCB (CRISPR Gene Editing).
     """
-    conn = hyde_e2e_db_connection
+    conn, config_manager = hyde_e2e_db_connection
 
     test_embedding_func = get_embedding_func()
     test_llm_func = get_llm_func()
@@ -161,8 +173,7 @@ def test_hyde_e2e_abstract_query_genetic_modification(hyde_e2e_db_connection):
         pytest.skip("LLM function not available, skipping HyDE test that requires it.")
 
     pipeline = HyDERAGPipeline(
-        iris_connector=conn,
-        embedding_func=test_embedding_func,
+        config_manager=config_manager,
         llm_func=test_llm_func
     )
 
@@ -184,7 +195,7 @@ def test_hyde_e2e_abstract_query_genetic_modification(hyde_e2e_db_connection):
     retrieved_docs_crispr = results_crispr["retrieved_documents"]
     assert len(retrieved_docs_crispr) > 0, f"HyDE retrieved no documents for abstract query: {abstract_query_crispr}"
 
-    retrieved_ids_crispr = [doc["id"] for doc in retrieved_docs_crispr]
+    retrieved_ids_crispr = [doc["doc_id"] for doc in retrieved_docs_crispr]
     logger.info(f"HyDE retrieved doc IDs for CRISPR query: {retrieved_ids_crispr}, Answer: {results_crispr['answer'][:100]}...")
 
     assert "DOCB" in retrieved_ids_crispr, \
@@ -212,10 +223,14 @@ if __name__ == "__main__":
     try:
         # Manually call what the fixture would do
         logger.info("Direct run: Setting up database...")
-        create_schema_if_not_exists("RAG")
-        initialize_complete_rag_database("RAG") # Ensure clean state
+        config_manager = ConfigurationManager()
+        connection_manager = IRISConnectionManager(config_manager=config_manager)
+        schema_manager = SchemaManager(connection_manager, config_manager)
+        schema_manager.ensure_table_schema("SourceDocuments")
+        schema_manager.ensure_table_schema("DocumentTokenEmbeddings")
+        schema_manager.ensure_table_schema("DocumentEntities")
         
-        temp_conn = get_iris_connection()
+        temp_conn = connection_manager.get_connection()
 
         # Clean up specific test documents
         try:
@@ -239,11 +254,15 @@ if __name__ == "__main__":
         # Manually ingest documents
         logger.info("Direct run: Ingesting test documents...")
         direct_embedding_func = get_embedding_func()
-        ingestion_stats_direct = process_and_load_documents(
+        loader_config = {
+            "limit": 2,
+            "batch_size": 2,
+            "embedding_column_type": "VECTOR"
+        }
+        ingestion_stats_direct = process_and_load_documents_unified(
+            config=loader_config,
             pmc_directory=TEST_E2E_DOC_DIR,
-            connection=temp_conn,
-            embedding_func=direct_embedding_func,
-            limit=2, batch_size=2
+            embedding_func=direct_embedding_func
         )
         if not ingestion_stats_direct["success"] or ingestion_stats_direct["loaded_doc_count"] != 2:
             logger.error(f"Direct run: Failed to ingest E2E test documents. Stats: {ingestion_stats_direct}")

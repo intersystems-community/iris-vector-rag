@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "iris-rag-server": {
+      "command": "node",
+      "args": ["src/mcp/server.js"],
+      "cwd": "/Users/tdyar/ws/rag-templates/nodejs",
+      "env": {}
+    }
+  }
+}

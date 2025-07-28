@@ -257,7 +257,8 @@ class IRISVectorStore(IVectorStore):
             
             # Update point count
             cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-            point_count = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            point_count = result[0] if result else 0
             cursor.execute("UPDATE VectorStore.Collections SET point_count = ? WHERE collection_name = ?",
                          (point_count, collection_name))
             

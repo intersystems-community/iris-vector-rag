@@ -10,7 +10,7 @@ import numpy as np
 from typing import List, Tuple, Optional
 from dataclasses import dataclass
 from ..config.manager import ConfigurationManager
-from ..core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,10 @@ class EmbeddingValidator:
             config_manager: Configuration manager for accessing settings
         """
         self.config_manager = config_manager
-        self.connection_manager = ConnectionManager(config_manager)
+        # Create a simple connection manager using get_iris_connection
+        self.connection_manager = type('ConnectionManager', (), {
+            'get_connection': lambda: get_iris_connection()
+        })()
         self.logger = logging.getLogger(__name__)
         
         # Get validation thresholds from configuration
@@ -162,7 +165,7 @@ class EmbeddingValidator:
         self.logger.debug(f"Sampling {sample_size} embeddings from {table_name}")
         
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.connection_manager.get_connection()
             cursor = iris_connector.cursor()
             
             # Sample embeddings using IRIS SQL TOP syntax

@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional, Union, List
 from dataclasses import dataclass
 
 from common.llm_cache_config import CacheConfig, load_cache_config
-from common.llm_cache_iris import IRISCacheBackend, create_iris_cache_backend
+from common.llm_cache_iris import IRISCacheBackend
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +72,9 @@ class CacheMetrics:
 class LangchainCacheManager:
     """Manages Langchain cache configuration and lifecycle."""
     
-    def __init__(self, config: CacheConfig):
+    def __init__(self, config: CacheConfig, config_manager=None):
         self.config = config
+        self.config_manager = config_manager
         self.metrics = CacheMetrics()
         self.cache_backend = None
         self._langchain_cache_configured = False
@@ -94,10 +95,10 @@ class LangchainCacheManager:
                 logger.info("Langchain memory cache configured")
                 
             elif self.config.backend == "iris":
-                # Try to reuse existing IRIS connection first, fallback to URL-based connection
-                iris_connector = self._get_iris_connection_for_cache()
+                from common.iris_connection_manager import IRISConnectionManager
+                connection_manager = IRISConnectionManager(self.config_manager)
                 
-                self.cache_backend = create_iris_cache_backend(self.config, iris_connector)
+                self.cache_backend = create_iris_cache_backend(self.config, connection_manager)
                 
                 # Create Langchain-compatible cache wrapper
                 cache = LangchainIRISCacheWrapper(self.cache_backend)
@@ -498,85 +499,56 @@ class LangchainIRISCacheWrapper:
         prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
         
         self.backend.set(
-            cache_key=cache_key,
-            value=cache_data,
+            cache_key,
+            cache_data,
             model_name=model_name,
             prompt_hash=prompt_hash
         )
     
     def _serialize_generations_for_sync_update(self, return_val: List['Generation']) -> str:
         """
-        Serialize List[Generation] for synchronous cache update.
+        Serialize a list of Generation objects to a JSON string for the `update` method.
+        
+        This method contains robust serialization logic, including fallbacks.
         
         Args:
-            return_val: List of Generation objects to serialize
+            return_val: List of Generation objects.
             
         Returns:
-            JSON string representation of the generations
+            JSON string representation of the list.
         """
         try:
             import json
             from langchain_core.load import dumpd
             from langchain_core.messages import BaseMessage
             
-            # Convert Generation objects to serializable format with robust error handling
             generations_data = []
-            
             for i, generation in enumerate(return_val):
                 try:
-                    # Log generation details for debugging
-                    logger.debug(f"Serializing generation {i}: {type(generation).__name__}")
-                    
-                    # Use Langchain's dumpd function for proper serialization
                     gen_data = dumpd(generation)
-                    
-                    # Additional validation: ensure the result is JSON serializable
-                    # This catches cases where dumpd succeeds but produces non-serializable objects
-                    json.dumps(gen_data)
-                    
-                    # Special handling for ChatGeneration with BaseMessage that might not be fully serialized
                     if hasattr(generation, 'message') and isinstance(generation.message, BaseMessage):
-                        # Double-check that the message in the serialized data is also serializable
                         if 'message' in gen_data and isinstance(gen_data['message'], BaseMessage):
-                            logger.debug(f"Re-serializing BaseMessage in generation {i}")
                             gen_data['message'] = dumpd(generation.message)
-                            # Validate again
-                            json.dumps(gen_data)
-                    
+                    json.dumps(gen_data)
                     generations_data.append(gen_data)
-                    logger.debug(f"Successfully serialized generation {i}")
-                    
                 except Exception as e:
                     logger.warning(f"Failed to serialize generation {i} with dumpd: {e}")
-                    logger.debug(f"Generation {i} type: {type(generation)}, attributes: {dir(generation)}")
-                    
-                    # Fallback 1: Try dict method if available
                     try:
                         if hasattr(generation, 'dict'):
                             gen_data = generation.dict()
-                            
-                            # Handle BaseMessage in dict output
                             if 'message' in gen_data and hasattr(gen_data['message'], 'dict'):
                                 gen_data['message'] = gen_data['message'].dict()
-                            
-                            # Validate JSON serialization
                             json.dumps(gen_data)
                             generations_data.append(gen_data)
-                            logger.debug(f"Successfully serialized generation {i} using dict fallback")
                             continue
-                            
                     except Exception as dict_error:
                         logger.warning(f"Dict fallback failed for generation {i}: {dict_error}")
-                    
-                    # Fallback 2: Manual extraction of key attributes
                     try:
                         gen_data = {
                             'text': getattr(generation, 'text', str(generation)),
                             'type': type(generation).__name__,
                             'generation_info': getattr(generation, 'generation_info', None)
                         }
-                        
-                        # Handle message attribute for ChatGeneration
                         if hasattr(generation, 'message'):
                             message = generation.message
                             if hasattr(message, 'content'):
@@ -586,16 +558,10 @@ class LangchainIRISCacheWrapper:
                                 }
                             else:
                                 gen_data['message'] = str(message)
-                        
-                        # Validate JSON serialization
                         json.dumps(gen_data)
                         generations_data.append(gen_data)
-                        logger.debug(f"Successfully serialized generation {i} using manual extraction")
-                        
                     except Exception as manual_error:
                         logger.error(f"Manual extraction failed for generation {i}: {manual_error}")
-                        
-                        # Fallback 3: Minimal safe representation
                         gen_data = {
                             'text': str(generation) if generation is not None else '',
                             'type': type(generation).__name__,
@@ -603,16 +569,11 @@ class LangchainIRISCacheWrapper:
                             'error_details': str(e)
                         }
                         generations_data.append(gen_data)
-                        logger.warning(f"Using minimal safe representation for generation {i}")
             
-            # Final validation: ensure the entire list is JSON serializable
             try:
-                serialized_generations = json.dumps(generations_data)
-                logger.debug(f"Successfully serialized {len(generations_data)} generations to JSON ({len(serialized_generations)} chars)")
-                return serialized_generations
+                return json.dumps(generations_data)
             except Exception as final_error:
                 logger.error(f"Final JSON serialization failed: {final_error}")
-                # Create a safe fallback representation
                 safe_generations = []
                 for i, gen_data in enumerate(generations_data):
                     try:
@@ -624,42 +585,55 @@ class LangchainIRISCacheWrapper:
                             'type': 'unknown',
                             'error': 'json_serialization_failed'
                         })
-                serialized_generations = json.dumps(safe_generations)
-                logger.warning(f"Used safe fallback serialization for {len(safe_generations)} generations")
-                return serialized_generations
+                return json.dumps(safe_generations)
             
         except Exception as e:
             logger.error(f"Error during sync cache update serialization: {e}")
-            # Ultimate fallback - return a safe JSON string
-            return json.dumps([{
-                'text': 'Serialization completely failed',
-                'type': 'unknown',
-                'error': str(e)
-            }])
+            return json.dumps([{'text': 'Serialization completely failed', 'type': 'unknown', 'error': str(e)}])
     
-    def clear(self) -> None:
-        """Clear all cache entries."""
-        self.backend.clear()
-    
-    def _generate_langchain_key(self, prompt: str, llm_string: str) -> str:
-        """Generate cache key compatible with Langchain format."""
-        combined = f"{prompt}|{llm_string}"
-        return hashlib.sha256(combined.encode()).hexdigest()
+    @staticmethod
+    def _generate_langchain_key(prompt: str, llm_string: str) -> str:
+        """
+        Generate a cache key that mimics Langchain's logic.
+        
+        Args:
+            prompt: The input prompt
+            llm_string: The LLM string identifier
+        
+        Returns:
+            SHA256 hash as cache key
+        """
+        # Langchain's key is a hash of the prompt and the LLM string identifier
+        return hashlib.sha256((prompt + llm_string).encode()).hexdigest()
     
     def _extract_model_name(self, llm_string: str) -> str:
         """Extract model name from Langchain LLM string."""
-        # Try to parse model name from llm_string
-        # Format is usually like "OpenAI\nmodel_name=gpt-3.5-turbo\n..."
         try:
-            for line in llm_string.split('\n'):
-                if 'model_name=' in line:
-                    return line.split('model_name=')[1].split('\n')[0].strip()
-                elif 'model=' in line:
-                    return line.split('model=')[1].split('\n')[0].strip()
-        except Exception:
-            pass
-        
-        return "unknown"
+            # A bit of a hack, but often works for standard representations
+            model_name_part = llm_string.split('"model_name": "')[1]
+            model_name = model_name_part.split('"')[0]
+            return model_name
+        except IndexError:
+            return "unknown"
+
+
+def create_iris_cache_backend(config: CacheConfig, connection_manager) -> IRISCacheBackend:
+    """
+    Factory function to create an IRISCacheBackend instance.
+    
+    Args:
+        config: Cache configuration object
+        connection_manager: An instance of IRISConnectionManager.
+    
+    Returns:
+        An instance of IRISCacheBackend
+    """
+    return IRISCacheBackend(
+        connection_manager=connection_manager,
+        table_name=config.table_name,
+        ttl_seconds=config.ttl,
+        schema=config.schema
+    )
 
 
 def generate_cache_key(prompt: str, model_name: str = "default", **kwargs) -> str:
@@ -674,64 +648,38 @@ def generate_cache_key(prompt: str, model_name: str = "default", **kwargs) -> st
     Returns:
         SHA256 hash as cache key
     """
-    # Load config to determine what to include in key
-    config = load_cache_config()
-    
-    cache_data = {'prompt': prompt.strip()}
-    
-    if config.include_model_name:
-        cache_data['model'] = model_name
-    
-    if config.include_temperature and 'temperature' in kwargs:
-        cache_data['temperature'] = kwargs['temperature']
-    
-    if config.include_max_tokens and 'max_tokens' in kwargs:
-        cache_data['max_tokens'] = kwargs['max_tokens']
-    
-    # Add other specified parameters
-    for key, value in kwargs.items():
-        if key not in ['temperature', 'max_tokens']:  # Already handled above
-            cache_data[key] = value
-    
-    # Apply normalization if configured
-    if config.normalize_whitespace:
-        cache_data['prompt'] = ' '.join(cache_data['prompt'].split())
-    
-    if config.normalize_case:
-        cache_data['prompt'] = cache_data['prompt'].lower()
+    # Create deterministic key from prompt and parameters
+    cache_data = {
+        'prompt': prompt.strip() if isinstance(prompt, str) else str(prompt),
+        'model': model_name,
+        **kwargs
+    }
     
     # Sort keys for deterministic hashing
     cache_str = json.dumps(cache_data, sort_keys=True)
-    
-    if config.hash_algorithm == 'sha256':
-        return hashlib.sha256(cache_str.encode()).hexdigest()
-    elif config.hash_algorithm == 'md5':
-        return hashlib.md5(cache_str.encode()).hexdigest()
-    elif config.hash_algorithm == 'sha1':
-        return hashlib.sha1(cache_str.encode()).hexdigest()
-    else:
-        # Default to sha256
-        return hashlib.sha256(cache_str.encode()).hexdigest()
+    return hashlib.sha256(cache_str.encode()).hexdigest()
+
+
+# Global cache manager instance
+_global_cache_manager: Optional[LangchainCacheManager] = None
 
 
 def setup_langchain_cache(config: Optional[CacheConfig] = None) -> Optional[Any]:
     """
-    Setup Langchain cache based on configuration.
+    Initialize and configure the global Langchain cache.
     
     Args:
-        config: Cache configuration. If None, loads from default location.
-    
+        config: A CacheConfig object. If not provided, loads from file.
+        
     Returns:
-        Cache instance or None if disabled/failed
+        The configured cache object, or None if disabled or failed.
     """
+    global _global_cache_manager
     if config is None:
         config = load_cache_config()
     
-    if not config.enabled:
-        return None
-    
-    manager = LangchainCacheManager(config)
-    return manager.setup_cache()
+    _global_cache_manager = LangchainCacheManager(config)
+    return _global_cache_manager.setup_cache()
 
 
 def is_langchain_cache_configured() -> bool:
@@ -743,21 +691,18 @@ def is_langchain_cache_configured() -> bool:
         return False
 
 
-# Global cache manager instance
-_global_cache_manager: Optional[LangchainCacheManager] = None
+# To ensure backward compatibility, we can keep a global instance
+# but it's recommended to manage the cache manager explicitly.
+_GLOBAL_CACHE_MANAGER = None
 
 
 def get_global_cache_manager() -> Optional[LangchainCacheManager]:
-    """Get or create global cache manager instance."""
-    global _global_cache_manager
-    
-    if _global_cache_manager is None:
+    """Get the global cache manager instance."""
+    global _GLOBAL_CACHE_MANAGER
+    if _GLOBAL_CACHE_MANAGER is None:
         config = load_cache_config()
-        if config.enabled:
-            _global_cache_manager = LangchainCacheManager(config)
-            _global_cache_manager.setup_cache()
-    
-    return _global_cache_manager
+        _GLOBAL_CACHE_MANAGER = LangchainCacheManager(config)
+    return _GLOBAL_CACHE_MANAGER
 
 
 def clear_global_cache() -> None:
@@ -772,15 +717,9 @@ def get_cache_stats() -> Dict[str, Any]:
     manager = get_global_cache_manager()
     if manager:
         return manager.get_cache_stats()
-    else:
-        return {
-            'enabled': False,
-            'backend': 'none',
-            'configured': False,
-            'metrics': {
-                'hits': 0,
-                'misses': 0,
-                'total_requests': 0,
-                'hit_rate': 0.0
-            }
-        }
+    return {
+        'enabled': False,
+        'backend': 'none',
+        'configured': False,
+        'metrics': {}
+    }

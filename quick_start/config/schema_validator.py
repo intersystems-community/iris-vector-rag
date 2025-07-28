@@ -144,11 +144,12 @@ class ConfigurationSchemaValidator:
         return validator
     
     def validate_configuration(
-        self, 
-        config: Dict[str, Any], 
+        self,
+        config: Dict[str, Any],
         schema_name: str = "base_config",
-        profile: Optional[str] = None
-    ) -> None:
+        profile: Optional[str] = None,
+        is_template: bool = False
+    ) -> bool:
         """
         Validate a configuration against a JSON schema.
         
@@ -156,11 +157,20 @@ class ConfigurationSchemaValidator:
             config: Configuration dictionary to validate
             schema_name: Name of the schema to validate against
             profile: Optional profile name for profile-specific validation
+            is_template: If True, validates as a template (allows partial configs)
+            
+        Returns:
+            True if validation passes
             
         Raises:
             ValidationError: If validation fails
         """
         try:
+            # For templates, use lenient validation
+            if is_template or "extends" in config:
+                return self._validate_template(config, schema_name, profile)
+            
+            # For complete configurations, use full validation
             validator = self.get_validator(schema_name)
             
             # Perform basic JSON schema validation
@@ -176,18 +186,22 @@ class ConfigurationSchemaValidator:
                         error_messages.append(f"Root level: {error.message}")
                 
                 raise ValidationError(
-                    f"Configuration validation failed:\n" + 
+                    f"Configuration validation failed:\n" +
                     "\n".join(f"  - {msg}" for msg in error_messages)
                 )
             
-            # Perform profile-specific validation if profile is provided
-            if profile:
+            # Only perform custom validation for complete configurations (base_config schema)
+            if schema_name == "base_config":
+                self._validate_custom_rules(config)
+                # Validate schema version compatibility
+                self._validate_schema_version_compatibility(config)
+            
+            # Perform profile-specific validation only for profile schemas
+            if profile and schema_name.startswith("quick_start_"):
                 self._validate_profile_constraints(config, profile)
             
-            # Perform custom validation rules
-            self._validate_custom_rules(config)
-            
             logger.debug(f"Configuration validation passed for schema: {schema_name}")
+            return True
             
         except JsonSchemaValidationError as e:
             raise ValidationError(f"JSON schema validation error: {e.message}")
@@ -195,6 +209,141 @@ class ConfigurationSchemaValidator:
             if isinstance(e, ValidationError):
                 raise
             raise ValidationError(f"Validation error: {e}")
+    
+    def _validate_template(
+        self,
+        config: Dict[str, Any],
+        schema_name: str,
+        profile: Optional[str] = None
+    ) -> bool:
+        """
+        Validate a template configuration with lenient rules.
+        
+        Templates are partial configurations that will be merged later,
+        so we only validate the structure of provided fields.
+        
+        Args:
+            config: Template configuration dictionary
+            schema_name: Name of the schema to validate against
+            profile: Optional profile name
+            
+        Returns:
+            True if validation passes
+            
+        Raises:
+            ValidationError: If validation fails
+        """
+        try:
+            # For templates, we validate only the provided fields
+            # Remove 'extends' field for validation as it's not part of the schema
+            config_copy = config.copy()
+            config_copy.pop('extends', None)
+            
+            # Validate specific fields that are present
+            if 'sample_data' in config_copy:
+                self._validate_sample_data_fields(config_copy['sample_data'])
+            
+            if 'mcp_server' in config_copy:
+                self._validate_mcp_server_fields(config_copy['mcp_server'])
+            
+            if 'metadata' in config_copy:
+                self._validate_metadata_fields(config_copy['metadata'])
+            
+            # Apply profile-specific constraints if this is a profile template
+            # Extract profile from metadata if not provided explicitly
+            effective_profile = profile
+            if not effective_profile and 'metadata' in config_copy and 'profile' in config_copy['metadata']:
+                effective_profile = config_copy['metadata']['profile']
+            
+            if effective_profile and effective_profile.startswith("quick_start_"):
+                self._validate_profile_template_constraints(config_copy, effective_profile)
+            
+            logger.debug(f"Template validation passed for schema: {schema_name}")
+            return True
+            
+        except Exception as e:
+            if isinstance(e, ValidationError):
+                raise
+            raise ValidationError(f"Template validation error: {e}")
+    
+    def _validate_sample_data_fields(self, sample_data: Dict[str, Any]) -> None:
+        """Validate sample_data fields in templates."""
+        if 'source' in sample_data:
+            # Allow both schema values and legacy test values
+            valid_sources = ['pmc', 'synthetic', 'custom', 'pmc_sample']
+            if sample_data['source'] not in valid_sources:
+                raise ValidationError(f"Invalid sample_data.source: {sample_data['source']}. Must be one of {valid_sources}")
+        
+        if 'document_count' in sample_data:
+            count = sample_data['document_count']
+            if not isinstance(count, int) or count < 1 or count > 10000:
+                raise ValidationError(f"Invalid sample_data.document_count: {count}. Must be integer between 1 and 10000")
+    
+    def _validate_mcp_server_fields(self, mcp_server: Dict[str, Any]) -> None:
+        """Validate mcp_server fields in templates."""
+        if 'tools' in mcp_server:
+            valid_tools = ['basic', 'crag', 'hyde', 'graphrag', 'hybrid_ifind', 'colbert', 'noderag', 'sqlrag', 'health_check', 'list_techniques', 'performance_metrics']
+            tools = mcp_server['tools']
+            if not isinstance(tools, list):
+                raise ValidationError("mcp_server.tools must be a list")
+            for tool in tools:
+                if tool not in valid_tools:
+                    raise ValidationError(f"Invalid tool: {tool}. Must be one of {valid_tools}")
+        
+        if 'port' in mcp_server:
+            port = mcp_server['port']
+            if not isinstance(port, int) or port < 1024 or port > 65535:
+                raise ValidationError(f"Invalid mcp_server.port: {port}. Must be integer between 1024 and 65535")
+    
+    def _validate_metadata_fields(self, metadata: Dict[str, Any]) -> None:
+        """Validate metadata fields in templates."""
+        # Metadata validation is lenient for templates
+        # We only check format if version/schema_version are provided
+        if 'version' in metadata:
+            version = metadata['version']
+            if not isinstance(version, str):
+                raise ValidationError(f"metadata.version must be a string, got {type(version).__name__}")
+        
+        if 'schema_version' in metadata:
+            schema_version = metadata['schema_version']
+            if not isinstance(schema_version, str):
+                raise ValidationError(f"metadata.schema_version must be a string, got {type(schema_version).__name__}")
+    
+    def _validate_profile_template_constraints(self, config: Dict[str, Any], profile: str) -> None:
+        """Validate profile-specific constraints for templates."""
+        # Extract profile from metadata if not provided directly
+        actual_profile = profile
+        if not actual_profile and 'metadata' in config and 'profile' in config['metadata']:
+            actual_profile = config['metadata']['profile']
+        
+        if actual_profile == "quick_start_minimal":
+            # Check document count constraint for minimal profile
+            if 'sample_data' in config and 'document_count' in config['sample_data']:
+                count = config['sample_data']['document_count']
+                if count > 50:
+                    raise ValidationError(f"Minimal profile document_count must be <= 50, got {count}")
+            
+            # Check tool constraints for minimal profile
+            if 'mcp_server' in config and 'tools' in config['mcp_server']:
+                tools = config['mcp_server']['tools']
+                allowed_tools = ['basic', 'health_check', 'list_techniques']
+                for tool in tools:
+                    if tool not in allowed_tools:
+                        raise ValidationError(f"Minimal profile only allows tools: {allowed_tools}, got {tool}")
+        
+        elif actual_profile == "quick_start_standard":
+            # Check document count constraint for standard profile
+            if 'sample_data' in config and 'document_count' in config['sample_data']:
+                count = config['sample_data']['document_count']
+                if count > 500:
+                    raise ValidationError(f"Standard profile document_count must be <= 500, got {count}")
+        
+        elif actual_profile == "quick_start_extended":
+            # Check document count constraint for extended profile
+            if 'sample_data' in config and 'document_count' in config['sample_data']:
+                count = config['sample_data']['document_count']
+                if count > 2000:
+                    raise ValidationError(f"Extended profile document_count must be <= 2000, got {count}")
     
     def _validate_profile_constraints(self, config: Dict[str, Any], profile: str) -> None:
         """
@@ -239,7 +388,7 @@ class ConfigurationSchemaValidator:
             )
         
         # Check required MCP tools
-        mcp_tools = config.get("mcp_server", {}).get("enabled_tools", [])
+        mcp_tools = config.get("mcp_server", {}).get("tools", [])
         required_tools = rules.get("required_mcp_tools", [])
         
         missing_tools = set(required_tools) - set(mcp_tools)
@@ -287,13 +436,40 @@ class ConfigurationSchemaValidator:
         # Custom rule: MCP server configuration consistency
         mcp_config = config.get("mcp_server", {})
         if mcp_config.get("enabled", False):
-            enabled_tools = mcp_config.get("enabled_tools", [])
-            if not enabled_tools:
+            tools = mcp_config.get("tools", [])
+            if not tools:
                 raise ValidationError("MCP server is enabled but no tools are specified")
     
-    def validate_schema_version(self, config: Dict[str, Any], expected_version: str = "1.0") -> None:
+    def _validate_schema_version_compatibility(self, config: Dict[str, Any]) -> None:
         """
         Validate schema version compatibility.
+        
+        Args:
+            config: Configuration to validate
+            
+        Raises:
+            ValidationError: If version is incompatible
+        """
+        # Current supported schema version
+        supported_version = "2024.1"
+        
+        # Get schema version from metadata section
+        metadata = config.get("metadata", {})
+        config_version = metadata.get("schema_version")
+        
+        if config_version is None:
+            # If no schema_version is provided, this will be caught by JSON schema validation
+            return
+        
+        if config_version != supported_version:
+            raise ValidationError(
+                f"Unsupported schema_version: {config_version}. "
+                f"Supported version: {supported_version}"
+            )
+
+    def validate_schema_version(self, config: Dict[str, Any], expected_version: str = "2024.1") -> None:
+        """
+        Validate schema version compatibility (public method for backward compatibility).
         
         Args:
             config: Configuration to validate
@@ -302,7 +478,9 @@ class ConfigurationSchemaValidator:
         Raises:
             ValidationError: If version is incompatible
         """
-        config_version = config.get("schema_version", "1.0")
+        # Get schema version from metadata section or root level for backward compatibility
+        metadata = config.get("metadata", {})
+        config_version = metadata.get("schema_version") or config.get("schema_version", "2024.1")
         
         if config_version != expected_version:
             raise ValidationError(

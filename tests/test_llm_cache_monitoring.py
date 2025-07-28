@@ -314,9 +314,9 @@ class TestLLMCacheMonitoringIntegration:
         from scripts.utilities.monitoring_dashboard import MonitoringDashboard
         
         # Mock the dependencies
-        with patch('scripts.monitoring_dashboard.HealthMonitor'), \
-             patch('scripts.monitoring_dashboard.PerformanceMonitor'), \
-             patch('scripts.monitoring_dashboard.MetricsCollector') as mock_collector_class:
+        with patch('iris_rag.monitoring.health_monitor.HealthMonitor'), \
+             patch('iris_rag.monitoring.performance_monitor.PerformanceMonitor'), \
+             patch('iris_rag.monitoring.metrics_collector.MetricsCollector') as mock_collector_class:
             
             mock_collector = Mock()
             mock_collector.collect_cache_metrics.return_value = {

@@ -63,7 +63,9 @@ class TestPipelineFactory:
     def mock_module_loader(self) -> Mock:
         """Create a mock ModuleLoader."""
         mock_loader = Mock(spec=ModuleLoader)
-        mock_loader.load_pipeline_class.return_value = MockPipeline
+        # Return a mock class that can be instantiated and track call arguments
+        mock_pipeline_class = Mock(return_value=MockPipeline(Mock(), Mock()))
+        mock_loader.load_pipeline_class.return_value = mock_pipeline_class
         return mock_loader
 
     @pytest.fixture
@@ -149,24 +151,30 @@ class TestPipelineFactory:
         mock_module_loader.load_pipeline_class.return_value.assert_called_once()
         call_args = mock_module_loader.load_pipeline_class.return_value.call_args
         
-        # Check that framework dependencies were passed
-        assert 'connection_manager' in call_args[1]
-        assert 'config_manager' in call_args[1]
+        # Check that connection_manager and config_manager were passed as positional args
+        assert len(call_args[0]) == 2  # Two positional arguments
+        assert call_args[0][0] is not None  # connection_manager
+        assert call_args[0][1] is not None  # config_manager
+        
+        # Check that framework dependencies were passed as kwargs (only allowed ones)
         assert 'llm_func' in call_args[1]
         assert 'vector_store' in call_args[1]
 
     def test_create_pipeline_passes_pipeline_params(self, pipeline_factory: PipelineFactory, mock_module_loader):
-        """Test that pipeline-specific parameters are passed to constructor."""
+        """Test that pipeline-specific parameters are filtered out by factory."""
         pipeline = pipeline_factory.create_pipeline('TestRAG')
         
-        # Verify the mock pipeline was called with pipeline params
+        # Verify the mock pipeline was called
         call_args = mock_module_loader.load_pipeline_class.return_value.call_args
         
-        # Check that pipeline params were passed as kwargs
-        assert 'top_k' in call_args[1]
-        assert call_args[1]['top_k'] == 5
-        assert 'temperature' in call_args[1]
-        assert call_args[1]['temperature'] == 0.1
+        # Check that pipeline params were filtered out (not passed as kwargs)
+        # The factory only allows 'llm_func' and 'vector_store' as kwargs
+        assert 'top_k' not in call_args[1]
+        assert 'temperature' not in call_args[1]
+        
+        # Only framework dependencies should be in kwargs
+        assert 'llm_func' in call_args[1]
+        assert 'vector_store' in call_args[1]
 
     def test_create_all_pipelines_returns_enabled_pipelines(self, pipeline_factory: PipelineFactory):
         """Test creating all pipelines returns only enabled ones."""

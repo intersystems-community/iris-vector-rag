@@ -99,7 +99,7 @@ def test_convert_legacy_config_with_rules(migration_util, legacy_pa_config_data,
     # (Current implementation logs and skips unmapped keys)
     assert "some_other_setting" not in converted_config
     assert "timeout_ms" not in converted_config
-    assert "pa_database_password" in converted_config # Check one that should be there
+    assert "iris_password" in converted_config # Check one that should be there
 
 def test_convert_legacy_config_with_default_rules(migration_util, legacy_pa_config_data):
     """Test configuration conversion with default internal mapping rules."""

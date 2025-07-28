@@ -1,45 +1,40 @@
-# Invalid template for schema validation testing
+# Invalid template for testing validation disabled scenarios
 metadata:
-  profile: "invalid_template"
-  description: "Invalid template for testing schema validation failures"
-  version: "1.0"
+  version: 1.0  # Should be string, not number
+  # Missing schema_version
 
 database:
   iris:
-    host: "localhost"
-    port: "invalid_port"  # Should be integer, not string
-    namespace: "USER"
-    username: "test_user"
-    # Missing required password field
+    host: localhost
+    port: "invalid_port"  # Should be integer
+    namespace: USER
+    # Missing username and password
 
-storage:
-  # Missing required data_directory field
+storage: null  # Should be object
 
 vector_index:
-  dimension: "invalid_dimension"  # Should be integer, not string
-  metric: "invalid_metric"  # Should be one of: cosine, euclidean, dot_product
+  dimension: "invalid_dimension"  # Should be integer
+  metric: "invalid_metric"  # Should be enum value
 
 embeddings:
-  model: "sentence-transformers/all-MiniLM-L6-v2"
-  dimension: 512  # Mismatched with vector_index dimension
-  provider: "invalid_provider"  # Should be one of: openai, huggingface, sentence_transformers
+  provider: "invalid_provider"  # Should be enum value
+  # Missing model and dimension
 
 llm:
-  model: "gpt-3.5-turbo"
-  provider: "invalid_provider"  # Should be one of: openai, anthropic, huggingface
-  temperature: 3.0  # Should be between 0 and 2
-  max_tokens: -100  # Should be positive
+  provider: "invalid_provider"  # Should be enum value
+  temperature: 3.0  # Should be <= 2
+  max_tokens: -100  # Should be >= 1
+  # Missing model
 
 performance:
-  batch_size: 0  # Should be at least 1
-  max_workers: 100  # Should be at most 32
-  timeout: -5  # Should be positive
+  batch_size: 0  # Should be >= 1
+  max_workers: 100  # Should be <= 32
+  timeout: -5  # Should be >= 1
 
 sample_data:
-  document_count: 20000  # Exceeds maximum allowed
-  source: "invalid_source"  # Should be one of: pmc, synthetic, custom
+  document_count: 20000  # Should be <= 10000
+  source: "invalid_source"  # Should be enum value
 
 mcp_server:
-  enabled: true
-  port: 80  # Should be at least 1024
-  enabled_tools: []  # Empty tools list when enabled=true violates custom rule
+  port: 80  # Should be >= 1024
+  enabled_tools: ["invalid_tool"]  # Should be "tools", not "enabled_tools"

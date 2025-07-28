@@ -20,7 +20,7 @@ sys.path.insert(0, str(project_root))
 
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.storage.schema_manager import SchemaManager
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from data.pmc_processor import process_pmc_files
 from common.db_vector_utils import insert_vector
 
@@ -277,8 +277,8 @@ def process_and_load_documents_with_colbert(
     try:
         # Initialize schema manager and configuration
         config_manager = ConfigurationManager()
-        connection_manager = ConnectionManager(config_manager)
-        schema_manager = SchemaManager(connection_manager, config_manager)
+        connection = get_iris_connection()
+        schema_manager = SchemaManager(connection, config_manager)
         
         # Ensure all required tables are ready
         logger.info("Schema manager ensuring required tables are ready...")
@@ -286,7 +286,7 @@ def process_and_load_documents_with_colbert(
         schema_manager.ensure_table_schema("DocumentTokenEmbeddings")
         
         # Get database connection through schema manager's connection manager
-        connection = connection_manager.get_connection()
+        connection = get_iris_connection()
         if not connection:
             return {
                 "success": False,

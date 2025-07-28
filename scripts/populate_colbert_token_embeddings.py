@@ -1,183 +1,137 @@
 #!/usr/bin/env python3
 """
-Populate DocumentTokenEmbeddings table for ColBERT pipeline.
+Fixed ColBERT Token Embedding Population Script.
 
-This script generates token-level embeddings for each document
-to enable fine-grained ColBERT retrieval.
+This script populates missing ColBERT token embeddings using the proper
+ColBERT interface with 768D embeddings instead of the incorrect 384D.
+
+Key fixes:
+- Uses proper ColBERT interface for 768D token embeddings
+- Integrates with TokenEmbeddingService for centralized management
+- Uses SchemaManager for consistent database operations
+- Proper error handling and logging
+- Batch processing for efficiency
 """
 
+import logging
+import argparse
 import sys
 from pathlib import Path
+
+# Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import logging
-import re
-from typing import List, Tuple
+from iris_rag.config.manager import ConfigurationManager
+from iris_rag.services.token_embedding_service import TokenEmbeddingService
 from common.iris_connection_manager import get_iris_connection
-from common.utils import get_embedding_func
-from common.db_vector_utils import insert_vector
-import re
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-class TokenEmbeddingGenerator:
-    """Generate token embeddings for ColBERT."""
-    
-    def __init__(self, max_tokens_per_doc: int = 512):
-        self.embedding_func = get_embedding_func()
-        self.max_tokens_per_doc = max_tokens_per_doc
-        
-    def tokenize_text(self, text: str) -> List[str]:
-        """Tokenize text into words using simple regex."""
-        # Simple word tokenization using regex
-        # Split on whitespace and punctuation, but keep important terms together
-        tokens = re.findall(r'\b\w+\b|[.!?,;:]', text.lower())
-        
-        # Filter tokens
-        filtered_tokens = []
-        for token in tokens:
-            # Skip very short tokens and numbers
-            if len(token) > 2 and not token.isdigit():
-                filtered_tokens.append(token)
-        
-        # Limit to max tokens
-        return filtered_tokens[:self.max_tokens_per_doc]
-    
-    def generate_token_embeddings(self, doc_id: str, text: str) -> List[Tuple[int, str, List[float]]]:
-        """Generate embeddings for each token in the document."""
-        tokens = self.tokenize_text(text)
-        
-        if not tokens:
-            return []
-        
-        token_embeddings = []
-        
-        # Generate embeddings for each token
-        # In practice, ColBERT would use contextual embeddings, but we'll use
-        # individual token embeddings as an approximation
-        for i, token in enumerate(tokens):
-            try:
-                # Generate embedding for the token
-                embedding = self.embedding_func(token)
-                token_embeddings.append((i, token, embedding))
-            except Exception as e:
-                logger.warning(f"Failed to generate embedding for token '{token}': {e}")
-        
-        return token_embeddings
 
-def populate_token_embeddings(limit: int = 100):
-    """Populate DocumentTokenEmbeddings table."""
+def main():
+    """Main function to populate ColBERT token embeddings."""
+    parser = argparse.ArgumentParser(
+        description="Populate missing ColBERT token embeddings with proper 768D dimensions"
+    )
+    parser.add_argument(
+        "--doc-ids",
+        nargs="*",
+        help="Specific document IDs to process (if not provided, processes all missing)"
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=50,
+        help="Batch size for processing documents (default: 50)"
+    )
+    parser.add_argument(
+        "--config",
+        default="config/config.yaml",
+        help="Path to configuration file (default: config/config.yaml)"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be processed without actually doing it"
+    )
     
-    connection = get_iris_connection()
-    cursor = connection.cursor()
-    generator = TokenEmbeddingGenerator()
-    
-    try:
-        # Get documents that don't have token embeddings yet
-        cursor.execute("""
-            SELECT d.doc_id, d.title, d.text_content 
-            FROM RAG.SourceDocuments d
-            WHERE d.doc_id NOT IN (
-                SELECT DISTINCT doc_id FROM RAG.DocumentTokenEmbeddings
-            )
-            AND d.text_content IS NOT NULL
-            LIMIT ?
-        """, [limit])
-        
-        documents = cursor.fetchall()
-        logger.info(f"Found {len(documents)} documents without token embeddings")
-        
-        total_tokens = 0
-        
-        for i, (doc_id, title, content) in enumerate(documents):
-            if i % 10 == 0:
-                logger.info(f"Processing document {i+1}/{len(documents)}...")
-            
-            # Combine title and content
-            full_text = f"{title or ''} {content or ''}"
-            
-            # Generate token embeddings
-            token_embeddings = generator.generate_token_embeddings(doc_id, full_text)
-            
-            # Store token embeddings
-            for token_index, token_text, embedding in token_embeddings:
-                try:
-                    # Use the insert_vector utility to handle IRIS limitations
-                    success = insert_vector(
-                        cursor=cursor,
-                        table_name="RAG.DocumentTokenEmbeddings",
-                        vector_column_name="token_embedding",
-                        vector_data=embedding,
-                        target_dimension=384,  # Using same dimension as document embeddings
-                        key_columns={
-                            "doc_id": doc_id,
-                            "token_index": token_index
-                        },
-                        additional_data={
-                            "token_text": token_text[:500]  # Limit token text length
-                        }
-                    )
-                    
-                    if success:
-                        total_tokens += 1
-                    
-                except Exception as e:
-                    logger.warning(f"Failed to insert token embedding for '{token_text}': {e}")
-            
-            # Commit periodically
-            if (i + 1) % 10 == 0:
-                connection.commit()
-                logger.info(f"Committed {total_tokens} token embeddings so far...")
-        
-        # Final commit
-        connection.commit()
-        
-        logger.info(f"\n✅ Successfully populated {total_tokens} token embeddings")
-        
-        # Show statistics
-        cursor.execute("""
-            SELECT COUNT(DISTINCT doc_id) as doc_count, 
-                   COUNT(*) as token_count,
-                   AVG(LENGTH(token_text)) as avg_token_length
-            FROM RAG.DocumentTokenEmbeddings
-        """)
-        
-        row = cursor.fetchone()
-        if row:
-            logger.info(f"\nToken embedding statistics:")
-            logger.info(f"  Documents with token embeddings: {row[0]}")
-            logger.info(f"  Total token embeddings: {row[1]}")
-            logger.info(f"  Average token length: {row[2]:.1f} characters")
-        
-        # Show sample tokens
-        cursor.execute("""
-            SELECT token_text, COUNT(*) as freq
-            FROM RAG.DocumentTokenEmbeddings
-            WHERE LENGTH(token_text) > 3
-            GROUP BY token_text
-            ORDER BY freq DESC
-            LIMIT 20
-        """)
-        
-        logger.info("\nMost frequent tokens:")
-        for row in cursor.fetchall():
-            logger.info(f"  {row[0]}: {row[1]} occurrences")
-            
-    except Exception as e:
-        logger.error(f"Error populating token embeddings: {e}")
-        connection.rollback()
-        raise
-    finally:
-        cursor.close()
-        connection.close()
-
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--limit", type=int, default=50, help="Number of documents to process")
     args = parser.parse_args()
     
-    logger.info("Populating DocumentTokenEmbeddings table for ColBERT...")
-    populate_token_embeddings(args.limit)
+    try:
+        logger.info("Starting ColBERT token embedding population")
+        logger.info(f"Using configuration: {args.config}")
+        
+        # Initialize configuration manager
+        config_manager = ConfigurationManager(args.config)
+        
+        # Override batch size if provided
+        if args.batch_size != 50:
+            config_manager.config["colbert"] = config_manager.config.get("colbert", {})
+            config_manager.config["colbert"]["batch_size"] = args.batch_size
+        
+        # Create connection manager wrapper
+        connection_manager = type('ConnectionManager', (), {
+            'get_connection': lambda: get_iris_connection()
+        })()
+        
+        # Initialize token embedding service
+        token_service = TokenEmbeddingService(config_manager, connection_manager)
+        
+        # Get current statistics
+        logger.info("Checking current token embedding status...")
+        stats = token_service.get_token_embedding_stats()
+        
+        logger.info(f"Current status:")
+        logger.info(f"  Total documents: {stats['total_documents']}")
+        logger.info(f"  Documents with token embeddings: {stats['documents_with_token_embeddings']}")
+        logger.info(f"  Documents missing token embeddings: {stats['documents_missing_token_embeddings']}")
+        logger.info(f"  Total token embeddings: {stats['total_token_embeddings']}")
+        logger.info(f"  Token dimension: {stats['token_dimension']}D")
+        logger.info(f"  Coverage: {stats['coverage_percentage']:.1f}%")
+        
+        if stats['documents_missing_token_embeddings'] == 0:
+            logger.info("All documents already have token embeddings. Nothing to do.")
+            return 0
+        
+        if args.dry_run:
+            logger.info(f"DRY RUN: Would process {stats['documents_missing_token_embeddings']} documents")
+            if args.doc_ids:
+                logger.info(f"DRY RUN: Would filter to specific doc IDs: {args.doc_ids}")
+            return 0
+        
+        # Process token embeddings
+        logger.info(f"Processing {stats['documents_missing_token_embeddings']} documents...")
+        
+        processing_stats = token_service.ensure_token_embeddings_exist(args.doc_ids)
+        
+        # Report results
+        logger.info("Token embedding population completed!")
+        logger.info(f"Results:")
+        logger.info(f"  Documents processed: {processing_stats.documents_processed}")
+        logger.info(f"  Token embeddings generated: {processing_stats.tokens_generated}")
+        logger.info(f"  Processing time: {processing_stats.processing_time:.2f} seconds")
+        logger.info(f"  Errors: {processing_stats.errors}")
+        
+        if processing_stats.errors > 0:
+            logger.warning(f"Completed with {processing_stats.errors} errors")
+            return 1
+        
+        # Get final statistics
+        final_stats = token_service.get_token_embedding_stats()
+        logger.info(f"Final coverage: {final_stats['coverage_percentage']:.1f}%")
+        
+        return 0
+        
+    except Exception as e:
+        logger.error(f"Token embedding population failed: {e}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

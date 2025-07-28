@@ -8,7 +8,7 @@ data and dependencies before execution.
 import logging
 from typing import Dict, List, Any
 from dataclasses import dataclass
-from ..core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from .requirements import PipelineRequirements, TableRequirement, EmbeddingRequirement
 
 logger = logging.getLogger(__name__)
@@ -44,12 +44,12 @@ class PreConditionValidator:
     - Data integrity and completeness
     """
     
-    def __init__(self, connection_manager: ConnectionManager):
+    def __init__(self, connection_manager=None):
         """
         Initialize the validator.
         
         Args:
-            connection_manager: Database connection manager
+            connection_manager: Optional connection manager for database access
         """
         self.connection_manager = connection_manager
         self.logger = logging.getLogger(__name__)
@@ -125,7 +125,10 @@ class PreConditionValidator:
             Validation result
         """
         try:
-            connection = self.connection_manager.get_connection()
+            if self.connection_manager:
+                connection = self.connection_manager.get_connection()
+            else:
+                connection = get_iris_connection()
             cursor = connection.cursor()
             
             # Check if table exists
@@ -182,7 +185,10 @@ class PreConditionValidator:
             Validation result
         """
         try:
-            connection = self.connection_manager.get_connection()
+            if self.connection_manager:
+                connection = self.connection_manager.get_connection()
+            else:
+                connection = get_iris_connection()
             cursor = connection.cursor()
             
             # Check if embedding column has data

@@ -3,7 +3,7 @@ import os
 import shutil
 from typing import Dict, Any
 
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
 from iris_rag.core.models import Document
@@ -29,26 +29,30 @@ def test_config_manager() -> ConfigurationManager:
                 return {"top_k": 3, "max_entities": 5, "relationship_depth": 1}
             if key == "storage:iris:vector_data_type":
                 return "FLOAT" # Default, ensure this matches expected schema
+            if key == "storage:iris":
+                return {"vector_data_type": "FLOAT"}
             return default
 
         def get_embedding_config(self) -> Dict[str, Any]:
-            return {"model": "all-MiniLM-L6-v2", "api_key": "test_key"} # Dimension 384
+            return {"model": "sentence-transformers/all-MiniLM-L6-v2", "api_key": "test_key"} # Dimension 384
 
     return MockConfigurationManager()
 
 
 @pytest.fixture(scope="session")
-def test_connection_manager() -> ConnectionManager:
+def test_connection_manager():
     """Provides a ConnectionManager instance for tests, using test DB settings."""
-    # Ensure environment variables for DB connection are set for testing
-    # Or use a test-specific configuration file loaded by ConnectionManager
-    # For this example, assuming environment variables are configured (e.g., IRIS_HOST, IRIS_PORT, etc.)
-    # Fallback to defaults if not set, which might fail if DB not running locally with defaults.
-    return ConnectionManager()
+    class MockConnectionManager:
+        _connection = None
+        def get_connection(self):
+            if not self._connection:
+                self._connection = get_iris_connection()
+            return self._connection
+    return MockConnectionManager()
 
 
 @pytest.fixture(scope="function")
-def clear_rag_tables(test_connection_manager: ConnectionManager, test_config_manager: ConfigurationManager):
+def clear_rag_tables(test_connection_manager, test_config_manager: ConfigurationManager):
     """Clears RAG tables before and after each test function."""
     # Order matters due to foreign key constraints
     tables_to_clear = [
@@ -94,12 +98,12 @@ def clear_rag_tables(test_connection_manager: ConnectionManager, test_config_man
 
 
 @pytest.fixture(scope="function")
-def graphrag_pipeline_instance(test_connection_manager: ConnectionManager,
+def graphrag_pipeline_instance(test_connection_manager,
                                test_config_manager: ConfigurationManager,
                                clear_rag_tables) -> GraphRAGPipeline:
     """Provides a GraphRAGPipeline instance for tests."""
     # LLM func can be None for ingestion and basic retrieval tests
-    return GraphRAGPipeline(test_connection_manager, test_config_manager, llm_func=None)
+    return GraphRAGPipeline(test_config_manager, llm_func=None)
 
 @pytest.fixture(scope="session", autouse=True)
 def manage_test_data_dir():
@@ -130,9 +134,9 @@ def manage_test_data_dir():
     # Teardown: remove the directory after tests
     # shutil.rmtree(TEST_DATA_DIR) # Keep for inspection if tests fail
 
-def count_rows(connection_manager: ConnectionManager, table_name: str) -> int:
+def count_rows(connection, table_name: str) -> int:
     """Helper function to count rows in a table."""
-    connection = connection_manager.get_connection()
+    connection = connection
     cursor = connection.cursor()
     try:
         cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
@@ -146,7 +150,7 @@ def count_rows(connection_manager: ConnectionManager, table_name: str) -> int:
         cursor.close()
 
 def test_graph_population(graphrag_pipeline_instance: GraphRAGPipeline,
-                          test_connection_manager: ConnectionManager):
+                          test_connection_manager):
     """
     Tests complete graph population: SourceDocuments, DocumentEntities, EntityRelationships.
     """
@@ -157,7 +161,7 @@ def test_graph_population(graphrag_pipeline_instance: GraphRAGPipeline,
     pipeline.load_documents(TEST_DATA_DIR)
 
     # 2. Verify RAG.SourceDocuments population
-    source_docs_count = count_rows(test_connection_manager, "RAG.SourceDocuments")
+    source_docs_count = count_rows(test_connection_manager.get_connection(), "RAG.SourceDocuments")
     assert source_docs_count == DOC_COUNT, f"Expected {DOC_COUNT} source documents, got {source_docs_count}"
 
     # 3. Verify RAG.DocumentEntities population
@@ -173,7 +177,7 @@ def test_graph_population(graphrag_pipeline_instance: GraphRAGPipeline,
     # Total expected entities = 5 + 4 + 4 = 13
     # This depends heavily on the _extract_entities logic and max_entities config.
     # Let's assert it's greater than 0 for now, and refine if needed.
-    doc_entities_count = count_rows(test_connection_manager, "RAG.DocumentEntities")
+    doc_entities_count = count_rows(test_connection_manager.get_connection(), "RAG.DocumentEntities")
     assert doc_entities_count > 0, "Expected DocumentEntities to be populated"
     # A more precise count would require replicating the exact logic of _extract_entities
     # For now, let's aim for a reasonable minimum based on unique capitalized words.
@@ -203,7 +207,7 @@ def test_graph_population(graphrag_pipeline_instance: GraphRAGPipeline,
     # Relationships are co-occurrences within 10 words.
     # This also depends on the _extract_relationships logic.
     # Asserting > 0 is a safe start.
-    entity_relationships_count = count_rows(test_connection_manager, "RAG.EntityRelationships")
+    entity_relationships_count = count_rows(test_connection_manager.get_connection(), "RAG.EntityRelationships")
     assert entity_relationships_count > 0, "Expected EntityRelationships to be populated"
     # Example: Doc 1 ("Apples", "Oranges", "Apple", "Keeps", "Doctor")
     # (Apples,Oranges), (Apples,Apple), (Apples,Keeps), (Apples,Doctor)
@@ -326,11 +330,11 @@ def mock_llm_func(prompt: str) -> str:
 
 
 @pytest.fixture(scope="function")
-def graphrag_pipeline_with_llm(test_connection_manager: ConnectionManager,
+def graphrag_pipeline_with_llm(test_connection_manager,
                                test_config_manager: ConfigurationManager,
                                clear_rag_tables) -> GraphRAGPipeline: # Depends on clear_rag_tables to ensure data is loaded
     """Provides a GraphRAGPipeline instance with a mock LLM for query tests."""
-    pipeline = GraphRAGPipeline(test_connection_manager, test_config_manager, llm_func=mock_llm_func)
+    pipeline = GraphRAGPipeline(test_config_manager, llm_func=mock_llm_func)
     # Ensure documents are loaded for this pipeline instance before testing queries
     pipeline.load_documents(TEST_DATA_DIR)
     return pipeline
@@ -341,7 +345,7 @@ def test_query_functionality(graphrag_pipeline_with_llm: GraphRAGPipeline):
     Tests graph-based query functionality: entity retrieval, document relevance.
     """
     pipeline = graphrag_pipeline_with_llm
-    query_text = "Tell me about Apples and Oranges"
+    query_text = "Tell me about Cancer and Treatment"
 
     # Execute query
     result = pipeline.query(query_text, top_k=2)
@@ -357,20 +361,20 @@ def test_query_functionality(graphrag_pipeline_with_llm: GraphRAGPipeline):
     assert result.get("pipeline_type") == "graphrag"
 
     # Assert query entities (simple extraction: capitalized words > 3 chars)
-    # Query: "Tell me about Apples and Oranges" -> Expected: ["Apples", "Oranges"]
+    # Query: "Tell me about Cancer and Treatment" -> Expected: ["Tell", "Cancer", "Treatment"]
     # The _extract_query_entities method is simple:
-    # words = query_text.split() -> ["Tell", "me", "about", "Apples", "and", "Oranges"]
+    # words = query_text.split() -> ["Tell", "me", "about", "Cancer", "and", "Treatment"]
     # entities = []
     # for word in words: if word[0].isupper() and len(word) > 3: entities.append(word)
-    # -> ["Tell", "Apples", "Oranges"]
-    expected_query_entities = ["Tell", "Apples", "Oranges"]
+    # -> ["Tell", "Cancer", "Treatment"]
+    expected_query_entities = ["Tell", "Cancer", "Treatment"]
     assert sorted(result["query_entities"]) == sorted(expected_query_entities), \
         f"Expected query entities {expected_query_entities}, got {result['query_entities']}"
 
     # Assert document retrieval
     retrieved_docs = result["retrieved_documents"]
     assert isinstance(retrieved_docs, list), "Retrieved documents should be a list"
-    # Given the query "Apples and Oranges", doc_1.txt should be highly relevant.
+    # Given the query "Cancer and Treatment", medical documents should be relevant.
     # The _graph_based_retrieval uses TOP k, and mock config has top_k=3 for pipeline init,
     # but query() call overrides it with top_k=2.
     assert result["num_documents_retrieved"] > 0, "Expected at least one document to be retrieved"
@@ -393,7 +397,7 @@ def test_query_functionality(graphrag_pipeline_with_llm: GraphRAGPipeline):
     assert "Mocked LLM response" in result["answer"]
 
 
-def test_schema_self_healing(test_connection_manager: ConnectionManager,
+def test_schema_self_healing(test_connection_manager,
                              test_config_manager: ConfigurationManager,
                              clear_rag_tables): # clear_rag_tables ensures a clean slate
     """
@@ -468,7 +472,7 @@ def test_schema_self_healing(test_connection_manager: ConnectionManager,
     # We can simulate this by directly calling it or by a minimal ingestion.
     # A minimal ingestion is more end-to-end for this part.
     
-    pipeline = GraphRAGPipeline(test_connection_manager, test_config_manager, llm_func=None)
+    pipeline = GraphRAGPipeline(test_config_manager, llm_func=None)
     
     # Create a single dummy document to trigger ingestion and thus schema check/healing
     dummy_doc_content = "This is a Healing Test document with some CapitalizedWords."

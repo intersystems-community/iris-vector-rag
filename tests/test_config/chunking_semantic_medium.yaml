@@ -1,0 +1,27 @@
+# Test configuration for semantic chunking
+storage:
+  chunking:
+    enabled: true
+    strategy: "semantic"
+    similarity_threshold: 0.8
+    min_chunk_size: 300
+    max_chunk_size: 1500
+    auto_chunk: true
+
+pipelines:
+  basic:
+    default_top_k: 5
+    chunking_strategy: "semantic"
+  hyde:
+    top_k: 5
+    use_hypothetical_doc: true
+    chunking_strategy: "semantic"
+  sql_rag:
+    chunking_strategy: "semantic"
+  colbert:
+    chunking_strategy: "semantic"
+
+embeddings:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 384
+  provider: "sentence-transformers"

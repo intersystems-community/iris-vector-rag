@@ -1,25 +1,40 @@
 """
-IRIS Connection Manager - DBAPI First Architecture with Smart Environment Detection
+IRIS Connection Manager - DBAPI First Architecture with JDBC Fallback
 
 This module provides a unified connection manager that prioritizes DBAPI connections
-over JDBC, with automatic environment detection for optimal package availability.
+and falls back to JDBC if the DBAPI connection fails. It includes smart
+environment detection to ensure IRIS packages are available.
 
 Connection Priority:
-1. DBAPI (intersystems-irispython package) - DEFAULT
-2. JDBC (fallback for specific use cases)
+1. DBAPI (intersystems-irispython package)
+2. JDBC (jaydebeapi package) - as a fallback
 3. Mock (for testing without database)
 
 Environment Priority:
 1. UV environment (.venv) if available and has IRIS packages
-2. Current environment if it has IRIS packages  
+2. Current environment if it has IRIS packages
 3. System Python as fallback
 """
 
 import os
 import logging
 from typing import Optional, Any, Dict
+from dataclasses import dataclass
+
+from common.db_driver_utils import DriverType, get_driver_type as _get_driver_type, get_driver_capabilities as _get_driver_capabilities
 
 logger = logging.getLogger(__name__)
+
+@dataclass
+class ConnectionInfo:
+    """Metadata about an IRIS database connection."""
+    connection: Any
+    driver_type: DriverType
+    hostname: str
+    port: int
+    namespace: str
+    username: str
+    capabilities: Dict[str, bool]
 
 # Smart environment detection
 def _detect_best_iris_environment():
@@ -35,60 +50,138 @@ def _detect_best_iris_environment():
 class IRISConnectionManager:
     """
     Unified connection manager for IRIS database with DBAPI-first approach.
+    
+    Provides automatic driver detection, fallback mechanisms, and connection
+    metadata for optimizing SQL generation based on driver capabilities.
     """
     
-    def __init__(self, prefer_dbapi: bool = True):
+    def __init__(self, config_manager=None):
         """
         Initialize connection manager.
-        
-        Args:
-            prefer_dbapi: Whether to prefer DBAPI over JDBC (default: True)
         """
-        self.prefer_dbapi = prefer_dbapi
+        from iris_rag.config.manager import ConfigurationManager
+        self.config_manager = config_manager or ConfigurationManager()
         self._connection = None
         self._connection_type = None
+        self._connection_info = None
+        # Driver capabilities are now handled by the db_driver_utils module
         
-    def get_connection(self, config: Optional[Dict[str, Any]] = None) -> Any:
+    def get_connection(self) -> Any:
         """
-        Get a database connection, preferring DBAPI by default.
+        Get a database connection, preferring DBAPI and falling back to JDBC.
         
-        Args:
-            config: Optional configuration dictionary
+        This method maintains backward compatibility by returning just the connection object.
+        Use get_connection_info() for enhanced metadata.
             
         Returns:
             Database connection object
         """
         if self._connection is not None:
             return self._connection
+        
+        # Get full connection info and extract just the connection
+        connection_info = self.get_connection_info()
+        return connection_info.connection
+    
+    def get_connection_info(self) -> ConnectionInfo:
+        """
+        Get detailed connection information including driver type and capabilities.
+        
+        Returns:
+            ConnectionInfo object with connection metadata
+        """
+        if self._connection_info is not None:
+            return self._connection_info
             
-        if self.prefer_dbapi:
-            # Try DBAPI first
-            try:
-                self._connection = self._get_dbapi_connection(config)
-                self._connection_type = "DBAPI"
-                logger.info("✓ Connected using DBAPI (intersystems-irispython)")
-                return self._connection
-            except Exception as e:
-                # Only log as warning if it's a real failure, not just missing module
-                if "module 'iris' has no attribute 'connect'" in str(e):
-                    logger.debug(f"DBAPI not available (iris module issue): {e}")
-                else:
-                    logger.warning(f"DBAPI connection failed: {e}")
-                logger.info("Falling back to JDBC connection...")
-                
-        # Fallback to JDBC
+        config = {}
+        if hasattr(self.config_manager, 'get_database_config'):
+            config = self.config_manager.get_database_config()
+        elif isinstance(self.config_manager, dict):
+            config = self.config_manager
+        
+        # Ensure config is a dictionary, even if get_database_config returns None
+        if config is None:
+            config = {}
+            
+        # Get connection parameters
+        conn_params = self._get_connection_params(config)
+        
+        # Try DBAPI first
         try:
-            self._connection = self._get_jdbc_connection(config)
-            self._connection_type = "JDBC"
-            logger.info("✓ Connected using JDBC")
-            return self._connection
-        except Exception as e:
-            logger.error(f"All connection methods failed. JDBC error: {e}")
-            raise ConnectionError("Failed to establish database connection with both DBAPI and JDBC")
+            connection = self._get_dbapi_connection(config)
+            self._connection = connection
+            self._connection_type = "DBAPI"
+            
+            self._connection_info = ConnectionInfo(
+                connection=connection,
+                driver_type=DriverType.DBAPI,
+                hostname=conn_params['hostname'],
+                port=conn_params['port'],
+                namespace=conn_params['namespace'],
+                username=conn_params['username'],
+                capabilities=_get_driver_capabilities(DriverType.DBAPI)
+            )
+            
+            logger.info("✓ Connected using DBAPI (intersystems-irispython)")
+            return self._connection_info
+            
+        except Exception as dbapi_error:
+            logger.warning(f"DBAPI connection failed: {dbapi_error}. Attempting JDBC fallback.")
+            
+            # Fallback to JDBC
+            try:
+                connection = self._get_jdbc_connection(config)
+                self._connection = connection
+                self._connection_type = "JDBC"
+                
+                self._connection_info = ConnectionInfo(
+                    connection=connection,
+                    driver_type=DriverType.JDBC,
+                    hostname=conn_params['hostname'],
+                    port=conn_params['port'],
+                    namespace=conn_params['namespace'],
+                    username=conn_params['username'],
+                    capabilities=_get_driver_capabilities(DriverType.JDBC)
+                )
+                
+                logger.info("✓ Connected using JDBC (jaydebeapi)")
+                logger.warning("⚠️  JDBC driver has limitations with vector operations")
+                return self._connection_info
+                
+            except Exception as jdbc_error:
+                logger.error(f"JDBC connection failed after DBAPI failure: {jdbc_error}")
+                raise ConnectionError(f"Failed to establish database connection with both DBAPI and JDBC. DBAPI error: {dbapi_error}, JDBC error: {jdbc_error}")
+    
+    def get_driver_type(self) -> DriverType:
+        """
+        Get the type of driver currently in use.
+        
+        Returns:
+            DriverType enum value
+        """
+        return self.get_connection_info().driver_type
+    
+    def get_capabilities(self) -> Dict[str, bool]:
+        """
+        Get the capabilities of the current driver.
+        
+        Returns:
+            Dictionary of capability flags
+        """
+        return self.get_connection_info().capabilities
+    
+    def supports_vector_operations(self) -> bool:
+        """
+        Check if the current driver supports vector operations.
+        
+        Returns:
+            True if vector operations are supported
+        """
+        return self.get_capabilities().get("vector_operations", False)
     
     def _get_dbapi_connection(self, config: Optional[Dict[str, Any]] = None) -> Any:
         """
-        Get DBAPI connection using intersystems-irispython package with smart environment detection.
+        Get DBAPI connection using proper iris import as per official documentation.
         
         Args:
             config: Optional configuration dictionary
@@ -97,40 +190,39 @@ class IRISConnectionManager:
             DBAPI connection object
         """
         try:
-            # Check environment first
-            if not _detect_best_iris_environment():
-                logger.warning("IRIS packages may not be available in current environment")
-            
-            # Import the IRIS module 
+            # Use the proper import as per InterSystems documentation
             import iris
-            
-            # Verify iris.connect is available
-            if not hasattr(iris, 'connect'):
-                raise AttributeError(
-                    "iris module imported but doesn't have 'connect' method. "
-                    "This usually means the intersystems-irispython package is not properly installed "
-                    "or the wrong iris module is being imported."
-                )
             
             # Get connection parameters
             conn_params = self._get_connection_params(config)
             
-            # Create an IRIS connection using the correct parameters
-            connection = iris.connect(
-                hostname=conn_params["hostname"],
-                port=conn_params["port"],
-                namespace=conn_params["namespace"],
-                username=conn_params["username"],
-                password=conn_params["password"]
-            )
+            # Create an IRIS connection using the official approach.
+            # IRIS DBAPI requires either a connectionstr or individual parameters
+            
+            # Try connection string format first (recommended approach)
+            try:
+                connectionstr = f"{conn_params['hostname']}:{conn_params['port']}/{conn_params['namespace']}"
+                connection = iris.connect(
+                    connectionstr=connectionstr,
+                    username=conn_params['username'],
+                    password=conn_params['password']
+                )
+            except Exception as conn_str_error:
+                # Fallback to individual parameters if connection string fails
+                logger.debug(f"Connection string approach failed: {conn_str_error}, trying individual parameters")
+                connection = iris.connect(
+                    hostname=conn_params['hostname'],
+                    port=conn_params['port'],
+                    namespace=conn_params['namespace'],
+                    username=conn_params['username'],
+                    password=conn_params['password']
+                )
             
             logger.debug(f"DBAPI connection established to {conn_params['hostname']}:{conn_params['port']}")
             return connection
             
         except ImportError as e:
             raise ImportError(f"intersystems-irispython package not available. Install with: pip install intersystems-irispython. Error: {e}")
-        except AttributeError as e:
-            raise ImportError(f"IRIS DBAPI not properly configured: {e}")
         except Exception as e:
             raise ConnectionError(f"Failed to create DBAPI connection: {e}")
     
@@ -151,16 +243,11 @@ class IRISConnectionManager:
             conn_params = self._get_connection_params(config)
             
             # JDBC URL
-            jdbc_url = f"jdbc:IRIS://{conn_params['hostname']}:{conn_params['port']}/{conn_params['namespace']}"
+            jdbc_url = f"jdbc:IRIS://{conn_params['hostname']}:{conn_params['port']}/{conn_params['namespace']}?SSL=false"
             
             # JDBC driver path - try multiple locations
             possible_paths = [
-                os.path.join(os.path.dirname(__file__), '..', 'intersystems-jdbc-3.8.4.jar'),
-                './intersystems-jdbc-3.8.4.jar',
-                '../intersystems-jdbc-3.8.4.jar',
-                './jdbc_exploration/intersystems-jdbc-3.8.4.jar',
-                os.path.expanduser('~/intersystems-jdbc-3.8.4.jar'),
-                '/opt/iris/jdbc/intersystems-jdbc-3.8.4.jar'
+                './intersystems-jdbc-3.10.3.jar',
             ]
             
             jdbc_jar_path = None
@@ -174,7 +261,7 @@ class IRISConnectionManager:
                 attempted_paths = '\n  - '.join(possible_paths)
                 raise FileNotFoundError(
                     f"JDBC driver not found. Attempted paths:\n  - {attempted_paths}\n"
-                    f"Download from: https://github.com/intersystems-community/iris-driver-distribution/raw/main/JDBC/JDK18/intersystems-jdbc-3.8.4.jar"
+                    f"Download from: https://github.com/intersystems-community/iris-driver-distribution/raw/main/JDBC/JDK18/intersystems-jdbc-3.9.0.jar"
                 )
             
             # Create JDBC connection
@@ -212,9 +299,11 @@ class IRISConnectionManager:
             "password": os.environ.get("IRIS_PASSWORD", "SYS")
         }
         
-        # Override with config if provided
+        # Override with config if provided, but only if the value is not None
         if config:
-            params.update(config)
+            for key, value in config.items():
+                if value is not None:
+                    params[key] = value
         
         return params
     
@@ -263,19 +352,22 @@ def get_iris_jdbc_connection(config: Optional[Dict[str, Any]] = None) -> Any:
     manager = IRISConnectionManager()
     return manager._get_jdbc_connection(config)
 
-def get_iris_connection(config: Optional[Dict[str, Any]] = None, prefer_dbapi: bool = True) -> Any:
+def get_iris_connection(config: Optional[Dict[str, Any]] = None) -> Any:
     """
-    Get an IRIS database connection, preferring DBAPI by default.
+    Get an IRIS database connection.
+    
+    This function attempts to connect using the DBAPI first, and falls back
+    to JDBC if the DBAPI connection fails. It will raise a ConnectionError
+    if both methods fail.
     
     Args:
-        config: Optional configuration dictionary
-        prefer_dbapi: Whether to prefer DBAPI over JDBC (default: True)
+        config: Optional configuration dictionary for connection parameters.
         
     Returns:
-        Database connection object
+        A database connection object.
     """
-    manager = IRISConnectionManager(prefer_dbapi=prefer_dbapi)
-    return manager.get_connection(config)
+    manager = IRISConnectionManager(config)
+    return manager.get_connection()
 
 
 def get_dbapi_connection(config: Optional[Dict[str, Any]] = None) -> Any:
@@ -288,8 +380,48 @@ def get_dbapi_connection(config: Optional[Dict[str, Any]] = None) -> Any:
     Returns:
         DBAPI connection object
     """
-    manager = IRISConnectionManager(prefer_dbapi=True)
+    manager = IRISConnectionManager()
     return manager._get_dbapi_connection(config)
+
+
+# Global connection manager instance for enhanced functionality
+_global_connection_manager = IRISConnectionManager()
+
+def get_connection_info() -> ConnectionInfo:
+    """
+    Get detailed connection information including driver type and capabilities.
+    
+    Returns:
+        ConnectionInfo object with connection metadata
+    """
+    return _global_connection_manager.get_connection_info()
+
+def get_driver_type() -> DriverType:
+    """
+    Get the type of driver currently in use.
+    
+    Returns:
+        DriverType enum value
+    """
+    return _global_connection_manager.get_driver_type()
+
+def supports_vector_operations() -> bool:
+    """
+    Check if the current driver supports vector operations.
+    
+    Returns:
+        True if vector operations are supported
+    """
+    return _global_connection_manager.supports_vector_operations()
+
+def get_driver_capabilities() -> Dict[str, bool]:
+    """
+    Get the capabilities of the current driver.
+    
+    Returns:
+        Dictionary of capability flags
+    """
+    return _global_connection_manager.get_capabilities()
 
 
 def test_connection() -> bool:
@@ -326,7 +458,7 @@ if __name__ == "__main__":
     
     # Test connection types
     try:
-        with IRISConnectionManager(prefer_dbapi=True) as manager:
+        with IRISConnectionManager() as manager:
             conn = manager.get_connection()
             print(f"✓ Connection established using: {manager.get_connection_type()}")
     except Exception as e:

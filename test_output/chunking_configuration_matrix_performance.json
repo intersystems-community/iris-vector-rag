@@ -1,0 +1,10 @@
+{
+  "ColBERT_chunking_hybrid_large": [
+    {
+      "init_time": 0.0,
+      "chunk_size": null,
+      "strategy": null,
+      "config_name": "chunking_hybrid_large"
+    }
+  ]
+}

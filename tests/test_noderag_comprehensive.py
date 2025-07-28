@@ -46,8 +46,7 @@ def test_noderag_comprehensive():
     
     # Create NodeRAG pipeline
     pipeline = NodeRAGPipeline(
-        iris_connector=iris_conn,
-        embedding_func=embedding_func,
+        config_manager=real_config_manager,
         llm_func=llm_func
     )
     

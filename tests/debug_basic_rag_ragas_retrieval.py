@@ -29,13 +29,13 @@ def test_basic_rag_retrieval_step():
         # Import the basic RAG pipeline
         from iris_rag.pipelines.basic import BasicRAGPipeline
         from iris_rag.core.models import Document
-        from iris_rag.core.connection import ConnectionManager
+        from common.iris_connection_manager import get_iris_connection
         from iris_rag.config.manager import ConfigurationManager
         
         logger.info("✅ Successfully imported BasicRAGPipeline")
         
         # Create mock components
-        mock_connection_manager = Mock(spec=ConnectionManager)
+        mock_connection_manager = Mock()
         mock_config_manager = Mock(spec=ConfigurationManager)
         
         # Configure mock config manager
@@ -87,7 +87,7 @@ def test_basic_rag_retrieval_step():
             
             # Create pipeline instance
             pipeline = BasicRAGPipeline(
-                connection_manager=mock_connection_manager,
+                config_manager=mock_config_manager,
                 config_manager=mock_config_manager
             )
             
@@ -135,7 +135,7 @@ def test_basic_rag_ragas_integration():
         # Import RAGAS evaluation components
         from iris_rag.pipelines.basic import BasicRAGPipeline
         from iris_rag.core.models import Document
-        from iris_rag.core.connection import ConnectionManager
+        from common.iris_connection_manager import get_iris_connection
         from iris_rag.config.manager import ConfigurationManager
         
         # Create mock LLM function for answer generation
@@ -143,7 +143,7 @@ def test_basic_rag_ragas_integration():
             return f"Based on the provided context, diabetes is a metabolic disorder that affects blood sugar levels."
         
         # Create mock components
-        mock_connection_manager = Mock(spec=ConnectionManager)
+        mock_connection_manager = Mock()
         mock_config_manager = Mock(spec=ConfigurationManager)
         mock_config_manager.get.return_value = {
             "chunk_size": 1000,
@@ -176,7 +176,7 @@ def test_basic_rag_ragas_integration():
             
             # Create pipeline with LLM function
             pipeline = BasicRAGPipeline(
-                connection_manager=mock_connection_manager,
+                config_manager=mock_config_manager,
                 config_manager=mock_config_manager,
                 llm_func=mock_llm_func
             )

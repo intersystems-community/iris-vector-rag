@@ -1,0 +1,70 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-07-27T11:41:47.650330",
+    "total_execution_time": 60.039007902145386,
+    "document_count": 0,
+    "target_document_count": 1000,
+    "techniques_tested": 7,
+    "successful_tests": 0,
+    "success_rate": 0.0
+  },
+  "technique_results": {
+    "iris_rag_basic": {
+      "technique": "iris_rag_basic",
+      "success": false,
+      "error": "Vector search failed: Database operation failed during similarity_search: RuntimeError",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_colbert": {
+      "technique": "iris_rag_colbert",
+      "success": false,
+      "error": "Can't instantiate abstract class ColBERTRAGPipeline without an implementation for abstract methods 'load_documents', 'query'",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_crag": {
+      "technique": "iris_rag_crag",
+      "success": false,
+      "error": "iris_rag_crag: Result missing 'retrieved_documents' field\nassert 'retrieved_documents' in {'answer': None, 'error': 'Vector search failed: Database operation failed during similarity_search: RuntimeError', 'execution_time': 0.014945030212402344, 'pipeline_type': 'CRAG', ...}",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_noderag": {
+      "technique": "iris_rag_noderag",
+      "success": false,
+      "error": "NodeRAGPipeline.__init__() got an unexpected keyword argument 'connection_manager'",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hybrid_ifind": {
+      "technique": "iris_rag_hybrid_ifind",
+      "success": false,
+      "error": "iris_rag_hybrid_ifind: Result missing 'retrieved_documents' field\nassert 'retrieved_documents' in {'answer': None, 'error': 'Vector search failed: Database operation failed during similarity_search: RuntimeError', 'pipeline_type': 'hybrid_ifind_rag', 'query': 'What are the effects of BRCA1 mutations on breast cancer risk?'}",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_graphrag": {
+      "technique": "iris_rag_graphrag",
+      "success": false,
+      "error": "iris_rag_graphrag: Too few documents retrieved (0)\nassert 0 >= 1\n +  where 0 = len([])",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hyde": {
+      "technique": "iris_rag_hyde",
+      "success": false,
+      "error": "iris_rag_hyde: Result missing 'retrieved_documents' field\nassert 'retrieved_documents' in {'answer': None, 'error': 'Vector search failed: Database operation failed during similarity_search: RuntimeError', 'pipeline_type': 'hyde_rag', 'query': 'What are the effects of BRCA1 mutations on breast cancer risk?'}",
+      "performance": {},
+      "query_results": []
+    }
+  },
+  "performance_summary": {
+    "fastest_technique": null,
+    "slowest_technique": null,
+    "avg_times": {},
+    "retrieval_counts": {},
+    "answer_lengths": {}
+  },
+  "validation_status": "PARTIAL"
+}

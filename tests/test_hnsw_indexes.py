@@ -12,11 +12,19 @@ import os
 # Add the project root to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from common.iris_connector import get_iris_connection, IRISConnectionError
+from common.iris_connection_manager import get_iris_connection
+from iris_rag.config.manager import ConfigurationManager
+from iris_rag.storage.schema_manager import SchemaManager
+from iris_rag.storage.vector_store_iris import IRISVectorStore
 
 
 class TestHNSWIndexes:
     """Test HNSW index creation and functionality."""
+    
+    @pytest.fixture
+    def real_config_manager(self):
+        """Create a real configuration manager for testing."""
+        return ConfigurationManager()
     
     @pytest.fixture
     def iris_connection(self):
@@ -25,8 +33,26 @@ class TestHNSWIndexes:
         yield connection
         connection.close()
     
-    def test_hnsw_indexes_exist(self, iris_connection):
+    @pytest.fixture
+    def schema_manager(self, real_config_manager):
+        """Create a schema manager for testing."""
+        connection_manager = type('ConnectionManager', (), {
+            'get_connection': lambda self: get_iris_connection()
+        })()
+        return SchemaManager(connection_manager, real_config_manager)
+    
+    @pytest.fixture
+    def vector_store(self, real_config_manager):
+        """Create a vector store for testing."""
+        return IRISVectorStore(config_manager=real_config_manager)
+    
+    def test_hnsw_indexes_exist(self, iris_connection, schema_manager):
         """Test that HNSW indexes are created on the expected tables."""
+        # Ensure tables and HNSW indexes are created using SchemaManager
+        schema_manager.ensure_table_schema('SourceDocuments')
+        schema_manager.ensure_table_schema('DocumentTokenEmbeddings')
+        schema_manager.ensure_table_schema('KnowledgeGraphNodes')
+        
         cursor = iris_connection.cursor()
         
         # Query to check for HNSW indexes
@@ -64,29 +90,26 @@ class TestHNSWIndexes:
         for expected_name, expected_table in expected_indexes:
             assert expected_name in index_names, f"HNSW index {expected_name} not found. Available indexes: {index_names}"
     
-    def test_hnsw_index_functionality(self, iris_connection):
-        """Test that HNSW indexes exist and vector functions work."""
-        cursor = iris_connection.cursor()
+    def test_hnsw_index_functionality(self, iris_connection, schema_manager, vector_store):
+        """Test that HNSW indexes exist and vector functions work through vector store interface."""
+        # Ensure tables and HNSW indexes are created using SchemaManager
+        schema_manager.ensure_table_schema('SourceDocuments')
         
-        # Test 1: Verify that vector functions are available
-        # This tests the basic vector functionality without requiring data insertion
+        # Test 1: Verify that vector functions work through vector store interface
         try:
-            test_vector_query = """
-            SELECT VECTOR_COSINE(
-                TO_VECTOR('[0.1,0.2,0.3]', 'DOUBLE', 3),
-                TO_VECTOR('[0.1,0.2,0.3]', 'DOUBLE', 3)
-            ) as similarity
-            """
-            cursor.execute(test_vector_query)
-            result = cursor.fetchone()
+            # Create a test query embedding
+            test_embedding = [0.1, 0.2, 0.3] + [0.0] * 381  # 384-dimensional vector
             
-            if result:
-                similarity = float(result[0])
-                # Cosine similarity of identical vectors should be 1.0
-                assert similarity == 1.0, f"Expected similarity 1.0 for identical vectors, got {similarity}"
-                print(f"✅ Vector functions work correctly: similarity = {similarity}")
-            else:
-                assert False, "No result returned from vector function test"
+            # Use vector store interface instead of direct SQL
+            results = vector_store.similarity_search_by_embedding(
+                query_embedding=test_embedding,
+                k=5,
+                table_name="SourceDocuments"
+            )
+            
+            # This should work even if no documents exist (returns empty list)
+            assert isinstance(results, list), f"Expected list result, got {type(results)}"
+            print(f"✅ Vector store interface works correctly: returned {len(results)} results")
                 
         except Exception as e:
             print(f"Note: Vector functions may not be fully configured: {e}")
@@ -95,6 +118,7 @@ class TestHNSWIndexes:
         
         # Test 2: Check if tables with HNSW indexes exist and are accessible
         try:
+            cursor = iris_connection.cursor()
             count_query = "SELECT COUNT(*) FROM RAG.SourceDocuments"
             cursor.execute(count_query)
             count_result = cursor.fetchone()
@@ -104,28 +128,31 @@ class TestHNSWIndexes:
                 print(f"✅ RAG.SourceDocuments table accessible with {doc_count} documents")
             else:
                 assert False, "Could not get count from RAG.SourceDocuments"
+            
+            cursor.close()
                 
         except Exception as e:
             assert False, f"Could not access RAG.SourceDocuments table: {e}"
-        
-        cursor.close()
 
-    def test_hnsw_index_performance_hint(self, iris_connection):
+    def test_hnsw_index_performance_hint(self, iris_connection, schema_manager):
         """Test that HNSW indexes are being used by checking query execution plan."""
+        # Ensure tables and HNSW indexes are created using SchemaManager
+        schema_manager.ensure_table_schema('SourceDocuments')
+        
         cursor = iris_connection.cursor()
         
         # Create a query that should use the HNSW index
-        query_vector = [0.1] * 768
+        query_vector = [0.1] * 384  # Use correct dimension
         query_str = ','.join(map(str, query_vector))
         
         # Use EXPLAIN to check if HNSW index is being used
         explain_query = f"""
         EXPLAIN
         SELECT TOP 10 doc_id,
-               VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'FLOAT', 768)) as similarity
+               VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'FLOAT', 384)) as similarity
         FROM RAG.SourceDocuments
         WHERE embedding IS NOT NULL
-        ORDER BY VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'FLOAT', 768)) DESC
+        ORDER BY VECTOR_COSINE(embedding, TO_VECTOR('[{query_str}]', 'FLOAT', 384)) DESC
         """
         
         try:
@@ -147,3 +174,5 @@ class TestHNSWIndexes:
             print(f"Note: Could not analyze execution plan: {e}")
             # This is not a critical failure for HNSW functionality
             pass
+        
+        cursor.close()

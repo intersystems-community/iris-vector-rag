@@ -8,11 +8,11 @@ before creating pipeline instances.
 import logging
 from typing import Optional, Callable, Dict, Any
 from ..core.base import RAGPipeline
-from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
-from ..embeddings.manager import EmbeddingManager # Import EmbeddingManager
+from ..embeddings.manager import EmbeddingManager
+from common.iris_connection_manager import IRISConnectionManager
 from ..pipelines.basic import BasicRAGPipeline
-from ..pipelines.colbert import ColBERTRAGPipeline
+from ..pipelines.colbert.pipeline import ColBERTRAGPipeline
 from ..pipelines.crag import CRAGPipeline
 from ..pipelines.hyde import HyDERAGPipeline
 from ..pipelines.graphrag import GraphRAGPipeline
@@ -39,20 +39,19 @@ class ValidatedPipelineFactory:
     or provide clear error messages with setup suggestions.
     """
     
-    def __init__(self, connection_manager: ConnectionManager, 
-                 config_manager: ConfigurationManager):
+    def __init__(self, config_manager: ConfigurationManager, connection_manager: Optional[IRISConnectionManager] = None):
         """
         Initialize the validated factory.
         
         Args:
-            connection_manager: Database connection manager
             config_manager: Configuration manager
+            connection_manager: Optional connection manager for dependency injection
         """
-        self.connection_manager = connection_manager
         self.config_manager = config_manager
-        self.embedding_manager = EmbeddingManager(config_manager) # Initialize EmbeddingManager
-        self.validator = PreConditionValidator(connection_manager)
-        self.orchestrator = SetupOrchestrator(connection_manager, config_manager) # SetupOrchestrator creates its own EmbeddingManager
+        self.connection_manager = connection_manager or IRISConnectionManager(config_manager)
+        self.embedding_manager = EmbeddingManager(config_manager)
+        self.validator = PreConditionValidator(self.connection_manager)
+        self.orchestrator = SetupOrchestrator(config_manager, self.connection_manager)
         self.logger = logging.getLogger(__name__)
     
     def create_pipeline(self, pipeline_type: str, 
@@ -113,13 +112,12 @@ class ValidatedPipelineFactory:
         """Create the actual pipeline instance."""
         if pipeline_type == "basic":
             return BasicRAGPipeline(
-                connection_manager=self.connection_manager,
                 config_manager=self.config_manager,
                 llm_func=llm_func
             )
         elif pipeline_type == "colbert":
             return ColBERTRAGPipeline(
-                connection_manager=self.connection_manager,
+                iris_connector=self.connection_manager.get_connection(),
                 config_manager=self.config_manager,
                 llm_func=llm_func,
                 **kwargs
@@ -131,21 +129,25 @@ class ValidatedPipelineFactory:
                 llm_func=llm_func
             )
         elif pipeline_type == "hyde":
+            # HyDERAGPipeline(config_manager, llm_func=None, vector_store=None)
             return HyDERAGPipeline(
-                connection_manager=self.connection_manager,
                 config_manager=self.config_manager,
-                llm_func=llm_func
+                llm_func=llm_func,
+                vector_store=kwargs.get('vector_store')
             )
         elif pipeline_type == "graphrag":
+            # GraphRAGPipeline(config_manager, vector_store=None, llm_func=None, connection_factory=None)
             return GraphRAGPipeline(
-                connection_manager=self.connection_manager,
                 config_manager=self.config_manager,
-                llm_func=llm_func
+                vector_store=kwargs.get('vector_store'),
+                llm_func=llm_func,
+                connection_factory=self.connection_manager.get_connection
             )
         elif pipeline_type == "hybrid_ifind":
+            # HybridIFindRAGPipeline(config_manager, vector_store=None, llm_func=None)
             return HybridIFindRAGPipeline(
-                connection_manager=self.connection_manager,
                 config_manager=self.config_manager,
+                vector_store=kwargs.get('vector_store'),
                 llm_func=llm_func
             )
         elif pipeline_type == "noderag":
@@ -325,7 +327,6 @@ class ValidatedPipelineFactory:
 
 # Convenience function for backward compatibility
 def create_validated_pipeline(pipeline_type: str,
-                            connection_manager: ConnectionManager,
                             config_manager: ConfigurationManager,
                             llm_func: Optional[Callable[[str], str]] = None,
                             auto_setup: bool = False,
@@ -335,7 +336,6 @@ def create_validated_pipeline(pipeline_type: str,
     
     Args:
         pipeline_type: Type of pipeline to create
-        connection_manager: Database connection manager
         config_manager: Configuration manager
         llm_func: Optional LLM function
         auto_setup: Whether to automatically set up missing requirements
@@ -344,7 +344,7 @@ def create_validated_pipeline(pipeline_type: str,
     Returns:
         Validated pipeline instance
     """
-    factory = ValidatedPipelineFactory(connection_manager, config_manager)
+    factory = ValidatedPipelineFactory(config_manager)
     return factory.create_pipeline(
         pipeline_type=pipeline_type,
         llm_func=llm_func,

@@ -35,7 +35,7 @@ from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipeline
 from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2
 from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipelineV2
 from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipeline
-from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTPipelineV2
+from iris_rag.pipelines.colbert.pipeline import ColBERTRAGPipeline as ColBERTPipelineV2
 from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline as HybridIFindRAGPipelineV2
 from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipeline
 

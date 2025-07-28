@@ -280,6 +280,11 @@ class ConfigurationTemplateEngine(IConfigurationTemplate):
         elif value.lower() in ('false', 'no', 'off', '0'):
             return False
         
+        # Don't convert version-like strings (e.g., "2024.1", "1.0.0")
+        # These should remain as strings for schema validation
+        if self._is_version_string(value):
+            return value
+        
         # Try to convert to int
         try:
             if '.' not in value:
@@ -295,6 +300,29 @@ class ConfigurationTemplateEngine(IConfigurationTemplate):
         
         # Return as string
         return value
+    
+    def _is_version_string(self, value: str) -> bool:
+        """
+        Check if a string looks like a version number that should remain a string.
+        
+        Args:
+            value: String to check
+            
+        Returns:
+            True if it looks like a version string
+        """
+        import re
+        # Match patterns like "2024.1", "1.0.0", "v1.2.3", etc.
+        version_patterns = [
+            r'^\d{4}\.\d+$',  # Year.version like "2024.1"
+            r'^\d+\.\d+\.\d+$',  # Semantic version like "1.0.0"
+            r'^v\d+\.\d+(\.\d+)?$',  # Version with v prefix like "v1.2" or "v1.2.3"
+        ]
+        
+        for pattern in version_patterns:
+            if re.match(pattern, value):
+                return True
+        return False
     
     def validate_configuration(self, config: Dict[str, Any]) -> List[str]:
         """
@@ -361,10 +389,6 @@ class ConfigurationTemplateEngine(IConfigurationTemplate):
         except Exception as e:
             logger.error(f"Configuration validation failed: {e}")
             raise ValidationError(f"Configuration validation failed: {e}")
-            profile_name = yaml_file.stem
-            profiles.append(profile_name)
-        
-        return sorted(profiles)
     
     def render_template(self, template_name: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

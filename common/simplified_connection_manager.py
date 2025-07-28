@@ -1,139 +1,199 @@
 """
-Simplified connection manager that uses ODBC for now
-Will be updated to support JDBC and dbapi when available
-"""
+Simplified Connection Manager that provides a working DBAPI-like interface.
 
+This module creates a DBAPI-compatible connection that works around the
+circular import issues in intersystems_iris by using JDBC under the hood
+but presenting a DBAPI-like interface for testing.
+"""
 import logging
-from typing import Any, List, Optional, Dict
-from contextlib import contextmanager
+from typing import Any, Optional, Tuple, List
 
 logger = logging.getLogger(__name__)
 
-class SimplifiedConnectionManager:
-    """Simplified connection manager using ODBC with workarounds for vector operations"""
+
+class SimplifiedCursor:
+    """A simplified cursor that mimics DBAPI cursor interface."""
     
-    def __init__(self):
-        """Initialize with ODBC connection"""
-        self._connection = None
-        self._init_connection()
+    def __init__(self, jdbc_cursor):
+        self._jdbc_cursor = jdbc_cursor
+        self._closed = False
     
-    def _init_connection(self):
-        """Initialize ODBC connection"""
-        from common.iris_connector import get_iris_connection
-        self._connection = get_iris_connection()
-        logger.info("Initialized ODBC connection")
-    
-    def execute_vector_search(
-        self, 
-        table: str,
-        embedding_column: str,
-        query_embedding: List[float],
-        top_k: int = 5,
-        similarity_threshold: float = 0.1,
-        select_columns: List[str] = None,
-        where_clause: str = None
-    ) -> List[Dict[str, Any]]:
-        """
-        Execute vector similarity search with ODBC workarounds
+    def execute(self, query: str, params: Optional[Tuple] = None):
+        """Execute a query."""
+        if self._closed:
+            raise RuntimeError("Cursor is closed")
         
-        Args:
-            table: Table name (e.g., "RAG.SourceDocuments")
-            embedding_column: Name of the embedding column
-            query_embedding: Query embedding vector
-            top_k: Number of results to return
-            similarity_threshold: Minimum similarity score
-            select_columns: Columns to select (default: all)
-            where_clause: Additional WHERE conditions
-            
-        Returns:
-            List of result dictionaries
-        """
-        # Format embedding for IRIS
-        embedding_str = ','.join([f'{x:.10f}' for x in query_embedding])
-        
-        # Build column list
-        if select_columns:
-            columns = ', '.join(select_columns)
-        else:
-            columns = '*'
-        
-        # Build WHERE clause
-        where_parts = [f"{embedding_column} IS NOT NULL"]
-        if where_clause:
-            where_parts.append(f"({where_clause})")
-        where_sql = " AND ".join(where_parts)
-        
-        # For ODBC, we'll use a simpler approach without VECTOR_COSINE
-        # This is a temporary workaround until JDBC/dbapi is available
-        sql = f"""
-            SELECT TOP {top_k} {columns}
-            FROM {table}
-            WHERE {where_sql}
-        """
-        
-        cursor = self._connection.cursor()
-        try:
-            cursor.execute(sql)
-            
-            # Get column names
-            columns = [desc[0] for desc in cursor.description]
-            
-            # Fetch results and convert to dictionaries
-            results = []
-            for row in cursor.fetchall():
-                result_dict = dict(zip(columns, row))
-                # Add a placeholder similarity score
-                result_dict['similarity_score'] = 0.5  # Placeholder
-                results.append(result_dict)
-            
-            return results
-            
-        finally:
-            cursor.close()
-    
-    def execute(self, query: str, params: Optional[List[Any]] = None) -> List[Any]:
-        """
-        Execute a general SQL query
-        
-        Args:
-            query: SQL query
-            params: Optional parameters (not supported in ODBC)
-            
-        Returns:
-            Query results
-        """
         if params:
-            logger.warning("Parameters not supported in ODBC, query will be executed as-is")
-        
-        cursor = self._connection.cursor()
-        try:
-            cursor.execute(query)
-            return cursor.fetchall()
-        finally:
-            cursor.close()
+            self._jdbc_cursor.execute(query, params)
+        else:
+            self._jdbc_cursor.execute(query)
     
-    @contextmanager
-    def cursor(self):
-        """Get a cursor for direct operations"""
-        cursor = self._connection.cursor()
-        try:
-            yield cursor
-        finally:
-            cursor.close()
+    def fetchone(self) -> Optional[Tuple]:
+        """Fetch one row."""
+        if self._closed:
+            raise RuntimeError("Cursor is closed")
+        
+        result = self._jdbc_cursor.fetchone()
+        return result
+    
+    def fetchall(self) -> List[Tuple]:
+        """Fetch all rows."""
+        if self._closed:
+            raise RuntimeError("Cursor is closed")
+        
+        return self._jdbc_cursor.fetchall()
+    
+    def fetchmany(self, size: int = 1) -> List[Tuple]:
+        """Fetch many rows."""
+        if self._closed:
+            raise RuntimeError("Cursor is closed")
+        
+        return self._jdbc_cursor.fetchmany(size)
     
     def close(self):
-        """Close the connection"""
-        if self._connection:
-            self._connection.close()
-            self._connection = None
-            logger.info("Closed ODBC connection")
+        """Close the cursor."""
+        if not self._closed:
+            self._jdbc_cursor.close()
+            self._closed = True
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
-# Global instance
-_global_manager = None
 
-def get_simplified_connection_manager() -> SimplifiedConnectionManager:
-    """Get or create global connection manager"""
-    global _global_manager
-    if _global_manager is None:
-        _global_manager = SimplifiedConnectionManager()
-    return _global_manager
+class SimplifiedConnection:
+    """A simplified connection that mimics DBAPI connection interface."""
+    
+    def __init__(self, jdbc_connection):
+        self._jdbc_connection = jdbc_connection
+        self._closed = False
+    
+    def cursor(self) -> SimplifiedCursor:
+        """Create a cursor."""
+        if self._closed:
+            raise RuntimeError("Connection is closed")
+        
+        jdbc_cursor = self._jdbc_connection.cursor()
+        return SimplifiedCursor(jdbc_cursor)
+    
+    def commit(self):
+        """Commit the transaction."""
+        if self._closed:
+            raise RuntimeError("Connection is closed")
+        
+        self._jdbc_connection.commit()
+    
+    def rollback(self):
+        """Rollback the transaction."""
+        if self._closed:
+            raise RuntimeError("Connection is closed")
+        
+        self._jdbc_connection.rollback()
+    
+    def close(self):
+        """Close the connection."""
+        if not self._closed:
+            self._jdbc_connection.close()
+            self._closed = True
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+
+def get_simplified_dbapi_connection(
+    hostname: str = "localhost",
+    port: int = 1972,
+    namespace: str = "USER",
+    username: str = "SuperUser",
+    password: str = "SYS"
+) -> Optional[SimplifiedConnection]:
+    """
+    Get a simplified DBAPI-like connection using JDBC under the hood.
+    
+    This provides a DBAPI-compatible interface while avoiding the circular
+    import issues in the intersystems_iris package.
+    
+    Args:
+        hostname: IRIS server hostname
+        port: IRIS server port
+        namespace: IRIS namespace
+        username: IRIS username
+        password: IRIS password
+        
+    Returns:
+        SimplifiedConnection object or None if failed
+    """
+    try:
+        import jaydebeapi
+        import os
+        
+        # JDBC URL
+        jdbc_url = f"jdbc:IRIS://{hostname}:{port}/{namespace}"
+        
+        # JDBC driver path - try multiple locations
+        possible_paths = [
+            os.path.join(os.path.dirname(__file__), '..', 'intersystems-jdbc-3.9.0.jar'),
+            './intersystems-jdbc-3.9.0.jar',
+            '../intersystems-jdbc-3.9.0.jar',
+            './jdbc_exploration/intersystems-jdbc-3.9.0.jar',
+            os.path.expanduser('~/intersystems-jdbc-3.9.0.jar'),
+            '/opt/iris/jdbc/intersystems-jdbc-3.9.0.jar'
+        ]
+        
+        jdbc_jar_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                jdbc_jar_path = path
+                break
+        
+        if not jdbc_jar_path:
+            logger.error("JDBC driver not found for simplified connection")
+            return None
+        
+        # Create JDBC connection
+        jdbc_connection = jaydebeapi.connect(
+            "com.intersystems.jdbc.IRISDriver",
+            jdbc_url,
+            [username, password],
+            jdbc_jar_path
+        )
+        
+        # Wrap in simplified interface
+        simplified_conn = SimplifiedConnection(jdbc_connection)
+        
+        logger.info("✓ Successfully created simplified DBAPI-like connection")
+        return simplified_conn
+        
+    except Exception as e:
+        logger.error(f"Failed to create simplified DBAPI connection: {e}")
+        return None
+
+
+def test_simplified_connection():
+    """Test the simplified connection."""
+    conn = get_simplified_dbapi_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            logger.info(f"Test query result: {result}")
+            cursor.close()
+            return True
+        except Exception as e:
+            logger.error(f"Test query failed: {e}")
+            return False
+        finally:
+            conn.close()
+    return False
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    success = test_simplified_connection()
+    print(f"Simplified DBAPI connection test: {'✓ PASSED' if success else '✗ FAILED'}")

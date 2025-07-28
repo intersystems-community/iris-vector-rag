@@ -12,7 +12,7 @@ from transformers import AutoTokenizer, AutoModel
 import torch
 
 from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.controllers.reconciliation_components.document_service import DocumentService
 from iris_rag.validation.embedding_validator import EmbeddingValidator
 from iris_rag.controllers.reconciliation_components.models import (
@@ -34,8 +34,8 @@ class RemediationEngine:
     embedding generation, document processing, and coordination of remediation actions.
     """
     
-    def __init__(self, config_manager: ConfigurationManager, 
-                 connection_manager: ConnectionManager,
+    def __init__(self, config_manager: ConfigurationManager,
+                 iris_connector,
                  document_service: DocumentService,
                  embedding_validator: EmbeddingValidator):
         """
@@ -48,7 +48,7 @@ class RemediationEngine:
             embedding_validator: Validator for embedding quality
         """
         self.config_manager = config_manager
-        self.connection_manager = connection_manager
+        self.iris_connector = iris_connector
         self.document_service = document_service
         self.embedding_validator = embedding_validator
         
@@ -171,7 +171,7 @@ class RemediationEngine:
             )
         
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             embedding_func = get_embedding_func()
             
             # Extract target dimension from desired state

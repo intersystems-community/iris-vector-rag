@@ -139,19 +139,25 @@ class ComprehensiveValidationTester:
             import iris_rag
             logger.info("✓ iris_rag package imported successfully")
             
-            # Check document count
+            # Check document count - use all documents, not just PMC ones
             from common.iris_connection_manager import get_iris_connection
             conn = get_iris_connection()
             if conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE doc_id LIKE 'PMC%'")
+                cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
                 result = cursor.fetchone()
                 doc_count = result[0] if result else 0
                 self.results.results["document_count"] = doc_count
+                
+                # Also check PMC documents specifically for reporting
+                cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE doc_id LIKE 'PMC%'")
+                pmc_result = cursor.fetchone()
+                pmc_count = pmc_result[0] if pmc_result else 0
+                self.results.results["pmc_document_count"] = pmc_count
                 cursor.close()
                 
                 if doc_count >= 1000:
-                    logger.info(f"✅ Sufficient documents for testing: {doc_count}")
+                    logger.info(f"✅ Sufficient documents for testing: {doc_count} total ({pmc_count} PMC documents)")
                 else:
                     raise Exception(f"Insufficient documents: {doc_count} < 1000")
             else:

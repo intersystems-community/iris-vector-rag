@@ -1,0 +1,218 @@
+{
+  "timestamp": "2025-07-27T22:54:12.294683",
+  "document_count": 0,
+  "total_pipelines_tested": 8,
+  "successful_pipelines": 8,
+  "failed_pipelines": 0,
+  "pipeline_results": [
+    {
+      "pipeline_name": "BasicRAG",
+      "success": true,
+      "execution_time": 1.7190742492675781,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "No relevant documents found to answer the query.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 1.7190742492675781,
+        "retrieved_docs_count": 0,
+        "answer_length": 48,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "HyDERAG",
+      "success": true,
+      "execution_time": 7.657200813293457,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "No relevant documents found to answer the query.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 7.657200813293457,
+        "retrieved_docs_count": 0,
+        "answer_length": 48,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "SQLRAG",
+      "success": true,
+      "execution_time": 2.9735660552978516,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "Based on the database query results, there were no documents found that specifically mention the effects of metformin. This could be due to the search criteria used or the content of the database itself. Metformin is commonly known as a medication used to treat type 2 diabetes by helping control blood sugar levels. Some common effects of metformin include gastrointestinal issues such as nausea, diarrhea, and stomach upset. It can also rarely cause a serious condition called lactic acidosis. For more detailed information on the effects of metformin, further research or consultation with a healthcare provider is recommended.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 2.9735660552978516,
+        "retrieved_docs_count": 0,
+        "answer_length": 630,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "ColBERT",
+      "success": true,
+      "execution_time": 0.3298821449279785,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "No relevant documents found to answer the query.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 0.3298821449279785,
+        "retrieved_docs_count": 0,
+        "answer_length": 48,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "GraphRAG",
+      "success": true,
+      "execution_time": 2.0219709873199463,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "GraphRAG failed: Insufficient knowledge graph data for graph-based retrieval. Please use BasicRAG or ensure knowledge graph is properly populated.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 2.0219709873199463,
+        "retrieved_docs_count": 0,
+        "answer_length": 146,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "NodeRAG",
+      "success": true,
+      "execution_time": 1.2171425819396973,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "I could not find enough information from the knowledge graph to answer your question.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 1.2171425819396973,
+        "retrieved_docs_count": 0,
+        "answer_length": 85,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "CRAG",
+      "success": true,
+      "execution_time": 0.30371999740600586,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "I couldn't find relevant information to answer your question. Please try rephrasing your query.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 0.30371999740600586,
+        "retrieved_docs_count": 0,
+        "answer_length": 95,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    },
+    {
+      "pipeline_name": "HybridIFind",
+      "success": true,
+      "execution_time": 0.9200448989868164,
+      "error_message": null,
+      "error_type": null,
+      "query": "What are the effects of metformin?",
+      "answer": "No documents retrieved to generate an answer.",
+      "retrieved_docs_count": 0,
+      "performance_metrics": {
+        "execution_time": 0.9200448989868164,
+        "retrieved_docs_count": 0,
+        "answer_length": 45,
+        "has_answer": true,
+        "has_retrieved_docs": false
+      }
+    }
+  ],
+  "test_queries": [
+    "What are the effects of metformin?"
+  ],
+  "summary": {
+    "pipeline_summary": {
+      "BasicRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 1.7190742492675781,
+        "status": "WORKING"
+      },
+      "HyDERAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 7.657200813293457,
+        "status": "WORKING"
+      },
+      "SQLRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 2.9735660552978516,
+        "status": "WORKING"
+      },
+      "ColBERT": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 0.3298821449279785,
+        "status": "WORKING"
+      },
+      "GraphRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 2.0219709873199463,
+        "status": "WORKING"
+      },
+      "NodeRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 1.2171425819396973,
+        "status": "WORKING"
+      },
+      "CRAG": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 0.30371999740600586,
+        "status": "WORKING"
+      },
+      "HybridIFind": {
+        "total_tests": 1,
+        "successful_tests": 1,
+        "success_rate": 1.0,
+        "avg_execution_time": 0.9200448989868164,
+        "status": "WORKING"
+      }
+    },
+    "total_tests_run": 8,
+    "total_successful_tests": 8,
+    "total_failed_tests": 0,
+    "overall_success_rate": 1.0
+  },
+  "recommendations": [
+    "CRITICAL: Only 0 documents available. Need to ingest at least 1000 PMC documents for proper testing.",
+    "Run data ingestion script to load more PMC documents before comprehensive testing.",
+    "Working pipelines that can be used immediately: BasicRAG, HyDERAG, SQLRAG, ColBERT, GraphRAG, NodeRAG, CRAG, HybridIFind",
+    "Next steps: 1) Fix data ingestion, 2) Fix broken pipelines, 3) Re-run comprehensive test"
+  ]
+}

@@ -11,10 +11,12 @@ import sys
 # Make sure the project root is in the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from common.iris_connector import get_iris_connection
+from common.iris_connection_manager import get_iris_connection
+from iris_rag.storage.schema_manager import SchemaManager
+from iris_rag.config.manager import ConfigurationManager
 
 # Import our embedding generation functions
-# This will fail initially since we haven't moved these functions out of 
+# This will fail initially since we haven't moved these functions out of
 # generate_embeddings.py into a proper module yet
 from common.embedding_utils import (
     generate_document_embeddings,
@@ -57,6 +59,14 @@ class TestEmbeddingGeneration:
         connection = get_iris_connection()
         assert connection is not None
         
+        # Initialize schema manager and ensure table exists
+        connection_manager = type('ConnectionManager', (), {
+            'get_connection': lambda self: connection
+        })()
+        config_manager = ConfigurationManager()
+        schema_manager = SchemaManager(connection_manager, config_manager)
+        schema_manager.ensure_table_schema('SourceDocuments')
+        
         # Add some documents
         cursor = connection.cursor()
         mock_docs = [
@@ -64,7 +74,7 @@ class TestEmbeddingGeneration:
             ("doc2", "Test Title 2", "Test Content 2", "[]", "[]")
         ]
         cursor.executemany(
-            "INSERT INTO SourceDocuments (doc_id, title, content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
             mock_docs
         )
         cursor.close()
@@ -85,6 +95,15 @@ class TestEmbeddingGeneration:
         # Get a connection (mock)
         connection = get_iris_connection()
         assert connection is not None
+
+        # Initialize schema manager and ensure tables exist
+        connection_manager = type('ConnectionManager', (), {
+            'get_connection': lambda self: connection
+        })()
+        config_manager = ConfigurationManager()
+        schema_manager = SchemaManager(connection_manager, config_manager)
+        schema_manager.ensure_table_schema('SourceDocuments')
+        schema_manager.ensure_table_schema('DocumentTokenEmbeddings')
         
         # Add some documents
         cursor = connection.cursor()
@@ -93,7 +112,7 @@ class TestEmbeddingGeneration:
             ("doc2", "Test Title 2", "Test Content 2", "[]", "[]")
         ]
         cursor.executemany(
-            "INSERT INTO SourceDocuments (doc_id, title, content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
             mock_docs
         )
         cursor.close()
@@ -102,7 +121,7 @@ class TestEmbeddingGeneration:
         model = get_colbert_model(mock=True)
         
         # Generate token embeddings
-        stats = generate_token_embeddings(connection, model, batch_size=1, limit=2)
+        stats = generate_token_embeddings(connection, model, config_manager, batch_size=1, limit=2)
         
         # Verify results
         assert stats is not None

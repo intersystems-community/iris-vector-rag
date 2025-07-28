@@ -16,8 +16,10 @@ from common.utils import get_embedding_func, get_llm_func
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from common.iris_connector import get_iris_connection
-from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists
-from data.loader_fixed import process_and_load_documents
+from iris_rag.storage.schema_manager import SchemaManager
+from iris_rag.config.manager import ConfigurationManager
+from common.iris_connection_manager import IRISConnectionManager
+from data.unified_loader import process_and_load_documents_unified
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
@@ -40,12 +42,14 @@ def e2e_db_connection():
     Ensures test-specific documents are cleared before ingestion for idempotency.
     """
     logger.info("Setting up database for E2E pipeline tests...")
-    create_schema_if_not_exists("RAG")
-    success_init = initialize_complete_rag_database("RAG")
-    if not success_init:
-        pytest.fail("Failed to initialize RAG database for E2E tests.")
+    config_manager = ConfigurationManager()
+    connection_manager = IRISConnectionManager(config_manager=config_manager)
+    schema_manager = SchemaManager(connection_manager, config_manager)
+    schema_manager.ensure_table_schema("SourceDocuments")
+    schema_manager.ensure_table_schema("DocumentTokenEmbeddings")
+    schema_manager.ensure_table_schema("DocumentEntities")
 
-    conn = get_iris_connection()
+    conn = connection_manager.get_connection()
 
     # Clean up specific test documents before ingestion to ensure idempotency of this fixture
     logger.info("Attempting to delete DOCA and DOCB if they exist to ensure clean test data ingestion.")
@@ -78,19 +82,21 @@ def e2e_db_connection():
     logger.info(f"Ingesting E2E test documents from {TEST_E2E_DOC_DIR}")
     # Use actual embedding function for ingestion
     e2e_embedding_func = get_embedding_func()
-    ingestion_stats = process_and_load_documents(
+    loader_config = {
+        "limit": 2,
+        "batch_size": 2,
+        "embedding_column_type": "VECTOR"
+    }
+    ingestion_stats = process_and_load_documents_unified(
+        config=loader_config,
         pmc_directory=TEST_E2E_DOC_DIR,
-        connection=conn,
-        embedding_func=e2e_embedding_func,
-        colbert_doc_encoder_func=None, # Not testing Colbert here
-        limit=2, # Only our two test docs
-        batch_size=2
+        colbert_doc_encoder_func=None # Not testing Colbert here
     )
     if not ingestion_stats["success"] or ingestion_stats["loaded_doc_count"] != 2:
         pytest.fail(f"Failed to ingest E2E test documents. Stats: {ingestion_stats}")
     
     logger.info("E2E test documents ingested successfully.")
-    yield conn
+    yield conn, config_manager
     
     logger.info("Closing database connection for E2E pipeline tests.")
     conn.close()
@@ -100,14 +106,13 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     """
     Tests the full pipeline: ingest, search, verify document retrieval, and answer generation.
     """
-    conn = e2e_db_connection
+    conn, config_manager = e2e_db_connection
 
     # Initialize the RAG pipeline
     test_embedding_func = get_embedding_func()
     test_llm_func = get_llm_func()
     pipeline = BasicRAGPipeline(
-        iris_connector=conn,
-        embedding_func=test_embedding_func,
+        config_manager=config_manager,
         llm_func=test_llm_func
     )
 
@@ -188,8 +193,12 @@ if __name__ == "__main__":
     # Manual setup for direct run
     logger.info("Running E2E pipeline test directly (not via pytest)...")
     
-    create_schema_if_not_exists("RAG")
-    initialize_complete_rag_database("RAG") # Ensure clean state
+    config_manager = ConfigurationManager()
+    connection_manager = IRISConnectionManager(config_manager=config_manager)
+    schema_manager = SchemaManager(connection_manager, config_manager)
+    schema_manager.ensure_table_schema("SourceDocuments")
+    schema_manager.ensure_table_schema("DocumentTokenEmbeddings")
+    schema_manager.ensure_table_schema("DocumentEntities")
     
     # Create dummy test files if they don't exist
     if not os.path.exists(TEST_E2E_DOC_DIR):
@@ -205,12 +214,14 @@ if __name__ == "__main__":
     
     # Manually ingest for direct run, now with embedding function
     direct_embedding_func = get_embedding_func()
-    ingestion_stats_direct = process_and_load_documents(
-        pmc_directory=TEST_E2E_DOC_DIR,
-        connection=temp_conn_e2e,
-        embedding_func=direct_embedding_func, # Added embedding function
-        limit=2,
-        batch_size=2
+    loader_config = {
+        "limit": 2,
+        "batch_size": 2,
+        "embedding_column_type": "VECTOR"
+    }
+    ingestion_stats_direct = process_and_load_documents_unified(
+        config=loader_config,
+        pmc_directory=TEST_E2E_DOC_DIR
     )
     if not ingestion_stats_direct["success"] or ingestion_stats_direct["loaded_doc_count"] != 2:
         logger.error(f"Direct run: Failed to ingest E2E test documents. Stats: {ingestion_stats_direct}")

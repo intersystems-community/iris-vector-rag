@@ -8,8 +8,8 @@ including document insertion, vector search, and metadata queries.
 import json
 import logging
 from typing import List, Dict, Any, Optional, Tuple
-from ..core.models import Document
-from ..core.connection import ConnectionManager
+from common.utils import Document
+from common.iris_connection_manager import get_iris_connection
 from ..config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
@@ -68,17 +68,15 @@ class IRISStorage:
     specifically optimized for IRIS database operations.
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager):
+    def __init__(self, config_manager: ConfigurationManager):
         """
-        Initialize IRIS storage with connection and configuration managers.
+        Initialize IRIS storage with a configuration manager.
         
         Args:
-            connection_manager: Manager for database connections
             config_manager: Manager for configuration settings
         """
-        self.connection_manager = connection_manager
         self.config_manager = config_manager
-        self._connection = None
+        self._connection = get_iris_connection()
         
         # Get storage configuration
         self.storage_config = self.config_manager.get("storage:iris", {})
@@ -88,7 +86,7 @@ class IRISStorage:
     def _get_connection(self):
         """Get or create database connection."""
         if self._connection is None:
-            self._connection = self.connection_manager.get_connection("iris")
+            self._connection = get_iris_connection()
         return self._connection
     
     def initialize_schema(self) -> None:

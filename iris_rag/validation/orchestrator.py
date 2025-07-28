@@ -8,11 +8,12 @@ and prepare data for different pipeline types.
 import logging
 import time
 from typing import Dict, List, Any
-from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
 from ..embeddings.manager import EmbeddingManager
+from ..embeddings.colbert_interface import RAGTemplatesColBERTInterface
 from .requirements import PipelineRequirements, get_pipeline_requirements
 from .validator import PreConditionValidator, ValidationReport
+from common.db_vector_utils import insert_vector
 
 logger = logging.getLogger(__name__)
 
@@ -54,19 +55,23 @@ class SetupOrchestrator:
     - Progress tracking and error handling
     """
     
-    def __init__(self, connection_manager: ConnectionManager, 
-                 config_manager: ConfigurationManager):
+    def __init__(self, config_manager: ConfigurationManager, connection_manager):
         """
         Initialize the setup orchestrator.
         
         Args:
-            connection_manager: Database connection manager
             config_manager: Configuration manager
+            connection_manager: Connection manager for database access
         """
-        self.connection_manager = connection_manager
         self.config_manager = config_manager
+        self.connection_manager = connection_manager
         self.embedding_manager = EmbeddingManager(config_manager)
         self.validator = PreConditionValidator(connection_manager)
+        
+        # Initialize ColBERT interface for token embeddings with proper 768 dimensions
+        colbert_token_dimension = config_manager.get("colbert.token_dimension", 768)
+        self.colbert_interface = RAGTemplatesColBERTInterface(token_dimension=colbert_token_dimension)
+        
         self.logger = logging.getLogger(__name__)
     
     def setup_pipeline(self, pipeline_type: str, auto_fix: bool = True) -> ValidationReport:
@@ -296,14 +301,23 @@ class SetupOrchestrator:
                         item_data["node_name"], node_id
                     ))
                 else:
-                    insert_sql = """
-                        INSERT INTO RAG.KnowledgeGraphNodes
-                        (node_id, node_name, embedding)
-                        VALUES (?, ?, TO_VECTOR(?))
-                    """
-                    cursor.execute(insert_sql, (
-                        node_id, item_data["node_name"], iris_vector_str
-                    ))
+                    # Use insert_vector utility to comply with Vector Insertion Rules
+                    success = insert_vector(
+                        cursor=cursor,
+                        table_name="RAG.KnowledgeGraphNodes",
+                        vector_column_name="embedding",
+                        vector_data=node_embedding_list,
+                        target_dimension=len(node_embedding_list),
+                        key_columns={
+                            "node_id": node_id
+                        },
+                        additional_data={
+                            "node_name": item_data["node_name"]
+                        }
+                    )
+                    
+                    if not success:
+                        self.logger.error(f"Failed to insert node {node_id} using insert_vector utility")
             except Exception as e:
                 self.logger.error(f"Error upserting node {node_id} in _process_kg_node_batch_for_upsert (DIAGNOSTIC): {e}", exc_info=False)
     
@@ -341,26 +355,52 @@ class SetupOrchestrator:
     
     def _ensure_document_embeddings(self):
         """Ensure all documents have embeddings."""
-        connection = self.connection_manager.get_connection()
+        from common.iris_connection_manager import get_iris_connection
+        from iris_rag.storage.schema_manager import SchemaManager
+        from iris_rag.config.manager import ConfigurationManager
+        
+        connection = get_iris_connection()
         cursor = connection.cursor()
         
         try:
-            # Check for documents without embeddings
-            cursor.execute("""
-                SELECT COUNT(*) FROM RAG.SourceDocuments
-                WHERE embedding IS NULL
-            """)
+            # Get the correct embedding column name from SchemaManager configuration
+            config_manager = ConfigurationManager()
+            connection_manager = type('ConnectionManager', (), {
+                'get_connection': lambda *args, **kwargs: connection
+            })()
+            schema_manager = SchemaManager(connection_manager, config_manager)
             
-            missing_count = cursor.fetchone()[0]
+            # Get table configuration for SourceDocuments
+            table_config = schema_manager._table_configs.get("SourceDocuments", {})
+            embedding_column = table_config.get("embedding_column")
             
-            if missing_count > 0:
-                self.logger.info(f"Generating embeddings for {missing_count} documents")
-                self._generate_missing_document_embeddings()
+            if not embedding_column:
+                self.logger.info("SourceDocuments table does not use embeddings according to configuration")
+                return
+            
+            # Check if the embedding column exists in the table
+            try:
+                cursor.execute(f"""
+                    SELECT COUNT(*) FROM RAG.SourceDocuments
+                    WHERE {embedding_column} IS NULL
+                """)
+                missing_count = cursor.fetchone()[0]
                 
-                # Validate that embeddings were actually generated
-                self._validate_embeddings_after_generation("RAG.SourceDocuments", "embedding", "document")
-            else:
-                self.logger.info("All documents have embeddings")
+                if missing_count > 0:
+                    self.logger.info(f"Generating embeddings for {missing_count} documents")
+                    self._generate_missing_document_embeddings()
+                    
+                    # Validate that embeddings were actually generated
+                    self._validate_embeddings_after_generation("RAG.SourceDocuments", embedding_column, "document")
+                else:
+                    self.logger.info("All documents have embeddings")
+                    
+            except Exception as e:
+                if "Field not found" in str(e) or "not found in the applicable tables" in str(e):
+                    self.logger.warning(f"Embedding column '{embedding_column}' not found in SourceDocuments table. Skipping embedding validation.")
+                    return
+                else:
+                    raise
                 
         finally:
             cursor.close()
@@ -405,15 +445,24 @@ class SetupOrchestrator:
                             elif not isinstance(embedding, list):
                                 embedding = list(embedding)
                             
-                            # Use consistent vector format that validator expects
-                            vector_str = f"[{','.join(map(str, embedding))}]"
+                            # Use insert_vector utility to comply with Vector Insertion Rules
+                            # This will attempt INSERT first, then UPDATE if needed
+                            success = insert_vector(
+                                cursor=cursor,
+                                table_name="RAG.SourceDocuments",
+                                vector_column_name="embedding",
+                                vector_data=embedding,
+                                target_dimension=len(embedding),
+                                key_columns={
+                                    "doc_id": doc_id
+                                }
+                            )
                             
-                            cursor.execute("""
-                                UPDATE RAG.SourceDocuments
-                                SET embedding = TO_VECTOR(?)
-                                WHERE doc_id = ?
-                            """, [vector_str, doc_id])
-                            total_processed += 1
+                            if success:
+                                total_processed += 1
+                            else:
+                                self.logger.warning(f"Failed to update embedding for {doc_id} using insert_vector utility")
+                                total_failed += 1
                             
                         except Exception as doc_error:
                             self.logger.warning(f"Failed to update embedding for {doc_id}: {doc_error}")
@@ -448,8 +497,8 @@ class SetupOrchestrator:
         cursor = connection.cursor()
         
         try:
-            # Get token embedding dimension from config
-            token_dimension = self.config_manager.get("pipelines:colbert:token_embedding_dimension", 384)
+            # Get token embedding dimension from schema manager (should be 768D for ColBERT)
+            token_dimension = self.schema_manager.get_colbert_token_dimension()
             
             # Check if table exists
             cursor.execute("""
@@ -744,7 +793,7 @@ class SetupOrchestrator:
         # Fetch document content for specified doc_ids
         doc_content_map = {}
         for doc_id in doc_ids:
-            cursor.execute("SELECT abstract FROM RAG.SourceDocuments WHERE doc_id = ? AND abstract IS NOT NULL", [doc_id])
+            cursor.execute("SELECT text_content FROM RAG.SourceDocuments WHERE doc_id = ? AND text_content IS NOT NULL", [doc_id])
             result = cursor.fetchone()
             if result and result[0]:
                 doc_content_map[doc_id] = result[0]
@@ -790,13 +839,14 @@ class SetupOrchestrator:
                     else:
                         total_failed += 1
                     
-                    # Commit after each document to ensure progress is saved
-                    cursor.connection.commit()
+                    # Note: Connection management should be handled at higher level
+                    # Removed direct cursor.connection.commit() to comply with architecture rules
                     
                 except Exception as e:
                     self.logger.warning(f"Failed to generate token embeddings for {doc_id}: {e}")
                     total_failed += 1
-                    cursor.connection.rollback()
+                    # Note: Connection management should be handled at higher level
+                    # Removed direct cursor.connection.rollback() to comply with architecture rules
             
             # Progress logging
             if (i // batch_size + 1) % 5 == 0:
@@ -838,38 +888,61 @@ class SetupOrchestrator:
             # Note: If the ColBERT embedding function is called, log this call
             # self.logger.info(f"Calling ColBERT tokenize_and_embed for doc_id: {doc_id}")
             
-            # Generate embeddings for each token using the embedding manager
-            for token_index, token_text in enumerate(tokens):
-                try:
-                    # Generate embedding for individual token
-                    token_embedding = self.embedding_manager.embed_text(token_text)
+            # Generate embeddings for the entire document using ColBERT interface
+            try:
+                # Use ColBERT interface to generate proper 768-dimensional token embeddings
+                document_token_embeddings = self.colbert_interface.encode_document(content)
+                
+                # Process each token embedding
+                for token_index, token_embedding in enumerate(document_token_embeddings):
+                    if token_index >= len(tokens):
+                        break  # Safety check
                     
-                    # Ensure token_embedding is a list of floats
-                    if hasattr(token_embedding, 'tolist'):
-                        token_embedding = token_embedding.tolist()
-                    elif not isinstance(token_embedding, list):
-                        if hasattr(token_embedding, '__iter__'):
-                            token_embedding = list(token_embedding)
-                        else:
-                            # If it's a single float, skip this token
+                    token_text = tokens[token_index]
+                    
+                    try:
+                        # Ensure token_embedding is a list of floats
+                        if not isinstance(token_embedding, list):
+                            if hasattr(token_embedding, 'tolist'):
+                                token_embedding = token_embedding.tolist()
+                            elif hasattr(token_embedding, '__iter__'):
+                                token_embedding = list(token_embedding)
+                            else:
+                                # If it's a single float, skip this token
+                                tokens_failed += 1
+                                continue
+                        
+                        # Use insert_vector utility to comply with Vector Insertion Rules
+                        success = insert_vector(
+                            cursor=cursor,
+                            table_name="RAG.DocumentTokenEmbeddings",
+                            vector_column_name="token_embedding",
+                            vector_data=token_embedding,
+                            target_dimension=len(token_embedding),
+                            key_columns={
+                                "doc_id": doc_id,
+                                "token_index": token_index
+                            },
+                            additional_data={
+                                "token_text": token_text
+                            }
+                        )
+                        
+                        if not success:
+                            self.logger.debug(f"Failed to insert token embedding for '{token_text}'")
                             tokens_failed += 1
                             continue
+                        
+                        tokens_processed += 1
+                        
+                    except Exception as token_error:
+                        self.logger.debug(f"Failed to process token '{token_text}': {token_error}")
+                        tokens_failed += 1
+                        continue
                     
-                    # Use consistent vector format that validator expects
-                    vector_str = f"[{','.join(map(str, token_embedding))}]"
-                    
-                    cursor.execute("""
-                        INSERT INTO RAG.DocumentTokenEmbeddings
-                        (doc_id, token_index, token_text, token_embedding)
-                        VALUES (?, ?, ?, TO_VECTOR(?))
-                    """, [doc_id, token_index, token_text, vector_str])
-                    
-                    tokens_processed += 1
-                    
-                except Exception as token_error:
-                    self.logger.debug(f"Failed to generate embedding for token '{token_text}': {token_error}")
-                    tokens_failed += 1
-                    continue
+            except Exception as doc_error:
+                self.logger.warning(f"Failed to generate ColBERT embeddings for document {doc_id}: {doc_error}")
+                return {"success": False, "reason": str(doc_error)}
             
             return {
                 "success": tokens_processed > 0,
@@ -914,11 +987,13 @@ class SetupOrchestrator:
         try:
             # Check if table exists
             cursor.execute("""
-                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES 
-                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'DocumentChunks'
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+                WHERE UPPER(TABLE_SCHEMA) = 'RAG' AND UPPER(TABLE_NAME) = 'DOCUMENTCHUNKS'
             """)
             
-            if cursor.fetchone()[0] == 0:
+            table_exists = cursor.fetchone()[0] > 0
+            
+            if not table_exists:
                 # Create table
                 cursor.execute("""
                     CREATE TABLE RAG.DocumentChunks (
@@ -928,15 +1003,43 @@ class SetupOrchestrator:
                         chunk_text TEXT,
                         embedding VECTOR(DOUBLE, 768),
                         metadata TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        INDEX idx_doc_id (doc_id),
-                        INDEX idx_chunk_index (chunk_index)
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
-                connection.commit()
                 self.logger.info("Created DocumentChunks table")
             else:
                 self.logger.info("DocumentChunks table already exists")
+            
+            # Check and create indexes separately (whether table was just created or already existed)
+            # Check for idx_doc_id index
+            cursor.execute("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES
+                WHERE UPPER(TABLE_SCHEMA) = 'RAG'
+                AND UPPER(TABLE_NAME) = 'DOCUMENTCHUNKS'
+                AND UPPER(INDEX_NAME) = 'IDX_DOC_ID'
+            """)
+            
+            if cursor.fetchone()[0] == 0:
+                cursor.execute("CREATE INDEX idx_doc_id ON RAG.DocumentChunks (doc_id)")
+                self.logger.info("Created idx_doc_id index")
+            else:
+                self.logger.info("idx_doc_id index already exists")
+            
+            # Check for idx_chunk_index index
+            cursor.execute("""
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES
+                WHERE UPPER(TABLE_SCHEMA) = 'RAG'
+                AND UPPER(TABLE_NAME) = 'DOCUMENTCHUNKS'
+                AND UPPER(INDEX_NAME) = 'IDX_CHUNK_INDEX'
+            """)
+            
+            if cursor.fetchone()[0] == 0:
+                cursor.execute("CREATE INDEX idx_chunk_index ON RAG.DocumentChunks (chunk_index)")
+                self.logger.info("Created idx_chunk_index index")
+            else:
+                self.logger.info("idx_chunk_index index already exists")
+            
+            connection.commit()
                 
         finally:
             cursor.close()
@@ -955,8 +1058,20 @@ class SetupOrchestrator:
                 self.logger.info(f"Document chunks already exist ({existing_count} chunks)")
                 return
             
-            # Get documents for chunking
-            cursor.execute("SELECT doc_id, abstract as content FROM RAG.SourceDocuments")
+            # Get documents for chunking - use SchemaManager to get correct column names
+            from iris_rag.storage.schema_manager import SchemaManager
+            config_manager = ConfigurationManager()
+            connection_manager = type('ConnectionManager', (), {
+                'get_connection': lambda *args, **kwargs: connection
+            })()
+            schema_manager = SchemaManager(connection_manager, config_manager)
+            
+            # Get table configuration for SourceDocuments
+            table_config = schema_manager._table_configs.get("SourceDocuments", {})
+            id_column = table_config.get("id_column", "ID")  # Default to ID if not configured
+            content_column = table_config.get("content_column", "TEXT_CONTENT")  # Default to TEXT_CONTENT if not configured
+            
+            cursor.execute(f"SELECT {id_column}, {content_column} as content FROM RAG.SourceDocuments")
             documents = cursor.fetchall()
             
             if not documents:
@@ -994,22 +1109,32 @@ class SetupOrchestrator:
                                 elif not isinstance(embedding, list):
                                     embedding = list(embedding)
                                 
-                                # Use consistent vector format that validator expects
-                                vector_str = f"[{','.join(map(str, embedding))}]"
-                                
+                                # Use insert_vector utility to comply with Vector Insertion Rules
                                 chunk_id = f"{doc_id}_chunk_{chunk_index}"
-                                cursor.execute("""
-                                    INSERT INTO RAG.DocumentChunks
-                                    (chunk_id, doc_id, chunk_index, chunk_text, embedding, metadata)
-                                    VALUES (?, ?, ?, ?, TO_VECTOR(?), ?)
-                                """, [
-                                    chunk_id,
-                                    doc_id,
-                                    chunk_index,
-                                    chunk_text,
-                                    vector_str,
-                                    f'{{"chunk_size": {len(chunk_text)}, "parent_doc": "{doc_id}"}}'
-                                ])
+                                metadata_str = f'{{"chunk_size": {len(chunk_text)}, "parent_doc": "{doc_id}"}}'
+                                
+                                success = insert_vector(
+                                    cursor=cursor,
+                                    table_name="RAG.DocumentChunks",
+                                    vector_column_name="embedding",
+                                    vector_data=embedding,
+                                    target_dimension=len(embedding),
+                                    key_columns={
+                                        "chunk_id": chunk_id
+                                    },
+                                    additional_data={
+                                        "doc_id": doc_id,
+                                        "chunk_index": chunk_index,
+                                        "chunk_text": chunk_text,
+                                        "metadata": metadata_str
+                                    }
+                                )
+                                
+                                if not success:
+                                    self.logger.warning(f"Failed to insert chunk {chunk_id} using insert_vector utility")
+                                    chunks_failed += 1
+                                    continue
+                                
                                 total_chunks_processed += 1
                                 
                             except Exception as chunk_error:

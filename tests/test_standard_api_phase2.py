@@ -273,7 +273,7 @@ class TestPipelineFactoryPhase2:
         factory = PipelineFactory(config_manager)
         
         # Should manage component creation and cleanup
-        with patch('iris_rag.core.connection.ConnectionManager') as mock_conn:
+        with patch('common.iris_connection_manager.get_iris_connection') as mock_conn:
             mock_conn.return_value = MagicMock()
             
             pipeline = factory.create_pipeline("basic")

@@ -17,8 +17,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from common.iris_connection_manager import get_iris_connection
-from iris_rag.pipelines.colbert import ColBERTRAGPipeline
-from iris_rag.core.connection import ConnectionManager
+from iris_rag.pipelines.colbert.pipeline import ColBERTRAGPipeline
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.config.manager import ConfigurationManager
 
 # Configure logging
@@ -103,10 +103,10 @@ def test_colbert_pipeline():
     try:
         # Initialize ColBERT pipeline
         config_manager = ConfigurationManager()
-        connection_manager = ConnectionManager(config_manager)
+        connection = get_iris_connection()
         
         pipeline = ColBERTRAGPipeline(
-            connection_manager=connection_manager,
+            iris_connector=connection,
             config_manager=config_manager
         )
         

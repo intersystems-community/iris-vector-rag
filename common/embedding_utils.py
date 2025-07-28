@@ -336,8 +336,9 @@ def generate_document_embeddings(
     }
 
 def generate_token_embeddings(
-    connection, 
+    connection,
     token_encoder,
+    config_manager,
     batch_size: int = 10,
     limit: Optional[int] = None
 ) -> Dict[str, Any]:
@@ -347,6 +348,7 @@ def generate_token_embeddings(
     Args:
         connection: IRIS connection
         token_encoder: Model to generate token-level embeddings
+        config_manager: Configuration manager for table names
         batch_size: Number of documents to process at once
         limit: Maximum number of documents to process (None for all)
         
@@ -358,28 +360,34 @@ def generate_token_embeddings(
     tokens_count = 0
     error_count = 0
     
+    # Get table names from configuration
+    source_table = config_manager.get("storage:iris:table_name", "RAG.SourceDocuments")
+    # For DocumentTokenEmbeddings, derive from the same schema as SourceDocuments
+    schema_prefix = source_table.split('.')[0] if '.' in source_table else "RAG"
+    token_embeddings_table = f"{schema_prefix}.DocumentTokenEmbeddings"
+    
     try:
         cursor = connection.cursor()
         
         # Get documents without token embeddings
         # We use a LEFT JOIN to find documents that don't have entries in DocumentTokenEmbeddings
         if limit:
-            sql = """
-                SELECT TOP ? d.doc_id, d.content 
-                FROM SourceDocuments d 
+            sql = f"""
+                SELECT TOP ? d.doc_id, d.text_content
+                FROM {source_table} d
                 LEFT JOIN (
-                    SELECT DISTINCT doc_id FROM DocumentTokenEmbeddings
-                ) t ON d.doc_id = t.doc_id 
+                    SELECT DISTINCT doc_id FROM {token_embeddings_table}
+                ) t ON d.doc_id = t.doc_id
                 WHERE t.doc_id IS NULL
             """
             cursor.execute(sql, (limit,))
         else:
-            sql = """
-                SELECT d.doc_id, d.content 
-                FROM SourceDocuments d 
+            sql = f"""
+                SELECT d.doc_id, d.text_content
+                FROM {source_table} d
                 LEFT JOIN (
-                    SELECT DISTINCT doc_id FROM DocumentTokenEmbeddings
-                ) t ON d.doc_id = t.doc_id 
+                    SELECT DISTINCT doc_id FROM {token_embeddings_table}
+                ) t ON d.doc_id = t.doc_id
                 WHERE t.doc_id IS NULL
             """
             cursor.execute(sql)
@@ -407,19 +415,14 @@ def generate_token_embeddings(
                     token_batch = []
                     
                     for idx, (token, embedding) in enumerate(zip(tokens, token_embeddings)):
-                        # Convert embedding to string and create metadata
+                        # Convert embedding to string
                         embedding_str = json.dumps(embedding.tolist())
-                        metadata = json.dumps({
-                            "token_idx": idx,
-                            "token": token
-                        })
                         
                         token_batch.append((
-                            doc_id, 
-                            idx, 
-                            token, 
-                            embedding_str, 
-                            metadata
+                            doc_id,
+                            idx,
+                            token,
+                            embedding_str
                         ))
                         
                     # Insert all tokens for this document
@@ -430,20 +433,19 @@ def generate_token_embeddings(
                             connection._cursor.stored_token_embeddings[doc_id] = []
                         
                         for token_data in token_batch:
-                            doc_id, token_idx, token_text, token_embedding, metadata = token_data
+                            doc_id, token_idx, token_text, token_embedding = token_data
                             connection._cursor.stored_token_embeddings[doc_id].append({
                                 "idx": token_idx,
                                 "text": token_text,
-                                "embedding": token_embedding,
-                                "metadata": metadata
+                                "embedding": token_embedding
                             })
                     else:
                         # For real database, use SQL
                         insert_cursor.executemany(
-                            """
-                            INSERT INTO DocumentTokenEmbeddings 
-                            (doc_id, token_idx, token_text, token_embedding, metadata_json) 
-                            VALUES (?, ?, ?, ?, ?)
+                            f"""
+                            INSERT INTO {token_embeddings_table}
+                            (doc_id, token_index, token_text, token_embedding)
+                            VALUES (?, ?, ?, ?)
                             """,
                             token_batch
                         )

@@ -7,7 +7,7 @@ for Embedded Python integration following TDD methodology.
 
 import pytest
 import json
-from common.iris_connector import get_iris_connection
+from common.iris_connection_manager import get_iris_connection, get_iris_dbapi_connection
 
 
 class TestObjectScriptInvoker:

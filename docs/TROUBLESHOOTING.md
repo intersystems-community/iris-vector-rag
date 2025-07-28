@@ -11,9 +11,10 @@ Comprehensive troubleshooting guide for the Library Consumption Framework, cover
 5. [API and LLM Issues](#api-and-llm-issues)
 6. [Performance Problems](#performance-problems)
 7. [MCP Integration Issues](#mcp-integration-issues)
-8. [Error Reference](#error-reference)
-9. [Debug Mode and Logging](#debug-mode-and-logging)
-10. [Getting Help](#getting-help)
+8. [Document Format Issues](#document-format-issues)
+9. [Error Reference](#error-reference)
+10. [Debug Mode and Logging](#debug-mode-and-logging)
+11. [Getting Help](#getting-help)
 
 ## Quick Diagnostics
 
@@ -1094,6 +1095,33 @@ function validateToolSchema(tool) {
         console.warn('Tool should set additionalProperties: false for MCP compliance');
     }
 }
+## Document Format Issues
+
+### Issue 1: AttributeError - 'dict' object has no attribute 'page_content'
+
+**Problem**: `AttributeError: 'dict' object has no attribute 'page_content'` when adding documents
+
+**Cause**: Document format inconsistency between rag_templates and iris_rag pipeline
+
+**Solution**: This critical bug has been resolved. The issue was caused by the `_process_documents()` methods in both `rag_templates/simple.py` and `rag_templates/standard.py` returning dictionary objects instead of proper `Document` objects.
+
+**Quick Fix**: Update to the latest version of the library where this issue has been resolved.
+
+**For detailed information**: See the comprehensive [Document Format Inconsistency Fix Guide](troubleshooting/DOCUMENT_FORMAT_INCONSISTENCY_FIX.md)
+
+#### Symptoms
+- Error occurs when calling `rag.add_documents()`
+- Works with Simple API and Standard API
+- Error message: `AttributeError: 'dict' object has no attribute 'page_content'`
+
+#### Verification
+```python
+# Test that the fix is working
+from rag_templates import RAG
+rag = RAG()
+rag.add_documents(["Test document"])  # Should work without error
+```
+
 ```
 
 ## Error Reference
@@ -1110,5 +1138,6 @@ function validateToolSchema(tool) {
 | `ConnectionError` | Database connection failed | Verify IRIS is running and accessible |
 | `AuthenticationError` | Invalid credentials | Check username/password |
 | `APIError` | LLM API failure | Verify API key and rate limits |
+| `AttributeError: 'dict' object has no attribute 'page_content'` | Document format inconsistency | See [Document Format Fix](troubleshooting/DOCUMENT_FORMAT_INCONSISTENCY_FIX.md) |
 
 ####

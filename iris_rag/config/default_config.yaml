@@ -12,6 +12,28 @@ storage:
   iris:
     table_name: "RAG.SourceDocuments"
     vector_dimension: 384
+  
+  # Chunking Configuration
+  chunking:
+    enabled: true
+    strategy: "fixed_size"
+    threshold: 1000
+    chunk_size: 512
+    overlap: 50
+    strategies:
+      fixed_size:
+        chunk_size: 512
+        overlap_size: 50
+        preserve_sentences: true
+        min_chunk_size: 100
+      semantic:
+        similarity_threshold: 0.7
+        min_chunk_size: 200
+        max_chunk_size: 1000
+      hybrid:
+        max_chunk_size: 800
+        primary_strategy: "semantic"
+        fallback_strategy: "fixed_size"
 
 # Vector index configuration for optimal HNSW performance
 vector_index:
@@ -31,6 +53,39 @@ pipelines:
     max_tokens_per_document: 512
     token_embedding_batch_size: 16
     use_colbert_tokenizer: true
+
+# Pipeline-specific chunking overrides
+pipeline_overrides:
+  graphrag:
+    chunking:
+      enabled: true
+      strategy: "semantic"
+      threshold: 800  # Smaller chunks for better entity extraction
+      strategies:
+        semantic:
+          similarity_threshold: 0.7
+          min_chunk_size: 200
+          max_chunk_size: 800
+  colbert:
+    chunking:
+      enabled: false  # ColBERT handles token-level chunking internally
+  sql_rag:
+    chunking:
+      enabled: false  # Default disabled for structured queries
+      conditional: true  # Enable conditional chunking based on document type
+  crag:
+    chunking:
+      enabled: true  # Use default chunking strategy
+  noderag:
+    chunking:
+      enabled: true  # Use default chunking strategy
+  hybrid_ifind:
+    chunking:
+      enabled: true  # Use default chunking strategy
+  hyde:
+    chunking:
+      enabled: true  # Use default chunking strategy for hypothetical documents
+      strategy: "fixed_size"  # Fixed-size chunking works well with hypothetical docs
 
 embeddings:
   default_provider: "sentence_transformers"

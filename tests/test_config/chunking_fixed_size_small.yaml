@@ -1,0 +1,27 @@
+# Test configuration for small fixed-size chunking
+storage:
+  chunking:
+    enabled: true
+    strategy: "fixed_size"
+    chunk_size: 500
+    overlap: 50
+    auto_chunk: true
+    preserve_sentences: true
+
+pipelines:
+  basic:
+    default_top_k: 5
+    chunking_strategy: "fixed_size"
+  hyde:
+    top_k: 5
+    use_hypothetical_doc: true
+    chunking_strategy: "fixed_size"
+  sql_rag:
+    chunking_strategy: "fixed_size"
+  colbert:
+    chunking_strategy: "fixed_size"
+
+embeddings:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 384
+  provider: "sentence-transformers"

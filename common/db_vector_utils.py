@@ -1,6 +1,13 @@
 import logging
 from typing import List, Any, Dict, Optional
 
+# Import driver detection capabilities
+from common.db_driver_utils import (
+    get_driver_type,
+    get_driver_capabilities,
+    DriverType
+)
+
 logger = logging.getLogger(__name__)
 
 def insert_vector(
@@ -10,11 +17,12 @@ def insert_vector(
     vector_data: List[float],
     target_dimension: int,
     key_columns: Dict[str, Any],
-    additional_data: Optional[Dict[str, Any]] = None
+    additional_data: Optional[Dict[str, Any]] = None,
+    driver_type: Optional[DriverType] = None
 ) -> bool:
     """
-    Inserts a record with a vector embedding into a specified table.
-    The vector is truncated to the target_dimension and inserted using TO_VECTOR(?).
+    Inserts a record with a vector embedding into a specified table using driver-aware SQL generation.
+    The vector is truncated to the target_dimension and inserted using appropriate TO_VECTOR syntax.
 
     Args:
         cursor: Database cursor.
@@ -26,10 +34,16 @@ def insert_vector(
                      (e.g., {"doc_id": "id1", "token_index": 0})
         additional_data: Optional dictionary of other column names and their values.
                          (e.g., {"token_text": "example"})
+        driver_type: Override driver type detection (default: None for auto-detect)
 
     Returns:
         True if insertion was successful, False otherwise.
     """
+    # Auto-detect driver type if not provided
+    if driver_type is None:
+        driver_type = get_driver_type()
+    
+    capabilities = get_driver_capabilities(driver_type)
     if not isinstance(vector_data, list) or not all(isinstance(x, (float, int)) for x in vector_data):
         logger.error(
             f"DB Vector Util: Invalid vector_data format for table '{table_name}'. "
@@ -60,17 +74,21 @@ def insert_vector(
 
     column_names_sql = ", ".join(other_column_names + [vector_column_name])
     
-    placeholders_list = ["?" for _ in other_column_names] + [f"TO_VECTOR(?, FLOAT, {target_dimension})"]
-    placeholders_sql = ", ".join(placeholders_list)
-
-    # Use MERGE for upsert functionality to handle duplicates
-    # Build MERGE statement for IRIS
-    key_conditions = " AND ".join([f"target.{col} = source.{col}" for col in key_columns.keys()])
-    update_assignments = ", ".join([f"{col} = source.{col}" for col in other_column_names if col not in key_columns])
-    
-    # Separate approach: try INSERT first, if it fails due to constraint, try UPDATE
-    sql_query = f"INSERT INTO {table_name} ({column_names_sql}) VALUES ({placeholders_sql})"
-    params = other_column_values + [embedding_str]
+    # Generate driver-appropriate SQL
+    if capabilities.get('supports_vector_operations', False):
+        # DBAPI: Use parameter markers
+        placeholders_list = ["?" for _ in other_column_names] + [f"TO_VECTOR(?, FLOAT, {target_dimension})"]
+        placeholders_sql = ", ".join(placeholders_list)
+        sql_query = f"INSERT INTO {table_name} ({column_names_sql}) VALUES ({placeholders_sql})"
+        params = other_column_values + [embedding_str]
+        logger.debug(f"DB Vector Util: Using DBAPI-compatible SQL with parameters for {driver_type}")
+    else:
+        # JDBC: Use string interpolation to avoid auto-parameterization bug
+        placeholders_list = ["?" for _ in other_column_names] + [f"TO_VECTOR('{embedding_str}', FLOAT, {target_dimension})"]
+        placeholders_sql = ", ".join(placeholders_list)
+        sql_query = f"INSERT INTO {table_name} ({column_names_sql}) VALUES ({placeholders_sql})"
+        params = other_column_values  # No vector parameter for JDBC
+        logger.debug(f"DB Vector Util: Using JDBC-compatible SQL with string interpolation for {driver_type}")
     
     try:
         logger.debug(f"DB Vector Util: Executing INSERT: {sql_query}")
@@ -78,10 +96,12 @@ def insert_vector(
         logger.debug(f"DB Vector Util: Embedding string length: {len(embedding_str)} chars")
         logger.debug(f"DB Vector Util: Vector dimension: {target_dimension}")
         cursor.execute(sql_query, params)
+        logger.debug(f"DB Vector Util: INSERT successful")
         return True
     except Exception as e:
+        logger.debug(f"DB Vector Util: INSERT failed with error: {e}")
         # Check if it's a unique constraint violation
-        if "UNIQUE" in str(e) or "constraint failed" in str(e):
+        if "UNIQUE" in str(e) or "constraint failed" in str(e) or "duplicate" in str(e).lower():
             logger.debug(f"DB Vector Util: INSERT failed due to duplicate key, attempting UPDATE...")
             
             # Build UPDATE statement
@@ -94,9 +114,15 @@ def insert_vector(
                     set_clauses.append(f"{col} = ?")
                     update_params.append(all_columns_dict[col])
             
-            # Add vector column to SET clause
-            set_clauses.append(f"{vector_column_name} = TO_VECTOR(?, FLOAT, {target_dimension})")
-            update_params.append(embedding_str)
+            # Add vector column to SET clause with driver-appropriate syntax
+            if capabilities.get('supports_vector_operations', False):
+                # DBAPI: Use parameter marker
+                set_clauses.append(f"{vector_column_name} = TO_VECTOR(?, FLOAT, {target_dimension})")
+                update_params.append(embedding_str)
+            else:
+                # JDBC: Use string interpolation
+                set_clauses.append(f"{vector_column_name} = TO_VECTOR('{embedding_str}', FLOAT, {target_dimension})")
+                # No parameter needed for JDBC since it's embedded in the SQL
             
             # Add key columns to WHERE clause
             where_clauses = []
@@ -109,8 +135,16 @@ def insert_vector(
                 
                 try:
                     logger.debug(f"DB Vector Util: Executing UPDATE: {update_sql}")
+                    logger.debug(f"DB Vector Util: UPDATE parameters: {update_params}")
                     cursor.execute(update_sql, update_params)
-                    return True
+                    rows_affected = cursor.rowcount
+                    logger.debug(f"DB Vector Util: UPDATE affected {rows_affected} rows")
+                    if rows_affected > 0:
+                        logger.debug(f"DB Vector Util: UPDATE successful")
+                        return True
+                    else:
+                        logger.warning(f"DB Vector Util: UPDATE executed but affected 0 rows - no matching record found")
+                        return False
                 except Exception as update_error:
                     logger.error(f"DB Vector Util: UPDATE also failed: {update_error}")
                     return False

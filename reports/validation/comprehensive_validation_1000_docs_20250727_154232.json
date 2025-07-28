@@ -1,0 +1,469 @@
+{
+  "test_start_time": "2025-07-27T15:39:33.048117",
+  "document_count": 2808,
+  "pipeline_tests": {
+    "basic": {
+      "pipeline_type": "basic",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Vector search failed: Database operation failed during similarity_search: TypeError",
+      "total_time": 3.9526989459991455
+    },
+    "colbert": {
+      "pipeline_type": "colbert",
+      "validation_success": true,
+      "setup_success": true,
+      "execution_success": true,
+      "status_check_time": 1.4029128551483154,
+      "setup_time": 0,
+      "creation_time": 2.375831127166748,
+      "execution_time": 0.01516413688659668,
+      "total_time": 3.7939131259918213,
+      "result_length": 48,
+      "retrieved_docs": 0,
+      "query": "What are the latest treatments for cancer?",
+      "answer_preview": "No relevant documents found to answer the query...."
+    },
+    "crag": {
+      "pipeline_type": "crag",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "object of type 'NoneType' has no len()",
+      "total_time": 2.7468559741973877
+    },
+    "hyde": {
+      "pipeline_type": "hyde",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "object of type 'NoneType' has no len()",
+      "total_time": 3.767496109008789
+    },
+    "graphrag": {
+      "pipeline_type": "graphrag",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "Setup failed: Pipeline not ready. Issues: Table issues: DocumentEntities, EntityRelationships; Embedding issues: entity_embeddings, chunk_embeddings_optional",
+      "total_time": 39.994765758514404
+    },
+    "hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "validation_success": false,
+      "setup_success": false,
+      "execution_success": false,
+      "error": "object of type 'NoneType' has no len()",
+      "total_time": 33.72571802139282
+    }
+  },
+  "validation_tests": {
+    "status_check_basic": {
+      "pipeline_type": "basic",
+      "status_check_success": true,
+      "overall_valid": true,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 2808 rows",
+          "details": {
+            "row_count": 2808
+          }
+        },
+        "DocumentChunks_optional": {
+          "valid": true,
+          "message": "Table RAG.DocumentChunks exists with 0 rows",
+          "details": {
+            "row_count": 0
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": true,
+          "message": "Embeddings valid: 2808/2808 (100.0%)",
+          "details": {
+            "total_rows": 2808,
+            "rows_with_embeddings": 2808,
+            "completeness_ratio": 1.0
+          }
+        },
+        "chunk_embeddings_optional": {
+          "valid": false,
+          "message": "No data in table RAG.DocumentChunks",
+          "details": {
+            "total_rows": 0,
+            "rows_with_embeddings": 0
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 6.561169147491455
+    },
+    "status_check_colbert": {
+      "pipeline_type": "colbert",
+      "status_check_success": true,
+      "overall_valid": true,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 2808 rows",
+          "details": {
+            "row_count": 2808
+          }
+        },
+        "DocumentTokenEmbeddings": {
+          "valid": true,
+          "message": "Table RAG.DocumentTokenEmbeddings exists with 34 rows",
+          "details": {
+            "row_count": 34
+          }
+        },
+        "DocumentChunks_optional": {
+          "valid": true,
+          "message": "Table RAG.DocumentChunks exists with 0 rows",
+          "details": {
+            "row_count": 0
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": true,
+          "message": "Embeddings valid: 2808/2808 (100.0%)",
+          "details": {
+            "total_rows": 2808,
+            "rows_with_embeddings": 2808,
+            "completeness_ratio": 1.0
+          }
+        },
+        "token_embeddings": {
+          "valid": true,
+          "message": "Embeddings valid: 34/34 (100.0%)",
+          "details": {
+            "total_rows": 34,
+            "rows_with_embeddings": 34,
+            "completeness_ratio": 1.0
+          }
+        },
+        "chunk_embeddings_optional": {
+          "valid": false,
+          "message": "No data in table RAG.DocumentChunks",
+          "details": {
+            "total_rows": 0,
+            "rows_with_embeddings": 0
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 8.011005163192749
+    },
+    "status_check_crag": {
+      "pipeline_type": "crag",
+      "status_check_success": true,
+      "overall_valid": true,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 2808 rows",
+          "details": {
+            "row_count": 2808
+          }
+        },
+        "DocumentChunks_optional": {
+          "valid": true,
+          "message": "Table RAG.DocumentChunks exists with 0 rows",
+          "details": {
+            "row_count": 0
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": true,
+          "message": "Embeddings valid: 2808/2808 (100.0%)",
+          "details": {
+            "total_rows": 2808,
+            "rows_with_embeddings": 2808,
+            "completeness_ratio": 1.0
+          }
+        },
+        "chunk_embeddings_optional": {
+          "valid": false,
+          "message": "No data in table RAG.DocumentChunks",
+          "details": {
+            "total_rows": 0,
+            "rows_with_embeddings": 0
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 9.37807321548462
+    },
+    "status_check_hyde": {
+      "pipeline_type": "hyde",
+      "status_check_success": true,
+      "overall_valid": true,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 2808 rows",
+          "details": {
+            "row_count": 2808
+          }
+        },
+        "DocumentChunks_optional": {
+          "valid": true,
+          "message": "Table RAG.DocumentChunks exists with 0 rows",
+          "details": {
+            "row_count": 0
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": true,
+          "message": "Embeddings valid: 2808/2808 (100.0%)",
+          "details": {
+            "total_rows": 2808,
+            "rows_with_embeddings": 2808,
+            "completeness_ratio": 1.0
+          }
+        },
+        "chunk_embeddings_optional": {
+          "valid": false,
+          "message": "No data in table RAG.DocumentChunks",
+          "details": {
+            "total_rows": 0,
+            "rows_with_embeddings": 0
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 10.8997061252594
+    },
+    "status_check_graphrag": {
+      "pipeline_type": "graphrag",
+      "status_check_success": true,
+      "overall_valid": false,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 2808 rows",
+          "details": {
+            "row_count": 2808
+          }
+        },
+        "DocumentEntities": {
+          "valid": false,
+          "message": "Table RAG.DocumentEntities does not exist or is not accessible: [SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.DOCUMENTENTITIES' not found>]",
+          "details": {
+            "error": "[SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.DOCUMENTENTITIES' not found>]"
+          }
+        },
+        "EntityRelationships": {
+          "valid": false,
+          "message": "Table RAG.EntityRelationships does not exist or is not accessible: [SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.ENTITYRELATIONSHIPS' not found>]",
+          "details": {
+            "error": "[SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.ENTITYRELATIONSHIPS' not found>]"
+          }
+        },
+        "DocumentChunks_optional": {
+          "valid": true,
+          "message": "Table RAG.DocumentChunks exists with 0 rows",
+          "details": {
+            "row_count": 0
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": true,
+          "message": "Embeddings valid: 2808/2808 (100.0%)",
+          "details": {
+            "total_rows": 2808,
+            "rows_with_embeddings": 2808,
+            "completeness_ratio": 1.0
+          }
+        },
+        "entity_embeddings": {
+          "valid": false,
+          "message": "Error validating embeddings: [SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.DOCUMENTENTITIES' not found>]",
+          "details": {
+            "error": "[SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.DOCUMENTENTITIES' not found>]"
+          }
+        },
+        "chunk_embeddings_optional": {
+          "valid": false,
+          "message": "No data in table RAG.DocumentChunks",
+          "details": {
+            "total_rows": 0,
+            "rows_with_embeddings": 0
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 12.219675302505493
+    },
+    "status_check_hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "status_check_success": true,
+      "overall_valid": true,
+      "tables": {
+        "SourceDocuments": {
+          "valid": true,
+          "message": "Table RAG.SourceDocuments exists with 2808 rows",
+          "details": {
+            "row_count": 2808
+          }
+        },
+        "DocumentChunks_optional": {
+          "valid": true,
+          "message": "Table RAG.DocumentChunks exists with 0 rows",
+          "details": {
+            "row_count": 0
+          }
+        }
+      },
+      "embeddings": {
+        "document_embeddings": {
+          "valid": true,
+          "message": "Embeddings valid: 2808/2808 (100.0%)",
+          "details": {
+            "total_rows": 2808,
+            "rows_with_embeddings": 2808,
+            "completeness_ratio": 1.0
+          }
+        },
+        "chunk_embeddings_optional": {
+          "valid": false,
+          "message": "No data in table RAG.DocumentChunks",
+          "details": {
+            "total_rows": 0,
+            "rows_with_embeddings": 0
+          }
+        }
+      },
+      "suggestions": [],
+      "validation_time": 13.759819030761719
+    },
+    "error_quality_colbert": {
+      "pipeline_type": "colbert",
+      "has_summary": true,
+      "has_suggestions": true,
+      "has_specific_issues": true,
+      "message_quality_score": 3
+    },
+    "error_quality_crag": {
+      "pipeline_type": "crag",
+      "has_summary": true,
+      "has_suggestions": true,
+      "has_specific_issues": true,
+      "message_quality_score": 3
+    }
+  },
+  "setup_tests": {
+    "setup_basic": {
+      "pipeline_type": "basic",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.3892560005187988
+    },
+    "setup_colbert": {
+      "pipeline_type": "colbert",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.6765069961547852
+    },
+    "setup_crag": {
+      "pipeline_type": "crag",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.3530638217926025
+    },
+    "setup_hyde": {
+      "pipeline_type": "hyde",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 1.3768479824066162
+    },
+    "setup_graphrag": {
+      "pipeline_type": "graphrag",
+      "setup_success": false,
+      "setup_completed": false,
+      "summary": "Pipeline not ready. Issues: Table issues: DocumentEntities, EntityRelationships; Embedding issues: entity_embeddings, chunk_embeddings_optional",
+      "remaining_issues": [
+        "DocumentEntities",
+        "EntityRelationships",
+        "entity_embeddings",
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 37.43748497962952
+    },
+    "setup_hybrid_ifind": {
+      "pipeline_type": "hybrid_ifind",
+      "setup_success": true,
+      "setup_completed": true,
+      "summary": "All requirements satisfied. Pipeline ready for execution.",
+      "remaining_issues": [
+        "chunk_embeddings_optional"
+      ],
+      "setup_time": 31.793928861618042
+    }
+  },
+  "performance_metrics": {
+    "avg_total_time": 14.663574655850729,
+    "avg_execution_time": 0.01516413688659668,
+    "avg_setup_time": 0,
+    "max_total_time": 39.994765758514404,
+    "min_total_time": 2.7468559741973877,
+    "avg_answer_length": 48.0,
+    "avg_retrieved_docs": 0.0,
+    "avg_validation_time": 10.138241330782572,
+    "avg_setup_orchestration_time": 12.504514773686727
+  },
+  "reliability_metrics": {
+    "total_pipelines_tested": 6,
+    "successful_validations": 1,
+    "successful_setups": 1,
+    "successful_executions": 1,
+    "success_rate": 16.666666666666664
+  },
+  "errors": [
+    "Pipeline test failed for basic: Vector search failed: Database operation failed during similarity_search: TypeError",
+    "Pipeline test failed for crag: object of type 'NoneType' has no len()",
+    "Pipeline test failed for hyde: object of type 'NoneType' has no len()",
+    "Pipeline test failed for graphrag: Setup failed: Pipeline not ready. Issues: Table issues: DocumentEntities, EntityRelationships; Embedding issues: entity_embeddings, chunk_embeddings_optional",
+    "Pipeline test failed for hybrid_ifind: object of type 'NoneType' has no len()"
+  ],
+  "summary": {
+    "overall_success": false,
+    "validation_system_working": true,
+    "setup_system_working": true,
+    "all_pipelines_tested": false,
+    "error_count": 5,
+    "recommendations": [
+      "Some pipelines failed - investigate error logs",
+      "Errors encountered - review error details"
+    ]
+  },
+  "pmc_document_count": 2,
+  "test_end_time": "2025-07-27T15:42:32.649510"
+}

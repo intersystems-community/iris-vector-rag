@@ -23,7 +23,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
     
     def test_mock_query_encoder_initialization(self):
         """Test that the mock query encoder initializes correctly."""
-        encoder_func = get_colbert_query_encoder_func(mock=True) # Get the function
+        encoder_func = get_colbert_query_encoder_func(get_iris_connection=None, model_name="stub_colbert_query_encoder") # Get the function
         # These assertions will fail as encoder_func is not a class instance with these attributes
         # For now, just assert it's callable to pass collection
         assert callable(encoder_func)
@@ -33,7 +33,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
         
     def test_mock_tokenization(self):
         """Test that the mock tokenizer works correctly."""
-        encoder_func = get_colbert_query_encoder_func(mock=True)
+        encoder_func = get_colbert_query_encoder_func(get_iris_connection=None, model_name="stub_colbert_query_encoder")
         query = "What is ColBERT?"
         
         # This test needs significant rewrite as _mock_tokenize is internal to a non-existent class
@@ -48,7 +48,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
         
     def test_mock_encoder_output_shape(self):
         """Test that the mock encoder produces correctly shaped outputs."""
-        encoder_func = get_colbert_query_encoder_func(mock=True) # Assuming default dim is tested elsewhere or implicitly
+        encoder_func = get_colbert_query_encoder_func(get_iris_connection=None, model_name="stub_colbert_query_encoder") # Assuming default dim is tested elsewhere or implicitly
         query = "What is ColBERT?"
         
         token_embeddings = encoder_func(query) # Call the function
@@ -60,7 +60,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
         
     def test_mock_encoder_normalization(self):
         """Test that the mock encoder produces normalized embeddings."""
-        encoder_func = get_colbert_query_encoder_func(mock=True)
+        encoder_func = get_colbert_query_encoder_func(get_iris_connection=None, model_name="stub_colbert_query_encoder")
         query = "What is ColBERT?"
         
         token_embeddings = encoder_func(query) # Call the function
@@ -74,7 +74,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
             
     def test_mock_encoder_deterministic(self):
         """Test that the mock encoder produces deterministic results for the same input."""
-        encoder_func = get_colbert_query_encoder_func(mock=True)
+        encoder_func = get_colbert_query_encoder_func(get_iris_connection=None, model_name="stub_colbert_query_encoder")
         query = "What is ColBERT?"
         
         embeddings1 = encoder_func(query)
@@ -87,7 +87,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
             
     def test_mock_encoder_callable(self):
         """Test that the encoder object is callable as a function."""
-        encoder_func = get_colbert_query_encoder_func(mock=True)
+        encoder_func = get_colbert_query_encoder_func(get_iris_connection=None, model_name="stub_colbert_query_encoder")
         query = "What is ColBERT?"
         
         # Can call the encoder directly
@@ -98,7 +98,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
         
     def test_get_colbert_query_encoder(self): # Renamed test to reflect function name change if any
         """Test that the get_colbert_query_encoder_func function returns a callable."""
-        encoder_func = get_colbert_query_encoder_func(mock=True) # Use the imported function
+        encoder_func = get_colbert_query_encoder_func(get_iris_connection=None, model_name="stub_colbert_query_encoder") # Use the imported function
         
         assert callable(encoder_func)
         
@@ -132,7 +132,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
         # This test assumes ColBERTQueryEncoder class with max_query_length.
         # The get_colbert_query_encoder_func from common.utils might have different truncation logic.
         # For now, call the function to pass collection.
-        encoder_func = get_colbert_query_encoder_func(mock=True)
+        encoder_func = get_colbert_query_encoder_func(get_iris_connection=None, model_name="stub_colbert_query_encoder")
         long_query = "This is a very long query that exceeds the maximum length"
         
         token_embeddings = encoder_func(long_query)

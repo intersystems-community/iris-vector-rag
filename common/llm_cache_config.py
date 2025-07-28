@@ -55,41 +55,10 @@ class CacheConfig:
     retry_delay: int = 1
     operation_timeout: int = 10
     
-    @classmethod
-    def from_env(cls) -> 'CacheConfig':
-        """Create configuration from environment variables."""
-        config = cls()
-        
-        # Override with environment variables if present
-        if 'LLM_CACHE_ENABLED' in os.environ:
-            config.enabled = os.environ['LLM_CACHE_ENABLED'].lower() in ('true', '1', 'yes')
-        
-        if 'LLM_CACHE_BACKEND' in os.environ:
-            config.backend = os.environ['LLM_CACHE_BACKEND']
-        
-        if 'LLM_CACHE_TTL' in os.environ:
-            config.ttl_seconds = int(os.environ['LLM_CACHE_TTL'])
-        
-        if 'LLM_CACHE_TABLE' in os.environ:
-            config.table_name = os.environ['LLM_CACHE_TABLE']
-        
-        if 'LLM_CACHE_NORMALIZE_PROMPTS' in os.environ:
-            config.normalize_prompts = os.environ['LLM_CACHE_NORMALIZE_PROMPTS'].lower() in ('true', '1', 'yes')
-        
-        if 'LLM_CACHE_MAX_SIZE' in os.environ:
-            config.max_cache_size = int(os.environ['LLM_CACHE_MAX_SIZE'])
-        
-        
-        if 'LLM_CACHE_IRIS_SCHEMA' in os.environ:
-            config.iris_schema = os.environ['LLM_CACHE_IRIS_SCHEMA']
-        
-        logger.info(f"Cache configuration loaded from environment: backend={config.backend}, enabled={config.enabled}")
-        return config
-    
-    @classmethod
-    def from_yaml(cls, config_path: str = 'config/cache_config.yaml') -> 'CacheConfig':
-        """Create configuration from YAML file with environment variable overrides."""
-        config = cls()
+    def __init__(self, config_path: Optional[str] = None):
+        """Initializes the CacheConfig, loading from YAML and overriding with environment variables."""
+        if config_path is None:
+            config_path = 'config/cache_config.yaml'
         
         # Load from YAML file if it exists
         yaml_path = Path(config_path)
@@ -98,53 +67,19 @@ class CacheConfig:
                 with open(yaml_path, 'r') as f:
                     yaml_data = yaml.safe_load(f)
                 
-                if 'llm_cache' in yaml_data:
-                    cache_data = yaml_data['llm_cache']
+                if 'cache' in yaml_data:
+                    cache_data = yaml_data['cache']
                     
                     # Core settings
-                    config.enabled = cache_data.get('enabled', config.enabled)
-                    config.backend = cache_data.get('backend', config.backend)
-                    config.ttl_seconds = cache_data.get('ttl_seconds', config.ttl_seconds)
-                    config.normalize_prompts = cache_data.get('normalize_prompts', config.normalize_prompts)
-                    config.max_cache_size = cache_data.get('max_cache_size', config.max_cache_size)
+                    self.enabled = cache_data.get('enabled', self.enabled)
+                    self.backend = cache_data.get('backend', self.backend)
+                    self.ttl_seconds = cache_data.get('ttl_seconds', self.ttl_seconds)
                     
                     # IRIS settings
                     if 'iris' in cache_data:
                         iris_data = cache_data['iris']
-                        config.table_name = iris_data.get('table_name', config.table_name)
-                        config.iris_schema = iris_data.get('schema', config.iris_schema)
-                        config.connection_timeout = iris_data.get('connection_timeout', config.connection_timeout)
-                        config.cleanup_batch_size = iris_data.get('cleanup_batch_size', config.cleanup_batch_size)
-                        config.auto_cleanup = iris_data.get('auto_cleanup', config.auto_cleanup)
-                        config.cleanup_interval = iris_data.get('cleanup_interval', config.cleanup_interval)
-                    
-                    
-                    # Key generation settings
-                    if 'key_generation' in cache_data:
-                        key_data = cache_data['key_generation']
-                        config.include_temperature = key_data.get('include_temperature', config.include_temperature)
-                        config.include_max_tokens = key_data.get('include_max_tokens', config.include_max_tokens)
-                        config.include_model_name = key_data.get('include_model_name', config.include_model_name)
-                        config.hash_algorithm = key_data.get('hash_algorithm', config.hash_algorithm)
-                        config.normalize_whitespace = key_data.get('normalize_whitespace', config.normalize_whitespace)
-                        config.normalize_case = key_data.get('normalize_case', config.normalize_case)
-                    
-                    # Monitoring settings
-                    if 'monitoring' in cache_data:
-                        monitor_data = cache_data['monitoring']
-                        config.monitoring_enabled = monitor_data.get('enabled', config.monitoring_enabled)
-                        config.log_operations = monitor_data.get('log_operations', config.log_operations)
-                        config.track_stats = monitor_data.get('track_stats', config.track_stats)
-                        config.metrics_interval = monitor_data.get('metrics_interval', config.metrics_interval)
-                    
-                    # Error handling settings
-                    if 'error_handling' in cache_data:
-                        error_data = cache_data['error_handling']
-                        config.graceful_fallback = error_data.get('graceful_fallback', config.graceful_fallback)
-                        config.max_retries = error_data.get('max_retries', config.max_retries)
-                        config.retry_delay = error_data.get('retry_delay', config.retry_delay)
-                        config.operation_timeout = error_data.get('operation_timeout', config.operation_timeout)
-                
+                        self.table_name = iris_data.get('table_name', self.table_name)
+
                 logger.info(f"Cache configuration loaded from YAML: {config_path}")
                 
             except Exception as e:
@@ -153,39 +88,14 @@ class CacheConfig:
             logger.info(f"Cache config file not found at {config_path}. Using defaults.")
         
         # Apply environment variable overrides
-        config = cls._apply_env_overrides(config)
-        
-        return config
-    
-    @classmethod
-    def _apply_env_overrides(cls, config: 'CacheConfig') -> 'CacheConfig':
+        self._apply_env_overrides()
+
+    def _apply_env_overrides(self):
         """Apply environment variable overrides to configuration."""
-        # Override with environment variables if present
-        if 'LLM_CACHE_ENABLED' in os.environ:
-            config.enabled = os.environ['LLM_CACHE_ENABLED'].lower() in ('true', '1', 'yes')
-        
-        if 'LLM_CACHE_BACKEND' in os.environ:
-            config.backend = os.environ['LLM_CACHE_BACKEND']
-        
-        if 'LLM_CACHE_TTL' in os.environ:
-            config.ttl_seconds = int(os.environ['LLM_CACHE_TTL'])
-        
-        if 'LLM_CACHE_TABLE' in os.environ:
-            config.table_name = os.environ['LLM_CACHE_TABLE']
-        
-        if 'LLM_CACHE_NORMALIZE_PROMPTS' in os.environ:
-            config.normalize_prompts = os.environ['LLM_CACHE_NORMALIZE_PROMPTS'].lower() in ('true', '1', 'yes')
-        
-        if 'LLM_CACHE_MAX_SIZE' in os.environ:
-            config.max_cache_size = int(os.environ['LLM_CACHE_MAX_SIZE'])
-        
-        if 'LLM_CACHE_REDIS_URL' in os.environ:
-            config.redis_url = os.environ['LLM_CACHE_REDIS_URL']
-        
-        if 'LLM_CACHE_IRIS_SCHEMA' in os.environ:
-            config.iris_schema = os.environ['LLM_CACHE_IRIS_SCHEMA']
-        
-        return config
+        self.enabled = os.environ.get('RAG_CACHE__ENABLED', str(self.enabled)).lower() in ('true', '1', 'yes')
+        self.backend = os.environ.get('RAG_CACHE__BACKEND', self.backend)
+        self.ttl_seconds = int(os.environ.get('RAG_CACHE__TTL_SECONDS', self.ttl_seconds))
+        self.table_name = os.environ.get('RAG_CACHE__IRIS__TABLE_NAME', self.table_name)
     
     def validate(self) -> bool:
         """Validate the configuration settings."""

@@ -12,22 +12,35 @@ class RAGPipeline(abc.ABC):
     interchangeably within the framework.
     """
     
-    def __init__(self, connection_manager, config_manager, vector_store: Optional[VectorStore] = None):
+    def __init__(self, config_manager, vector_store: Optional[VectorStore] = None, connection_manager=None):
         """
-        Initialize the RAG pipeline with connection and configuration managers.
+        Initialize the RAG pipeline with configuration and connection managers.
         
         Args:
-            connection_manager: Database connection manager
             config_manager: Configuration manager
             vector_store: Optional VectorStore instance. If None, IRISVectorStore will be instantiated.
+            connection_manager: Optional IRISConnectionManager instance.
         """
-        self.connection_manager = connection_manager
         self.config_manager = config_manager
         
-        # Initialize vector store
+        # Initialize schema manager and vector store
+        from ..storage.schema_manager import SchemaManager
+        from common.iris_connection_manager import IRISConnectionManager
+        
+        # Use provided connection_manager or create a new one
+        self.connection_manager = connection_manager or IRISConnectionManager(config_manager)
+        self.schema_manager = SchemaManager(self.connection_manager, config_manager)
+        
         if vector_store is None:
             from ..storage.vector_store_iris import IRISVectorStore
-            self.vector_store = IRISVectorStore(connection_manager, config_manager)
+            # Pass embedding manager if available (for automatic embedding generation)
+            embedding_manager = getattr(self, 'embedding_manager', None)
+            self.vector_store = IRISVectorStore(
+                config_manager,
+                schema_manager=self.schema_manager,
+                connection_manager=self.connection_manager,
+                embedding_manager=embedding_manager
+            )
         else:
             self.vector_store = vector_store
 
@@ -50,19 +63,47 @@ class RAGPipeline(abc.ABC):
         """
         pass
 
-    @abc.abstractmethod
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
-        Loads and processes documents into the RAG pipeline&#x27;s knowledge base.
-
-        This method handles the ingestion, chunking, embedding, and indexing
-        of documents.
-
+        Default implementation with automatic chunking via vector store.
+        
+        Pipelines can override this method if they need special processing,
+        but most should use this default implementation.
+        
         Args:
             documents_path: Path to the documents or directory of documents.
-            **kwargs: Additional keyword arguments for document loading.
+            **kwargs: Additional keyword arguments including:
+                - documents: List of Document objects (if providing directly)
+                - auto_chunk: Override automatic chunking setting
+                - chunking_strategy: Override chunking strategy
         """
-        pass
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Load documents from path or direct input
+        documents = self._get_documents(documents_path, **kwargs)
+        
+        # Get pipeline-specific chunking configuration
+        pipeline_name = self._get_pipeline_name()
+        chunking_config = self._get_chunking_config(pipeline_name)
+        
+        # Apply any pipeline-specific document preprocessing
+        # Extract documents from kwargs to avoid conflicts
+        preprocessing_kwargs = {k: v for k, v in kwargs.items() if k != 'documents'}
+        documents = self._preprocess_documents(documents, **preprocessing_kwargs)
+        
+        # Override chunking config with kwargs if provided
+        auto_chunk = kwargs.get("auto_chunk", chunking_config.get("enabled", True))
+        chunking_strategy = kwargs.get("chunking_strategy", chunking_config.get("strategy", "fixed_size"))
+        
+        # Delegate to vector store with automatic chunking
+        document_ids = self.vector_store.add_documents(
+            documents=documents,
+            auto_chunk=auto_chunk,
+            chunking_strategy=chunking_strategy
+        )
+        
+        logger.info(f"{pipeline_name}: Loaded {len(documents)} documents with chunking (auto_chunk={auto_chunk}, strategy={chunking_strategy}), generated {len(document_ids)} chunks/documents")
 
     @abc.abstractmethod
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> list:
@@ -149,3 +190,75 @@ class RAGPipeline(abc.ABC):
             List of document IDs that were stored
         """
         return self.vector_store.add_documents(documents, embeddings)
+    
+    def _get_documents(self, documents_path: str, **kwargs) -> List[Document]:
+        """Load documents from path or kwargs."""
+        if "documents" in kwargs:
+            return kwargs["documents"]
+        return self._load_documents_from_path(documents_path)
+    
+    def _get_pipeline_name(self) -> str:
+        """Extract pipeline name from class name for configuration lookup."""
+        class_name = self.__class__.__name__.lower()
+        # Remove common suffixes to get clean pipeline name
+        for suffix in ['pipeline', 'ragpipeline', 'rag']:
+            if class_name.endswith(suffix):
+                class_name = class_name[:-len(suffix)]
+                break
+        return class_name
+    
+    def _get_chunking_config(self, pipeline_name: str) -> dict:
+        """Get pipeline-specific chunking configuration."""
+        config_key = f"pipeline_overrides:{pipeline_name}:chunking"
+        return self.config_manager.get(config_key, {})
+    
+    def _preprocess_documents(self, documents: List[Document], **kwargs) -> List[Document]:
+        """
+        Hook for pipeline-specific document preprocessing.
+        Override in subclasses if needed.
+        """
+        return documents
+    
+    def _load_documents_from_path(self, documents_path: str) -> List[Document]:
+        """Load documents from file or directory path."""
+        import os
+        
+        documents = []
+        
+        if os.path.isfile(documents_path):
+            # Single file
+            documents.append(self._load_single_file(documents_path))
+        elif os.path.isdir(documents_path):
+            # Directory of files
+            for filename in os.listdir(documents_path):
+                file_path = os.path.join(documents_path, filename)
+                if os.path.isfile(file_path):
+                    try:
+                        doc = self._load_single_file(file_path)
+                        documents.append(doc)
+                    except Exception as e:
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.warning(f"Failed to load file {file_path}: {e}")
+        else:
+            raise ValueError(f"Path does not exist: {documents_path}")
+        
+        return documents
+    
+    def _load_single_file(self, file_path: str) -> Document:
+        """Load a single file as a Document."""
+        import os
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        metadata = {
+            "source": file_path,
+            "filename": os.path.basename(file_path),
+            "file_size": os.path.getsize(file_path)
+        }
+        
+        return Document(
+            page_content=content,
+            metadata=metadata
+        )

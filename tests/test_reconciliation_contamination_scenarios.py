@@ -6,7 +6,7 @@ import numpy as np
 from typing import List, Dict, Any
 
 from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 
 # Constants for table names
 SOURCE_DOCUMENTS_TABLE = "RAG.SourceDocuments"
@@ -155,10 +155,8 @@ def config_manager(test_config_file_path):
 
 @pytest.fixture(scope="session")
 def iris_connection(config_manager):
-    conn_mgr = ConnectionManager(config_manager)
-    conn = None
+    conn = get_iris_connection()
     try:
-        conn = conn_mgr.get_connection("iris")
         cursor = conn.cursor()
         cursor.execute("SELECT 1")
         cursor.fetchone()

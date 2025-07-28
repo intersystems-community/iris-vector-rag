@@ -2,6 +2,21 @@
 
 This file defines key rules and standards for the RAG templates project.
 
+## General
+
+1. **ALWAYS USE UV**: All Python commands (pytest, pip, python, etc.) MUST be prefixed with `uv run`. Examples:
+   - `uv run pytest tests/` (NOT `python -m pytest tests/`)
+   - `uv run python script.py` (NOT `python script.py`)
+   - This is MANDATORY for all Python execution in this project.
+
+2. **IRIS Edition Requirements**: For large-scale RAG testing, IRIS Enterprise edition is required due to data size constraints:
+   - **Community Edition**: 10GB data limit (insufficient for 92K+ documents)
+   - **Enterprise Edition**: No data limits (required for large-scale testing)
+   - **Default for Testing**: Use Enterprise/ML edition by default
+   - **Environment Variable**: Set `IRIS_DOCKER_IMAGE` to override edition selection
+
+3. **ALWAYS KEEP CODE FILES UNDER 500 LINES**
+
 ## TDD Workflow
 
 1. **Test-First Development**: Always write failing tests first, then implement the code to make them pass.
@@ -32,6 +47,11 @@ This file defines key rules and standards for the RAG templates project.
 
 5. **Assert Actual Results**: Tests must make assertions on actual result properties (not just logging).
 
+6. **Log Pytest Output to File**: All pytest commands MUST use `tee` to display output in terminal AND log to file in the `test_output` directory. The filename should be descriptive of the test being run. Examples:
+   - `uv run pytest tests/test_ingestion.py | tee test_output/test_ingestion.log`
+   - `uv run pytest tests/test_fallback_behavior_validation.py -v | tee test_output/test_fallback_behavior_validation.log`
+   - This allows real-time viewing of test output while preserving logs for analysis
+
 ## Code Organization Rules
 
 1. **Pythonic Approach**: Prefer Python functionality over shell scripts for automation.
@@ -53,6 +73,26 @@ This file defines key rules and standards for the RAG templates project.
 ## SQL Rules
 
 1. **Use TOP instead of LIMIT**: IRIS SQL uses TOP keyword instead of LIMIT. Always use "SELECT TOP n" syntax rather than "SELECT ... LIMIT n".
+## Vector Store Architecture Rules
+
+1. **Always Use Vector Store Interface**: All vector operations (search, insertion, retrieval) MUST use the `IVectorStore` interface and its `IRISVectorStore` implementation instead of direct SQL queries. This ensures consistent abstraction and proper encapsulation of vector operations.
+
+2. **No Direct Vector SQL in Tests or Application Code**: Never write direct SQL queries with `VECTOR_COSINE`, `TO_VECTOR`, or other vector functions. Always delegate to the vector store interface methods like `similarity_search()`, `add_documents()`, etc.
+
+3. **Vector Store Usage Pattern**: Initialize and use vector store through the proper interface:
+   ```python
+   from iris_rag.storage.vector_store.iris_impl import IRISVectorStore
+   from iris_rag.config.manager import ConfigurationManager
+   
+   config_manager = ConfigurationManager()
+   vector_store = IRISVectorStore(config_manager=config_manager)
+   
+   # Use interface methods instead of direct SQL
+   results = vector_store.similarity_search(query_embedding, k=10)
+   ```
+
+4. **Benchmarking and Performance Tests**: Even performance and benchmarking tests must use the vector store interface to ensure they test the actual production code paths and maintain architectural consistency.
+
 
 ## Vector Insertion Rules
 
@@ -61,6 +101,31 @@ This file defines key rules and standards for the RAG templates project.
 2. **No Direct Vector SQL**: Never write direct INSERT statements with vector data. Always delegate to the `insert_vector()` utility function to ensure consistent vector handling across the entire codebase.
 
 3. **Consistent Vector Format**: The `insert_vector()` utility handles all vector formatting requirements including proper TO_VECTOR() syntax, dimension validation, and error handling.
+
+## Database Schema Management Rules
+
+1. **Always Use SchemaManager**: For database schema initialization and table creation, MUST use the `iris_rag.storage.schema_manager.SchemaManager` class instead of manual SQL scripts or direct table creation.
+
+2. **Schema Manager Usage Pattern**: Initialize schema manager with connection_manager and config_manager, then use `ensure_table_schema(table_name)` method:
+   ```python
+   from iris_rag.storage.schema_manager import SchemaManager
+   from common.iris_connection_manager import get_iris_connection
+   from iris_rag.config.manager import ConfigurationManager
+   
+   # Initialize components
+   connection_manager = type('ConnectionManager', (), {
+       'get_connection': lambda: get_iris_connection()
+   })()
+   config_manager = ConfigurationManager()
+   
+   # Create and use schema manager
+   schema_manager = SchemaManager(connection_manager, config_manager)
+   schema_manager.ensure_table_schema('SourceDocuments')
+   ```
+
+3. **Automatic Migration Support**: The SchemaManager automatically handles vector dimension changes, model updates, and schema versioning without manual intervention.
+
+4. **No Manual Table Creation**: Never create tables manually with CREATE TABLE statements. Always delegate to SchemaManager for consistent schema management across all RAG techniques.
 
 ## Performance & Benchmarking Rules
 

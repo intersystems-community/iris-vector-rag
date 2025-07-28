@@ -1,0 +1,19 @@
+{
+  "pipeline_results": {
+    "basic": {
+      "success": false,
+      "error": "BasicRAGPipeline.__init__() got an unexpected keyword argument 'connection_manager'",
+      "chunking_config": {
+        "chunking_strategy": "fixed_size",
+        "auto_chunk": true
+      }
+    }
+  },
+  "performance_metrics": {},
+  "errors": [
+    {
+      "pipeline": "basic",
+      "error": "BasicRAGPipeline.__init__() got an unexpected keyword argument 'connection_manager'"
+    }
+  ]
+}

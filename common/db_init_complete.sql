@@ -20,7 +20,7 @@ CREATE TABLE RAG.SourceDocuments (
 
 -- Indexes for SourceDocuments
 CREATE INDEX IF NOT EXISTS idx_source_docs_id ON RAG.SourceDocuments (doc_id);
-CREATE INDEX IF NOT EXISTS idx_hnsw_source_embedding ON RAG.SourceDocuments (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
+CREATE INDEX IF NOT EXISTS idx_hnsw_source_embedding ON RAG.SourceDocuments (embedding) AS HNSW(M=16, efConstruction=200, Distance='Cosine');
 
 -- =====================================================
 -- 2. DOCUMENT CHUNKING TABLES
@@ -42,7 +42,7 @@ CREATE TABLE RAG.DocumentChunks (
 -- Indexes for DocumentChunks
 CREATE INDEX IF NOT EXISTS idx_chunks_doc_id ON RAG.DocumentChunks (doc_id);
 CREATE INDEX IF NOT EXISTS idx_chunks_type ON RAG.DocumentChunks (chunk_type);
-CREATE INDEX IF NOT EXISTS idx_hnsw_chunk_embedding ON RAG.DocumentChunks (chunk_embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
+CREATE INDEX IF NOT EXISTS idx_hnsw_chunk_embedding ON RAG.DocumentChunks (chunk_embedding) AS HNSW(M=16, efConstruction=200, Distance='Cosine');
 
 -- =====================================================
 -- 3. KNOWLEDGE GRAPH TABLES
@@ -82,7 +82,7 @@ CREATE INDEX IF NOT EXISTS idx_entities_id ON RAG.Entities (entity_id);
 CREATE INDEX IF NOT EXISTS idx_entities_name ON RAG.Entities (entity_name);
 CREATE INDEX IF NOT EXISTS idx_entities_type ON RAG.Entities (entity_type);
 CREATE INDEX IF NOT EXISTS idx_entities_source_doc ON RAG.Entities (source_doc_id);
-CREATE INDEX IF NOT EXISTS idx_hnsw_entity_embedding ON RAG.Entities (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
+CREATE INDEX IF NOT EXISTS idx_hnsw_entity_embedding ON RAG.Entities (embedding) AS HNSW(M=16, efConstruction=200, Distance='Cosine');
 
 -- Indexes for Relationships
 CREATE INDEX IF NOT EXISTS idx_relationships_id ON RAG.Relationships (relationship_id);
@@ -123,7 +123,7 @@ CREATE TABLE RAG.KnowledgeGraphEdges (
 -- Indexes for KnowledgeGraphNodes
 CREATE INDEX IF NOT EXISTS idx_kg_nodes_id ON RAG.KnowledgeGraphNodes (node_id);
 CREATE INDEX IF NOT EXISTS idx_kg_nodes_type ON RAG.KnowledgeGraphNodes (node_type);
-CREATE INDEX IF NOT EXISTS idx_hnsw_kg_node_embedding ON RAG.KnowledgeGraphNodes (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
+CREATE INDEX IF NOT EXISTS idx_hnsw_kg_node_embedding ON RAG.KnowledgeGraphNodes (embedding) AS HNSW(M=16, efConstruction=200, Distance='Cosine');
 
 -- Indexes for KnowledgeGraphEdges
 CREATE INDEX IF NOT EXISTS idx_kg_edges_id ON RAG.KnowledgeGraphEdges (edge_id);
@@ -150,7 +150,7 @@ CREATE TABLE RAG.DocumentTokenEmbeddings (
 -- Indexes for DocumentTokenEmbeddings
 CREATE INDEX IF NOT EXISTS idx_token_embeddings_doc ON RAG.DocumentTokenEmbeddings (doc_id);
 CREATE INDEX IF NOT EXISTS idx_token_embeddings_token ON RAG.DocumentTokenEmbeddings (token_index);
-CREATE INDEX IF NOT EXISTS idx_hnsw_token_embedding ON RAG.DocumentTokenEmbeddings (token_embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE');
+CREATE INDEX IF NOT EXISTS idx_hnsw_token_embedding ON RAG.DocumentTokenEmbeddings (token_embedding) AS HNSW(M=16, efConstruction=200, Distance='Cosine');
 
 -- =====================================================
 -- 6. PERFORMANCE OPTIMIZATION INDEXES

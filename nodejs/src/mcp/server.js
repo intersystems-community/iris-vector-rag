@@ -1,238 +1,397 @@
 /**
- * MCP Server Integration for RAG Templates Library Consumption Framework.
+ * MCP Server for IRIS RAG System
  * 
- * This module provides trivial MCP server creation following support-tools-mcp patterns.
- * Enables zero-config MCP server setup with RAG capabilities.
+ * Main entry point for the Model Context Protocol server that provides
+ * access to all 8 RAG techniques through a standardized interface.
+ * 
+ * This server integrates:
+ * - Node.js MCP infrastructure
+ * - Python RAG pipeline implementations
+ * - IRIS database backend
+ * - Performance monitoring and health checks
  */
 
-const { RAG } = require('../simple');
-const { ConfigurableRAG } = require('../standard');
-const { createRAGTools } = require('./tools');
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { RAGToolsManager } from './rag_tools/index.js';
 
 /**
- * Create a trivial MCP server with RAG capabilities.
+ * IRIS RAG MCP Server
  * 
- * This function provides zero-configuration MCP server creation,
- * following the patterns established in support-tools-mcp.
- * 
- * @param {Object} config - Server configuration
- * @param {string} config.name - Server name
- * @param {string} config.description - Server description
- * @param {string} config.version - Server version (default: "1.0.0")
- * @param {Object} config.ragConfig - RAG configuration (optional)
- * @param {Array<string>} config.enabledTools - List of enabled tools (optional)
- * @returns {Object} MCP server instance
+ * Provides Model Context Protocol interface for all RAG techniques,
+ * enabling integration with AI assistants and other MCP clients.
  */
-function createMCPServer(config) {
-    const {
-        name,
-        description,
-        version = "1.0.0",
-        ragConfig = {},
-        enabledTools = ['rag_search', 'rag_add_documents', 'rag_get_stats']
-    } = config;
-    
-    if (!name || !description) {
-        throw new Error('Server name and description are required');
-    }
-    
-    // Initialize RAG instance based on configuration
-    let ragInstance;
-    if (ragConfig.technique) {
-        // Use Standard API for advanced configuration
-        ragInstance = new ConfigurableRAG(ragConfig);
-    } else {
-        // Use Simple API for zero-config
-        ragInstance = new RAG();
-    }
-    
-    // Create RAG tools
-    const tools = createRAGTools(ragInstance, enabledTools);
-    
-    // Server state
-    let isRunning = false;
-    let serverInfo = null;
-    
-    const server = {
-        /**
-         * Get server information
-         */
-        getInfo() {
-            return {
-                name,
-                description,
-                version,
-                protocol_version: "2024-11-05",
+class IRISRAGMCPServer {
+    constructor() {
+        this.server = new Server(
+            {
+                name: 'iris-rag-server',
+                version: '1.0.0',
+                description: 'MCP Server for IRIS RAG System with 8 RAG techniques'
+            },
+            {
                 capabilities: {
-                    tools: {},
-                    resources: {},
-                    prompts: {},
-                    logging: {}
-                },
-                tools: Object.keys(tools),
-                isRunning
-            };
-        },
-        
-        /**
-         * Start the MCP server
-         */
-        async start() {
-            if (isRunning) {
-                console.warn('Server is already running');
-                return;
-            }
-            
-            try {
-                // Initialize RAG instance if needed
-                if (ragInstance._initializePipeline && !ragInstance._initialized) {
-                    console.log('Initializing RAG pipeline...');
-                    // Note: We don't actually initialize here to avoid database dependencies
-                    // In a real implementation, this would initialize the pipeline
+                    tools: {}
                 }
-                
-                serverInfo = this.getInfo();
-                isRunning = true;
-                
-                console.log(`🚀 MCP Server "${name}" started successfully`);
-                console.log(`📋 Available tools: ${Object.keys(tools).join(', ')}`);
-                console.log(`🔧 Server version: ${version}`);
-                
-                return serverInfo;
-            } catch (error) {
-                throw new Error(`Failed to start MCP server: ${error.message}`);
             }
-        },
+        );
         
-        /**
-         * Stop the MCP server
-         */
-        async stop() {
-            if (!isRunning) {
-                console.warn('Server is not running');
-                return;
-            }
-            
-            try {
-                // Cleanup RAG resources if needed
-                if (ragInstance.close && typeof ragInstance.close === 'function') {
-                    await ragInstance.close();
-                }
-                
-                isRunning = false;
-                serverInfo = null;
-                
-                console.log(`🛑 MCP Server "${name}" stopped successfully`);
-            } catch (error) {
-                throw new Error(`Failed to stop MCP server: ${error.message}`);
-            }
-        },
+        this.ragToolsManager = new RAGToolsManager();
+        this.logger = console; // Use console for now, can be replaced with proper logger
         
-        /**
-         * Handle tool calls
-         */
-        async handleToolCall(toolName, parameters) {
-            if (!isRunning) {
-                throw new Error('Server is not running');
-            }
-            
-            if (!(toolName in tools)) {
-                throw new Error(`Unknown tool: ${toolName}`);
-            }
-            
-            try {
-                const result = await tools[toolName](parameters);
-                return {
-                    success: true,
-                    result
-                };
-            } catch (error) {
-                return {
-                    success: false,
-                    error: error.message
-                };
-            }
-        },
-        
-        /**
-         * List available tools
-         */
-        listTools() {
-            return Object.keys(tools).map(toolName => ({
-                name: toolName,
-                description: tools[toolName].description || `RAG tool: ${toolName}`,
-                inputSchema: tools[toolName].inputSchema || {
-                    type: "object",
-                    properties: {},
-                    required: []
-                }
-            }));
-        },
-        
-        /**
-         * Get tool schema
-         */
-        getToolSchema(toolName) {
-            if (!(toolName in tools)) {
-                throw new Error(`Unknown tool: ${toolName}`);
-            }
-            
-            return {
-                name: toolName,
-                description: tools[toolName].description || `RAG tool: ${toolName}`,
-                inputSchema: tools[toolName].inputSchema || {
-                    type: "object",
-                    properties: {},
-                    required: []
-                }
-            };
-        },
-        
-        /**
-         * Health check
-         */
-        async healthCheck() {
-            return {
-                status: isRunning ? 'healthy' : 'stopped',
-                server: name,
-                version,
-                timestamp: new Date().toISOString(),
-                ragInitialized: ragInstance._initialized || false
-            };
-        },
-        
-        // Expose RAG instance for advanced usage
-        getRagInstance() {
-            return ragInstance;
-        }
-    };
+        this._setupHandlers();
+    }
     
-    return server;
+    /**
+     * Setup MCP server handlers.
+     */
+    _setupHandlers() {
+        // List tools handler
+        this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+            try {
+                const tools = this.ragToolsManager.getTools();
+                this.logger.log(`Listing ${tools.length} available tools`);
+                return { tools };
+            } catch (error) {
+                this.logger.error('Error listing tools:', error);
+                throw error;
+            }
+        });
+        
+        // Call tool handler
+        this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+            try {
+                const { name, arguments: args } = request.params;
+                
+                this.logger.log(`Executing tool: ${name}`);
+                this.logger.log(`Arguments:`, JSON.stringify(args, null, 2));
+                
+                // Execute tool via RAG tools manager
+                const result = await this.ragToolsManager.executeTool(name, args || {});
+                
+                this.logger.log(`Tool ${name} executed successfully`);
+                
+                // Format response according to MCP specification
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: this._formatToolResult(name, result)
+                        }
+                    ]
+                };
+                
+            } catch (error) {
+                this.logger.error(`Error executing tool ${request.params.name}:`, error);
+                
+                // Return error response
+                return {
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Error executing ${request.params.name}: ${error.message}`
+                        }
+                    ],
+                    isError: true
+                };
+            }
+        });
+        
+        // Error handler
+        this.server.onerror = (error) => {
+            this.logger.error('MCP Server error:', error);
+        };
+        
+        this.logger.log('MCP server handlers configured');
+    }
+    
+    /**
+     * Format tool result for MCP response.
+     */
+    _formatToolResult(toolName, result) {
+        try {
+            // Handle different result types
+            if (typeof result === 'string') {
+                return result;
+            }
+            
+            if (typeof result === 'object' && result !== null) {
+                // Format RAG technique results
+                if (result.technique && result.query && result.answer) {
+                    return this._formatRAGResult(result);
+                }
+                
+                // Format utility tool results
+                if (toolName.includes('health_check')) {
+                    return this._formatHealthCheckResult(result);
+                } else if (toolName.includes('list_techniques')) {
+                    return this._formatListTechniquesResult(result);
+                } else if (toolName.includes('performance_metrics')) {
+                    return this._formatMetricsResult(result);
+                }
+                
+                // Default JSON formatting
+                return JSON.stringify(result, null, 2);
+            }
+            
+            return String(result);
+            
+        } catch (error) {
+            this.logger.error('Error formatting tool result:', error);
+            return `Result formatting error: ${error.message}`;
+        }
+    }
+    
+    /**
+     * Format RAG technique result.
+     */
+    _formatRAGResult(result) {
+        const sections = [];
+        
+        // Header
+        sections.push(`# ${result.technique.toUpperCase()} RAG Result`);
+        sections.push('');
+        
+        // Query
+        sections.push(`**Query:** ${result.query}`);
+        sections.push('');
+        
+        // Answer
+        sections.push(`**Answer:**`);
+        sections.push(result.answer);
+        sections.push('');
+        
+        // Retrieved documents
+        if (result.retrieved_documents && result.retrieved_documents.length > 0) {
+            sections.push(`**Retrieved Documents (${result.retrieved_documents.length}):**`);
+            result.retrieved_documents.forEach((doc, index) => {
+                sections.push(`${index + 1}. **Score:** ${doc.score || 'N/A'}`);
+                if (doc.source) {
+                    sections.push(`   **Source:** ${doc.source}`);
+                }
+                if (doc.content) {
+                    const preview = doc.content.length > 200 
+                        ? doc.content.substring(0, 200) + '...'
+                        : doc.content;
+                    sections.push(`   **Content:** ${preview}`);
+                }
+                sections.push('');
+            });
+        }
+        
+        // Performance metrics
+        if (result.performance) {
+            sections.push(`**Performance:**`);
+            sections.push(`- Execution Time: ${result.performance.execution_time_ms?.toFixed(2) || 'N/A'}ms`);
+            sections.push(`- Timestamp: ${result.performance.timestamp || 'N/A'}`);
+            sections.push('');
+        }
+        
+        // Metadata
+        if (result.metadata && Object.keys(result.metadata).length > 0) {
+            sections.push(`**Metadata:**`);
+            sections.push('```json');
+            sections.push(JSON.stringify(result.metadata, null, 2));
+            sections.push('```');
+        }
+        
+        return sections.join('\n');
+    }
+    
+    /**
+     * Format health check result.
+     */
+    _formatHealthCheckResult(result) {
+        const sections = [];
+        
+        sections.push('# RAG System Health Check');
+        sections.push('');
+        
+        if (result.status) {
+            sections.push(`**Overall Status:** ${result.status}`);
+            sections.push('');
+        }
+        
+        if (result.components) {
+            sections.push('**Component Status:**');
+            for (const [component, status] of Object.entries(result.components)) {
+                sections.push(`- ${component}: ${status}`);
+            }
+            sections.push('');
+        }
+        
+        if (result.details) {
+            sections.push('**Details:**');
+            sections.push('```json');
+            sections.push(JSON.stringify(result.details, null, 2));
+            sections.push('```');
+        }
+        
+        return sections.join('\n');
+    }
+    
+    /**
+     * Format list techniques result.
+     */
+    _formatListTechniquesResult(result) {
+        const sections = [];
+        
+        sections.push('# Available RAG Techniques');
+        sections.push('');
+        
+        if (result.techniques) {
+            result.techniques.forEach((technique, index) => {
+                sections.push(`${index + 1}. **${technique.name}**`);
+                if (technique.description) {
+                    sections.push(`   ${technique.description}`);
+                }
+                if (technique.enabled !== undefined) {
+                    sections.push(`   Status: ${technique.enabled ? 'Enabled' : 'Disabled'}`);
+                }
+                sections.push('');
+            });
+        }
+        
+        if (result.total_count) {
+            sections.push(`**Total Techniques:** ${result.total_count}`);
+        }
+        
+        return sections.join('\n');
+    }
+    
+    /**
+     * Format performance metrics result.
+     */
+    _formatMetricsResult(result) {
+        const sections = [];
+        
+        sections.push('# Performance Metrics');
+        sections.push('');
+        
+        if (result.technique) {
+            sections.push(`**Technique:** ${result.technique}`);
+            sections.push('');
+        }
+        
+        if (result.time_range) {
+            sections.push(`**Time Range:** ${result.time_range}`);
+            sections.push('');
+        }
+        
+        if (result.metrics) {
+            sections.push('**Metrics:**');
+            for (const [metric, value] of Object.entries(result.metrics)) {
+                sections.push(`- ${metric}: ${value}`);
+            }
+            sections.push('');
+        }
+        
+        if (result.details) {
+            sections.push('**Details:**');
+            sections.push('```json');
+            sections.push(JSON.stringify(result.details, null, 2));
+            sections.push('```');
+        }
+        
+        return sections.join('\n');
+    }
+    
+    /**
+     * Start the MCP server.
+     */
+    async start() {
+        try {
+            // Check if RAG tools manager is initialized
+            if (!this.ragToolsManager.isInitialized()) {
+                throw new Error('RAG Tools Manager failed to initialize');
+            }
+            
+            this.logger.log('Starting IRIS RAG MCP Server...');
+            
+            // Create transport
+            const transport = new StdioServerTransport();
+            
+            // Connect server to transport
+            await this.server.connect(transport);
+            
+            this.logger.log('IRIS RAG MCP Server started successfully');
+            this.logger.log(`Available tools: ${this.ragToolsManager.getTools().length}`);
+            
+            // Log server status
+            const status = this.ragToolsManager.getStatus();
+            this.logger.log('Server status:', JSON.stringify(status, null, 2));
+            
+        } catch (error) {
+            this.logger.error('Failed to start MCP server:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Stop the MCP server.
+     */
+    async stop() {
+        try {
+            this.logger.log('Stopping IRIS RAG MCP Server...');
+            
+            // Close server connection
+            await this.server.close();
+            
+            this.logger.log('IRIS RAG MCP Server stopped');
+            
+        } catch (error) {
+            this.logger.error('Error stopping MCP server:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Get server status.
+     */
+    getStatus() {
+        return {
+            server_name: 'iris-rag-server',
+            version: '1.0.0',
+            rag_tools_manager: this.ragToolsManager.getStatus(),
+            uptime: process.uptime()
+        };
+    }
 }
 
-/**
- * Create a simple MCP server with minimal configuration.
- * 
- * @param {string} name - Server name
- * @param {string} description - Server description
- * @returns {Object} MCP server instance
- */
-function createSimpleMCPServer(name, description) {
-    return createMCPServer({ name, description });
+// Main execution
+async function main() {
+    const server = new IRISRAGMCPServer();
+    
+    // Handle process signals
+    process.on('SIGINT', async () => {
+        console.log('Received SIGINT, shutting down gracefully...');
+        await server.stop();
+        process.exit(0);
+    });
+    
+    process.on('SIGTERM', async () => {
+        console.log('Received SIGTERM, shutting down gracefully...');
+        await server.stop();
+        process.exit(0);
+    });
+    
+    // Start server
+    try {
+        await server.start();
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
 }
 
-/**
- * Create an advanced MCP server with full configuration.
- * 
- * @param {Object} config - Full server configuration
- * @returns {Object} MCP server instance
- */
-function createAdvancedMCPServer(config) {
-    return createMCPServer(config);
-}
+// Export for testing
+export { IRISRAGMCPServer };
 
-module.exports = {
-    createMCPServer,
-    createSimpleMCPServer,
-    createAdvancedMCPServer
-};
+// Run if this is the main module
+if (import.meta.url === `file://${process.argv[1]}`) {
+    main().catch((error) => {
+        console.error('Unhandled error:', error);
+        process.exit(1);
+    });
+}

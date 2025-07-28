@@ -1,0 +1,129 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-07-27T09:52:37.117530",
+    "total_execution_time": 20.662191152572632,
+    "document_count": 0,
+    "target_document_count": 1000,
+    "techniques_tested": 7,
+    "successful_tests": 2,
+    "success_rate": 28.57142857142857
+  },
+  "technique_results": {
+    "iris_rag_basic": {
+      "technique": "iris_rag_basic",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 6.711846113204956,
+        "avg_query_time": 1.439772367477417
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 2.009136915206909,
+          "retrieved_count": 2,
+          "answer_length": 390,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 1.059002161026001,
+          "retrieved_count": 2,
+          "answer_length": 469,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 1.2511780261993408,
+          "retrieved_count": 2,
+          "answer_length": 320,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_colbert": {
+      "technique": "iris_rag_colbert",
+      "success": false,
+      "error": "Can't instantiate abstract class ColBERTRAGPipeline without an implementation for abstract methods 'load_documents', 'query'",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_crag": {
+      "technique": "iris_rag_crag",
+      "success": true,
+      "error": null,
+      "performance": {
+        "total_time": 6.931342840194702,
+        "avg_query_time": 1.870941400527954
+      },
+      "query_results": [
+        {
+          "query": "What are the effects of BRCA1 mutations on breast cancer risk?",
+          "execution_time": 1.9233360290527344,
+          "retrieved_count": 2,
+          "answer_length": 1168,
+          "success": true
+        },
+        {
+          "query": "How does p53 protein function in cell cycle regulation?",
+          "execution_time": 1.2082240581512451,
+          "retrieved_count": 2,
+          "answer_length": 734,
+          "success": true
+        },
+        {
+          "query": "What is the role of inflammation in cardiovascular disease?",
+          "execution_time": 2.481264114379883,
+          "retrieved_count": 2,
+          "answer_length": 1463,
+          "success": true
+        }
+      ]
+    },
+    "iris_rag_noderag": {
+      "technique": "iris_rag_noderag",
+      "success": false,
+      "error": "NodeRAGPipeline.__init__() got an unexpected keyword argument 'connection_manager'",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hybrid_ifind": {
+      "technique": "iris_rag_hybrid_ifind",
+      "success": false,
+      "error": "HybridIFindRAGPipeline.__init__() got an unexpected keyword argument 'connection_manager'",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_graphrag": {
+      "technique": "iris_rag_graphrag",
+      "success": false,
+      "error": "GraphRAGPipeline.__init__() got an unexpected keyword argument 'connection_manager'",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hyde": {
+      "technique": "iris_rag_hyde",
+      "success": false,
+      "error": "HyDERAGPipeline.__init__() got an unexpected keyword argument 'connection_manager'",
+      "performance": {},
+      "query_results": []
+    }
+  },
+  "performance_summary": {
+    "fastest_technique": "iris_rag_basic",
+    "slowest_technique": "iris_rag_crag",
+    "avg_times": {
+      "iris_rag_basic": 1.439772367477417,
+      "iris_rag_crag": 1.870941400527954
+    },
+    "retrieval_counts": {
+      "iris_rag_basic": 2.0,
+      "iris_rag_crag": 2.0
+    },
+    "answer_lengths": {
+      "iris_rag_basic": 393.0,
+      "iris_rag_crag": 1121.6666666666667
+    }
+  },
+  "validation_status": "PARTIAL"
+}

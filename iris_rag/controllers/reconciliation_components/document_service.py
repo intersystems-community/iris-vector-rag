@@ -8,7 +8,7 @@ system, including CRUD operations on documents, chunks, and embeddings.
 import logging
 from typing import List, Optional, Tuple
 from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.validation.embedding_validator import EmbeddingValidator
 from common.db_vector_utils import insert_vector
 
@@ -23,7 +23,7 @@ class DocumentService:
     for the reconciliation system.
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager):
+    def __init__(self, iris_connector, config_manager: ConfigurationManager):
         """
         Initialize the DocumentService.
         
@@ -31,7 +31,7 @@ class DocumentService:
             connection_manager: Connection manager for database access
             config_manager: Configuration manager for settings
         """
-        self.connection_manager = connection_manager
+        self.iris_connector = iris_connector
         self.config_manager = config_manager
         self.embedding_validator = EmbeddingValidator(config_manager)
         
@@ -48,7 +48,7 @@ class DocumentService:
             List of document IDs
         """
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             cursor.execute(
@@ -78,7 +78,7 @@ class DocumentService:
             Document content as string, or None if not found
         """
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             cursor.execute(
@@ -105,7 +105,7 @@ class DocumentService:
             List of all document IDs
         """
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             cursor.execute("SELECT id FROM RAG.SourceDocuments")
@@ -132,7 +132,7 @@ class DocumentService:
             List of chunk IDs
         """
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             cursor.execute(
@@ -162,7 +162,7 @@ class DocumentService:
             List of embedding IDs
         """
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             cursor.execute(
@@ -195,7 +195,7 @@ class DocumentService:
             return 0
             
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             # Create placeholders for the IN clause
@@ -230,7 +230,7 @@ class DocumentService:
             return 0
             
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             # Create placeholders for the IN clause
@@ -265,7 +265,7 @@ class DocumentService:
             return 0
             
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             # Create placeholders for the IN clause
@@ -352,7 +352,7 @@ class DocumentService:
             List of document IDs without embeddings
         """
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             # Find documents in SourceDocuments that don't have token embeddings
@@ -385,7 +385,7 @@ class DocumentService:
             List of document IDs with incomplete embeddings
         """
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             # Find documents that have some but not complete token embeddings
@@ -426,7 +426,7 @@ class DocumentService:
             True if successful, False otherwise
         """
         try:
-            iris_connector = self.connection_manager.get_connection("iris")
+            iris_connector = self.iris_connector
             cursor = iris_connector.cursor()
             
             # Clear existing token embeddings for this document

@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 from iris_rag.adapters.personal_assistant import PersonalAssistantAdapter
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.pipelines.basic import BasicRAGPipeline # Target pipeline
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 
 # Configure basic logging for tests
 logging.basicConfig(level=logging.DEBUG)
@@ -25,8 +25,8 @@ def mock_basic_rag_pipeline():
 @pytest.fixture
 def mock_connection_manager():
     """Fixture for a mocked ConnectionManager."""
-    cm = MagicMock(spec=ConnectionManager)
-    cm.get_iris_connection.return_value = MagicMock() # Simulate a successful connection
+    cm = MagicMock()
+    cm.return_value = MagicMock() # Simulate a successful connection
     return cm
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def test_adapter_initialization_default():
     """Test PersonalAssistantAdapter initializes with default config manager."""
     adapter = PersonalAssistantAdapter()
     assert isinstance(adapter.config_manager, ConfigurationManager)
-    assert isinstance(adapter.connection_manager, ConnectionManager)
+    assert adapter.iris_connector is not None
     assert adapter.rag_pipeline is None
 
 def test_adapter_initialization_with_config_dict(base_pa_config):

@@ -13,7 +13,7 @@ from common.utils import get_embedding_func, get_llm_func # Updated import
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def test_hyde_document_retrieval():
+def test_hyde_document_retrieval(real_config_manager):
     logger.info("Starting HyDE document retrieval test...")
     db_conn = None
     try:
@@ -23,11 +23,10 @@ def test_hyde_document_retrieval():
             raise ConnectionError("Failed to get IRIS connection for HyDE test.")
 
         embed_fn = get_embedding_func()
-        llm_fn = get_llm_func(provider="stub") 
+        llm_fn = get_llm_func(provider="stub")
 
         pipeline = HyDERAGPipeline(
-            iris_connector=db_conn,
-            embedding_func=embed_fn,
+            config_manager=real_config_manager,
             llm_func=llm_fn
         )
 

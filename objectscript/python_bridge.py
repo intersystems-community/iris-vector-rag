@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 # Import RAG pipeline modules (legacy imports with fallback)
 try:
     from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
-    from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+    from iris_rag.pipelines.colbert.pipeline import ColBERTRAGPipeline # Updated import
     from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+    from iris_rag.config.manager import ConfigurationManager # Added import
     from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
     from iris_rag.pipelines.crag import CRAGPipeline # Updated import
     from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
@@ -198,8 +199,9 @@ def invoke_colbert(query: str, config: str) -> str:
         iris_connector = get_iris_connection()
         pipeline = ColBERTRAGPipeline(
             iris_connector=iris_connector,
-            colbert_query_encoder_func=config_dict.get("colbert_query_encoder_func"),
-            colbert_doc_encoder_func=config_dict.get("colbert_doc_encoder_func"),
+            config_manager=ConfigurationManager(),
+            colbert_query_encoder=config_dict.get("colbert_query_encoder_func"),
+            embedding_func=config_dict.get("colbert_doc_encoder_func"),
             llm_func=config_dict.get("llm_func")
         )
         
@@ -255,16 +257,20 @@ def invoke_hyde(query: str, config: str) -> str:
     def _execute():
         config_dict = json.loads(config) if isinstance(config, str) else config
         
-        # Initialize pipeline
-        iris_connector = get_iris_connection()
+        # Initialize configuration manager
+        from iris_rag.config.manager import ConfigurationManager
+        
+        config_manager = ConfigurationManager()
+        
+        # Initialize HyDE RAG pipeline
         pipeline = HyDERAGPipeline(
-            iris_connector=iris_connector,
-            embedding_func=config_dict.get("embedding_func"),
-            llm_func=config_dict.get("llm_func")
+            config_manager=config_manager,
+            llm_func=config_dict.get("llm_func"),
+            vector_store=None  # Let pipeline use default vector store
         )
         
         # Execute pipeline
-        result = pipeline.run(query)
+        result = pipeline.execute(query)
         return result
     
     execution_result = _safe_execute(_execute)
@@ -403,15 +409,15 @@ def invoke_sql_rag(query: str, config: str) -> str:
             raise ImportError("Connection utilities not available")
         
         # Initialize connection and configuration managers
-        from iris_rag.core.connection_manager import ConnectionManager
+        from common.iris_connection_manager import get_iris_connection
         from iris_rag.core.config_manager import ConfigurationManager
         
         config_manager = ConfigurationManager()
-        connection_manager = ConnectionManager(config_manager)
+        connection = get_iris_connection()
         
         # Initialize SQL RAG pipeline
         pipeline = SQLRAGPipeline(
-            connection_manager=connection_manager,
+            iris_connector=connection,
             config_manager=config_manager,
             llm_func=config_dict.get("llm_func")
         )

@@ -1,0 +1,697 @@
+{
+  "version": "1.0.0",
+  "description": "Standardized MCP tool schemas for IRIS RAG system",
+  "tools": {
+    "rag_basic": {
+      "name": "rag_basic",
+      "description": "Standard retrieval-augmented generation with vector similarity search",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User query text",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5,
+                "description": "Number of documents to retrieve"
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 2.0,
+                "default": 0.7,
+                "description": "LLM generation temperature"
+              },
+              "max_tokens": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 4096,
+                "default": 1024,
+                "description": "Maximum tokens in response"
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": true,
+                "description": "Include source documents in response"
+              },
+              "min_similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.1,
+                "description": "Minimum similarity threshold"
+              }
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    "rag_crag": {
+      "name": "rag_crag",
+      "description": "Corrective RAG with retrieval quality evaluation and correction",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User query text",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 2.0,
+                "default": 0.7
+              },
+              "max_tokens": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 4096,
+                "default": 1024
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": true
+              },
+              "min_similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.1
+              }
+            }
+          },
+          "technique_params": {
+            "type": "object",
+            "properties": {
+              "confidence_threshold": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.8,
+                "description": "Threshold for retrieval confidence"
+              },
+              "enable_web_search": {
+                "type": "boolean",
+                "default": false,
+                "description": "Enable web search fallback for low confidence"
+              },
+              "correction_strategy": {
+                "type": "string",
+                "enum": ["rewrite", "expand", "filter"],
+                "default": "rewrite",
+                "description": "Strategy for correcting poor retrievals"
+              }
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    "rag_hyde": {
+      "name": "rag_hyde",
+      "description": "Hypothetical Document Embeddings for improved retrieval",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User query text",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 2.0,
+                "default": 0.7
+              },
+              "max_tokens": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 4096,
+                "default": 1024
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": true
+              },
+              "min_similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.1
+              }
+            }
+          },
+          "technique_params": {
+            "type": "object",
+            "properties": {
+              "generate_hypothetical": {
+                "type": "boolean",
+                "default": true,
+                "description": "Generate hypothetical document for embedding"
+              },
+              "hypothesis_length": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 500,
+                "default": 200,
+                "description": "Target length for hypothetical document"
+              },
+              "combine_strategy": {
+                "type": "string",
+                "enum": ["replace", "combine", "weighted"],
+                "default": "replace",
+                "description": "How to combine original and hypothetical embeddings"
+              }
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    "rag_graphrag": {
+      "name": "rag_graphrag",
+      "description": "Graph-based retrieval using entity relationships",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User query text",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 2.0,
+                "default": 0.7
+              },
+              "max_tokens": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 4096,
+                "default": 1024
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": true
+              },
+              "min_similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.1
+              }
+            }
+          },
+          "technique_params": {
+            "type": "object",
+            "properties": {
+              "max_hops": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5,
+                "default": 2,
+                "description": "Maximum graph traversal hops"
+              },
+              "entity_threshold": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.7,
+                "description": "Entity extraction confidence threshold"
+              },
+              "relationship_weight": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.5,
+                "description": "Weight for relationship-based scoring"
+              },
+              "include_entity_context": {
+                "type": "boolean",
+                "default": true,
+                "description": "Include entity context in results"
+              }
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    "rag_hybrid_ifind": {
+      "name": "rag_hybrid_ifind",
+      "description": "Hybrid search combining vector similarity and keyword matching",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User query text",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 2.0,
+                "default": 0.7
+              },
+              "max_tokens": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 4096,
+                "default": 1024
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": true
+              },
+              "min_similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.1
+              }
+            }
+          },
+          "technique_params": {
+            "type": "object",
+            "properties": {
+              "vector_weight": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.7,
+                "description": "Weight for vector similarity scores"
+              },
+              "keyword_weight": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.3,
+                "description": "Weight for keyword matching scores"
+              },
+              "enable_fuzzy_matching": {
+                "type": "boolean",
+                "default": true,
+                "description": "Enable fuzzy keyword matching"
+              },
+              "keyword_boost_fields": {
+                "type": "array",
+                "items": { "type": "string" },
+                "default": ["title", "abstract"],
+                "description": "Fields to boost for keyword matching"
+              }
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    "rag_colbert": {
+      "name": "rag_colbert",
+      "description": "Late interaction retrieval with token-level matching",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User query text",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 2.0,
+                "default": 0.7
+              },
+              "max_tokens": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 4096,
+                "default": 1024
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": true
+              },
+              "min_similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.1
+              }
+            }
+          },
+          "technique_params": {
+            "type": "object",
+            "properties": {
+              "max_query_length": {
+                "type": "integer",
+                "minimum": 32,
+                "maximum": 512,
+                "default": 256,
+                "description": "Maximum query length in tokens"
+              },
+              "interaction_threshold": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.5,
+                "description": "Token interaction threshold"
+              },
+              "enable_query_expansion": {
+                "type": "boolean",
+                "default": false,
+                "description": "Enable automatic query expansion"
+              },
+              "compression_ratio": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 1.0,
+                "default": 0.8,
+                "description": "Token representation compression ratio"
+              }
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    "rag_noderag": {
+      "name": "rag_noderag",
+      "description": "Node-based retrieval with hierarchical document structure",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User query text",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 2.0,
+                "default": 0.7
+              },
+              "max_tokens": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 4096,
+                "default": 1024
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": true
+              },
+              "min_similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.1
+              }
+            }
+          },
+          "technique_params": {
+            "type": "object",
+            "properties": {
+              "node_depth": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10,
+                "default": 3,
+                "description": "Maximum node hierarchy depth"
+              },
+              "context_window": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10,
+                "default": 2,
+                "description": "Number of sibling nodes to include"
+              },
+              "aggregation_strategy": {
+                "type": "string",
+                "enum": ["concatenate", "summarize", "weighted"],
+                "default": "concatenate",
+                "description": "Strategy for combining node content"
+              },
+              "include_parent_context": {
+                "type": "boolean",
+                "default": true,
+                "description": "Include parent node context"
+              }
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    "rag_sqlrag": {
+      "name": "rag_sqlrag",
+      "description": "SQL-augmented retrieval for structured data queries",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User query text",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "top_k": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "default": 5
+              },
+              "temperature": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 2.0,
+                "default": 0.7
+              },
+              "max_tokens": {
+                "type": "integer",
+                "minimum": 50,
+                "maximum": 4096,
+                "default": 1024
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": true
+              },
+              "min_similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "default": 0.1
+              }
+            }
+          },
+          "technique_params": {
+            "type": "object",
+            "properties": {
+              "enable_sql_generation": {
+                "type": "boolean",
+                "default": true,
+                "description": "Enable automatic SQL query generation"
+              },
+              "max_sql_complexity": {
+                "type": "string",
+                "enum": ["simple", "moderate", "complex"],
+                "default": "moderate",
+                "description": "Maximum SQL query complexity"
+              },
+              "allowed_tables": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Whitelist of allowed database tables"
+              },
+              "combine_with_vector": {
+                "type": "boolean",
+                "default": true,
+                "description": "Combine SQL results with vector search"
+              }
+            }
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    "rag_health_check": {
+      "name": "rag_health_check",
+      "description": "Check system health and component status",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "include_details": {
+            "type": "boolean",
+            "default": false,
+            "description": "Include detailed component status"
+          }
+        }
+      }
+    },
+    "rag_metrics": {
+      "name": "rag_metrics",
+      "description": "Get performance metrics and usage statistics",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "time_range": {
+            "type": "string",
+            "enum": ["1h", "24h", "7d", "30d"],
+            "default": "1h",
+            "description": "Time range for metrics"
+          },
+          "technique_filter": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Filter metrics by RAG techniques"
+          }
+        }
+      }
+    }
+  },
+  "response_schema": {
+    "type": "object",
+    "properties": {
+      "success": {
+        "type": "boolean",
+        "description": "Operation success status"
+      },
+      "technique": {
+        "type": "string",
+        "description": "RAG technique used"
+      },
+      "query": {
+        "type": "string",
+        "description": "Original query"
+      },
+      "answer": {
+        "type": "string",
+        "description": "Generated answer"
+      },
+      "retrieved_documents": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "content": { "type": "string" },
+            "metadata": { "type": "object" },
+            "similarity_score": { "type": "number" },
+            "source": { "type": "string" }
+          }
+        }
+      },
+      "performance": {
+        "type": "object",
+        "properties": {
+          "total_time_ms": { "type": "number" },
+          "retrieval_time_ms": { "type": "number" },
+          "generation_time_ms": { "type": "number" },
+          "documents_searched": { "type": "integer" }
+        }
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string" },
+          "model_info": {
+            "type": "object",
+            "properties": {
+              "embedding_model": { "type": "string" },
+              "llm_model": { "type": "string" }
+            }
+          },
+          "technique_specific": { "type": "object" }
+        }
+      },
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "details": { "type": "object" }
+        }
+      }
+    },
+    "required": ["success", "technique"]
+  }
+}

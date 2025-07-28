@@ -19,22 +19,25 @@ logger = logging.getLogger(__name__)
 class IRISCacheBackend:
     """IRIS database backend for LLM response caching."""
     
-    def __init__(self, iris_connector, table_name: str = "llm_cache",
-                 ttl_seconds: int = 3600, schema: str = "USER"):
+    def __init__(self, connection_manager, table_name: str = "llm_cache",
+                 ttl_seconds: int = 3600, schema: str = "USER", raise_exceptions: bool = False):
         """
         Initialize IRIS cache backend.
         
         Args:
-            iris_connector: IRIS database connector instance (DBAPI, JDBC, or SQLAlchemy)
+            connection_manager: An instance of IRISConnectionManager.
             table_name: Name of the cache table
             ttl_seconds: Default time-to-live for cache entries
             schema: Database schema name
+            raise_exceptions: If True, exceptions will be raised for testing.
         """
-        self.iris_connector = iris_connector
+        self.connection_manager = connection_manager
+        self.iris_connector = self.connection_manager.get_connection()
         self.table_name = table_name
         self.ttl_seconds = ttl_seconds
         self.schema = schema
         self.full_table_name = f"{schema}.{table_name}" if schema else table_name
+        self._raise_exceptions = raise_exceptions
         
         # Detect connection type and set up appropriate interface
         self._setup_connection_interface()
@@ -52,6 +55,28 @@ class IRISCacheBackend:
         self.setup_table()
     
     def _setup_connection_interface(self):
+        """Setup the appropriate interface based on connection type."""
+        # Check if it's a SQLAlchemy connection
+        if hasattr(self.iris_connector, 'execute') and hasattr(self.iris_connector, 'commit'):
+            self.connection_type = "sqlalchemy"
+            logger.debug("Using SQLAlchemy connection interface for cache")
+        # Check if it's a DBAPI/JDBC connection
+        elif hasattr(self.iris_connector, 'cursor'):
+            self.connection_type = "dbapi"
+            logger.debug("Using DBAPI/JDBC connection interface for cache")
+        else:
+            # Try to detect other connection types
+            logger.warning(f"Unknown connection type: {type(self.iris_connector)}. Attempting DBAPI interface.")
+            self.connection_type = "dbapi"
+    
+    def _get_cursor(self):
+        """Get a cursor appropriate for the connection type."""
+        if self.connection_type == "sqlalchemy":
+            # For SQLAlchemy connections, we use the connection directly
+            return self.iris_connector
+        else:
+            # For DBAPI/JDBC connections
+            return self.iris_connector.cursor()
         """Setup the appropriate interface based on connection type."""
         # Check if it's a SQLAlchemy connection
         if hasattr(self.iris_connector, 'execute') and hasattr(self.iris_connector, 'commit'):
@@ -135,7 +160,8 @@ class IRISCacheBackend:
         except Exception as e:
             logger.error(f"Failed to setup IRIS cache table: {e}")
             self.stats['errors'] += 1
-            raise
+            if self._raise_exceptions:
+                raise
     
     def _create_index_if_not_exists(self, cursor, index_name: str, column_name: str) -> None:
         """
@@ -195,13 +221,16 @@ class IRISCacheBackend:
                         logger.debug(f"Index {index_name} already exists")
                     else:
                         # Re-raise if it's a different error
-                        raise
+                        if self._raise_exceptions:
+                            raise
             else:
                 logger.debug(f"Index {index_name} already exists")
                 
         except Exception as e:
             logger.error(f"Error creating index {index_name}: {e}")
             # Don't raise - index creation is not critical for basic functionality
+            if self._raise_exceptions:
+                raise
     
     def _serialize_cache_value(self, value: Any) -> str:
         """
@@ -372,6 +401,8 @@ class IRISCacheBackend:
         except Exception as e:
             logger.error(f"Error retrieving from IRIS cache: {e}")
             self.stats['errors'] += 1
+            if self._raise_exceptions:
+                raise
             return None
     
     def set(self, cache_key: str, value: Any, ttl: Optional[int] = None,
@@ -430,7 +461,8 @@ class IRISCacheBackend:
         except Exception as e:
             logger.error(f"Error storing to IRIS cache: {e}")
             self.stats['errors'] += 1
-            # Don't raise - graceful fallback
+            if self._raise_exceptions:
+                raise
     
     def delete(self, cache_key: str) -> None:
         """
@@ -453,6 +485,8 @@ class IRISCacheBackend:
         except Exception as e:
             logger.error(f"Error deleting from IRIS cache: {e}")
             self.stats['errors'] += 1
+            if self._raise_exceptions:
+                raise
     
     def clear(self) -> None:
         """Clear all cache entries."""
@@ -470,6 +504,8 @@ class IRISCacheBackend:
         except Exception as e:
             logger.error(f"Error clearing IRIS cache: {e}")
             self.stats['errors'] += 1
+            if self._raise_exceptions:
+                raise
     
     def cleanup_expired(self, batch_size: int = 1000) -> int:
         """
@@ -495,9 +531,9 @@ class IRISCacheBackend:
             
             # Get row count based on connection type
             if self.connection_type == "sqlalchemy":
-                deleted_count = result.rowcount if hasattr(result, 'rowcount') else 0
+                deleted_count = result.rowcount
             else:
-                deleted_count = cursor.rowcount if hasattr(cursor, 'rowcount') else 0
+                deleted_count = cursor.rowcount
             
             self._commit_transaction()
             self._close_cursor(cursor)
@@ -508,80 +544,67 @@ class IRISCacheBackend:
             return deleted_count
             
         except Exception as e:
-            logger.error(f"Error cleaning up expired cache entries: {e}")
+            logger.error(f"Error cleaning up expired IRIS cache entries: {e}")
             self.stats['errors'] += 1
+            if self._raise_exceptions:
+                raise
             return 0
     
     def get_stats(self) -> Dict[str, Any]:
-        """Get cache statistics."""
-        total_requests = self.stats['hits'] + self.stats['misses']
-        hit_rate = self.stats['hits'] / total_requests if total_requests > 0 else 0.0
-        
-        return {
-            **self.stats,
-            'total_requests': total_requests,
-            'hit_rate': hit_rate,
-            'table_name': self.full_table_name
-        }
+        """Get cache performance statistics."""
+        self.stats['hit_rate'] = self.stats['hits'] / (self.stats['hits'] + self.stats['misses']) if (self.stats['hits'] + self.stats['misses']) > 0 else 0
+        return self.stats
     
     def get_cache_info(self) -> Dict[str, Any]:
         """Get detailed cache information from database."""
         try:
             cursor = self._get_cursor()
             
-            # Get cache statistics using IRIS SQL
-            stats_sql = f"""
-            SELECT
-                COUNT(*) as total_entries,
-                COUNT(CASE WHEN expires_at > CURRENT_TIMESTAMP OR expires_at IS NULL THEN 1 END) as active_entries,
-                COUNT(CASE WHEN expires_at <= CURRENT_TIMESTAMP THEN 1 END) as expired_entries,
-                MIN(created_at) as oldest_entry,
-                MAX(created_at) as newest_entry
-            FROM {self.full_table_name}
-            """
+            # Get total entries
+            count_sql = f"SELECT COUNT(*) FROM {self.full_table_name}"
+            self._execute_sql(cursor, count_sql)
+            total_entries = cursor.fetchone()[0]
             
-            self._execute_sql(cursor, stats_sql)
-            result = cursor.fetchone()
+            # Get oldest and newest entries
+            oldest_sql = f"SELECT MIN(created_at) FROM {self.full_table_name}"
+            self._execute_sql(cursor, oldest_sql)
+            oldest_entry = cursor.fetchone()[0]
             
-            if result:
-                info = {
-                    'total_entries': result[0],
-                    'active_entries': result[1],
-                    'expired_entries': result[2],
-                    'oldest_entry': result[3],
-                    'newest_entry': result[4]
-                }
-            else:
-                info = {
-                    'total_entries': 0,
-                    'active_entries': 0,
-                    'expired_entries': 0,
-                    'oldest_entry': None,
-                    'newest_entry': None
-                }
+            newest_sql = f"SELECT MAX(created_at) FROM {self.full_table_name}"
+            self._execute_sql(cursor, newest_sql)
+            newest_entry = cursor.fetchone()[0]
             
             self._close_cursor(cursor)
-            return info
+            
+            return {
+                'total_entries': total_entries,
+                'oldest_entry': oldest_entry,
+                'newest_entry': newest_entry,
+                'table_name': self.full_table_name
+            }
             
         except Exception as e:
             logger.error(f"Error getting cache info: {e}")
-            return {'error': str(e)}
+            self.stats['errors'] += 1
+            if self._raise_exceptions:
+                raise
+            return {}
 
 
-def create_iris_cache_backend(config: CacheConfig, iris_connector) -> IRISCacheBackend:
+def create_iris_cache_backend(config: CacheConfig, connection_manager) -> IRISCacheBackend:
     """
-    Factory function to create IRIS cache backend.
+    Factory function to create an IRISCacheBackend instance.
     
     Args:
-        config: Cache configuration
-        iris_connector: IRIS database connector
+        config: Cache configuration object
+        connection_manager: An instance of IRISConnectionManager.
     
     Returns:
-        IRISCacheBackend instance
+        An instance of IRISCacheBackend
     """
     return IRISCacheBackend(
-        iris_connector=iris_connector,
+        connection_manager=connection_manager,
         table_name=config.table_name,
-        ttl_seconds=config.ttl_seconds,
-        schema=config.iris_schema
+        ttl_seconds=config.ttl,
+        schema=config.schema
     )

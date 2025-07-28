@@ -1,0 +1,70 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-07-24T16:14:17.832457",
+    "total_execution_time": 15.159502029418945,
+    "document_count": 0,
+    "target_document_count": 1000,
+    "techniques_tested": 7,
+    "successful_tests": 0,
+    "success_rate": 0.0
+  },
+  "technique_results": {
+    "iris_rag_basic": {
+      "technique": "iris_rag_basic",
+      "success": false,
+      "error": "iris_rag_basic: Answer too short (48 chars)\nassert 48 >= 50\n +  where 48 = len('No relevant documents found to answer the query.')",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_colbert": {
+      "technique": "iris_rag_colbert",
+      "success": false,
+      "error": "Can't instantiate abstract class ColBERTRAGPipeline without an implementation for abstract methods 'load_documents', 'query'",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_crag": {
+      "technique": "iris_rag_crag",
+      "success": false,
+      "error": "iris_rag_crag: Too few documents retrieved (0)\nassert 0 >= 1\n +  where 0 = len([])",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_noderag": {
+      "technique": "iris_rag_noderag",
+      "success": false,
+      "error": "iris_rag_noderag: Too few documents retrieved (0)\nassert 0 >= 1\n +  where 0 = len([])",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hybrid_ifind": {
+      "technique": "iris_rag_hybrid_ifind",
+      "success": false,
+      "error": "object of type 'NoneType' has no len()",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_graphrag": {
+      "technique": "iris_rag_graphrag",
+      "success": false,
+      "error": "iris_rag_graphrag: Too few documents retrieved (0)\nassert 0 >= 1\n +  where 0 = len([])",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hyde": {
+      "technique": "iris_rag_hyde",
+      "success": false,
+      "error": "object of type 'NoneType' has no len()",
+      "performance": {},
+      "query_results": []
+    }
+  },
+  "performance_summary": {
+    "fastest_technique": null,
+    "slowest_technique": null,
+    "avg_times": {},
+    "retrieval_counts": {},
+    "answer_lengths": {}
+  },
+  "validation_status": "PARTIAL"
+}

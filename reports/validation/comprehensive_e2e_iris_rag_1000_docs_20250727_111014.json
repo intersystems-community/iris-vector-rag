@@ -1,0 +1,70 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-07-27T11:10:14.790984",
+    "total_execution_time": 63.28052091598511,
+    "document_count": 0,
+    "target_document_count": 1000,
+    "techniques_tested": 7,
+    "successful_tests": 0,
+    "success_rate": 0.0
+  },
+  "technique_results": {
+    "iris_rag_basic": {
+      "technique": "iris_rag_basic",
+      "success": false,
+      "error": "[SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'ABSTRACT' not found in the applicable tables^SELECT ID , abstract AS>]",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_colbert": {
+      "technique": "iris_rag_colbert",
+      "success": false,
+      "error": "[SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'ABSTRACT' not found in the applicable tables^SELECT ID , abstract AS>]",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_crag": {
+      "technique": "iris_rag_crag",
+      "success": false,
+      "error": "[SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'ABSTRACT' not found in the applicable tables^SELECT ID , abstract AS>]",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_noderag": {
+      "technique": "iris_rag_noderag",
+      "success": false,
+      "error": "[SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'ABSTRACT' not found in the applicable tables^SELECT ID , abstract AS>]",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hybrid_ifind": {
+      "technique": "iris_rag_hybrid_ifind",
+      "success": false,
+      "error": "[SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'ABSTRACT' not found in the applicable tables^SELECT ID , abstract AS>]",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_graphrag": {
+      "technique": "iris_rag_graphrag",
+      "success": false,
+      "error": "[SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'ABSTRACT' not found in the applicable tables^SELECT ID , abstract AS>]",
+      "performance": {},
+      "query_results": []
+    },
+    "iris_rag_hyde": {
+      "technique": "iris_rag_hyde",
+      "success": false,
+      "error": "[SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'ABSTRACT' not found in the applicable tables^SELECT ID , abstract AS>]",
+      "performance": {},
+      "query_results": []
+    }
+  },
+  "performance_summary": {
+    "fastest_technique": null,
+    "slowest_technique": null,
+    "avg_times": {},
+    "retrieval_counts": {},
+    "answer_lengths": {}
+  },
+  "validation_status": "PARTIAL"
+}

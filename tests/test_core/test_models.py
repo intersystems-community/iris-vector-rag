@@ -1,10 +1,7 @@
 import pytest
 
 # Attempt to import Document, will fail initially
-try:
-    from iris_rag.core.models import Document
-except ImportError:
-    Document = None # Placeholder if import fails
+from common.utils import Document
 
 def test_import_document_model():
     """Tests that Document model can be imported."""
@@ -17,9 +14,9 @@ def test_document_creation_with_content_and_metadata():
     
     page_content = "This is a test document."
     metadata = {"source": "test_source.txt", "page": 1}
-    doc = Document(page_content=page_content, metadata=metadata)
+    doc = Document(content=page_content, metadata=metadata)
     
-    assert doc.page_content == page_content
+    assert doc.content == page_content
     assert doc.metadata == metadata
     assert doc.id is not None # Expect an ID to be generated or present
     assert isinstance(doc.id, str)
@@ -30,14 +27,14 @@ def test_document_creation_default_metadata_and_id():
         pytest.fail("Document model not imported")
         
     page_content = "Another test document."
-    doc1 = Document(page_content=page_content)
+    doc1 = Document(content=page_content)
     
-    assert doc1.page_content == page_content
+    assert doc1.content == page_content
     assert doc1.metadata == {} # Expect default metadata to be an empty dict
     assert doc1.id is not None
     assert isinstance(doc1.id, str)
 
-    doc2 = Document(page_content="Yet another test document.")
+    doc2 = Document(content="Yet another test document.")
     assert doc2.id is not None
     assert doc1.id != doc2.id, "Document IDs should be unique by default."
 
@@ -49,10 +46,10 @@ def test_document_is_dataclass_like():
     if Document is None:
         pytest.fail("Document model not imported")
 
-    doc1 = Document(page_content="Content", metadata={"a": 1}, id="fixed_id_1")
-    doc2 = Document(page_content="Content", metadata={"a": 1}, id="fixed_id_1")
-    doc3 = Document(page_content="Different Content", metadata={"a": 1}, id="fixed_id_2")
-    doc4 = Document(page_content="Content", metadata={"b": 2}, id="fixed_id_3")
+    doc1 = Document(content="Content", metadata={"a": 1}, id="fixed_id_1")
+    doc2 = Document(content="Content", metadata={"a": 1}, id="fixed_id_1")
+    doc3 = Document(content="Different Content", metadata={"a": 1}, id="fixed_id_2")
+    doc4 = Document(content="Content", metadata={"b": 2}, id="fixed_id_3")
 
     assert repr(doc1) is not None # Basic check for a __repr__
     assert doc1 == doc2, "Documents with same content, metadata, and id should be equal."
@@ -75,10 +72,10 @@ def test_document_with_provided_id():
     page_content = "Content with provided ID."
     metadata = {"source": "manual_id.txt"}
     provided_id = "my_custom_id_123"
-    doc = Document(page_content=page_content, metadata=metadata, id=provided_id)
+    doc = Document(content=page_content, metadata=metadata, id=provided_id)
     
     assert doc.id == provided_id
-    assert doc.page_content == page_content
+    assert doc.content == page_content
     assert doc.metadata == metadata
 
 # Placeholder for future related models like Chunk if needed

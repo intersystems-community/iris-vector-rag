@@ -36,7 +36,18 @@ def mock_connection_manager():
 def mock_config_manager():
     """Mock configuration manager for testing."""
     mock_manager = Mock()
-    mock_manager.get.return_value = {}
+    # Configure the mock to return appropriate values for different config keys
+    def mock_get(key, default=None):
+        config_values = {
+            "storage:iris": {},
+            "embedding_model.name": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model.dimension": 384,
+            "colbert.token_dimension": 128,
+            "colbert.backend": "native"
+        }
+        return config_values.get(key, default if default is not None else {})
+    
+    mock_manager.get.side_effect = mock_get
     mock_manager.get_embedding_config.return_value = {'model': 'test', 'dimension': 384}
     mock_manager.get_vector_index_config.return_value = {'type': 'HNSW'}
     return mock_manager
@@ -77,7 +88,6 @@ class TestCRAGPipeline:
         """Test CRAG pipeline initializes correctly with vector store."""
         with patch('iris_rag.pipelines.crag.RetrievalEvaluator'):
             pipeline = CRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store
             )
@@ -95,10 +105,8 @@ class TestCRAGPipeline:
             mock_evaluator_class.return_value = mock_evaluator
             
             pipeline = CRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store,
-                embedding_func=mock_embedding_func,
                 llm_func=mock_llm_func
             )
             
@@ -114,10 +122,8 @@ class TestCRAGPipeline:
         """Test CRAG load_documents uses vector store helper."""
         with patch('iris_rag.pipelines.crag.RetrievalEvaluator'):
             pipeline = CRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
-                vector_store=mock_vector_store,
-                embedding_func=mock_embedding_func
+                vector_store=mock_vector_store
             )
             
             test_docs = [Document(id="test", page_content="test content", metadata={})]
@@ -135,7 +141,6 @@ class TestNodeRAGPipeline:
         with patch('iris_rag.pipelines.noderag.EmbeddingManager'), \
              patch('common.utils.get_llm_func'):
             pipeline = NodeRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store
             )
@@ -156,7 +161,6 @@ class TestNodeRAGPipeline:
             mock_llm.return_value = lambda x: "test answer"
             
             pipeline = NodeRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store
             )
@@ -178,7 +182,6 @@ class TestGraphRAGPipeline:
              patch('iris_rag.pipelines.graphrag.EmbeddingManager'), \
              patch('iris_rag.pipelines.graphrag.SchemaManager'):
             pipeline = GraphRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store
             )
@@ -199,7 +202,6 @@ class TestGraphRAGPipeline:
             mock_em.return_value = mock_embedding_manager
             
             pipeline = GraphRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store,
                 llm_func=lambda x: "test answer"
@@ -221,7 +223,6 @@ class TestHybridIFindRAGPipeline:
         with patch('iris_rag.pipelines.hybrid_ifind.IRISStorage'), \
              patch('iris_rag.pipelines.hybrid_ifind.EmbeddingManager'):
             pipeline = HybridIFindRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store
             )
@@ -241,19 +242,21 @@ class TestHybridIFindRAGPipeline:
             mock_em.return_value = mock_embedding_manager
             
             pipeline = HybridIFindRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store,
                 llm_func=lambda x: "test answer"
             )
             
-            # Mock the search methods to return test data
-            pipeline._vector_search = Mock(return_value=[
-                {"doc_id": "test1", "title": "Test 1", "content": "Content 1", "vector_score": 0.9, "search_type": "vector"}
-            ])
-            pipeline._ifind_search = Mock(return_value=[
-                {"doc_id": "test2", "title": "Test 2", "content": "Content 2", "ifind_score": 0.8, "search_type": "ifind"}
-            ])
+            # Mock the vector store hybrid search method to return test data
+            # HybridIFind expects (doc, score) tuples
+            from common.utils import Document
+            test_doc = Document(
+                content="Test content",
+                id="test1"
+            )
+            mock_vector_store.hybrid_search.return_value = [
+                (test_doc, 0.9)
+            ]
             
             result = pipeline.execute("test query")
             
@@ -266,18 +269,19 @@ class TestHybridIFindRAGPipeline:
             # Verify returned documents are Document objects
             if result["retrieved_documents"]:
                 assert isinstance(result["retrieved_documents"][0], Document)
-                assert hasattr(result["retrieved_documents"][0], 'page_content')
+                assert hasattr(result["retrieved_documents"][0], 'content')
                 assert hasattr(result["retrieved_documents"][0], 'metadata')
 
 
+@pytest.mark.usefixtures("iris_container")
 class TestStandardizedInterface:
     """Test that all pipelines conform to standardized interface."""
     
     def test_crag_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
         """Test CRAG pipeline has execute method."""
-        with patch('iris_rag.pipelines.crag.RetrievalEvaluator'):
+        with patch('iris_rag.pipelines.crag.RetrievalEvaluator'), \
+             patch('iris_rag.storage.schema_manager.SchemaManager'):
             pipeline = CRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager
             )
         assert hasattr(pipeline, 'execute')
@@ -285,9 +289,9 @@ class TestStandardizedInterface:
 
     def test_noderag_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
         """Test NodeRAG pipeline has execute method."""
-        with patch('iris_rag.pipelines.noderag.EmbeddingManager'):
+        with patch('iris_rag.pipelines.noderag.EmbeddingManager'), \
+             patch('iris_rag.storage.schema_manager.SchemaManager'):
             pipeline = NodeRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager
             )
         assert hasattr(pipeline, 'execute')
@@ -297,9 +301,9 @@ class TestStandardizedInterface:
         """Test GraphRAG pipeline has execute method."""
         with patch('iris_rag.pipelines.graphrag.IRISStorage'), \
              patch('iris_rag.pipelines.graphrag.EmbeddingManager'), \
-             patch('iris_rag.pipelines.graphrag.SchemaManager'):
+             patch('iris_rag.pipelines.graphrag.SchemaManager'), \
+             patch('iris_rag.storage.schema_manager.SchemaManager'):
             pipeline = GraphRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager
             )
         assert hasattr(pipeline, 'execute')
@@ -308,9 +312,9 @@ class TestStandardizedInterface:
     def test_hybrid_ifind_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
         """Test HybridIFindRAG pipeline has execute method."""
         with patch('iris_rag.pipelines.hybrid_ifind.IRISStorage'), \
-             patch('iris_rag.pipelines.hybrid_ifind.EmbeddingManager'):
+             patch('iris_rag.pipelines.hybrid_ifind.EmbeddingManager'), \
+             patch('iris_rag.storage.schema_manager.SchemaManager'):
             pipeline = HybridIFindRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager
             )
         assert hasattr(pipeline, 'execute')
@@ -324,10 +328,8 @@ class TestStandardizedInterface:
             mock_evaluator_class.return_value = mock_evaluator
             
             pipeline = CRAGPipeline(
-                connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store,
-                embedding_func=lambda texts: [[0.1] * 384 for _ in texts],
                 llm_func=lambda prompt: "test answer"
             )
             

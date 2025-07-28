@@ -8,7 +8,6 @@ for enhanced document retrieval and answer generation.
 import logging
 from typing import List, Dict, Any, Optional, Callable, Set
 from ..core.base import RAGPipeline
-from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..config.manager import ConfigurationManager
 from ..embeddings.manager import EmbeddingManager # Import EmbeddingManager
@@ -25,22 +24,22 @@ class NodeRAGPipeline(RAGPipeline):
     the knowledge graph to find related content.
     """
     
-    def __init__(self, connection_manager: ConnectionManager,
-                 config_manager: ConfigurationManager,
+    def __init__(self, config_manager: ConfigurationManager,
                  vector_store=None,
                  embedding_manager: Optional[EmbeddingManager] = None,
-                 llm_func: Optional[Callable[[str], str]] = None):
+                 llm_func: Optional[Callable[[str], str]] = None,
+                 connection_manager=None):
         """
         Initialize the NodeRAG pipeline.
         
         Args:
-            connection_manager: Database connection manager
             config_manager: Configuration manager
             vector_store: Optional VectorStore instance
             embedding_manager: Optional Embedding manager
             llm_func: Optional LLM function for answer generation
+            connection_manager: Optional connection manager (for compatibility)
         """
-        super().__init__(connection_manager, config_manager, vector_store)
+        super().__init__(config_manager, vector_store)
         self.embedding_manager = embedding_manager
         self.llm_func = llm_func
         self.logger = logging.getLogger(__name__)
@@ -114,7 +113,7 @@ class NodeRAGPipeline(RAGPipeline):
         query_embedding = self.embedding_manager.embed_text(query_text)
         iris_vector_str = ','.join(map(str, query_embedding))
         
-        connection = self.connection_manager.get_connection()
+        connection = self.vector_store._connection
         cursor = connection.cursor()
         
         try:
@@ -123,31 +122,31 @@ class NodeRAGPipeline(RAGPipeline):
             kg_count = cursor.fetchone()[0]
             
             # Increase candidate pool for relevance filtering
-            candidate_pool_size = max(top_n_seed * 3, 15)  # Get more candidates for filtering
+            candidate_pool_size = int(max(top_n_seed * 3, 15))  # Ensure it's an integer
             
             if kg_count == 0:
                 self.logger.info("NodeRAG: KnowledgeGraphNodes is empty, using SourceDocuments")
                 # Use SourceDocuments as fallback
-                sql_query = f"""
-                    SELECT TOP {candidate_pool_size} doc_id AS node_id,
+                sql_query = """
+                    SELECT TOP {} doc_id AS node_id,
                            VECTOR_COSINE(embedding, TO_VECTOR(?)) AS score,
                            title, SUBSTRING(text_content, 1, 300) AS content_sample
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY score DESC
-                """
+                """.format(candidate_pool_size)
                 cursor.execute(sql_query, (iris_vector_str,))
             else:
                 self.logger.info("NodeRAG: Using KnowledgeGraphNodes for vector search")
-                sql_query = f"""
-                    SELECT TOP {candidate_pool_size} kg.node_id,
+                sql_query = """
+                    SELECT TOP {} kg.node_id,
                            VECTOR_COSINE(kg.embedding, TO_VECTOR(?)) AS score,
                            kg.content, kg.content AS content_sample
                     FROM RAG.KnowledgeGraphNodes kg
                     WHERE kg.embedding IS NOT NULL
                       AND VECTOR_COSINE(kg.embedding, TO_VECTOR(?)) > ?
                     ORDER BY score DESC
-                """
+                """.format(candidate_pool_size)
                 cursor.execute(sql_query, (iris_vector_str, iris_vector_str, similarity_threshold))
             
             results = cursor.fetchall()
@@ -234,7 +233,7 @@ class NodeRAGPipeline(RAGPipeline):
         for result in candidate_results:
             from common.iris_stream_reader import read_iris_stream
             node_id = str(result[0])
-            score = result[1] if len(result) > 1 else 0.0
+            score = float(result[1]) if len(result) > 1 and result[1] is not None else 0.0
             title = read_iris_stream(result[2]) if len(result) > 2 and result[2] else ""
             content = read_iris_stream(result[3]) if len(result) > 3 and result[3] else ""
             
@@ -313,7 +312,7 @@ class NodeRAGPipeline(RAGPipeline):
         relevant_node_ids = set(seed_node_ids)
         
         # Check if we have a knowledge graph to traverse
-        connection = self.connection_manager.get_connection()
+        connection = self.vector_store._connection
         cursor = connection.cursor()
         
         try:
@@ -399,7 +398,7 @@ class NodeRAGPipeline(RAGPipeline):
         if not node_ids:
             return []
         
-        connection = self.connection_manager.get_connection()
+        connection = self.vector_store._connection
         cursor = connection.cursor()
         
         try:
@@ -574,24 +573,9 @@ Answer:"""
         """
         return self.run(query_text, **kwargs)
     
-    def load_documents(self, documents_path: str, **kwargs) -> None:
-        """
-        Load documents into the knowledge base.
-        
-        Note: NodeRAG typically works with documents already loaded in the database.
-        This method provides a placeholder for document loading functionality.
-        
-        Args:
-            documents_path: Path to documents or directory
-            **kwargs: Additional keyword arguments
-        """
-        self.logger.info(f"NodeRAG: Document loading not implemented. Documents should be pre-loaded in RAG.SourceDocuments table.")
-        # In a full implementation, this would:
-        # 1. Load documents from the specified path
-        # 2. Generate embeddings
-        # 3. Store in RAG.SourceDocuments
-        # 4. Optionally create knowledge graph nodes and edges
-        pass
+    # NodeRAG now uses the base class load_documents implementation
+    # which provides automatic chunking via vector store
+    # Pipeline-specific configuration is handled via pipeline_overrides:noderag:chunking
     
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> list:
         """

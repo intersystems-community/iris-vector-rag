@@ -15,7 +15,7 @@ import logging
 from unittest.mock import Mock, patch
 
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.config.manager import ConfigurationManager
 
 logging.basicConfig(level=logging.DEBUG)
@@ -33,11 +33,11 @@ class TestGraphRAGRetrievalPaths:
     @pytest.fixture
     def mock_connection_manager(self):
         """Create a mock connection manager."""
-        manager = Mock(spec=ConnectionManager)
+        manager = Mock()
         connection = Mock()
         cursor = Mock()
         
-        manager.get_connection.return_value = connection
+        manager.return_value = connection
         connection.cursor.return_value = cursor
         
         return manager, connection, cursor
@@ -60,8 +60,8 @@ class TestGraphRAGRetrievalPaths:
         """Create pipeline instance with mocks."""
         manager, _, _ = mock_connection_manager
         return GraphRAGPipeline(
-            connection_manager=manager,
-            config_manager=mock_config_manager
+            config_manager=mock_config_manager,
+            connection_factory=manager
         )
     
     def test_graph_only_retrieval(self, pipeline, mock_connection_manager):

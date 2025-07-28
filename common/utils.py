@@ -42,17 +42,19 @@ def get_config_value(key_path: str, default: Any = None) -> Any:
         return default
 
 # --- Dataclasses ---
-@dataclass
+import uuid
+
+@dataclass(frozen=True)
 class Document:
-    id: str
     content: str
-    score: Optional[float] = None # For similarity score from retrieval
-    metadata: Optional[Dict[str, Any]] = None # For title or other metadata
-    embedding: Optional[List[float]] = field(default=None, repr=False) # Standard document embedding
+    id: str = field(default_factory=lambda: str(uuid.uuid4()), compare=True)
+    score: Optional[float] = field(default=None, compare=False) # For similarity score from retrieval
+    metadata: Optional[Dict[str, Any]] = field(default_factory=dict, compare=False) # For title or other metadata
+    embedding: Optional[List[float]] = field(default=None, repr=False, compare=False) # Standard document embedding
     # For ColBERT or other token-level models
-    colbert_tokens: Optional[List[str]] = field(default=None, repr=False)
-    colbert_token_embeddings: Optional[List[List[float]]] = field(default=None, repr=False) # Raw token embeddings
-    colbert_compressed_embeddings: Optional[List[Any]] = field(default=None, repr=False) # Compressed + scale factors
+    colbert_tokens: Optional[List[str]] = field(default=None, repr=False, compare=False)
+    colbert_token_embeddings: Optional[List[List[float]]] = field(default=None, repr=False, compare=False) # Raw token embeddings
+    colbert_compressed_embeddings: Optional[List[Any]] = field(default=None, repr=False, compare=False) # Compressed + scale factors
 
     def to_dict(self, include_embeddings: bool = False) -> Dict[str, Any]:
         data = {
@@ -354,7 +356,7 @@ def get_colbert_doc_encoder_func(model_name: str = None) -> Callable[[str], List
     return mock_colbert_doc_encode
 
 
-def get_colbert_query_encoder_func(model_name: str = None) -> Callable[[str], List[List[float]]]:
+def get_colbert_query_encoder_func(get_iris_connection: Callable, model_name: str = None) -> Callable[[str], List[List[float]]]:
     """
     Returns a ColBERT query encoder function based on configuration.
     Uses real ColBERT if backend is "native", otherwise falls back to mock.
@@ -387,21 +389,24 @@ def get_colbert_query_encoder_func(model_name: str = None) -> Callable[[str], Li
     logger.info(f"Using mock ColBERT query encoder: {colbert_model}")
     
     # Get ColBERT token embedding dimension from config
-    try:
-        from iris_rag.storage.schema_manager import SchemaManager
-        from common.iris_connection_manager import get_iris_connection
-        from iris_rag.config.manager import ConfigurationManager
-        
-        config_manager = ConfigurationManager('config/config.yaml')
-        connection_manager = type('CM', (), {'get_connection': get_iris_connection})()
-        schema_manager = SchemaManager(connection_manager, config_manager)
-        colbert_token_dimension = schema_manager.get_vector_dimension("DocumentTokenEmbeddings")
-        logger.info(f"Using ColBERT token dimension from schema manager: {colbert_token_dimension}D")
-    except Exception as e:
-        # HARD FAIL - no fallbacks to hide configuration issues
-        error_msg = f"CRITICAL: Cannot get ColBERT token dimension from schema manager: {e}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
+    if colbert_model == "stub_colbert_query_encoder":
+        colbert_token_dimension = get_config_value("colbert.token_dimension", 768)
+        logger.info(f"Using stub ColBERT token dimension: {colbert_token_dimension}D")
+    else:
+        try:
+            from iris_rag.storage.schema_manager import SchemaManager
+            from iris_rag.config.manager import ConfigurationManager
+            
+            config_manager = ConfigurationManager('config/config.yaml')
+            connection_manager = type('CM', (), {'get_connection': get_iris_connection})()
+            schema_manager = SchemaManager(connection_manager, config_manager)
+            colbert_token_dimension = schema_manager.get_vector_dimension("DocumentTokenEmbeddings")
+            logger.info(f"Using ColBERT token dimension from schema manager: {colbert_token_dimension}D")
+        except Exception as e:
+            # HARD FAIL - no fallbacks to hide configuration issues
+            error_msg = f"CRITICAL: Cannot get ColBERT token dimension from schema manager: {e}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
     
     logger.info(f"Using mock ColBERT query encoder: {model_name} with {colbert_token_dimension}D embeddings")
 

@@ -18,7 +18,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import required components
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import IRISConnectionManager as ConnectionManager
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.pipelines.basic import BasicRAGPipeline
 from iris_rag.storage.vector_store_iris import IRISVectorStore

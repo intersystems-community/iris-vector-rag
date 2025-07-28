@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Dict, Optional, Any
 
 from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from common.iris_connection_manager import get_iris_connection
 from iris_rag.validation.embedding_validator import EmbeddingValidator
 from iris_rag.controllers.reconciliation_components.models import (
     SystemState,
@@ -52,26 +52,26 @@ class ReconciliationController:
             reconcile_interval_seconds: Override default reconciliation interval (for daemon mode)
         """
         self.config_manager = config_manager
-        self.connection_manager = ConnectionManager(config_manager)
+        self.iris_connector = get_iris_connection()
         self.embedding_validator = EmbeddingValidator(config_manager)
         
         # Initialize StateObserver with required dependencies
         self.state_observer = StateObserver(
             self.config_manager,
-            self.connection_manager,
+            self.iris_connector,
             self.embedding_validator
         )
         
         # Initialize PipelineDriftAnalyzer with connection manager
-        self.drift_analyzer = PipelineDriftAnalyzer(self.connection_manager)
+        self.drift_analyzer = PipelineDriftAnalyzer(self.iris_connector)
         
         # Initialize DocumentService
-        self.document_service = DocumentService(self.connection_manager, self.config_manager)
+        self.document_service = DocumentService(self.iris_connector, self.config_manager)
         
         # Initialize RemediationEngine
         self.remediation_engine = RemediationEngine(
             self.config_manager,
-            self.connection_manager,
+            self.iris_connector,
             self.document_service,
             self.embedding_validator
         )
@@ -253,7 +253,8 @@ class ReconciliationController:
     
     def run_continuous_reconciliation(self, pipeline_type: str = "colbert",
                                     interval_seconds: Optional[int] = None,
-                                    max_iterations: int = 0) -> None:
+                                    max_iterations: int = 0,
+                                    error_retry_interval: Optional[int] = None) -> None:
         """
         Run continuous reconciliation in daemon mode.
         
@@ -261,9 +262,10 @@ class ReconciliationController:
             pipeline_type: The pipeline type to reconcile continuously
             interval_seconds: Time between reconciliation attempts in seconds (uses config default if None)
             max_iterations: Maximum number of iterations (0 = infinite)
+            error_retry_interval: Retry interval on errors in seconds (uses config default if None)
         """
         # Delegate to daemon controller with pipeline type
-        return self.daemon_controller.run_daemon(interval_seconds, max_iterations, None, pipeline_type)
+        return self.daemon_controller.run_daemon(interval_seconds, max_iterations, error_retry_interval, pipeline_type)
     
     def stop_daemon(self) -> None:
         """

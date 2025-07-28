@@ -3,11 +3,10 @@
 
 from typing import Dict, Any, Optional, Callable, List
 from .core.base import RAGPipeline
-from .core.connection import ConnectionManager
 from .config.manager import ConfigurationManager
 from .pipelines.basic import BasicRAGPipeline
-from .pipelines.colbert import ColBERTRAGPipeline
 from .pipelines.crag import CRAGPipeline
+from .pipelines.colbert.pipeline import ColBERTRAGPipeline
 
 # Import validation components
 from .validation.factory import ValidatedPipelineFactory, create_validated_pipeline
@@ -15,6 +14,7 @@ from .validation.validator import PreConditionValidator
 from .validation.orchestrator import SetupOrchestrator
 from .validation.requirements import get_pipeline_requirements
 from common.utils import get_llm_func  # Import get_llm_func
+from common.iris_connection_manager import IRISConnectionManager as ConnectionManager
 
 # Package version
 __version__ = "0.1.0"
@@ -25,6 +25,7 @@ def create_pipeline(pipeline_type: str, config_path: Optional[str] = None,
                    llm_func: Optional[Callable[[str], str]] = None,
                    embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
                    external_connection=None,
+                   connection_manager=None,
                    validate_requirements: bool = True,
                    auto_setup: bool = False,
                    **kwargs) -> RAGPipeline:
@@ -36,7 +37,8 @@ def create_pipeline(pipeline_type: str, config_path: Optional[str] = None,
         config_path: Optional path to configuration file.
         llm_func: Optional LLM function for answer generation.
         embedding_func: Optional embedding function for vector generation.
-        external_connection: Optional existing database connection to use.
+        external_connection: Optional existing database connection to use (deprecated).
+        connection_manager: Optional connection manager instance for dependency injection.
         validate_requirements: Whether to validate pipeline requirements before creation.
         auto_setup: Whether to automatically set up missing requirements.
         **kwargs: Additional configuration parameters.
@@ -51,16 +53,9 @@ def create_pipeline(pipeline_type: str, config_path: Optional[str] = None,
     # Initialize configuration manager
     config_manager = ConfigurationManager(config_path)
     
-    # Initialize connection manager
-    if external_connection:
-        # Create a wrapper connection manager that uses the external connection
-        connection_manager = ExternalConnectionWrapper(external_connection, config_manager)
-    else:
-        connection_manager = ConnectionManager(config_manager)
-    
     # Use validated factory if validation is requested
     if validate_requirements:
-        factory = ValidatedPipelineFactory(connection_manager, config_manager)
+        factory = ValidatedPipelineFactory(config_manager, connection_manager=connection_manager)
         return factory.create_pipeline(
             pipeline_type=pipeline_type,
             llm_func=llm_func,
@@ -68,7 +63,7 @@ def create_pipeline(pipeline_type: str, config_path: Optional[str] = None,
             validate_requirements=True,
             **kwargs
         )
-    
+
     # Legacy creation without validation
     # Pass embedding_func through kwargs for pipelines that need it
     if embedding_func:
@@ -83,65 +78,65 @@ def create_pipeline(pipeline_type: str, config_path: Optional[str] = None,
         effective_llm_func = get_llm_func(provider=llm_provider, model_name=llm_model_name, **kwargs)
 
 
-    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)
+    return _create_pipeline_legacy(pipeline_type, config_manager, effective_llm_func, connection_manager=connection_manager, **kwargs)
 
 
-def _create_pipeline_legacy(pipeline_type: str, connection_manager: ConnectionManager,
+def _create_pipeline_legacy(pipeline_type: str,
                            config_manager: ConfigurationManager,
-                           llm_func: Optional[Callable[[str], str]], **kwargs) -> RAGPipeline:
+                           llm_func: Optional[Callable[[str], str]],
+                           connection_manager=None, **kwargs) -> RAGPipeline:
     """Legacy pipeline creation without validation."""
     if pipeline_type == "basic":
         return BasicRAGPipeline(
-            connection_manager=connection_manager,
-            config_manager=config_manager,
-            llm_func=llm_func
-        )
-    elif pipeline_type == "colbert":
-        return ColBERTRAGPipeline(
-            connection_manager=connection_manager,
             config_manager=config_manager,
             llm_func=llm_func,
-            **kwargs
+            connection_manager=connection_manager
         )
     elif pipeline_type == "crag":
         # Extract embedding_func from kwargs if provided
         embedding_func = kwargs.get('embedding_func')
         return CRAGPipeline(
-            connection_manager=connection_manager,
             config_manager=config_manager,
             embedding_func=embedding_func,
-            llm_func=llm_func
+            llm_func=llm_func,
+            connection_manager=connection_manager
         )
     elif pipeline_type == "hyde":
         from .pipelines.hyde import HyDERAGPipeline
         return HyDERAGPipeline(
-            connection_manager=connection_manager,
             config_manager=config_manager,
-            llm_func=llm_func
+            llm_func=llm_func,
+            connection_manager=connection_manager
         )
     elif pipeline_type == "graphrag":
         from .pipelines.graphrag import GraphRAGPipeline
         return GraphRAGPipeline(
-            connection_manager=connection_manager,
             config_manager=config_manager,
-            llm_func=llm_func
+            llm_func=llm_func,
+            connection_manager=connection_manager
         )
     elif pipeline_type == "hybrid_ifind":
         from .pipelines.hybrid_ifind import HybridIFindRAGPipeline
         return HybridIFindRAGPipeline(
-            connection_manager=connection_manager,
             config_manager=config_manager,
-            llm_func=llm_func
+            llm_func=llm_func,
+            connection_manager=connection_manager
         )
     elif pipeline_type == "noderag":
         from .pipelines.noderag import NodeRAGPipeline
         return NodeRAGPipeline(
-            connection_manager=connection_manager,
             config_manager=config_manager,
-            llm_func=llm_func
+            llm_func=llm_func,
+            connection_manager=connection_manager
+        )
+    elif pipeline_type == "colbert":
+        return ColBERTRAGPipeline(
+            config_manager=config_manager,
+            llm_func=llm_func,
+            connection_manager=connection_manager
         )
     else:
-        available_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag"]
+        available_types = ["basic", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag", "colbert"]
         raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available: {available_types}")
 
 
@@ -165,7 +160,7 @@ def validate_pipeline(pipeline_type: str, config_path: Optional[str] = None,
     else:
         connection_manager = ConnectionManager(config_manager)
     
-    factory = ValidatedPipelineFactory(connection_manager, config_manager)
+    factory = ValidatedPipelineFactory(config_manager, connection_manager)
     return factory.validate_pipeline_type(pipeline_type)
 
 
@@ -189,7 +184,7 @@ def setup_pipeline(pipeline_type: str, config_path: Optional[str] = None,
     else:
         connection_manager = ConnectionManager(config_manager)
     
-    factory = ValidatedPipelineFactory(connection_manager, config_manager)
+    factory = ValidatedPipelineFactory(config_manager, connection_manager)
     return factory.setup_pipeline_requirements(pipeline_type)
 
 
@@ -213,7 +208,7 @@ def get_pipeline_status(pipeline_type: str, config_path: Optional[str] = None,
     else:
         connection_manager = ConnectionManager(config_manager)
     
-    factory = ValidatedPipelineFactory(connection_manager, config_manager)
+    factory = ValidatedPipelineFactory(config_manager, connection_manager)
     return factory.get_pipeline_status(pipeline_type)
 
 
@@ -230,8 +225,8 @@ class ExternalConnectionWrapper:
 
 __all__ = [
     "create_pipeline", "validate_pipeline", "setup_pipeline", "get_pipeline_status",
-    "create_validated_pipeline", "RAGPipeline", "ConnectionManager", "ConfigurationManager",
-    "BasicRAGPipeline", "ColBERTRAGPipeline", "CRAGPipeline",
+    "create_validated_pipeline", "RAGPipeline", "ConfigurationManager", "ConnectionManager",
+    "BasicRAGPipeline", "CRAGPipeline", "ColBERTRAGPipeline",
     "ValidatedPipelineFactory", "PreConditionValidator", "SetupOrchestrator",
     "get_pipeline_requirements"
 ]
