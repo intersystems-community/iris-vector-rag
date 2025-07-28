@@ -1,0 +1,5 @@
+# Incomplete template for schema validation testing (missing required fields)
+metadata:
+  version: "1.0.0"
+  schema_version: "2024.1"
+# Missing required database, storage, vector_index, embeddings, llm sections
