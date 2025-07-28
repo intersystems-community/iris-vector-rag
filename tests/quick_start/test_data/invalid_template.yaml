@@ -1,0 +1,45 @@
+# Invalid template for schema validation testing
+metadata:
+  profile: "invalid_template"
+  description: "Invalid template for testing schema validation failures"
+  version: "1.0"
+
+database:
+  iris:
+    host: "localhost"
+    port: "invalid_port"  # Should be integer, not string
+    namespace: "USER"
+    username: "test_user"
+    # Missing required password field
+
+storage:
+  # Missing required data_directory field
+
+vector_index:
+  dimension: "invalid_dimension"  # Should be integer, not string
+  metric: "invalid_metric"  # Should be one of: cosine, euclidean, dot_product
+
+embeddings:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 512  # Mismatched with vector_index dimension
+  provider: "invalid_provider"  # Should be one of: openai, huggingface, sentence_transformers
+
+llm:
+  model: "gpt-3.5-turbo"
+  provider: "invalid_provider"  # Should be one of: openai, anthropic, huggingface
+  temperature: 3.0  # Should be between 0 and 2
+  max_tokens: -100  # Should be positive
+
+performance:
+  batch_size: 0  # Should be at least 1
+  max_workers: 100  # Should be at most 32
+  timeout: -5  # Should be positive
+
+sample_data:
+  document_count: 20000  # Exceeds maximum allowed
+  source: "invalid_source"  # Should be one of: pmc, synthetic, custom
+
+mcp_server:
+  enabled: true
+  port: 80  # Should be at least 1024
+  enabled_tools: []  # Empty tools list when enabled=true violates custom rule

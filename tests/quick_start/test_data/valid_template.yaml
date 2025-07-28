@@ -1,0 +1,53 @@
+# Valid template for schema validation testing
+metadata:
+  profile: "valid_template"
+  description: "Valid template for testing schema validation"
+  version: "1.0"
+
+database:
+  iris:
+    host: "localhost"
+    port: 1972
+    namespace: "USER"
+    username: "test_user"
+    password: "test_password"
+
+storage:
+  data_directory: "/tmp/test_data"
+  cache_directory: "/tmp/test_cache"
+
+vector_index:
+  dimension: 384
+  metric: "cosine"
+
+embeddings:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 384
+  provider: "sentence_transformers"
+
+llm:
+  model: "gpt-3.5-turbo"
+  provider: "openai"
+  temperature: 0.7
+  max_tokens: 1024
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+performance:
+  batch_size: 10
+  max_workers: 2
+  timeout: 30
+
+sample_data:
+  document_count: 100
+  source: "pmc"
+
+mcp_server:
+  enabled: true
+  port: 8080
+  enabled_tools:
+    - "rag_basic"
+    - "rag_hyde"
+    - "rag_health_check"
