@@ -52,6 +52,33 @@ class ConfigurationTemplateEngine(IConfigurationTemplate):
         self.enable_schema_validation = False
         self._schema_validator = None
     
+    def generate_configuration(self, profile: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Generate configuration for the specified profile.
+        
+        Args:
+            profile: Profile name to generate configuration for
+            context: Additional context for configuration generation
+            
+        Returns:
+            Generated configuration dictionary
+        """
+        # Default configuration based on profile
+        base_config = {
+            "database": {"host": "localhost", "port": 1972},
+            "llm": {"provider": "openai", "model": "gpt-4"},
+            "embedding": {"model": "text-embedding-ada-002"}
+        }
+        
+        # Profile-specific adjustments
+        if profile == "minimal":
+            base_config["llm"]["model"] = "gpt-3.5-turbo"
+        elif profile == "extended":
+            base_config["database"]["pool_size"] = 20
+            base_config["llm"]["model"] = "gpt-4-turbo"
+            
+        return base_config
+    
     def load_template(self, template_name: str) -> Dict[str, Any]:
         """
         Load a configuration template by name.

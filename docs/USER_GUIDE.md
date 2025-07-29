@@ -19,7 +19,32 @@ Complete guide for installing, configuring, and using RAG Templates with InterSy
 
 ## Quick Start
 
-Get up and running in 5 minutes:
+**🚀 NEW: One-Command Setup!** Get a complete RAG system running in minutes:
+
+### Option 1: Quick Start Profiles (Recommended)
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd rag-templates
+
+# Choose your profile and run ONE command:
+make quick-start-minimal    # Development setup (50 docs, 2GB RAM, ~5 min)
+make quick-start-standard   # Production setup (500 docs, 4GB RAM, ~15 min)
+make quick-start-extended   # Enterprise setup (5000 docs, 8GB RAM, ~30 min)
+
+# Or use interactive setup:
+make quick-start           # Interactive wizard with profile selection
+```
+
+**That's it!** The Quick Start system automatically:
+- ✅ Sets up Python environment and dependencies
+- ✅ Configures and starts database services
+- ✅ Loads optimized sample data for your profile
+- ✅ Validates system health and functionality
+- ✅ Provides ready-to-use RAG pipelines
+
+### Option 2: Manual Setup (Advanced Users)
 
 ```bash
 # 1. Clone the repository
@@ -36,13 +61,36 @@ make install    # This will install all dependencies from requirements.txt
 # 4. Start the database
 docker-compose up -d
 
-# 4. Initialize and load sample data
+# 5. Initialize and load sample data
 make setup-db
 make load-data
 
-# 5. Test your installation
+# 6. Test your installation
 make validate-iris-rag
 ```
+
+### Quick Start Profile Comparison
+
+| Profile | Documents | Memory | Setup Time | Use Case |
+|---------|-----------|--------|------------|----------|
+| **Minimal** | 50 | 2GB | ~5 min | Development, Testing, Learning |
+| **Standard** | 500 | 4GB | ~15 min | Production, Demos, Evaluation |
+| **Extended** | 5000 | 8GB | ~30 min | Enterprise, Scale Testing |
+
+### Quick Start Management
+
+```bash
+# Check system status and health
+make quick-start-status
+
+# Clean up Quick Start environment
+make quick-start-clean
+
+# Custom profile setup
+make quick-start-custom PROFILE=my-profile
+```
+
+For detailed Quick Start documentation, see [`QUICK_START_GUIDE.md`](QUICK_START_GUIDE.md).
 
 ## System Requirements
 

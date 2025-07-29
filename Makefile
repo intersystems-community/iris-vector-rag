@@ -6,7 +6,7 @@ SHELL := /bin/bash
 # Standardized commands for development, testing, and data management
 # Uses Python virtual environment (.venv) for consistent dependency management
 
-.PHONY: help install test test-unit test-integration test-e2e test-1000 test-ragas-1000-enhanced debug-ragas-hyde debug-ragas-graphrag debug-ragas-crag debug-ragas-colbert debug-ragas-basic debug-ragas-noderag debug-ragas-hybrid_ifind eval-all-ragas-1000 ragas-debug ragas-test ragas-full ragas-cache-check ragas-clean ragas-no-cache ragas clean setup-db load-data clear-rag-data populate-graph-entities populate-knowledge-graph populate-graph-all check-graph-data test-graphrag-drift-detection validate-iris-rag validate-pipeline validate-all-pipelines auto-setup-pipeline auto-setup-all setup-env make-test-echo test-performance-ragas-tdd test-scalability-ragas-tdd test-tdd-comprehensive-ragas test-1000-enhanced test-tdd-ragas-quick ragas-with-tdd test-system-workup test-system-workup-verbose
+.PHONY: help install test test-unit test-integration test-e2e test-1000 test-ragas-1000-enhanced debug-ragas-hyde debug-ragas-graphrag debug-ragas-crag debug-ragas-colbert debug-ragas-basic debug-ragas-noderag debug-ragas-hybrid_ifind eval-all-ragas-1000 ragas-debug ragas-test ragas-full ragas-cache-check ragas-clean ragas-no-cache ragas clean setup-db load-data clear-rag-data populate-graph-entities populate-knowledge-graph populate-graph-all check-graph-data test-graphrag-drift-detection validate-iris-rag validate-pipeline validate-all-pipelines auto-setup-pipeline auto-setup-all setup-env make-test-echo test-performance-ragas-tdd test-scalability-ragas-tdd test-tdd-comprehensive-ragas test-1000-enhanced test-tdd-ragas-quick ragas-with-tdd test-system-workup test-system-workup-verbose quick-start quick-start-minimal quick-start-standard quick-start-extended quick-start-custom quick-start-clean quick-start-status
 
 # Simple test target to verify make execution
 make-test-echo:
@@ -27,6 +27,15 @@ help:
 	@echo "  make setup-env        - Set up Python virtual environment (.venv)"
 	@echo "  make install          - Install dependencies in the virtual environment"
 	@echo "  make setup-db         - Initialize IRIS database schema"
+	@echo ""
+	@echo "Quick Start (One-Command Setup):"
+	@echo "  make quick-start      - Interactive setup with profile selection"
+	@echo "  make quick-start-minimal    - Minimal profile setup (50 docs, 2GB RAM)"
+	@echo "  make quick-start-standard   - Standard profile setup (500 docs, 4GB RAM)"
+	@echo "  make quick-start-extended   - Extended profile setup (5000 docs, 8GB RAM)"
+	@echo "  make quick-start-custom PROFILE=name - Custom profile setup"
+	@echo "  make quick-start-clean      - Clean up Quick Start environment"
+	@echo "  make quick-start-status     - Check Quick Start system status"
 	@echo ""
 	@echo "Testing (DBAPI-first):"
 	@echo "  make test             - Run all tests"
@@ -825,3 +834,50 @@ test-graphrag-drift-detection:
 	@echo "🧪 Testing GraphRAG drift detection capabilities..."
 	@echo "This demonstrates our enhanced pipeline-specific drift detection"
 	make check-pipeline-drift PIPELINE=graphrag
+
+# Quick Start One-Command Setup Targets
+quick-start:
+	@echo "🚀 Starting Interactive Quick Start Setup..."
+	@echo "This will guide you through setting up the RAG Templates system"
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration interactive
+
+quick-start-minimal:
+	@echo "🚀 Starting Minimal Quick Start Setup..."
+	@echo "Setting up minimal profile (50 docs, 2GB RAM, ~5 minutes)"
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration minimal
+
+quick-start-standard:
+	@echo "🚀 Starting Standard Quick Start Setup..."
+	@echo "Setting up standard profile (500 docs, 4GB RAM, ~15 minutes)"
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration standard
+
+quick-start-extended:
+	@echo "🚀 Starting Extended Quick Start Setup..."
+	@echo "Setting up extended profile (5000 docs, 8GB RAM, ~30 minutes)"
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration extended
+
+quick-start-custom:
+	@if [ -z "$(PROFILE)" ]; then \
+		echo "Error: PROFILE parameter required. Usage: make quick-start-custom PROFILE=my_profile"; \
+		echo "Available profiles: minimal, standard, extended, or custom profile name"; \
+		exit 1; \
+	fi
+	@echo "🚀 Starting Custom Quick Start Setup with profile: $(PROFILE)"
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration custom --profile $(PROFILE)
+
+quick-start-clean:
+	@echo "🧹 Cleaning Quick Start Environment..."
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration clean
+
+quick-start-status:
+	@echo "📊 Checking Quick Start Status..."
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration status
+
+# Quick Start Testing
+test-quick-start:
+	@echo "🧪 Testing Quick Start setup system..."
+	$(PYTHON_RUN) -m pytest tests/quick_start/test_one_command_setup.py -v
+
+test-quick-start-integration:
+	@echo "🧪 Testing Quick Start integration with existing components..."
+	$(PYTHON_RUN) -m pytest tests/quick_start/ -v

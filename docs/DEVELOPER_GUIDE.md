@@ -24,8 +24,13 @@ The RAG Templates framework follows a modular, layered architecture designed for
 ┌─────────────────────────────────────────────────────────────┐
 │                    Application Layer                        │
 ├─────────────────────────────────────────────────────────────┤
-│  CLI (ragctl)     │  Configuration  │  Controllers         │
-│                   │     Manager     │                      │
+│ CLI (ragctl) │ Quick Start │ Configuration │ Controllers    │
+│              │   Wizard    │    Manager    │                │
+├─────────────────────────────────────────────────────────────┤
+│                   Quick Start Layer (NEW!)                  │
+├─────────────────────────────────────────────────────────────┤
+│ Template │ Schema    │ Setup     │ Health    │ MCP Server   │
+│ Engine   │ Validator │ Pipeline  │ Monitor   │ Integration  │
 ├─────────────────────────────────────────────────────────────┤
 │                     Pipeline Layer                          │
 ├─────────────────────────────────────────────────────────────┤
@@ -45,7 +50,125 @@ The RAG Templates framework follows a modular, layered architecture designed for
 └─────────────────────────────────────────────────────────────┘
 ```
 
+### 🚀 Quick Start Architecture
+
+The Quick Start system adds a new architectural layer focused on seamless deployment:
+
+#### Template Engine
+- **Hierarchical inheritance**: `base_config → quick_start → profile variants`
+- **Environment injection**: Dynamic variable substitution with defaults
+- **Schema validation**: JSON schema validation with custom rules
+- **Caching**: Template compilation and caching for performance
+
+#### Setup Pipeline
+- **Orchestrated deployment**: Step-by-step setup with rollback capabilities
+- **Health validation**: Real-time system health monitoring during setup
+- **Docker integration**: Container orchestration and service management
+- **Progress tracking**: User feedback and status reporting
+
+#### Configuration Profiles
+- **Minimal Profile**: Development-optimized (50 docs, 2GB RAM)
+- **Standard Profile**: Production-ready (500 docs, 4GB RAM)
+- **Extended Profile**: Enterprise-scale (5000 docs, 8GB RAM)
+- **Custom Profiles**: User-defined configurations with validation
+
 ### Component Relationships
+
+## 🚀 Quick Start Development
+
+### Extending Quick Start Profiles
+
+To create a new Quick Start profile:
+
+1. **Create Template File**:
+```yaml
+# quick_start/config/templates/quick_start_myprofile.yaml
+extends: quick_start.yaml
+metadata:
+  profile: myprofile
+  description: "Custom profile for specific use case"
+sample_data:
+  document_count: 100
+  source: pmc
+performance:
+  batch_size: 32
+  max_workers: 4
+```
+
+2. **Create Schema File**:
+```json
+// quick_start/config/schemas/quick_start_myprofile.json
+{
+  "allOf": [
+    {"$ref": "quick_start.json"},
+    {
+      "properties": {
+        "custom_settings": {
+          "type": "object",
+          "properties": {
+            "feature_enabled": {"type": "boolean"}
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+3. **Add Makefile Target**:
+```makefile
+quick-start-myprofile:
+	@echo "🚀 Starting MyProfile Quick Start Setup..."
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration myprofile
+```
+
+### Quick Start Testing
+
+Quick Start components follow TDD principles:
+
+```python
+# tests/quick_start/test_myprofile.py
+def test_myprofile_template_loads():
+    """Test that myprofile template loads correctly."""
+    engine = ConfigurationTemplateEngine()
+    context = ConfigurationContext(profile='quick_start_myprofile')
+    config = engine.resolve_template(context)
+    
+    assert config['metadata']['profile'] == 'myprofile'
+    assert config['sample_data']['document_count'] == 100
+
+def test_myprofile_schema_validation():
+    """Test that myprofile configuration validates."""
+    validator = SchemaValidator()
+    config = load_test_config('myprofile')
+    
+    result = validator.validate(config, 'quick_start_myprofile')
+    assert result.is_valid
+```
+
+### Integration Adapters
+
+To integrate Quick Start with existing systems:
+
+```python
+# quick_start/config/integration_adapters.py
+class MySystemAdapter(ConfigurationAdapter):
+    """Adapter for MySystem configuration format."""
+    
+    def convert_from_quick_start(self, quick_start_config: Dict) -> Dict:
+        """Convert Quick Start config to MySystem format."""
+        return {
+            'my_system_database': {
+                'host': quick_start_config['database']['iris']['host'],
+                'port': quick_start_config['database']['iris']['port']
+            }
+        }
+    
+    def validate_compatibility(self, config: Dict) -> bool:
+        """Validate config compatibility with MySystem."""
+        required_fields = ['my_system_database']
+        return all(field in config for field in required_fields)
+```
 
 #### Core Components
 

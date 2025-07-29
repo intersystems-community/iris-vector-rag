@@ -5,11 +5,84 @@ This document provides comprehensive configuration guidance for the RAG template
 ## Overview
 
 The RAG system uses a hierarchical configuration approach with support for:
+- **🚀 Quick Start Configuration**: Template-based configuration with intelligent profiles (NEW!)
 - **Multiple Configuration Files**: Main config, pipeline-specific configs, and specialized configurations
 - **Environment Variable Overrides**: Runtime configuration overrides with `RAG_` prefix
 - **Pipeline-Specific Settings**: Configuration for different RAG techniques (Basic, ColBERT, CRAG, HyDE, GraphRAG, HybridIFind, NodeRAG)
 - **Reconciliation Framework**: Automated drift detection and healing capabilities
 - **CLI Configuration**: Command-line interface for system management
+
+## Quick Start Configuration System
+
+### 🎯 Profile-Based Configuration
+
+The Quick Start system provides intelligent configuration profiles optimized for different use cases:
+
+| Profile | Documents | Memory | Use Case | Configuration Features |
+|---------|-----------|--------|----------|----------------------|
+| **Minimal** | 50 | 2GB | Development, Testing | Basic RAG, Local setup, Minimal resources |
+| **Standard** | 500 | 4GB | Production, Demos | Multiple techniques, MCP server, Docker integration |
+| **Extended** | 5000 | 8GB | Enterprise, Scale | Full stack, Monitoring, Advanced features |
+
+### 🔧 Template Inheritance System
+
+Quick Start uses a hierarchical template system:
+
+```
+base_config.yaml           # Core system defaults
+    ↓
+quick_start.yaml           # Quick Start framework settings
+    ↓
+quick_start_minimal.yaml   # Minimal profile optimizations
+quick_start_standard.yaml  # Standard profile optimizations
+quick_start_extended.yaml  # Extended profile optimizations
+```
+
+### 🌍 Environment Variable Injection
+
+Templates support dynamic environment variable injection:
+
+```yaml
+database:
+  iris:
+    host: ${IRIS_HOST:-localhost}
+    port: ${IRIS_PORT:-1972}
+    username: ${IRIS_USERNAME:-demo}
+    password: ${IRIS_PASSWORD:-demo}
+```
+
+### 📋 Schema Validation
+
+All Quick Start configurations are validated against JSON schemas:
+- **Type validation**: Ensures correct data types
+- **Range validation**: Validates numeric ranges and constraints
+- **Required fields**: Enforces mandatory configuration sections
+- **Custom rules**: Profile-specific validation rules
+
+### 🚀 Quick Start Commands
+
+```bash
+# Generate configuration for a profile
+make quick-start-minimal    # Generates minimal profile config
+make quick-start-standard   # Generates standard profile config
+make quick-start-extended   # Generates extended profile config
+
+# Interactive configuration wizard
+make quick-start           # Interactive setup with profile selection
+
+# Check configuration status
+make quick-start-status    # Validate current configuration
+
+# Custom profile configuration
+make quick-start-custom PROFILE=my-profile
+```
+
+### 📁 Quick Start Configuration Files
+
+Quick Start configurations are stored in:
+- **Templates**: [`quick_start/config/templates/`](../quick_start/config/templates/)
+- **Schemas**: [`quick_start/config/schemas/`](../quick_start/config/schemas/)
+- **Generated configs**: Created in project root during setup
 
 ## Configuration Files
 

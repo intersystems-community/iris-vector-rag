@@ -1,5 +1,6 @@
 import os
 import logging
+import importlib
 
 logger = logging.getLogger(__name__)
 
@@ -63,25 +64,39 @@ class ConnectionManager:
         if backend_name in self._connections:
             return self._connections[backend_name]
 
+        # Get database configuration
+        config_key = f"database:{backend_name}"
+        db_config = self.config_manager.get(config_key)
+        
+        if not db_config:
+            raise ValueError(f"Configuration for backend '{backend_name}' not found.")
+
         # Check for supported backend types
         if backend_name != "iris":
             # This can be expanded if more backends are officially supported
             raise ValueError(f"Unsupported database backend: {backend_name}")
 
-        # For IRIS backend, check configuration to determine connection type
+        # For IRIS backend, use dynamic import
         try:
-            # Get storage configuration to determine connection type
-            storage_config = self.config_manager.get("storage:backends:iris")
-            connection_type = storage_config.get("connection_type", "dbapi") if storage_config else "dbapi"
+            logger.info(f"Establishing connection for backend '{backend_name}' using DBAPI")
             
-            logger.info(f"Establishing connection for backend '{backend_name}' using {connection_type.upper()}")
+            # Use importlib to dynamically import the database driver
+            driver_module = importlib.import_module("intersystems_iris.dbapi")
             
-            # For now, always use the common iris_connection_manager which works
-            from common.iris_connection_manager import get_iris_connection
-            connection = get_iris_connection()
+            # Create connection using the imported module
+            connection = driver_module.connect(
+                hostname=db_config["host"],
+                port=db_config["port"],
+                namespace=db_config["namespace"],
+                username=db_config["username"],
+                password=db_config["password"]
+            )
             
             self._connections[backend_name] = connection
             return connection
+        except ImportError as e:
+            logger.error(f"Failed to import database driver: {e}")
+            raise ImportError(f"Database driver not available: {e}")
         except Exception as e:
             # Catching a broad exception here as connection creation can raise various errors
             raise ConnectionError(f"Failed to connect to IRIS backend '{backend_name}': {e}")

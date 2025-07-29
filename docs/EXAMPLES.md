@@ -14,6 +14,24 @@ Real-world examples demonstrating the Library Consumption Framework across diffe
 
 ## Quick Start Examples
 
+### 🚀 One-Command Setup (NEW!)
+
+Get a complete RAG system running in minutes:
+
+```bash
+# Choose your profile and run ONE command:
+make quick-start-minimal    # Development (50 docs, 2GB RAM, ~5 min)
+make quick-start-standard   # Production (500 docs, 4GB RAM, ~15 min)
+make quick-start-extended   # Enterprise (5000 docs, 8GB RAM, ~30 min)
+
+# Or use interactive setup:
+make quick-start           # Interactive wizard with profile selection
+```
+
+**That's it!** The system automatically sets up everything including database, sample data, and validation.
+
+For detailed Quick Start documentation, see [`QUICK_START_GUIDE.md`](QUICK_START_GUIDE.md).
+
 ### 30-Second RAG Application
 
 #### Python

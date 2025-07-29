@@ -201,7 +201,16 @@ class TestBasicRAGPipelineRefactoring:
         """Test that BasicRAGPipeline uses VectorStore for operations."""
         mock_connection_manager = Mock()
         mock_config_manager = Mock()
-        mock_config_manager.get.return_value = {}
+        # Ensure get() returns proper values, not Mock objects
+        def mock_get(key, default=None):
+            config_map = {
+                'pipelines:colbert:top_k': 5,
+                'pipelines:basic:top_k': 5,
+                'pipelines:hyde:top_k': 5,
+            }
+            return config_map.get(key, default if default is not None else {})
+        
+        mock_config_manager.get.side_effect = mock_get
         
         mock_vector_store = Mock()
         mock_vector_store_class.return_value = mock_vector_store
@@ -221,7 +230,16 @@ class TestBasicRAGPipelineRefactoring:
         """Test that BasicRAGPipeline execute returns standardized format."""
         mock_connection_manager = Mock()
         mock_config_manager = Mock()
-        mock_config_manager.get.return_value = {}
+        # Ensure get() returns proper values, not Mock objects
+        def mock_get(key, default=None):
+            config_map = {
+                'pipelines:basic:top_k': 5,
+                'pipelines:hyde:top_k': 5,
+                'pipelines:colbert:top_k': 5,
+            }
+            return config_map.get(key, default if default is not None else {})
+        
+        mock_config_manager.get.side_effect = mock_get
         
         mock_vector_store = Mock()
         mock_vector_store_class.return_value = mock_vector_store
@@ -263,7 +281,16 @@ class TestHyDERAGPipelineRefactoring:
         """Test that HyDERAGPipeline uses VectorStore for operations."""
         mock_connection_manager = Mock()
         mock_config_manager = Mock()
-        mock_config_manager.get.return_value = {}
+        # Ensure get() returns proper values, not Mock objects
+        def mock_get(key, default=None):
+            config_map = {
+                'pipelines:basic:top_k': 5,
+                'pipelines:hyde:top_k': 5,
+                'pipelines:colbert:top_k': 5,
+            }
+            return config_map.get(key, default if default is not None else {})
+        
+        mock_config_manager.get.side_effect = mock_get
         
         mock_vector_store = Mock()
         mock_vector_store_class.return_value = mock_vector_store
@@ -283,7 +310,16 @@ class TestHyDERAGPipelineRefactoring:
         """Test that HyDERAGPipeline execute returns standardized format."""
         mock_connection_manager = Mock()
         mock_config_manager = Mock()
-        mock_config_manager.get.return_value = {}
+        # Ensure get() returns proper values, not Mock objects
+        def mock_get(key, default=None):
+            config_map = {
+                'pipelines:basic:top_k': 5,
+                'pipelines:hyde:top_k': 5,
+                'pipelines:colbert:top_k': 5,
+            }
+            return config_map.get(key, default if default is not None else {})
+        
+        mock_config_manager.get.side_effect = mock_get
         
         mock_vector_store = Mock()
         mock_vector_store_class.return_value = mock_vector_store
@@ -325,7 +361,16 @@ class TestColBERTRAGPipelineRefactoring:
         """Test that ColBERTRAGPipeline uses VectorStore for operations."""
         mock_connection_manager = Mock()
         mock_config_manager = Mock()
-        mock_config_manager.get.return_value = {}
+        # Ensure get() returns proper values, not Mock objects
+        def mock_get(key, default=None):
+            config_map = {
+                'pipelines:basic:top_k': 5,
+                'pipelines:hyde:top_k': 5,
+                'pipelines:colbert:top_k': 5,
+            }
+            return config_map.get(key, default if default is not None else {})
+        
+        mock_config_manager.get.side_effect = mock_get
         
         mock_vector_store = Mock()
         mock_vector_store_class.return_value = mock_vector_store
@@ -353,10 +398,23 @@ class TestColBERTRAGPipelineRefactoring:
         """Test that ColBERTRAGPipeline execute returns standardized format."""
         mock_connection_manager = Mock()
         mock_config_manager = Mock()
-        mock_config_manager.get.return_value = {}
+        # Ensure get() returns proper values, not Mock objects
+        def mock_get(key, default=None):
+            config_map = {
+                'pipelines:basic:top_k': 5,
+                'pipelines:hyde:top_k': 5,
+                'pipelines:colbert:top_k': 5,
+            }
+            return config_map.get(key, default if default is not None else {})
+        
+        mock_config_manager.get.side_effect = mock_get
         
         mock_vector_store = Mock()
         mock_vector_store_class.return_value = mock_vector_store
+        
+        # Mock the colbert_search method to return proper format
+        test_doc = Document(page_content="test content", metadata={"title": "test"})
+        mock_vector_store.colbert_search.return_value = [(test_doc, 0.9)]
         
         # Mock utility functions
         mock_colbert_encoder = Mock()
@@ -381,20 +439,17 @@ class TestColBERTRAGPipelineRefactoring:
             config_manager=mock_config_manager
         )
         
-        # Mock the ColBERT retrieval to return test documents
-        test_doc = Document(page_content="test content", metadata={"title": "test"})
-        with patch.object(pipeline, '_retrieve_documents_with_colbert', return_value=[test_doc]):
-            # Execute pipeline
-            result = pipeline.execute("test query")
-            
-            # Verify standard format
-            assert "query" in result
-            assert "answer" in result
-            assert "retrieved_documents" in result
-            assert result["query"] == "test query"
-            assert result["answer"] == "test answer"
-            assert len(result["retrieved_documents"]) == 1
-            assert isinstance(result["retrieved_documents"][0], Document)
+        # Execute pipeline
+        result = pipeline.execute("test query")
+        
+        # Verify standard format
+        assert "query" in result
+        assert "answer" in result
+        assert "retrieved_documents" in result
+        assert result["query"] == "test query"
+        assert result["answer"] == "test answer"
+        assert len(result["retrieved_documents"]) == 1
+        assert isinstance(result["retrieved_documents"][0], Document)
 
 
 def test_vector_store_integration_removes_clob_handling():

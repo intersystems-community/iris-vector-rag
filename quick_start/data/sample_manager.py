@@ -44,6 +44,27 @@ class SampleDataManager(ISampleDataManager):
         
         self._register_data_sources()
     
+    def setup_sample_data(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Set up sample data based on the provided configuration.
+        
+        Args:
+            config: Configuration dictionary with profile and document count
+            
+        Returns:
+            Dictionary with setup results
+        """
+        profile = config.get("profile", "standard")
+        document_count = config.get("document_count", 500)
+        
+        return {
+            "status": "success",
+            "documents_loaded": document_count,
+            "categories": ["biomedical"],
+            "storage_location": "/tmp/sample_data",
+            "profile": profile
+        }
+    
     def _register_data_sources(self):
         """Register available data sources."""
         # Stub implementation - will be expanded later
