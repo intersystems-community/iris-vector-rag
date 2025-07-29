@@ -14,7 +14,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Corrected import path and class name
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Corrected import path and class name
 
 def test_noderag_current_state():
     """Test NodeRAG current state to identify stream issues"""
@@ -26,7 +26,7 @@ def test_noderag_current_state():
     llm_func = get_llm_func()
     
     # Create NodeRAG pipeline
-    pipeline = NodeRAGPipelineV2(
+    pipeline = NodeRAGPipeline(
         iris_connector=iris_conn,
         embedding_func=embedding_func,
         llm_func=llm_func

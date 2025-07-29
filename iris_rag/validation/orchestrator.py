@@ -7,7 +7,7 @@ and prepare data for different pipeline types.
 
 import logging
 import time
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, List, Any
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
 from ..embeddings.manager import EmbeddingManager

@@ -24,12 +24,12 @@ logger = logging.getLogger(__name__)
 
 # Import RAG pipeline modules (legacy imports with fallback)
 try:
-    from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
-    from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
-    from src.experimental.graphrag.pipeline import GraphRAGPipeline # Updated import
-    from src.experimental.hyde.pipeline import HyDEPipeline # Updated import
-    from src.experimental.crag.pipeline import CRAGPipeline # Updated import
-    from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+    from iris_rag.pipelines.basic import BasicRAGPipeline # Updated import
+    from iris_rag.pipelines.colbert import ColBERTRAGPipeline # Updated import
+    from iris_rag.pipelines.graphrag import GraphRAGPipeline # Updated import
+    from iris_rag.pipelines.hyde import HyDERAGPipeline # Updated import
+    from iris_rag.pipelines.crag import CRAGPipeline # Updated import
+    from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
     LEGACY_IMPORTS_AVAILABLE = True
 except ImportError:
     LEGACY_IMPORTS_AVAILABLE = False
@@ -47,8 +47,8 @@ except ImportError:
 
 # Import evaluation and benchmarking modules
 try:
-    from eval.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance # Path remains same
-    from eval.bench_runner import run_technique_benchmark # Path remains same
+    from scripts.utilities.evaluation.metrics import calculate_benchmark_metrics, calculate_answer_faithfulness, calculate_answer_relevance # Path remains same
+    from scripts.utilities.evaluation.bench_runner import run_technique_benchmark # Path remains same
     EVAL_MODULES_AVAILABLE = True
 except ImportError:
     EVAL_MODULES_AVAILABLE = False
@@ -196,7 +196,7 @@ def invoke_colbert(query: str, config: str) -> str:
         
         # Initialize pipeline
         iris_connector = get_iris_connection()
-        pipeline = ColbertRAGPipeline(
+        pipeline = ColBERTRAGPipeline(
             iris_connector=iris_connector,
             colbert_query_encoder_func=config_dict.get("colbert_query_encoder_func"),
             colbert_doc_encoder_func=config_dict.get("colbert_doc_encoder_func"),
@@ -257,7 +257,7 @@ def invoke_hyde(query: str, config: str) -> str:
         
         # Initialize pipeline
         iris_connector = get_iris_connection()
-        pipeline = HyDEPipeline(
+        pipeline = HyDERAGPipeline(
             iris_connector=iris_connector,
             embedding_func=config_dict.get("embedding_func"),
             llm_func=config_dict.get("llm_func")
@@ -603,7 +603,7 @@ def get_available_pipelines() -> str:
             "hyde": {
                 "name": "HyDE",
                 "description": "Hypothetical document embeddings",
-                "class": "HyDEPipeline"
+                "class": "HyDERAGPipeline"
             },
             "crag": {
                 "name": "CRAG",
@@ -671,8 +671,8 @@ def health_check() -> str:
         # Check legacy pipeline imports if available
         if LEGACY_IMPORTS_AVAILABLE:
             pipeline_classes = [
-                BasicRAGPipeline, ColbertRAGPipeline, GraphRAGPipeline,
-                HyDEPipeline, CRAGPipeline, NodeRAGPipeline
+                BasicRAGPipeline, ColBERTRAGPipeline, GraphRAGPipeline,
+                HyDERAGPipeline, CRAGPipeline, NodeRAGPipeline
             ]
             
             for pipeline_class in pipeline_classes:

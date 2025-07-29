@@ -3,6 +3,8 @@
 # This requirements.txt is kept for compatibility.
 # To install: make install (which uses uv sync)
 
+docker>=6.1.3
+
 # Core IRIS and ML dependencies
 intersystems-irispython==5.1.2
 sqlalchemy>=2.0.0

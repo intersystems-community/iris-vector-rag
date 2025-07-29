@@ -2,21 +2,65 @@
 
 Welcome to the Enterprise RAG Framework documentation. This directory contains comprehensive guides for understanding, configuring, and working with our production-ready RAG (Retrieval-Augmented Generation) system built on InterSystems IRIS.
 
-## Quick Start
+## 🚀 Quick Start
 
-- **New Users**: Start with [`USER_GUIDE.md`](USER_GUIDE.md) for basic usage and getting started
-- **Developers**: See the main [README.md](../README.md) for development setup and architecture overview
+**Get started in minutes with our new one-command setup:**
 
-## Available Documentation
+- **🎯 New Users**: Start with [`QUICK_START_GUIDE.md`](QUICK_START_GUIDE.md) for one-command setup with intelligent profiles
+- **📖 Detailed Usage**: See [`USER_GUIDE.md`](USER_GUIDE.md) for comprehensive usage guide and examples
+- **👨‍💻 Developers**: See [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) for development setup and Quick Start extension
 
-### Core Documentation
-- [`USER_GUIDE.md`](USER_GUIDE.md) - Getting started guide for end users
-- [`README.md`](README.md) - This documentation index
+### Quick Commands
+```bash
+make quick-start-minimal    # Development setup (50 docs, 2GB RAM, ~5 min)
+make quick-start-standard   # Production setup (500 docs, 4GB RAM, ~15 min)
+make quick-start-extended   # Enterprise setup (5000 docs, 8GB RAM, ~30 min)
+make quick-start           # Interactive wizard with profile selection
+```
 
-### Development & Operations
-- [`REPOSITORY_SYNC.md`](REPOSITORY_SYNC.md) - Repository synchronization between internal and public repositories
-- [`CONFIGURATION.md`](CONFIGURATION.md) - Configuration system and environment setup
-- [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) - Developer onboarding and contribution guide
+## 📚 Documentation Structure
+
+### 🎯 Getting Started
+| Document | Description | Audience |
+|----------|-------------|----------|
+| **[`QUICK_START_GUIDE.md`](QUICK_START_GUIDE.md)** | **NEW!** One-command setup with intelligent profiles | All Users |
+| [`USER_GUIDE.md`](USER_GUIDE.md) | Comprehensive usage guide and best practices | End Users |
+| [`EXAMPLES.md`](EXAMPLES.md) | Real-world examples and use cases | All Users |
+
+### 🔧 Development & Configuration
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) | Developer onboarding, Quick Start extension, and contribution guide | Developers |
+| [`CONFIGURATION.md`](CONFIGURATION.md) | Configuration system, Quick Start templates, and environment setup | Developers, DevOps |
+| [`API_REFERENCE.md`](API_REFERENCE.md) | Complete API documentation for Python and JavaScript | Developers |
+
+### 🏗️ Architecture & Integration
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [`MCP_INTEGRATION_GUIDE.md`](MCP_INTEGRATION_GUIDE.md) | Multi-Cloud Platform integration and MCP server creation | Architects, DevOps |
+| [`LIBRARY_CONSUMPTION_GUIDE.md`](LIBRARY_CONSUMPTION_GUIDE.md) | Library consumption framework and patterns | Developers |
+| [`LIBRARY_CONSUMPTION_FRAMEWORK_ARCHITECTURE.md`](LIBRARY_CONSUMPTION_FRAMEWORK_ARCHITECTURE.md) | Framework architecture and design patterns | Architects |
+
+### 🔄 Operations & Maintenance
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) | Common issues and solutions | All Users |
+| [`MIGRATION_GUIDE.md`](MIGRATION_GUIDE.md) | Migration strategies and upgrade paths | DevOps |
+| [`REPOSITORY_SYNC.md`](REPOSITORY_SYNC.md) | Repository synchronization between internal and public repositories | Maintainers |
+
+### 📋 Reference & Testing
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [`EXISTING_TESTS_GUIDE.md`](EXISTING_TESTS_GUIDE.md) | Testing strategy and test execution | Developers, QA |
+| [`PIPELINE_CHUNKING_ARCHITECTURE_REFACTOR.md`](PIPELINE_CHUNKING_ARCHITECTURE_REFACTOR.md) | Pipeline architecture and chunking strategies | Architects |
+| [`PIPELINE_MIGRATION_STRATEGY.md`](PIPELINE_MIGRATION_STRATEGY.md) | Pipeline migration and upgrade strategies | DevOps |
+
+### 📁 Organized Directories
+- **[`architecture/`](architecture/)** - System architecture diagrams and specifications
+- **[`design/`](design/)** - Design documents and technical specifications
+- **[`guides/`](guides/)** - Step-by-step guides and tutorials
+- **[`reference/`](reference/)** - API references and technical documentation
+- **[`project_governance/`](project_governance/)** - Project governance and status reports
 
 ## RAG Techniques Implemented
 

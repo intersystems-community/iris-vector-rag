@@ -1,0 +1,74 @@
+# Base Docker-compose template for RAG Quick Start
+# This template provides the foundation for all profiles
+
+version: '3.8'
+
+services:
+  iris:
+    image: ${IRIS_IMAGE:-intersystemsdc/iris-community:latest}
+    container_name: rag_iris
+    ports:
+      - "${IRIS_PORT:-1972}:1972"
+      - "${IRIS_WEB_PORT:-52773}:52773"
+    environment:
+      - ISC_PASSWORD=${ISC_PASSWORD:-SYS}
+      - ISC_DATA_DIRECTORY=/opt/irisapp/data
+    volumes:
+      - iris_data:/opt/irisapp/data
+      - ./config/iris:/opt/irisapp/config:ro
+    networks:
+      - rag_network
+    healthcheck:
+      test: ["CMD", "iris", "session", "iris", "-U", "USER", "##class(%SYSTEM.Process).CurrentDirectory()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  rag_app:
+    image: ${RAG_APP_IMAGE:-python:3.11-slim}
+    container_name: rag_app
+    ports:
+      - "${RAG_APP_PORT:-8000}:8000"
+    working_dir: /app
+    command: ["python", "-m", "iris_rag.cli"]
+    volumes:
+      - .:/app
+      - rag_data:/app/data
+    environment:
+      - IRIS_HOST=iris
+      - IRIS_PORT=1972
+      - IRIS_USERNAME=${IRIS_USERNAME:-demo}
+      - IRIS_PASSWORD=${IRIS_PASSWORD:-demo}
+      - IRIS_NAMESPACE=${IRIS_NAMESPACE:-USER}
+      - PYTHONPATH=/app
+      - BATCH_SIZE=${BATCH_SIZE:-32}
+      - MAX_WORKERS=${MAX_WORKERS:-4}
+      - CHUNK_SIZE=${CHUNK_SIZE:-1000}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-200}
+    depends_on:
+      iris:
+        condition: service_healthy
+    networks:
+      - rag_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+volumes:
+  iris_data:
+    driver: local
+  rag_data:
+    driver: local
+
+networks:
+  rag_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

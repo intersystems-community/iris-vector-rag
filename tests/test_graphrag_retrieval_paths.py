@@ -12,11 +12,9 @@ This test file explicitly tests different retrieval paths:
 
 import pytest
 import logging
-from unittest.mock import Mock, patch, MagicMock
-from typing import List, Dict, Any
+from unittest.mock import Mock, patch
 
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
-from iris_rag.core.models import Document
 from iris_rag.core.connection import ConnectionManager
 from iris_rag.config.manager import ConfigurationManager
 

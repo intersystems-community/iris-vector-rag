@@ -1,0 +1,100 @@
+{
+  "database": {
+    "host": "localhost",
+    "port": 1972,
+    "namespace": "USER",
+    "username": "demo",
+    "password": "demo",
+    "connection_type": "dbapi",
+    "schema": "RAG",
+    "timeout": 30
+  },
+  "embedding": {
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "device": "cpu",
+    "batch_size": 16,
+    "max_length": 256,
+    "normalize_embeddings": true,
+    "cache_dir": null
+  },
+  "llm": {
+    "provider": "openai",
+    "model_name": "gpt-3.5-turbo",
+    "api_key": null,
+    "base_url": null,
+    "temperature": 0.0,
+    "max_tokens": 500,
+    "timeout": 30
+  },
+  "chunking": {
+    "method": "fixed_size",
+    "chunk_size": 256,
+    "chunk_overlap": 25,
+    "separator": "\n\n",
+    "min_chunk_size": 50,
+    "max_chunk_size": 500
+  },
+  "retrieval": {
+    "top_k": 5,
+    "similarity_threshold": 0.1,
+    "rerank": false,
+    "rerank_model": null,
+    "diversity_threshold": 0.7,
+    "max_documents": 25
+  },
+  "evaluation": {
+    "enable_ragas": true,
+    "enable_statistical_testing": true,
+    "num_iterations": 2,
+    "parallel_execution": true,
+    "max_workers": 3,
+    "timeout_per_query": 45,
+    "save_individual_results": true
+  },
+  "output": {
+    "results_dir": "dev_ragas_results",
+    "save_results": true,
+    "create_visualizations": true,
+    "generate_report": true,
+    "export_formats": ["json", "csv"],
+    "visualization_formats": ["png"]
+  },
+  "pipelines": {
+    "BasicRAG": {
+      "enabled": true,
+      "timeout": 30,
+      "retry_attempts": 2,
+      "custom_params": {}
+    },
+    "HyDE": {
+      "enabled": true,
+      "timeout": 45,
+      "retry_attempts": 2,
+      "custom_params": {}
+    },
+    "CRAG": {
+      "enabled": true,
+      "timeout": 60,
+      "retry_attempts": 2,
+      "custom_params": {}
+    },
+    "ColBERT": {
+      "enabled": true,
+      "timeout": 90,
+      "retry_attempts": 2,
+      "custom_params": {}
+    },
+    "NodeRAG": {
+      "enabled": true,
+      "timeout": 75,
+      "retry_attempts": 2,
+      "custom_params": {}
+    },
+    "GraphRAG": {
+      "enabled": true,
+      "timeout": 100,
+      "retry_attempts": 2,
+      "custom_params": {}
+    }
+  }
+}

@@ -10,7 +10,6 @@ import os
 import sys
 import logging
 import traceback
-from typing import Dict, Any
 
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -40,7 +39,7 @@ def test_imports():
         
         # Test core pipeline imports
         try:
-            from core_pipelines.basic_rag_pipeline import BasicRAGPipeline
+            from iris_rag.pipelines.basic import BasicRAGPipeline
             logger.info("✓ BasicRAG pipeline import successful")
         except ImportError as e:
             logger.warning(f"BasicRAG pipeline import failed: {e}")

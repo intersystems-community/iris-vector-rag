@@ -12,7 +12,6 @@ from ..core.base import RAGPipeline
 from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
-from ..storage.iris import IRISStorage
 from ..embeddings.manager import EmbeddingManager
 
 logger = logging.getLogger(__name__)

@@ -6,7 +6,7 @@ for multiple backends and graceful fallback mechanisms.
 """
 
 import logging
-from typing import List, Union, Optional, Dict, Any, Callable
+from typing import List, Optional, Dict, Callable
 from ..config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)

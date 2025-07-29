@@ -17,12 +17,11 @@ SUCCESS CRITERIA:
 - 100% success rate across all techniques
 """
 
-import pytest
 import time
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from pathlib import Path
 
 # Configure logging

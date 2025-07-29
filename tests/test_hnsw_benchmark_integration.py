@@ -12,24 +12,22 @@ import pytest
 import sys
 import os
 import time
-import json
 import numpy as np
 import logging
-from typing import List, Dict, Any, Tuple
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func, get_llm_func
-from basic_rag.pipeline_final import BasicRAGPipeline # Corrected import
-from eval.metrics import (
+from iris_rag.pipelines.basic import BasicRAGPipeline
+from scripts.utilities.evaluation.metrics import (
     calculate_hnsw_performance_metrics,
     calculate_hnsw_scalability_metrics,
     calculate_hnsw_index_effectiveness_metrics,
     calculate_latency_percentiles
 )
-from eval.comparative.analysis import calculate_technique_comparison
+from scripts.utilities.evaluation.comparative.analysis import calculate_technique_comparison
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

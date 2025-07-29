@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 
-from hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
 from common.utils import Document
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def mock_llm_func():
 
 @pytest.fixture
 def hybrid_pipeline(mock_iris_connector, mock_embedding_func, mock_llm_func):
-    return HybridiFindRAGPipelineV2(mock_iris_connector, mock_embedding_func, mock_llm_func)
+    return HybridIFindRAGPipeline(mock_iris_connector, mock_embedding_func, mock_llm_func)
 
 def test_hybrid_ifind_rag_e2e_combined_retrieval(hybrid_pipeline, mock_llm_func):
     query = "What are the treatments for neurodegenerative diseases and their link to protein aggregation?"

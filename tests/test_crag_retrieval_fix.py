@@ -12,7 +12,7 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline # Corrected import path and class name
+from iris_rag.pipelines.crag import CRAGPipeline
 
 def test_crag_retrieval():
     """Test CRAG document retrieval"""
@@ -24,7 +24,7 @@ def test_crag_retrieval():
     llm_func = get_llm_func()
     
     # Create CRAG pipeline
-    crag_pipeline = CRAGPipelineV2(
+    crag_pipeline = CRAGPipeline(
         iris_connector=iris_conn,
         embedding_func=embedding_func,
         llm_func=llm_func

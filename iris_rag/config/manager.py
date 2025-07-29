@@ -1,5 +1,6 @@
 import os
 import yaml
+import logging
 from typing import Any, Optional, Dict
 
 # Define a specific exception for configuration errors
@@ -371,3 +372,164 @@ class ConfigurationManager:
         # and will need a proper implementation.
         if self.get("database:iris:host") is None and "database:iris:host" in self._schema.get("required", []):
             raise ConfigValidationError("Missing required config: database:iris:host")
+
+    def load_quick_start_template(
+        self,
+        template_name: str,
+        options: Optional[Dict[str, Any]] = None,
+        environment_variables: Optional[Dict[str, Any]] = None,
+        validation_rules: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Load and integrate a Quick Start configuration template.
+        
+        This method uses the Quick Start integration system to load a template
+        and convert it to the iris_rag configuration format. The resulting
+        configuration is merged with the current configuration.
+        
+        Args:
+            template_name: Name of the Quick Start template to load
+            options: Optional integration options (e.g., validation settings)
+            environment_variables: Optional environment variable overrides
+            validation_rules: Optional custom validation rules
+        
+        Returns:
+            Dict containing the integrated configuration
+            
+        Raises:
+            ImportError: If Quick Start integration system is not available
+            ConfigValidationError: If template integration fails
+        """
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        
+        try:
+            # Import the integration factory
+            from quick_start.config.integration_factory import IntegrationFactory
+            
+            logger.info(f"Loading Quick Start template '{template_name}' for iris_rag")
+            
+            # Create integration factory and integrate template
+            factory = IntegrationFactory()
+            result = factory.integrate_template(
+                template_name=template_name,
+                target_manager="iris_rag",
+                options=options or {},
+                environment_variables=environment_variables or {},
+                validation_rules=validation_rules or {}
+            )
+            
+            if not result.success:
+                error_msg = f"Failed to integrate Quick Start template '{template_name}': {'; '.join(result.errors)}"
+                logger.error(error_msg)
+                raise ConfigValidationError(error_msg)
+            
+            # Merge the converted configuration with current configuration
+            if result.converted_config:
+                self._merge_configuration(result.converted_config)
+                logger.info(f"Successfully integrated Quick Start template '{template_name}'")
+            
+            # Log any warnings
+            for warning in result.warnings:
+                logger.warning(f"Quick Start integration warning: {warning}")
+            
+            return result.converted_config
+            
+        except ImportError as e:
+            error_msg = f"Quick Start integration system not available: {str(e)}"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
+        except Exception as e:
+            error_msg = f"Failed to load Quick Start template '{template_name}': {str(e)}"
+            logger.error(error_msg)
+            raise ConfigValidationError(error_msg)
+    
+    def _merge_configuration(self, new_config: Dict[str, Any]):
+        """
+        Merge new configuration with existing configuration.
+        
+        This method performs a deep merge, where nested dictionaries are merged
+        recursively, and new values override existing ones.
+        
+        Args:
+            new_config: Configuration dictionary to merge
+        """
+        def deep_merge(target: Dict[str, Any], source: Dict[str, Any]):
+            """Recursively merge source into target."""
+            for key, value in source.items():
+                if key in target and isinstance(target[key], dict) and isinstance(value, dict):
+                    deep_merge(target[key], value)
+                else:
+                    target[key] = value
+        
+        deep_merge(self._config, new_config)
+    
+    def list_quick_start_templates(self) -> Dict[str, Any]:
+        """
+        List available Quick Start templates and integration options.
+        
+        Returns:
+            Dictionary containing available templates and adapter information
+            
+        Raises:
+            ImportError: If Quick Start integration system is not available
+        """
+        try:
+            from quick_start.config.integration_factory import IntegrationFactory
+            
+            factory = IntegrationFactory()
+            adapters = factory.list_available_adapters()
+            
+            return {
+                "available_adapters": adapters,
+                "target_manager": "iris_rag",
+                "supported_options": [
+                    "flatten_inheritance",
+                    "validate_schema",
+                    "ensure_compatibility",
+                    "cross_language",
+                    "test_round_trip"
+                ],
+                "integration_factory_available": True
+            }
+            
+        except ImportError:
+            return {
+                "integration_factory_available": False,
+                "error": "Quick Start integration system not available"
+            }
+    
+    def validate_quick_start_integration(self, template_name: str) -> Dict[str, Any]:
+        """
+        Validate a Quick Start template integration without applying it.
+        
+        Args:
+            template_name: Name of the template to validate
+            
+        Returns:
+            Dictionary containing validation results
+        """
+        try:
+            from quick_start.config.integration_factory import IntegrationFactory, IntegrationRequest
+            
+            factory = IntegrationFactory()
+            request = IntegrationRequest(
+                template_name=template_name,
+                target_manager="iris_rag"
+            )
+            
+            issues = factory.validate_integration_request(request)
+            
+            return {
+                "valid": len(issues) == 0,
+                "issues": issues,
+                "template_name": template_name,
+                "target_manager": "iris_rag"
+            }
+            
+        except ImportError:
+            return {
+                "valid": False,
+                "issues": ["Quick Start integration system not available"],
+                "template_name": template_name,
+                "target_manager": "iris_rag"
+            }

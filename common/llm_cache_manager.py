@@ -10,8 +10,7 @@ import hashlib
 import json
 import logging
 import time
-import warnings
-from typing import Any, Callable, Dict, Optional, Union, List
+from typing import Any, Dict, Optional, Union, List
 from dataclasses import dataclass
 
 from common.llm_cache_config import CacheConfig, load_cache_config

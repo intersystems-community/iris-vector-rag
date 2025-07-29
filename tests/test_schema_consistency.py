@@ -10,7 +10,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from common.database_schema_manager import get_schema_manager, DatabaseSchemaManager
+from common.database_schema_manager import get_schema_manager
 
 @pytest.mark.schema
 def test_schema_manager_initialization():

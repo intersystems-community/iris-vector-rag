@@ -7,7 +7,6 @@ ensuring it correctly generates token-level embeddings for queries.
 
 import pytest
 import numpy as np
-from unittest.mock import MagicMock, patch
 import sys
 import os
 
@@ -136,7 +135,7 @@ class TestColBERTQueryEncoder: # Tests below will likely fail at runtime but col
         encoder_func = get_colbert_query_encoder_func(mock=True)
         long_query = "This is a very long query that exceeds the maximum length"
         
-        token_embeddings = encoder.encode(long_query)
+        token_embeddings = encoder_func(long_query)
         
         # Should be truncated to max_query_length
         assert len(token_embeddings) <= 5

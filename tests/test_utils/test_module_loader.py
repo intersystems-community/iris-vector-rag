@@ -7,7 +7,6 @@ following TDD principles to ensure robust dynamic module loading.
 
 import pytest
 from unittest.mock import Mock, patch
-from typing import Type
 
 from iris_rag.utils.module_loader import ModuleLoader
 from iris_rag.core.exceptions import ModuleLoadingError

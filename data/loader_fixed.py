@@ -9,7 +9,7 @@ import logging
 import time
 import json
 import numpy as np
-from typing import List, Dict, Any, Generator, Optional, Tuple, Callable
+from typing import List, Dict, Any, Optional, Tuple, Callable
 import os
 import sys
 
@@ -289,7 +289,6 @@ def process_and_load_documents(
     db_config: Optional[Dict[str, Any]] = None, # Added db_config parameter
     limit: int = 1000,
     batch_size: int = 50,
-    use_mock: bool = False
 ) -> Dict[str, Any]:
     """
     Process PMC XML files and load them into IRIS database with comprehensive error handling.
@@ -300,7 +299,7 @@ def process_and_load_documents(
     conn_provided = connection is not None
     if not connection:
         # Pass db_config to get_iris_connection
-        connection = get_iris_connection(config=db_config, use_mock=use_mock)
+        connection = get_iris_connection(config=db_config)
         if not connection:
             return {
                 "success": False,

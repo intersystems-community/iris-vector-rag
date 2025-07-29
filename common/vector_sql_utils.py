@@ -28,7 +28,7 @@ For more details on these limitations, see docs/IRIS_SQL_VECTOR_OPERATIONS.md
 
 import logging
 import re
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Tuple
 
 logger = logging.getLogger(__name__)
 

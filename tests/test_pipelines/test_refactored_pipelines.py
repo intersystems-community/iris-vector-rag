@@ -9,7 +9,7 @@ This module tests that all refactored pipelines:
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 from iris_rag.core.models import Document
 from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.pipelines.noderag import NodeRAGPipeline
@@ -36,7 +36,18 @@ def mock_connection_manager():
 def mock_config_manager():
     """Mock configuration manager for testing."""
     mock_manager = Mock()
-    mock_manager.get.return_value = {}
+    # Ensure get() returns proper values, not Mock objects
+    def mock_get(key, default=None):
+        config_map = {
+            'pipelines:crag:top_k': 5,
+            'pipelines:noderag:top_k': 5,
+            'pipelines:graphrag:top_k': 5,
+            'pipelines:hybrid_ifind:top_k': 5,
+            'pipelines:colbert:top_k': 5,
+        }
+        return config_map.get(key, default if default is not None else {})
+    
+    mock_manager.get.side_effect = mock_get
     mock_manager.get_embedding_config.return_value = {'model': 'test', 'dimension': 384}
     mock_manager.get_vector_index_config.return_value = {'type': 'HNSW'}
     return mock_manager
@@ -233,6 +244,8 @@ class TestHybridIFindRAGPipeline:
     
     def test_hybrid_ifind_execute_returns_documents(self, mock_connection_manager, mock_config_manager, mock_vector_store):
         """Test HybridIFindRAG execute method returns Document objects."""
+        from iris_rag.core.models import Document
+        
         with patch('iris_rag.pipelines.hybrid_ifind.IRISStorage'), \
              patch('iris_rag.pipelines.hybrid_ifind.EmbeddingManager') as mock_em:
             
@@ -240,20 +253,20 @@ class TestHybridIFindRAGPipeline:
             mock_embedding_manager.embed_text.return_value = [0.1, 0.2, 0.3]
             mock_em.return_value = mock_embedding_manager
             
+            # Mock the vector store's hybrid_search method to return proper format
+            test_doc1 = Document(page_content="Content 1", metadata={"doc_id": "test1", "title": "Test 1"})
+            test_doc2 = Document(page_content="Content 2", metadata={"doc_id": "test2", "title": "Test 2"})
+            mock_vector_store.hybrid_search.return_value = [
+                (test_doc1, 0.9),
+                (test_doc2, 0.8)
+            ]
+            
             pipeline = HybridIFindRAGPipeline(
                 connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager,
                 vector_store=mock_vector_store,
                 llm_func=lambda x: "test answer"
             )
-            
-            # Mock the search methods to return test data
-            pipeline._vector_search = Mock(return_value=[
-                {"doc_id": "test1", "title": "Test 1", "content": "Content 1", "vector_score": 0.9, "search_type": "vector"}
-            ])
-            pipeline._ifind_search = Mock(return_value=[
-                {"doc_id": "test2", "title": "Test 2", "content": "Content 2", "ifind_score": 0.8, "search_type": "ifind"}
-            ])
             
             result = pipeline.execute("test query")
             
@@ -273,38 +286,48 @@ class TestHybridIFindRAGPipeline:
 class TestStandardizedInterface:
     """Test that all pipelines conform to standardized interface."""
     
-    @pytest.mark.parametrize("pipeline_class", [
-        CRAGPipeline,
-        NodeRAGPipeline, 
-        GraphRAGPipeline,
-        HybridIFindRAGPipeline
-    ])
-    def test_all_pipelines_have_execute_method(self, pipeline_class, mock_connection_manager, mock_config_manager):
-        """Test all pipelines have execute method."""
-        with patch.multiple(
-            'iris_rag.pipelines.crag',
-            RetrievalEvaluator=Mock()
-        ), patch.multiple(
-            'iris_rag.pipelines.noderag',
-            EmbeddingManager=Mock()
-        ), patch.multiple(
-            'iris_rag.pipelines.graphrag',
-            IRISStorage=Mock(),
-            EmbeddingManager=Mock(),
-            SchemaManager=Mock()
-        ), patch.multiple(
-            'iris_rag.pipelines.hybrid_ifind',
-            IRISStorage=Mock(),
-            EmbeddingManager=Mock()
-        ), patch('common.utils.get_llm_func', return_value=lambda x: "test"):
-            
-            pipeline = pipeline_class(
+    def test_crag_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
+        """Test CRAG pipeline has execute method."""
+        with patch('iris_rag.pipelines.crag.RetrievalEvaluator'):
+            pipeline = CRAGPipeline(
                 connection_manager=mock_connection_manager,
                 config_manager=mock_config_manager
             )
-            
-            assert hasattr(pipeline, 'execute')
-            assert callable(getattr(pipeline, 'execute'))
+        assert hasattr(pipeline, 'execute')
+        assert callable(getattr(pipeline, 'execute'))
+
+    def test_noderag_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
+        """Test NodeRAG pipeline has execute method."""
+        with patch('iris_rag.pipelines.noderag.EmbeddingManager'):
+            pipeline = NodeRAGPipeline(
+                connection_manager=mock_connection_manager,
+                config_manager=mock_config_manager
+            )
+        assert hasattr(pipeline, 'execute')
+        assert callable(getattr(pipeline, 'execute'))
+
+    def test_graphrag_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
+        """Test GraphRAG pipeline has execute method."""
+        with patch('iris_rag.pipelines.graphrag.IRISStorage'), \
+             patch('iris_rag.pipelines.graphrag.EmbeddingManager'), \
+             patch('iris_rag.pipelines.graphrag.SchemaManager'):
+            pipeline = GraphRAGPipeline(
+                connection_manager=mock_connection_manager,
+                config_manager=mock_config_manager
+            )
+        assert hasattr(pipeline, 'execute')
+        assert callable(getattr(pipeline, 'execute'))
+
+    def test_hybrid_ifind_pipeline_has_execute_method(self, mock_connection_manager, mock_config_manager):
+        """Test HybridIFindRAG pipeline has execute method."""
+        with patch('iris_rag.pipelines.hybrid_ifind.IRISStorage'), \
+             patch('iris_rag.pipelines.hybrid_ifind.EmbeddingManager'):
+            pipeline = HybridIFindRAGPipeline(
+                connection_manager=mock_connection_manager,
+                config_manager=mock_config_manager
+            )
+        assert hasattr(pipeline, 'execute')
+        assert callable(getattr(pipeline, 'execute'))
     
     def test_evaluation_framework_compatibility(self, mock_connection_manager, mock_config_manager, mock_vector_store):
         """Test that pipelines work with evaluation framework's standardized call."""
