@@ -19,7 +19,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from common.iris_connector import get_iris_connection # Updated import
-from src.working.colbert.doc_encoder import get_colbert_doc_encoder # Updated import
+from common.utils import get_colbert_doc_encoder_func # Fixed import to use centralized function
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

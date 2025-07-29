@@ -68,27 +68,22 @@ try:
     import common.embedding_utils as embedding_utils_module
     from common.db_init import initialize_database
 except ImportError as e:
-    logger = logging.getLogger("rag_benchmarks")
-    logger.warning(f"Error importing from common module: {e}")
-    logger.warning("Defining mock implementations for required functions")
+    # Import security configuration to handle fallback behavior
+    try:
+        from common.security_config import get_security_validator, ImportValidationError
+        security_validator = get_security_validator()
+        security_validator.validate_import("common.iris_dbapi_connector", e)
+    except ImportError:
+        # If security config is not available, fail fast
+        logger.error(f"CRITICAL: Failed to import required common modules: {e}")
+        logger.error("SECURITY: Cannot proceed without proper database connectivity")
+        sys.exit(1)
     
-    # Mock implementations
-    def get_iris_connection(use_mock=True, use_testcontainer=False):
-        logger.warning("Using mock IRIS connection due to import error")
-        return None
-        
-    # Mock for common.embedding_utils module if it failed to import
-    class MockEmbeddingUtils:
-        def get_embedding_func(self, provider="stub"):
-            logger.warning("Using stub embedding_utils.get_embedding_func due to import error")
-            def stub_embedding_func(text):
-                return [0.0] * 384  # Return a vector of zeros
-            return stub_embedding_func
-    embedding_utils_module = MockEmbeddingUtils() # Assign to the alias used in the try block
-        
-    def initialize_database(conn, force_recreate=False):
-        logger.warning("Mock database initialization (no-op)")
-        return True
+    # If we reach here, security validation passed but we still need the imports
+    logger.error(f"CRITICAL: Failed to import required common modules: {e}")
+    logger.error("Required modules: common.iris_dbapi_connector, common.embedding_utils, common.db_init")
+    logger.error("Please ensure all dependencies are properly installed and accessible")
+    sys.exit(1)
 
 # Import evaluation modules
 try:
@@ -133,42 +128,22 @@ try:
                 "p99": float(p99)
             }
 except ImportError as e:
-    logger = logging.getLogger("rag_benchmarks")
-    logger.warning(f"Error importing evaluation modules: {e}")
-    logger.warning("Defining mock implementations for evaluation functions")
+    # Import security configuration to handle fallback behavior
+    try:
+        from common.security_config import get_security_validator, ImportValidationError
+        security_validator = get_security_validator()
+        security_validator.validate_import("scripts.utilities.evaluation", e)
+    except ImportError:
+        # If security config is not available, fail fast
+        logger.error(f"CRITICAL: Failed to import required evaluation modules: {e}")
+        logger.error("SECURITY: Cannot proceed without proper evaluation functionality")
+        sys.exit(1)
     
-    # Mock implementations for evaluation functions
-    def run_all_techniques_benchmark(queries, techniques, output_path=None):
-        logger.warning("Using mock benchmark runner due to import error")
-        return {tech: {"metrics": {"mock": True}} for tech in techniques}
-        
-    def load_benchmark_results(input_path):
-        logger.warning("Using mock benchmark loader due to import error")
-        return {}
-        
-    def generate_combined_report(benchmarks, output_dir=None, dataset_name="medical"):
-        logger.warning("Using mock report generator due to import error")
-        return {"json": "mock_results.json", "markdown": "mock_report.md", "charts": []}
-        
-    def calculate_context_recall(results, queries):
-        return 0.5  # Mock value
-        
-    def calculate_precision_at_k(results, queries, k=5):
-        return 0.5  # Mock value
-        
-    def calculate_answer_faithfulness(results, queries):
-        return 0.5  # Mock value
-        
-    def calculate_answer_relevance(results, queries):
-        return 0.5  # Mock value
-        
-    def calculate_throughput(num_queries, total_time_sec):
-        return num_queries / max(1, total_time_sec)
-        
-    def calculate_latency_percentiles(latencies):
-        if not latencies:
-            return {"p50": 0.0, "p95": 0.0, "p99": 0.0}
-        return {"p50": sum(latencies)/len(latencies), "p95": max(latencies), "p99": max(latencies)}
+    # If we reach here, security validation passed but we still need the imports
+    logger.error(f"CRITICAL: Failed to import required evaluation modules: {e}")
+    logger.error("Required modules: scripts.utilities.evaluation.bench_runner, scripts.utilities.evaluation.metrics")
+    logger.error("Please ensure all evaluation dependencies are properly installed and accessible")
+    sys.exit(1)
 
 # Import pipeline classes
 try:
@@ -182,31 +157,22 @@ try:
         create_colbert_semantic_encoder # Added for ColBERT wrapper
     )
 except ImportError as e:
-    logger = logging.getLogger("rag_benchmarks")
-    logger.warning(f"Error importing pipeline classes: {e}")
-    logger.warning("Using mock pipeline classes")
+    # Import security configuration to handle fallback behavior
+    try:
+        from common.security_config import get_security_validator, ImportValidationError
+        security_validator = get_security_validator()
+        security_validator.validate_import("iris_rag.pipelines", e)
+    except ImportError:
+        # If security config is not available, fail fast
+        logger.error(f"CRITICAL: Failed to import required pipeline classes: {e}")
+        logger.error("SECURITY: Cannot proceed without proper RAG pipeline implementations")
+        sys.exit(1)
     
-    # Define mock pipeline classes
-    class MockPipeline:
-        def __init__(self, iris_connector=None, embedding_func=None, llm_func=None):
-            self.iris_connector = iris_connector
-            self.embedding_func = embedding_func
-            self.llm_func = llm_func
-            
-        def run(self, query, **kwargs):
-            return {
-                "query": query,
-                "answer": f"Mock answer for: {query}",
-                "retrieved_documents": []
-            }
-    
-    # Use the same mock class for all pipelines
-    BasicRAGPipeline = MockPipeline
-    HyDERAGPipeline = MockPipeline
-    ColBERTRAGPipeline = MockPipeline
-    CRAGPipeline = MockPipeline
-    NodeRAGPipeline = MockPipeline
-    GraphRAGPipeline = MockPipeline
+    # If we reach here, security validation passed but we still need the imports
+    logger.error(f"CRITICAL: Failed to import required pipeline classes: {e}")
+    logger.error("Required modules: iris_rag.pipelines with BasicRAGPipeline, HyDERAGPipeline, etc.")
+    logger.error("Please ensure all RAG pipeline dependencies are properly installed and accessible")
+    sys.exit(1)
 
 # Constants
 MIN_DOCUMENT_COUNT = 1000

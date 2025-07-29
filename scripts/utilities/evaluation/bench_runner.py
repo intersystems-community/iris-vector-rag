@@ -361,8 +361,8 @@ class BenchmarkRunner:
                 llm_func=self.llm_func
             )
             return pipeline.run(query=query)
-        except ImportError:
-            return self._mock_technique_result(query, "basic_rag")
+        except ImportError as e:
+            return self._handle_import_error(query, "basic_rag", e)
     
     def _run_colbert(self, query: str) -> Dict[str, Any]:
         """Run ColBERT pipeline"""
@@ -375,8 +375,8 @@ class BenchmarkRunner:
                 llm_func=self.llm_func
             )
             return pipeline.run(query=query)
-        except ImportError:
-            return self._mock_technique_result(query, "colbert")
+        except ImportError as e:
+            return self._handle_import_error(query, "colbert", e)
     
     def _run_graphrag(self, query: str) -> Dict[str, Any]:
         """Run GraphRAG pipeline"""
@@ -388,8 +388,8 @@ class BenchmarkRunner:
                 llm_func=self.llm_func
             )
             return pipeline.run(query=query)
-        except ImportError:
-            return self._mock_technique_result(query, "graphrag")
+        except ImportError as e:
+            return self._handle_import_error(query, "graphrag", e)
     
     def _run_noderag(self, query: str) -> Dict[str, Any]:
         """Run NodeRAG pipeline"""
@@ -401,8 +401,8 @@ class BenchmarkRunner:
                 llm_func=self.llm_func
             )
             return pipeline.run(query=query)
-        except ImportError:
-            return self._mock_technique_result(query, "noderag")
+        except ImportError as e:
+            return self._handle_import_error(query, "noderag", e)
     
     def _run_hyde(self, query: str) -> Dict[str, Any]:
         """Run HyDE pipeline"""
@@ -414,8 +414,8 @@ class BenchmarkRunner:
                 llm_func=self.llm_func
             )
             return pipeline.run(query=query)
-        except ImportError:
-            return self._mock_technique_result(query, "hyde")
+        except ImportError as e:
+            return self._handle_import_error(query, "hyde", e)
     
     def _run_crag(self, query: str) -> Dict[str, Any]:
         """Run CRAG pipeline"""
@@ -427,11 +427,31 @@ class BenchmarkRunner:
                 llm_func=self.llm_func
             )
             return pipeline.run(query=query)
-        except ImportError:
-            return self._mock_technique_result(query, "crag")
+        except ImportError as e:
+            return self._handle_import_error(query, "crag", e)
+    
+    def _handle_import_error(self, query: str, technique: str, import_error: Exception) -> Dict[str, Any]:
+        """Handle import errors with security validation"""
+        try:
+            from common.security_config import get_security_validator, SilentFallbackError
+            security_validator = get_security_validator()
+            
+            # Check if fallback is allowed
+            security_validator.check_fallback_allowed(f"{technique}_pipeline", "mock_result")
+            
+            # If we reach here, fallback is allowed (development/testing mode)
+            logger.warning(f"SECURITY AUDIT: Using mock result for {technique} due to import error: {import_error}")
+            return self._mock_technique_result(query, technique)
+            
+        except (ImportError, SilentFallbackError):
+            # Security validation failed or not available - fail fast
+            logger.error(f"CRITICAL: Failed to import {technique} pipeline: {import_error}")
+            logger.error(f"SECURITY: Silent fallback disabled for {technique}")
+            raise ImportError(f"Required pipeline '{technique}' not available and fallback disabled") from import_error
     
     def _mock_technique_result(self, query: str, technique: str) -> Dict[str, Any]:
-        """Generate mock result for techniques that can't be imported"""
+        """Generate mock result for techniques that can't be imported (development/testing only)"""
+        logger.warning(f"SECURITY AUDIT: Generating mock result for {technique}")
         return {
             "query": query,
             "answer": f"Mock {technique} answer for: {query}",
@@ -440,5 +460,6 @@ class BenchmarkRunner:
                 for i in range(3)
             ],
             "technique": technique,
-            "mock": True
+            "mock": True,
+            "security_warning": "This is a mock result - not suitable for production use"
         }

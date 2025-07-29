@@ -10,6 +10,9 @@ This script handles:
 3. Staging and committing changes to public repository
 4. Pushing to public GitHub repository
 
+Note: Some files like uv.lock are excluded from sync because they are ignored by the target
+repository's .gitignore file, which would cause git staging failures during the sync process.
+
 Usage:
     python scripts/sync_to_public.py --sync-all
     python scripts/sync_to_public.py --sync-all --push
@@ -445,85 +448,143 @@ def get_default_config() -> SyncConfig:
     
     # Define files to synchronize FROM internal TO public
     files_to_sync = [
+        # Core project files
         {"source": "README.md", "target": "README.md"},
-        {"source": "docs/README.md", "target": "docs/README.md"},
-        {"source": "docs/MCP_INTEGRATION_GUIDE.md", "target": "docs/MCP_INTEGRATION_GUIDE.md"},
         {"source": "pyproject.toml", "target": "pyproject.toml"},
         {"source": "setup.py", "target": "setup.py"},
         {"source": "requirements.txt", "target": "requirements.txt"},
+        
+        # Critical build and dependency files
+        {"source": "Makefile", "target": "Makefile"},
+        {"source": "pytest.ini", "target": "pytest.ini"},
+        # Note: uv.lock is excluded because it's ignored by the target repository's .gitignore
+        # This prevents git staging failures during the sync process
+        
+        # Docker and container files
         {"source": "docker-compose.yml", "target": "docker-compose.yml"},
-        {"source": "Dockerfile", "target": "Dockerfile"},
-        {"source": "Dockerfile_mini", "target": "Dockerfile_mini"},
         {"source": ".dockerignore", "target": ".dockerignore"},
+        
+        # Git configuration
         {"source": ".gitignore", "target": ".gitignore"},
         {"source": ".gitattributes", "target": ".gitattributes"},
+        
+        # Environment and setup scripts
         {"source": "activate_env.sh", "target": "activate_env.sh"},
-        {"source": "App.Installer.cls", "target": "App.Installer.cls"},
-        {"source": "iris.script", "target": "iris.script"},
         {"source": "module.xml", "target": "module.xml"},
     ]
     
     # Define directories to synchronize FROM internal TO public
     directories_to_sync = [
+        # Core library directories
         {
             "source": "common/",
             "target": "common/",
-            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "CLEANUP_SUMMARY.md"]
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "CLEANUP_SUMMARY.md", "temp_*"]
         },
         {
             "source": "iris_rag/",
             "target": "iris_rag/",
-            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log"]
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*"]
         },
         {
             "source": "rag_templates/",
             "target": "rag_templates/",
-            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log"]
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*"]
         },
+        
+        # Configuration and setup
         {
             "source": "config/",
             "target": "config/",
-            "exclude_patterns": ["*.pyc", "__pycache__/", "monitoring.json", "sync_config.yaml"]
+            "exclude_patterns": ["*.pyc", "__pycache__/", "monitoring.json", "sync_config.yaml", "*.key", "*.secret"]
+        },
+        
+        # Complete documentation directory (instead of just two files)
+        {
+            "source": "docs/",
+            "target": "docs/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp"]
+        },
+        
+        # Critical missing directories
+        {
+            "source": "quick_start/",
+            "target": "quick_start/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp"]
         },
         {
-            "source": "schema/",
-            "target": "schema/",
-            "exclude_patterns": ["*.pyc", "__pycache__/"]
+            "source": "tools/",
+            "target": "tools/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp"]
         },
+        {
+            "source": "benchmarks/",
+            "target": "benchmarks/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*", "results_*", "*.tmp"]
+        },
+        {
+            "source": "examples/",
+            "target": "examples/",
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp"]
+        },
+        
+        # Scripts directory with comprehensive filtering
+        {
+            "source": "scripts/",
+            "target": "scripts/",
+            "exclude_patterns": [
+                "*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp",
+                "sync_to_public.py",  # Don't sync the sync script itself
+                "internal_*",         # Exclude internal-only scripts
+                "private_*",          # Exclude private scripts
+                "*.secret",           # Exclude secret files
+                "*.key"               # Exclude key files
+            ]
+        },
+        
+        # Data directory with better filtering
         {
             "source": "data/",
             "target": "data/",
-            "exclude_patterns": ["*.pyc", "__pycache__/", "pmc_oas_downloaded/", "pmc_100k_downloaded/"]
+            "exclude_patterns": [
+                "*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp",
+                "pmc_oas_downloaded/", "pmc_100k_downloaded/",
+                "pmc_enterprise_download.log", "*.key", "*.secret",
+                "test_pmc_downloads/"  # Exclude test downloads
+            ]
         },
+        
+        # Evaluation directory
         {
             "source": "eval/",
             "target": "eval/",
-            "exclude_patterns": ["*.pyc", "__pycache__/"]
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp"]
         },
+        
+        # Node.js components
         {
             "source": "nodejs/",
             "target": "nodejs/",
-            "exclude_patterns": ["node_modules/", "*.log", "coverage/"]
+            "exclude_patterns": ["node_modules/", "*.log", "coverage/", "temp_*", "*.tmp"]
         },
+        
+        # ObjectScript components
         {
             "source": "objectscript/",
             "target": "objectscript/",
-            "exclude_patterns": ["*.pyc", "__pycache__/"]
+            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp"]
         },
-        {
-            "source": "src/",
-            "target": "src/",
-            "exclude_patterns": ["*.pyc", "__pycache__/"]
-        },
+        
+        # Tests with comprehensive filtering
         {
             "source": "tests/",
             "target": "tests/",
-            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "reports/", "working/", "temp_*/", "validation/"]
-        },
-        {
-            "source": "scripts/examples/",
-            "target": "scripts/examples/",
-            "exclude_patterns": ["*.pyc", "__pycache__/"]
+            "exclude_patterns": [
+                "*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp",
+                "reports/", "working/", "validation/",
+                "test_output/", "*.secret", "*.key",
+                "experimental/*/temp_*"  # Exclude temp files in experimental
+            ]
         },
     ]
     

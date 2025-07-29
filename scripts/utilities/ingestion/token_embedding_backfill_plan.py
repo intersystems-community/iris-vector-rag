@@ -278,7 +278,7 @@ if project_root_generated not in sys.path:
     sys.path.insert(0, project_root_generated)
 
 from common.iris_connector import get_iris_connection # Updated import
-from src.working.colbert.doc_encoder import ColBERTDocumentEncoder # Updated import
+from common.utils import get_colbert_doc_encoder_func # Fixed import to use centralized function
 import time
 from datetime import datetime
 

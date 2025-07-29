@@ -22,18 +22,9 @@ from iris_rag.config.manager import ConfigurationManager
 # Import proven vector formatting utilities
 from common.vector_format_fix import format_vector_for_iris, create_iris_vector_string, validate_vector_for_iris, VectorFormatError
 # Try to import the real ColBERT encoder first, fall back to mock
-try:
-    import sys
-    import os
-    # Add the archive colbert path to sys.path
-    archive_colbert_path = os.path.join(os.path.dirname(__file__), '..', 'archive', 'colbert')
-    if archive_colbert_path not in sys.path:
-        sys.path.insert(0, archive_colbert_path)
-    from doc_encoder import ColBERTDocEncoder
-    REAL_COLBERT_AVAILABLE = True
-except ImportError:
-    from common.utils import get_colbert_doc_encoder_func
-    REAL_COLBERT_AVAILABLE = False
+# Use centralized ColBERT functions from common.utils
+from common.utils import get_colbert_doc_encoder_func
+REAL_COLBERT_AVAILABLE = True  # The centralized function handles fallbacks internally
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

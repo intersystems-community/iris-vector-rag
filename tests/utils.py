@@ -18,20 +18,35 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from common.utils import Document
-try:
-    from colbert.doc_encoder import generate_token_embeddings_for_documents as colbert_generate_embeddings
-except ImportError:
-    # Fallback for different import paths
-    try:
-        from src.working.colbert.doc_encoder import generate_token_embeddings_for_documents as colbert_generate_embeddings
-    except ImportError:
-        # Mock function if ColBERT is not available
-        def colbert_generate_embeddings(documents, batch_size=10, model_name="colbert-ir/colbertv2.0", device="cpu", mock=False):
-            logger.warning("ColBERT doc encoder not available, using mock implementation (384-dim)")
-            # Ensure mock embeddings match the expected 384 dimension
-            mock_embedding_dim = 384
-            return [{"id": doc["id"], "tokens": ["mock", "tokens"], "token_embeddings": [[0.1]*mock_embedding_dim, [0.2]*mock_embedding_dim]} for doc in documents]
+from common.utils import Document, get_colbert_doc_encoder_func
+
+def colbert_generate_embeddings(documents, batch_size=10, model_name="colbert-ir/colbertv2.0", device="cpu", mock=False):
+    """
+    Generate ColBERT token embeddings for documents using the proper common.utils interface.
+    
+    This function now uses get_colbert_doc_encoder_func from common.utils instead of
+    the broken import fallback pattern that was masking import errors.
+    """
+    # Handle mock parameter by using stub model name to force mock behavior
+    if mock:
+        encoder = get_colbert_doc_encoder_func(model_name="stub_colbert_doc_encoder")
+    else:
+        encoder = get_colbert_doc_encoder_func(model_name=model_name)
+    results = []
+    for doc in documents:
+        text = doc.get("content")
+        tokens_and_embeddings = encoder(text)
+        
+        # Convert from List[Tuple[str, List[float]]] to expected format
+        tokens = [token for token, _ in tokens_and_embeddings]
+        token_embeddings = [embedding for _, embedding in tokens_and_embeddings]
+        
+        results.append({
+            "id": doc["id"],
+            "tokens": tokens,
+            "token_embeddings": token_embeddings
+        })
+    return results
 
 logger = logging.getLogger(__name__)
 

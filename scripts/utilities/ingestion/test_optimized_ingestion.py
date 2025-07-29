@@ -19,9 +19,8 @@ from data.loader_optimized_performance import process_and_load_documents_optimiz
 from common.iris_connector import get_iris_connection
 from common.embedding_utils import get_embedding_model
 
-# Import ColBERT encoder
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'colbert'))
-from doc_encoder import ColBERTDocEncoder
+# Import ColBERT encoder from centralized utils
+from common.utils import get_colbert_doc_encoder_func
 
 def setup_test_logging():
     """Set up logging for the test."""

@@ -16,11 +16,24 @@ from dataclasses import dataclass
 try:
     from iris_rag.monitoring.health_monitor import HealthMonitor, HealthCheckResult
     from iris_rag.config.manager import ConfigurationManager
-except ImportError:
-    # Fallback for testing - these will be mocked
-    HealthMonitor = None
-    HealthCheckResult = None
-    ConfigurationManager = None
+except ImportError as e:
+    # Import security configuration to handle fallback behavior
+    try:
+        from common.security_config import get_security_validator, SilentFallbackError
+        security_validator = get_security_validator()
+        security_validator.check_fallback_allowed("health_monitoring", "mock_classes")
+        
+        # If we reach here, fallback is allowed (development/testing mode)
+        logger.warning(f"SECURITY AUDIT: Using mock health monitoring classes due to import error: {e}")
+        HealthMonitor = None
+        HealthCheckResult = None
+        ConfigurationManager = None
+        
+    except (ImportError, SilentFallbackError):
+        # Security validation failed or not available - fail fast
+        logger.error(f"CRITICAL: Failed to import required health monitoring components: {e}")
+        logger.error("SECURITY: Cannot proceed without proper health monitoring infrastructure")
+        raise ImportError("Required health monitoring components not available and fallback disabled") from e
 
 # Import Quick Start components
 from quick_start.cli.wizard import QuickStartCLIWizard
