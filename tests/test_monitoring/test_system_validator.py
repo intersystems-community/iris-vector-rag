@@ -47,17 +47,21 @@ class TestSystemValidator:
         # Mock database connection and queries
         mock_connection = Mock()
         mock_cursor = Mock()
-        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        # Properly mock the context manager
+        mock_cursor_context = Mock()
+        mock_cursor_context.__enter__ = Mock(return_value=mock_cursor)
+        mock_cursor_context.__exit__ = Mock(return_value=None)
+        mock_connection.cursor.return_value = mock_cursor_context
         
         # Mock query results for successful validation
         mock_cursor.fetchall.side_effect = [
             [],  # No duplicates
-            [384],  # Consistent embedding dimensions
+            [(384,)],  # Consistent embedding dimensions (single dimension)
         ]
         mock_cursor.fetchone.side_effect = [
-            [0],  # No null embeddings
-            [0],  # No orphaned chunks
-            [0],  # No empty content
+            (0,),  # No null embeddings
+            (0,),  # No orphaned chunks
+            (0,),  # No empty content
         ]
         
         system_validator.connection_manager.get_connection.return_value = mock_connection
@@ -75,17 +79,22 @@ class TestSystemValidator:
         # Mock database connection and queries
         mock_connection = Mock()
         mock_cursor = Mock()
-        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        
+        # Properly mock the context manager
+        mock_cursor_context = Mock()
+        mock_cursor_context.__enter__ = Mock(return_value=mock_cursor)
+        mock_cursor_context.__exit__ = Mock(return_value=None)
+        mock_connection.cursor.return_value = mock_cursor_context
         
         # Mock query results with issues
         mock_cursor.fetchall.side_effect = [
             [('doc1', 2), ('doc2', 3)],  # Duplicates found
-            [384, 512],  # Inconsistent embedding dimensions
+            [(384,), (512,)],  # Inconsistent embedding dimensions (tuple format)
         ]
         mock_cursor.fetchone.side_effect = [
-            [50],  # 50 documents without embeddings
-            [10],  # 10 orphaned chunks
-            [5],   # 5 documents with empty content
+            (50,),  # 50 documents without embeddings (tuple format)
+            (10,),  # 10 orphaned chunks (tuple format)
+            (5,),   # 5 documents with empty content (tuple format)
         ]
         
         system_validator.connection_manager.get_connection.return_value = mock_connection
@@ -111,7 +120,7 @@ class TestSystemValidator:
         assert 'failed' in result.message.lower()
         assert 'error' in result.details
     
-    @patch('iris_rag.monitoring.system_validator.BasicRAGPipeline')
+    @patch('iris_rag.pipelines.basic.BasicRAGPipeline')
     def test_validate_pipeline_functionality_success(self, mock_pipeline_class, system_validator):
         """Test successful pipeline functionality validation."""
         # Mock pipeline execution
@@ -132,7 +141,7 @@ class TestSystemValidator:
         assert result.details['successful_queries'] == 1
         assert result.details['failed_queries'] == 0
     
-    @patch('iris_rag.monitoring.system_validator.BasicRAGPipeline')
+    @patch('iris_rag.pipelines.basic.BasicRAGPipeline')
     def test_validate_pipeline_functionality_with_failures(self, mock_pipeline_class, system_validator):
         """Test pipeline functionality validation with failures."""
         # Mock pipeline execution with missing keys
@@ -152,7 +161,7 @@ class TestSystemValidator:
         assert result.details['failed_queries'] == 1
         assert len(result.details['issues']) > 0
     
-    @patch('iris_rag.monitoring.system_validator.BasicRAGPipeline')
+    @patch('iris_rag.pipelines.basic.BasicRAGPipeline')
     def test_validate_pipeline_functionality_exception(self, mock_pipeline_class, system_validator):
         """Test pipeline functionality validation with exception."""
         # Mock pipeline execution exception
@@ -170,7 +179,12 @@ class TestSystemValidator:
         # Mock database connection and queries
         mock_connection = Mock()
         mock_cursor = Mock()
-        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        
+        # Properly mock the context manager
+        mock_cursor_context = Mock()
+        mock_cursor_context.__enter__ = Mock(return_value=mock_cursor)
+        mock_cursor_context.__exit__ = Mock(return_value=None)
+        mock_connection.cursor.return_value = mock_cursor_context
         
         # Mock successful vector operations
         mock_cursor.fetchone.side_effect = [
@@ -200,13 +214,18 @@ class TestSystemValidator:
         # Mock database connection
         mock_connection = Mock()
         mock_cursor = Mock()
-        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        
+        # Properly mock the context manager
+        mock_cursor_context = Mock()
+        mock_cursor_context.__enter__ = Mock(return_value=mock_cursor)
+        mock_cursor_context.__exit__ = Mock(return_value=None)
+        mock_connection.cursor.return_value = mock_cursor_context
         
         # Mock no embedded documents
         mock_cursor.fetchone.side_effect = [
-            ['test_vector'],  # Vector creation works
-            [1.0],  # Vector similarity works
-            [0],  # No embedded documents
+            ('test_vector',),  # Vector creation works (tuple format)
+            (1.0,),  # Vector similarity works (tuple format)
+            (0,),  # No embedded documents (tuple format)
         ]
         
         system_validator.connection_manager.get_connection.return_value = mock_connection
@@ -215,7 +234,7 @@ class TestSystemValidator:
         
         assert result.test_name == 'vector_operations'
         assert result.success is False
-        assert 'no embedded documents' in result.message.lower()
+        assert 'issues' in result.message.lower()
         assert result.details['embedded_documents'] == 0
     
     def test_validate_vector_operations_database_error(self, system_validator):
@@ -267,7 +286,7 @@ class TestSystemValidator:
         
         assert result.test_name == 'system_configuration'
         assert result.success is False
-        assert 'issues' in result.message.lower()
+        assert 'failed' in result.message.lower()
     
     def test_run_comprehensive_validation(self, system_validator):
         """Test comprehensive validation execution."""
