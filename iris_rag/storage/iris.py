@@ -14,7 +14,6 @@ from ..config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
 
-
 def _convert_clob_to_string(value: Any) -> str:
     """
     Convert CLOB/IRISInputStream objects to strings.
@@ -103,8 +102,27 @@ class IRISStorage:
         try:
             # Check if table exists and print columns for diagnostics
             try:
-                cursor.execute(f"SELECT * FROM {self.table_name} WHERE 1=0") # Check existence without fetching data
-                logger.info(f"Table {self.table_name} already exists. Columns: {[desc[0] for desc in cursor.description]}")
+                required_columns = {
+                    "DOC_ID": "VARCHAR(255)",
+                    "TEXT_CONTENT": "LONGVARCHAR",
+                    "METADATA": "LONGVARCHAR",
+                    "EMBEDDING": f"VECTOR(DOUBLE, {self.vector_dimension})",
+                }
+
+                # Check existing columns
+                existing_columns = []
+                cursor.execute(f"SELECT * FROM {self.table_name} WHERE 1=0")
+                existing_columns = [desc[0].upper() for desc in cursor.description]
+                logger.info(f"Table {self.table_name} already exists. Columns: {existing_columns}")
+
+                # Add any missing columns
+                for col, definition in required_columns.items():
+                    if col not in existing_columns:
+                        try:
+                            cursor.execute(f"ALTER TABLE {self.table_name} ADD {col} {definition}")
+                            logger.info(f"Added missing column '{col}' to {self.table_name}")
+                        except Exception as e:
+                            logger.warning(f"Failed to add column '{col}': {e}")
             except Exception:
                 logger.info(f"Table {self.table_name} does not exist or query failed, will attempt to create.")
 
@@ -112,6 +130,7 @@ class IRISStorage:
             create_table_sql = f"""
             CREATE TABLE IF NOT EXISTS {self.table_name} (
                 id VARCHAR(255) PRIMARY KEY,
+                doc_id VARCHAR(255),
                 text_content LONGVARCHAR,
                 metadata LONGVARCHAR,
                 embedding VECTOR(DOUBLE, {self.vector_dimension}),

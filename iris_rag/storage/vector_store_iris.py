@@ -229,7 +229,7 @@ class IRISVectorStore(VectorStore):
                 metadata_json = json.dumps(doc.metadata)
                 
                 # Check if document exists
-                check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE id = ?"
+                check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE doc_id = ?"
                 cursor.execute(check_sql, [doc.id])
                 exists = cursor.fetchone()[0] > 0
                 
@@ -251,20 +251,19 @@ class IRISVectorStore(VectorStore):
                         """
                         cursor.execute(update_sql, [doc.page_content, metadata_json, doc.id])
                 else:
-                    # Insert new document
                     if embeddings:
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (doc_id, text_content, metadata, embedding)
-                        VALUES (?, ?, ?, TO_VECTOR(?))
+                        INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata, embedding)
+                        VALUES (?, ?, ?, ?, TO_VECTOR(?))
                         """
                         embedding_str = json.dumps(embeddings[i])
-                        cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json, embedding_str])
+                        cursor.execute(insert_sql, [doc.id, doc.id, doc.page_content, metadata_json, embedding_str])
                     else:
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (doc_id, text_content, metadata)
-                        VALUES (?, ?, ?)
+                        INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata)
+                        VALUES (?, ?, ?, ?)
                         """
-                        cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json])
+                        cursor.execute(insert_sql, [doc.id, doc.id, doc.page_content, metadata_json])
                 
                 added_ids.append(doc.id)
             
@@ -299,7 +298,7 @@ class IRISVectorStore(VectorStore):
         
         try:
             placeholders = ','.join(['?' for _ in ids])
-            delete_sql = f"DELETE FROM {self.table_name} WHERE id IN ({placeholders})"
+            delete_sql = f"DELETE FROM {self.table_name} WHERE doc_id IN ({placeholders})"
             cursor.execute(delete_sql, ids)
             
             deleted_count = cursor.rowcount
@@ -383,6 +382,8 @@ class IRISVectorStore(VectorStore):
             )
             
             # Execute using the parameter-based function
+            print("SQL: ", sql)
+            print("Embedding: ", embedding_str)
             rows = execute_vector_search_with_params(cursor, sql, embedding_str)
             
             # Now fetch metadata for the returned documents

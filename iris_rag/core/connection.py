@@ -8,16 +8,8 @@ logger = logging.getLogger(__name__)
 try:
     from iris_rag.config.manager import ConfigurationManager
 except ImportError:
-    # Placeholder if ConfigurationManager doesn't exist yet
-    # This allows ConnectionManager to be defined, though tests requiring
-    # actual config loading will fail until ConfigurationManager is implemented.
-    class ConfigurationManager:
-        def __init__(self, config_path=None):
-            # This is a placeholder, real implementation will load from file/env
-            pass
-        def get(self, section_key):
-            # Placeholder: always return None. Tests should mock this.
-            return None
+    logger.error("ConfigurationManager not found. Ensure iris_rag package is installed correctly.")
+    raise ImportError("ConfigurationManager not available. Please check your installation.")
 
 class ConnectionManager:
     """
@@ -80,11 +72,10 @@ class ConnectionManager:
         try:
             logger.info(f"Establishing connection for backend '{backend_name}' using DBAPI")
             
-            # Use importlib to dynamically import the database driver
-            driver_module = importlib.import_module("intersystems_iris.dbapi")
+            import iris
             
             # Create connection using the imported module
-            connection = driver_module.connect(
+            connection = iris.connect(
                 hostname=db_config["host"],
                 port=db_config["port"],
                 namespace=db_config["namespace"],
@@ -105,7 +96,7 @@ class ConnectionManager:
         """Create a native IRIS DBAPI connection."""
         try:
             # Import the correct IRIS DBAPI module that has connect()
-            from intersystems_iris.dbapi import _DBAPI as iris
+            import iris
             
             # Get database configuration
             db_config = self.config_manager.get("database")
