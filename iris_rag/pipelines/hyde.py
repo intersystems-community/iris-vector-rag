@@ -26,17 +26,33 @@ class HyDERAGPipeline(RAGPipeline):
     3. Context augmentation and LLM generation
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager,
+    def __init__(self, connection_manager: Optional[ConnectionManager] = None,
+                 config_manager: Optional[ConfigurationManager] = None,
                  llm_func: Optional[Callable[[str], str]] = None, vector_store=None):
         """
         Initialize the HyDE RAG Pipeline.
         
         Args:
-            connection_manager: Manager for database connections
-            config_manager: Manager for configuration settings
+            connection_manager: Optional manager for database connections (defaults to new instance)
+            config_manager: Optional manager for configuration settings (defaults to new instance)
             llm_func: Optional LLM function for answer generation
             vector_store: Optional VectorStore instance
         """
+        # Create default instances if not provided
+        if connection_manager is None:
+            try:
+                connection_manager = ConnectionManager()
+            except Exception as e:
+                logger.warning(f"Failed to create default ConnectionManager: {e}")
+                connection_manager = None
+        
+        if config_manager is None:
+            try:
+                config_manager = ConfigurationManager()
+            except Exception as e:
+                logger.warning(f"Failed to create default ConfigurationManager: {e}")
+                config_manager = ConfigurationManager()  # Always need config manager
+        
         super().__init__(connection_manager, config_manager, vector_store)
         self.llm_func = llm_func
         
@@ -185,6 +201,15 @@ class HyDERAGPipeline(RAGPipeline):
                 context = self._build_context(relevant_docs)
                 prompt = self._build_prompt(query_text, context)
                 answer = self.llm_func(prompt)
+            
+            # Provide fallback message if answer is still None
+            if answer is None:
+                if not self.llm_func:
+                    answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
+                elif not relevant_docs:
+                    answer = "No relevant documents found for the query. Unable to generate an answer without context."
+                else:
+                    answer = "LLM function failed to generate an answer. Please check the LLM configuration."
             
             end_time = time.time()
             

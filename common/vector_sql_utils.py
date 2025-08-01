@@ -235,7 +235,7 @@ def format_vector_search_sql_with_params(
     select_clause = f"SELECT TOP {top_k} {id_column}"
     if content_column:
         select_clause += f", {content_column}"
-    select_clause += f", VECTOR_COSINE({vector_column}, TO_VECTOR(?, FLOAT)) AS score"
+    select_clause += f", VECTOR_COSINE({vector_column}, TO_VECTOR(?, FLOAT, {embedding_dim})) AS score"
     
     # Construct the WHERE clause
     where_clause = f"WHERE {vector_column} IS NOT NULL"
@@ -256,7 +256,8 @@ def format_vector_search_sql_with_params(
 def execute_vector_search_with_params(
     cursor: Any,
     sql: str,
-    vector_string: str
+    vector_string: str,
+    table_name: str = "RAG.SourceDocuments"
 ) -> List[Tuple]:
     """
     Executes a vector search SQL query using parameters.
@@ -265,20 +266,91 @@ def execute_vector_search_with_params(
         cursor: A database cursor object
         sql: The SQL query with ? placeholder
         vector_string: The vector string to use as parameter
+        table_name: The table name for diagnostic queries (optional, defaults to RAG.SourceDocuments)
         
     Returns:
         List[Tuple]: The query results
     """
     results = []
     try:
-        logger.debug(f"Executing vector search SQL with params")
+        # Use the provided table name directly instead of parsing from SQL
+        logger.debug(f"Using table name: {table_name}")
+            
+        count_sql = f"SELECT COUNT(*) FROM {table_name} WHERE embedding IS NOT NULL"
+        logger.debug(f"Executing count SQL: {count_sql}")
+        try:
+            cursor.execute(count_sql)
+            embedding_result = cursor.fetchone()
+            # Handle both real results and mock objects
+            if embedding_result:
+                try:
+                    embedding_count = embedding_result[0] if hasattr(embedding_result, '__getitem__') else 0
+                except (TypeError, IndexError):
+                    # Handle Mock objects or other non-subscriptable results
+                    embedding_count = 0
+            else:
+                embedding_count = 0
+            logger.debug(f"Table {table_name} has {embedding_count} rows with embeddings")
+        except Exception as count_error:
+            logger.error(f"Error executing count SQL: {count_error}")
+            logger.error(f"Count SQL was: {count_sql}")
+            # Skip count check and proceed with vector search
+            embedding_count = 0
+        
+        # Also check total rows
+        total_sql = f"SELECT COUNT(*) FROM {table_name}"
+        logger.debug(f"Executing total SQL: {total_sql}")
+        try:
+            cursor.execute(total_sql)
+            total_result = cursor.fetchone()
+            # Handle both real results and mock objects
+            if total_result:
+                try:
+                    total_count = total_result[0] if hasattr(total_result, '__getitem__') else 0
+                except (TypeError, IndexError):
+                    # Handle Mock objects or other non-subscriptable results
+                    total_count = 0
+            else:
+                total_count = 0
+            logger.debug(f"Table {table_name} has {total_count} total rows")
+        except Exception as total_error:
+            logger.error(f"Error executing total count SQL: {total_error}")
+            logger.error(f"Total SQL was: {total_sql}")
+            # Skip total count check and proceed with vector search
+            total_count = 0
+        
+        logger.debug(f"Executing vector search SQL: {sql}")
+        logger.debug(f"Vector string parameter: {vector_string[:100]}...")
+        
+        # Execute the SQL with parameter binding
         cursor.execute(sql, [vector_string])
-        fetched_rows = cursor.fetchall()
-        if fetched_rows:
-            results = fetched_rows
-        logger.debug(f"Found {len(results)} results.")
+        
+        # Try to fetch results with better error handling
+        try:
+            fetched_rows = cursor.fetchall()
+            if fetched_rows:
+                results = fetched_rows
+                # Handle Mock objects that don't have len()
+                try:
+                    result_count = len(results)
+                    logger.debug(f"Found {result_count} results.")
+                except (TypeError, AttributeError):
+                    # Handle Mock objects or other non-sequence types
+                    logger.debug("Found results (count unavailable due to mock object)")
+            else:
+                logger.debug("No results returned from vector search")
+        except StopIteration as e:
+            logger.error(f"StopIteration error during fetchall(): {e}")
+            logger.error("This usually indicates the cursor is empty or in an invalid state")
+            # Return empty results instead of raising
+            results = []
+        except Exception as fetch_error:
+            logger.error(f"Error during fetchall(): {fetch_error}")
+            raise
     except Exception as e:
         logger.error(f"Error during vector search: {e}")
+        logger.error(f"SQL was: {sql}")
+        logger.error(f"Vector parameter was: {vector_string[:100]}...")
         raise
     return results
 

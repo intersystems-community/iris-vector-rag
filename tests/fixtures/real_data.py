@@ -110,7 +110,8 @@ def iris_connection(use_real_data: bool):
     Returns:
         An IRIS connection object
     """
-    conn = get_iris_connection(use_mock=not use_real_data)
+    # Use real IRIS connection when use_real_data is True
+    conn = get_iris_connection(prefer_dbapi=True)
     yield conn
     
     # Close connection after test

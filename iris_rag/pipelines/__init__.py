@@ -11,6 +11,7 @@ from .crag import CRAGPipeline
 from .hyde import HyDERAGPipeline
 from .graphrag import GraphRAGPipeline
 from .hybrid_ifind import HybridIFindRAGPipeline
+from .noderag import NodeRAGPipeline
 
 __all__ = [
     "BasicRAGPipeline",
@@ -18,5 +19,6 @@ __all__ = [
     "CRAGPipeline",
     "HyDERAGPipeline",
     "GraphRAGPipeline",
-    "HybridIFindRAGPipeline"
+    "HybridIFindRAGPipeline",
+    "NodeRAGPipeline"
 ]

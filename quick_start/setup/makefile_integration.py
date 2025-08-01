@@ -457,17 +457,17 @@ class MakefileTargetHandler:
             service_manager = DockerServiceManager()
             start_result = service_manager.start_services(str(compose_file))
             
-            if start_result.get('status') == 'success':
+            if start_result.success:
                 return {
                     'status': 'success',
                     'docker_compose_file': str(compose_file),
                     'profile': profile,
-                    'services_started': start_result.get('services', [])
+                    'services_started': start_result.services_started
                 }
             else:
                 return {
                     'status': 'error',
-                    'error': f"Failed to start services: {start_result.get('error', 'Unknown error')}"
+                    'error': f"Failed to start services: {start_result.error_message or 'Unknown error'}"
                 }
                 
         except Exception as e:

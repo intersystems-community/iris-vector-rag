@@ -25,7 +25,7 @@ def test_storage_module_imports():
     from iris_rag.storage import enterprise_storage as iris_storage
     # Assuming __init__.py might have factory functions or main classes
     import iris_rag.storage
-    assert iris_storage is not None, "iris_rag.storage.iris failed to import"
+    assert iris_storage is not None, "iris_rag.storage.enterprise_storage failed to import"
     assert iris_rag.storage is not None, "iris_rag.storage package failed to import"
 
 def test_config_module_imports():

@@ -68,12 +68,22 @@ class IRISCacheBackend:
     
     def _get_cursor(self):
         """Get a cursor appropriate for the connection type."""
+        # Validate connection handle before proceeding
+        if self.iris_connector is None:
+            raise ConnectionError("Cannot get cursor: _handle is NULL")
+        
         if self.connection_type == "sqlalchemy":
             # For SQLAlchemy connections, we use the connection directly
             return self.iris_connector
         else:
             # For DBAPI/JDBC connections
-            return self.iris_connector.cursor()
+            try:
+                cursor = self.iris_connector.cursor()
+                if cursor is None:
+                    raise ConnectionError("Failed to create cursor: cursor is NULL")
+                return cursor
+            except AttributeError as e:
+                raise ConnectionError(f"Connection object does not support cursor(): {e}")
     
     def _execute_sql(self, cursor, sql, params=None):
         """Execute SQL with appropriate method based on connection type."""
@@ -106,8 +116,22 @@ class IRISCacheBackend:
     
     def setup_table(self) -> None:
         """Create the cache table if it doesn't exist."""
+        # Validate connection handle before proceeding
+        if self.iris_connector is None:
+            error_msg = "Failed to setup IRIS cache table: _handle is NULL"
+            logger.error(error_msg)
+            self.stats['errors'] += 1
+            raise ConnectionError(error_msg)
+        
         try:
             cursor = self._get_cursor()
+            
+            # Validate cursor was created successfully
+            if cursor is None:
+                error_msg = "Failed to setup IRIS cache table: cursor is NULL"
+                logger.error(error_msg)
+                self.stats['errors'] += 1
+                raise ConnectionError(error_msg)
             
             # Create table with proper IRIS SQL syntax
             create_table_sql = f"""
@@ -337,6 +361,12 @@ class IRISCacheBackend:
         Returns:
             Cached value or None if not found/expired
         """
+        # Validate connection handle before proceeding
+        if self.iris_connector is None:
+            logger.error("Cannot retrieve from cache: _handle is NULL")
+            self.stats['errors'] += 1
+            return None
+        
         try:
             cursor = self._get_cursor()
             
@@ -386,6 +416,12 @@ class IRISCacheBackend:
             model_name: LLM model name for analytics
             prompt_hash: Hash of the original prompt
         """
+        # Validate connection handle before proceeding
+        if self.iris_connector is None:
+            logger.error("Cannot store to cache: _handle is NULL")
+            self.stats['errors'] += 1
+            return
+        
         try:
             cursor = self._get_cursor()
             

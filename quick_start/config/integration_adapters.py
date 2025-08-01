@@ -131,12 +131,24 @@ class IrisRagConfigManagerAdapter:
     def _deep_merge(self, base_dict: Dict[str, Any], update_dict: Dict[str, Any]) -> None:
         """Deep merge two dictionaries, modifying base_dict in place."""
         for key, value in update_dict.items():
-            if (key in base_dict and 
-                isinstance(base_dict[key], dict) and 
+            if (key in base_dict and
+                isinstance(base_dict[key], dict) and
                 isinstance(value, dict)):
                 self._deep_merge(base_dict[key], value)
             else:
                 base_dict[key] = value
+    
+    def convert_from_quick_start(self, quick_start_config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Alias for convert_quick_start_config to match test expectations.
+        
+        Args:
+            quick_start_config: Configuration from Quick Start template engine
+            
+        Returns:
+            Configuration compatible with iris_rag.config.manager.ConfigurationManager
+        """
+        return self.convert_quick_start_config(quick_start_config)
 
 
 class RagTemplatesConfigManagerAdapter:
@@ -289,12 +301,24 @@ class RagTemplatesConfigManagerAdapter:
     def _deep_merge(self, base_dict: Dict[str, Any], update_dict: Dict[str, Any]) -> None:
         """Deep merge two dictionaries, modifying base_dict in place."""
         for key, value in update_dict.items():
-            if (key in base_dict and 
-                isinstance(base_dict[key], dict) and 
+            if (key in base_dict and
+                isinstance(base_dict[key], dict) and
                 isinstance(value, dict)):
                 self._deep_merge(base_dict[key], value)
             else:
                 base_dict[key] = value
+    
+    def convert_from_quick_start(self, quick_start_config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Alias for convert_quick_start_config to match test expectations.
+        
+        Args:
+            quick_start_config: Configuration from Quick Start template engine
+            
+        Returns:
+            Configuration compatible with rag_templates.core.config_manager.ConfigurationManager
+        """
+        return self.convert_quick_start_config(quick_start_config)
 
 
 class TemplateInheritanceAdapter:
@@ -364,6 +388,28 @@ class TemplateInheritanceAdapter:
                 for key, value in defaults.items():
                     if key not in config[section]:
                         config[section][key] = value
+    
+    def flatten_inheritance_chain(self, config: Dict[str, Any], target_manager: str) -> Dict[str, Any]:
+        """
+        Flatten inheritance chain for the specified target manager.
+        
+        Args:
+            config: Configuration with inheritance to flatten
+            target_manager: Target configuration manager type
+            
+        Returns:
+            Dictionary with flattened configuration
+        """
+        self.logger.debug(f"Flattening inheritance chain for {target_manager}")
+        
+        # Use the existing method but return in expected format
+        flattened_config = self.resolve_inheritance_for_existing_managers(config)
+        
+        return {
+            "flattened_config": flattened_config,
+            "target_manager": target_manager,
+            "inheritance_resolved": True
+        }
 
 
 class EnvironmentVariableIntegrationAdapter:

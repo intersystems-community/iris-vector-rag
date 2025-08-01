@@ -153,9 +153,9 @@ try:
         ColBERTRAGPipeline,
         CRAGPipeline,
         NodeRAGPipeline,
-        GraphRAGPipeline,
-        create_colbert_semantic_encoder # Added for ColBERT wrapper
+        GraphRAGPipeline
     )
+    from common.utils import get_colbert_query_encoder_func
 except ImportError as e:
     # Import security configuration to handle fallback behavior
     try:
@@ -258,16 +258,16 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
     # ColBERT wrapper
     def colbert_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
         """Wrapper for ColBERTRAGPipeline."""
-        # For ColBERT, use the semantic encoder from the core pipeline
+        # For ColBERT, use the query encoder from common.utils
         
-        # Pass the potentially stubbed embedding_func to the encoder factory
-        # create_colbert_semantic_encoder is imported at the top from core_pipelines
-        semantic_encoder = create_colbert_semantic_encoder(embedding_func_override=embedding_func)
+        # Get the ColBERT query encoder function
+        # This returns a function that can encode queries into ColBERT token embeddings
+        colbert_query_encoder = get_colbert_query_encoder_func()
         
-        # Initialize ColBERTRAGPipeline with the created encoder
+        # Initialize ColBERTRAGPipeline with the encoder function
         pipeline = ColBERTRAGPipeline(
             iris_connector=iris_connector,
-            colbert_query_encoder_func=semantic_encoder, # Use the returned encoder directly
+            colbert_query_encoder_func=colbert_query_encoder,
             colbert_doc_encoder_func=semantic_encoder, # Use the same for doc encoding as per original ColBERTRAGPipeline
             llm_func=llm_func
         )
