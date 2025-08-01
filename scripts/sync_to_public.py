@@ -450,6 +450,7 @@ def get_default_config() -> SyncConfig:
     files_to_sync = [
         # Core project files
         {"source": "README.md", "target": "README.md"},
+        {"source": "ROADMAP.md", "target": "ROADMAP.md"},  # Public roadmap
         {"source": "pyproject.toml", "target": "pyproject.toml"},
         {"source": "setup.py", "target": "setup.py"},
         {"source": "requirements.txt", "target": "requirements.txt"},
@@ -503,7 +504,12 @@ def get_default_config() -> SyncConfig:
         {
             "source": "docs/",
             "target": "docs/",
-            "exclude_patterns": ["*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp"]
+            "exclude_patterns": [
+                "*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp",
+                "INTERNAL_ROADMAP.md",  # Exclude internal roadmap from public sync
+                "internal_*",           # Exclude any internal-prefixed docs
+                "private_*"             # Exclude any private-prefixed docs
+            ]
         },
         
         # Critical missing directories

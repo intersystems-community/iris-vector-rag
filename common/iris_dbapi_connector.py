@@ -32,7 +32,7 @@ def _get_iris_dbapi_module():
         else:
             logger.warning("'iris' module imported but doesn't appear to have DBAPI interface (no 'connect' method)")
     except (ImportError, AttributeError) as e:
-        logger.warning(f"Failed to import 'iris' module (circular import issue): {e}")
+        logger.error(f"Failed to import 'iris' module (circular import issue): {e}")
         
         # Fallback to direct iris import for older installations
         try:

@@ -8,10 +8,99 @@ relevant metadata (abstract, author, title, keywords).
 import os
 import logging
 import xml.etree.ElementTree as ET
-from typing import Dict, Any, Generator
+from typing import Dict, Any, Generator, List, Optional
 import time
 
 logger = logging.getLogger(__name__)
+
+def _chunk_pmc_content(content: str, pmc_id: str, chunk_size: int = 8000, overlap: int = 400) -> List[Dict[str, Any]]:
+    """
+    Chunk PMC content into manageable pieces for LLM processing.
+    
+    Args:
+        content: Full PMC content to chunk
+        pmc_id: PMC document ID
+        chunk_size: Target size for each chunk (characters)
+        overlap: Overlap between chunks (characters)
+        
+    Returns:
+        List of chunk dictionaries with text and metadata
+    """
+    if len(content) <= chunk_size:
+        return [{
+            "chunk_id": f"{pmc_id}_chunk_0",
+            "text": content,
+            "chunk_index": 0,
+            "start_pos": 0,
+            "end_pos": len(content),
+            "metadata": {
+                "is_complete_doc": True,
+                "chunk_size": len(content)
+            }
+        }]
+    
+    chunks = []
+    start = 0
+    chunk_index = 0
+    
+    while start < len(content):
+        end = min(start + chunk_size, len(content))
+        
+        # Try to break at sentence boundaries to preserve context
+        if end < len(content):
+            # Look for sentence ending within last 20% of chunk
+            search_start = max(start + int(chunk_size * 0.8), start + 200)
+            sentence_end = _find_sentence_boundary(content, search_start, end)
+            if sentence_end > search_start:
+                end = sentence_end
+        
+        chunk_text = content[start:end].strip()
+        
+        if len(chunk_text) > 100:  # Only keep meaningful chunks
+            chunks.append({
+                "chunk_id": f"{pmc_id}_chunk_{chunk_index}",
+                "text": chunk_text,
+                "chunk_index": chunk_index,
+                "start_pos": start,
+                "end_pos": end,
+                "metadata": {
+                    "chunk_size": len(chunk_text),
+                    "overlap_with_previous": min(overlap, start) if start > 0 else 0,
+                    "strategy": "fixed_size_with_sentences"
+                }
+            })
+            chunk_index += 1
+        
+        # Move start position with overlap, but ensure progress
+        next_start = end - overlap
+        if next_start <= start:
+            # If overlap would prevent progress, move forward by at least 100 chars
+            next_start = start + 100
+        start = next_start
+        
+        # Prevent infinite loop
+        if start >= len(content):
+            break
+    
+    return chunks
+
+def _find_sentence_boundary(text: str, start: int, end: int) -> int:
+    """Find the best sentence boundary within the given range."""
+    import re
+    
+    # Look for sentence endings (., !, ?) followed by space or end of text
+    sentence_pattern = r'[.!?]\s+'
+    
+    # Search backwards from end to start
+    search_text = text[start:end]
+    matches = list(re.finditer(sentence_pattern, search_text))
+    
+    if matches:
+        # Return position after the last sentence ending
+        last_match = matches[-1]
+        return start + last_match.end()
+    
+    return end
 
 def extract_pmc_metadata(xml_file_path: str) -> Dict[str, Any]:
     """
@@ -67,14 +156,38 @@ def extract_pmc_metadata(xml_file_path: str) -> Dict[str, Any]:
                 if kwd.text:
                     keywords.append(kwd.text)
         
-        # Create content by combining title, abstract, and other text
+        # Extract body text for full article content
+        body_text = ""
+        body_elem = root.find(".//body")
+        if body_elem is not None:
+            # Extract all text from paragraphs and sections in the body
+            for p in body_elem.findall(".//p"):
+                if p.text:
+                    body_text += p.text + " "
+                # Also get text from child elements
+                for child in p:
+                    if child.text:
+                        body_text += child.text + " "
+                    if child.tail:
+                        body_text += child.tail + " "
+            
+            # Clean up extra whitespace
+            body_text = " ".join(body_text.split())
+        
+        # Create comprehensive content by combining title, abstract, and full body
         content = f"{title}\n\n{abstract}"
+        if body_text:
+            content += f"\n\n{body_text}"
         if authors:
             content += f"\n\nAuthors: {', '.join(authors)}"
         if keywords:
             content += f"\n\nKeywords: {', '.join(keywords)}"
         
-        return {
+        # Check if content is too large for LLM context (roughly 16k token limit = ~64k chars)
+        content_length = len(content)
+        needs_chunking = content_length > 12000  # Conservative threshold for chunking
+        
+        result = {
             "doc_id": pmc_id,
             "title": title,
             "content": content,
@@ -84,9 +197,19 @@ def extract_pmc_metadata(xml_file_path: str) -> Dict[str, Any]:
             "metadata": {
                 "source": "PMC",
                 "file_path": xml_file_path,
-                "pmc_id": pmc_id
+                "pmc_id": pmc_id,
+                "content_length": content_length,
+                "needs_chunking": needs_chunking,
+                "has_full_body": len(body_text) > 0
             }
         }
+        
+        # If chunking is needed, add chunked versions
+        if needs_chunking:
+            result["chunks"] = _chunk_pmc_content(content, pmc_id)
+            result["metadata"]["chunk_count"] = len(result["chunks"])
+        
+        return result
         
     except Exception as e:
         logger.error(f"Error processing {xml_file_path}: {e}")

@@ -98,3 +98,17 @@ This file defines key rules and standards for the RAG templates project.
 1. **Technique Documentation**: Each RAG technique should have corresponding implementation documentation (e.g., COLBERT_IMPLEMENTATION.md).
 
 2. **Test Documentation**: Test strategy should be documented, explaining how to run tests at various scales.
+
+3. **Connection Architecture Documentation**: All IRIS database connection patterns are documented in [docs/IRIS_CONNECTION_ARCHITECTURE.md](docs/IRIS_CONNECTION_ARCHITECTURE.md). Use this guide to understand the dual-path architecture (DBAPI vs JDBC systems).
+
+## IRIS Connection Rules
+
+1. **Use Appropriate Connection System**: 
+   - **DBAPI System** (`common.iris_dbapi_connector`) for RAG queries, vector search, and data operations
+   - **JDBC System** (`common.iris_connection_manager`) for schema management, utilities, and administrative tasks
+
+2. **Follow Connection Patterns**: Use the import patterns and code examples documented in [docs/CONNECTION_QUICK_REFERENCE.md](docs/CONNECTION_QUICK_REFERENCE.md).
+
+3. **Understand Fallback Behavior**: JDBC system's "Falling back to JDBC connection" messages are normal behavior, not errors. See architecture documentation for details.
+
+4. **No Direct IRIS Package Imports**: Avoid direct imports of `intersystems_iris.dbapi` in new code. Use the established connection utilities instead.

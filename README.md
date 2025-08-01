@@ -1,6 +1,54 @@
 # RAG Templates - Enterprise RAG Framework
 
-**Production-ready RAG applications with InterSystems IRIS.** Zero-configuration APIs, enterprise-grade architecture, and seamless LangChain integration.
+**Production-ready RAG applications with InterSystems IRIS.** Zero-configuration APIs, enterprise-grade architecture, and seamless framework integration.
+
+## 🎯 For IRIS Customers
+
+**Already have data in IRIS?** Add RAG capabilities to your existing systems in minutes:
+
+```python
+# Non-destructive integration with existing IRIS data
+from rag_templates import ConfigurableRAG
+
+rag = ConfigurableRAG({
+    "database": {"existing_tables": {"YourSchema.YourTable": {...}}}
+})
+answer = rag.query("Your business question")
+```
+
+**Key Benefits for IRIS Customers:**
+- ✅ **No Data Migration**: Works with existing IRIS tables
+- ✅ **8 RAG Techniques**: Compare performance on your data  
+- ✅ **ObjectScript Integration**: Native calls from existing applications
+- ✅ **2x Faster**: IRIS WSGI deployment outperforms external solutions
+- ✅ **Enterprise Security**: Inherits your existing IRIS security model
+
+## 🧭 Where to Start
+
+**Choose your path based on your situation:**
+
+### 📊 I want to evaluate RAG techniques
+```bash
+make demo-performance    # Compare 8 RAG techniques on sample data
+make demo-chat-app      # Interactive demo with all features
+```
+
+### 🔄 I'm migrating from LangChain/LlamaIndex  
+```bash
+make demo-migration     # See side-by-side code comparisons
+```
+👉 **See:** [Framework Migration Guide](docs/FRAMEWORK_MIGRATION.md)
+
+### 🏥 I have existing data in IRIS
+```bash
+make quick-start-demo   # Setup with existing data integration
+```
+👉 **See:** [Existing Data Integration](docs/EXISTING_DATA_INTEGRATION.md)
+
+### 🚀 I want to start fresh
+```bash
+make quick-start        # Guided setup wizard
+```
 
 ## 🚀 Quick Start
 
@@ -93,6 +141,33 @@ vector_store = IRISVectorStore(connection_manager, config_manager)
 retriever = vector_store.as_retriever(search_kwargs={"k": 5})
 ```
 
+### Enterprise Storage & Existing Data Integration
+Seamlessly integrate RAG with your existing databases and enterprise data:
+
+```python
+# Use existing database tables
+config = {
+    "storage": {
+        "iris": {
+            "table_name": "MyCompany.Documents"  # Your existing table
+        }
+    }
+}
+
+# Enterprise storage with manual schema control
+from iris_rag.storage.enterprise_storage import IRISStorage
+storage = IRISStorage(connection, config)
+storage.initialize_schema()  # Adds RAG columns to existing tables
+```
+
+**Key Features:**
+- **Custom table support**: Use existing database tables without modification
+- **Non-destructive overlay**: Add RAG capabilities via views and auxiliary tables
+- **Schema migration**: Automatically add missing columns to legacy tables
+- **Security-hardened**: Input validation and SQL injection prevention
+
+See the [Existing Data Integration Guide](docs/EXISTING_DATA_INTEGRATION.md) for complete setup instructions.
+
 ### Configuration System
 Environment-aware configuration with validation:
 ```python
@@ -114,6 +189,7 @@ config = ConfigurationManager()
 | **graphrag** | Graph-based knowledge retrieval | Structured knowledge bases | ✅ Production |
 | **hybrid_ifind** | Multi-modal search combination | Enterprise search | ✅ Production |
 | **noderag** | Node-based structured retrieval | Hierarchical data | ✅ Production |
+| **sql_rag** | Natural language to SQL conversion | Structured data queries | ✅ Production |
 
 *ColBERT: Includes experimental [Pylate integration](https://github.com/lightonai/pylate) with pluggable backend support (`native`/`pylate`).
 
@@ -239,6 +315,16 @@ make quick-start-status     # Check system health and configuration
 - **Embeddings**: [Sentence Transformers](https://github.com/UKPLab/sentence-transformers), [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings)
 - **LLM Integration**: [LangChain](https://github.com/langchain-ai/langchain), [OpenAI API](https://platform.openai.com/docs/api-reference)
 - **Evaluation**: [RAGAS Framework](https://github.com/explodinggradients/ragas)
+
+## 🛣️ Roadmap
+
+See our [Roadmap](ROADMAP.md) for planned features, architecture improvements, and long-term vision.
+
+**Upcoming Highlights:**
+- **Unified Connection Architecture** - Simplify IRIS database connections
+- **Multi-Modal RAG** - Image and document processing support  
+- **AutoRAG** - Automatic technique selection and optimization
+- **RAG Studio** - Visual pipeline builder for enterprise users
 
 ## 🤝 Contributing
 

@@ -65,6 +65,15 @@ pipelines:
       ifind_weight: 0.3
       vector_weight: 0.7
 
+  - name: "SQLRAG"
+    module: "iris_rag.pipelines.sql_rag"
+    class: "SQLRAGPipeline"
+    enabled: true
+    params:
+      top_k: 10
+      use_sql_context: true
+      enable_query_optimization: true
+
   # Example of an external/hypothetical pipeline
   - name: "AdvancedExternalRAG"
     module: "external_package.rag_pipelines"

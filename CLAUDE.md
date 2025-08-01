@@ -96,12 +96,17 @@ npm run lint
 3. **Builder Pattern**: Configuration builders for complex setups
 4. **Observer Pattern**: Event-driven monitoring system
 
-### Database Schema
+### Database Schema & Connections
 
 The system uses InterSystems IRIS with custom vector operations:
-- `rag_schemas.document` - Document storage with embeddings
+- `rag_schemas.document` - Document storage with embeddings  
 - `rag_schemas.chunk` - Document chunks with vector embeddings
 - Custom vector similarity functions in ObjectScript
+
+**IRIS Connection Architecture:**
+- **DBAPI System** (`iris_dbapi_connector`) - For RAG queries and data operations
+- **JDBC System** (`iris_connection_manager`) - For schema management with DBAPI→JDBC fallback
+- See [IRIS Connection Architecture Guide](docs/IRIS_CONNECTION_ARCHITECTURE.md) for detailed usage patterns
 
 ### Testing Strategy
 

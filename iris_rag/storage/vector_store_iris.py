@@ -319,8 +319,9 @@ class IRISVectorStore(VectorStore):
         """
         try:
             # Import embedding function here to avoid circular imports
-            from common.embedding_utils import get_embedding_func
-            embedding_func = get_embedding_func()
+            from ..embeddings.manager import EmbeddingManager
+            embedding_manager = EmbeddingManager(self.config_manager)
+            embedding_func = lambda text: embedding_manager.embed_text(text)
             
             embeddings = []
             for doc in documents:
@@ -663,9 +664,12 @@ class IRISVectorStore(VectorStore):
                 if isinstance(similarity_score, (list, tuple)):
                     # If it's a list/tuple, take the first element
                     score_value = float(similarity_score[0]) if similarity_score else 0.0
-                else:
+                elif similarity_score is not None:
                     # If it's already a single value, use it directly
                     score_value = float(similarity_score)
+                else:
+                    # Handle NULL similarity scores (database returned None)
+                    score_value = 0.0
                 
                 results.append((document, score_value))
             
