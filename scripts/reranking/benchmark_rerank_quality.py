@@ -92,6 +92,12 @@ class RAGASBenchmark:
         connection_manager = ConnectionManager()
         config_manager = ConfigurationManager()
         
+        # Initialize database schema - ensures clean state for RAGAS benchmarking
+        from iris_rag.storage.enterprise_storage import IRISStorage
+        storage = IRISStorage(connection_manager, config_manager)
+        storage.initialize_schema()
+        print("✅ Database schema initialized")
+        
         pipelines = {}
         
         for pipeline_id, config in self.pipeline_configs.items():
