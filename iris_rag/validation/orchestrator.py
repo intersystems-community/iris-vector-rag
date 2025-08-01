@@ -97,10 +97,13 @@ class SetupOrchestrator:
             return initial_report
         
         # Perform setup based on pipeline type
-        if pipeline_type == "colbert":
+        # NEW: Use generic requirements-driven approach for basic pipelines
+        if pipeline_type in ["basic", "basic_rerank"]:
+            self.logger.info(f"Using generic requirements fulfillment for {pipeline_type}")
+            self._fulfill_requirements(requirements)
+        # LEGACY: Existing hardcoded methods for other pipelines
+        elif pipeline_type == "colbert":
             self._setup_colbert_pipeline(requirements)
-        elif pipeline_type == "basic":
-            self._setup_basic_pipeline(requirements)
         elif pipeline_type == "crag":
             self._setup_crag_pipeline(requirements)
         elif pipeline_type == "hyde":
@@ -113,6 +116,9 @@ class SetupOrchestrator:
             self._setup_noderag_pipeline(requirements)
         else:
             self.logger.warning(f"No specific setup logic for {pipeline_type}")
+            # Fallback: Try generic approach for unknown pipelines
+            self.logger.info(f"Attempting generic requirements fulfillment for {pipeline_type}")
+            self._fulfill_requirements(requirements)
         
         # Check for optional chunking enhancement
         self._setup_optional_chunking(requirements)
@@ -126,6 +132,73 @@ class SetupOrchestrator:
             self.logger.warning(f"Pipeline {pipeline_type} setup completed with issues")
         
         return final_report
+    
+    def _fulfill_requirements(self, requirements: PipelineRequirements):
+        """
+        Generic requirements fulfillment based on declared requirements.
+        
+        This method replaces hardcoded pipeline-specific setup with a generic
+        approach driven by the requirements registry system.
+        
+        Args:
+            requirements: Pipeline requirements to fulfill
+        """
+        # Count total requirements for progress tracking
+        total_steps = (
+            len(requirements.required_tables) + 
+            len(requirements.required_embeddings) + 
+            len(getattr(requirements, 'optional_tables', []))
+        )
+        
+        progress = SetupProgress(total_steps)
+        
+        # Fulfill table requirements
+        for table_req in requirements.required_tables:
+            progress.next_step(f"Setting up table: {table_req.name}")
+            self._fulfill_table_requirement(table_req)
+        
+        # Fulfill embedding requirements  
+        for embedding_req in requirements.required_embeddings:
+            progress.next_step(f"Setting up embeddings: {embedding_req.name}")
+            self._fulfill_embedding_requirement(embedding_req)
+        
+        # Fulfill optional requirements
+        for optional_req in getattr(requirements, 'optional_tables', []):
+            progress.next_step(f"Setting up optional: {optional_req.name}")
+            self._fulfill_optional_requirement(optional_req)
+        
+        progress.complete()
+        self.logger.info(f"Generic requirements fulfillment completed for {requirements.pipeline_name}")
+    
+    def _fulfill_table_requirement(self, table_req):
+        """Fulfill a table requirement."""
+        # For now, tables are created by schema manager automatically
+        # This is a placeholder for future table-specific setup logic
+        self.logger.debug(f"Table requirement handled: {table_req.name}")
+    
+    def _fulfill_embedding_requirement(self, embedding_req):
+        """Fulfill an embedding requirement generically."""
+        if embedding_req.table == "RAG.SourceDocuments" and embedding_req.column == "embedding":
+            self._ensure_document_embeddings()
+        elif embedding_req.table == "RAG.DocumentTokenEmbeddings" and embedding_req.column == "token_embedding":
+            self._ensure_token_embeddings()
+        else:
+            self.logger.warning(f"Unknown embedding requirement: {embedding_req.table}.{embedding_req.column}")
+    
+    def _fulfill_optional_requirement(self, optional_req):
+        """Fulfill an optional requirement."""
+        if optional_req.name == "DocumentChunks":
+            self._setup_optional_chunking_for_requirement(optional_req)
+        else:
+            self.logger.debug(f"Optional requirement noted: {optional_req.name}")
+    
+    def _setup_optional_chunking_for_requirement(self, chunk_req):
+        """Set up chunking for a specific requirement."""
+        try:
+            self._generate_document_chunks()
+            self.logger.info("Document chunks generated successfully")
+        except Exception as e:
+            self.logger.warning(f"Failed to generate document chunks: {e}")
     
     def _setup_basic_pipeline(self, requirements: PipelineRequirements):
         """Set up basic RAG pipeline requirements."""
@@ -956,7 +1029,7 @@ class SetupOrchestrator:
                 return
             
             # Get documents for chunking
-            cursor.execute("SELECT doc_id, abstract as content FROM RAG.SourceDocuments")
+            cursor.execute("SELECT doc_id, text_content as content FROM RAG.SourceDocuments")
             documents = cursor.fetchall()
             
             if not documents:
