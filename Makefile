@@ -6,7 +6,7 @@ SHELL := /bin/bash
 # Standardized commands for development, testing, and data management
 # Uses Python virtual environment (.venv) for consistent dependency management
 
-.PHONY: help install test test-unit test-integration test-e2e test-1000 test-ragas-1000-enhanced debug-ragas-hyde debug-ragas-graphrag debug-ragas-crag debug-ragas-colbert debug-ragas-basic debug-ragas-noderag debug-ragas-hybrid_ifind eval-all-ragas-1000 ragas-debug ragas-test ragas-full ragas-cache-check ragas-clean ragas-no-cache ragas clean setup-db load-data clear-rag-data populate-graph-entities populate-knowledge-graph populate-graph-all check-graph-data test-graphrag-drift-detection validate-iris-rag validate-pipeline validate-all-pipelines auto-setup-pipeline auto-setup-all setup-env make-test-echo test-performance-ragas-tdd test-scalability-ragas-tdd test-tdd-comprehensive-ragas test-1000-enhanced test-tdd-ragas-quick ragas-with-tdd test-system-workup test-system-workup-verbose quick-start quick-start-minimal quick-start-standard quick-start-extended quick-start-custom quick-start-clean quick-start-status
+.PHONY: help install test test-unit test-integration test-e2e test-1000 test-ragas-1000-enhanced debug-ragas-hyde debug-ragas-graphrag debug-ragas-crag debug-ragas-colbert debug-ragas-basic debug-ragas-noderag debug-ragas-hybrid_ifind debug-ragas-sql_rag eval-all-ragas-1000 ragas-debug ragas-test ragas-full ragas-cache-check ragas-clean ragas-no-cache ragas clean setup-db load-data clear-rag-data populate-graph-entities populate-knowledge-graph populate-graph-all check-graph-data test-graphrag-drift-detection validate-iris-rag validate-pipeline validate-all-pipelines auto-setup-pipeline auto-setup-all setup-env make-test-echo test-performance-ragas-tdd test-scalability-ragas-tdd test-tdd-comprehensive-ragas test-1000-enhanced test-tdd-ragas-quick ragas-with-tdd test-system-workup test-system-workup-verbose quick-start quick-start-minimal quick-start-standard quick-start-extended quick-start-custom quick-start-clean quick-start-status
 
 # Simple test target to verify make execution
 make-test-echo:
@@ -34,8 +34,18 @@ help:
 	@echo "  make quick-start-standard   - Standard profile setup (500 docs, 4GB RAM)"
 	@echo "  make quick-start-extended   - Extended profile setup (5000 docs, 8GB RAM)"
 	@echo "  make quick-start-custom PROFILE=name - Custom profile setup"
+	@echo "  make quick-start-demo       - Demo profile with chat app and migration examples"
 	@echo "  make quick-start-clean      - Clean up Quick Start environment"
 	@echo "  make quick-start-status     - Check Quick Start system status"
+	@echo ""
+	@echo "Demo Applications:"
+	@echo "  make demo-chat-app          - Run interactive demo chat application"
+	@echo "  make demo-migration         - Demonstrate framework migration paths"
+	@echo "  make demo-objectscript      - Show ObjectScript integration examples"
+	@echo "  make demo-performance       - Compare RAG technique performance"
+	@echo "  make demo-mcp-server        - Start MCP server for tool integration"
+	@echo "  make demo-web-interface     - Launch web-based demo interface"
+	@echo "  make test-demo-framework    - Test all demo framework migration paths"
 	@echo ""
 	@echo "Testing (DBAPI-first):"
 	@echo "  make test             - Run all tests"
@@ -44,10 +54,10 @@ help:
 	@echo "  make test-e2e         - Run end-to-end tests"
 	@echo "  make test-install     - Post-installation validation"
 	@echo "  make test-1000        - Run comprehensive test with 1000 docs"
-	@echo "  make eval-all-ragas-1000 - Run comprehensive RAGAS evaluation on all 7 pipelines with 1000 docs (RECOMMENDED)"
+	@echo "  make eval-all-ragas-1000 - Run comprehensive RAGAS evaluation on all 8 pipelines with 1000 docs (RECOMMENDED)"
 	@echo "  make test-ragas-1000-enhanced  - [DEPRECATED] Use eval-all-ragas-1000 instead"
 	@echo "  make validate-iris-rag - Validate iris_rag package"
-	@echo "  make validate-all-pipelines - Validate all 7 RAG pipelines can be registered"
+	@echo "  make validate-all-pipelines - Validate all 8 RAG pipelines can be registered"
 	@echo ""
 	@echo "Test Mode Framework:"
 	@echo "  make test-e2e-validation - Comprehensive E2E validation with Docker management"
@@ -73,6 +83,7 @@ help:
 	@echo "  make debug-ragas-noderag    - Debug NodeRAG pipeline"
 	@echo "  make debug-ragas-graphrag   - Debug GraphRAG pipeline"
 	@echo "  make debug-ragas-hybrid_ifind - Debug Hybrid iFind pipeline"
+	@echo "  make debug-ragas-sql_rag - Debug SQL RAG pipeline"
 	@echo ""
 	@echo "TDD with RAGAS Testing (New):"
 	@echo "  make test-performance-ragas-tdd - Run TDD performance benchmark tests with RAGAS quality metrics"
@@ -84,7 +95,7 @@ help:
 	@echo ""
 	@echo "Validation & Auto-Setup:"
 	@echo "  make validate-pipeline PIPELINE=<type> - Validate specific pipeline"
-	@echo "  make validate-all-pipelines - Validate all 7 pipeline types"
+	@echo "  make validate-all-pipelines - Validate all 8 pipeline types"
 	@echo "  make auto-setup-pipeline PIPELINE=<type> - Auto-setup pipeline with validation"
 	@echo "  make auto-setup-all     - Auto-setup all pipelines with validation"
 	@echo "  make test-with-auto-setup - Run tests with automatic setup"
@@ -219,10 +230,15 @@ debug-ragas-hybrid_ifind:
 	@echo "This will test Hybrid iFind pipeline execution and data readiness without RAGAs metric calculation"
 	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines hybrid_ifind --iterations 1 --no-ragas
 
+debug-ragas-sql_rag:
+	@echo "Running debug RAGAs evaluation for SQL RAG pipeline (no RAGAs metrics, 1 iteration)..."
+	@echo "This will test SQL RAG pipeline execution and data readiness without RAGAs metric calculation"
+	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines sql_rag --iterations 1 --no-ragas
+
 eval-all-ragas-1000:
 	@echo "🚀 Running comprehensive RAGAS evaluation on all pipelines with 1000 documents..."
 	@echo "✅ Using UV environment with DBAPI connections"
-	@echo "📊 This includes full RAGAS metrics calculation for all 7 pipeline types"
+	@echo "📊 This includes full RAGAS metrics calculation for all 8 pipeline types"
 	@echo "📋 Generates both JSON results and markdown summary reports"
 	@mkdir -p comprehensive_ragas_results
 	uv run python scripts/utilities/evaluation/execute_comprehensive_ragas_evaluation.py --pipelines ALL
@@ -332,7 +348,7 @@ test-jdbc:
 validate-pipeline:
 	@if [ -z "$(PIPELINE)" ]; then \
 		echo "Error: PIPELINE parameter required. Usage: make validate-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind"; \
+		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
 		exit 1; \
 	fi
 	@echo "Validating $(PIPELINE) pipeline with pre-condition checks..."
@@ -341,7 +357,7 @@ validate-pipeline:
 auto-setup-pipeline:
 	@if [ -z "$(PIPELINE)" ]; then \
 		echo "Error: PIPELINE parameter required. Usage: make auto-setup-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind"; \
+		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
 		exit 1; \
 	fi
 	@echo "Auto-setting up $(PIPELINE) pipeline with validation and embedding generation..."
@@ -352,8 +368,8 @@ auto-setup-pipeline:
 # Removed duplicate validate-all-pipelines target - see line 212 for the main one
 
 auto-setup-all:
-	@echo "Auto-setting up all 7 pipeline types with validation..."
-	@for pipeline in basic colbert crag hyde graphrag noderag hybrid_ifind; do \
+	@echo "Auto-setting up all 8 pipeline types with validation..."
+	@for pipeline in basic colbert crag hyde graphrag noderag hybrid_ifind sql_rag; do \
 		echo ""; \
 		echo "=== Auto-setting up $$pipeline ==="; \
 		$(MAKE) auto-setup-pipeline PIPELINE=$$pipeline || echo "⚠ $$pipeline auto-setup failed"; \
@@ -397,7 +413,7 @@ prod-check: validate-iris-rag test-dbapi auto-setup-all
 	$(PYTHON_RUN) -c "from iris_rag import create_pipeline; print('✓ Pipeline factory works')"
 	$(PYTHON_RUN) -c "from common.iris_connection_manager import test_connection; assert test_connection(), 'Connection test failed'"
 	@echo "Testing all pipeline types with auto-setup..."
-	@for pipeline in basic colbert crag hyde graphrag noderag hybrid_ifind; do \
+	@for pipeline in basic colbert crag hyde graphrag noderag hybrid_ifind sql_rag; do \
 		echo "Testing $$pipeline pipeline..."; \
 		$(PYTHON_RUN) -c "import iris_rag; from common.utils import get_llm_func; from common.iris_connection_manager import get_iris_connection; pipeline = iris_rag.create_pipeline('$$pipeline', llm_func=get_llm_func(), external_connection=get_iris_connection(), auto_setup=True); result = pipeline.run('test query', top_k=3); print('✓ $$pipeline pipeline works: ' + str(len(result.get('retrieved_documents', []))) + ' docs retrieved')" || echo "⚠ $$pipeline pipeline test failed"; \
 	done
@@ -483,7 +499,7 @@ sync-all-dry-run:
 test-pipeline:
 	@if [ -z "$(PIPELINE)" ]; then \
 		echo "Error: PIPELINE parameter required. Usage: make test-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind"; \
+		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
 		exit 1; \
 	fi
 	@echo "Testing $(PIPELINE) pipeline with auto-setup..."
@@ -672,7 +688,7 @@ ragas-full:
 	@echo "Running full evaluation with all pipelines, full metrics using Unified Framework"
 	eval "$$(conda shell.bash hook)" && conda activate $(CONDA_ENV) && \
 	python scripts/utilities/run_unified_evaluation.py \
-		--pipelines basic,hyde,crag,colbert,noderag,graphrag,hybrid_ifind \
+		--pipelines basic,hyde,crag,colbert,noderag,graphrag,hybrid_ifind,sql_rag \
 		--log-level DEBUG
 
 ragas-cache-check:
@@ -693,7 +709,7 @@ ragas-no-cache:
 ragas:
 	@if [ -z "$(PIPELINES)" ]; then \
 		echo "Usage: make ragas PIPELINES=basic,hyde [METRICS=core] [QUERIES=10]"; \
-		echo "Available pipelines: basic, hyde, crag, colbert, noderag, graphrag, hybrid_ifind"; \
+		echo "Available pipelines: basic, hyde, crag, colbert, noderag, graphrag, hybrid_ifind, sql_rag"; \
 		echo "Available metrics: core, extended, full"; \
 		exit 1; \
 	fi
@@ -803,7 +819,7 @@ check-drift:
 check-pipeline-drift:
 	@if [ -z "$(PIPELINE)" ]; then \
 		echo "Error: PIPELINE parameter required. Usage: make check-pipeline-drift PIPELINE=graphrag"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind"; \
+		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
 		exit 1; \
 	fi
 	@echo "🔍 Checking drift for $(PIPELINE) pipeline..."
@@ -816,7 +832,7 @@ fix-drift:
 fix-pipeline-drift:
 	@if [ -z "$(PIPELINE)" ]; then \
 		echo "Error: PIPELINE parameter required. Usage: make fix-pipeline-drift PIPELINE=graphrag"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind"; \
+		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
 		exit 1; \
 	fi
 	@echo "🔧 Fixing drift for $(PIPELINE) pipeline..."
@@ -869,6 +885,10 @@ quick-start-clean:
 	@echo "🧹 Cleaning Quick Start Environment..."
 	$(PYTHON_RUN) -m quick_start.setup.makefile_integration clean
 
+quick-start-demo:
+	@echo "🎭 Starting Demo Quick Start Setup with chat app and migration examples..."
+	$(PYTHON_RUN) -m quick_start.setup.makefile_integration standard --profile demo
+
 quick-start-status:
 	@echo "📊 Checking Quick Start Status..."
 	$(PYTHON_RUN) -m quick_start.setup.makefile_integration status
@@ -881,3 +901,67 @@ test-quick-start:
 test-quick-start-integration:
 	@echo "🧪 Testing Quick Start integration with existing components..."
 	$(PYTHON_RUN) -m pytest tests/quick_start/ -v
+
+# Demo Application Targets
+demo-chat-app:
+	@echo "💬 Starting Interactive Demo Chat Application..."
+	@echo "Available modes: simple, standard, enterprise, demo, tutorial"
+	$(PYTHON_RUN) examples/demo_chat_app.py demo
+
+demo-migration:
+	@echo "🔄 Demonstrating Framework Migration Paths..."
+	@echo "Testing LangChain migration..."
+	$(PYTHON_RUN) examples/demo_chat_app.py simple "What is machine learning?"
+	@echo ""
+	@echo "Migration comparison complete! Try 'make demo-chat-app' for interactive demo."
+
+demo-objectscript:
+	@echo "🔗 Demonstrating ObjectScript Integration..."
+	@echo "Showing MCP bridge and embedded Python capabilities..."
+	$(PYTHON_RUN) -c "from examples.demo_chat_app import DemoChatApp; app = DemoChatApp('demo'); demo = app.demonstrate_objectscript_integration('Patient analysis demo'); print('ObjectScript Integration:', demo.get('integration_type')); print('MCP Result:', demo.get('mcp_result', {}).get('success', False))"
+
+demo-performance:
+	@echo "⚡ Comparing RAG Technique Performance..."
+	$(PYTHON_RUN) -c "from examples.demo_chat_app import DemoChatApp; app = DemoChatApp('demo'); app.load_sample_documents(['AI is artificial intelligence', 'ML is machine learning', 'DL is deep learning']); results = app.compare_technique_performance('What is AI?'); print('Performance Comparison:'); [print(f'  {technique}: {result.get(\"execution_time\", 0):.3f}s') for technique, result in results.items()]"
+
+demo-mcp-server:
+	@echo "🛠️  Starting MCP Server Demo..."
+	@echo "Initializing RAG tools for external integration..."
+	$(PYTHON_RUN) -c "from examples.demo_chat_app import DemoChatApp; app = DemoChatApp('demo'); server = app.initialize_mcp_server(); tools = server.list_tools(); print(f'MCP Server initialized with {len(tools)} tools:'); [print(f'  - {tool[\"name\"]}: {tool[\"description\"]}') for tool in tools[:5]]"
+
+demo-web-interface:
+	@echo "🌐 Starting Web-based Demo Interface..."
+	@echo "Access the demo at http://localhost:8080"
+	$(PYTHON_RUN) -c "from examples.demo_chat_app import DemoChatApp; app = DemoChatApp('demo'); web_app = app.create_web_interface(); print('Web interface created. In production, run: web_app.run(host=\"0.0.0.0\", port=8080)'); print('Available endpoints: /chat, /demo/migration/<framework>, /demo/compare, /demo/objectscript')"
+
+test-demo-framework:
+	@echo "🧪 Testing Demo Framework Migration Paths..."
+	$(PYTHON_RUN) -m pytest tests/test_demo_chat_application.py::TestDemoChatApplicationMigrationPaths -v
+
+test-demo-chat-app:
+	@echo "🧪 Testing Demo Chat Application..."
+	$(PYTHON_RUN) -m pytest tests/test_demo_chat_application.py -v
+
+# PMC Data Enhancement for Customer Use
+enhance-pmc-data:
+	@echo "📚 Enhancing PMC data loading for customer use..."
+	@echo "Loading customer-friendly medical research documents..."
+	$(PYTHON_RUN) -c "from data.loader_fixed import process_and_load_documents; result = process_and_load_documents('data/sample_10_docs', limit=50, customer_mode=True); print(f'Enhanced PMC data loaded: {result}')"
+
+# Comprehensive Demo Suite
+demo-full-suite:
+	@echo "🎭 Running Full Demo Suite..."
+	@echo "================================"
+	make demo-chat-app
+	@echo ""
+	make demo-migration  
+	@echo ""
+	make demo-objectscript
+	@echo ""
+	make demo-performance
+	@echo ""
+	@echo "✅ Full demo suite completed!"
+	@echo "Next steps:"
+	@echo "  - Try 'make quick-start-demo' for complete setup"
+	@echo "  - Run 'make demo-web-interface' for web UI"
+	@echo "  - Use 'make test-demo-chat-app' to validate functionality"

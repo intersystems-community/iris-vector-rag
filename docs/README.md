@@ -150,7 +150,19 @@ The framework follows a modular, enterprise-ready architecture:
 
 ## Available Documentation
 
-- [USER_GUIDE.md](USER_GUIDE.md) - Comprehensive user guide with examples
+### Core Guides
+- [USER_GUIDE.md](USER_GUIDE.md) - Comprehensive user guide with examples  
+- [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) - Development setup and extension guide
+- [QUICK_START_GUIDE.md](QUICK_START_GUIDE.md) - One-command setup and profiles
+
+### Architecture & Technical
+- [IRIS_CONNECTION_ARCHITECTURE.md](IRIS_CONNECTION_ARCHITECTURE.md) - Database connection patterns and troubleshooting
+- [CONNECTION_QUICK_REFERENCE.md](CONNECTION_QUICK_REFERENCE.md) - Developer cheat sheet for connections
+- [MCP_INTEGRATION_GUIDE.md](MCP_INTEGRATION_GUIDE.md) - Model Context Protocol integration
+- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Framework migration patterns
+
+### Planning & Roadmap
+- [../ROADMAP.md](../ROADMAP.md) - Feature roadmap and architecture improvements
 - [README.md](README.md) - This documentation index
 
 For complete documentation, architecture details, and API references, see the main [README.md](../README.md).

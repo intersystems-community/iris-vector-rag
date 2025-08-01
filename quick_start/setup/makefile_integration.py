@@ -50,8 +50,11 @@ class MakefileIntegration:
             # Initialize CLI wizard
             wizard = QuickStartCLIWizard()
             
-            # Run interactive setup
-            result = wizard.run_interactive_setup()
+            # Set up output directory (current directory by default)
+            output_dir = Path.cwd()
+            
+            # Run interactive setup with output directory
+            result = wizard.run_interactive_setup(output_dir)
             
             if result.get('success', False):
                 self.logger.info("✅ Interactive setup completed successfully!")
@@ -87,7 +90,7 @@ class MakefileIntegration:
             pipeline = OneCommandSetupPipeline()
             result = pipeline.execute(profile_name)
             
-            if result.get('success', False):
+            if result.get('status') == 'success':
                 self.logger.info(f"✅ {profile_name.title()} setup completed successfully!")
                 self._print_setup_summary(result, profile_name)
                 return 0

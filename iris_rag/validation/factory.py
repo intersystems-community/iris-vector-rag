@@ -18,6 +18,7 @@ from ..pipelines.hyde import HyDERAGPipeline
 from ..pipelines.graphrag import GraphRAGPipeline
 from ..pipelines.hybrid_ifind import HybridIFindRAGPipeline
 from ..pipelines.noderag import NodeRAGPipeline
+from ..pipelines.sql_rag import SQLRAGPipeline
 from .requirements import get_pipeline_requirements
 from .validator import PreConditionValidator
 from .orchestrator import SetupOrchestrator
@@ -155,8 +156,14 @@ class ValidatedPipelineFactory:
                 embedding_manager=self.embedding_manager, # Pass embedding_manager
                 llm_func=llm_func
             )
+        elif pipeline_type == "sql_rag":
+            return SQLRAGPipeline(
+                connection_manager=self.connection_manager,
+                config_manager=self.config_manager,
+                llm_func=llm_func
+            )
         else:
-            available_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag"]
+            available_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag", "sql_rag"]
             raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available: {available_types}")
     
     def validate_pipeline_type(self, pipeline_type: str) -> Dict[str, Any]:
@@ -303,7 +310,7 @@ class ValidatedPipelineFactory:
         Returns:
             Dictionary of pipeline types and their status
         """
-        pipeline_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag"]
+        pipeline_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag", "sql_rag"]
         results = {}
         
         for pipeline_type in pipeline_types:
