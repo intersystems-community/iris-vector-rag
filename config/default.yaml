@@ -4,7 +4,7 @@
 # Database Configuration
 database:
   iris:
-    driver: "iris._DBAPI"
+    driver: "intersystems_iris.dbapi._DBAPI"
     host: "localhost"
     port: 1972
     namespace: "USER"

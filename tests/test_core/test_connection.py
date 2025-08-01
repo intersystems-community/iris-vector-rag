@@ -29,7 +29,7 @@ def mock_config_manager():
                 "namespace": "FIXTURE_NS",
                 "username": "fixture_user",
                 "password": "fixture_password",
-                "driver": "iris"
+                "driver": "intersystems_iris.dbapi"
             }
         
         def get(self, section_key):
