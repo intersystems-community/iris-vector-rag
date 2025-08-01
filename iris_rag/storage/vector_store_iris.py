@@ -412,21 +412,21 @@ class IRISVectorStore(VectorStore):
                         cursor.execute(update_sql, [doc.page_content, metadata_json, doc.id])
                     else:
                         if embeddings:
-                            # Don't manually set ID for IDENTITY columns - let database auto-generate
+                            # Include ID column - CRITICAL: removing it causes SQL failures
                             insert_sql = f"""
-                            INSERT INTO {self.table_name} (doc_id, text_content, metadata, embedding)
-                            VALUES (?, ?, ?, TO_VECTOR(?))
+                            INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata, embedding)
+                            VALUES (?, ?, ?, ?, TO_VECTOR(?))
                             """
                             embedding_str = json.dumps(embeddings[i])
-                            cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json, embedding_str])
+                            cursor.execute(insert_sql, [doc.id, doc.id, doc.page_content, metadata_json, embedding_str])
                             logger.debug(f"Inserted document {doc.id} with embedding: {embedding_str}")
                         else:
-                            # Don't manually set ID for IDENTITY columns - let database auto-generate
+                            # Include ID column - CRITICAL: removing it causes SQL failures
                             insert_sql = f"""
-                            INSERT INTO {self.table_name} (doc_id, text_content, metadata)
-                            VALUES (?, ?, ?)
+                            INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata)
+                            VALUES (?, ?, ?, ?)
                             """
-                            cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json])
+                            cursor.execute(insert_sql, [doc.id, doc.id, doc.page_content, metadata_json])
                             logger.debug(f"Inserted new document {doc.id} without vector")
                     
                     added_ids.append(doc.id)
