@@ -181,6 +181,200 @@ pipelines:
 
 The registration system uses `ModuleLoader` with `importlib.import_module()` for dynamic loading.
 
+## Requirements-Driven Orchestrator Architecture
+
+### Overview
+
+The orchestrator uses an elegant **requirements-driven architecture** that automatically sets up pipelines based on their declared requirements, eliminating hardcoded setup logic.
+
+### How It Works
+
+```python
+# 1. Define requirements (in requirements.py)
+class MyPipelineRequirements(PipelineRequirements):
+    @property
+    def pipeline_name(self) -> str:
+        return "my_pipeline"
+    
+    @property 
+    def required_tables(self) -> List[TableRequirement]:
+        return [
+            TableRequirement(
+                name="SourceDocuments", 
+                schema="RAG",
+                description="Main document storage"
+            )
+        ]
+    
+    @property
+    def required_embeddings(self) -> List[EmbeddingRequirement]:
+        return [
+            EmbeddingRequirement(
+                name="document_embeddings",
+                table="RAG.SourceDocuments", 
+                column="embedding",
+                description="Document-level embeddings"
+            )
+        ]
+
+# 2. Register requirements (in requirements.py)
+PIPELINE_REQUIREMENTS_REGISTRY = {
+    "my_pipeline": MyPipelineRequirements,
+    # ... other pipelines
+}
+
+# 3. Orchestrator automatically fulfills requirements
+orchestrator.setup_pipeline("my_pipeline")  # Just works!
+```
+
+### Architecture Benefits
+
+#### ✅ **Self-Documenting**
+Requirements clearly define what each pipeline needs:
+```python
+# Before: Hidden in hardcoded setup methods
+def _setup_my_pipeline(self, requirements):
+    # What does this pipeline actually need? 🤷‍♂️
+    self._ensure_document_embeddings()
+    self._generate_chunks()
+
+# After: Clear, declarative requirements  
+class MyPipelineRequirements(PipelineRequirements):
+    required_tables = [TableRequirement("SourceDocuments", ...)]
+    required_embeddings = [EmbeddingRequirement("document_embeddings", ...)]
+```
+
+#### ✅ **Zero Duplication**
+Similar pipelines share setup logic automatically:
+```python
+# Before: Duplicate hardcoded methods
+def _setup_basic_pipeline(self):      # Duplicate
+    self._ensure_document_embeddings()
+
+def _setup_basic_rerank_pipeline(self): # Duplicate  
+    self._ensure_document_embeddings()  # Same logic!
+
+# After: Single generic fulfillment
+if pipeline_type in ["basic", "basic_rerank"]:
+    self._fulfill_requirements(requirements)  # Shared logic!
+```
+
+#### ✅ **Automatic Setup**
+New pipelines work without touching orchestrator code:
+```python
+# Before: Must add hardcoded method to orchestrator
+def setup_pipeline(self, pipeline_type):
+    if pipeline_type == "my_new_pipeline":
+        self._setup_my_new_pipeline()  # Must add this method!
+
+# After: Just define requirements, setup works automatically
+class MyNewPipelineRequirements(PipelineRequirements):
+    # Define what you need
+    required_tables = [...]
+    
+# Orchestrator automatically fulfills requirements - no code changes!
+```
+
+### Migration Strategy
+
+The architecture supports **gradual migration**:
+
+```python
+def setup_pipeline(self, pipeline_type):
+    # NEW: Generic approach (recommended)
+    if pipeline_type in ["basic", "basic_rerank"]:
+        self._fulfill_requirements(requirements)  # Requirements-driven!
+        
+    # LEGACY: Hardcoded methods (still supported)  
+    elif pipeline_type == "colbert":
+        self._setup_colbert_pipeline(requirements)  # Will migrate later
+        
+    # FALLBACK: Try generic for unknown pipelines
+    else:
+        self._fulfill_requirements(requirements)  # Always try generic first
+```
+
+### Adding Your Pipeline
+
+**Step 1**: Define requirements (copy existing similar pipeline):
+```python
+class MyPipelineRequirements(PipelineRequirements):
+    @property
+    def pipeline_name(self) -> str:
+        return "my_pipeline"
+    
+    # Copy requirements from similar pipeline, modify as needed
+    @property
+    def required_embeddings(self) -> List[EmbeddingRequirement]:
+        return [
+            EmbeddingRequirement(
+                name="document_embeddings",
+                table="RAG.SourceDocuments",
+                column="embedding", 
+                description="Document embeddings for vector search"
+            )
+        ]
+```
+
+**Step 2**: Register requirements:
+```python
+PIPELINE_REQUIREMENTS_REGISTRY = {
+    "my_pipeline": MyPipelineRequirements,
+    # ... existing pipelines
+}
+```
+
+**Step 3**: Add to factory (in factory.py):
+```python
+elif pipeline_type == "my_pipeline":
+    return MyPipeline(connection_manager, config_manager, llm_func)
+```
+
+**That's it!** Orchestrator setup works automatically based on your requirements.
+
+### Best Practices
+
+#### ✅ **Reuse Existing Requirements**
+```python
+# Good: Reuse existing requirement patterns
+required_embeddings = [
+    EmbeddingRequirement(
+        name="document_embeddings",           # Standard name
+        table="RAG.SourceDocuments",          # Standard table
+        column="embedding",                   # Standard column
+        description="Document-level embeddings"
+    )
+]
+
+# Avoid: Creating new requirement types unless necessary
+```
+
+#### ✅ **Clear Descriptions**
+```python
+# Good: Descriptive, helpful
+TableRequirement(
+    name="SourceDocuments",
+    schema="RAG", 
+    description="Main document storage with embeddings for vector search",
+    min_rows=1
+)
+
+# Avoid: Vague descriptions
+TableRequirement(name="SourceDocuments", description="Documents")
+```
+
+#### ✅ **Optional vs Required**
+```python
+class MyPipelineRequirements(PipelineRequirements):
+    @property
+    def required_tables(self) -> List[TableRequirement]:
+        return [...]  # Must exist for pipeline to work
+    
+    @property  
+    def optional_tables(self) -> List[TableRequirement]:
+        return [...]  # Nice to have, enhances functionality
+```
+
 ## Common Patterns & Anti-Patterns
 
 ### ✅ Good Pipeline Structure
