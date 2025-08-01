@@ -98,6 +98,6 @@ if __name__ == "__main__":
     logger.info(" - IRIS_USER                                         ")
     logger.info(" - IRIS_PASSWORD                                     ")
     logger.info(" OR IRIS_CONNECTION_STRING                           ")
-    logger.info(" AND intersystems_iris.dbapi is installed.           ")
+    logger.info(" AND iris is installed.           ")
     logger.info("-----------------------------------------------------")
     test_dbapi_connection()

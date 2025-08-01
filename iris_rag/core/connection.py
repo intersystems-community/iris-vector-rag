@@ -8,16 +8,8 @@ logger = logging.getLogger(__name__)
 try:
     from iris_rag.config.manager import ConfigurationManager
 except ImportError:
-    # Placeholder if ConfigurationManager doesn't exist yet
-    # This allows ConnectionManager to be defined, though tests requiring
-    # actual config loading will fail until ConfigurationManager is implemented.
-    class ConfigurationManager:
-        def __init__(self, config_path=None):
-            # This is a placeholder, real implementation will load from file/env
-            pass
-        def get(self, section_key):
-            # Placeholder: always return None. Tests should mock this.
-            return None
+    logger.error("ConfigurationManager not found. Ensure iris_rag package is installed correctly.")
+    raise ImportError("ConfigurationManager not available. Please check your installation.")
 
 class ConnectionManager:
     """

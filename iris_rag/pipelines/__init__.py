@@ -20,5 +20,6 @@ __all__ = [
     "HyDERAGPipeline",
     "GraphRAGPipeline",
     "HybridIFindRAGPipeline",
+    "BasicRAGRerankingPipeline",
     "NodeRAGPipeline"
 ]

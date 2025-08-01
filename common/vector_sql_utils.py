@@ -141,7 +141,7 @@ def format_vector_search_sql(
         ...     "text_content"
         ... )
         'SELECT TOP 10 doc_id, text_content,
-            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', 'DOUBLE', 768)) AS score
+            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', 'FLOAT', 768)) AS score
          FROM SourceDocuments
          WHERE embedding IS NOT NULL
          ORDER BY score DESC'

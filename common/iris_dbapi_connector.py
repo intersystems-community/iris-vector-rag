@@ -18,22 +18,21 @@ def _get_iris_dbapi_module():
     Returns:
         The IRIS DBAPI module if successfully imported, None otherwise.
     """
-    # Try primary import: intersystems_iris.dbapi._DBAPI module
     try:
-        import intersystems_iris.dbapi as iris_dbapi
+        import iris as iris_dbapi
         # Check if iris_dbapi module has _DBAPI submodule with connect method
         if hasattr(iris_dbapi, '_DBAPI') and hasattr(iris_dbapi._DBAPI, 'connect'):
             # The _DBAPI submodule provides the DBAPI interface
-            logger.info("Successfully imported 'intersystems_iris.dbapi._DBAPI' module with DBAPI interface")
+            logger.info("Successfully imported 'iris' module with DBAPI interface")
             return iris_dbapi._DBAPI
         elif hasattr(iris_dbapi, 'connect'):
             # The iris_dbapi module itself provides the DBAPI interface
-            logger.info("Successfully imported 'intersystems_iris.dbapi' module with DBAPI interface")
+            logger.info("Successfully imported 'iris' module with DBAPI interface")
             return iris_dbapi
         else:
-            logger.warning("'intersystems_iris.dbapi' module imported but doesn't appear to have DBAPI interface (no 'connect' method)")
+            logger.warning("'iris' module imported but doesn't appear to have DBAPI interface (no 'connect' method)")
     except (ImportError, AttributeError) as e:
-        logger.error(f"Failed to import 'intersystems_iris.dbapi' module: {e}")
+        logger.error(f"Failed to import 'iris' module (circular import issue): {e}")
         
         # Fallback to direct iris import for older installations
         try:

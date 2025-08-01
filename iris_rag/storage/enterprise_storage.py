@@ -14,7 +14,6 @@ from ..config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
 
-
 def _convert_clob_to_string(value: Any) -> str:
     """
     Convert CLOB/IRISInputStream objects to strings.
@@ -131,11 +130,12 @@ class IRISStorage:
                     try:
                         cursor.execute(f"DROP TABLE {table_name}")
                         logger.info(f"Dropped existing {table_name} table")
-                    except:
-                        pass  # Table didn't exist, which is fine
-                    
-                    cursor.execute(create_table_sql)
-                    logger.info(f"✅ Successfully created {table_name} table")
+                        cursor.execute(create_table_sql)
+                        logger.info(f"✅ Successfully recreated {table_name} table")
+                    except Exception as drop_err:
+                        logger.warning(f"Could not drop {table_name} (foreign keys?): {drop_err}")
+                        logger.info(f"Clearing all rows from {table_name} instead")
+                        cursor.execute(f"DELETE FROM {table_name}")
                     
                     # Update the table name for subsequent operations
                     self.table_name = table_name

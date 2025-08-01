@@ -48,13 +48,13 @@ try:
         print("Attempting to import iris.dbapi as fallback1...")
         try:
             import iris.dbapi as irisdbapi_alt
-            print(f"Location of imported 'intersystems_iris.dbapi': {irisdbapi_alt.__file__ if hasattr(irisdbapi_alt, '__file__') else 'Unknown'}")
+            print(f"Location of imported 'iris': {irisdbapi_alt.__file__ if hasattr(irisdbapi_alt, '__file__') else 'Unknown'}")
             if hasattr(irisdbapi_alt, 'connect'):
-                print("Successfully imported 'intersystems_iris.dbapi' and it HAS 'connect'.")
+                print("Successfully imported 'iris' and it HAS 'connect'.")
             else:
-                print("Imported 'intersystems_iris.dbapi' but it DOES NOT HAVE 'connect'.")
+                print("Imported 'iris' but it DOES NOT HAVE 'connect'.")
         except ImportError as e_alt:
-            print(f"Failed to import 'intersystems_iris.dbapi': {e_alt}")
+            print(f"Failed to import 'iris': {e_alt}")
             print("Attempting to import irisnative.dbapi as fallback2...")
             try:
                 import iris as irisdbapi_native

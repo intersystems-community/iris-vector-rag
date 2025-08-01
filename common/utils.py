@@ -512,9 +512,9 @@ def get_iris_connector_for_embedded():
     if _iris_connector_embedded is None:
         try:
             try:
-                import intersystems_iris.dbapi as iris
+                import iris
             except ImportError:
-                import iris  # Fallback for older installations
+                raise ImportError("IRIS Embedded Python module 'iris' not found. Ensure it is installed in your environment.")
             _iris_connector_embedded = iris.connect()
             print("IRIS Embedded Python: DBAPI connection established.")
         except ImportError:

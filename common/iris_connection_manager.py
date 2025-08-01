@@ -103,8 +103,8 @@ class IRISConnectionManager:
             
             # Import the correct IRIS DBAPI module
             try:
-                import intersystems_iris.dbapi as iris
-                logger.debug("Successfully imported intersystems_iris.dbapi")
+                import iris
+                logger.debug("Successfully imported iris")
             except ImportError:
                 # Fallback to direct iris import for older installations
                 import iris
