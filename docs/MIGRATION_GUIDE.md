@@ -44,7 +44,7 @@ from iris_rag.pipelines.factory import create_pipeline
 from iris_rag.core.connection import ConnectionManager
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.embeddings.manager import EmbeddingManager
-from iris_rag.storage.iris import IRISStorage
+from iris_rag.storage.enterprise_storage import IRISStorage
 from common.utils import get_llm_func
 from common.iris_connector import get_iris_connection
 
@@ -64,7 +64,7 @@ pipeline = create_pipeline(
 )
 
 # Manual document loading
-from iris_rag.storage.iris import IRISStorage
+from iris_rag.storage.enterprise_storage import IRISStorage
 storage = IRISStorage(connection_manager, config_manager)
 storage.initialize_schema()
 
@@ -320,7 +320,7 @@ database:
 **Before**: Manual document processing
 ```python
 from iris_rag.core.models import Document
-from iris_rag.storage.iris import IRISStorage
+from iris_rag.storage.enterprise_storage import IRISStorage
 
 documents = []
 for file_path in file_paths:

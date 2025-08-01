@@ -22,7 +22,7 @@ def test_pipelines_module_imports():
 
 def test_storage_module_imports():
     """Tests imports from iris_rag.storage module."""
-    from iris_rag.storage import iris as iris_storage
+    from iris_rag.storage import enterprise_storage as iris_storage
     # Assuming __init__.py might have factory functions or main classes
     import iris_rag.storage
     assert iris_storage is not None, "iris_rag.storage.iris failed to import"
@@ -49,7 +49,7 @@ def test_specific_class_function_imports():
     from iris_rag.pipelines.basic import BasicRAGPipeline
     assert BasicRAGPipeline is not None
 
-    from iris_rag.storage.iris import IRISStorage
+    from iris_rag.storage.enterprise_storage import IRISStorage
     assert IRISStorage is not None
 
     from iris_rag.config.manager import ConfigurationManager

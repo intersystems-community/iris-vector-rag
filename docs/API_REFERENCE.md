@@ -737,6 +737,126 @@ const server = createMCPServer({
 await server.start();
 ```
 
+## Storage Layer API
+
+The storage layer provides two classes for different use cases:
+
+### IRISVectorStore (Standard API)
+
+LangChain-compatible vector store for standard RAG applications.
+
+```python
+from iris_rag.storage.vector_store_iris import IRISVectorStore
+from iris_rag.core.connection import ConnectionManager  
+from iris_rag.config.manager import ConfigurationManager
+
+config = ConfigurationManager()
+connection = ConnectionManager(config)
+vector_store = IRISVectorStore(connection, config)
+```
+
+#### Key Features:
+- **LangChain compatibility**: Drop-in replacement for LangChain vector stores
+- **Automatic schema management**: Creates tables and indexes automatically  
+- **Security validation**: Validates table names and query parameters
+- **Custom table support**: Configure custom table names via config
+
+#### Methods:
+
+```python
+# Add documents
+vector_store.add_documents(documents)
+
+# Similarity search
+results = vector_store.similarity_search("query", k=5)
+
+# Similarity search with scores
+results = vector_store.similarity_search_with_score("query", k=5)
+
+# Use as LangChain retriever
+retriever = vector_store.as_retriever(search_kwargs={"k": 5})
+```
+
+#### Custom Table Configuration:
+```yaml
+# config.yaml
+storage:
+  iris:
+    table_name: "MyCompany.Documents"  # Custom table name
+```
+
+### IRISStorage (Enterprise API)
+
+Enterprise-grade storage with full manual control for complex scenarios.
+
+```python
+from iris_rag.storage.enterprise_storage import IRISStorage
+
+storage = IRISStorage(connection, config)
+```
+
+#### Key Features:
+- **Manual schema control**: Full control over database schema creation
+- **Legacy integration**: Works with existing database schemas
+- **Schema migration**: Add missing columns to existing tables
+- **Enterprise flexibility**: Complete customization of storage behavior
+
+#### Methods:
+
+```python
+# Initialize or update schema
+storage.initialize_schema()  # Adds missing columns like doc_id, metadata
+
+# Store documents directly
+storage.store_documents(documents)
+
+# Vector search with manual control
+results = storage.vector_search(query_vector, top_k=5)
+
+# Get document by ID
+document = storage.get_document(doc_id)
+```
+
+### When to Use Which Storage Class
+
+#### Use IRISVectorStore (Standard) When:
+- Building standard RAG applications
+- Using LangChain ecosystem 
+- Want automatic schema management
+- Need LangChain compatibility
+
+#### Use IRISStorage (Enterprise) When:
+- Integrating with existing databases
+- Need custom schema modifications
+- Require manual control over database operations
+- Migrating from legacy systems
+
+### Custom Table Names
+
+Both storage classes support custom table names:
+
+```python
+# Via configuration
+config_data = {
+    "storage": {
+        "iris": {
+            "table_name": "Sales.CustomerDocuments"
+        }
+    }
+}
+
+# Both classes will use the custom table name
+vector_store = IRISVectorStore(connection, config)  # Uses Sales.CustomerDocuments
+storage = IRISStorage(connection, config)           # Uses Sales.CustomerDocuments
+```
+
+### Security Considerations
+
+- **Table name validation**: Both classes validate table names to prevent SQL injection
+- **Parameterized queries**: All queries use parameterized statements
+- **Field validation**: Input validation for all user-provided data
+- **Schema security**: Custom tables must follow `Schema.TableName` format
+
 ## Configuration Reference
 
 ### Configuration File Format
