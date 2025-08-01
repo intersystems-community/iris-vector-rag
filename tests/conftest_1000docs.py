@@ -32,11 +32,52 @@ def enterprise_iris_connection():
 @pytest.fixture
 def scale_test_config():
     """Configuration for scale testing with 1000+ documents."""
+    from unittest.mock import Mock
+    from iris_rag.config.manager import ConfigurationManager
+    
+    # Create a mock config manager with proper configuration structure
+    mock_config_manager = Mock(spec=ConfigurationManager)
+    
+    # Configure the mock to return appropriate values for different config keys
+    def mock_get(key, default=None):
+        config_values = {
+            # Storage chunking configuration
+            "storage:chunking": {
+                "enabled": True,
+                "strategy": "fixed_size",
+                "chunk_size": 1000,
+                "chunk_overlap": 200,
+                "strategies": {
+                    "fixed_size": {"enabled": True},
+                    "semantic": {"enabled": True},
+                    "hybrid": {"enabled": True}
+                }
+            },
+            # Embedding model configuration
+            "embedding_model.name": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_model.dimension": 384,
+            # ColBERT configuration
+            "colbert": {
+                "backend": "native",
+                "token_dimension": 768,
+                "model_name": "bert-base-uncased"
+            },
+            "colbert.token_dimension": 768,
+            "colbert.backend": "native",
+            "colbert.model_name": "bert-base-uncased",
+            # Pipeline overrides
+            "pipeline_overrides": {}
+        }
+        return config_values.get(key, default)
+    
+    mock_config_manager.get.side_effect = mock_get
+    
     return {
         "min_documents": 1000,
         "test_mode": "scale",
         "batch_size": 100,
-        "timeout": 300
+        "timeout": 300,
+        "config_manager": mock_config_manager
     }
 
 @pytest.fixture
@@ -55,9 +96,17 @@ def scale_test_documents():
 @pytest.fixture
 def enterprise_document_loader_1000docs():
     """Mock enterprise document loader for 1000+ documents."""
-    mock_loader = Mock()
-    mock_loader.load_documents = Mock(return_value=[{"id": i, "content": f"Doc {i}"} for i in range(1000)])
-    return mock_loader
+    from iris_rag.core.models import Document
+    # Return actual Document objects that can be sliced
+    documents = []
+    for i in range(1000):
+        doc = Document(
+            id=f"test_doc_{i+1:03d}",
+            page_content=f"Medical research document {i+1} discussing COVID-19 treatment protocols, symptoms, and patient outcomes. This document contains detailed information about diagnosis procedures, medication effectiveness, and recovery statistics.",
+            metadata={"source": f"test_source_{i+1}", "category": "medical", "test_document": True}
+        )
+        documents.append(doc)
+    return documents
 
 @pytest.fixture
 def enterprise_embedding_manager():
@@ -65,6 +114,17 @@ def enterprise_embedding_manager():
     mock_embedding = Mock()
     mock_embedding.embed_text = Mock(return_value=[0.1] * 384)
     mock_embedding.embed_batch = Mock(return_value=[[0.1] * 384 for _ in range(100)])
+    
+    # Create mock embedding function that the chunking integration test expects
+    def mock_embedding_function(texts):
+        if isinstance(texts, str):
+            return [0.1] * 384
+        elif isinstance(texts, list):
+            return [[0.1] * 384 for _ in texts]
+        else:
+            return [0.1] * 384
+    
+    mock_embedding.get_embedding_function = Mock(return_value=mock_embedding_function)
     return mock_embedding
 
 @pytest.fixture

@@ -101,15 +101,26 @@ class IRISConnectionManager:
             if not _detect_best_iris_environment():
                 logger.warning("IRIS packages may not be available in current environment")
             
-            # Import the IRIS module 
-            import iris
+            # Import the correct IRIS DBAPI module
+            try:
+                import iris
+                logger.debug("Successfully imported iris")
+            except ImportError:
+                # Fallback to direct iris import for older installations
+                import iris
+                logger.debug("Fallback: imported iris module directly")
             
             # Verify iris.connect is available
             if not hasattr(iris, 'connect'):
-                raise AttributeError(
-                    "iris module imported but doesn't have 'connect' method. "
-                    "This usually means the intersystems-irispython package is not properly installed "
-                    "or the wrong iris module is being imported."
+                # Check if this is the wrong iris module
+                iris_module_name = getattr(iris, '__name__', 'unknown')
+                iris_module_file = getattr(iris, '__file__', 'unknown')
+                
+                raise ConnectionError(
+                    f"DBAPI connection failed: module '{iris_module_name}' has no attribute 'connect'. "
+                    f"This indicates the wrong 'iris' module was imported (from: {iris_module_file}). "
+                    f"The intersystems-irispython package is required for IRIS database connections. "
+                    f"Please install it with: pip install intersystems-irispython"
                 )
             
             # Get connection parameters

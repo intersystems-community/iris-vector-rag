@@ -92,7 +92,7 @@ class IRISStorage:
     
     def initialize_schema(self) -> None:
         """
-        Initialize the database schema for document storage.
+        Initialize the database schema for document storage with IRIS-specific workarounds.
         
         Creates the necessary tables and indexes if they don't exist.
         """
@@ -100,45 +100,55 @@ class IRISStorage:
         cursor = connection.cursor()
         
         try:
-            # Check if table exists and print columns for diagnostics
-            try:
-                required_columns = {
-                    "DOC_ID": "VARCHAR(255)",
-                    "TEXT_CONTENT": "LONGVARCHAR",
-                    "METADATA": "LONGVARCHAR",
-                    "EMBEDDING": f"VECTOR(DOUBLE, {self.vector_dimension})",
-                }
-
-                # Check existing columns
-                existing_columns = []
-                cursor.execute(f"SELECT * FROM {self.table_name} WHERE 1=0")
-                existing_columns = [desc[0].upper() for desc in cursor.description]
-                logger.info(f"Table {self.table_name} already exists. Columns: {existing_columns}")
-
-                # Add any missing columns
-                for col, definition in required_columns.items():
-                    if col not in existing_columns:
-                        try:
-                            cursor.execute(f"ALTER TABLE {self.table_name} ADD {col} {definition}")
-                            logger.info(f"Added missing column '{col}' to {self.table_name}")
-                        except Exception as e:
-                            logger.warning(f"Failed to add column '{col}': {e}")
-            except Exception:
-                logger.info(f"Table {self.table_name} does not exist or query failed, will attempt to create.")
-
-            # Create main documents table
-            create_table_sql = f"""
-            CREATE TABLE IF NOT EXISTS {self.table_name} (
-                id VARCHAR(255) PRIMARY KEY,
-                doc_id VARCHAR(255),
-                text_content LONGVARCHAR,
-                metadata LONGVARCHAR,
-                embedding VECTOR(DOUBLE, {self.vector_dimension}),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-            cursor.execute(create_table_sql)
+            # Try multiple table name approaches to work around IRIS schema issues
+            table_attempts = [
+                self.table_name,  # Original preference (e.g., RAG.SourceDocuments)
+                "SourceDocuments"  # Fallback to current user schema
+            ]
+            
+            table_created = False
+            for table_name in table_attempts:
+                try:
+                    logger.info(f"Attempting to create/verify table {table_name}")
+                    
+                    # Create main documents table with consistent column names
+                    create_table_sql = f"""
+                    CREATE TABLE {table_name} (
+                        doc_id VARCHAR(255) PRIMARY KEY,
+                        title VARCHAR(1000),
+                        text_content VARCHAR(MAX),
+                        abstract VARCHAR(MAX),
+                        authors VARCHAR(MAX),
+                        keywords VARCHAR(MAX),
+                        metadata VARCHAR(MAX),
+                        embedding VECTOR(FLOAT, {self.vector_dimension}),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                    """
+                    
+                    # Try to drop first if exists (ignore errors)
+                    try:
+                        cursor.execute(f"DROP TABLE {table_name}")
+                        logger.info(f"Dropped existing {table_name} table")
+                    except:
+                        pass  # Table didn't exist, which is fine
+                    
+                    cursor.execute(create_table_sql)
+                    logger.info(f"✅ Successfully created {table_name} table")
+                    
+                    # Update the table name for subsequent operations
+                    self.table_name = table_name
+                    table_created = True
+                    break
+                    
+                except Exception as table_error:
+                    logger.warning(f"Failed to create table {table_name}: {table_error}")
+                    if table_name == table_attempts[-1]:  # Last attempt
+                        raise Exception("All table creation attempts failed")
+                    continue
+            
+            if not table_created:
+                raise Exception("Could not create SourceDocuments table")
             
             # Create vector index for similarity search with configurable HNSW parameters
             try:
@@ -189,13 +199,16 @@ class IRISStorage:
         """
         self.store_documents([document], [embedding] if embedding else None)
     
-    def store_documents(self, documents: List[Document], embeddings: Optional[List[List[float]]] = None) -> None:
+    def store_documents(self, documents: List[Document], embeddings: Optional[List[List[float]]] = None) -> Dict[str, Any]:
         """
-        Store multiple documents with optional embeddings.
+        Store multiple documents with optional embeddings, auto-initializing schema if needed.
         
         Args:
             documents: List of documents to store
             embeddings: Optional list of vector embeddings for the documents
+            
+        Returns:
+            Dictionary with storage results
         """
         if embeddings and len(embeddings) != len(documents):
             raise ValueError("Number of embeddings must match number of documents")
@@ -204,8 +217,21 @@ class IRISStorage:
         cursor = connection.cursor()
         
         try:
+            # First attempt to access the table, initialize schema if needed
+            try:
+                check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE 1=0"
+                cursor.execute(check_sql)
+            except Exception as table_error:
+                logger.info(f"Table {self.table_name} not accessible, initializing schema: {table_error}")
+                cursor.close()  # Close cursor before schema initialization
+                self.initialize_schema()
+                cursor = connection.cursor()  # Get new cursor after schema initialization
+            
+            documents_stored = 0
+            documents_updated = 0
+            
             # Use IRIS-compatible check-then-insert/update pattern
-            # Map Document.id to doc_id column in RAG.SourceDocuments
+            # Map Document.id to doc_id column in SourceDocuments
             for i, doc in enumerate(documents):
                 metadata_json = json.dumps(doc.metadata)
                 
@@ -215,46 +241,70 @@ class IRISStorage:
                 exists = cursor.fetchone()[0] > 0
                 
                 if exists:
-                    # Update existing document
+                    # Update existing document with all available fields
                     if embeddings:
                         update_sql = f"""
                         UPDATE {self.table_name}
-                        SET text_content = ?, metadata = ?, embedding = TO_VECTOR(?)
+                        SET title = ?, text_content = ?, metadata = ?, embedding = TO_VECTOR(?)
                         WHERE doc_id = ?
                         """
                         embedding_str = json.dumps(embeddings[i])
-                        cursor.execute(update_sql, [doc.page_content, metadata_json, embedding_str, doc.id])
+                        title = doc.metadata.get('title', '')
+                        cursor.execute(update_sql, [title, doc.page_content, metadata_json, embedding_str, doc.id])
                     else:
                         update_sql = f"""
                         UPDATE {self.table_name}
-                        SET text_content = ?, metadata = ?
+                        SET title = ?, text_content = ?, metadata = ?
                         WHERE doc_id = ?
                         """
-                        cursor.execute(update_sql, [doc.page_content, metadata_json, doc.id])
+                        title = doc.metadata.get('title', '')
+                        cursor.execute(update_sql, [title, doc.page_content, metadata_json, doc.id])
+                    documents_updated += 1
                 else:
-                    # Insert new document (using doc_id column and available columns)
+                    # Insert new document with all available fields
+                    title = doc.metadata.get('title', '')
+                    abstract = doc.metadata.get('abstract', '')
+                    authors = doc.metadata.get('authors', '')
+                    keywords = doc.metadata.get('keywords', '')
+                    
                     if embeddings:
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (doc_id, text_content, metadata, embedding)
-                        VALUES (?, ?, ?, TO_VECTOR(?))
+                        INSERT INTO {self.table_name} (doc_id, title, text_content, abstract, authors, keywords, metadata, embedding)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR(?))
                         """
                         embedding_str = json.dumps(embeddings[i])
-                        cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json, embedding_str])
+                        cursor.execute(insert_sql, [doc.id, title, doc.page_content, abstract, authors, keywords, metadata_json, embedding_str])
                     else:
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (doc_id, text_content, metadata)
-                        VALUES (?, ?, ?)
+                        INSERT INTO {self.table_name} (doc_id, title, text_content, abstract, authors, keywords, metadata)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
                         """
-                        cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json])
+                        cursor.execute(insert_sql, [doc.id, title, doc.page_content, abstract, authors, keywords, metadata_json])
+                    documents_stored += 1
             
             connection.commit()
             
-            logger.info(f"Stored {len(documents)} documents in {self.table_name}")
+            result = {
+                "status": "success",
+                "documents_stored": documents_stored,
+                "documents_updated": documents_updated,
+                "total_documents": len(documents),
+                "table_name": self.table_name
+            }
+            
+            logger.info(f"Stored {documents_stored} new and updated {documents_updated} documents in {self.table_name}")
+            return result
             
         except Exception as e:
             connection.rollback()
             logger.error(f"Failed to store documents: {e}")
-            raise
+            return {
+                "status": "error",
+                "error": str(e),
+                "documents_stored": 0,
+                "documents_updated": 0,
+                "total_documents": len(documents)
+            }
         finally:
             cursor.close()
     

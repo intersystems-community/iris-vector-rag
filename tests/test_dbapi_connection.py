@@ -17,14 +17,14 @@ except ImportError as e:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Get the DBAPI module at the module level for the test
-irisdbapi = _get_iris_dbapi_module()
-
 def test_dbapi_connection():
     """
     Tests the DBAPI connection through the ConnectionManager.
     """
     logger.info("Starting DBAPI connection test...")
+
+    # Get the DBAPI module lazily within the test function to avoid circular imports
+    irisdbapi = _get_iris_dbapi_module()
 
     if not irisdbapi: # This check remains the same
         logger.error(
@@ -98,6 +98,6 @@ if __name__ == "__main__":
     logger.info(" - IRIS_USER                                         ")
     logger.info(" - IRIS_PASSWORD                                     ")
     logger.info(" OR IRIS_CONNECTION_STRING                           ")
-    logger.info(" AND intersystems_iris.dbapi is installed.           ")
+    logger.info(" AND iris is installed.           ")
     logger.info("-----------------------------------------------------")
     test_dbapi_connection()

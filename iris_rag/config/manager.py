@@ -46,6 +46,9 @@ class ConfigurationManager:
         
         # Basic environment variable loading (will be refined)
         self._load_env_variables()
+        
+        # Validate required configuration
+        self._validate_required_config()
 
     def _load_env_variables(self):
         """
@@ -101,6 +104,29 @@ class ConfigurationManager:
             return value_str 
         return value_str # Default return if no specific cast matches
 
+    def _validate_required_config(self):
+        """
+        Validate that required configuration values are present.
+        
+        Raises:
+            ConfigValidationError: If required configuration is missing
+        """
+        # Define required configuration keys
+        required_keys = [
+            "database:iris:host"
+        ]
+        
+        # Check each required key
+        for key in required_keys:
+            value = self.get(key)
+            if value is None:
+                raise ConfigValidationError(f"Missing required config: {key}")
+        
+        # Check for critical IRIS configuration from environment (for backward compatibility)
+        # Note: This is only checked if the config file doesn't provide the host
+        if self.get("database:iris:host") is None and 'IRIS_HOST' not in os.environ:
+            raise ConfigValidationError("Missing required config: database:iris:host")
+
     def _get_value_by_keys(self, config_dict: Dict, keys: list) -> Any:
         """Helper to navigate nested dict with a list of keys."""
         current = config_dict
@@ -133,6 +159,38 @@ class ConfigurationManager:
             else:
                 return default # Key path not found, return default
         return value
+
+    def get_config(self, key: str, default: Any = None) -> Any:
+        """
+        Get a configuration value by key (alias for get method for backward compatibility).
+        
+        Args:
+            key: The configuration key string.
+            default: The default value to return if the key is not found.
+            
+        Returns:
+            The configuration value, or the default if not found.
+        """
+        return self.get(key, default)
+
+    def load_config(self, config_path: str) -> None:
+        """
+        Load configuration from a file path.
+        
+        Args:
+            config_path: Path to the configuration file to load
+            
+        Raises:
+            FileNotFoundError: If the configuration file doesn't exist
+        """
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        with open(config_path, 'r') as f:
+            loaded_config = yaml.safe_load(f) or {}
+            if self._config:
+                self._config.update(loaded_config)
+            else:
+                self._config = loaded_config
 
     def get_vector_index_config(self) -> Dict[str, Any]:
         """
@@ -178,14 +236,27 @@ class ConfigurationManager:
         """
         default_config = {
             'model': 'all-MiniLM-L6-v2',
+            'model_name': 'all-MiniLM-L6-v2',  # Alias for compatibility
             'dimension': None,  # Will be determined by model or schema manager
             'provider': 'sentence-transformers'
         }
+        
+        # Check for environment variable override for model name
+        if 'EMBEDDING_MODEL_NAME' in os.environ:
+            model_name = os.environ['EMBEDDING_MODEL_NAME']
+            default_config['model'] = model_name
+            default_config['model_name'] = model_name
         
         # Get user-defined config and merge with defaults
         user_config = self.get("embeddings", {})
         if isinstance(user_config, dict):
             default_config.update(user_config)
+        
+        # Ensure model_name and model are synchronized
+        if 'model' in default_config and 'model_name' not in default_config:
+            default_config['model_name'] = default_config['model']
+        elif 'model_name' in default_config and 'model' not in default_config:
+            default_config['model'] = default_config['model_name']
         
         # If dimension is not explicitly set, determine from model or use default
         if not default_config['dimension']:
@@ -533,3 +604,104 @@ class ConfigurationManager:
                 "template_name": template_name,
                 "target_manager": "iris_rag"
             }
+
+    def get_database_config(self) -> Dict[str, Any]:
+        """
+        Get database configuration with defaults for IRIS connection.
+        
+        Returns:
+            Dictionary containing database configuration
+        """
+        default_config = {
+            'host': 'localhost',
+            'port': '1972',  # Keep as string for consistency
+            'namespace': 'USER',
+            'username': '_SYSTEM',
+            'password': 'SYS',
+            'driver_path': None
+        }
+        
+        # Map environment variables to config keys
+        env_mappings = {
+            'IRIS_HOST': 'host',
+            'IRIS_PORT': 'port', 
+            'IRIS_NAMESPACE': 'namespace',
+            'IRIS_USERNAME': 'username',
+            'IRIS_PASSWORD': 'password',
+            'IRIS_DRIVER_PATH': 'driver_path'
+        }
+        
+        # Override with environment variables
+        for env_key, config_key in env_mappings.items():
+            if env_key in os.environ:
+                value = os.environ[env_key]
+                # Keep port as string for config compatibility
+                default_config[config_key] = value
+        
+        # Also check for user-defined database config in YAML
+        user_config = self.get("database", {})
+        if isinstance(user_config, dict):
+            default_config.update(user_config)
+        
+        return default_config
+
+    def get_logging_config(self) -> Dict[str, Any]:
+        """
+        Get logging configuration with defaults.
+        
+        Returns:
+            Dictionary containing logging configuration
+        """
+        default_config = {
+            'level': 'INFO',
+            'path': 'logs/iris_rag.log',
+            'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        }
+        
+        # Map environment variables to config keys
+        env_mappings = {
+            'LOG_LEVEL': 'level',
+            'LOG_PATH': 'path'
+        }
+        
+        # Override with environment variables
+        for env_key, config_key in env_mappings.items():
+            if env_key in os.environ:
+                default_config[config_key] = os.environ[env_key]
+        
+        # Also check for user-defined logging config in YAML
+        user_config = self.get("logging", {})
+        if isinstance(user_config, dict):
+            default_config.update(user_config)
+        
+        return default_config
+
+    def get_default_table_name(self) -> str:
+        """
+        Get default table name for RAG operations.
+        
+        Returns:
+            Default table name as string
+        """
+        # Check environment variable first
+        if 'DEFAULT_TABLE_NAME' in os.environ:
+            return os.environ['DEFAULT_TABLE_NAME']
+        
+        # Check YAML config
+        table_name = self.get("default_table_name", "SourceDocuments")
+        return table_name
+
+    def get_default_top_k(self) -> int:
+        """
+        Get default top_k value for similarity search.
+        
+        Returns:
+            Default top_k value as integer
+        """
+        # Check environment variable first
+        if 'DEFAULT_TOP_K' in os.environ:
+            return int(os.environ['DEFAULT_TOP_K'])
+        
+        # Check YAML config
+        top_k = self.get("default_top_k", 5)
+        return int(top_k)

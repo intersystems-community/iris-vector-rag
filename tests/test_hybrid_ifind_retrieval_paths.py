@@ -45,14 +45,28 @@ class TestHybridIFindRetrievalPaths:
     def mock_config_manager(self):
         """Create a mock configuration manager."""
         config = Mock(spec=ConfigurationManager)
-        config.get.side_effect = lambda key, default=None: {
-            "pipelines:hybrid_ifind": {
-                "top_k": 5,
-                "vector_weight": 0.6,
-                "ifind_weight": 0.4,
-                "min_ifind_score": 0.1
+        
+        def mock_get(key, default=None):
+            config_values = {
+                "embedding_model.name": "sentence-transformers/all-MiniLM-L6-v2",
+                "embedding_model.dimension": 384,
+                "colbert": {
+                    "backend": "native",
+                    "token_dimension": 768,
+                    "model_name": "bert-base-uncased"
+                },
+                "storage:iris": {},
+                "storage:chunking": {"enabled": False},
+                "pipelines:hybrid_ifind": {
+                    "top_k": 5,
+                    "vector_weight": 0.6,
+                    "ifind_weight": 0.4,
+                    "min_ifind_score": 0.1
+                }
             }
-        }.get(key, default)
+            return config_values.get(key, default if default is not None else {})
+        
+        config.get.side_effect = mock_get
         return config
     
     @pytest.fixture
@@ -98,7 +112,13 @@ class TestHybridIFindRetrievalPaths:
             
             # Verify IFind SQL was executed
             calls = cursor.execute.call_args_list
-            ifind_call = calls[1]  # Second call should be IFind
+            # Find the IFind call (should contain $FIND and $SCORE)
+            ifind_call = None
+            for call in calls:
+                if "$FIND" in call[0][0] and "$SCORE" in call[0][0]:
+                    ifind_call = call
+                    break
+            assert ifind_call is not None, f"IFind query with $FIND not found in calls: {[call[0][0][:100] for call in calls]}"
             assert "$FIND" in ifind_call[0][0]
             assert "$SCORE" in ifind_call[0][0]
             

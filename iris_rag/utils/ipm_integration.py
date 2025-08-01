@@ -216,7 +216,7 @@ class IPMIntegration:
                     "namespace": "USER",
                     "username": "demo",
                     "password": "demo",
-                    "driver": "intersystems_iris.dbapi"
+                    "driver": "iris"
                 }
             },
             "embeddings": {

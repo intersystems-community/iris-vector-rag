@@ -9,7 +9,7 @@ metadata:
 # Database Configuration
 database:
   iris:
-    driver: "intersystems_iris.dbapi._DBAPI"
+    driver: "iris._DBAPI"
     host: "${IRIS_HOST:-localhost}"
     port: "${IRIS_PORT:-1972}"
     namespace: "${IRIS_NAMESPACE:-USER}"

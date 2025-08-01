@@ -140,7 +140,7 @@ database:
 # Alternative IRIS-specific format (from default.yaml)
 database:
   iris:
-    driver: "intersystems_iris.dbapi._DBAPI"
+    driver: "iris._DBAPI"
     host: "localhost"
     port: 1972
     namespace: "USER"

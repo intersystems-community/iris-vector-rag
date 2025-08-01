@@ -57,10 +57,10 @@ def get_real_token_embeddings(text: str, max_length: int = 512) -> tuple[List[st
             logger.info("Clearing _hf_model_cache to load new/updated model.")
             _hf_model_cache.clear()
         
+        from common.huggingface_utils import download_huggingface_model
         logger.info(f"Loading HuggingFace tokenizer and model: {current_model_name}")
-        tokenizer = AutoTokenizer.from_pretrained(current_model_name)
         # Load model with trust_remote_code=True to ensure custom ColBERT code/architecture is used
-        model = AutoModel.from_pretrained(current_model_name, trust_remote_code=True)
+        tokenizer, model = download_huggingface_model(current_model_name, trust_remote_code=True)
         model.eval() # Set to evaluation mode
         _hf_model_cache[current_model_name] = (tokenizer, model)
     else:

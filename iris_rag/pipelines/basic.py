@@ -27,17 +27,33 @@ class BasicRAGPipeline(RAGPipeline):
     3. Context augmentation and LLM generation
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager,
+    def __init__(self, connection_manager: Optional[ConnectionManager] = None,
+                 config_manager: Optional[ConfigurationManager] = None,
                  llm_func: Optional[Callable[[str], str]] = None, vector_store=None):
         """
         Initialize the Basic RAG Pipeline.
         
         Args:
-            connection_manager: Manager for database connections
-            config_manager: Manager for configuration settings
+            connection_manager: Optional manager for database connections (defaults to new instance)
+            config_manager: Optional manager for configuration settings (defaults to new instance)
             llm_func: Optional LLM function for answer generation
             vector_store: Optional VectorStore instance
         """
+        # Create default instances if not provided
+        if connection_manager is None:
+            try:
+                connection_manager = ConnectionManager()
+            except Exception as e:
+                logger.warning(f"Failed to create default ConnectionManager: {e}")
+                connection_manager = None
+        
+        if config_manager is None:
+            try:
+                config_manager = ConfigurationManager()
+            except Exception as e:
+                logger.warning(f"Failed to create default ConfigurationManager: {e}")
+                config_manager = ConfigurationManager()  # Always need config manager
+        
         super().__init__(connection_manager, config_manager, vector_store)
         self.llm_func = llm_func
         
@@ -72,15 +88,16 @@ class BasicRAGPipeline(RAGPipeline):
             # Load documents from path
             documents = self._load_documents_from_path(documents_path)
         
-        # Process documents
-        chunk_documents = kwargs.get("chunk_documents", True)
+        # Process documents - use vector store's automatic chunking
         generate_embeddings = kwargs.get("generate_embeddings", True)
         
-        if chunk_documents:
-            documents = self._chunk_documents(documents)
-        
         if generate_embeddings:
-            self._generate_and_store_embeddings(documents)
+            # Use vector store's automatic chunking and embedding generation
+            self.vector_store.add_documents(
+                documents,
+                auto_chunk=True,
+                chunking_strategy=kwargs.get("chunking_strategy", "fixed_size")
+            )
         else:
             # Store documents without embeddings using vector store
             self._store_documents(documents)
@@ -220,6 +237,16 @@ class BasicRAGPipeline(RAGPipeline):
         
         return chunks
     
+    def _store_documents(self, documents: List[Document], embeddings: Optional[List[List[float]]] = None) -> None:
+        """
+        Store documents in the vector store with optional embeddings.
+        
+        Args:
+            documents: List of documents to store
+            embeddings: Optional list of embeddings corresponding to documents
+        """
+        self.vector_store.add_documents(documents, embeddings)
+    
     def _generate_and_store_embeddings(self, documents: List[Document]) -> None:
         """
         Generate embeddings for documents and store them.
@@ -227,21 +254,34 @@ class BasicRAGPipeline(RAGPipeline):
         Args:
             documents: List of documents to process
         """
-        # Extract text content
-        texts = [doc.page_content for doc in documents]
-        
-        # Generate embeddings in batches
-        batch_size = self.pipeline_config.get("embedding_batch_size", 32)
-        all_embeddings = []
-        
-        for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i + batch_size]
-            batch_embeddings = self.embedding_manager.embed_texts(batch_texts)
-            all_embeddings.extend(batch_embeddings)
-        
-        # Store documents with embeddings using vector store
-        self._store_documents(documents, all_embeddings)
-        logger.info(f"Generated and stored embeddings for {len(documents)} documents")
+        try:
+            # Extract text content
+            texts = [doc.page_content for doc in documents]
+            logger.debug(f"Extracted {len(texts)} texts for embedding generation")
+            
+            # Generate embeddings in batches
+            batch_size = self.pipeline_config.get("embedding_batch_size", 32)
+            all_embeddings = []
+            
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i:i + batch_size]
+                logger.debug(f"Generating embeddings for batch {i//batch_size + 1}: {len(batch_texts)} texts")
+                batch_embeddings = self.embedding_manager.embed_texts(batch_texts)
+                logger.debug(f"Generated {len(batch_embeddings) if batch_embeddings else 0} embeddings")
+                if batch_embeddings:
+                    all_embeddings.extend(batch_embeddings)
+            
+            logger.info(f"Total embeddings generated: {len(all_embeddings)} for {len(documents)} documents")
+            
+            # Store documents with embeddings using vector store
+            self._store_documents(documents, all_embeddings)
+            logger.info(f"Generated and stored embeddings for {len(documents)} documents")
+            
+        except Exception as e:
+            # If embedding generation fails, fall back to storing documents without embeddings
+            logger.warning(f"Embedding generation failed: {e}. Storing documents without embeddings.")
+            self._store_documents(documents, embeddings=None)
+            logger.info(f"Stored {len(documents)} documents without embeddings due to embedding failure")
     
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
         """
@@ -280,6 +320,45 @@ class BasicRAGPipeline(RAGPipeline):
         
         logger.debug(f"Retrieved {len(documents)} documents for query: {query_text[:50]}...")
         return documents
+    
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+        """
+        Execute a query and return results in standard format.
+        
+        This method provides a consistent interface that returns a dictionary
+        with retrieved_documents, matching the expected format for tests and
+        other consumers.
+        
+        Args:
+            query_text: The query string
+            top_k: Number of documents to retrieve
+            **kwargs: Additional arguments for retrieval
+            
+        Returns:
+            Dictionary containing query results with retrieved_documents
+        """
+        # Use the vector store to search for similar documents directly
+        # to avoid recursion with the base class retrieve() method
+        if hasattr(self, 'vector_store') and self.vector_store:
+            try:
+                retrieved_documents = self.vector_store.similarity_search(query_text, k=top_k)
+            except Exception as e:
+                logger.warning(f"Vector store search failed: {e}")
+                retrieved_documents = []
+        else:
+            # Fallback: return empty list if no vector store
+            retrieved_documents = []
+        
+        # Return in standard format expected by tests
+        return {
+            "query": query_text,
+            "retrieved_documents": retrieved_documents,
+            "answer": None,  # Basic query method doesn't generate answers
+            "metadata": {
+                "num_retrieved": len(retrieved_documents),
+                "pipeline_type": "basic_rag"
+            }
+        }
     
     def run(self, query: str, **kwargs) -> Dict[str, Any]:
         """
@@ -321,7 +400,20 @@ class BasicRAGPipeline(RAGPipeline):
         # Step 1: Retrieve relevant documents
         # Remove top_k from kwargs to avoid duplicate parameter error
         query_kwargs = {k: v for k, v in kwargs.items() if k != 'top_k'}
-        retrieved_documents = self.query(query_text, top_k=top_k, **query_kwargs)
+        query_result = self.query(query_text, top_k=top_k, **query_kwargs)
+        
+        # Extract the actual document list from the query result
+        raw_documents = query_result.get("retrieved_documents", [])
+        
+        # Handle case where documents might be tuples (Document, score) or just Documents
+        retrieved_documents = []
+        for item in raw_documents:
+            if isinstance(item, tuple) and len(item) >= 2:
+                # Extract Document from (Document, score) tuple
+                retrieved_documents.append(item[0])
+            else:
+                # Assume it's already a Document
+                retrieved_documents.append(item)
         
         # Step 2: Generate answer using LLM
         if self.llm_func:

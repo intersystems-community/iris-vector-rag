@@ -2,7 +2,7 @@ import logging
 from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
 from iris_rag.core.connection import ConnectionManager
 from iris_rag.config.manager import ConfigurationManager
-from iris_rag.storage.iris import IRISStorage
+from iris_rag.storage.enterprise_storage import IRISStorage
 
 # Optional: Dummy LLM function
 def dummy_llm(prompt: str) -> str:

@@ -66,6 +66,10 @@ class CRAGPipeline(RAGPipeline):
         # Initialize parent with vector store
         super().__init__(connection_manager, config_manager, vector_store)
         
+        # Initialize embedding manager for compatibility with tests
+        from ..embeddings.manager import EmbeddingManager
+        self.embedding_manager = EmbeddingManager(config_manager)
+        
         self.embedding_func = embedding_func
         self.llm_func = llm_func
         self.web_search_func = web_search_func

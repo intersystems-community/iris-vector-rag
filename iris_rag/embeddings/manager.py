@@ -124,14 +124,13 @@ class EmbeddingManager:
     def _create_huggingface_function(self) -> Callable:
         """Create Hugging Face embedding function."""
         try:
-            from transformers import AutoTokenizer, AutoModel
+            from common.huggingface_utils import download_huggingface_model
             import torch
-            
+
             hf_config = self.embedding_config.get("huggingface", {})
             model_name = hf_config.get("model_name", "sentence-transformers/all-MiniLM-L6-v2")
-            
-            tokenizer = AutoTokenizer.from_pretrained(model_name)
-            model = AutoModel.from_pretrained(model_name)
+
+            tokenizer, model = download_huggingface_model(model_name)
             
             def embed_texts(texts: List[str]) -> List[List[float]]:
                 # Tokenize and encode

@@ -63,7 +63,7 @@ def mock_vector_store():
 @pytest.fixture
 def graphrag_pipeline_instance(mock_connection_manager, mock_config_manager, mock_vector_store) -> GraphRAGPipeline:
     """Provides a GraphRAGPipeline instance for tests."""
-    with patch('iris_rag.storage.iris.IRISStorage'), \
+    with patch('iris_rag.storage.enterprise_storage.IRISStorage'), \
          patch('iris_rag.embeddings.manager.EmbeddingManager'), \
          patch('iris_rag.storage.schema_manager.SchemaManager'):
         
@@ -181,7 +181,7 @@ def test_schema_self_healing(mock_connection_manager, mock_config_manager):
     Tests GraphRAG pipeline with schema management through mocked components.
     """
     # Test that pipeline can be initialized with schema management
-    with patch('iris_rag.storage.iris.IRISStorage'), \
+    with patch('iris_rag.storage.enterprise_storage.IRISStorage'), \
          patch('iris_rag.embeddings.manager.EmbeddingManager'), \
          patch('iris_rag.storage.schema_manager.SchemaManager') as mock_schema_manager:
         

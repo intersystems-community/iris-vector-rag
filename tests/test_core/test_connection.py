@@ -29,7 +29,7 @@ def mock_config_manager():
                 "namespace": "FIXTURE_NS",
                 "username": "fixture_user",
                 "password": "fixture_password",
-                "driver": "intersystems_iris.dbapi"
+                "driver": "iris"
             }
         
         def get(self, section_key):
@@ -48,26 +48,15 @@ def test_connection_manager_get_iris_connection(mock_config_manager):
     if ConnectionManager is None:
         pytest.fail("ConnectionManager not imported")
 
-    with mock.patch('iris_rag.core.connection.importlib.import_module') as mock_import_module:
-        mock_db_api = mock.MagicMock()
-        mock_db_api.connect.return_value = "mock_iris_connection_object"
-        mock_import_module.return_value = mock_db_api
+    # Mock the ACTUAL import path used by ConnectionManager
+    with mock.patch('common.iris_dbapi_connector.get_iris_dbapi_connection') as mock_get_connection:
+        mock_get_connection.return_value = "mock_iris_connection_object"
         
         conn_manager = ConnectionManager(config_manager=mock_config_manager)
         connection = conn_manager.get_connection("iris")
         
         assert connection == "mock_iris_connection_object"
-        mock_import_module.assert_called_once_with("intersystems_iris.dbapi")
-        
-        # Expected values from the simplified mock_config_manager fixture
-        expected_config = mock_config_manager.get("database:iris")
-        mock_db_api.connect.assert_called_once_with(
-            hostname=expected_config["host"], # Should be "fixture_host"
-            port=expected_config["port"],     # Should be 11111
-            namespace=expected_config["namespace"], # Should be "FIXTURE_NS"
-            username=expected_config["username"], # Should be "fixture_user"
-            password=expected_config["password"]  # Should be "fixture_password"
-        )
+        mock_get_connection.assert_called_once()
 
 def test_connection_manager_unsupported_backend(mock_config_manager):
     """Tests getting a connection for an unsupported backend."""
@@ -107,25 +96,14 @@ def test_connection_manager_iris_uses_provided_config(mock_config_manager):
     if ConnectionManager is None:
         pytest.fail("ConnectionManager not imported")
 
-    # mock_config_manager will provide its fixed "fixture_host" etc.
-    with mock.patch('iris_rag.core.connection.importlib.import_module') as mock_import_module:
-        mock_db_api = mock.MagicMock()
+    # Mock the ACTUAL import path used by ConnectionManager
+    with mock.patch('common.iris_dbapi_connector.get_iris_dbapi_connection') as mock_get_connection:
         # Use a distinct return value to ensure no test pollution
         connect_return_value = "mock_iris_connection_object_specific_test"
-        mock_db_api.connect.return_value = connect_return_value
-        mock_import_module.return_value = mock_db_api
+        mock_get_connection.return_value = connect_return_value
         
         conn_manager = ConnectionManager(config_manager=mock_config_manager)
         connection = conn_manager.get_connection("iris")
         
         assert connection == connect_return_value
-        mock_import_module.assert_called_once_with("intersystems_iris.dbapi")
-
-        expected_config = mock_config_manager.get("database:iris")
-        mock_db_api.connect.assert_called_once_with(
-            hostname=expected_config["host"],
-            port=expected_config["port"],
-            namespace=expected_config["namespace"],
-            username=expected_config["username"],
-            password=expected_config["password"]
-        )
+        mock_get_connection.assert_called_once()

@@ -55,7 +55,7 @@ try:
     from iris_rag.core.models import Document
     from iris_rag.config.manager import ConfigurationManager
     from iris_rag.embeddings.manager import EmbeddingManager
-    from iris_rag.storage.iris import IRISStorage
+    from iris_rag.storage.enterprise_storage import IRISStorage
     from iris_rag.pipelines.basic import BasicRAGPipeline
     logger.info("✓ Successfully imported iris_rag package components")
 except ImportError as e:
@@ -670,7 +670,7 @@ def test_iris_rag_package_imports():
     from iris_rag.core.models import Document
     from iris_rag.config.manager import ConfigurationManager
     from iris_rag.embeddings.manager import EmbeddingManager
-    from iris_rag.storage.iris import IRISStorage
+    from iris_rag.storage.enterprise_storage import IRISStorage
     from iris_rag.pipelines.basic import BasicRAGPipeline
     
     # Test top-level package import

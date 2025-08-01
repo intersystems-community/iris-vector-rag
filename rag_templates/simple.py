@@ -185,7 +185,7 @@ class RAG:
                 details={"error": str(e)}
             ) from e
     
-    def _process_documents(self, documents: Union[List[str], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    def _process_documents(self, documents: Union[List[str], List[Dict[str, Any]]]) -> List[Any]:
         """
         Process input documents into the format expected by the pipeline.
         
@@ -193,35 +193,41 @@ class RAG:
             documents: List of document texts or document dictionaries
             
         Returns:
-            List of processed document dictionaries
+            List of Document objects
         """
+        # Import Document class here to avoid circular imports
+        from iris_rag.core.models import Document
+        
         processed = []
         
         for i, doc in enumerate(documents):
             if isinstance(doc, str):
-                # Convert string to document format
-                processed_doc = {
-                    "page_content": doc,
-                    "metadata": {
+                # Convert string to Document object
+                processed_doc = Document(
+                    page_content=doc,
+                    metadata={
                         "source": f"simple_api_doc_{i}",
                         "document_id": f"doc_{i}",
                         "added_via": "simple_api"
                     }
-                }
+                )
             elif isinstance(doc, dict):
                 # Ensure required fields exist
                 if "page_content" not in doc:
                     raise ValueError(f"Document {i} missing 'page_content' field")
                 
-                processed_doc = doc.copy()
-                if "metadata" not in processed_doc:
-                    processed_doc["metadata"] = {}
+                metadata = doc.get("metadata", {}).copy()
                 
                 # Add default metadata
-                processed_doc["metadata"].update({
-                    "document_id": processed_doc["metadata"].get("document_id", f"doc_{i}"),
+                metadata.update({
+                    "document_id": metadata.get("document_id", f"doc_{i}"),
                     "added_via": "simple_api"
                 })
+                
+                processed_doc = Document(
+                    page_content=doc["page_content"],
+                    metadata=metadata
+                )
             else:
                 raise ValueError(f"Document {i} must be string or dictionary, got {type(doc)}")
             
