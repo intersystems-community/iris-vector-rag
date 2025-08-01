@@ -93,6 +93,33 @@ vector_store = IRISVectorStore(connection_manager, config_manager)
 retriever = vector_store.as_retriever(search_kwargs={"k": 5})
 ```
 
+### Enterprise Storage & Existing Data Integration
+Seamlessly integrate RAG with your existing databases and enterprise data:
+
+```python
+# Use existing database tables
+config = {
+    "storage": {
+        "iris": {
+            "table_name": "MyCompany.Documents"  # Your existing table
+        }
+    }
+}
+
+# Enterprise storage with manual schema control
+from iris_rag.storage.enterprise_storage import IRISStorage
+storage = IRISStorage(connection, config)
+storage.initialize_schema()  # Adds RAG columns to existing tables
+```
+
+**Key Features:**
+- **Custom table support**: Use existing database tables without modification
+- **Non-destructive overlay**: Add RAG capabilities via views and auxiliary tables
+- **Schema migration**: Automatically add missing columns to legacy tables
+- **Security-hardened**: Input validation and SQL injection prevention
+
+See the [Existing Data Integration Guide](docs/EXISTING_DATA_INTEGRATION.md) for complete setup instructions.
+
 ### Configuration System
 Environment-aware configuration with validation:
 ```python
@@ -114,6 +141,7 @@ config = ConfigurationManager()
 | **graphrag** | Graph-based knowledge retrieval | Structured knowledge bases | ✅ Production |
 | **hybrid_ifind** | Multi-modal search combination | Enterprise search | ✅ Production |
 | **noderag** | Node-based structured retrieval | Hierarchical data | ✅ Production |
+| **sql_rag** | Natural language to SQL conversion | Structured data queries | ✅ Production |
 
 *ColBERT: Includes experimental [Pylate integration](https://github.com/lightonai/pylate) with pluggable backend support (`native`/`pylate`).
 

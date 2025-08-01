@@ -238,7 +238,7 @@ List available RAG techniques.
 ```python
 techniques = rag.get_available_techniques()
 print(f"Available techniques: {techniques}")
-# Output: ['basic', 'colbert', 'crag', 'hyde', 'graphrag', 'hybrid_ifind', 'noderag']
+# Output: ['basic', 'colbert', 'crag', 'hyde', 'graphrag', 'hybrid_ifind', 'noderag', 'sql_rag']
 ```
 
 ###### `get_technique_info(technique_name)`
@@ -569,7 +569,7 @@ List available RAG techniques.
 ```javascript
 const techniques = rag.getAvailableTechniques();
 console.log(`Available techniques: ${techniques}`);
-// Output: ['basic', 'colbert', 'crag', 'hyde', 'graphrag', 'hybrid_ifind', 'noderag']
+// Output: ['basic', 'colbert', 'crag', 'hyde', 'graphrag', 'hybrid_ifind', 'noderag', 'sql_rag']
 ```
 
 ###### `getTechniqueInfo(techniqueName)`

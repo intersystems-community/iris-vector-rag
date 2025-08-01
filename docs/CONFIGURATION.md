@@ -509,7 +509,7 @@ python -m iris_rag.cli run [OPTIONS]
 ```
 
 **Options:**
-- `-p, --pipeline [basic|colbert|noderag|graphrag|hyde|crag|hybrid_ifind]`: Pipeline type to reconcile (default: colbert)
+- `-p, --pipeline [basic|colbert|noderag|graphrag|hyde|crag|hybrid_ifind|sql_rag]`: Pipeline type to reconcile (default: colbert)
 - `-f, --force`: Force reconciliation even if no drift detected
 - `-n, --dry-run`: Analyze drift without executing reconciliation actions
 
@@ -536,7 +536,7 @@ python -m iris_rag.cli status [OPTIONS]
 ```
 
 **Options:**
-- `-p, --pipeline [basic|colbert|noderag|graphrag|hyde|crag|hybrid_ifind]`: Pipeline type to check status for (default: colbert)
+- `-p, --pipeline [basic|colbert|noderag|graphrag|hyde|crag|hybrid_ifind|sql_rag]`: Pipeline type to check status for (default: colbert)
 
 #### 3. `daemon` - Continuous Reconciliation
 
@@ -546,7 +546,7 @@ python -m iris_rag.cli daemon [OPTIONS]
 ```
 
 **Options:**
-- `-p, --pipeline [basic|colbert|noderag|graphrag|hyde|crag|hybrid_ifind]`: Pipeline type to monitor (default: colbert)
+- `-p, --pipeline [basic|colbert|noderag|graphrag|hyde|crag|hybrid_ifind|sql_rag]`: Pipeline type to monitor (default: colbert)
 - `-i, --interval INTEGER`: Reconciliation interval in seconds (default: 3600 = 1 hour)
 - `--max-iterations INTEGER`: Maximum iterations (0 = infinite, default: 0)
 
