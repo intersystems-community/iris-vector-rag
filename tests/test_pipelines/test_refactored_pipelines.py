@@ -113,7 +113,7 @@ class TestCRAGPipeline:
                 llm_func=mock_llm_func
             )
             
-            result = pipeline.execute("test query")
+            result = pipeline.query("test query")
             
             assert isinstance(result, dict)
             assert "query" in result
@@ -172,7 +172,7 @@ class TestNodeRAGPipeline:
                 vector_store=mock_vector_store
             )
             
-            result = pipeline.execute("test query")
+            result = pipeline.query("test query")
             
             assert isinstance(result, dict)
             assert "query" in result
@@ -216,7 +216,7 @@ class TestGraphRAGPipeline:
                 llm_func=lambda x: "test answer"
             )
             
-            result = pipeline.execute("test query")
+            result = pipeline.query("test query")
             
             assert isinstance(result, dict)
             assert "query" in result
@@ -268,7 +268,7 @@ class TestHybridIFindRAGPipeline:
                 llm_func=lambda x: "test answer"
             )
             
-            result = pipeline.execute("test query")
+            result = pipeline.query("test query")
             
             assert isinstance(result, dict)
             assert "query" in result
@@ -345,7 +345,7 @@ class TestStandardizedInterface:
             )
             
             # This is how the evaluation framework now calls pipelines
-            result = pipeline.execute("test query")
+            result = pipeline.query("test query")
             
             assert isinstance(result, dict)
             assert "query" in result

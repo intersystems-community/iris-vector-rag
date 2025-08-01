@@ -36,7 +36,7 @@ def test_pipeline(pipeline_class, pipeline_name: str, query: str = "What are the
         
         # Run pipeline
         start_time = time.time()
-        result = pipeline.run(query, top_k=3)
+        result = pipeline.query(query, top_k=3)
         end_time = time.time()
         
         execution_time = end_time - start_time

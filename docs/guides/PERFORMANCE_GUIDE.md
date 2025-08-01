@@ -723,7 +723,7 @@ import tracemalloc
 tracemalloc.start()
 
 # Run your RAG pipeline
-result = rag_pipeline.execute(query)
+result = rag_pipeline.query(query)
 
 # Check memory usage
 current, peak = tracemalloc.get_traced_memory()
@@ -802,7 +802,7 @@ def profile_rag_pipeline(rag_pipeline, query):
     profiler = cProfile.Profile()
     
     profiler.enable()
-    result = rag_pipeline.execute(query)
+    result = rag_pipeline.query(query)
     profiler.disable()
     
     # Analyze results

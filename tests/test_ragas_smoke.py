@@ -71,7 +71,7 @@ def test_pipeline_for_query(pipeline_class, pipeline_name, iris, embedding_func,
         pipeline = pipeline_class(iris, embedding_func, llm_func)
         
         # Run pipeline
-        result = pipeline.run(query_text, top_k=5)
+        result = pipeline.query(query_text, top_k=5)
         
         end_time = time.time()
         execution_time = end_time - start_time

@@ -39,7 +39,7 @@ def test_crag():
     query = "What is diabetes and how is it treated?"
     
     # Run pipeline
-    result = pipeline.run(query, top_k=5)
+    result = pipeline.query(query, top_k=5)
     
     print(f"\nQuery: {query}")
     print(f"Documents retrieved: {len(result['retrieved_documents'])}")
@@ -81,7 +81,7 @@ def test_graphrag():
     query = "What is diabetes and how is it treated?"
     
     # Run pipeline
-    result = pipeline.run(query, top_k=5)
+    result = pipeline.query(query, top_k=5)
     
     print(f"\nQuery: {query}")
     print(f"Documents retrieved: {len(result['retrieved_documents'])}")

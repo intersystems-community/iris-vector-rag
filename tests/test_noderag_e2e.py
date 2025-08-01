@@ -171,7 +171,7 @@ def test_noderag_e2e_relationship_query(iris_testcontainer_connection):
         # and chunk "noderag_chunk_002_01" or "noderag_chunk_002_02" (Project B relation)
         # or potentially the full documents DOC1_ID, DOC2_ID if they score high enough.
         
-        results = pipeline.run(query=query, top_k=3, similarity_threshold=0.1) # top_k for merged results
+        results = pipeline.query(query=query, top_k=3, similarity_threshold=0.1) # top_k for merged results
 
         print(f"NodeRAG Query: {results['query']}")
         print(f"NodeRAG Answer: {results['answer']}")

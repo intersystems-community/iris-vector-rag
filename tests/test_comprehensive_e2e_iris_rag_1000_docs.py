@@ -191,7 +191,7 @@ class ComprehensiveE2ETestRunner:
                 query_start = time.time()
                 
                 # Run the pipeline
-                result = pipeline.run(
+                result = pipeline.query(
                     query_data["query"],
                     top_k=5
                 )
@@ -261,7 +261,7 @@ class ComprehensiveE2ETestRunner:
                 query_start = time.time()
                 
                 # Run the pipeline
-                result = pipeline.run(
+                result = pipeline.query(
                     query_text=query_data["query"],
                     top_k=5
                 )
@@ -471,7 +471,7 @@ class ComprehensiveE2ETestRunner:
                 
                 # Run the pipeline
                 # The HybridIFindRAGPipeline.execute method takes query_text directly
-                result = pipeline.execute(
+                result = pipeline.query(
                     query_text=query_data["query"], # Pass query_text directly
                     top_k=5
                 )
@@ -529,7 +529,7 @@ class ComprehensiveE2ETestRunner:
             for query_data in TEST_CONFIG["test_queries"]:
                 query_start_time = time.time()
                 # Using pipeline.execute as it's the standard defined in RAGPipeline base class
-                result = pipeline.execute(
+                result = pipeline.query(
                     query_text=query_data["query"],
                     top_k=5
                 )

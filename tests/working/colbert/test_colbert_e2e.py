@@ -119,7 +119,7 @@ def test_colbert_v2_e2e_fine_grained_match(iris_testcontainer_connection): # Rem
 
         query = "What is azithromycin used for regarding Streptococcus pneumoniae?"
         
-        results = pipeline.run(query=query, top_k=2, similarity_threshold=0.0)
+        results = pipeline.query(query=query, top_k=2, similarity_threshold=0.0)
 
         print(f"V2 Query: {results['query']}")
         print(f"V2 Answer: {results['answer']}")

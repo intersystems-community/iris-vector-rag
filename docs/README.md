@@ -31,6 +31,7 @@ make quick-start           # Interactive wizard with profile selection
 | Document | Description | Audience |
 |----------|-------------|----------|
 | [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) | Developer onboarding, Quick Start extension, and contribution guide | Developers |
+| [`PIPELINE_DEVELOPMENT_GUIDE.md`](PIPELINE_DEVELOPMENT_GUIDE.md) | **NEW!** How to create custom RAG pipelines with proper inheritance patterns | Pipeline Developers |
 | [`CONFIGURATION.md`](CONFIGURATION.md) | Configuration system, Quick Start templates, and environment setup | Developers, DevOps |
 | [`API_REFERENCE.md`](API_REFERENCE.md) | Complete API documentation for Python and JavaScript | Developers |
 

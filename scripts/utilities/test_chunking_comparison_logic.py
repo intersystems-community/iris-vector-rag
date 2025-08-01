@@ -93,7 +93,7 @@ class ChunkingComparisonTester:
     def simulate_chunked_retrieval(self, pipeline, query: str) -> Dict[str, Any]:
         """Simulate chunked retrieval with realistic performance characteristics"""
         # First get normal results
-        normal_result = pipeline.run(query, top_k=10)
+        normal_result = pipeline.query(query, top_k=10)
         retrieved_docs = normal_result.get("retrieved_documents", [])
         
         if not retrieved_docs:
@@ -166,7 +166,7 @@ class ChunkingComparisonTester:
             for query in self.test_queries:
                 # Test non-chunked approach
                 start_time = time.time()
-                non_chunked_result = pipeline.run(query, top_k=10)
+                non_chunked_result = pipeline.query(query, top_k=10)
                 non_chunked_time = (time.time() - start_time) * 1000
                 
                 non_chunked_times.append(non_chunked_time)

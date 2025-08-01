@@ -335,7 +335,7 @@ class WorkingHNSWComparison:
                     response = pipeline.query(query, top_k=5)
                 elif hasattr(pipeline, 'run'):
                     # Use run method for techniques that have it
-                    response = pipeline.run(query, top_k=5)
+                    response = pipeline.query(query, top_k=5)
                 else:
                     # Fallback for pipelines without query method
                     retrieved_docs = pipeline.retrieve_documents(query)

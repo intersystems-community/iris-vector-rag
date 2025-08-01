@@ -246,14 +246,14 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
         """Wrapper for BasicRAGPipeline."""
         pipeline = BasicRAGPipeline(iris_connector, embedding_func, llm_func)
         top_k = kwargs.get("top_k", DEFAULT_TOP_K)
-        return pipeline.run(query, top_k=top_k)
+        return pipeline.query(query, top_k=top_k)
 
     # HyDE wrapper
     def hyde_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
         """Wrapper for HyDERAGPipeline."""
         pipeline = HyDERAGPipeline(iris_connector, embedding_func, llm_func)
         top_k = kwargs.get("top_k", DEFAULT_TOP_K)
-        return pipeline.run(query, top_k=top_k)
+        return pipeline.query(query, top_k=top_k)
 
     # ColBERT wrapper
     def colbert_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
@@ -273,14 +273,14 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
         )
         
         top_k = kwargs.get("top_k", DEFAULT_TOP_K)
-        return pipeline.run(query, top_k=top_k)
+        return pipeline.query(query, top_k=top_k)
 
     # CRAG wrapper
     def crag_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
         """Wrapper for CRAGPipeline."""
         pipeline = CRAGPipeline(iris_connector, embedding_func, llm_func)
         top_k = kwargs.get("top_k", DEFAULT_TOP_K)
-        return pipeline.run(query, top_k=top_k)
+        return pipeline.query(query, top_k=top_k)
 
     # NodeRAG wrapper
     def noderag_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
@@ -290,7 +290,7 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
         # The 'top_k_seeds' logic is internal to its retrieval methods.
         # The wrapper should pass the 'top_k' value intended for the overall pipeline.
         actual_top_k = kwargs.get("top_k", DEFAULT_TOP_K)
-        return pipeline.run(query, top_k=actual_top_k)
+        return pipeline.query(query, top_k=actual_top_k)
 
     # GraphRAG wrapper
     def graphrag_wrapper(query, iris_connector=None, embedding_func=None, llm_func=None, **kwargs):
@@ -299,7 +299,7 @@ def create_pipeline_wrappers(top_k: int = DEFAULT_TOP_K) -> Dict[str, Dict[str, 
         # GraphRAGPipeline.execute (which is its run method) calls self.query(query_text, top_k)
         # The wrapper should pass 'top_k'.
         actual_top_k = kwargs.get("top_k", DEFAULT_TOP_K)
-        return pipeline.run(query, top_k=actual_top_k)
+        return pipeline.query(query, top_k=actual_top_k)
 
     # Return all wrappers in a dictionary
     return {

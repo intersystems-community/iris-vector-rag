@@ -185,7 +185,7 @@ class TestRAGPipelineBaseClass:
         pipeline = TestPipeline(mock_connection_manager, mock_config_manager, mock_vector_store)
         
         # Test run method
-        result = pipeline.run("test query", top_k=3)
+        result = pipeline.query("test query", top_k=3)
         
         # Verify it returns the same as execute
         expected = {"query": "test query", "answer": "test answer", "retrieved_documents": []}
@@ -260,7 +260,7 @@ class TestBasicRAGPipelineRefactoring:
         )
         
         # Execute pipeline
-        result = pipeline.execute("test query")
+        result = pipeline.query("test query")
         
         # Verify standard format
         assert "query" in result
@@ -340,7 +340,7 @@ class TestHyDERAGPipelineRefactoring:
         )
         
         # Execute pipeline
-        result = pipeline.execute("test query")
+        result = pipeline.query("test query")
         
         # Verify standard format
         assert "query" in result
@@ -440,7 +440,7 @@ class TestColBERTRAGPipelineRefactoring:
         )
         
         # Execute pipeline
-        result = pipeline.execute("test query")
+        result = pipeline.query("test query")
         
         # Verify standard format
         assert "query" in result

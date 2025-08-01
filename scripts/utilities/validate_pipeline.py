@@ -58,7 +58,7 @@ def test_pipeline(pipeline_type):
         )
         
         # Run a test query
-        result = pipeline.run('What are the effects of BRCA1 mutations?', top_k=3)
+        result = pipeline.query('What are the effects of BRCA1 mutations?', top_k=3)
         
         doc_count = len(result.get('retrieved_documents', []))
         answer_length = len(result.get('answer', ''))

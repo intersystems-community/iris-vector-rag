@@ -203,7 +203,7 @@ def test_hybrid_ifind_rag_with_optimizations():
         print(f"📊 Testing query: {query}")
         
         start_time = time.time()
-        result = pipeline.run(query, top_k=5)
+        result = pipeline.query(query, top_k=5)
         end_time = time.time()
         
         total_time = end_time - start_time

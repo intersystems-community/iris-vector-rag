@@ -184,7 +184,7 @@ class EnterpriseRAGBenchmark:
         
         start_time = time.time()
         try:
-            result = pipeline.run(query, top_k=10, similarity_threshold=0.1)
+            result = pipeline.query(query, top_k=10, similarity_threshold=0.1)
             response_time = time.time() - start_time
             
             # Extract metrics

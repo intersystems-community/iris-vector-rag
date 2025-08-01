@@ -474,10 +474,10 @@ def main():
     if args.interactive:
         print("🚀 Starting Interactive Quick Start Setup...")
         # Interactive mode would use the wizard
-        result = pipeline.execute(args.profile)
+        result = pipeline.query(args.profile)
     else:
         print(f"🚀 Starting {args.profile.title()} Quick Start Setup...")
-        result = pipeline.execute(args.profile)
+        result = pipeline.query(args.profile)
     
     if result["status"] == "success":
         print("✅ Setup completed successfully!")

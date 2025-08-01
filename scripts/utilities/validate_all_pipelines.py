@@ -145,7 +145,7 @@ class PipelineValidator:
                 
                 try:
                     start_time = time.time()
-                    result = pipeline.run(query, top_k=3)
+                    result = pipeline.query(query, top_k=3)
                     elapsed_time = time.time() - start_time
                     
                     query_result["success"] = True

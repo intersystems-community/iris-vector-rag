@@ -120,7 +120,7 @@ def test_colbert_pipeline():
             # Try a simple query
             logger.info("Testing ColBERT query execution...")
             try:
-                result = pipeline.run("What are the effects of BRCA1 mutations?", top_k=3)
+                result = pipeline.query("What are the effects of BRCA1 mutations?", top_k=3)
                 
                 if result and result.get("retrieved_documents"):
                     logger.info(f"✅ ColBERT query successful! Retrieved {len(result['retrieved_documents'])} documents")

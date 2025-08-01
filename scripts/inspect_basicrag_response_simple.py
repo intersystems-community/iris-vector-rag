@@ -201,11 +201,11 @@ def main():
     print(f"\nTesting query: '{test_query}'")
     
     # Test execute() method
-    result_execute = pipeline.execute(test_query, top_k=2)
+    result_execute = pipeline.query(test_query, top_k=2)
     inspect_response_structure(result_execute, "execute")
     
     # Test run() method
-    result_run = pipeline.run(test_query, top_k=2)
+    result_run = pipeline.query(test_query, top_k=2)
     inspect_response_structure(result_run, "run")
     
     # Compare results

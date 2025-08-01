@@ -185,7 +185,7 @@ def test_basic_rag_ragas_integration():
             test_query = "What is diabetes?"
             logger.info(f"🔍 Testing full pipeline execution with query: '{test_query}'")
             
-            result = pipeline.execute(test_query, top_k=3)
+            result = pipeline.query(test_query, top_k=3)
             
             # Verify RAGAS-compatible result format
             required_keys = ["query", "answer", "retrieved_documents"]

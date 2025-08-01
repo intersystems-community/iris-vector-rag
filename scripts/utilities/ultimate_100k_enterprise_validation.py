@@ -230,9 +230,9 @@ class Ultimate100kEnterpriseValidator:
                 
                 try:
                     if technique_name == "OptimizedColBERT":
-                        result = pipeline.run(query, top_k=5, similarity_threshold=0.3)
+                        result = pipeline.query(query, top_k=5, similarity_threshold=0.3)
                     else:
-                        result = pipeline.run(query, top_k=5)
+                        result = pipeline.query(query, top_k=5)
                     
                     query_time = time.time() - query_start
                     docs_found = len(result.get("retrieved_documents", []))

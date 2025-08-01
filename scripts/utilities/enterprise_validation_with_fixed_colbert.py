@@ -70,9 +70,9 @@ def test_rag_technique(pipeline, technique_name: str, queries: List[str], simila
         query_start = time.time()
         try:
             if technique_name == "OptimizedColBERT":
-                result = pipeline.run(query, top_k=5, similarity_threshold=similarity_threshold)
+                result = pipeline.query(query, top_k=5, similarity_threshold=similarity_threshold)
             else:
-                result = pipeline.run(query, top_k=5)
+                result = pipeline.query(query, top_k=5)
             
             query_time = time.time() - query_start
             docs_found = len(result.get("retrieved_documents", []))

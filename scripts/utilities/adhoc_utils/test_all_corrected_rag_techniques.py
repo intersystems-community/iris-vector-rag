@@ -58,9 +58,9 @@ def test_all_corrected_techniques():
             try:
                 if name == "GraphRAG":
                     # GraphRAGPipeline.run does not take similarity_threshold
-                    result = pipeline.run(test_query, top_k=5)
+                    result = pipeline.query(test_query, top_k=5)
                 else:
-                    result = pipeline.run(test_query, top_k=5, similarity_threshold=0.1)
+                    result = pipeline.query(test_query, top_k=5, similarity_threshold=0.1)
                 doc_count = result.get('document_count', len(result.get('retrieved_documents', [])))
                 
                 if doc_count > 0:

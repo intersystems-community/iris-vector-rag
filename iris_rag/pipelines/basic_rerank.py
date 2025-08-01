@@ -1,311 +1,190 @@
 """
 Basic RAG Pipeline implementation with ReRanking step after the initial vector search.
+
+This pipeline extends BasicRAGPipeline to add reranking functionality while
+eliminating code duplication through proper inheritance.
 """
 
 import logging
-import time
 from typing import List, Dict, Any, Optional, Callable, Tuple
-from ..core.base import RAGPipeline
+from .basic import BasicRAGPipeline
 from ..core.models import Document
-from ..core.connection import ConnectionManager
-from ..config.manager import ConfigurationManager
-from ..embeddings.manager import EmbeddingManager
-from sentence_transformers import CrossEncoder
 
 logger = logging.getLogger(__name__)
 
 
-cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-
-# Default reranker function
-# This can be replaced with any custom reranker function that matches the signature
 def hf_reranker(query: str, docs: List[Document]) -> List[Tuple[Document, float]]:
+    """
+    Default HuggingFace cross-encoder reranker function.
+    
+    Uses lazy loading to avoid import-time model loading.
+    
+    Args:
+        query: The query text
+        docs: List of documents to rerank
+        
+    Returns:
+        List of (document, score) tuples
+    """
+    # Lazy import to avoid module-level loading
+    from sentence_transformers import CrossEncoder
+    
+    # Create cross-encoder instance (could be cached in future)
+    cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    
     pairs = [(query, doc.page_content) for doc in docs]
     scores = cross_encoder.predict(pairs)
     return list(zip(docs, scores))
 
-class BasicRAGRerankingPipeline(RAGPipeline):
+
+class BasicRAGRerankingPipeline(BasicRAGPipeline):
     """
-    Basic RAG pipeline implementation.
+    Basic RAG pipeline with reranking support.
     
-    This pipeline implements the standard RAG approach:
-    1. Document ingestion and embedding
-    2. Vector similarity search for retrieval
-    3. Context augmentation and LLM generation
+    This pipeline extends the standard BasicRAGPipeline by adding a reranking
+    step after initial vector retrieval. The reranking uses cross-encoder models
+    to improve the relevance ordering of retrieved documents.
+    
+    Key differences from BasicRAGPipeline:
+    1. Retrieves more documents initially (rerank_factor * top_k)
+    2. Applies reranking to reorder documents by relevance
+    3. Returns top_k documents after reranking
+    
+    The pipeline supports:
+    - Custom reranker functions
+    - Configurable rerank factor
+    - Fallback to no reranking if reranker fails
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager,
-                reranker_func: Callable[[str, List[Document]], List[Tuple[Document, float]]] = hf_reranker, 
-                llm_func: Optional[Callable[[str], str]] = None, vector_store = None,):
+    def __init__(self, connection_manager, config_manager,
+                 reranker_func: Optional[Callable[[str, List[Document]], List[Tuple[Document, float]]]] = None, 
+                 **kwargs):
         """
-        Initialize the Basic RAG Pipeline.
+        Initialize the Basic RAG Reranking Pipeline.
         
         Args:
             connection_manager: Manager for database connections
             config_manager: Manager for configuration settings
-            reranker_func: Function signature str, List[Document] -> List[Tuple[Document, float]]:
-                - Cross-encoder model
-                - LLM with scoring
-                - Custom reranking function
-            llm_func: Optional LLM function for answer generation
-            vector_store: Optional VectorStore instance
+            reranker_func: Optional custom reranker function. If None, uses default HuggingFace reranker.
+            **kwargs: Additional arguments passed to parent BasicRAGPipeline
         """
-        super().__init__(connection_manager, config_manager, vector_store)
-        self.llm_func = llm_func
+        # Initialize parent pipeline with all standard functionality
+        super().__init__(connection_manager, config_manager, **kwargs)
         
-        # Initialize components
-        self.embedding_manager = EmbeddingManager(config_manager)
+        # Set up reranking-specific configuration
+        # Use dedicated reranking config section with fallback to basic config
+        self.reranking_config = self.config_manager.get("pipelines:basic_reranking", 
+                                                       self.config_manager.get("pipelines:basic", {}))
         
-        # Get pipeline configuration
-        self.pipeline_config = self.config_manager.get("pipelines:basic", {})
-        self.chunk_size = self.pipeline_config.get("chunk_size", 1000)
-        self.chunk_overlap = self.pipeline_config.get("chunk_overlap", 200)
-        self.default_top_k = self.pipeline_config.get("default_top_k", 5)
-        self.reranker_func = reranker_func
+        # Reranking parameters
+        self.rerank_factor = self.reranking_config.get("rerank_factor", 2)
+        self.reranker_model = self.reranking_config.get("reranker_model", "cross-encoder/ms-marco-MiniLM-L-6-v2")
+        
+        # Set reranker function (default to HuggingFace if none provided)
+        self.reranker_func = reranker_func or hf_reranker
+        
+        logger.info(f"Initialized BasicRAGRerankingPipeline with rerank_factor={self.rerank_factor}")
     
-    def load_documents(self, documents_path: str, **kwargs) -> None:
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
-        Load and process documents into the pipeline's knowledge base.
+        Execute RAG query with reranking - THE single method for reranking RAG operations.
         
-        Args:
-            documents_path: Path to documents or directory of documents
-            **kwargs: Additional arguments including:
-                - documents: List of Document objects (if providing directly)
-                - chunk_documents: Whether to chunk documents (default: True)
-                - generate_embeddings: Whether to generate embeddings (default: True)
-        """
-        start_time = time.time()
-        
-        # Handle direct document input
-        if "documents" in kwargs:
-            documents = kwargs["documents"]
-            if not isinstance(documents, list):
-                raise ValueError("Documents must be provided as a list")
-        else:
-            # Load documents from path
-            documents = self._load_documents_from_path(documents_path)
-        
-        # Process documents
-        chunk_documents = kwargs.get("chunk_documents", True)
-        generate_embeddings = kwargs.get("generate_embeddings", True)
-        
-        if chunk_documents:
-            documents = self._chunk_documents(documents)
-        
-        if generate_embeddings:
-            self._generate_and_store_embeddings(documents)
-        else:
-            # Store documents without embeddings using vector store
-            self._store_documents(documents)
-        
-        processing_time = time.time() - start_time
-        logger.info(f"Loaded {len(documents)} documents in {processing_time:.2f} seconds")
-    
-    def _load_documents_from_path(self, documents_path: str) -> List[Document]:
-        """
-        Load documents from a file or directory path.
-        
-        Args:
-            documents_path: Path to load documents from
-            
-        Returns:
-            List of Document objects
-        """
-        import os
-        
-        documents = []
-        
-        if os.path.isfile(documents_path):
-            # Single file
-            documents.append(self._load_single_file(documents_path))
-        elif os.path.isdir(documents_path):
-            # Directory of files
-            for filename in os.listdir(documents_path):
-                file_path = os.path.join(documents_path, filename)
-                if os.path.isfile(file_path):
-                    try:
-                        doc = self._load_single_file(file_path)
-                        documents.append(doc)
-                    except Exception as e:
-                        logger.warning(f"Failed to load file {file_path}: {e}")
-        else:
-            raise ValueError(f"Path does not exist: {documents_path}")
-        
-        return documents
-    
-    def _load_single_file(self, file_path: str) -> Document:
-        """
-        Load a single file as a Document.
-        
-        Args:
-            file_path: Path to the file
-            
-        Returns:
-            Document object
-        """
-        import os
-        
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        metadata = {
-            "source": file_path,
-            "filename": os.path.basename(file_path),
-            "file_size": os.path.getsize(file_path)
-        }
-        
-        return Document(
-            page_content=content,
-            metadata=metadata
-        )
-    
-    def _chunk_documents(self, documents: List[Document]) -> List[Document]:
-        """
-        Split documents into smaller chunks.
-        
-        Args:
-            documents: List of documents to chunk
-            
-        Returns:
-            List of chunked documents
-        """
-        chunked_documents = []
-        
-        for doc in documents:
-            chunks = self._split_text(doc.page_content)
-            
-            for i, chunk_text in enumerate(chunks):
-                chunk_metadata = doc.metadata.copy()
-                chunk_metadata.update({
-                    "chunk_index": i,
-                    "parent_document_id": doc.id,
-                    "chunk_size": len(chunk_text)
-                })
-                
-                chunk_doc = Document(
-                    page_content=chunk_text,
-                    metadata=chunk_metadata
-                )
-                chunked_documents.append(chunk_doc)
-        
-        logger.info(f"Chunked {len(documents)} documents into {len(chunked_documents)} chunks")
-        return chunked_documents
-    
-    def _split_text(self, text: str) -> List[str]:
-        """
-        Split text into chunks with overlap.
-        
-        Args:
-            text: Text to split
-            
-        Returns:
-            List of text chunks
-        """
-        if len(text) <= self.chunk_size:
-            return [text]
-        
-        chunks = []
-        start = 0
-        
-        while start < len(text):
-            end = start + self.chunk_size
-            
-            # If this is not the last chunk, try to break at a sentence or word boundary
-            if end < len(text):
-                # Look for sentence boundary
-                sentence_end = text.rfind('.', start, end)
-                if sentence_end > start:
-                    end = sentence_end + 1
-                else:
-                    # Look for word boundary
-                    word_end = text.rfind(' ', start, end)
-                    if word_end > start:
-                        end = word_end
-            
-            chunk = text[start:end].strip()
-            if chunk:
-                chunks.append(chunk)
-            
-            # Move start position with overlap
-            start = end - self.chunk_overlap
-            if start <= 0:
-                start = end
-        
-        return chunks
-    
-    def _generate_and_store_embeddings(self, documents: List[Document]) -> None:
-        """
-        Generate embeddings for documents and store them.
-        
-        Args:
-            documents: List of documents to process
-        """
-        # Extract text content
-        texts = [doc.page_content for doc in documents]
-        
-        # Generate embeddings in batches
-        batch_size = self.pipeline_config.get("embedding_batch_size", 32)
-        all_embeddings = []
-        
-        for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i + batch_size]
-            batch_embeddings = self.embedding_manager.embed_texts(batch_texts)
-            all_embeddings.extend(batch_embeddings)
-        
-        # Store documents with embeddings using vector store
-        self._store_documents(documents, all_embeddings)
-        logger.info(f"Generated and stored embeddings for {len(documents)} documents")
-    
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
-        """
-        Retrieve relevant documents for a query.
+        This method overrides the parent to add reranking:
+        1. Retrieves rerank_factor * top_k documents using parent method
+        2. Applies reranking to improve document ordering  
+        3. Returns top_k best documents after reranking
+        4. Maintains full compatibility with parent response format
         
         Args:
             query_text: The query text
-            top_k: Number of documents to retrieve
+            top_k: Number of documents to return after reranking
             **kwargs: Additional arguments including:
-                - metadata_filter: Optional metadata filters
-                - similarity_threshold: Minimum similarity score
+                - include_sources: Whether to include source information (default: True)
+                - custom_prompt: Custom prompt template
+                - generate_answer: Whether to generate LLM answer (default: True)
+                - All other parent query arguments
                 
         Returns:
-            List of retrieved documents
+            Dictionary with complete RAG response including reranked documents
         """
-        # Generate query embedding
-        query_embedding = self.embedding_manager.embed_text(query_text)
+        # Calculate how many documents to retrieve for reranking pool
+        initial_k = min(top_k * self.rerank_factor, 100)  # Cap at 100 for performance
         
-        # Get optional parameters
-        metadata_filter = kwargs.get("metadata_filter")
-        similarity_threshold = kwargs.get("similarity_threshold", 0.0)
+        # Get initial candidates using parent pipeline's query method
+        # Set generate_answer=False initially to avoid duplicate LLM calls
+        parent_kwargs = kwargs.copy()
+        parent_kwargs['generate_answer'] = False  # We'll generate answer after reranking
         
-        # Perform vector search using base class helper
-        results = self._retrieve_documents_by_vector(
-            query_embedding=query_embedding,
-            top_k=top_k * 2, # Retrieve more to allow for reranking
-            metadata_filter=metadata_filter
-        )
+        parent_result = super().query(query_text, top_k=initial_k, **parent_kwargs)
+        candidate_documents = parent_result.get("retrieved_documents", [])
         
-        # Filter by similarity threshold if specified
-        if similarity_threshold > 0.0:
-            results = [(doc, score) for doc, score in results if score >= similarity_threshold]
-        
-        # Return just the documents
-        documents = [doc for doc, score in results]
-
-        # If reranker is provided, apply it to the retrieved documents
-        if self.reranker_func and documents:
-            reranked_documents = self._rerank_documents(query_text, documents, top_k=top_k)
-            logger.debug(f"Reranked {len(documents)} documents for query: {query_text[:50]}...")
-            return reranked_documents
+        # Always rerank if we have multiple candidates and a reranker (fixes the logic issue!)
+        if len(candidate_documents) > 1 and self.reranker_func:
+            try:
+                final_documents = self._rerank_documents(query_text, candidate_documents, top_k)
+                logger.debug(f"Reranked {len(candidate_documents)} documents, returning top {len(final_documents)}")
+                reranked = True
+            except Exception as e:
+                logger.warning(f"Reranking failed, falling back to original order: {e}")
+                final_documents = candidate_documents[:top_k]
+                reranked = False
         else:
-            logger.debug(f"Retrieved {len(documents[:top_k])} documents for query: {query_text[:50]}...")
-            return documents[:top_k]
+            # Single document or no reranker - just return what we have
+            final_documents = candidate_documents[:top_k]
+            reranked = False
+            if len(candidate_documents) <= 1:
+                logger.debug(f"Only {len(candidate_documents)} candidates found, no reranking needed")
+            else:
+                logger.debug(f"No reranker available, returning top {top_k} documents")
+        
+        # Now generate answer if requested (using reranked documents)
+        generate_answer = kwargs.get("generate_answer", True)
+        if generate_answer and self.llm_func and final_documents:
+            try:
+                custom_prompt = kwargs.get("custom_prompt")
+                answer = self._generate_answer(query_text, final_documents, custom_prompt)
+            except Exception as e:
+                logger.warning(f"Answer generation failed: {e}")
+                answer = "Error generating answer"
+        elif not generate_answer:
+            answer = None
+        elif not final_documents:
+            answer = "No relevant documents found to answer the query."
+        else:
+            answer = "No LLM function provided. Retrieved documents only."
+        
+        # Build complete response (matching parent format exactly)
+        response = {
+            "query": query_text,
+            "answer": answer,
+            "retrieved_documents": final_documents,
+            "contexts": [doc.page_content for doc in final_documents],
+            "execution_time": parent_result.get("execution_time", 0.0),
+            "metadata": {
+                "num_retrieved": len(final_documents),
+                "processing_time": parent_result.get("execution_time", 0.0),
+                "pipeline_type": "basic_rag_reranking",
+                "reranked": reranked,
+                "initial_candidates": len(candidate_documents),
+                "rerank_factor": self.rerank_factor,
+                "generated_answer": generate_answer and answer is not None
+            }
+        }
+        
+        # Add sources if requested
+        include_sources = kwargs.get("include_sources", True)
+        if include_sources:
+            response["sources"] = self._extract_sources(final_documents)
+        
+        logger.info(f"Reranking RAG query completed - {len(final_documents)} docs returned (reranked: {reranked})")
+        return response
     
     def _rerank_documents(self, query_text: str, documents: List[Document], top_k: int = 5) -> List[Document]:
         """
         Apply reranking function to reorder retrieved documents.
 
         Args:
-            query_text: The query
+            query_text: The query text
             documents: Initial retrieved documents
             top_k: Number of top documents to return
 
@@ -313,199 +192,43 @@ class BasicRAGRerankingPipeline(RAGPipeline):
             Reranked list of top-k documents
         """
         try:
-            # Print out original top-k document order
-            logger.debug("Pre-reranking document order:")
-            for i, doc in enumerate(documents):
-                logger.debug(f"[{i}] {doc.metadata.get('source', 'Unknown')}")
+            logger.debug(f"Reranking {len(documents)} documents for query: {query_text[:50]}...")
             
             # Apply reranker function
             reranked_results = self.reranker_func(query_text, documents)
+            
+            # Sort by score (descending)
             reranked_results = sorted(reranked_results, key=lambda x: x[1], reverse=True)
-
-            # Print out reranked document order
-            logger.debug("Post-reranking document order:")
-            for i, (doc, score) in enumerate(reranked_results[:top_k]):
-                logger.debug(f"[{i}] {doc.metadata.get('source', 'Unknown')} (score: {score:.4f})")
-                
+            
+            # Log reranking results
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug("Post-reranking document order:")
+                for i, (doc, score) in enumerate(reranked_results[:top_k]):
+                    source = doc.metadata.get('source', 'Unknown')
+                    logger.debug(f"  [{i}] {source} (score: {score:.4f})")
+            
+            # Return top_k documents
             return [doc for doc, score in reranked_results[:top_k]]
+            
         except Exception as e:
-            logger.warning(f"Reranking failed: {e}")
+            logger.error(f"Reranking failed: {e}")
+            # Fallback to original order
             return documents[:top_k]
-
-    def run(self, query: str, **kwargs) -> Dict[str, Any]:
-        """
-        Run the full RAG pipeline for a query (main API method).
-        
-        Args:
-            query: The input query
-            **kwargs: Additional arguments including:
-                - top_k: Number of documents to retrieve
-                - include_sources: Whether to include source information
-                - custom_prompt: Custom prompt template
-                
-        Returns:
-            Dictionary with query, answer, and retrieved documents
-        """
-        return self.execute(query, **kwargs)
     
-    def execute(self, query_text: str, **kwargs) -> Dict[str, Any]:
+    def get_pipeline_info(self) -> Dict[str, Any]:
         """
-        Execute the full RAG pipeline for a query.
-        
-        Args:
-            query_text: The input query
-            **kwargs: Additional arguments including:
-                - top_k: Number of documents to retrieve
-                - include_sources: Whether to include source information
-                - custom_prompt: Custom prompt template
-                
-        Returns:
-            Dictionary with query, answer, retrieved documents, contexts, and execution_time
-        """
-        start_time = time.time()
-        
-        # Get parameters
-        top_k = kwargs.get("top_k", self.default_top_k)
-        include_sources = kwargs.get("include_sources", True)
-        custom_prompt = kwargs.get("custom_prompt")
-        
-        # Step 1: Retrieve relevant documents
-        # Remove top_k from kwargs to avoid duplicate parameter error
-        query_kwargs = {k: v for k, v in kwargs.items() if k != 'top_k'}
-        retrieved_documents = self.query(query_text, top_k=top_k, **query_kwargs)
-        
-        # Step 2: Generate answer using LLM
-        if self.llm_func:
-            answer = self._generate_answer(query_text, retrieved_documents, custom_prompt)
-        else:
-            answer = "No LLM function provided. Retrieved documents only."
-        
-        # Calculate execution time
-        execution_time = time.time() - start_time
-        
-        # Step 3: Prepare response
-        response = {
-            "query": query_text,
-            "answer": answer,
-            "retrieved_documents": retrieved_documents,
-            "contexts": [doc.page_content for doc in retrieved_documents],  # String contexts for RAGAS
-            "execution_time": execution_time  # Required for RAGAS debug harness
-        }
-        
-        if include_sources:
-            response["sources"] = self._extract_sources(retrieved_documents)
-        
-        # Add metadata
-        response["metadata"] = {
-            "num_retrieved": len(retrieved_documents),
-            "processing_time": execution_time,
-            "pipeline_type": "basic_rag"
-        }
-        
-        logger.info(f"RAG pipeline executed in {execution_time:.2f} seconds")
-        return response
-    
-    def _generate_answer(self, query: str, documents: List[Document], custom_prompt: Optional[str] = None) -> str:
-        """
-        Generate an answer using the LLM and retrieved documents.
-        
-        Args:
-            query: The original query
-            documents: Retrieved documents for context
-            custom_prompt: Optional custom prompt template
-            
-        Returns:
-            Generated answer
-        """
-        if not documents:
-            return "No relevant documents found to answer the query."
-        
-        # Prepare context from documents
-        context_parts = []
-        for i, doc in enumerate(documents, 1):
-            source = doc.metadata.get("source", "Unknown")
-            context_parts.append(f"Document {i} (Source: {source}):\n{doc.page_content}")
-        
-        context = "\n\n".join(context_parts)
-        
-        # Use custom prompt or default
-        if custom_prompt:
-            prompt = custom_prompt.format(query=query, context=context)
-        else:
-            prompt = self._create_default_prompt(query, context)
-        
-        # Generate answer using LLM
-        try:
-            answer = self.llm_func(prompt)
-            return answer
-        except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
-            return f"Error generating answer: {e}"
-    
-    def _create_default_prompt(self, query: str, context: str) -> str:
-        """
-        Create a default prompt for answer generation.
-        
-        Args:
-            query: The user query
-            context: Retrieved document context
-            
-        Returns:
-            Formatted prompt
-        """
-        prompt = f"""Based on the following context documents, please answer the question.
-
-Context:
-{context}
-
-Question: {query}
-
-Please provide a comprehensive answer based on the information in the context documents. If the context doesn't contain enough information to fully answer the question, please indicate what information is missing.
-
-Answer:"""
-        
-        return prompt
-    
-    def _extract_sources(self, documents: List[Document]) -> List[Dict[str, Any]]:
-        """
-        Extract source information from documents.
-        
-        Args:
-            documents: List of documents
-            
-        Returns:
-            List of source information dictionaries
-        """
-        sources = []
-        for doc in documents:
-            source_info = {
-                "document_id": doc.id,
-                "source": doc.metadata.get("source", "Unknown"),
-                "filename": doc.metadata.get("filename", "Unknown")
-            }
-            
-            # Add chunk information if available
-            if "chunk_index" in doc.metadata:
-                source_info["chunk_index"] = doc.metadata["chunk_index"]
-            
-            sources.append(source_info)
-        
-        return sources
-    
-    def get_document_count(self) -> int:
-        """
-        Get the total number of documents in the knowledge base.
+        Get information about this pipeline's configuration.
         
         Returns:
-            Document count
+            Dictionary with pipeline information
         """
-        return self.vector_store.get_document_count()
-    
-    def clear_knowledge_base(self) -> None:
-        """
-        Clear all documents from the knowledge base.
+        info = super().get_pipeline_info() if hasattr(super(), 'get_pipeline_info') else {}
         
-        Warning: This operation is irreversible.
-        """
-        self.vector_store.clear_documents()
-        logger.info("Knowledge base cleared")
+        info.update({
+            "pipeline_type": "basic_rag_reranking",
+            "rerank_factor": self.rerank_factor,
+            "reranker_model": self.reranker_model,
+            "has_reranker": self.reranker_func is not None
+        })
+        
+        return info

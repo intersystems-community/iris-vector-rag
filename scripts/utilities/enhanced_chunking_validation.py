@@ -232,7 +232,7 @@ class EnhancedChunkingValidator:
                             iris_connector=get_iris_connection(), # Assuming constructor takes these
                             embedding_func=self.embedding_func   # Or they might be passed to run()
                         )
-                        result = pipeline_instance.run(
+                        result = pipeline_instance.query(
                             query=query,
                             top_k=5
                         )

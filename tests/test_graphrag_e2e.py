@@ -28,7 +28,7 @@ def test_graphrag_e2e_protein_interaction_and_pathways():
     # Query designed to test graph traversal for relationships and context
     query = "What proteins interact with BRCA1 in cancer pathways?"
     
-    result = pipeline.run(query_text=query, top_k=5) # top_k for documents
+    result = pipeline.query(query_text=query, top_k=5) # top_k for documents
 
     # Basic assertions for pipeline execution
     assert result is not None, "Pipeline should return a result."

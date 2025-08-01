@@ -69,7 +69,7 @@ class RealRAGASEvaluator:
                 
                 try:
                     # Run actual pipeline query
-                    result = pipeline.run(query, top_k=3)
+                    result = pipeline.query(query, top_k=3)
                     
                     end_time = time.time()
                     response_time = (end_time - start_time) * 1000  # ms

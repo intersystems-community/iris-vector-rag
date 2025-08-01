@@ -45,7 +45,7 @@ def test_basic_rag():
             return f"BasicRAG response to: {prompt[:50]}..."
         
         pipeline = BasicRAGPipeline(iris, embedding_func, llm_func)
-        result = pipeline.run("diabetes treatment", top_k=3)
+        result = pipeline.query("diabetes treatment", top_k=3)
         
         iris.close()
         return True, f"Retrieved {len(result['retrieved_documents'])} documents"
@@ -68,7 +68,7 @@ def test_node_rag():
             return f"NodeRAG response to: {prompt[:50]}..."
         
         pipeline = NodeRAGPipeline(iris, embedding_func, llm_func)
-        result = pipeline.run("diabetes treatment", top_k=3)
+        result = pipeline.query("diabetes treatment", top_k=3)
         
         iris.close()
         return True, f"Retrieved {len(result['retrieved_documents'])} chunks"
@@ -91,7 +91,7 @@ def test_graph_rag():
             return f"GraphRAG response to: {prompt[:50]}..."
         
         pipeline = GraphRAGPipeline(iris, embedding_func, llm_func)
-        result = pipeline.run("diabetes treatment", top_k=3)
+        result = pipeline.query("diabetes treatment", top_k=3)
         
         iris.close()
         return True, f"Retrieved {len(result['entities'])} entities, {len(result['relationships'])} relationships"
@@ -114,7 +114,7 @@ def test_colbert():
             return f"ColBERT response to: {prompt[:50]}..."
         
         pipeline = ColBERTRAGPipeline(iris, embedding_func, llm_func)
-        result = pipeline.run("diabetes treatment", top_k=3)
+        result = pipeline.query("diabetes treatment", top_k=3)
         
         iris.close()
         return True, f"Retrieved {len(result['retrieved_documents'])} documents with token-level matching"
@@ -137,7 +137,7 @@ def test_hyde():
             return f"HyDE response to: {prompt[:50]}..."
         
         pipeline = HyDERAGPipeline(iris, embedding_func, llm_func)
-        result = pipeline.run("diabetes treatment", top_k=3)
+        result = pipeline.query("diabetes treatment", top_k=3)
         
         iris.close()
         return True, f"Generated hypothetical document and retrieved {len(result['retrieved_documents'])} documents"
@@ -160,7 +160,7 @@ def test_crag():
             return f"CRAG response to: {prompt[:50]}..."
         
         pipeline = CRAGPipeline(iris, embedding_func, llm_func)
-        result = pipeline.run("diabetes treatment", top_k=3)
+        result = pipeline.query("diabetes treatment", top_k=3)
         
         iris.close()
         return True, f"Performed corrective retrieval with {len(result['retrieved_documents'])} documents"
@@ -183,7 +183,7 @@ def test_hybrid_ifind_rag():
             return f"Hybrid iFindRAG response to: {prompt[:50]}..."
         
         pipeline = HybridIFindRAGPipeline(iris, embedding_func, llm_func)
-        result = pipeline.run("diabetes treatment", top_k=3)
+        result = pipeline.query("diabetes treatment", top_k=3)
         
         iris.close()
         return True, f"Combined multiple retrieval strategies with {len(result['retrieved_documents'])} documents"

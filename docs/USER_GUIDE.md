@@ -239,7 +239,7 @@ pipeline = create_pipeline(
 )
 
 # Ask a question
-result = pipeline.run("What is machine learning?", top_k=5)
+result = pipeline.query("What is machine learning?", top_k=5)
 print(f"Answer: {result['answer']}")
 print(f"Found {len(result['retrieved_documents'])} relevant documents")
 ```
@@ -327,7 +327,7 @@ from iris_rag import create_pipeline
 pipeline = create_pipeline("basic")
 
 # Ask questions
-result = pipeline.run("What is photosynthesis?")
+result = pipeline.query("What is photosynthesis?")
 print(result["answer"])
 ```
 
@@ -335,7 +335,7 @@ print(result["answer"])
 
 ```python
 # Get more detailed results
-result = pipeline.run(
+result = pipeline.query(
     "Explain machine learning algorithms",
     top_k=10,  # Get more source documents
     include_sources=True  # Include source information
@@ -401,7 +401,7 @@ make auto-setup-all
 pipeline = create_pipeline("basic")
 
 # Ask questions about your documents
-answer = pipeline.run("What is our return policy?")
+answer = pipeline.query("What is our return policy?")
 print(answer["answer"])
 ```
 
@@ -412,7 +412,7 @@ print(answer["answer"])
 pipeline = create_pipeline("crag")
 
 # Ask complex research questions
-result = pipeline.run("What are the latest developments in AI?")
+result = pipeline.query("What are the latest developments in AI?")
 print(result["answer"])
 ```
 
@@ -423,7 +423,7 @@ print(result["answer"])
 pipeline = create_pipeline("colbert")
 
 # Search technical documentation
-result = pipeline.run("How do I configure the database connection?")
+result = pipeline.query("How do I configure the database connection?")
 print(result["answer"])
 ```
 

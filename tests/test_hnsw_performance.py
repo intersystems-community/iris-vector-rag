@@ -310,7 +310,7 @@ class TestHNSWPerformance:
             start_time = time.time()
             
             # Run complete RAG pipeline (should use HNSW indexes)
-            result = rag_pipeline.run(query, top_k=5)
+            result = rag_pipeline.query(query, top_k=5)
             
             end_time = time.time()
             total_time_ms = (end_time - start_time) * 1000

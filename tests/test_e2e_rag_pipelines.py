@@ -399,7 +399,7 @@ def test_basic_rag_with_real_data(real_iris_connection, real_embedding_func, rea
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
     
     params = {}
     if hasattr(pipeline, 'top_k'): params['top_k'] = pipeline.top_k
@@ -423,7 +423,7 @@ def test_hyde_with_real_data(real_iris_connection, real_embedding_func, real_llm
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {}
     if hasattr(pipeline, 'llm') and hasattr(pipeline.llm, 'model_name'): params['llm_model_name'] = pipeline.llm.model_name
@@ -448,7 +448,7 @@ def test_crag_with_real_data(real_iris_connection, real_embedding_func, real_llm
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {'chunk_types': pipeline.chunk_types if hasattr(pipeline, 'chunk_types') else None}
     if hasattr(pipeline, 'llm') and hasattr(pipeline.llm, 'model_name'): params['llm_model_name'] = pipeline.llm.model_name
@@ -473,7 +473,7 @@ def test_colbert_with_real_data(real_iris_connection, real_embedding_func, real_
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {}
     if hasattr(pipeline, 'top_k'): params['top_k'] = pipeline.top_k
@@ -497,7 +497,7 @@ def test_noderag_with_real_data(real_iris_connection, real_embedding_func, real_
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {}
     if hasattr(pipeline, 'top_k'): params['top_k'] = pipeline.top_k
@@ -521,7 +521,7 @@ def test_graphrag_with_real_data(real_iris_connection, real_embedding_func, real
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {}
     if hasattr(pipeline, 'top_k'): params['top_k'] = pipeline.top_k
@@ -594,7 +594,7 @@ def test_all_pipelines_with_same_query(
         logger.info(f"Running {name} pipeline with query: '{query}' for comparison test.")
         try:
             start_time = time.time()
-            pipeline_output = pipeline_instance_loop.run(query, top_k=5)
+            pipeline_output = pipeline_instance_loop.query(query, top_k=5)
             elapsed_time = time.time() - start_time
             
             current_pipeline_params_loop = {}

@@ -107,7 +107,7 @@ def test_colbert_stream_handling():
         test_query = "What is cancer treatment?"
         
         logger.info(f"Testing query: {test_query}")
-        result = pipeline.run(test_query)
+        result = pipeline.query(test_query)
         
         # Check if we got meaningful results
         if result and "retrieved_documents" in result:

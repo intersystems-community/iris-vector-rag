@@ -238,7 +238,7 @@ class ProductionBenchmarkRunner:
         
         try:
             # Run the pipeline
-            result = pipeline.run(query)
+            result = pipeline.query(query)
             
             # Extract results
             answer = result.get("answer", "")

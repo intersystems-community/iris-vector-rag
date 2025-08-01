@@ -117,11 +117,11 @@ class SimplePipelineEvaluator:
             
             # Try different method names
             if hasattr(pipeline, 'run'):
-                result = pipeline.run(query)
+                result = pipeline.query(query)
             elif hasattr(pipeline, 'query'):
                 result = pipeline.query(query)
             elif hasattr(pipeline, 'execute'):
-                result = pipeline.execute(query)
+                result = pipeline.query(query)
             else:
                 # Try calling the pipeline directly
                 result = pipeline(query)

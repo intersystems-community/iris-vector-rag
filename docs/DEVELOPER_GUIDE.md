@@ -9,6 +9,7 @@ Complete guide for developing, extending, and contributing to the RAG Templates 
 - [Code Organization](#code-organization)
 - [Design Patterns](#design-patterns)
 - [Extension Patterns](#extension-patterns)
+- [Pipeline Development](#pipeline-development)
 - [Testing Strategy](#testing-strategy)
 - [CLI Development](#cli-development)
 - [Database Integration](#database-integration)
@@ -478,6 +479,33 @@ def create_pipeline(pipeline_type: str, **kwargs):
     return pipeline_classes[pipeline_type](**kwargs)
 ```
 
+## Pipeline Development
+
+**For comprehensive pipeline development guidance, see the [Pipeline Development Guide](PIPELINE_DEVELOPMENT_GUIDE.md).**
+
+The Pipeline Development Guide provides:
+- **Inheritance patterns** - How to properly extend BasicRAGPipeline
+- **Lazy loading best practices** - Avoid performance issues with heavy imports
+- **Configuration management** - Using dedicated config sections
+- **Registration system** - Adding pipelines without source code changes
+- **Complete examples** - Working pipeline implementations
+- **Anti-pattern warnings** - Common mistakes to avoid
+
+**Quick Reference:**
+```python
+# ✅ Proper pipeline development
+from iris_rag.pipelines.basic import BasicRAGPipeline
+
+class MyCustomPipeline(BasicRAGPipeline):
+    def __init__(self, connection_manager, config_manager, **kwargs):
+        super().__init__(connection_manager, config_manager, **kwargs)
+        # Add custom initialization
+    
+    def query(self, query_text: str, top_k: int = 5, **kwargs):
+        # Override only what you need to customize
+        return super().query(query_text, top_k, **kwargs)
+```
+
 ## Extension Patterns
 
 ### Adding New RAG Techniques
@@ -508,15 +536,15 @@ class MyTechniqueRAGPipeline(RAGPipeline):
         # Implementation specific to your technique
         pass
     
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
-        """Retrieve documents using My Technique approach."""
+    def retrieve(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
+        """Retrieve documents using My Technique approach (convenience method)."""
         # Implementation specific to your technique
         pass
     
-    def execute(self, query_text: str, **kwargs) -> Dict[str, Any]:
-        """Execute the complete My Technique pipeline."""
-        # Use the template method or override for custom flow
-        return super().execute(query_text, **kwargs)
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+        """Execute the complete My Technique pipeline - THE single method for all RAG operations."""
+        # Use the parent's unified query method or override for custom flow
+        return super().query(query_text, top_k, **kwargs)
 ```
 
 #### 2. Register Pipeline
@@ -562,11 +590,15 @@ class TestMyTechniqueRAGPipeline:
         )
         assert pipeline is not None
     
-    def test_execute_returns_expected_format(self, pipeline, sample_query):
-        result = pipeline.execute(sample_query)
+    def test_query_returns_expected_format(self, pipeline, sample_query):
+        result = pipeline.query(sample_query)
         
         assert 'query' in result
         assert 'answer' in result
+        assert 'retrieved_documents' in result
+        assert 'contexts' in result
+        assert 'execution_time' in result
+        assert 'metadata' in result
         assert 'retrieved_documents' in result
         assert result['query'] == sample_query
 ```
@@ -610,7 +642,7 @@ def test_basic_rag_end_to_end(iris_connection, sample_documents):
     pipeline = BasicRAGPipeline(conn_mgr, config)
     pipeline.load_documents(sample_documents)
     
-    result = pipeline.execute("What is machine learning?")
+    result = pipeline.query("What is machine learning?")
     
     assert 'answer' in result
     assert len(result['retrieved_documents']) > 0
@@ -629,7 +661,7 @@ def test_all_techniques_with_1000_docs():
     
     for technique in techniques:
         pipeline = create_pipeline(technique)
-        result = pipeline.execute("What are the effects of diabetes?")
+        result = pipeline.query("What are the effects of diabetes?")
         
         assert result['answer']
         assert len(result['retrieved_documents']) > 0
@@ -815,17 +847,21 @@ success = insert_vector(
 - Include code examples where appropriate
 
 ```python
-def execute(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
     """
-    Execute the RAG pipeline for a given query.
+    Execute the RAG pipeline for a given query - THE single method for all RAG operations.
     
     Args:
         query_text: The input query string.
         top_k: Number of documents to retrieve.
-        **kwargs: Additional pipeline-specific arguments.
+        **kwargs: Additional pipeline-specific arguments including:
+            - include_sources: Whether to include source information
+            - generate_answer: Whether to generate LLM answer
+            - custom_prompt: Custom prompt template
     
     Returns:
-        Dictionary containing query, answer, retrieved documents, and metadata.
+        Dictionary containing query, answer, retrieved_documents, contexts, 
+        execution_time, and metadata in standard format.
     
     Raises:
         ValueError: If query_text is empty or invalid.

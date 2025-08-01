@@ -339,7 +339,7 @@ class UltimateEnterpriseDemo:
                 cpu_before = psutil.cpu_percent()
                 
                 # Execute RAG pipeline with real LLM
-                result = pipeline.run(query, top_k=10)
+                result = pipeline.query(query, top_k=10)
                 
                 cpu_after = psutil.cpu_percent()
                 cpu_samples.append((cpu_before + cpu_after) / 2)

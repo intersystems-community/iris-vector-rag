@@ -161,10 +161,10 @@ class EnterpriseRAGBenchmarkFinal:
             # Use different parameters based on pipeline
             if pipeline_name == 'CRAG':
                 # CRAG doesn't accept similarity_threshold
-                result = pipeline.run(query, top_k=10)
+                result = pipeline.query(query, top_k=10)
             else:
                 # Other pipelines accept similarity_threshold
-                result = pipeline.run(query, top_k=10, similarity_threshold=0.1)
+                result = pipeline.query(query, top_k=10, similarity_threshold=0.1)
             
             response_time = time.time() - start_time
             

@@ -370,7 +370,7 @@ class ErrorFixAndScale:
                     )
                 
                 # Run the pipeline
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 
                 response_time = (time.time() - start_time) * 1000
                 
