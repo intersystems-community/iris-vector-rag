@@ -289,7 +289,7 @@ class IRISVectorStore(VectorStore):
             chunking_strategy: Strategy to use for chunking (optional, uses config default)
             
         Returns:
-            List of chunked documents
+            List of chunked documents with unique IDs
         """
         if not self.chunking_service:
             # If no chunking service available, return original document
@@ -297,11 +297,35 @@ class IRISVectorStore(VectorStore):
         
         try:
             # Use the chunking service to chunk the document
-            chunks = self.chunking_service.chunk_document(
-                document,
-                strategy=chunking_strategy or self.chunking_config.get("strategy", "fixed_size")
+            # The chunking service expects (doc_id, text, strategy_name)
+            strategy_name = chunking_strategy or self.chunking_config.get("strategy", "fixed_size")
+            chunk_records = self.chunking_service.chunk_document(
+                document.id,
+                document.page_content,
+                strategy_name
             )
-            return chunks
+            
+            # Convert chunk records to Document objects with unique IDs
+            chunked_documents = []
+            for chunk_record in chunk_records:
+                # Use the unique chunk_id as the Document ID to avoid collisions
+                chunk_doc = Document(
+                    id=chunk_record["chunk_id"],  # This is unique: "doc-123_chunk_fixed_size_0"
+                    page_content=chunk_record["chunk_text"],  # Note: chunk service uses "chunk_text"
+                    metadata={
+                        **document.metadata,  # Inherit original metadata
+                        "parent_doc_id": document.id,  # Reference to original document
+                        "chunk_index": chunk_record.get("chunk_index", 0),
+                        "chunk_strategy": strategy_name,
+                        "start_pos": chunk_record.get("start_position", 0),
+                        "end_pos": chunk_record.get("end_position", len(chunk_record["chunk_text"]))
+                    }
+                )
+                chunked_documents.append(chunk_doc)
+            
+            logger.debug(f"Document {document.id} chunked into {len(chunked_documents)} pieces with unique IDs")
+            return chunked_documents
+            
         except Exception as e:
             logger.warning(f"Chunking failed for document {document.id}: {e}")
             # Fallback to original document if chunking fails
@@ -382,8 +406,8 @@ class IRISVectorStore(VectorStore):
                 cursor.execute(check_sql, [doc.id])
                 exists = cursor.fetchone()[0] > 0
                 
-                # Use insert_vector utility for all vector operations (it handles upsert automatically)
-                if embeddings:
+                # Always use insert_vector utility for consistent handling (it works with or without embeddings)
+                if embeddings and len(embeddings) > i:
                     logger.debug(f"Inserting document {doc.id} with embedding using insert_vector utility")
                     # Use the required insert_vector utility function for vector insertions/updates
                     # Don't manually set ID for IDENTITY columns - let database auto-generate
@@ -402,7 +426,7 @@ class IRISVectorStore(VectorStore):
                     else:
                         logger.error(f"Failed to upsert document {doc.id} with vector")
                 else:
-                    # Insert without embedding
+                    # Insert without embedding - use safe insert that avoids ID column
                     if exists:
                         update_sql = f"""
                         UPDATE {self.table_name}
@@ -410,24 +434,15 @@ class IRISVectorStore(VectorStore):
                         WHERE doc_id = ?
                         """
                         cursor.execute(update_sql, [doc.page_content, metadata_json, doc.id])
+                        logger.debug(f"Updated existing document {doc.id} without vector")
                     else:
-                        if embeddings:
-                            # Include ID column - CRITICAL: removing it causes SQL failures
-                            insert_sql = f"""
-                            INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata, embedding)
-                            VALUES (?, ?, ?, ?, TO_VECTOR(?))
-                            """
-                            embedding_str = json.dumps(embeddings[i])
-                            cursor.execute(insert_sql, [doc.id, doc.id, doc.page_content, metadata_json, embedding_str])
-                            logger.debug(f"Inserted document {doc.id} with embedding: {embedding_str}")
-                        else:
-                            # Include ID column - CRITICAL: removing it causes SQL failures
-                            insert_sql = f"""
-                            INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata)
-                            VALUES (?, ?, ?, ?)
-                            """
-                            cursor.execute(insert_sql, [doc.id, doc.id, doc.page_content, metadata_json])
-                            logger.debug(f"Inserted new document {doc.id} without vector")
+                        # Safe insert without manually setting ID column (let database auto-generate)
+                        insert_sql = f"""
+                        INSERT INTO {self.table_name} (doc_id, text_content, metadata)
+                        VALUES (?, ?, ?)
+                        """
+                        cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json])
+                        logger.debug(f"Inserted new document {doc.id} without vector")
                     
                     added_ids.append(doc.id)
             

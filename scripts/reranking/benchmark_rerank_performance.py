@@ -60,6 +60,12 @@ class RerankerBenchmark:
         self.connection_manager = ConnectionManager()
         self.config_manager = ConfigurationManager()
         
+        # Initialize database schema - ensures clean state for benchmarking  
+        from iris_rag.storage.enterprise_storage import IRISStorage
+        storage = IRISStorage(self.connection_manager, self.config_manager)
+        storage.initialize_schema()
+        print("✅ Database schema initialized")
+        
         # Baseline: Current reranking pipeline
         self.baseline_pipeline = BasicRAGRerankingPipeline(
             self.connection_manager, 
