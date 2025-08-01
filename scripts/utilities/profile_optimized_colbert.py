@@ -200,7 +200,7 @@ class OptimizedColBERTProfiler:
         
         # Run the pipeline
         start_time = time.time()
-        result = self.pipeline.run("What are the effects of diabetes?", top_k=5)
+        result = self.pipeline.query("What are the effects of diabetes?", top_k=5)
         total_time = time.time() - start_time
         
         # Print analysis

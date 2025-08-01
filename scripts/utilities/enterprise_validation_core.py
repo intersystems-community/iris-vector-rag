@@ -249,7 +249,7 @@ class EnterpriseCoreValidation:
                     query_start = time.time()
                     
                     # Execute query
-                    result = pipeline.run(query, top_k=5)
+                    result = pipeline.query(query, top_k=5)
                     
                     query_time = time.time() - query_start
                     total_response_time += query_time

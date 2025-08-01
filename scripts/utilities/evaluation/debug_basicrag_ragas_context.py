@@ -279,7 +279,7 @@ class RAGASContextDebugHarness:
             try:
                 # Execute pipeline
                 start_time = time.time()
-                result = pipeline.execute(query)
+                result = pipeline.query(query)
                 fallback_execution_time = time.time() - start_time
                 
                 # Validate pipeline response format

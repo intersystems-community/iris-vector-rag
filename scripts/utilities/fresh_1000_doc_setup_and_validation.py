@@ -259,7 +259,7 @@ class Fresh1000DocSetup:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 results['BasicRAG'] = {
                     'success': True,
                     'docs_retrieved': result['document_count'],
@@ -284,7 +284,7 @@ class Fresh1000DocSetup:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 results['HyDE'] = {
                     'success': True,
                     'docs_retrieved': result['document_count'],
@@ -309,7 +309,7 @@ class Fresh1000DocSetup:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 results['CRAG'] = {
                     'success': True,
                     'docs_retrieved': result['document_count'],
@@ -334,7 +334,7 @@ class Fresh1000DocSetup:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 results['NodeRAG'] = {
                     'success': True,
                     'docs_retrieved': result['document_count'],

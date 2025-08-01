@@ -278,12 +278,12 @@ class ScalingEvaluationFramework:
         try:
             # Use different parameters based on pipeline
             if technique_name == 'CRAG':
-                result = pipeline.run(query, top_k=10)
+                result = pipeline.query(query, top_k=10)
             elif technique_name == 'ColBERT':
                 # Limit ColBERT to prevent content overflow
-                result = pipeline.run(query, top_k=5)
+                result = pipeline.query(query, top_k=5)
             else:
-                result = pipeline.run(query, top_k=10, similarity_threshold=0.1)
+                result = pipeline.query(query, top_k=10, similarity_threshold=0.1)
             
             response_time = time.time() - start_time
             

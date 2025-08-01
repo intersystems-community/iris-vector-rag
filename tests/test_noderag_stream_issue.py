@@ -37,7 +37,7 @@ def test_noderag_current_state():
     
     try:
         print(f"\nTesting query: {test_query}")
-        result = pipeline.run(test_query, top_k=3)
+        result = pipeline.query(test_query, top_k=3)
         
         print(f"✓ NodeRAG completed successfully")
         print(f"  - Retrieved {len(result.get('retrieved_nodes', []))} nodes")

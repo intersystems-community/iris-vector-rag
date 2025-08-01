@@ -172,7 +172,7 @@ def invoke_basic_rag(query: str, config: str) -> str:
         )
         
         # Execute pipeline
-        result = pipeline.run(query)
+        result = pipeline.query(query)
         result["framework"] = "legacy"
         return result
     
@@ -204,7 +204,7 @@ def invoke_colbert(query: str, config: str) -> str:
         )
         
         # Execute pipeline
-        result = pipeline.run(query)
+        result = pipeline.query(query)
         return result
     
     execution_result = _safe_execute(_execute)
@@ -234,7 +234,7 @@ def invoke_graphrag(query: str, config: str) -> str:
         )
         
         # Execute pipeline
-        result = pipeline.run(query)
+        result = pipeline.query(query)
         return result
     
     execution_result = _safe_execute(_execute)
@@ -264,7 +264,7 @@ def invoke_hyde(query: str, config: str) -> str:
         )
         
         # Execute pipeline
-        result = pipeline.run(query)
+        result = pipeline.query(query)
         return result
     
     execution_result = _safe_execute(_execute)
@@ -294,7 +294,7 @@ def invoke_crag(query: str, config: str) -> str:
         )
         
         # Execute pipeline
-        result = pipeline.run(query)
+        result = pipeline.query(query)
         return result
     
     execution_result = _safe_execute(_execute)
@@ -324,7 +324,7 @@ def invoke_noderag(query: str, config: str) -> str:
         )
         
         # Execute pipeline
-        result = pipeline.run(query)
+        result = pipeline.query(query)
         return result
     
     execution_result = _safe_execute(_execute)
@@ -417,7 +417,7 @@ def invoke_sql_rag(query: str, config: str) -> str:
         )
         
         # Execute pipeline
-        result = pipeline.execute(query)
+        result = pipeline.query(query)
         return result
     
     execution_result = _safe_execute(_execute)

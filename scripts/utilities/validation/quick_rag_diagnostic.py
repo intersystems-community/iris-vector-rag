@@ -29,7 +29,7 @@ def test_technique(name, pipeline_class, *args):
         print(f"✅ {name} initialized successfully")
         
         # Test with a simple query
-        result = pipeline.run("diabetes treatment", top_k=5, similarity_threshold=0.1)
+        result = pipeline.query("diabetes treatment", top_k=5, similarity_threshold=0.1)
         
         docs = result.get('retrieved_documents', [])
         answer = result.get('answer', '')

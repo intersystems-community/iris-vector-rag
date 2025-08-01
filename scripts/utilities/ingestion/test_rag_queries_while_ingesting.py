@@ -79,7 +79,7 @@ def test_basic_rag(queries: List[str]) -> Dict[str, Any]:
             logger.info(f"   Query {i+1}: {query}")
             start_time = time.time()
             
-            result = pipeline.run(query, top_k=3)
+            result = pipeline.query(query, top_k=3)
             
             end_time = time.time()
             query_time = end_time - start_time
@@ -115,7 +115,7 @@ def test_colbert_rag(queries: List[str]) -> Dict[str, Any]:
             logger.info(f"   Query {i+1}: {query}")
             start_time = time.time()
             
-            result = pipeline.run(query, top_k=3)
+            result = pipeline.query(query, top_k=3)
             
             end_time = time.time()
             query_time = end_time - start_time
@@ -151,7 +151,7 @@ def test_optimized_colbert_rag(queries: List[str]) -> Dict[str, Any]:
             logger.info(f"   Query {i+1}: {query}")
             start_time = time.time()
             
-            result = pipeline.run(query, top_k=3)
+            result = pipeline.query(query, top_k=3)
             
             end_time = time.time()
             query_time = end_time - start_time

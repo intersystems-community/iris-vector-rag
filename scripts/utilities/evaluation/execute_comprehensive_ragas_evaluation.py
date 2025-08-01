@@ -387,7 +387,7 @@ def evaluate_single_pipeline(pipeline: Any, queries: List[Dict[str, Any]]) -> Li
             start_time = time.time()
             
             # Execute pipeline query using standardized interface
-            pipeline_response = pipeline.execute(query_text)
+            pipeline_response = pipeline.query(query_text)
             
             execution_time = time.time() - start_time
             

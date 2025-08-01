@@ -333,7 +333,7 @@ def evaluate_pipeline(pipeline_name: str, queries: List[Dict[str, Any]],
             try:
                 print(f"⏱️  [DEBUG] Running pipeline for query {i+1}...", flush=True)
                 start_time = time.time()
-                result = pipeline.run(query, top_k=5)
+                result = pipeline.query(query, top_k=5)
                 response_time = time.time() - start_time
                 print(f"✅ [DEBUG] Query {i+1} completed in {response_time:.2f}s", flush=True)
                 

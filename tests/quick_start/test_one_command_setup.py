@@ -196,7 +196,7 @@ class TestSetupPipelineOrchestration:
         
         # Use the mocked class, not the real one
         pipeline = mock_pipeline_class()
-        result = pipeline.execute("standard")
+        result = pipeline.query("standard")
         
         assert result["status"] == "success"
         assert len(result["steps_completed"]) == 8
@@ -255,7 +255,7 @@ class TestSetupPipelineOrchestration:
         
         # Use the mocked class, not the real one
         pipeline = mock_pipeline_class()
-        result = pipeline.execute("standard")
+        result = pipeline.query("standard")
         
         assert result["status"] == "failed"
         assert result["failed_step"] == "database_setup"
@@ -496,7 +496,7 @@ class TestErrorHandlingAndRecovery:
         
         # Use the mocked class, not the real one
         pipeline = mock_pipeline_class()
-        result = pipeline.execute("standard")
+        result = pipeline.query("standard")
         
         assert result["status"] == "failed"
         assert len(result["errors"]) == 1

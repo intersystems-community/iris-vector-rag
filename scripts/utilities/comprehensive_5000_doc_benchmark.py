@@ -663,22 +663,22 @@ class Comprehensive5000DocBenchmark:
                         # Execute RAG pipeline with technique-specific parameters
                         if technique_name == "CRAG":
                             # CRAG needs lower threshold to find documents
-                            result = pipeline.run(query, initial_threshold=0.3)
+                            result = pipeline.query(query, initial_threshold=0.3)
                         elif technique_name == "ColBERT":
                             # ColBERT needs similarity threshold
-                            result = pipeline.run(query, top_k=5, similarity_threshold=0.3)
+                            result = pipeline.query(query, top_k=5, similarity_threshold=0.3)
                         elif technique_name == "NodeRAG":
                             # NodeRAG needs similarity threshold
-                            result = pipeline.run(query, top_k_seeds=5, similarity_threshold=0.5)
+                            result = pipeline.query(query, top_k_seeds=5, similarity_threshold=0.5)
                         elif technique_name == "GraphRAG":
                             # GraphRAG needs start nodes parameter
-                            result = pipeline.run(query, top_n_start_nodes=3)
+                            result = pipeline.query(query, top_n_start_nodes=3)
                         elif technique_name == "Hybrid iFind RAG":
                             # Hybrid iFind RAG uses query method with multi-modal search
                             result = pipeline.query(query)
                         else:
                             # BasicRAG and HyDE use standard parameters
-                            result = pipeline.run(query)
+                            result = pipeline.query(query)
                         
                         query_time = time.time() - query_start
                         

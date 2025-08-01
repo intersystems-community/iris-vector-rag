@@ -208,7 +208,7 @@ def test_retrieve_documents_flow(colbert_rag_pipeline, mock_connection_manager, 
     colbert_rag_pipeline.vector_store = mock_vector_store
 
     # Execute the pipeline
-    result = colbert_rag_pipeline.run(query_text, top_k=top_k)
+    result = colbert_rag_pipeline.query(query_text, top_k=top_k)
 
     # Verify query encoder was called with the actual query text
     # Note: The encoder may be called multiple times (validation + actual processing)

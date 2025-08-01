@@ -44,7 +44,7 @@ def final_validation():
         print(f"{'='*50}")
         
         try:
-            result = pipeline.run(query, top_k=3)
+            result = pipeline.query(query, top_k=3)
             
             print(f"✅ SUCCESS!")
             print(f"   Query: {result['query']}")

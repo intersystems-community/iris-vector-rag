@@ -34,9 +34,9 @@ def test_pipeline(name: str, pipeline: Any, query: str) -> Dict[str, Any]:
     try:
         if name == "CRAG":
             # CRAG doesn't accept similarity_threshold
-            result = pipeline.run(query, top_k=10)
+            result = pipeline.query(query, top_k=10)
         else:
-            result = pipeline.run(query, top_k=10, similarity_threshold=0.1)
+            result = pipeline.query(query, top_k=10, similarity_threshold=0.1)
         
         elapsed = time.time() - start_time
         

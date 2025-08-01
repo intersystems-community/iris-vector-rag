@@ -242,7 +242,7 @@ class DemoChatApp:
                     external_connection=get_iris_connection(),
                     validate_requirements=False
                 )
-                pipeline_result = pipeline.run(query, top_k=max_results)
+                pipeline_result = pipeline.query(query, top_k=max_results)
                 result = {
                     "answer": pipeline_result.get('answer', 'No answer generated'),
                     "sources": pipeline_result.get('retrieved_documents', []),
@@ -299,7 +299,7 @@ class DemoChatApp:
                     external_connection=get_iris_connection(),
                     validate_requirements=False
                 )
-                pipeline_result = pipeline.run(query, top_k=10)
+                pipeline_result = pipeline.query(query, top_k=10)
                 result = {
                     "answer": pipeline_result.get('answer', 'No answer generated'),
                     "sources": pipeline_result.get('retrieved_documents', []),

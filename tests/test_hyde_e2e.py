@@ -116,7 +116,7 @@ def test_hyde_e2e_abstract_query_cellular_energy(hyde_e2e_db_connection):
     abstract_query = "How do cells produce energy?"
     logger.info(f"Executing HyDE E2E test with abstract query: {abstract_query}")
     
-    results = pipeline.run(abstract_query, top_k=1) # Ask for top 1
+    results = pipeline.query(abstract_query, top_k=1) # Ask for top 1
 
     assert "retrieved_documents" in results, "HyDE result missing 'retrieved_documents' key"
     assert "answer" in results, "HyDE result missing 'answer' key"
@@ -171,7 +171,7 @@ def test_hyde_e2e_abstract_query_genetic_modification(hyde_e2e_db_connection):
     abstract_query_crispr = "What are modern methods for altering genetic code?"
     logger.info(f"Executing HyDE E2E test with abstract query: {abstract_query_crispr}")
 
-    results_crispr = pipeline.run(abstract_query_crispr, top_k=1)
+    results_crispr = pipeline.query(abstract_query_crispr, top_k=1)
 
     assert "hypothetical_document" in results_crispr
     hypothetical_doc_crispr = results_crispr["hypothetical_document"]

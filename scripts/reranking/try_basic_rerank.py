@@ -1,8 +1,12 @@
 import logging
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
 from iris_rag.core.connection import ConnectionManager
 from iris_rag.config.manager import ConfigurationManager
-from iris_rag.storage.enterprise_storage import IRISStorage
+from iris_rag.storage.vector_store_iris import IRISVectorStore
 
 # Optional: Dummy LLM function
 def dummy_llm(prompt: str) -> str:
@@ -19,15 +23,14 @@ def main():
     # Instantiate core components
     connection_manager = ConnectionManager()
     config_manager = ConfigurationManager()
-    temp_vector_store = IRISStorage(connection_manager=connection_manager, config_manager=config_manager)
-    temp_vector_store.initialize_schema() # Initialize the schema to use doc_id
+    vector_store = IRISVectorStore(config_manager=config_manager)
 
     print("Instantiating RAG Reranking Pipeline")
     # Instantiate the RAG pipeline
     reranking_rag_pipeline = BasicRAGRerankingPipeline(
         connection_manager=connection_manager,
         config_manager=config_manager,
-        vector_store=None,
+        vector_store=vector_store,
         llm_func=dummy_llm  # Replace with real LLM call if available
     )
 
@@ -39,7 +42,7 @@ def main():
     print("Running RAG + Reranking Pipeline")
     # Step 2: Run a sample query
     query = "What is InterSystems IRIS?"
-    response = reranking_rag_pipeline.run(query, top_k=3)
+    response = reranking_rag_pipeline.query(query, top_k=3)
 
     # Step 3: Print final answer
     print("\n========== RAG + Reranking Pipeline Output ==========")

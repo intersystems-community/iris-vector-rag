@@ -466,7 +466,7 @@ class UnifiedRAGASEvaluationFramework:
         start_time = time.time()
         try:
             # Run pipeline with standardized parameters
-            result = pipeline.run(
+            result = pipeline.query(
                 query,
                 top_k=self.comprehensive_config.retrieval.top_k,
                 similarity_threshold=self.comprehensive_config.retrieval.similarity_threshold

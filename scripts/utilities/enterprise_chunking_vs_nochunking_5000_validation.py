@@ -129,7 +129,7 @@ class EnterpriseChunkingValidation:
         """Run pipeline with simulated chunk-based retrieval for comparison"""
         try:
             # First, run the normal pipeline to get baseline results
-            normal_result = pipeline.run(query, top_k=10)
+            normal_result = pipeline.query(query, top_k=10)
             
             # Simulate chunking by breaking documents into smaller pieces
             # This provides a realistic comparison of chunked vs non-chunked performance
@@ -238,7 +238,7 @@ Answer:"""
                 # Test non-chunked approach
                 try:
                     start_time = time.time()
-                    non_chunked_result = pipeline.run(query, top_k=10)
+                    non_chunked_result = pipeline.query(query, top_k=10)
                     non_chunked_time = (time.time() - start_time) * 1000
                     
                     non_chunked_times.append(non_chunked_time)

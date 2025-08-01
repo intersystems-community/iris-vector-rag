@@ -360,7 +360,7 @@ class BenchmarkRunner:
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
-            return pipeline.run(query=query)
+            return pipeline.query(query=query)
         except ImportError as e:
             return self._handle_import_error(query, "basic_rag", e)
     
@@ -374,7 +374,7 @@ class BenchmarkRunner:
                 colbert_doc_encoder_func=self.embedding_func,
                 llm_func=self.llm_func
             )
-            return pipeline.run(query=query)
+            return pipeline.query(query=query)
         except ImportError as e:
             return self._handle_import_error(query, "colbert", e)
     
@@ -387,7 +387,7 @@ class BenchmarkRunner:
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
-            return pipeline.run(query=query)
+            return pipeline.query(query=query)
         except ImportError as e:
             return self._handle_import_error(query, "graphrag", e)
     
@@ -400,7 +400,7 @@ class BenchmarkRunner:
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
-            return pipeline.run(query=query)
+            return pipeline.query(query=query)
         except ImportError as e:
             return self._handle_import_error(query, "noderag", e)
     
@@ -413,7 +413,7 @@ class BenchmarkRunner:
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
-            return pipeline.run(query=query)
+            return pipeline.query(query=query)
         except ImportError as e:
             return self._handle_import_error(query, "hyde", e)
     
@@ -426,7 +426,7 @@ class BenchmarkRunner:
                 embedding_func=self.embedding_func,
                 llm_func=self.llm_func
             )
-            return pipeline.run(query=query)
+            return pipeline.query(query=query)
         except ImportError as e:
             return self._handle_import_error(query, "crag", e)
     

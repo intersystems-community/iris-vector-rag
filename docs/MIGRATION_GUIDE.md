@@ -82,7 +82,7 @@ for file_path in document_paths:
 storage.store_documents(documents)
 
 # Complex querying
-result = pipeline.execute("What is machine learning?", top_k=5)
+result = pipeline.query("What is machine learning?", top_k=5)
 answer = result['answer']
 sources = result['retrieved_documents']
 ```
@@ -168,7 +168,7 @@ const answer = await rag.query("What is machine learning?");
 ```python
 # If you're using basic pipeline creation
 pipeline = create_pipeline(pipeline_type="basic", ...)
-result = pipeline.execute(query)
+result = pipeline.query(query)
 ```
 → **Migrate to**: Simple API
 
@@ -203,7 +203,7 @@ pipeline = create_pipeline(
     pipeline_type="basic",
     llm_func=get_llm_func()
 )
-result = pipeline.execute("query")
+result = pipeline.query("query")
 
 # After (Simple)
 from rag_templates import RAG
@@ -393,7 +393,7 @@ rag.load_from_directory("./documents", {
 
 **Before**: Complex pipeline execution
 ```python
-result = pipeline.execute(
+result = pipeline.query(
     query_text="What is machine learning?",
     top_k=5,
     similarity_threshold=0.7
@@ -505,7 +505,7 @@ from rag_templates import RAG
 simple_rag = RAG()
 
 # Use both as needed
-legacy_result = existing_pipeline.execute(query)
+legacy_result = existing_pipeline.query(query)
 simple_answer = simple_rag.query(query)
 ```
 
@@ -514,14 +514,14 @@ simple_answer = simple_rag.query(query)
 # Migrate simple use cases first
 def simple_qa(question):
     # Before: complex pipeline
-    # return existing_pipeline.execute(question)['answer']
+    # return existing_pipeline.query(question)['answer']
     
     # After: simple API
     return rag.query(question)
 
 # Keep complex use cases on old system temporarily
 def complex_analysis(query):
-    return existing_pipeline.execute(query)  # Keep for now
+    return existing_pipeline.query(query)  # Keep for now
 ```
 
 #### Phase 3: Complete Migration
@@ -593,7 +593,7 @@ cache = {}
 def cached_query(query):
     if query in cache:
         return cache[query]
-    result = pipeline.execute(query)
+    result = pipeline.query(query)
     cache[query] = result
     return result
 ```
@@ -736,7 +736,7 @@ class RAGMigrationTool:
             plan['migration_steps'] = [
                 "1. Install new rag-templates library",
                 "2. Replace create_pipeline() with RAG()",
-                "3. Replace pipeline.execute() with rag.query()",
+                "3. Replace pipeline.query() with rag.query()",
                 "4. Replace manual document processing with rag.add_documents()",
                 "5. Test and validate functionality"
             ]
@@ -835,7 +835,7 @@ def setup_rag():
     return pipeline
 
 def ask_question(pipeline, question):
-    result = pipeline.execute(question, top_k=5)
+    result = pipeline.query(question, top_k=5)
     return result['answer']
 
 # Usage
@@ -875,7 +875,7 @@ def setup_advanced_rag():
     return pipeline
 
 def advanced_query(pipeline, question):
-    result = pipeline.execute(
+    result = pipeline.query(
         question,
         top_k=10,
         similarity_threshold=0.8
@@ -1010,7 +1010,7 @@ old_pipeline = create_pipeline(pipeline_type="basic")
 new_rag = ConfigurableRAG({"technique": "basic"})
 
 # Use same parameters
-old_result = old_pipeline.execute(query, top_k=5)
+old_result = old_pipeline.query(query, top_k=5)
 new_result = new_rag.query(query, {"max_results": 5})
 
 # Compare results
@@ -1066,7 +1066,7 @@ def validate_migration(old_pipeline, new_rag, test_queries):
     
     for query in test_queries:
         # Test old implementation
-        old_result = old_pipeline.execute(query)
+        old_result = old_pipeline.query(query)
         old_answer = old_result['answer']
         
         # Test new implementation

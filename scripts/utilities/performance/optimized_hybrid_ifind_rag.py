@@ -282,7 +282,7 @@ def test_optimized_pipeline():
         print(f"\n🔍 Test {i}: {query}")
         
         start_time = time.time()
-        result = pipeline.run(query, top_k=3)
+        result = pipeline.query(query, top_k=3)
         end_time = time.time()
         
         print(f"📊 Execution time: {result['execution_time']:.2f}s")

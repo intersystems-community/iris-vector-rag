@@ -144,13 +144,13 @@ def main():
         
         # Execute pipeline using both methods
         print("\n--- Using execute() method ---")
-        result_execute = pipeline.execute(query, top_k=2)
+        result_execute = pipeline.query(query, top_k=2)
         
         print("\nResponse structure from execute():")
         inspect_object_structure(result_execute, "execute() result")
         
         print("\n--- Using run() method ---")
-        result_run = pipeline.run(query, top_k=2)
+        result_run = pipeline.query(query, top_k=2)
         
         print("\nResponse structure from run():")
         inspect_object_structure(result_run, "run() result")

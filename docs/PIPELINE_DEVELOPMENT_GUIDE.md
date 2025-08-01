@@ -2,6 +2,38 @@
 
 This guide helps developers create new RAG pipelines that follow project architecture patterns and avoid common pitfalls.
 
+## ⚡ IMPORTANT: Unified API Architecture
+
+**All pipelines now use a single `query()` method** - the old `execute()` and `run()` methods are deprecated for consistency and performance.
+
+### The New Standard Pattern
+```python
+# ✅ CORRECT: Use the unified query() method
+result = pipeline.query("What is machine learning?", top_k=5, include_sources=True)
+
+# ❌ DEPRECATED: Don't use execute() or run()
+result = pipeline.query("What is machine learning?")  # Still works but deprecated
+result = pipeline.query("What is machine learning?")     # Still works but deprecated
+```
+
+### Standard Response Format
+All pipelines return the same structured response:
+```python
+{
+    "query": str,           # The original query
+    "answer": str,          # Generated answer (or None if generate_answer=False)
+    "retrieved_documents": List[Document],  # Retrieved documents
+    "contexts": List[str],  # Document content as strings (for RAGAS compatibility)
+    "execution_time": float,               # Processing time in seconds
+    "metadata": {           # Pipeline-specific metadata
+        "num_retrieved": int,
+        "pipeline_type": str,
+        "generated_answer": bool,
+        # ... custom fields
+    }
+}
+```
+
 ## Quick Start: Creating a New Pipeline
 
 ### 1. Choose Your Base Class
@@ -24,16 +56,46 @@ class MyCustomPipeline(BasicRAGPipeline):
 
 ### 2. Override Only What You Need
 
-**✅ DO: Override specific methods**
+**✅ DO: Override the unified query() method**
 ```python
 class ReRankingPipeline(BasicRAGPipeline):
-    def query(self, query_text: str, top_k: int = 5, **kwargs):
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         # Get more candidates for reranking
-        initial_k = top_k * self.rerank_factor
-        parent_result = super().query(query_text, top_k=initial_k, **kwargs)
+        initial_k = min(top_k * self.rerank_factor, 100)  # Cap for performance
         
-        # Apply reranking logic
-        return self._rerank_documents(parent_result, top_k)
+        # Use parent method for initial retrieval (don't generate answer yet)
+        parent_kwargs = kwargs.copy()
+        parent_kwargs['generate_answer'] = False
+        parent_result = super().query(query_text, top_k=initial_k, **parent_kwargs)
+        
+        # Apply reranking to retrieved documents
+        candidates = parent_result.get("retrieved_documents", [])
+        if len(candidates) > 1 and self.reranker_func:
+            final_documents = self._rerank_documents(query_text, candidates, top_k)
+        else:
+            final_documents = candidates[:top_k]
+        
+        # Generate answer with reranked documents if requested
+        generate_answer = kwargs.get("generate_answer", True)
+        if generate_answer and self.llm_func and final_documents:
+            answer = self._generate_answer(query_text, final_documents)
+        else:
+            answer = parent_result.get("answer")
+        
+        # Return complete response in standard format
+        return {
+            "query": query_text,
+            "answer": answer,
+            "retrieved_documents": final_documents,
+            "contexts": [doc.page_content for doc in final_documents],
+            "execution_time": parent_result.get("execution_time", 0.0),
+            "metadata": {
+                "num_retrieved": len(final_documents),
+                "pipeline_type": "reranking",
+                "reranked": len(candidates) > 1,
+                "generated_answer": generate_answer and answer is not None
+            }
+        }
 ```
 
 **❌ DON'T: Copy entire parent class**
@@ -138,13 +200,24 @@ class WellDesignedPipeline(BasicRAGPipeline):
         # Custom function with default
         self.custom_func = custom_func or self._default_custom_func
     
-    def query(self, query_text: str, top_k: int = 5, **kwargs):
-        """Override only the parts that need customization."""
-        # Use parent for standard retrieval
-        parent_result = super().query(query_text, top_k=initial_k, **kwargs)
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+        """
+        THE single method for all RAG operations - replaces execute()/run().
         
-        # Add custom processing
+        Override only the parts that need customization while maintaining
+        the standard response format for compatibility.
+        """
+        # Use parent for standard retrieval and generation
+        parent_result = super().query(query_text, top_k, **kwargs)
+        
+        # Add custom processing while preserving response structure
         enhanced_result = self._apply_custom_logic(parent_result)
+        
+        # Ensure metadata reflects custom processing
+        enhanced_result["metadata"].update({
+            "pipeline_type": "custom",
+            "custom_processing": True
+        })
         
         return enhanced_result
     
@@ -171,6 +244,12 @@ class BadPipeline(RAGPipeline):
     def query(self, ...):
         # Another 100+ lines copied from BasicRAGPipeline
         # with tiny modifications
+    
+    def execute(self, ...):  # DON'T: Multiple query methods
+        # Confusing API with multiple entry points
+    
+    def run(self, ...):  # DON'T: More method confusion
+        # Use single query() method instead
 
 # DON'T: Module-level heavy imports
 from transformers import AutoModel, AutoTokenizer
@@ -194,9 +273,16 @@ def test_my_pipeline():
     
     pipeline = MyCustomPipeline(connection_manager, config_manager)
     
-    # Test with mock data
+    # Test the unified query() method
     result = pipeline.query("test query", top_k=3)
+    
+    # Verify standard response format
+    assert "query" in result
+    assert "answer" in result
     assert "retrieved_documents" in result
+    assert "contexts" in result
+    assert "metadata" in result
+    assert "execution_time" in result
     assert len(result["retrieved_documents"]) <= 3
 ```
 
@@ -208,8 +294,10 @@ def test_pipeline_e2e():
     pipeline = MyCustomPipeline()
     pipeline.load_documents(["test_doc.txt"])
     
-    result = pipeline.execute("What is the main topic?")
+    # Use the unified query() method (not execute())
+    result = pipeline.query("What is the main topic?")
     assert result["answer"] is not None
+    assert "retrieved_documents" in result
 ```
 
 ## Performance Considerations
@@ -274,7 +362,7 @@ Configuration:
 
 Usage:
     pipeline = BasicRAGRerankingPipeline(conn_mgr, config_mgr)
-    result = pipeline.execute("What is machine learning?")
+    result = pipeline.query("What is machine learning?")  # Use query(), not execute()
 """
 ```
 
@@ -284,9 +372,11 @@ Before submitting your pipeline, verify:
 
 - [ ] **Inherits from appropriate base class** (not RAGPipeline directly)
 - [ ] **No code duplication** from parent classes
+- [ ] **Uses unified query() method** (no execute(), run() methods)
 - [ ] **Heavy imports are lazy-loaded** (inside methods, not module-level)
 - [ ] **Configuration uses dedicated config section** 
 - [ ] **Registration only requires config changes** (no __init__.py modifications)
+- [ ] **Maintains standard response format** (query, answer, retrieved_documents, contexts, metadata, execution_time)
 - [ ] **Docstrings explain the unique technique**
 - [ ] **Tests cover custom functionality**
 - [ ] **Error handling for custom components**
@@ -345,7 +435,11 @@ class ExampleCustomPipeline(BasicRAGPipeline):
         logger.info(f"Initialized ExampleCustomPipeline with post_process={self.post_process}")
     
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
-        """Override query to add post-processing."""
+        """
+        THE single method for all RAG operations.
+        
+        Override to add post-processing while maintaining standard response format.
+        """
         # Use parent for standard functionality
         result = super().query(query_text, top_k, **kwargs)
         
@@ -353,9 +447,11 @@ class ExampleCustomPipeline(BasicRAGPipeline):
         if self.post_process:
             result = self._post_process_result(result)
         
-        # Update metadata
-        result["metadata"]["post_processed"] = self.post_process
-        result["metadata"]["pipeline_type"] = "example_custom"
+        # Update metadata to reflect custom processing
+        result["metadata"].update({
+            "post_processed": self.post_process,
+            "pipeline_type": "example_custom"
+        })
         
         return result
     

@@ -353,7 +353,7 @@ class ComprehensiveValidationTester:
             
             # Step 4: Execute query
             execution_start = time.time()
-            result = pipeline.run(self.test_query)
+            result = pipeline.query(self.test_query)
             execution_time = time.time() - execution_start
             
             total_time = time.time() - pipeline_start

@@ -617,7 +617,7 @@ class ComprehensiveRAGASEvaluationFramework:
                 logger.debug(f"🚀 Executing {pipeline_name} pipeline...")
             
             # Run pipeline with standardized parameters
-            result = pipeline.execute(
+            result = pipeline.query(
                 query,
                 top_k=self.config.retrieval.top_k,
                 similarity_threshold=self.config.retrieval.similarity_threshold

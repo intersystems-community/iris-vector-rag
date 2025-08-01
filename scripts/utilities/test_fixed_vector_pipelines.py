@@ -45,7 +45,7 @@ def test_fixed_pipelines():
             llm_func=llm_func
         )
         
-        result = pipeline.run(test_query, top_k=5)
+        result = pipeline.query(test_query, top_k=5)
         results['BasicRAG'] = {
             'success': True,
             'docs_retrieved': result.get('document_count', 0),
@@ -70,7 +70,7 @@ def test_fixed_pipelines():
             llm_func=llm_func
         )
         
-        result = pipeline.run(test_query, top_k=5)
+        result = pipeline.query(test_query, top_k=5)
         results['HyDE'] = {
             'success': True,
             'docs_retrieved': result.get('document_count', 0),
@@ -120,7 +120,7 @@ def test_fixed_pipelines():
             llm_func=llm_func
         )
         
-        result = pipeline.run(test_query, top_k=5)
+        result = pipeline.query(test_query, top_k=5)
         results['CRAG'] = {
             'success': True,
             'docs_retrieved': result.get('document_count', 0),
@@ -145,7 +145,7 @@ def test_fixed_pipelines():
             llm_func=llm_func
         )
         
-        result = pipeline.run(test_query, top_k=5)
+        result = pipeline.query(test_query, top_k=5)
         results['NodeRAG'] = {
             'success': True,
             'docs_retrieved': result.get('document_count', 0),

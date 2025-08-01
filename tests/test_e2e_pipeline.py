@@ -114,7 +114,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # Test Case 1: Query targeting Doc A ("DOCA") - "Mitochondrial DNA"
     query_doc_a = "What is the role of mitochondrial DNA?"
     logger.info(f"Executing E2E test query 1: {query_doc_a}")
-    results_a = pipeline.run(query_doc_a)
+    results_a = pipeline.query(query_doc_a)
 
     assert "retrieved_documents" in results_a, "Query result missing 'retrieved_documents' key"
     assert "answer" in results_a, "Query result missing 'answer' key"
@@ -134,7 +134,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # Test Case 2: Query targeting Doc B ("DOCB") - "CRISPR Gene Editing"
     query_doc_b = "Explain CRISPR gene editing technology." # This is the key query from the task
     logger.info(f"Executing E2E test query 2: {query_doc_b}")
-    results_b = pipeline.run(query_doc_b)
+    results_b = pipeline.query(query_doc_b)
 
     assert "retrieved_documents" in results_b
     assert "answer" in results_b
@@ -156,7 +156,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # Test Case 3: Query for content not present
     query_not_present = "Latest advancements in underwater basket weaving."
     logger.info(f"Executing E2E test query 3: {query_not_present}")
-    results_c = pipeline.run(query_not_present)
+    results_c = pipeline.query(query_not_present)
     
     assert "retrieved_documents" in results_c
     assert "answer" in results_c

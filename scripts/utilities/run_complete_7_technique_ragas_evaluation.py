@@ -172,7 +172,7 @@ def run_technique_evaluation(technique_name, pipeline, questions):
             print(f"  Question {i}/10: {q['question'][:50]}...")
             
             start_time = time.time()
-            result = pipeline.run(q['question'])
+            result = pipeline.query(q['question'])
             response_time = time.time() - start_time
             
             total_time += response_time

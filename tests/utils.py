@@ -239,7 +239,7 @@ def run_standardized_queries(pipeline, queries: Optional[List[str]] = None,
     for query in queries:
         logger.info(f"Running query: {query}")
         start_time = time.time()
-        result = pipeline.run(query)
+        result = pipeline.query(query)
         query_time = time.time() - start_time
         docs = result.get("retrieved_documents", [])
         total_docs += len(docs)

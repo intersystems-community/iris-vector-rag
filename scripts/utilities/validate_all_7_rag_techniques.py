@@ -45,7 +45,7 @@ def test_technique(technique_name, pipeline_class, iris, embedding_func, llm_fun
         print(f"✅ {technique_name} pipeline initialized")
         
         # Run the pipeline
-        result = pipeline.run(query, top_k=3)
+        result = pipeline.query(query, top_k=3)
         
         execution_time = time.time() - start_time
         

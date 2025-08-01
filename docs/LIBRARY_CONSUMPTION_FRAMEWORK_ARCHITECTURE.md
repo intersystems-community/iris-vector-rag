@@ -490,7 +490,7 @@ class RAG:
         if options:
             query_config.update(options)
         
-        return self.pipeline.execute(question, query_config)
+        return self.pipeline.query(question, query_config)
     
     def add_documents(self, documents):
         """Simple document addition interface"""

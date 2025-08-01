@@ -33,7 +33,7 @@ def test_technique(name, pipeline_class, module_path):
         
         # Test query
         test_query = "What are the symptoms of diabetes?"
-        result = pipeline.run(test_query, top_k=3)
+        result = pipeline.query(test_query, top_k=3)
         
         # Check results
         retrieved_count = 0

@@ -103,7 +103,7 @@ def run_quick_performance_test():
             # --- BasicRAG Test ---
             print("Testing BasicRAG...")
             # Get total time and document count
-            basic_run_result = basic_rag_pipeline.run(query_text, top_k=5)
+            basic_run_result = basic_rag_pipeline.query(query_text, top_k=5)
             basic_total_time_ms = basic_run_result.get('latency_ms', 0)
             basic_doc_count = basic_run_result.get('document_count', 0)
 

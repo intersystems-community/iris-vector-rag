@@ -149,7 +149,7 @@ class FocusedRAGASEvaluator:
             if hasattr(pipeline, 'query'):
                 result = pipeline.query(query)
             elif hasattr(pipeline, 'run'):
-                result = pipeline.run(query)
+                result = pipeline.query(query)
             else:
                 # Try calling the pipeline directly
                 result = pipeline(query)

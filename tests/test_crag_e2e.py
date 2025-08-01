@@ -193,7 +193,7 @@ def test_crag_jdbc_e2e_corrective_web_search_triggered(
 
     logger.info(f"Running CRAG pipeline (run method) with query: '{query}', top_k={test_top_k}")
     
-    result_data = pipeline.run(query_text=query, top_k=test_top_k)
+    result_data = pipeline.query(query_text=query, top_k=test_top_k)
     
     final_documents = result_data.get("retrieved_documents", [])
     answer = result_data.get("answer", "")

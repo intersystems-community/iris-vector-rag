@@ -88,7 +88,7 @@ class MakefileIntegration:
             
             # Run setup pipeline
             pipeline = OneCommandSetupPipeline()
-            result = pipeline.execute(profile_name)
+            result = pipeline.query(profile_name)
             
             if result.get('status') == 'success':
                 self.logger.info(f"✅ {profile_name.title()} setup completed successfully!")

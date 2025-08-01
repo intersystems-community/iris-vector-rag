@@ -114,8 +114,8 @@ class RAG:
             # Ensure pipeline is initialized
             pipeline = self._get_pipeline()
             
-            # Execute the query
-            result = pipeline.execute(query_text, **kwargs)
+            # Execute the query using unified query() method
+            result = pipeline.query(query_text, **kwargs)
             
             # Extract the answer string
             answer = result.get("answer", "No answer generated")

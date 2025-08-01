@@ -87,57 +87,97 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
     
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
-        Retrieve and rerank relevant documents for a query.
+        Execute RAG query with reranking - THE single method for reranking RAG operations.
         
-        This method overrides the parent query method to add reranking:
+        This method overrides the parent to add reranking:
         1. Retrieves rerank_factor * top_k documents using parent method
         2. Applies reranking to improve document ordering  
         3. Returns top_k best documents after reranking
+        4. Maintains full compatibility with parent response format
         
         Args:
             query_text: The query text
             top_k: Number of documents to return after reranking
-            **kwargs: Additional arguments passed to parent query method
+            **kwargs: Additional arguments including:
+                - include_sources: Whether to include source information (default: True)
+                - custom_prompt: Custom prompt template
+                - generate_answer: Whether to generate LLM answer (default: True)
+                - All other parent query arguments
                 
         Returns:
-            Dictionary with reranked documents in standard format
+            Dictionary with complete RAG response including reranked documents
         """
         # Calculate how many documents to retrieve for reranking pool
         initial_k = min(top_k * self.rerank_factor, 100)  # Cap at 100 for performance
         
         # Get initial candidates using parent pipeline's query method
-        parent_result = super().query(query_text, top_k=initial_k, **kwargs)
+        # Set generate_answer=False initially to avoid duplicate LLM calls
+        parent_kwargs = kwargs.copy()
+        parent_kwargs['generate_answer'] = False  # We'll generate answer after reranking
+        
+        parent_result = super().query(query_text, top_k=initial_k, **parent_kwargs)
         candidate_documents = parent_result.get("retrieved_documents", [])
         
-        # If we have fewer candidates than requested, just return them
-        if len(candidate_documents) <= top_k:
-            logger.debug(f"Only {len(candidate_documents)} candidates found, skipping reranking")
-            final_documents = candidate_documents
-        else:
-            # Apply reranking if we have a reranker function and multiple candidates
-            if self.reranker_func and len(candidate_documents) > 1:
-                try:
-                    final_documents = self._rerank_documents(query_text, candidate_documents, top_k)
-                    logger.debug(f"Reranked {len(candidate_documents)} documents, returning top {len(final_documents)}")
-                except Exception as e:
-                    logger.warning(f"Reranking failed, falling back to original order: {e}")
-                    final_documents = candidate_documents[:top_k]
-            else:
-                # No reranking available, return top candidates
-                logger.debug(f"No reranking applied, returning top {top_k} documents")
+        # Always rerank if we have multiple candidates and a reranker (fixes the logic issue!)
+        if len(candidate_documents) > 1 and self.reranker_func:
+            try:
+                final_documents = self._rerank_documents(query_text, candidate_documents, top_k)
+                logger.debug(f"Reranked {len(candidate_documents)} documents, returning top {len(final_documents)}")
+                reranked = True
+            except Exception as e:
+                logger.warning(f"Reranking failed, falling back to original order: {e}")
                 final_documents = candidate_documents[:top_k]
+                reranked = False
+        else:
+            # Single document or no reranker - just return what we have
+            final_documents = candidate_documents[:top_k]
+            reranked = False
+            if len(candidate_documents) <= 1:
+                logger.debug(f"Only {len(candidate_documents)} candidates found, no reranking needed")
+            else:
+                logger.debug(f"No reranker available, returning top {top_k} documents")
         
-        # Return in same format as parent, but with reranked documents
-        return {
+        # Now generate answer if requested (using reranked documents)
+        generate_answer = kwargs.get("generate_answer", True)
+        if generate_answer and self.llm_func and final_documents:
+            try:
+                custom_prompt = kwargs.get("custom_prompt")
+                answer = self._generate_answer(query_text, final_documents, custom_prompt)
+            except Exception as e:
+                logger.warning(f"Answer generation failed: {e}")
+                answer = "Error generating answer"
+        elif not generate_answer:
+            answer = None
+        elif not final_documents:
+            answer = "No relevant documents found to answer the query."
+        else:
+            answer = "No LLM function provided. Retrieved documents only."
+        
+        # Build complete response (matching parent format exactly)
+        response = {
             "query": query_text,
+            "answer": answer,
             "retrieved_documents": final_documents,
-            "answer": None,
+            "contexts": [doc.page_content for doc in final_documents],
+            "execution_time": parent_result.get("execution_time", 0.0),
             "metadata": {
                 "num_retrieved": len(final_documents),
+                "processing_time": parent_result.get("execution_time", 0.0),
                 "pipeline_type": "basic_rag_reranking",
-                "reranked": self.reranker_func is not None and len(candidate_documents) > top_k
+                "reranked": reranked,
+                "initial_candidates": len(candidate_documents),
+                "rerank_factor": self.rerank_factor,
+                "generated_answer": generate_answer and answer is not None
             }
         }
+        
+        # Add sources if requested
+        include_sources = kwargs.get("include_sources", True)
+        if include_sources:
+            response["sources"] = self._extract_sources(final_documents)
+        
+        logger.info(f"Reranking RAG query completed - {len(final_documents)} docs returned (reranked: {reranked})")
+        return response
     
     def _rerank_documents(self, query_text: str, documents: List[Document], top_k: int = 5) -> List[Document]:
         """

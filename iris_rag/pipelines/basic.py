@@ -283,82 +283,94 @@ class BasicRAGPipeline(RAGPipeline):
             self._store_documents(documents, embeddings=None)
             logger.info(f"Stored {len(documents)} documents without embeddings due to embedding failure")
     
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
-        Retrieve relevant documents for a query.
+        Execute RAG query - THE single method for all RAG operations.
+        
+        This is the unified method that handles retrieval, generation, and response formatting.
+        Replaces the old query()/execute()/run() method confusion.
         
         Args:
             query_text: The query text
             top_k: Number of documents to retrieve
             **kwargs: Additional arguments including:
+                - include_sources: Whether to include source information (default: True)
+                - custom_prompt: Custom prompt template
                 - metadata_filter: Optional metadata filters
                 - similarity_threshold: Minimum similarity score
+                - generate_answer: Whether to generate LLM answer (default: True)
                 
         Returns:
-            List of retrieved documents
+            Dictionary with complete RAG response:
+            {
+                "query": str,
+                "answer": str,
+                "retrieved_documents": List[Document],
+                "contexts": List[str],
+                "sources": List[Dict],
+                "metadata": Dict,
+                "execution_time": float
+            }
         """
-        # Generate query embedding
-        query_embedding = self.embedding_manager.embed_text(query_text)
+        start_time = time.time()
         
-        # Get optional parameters
+        # Get parameters
+        include_sources = kwargs.get("include_sources", True)
+        custom_prompt = kwargs.get("custom_prompt")
+        generate_answer = kwargs.get("generate_answer", True)
         metadata_filter = kwargs.get("metadata_filter")
         similarity_threshold = kwargs.get("similarity_threshold", 0.0)
         
-        # Perform vector search using base class helper
-        results = self._retrieve_documents_by_vector(
-            query_embedding=query_embedding,
-            top_k=top_k,
-            metadata_filter=metadata_filter
-        )
-        
-        # Filter by similarity threshold if specified
-        if similarity_threshold > 0.0:
-            results = [(doc, score) for doc, score in results if score >= similarity_threshold]
-        
-        # Return just the documents
-        documents = [doc for doc, score in results]
-        
-        logger.debug(f"Retrieved {len(documents)} documents for query: {query_text[:50]}...")
-        return documents
-    
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
-        """
-        Execute a query and return results in standard format.
-        
-        This method provides a consistent interface that returns a dictionary
-        with retrieved_documents, matching the expected format for tests and
-        other consumers.
-        
-        Args:
-            query_text: The query string
-            top_k: Number of documents to retrieve
-            **kwargs: Additional arguments for retrieval
-            
-        Returns:
-            Dictionary containing query results with retrieved_documents
-        """
-        # Use the vector store to search for similar documents directly
-        # to avoid recursion with the base class retrieve() method
-        if hasattr(self, 'vector_store') and self.vector_store:
-            try:
+        # Step 1: Retrieve relevant documents
+        try:
+            # Use vector store for retrieval
+            if hasattr(self, 'vector_store') and self.vector_store:
                 retrieved_documents = self.vector_store.similarity_search(query_text, k=top_k)
-            except Exception as e:
-                logger.warning(f"Vector store search failed: {e}")
+            else:
+                logger.warning("No vector store available")
                 retrieved_documents = []
-        else:
-            # Fallback: return empty list if no vector store
+        except Exception as e:
+            logger.warning(f"Document retrieval failed: {e}")
             retrieved_documents = []
         
-        # Return in standard format expected by tests
-        return {
+        # Step 2: Generate answer using LLM (if enabled and LLM available)
+        if generate_answer and self.llm_func and retrieved_documents:
+            try:
+                answer = self._generate_answer(query_text, retrieved_documents, custom_prompt)
+            except Exception as e:
+                logger.warning(f"Answer generation failed: {e}")
+                answer = "Error generating answer"
+        elif not generate_answer:
+            answer = None
+        elif not retrieved_documents:
+            answer = "No relevant documents found to answer the query."
+        else:
+            answer = "No LLM function provided. Retrieved documents only."
+        
+        # Calculate execution time
+        execution_time = time.time() - start_time
+        
+        # Step 3: Prepare complete response
+        response = {
             "query": query_text,
+            "answer": answer,
             "retrieved_documents": retrieved_documents,
-            "answer": None,  # Basic query method doesn't generate answers
+            "contexts": [doc.page_content for doc in retrieved_documents],  # String contexts for RAGAS
+            "execution_time": execution_time,  # Required for RAGAS debug harness
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
-                "pipeline_type": "basic_rag"
+                "processing_time": execution_time,
+                "pipeline_type": "basic_rag",
+                "generated_answer": generate_answer and answer is not None
             }
         }
+        
+        # Add sources if requested
+        if include_sources:
+            response["sources"] = self._extract_sources(retrieved_documents)
+        
+        logger.info(f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved")
+        return response
     
     def run(self, query: str, **kwargs) -> Dict[str, Any]:
         """
@@ -374,77 +386,46 @@ class BasicRAGPipeline(RAGPipeline):
         Returns:
             Dictionary with query, answer, and retrieved documents
         """
-        return self.execute(query, **kwargs)
+        logger.warning("run() is deprecated - use query() method directly")
+        return self.query(query, **kwargs)
     
     def execute(self, query_text: str, **kwargs) -> Dict[str, Any]:
         """
-        Execute the full RAG pipeline for a query.
+        Backward compatibility method - calls main query() method.
+        
+        DEPRECATED: Use query() directly instead.
+        """
+        logger.warning("execute() is deprecated - use query() method directly")
+        return self.query(query_text, **kwargs)
+    
+    def retrieve(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
+        """
+        Convenience method to get just the documents (no answer generation).
         
         Args:
-            query_text: The input query
-            **kwargs: Additional arguments including:
-                - top_k: Number of documents to retrieve
-                - include_sources: Whether to include source information
-                - custom_prompt: Custom prompt template
-                
+            query_text: The query text
+            top_k: Number of documents to retrieve
+            **kwargs: Additional arguments
+            
         Returns:
-            Dictionary with query, answer, retrieved documents, contexts, and execution_time
+            List of retrieved documents
         """
-        start_time = time.time()
+        result = self.query(query_text, top_k=top_k, generate_answer=False, **kwargs)
+        return result["retrieved_documents"]
+    
+    def ask(self, question: str, **kwargs) -> str:
+        """
+        Convenience method to get just the answer text.
         
-        # Get parameters
-        top_k = kwargs.get("top_k", self.default_top_k)
-        include_sources = kwargs.get("include_sources", True)
-        custom_prompt = kwargs.get("custom_prompt")
-        
-        # Step 1: Retrieve relevant documents
-        # Remove top_k from kwargs to avoid duplicate parameter error
-        query_kwargs = {k: v for k, v in kwargs.items() if k != 'top_k'}
-        query_result = self.query(query_text, top_k=top_k, **query_kwargs)
-        
-        # Extract the actual document list from the query result
-        raw_documents = query_result.get("retrieved_documents", [])
-        
-        # Handle case where documents might be tuples (Document, score) or just Documents
-        retrieved_documents = []
-        for item in raw_documents:
-            if isinstance(item, tuple) and len(item) >= 2:
-                # Extract Document from (Document, score) tuple
-                retrieved_documents.append(item[0])
-            else:
-                # Assume it's already a Document
-                retrieved_documents.append(item)
-        
-        # Step 2: Generate answer using LLM
-        if self.llm_func:
-            answer = self._generate_answer(query_text, retrieved_documents, custom_prompt)
-        else:
-            answer = "No LLM function provided. Retrieved documents only."
-        
-        # Calculate execution time
-        execution_time = time.time() - start_time
-        
-        # Step 3: Prepare response
-        response = {
-            "query": query_text,
-            "answer": answer,
-            "retrieved_documents": retrieved_documents,
-            "contexts": [doc.page_content for doc in retrieved_documents],  # String contexts for RAGAS
-            "execution_time": execution_time  # Required for RAGAS debug harness
-        }
-        
-        if include_sources:
-            response["sources"] = self._extract_sources(retrieved_documents)
-        
-        # Add metadata
-        response["metadata"] = {
-            "num_retrieved": len(retrieved_documents),
-            "processing_time": execution_time,
-            "pipeline_type": "basic_rag"
-        }
-        
-        logger.info(f"RAG pipeline executed in {execution_time:.2f} seconds")
-        return response
+        Args:
+            question: The question to ask
+            **kwargs: Additional arguments
+            
+        Returns:
+            Answer string
+        """
+        result = self.query(question, **kwargs)
+        return result.get("answer", "No answer generated")
     
     def _generate_answer(self, query: str, documents: List[Document], custom_prompt: Optional[str] = None) -> str:
         """

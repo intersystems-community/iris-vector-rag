@@ -352,7 +352,7 @@ class EnterpriseScaleValidator:
                 
                 try:
                     # Execute RAG pipeline using the run method which handles context limits
-                    result = pipeline.run(query, top_k=3, similarity_threshold=0.75)
+                    result = pipeline.query(query, top_k=3, similarity_threshold=0.75)
                     retrieved_docs = result["retrieved_documents"]
                     answer = result["answer"]
                     

@@ -308,7 +308,7 @@ class TestHNSWBenchmarkIntegration:
             start_time = time.time()
             
             # Run complete RAG pipeline (including HNSW vector search)
-            rag_result = rag_pipeline.run(query, top_k=10)
+            rag_result = rag_pipeline.query(query, top_k=10)
             
             end_time = time.time()
             pipeline_time = (end_time - start_time) * 1000

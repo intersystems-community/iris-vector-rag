@@ -364,7 +364,7 @@ class CompleteRAGSystemFix:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 results['BasicRAG'] = {
                     'success': True,
                     'docs_retrieved': result.get('document_count', 0),
@@ -389,7 +389,7 @@ class CompleteRAGSystemFix:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 results['CRAG'] = {
                     'success': True,
                     'docs_retrieved': result.get('document_count', 0),
@@ -414,7 +414,7 @@ class CompleteRAGSystemFix:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 results['NodeRAG'] = {
                     'success': True,
                     'docs_retrieved': result.get('document_count', 0),
@@ -464,7 +464,7 @@ class CompleteRAGSystemFix:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run(test_query, top_k=5)
+                result = pipeline.query(test_query, top_k=5)
                 results['HyDE'] = {
                     'success': True,
                     'docs_retrieved': result.get('document_count', 0),
@@ -514,7 +514,7 @@ class CompleteRAGSystemFix:
                     llm_func=self.llm_func
                 )
                 
-                result = pipeline.run("What is diabetes?", top_k=5)
+                result = pipeline.query("What is diabetes?", top_k=5)
                 logger.info(f"      ✅ ColBERT: {result.get('document_count', 0)} docs retrieved")
                 conn.close()
                 return True

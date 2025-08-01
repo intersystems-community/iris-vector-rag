@@ -374,7 +374,7 @@ class IRISHyDEChain(Chain):
     pipeline: HyDERAGPipeline
     
     def _call(self, inputs):
-        return self.pipeline.execute(inputs["query"])
+        return self.pipeline.query(inputs["query"])
 
 chain = IRISHyDEChain(pipeline=hyde_pipeline)
 result = chain({"query": "medical research question"})

@@ -60,7 +60,7 @@ def test_pipeline_instantiation(pipeline_type: str) -> Dict[str, Any]:
         print(f"3. Testing query execution...")
         try:
             test_query = "What is machine learning?"
-            response = pipeline.run(test_query, top_k=3)
+            response = pipeline.query(test_query, top_k=3)
             
             if isinstance(response, dict) and "answer" in response:
                 result["query_execution"] = True

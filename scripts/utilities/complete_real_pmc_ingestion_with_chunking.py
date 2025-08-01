@@ -430,7 +430,7 @@ class RealPMCIngestionPipeline:
                     start_time = time.time()
                     
                     # Execute query
-                    result = pipeline.run(query)
+                    result = pipeline.query(query)
                     
                     end_time = time.time()
                     query_time = end_time - start_time

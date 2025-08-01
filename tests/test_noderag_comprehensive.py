@@ -106,7 +106,7 @@ def test_noderag_comprehensive():
         
         if len(docs) > 0 or len(chunks) > 0:
             # Run full pipeline
-            result = pipeline.run(test_query, top_k=3)
+            result = pipeline.query(test_query, top_k=3)
             
             print(f"✓ NodeRAG completed successfully")
             print(f"  - Retrieved {len(result.get('retrieved_nodes', []))} nodes")

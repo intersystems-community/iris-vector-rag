@@ -106,7 +106,7 @@ class TestHNSWIntegration:
             min_similarity = test_case["min_similarity"]
             
             # Run BasicRAG with HNSW
-            result = pipeline.run(query, top_k=10)
+            result = pipeline.query(query, top_k=10)
             
             # TDD: This should fail initially if integration doesn't work
             assert "answer" in result, f"BasicRAG should return an answer for: {query}"
@@ -288,7 +288,7 @@ class TestHNSWIntegration:
         test_query = "diabetes management strategies"
         
         start_time = time.time()
-        result = pipeline.run(test_query, top_k=8)
+        result = pipeline.query(test_query, top_k=8)
         end_time = time.time()
         
         total_time_ms = (end_time - start_time) * 1000
@@ -322,7 +322,7 @@ class TestHNSWIntegration:
         test_query = "cardiovascular disease prevention"
         
         start_time = time.time()
-        result = pipeline.run(test_query, top_k=8)
+        result = pipeline.query(test_query, top_k=8)
         end_time = time.time()
         
         total_time_ms = (end_time - start_time) * 1000

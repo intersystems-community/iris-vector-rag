@@ -40,7 +40,7 @@ def test_technique(technique_name: str, pipeline_class, test_query: str) -> Dict
         
         # Run test
         start_time = time.time()
-        result = pipeline.run(test_query, top_k=3)
+        result = pipeline.query(test_query, top_k=3)
         execution_time = time.time() - start_time
         
         # Validate result - handle different return formats
