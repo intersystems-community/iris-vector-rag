@@ -141,7 +141,7 @@ def format_vector_search_sql(
         ...     "text_content"
         ... )
         'SELECT TOP 10 doc_id, text_content,
-            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', 'DOUBLE', 768)) AS score
+            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', 'FLOAT', 768)) AS score
          FROM SourceDocuments
          WHERE embedding IS NOT NULL
          ORDER BY score DESC'
@@ -235,7 +235,7 @@ def format_vector_search_sql_with_params(
     select_clause = f"SELECT TOP {top_k} {id_column}"
     if content_column:
         select_clause += f", {content_column}"
-    select_clause += f", VECTOR_COSINE({vector_column}, TO_VECTOR(?, DOUBLE, {embedding_dim})) AS score"
+    select_clause += f", VECTOR_COSINE({vector_column}, TO_VECTOR(?, FLOAT, {embedding_dim})) AS score"
     
     # Construct the WHERE clause
     where_clause = f"WHERE {vector_column} IS NOT NULL"

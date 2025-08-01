@@ -383,7 +383,7 @@ class IRISVectorStore(VectorStore):
                 
                 # Use insert_vector utility for all vector operations (it handles upsert automatically)
                 if embeddings:
-                    logger.debug(f"Upserting document {doc.id} with embedding using insert_vector utility")
+                    logger.debug(f"Inserting document {doc.id} with embedding using insert_vector utility")
                     # Use the required insert_vector utility function for vector insertions/updates
                     success = insert_vector(
                         cursor=cursor,
@@ -391,7 +391,7 @@ class IRISVectorStore(VectorStore):
                         vector_column_name="embedding",
                         vector_data=embeddings[i],
                         target_dimension=self.vector_dimension,
-                        key_columns={"doc_id": doc.id},
+                        key_columns={"ID": doc.id, "doc_id": doc.id},
                         additional_data={"text_content": doc.page_content, "metadata": metadata_json}
                     )
                     if success:
@@ -411,15 +411,16 @@ class IRISVectorStore(VectorStore):
                     else:
                         if embeddings:
                             insert_sql = f"""
-                            INSERT INTO {self.table_name} (doc_id, text_content, metadata, embedding)
-                            VALUES (?, ?, ?, TO_VECTOR(?))
+                            INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata, embedding)
+                            VALUES (?, ?, ?, ?, TO_VECTOR(?))
                             """
                             embedding_str = json.dumps(embeddings[i])
                             cursor.execute(insert_sql, [doc.id, doc.id, doc.page_content, metadata_json, embedding_str])
+                            logger.debug(f"Inserted document {doc.id} with embedding: {embedding_str}")
                         else:
                             insert_sql = f"""
-                            INSERT INTO {self.table_name} (doc_id, text_content, metadata)
-                            VALUES (?, ?, ?)
+                            INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata)
+                            VALUES (?, ?, ?, ?)
                             """
                             cursor.execute(insert_sql, [doc.id, doc.id, doc.page_content, metadata_json])
                             logger.debug(f"Inserted new document {doc.id} without vector")
@@ -607,7 +608,6 @@ class IRISVectorStore(VectorStore):
             
             # Execute using the parameter-based function
             print("SQL: ", sql)
-            print("Embedding: ", embedding_str)
             try:
                 rows = execute_vector_search_with_params(cursor, sql, embedding_str, self.table_name)
             except Exception as e:
