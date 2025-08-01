@@ -239,3 +239,6 @@ testing_system_analysis.md
 *_TEST_RESULTS.md
 COMPREHENSIVE_*.md
 PIPELINE_*.md
+
+# Claude Code guidance file (internal development tool)
+CLAUDE.md

@@ -74,6 +74,15 @@ pipelines:
       use_sql_context: true
       enable_query_optimization: true
 
+  - name: "BasicRAGReranking"
+    module: "iris_rag.pipelines.basic_rerank"
+    class: "BasicRAGRerankingPipeline"
+    enabled: true
+    params:
+      top_k: 5
+      reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+      rerank_factor: 2
+
   # Example of an external/hypothetical pipeline
   - name: "AdvancedExternalRAG"
     module: "external_package.rag_pipelines"
@@ -92,3 +101,12 @@ framework:
   embeddings:
     model: "text-embedding-3-small"
     dimension: 1536
+
+# Pipeline-specific configurations
+pipeline_configs:
+  basic_reranking:
+    rerank_factor: 2
+    reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    chunk_size: 1000
+    chunk_overlap: 200
+    default_top_k: 5

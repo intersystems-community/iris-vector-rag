@@ -256,6 +256,8 @@ For detailed setup and usage, refer to the [MCP Integration Guide](docs/MCP_INTE
 |-------|-------------|
 | **[🚀 Quick Start Guide](docs/QUICK_START_GUIDE.md)** | **NEW!** One-command setup with intelligent profiles |
 | **[📖 User Guide](docs/USER_GUIDE.md)** | Complete usage guide and best practices |
+| **[👨‍💻 Developer Guide](docs/DEVELOPER_GUIDE.md)** | Development setup, contribution guide, and best practices |
+| **[🔧 Pipeline Development Guide](docs/PIPELINE_DEVELOPMENT_GUIDE.md)** | **NEW!** How to create custom RAG pipelines with proper inheritance patterns |
 | **[🔗 MCP Integration Guide](docs/MCP_INTEGRATION_GUIDE.md)** | Multi-Cloud Platform integration, MCP server creation, and IRIS SQL tool usage |
 | **[📋 Documentation](docs/README.md)** | Additional documentation and guides |
 

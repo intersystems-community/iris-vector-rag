@@ -9,6 +9,7 @@ Complete guide for developing, extending, and contributing to the RAG Templates 
 - [Code Organization](#code-organization)
 - [Design Patterns](#design-patterns)
 - [Extension Patterns](#extension-patterns)
+- [Pipeline Development](#pipeline-development)
 - [Testing Strategy](#testing-strategy)
 - [CLI Development](#cli-development)
 - [Database Integration](#database-integration)
@@ -476,6 +477,33 @@ def create_pipeline(pipeline_type: str, **kwargs):
         raise ValueError(f"Unknown pipeline type: {pipeline_type}")
     
     return pipeline_classes[pipeline_type](**kwargs)
+```
+
+## Pipeline Development
+
+**For comprehensive pipeline development guidance, see the [Pipeline Development Guide](PIPELINE_DEVELOPMENT_GUIDE.md).**
+
+The Pipeline Development Guide provides:
+- **Inheritance patterns** - How to properly extend BasicRAGPipeline
+- **Lazy loading best practices** - Avoid performance issues with heavy imports
+- **Configuration management** - Using dedicated config sections
+- **Registration system** - Adding pipelines without source code changes
+- **Complete examples** - Working pipeline implementations
+- **Anti-pattern warnings** - Common mistakes to avoid
+
+**Quick Reference:**
+```python
+# ✅ Proper pipeline development
+from iris_rag.pipelines.basic import BasicRAGPipeline
+
+class MyCustomPipeline(BasicRAGPipeline):
+    def __init__(self, connection_manager, config_manager, **kwargs):
+        super().__init__(connection_manager, config_manager, **kwargs)
+        # Add custom initialization
+    
+    def query(self, query_text: str, top_k: int = 5, **kwargs):
+        # Override only what you need to customize
+        return super().query(query_text, top_k, **kwargs)
 ```
 
 ## Extension Patterns
