@@ -19,6 +19,7 @@ from ..pipelines.graphrag import GraphRAGPipeline
 from ..pipelines.hybrid_ifind import HybridIFindRAGPipeline
 from ..pipelines.noderag import NodeRAGPipeline
 from ..pipelines.sql_rag import SQLRAGPipeline
+from ..pipelines.basic_rerank import BasicRAGRerankingPipeline
 from .requirements import get_pipeline_requirements
 from .validator import PreConditionValidator
 from .orchestrator import SetupOrchestrator
@@ -162,8 +163,14 @@ class ValidatedPipelineFactory:
                 config_manager=self.config_manager,
                 llm_func=llm_func
             )
+        elif pipeline_type == "basic_rerank":
+            return BasicRAGRerankingPipeline(
+                connection_manager=self.connection_manager,
+                config_manager=self.config_manager,
+                llm_func=llm_func
+            )
         else:
-            available_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag", "sql_rag"]
+            available_types = ["basic", "basic_rerank", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag", "sql_rag"]
             raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available: {available_types}")
     
     def validate_pipeline_type(self, pipeline_type: str) -> Dict[str, Any]:
