@@ -488,7 +488,7 @@ The Pipeline Development Guide provides:
 - **Lazy loading best practices** - Avoid performance issues with heavy imports
 - **Configuration management** - Using dedicated config sections
 - **Registration system** - Adding pipelines without source code changes
-- **🆕 Requirements-driven orchestrator** - Elegant automatic setup architecture
+- **🆕 Requirements-driven orchestrator** - Elegant automatic setup architecture with TDD benefits
 - **Complete examples** - Working pipeline implementations
 - **Anti-pattern warnings** - Common mistakes to avoid
 

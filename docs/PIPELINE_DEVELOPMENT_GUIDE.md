@@ -375,6 +375,171 @@ class MyPipelineRequirements(PipelineRequirements):
         return [...]  # Nice to have, enhances functionality
 ```
 
+### TDD Benefits
+
+The requirements-driven architecture makes **Test-Driven Development much more elegant**:
+
+#### ✅ **Generic Tests Replace Duplicate Tests**
+
+```python
+# BEFORE: Duplicate test methods for similar pipelines
+def test_basic_pipeline_setup():
+    """Test basic pipeline setup."""
+    orchestrator._setup_basic_pipeline(requirements)
+    assert_embeddings_exist()
+    assert_tables_exist()
+
+def test_basic_rerank_pipeline_setup():  # Duplicate!
+    """Test basic rerank pipeline setup.""" 
+    orchestrator._setup_basic_rerank_pipeline(requirements)
+    assert_embeddings_exist()  # Same assertions!
+    assert_tables_exist()      # Same logic!
+
+# AFTER: One generic test for all similar pipelines
+@pytest.mark.parametrize("pipeline_type", ["basic", "basic_rerank", "future_basic_variant"])
+def test_basic_pipeline_family_setup(pipeline_type):
+    """Test that all basic pipeline variants work automatically."""
+    requirements = get_pipeline_requirements(pipeline_type)
+    orchestrator._fulfill_requirements(requirements)
+    
+    # Validate based on declared requirements (not hardcoded logic)
+    for table_req in requirements.required_tables:
+        assert_table_exists(table_req.name)
+    
+    for embedding_req in requirements.required_embeddings:
+        assert_embeddings_exist(embedding_req.table, embedding_req.column)
+```
+
+#### ✅ **Requirements Are Unit Testable**
+
+```python
+# Test requirement definitions themselves
+def test_basic_rerank_requirements():
+    """Test that basic_rerank declares correct requirements."""
+    req = get_pipeline_requirements("basic_rerank")
+    
+    # Validate requirements structure
+    assert req.pipeline_name == "basic_rerank"
+    assert len(req.required_tables) == 1
+    assert req.required_tables[0].name == "SourceDocuments"
+    assert len(req.required_embeddings) == 1
+    assert req.required_embeddings[0].table == "RAG.SourceDocuments"
+
+# Test requirement fulfillment generically  
+def test_embedding_requirement_fulfillment():
+    """Test that embedding requirements are fulfilled correctly."""
+    embedding_req = EmbeddingRequirement(
+        name="test_embeddings",
+        table="RAG.SourceDocuments", 
+        column="embedding",
+        description="Test embeddings"
+    )
+    
+    orchestrator._fulfill_embedding_requirement(embedding_req)
+    assert_embeddings_exist("RAG.SourceDocuments", "embedding")
+```
+
+#### ✅ **Test Coverage Scales Automatically**
+
+```python
+# New pipelines get test coverage automatically!
+def test_all_registered_pipelines_have_valid_setup():
+    """Test that EVERY registered pipeline can be set up."""
+    from iris_rag.validation.requirements import PIPELINE_REQUIREMENTS_REGISTRY
+    
+    for pipeline_type in PIPELINE_REQUIREMENTS_REGISTRY.keys():
+        # This test automatically covers new pipelines when they're added!
+        requirements = get_pipeline_requirements(pipeline_type)
+        
+        # Validate requirements are well-formed
+        assert requirements.pipeline_name == pipeline_type
+        assert len(requirements.required_tables) >= 0
+        assert len(requirements.required_embeddings) >= 0
+        
+        # Test that setup works
+        orchestrator._fulfill_requirements(requirements)
+```
+
+#### ✅ **Integration Tests Become Simpler**
+
+```python
+# BEFORE: Complex integration tests with hardcoded setup
+def test_colbert_e2e_integration():
+    # Complex setup mimicking _setup_colbert_pipeline
+    setup_source_documents_table()
+    setup_token_embeddings_table() 
+    generate_document_embeddings()
+    generate_token_embeddings()
+    setup_colbert_specific_configs()
+    
+    pipeline = create_pipeline("colbert")
+    result = pipeline.query("test query")
+    assert result["answer"]
+
+# AFTER: Clean integration tests using requirements
+def test_colbert_e2e_integration():
+    # Requirements-driven setup (works for ANY pipeline!)
+    orchestrator.setup_pipeline("colbert", auto_fix=True)
+    
+    pipeline = create_pipeline("colbert") 
+    result = pipeline.query("test query")
+    assert result["answer"]
+    
+# Same pattern works for ALL pipelines - no pipeline-specific test setup!
+@pytest.mark.parametrize("pipeline_type", ["basic", "colbert", "crag", "hyde"])  
+def test_pipeline_e2e_integration(pipeline_type):
+    orchestrator.setup_pipeline(pipeline_type, auto_fix=True)
+    pipeline = create_pipeline(pipeline_type)
+    result = pipeline.query("test query")
+    assert result["answer"]
+```
+
+#### ✅ **Mocking Becomes Targeted**
+
+```python
+# BEFORE: Must mock entire hardcoded setup methods
+@patch('orchestrator._setup_basic_pipeline')
+@patch('orchestrator._setup_colbert_pipeline') 
+@patch('orchestrator._setup_crag_pipeline')
+def test_setup_with_mocks(mock_crag, mock_colbert, mock_basic):
+    # Must mock every hardcoded method individually
+
+# AFTER: Mock the generic requirement fulfillment
+@patch('orchestrator._fulfill_requirements')
+def test_setup_with_generic_mock(mock_fulfill):
+    """Test setup logic without actually fulfilling requirements."""
+    orchestrator.setup_pipeline("any_pipeline")
+    mock_fulfill.assert_called_once()
+    
+# Or mock specific requirement types
+@patch('orchestrator._fulfill_embedding_requirement')
+def test_embedding_setup_only(mock_embed):
+    # Test just embedding fulfillment logic
+```
+
+#### ✅ **Test Failures Are More Informative**
+
+```python
+# BEFORE: Vague hardcoded test failures
+def test_basic_setup():
+    orchestrator._setup_basic_pipeline(req)  
+    # If this fails: "AssertionError" - what went wrong? 🤷‍♂️
+
+# AFTER: Requirement-specific failures  
+def test_requirements_fulfillment():
+    requirements = get_pipeline_requirements("basic")
+    
+    for table_req in requirements.required_tables:
+        assert_table_exists(table_req.name), f"Missing required table: {table_req.name}"
+        
+    for embed_req in requirements.required_embeddings:
+        assert_embeddings_exist(embed_req.table), f"Missing embeddings: {embed_req.name}"
+    
+    # Clear failure messages: "Missing required table: SourceDocuments"
+```
+
+**TDD Summary**: The elegant architecture makes tests more maintainable, more comprehensive, and easier to write. When adding a new pipeline, you get test coverage automatically instead of writing duplicate test code!
+
 ## Common Patterns & Anti-Patterns
 
 ### ✅ Good Pipeline Structure
