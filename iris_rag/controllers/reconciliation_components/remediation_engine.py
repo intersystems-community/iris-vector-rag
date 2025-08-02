@@ -278,7 +278,7 @@ class RemediationEngine:
         try:
             # Get document text content
             cursor.execute(
-                "SELECT text_content FROM RAG.SourceDocuments WHERE ID = ?",
+                "SELECT text_content FROM RAG.SourceDocuments WHERE doc_id = ?",
                 [doc_id]
             )
             result = cursor.fetchone()

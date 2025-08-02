@@ -7,7 +7,7 @@ and handles the execution with proper error handling.
 """
 
 import logging
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger(__name__)
 

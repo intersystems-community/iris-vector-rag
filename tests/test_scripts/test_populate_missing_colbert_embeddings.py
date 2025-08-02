@@ -6,7 +6,7 @@ import pytest
 from unittest import mock
 
 # Import the actual script
-from scripts import populate_missing_colbert_embeddings
+from scripts.utilities import populate_missing_colbert_embeddings
 
 @pytest.fixture
 def mock_db_connection():
@@ -123,7 +123,7 @@ def test_convert_to_iris_vector_validation():
     Tests the convert_to_iris_vector function to ensure it properly validates input
     and rejects invalid data like hash values.
     """
-    from scripts.populate_missing_colbert_embeddings import convert_to_iris_vector
+    from scripts.utilities.populate_missing_colbert_embeddings import convert_to_iris_vector
     
     # Test valid input
     valid_embedding = [0.1, 0.2, 0.3, -0.4, 1.5]

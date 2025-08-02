@@ -15,7 +15,7 @@ import pytest
 import os
 import sys
 import logging
-from typing import List, Dict, Any, Callable, Optional
+from typing import List, Dict, Any, Optional
 import time
 import csv
 import datetime
@@ -27,8 +27,6 @@ from ragas import evaluate
 from ragas.metrics import (
     faithfulness,
     answer_relevancy,
-    context_recall, # Not used currently as it requires ground truths
-    context_precision, # Not used currently as it requires ground truths
 )
 
 # Configure logging
@@ -68,15 +66,15 @@ if str(project_root) not in sys.path:
 from common.utils import load_config 
 
 # Import RAG pipelines
-from src.experimental.basic_rag.pipeline_final import BasicRAGPipeline
-from src.experimental.hyde.pipeline import HyDEPipeline
-from src.experimental.crag.pipeline import CRAGPipeline
-from src.working.colbert.pipeline import ColbertRAGPipeline
-from src.experimental.noderag.pipeline import NodeRAGPipeline
-from src.experimental.graphrag.pipeline import GraphRAGPipeline
+from iris_rag.pipelines.basic import BasicRAGPipeline
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipeline
+from iris_rag.pipelines.crag import CRAGPipeline
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTRAGPipeline
+from iris_rag.pipelines.noderag import NodeRAGPipeline
+from iris_rag.pipelines.graphrag import GraphRAGPipeline
 
 # Import common utilities
-from common.utils import Document, timing_decorator, get_embedding_func, get_llm_func
+from common.utils import Document, get_embedding_func, get_llm_func
 
 # Import fixtures for real data testing (os and json already imported above)
 
@@ -401,7 +399,7 @@ def test_basic_rag_with_real_data(real_iris_connection, real_embedding_func, rea
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
     
     params = {}
     if hasattr(pipeline, 'top_k'): params['top_k'] = pipeline.top_k
@@ -415,7 +413,7 @@ def test_basic_rag_with_real_data(real_iris_connection, real_embedding_func, rea
 @pytest.mark.requires_1000_docs
 def test_hyde_with_real_data(real_iris_connection, real_embedding_func, real_llm_func, sample_medical_queries):
     logger.info("Running test_hyde_with_real_data")
-    pipeline = HyDEPipeline(
+    pipeline = HyDERAGPipeline(
         iris_connector=real_iris_connection,
         embedding_func=real_embedding_func,
         llm_func=real_llm_func
@@ -425,7 +423,7 @@ def test_hyde_with_real_data(real_iris_connection, real_embedding_func, real_llm
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {}
     if hasattr(pipeline, 'llm') and hasattr(pipeline.llm, 'model_name'): params['llm_model_name'] = pipeline.llm.model_name
@@ -450,7 +448,7 @@ def test_crag_with_real_data(real_iris_connection, real_embedding_func, real_llm
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {'chunk_types': pipeline.chunk_types if hasattr(pipeline, 'chunk_types') else None}
     if hasattr(pipeline, 'llm') and hasattr(pipeline.llm, 'model_name'): params['llm_model_name'] = pipeline.llm.model_name
@@ -464,7 +462,7 @@ def test_crag_with_real_data(real_iris_connection, real_embedding_func, real_llm
 def test_colbert_with_real_data(real_iris_connection, real_embedding_func, real_llm_func, colbert_query_encoder, sample_medical_queries):
     logger.info("Running test_colbert_with_real_data")
     # colbert_query_encoder fixture is defined in conftest_common.py
-    pipeline = ColbertRAGPipeline(
+    pipeline = ColBERTRAGPipeline(
         iris_connector=real_iris_connection,
         llm_func=real_llm_func,
         colbert_query_encoder_func=colbert_query_encoder, 
@@ -475,7 +473,7 @@ def test_colbert_with_real_data(real_iris_connection, real_embedding_func, real_
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {}
     if hasattr(pipeline, 'top_k'): params['top_k'] = pipeline.top_k
@@ -499,7 +497,7 @@ def test_noderag_with_real_data(real_iris_connection, real_embedding_func, real_
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {}
     if hasattr(pipeline, 'top_k'): params['top_k'] = pipeline.top_k
@@ -523,7 +521,7 @@ def test_graphrag_with_real_data(real_iris_connection, real_embedding_func, real
     expected_keywords = query_data["expected_keywords"]
     min_doc_count = query_data["min_doc_count"]
     
-    run_result = pipeline.run(query, top_k=5)
+    run_result = pipeline.query(query, top_k=5)
 
     params = {}
     if hasattr(pipeline, 'top_k'): params['top_k'] = pipeline.top_k
@@ -560,7 +558,7 @@ def test_all_pipelines_with_same_query(
             embedding_func=real_embedding_func,
             llm_func=real_llm_func
         ),
-        "HyDE": HyDEPipeline(
+        "HyDE": HyDERAGPipeline(
             iris_connector=real_iris_connection,
             embedding_func=real_embedding_func,
             llm_func=real_llm_func
@@ -572,7 +570,7 @@ def test_all_pipelines_with_same_query(
             web_search_func=web_search_func,
             chunk_types=['adaptive']
         ),
-        "ColBERT": ColbertRAGPipeline(
+        "ColBERT": ColBERTRAGPipeline(
             iris_connector=real_iris_connection,
             llm_func=real_llm_func,
             colbert_query_encoder_func=colbert_query_encoder,
@@ -596,7 +594,7 @@ def test_all_pipelines_with_same_query(
         logger.info(f"Running {name} pipeline with query: '{query}' for comparison test.")
         try:
             start_time = time.time()
-            pipeline_output = pipeline_instance_loop.run(query, top_k=5)
+            pipeline_output = pipeline_instance_loop.query(query, top_k=5)
             elapsed_time = time.time() - start_time
             
             current_pipeline_params_loop = {}

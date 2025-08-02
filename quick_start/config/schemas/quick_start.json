@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://rag-templates.example.com/schemas/quick_start.json",
+  "title": "Quick Start Configuration Schema",
+  "description": "JSON schema for validating Quick Start RAG system configuration",
+  "allOf": [
+    {
+      "$ref": "base_config.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "extends": {
+          "type": "string",
+          "description": "Parent template to extend from"
+        },
+        "sample_data": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether sample data loading is enabled"
+            },
+            "document_count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000,
+              "description": "Number of sample documents to load"
+            },
+            "source": {
+              "type": "string",
+              "enum": ["pmc", "pmc_sample", "synthetic", "custom"],
+              "description": "Source of sample data"
+            }
+          },
+          "additionalProperties": false
+        },
+        "mcp_server": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether MCP server is enabled"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 65535,
+              "description": "MCP server port"
+            },
+            "tools": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "basic",
+                  "crag",
+                  "hyde",
+                  "graphrag",
+                  "hybrid_ifind",
+                  "colbert",
+                  "noderag",
+                  "sqlrag",
+                  "health_check",
+                  "list_techniques",
+                  "performance_metrics"
+                ]
+              },
+              "description": "List of enabled MCP tools"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  ]
+}

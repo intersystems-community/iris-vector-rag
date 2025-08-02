@@ -13,7 +13,7 @@ API across different ColBERT backends.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -250,15 +250,15 @@ class PylateColBERTInterface(ColBERTInterface):
         """Ensure model and tokenizer are loaded."""
         if self._model is None:
             try:
-                # Try to import pylate
-                import pylate
-                from transformers import AutoTokenizer, AutoModel
+                from common.huggingface_utils import download_huggingface_model
                 
                 logger.info(f"Loading pylate model: {self.model_name}")
                 
-                # Load tokenizer and model
-                self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-                self._model = AutoModel.from_pretrained(self.model_name)
+                # Load tokenizer and model with retry logic
+                self._tokenizer, self._model = download_huggingface_model(
+                    self.model_name,
+                    trust_remote_code=True
+                )
                 
                 # Move to device
                 self._model = self._model.to(self.device)

@@ -78,7 +78,7 @@ class StateObserver:
             docs_missing_all_embeddings_query = """
                 SELECT COUNT(DISTINCT sd.id)
                 FROM RAG.SourceDocuments sd
-                LEFT JOIN RAG.DocumentTokenEmbeddings dte ON sd.id = dte.doc_id
+                LEFT JOIN RAG.DocumentTokenEmbeddings dte ON sd.doc_id = dte.doc_id
                 WHERE dte.doc_id IS NULL
             """
             cursor.execute(docs_missing_all_embeddings_query)
@@ -94,10 +94,10 @@ class StateObserver:
             docs_with_few_embeddings_query = """
                 SELECT COUNT(doc_id)
                 FROM (
-                    SELECT sd.id as doc_id, COUNT(dte.id) as embedding_count
+                    SELECT sd.doc_id as doc_id, COUNT(dte.id) as embedding_count
                     FROM RAG.SourceDocuments sd
-                    JOIN RAG.DocumentTokenEmbeddings dte ON sd.id = dte.doc_id
-                    GROUP BY sd.id
+                    JOIN RAG.DocumentTokenEmbeddings dte ON sd.doc_id = dte.doc_id
+                    GROUP BY sd.doc_id
                     HAVING COUNT(dte.id) > 0 AND COUNT(dte.id) < 5
                 ) AS subquery
             """

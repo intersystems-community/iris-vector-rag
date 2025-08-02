@@ -1,7 +1,6 @@
 # tests/test_compression_utils.py
 # Tests for vector compression utilities used in ColBERT
 
-import pytest
 import numpy as np
 import sys
 import os

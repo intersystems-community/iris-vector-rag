@@ -6,13 +6,11 @@ metrics collector, and dashboard components.
 """
 
 import pytest
-import time
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
 
 from iris_rag.monitoring.health_monitor import HealthMonitor
 from iris_rag.monitoring.metrics_collector import MetricsCollector
-from common.llm_cache_manager import LangchainCacheManager, CacheMetrics
+from common.llm_cache_manager import LangchainCacheManager
 from common.llm_cache_config import CacheConfig
 
 
@@ -313,7 +311,7 @@ class TestLLMCacheMonitoringIntegration:
         # This would be an integration test that would require
         # the full dashboard setup, which is complex to mock
         # For now, we test that the method exists and can be called
-        from scripts.monitoring_dashboard import MonitoringDashboard
+        from scripts.utilities.monitoring_dashboard import MonitoringDashboard
         
         # Mock the dependencies
         with patch('scripts.monitoring_dashboard.HealthMonitor'), \

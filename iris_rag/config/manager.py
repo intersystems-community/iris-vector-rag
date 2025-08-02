@@ -1,5 +1,6 @@
 import os
 import yaml
+import logging
 from typing import Any, Optional, Dict
 
 # Define a specific exception for configuration errors
@@ -45,6 +46,9 @@ class ConfigurationManager:
         
         # Basic environment variable loading (will be refined)
         self._load_env_variables()
+        
+        # Validate required configuration
+        self._validate_required_config()
 
     def _load_env_variables(self):
         """
@@ -100,6 +104,29 @@ class ConfigurationManager:
             return value_str 
         return value_str # Default return if no specific cast matches
 
+    def _validate_required_config(self):
+        """
+        Validate that required configuration values are present.
+        
+        Raises:
+            ConfigValidationError: If required configuration is missing
+        """
+        # Define required configuration keys
+        required_keys = [
+            "database:iris:host"
+        ]
+        
+        # Check each required key
+        for key in required_keys:
+            value = self.get(key)
+            if value is None:
+                raise ConfigValidationError(f"Missing required config: {key}")
+        
+        # Check for critical IRIS configuration from environment (for backward compatibility)
+        # Note: This is only checked if the config file doesn't provide the host
+        if self.get("database:iris:host") is None and 'IRIS_HOST' not in os.environ:
+            raise ConfigValidationError("Missing required config: database:iris:host")
+
     def _get_value_by_keys(self, config_dict: Dict, keys: list) -> Any:
         """Helper to navigate nested dict with a list of keys."""
         current = config_dict
@@ -132,6 +159,38 @@ class ConfigurationManager:
             else:
                 return default # Key path not found, return default
         return value
+
+    def get_config(self, key: str, default: Any = None) -> Any:
+        """
+        Get a configuration value by key (alias for get method for backward compatibility).
+        
+        Args:
+            key: The configuration key string.
+            default: The default value to return if the key is not found.
+            
+        Returns:
+            The configuration value, or the default if not found.
+        """
+        return self.get(key, default)
+
+    def load_config(self, config_path: str) -> None:
+        """
+        Load configuration from a file path.
+        
+        Args:
+            config_path: Path to the configuration file to load
+            
+        Raises:
+            FileNotFoundError: If the configuration file doesn't exist
+        """
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        with open(config_path, 'r') as f:
+            loaded_config = yaml.safe_load(f) or {}
+            if self._config:
+                self._config.update(loaded_config)
+            else:
+                self._config = loaded_config
 
     def get_vector_index_config(self) -> Dict[str, Any]:
         """
@@ -177,14 +236,27 @@ class ConfigurationManager:
         """
         default_config = {
             'model': 'all-MiniLM-L6-v2',
+            'model_name': 'all-MiniLM-L6-v2',  # Alias for compatibility
             'dimension': None,  # Will be determined by model or schema manager
             'provider': 'sentence-transformers'
         }
+        
+        # Check for environment variable override for model name
+        if 'EMBEDDING_MODEL_NAME' in os.environ:
+            model_name = os.environ['EMBEDDING_MODEL_NAME']
+            default_config['model'] = model_name
+            default_config['model_name'] = model_name
         
         # Get user-defined config and merge with defaults
         user_config = self.get("embeddings", {})
         if isinstance(user_config, dict):
             default_config.update(user_config)
+        
+        # Ensure model_name and model are synchronized
+        if 'model' in default_config and 'model_name' not in default_config:
+            default_config['model_name'] = default_config['model']
+        elif 'model_name' in default_config and 'model' not in default_config:
+            default_config['model'] = default_config['model_name']
         
         # If dimension is not explicitly set, determine from model or use default
         if not default_config['dimension']:
@@ -371,3 +443,265 @@ class ConfigurationManager:
         # and will need a proper implementation.
         if self.get("database:iris:host") is None and "database:iris:host" in self._schema.get("required", []):
             raise ConfigValidationError("Missing required config: database:iris:host")
+
+    def load_quick_start_template(
+        self,
+        template_name: str,
+        options: Optional[Dict[str, Any]] = None,
+        environment_variables: Optional[Dict[str, Any]] = None,
+        validation_rules: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Load and integrate a Quick Start configuration template.
+        
+        This method uses the Quick Start integration system to load a template
+        and convert it to the iris_rag configuration format. The resulting
+        configuration is merged with the current configuration.
+        
+        Args:
+            template_name: Name of the Quick Start template to load
+            options: Optional integration options (e.g., validation settings)
+            environment_variables: Optional environment variable overrides
+            validation_rules: Optional custom validation rules
+        
+        Returns:
+            Dict containing the integrated configuration
+            
+        Raises:
+            ImportError: If Quick Start integration system is not available
+            ConfigValidationError: If template integration fails
+        """
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        
+        try:
+            # Import the integration factory
+            from quick_start.config.integration_factory import IntegrationFactory
+            
+            logger.info(f"Loading Quick Start template '{template_name}' for iris_rag")
+            
+            # Create integration factory and integrate template
+            factory = IntegrationFactory()
+            result = factory.integrate_template(
+                template_name=template_name,
+                target_manager="iris_rag",
+                options=options or {},
+                environment_variables=environment_variables or {},
+                validation_rules=validation_rules or {}
+            )
+            
+            if not result.success:
+                error_msg = f"Failed to integrate Quick Start template '{template_name}': {'; '.join(result.errors)}"
+                logger.error(error_msg)
+                raise ConfigValidationError(error_msg)
+            
+            # Merge the converted configuration with current configuration
+            if result.converted_config:
+                self._merge_configuration(result.converted_config)
+                logger.info(f"Successfully integrated Quick Start template '{template_name}'")
+            
+            # Log any warnings
+            for warning in result.warnings:
+                logger.warning(f"Quick Start integration warning: {warning}")
+            
+            return result.converted_config
+            
+        except ImportError as e:
+            error_msg = f"Quick Start integration system not available: {str(e)}"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
+        except Exception as e:
+            error_msg = f"Failed to load Quick Start template '{template_name}': {str(e)}"
+            logger.error(error_msg)
+            raise ConfigValidationError(error_msg)
+    
+    def _merge_configuration(self, new_config: Dict[str, Any]):
+        """
+        Merge new configuration with existing configuration.
+        
+        This method performs a deep merge, where nested dictionaries are merged
+        recursively, and new values override existing ones.
+        
+        Args:
+            new_config: Configuration dictionary to merge
+        """
+        def deep_merge(target: Dict[str, Any], source: Dict[str, Any]):
+            """Recursively merge source into target."""
+            for key, value in source.items():
+                if key in target and isinstance(target[key], dict) and isinstance(value, dict):
+                    deep_merge(target[key], value)
+                else:
+                    target[key] = value
+        
+        deep_merge(self._config, new_config)
+    
+    def list_quick_start_templates(self) -> Dict[str, Any]:
+        """
+        List available Quick Start templates and integration options.
+        
+        Returns:
+            Dictionary containing available templates and adapter information
+            
+        Raises:
+            ImportError: If Quick Start integration system is not available
+        """
+        try:
+            from quick_start.config.integration_factory import IntegrationFactory
+            
+            factory = IntegrationFactory()
+            adapters = factory.list_available_adapters()
+            
+            return {
+                "available_adapters": adapters,
+                "target_manager": "iris_rag",
+                "supported_options": [
+                    "flatten_inheritance",
+                    "validate_schema",
+                    "ensure_compatibility",
+                    "cross_language",
+                    "test_round_trip"
+                ],
+                "integration_factory_available": True
+            }
+            
+        except ImportError:
+            return {
+                "integration_factory_available": False,
+                "error": "Quick Start integration system not available"
+            }
+    
+    def validate_quick_start_integration(self, template_name: str) -> Dict[str, Any]:
+        """
+        Validate a Quick Start template integration without applying it.
+        
+        Args:
+            template_name: Name of the template to validate
+            
+        Returns:
+            Dictionary containing validation results
+        """
+        try:
+            from quick_start.config.integration_factory import IntegrationFactory, IntegrationRequest
+            
+            factory = IntegrationFactory()
+            request = IntegrationRequest(
+                template_name=template_name,
+                target_manager="iris_rag"
+            )
+            
+            issues = factory.validate_integration_request(request)
+            
+            return {
+                "valid": len(issues) == 0,
+                "issues": issues,
+                "template_name": template_name,
+                "target_manager": "iris_rag"
+            }
+            
+        except ImportError:
+            return {
+                "valid": False,
+                "issues": ["Quick Start integration system not available"],
+                "template_name": template_name,
+                "target_manager": "iris_rag"
+            }
+
+    def get_database_config(self) -> Dict[str, Any]:
+        """
+        Get database configuration with defaults for IRIS connection.
+        
+        Returns:
+            Dictionary containing database configuration
+        """
+        default_config = {
+            'host': 'localhost',
+            'port': '1972',  # Keep as string for consistency
+            'namespace': 'USER',
+            'username': '_SYSTEM',
+            'password': 'SYS',
+            'driver_path': None
+        }
+        
+        # Map environment variables to config keys
+        env_mappings = {
+            'IRIS_HOST': 'host',
+            'IRIS_PORT': 'port', 
+            'IRIS_NAMESPACE': 'namespace',
+            'IRIS_USERNAME': 'username',
+            'IRIS_PASSWORD': 'password',
+            'IRIS_DRIVER_PATH': 'driver_path'
+        }
+        
+        # Override with environment variables
+        for env_key, config_key in env_mappings.items():
+            if env_key in os.environ:
+                value = os.environ[env_key]
+                # Keep port as string for config compatibility
+                default_config[config_key] = value
+        
+        # Also check for user-defined database config in YAML
+        user_config = self.get("database", {})
+        if isinstance(user_config, dict):
+            default_config.update(user_config)
+        
+        return default_config
+
+    def get_logging_config(self) -> Dict[str, Any]:
+        """
+        Get logging configuration with defaults.
+        
+        Returns:
+            Dictionary containing logging configuration
+        """
+        default_config = {
+            'level': 'INFO',
+            'path': 'logs/iris_rag.log',
+            'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        }
+        
+        # Map environment variables to config keys
+        env_mappings = {
+            'LOG_LEVEL': 'level',
+            'LOG_PATH': 'path'
+        }
+        
+        # Override with environment variables
+        for env_key, config_key in env_mappings.items():
+            if env_key in os.environ:
+                default_config[config_key] = os.environ[env_key]
+        
+        # Also check for user-defined logging config in YAML
+        user_config = self.get("logging", {})
+        if isinstance(user_config, dict):
+            default_config.update(user_config)
+        
+        return default_config
+
+    def get_default_table_name(self) -> str:
+        """
+        Get default table name for RAG operations.
+        
+        Returns:
+            Default table name as string
+        """
+        # Check environment variable first
+        if 'DEFAULT_TABLE_NAME' in os.environ:
+            return os.environ['DEFAULT_TABLE_NAME']
+        
+        # Check YAML config
+        table_name = self.get("default_table_name", "SourceDocuments")
+        return table_name
+
+    def get_default_top_k(self) -> int:
+        """
+        Get default top_k value for similarity search.
+        
+        Returns:
+            Default top_k value as integer
+        """
+        # Check environment variable first
+        if 'DEFAULT_TOP_K' in os.environ:
+            return int(os.environ['DEFAULT_TOP_K'])
+        
+        # Check YAML config
+        top_k = self.get("default_top_k", 5)
+        return int(top_k)
