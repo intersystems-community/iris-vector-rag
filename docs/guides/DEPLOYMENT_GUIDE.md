@@ -76,15 +76,22 @@ uv pip install -r requirements.txt
 
 #### Option A: Docker Deployment (Recommended for Development)
 ```bash
-# Start IRIS container using docker-compose
+# Start IRIS Community Edition container using docker-compose (default)
+docker-compose up -d
+
+# Alternative: Use the standalone community configuration
 docker-compose -f docker-compose.iris-only.yml up -d
 
 # Wait for container to be ready (check health)
-docker-compose -f docker-compose.iris-only.yml ps
+docker-compose ps
 
 # Verify container is running
 docker ps | grep iris
 ```
+
+**🆓 Community Edition vs Enterprise Edition**:
+- The default `docker-compose.yml` uses **IRIS Community Edition** (free, no license required)
+- For Enterprise Edition features, use `docker-compose.licensed.yml` (requires valid IRIS license)
 
 #### Option B: Native IRIS Installation (Production)
 ```bash
