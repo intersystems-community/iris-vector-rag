@@ -7,7 +7,6 @@ vectors contain negative values, causing SQLCODE: <-104> during reconciliation.
 
 import pytest
 import logging
-from typing import List
 from common.db_vector_utils import insert_vector
 from common.iris_connector import get_iris_connection
 
@@ -22,7 +21,7 @@ TEST_DIMENSION = 5
 @pytest.fixture(scope="function")
 def real_iris_connection():
     """Get a real IRIS connection for testing vector operations."""
-    conn = get_iris_connection(use_mock=False)
+    conn = get_iris_connection()
     if conn is None:
         pytest.skip("Real IRIS connection not available")
     

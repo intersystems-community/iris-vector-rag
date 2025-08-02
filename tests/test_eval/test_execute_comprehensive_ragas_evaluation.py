@@ -10,10 +10,7 @@ import json
 from unittest import mock
 
 # Import the actual script now that it's created
-from eval import execute_comprehensive_ragas_evaluation
-from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from datasets import Dataset
+from scripts.utilities.evaluation import execute_comprehensive_ragas_evaluation
 
 @pytest.fixture
 def mock_db_connection():

@@ -5,7 +5,7 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from jdbc_exploration.iris_jdbc_connector import get_iris_jdbc_connection
+from common.iris_connection_manager import get_iris_jdbc_connection
 
 def test_connection():
     """Test JDBC connection with different credentials"""

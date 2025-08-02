@@ -8,8 +8,7 @@ with definitive fixes for LIST ERROR issues with VECTOR columns.
 import logging
 import time
 import json
-import numpy as np
-from typing import List, Dict, Any, Generator, Optional, Tuple, Callable
+from typing import List, Dict, Any, Optional, Tuple, Callable
 import os
 import sys
 

@@ -11,10 +11,10 @@ import pytest
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 # Import the harness
-from eval.debug_basicrag_ragas_context import RAGASContextDebugHarness
+from scripts.utilities.evaluation.debug_basicrag_ragas_context import RAGASContextDebugHarness
 
 
 class TestRAGASContextDebugHarness:

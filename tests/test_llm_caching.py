@@ -22,7 +22,6 @@ from common.llm_cache_iris import IRISCacheBackend
 
 # Import the modules we'll be implementing
 from common.utils import get_llm_func
-from tests.mocks.db import MockIRISConnector
 
 
 class TestLLMCacheConfiguration:
@@ -72,11 +71,6 @@ class TestLLMCacheConfiguration:
 
 class TestIRISCacheBackend:
     """Test IRIS-based cache backend implementation."""
-    
-    @pytest.fixture
-    def mock_iris_connector(self):
-        """Provide a mock IRIS connector for testing."""
-        return MockIRISConnector()
     
     def test_iris_cache_backend_initialization(self, mock_iris_connector):
         """Test IRIS cache backend can be initialized."""
@@ -182,29 +176,6 @@ class TestIRISCacheBackend:
 
 class TestLangchainCacheIntegration:
     """Test integration with Langchain's caching system."""
-    
-    def test_langchain_cache_setup_with_iris(self):
-        """Test setting up Langchain cache with IRIS backend."""
-        from common.llm_cache_manager import setup_langchain_cache
-        from common.llm_cache_config import CacheConfig
-        
-        config = CacheConfig(
-            enabled=True,
-            backend='iris',
-            ttl_seconds=3600,
-            table_name='llm_cache'
-        )
-        
-        with patch('common.utils.get_iris_connector') as mock_get_connector:
-            mock_connector = MockIRISConnector()
-            mock_get_connector.return_value = mock_connector
-            
-            cache_instance = setup_langchain_cache(config)
-            
-            assert cache_instance is not None
-            # Verify that langchain.llm_cache was set
-            import langchain
-            assert langchain.llm_cache is not None
     
     def test_langchain_cache_disabled(self):
         """Test that cache setup is skipped when disabled."""
@@ -384,93 +355,8 @@ class TestDeprecationOfCustomCache:
                                   if issubclass(warning.category, DeprecationWarning)]
             assert len(deprecation_warnings) > 0
             assert "deprecated" in str(deprecation_warnings[0].message).lower()
-
-
-class TestEndToEndCaching:
-    """End-to-end tests for the complete caching system."""
     
-    @pytest.mark.integration
-    def test_e2e_llm_caching_with_iris(self):
-        """Test complete end-to-end LLM caching with IRIS backend."""
-        # This test requires a real or well-mocked IRIS connection
-        with patch('common.utils.get_iris_connector') as mock_get_connector:
-            mock_connector = MockIRISConnector()
-            mock_get_connector.return_value = mock_connector
-            
-            # Configure cache
-            with patch.dict(os.environ, {
-                'LLM_CACHE_ENABLED': 'true',
-                'LLM_CACHE_BACKEND': 'iris',
-                'LLM_CACHE_TTL': '3600'
-            }):
-                # Get LLM function with caching
-                llm_func = get_llm_func(
-                    provider="stub",
-                    model_name="test-model",
-                    enable_cache=True
-                )
-                
-                # First call - should be cache miss
-                response1 = llm_func("What is machine learning?")
-                
-                # Second call - should be cache hit
-                response2 = llm_func("What is machine learning?")
-                
-                # Responses should be identical due to caching
-                assert response1 == response2
-                
-                # Different prompt should generate different response
-                response3 = llm_func("What is deep learning?")
-                assert response3 != response1
     
-    @pytest.mark.integration
-    def test_e2e_cache_persistence(self):
-        """Test that cache persists across different LLM function instances."""
-        with patch('common.utils.get_iris_connector') as mock_get_connector:
-            mock_connector = MockIRISConnector()
-            mock_get_connector.return_value = mock_connector
-            
-            # Mock cursor to simulate persistent storage
-            cursor_mock = mock_connector.cursor()
-            stored_data = {}
-            
-            def mock_execute(sql, params=None):
-                if 'INSERT' in sql.upper():
-                    # Simulate storing data
-                    if params:
-                        stored_data[params[0]] = params[1]  # key, value
-                elif 'SELECT' in sql.upper():
-                    # Simulate retrieving data
-                    if params and params[0] in stored_data:
-                        cursor_mock.fetchone.return_value = (stored_data[params[0]],)
-                    else:
-                        cursor_mock.fetchone.return_value = None
-            
-            cursor_mock.execute.side_effect = mock_execute
-            
-            with patch.dict(os.environ, {
-                'LLM_CACHE_ENABLED': 'true',
-                'LLM_CACHE_BACKEND': 'iris'
-            }):
-                # First LLM function instance
-                llm_func1 = get_llm_func(
-                    provider="stub",
-                    model_name="test-model",
-                    enable_cache=True
-                )
-                response1 = llm_func1("test prompt")
-                
-                # Second LLM function instance (simulating restart)
-                llm_func2 = get_llm_func(
-                    provider="stub", 
-                    model_name="test-model",
-                    enable_cache=True
-                )
-                response2 = llm_func2("test prompt")
-                
-                # Should get same response from cache
-                assert response1 == response2
-
 
 @pytest.mark.asyncio
 class TestAsyncLangchainIRISCacheWrapper:

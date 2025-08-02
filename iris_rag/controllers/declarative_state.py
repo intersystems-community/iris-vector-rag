@@ -11,7 +11,7 @@ import json
 import yaml
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional, Union, List
+from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, asdict
 
 from iris_rag.config.manager import ConfigurationManager
@@ -20,7 +20,6 @@ from iris_rag.controllers.reconciliation_components.models import (
     DesiredState,
     CompletenessRequirements,
     ReconciliationResult,
-    QualityIssues
 )
 
 logger = logging.getLogger(__name__)

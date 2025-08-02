@@ -8,8 +8,7 @@ import os
 import sys
 import subprocess
 import json
-from typing import Dict, Any, Optional, List
-from pathlib import Path
+from typing import Dict, Any, Optional
 
 
 class IPMIntegration:
@@ -79,10 +78,12 @@ class IPMIntegration:
     def _check_iris_python(self) -> Dict[str, Any]:
         """Check if IRIS Python is available."""
         try:
-            import intersystems_irispython
+            import iris
+            import importlib.metadata
+            version = importlib.metadata.version("intersystems-irispython")
             return {
                 "valid": True,
-                "version": getattr(intersystems_irispython, "__version__", "unknown"),
+                "version": version,
                 "message": "IRIS Python is available"
             }
         except ImportError:

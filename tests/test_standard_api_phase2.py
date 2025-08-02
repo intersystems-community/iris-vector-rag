@@ -13,7 +13,6 @@ Following TDD workflow:
 import pytest
 import os
 import sys
-from typing import List, Dict, Any
 from unittest.mock import patch, MagicMock
 
 # Add project root to path

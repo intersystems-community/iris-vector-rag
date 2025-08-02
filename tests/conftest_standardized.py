@@ -7,9 +7,8 @@ Provides consistent database setup, cleanup, and test data management.
 import pytest
 import logging
 import sys
-import os
 from pathlib import Path
-from typing import Generator, Dict, Any, List
+from typing import Dict, Any, List
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

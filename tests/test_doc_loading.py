@@ -6,7 +6,6 @@ This test uses a simplified approach to document loading.
 import pytest
 import logging
 import os
-import sys
 import uuid
 
 # Configure logging

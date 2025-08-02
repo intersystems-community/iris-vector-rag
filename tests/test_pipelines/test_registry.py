@@ -6,8 +6,7 @@ following TDD principles to ensure robust pipeline management.
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock
-from typing import Dict, Any, Optional, List
+from unittest.mock import Mock
 
 from iris_rag.pipelines.registry import PipelineRegistry
 from iris_rag.pipelines.factory import PipelineFactory

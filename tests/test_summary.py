@@ -8,7 +8,6 @@ for each RAG technique, especially with 1000+ documents.
 
 import logging
 import pytest
-from typing import Dict, List, Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

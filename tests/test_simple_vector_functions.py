@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.abspath('.'))
 
 import logging
 from common.utils import get_embedding_func
-from common.iris_connector_jdbc import get_iris_connection
+from common.iris_connector import get_iris_connection
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

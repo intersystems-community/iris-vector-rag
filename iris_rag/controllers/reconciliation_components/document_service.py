@@ -52,7 +52,7 @@ class DocumentService:
             cursor = iris_connector.cursor()
             
             cursor.execute(
-                "SELECT id FROM RAG.SourceDocuments WHERE source_uri = ?",
+                "SELECT doc_id FROM RAG.SourceDocuments WHERE source_uri = ?",
                 [source_uri]
             )
             
@@ -82,7 +82,7 @@ class DocumentService:
             cursor = iris_connector.cursor()
             
             cursor.execute(
-                "SELECT text_content FROM RAG.SourceDocuments WHERE id = ?",
+                "SELECT text_content FROM RAG.SourceDocuments WHERE doc_id = ?",
                 [doc_id]
             )
             
@@ -108,7 +108,7 @@ class DocumentService:
             iris_connector = self.connection_manager.get_connection("iris")
             cursor = iris_connector.cursor()
             
-            cursor.execute("SELECT id FROM RAG.SourceDocuments")
+            cursor.execute("SELECT doc_id FROM RAG.SourceDocuments")
             
             results = cursor.fetchall()
             doc_ids = [row[0] for row in results]
@@ -271,7 +271,7 @@ class DocumentService:
             # Create placeholders for the IN clause
             placeholders = ','.join(['?' for _ in doc_ids])
             cursor.execute(
-                f"DELETE FROM RAG.SourceDocuments WHERE id IN ({placeholders})",
+                f"DELETE FROM RAG.SourceDocuments WHERE doc_id IN ({placeholders})",
                 doc_ids
             )
             
@@ -357,9 +357,9 @@ class DocumentService:
             
             # Find documents in SourceDocuments that don't have token embeddings
             cursor.execute("""
-                SELECT sd.id
+                SELECT sd.doc_id
                 FROM RAG.SourceDocuments sd
-                LEFT JOIN RAG.DocumentTokenEmbeddings dte ON sd.id = dte.doc_id
+                LEFT JOIN RAG.DocumentTokenEmbeddings dte ON sd.doc_id = dte.doc_id
                 WHERE dte.doc_id IS NULL
             """)
             
@@ -394,9 +394,9 @@ class DocumentService:
                 FROM (
                     SELECT sd.id as doc_id, COUNT(dte.id) as embedding_count
                     FROM RAG.SourceDocuments sd
-                    JOIN RAG.DocumentTokenEmbeddings dte ON sd.id = dte.doc_id
-                    GROUP BY sd.id
-                    HAVING COUNT(dte.id) > 0 AND COUNT(dte.id) < {min_embeddings_threshold}
+                    JOIN RAG.DocumentTokenEmbeddings dte ON sd.doc_id = dte.doc_id
+                    GROUP BY sd.doc_id
+                    HAVING COUNT(dte.doc_id) > 0 AND COUNT(dte.doc_id) < {min_embeddings_threshold}
                 ) AS subquery
             """)
             

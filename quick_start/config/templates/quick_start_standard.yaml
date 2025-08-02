@@ -1,0 +1,28 @@
+# Standard Quick Start configuration
+# Balanced setup with 100 documents and moderate performance
+
+extends: "quick_start"
+
+metadata:
+  profile: "quick_start_standard"
+  description: "Standard quick start with 100 documents"
+
+sample_data:
+  document_count: 100
+  categories: ["medical", "biomedical"]
+  parallel_downloads: 4
+  batch_size: 20
+
+performance:
+  batch_size: 16
+  max_workers: 2
+
+mcp_server:
+  tools:
+    enabled:
+      - "rag_basic"
+      - "rag_hyde"
+      - "rag_crag"
+      - "rag_hybrid_ifind"
+      - "rag_health_check"
+      - "rag_list_techniques"

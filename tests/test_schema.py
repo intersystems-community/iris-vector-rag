@@ -10,7 +10,7 @@ def test_schema_definition_structure():
     This test does not connect to the DB, it only checks the definition.
     """
     try:
-        from scripts.schema_definition import EXPECTED_SCHEMA_DEFINITION
+        from scripts.utilities.schema_definition import EXPECTED_SCHEMA_DEFINITION
     except ImportError:
         pytest.fail("Could not import EXPECTED_SCHEMA_DEFINITION from scripts.schema_definition.py. Create the file and definition.")
 
@@ -55,7 +55,7 @@ def test_sql_ddl_exists_and_is_valid():
     Tests that the SQL DDL string for creating the table exists and contains key elements.
     """
     try:
-        from scripts.schema_definition import SOURCE_DOCUMENTS_TABLE_SQL
+        from scripts.utilities.schema_definition import SOURCE_DOCUMENTS_TABLE_SQL
     except ImportError:
         pytest.fail("Could not import SOURCE_DOCUMENTS_TABLE_SQL from scripts.schema_definition.py. Create the file and DDL string.")
     

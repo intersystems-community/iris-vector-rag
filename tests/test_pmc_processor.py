@@ -79,8 +79,8 @@ def test_extract_pmc_metadata_with_mock_file():
             # Call the function with a dummy path
             result = extract_pmc_metadata("dummy/path/PMC123456.xml")
     
-    # Assert the results
-    assert result["pmc_id"] == "PMC123456"
+    # Assert the results (enhanced format)
+    assert result["doc_id"] == "PMC123456"
     assert result["title"] == "Test Article Title"
     assert "This is a test abstract" in result["abstract"]
     assert "second paragraph" in result["abstract"]
@@ -91,6 +91,14 @@ def test_extract_pmc_metadata_with_mock_file():
     assert "keyword1" in result["keywords"]
     assert "keyword2" in result["keywords"]
     assert "keyword3" in result["keywords"]
+    
+    # Test enhanced features
+    assert "content" in result
+    assert "metadata" in result
+    assert result["metadata"]["source"] == "PMC"
+    assert result["metadata"]["pmc_id"] == "PMC123456"
+    assert "needs_chunking" in result["metadata"]
+    assert "content_length" in result["metadata"]
 
 def test_extract_pmc_metadata_with_temp_file():
     """Test extraction of metadata using a temporary file"""
@@ -146,12 +154,17 @@ def test_extract_pmc_metadata_with_missing_fields():
             # Call the function with a dummy path
             result = extract_pmc_metadata("dummy/path/PMC123456.xml")
     
-    # Assert the results
-    assert result["pmc_id"] == "PMC123456"
+    # Assert the results (enhanced format)
+    assert result["doc_id"] == "PMC123456"
     assert result["title"] == "Test Article Title"
     assert result["abstract"] == ""  # Empty abstract
     assert result["authors"] == []   # Empty authors list
     assert result["keywords"] == []  # Empty keywords list
+    
+    # Test enhanced features
+    assert "content" in result
+    assert "metadata" in result
+    assert result["metadata"]["pmc_id"] == "PMC123456"
 
 def test_extract_pmc_metadata_error_handling():
     """Test error handling in extract_pmc_metadata"""
@@ -160,10 +173,15 @@ def test_extract_pmc_metadata_error_handling():
         # Call the function with a dummy path
         result = extract_pmc_metadata("dummy/path/PMC123456.xml")
     
-    # Assert the error handling
-    assert result["pmc_id"] == "PMC123456"
+    # Assert the error handling (enhanced format)
+    assert result["doc_id"] == "PMC123456"
     assert result["title"] == "Error"
     assert "Failed to process" in result["abstract"]
+    
+    # Test enhanced features in error case
+    assert "metadata" in result
+    assert result["metadata"]["pmc_id"] == "PMC123456"
+    assert "error" in result["metadata"]
     assert result["authors"] == []
     assert result["keywords"] == []
 
@@ -176,25 +194,36 @@ def test_process_pmc_files_with_mocked_directory():
     with patch("os.walk") as mock_walk:
         mock_walk.return_value = [("/fake/dir", [], filenames)]
         
-        # Mock extract_pmc_metadata to return predictable results
-        with patch("data.pmc_processor.extract_pmc_metadata") as mock_extract:
-            mock_extract.side_effect = lambda path: {
-                "pmc_id": Path(path).stem,
-                "title": f"Title for {Path(path).stem}",
-                "abstract": f"Abstract for {Path(path).stem}",
-                "authors": [f"Author1 for {Path(path).stem}", f"Author2 for {Path(path).stem}"],
-                "keywords": [f"Keyword1 for {Path(path).stem}", f"Keyword2 for {Path(path).stem}"]
+        # Mock extract_pmc_metadata to return predictable results (enhanced format)
+        def mock_extract_func(path):
+            pmc_id = Path(path).stem
+            return {
+                "doc_id": pmc_id,
+                "title": f"Title for {pmc_id}",
+                "abstract": f"Abstract for {pmc_id}",
+                "content": f"Content for {pmc_id}",
+                "authors": [f"Author1 for {pmc_id}", f"Author2 for {pmc_id}"],
+                "keywords": [f"Keyword1 for {pmc_id}", f"Keyword2 for {pmc_id}"],
+                "metadata": {
+                    "source": "PMC",
+                    "pmc_id": pmc_id,
+                    "needs_chunking": False,
+                    "content_length": 20
+                }
             }
+        
+        with patch("data.pmc_processor.extract_pmc_metadata") as mock_extract:
+            mock_extract.side_effect = mock_extract_func
             
             # Process with a limit of 5
             results = list(process_pmc_files("/fake/dir", limit=5))
     
-    # Assert the results
+    # Assert the results (enhanced format)
     assert len(results) == 5  # Should respect the limit
     assert all(isinstance(r, dict) for r in results)
-    assert all(key in r for r in results for key in ["pmc_id", "title", "abstract", "authors", "keywords"])
-    assert results[0]["pmc_id"] == "PMC1"
-    assert results[4]["pmc_id"] == "PMC5"
+    assert all(key in r for r in results for key in ["doc_id", "title", "abstract", "authors", "keywords", "content", "metadata"])
+    assert results[0]["doc_id"] == "PMC1"
+    assert results[4]["doc_id"] == "PMC5"
 
 def test_process_pmc_files_error_handling():
     """Test error handling in process_pmc_files"""
@@ -209,12 +238,20 @@ def test_process_pmc_files_error_handling():
         def mock_extract_side_effect(path):
             if "PMC3" in path:
                 raise Exception("Processing error")
+            pmc_id = Path(path).stem
             return {
-                "pmc_id": Path(path).stem,
-                "title": f"Title for {Path(path).stem}",
-                "abstract": f"Abstract for {Path(path).stem}",
+                "doc_id": pmc_id,
+                "title": f"Title for {pmc_id}",
+                "abstract": f"Abstract for {pmc_id}",
+                "content": f"Content for {pmc_id}",
                 "authors": [],
-                "keywords": []
+                "keywords": [],
+                "metadata": {
+                    "source": "PMC",
+                    "pmc_id": pmc_id,
+                    "needs_chunking": False,
+                    "content_length": 20
+                }
             }
             
         with patch("data.pmc_processor.extract_pmc_metadata") as mock_extract:
@@ -225,7 +262,7 @@ def test_process_pmc_files_error_handling():
     
     # Assert the results
     assert len(results) == 4  # One file should be skipped due to error
-    assert "PMC3" not in [r["pmc_id"] for r in results]
+    assert "PMC3" not in [r["doc_id"] for r in results]
 
 # --- Integration Tests ---
 
@@ -251,8 +288,8 @@ def test_extract_pmc_metadata_with_real_sample():
     # Process the sample file
     result = extract_pmc_metadata(sample_path)
     
-    # Basic validation
-    assert result["pmc_id"] != ""
+    # Basic validation (enhanced format)
+    assert result["doc_id"] != ""
     assert result["title"] != ""
     assert result["title"] != "Unknown Title"
     assert result["title"] != "Error"
@@ -270,7 +307,60 @@ def test_process_pmc_files_with_real_directory():
     # Process a small number of files
     results = list(process_pmc_files(data_dir, limit=2))
     
-    # Validate results
+    # Skip if no files found in the directory
+    if len(results) == 0:
+        pytest.skip(f"No PMC XML files found in {data_dir}")
+    
+    # Validate results (enhanced format)
     assert len(results) > 0  # Should find at least one file
     assert all(isinstance(r, dict) for r in results)
-    assert all(key in r for r in results for key in ["pmc_id", "title", "abstract", "authors", "keywords"])
+    assert all(key in r for r in results for key in ["doc_id", "title", "abstract", "authors", "keywords", "content", "metadata"])
+
+def test_chunking_functionality():
+    """Test the chunking functionality with large content"""
+    # Create a large XML document that would trigger chunking
+    large_body = "<p>" + "This is a test sentence. " * 800 + "</p>"  # ~16k characters
+    large_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+    <article>
+      <front>
+        <article-meta>
+          <article-id pub-id-type="pmc">PMC_LARGE</article-id>
+          <title-group>
+            <article-title>Large Test Article</article-title>
+          </title-group>
+          <abstract>
+            <p>This is a test abstract.</p>
+          </abstract>
+        </article-meta>
+      </front>
+      <body>
+        {large_body}
+      </body>
+    </article>
+    """
+    
+    # Setup
+    with patch("builtins.open", mock_open(read_data=large_xml)):
+        with patch("xml.etree.ElementTree.parse") as mock_parse:
+            tree = ET.ElementTree(ET.fromstring(large_xml))
+            mock_parse.return_value = tree
+            
+            # Call the function
+            result = extract_pmc_metadata("dummy/path/PMC_LARGE.xml")
+    
+    # Assert chunking behavior
+    assert result["doc_id"] == "PMC_LARGE"
+    assert result["metadata"]["needs_chunking"] == True
+    assert "chunks" in result
+    assert len(result["chunks"]) > 1  # Should be chunked
+    
+    # Verify chunk structure
+    for i, chunk in enumerate(result["chunks"]):
+        assert "chunk_id" in chunk
+        assert "text" in chunk
+        assert "chunk_index" in chunk
+        assert "start_pos" in chunk
+        assert "end_pos" in chunk
+        assert "metadata" in chunk
+        assert chunk["chunk_index"] == i
+        assert len(chunk["text"]) <= 8500  # Should be within chunk size limits

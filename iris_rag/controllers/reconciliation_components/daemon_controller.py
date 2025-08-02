@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from iris_rag.controllers.reconciliation import ReconciliationController
 
 from iris_rag.controllers.reconciliation_components.models import ReconciliationResult
+from common.environment_utils import get_daemon_retry_interval, get_daemon_default_interval, detect_environment
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -45,12 +46,24 @@ class DaemonController:
         self.max_iterations = 0
         self.current_iteration = 0
         
-        # Get daemon configuration
+        # Get daemon configuration with environment-aware defaults
         reconciliation_config = config_manager.get_reconciliation_config()
-        self.default_interval_seconds = reconciliation_config.get('interval_hours', 1) * 3600
-        self.error_retry_interval_seconds = reconciliation_config.get('error_retry_minutes', 5) * 60
         
-        logger.info("DaemonController initialized")
+        # Use environment-aware defaults for better test performance
+        current_env = detect_environment()
+        config_interval_hours = reconciliation_config.get('interval_hours', 1)
+        config_error_retry_minutes = reconciliation_config.get('error_retry_minutes', 5)
+        
+        # Apply environment-aware defaults
+        self.default_interval_seconds = get_daemon_default_interval(
+            config_interval_hours * 3600 if current_env == "production" else None
+        )
+        self.error_retry_interval_seconds = get_daemon_retry_interval(
+            config_error_retry_minutes * 60 if current_env == "production" else None
+        )
+        
+        logger.info(f"DaemonController initialized for {current_env} environment")
+        logger.info(f"Default interval: {self.default_interval_seconds}s, Error retry: {self.error_retry_interval_seconds}s")
     
     def run_daemon(self, interval: Optional[int] = None, max_iterations: Optional[int] = None,
                    error_retry_interval: Optional[int] = None, pipeline_type: str = "colbert") -> None:

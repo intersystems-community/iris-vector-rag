@@ -13,8 +13,8 @@ sensible defaults for immediate usability.
 import os
 import yaml
 import logging
-from typing import Any, Optional, Dict, Union
-from .errors import ConfigurationError, handle_configuration_fallback
+from typing import Any, Optional, Dict
+from .errors import ConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -413,3 +413,191 @@ class ConfigurationManager:
     def to_dict(self) -> Dict[str, Any]:
         """Return the complete configuration as a dictionary."""
         return self._config.copy()
+    
+    def load_quick_start_template(
+        self,
+        template_name: str,
+        options: Optional[Dict[str, Any]] = None,
+        environment_variables: Optional[Dict[str, Any]] = None,
+        validation_rules: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Load and integrate a Quick Start configuration template.
+        
+        This method uses the Quick Start integration system to load a template
+        and convert it to the rag_templates configuration format. The resulting
+        configuration is merged with the current configuration.
+        
+        Args:
+            template_name: Name of the Quick Start template to load
+            options: Optional integration options (e.g., validation settings)
+            environment_variables: Optional environment variable overrides
+            validation_rules: Optional custom validation rules
+        
+        Returns:
+            Dict containing the integrated configuration
+            
+        Raises:
+            ImportError: If Quick Start integration system is not available
+            ConfigurationError: If template integration fails
+        """
+        try:
+            # Import the integration factory
+            from quick_start.config.integration_factory import IntegrationFactory
+            
+            logger.info(f"Loading Quick Start template '{template_name}' for rag_templates")
+            
+            # Create integration factory and integrate template
+            factory = IntegrationFactory()
+            result = factory.integrate_template(
+                template_name=template_name,
+                target_manager="rag_templates",
+                options=options or {},
+                environment_variables=environment_variables or {},
+                validation_rules=validation_rules or {}
+            )
+            
+            if not result.success:
+                error_msg = f"Failed to integrate Quick Start template '{template_name}': {'; '.join(result.errors)}"
+                logger.error(error_msg)
+                raise ConfigurationError(error_msg, template_name=template_name)
+            
+            # Merge the converted configuration with current configuration
+            if result.converted_config:
+                self._deep_merge(self._config, result.converted_config)
+                logger.info(f"Successfully integrated Quick Start template '{template_name}'")
+            
+            # Log any warnings
+            for warning in result.warnings:
+                logger.warning(f"Quick Start integration warning: {warning}")
+            
+            return result.converted_config
+            
+        except ImportError as e:
+            error_msg = f"Quick Start integration system not available: {str(e)}"
+            logger.error(error_msg)
+            raise ImportError(error_msg)
+        except Exception as e:
+            error_msg = f"Failed to load Quick Start template '{template_name}': {str(e)}"
+            logger.error(error_msg)
+            raise ConfigurationError(error_msg, template_name=template_name)
+    
+    def list_quick_start_templates(self) -> Dict[str, Any]:
+        """
+        List available Quick Start templates and integration options.
+        
+        Returns:
+            Dictionary containing available templates and adapter information
+            
+        Raises:
+            ImportError: If Quick Start integration system is not available
+        """
+        try:
+            from quick_start.config.integration_factory import IntegrationFactory
+            
+            factory = IntegrationFactory()
+            adapters = factory.list_available_adapters()
+            
+            return {
+                "available_adapters": adapters,
+                "target_manager": "rag_templates",
+                "supported_options": [
+                    "flatten_inheritance",
+                    "validate_schema",
+                    "ensure_compatibility",
+                    "cross_language",
+                    "test_round_trip"
+                ],
+                "integration_factory_available": True
+            }
+            
+        except ImportError:
+            return {
+                "integration_factory_available": False,
+                "error": "Quick Start integration system not available"
+            }
+    
+    def validate_quick_start_integration(self, template_name: str) -> Dict[str, Any]:
+        """
+        Validate a Quick Start template integration without applying it.
+        
+        Args:
+            template_name: Name of the template to validate
+            
+        Returns:
+            Dictionary containing validation results
+        """
+        try:
+            from quick_start.config.integration_factory import IntegrationFactory, IntegrationRequest
+            
+            factory = IntegrationFactory()
+            request = IntegrationRequest(
+                template_name=template_name,
+                target_manager="rag_templates"
+            )
+            
+            issues = factory.validate_integration_request(request)
+            
+            return {
+                "valid": len(issues) == 0,
+                "issues": issues,
+                "template_name": template_name,
+                "target_manager": "rag_templates"
+            }
+            
+        except ImportError:
+            return {
+                "valid": False,
+                "issues": ["Quick Start integration system not available"],
+                "template_name": template_name,
+                "target_manager": "rag_templates"
+            }
+    
+    def load_config(
+        self,
+        config_dict: Optional[Dict[str, Any]] = None,
+        config_file: Optional[str] = None,
+        quick_start_template: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Enhanced configuration loading method with Quick Start template support.
+        
+        This method provides a unified interface for loading configuration from
+        multiple sources with proper precedence handling.
+        
+        Args:
+            config_dict: Configuration dictionary to merge
+            config_file: Path to configuration file to load
+            quick_start_template: Name of Quick Start template to load
+            
+        Returns:
+            The complete merged configuration
+            
+        Raises:
+            ConfigurationError: If configuration loading fails
+        """
+        # Load Quick Start template first (lowest precedence)
+        if quick_start_template:
+            try:
+                self.load_quick_start_template(quick_start_template)
+                logger.info(f"Loaded Quick Start template: {quick_start_template}")
+            except Exception as e:
+                logger.warning(f"Failed to load Quick Start template '{quick_start_template}': {str(e)}")
+        
+        # Load configuration file (medium precedence)
+        if config_file:
+            try:
+                self._load_config_file(config_file)
+                logger.info(f"Loaded configuration file: {config_file}")
+            except Exception as e:
+                logger.warning(f"Failed to load configuration file '{config_file}': {str(e)}")
+        
+        # Merge configuration dictionary (highest precedence)
+        if config_dict:
+            self._deep_merge(self._config, config_dict)
+            logger.info("Merged configuration dictionary")
+        
+        # Reload environment variables to ensure they have final precedence
+        self._load_env_variables()
+        
+        return self.to_dict()

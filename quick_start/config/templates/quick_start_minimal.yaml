@@ -1,0 +1,25 @@
+# Minimal Quick Start configuration
+# Optimized for the smallest possible setup with 10 documents
+
+extends: "quick_start"
+
+metadata:
+  profile: "quick_start_minimal"
+  description: "Minimal quick start with 10 documents"
+
+sample_data:
+  document_count: 10
+  categories: ["medical"]
+  parallel_downloads: 2
+  batch_size: 5
+
+performance:
+  batch_size: 8
+  max_workers: 1
+
+mcp_server:
+  tools:
+    enabled:
+      - "rag_basic"
+      - "rag_hyde"
+      - "rag_health_check"

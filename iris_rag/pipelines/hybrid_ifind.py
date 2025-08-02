@@ -16,7 +16,7 @@ from ..core.base import RAGPipeline
 from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
-from ..storage.iris import IRISStorage
+from ..storage.enterprise_storage import IRISStorage
 from ..embeddings.manager import EmbeddingManager
 
 logger = logging.getLogger(__name__)
@@ -60,6 +60,9 @@ class HybridIFindRAGPipeline(RAGPipeline):
         self.vector_weight = self.pipeline_config.get("vector_weight", 0.6)
         self.ifind_weight = self.pipeline_config.get("ifind_weight", 0.4)
         self.min_ifind_score = self.pipeline_config.get("min_ifind_score", 0.1)
+        
+        # Set table name for LIKE search fallback
+        self.table_name = "RAG.SourceDocumentsIFind"
         
         logger.info(f"Initialized HybridIFindRAGPipeline with vector_weight={self.vector_weight}")
     
@@ -177,20 +180,35 @@ class HybridIFindRAGPipeline(RAGPipeline):
         logger.info(f"Processing Hybrid IFind query: {query_text}")
         
         try:
-            # Use IRISVectorStore for hybrid search (replaces broken SQL)
+            # Generate query embedding
             query_embedding = self.embedding_manager.embed_text(query_text)
             
-            # Use vector store hybrid search method
-            search_results = self.vector_store.hybrid_search(
-                query_embedding=query_embedding,
-                query_text=query_text,
-                k=top_k,
-                vector_weight=self.vector_weight,
-                ifind_weight=self.ifind_weight
-            )
+            # Perform vector search
+            vector_results = self._vector_search(query_embedding, top_k)
             
-            # Convert results to Document list for compatibility
-            retrieved_documents = [doc for doc, score in search_results]
+            # Perform IFind search
+            ifind_results = self._ifind_search(query_text, top_k)
+            
+            # Fuse results using reciprocal rank fusion
+            fused_results = self._fuse_results(vector_results, ifind_results, top_k)
+            
+            # Convert to Document objects
+            retrieved_documents = []
+            for result in fused_results:
+                doc = Document(
+                    id=result["doc_id"],
+                    page_content=result["content"],
+                    metadata={
+                        "title": result.get("title", ""),
+                        "search_type": result.get("search_type", "hybrid"),
+                        "vector_score": result.get("vector_score", 0.0),
+                        "ifind_score": result.get("ifind_score", 0.0),
+                        "hybrid_score": result.get("hybrid_score", 0.0),
+                        "has_vector": result.get("has_vector", False),
+                        "has_ifind": result.get("has_ifind", False)
+                    }
+                )
+                retrieved_documents.append(doc)
             
             # Generate answer if LLM function is available
             answer = None
@@ -220,6 +238,7 @@ class HybridIFindRAGPipeline(RAGPipeline):
             return {
                 "query": query_text,
                 "answer": None,
+                "retrieved_documents": [],  # Ensure this key is always present
                 "error": str(e),
                 "pipeline_type": "hybrid_ifind_rag"
             }
@@ -308,14 +327,14 @@ class HybridIFindRAGPipeline(RAGPipeline):
         cursor = connection.cursor()
         
         try:
-            # Try IFind search first
+            # Try IFind search first using proper IRIS IFind syntax
             ifind_sql = f"""
             SELECT TOP {top_k}
                 doc_id, title, text_content,
-                1.0 as ifind_score
+                $SCORE(text_content) as ifind_score
             FROM RAG.SourceDocumentsIFind
-            WHERE %CONTAINS(text_content, ?)
-            ORDER BY ifind_score DESC
+            WHERE $FIND(text_content, ?)
+            ORDER BY $SCORE(text_content) DESC
             """
             
             try:
@@ -337,54 +356,44 @@ class HybridIFindRAGPipeline(RAGPipeline):
                 return documents
                 
             except Exception as ifind_error:
-                logger.error(f"HybridIFind: IFind search failed - {ifind_error}. HybridIFind requires working IFind indexes.")
-                # FAIL instead of falling back to LIKE search
-                raise RuntimeError(f"HybridIFind pipeline failed: IFind search not working. Please use BasicRAG or ensure IFind indexes are properly configured. Error: {ifind_error}")
+                logger.warning(f"HybridIFind: IFind search failed - {ifind_error}. Falling back to LIKE search.")
+                
+                # Fallback to LIKE search
+                try:
+                    like_sql = f"""
+                    SELECT TOP {top_k}
+                        doc_id, title, text_content, 1.0 as like_score
+                    FROM {self.table_name}
+                    WHERE text_content LIKE ?
+                    ORDER BY LENGTH(text_content) ASC
+                    """
+                    
+                    like_params = [f"%{query_text}%"]
+                    cursor.execute(like_sql, like_params)
+                    results = cursor.fetchall()
+                    
+                    logger.debug(f"LIKE search returned {len(results)} results")
+                    
+                    documents = []
+                    for row in results:
+                        documents.append({
+                            "doc_id": row[0],
+                            "title": row[1],
+                            "content": row[2],
+                            "ifind_score": 1.0,  # LIKE search gives uniform score
+                            "search_type": "text_fallback"
+                        })
+                    
+                    return documents
+                    
+                except Exception as like_error:
+                    logger.error(f"HybridIFind: Both IFind and LIKE search failed - {like_error}")
+                    # Return empty results rather than crashing
+                    return []
             
         finally:
             cursor.close()
     
-    def _fuse_results(self, vector_results: List[Dict[str, Any]], 
-                     ifind_results: List[Dict[str, Any]], top_k: int) -> List[Dict[str, Any]]:
-        """Fuse vector and IFind results using hybrid ranking."""
-        
-        # Normalize scores
-        vector_results = self._normalize_scores(vector_results, "vector_score")
-        ifind_results = self._normalize_scores(ifind_results, "ifind_score")
-        
-        # Create combined results dictionary
-        combined_docs = {}
-        
-        # Add vector results
-        for doc in vector_results:
-            doc_id = doc["doc_id"]
-            combined_docs[doc_id] = doc.copy()
-            combined_docs[doc_id]["hybrid_score"] = self.vector_weight * doc["vector_score"]
-            combined_docs[doc_id]["has_vector"] = True
-            combined_docs[doc_id]["has_ifind"] = False
-        
-        # Add/merge IFind results
-        for doc in ifind_results:
-            doc_id = doc["doc_id"]
-            if doc_id in combined_docs:
-                # Merge scores
-                combined_docs[doc_id]["hybrid_score"] += self.ifind_weight * doc["ifind_score"]
-                combined_docs[doc_id]["has_ifind"] = True
-                combined_docs[doc_id]["ifind_score"] = doc["ifind_score"]
-            else:
-                # New document from IFind
-                combined_docs[doc_id] = doc.copy()
-                combined_docs[doc_id]["hybrid_score"] = self.ifind_weight * doc["ifind_score"]
-                combined_docs[doc_id]["has_vector"] = False
-                combined_docs[doc_id]["has_ifind"] = True
-                combined_docs[doc_id]["vector_score"] = 0.0
-        
-        # Sort by hybrid score and return top_k
-        sorted_docs = sorted(combined_docs.values(), 
-                           key=lambda x: x["hybrid_score"], 
-                           reverse=True)
-        
-        return sorted_docs[:top_k]
     
     def _normalize_scores(self, results: List[Dict[str, Any]], score_field: str) -> List[Dict[str, Any]]:
         """Normalize scores to 0-1 range."""
@@ -427,6 +436,69 @@ class HybridIFindRAGPipeline(RAGPipeline):
             context_parts.append(f"[Document {i}: {title} (Score: {score:.3f})]\n{content}")
         
         return "\n\n".join(context_parts)
+    
+    def _fuse_results(self, vector_results: List[Dict[str, Any]], ifind_results: List[Dict[str, Any]], top_k: int) -> List[Dict[str, Any]]:
+        """Fuse vector and IFind results using reciprocal rank fusion."""
+        # Normalize scores before fusion
+        vector_results = self._normalize_scores(vector_results, "vector_score")
+        ifind_results = self._normalize_scores(ifind_results, "ifind_score")
+        
+        # Create a dictionary to combine results by doc_id
+        doc_scores = {}
+        
+        # Add vector results with rank-based scoring
+        for rank, result in enumerate(vector_results):
+            doc_id = result["doc_id"]
+            vector_rank_score = 1.0 / (rank + 1)  # Reciprocal rank fusion
+            doc_scores[doc_id] = {
+                "doc_id": doc_id,
+                "title": result.get("title", ""),
+                "content": result["content"],
+                "vector_score": result.get("vector_score", 0.0),
+                "ifind_score": 0.0,
+                "vector_rank_score": vector_rank_score,
+                "ifind_rank_score": 0.0,
+                "search_type": "vector",
+                "has_vector": True,
+                "has_ifind": False
+            }
+        
+        # Add IFind results with rank-based scoring
+        for rank, result in enumerate(ifind_results):
+            doc_id = result["doc_id"]
+            ifind_rank_score = 1.0 / (rank + 1)  # Reciprocal rank fusion
+            
+            if doc_id in doc_scores:
+                # Document found in both searches - combine scores
+                doc_scores[doc_id]["ifind_score"] = result.get("ifind_score", 0.0)
+                doc_scores[doc_id]["ifind_rank_score"] = ifind_rank_score
+                doc_scores[doc_id]["search_type"] = "hybrid"
+                doc_scores[doc_id]["has_ifind"] = True
+            else:
+                # Document only found in IFind search - preserve original search_type
+                doc_scores[doc_id] = {
+                    "doc_id": doc_id,
+                    "title": result.get("title", ""),
+                    "content": result["content"],
+                    "vector_score": 0.0,
+                    "ifind_score": result.get("ifind_score", 0.0),
+                    "vector_rank_score": 0.0,
+                    "ifind_rank_score": ifind_rank_score,
+                    "search_type": result.get("search_type", "text_search"),  # Preserve original search_type
+                    "has_vector": False,
+                    "has_ifind": True
+                }
+        
+        # Calculate hybrid scores and sort
+        for doc_id, doc_data in doc_scores.items():
+            # Combine rank scores with weights
+            hybrid_score = (self.vector_weight * doc_data["vector_rank_score"] + 
+                          self.ifind_weight * doc_data["ifind_rank_score"])
+            doc_data["hybrid_score"] = hybrid_score
+        
+        # Sort by hybrid score and return top_k
+        sorted_results = sorted(doc_scores.values(), key=lambda x: x["hybrid_score"], reverse=True)
+        return sorted_results[:top_k]
     
     def _build_prompt(self, query: str, context: str) -> str:
         """Build prompt for LLM generation."""

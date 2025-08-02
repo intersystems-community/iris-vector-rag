@@ -8,10 +8,9 @@ scalability testing across different document counts.
 import json
 import os
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pytest
 
@@ -20,7 +19,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from eval.comprehensive_ragas_evaluation import (
+from scripts.utilities.evaluation.comprehensive_ragas_evaluation import (
     ComprehensiveRAGASEvaluationFramework,
     PipelinePerformanceMetrics,
     RAGASEvaluationResult,

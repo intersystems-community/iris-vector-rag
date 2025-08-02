@@ -6,11 +6,11 @@ have all required data before execution.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from iris_rag.validation.requirements import (
     BasicRAGRequirements, ColBERTRequirements, get_pipeline_requirements
 )
-from iris_rag.validation.validator import PreConditionValidator, ValidationResult
+from iris_rag.validation.validator import PreConditionValidator
 from iris_rag.validation.orchestrator import SetupOrchestrator
 from iris_rag.validation.factory import ValidatedPipelineFactory, PipelineValidationError
 

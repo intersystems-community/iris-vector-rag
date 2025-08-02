@@ -1,0 +1,2 @@
+do $system.OBJ.Load("/tmp/RAG.VectorMigration.cls","ck")
+halt

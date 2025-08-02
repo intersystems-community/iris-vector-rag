@@ -13,7 +13,7 @@ from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func
 import uuid
 import time
-from typing import List, Tuple
+from typing import List
 
 class DirectV2ChunkingService:
     def __init__(self, chunk_size: int = 512, chunk_overlap: int = 50, batch_size: int = 100):

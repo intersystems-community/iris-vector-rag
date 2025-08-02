@@ -8,7 +8,7 @@ supporting both YAML file configuration and environment variable overrides.
 import os
 import yaml
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, Any, Optional
 from pathlib import Path
 

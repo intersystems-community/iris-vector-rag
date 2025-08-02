@@ -5,7 +5,7 @@ Handles JDBC, ODBC, and future dbapi connections with a unified interface
 
 import os
 import logging
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class ConnectionManager:
             
         if self.connection_type == "jdbc":
             try:
-                from jdbc_exploration.iris_jdbc_connector import get_iris_jdbc_connection
+                from common.iris_connection_manager import get_iris_jdbc_connection
                 self._connection = get_iris_jdbc_connection()
                 logger.info("Established JDBC connection")
             except Exception as e:

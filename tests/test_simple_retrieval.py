@@ -6,7 +6,7 @@ functions that might not be available in the test environment.
 """
 
 import logging
-from typing import List, Any, Dict
+from typing import List
 from common.utils import Document
 
 logger = logging.getLogger(__name__)

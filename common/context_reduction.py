@@ -8,9 +8,8 @@ context window of an LLM.
 """
 
 import re
-import heapq
 import numpy as np
-from typing import List, Dict, Any, Callable, Optional
+from typing import List, Dict, Any, Optional
 from .utils import Document # Changed to relative import
 
 def count_tokens(text: str) -> int:

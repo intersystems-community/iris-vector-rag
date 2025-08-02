@@ -1,11 +1,9 @@
 import pytest
 import subprocess
-import json
 import os
 import sys
-import time
 import numpy as np
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any
 
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.core.connection import ConnectionManager

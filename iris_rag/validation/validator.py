@@ -6,7 +6,7 @@ data and dependencies before execution.
 """
 
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any
 from dataclasses import dataclass
 from ..core.connection import ConnectionManager
 from .requirements import PipelineRequirements, TableRequirement, EmbeddingRequirement
