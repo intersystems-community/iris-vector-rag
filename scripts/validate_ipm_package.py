@@ -99,7 +99,7 @@ def validate_ipm_package(repo_path: str) -> Tuple[bool, List[str]]:
                 "RAG.IPMInstaller.cls",
                 "RAG.VectorMigration.cls", 
                 "RAG.IFindSetup.cls",
-                "RAG.SourceDocumentsIFind.cls"
+                "RAG.SourceDocumentsWithIFind.cls"
             ]
             
             for cls_file in required_cls_files:

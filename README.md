@@ -52,10 +52,22 @@ make quick-start        # Guided setup wizard
 
 ## 🚀 Quick Start
 
-### 🆓 Free Community Edition
+### 🆓 Free Community Edition (Default)
 **This project uses InterSystems IRIS Community Edition by default - completely free, no license required!**
 
-All Docker configurations (`docker-compose.yml`, `docker-compose.iris-only.yml`) use `intersystemsdc/iris-community:latest` for immediate, license-free usage. For Enterprise Edition features, see `docker-compose.licensed.yml`.
+All Docker configurations (`docker-compose.yml`, `docker-compose.iris-only.yml`) use `intersystemsdc/iris-community:latest` for immediate, license-free usage. 
+
+**Community vs Enterprise Edition:**
+- **Community Edition** (Default): Free, full RAG functionality, perfect for development and production
+- **Enterprise Edition**: Licensed version with additional enterprise features (use `docker-compose.licensed.yml`)
+
+```bash
+# Start with Community Edition (default)
+docker-compose up -d
+
+# Or use the standalone Community Edition configuration
+docker-compose -f docker-compose.iris-only.yml up -d
+```
 
 ### One-Command Setup
 Get started with a complete RAG system in minutes using our intelligent setup wizard:
@@ -290,7 +302,7 @@ make quick-start-status     # Check system health and configuration
 
 ## 🌟 Key Features
 
-- **🆓 Free to Use**: Default IRIS Community Edition setup - no license required
+- **🆓 Free Community Edition**: Default setup uses IRIS Community Edition - completely free, no license required
 - **🚀 One-Command Setup**: Complete RAG systems in minutes with intelligent profiles
 - **🎯 Profile-Based Configuration**: Minimal, Standard, Extended - optimized for every use case
 - **🔧 Interactive CLI Wizard**: Guided setup with validation and intelligent defaults
