@@ -88,11 +88,6 @@
         <Parameter Name="SKIP_DEPENDENCIES" Description="Skip dependency validation" Default="false"/>
       </Parameters>
       
-      <SystemRequirements>
-        <SystemRequirement Name="IRIS" Version="2025.1"/>
-        <SystemRequirement Name="Python" Version="3.10"/>
-      </SystemRequirements>
-      
       <Manifest>
         <Default Name="SourceDir" Value="${mgrdir}${MODULE}"/>
         <Default Name="Namespace" Value="USER"/>
