@@ -8,10 +8,10 @@
       <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
       <Packaging>module</Packaging>
       <SourcesRoot>objectscript</SourcesRoot>
-      <Resource Name="RAG.IPMInstaller.CLS"/>
-      <Resource Name="RAG.VectorMigration.CLS"/>
-      <Resource Name="RAG.IFindSetup.CLS"/>
-      <Resource Name="RAG.SourceDocumentsWithIFind.CLS"/>
+      <Resource Name="RAG.IPMInstaller.cls"/>
+      <Resource Name="RAG.VectorMigration.cls"/>
+      <Resource Name="RAG.IFindSetup.cls"/>
+      <Resource Name="RAG.SourceDocumentsWithIFind.cls"/>
       
       <!-- Installation Lifecycle -->
       <Lifecycle>
