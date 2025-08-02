@@ -1,32 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Export generator="IRIS" version="26" zv="IRIS for UNIX (Ubuntu Server LTS for x86-64 Containers) 2025.1 (Build 1) Mon Dec 2 2024 14:30:00 EST">
+<Export generator="IRIS" version="26">
   <Document name="intersystems-iris-rag.ZPM">
     <Module>
       <Name>intersystems-iris-rag</Name>
       <Version>0.2.0</Version>
       <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend.</Description>
       <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
-      <License>MIT</License>
-      <Repository>https://github.com/intersystems/iris-rag-templates</Repository>
-      <Homepage>https://github.com/intersystems/iris-rag-templates</Homepage>
-      
-      <Dependencies>
-        <ModuleReference>
-          <Name>%ZPM</Name>
-          <Version>0.7.0</Version>
-        </ModuleReference>
-      </Dependencies>
-      
-      <Packaging>
-        <Resource Name="README.md" Directory=""/>
-        <Resource Name="pyproject.toml" Directory=""/>
-        <Resource Name="requirements.txt" Directory=""/>
-      </Packaging>
-      
-      <Manifest>
-        <Default Name="SourceDir" Value="${mgrdir}${MODULE}"/>
-        <Default Name="Namespace" Value="USER"/>
-      </Manifest>
+      <Packaging>module</Packaging>
+      <SourcesRoot>objectscript</SourcesRoot>
+      <Resource Name="RAG.PKG"/>
     </Module>
   </Document>
 </Export>
