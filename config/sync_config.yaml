@@ -14,7 +14,8 @@ git:
 
 # Files to synchronize from sanitized to internal repository
 files_to_sync:
-  # Documentation files
+  # Documentation files (excluding sensitive reports)
+  # NOTE: CRITICAL_SECURITY_AUDIT_REPORT.md is excluded as it contains sensitive security information
   - source: "README.md"
     target: "README.md"
     description: "Main project README with architecture overview"

@@ -16,7 +16,7 @@ class IPMIntegration:
     
     def __init__(self):
         self.package_name = "intersystems-iris-rag"
-        self.version = "0.1.0"
+        self.version = "0.2.0"
     
     def validate_environment(self) -> Dict[str, Any]:
         """

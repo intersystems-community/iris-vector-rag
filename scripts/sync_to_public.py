@@ -472,6 +472,10 @@ def get_default_config() -> SyncConfig:
         # Environment and setup scripts
         {"source": "activate_env.sh", "target": "activate_env.sh"},
         {"source": "module.xml", "target": "module.xml"},
+        
+        # Release and development files  
+        {"source": "CHANGELOG.md", "target": "CHANGELOG.md"},
+        # Note: CLAUDE.md and .clinerules are internal files - NEVER sync to public
     ]
     
     # Define directories to synchronize FROM internal TO public
@@ -507,6 +511,7 @@ def get_default_config() -> SyncConfig:
             "exclude_patterns": [
                 "*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp",
                 "INTERNAL_ROADMAP.md",  # Exclude internal roadmap from public sync
+                "CRITICAL_SECURITY_AUDIT_REPORT.md",  # Contains sensitive API keys - NEVER sync
                 "internal_*",           # Exclude any internal-prefixed docs
                 "private_*"             # Exclude any private-prefixed docs
             ]
