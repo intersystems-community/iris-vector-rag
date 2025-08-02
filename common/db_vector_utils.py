@@ -30,6 +30,11 @@ def insert_vector(
     Returns:
         True if insertion was successful, False otherwise.
     """
+    # Validate cursor handle
+    if cursor is None:
+        logger.error(f"DB Vector Util: Cannot insert vector into table '{table_name}': cursor is NULL")
+        return False
+    
     if not isinstance(vector_data, list) or not all(isinstance(x, (float, int)) for x in vector_data):
         logger.error(
             f"DB Vector Util: Invalid vector_data format for table '{table_name}'. "
@@ -80,6 +85,12 @@ def insert_vector(
         cursor.execute(sql_query, params)
         return True
     except Exception as e:
+        # Check for connection handle issues
+        error_str = str(e).lower()
+        if "_handle is null" in error_str or "handle is null" in error_str:
+            logger.error(f"DB Vector Util: Database connection handle is NULL during vector insertion: {e}")
+            return False
+        
         # Check if it's a unique constraint violation
         if "UNIQUE" in str(e) or "constraint failed" in str(e):
             logger.debug(f"DB Vector Util: INSERT failed due to duplicate key, attempting UPDATE...")
@@ -112,7 +123,12 @@ def insert_vector(
                     cursor.execute(update_sql, update_params)
                     return True
                 except Exception as update_error:
-                    logger.error(f"DB Vector Util: UPDATE also failed: {update_error}")
+                    # Check for connection handle issues in UPDATE
+                    update_error_str = str(update_error).lower()
+                    if "_handle is null" in update_error_str or "handle is null" in update_error_str:
+                        logger.error(f"DB Vector Util: Database connection handle is NULL during UPDATE: {update_error}")
+                    else:
+                        logger.error(f"DB Vector Util: UPDATE also failed: {update_error}")
                     return False
             else:
                 logger.error(f"DB Vector Util: Could not build UPDATE statement")

@@ -5,7 +5,6 @@ This module provides utilities for reliably determining the project root directo
 regardless of the current working directory.
 """
 
-import os
 from pathlib import Path
 from typing import Optional
 

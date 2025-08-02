@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.core.connection import ConnectionManager
 from iris_rag.embeddings.manager import EmbeddingManager
-from iris_rag.storage.iris import IRISStorage
+from iris_rag.storage.enterprise_storage import IRISStorage
 from iris_rag.pipelines.basic import BasicRAGPipeline
 from iris_rag.core.models import Document
 

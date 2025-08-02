@@ -6,7 +6,6 @@ without importing the schema manager directly, maintaining simplicity for LangCh
 """
 
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

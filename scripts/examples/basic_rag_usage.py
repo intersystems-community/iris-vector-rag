@@ -77,7 +77,7 @@ def main():
         
         for query in queries:
             print(f"\n   Query: {query}")
-            result = pipeline.execute(query, top_k=2)
+            result = pipeline.query(query, top_k=2)
             
             print(f"   Answer: {result['answer']}")
             print(f"   Retrieved {len(result['retrieved_documents'])} documents")

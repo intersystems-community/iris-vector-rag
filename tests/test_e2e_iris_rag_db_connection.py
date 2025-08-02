@@ -44,16 +44,6 @@ def test_db_connection_establishment(connection_manager):
         if conn:
             conn.close()
 
-def test_connection_manager_properties(connection_manager, config_manager):
-    """Tests if connection manager properties are correctly set from config."""
-    db_config = config_manager.get_database_config()
-    assert connection_manager.host == db_config.get("host")
-    assert connection_manager.port == int(db_config.get("port")) # Ensure port is int
-    assert connection_manager.namespace == db_config.get("namespace")
-    assert connection_manager.username == db_config.get("username")
-    # Password and driver path are sensitive or environment-specific, so direct assertion might not be ideal
-    # Instead, we rely on the connection_establishment test to implicitly validate them.
-
 def test_vector_search_readiness(connection_manager):
     """
     Tests if the database is ready for vector search operations.

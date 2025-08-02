@@ -15,15 +15,13 @@ import os
 import time
 import numpy as np
 import logging
-from typing import List, Dict, Any, Tuple
 from contextlib import contextmanager
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from common.iris_connector import get_iris_connection, IRISConnectionError
-from common.db_vector_search import search_source_documents_dynamically
-from basic_rag.pipeline_final import BasicRAGPipeline # Corrected import
+from common.iris_connector import get_iris_connection
+from iris_rag.pipelines.basic import BasicRAGPipeline
 from common.utils import get_embedding_func, get_llm_func
 
 # Configure logging
@@ -312,7 +310,7 @@ class TestHNSWPerformance:
             start_time = time.time()
             
             # Run complete RAG pipeline (should use HNSW indexes)
-            result = rag_pipeline.run(query, top_k=5)
+            result = rag_pipeline.query(query, top_k=5)
             
             end_time = time.time()
             total_time_ms = (end_time - start_time) * 1000

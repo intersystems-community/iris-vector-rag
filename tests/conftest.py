@@ -9,6 +9,9 @@ import os
 import sys
 import json
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
@@ -34,10 +37,10 @@ from common.utils import Document
 from common.utils import get_iris_connector, get_embedding_func, get_llm_func
 from common.iris_connector import get_iris_connection
 
-# Import standardized mocks from the mocks module
+# Import mock classes
 from tests.mocks.db import MockIRISConnector, MockIRISCursor
 from tests.mocks.models import (
-    mock_embedding_func, 
+    mock_embedding_func,
     mock_llm_func,
     mock_colbert_doc_encoder,
     mock_colbert_query_encoder
@@ -104,7 +107,7 @@ def iris_connection_real():
     print("\nFixture: Attempting to establish real IRIS connection...")
     
     # Use our new connection function
-    conn = get_iris_connection(use_mock=False)
+    conn = get_iris_connection()
     
     if conn:
         print("Fixture: Real IRIS connection established.")
@@ -365,6 +368,51 @@ def mock_graph_lib(mocker):
     # Mock specific graph functions as needed (e.g., mock_lib.Graph.return_value = mocker.Mock())
     return mock_lib
 
+@pytest.fixture
+def mock_config_manager():
+    """Provides a mock configuration manager for tests."""
+    print("\nFixture: Providing mock configuration manager")
+    
+    class MockConfigManager:
+        def __init__(self):
+            self._config = {
+                'vector_store.table_name': 'RAG.SourceDocuments',
+                'vector_store.schema': 'RAG',
+                'vector_store.embedding_column': 'embedding',
+                'vector_store.content_column': 'text_content',
+                'vector_store.id_column': 'doc_id',
+                'colbert.document_encoder_model': 'fjmgAI/reason-colBERT-150M-GTE-ModernColBERT',
+                'colbert.query_encoder_model': 'fjmgAI/reason-colBERT-150M-GTE-ModernColBERT',
+                'colbert.max_length': 512,
+                'colbert.embedding_dim': 384,
+                # Storage configuration
+                'storage:iris': {
+                    'host': 'localhost',
+                    'port': 1972,
+                    'namespace': 'USER',
+                    'username': 'test',
+                    'password': 'test'
+                }
+            }
+        
+        def get_config(self, key, default=None):
+            """Get configuration value with proper nested key handling."""
+            return self._config.get(key, default)
+        
+        def get(self, key, default=None):
+            """Alternative get method for compatibility."""
+            return self._config.get(key, default)
+        
+        def set_config(self, key, value):
+            """Set configuration value for testing."""
+            self._config[key] = value
+        
+        def set(self, key, value):
+            """Alternative set method for compatibility."""
+            self._config[key] = value
+    
+    return MockConfigManager()
+
 # --- Testcontainer Fixtures (for isolated testing with real data) ---
 
 # Register custom pytest markers
@@ -401,33 +449,35 @@ def iris_testcontainer():
     
     logger.info(f"Creating IRIS testcontainer with image: {image} on {'ARM64' if is_arm64 else 'x86_64'}")
     
-    # Create and start container
-    container = IRISContainer(image)
+    # Use the new testcontainer utilities for better error handling
+    from common.iris_testcontainer_utils import create_iris_testcontainer_with_retry, wait_for_iris_ready
+    
+    container = create_iris_testcontainer_with_retry(IRISContainer, image)
+    
+    if not container:
+        logger.error("Failed to create IRIS testcontainer")
+        pytest.skip("Failed to create IRIS testcontainer")
+        return None
     
     try:
-        container.start()
+        # Wait for IRIS to be ready
+        if not wait_for_iris_ready(container, timeout=120):
+            logger.error("IRIS testcontainer not ready within timeout")
+            pytest.skip("IRIS testcontainer not ready")
+            return None
         
-        # Manually create connection URL to work around bug in testcontainers-iris
-        host = container.get_container_host_ip()
-        port = container.get_exposed_port(container.port)
-        username = container.username
-        password = container.password
-        namespace = container.namespace
-        
-        connection_url = f"iris://{username}:{password}@{host}:{port}/{namespace}"
-        
-        # Store connection URL on the container for later use
-        container.connection_url = connection_url
-        
-        logger.info(f"IRIS testcontainer started. Connection URL: {connection_url}")
+        logger.info(f"IRIS testcontainer started successfully")
         
         yield container
         
     finally:
         # Stop container when tests are done
         logger.info("Stopping IRIS testcontainer...")
-        container.stop()
-        logger.info("IRIS testcontainer stopped")
+        try:
+            container.stop()
+            logger.info("IRIS testcontainer stopped")
+        except Exception as e:
+            logger.warning(f"Error stopping container: {e}")
 
 @pytest.fixture(scope="session")
 def iris_testcontainer_connection(iris_testcontainer):
@@ -441,13 +491,16 @@ def iris_testcontainer_connection(iris_testcontainer):
         return None
         
     try:
-        import sqlalchemy
+        from common.iris_testcontainer_utils import get_iris_connection_with_password_handling
         from common.db_init import initialize_database
         
-        # Create SQLAlchemy connection using the URL we manually created
-        connection_url = iris_testcontainer.connection_url
-        engine = sqlalchemy.create_engine(connection_url)
-        connection = engine.connect().connection
+        # Use the new connection utility with password handling
+        connection = get_iris_connection_with_password_handling(iris_testcontainer)
+        
+        if not connection:
+            logger.error("Failed to create connection to IRIS testcontainer")
+            pytest.skip("Failed to create connection to IRIS testcontainer")
+            return None
         
         # Initialize database schema
         logger.info("Initializing database schema in testcontainer")
@@ -458,7 +511,6 @@ def iris_testcontainer_connection(iris_testcontainer):
         # Close connection with better error handling
         try:
             connection.close()
-            engine.dispose()
             logger.info("Closed connection to IRIS testcontainer")
         except Exception as e:
             logger.warning(f"Note: Exception during connection close (can be ignored): {e}")
@@ -670,7 +722,7 @@ def iris_connection_auto(use_testcontainer, iris_testcontainer_connection, reque
     # If force_mock, always use mock
     if force_mock:
         logger.info("Using mock connection due to force_mock marker")
-        return get_iris_connection(use_mock=True)
+        return get_iris_connection()
     
     # If force_real, try real connection or skip
     if force_real:

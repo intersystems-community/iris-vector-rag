@@ -9,7 +9,7 @@ import os
 import sys
 from typing import List, Dict, Any, Callable, Tuple
 
-from basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Use fixed and alias
+from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipeline
 from common.utils import get_embedding_func, get_llm_func
 
 # Add project root to path
@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from common.iris_connector import get_iris_connection
 from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists
-from data.loader import process_and_load_documents
+from data.loader_fixed import process_and_load_documents
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
@@ -105,7 +105,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # Initialize the RAG pipeline
     test_embedding_func = get_embedding_func()
     test_llm_func = get_llm_func()
-    pipeline = BasicRAGPipelineV2(
+    pipeline = BasicRAGPipeline(
         iris_connector=conn,
         embedding_func=test_embedding_func,
         llm_func=test_llm_func
@@ -114,7 +114,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # Test Case 1: Query targeting Doc A ("DOCA") - "Mitochondrial DNA"
     query_doc_a = "What is the role of mitochondrial DNA?"
     logger.info(f"Executing E2E test query 1: {query_doc_a}")
-    results_a = pipeline.run(query_doc_a)
+    results_a = pipeline.query(query_doc_a)
 
     assert "retrieved_documents" in results_a, "Query result missing 'retrieved_documents' key"
     assert "answer" in results_a, "Query result missing 'answer' key"
@@ -134,7 +134,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # Test Case 2: Query targeting Doc B ("DOCB") - "CRISPR Gene Editing"
     query_doc_b = "Explain CRISPR gene editing technology." # This is the key query from the task
     logger.info(f"Executing E2E test query 2: {query_doc_b}")
-    results_b = pipeline.run(query_doc_b)
+    results_b = pipeline.query(query_doc_b)
 
     assert "retrieved_documents" in results_b
     assert "answer" in results_b
@@ -156,7 +156,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # Test Case 3: Query for content not present
     query_not_present = "Latest advancements in underwater basket weaving."
     logger.info(f"Executing E2E test query 3: {query_not_present}")
-    results_c = pipeline.run(query_not_present)
+    results_c = pipeline.query(query_not_present)
     
     assert "retrieved_documents" in results_c
     assert "answer" in results_c
@@ -181,7 +181,7 @@ def test_e2e_ingest_search_retrieve_answer(e2e_db_connection):
     # For this test, we'll rely on the answer content check above.
     # logger.debug(f"Retrieved IDs for irrelevant query: {retrieved_ids_c}")
 
-    logger.info("✅ End-to-end pipeline test passed successfully with BasicRAGPipelineV2.")
+    logger.info("✅ End-to-end pipeline test passed successfully with BasicRAGPipeline.")
 
 
 if __name__ == "__main__":

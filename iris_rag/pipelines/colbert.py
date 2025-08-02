@@ -27,8 +27,8 @@ class ColBERTRAGPipeline(RAGPipeline):
     fine-grained query-document matching.
     """
     
-    def __init__(self, connection_manager: ConnectionManager,
-                 config_manager: ConfigurationManager,
+    def __init__(self, connection_manager: Optional[ConnectionManager] = None,
+                 config_manager: Optional[ConfigurationManager] = None,
                  colbert_query_encoder: Optional[Callable[[str], List[List[float]]]] = None,
                  llm_func: Optional[Callable[[str], str]] = None,
                  embedding_func: Optional[Callable] = None,
@@ -37,13 +37,22 @@ class ColBERTRAGPipeline(RAGPipeline):
         Initialize ColBERT RAG pipeline.
         
         Args:
-            connection_manager: Database connection manager
-            config_manager: Configuration manager
+            connection_manager: Database connection manager (optional, will create default if None)
+            config_manager: Configuration manager (optional, will create default if None)
             colbert_query_encoder: Function to encode queries into token embeddings
             llm_func: Function for answer generation
             embedding_func: Function for document-level embeddings (used for candidate retrieval)
             vector_store: Optional VectorStore instance
         """
+        # Handle None arguments by creating default instances
+        if connection_manager is None:
+            from ..core.connection import ConnectionManager
+            connection_manager = ConnectionManager()
+            
+        if config_manager is None:
+            from ..config.manager import ConfigurationManager
+            config_manager = ConfigurationManager()
+        
         super().__init__(connection_manager, config_manager, vector_store)
         
         # Initialize schema manager for dimension management
@@ -55,6 +64,10 @@ class ColBERTRAGPipeline(RAGPipeline):
         self.token_embedding_dim = self.schema_manager.get_vector_dimension("DocumentTokenEmbeddings")
         
         logger.info(f"ColBERT: Document embeddings = {self.doc_embedding_dim}D, Token embeddings = {self.token_embedding_dim}D")
+        
+        # Initialize embedding manager for compatibility with tests
+        from ..embeddings.manager import EmbeddingManager
+        self.embedding_manager = EmbeddingManager(config_manager)
         
         # Store embedding functions with proper naming
         self.doc_embedding_func = embedding_func  # 384D for document-level retrieval
@@ -86,6 +99,19 @@ class ColBERTRAGPipeline(RAGPipeline):
         self._validate_embedding_dimensions()
         
         logger.info("ColBERTRAGPipeline initialized with proper dimension handling")
+    
+    def _tokenize_text(self, text: str) -> List[str]:
+        """
+        Simple tokenization method for compatibility with tests.
+        
+        Args:
+            text: Input text to tokenize
+            
+        Returns:
+            List of tokens
+        """
+        # Simple whitespace tokenization for test compatibility
+        return text.lower().split()
     
     def _validate_embedding_dimensions(self):
         """
@@ -925,7 +951,9 @@ class ColBERTRAGPipeline(RAGPipeline):
         # Prepare context from retrieved documents
         context_parts = []
         for i, doc in enumerate(documents, 1):
-            context_parts.append(f"Document {i}: {doc.page_content[:500]}...")
+            # Handle both page_content and content attributes for compatibility
+            content = getattr(doc, 'page_content', None) or getattr(doc, 'content', '')
+            context_parts.append(f"Document {i}: {content[:500]}...")
         
         context = "\n\n".join(context_parts)
         

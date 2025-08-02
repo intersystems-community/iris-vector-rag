@@ -7,7 +7,6 @@ that cause LIST ERROR with various type codes in IRIS.
 """
 
 import numpy as np
-import json
 import logging
 from typing import List, Union, Any
 

@@ -7,6 +7,7 @@ import sys
 import logging
 import time
 import gc
+import pytest
 from typing import List, Generator
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func
@@ -40,7 +41,8 @@ def chunk_text(text: str, chunk_size: int = 400, overlap: int = 50) -> List[str]
     
     return [chunk.strip() for chunk in chunks if chunk.strip()]
 
-def test_document_generator(limit: int = 10) -> Generator[tuple, None, None]:
+@pytest.fixture
+def document_generator(limit: int = 10) -> Generator[tuple, None, None]:
     """Generator that yields a limited number of documents for testing"""
     conn = get_iris_connection()
     cursor = conn.cursor()
@@ -133,7 +135,7 @@ def monitor_memory_usage():
         logger.warning("psutil not available for memory monitoring")
         return None
 
-def test_memory_efficient_chunking(test_limit: int = 10):
+def test_memory_efficient_chunking(document_generator):
     """Test memory-efficient chunk population with limited documents"""
     
     conn = get_iris_connection()
@@ -157,8 +159,8 @@ def test_memory_efficient_chunking(test_limit: int = 10):
         initial_memory = monitor_memory_usage()
         
         # Process limited documents one at a time using generator
-        for doc_id, text_content in test_document_generator(test_limit):
-            logger.info(f"Processing document {docs_processed + 1}/{test_limit}: {doc_id}")
+        for doc_id, text_content in document_generator:
+            logger.info(f"Processing document {docs_processed + 1}: {doc_id}")
             
             doc_chunks = process_single_document_test(doc_id, text_content, embedding_func, conn, cursor)
             chunks_created += doc_chunks
@@ -174,7 +176,7 @@ def test_memory_efficient_chunking(test_limit: int = 10):
             elapsed = time.time() - start_time
             rate = docs_processed / elapsed if elapsed > 0 else 0
             
-            logger.info(f'Progress: {docs_processed}/{test_limit} docs, {chunks_created} chunks created')
+            logger.info(f'Progress: {docs_processed} docs, {chunks_created} chunks created')
             logger.info(f'Rate: {rate:.1f} docs/sec')
             
             # Force garbage collection
@@ -194,7 +196,7 @@ def test_memory_efficient_chunking(test_limit: int = 10):
         
         logger.info(f'Verification: {test_chunks} test chunks in database')
         
-        return chunks_created
+        assert chunks_created > 0
         
     except Exception as e:
         logger.error(f'❌ Error in test: {e}')

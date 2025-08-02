@@ -2,185 +2,124 @@
 Tests for real data integration with embedding generation.
 
 This module tests the complete pipeline for processing real PMC data 
-and generating both document-level and token-level embeddings.
+and generating both document-level and token-level embeddings using
+the proper utility abstractions.
 """
 
 import pytest
 import os
 import sys
-import numpy as np
-from unittest.mock import MagicMock, patch
 
 # Make sure the project root is in the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from common.iris_connector import get_iris_connection
-from common.utils import Document
-from common.embedding_utils import (
-    generate_document_embeddings,
-    generate_token_embeddings,
-    get_embedding_model,
-    get_colbert_model,
-    create_tables_if_needed
-)
+from rag_templates.simple import RAG
 
 
 @pytest.mark.integration
-@pytest.mark.real_data
-def test_real_data_embedding_pipeline(iris_connection, use_real_data):
+@pytest.mark.real_data  
+def test_real_data_embedding_pipeline(use_real_data):
     """
-    Test the complete pipeline for processing real data and generating embeddings.
-    This test will run with real data if available, otherwise falls back to mock data.
+    Test the complete pipeline for processing real data and generating embeddings
+    using the Simple RAG API abstraction with proper schema setup.
     """
-    # Initialize connection and ensure we have documents in the database
-    cursor = iris_connection.cursor()
-    
-    # For mock connection, add some test documents if needed
-    if not use_real_data:
-        cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
-        result = cursor.fetchone()
-        count = int(result[0]) if result and isinstance(result[0], str) else 0 if result is None else result[0]
-        
-        if count == 0:
-            # Add some test documents
-            test_docs = [
-                ("test_doc1", "Test Document 1", "Content for test document 1", "[]", "[]"),
-                ("test_doc2", "Test Document 2", "Content for test document 2", "[]", "[]"),
-            ]
-            cursor.executemany(
-                "INSERT INTO SourceDocuments (doc_id, title, content, authors, keywords) VALUES (?, ?, ?, ?, ?)",
-                test_docs
-            )
-            print("Added test documents to mock database")
-    
-    # Verify we have documents
-    cursor.execute("SELECT COUNT(*) FROM SourceDocuments")
-    result = cursor.fetchone()
-    cursor.close()
-    
-    assert result is not None
-    doc_count = int(result[0]) if isinstance(result[0], str) else result[0]
-    assert doc_count > 0, "No documents found in database"
-    
-    # Create tables if needed for embeddings
-    create_tables_if_needed(iris_connection)
-    
-    # Get embedding models (mock=True for testing to avoid real model loading)
-    doc_embedding_model = get_embedding_model(mock=True)
-    token_embedding_model = get_colbert_model(mock=True)
-    
-    # Generate document-level embeddings
-    doc_stats = generate_document_embeddings(
-        iris_connection,
-        doc_embedding_model,
-        batch_size=2,
-        limit=2  # Small limit for testing
-    )
-    
-    # Verify document embedding results
-    assert doc_stats is not None
-    assert doc_stats["type"] == "document_embeddings"
-    assert doc_stats["processed_count"] >= 0  # May be 0 if all docs already have embeddings
-    
-    # Generate token-level embeddings
-    token_stats = generate_token_embeddings(
-        iris_connection,
-        token_embedding_model,
-        batch_size=1,
-        limit=2  # Small limit for testing
-    )
-    
-    # Verify token embedding results
-    assert token_stats is not None
-    assert token_stats["type"] == "token_embeddings"
-    assert token_stats["processed_count"] >= 0  # May be 0 if all docs already have token embeddings
-    
-    # Verify we can retrieve documents with embeddings
-    cursor = iris_connection.cursor()
-    
-    # For document embeddings
-    cursor.execute("SELECT COUNT(*) FROM SourceDocuments WHERE embedding IS NOT NULL")
-    doc_result = cursor.fetchone()
-    doc_with_embeddings = int(doc_result[0]) if isinstance(doc_result[0], str) else doc_result[0]
-    
-    # For token embeddings
-    cursor.execute("SELECT COUNT(DISTINCT doc_id) FROM DocumentTokenEmbeddings")
-    token_result = cursor.fetchone()
-    docs_with_tokens = 0
-    if token_result and token_result[0]:
-        docs_with_tokens = int(token_result[0]) if isinstance(token_result[0], str) else token_result[0]
-    
-    cursor.close()
-    
-    # Print stats for debugging
-    print(f"\nResults using {'real' if use_real_data else 'mock'} data:")
-    print(f"Total documents: {doc_count}")
-    print(f"Documents with embeddings: {doc_with_embeddings}")
-    print(f"Documents with token embeddings: {docs_with_tokens}")
-    
-    # We should have at least some documents with embeddings
-    if doc_count > 0:
-        assert doc_with_embeddings > 0 or docs_with_tokens > 0, "No embeddings were generated"
-
-
-@pytest.mark.integration
-@pytest.mark.real_data
-def test_embedding_end_to_end(iris_connection, use_real_data, mock_embedding_func):
-    """
-    Test the end-to-end embedding generation and retrieval process.
-    This test simulates a complete RAG pipeline with embedding generation and retrieval.
-    """
-    # Initialize connection and create test document if needed
-    cursor = iris_connection.cursor()
-    
-    # If using mock data, create a test document
-    if not use_real_data:
-        cursor.execute("DELETE FROM SourceDocuments WHERE doc_id = 'test_e2e_doc'")
-        cursor.execute(
-            "INSERT INTO SourceDocuments (doc_id, title, content) VALUES (?, ?, ?)",
-            ("test_e2e_doc", "E2E Test", "This is a test document for end-to-end testing.")
-        )
-        doc_id = "test_e2e_doc"
-    else:
-        # With real data, get an existing document
-        cursor.execute("SELECT doc_id FROM SourceDocuments LIMIT 1")
-        result = cursor.fetchone()
-        if not result:
-            pytest.skip("No documents available in real database")
-        doc_id = result[0]
-    
-    # Ensure we have embedding column
+    # Initialize RAG system - this should handle schema setup through proper abstractions
     try:
-        cursor.execute("SELECT embedding FROM SourceDocuments WHERE 1=0")
-    except:
-        cursor.execute("ALTER TABLE SourceDocuments ADD embedding TEXT")
-    
-    # Get document content
-    cursor.execute("SELECT content FROM SourceDocuments WHERE doc_id = ?", (doc_id,))
-    content_result = cursor.fetchone()
-    assert content_result is not None
-    content = content_result[0]
-    
-    # Generate embedding
-    model = get_embedding_model(mock=True)
-    embedding = model.encode([content])[0]
-    
-    # Store embedding
-    embedding_json = list(embedding)
-    cursor.execute(
-        "UPDATE SourceDocuments SET embedding = ? WHERE doc_id = ?", 
-        (str(embedding_json), doc_id)
-    )
-    
-    # Now verify we can retrieve document using embedding similarity
-    # Create a test query embedding
-    # This logic would need to be adjusted based on IRIS's vector similarity support
-    query_embedding = embedding * 0.95  # Slightly modified version of the original embedding
-    cursor.close()
-    
-    print(f"\nE2E test results using {'real' if use_real_data else 'mock'} data:")
-    print(f"Successfully generated and stored embedding for document {doc_id}")
-    print(f"Embedding dimensions: {len(embedding)}")
-    
-    # Test passed if we got this far without errors
-    assert True
+        rag = RAG()
+        
+        # Ensure proper schema setup by validating configuration
+        config_valid = rag.validate_config()
+        assert config_valid, "RAG configuration should be valid"
+        
+        # Add test documents using the proper API if not using real data
+        if not use_real_data:
+            test_documents = [
+                "This is test document 1 about machine learning and AI.",
+                "This is test document 2 about database systems and vectors.", 
+                "This is test document 3 about RAG and information retrieval."
+            ]
+            
+            # Use the Simple API to add documents (this handles all abstractions including schema)
+            rag.add_documents(test_documents)
+            print("Added test documents using Simple RAG API")
+        
+        # Verify document count
+        doc_count = rag.get_document_count()
+        assert doc_count > 0, "No documents found in knowledge base"
+        
+        # Test querying the system
+        query_result = rag.query("What is machine learning?")
+        assert isinstance(query_result, str), "Query should return a string response"
+        assert len(query_result) > 0, "Query should return non-empty response"
+        
+        print(f"\nResults using {'real' if use_real_data else 'mock'} data:")
+        print(f"Total documents: {doc_count}")
+        print(f"Query response: {query_result[:100]}...")
+        
+        # Verify the system is working end-to-end
+        assert doc_count > 0, "Pipeline should have documents loaded"
+        
+    except Exception as e:
+        # If the test fails due to schema issues, that indicates the schema manager setup needs fixing
+        if "Field" in str(e) and "not found" in str(e):
+            pytest.fail(f"Schema setup failed - schema manager did not properly create required database structure: {e}")
+        else:
+            # Re-raise other exceptions
+            raise
+
+
+@pytest.mark.integration
+@pytest.mark.real_data
+def test_embedding_end_to_end(use_real_data):
+    """
+    Test the end-to-end embedding generation and retrieval process
+    using the Simple RAG API abstractions with proper schema management.
+    """
+    try:
+        # Initialize RAG system - this should handle schema setup through proper abstractions
+        rag = RAG()
+        
+        # Validate configuration before proceeding
+        config_valid = rag.validate_config()
+        assert config_valid, "RAG configuration should be valid"
+        
+        # If using mock data, add a test document
+        if not use_real_data:
+            test_document = "This is a comprehensive test document for end-to-end testing of the RAG pipeline with embeddings and retrieval capabilities."
+            rag.add_documents([test_document])
+            print("Added test document using Simple RAG API")
+        
+        # Verify we have documents
+        doc_count = rag.get_document_count()
+        if doc_count == 0:
+            pytest.skip("No documents available for testing")
+        
+        # Test the end-to-end pipeline with a query
+        test_query = "What is the purpose of this test document?"
+        query_result = rag.query(test_query)
+        
+        # Verify the response
+        assert isinstance(query_result, str), "Query should return a string response"
+        assert len(query_result) > 0, "Query should return non-empty response"
+        assert "error" not in query_result.lower() or "Error:" not in query_result, f"Query returned error: {query_result}"
+        
+        # Test another query to verify retrieval is working
+        similarity_query = "test document"
+        similarity_result = rag.query(similarity_query)
+        assert isinstance(similarity_result, str), "Similarity query should return string response"
+        assert len(similarity_result) > 0, "Similarity query should return non-empty response"
+        
+        print(f"\nE2E test results using {'real' if use_real_data else 'mock'} data:")
+        print(f"Total documents: {doc_count}")
+        print(f"Test query response: {query_result[:100]}...")
+        print(f"Similarity query response: {similarity_result[:100]}...")
+        
+        print("End-to-end test completed successfully using proper abstractions")
+        
+    except Exception as e:
+        # If the test fails due to schema issues, that indicates the schema manager setup needs fixing
+        if "Field" in str(e) and "not found" in str(e):
+            pytest.fail(f"Schema setup failed - schema manager did not properly create required database structure: {e}")
+        else:
+            # Re-raise other exceptions  
+            raise

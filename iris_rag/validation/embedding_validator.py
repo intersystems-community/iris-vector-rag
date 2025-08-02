@@ -7,7 +7,7 @@ and identify quality issues in embedding data for the reconciliation system.
 
 import logging
 import numpy as np
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Optional
 from dataclasses import dataclass
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager

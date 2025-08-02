@@ -96,6 +96,13 @@ def _create_pipeline_legacy(pipeline_type: str, connection_manager: ConnectionMa
             config_manager=config_manager,
             llm_func=llm_func
         )
+    elif pipeline_type == "basic_rerank":
+        from .pipelines.basic_rerank import BasicRAGRerankingPipeline
+        return BasicRAGRerankingPipeline(
+            connection_manager=connection_manager,
+            config_manager=config_manager,
+            llm_func=llm_func
+        )
     elif pipeline_type == "colbert":
         return ColBERTRAGPipeline(
             connection_manager=connection_manager,
@@ -140,8 +147,15 @@ def _create_pipeline_legacy(pipeline_type: str, connection_manager: ConnectionMa
             config_manager=config_manager,
             llm_func=llm_func
         )
+    elif pipeline_type == "sql_rag":
+        from .pipelines.sql_rag import SQLRAGPipeline
+        return SQLRAGPipeline(
+            connection_manager=connection_manager,
+            config_manager=config_manager,
+            llm_func=llm_func
+        )
     else:
-        available_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag"]
+        available_types = ["basic", "basic_rerank", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag", "sql_rag"]
         raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available: {available_types}")
 
 

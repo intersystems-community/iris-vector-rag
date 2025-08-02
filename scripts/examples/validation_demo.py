@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import iris_rag
 from iris_rag.validation.requirements import get_pipeline_requirements
-from iris_rag.validation.factory import ValidatedPipelineFactory
 from common.iris_connection_manager import get_iris_connection
 
 

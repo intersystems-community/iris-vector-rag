@@ -3,9 +3,8 @@ Tests for the Health Monitor module.
 """
 
 import pytest
-import time
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from iris_rag.monitoring.health_monitor import HealthMonitor, HealthCheckResult
 from iris_rag.config.manager import ConfigurationManager
@@ -100,7 +99,12 @@ class TestHealthMonitor:
         # Mock successful database connection
         mock_connection = Mock()
         mock_cursor = Mock()
-        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        
+        # Properly mock the context manager
+        mock_cursor_context = Mock()
+        mock_cursor_context.__enter__ = Mock(return_value=mock_cursor)
+        mock_cursor_context.__exit__ = Mock(return_value=None)
+        mock_connection.cursor.return_value = mock_cursor_context
         
         # Mock query results
         mock_cursor.fetchone.side_effect = [
@@ -189,7 +193,12 @@ class TestHealthMonitor:
         # Mock database connection and queries
         mock_connection = Mock()
         mock_cursor = Mock()
-        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        
+        # Properly mock the context manager
+        mock_cursor_context = Mock()
+        mock_cursor_context.__enter__ = Mock(return_value=mock_cursor)
+        mock_cursor_context.__exit__ = Mock(return_value=None)
+        mock_connection.cursor.return_value = mock_cursor_context
         
         # Mock query results
         mock_cursor.fetchone.return_value = [1000]  # Embedded document count
@@ -214,7 +223,12 @@ class TestHealthMonitor:
         # Mock database connection
         mock_connection = Mock()
         mock_cursor = Mock()
-        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        
+        # Properly mock the context manager
+        mock_cursor_context = Mock()
+        mock_cursor_context.__enter__ = Mock(return_value=mock_cursor)
+        mock_cursor_context.__exit__ = Mock(return_value=None)
+        mock_connection.cursor.return_value = mock_cursor_context
         
         # Mock insufficient embedded documents
         mock_cursor.fetchone.return_value = [5]  # Only 5 embedded documents
@@ -267,19 +281,30 @@ class TestHealthMonitor:
             duration_ms=30.0
         ))
         
+        health_monitor.check_llm_cache_performance = Mock(return_value=HealthCheckResult(
+            component='llm_cache_performance',
+            status='healthy',
+            message='LLM cache performance healthy',
+            metrics={},
+            timestamp=datetime.now(),
+            duration_ms=25.0
+        ))
+        
         results = health_monitor.run_comprehensive_health_check()
         
-        assert len(results) == 4
+        assert len(results) == 5
         assert 'system_resources' in results
         assert 'database_connectivity' in results
         assert 'docker_containers' in results
         assert 'vector_performance' in results
+        assert 'llm_cache_performance' in results
         
         # Verify all checks were called
         health_monitor.check_system_resources.assert_called_once()
         health_monitor.check_database_connectivity.assert_called_once()
         health_monitor.check_docker_containers.assert_called_once()
         health_monitor.check_vector_performance.assert_called_once()
+        health_monitor.check_llm_cache_performance.assert_called_once()
     
     def test_get_overall_health_status_healthy(self, health_monitor):
         """Test overall health status when all components are healthy."""

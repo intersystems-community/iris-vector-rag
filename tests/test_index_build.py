@@ -3,8 +3,7 @@
 
 import pytest
 import time
-from typing import List, Dict, Any
-from unittest.mock import call, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 # Assuming mock fixtures are available from conftest.py
 

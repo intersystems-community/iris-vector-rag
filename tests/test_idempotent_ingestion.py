@@ -6,15 +6,14 @@ import pytest
 import logging
 import os
 import sys
-from typing import List, Dict, Any, Callable, Tuple
+from typing import List, Tuple
 
 # Add project root to path to allow direct execution and imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from common.iris_connector import get_iris_connection
 from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists
-from data.loader import process_and_load_documents
-from data.pmc_processor import process_pmc_files # To get doc_ids for verification
+from data.loader_fixed import process_and_load_documents
 
 # Configure logging for tests
 logger = logging.getLogger(__name__)

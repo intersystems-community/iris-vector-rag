@@ -14,8 +14,6 @@ import time
 
 from ..core.base import RAGPipeline
 from ..core.models import Document
-from ..core.connection import ConnectionManager
-from ..config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +65,10 @@ class CRAGPipeline(RAGPipeline):
         
         # Initialize parent with vector store
         super().__init__(connection_manager, config_manager, vector_store)
+        
+        # Initialize embedding manager for compatibility with tests
+        from ..embeddings.manager import EmbeddingManager
+        self.embedding_manager = EmbeddingManager(config_manager)
         
         self.embedding_func = embedding_func
         self.llm_func = llm_func

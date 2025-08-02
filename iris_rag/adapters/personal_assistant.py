@@ -24,18 +24,43 @@ class PersonalAssistantAdapter:
     format and the RAG templates format.
     """
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, config_path: Optional[str] = None):
         """
         Initializes the PersonalAssistantAdapter.
 
         Args:
             config: Optional configuration dictionary. If provided, it will be
-                    used to initialize the ConfigurationManager.
+                    used to update the ConfigurationManager after initialization.
+            config_path: Optional path to configuration file. If provided, it will be
+                        passed to ConfigurationManager for initialization.
         """
-        self.config_manager = ConfigurationManager(config=config)
+        # Initialize ConfigurationManager with proper parameters
+        self.config_manager = ConfigurationManager(config_path=config_path)
+        
+        # If config dict is provided, update the configuration
+        if config:
+            self.update_config(config)
+        
         self.connection_manager = ConnectionManager(config_manager=self.config_manager)
         self.rag_pipeline: Optional[BasicRAGPipeline] = None
         logger.info("PersonalAssistantAdapter initialized.")
+
+    def update_config(self, config: Dict[str, Any]) -> None:
+        """
+        Update the configuration manager with new configuration values.
+        
+        Args:
+            config: Configuration dictionary to update with
+        """
+        if hasattr(self.config_manager, '_config') and self.config_manager._config is not None:
+            # Translate the config to the expected format
+            translated_config = self._translate_config(config)
+            # Update the internal config dictionary
+            self.config_manager._config.update(translated_config)
+        else:
+            # If no internal config exists, create one with translated config
+            translated_config = self._translate_config(config)
+            self.config_manager._config = translated_config
 
     def _translate_config(self, pa_config: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -98,7 +123,10 @@ class PersonalAssistantAdapter:
         if pa_specific_config:
             iris_rag_config = self._translate_config(pa_specific_config)
             # Merge translated config with existing config, translated taking precedence
-            self.config_manager.update_config(iris_rag_config)
+            if hasattr(self.config_manager, '_config') and self.config_manager._config is not None:
+                self.config_manager._config.update(iris_rag_config)
+            else:
+                self.config_manager._config = iris_rag_config
             logger.info("Personal Assistant specific configuration translated and merged.")
 
         # Ensure connection manager uses the latest config

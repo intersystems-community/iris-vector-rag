@@ -9,13 +9,11 @@ the LLM context window size.
 import pytest
 import os
 import sys
-import numpy as np
 from unittest.mock import MagicMock, patch
 
 # Make sure the project root is in the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
-from common.iris_connector import get_iris_connection
 from common.utils import Document
 from common.embedding_utils import get_embedding_model
 

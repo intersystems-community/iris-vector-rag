@@ -9,7 +9,6 @@ between tests and support MCP integration testing.
 import pytest
 import logging
 import uuid
-from typing import Optional, Dict, Any
 from contextlib import contextmanager
 
 from tests.test_modes import MockController, TestMode
@@ -272,27 +271,7 @@ def temporary_test_data(docs: list):
         conn.close()
 
 
-# MCP-specific fixtures
-
-@pytest.fixture
-async def mcp_test_environment():
-    """
-    Provides isolated environment for MCP integration testing.
-    
-    This fixture:
-    - Creates a dedicated namespace for MCP tests
-    - Ensures Python and Node.js see same data
-    - Provides cleanup after tests
-    """
-    from tests.utils.mcp_test_helpers import MCPTestEnvironment
-    
-    env = MCPTestEnvironment()
-    await env.setup()
-    
-    yield env
-    
-    await env.teardown()
-
+# MCP-specific fixtur
 
 @pytest.fixture
 def assert_database_state():
