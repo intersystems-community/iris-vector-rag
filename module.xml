@@ -8,7 +8,11 @@
       <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
       <Packaging>module</Packaging>
       <SourcesRoot>objectscript</SourcesRoot>
-      <Resource Name="RAG.PKG"/>
+      <Resource Name="RAG.IPMInstaller.CLS"/>
+      <Resource Name="RAG.VectorMigration.CLS"/>
+      <Resource Name="RAG.IFindSetup.CLS"/>
+      <Resource Name="enable_vector_search.cos"/>
+      <Resource Name="python_bridge.py"/>
     </Module>
   </Document>
 </Export>
