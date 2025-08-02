@@ -6,60 +6,12 @@
       <Version>0.2.0</Version>
       <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend.</Description>
       <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
-      <License>MIT</License>
-      <Repository>https://github.com/intersystems-community/iris-rag-templates</Repository>
-      <Homepage>https://github.com/intersystems-community/iris-rag-templates</Homepage>
-      <MinimumVersion>2025.1</MinimumVersion>
-      
-      <!-- Configuration Parameters -->
-      <Parameter Name="PYTHON_PATH">
-        <Description>Path to Python executable for RAG operations</Description>
-        <Default>python3</Default>
-      </Parameter>
-      <Parameter Name="INSTALL_PYTHON_PACKAGE">
-        <Description>Whether to install Python dependencies during setup</Description>
-        <Default>1</Default>
-      </Parameter>
-      <Parameter Name="ENABLE_VECTOR_SEARCH">
-        <Description>Enable IRIS Vector Search capabilities</Description>
-        <Default>1</Default>
-      </Parameter>
-      <Parameter Name="NAMESPACE">
-        <Description>Target namespace for installation</Description>
-        <Default>USER</Default>
-      </Parameter>
-      
-      <!-- Dependencies -->
-      <Dependencies>
-        <ModuleReference>
-          <Name>iris-python-tools</Name>
-          <Version>1.0.0</Version>
-          <Optional>true</Optional>
-        </ModuleReference>
-      </Dependencies>
-      
-      <!-- Package Resources -->
       <Packaging>module</Packaging>
       <SourcesRoot>objectscript</SourcesRoot>
-      
-      <!-- ObjectScript Classes -->
       <Resource Name="RAG.IPMInstaller.CLS"/>
       <Resource Name="RAG.VectorMigration.CLS"/>
       <Resource Name="RAG.IFindSetup.CLS"/>
-      <Resource Name="RAG.PythonBridge.CLS"/>
       <Resource Name="RAG.SourceDocumentsWithIFind.CLS"/>
-      <Resource Name="RAGDemo.Invoker.CLS"/>
-      <Resource Name="RAGDemo.KeywordFinder.CLS"/>
-      <Resource Name="RAGDemo.KeywordProcessor.CLS"/>
-      <Resource Name="RAGDemo.TestBed.CLS"/>
-      
-      <!-- Python Package Resources -->
-      <Resource Name="iris_rag" Directory="iris_rag" Recurse="true"/>
-      <Resource Name="rag_templates" Directory="rag_templates" Recurse="true"/>
-      <Resource Name="common" Directory="common" Recurse="true"/>
-      <Resource Name="requirements.txt"/>
-      <Resource Name="pyproject.toml"/>
-      <Resource Name="README.md"/>
       
       <!-- Installation Lifecycle -->
       <Lifecycle>
