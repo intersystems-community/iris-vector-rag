@@ -10,7 +10,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.working.colbert.pipeline import ColbertRAGPipeline # Updated import
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTRAGPipeline
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Test data
@@ -106,20 +106,20 @@ def test_colbert_v2_e2e_fine_grained_match(iris_testcontainer_connection): # Rem
         setup_test_data_v2(iris_testcontainer_connection, real_embedding_function)
         
         # Instantiate ColBERTPipelineV2 directly with real iris_connector, real embedding_func, and mock llm_func
-        pipeline = ColbertRAGPipeline( # Updated class name
+        pipeline = ColBERTRAGPipeline( # Updated class name
             iris_connector=iris_testcontainer_connection,
-            colbert_query_encoder_func=real_embedding_function, # Parameter name changed in ColbertRAGPipeline
+            colbert_query_encoder_func=real_embedding_function, # Parameter name changed in ColBERTRAGPipeline
             llm_func=mock_llm_function
-            # embedding_func is also a param in ColbertRAGPipeline, might need to pass real_embedding_function again or ensure default is okay
+            # embedding_func is also a param in ColBERTRAGPipeline, might need to pass real_embedding_function again or ensure default is okay
             # For now, assuming colbert_query_encoder_func is the primary one needed for embeddings here.
-            # The actual ColbertRAGPipeline also takes embedding_func for stage 1.
+            # The actual ColBERTRAGPipeline also takes embedding_func for stage 1.
             # Let's add it for completeness, assuming real_embedding_function serves both roles for this test.
             , embedding_func=real_embedding_function
         )
 
         query = "What is azithromycin used for regarding Streptococcus pneumoniae?"
         
-        results = pipeline.run(query=query, top_k=2, similarity_threshold=0.0)
+        results = pipeline.query(query=query, top_k=2, similarity_threshold=0.0)
 
         print(f"V2 Query: {results['query']}")
         print(f"V2 Answer: {results['answer']}")

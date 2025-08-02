@@ -1,0 +1,243 @@
+# Test configurations for Docker-compose integration testing
+
+minimal_profile:
+  profile: minimal
+  document_count: 50
+  database:
+    host: localhost
+    port: 1972
+    username: demo
+    password: demo
+    namespace: USER
+  storage:
+    chunking:
+      chunk_size: 1000
+      overlap: 200
+  performance:
+    batch_size: 16
+    max_workers: 2
+  docker:
+    iris_image: intersystemsdc/iris-community:latest
+    app_image: python:3.11-slim
+    network_name: rag_network
+    compose_project_name: rag-quick-start-minimal
+
+standard_profile:
+  profile: standard
+  document_count: 500
+  database:
+    host: localhost
+    port: 1972
+    username: demo
+    password: demo
+    namespace: USER
+  storage:
+    chunking:
+      chunk_size: 1000
+      overlap: 200
+  performance:
+    batch_size: 32
+    max_workers: 4
+  docker:
+    iris_image: intersystemsdc/iris-community:latest
+    app_image: python:3.11-slim
+    mcp_image: node:18-alpine
+    network_name: rag_network
+    compose_project_name: rag-quick-start-standard
+    enable_monitoring: true
+
+extended_profile:
+  profile: extended
+  document_count: 5000
+  database:
+    host: localhost
+    port: 1972
+    username: demo
+    password: demo
+    namespace: USER
+  storage:
+    chunking:
+      chunk_size: 1000
+      overlap: 200
+  performance:
+    batch_size: 64
+    max_workers: 8
+  docker:
+    iris_image: intersystemsdc/iris-community:latest
+    app_image: python:3.11-slim
+    mcp_image: node:18-alpine
+    nginx_image: nginx:alpine
+    monitoring_image: prom/prometheus:latest
+    grafana_image: grafana/grafana:latest
+    network_name: rag_network
+    compose_project_name: rag-quick-start-extended
+    enable_monitoring: true
+    enable_scaling: true
+
+development_profile:
+  profile: development
+  document_count: 100
+  database:
+    host: localhost
+    port: 1972
+    username: demo
+    password: demo
+    namespace: USER
+  development:
+    hot_reload: true
+    debug_mode: true
+    expose_debug_ports: true
+    debug_ports:
+      python: 5678
+      node: 9229
+  docker:
+    iris_image: intersystemsdc/iris-community:latest
+    app_image: python:3.11-slim
+    mcp_image: node:18-alpine
+    network_name: rag_network_dev
+    compose_project_name: rag-quick-start-dev
+
+production_profile:
+  profile: production
+  document_count: 10000
+  database:
+    host: localhost
+    port: 1972
+    username: demo
+    password: demo
+    namespace: USER
+  production:
+    enable_ssl: true
+    enable_monitoring: true
+    enable_backup: true
+    resource_limits:
+      memory: 2g
+      cpus: 1.0
+  security:
+    enable_ssl: true
+    ssl_cert_path: /certs/server.crt
+    ssl_key_path: /certs/server.key
+    enable_firewall: true
+  backup:
+    enable_automated_backup: true
+    backup_schedule: "0 2 * * *"
+    backup_retention: 7d
+    backup_storage: s3://backup-bucket
+  scaling:
+    rag_app:
+      replicas: 3
+      cpu_limit: 1.0
+      memory_limit: 1g
+    mcp_server:
+      replicas: 2
+      cpu_limit: 0.5
+      memory_limit: 512m
+  docker:
+    iris_image: intersystemsdc/iris-community:latest
+    app_image: python:3.11-slim
+    mcp_image: node:18-alpine
+    nginx_image: nginx:alpine
+    monitoring_image: prom/prometheus:latest
+    grafana_image: grafana/grafana:latest
+    network_name: rag_network_prod
+    compose_project_name: rag-quick-start-prod
+
+testing_profile:
+  profile: testing
+  document_count: 200
+  database:
+    host: localhost
+    port: 1972
+    username: test
+    password: test
+    namespace: TEST
+  testing:
+    enable_test_db: true
+    mock_external_services: true
+    test_data_volume: true
+  docker:
+    iris_image: intersystemsdc/iris-community:latest
+    app_image: python:3.11-slim
+    network_name: rag_network_test
+    compose_project_name: rag-quick-start-test
+
+custom_profile:
+  profile: custom
+  document_count: 1000
+  database:
+    host: localhost
+    port: 1972
+    username: custom
+    password: custom
+    namespace: CUSTOM
+  docker:
+    services:
+      iris:
+        image: intersystemsdc/iris-community:2024.1
+        ports:
+          - "1972:1972"
+        environment:
+          - ISC_PASSWORD=CustomPassword
+      custom_service:
+        image: custom/app:latest
+        ports:
+          - "8080:8080"
+        depends_on:
+          - iris
+    network_name: rag_network_custom
+    compose_project_name: rag-quick-start-custom
+
+# Error test configurations
+invalid_profile:
+  profile: invalid_profile
+  docker:
+    invalid_service:
+      image: ""  # Invalid empty image
+      ports:
+        - "invalid_port_format"
+
+port_conflict_config:
+  profile: standard
+  services:
+    service1:
+      ports:
+        - "8000:8000"
+    service2:
+      ports:
+        - "8000:8000"  # Conflict
+
+invalid_volume_config:
+  profile: standard
+  volumes:
+    invalid_volume: "/nonexistent/path:/app"
+
+# Optimization test configurations
+fast_startup_config:
+  profile: development
+  optimization:
+    fast_startup: true
+    parallel_startup: true
+    cache_images: true
+
+resource_optimization_config:
+  profile: extended
+  optimization:
+    resource_optimization: true
+    memory_optimization: true
+    cpu_optimization: true
+
+load_balancer_config:
+  profile: production
+  load_balancer:
+    enable: true
+    algorithm: round_robin
+    health_check_interval: 30s
+
+autoscaling_config:
+  profile: production
+  autoscaling:
+    enable: true
+    min_replicas: 2
+    max_replicas: 10
+    cpu_threshold: 70
+    memory_threshold: 80

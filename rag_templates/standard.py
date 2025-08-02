@@ -160,8 +160,8 @@ class ConfigurableRAG:
             if "max_results" in query_options:
                 query_options["top_k"] = query_options.pop("max_results")
             
-            # Execute the query
-            result = pipeline.execute(query_text, **query_options)
+            # Execute the query using unified query() method
+            result = pipeline.query(query_text, **query_options)
             
             # Determine return format
             include_sources = options.get("include_sources", False) if options else False

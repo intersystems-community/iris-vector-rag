@@ -1,0 +1,99 @@
+# Base configuration template for RAG Templates
+# This serves as the foundation for all other configuration profiles
+
+metadata:
+  version: "1.0.0"
+  schema_version: "2024.1"
+  description: "Base configuration for RAG Templates"
+  
+# Database Configuration
+database:
+  iris:
+    driver: "intersystems_iris.dbapi._DBAPI"
+    host: "${IRIS_HOST:-localhost}"
+    port: "${IRIS_PORT:-1972}"
+    namespace: "${IRIS_NAMESPACE:-USER}"
+    username: "${IRIS_USERNAME:-_SYSTEM}"
+    password: "${IRIS_PASSWORD:-SYS}"
+    connection_pool:
+      min_connections: 2
+      max_connections: 10
+      connection_timeout: 30
+      idle_timeout: 300
+
+# Storage Configuration
+storage:
+  iris:
+    table_name: "${IRIS_TABLE_NAME:-RAG.SourceDocuments}"
+    vector_dimension: "${VECTOR_DIMENSION:-384}"
+    index_type: "HNSW"
+  
+  chunking:
+    enabled: true
+    strategy: "fixed_size"
+    chunk_size: 512
+    overlap: 50
+    preserve_sentences: true
+    min_chunk_size: 100
+
+# Vector Index Configuration
+vector_index:
+  type: "HNSW"
+  M: 16
+  efConstruction: 200
+  Distance: "COSINE"
+
+# Embeddings Configuration
+embeddings:
+  default_provider: "sentence_transformers"
+  sentence_transformers:
+    model_name: "${EMBEDDING_MODEL:-all-MiniLM-L6-v2}"
+    device: "${EMBEDDING_DEVICE:-cpu}"
+    cache_folder: "${EMBEDDING_CACHE_FOLDER:-./models/embeddings}"
+
+# LLM Configuration
+llm:
+  default_provider: "${LLM_PROVIDER:-openai}"
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "${OPENAI_MODEL:-gpt-3.5-turbo}"
+    temperature: 0.1
+    max_tokens: 1000
+  azure_openai:
+    api_key: "${AZURE_OPENAI_API_KEY}"
+    endpoint: "${AZURE_OPENAI_ENDPOINT}"
+    api_version: "${AZURE_OPENAI_API_VERSION:-2023-12-01-preview}"
+    deployment_name: "${AZURE_OPENAI_DEPLOYMENT_NAME}"
+
+# Logging Configuration
+logging:
+  level: "${LOG_LEVEL:-INFO}"
+  format: "structured"
+  handlers:
+    - type: "console"
+      level: "INFO"
+    - type: "file"
+      level: "DEBUG"
+      filename: "${LOG_FILE:-logs/rag_templates.log}"
+      max_size: "10MB"
+      backup_count: 5
+
+# Security Configuration
+security:
+  enable_auth: false
+  cors:
+    enabled: true
+    origins: ["http://localhost:3000", "http://localhost:8080"]
+  rate_limiting:
+    enabled: false
+    requests_per_minute: 60
+
+# Performance Configuration
+performance:
+  batch_size: 32
+  max_workers: 4
+  timeout: 30
+  cache:
+    enabled: true
+    ttl: 3600
+    max_size: 1000

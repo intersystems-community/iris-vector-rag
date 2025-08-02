@@ -2,7 +2,6 @@
 Integration tests for the PersonalAssistantAdapter.
 """
 import pytest
-import os
 import json
 import logging
 from unittest.mock import patch, MagicMock
@@ -27,7 +26,7 @@ def mock_basic_rag_pipeline():
 def mock_connection_manager():
     """Fixture for a mocked ConnectionManager."""
     cm = MagicMock(spec=ConnectionManager)
-    cm.get_iris_connection.return_value = MagicMock() # Simulate a successful connection
+    cm.get_connection.return_value = MagicMock() # Simulate a successful connection
     return cm
 
 @pytest.fixture

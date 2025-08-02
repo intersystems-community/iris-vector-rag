@@ -5,7 +5,7 @@ This module provides storage abstractions and implementations for different
 database backends, with a focus on InterSystems IRIS.
 """
 
-from .iris import IRISStorage
+from .enterprise_storage import IRISStorage
 from .vector_store_iris import IRISVectorStore
 from .clob_handler import convert_clob_to_string, process_document_row, ensure_string_content
 

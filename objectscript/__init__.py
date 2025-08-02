@@ -1,9 +1,6 @@
 """
-ObjectScript integration package for RAG pipelines.
+ObjectScript integration package for RAG templates.
 
-This package provides the bridge between ObjectScript classes and Python RAG implementations,
-enabling seamless integration and testing through IRIS Embedded Python.
+This package provides ObjectScript integration capabilities including
+MCP (Model Context Protocol) bridge functionality.
 """
-
-__version__ = "1.0.0"
-__author__ = "RAG Templates Project"

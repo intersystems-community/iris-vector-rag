@@ -5,6 +5,7 @@ Comprehensive test for NodeRAG functionality
 
 import os
 import sys
+import pytest
 # Old path insert - keep for now if it serves a specific purpose for this test file
 sys.path.insert(0, os.path.abspath('.'))
 # Add project root to path
@@ -14,38 +15,75 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.utils import get_embedding_func, get_llm_func # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Corrected import path and class name
+from iris_rag.pipelines.noderag import NodeRAGPipeline # Corrected import path and class name
 
 def test_noderag_comprehensive():
     """Test NodeRAG with comprehensive debugging"""
     print("Testing NodeRAG Comprehensive...")
     
-    # Check database state first
+    # Set up the database schema first
+    from iris_rag.storage.schema_manager import SchemaManager
+    from iris_rag.config.manager import ConfigurationManager
+    from iris_rag.core.connection import ConnectionManager
+    
+    # Initialize managers
+    config_manager = ConfigurationManager()
+    connection_manager = ConnectionManager(config_manager)
+    schema_manager = SchemaManager(connection_manager, config_manager)
+    
+    # Ensure the schema exists
+    schema_manager.ensure_table_schema("SourceDocuments")
+    
+    # Check database state
     iris_conn = get_iris_connection()
     cursor = iris_conn.cursor()
     
-    # Check document count
-    cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
-    doc_count = cursor.fetchone()[0]
-    print(f"Documents with embeddings: {doc_count}")
+    # Check if tables exist and create minimal test data if needed
+    try:
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+        doc_count = cursor.fetchone()[0]
+        print(f"Documents with embeddings: {doc_count}")
+    except Exception as e:
+        print(f"Could not access SourceDocuments table: {e}")
+        doc_count = 0
     
-    # Check chunk count
-    cursor.execute("SELECT COUNT(*) FROM RAG.DocumentChunks WHERE embedding IS NOT NULL")
-    chunk_count = cursor.fetchone()[0]
-    print(f"Chunks with embeddings: {chunk_count}")
+    try:
+        cursor.execute("SELECT COUNT(*) FROM RAG.DocumentChunks WHERE embedding IS NOT NULL")
+        chunk_count = cursor.fetchone()[0]
+        print(f"Chunks with embeddings: {chunk_count}")
+    except Exception as e:
+        print(f"Could not access DocumentChunks table: {e}")
+        chunk_count = 0
     
-    cursor.close()
-    
+    # If no data exists, create minimal test data
     if doc_count == 0 and chunk_count == 0:
-        print("No embeddings found - cannot test retrieval")
-        return False
+        print("No embeddings found - creating minimal test data")
+        from common.utils import get_embedding_func
+        embedding_func = get_embedding_func()
+        
+        # Create test document with embedding
+        test_embedding = embedding_func("diabetes symptoms include increased thirst")
+        embedding_str = "[" + ",".join(map(str, test_embedding)) + "]"
+        
+        try:
+            cursor.execute(
+                "INSERT INTO RAG.SourceDocuments (doc_id, title, text_content, embedding) VALUES (?, ?, ?, TO_VECTOR(?))",
+                ("test_diabetes", "Diabetes Info", "Diabetes symptoms include increased thirst, frequent urination, and fatigue.", embedding_str)
+            )
+            iris_conn.commit()
+            print("✅ Created test document with embedding")
+            doc_count = 1
+        except Exception as e:
+            print(f"Could not create test data: {e}")
+            cursor.close()
+            return False
     
     # Initialize components
     embedding_func = get_embedding_func()
     llm_func = get_llm_func()
     
     # Create NodeRAG pipeline
-    pipeline = NodeRAGPipelineV2(
+    pipeline = NodeRAGPipeline(
         iris_connector=iris_conn,
         embedding_func=embedding_func,
         llm_func=llm_func
@@ -68,7 +106,7 @@ def test_noderag_comprehensive():
         
         if len(docs) > 0 or len(chunks) > 0:
             # Run full pipeline
-            result = pipeline.run(test_query, top_k=3)
+            result = pipeline.query(test_query, top_k=3)
             
             print(f"✓ NodeRAG completed successfully")
             print(f"  - Retrieved {len(result.get('retrieved_nodes', []))} nodes")

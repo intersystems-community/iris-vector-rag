@@ -8,7 +8,7 @@ import logging
 import time
 import threading
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from collections import deque, defaultdict
 import json

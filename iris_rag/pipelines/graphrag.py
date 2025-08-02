@@ -11,7 +11,7 @@ from ..core.base import RAGPipeline
 from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
-from ..storage.iris import IRISStorage
+from ..storage.enterprise_storage import IRISStorage
 from ..storage.schema_manager import SchemaManager
 from ..embeddings.manager import EmbeddingManager
 

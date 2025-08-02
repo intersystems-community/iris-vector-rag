@@ -112,8 +112,14 @@ class PersonalAssistantMigrationUtils:
                     # Assuming RAG Document has 'doc_id', 'content', and 'metadata'
                     if rag_field in ["doc_id", "content"]: # Direct fields in a potential Document model
                         rag_record[rag_field] = legacy_value
-                    else: # Assume other mapped fields go into metadata
-                        metadata[rag_field] = legacy_value
+                    else: # Handle metadata fields with dot notation
+                        if rag_field.startswith("metadata."):
+                            # Extract the actual metadata field name (remove "metadata." prefix)
+                            metadata_field = rag_field[9:]  # Remove "metadata." (9 characters)
+                            metadata[metadata_field] = legacy_value
+                        else:
+                            # Regular metadata field without dot notation
+                            metadata[rag_field] = legacy_value
                 else:
                     # Unmapped fields could also go into metadata by default
                     metadata[legacy_field] = legacy_value
@@ -122,9 +128,9 @@ class PersonalAssistantMigrationUtils:
             if metadata:
                 rag_record["metadata"] = metadata
             
-            # Basic validation (example)
-            if "content" not in rag_record and "doc_id" not in rag_record : # Or whatever is essential for RAG Document
-                logger.warning(f"Record {i} (Legacy: {legacy_record}) is missing essential fields ('content' or 'doc_id') after mapping. Skipping.")
+            # Basic validation (example) - Allow records with only metadata if they have some content
+            if "content" not in rag_record and "doc_id" not in rag_record and not metadata:
+                logger.warning(f"Record {i} (Legacy: {legacy_record}) is missing essential fields ('content' or 'doc_id') and has no metadata after mapping. Skipping.")
                 continue
             
             migrated_data.append(rag_record)

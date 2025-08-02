@@ -1,3 +1,11 @@
+nodejs/node_modules/
+.vscode/
+outputs/
+specs/
+eval_results/
+comprehensive_ragas_results/
+test_benchmark_results/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -231,3 +239,6 @@ testing_system_analysis.md
 *_TEST_RESULTS.md
 COMPREHENSIVE_*.md
 PIPELINE_*.md
+
+# Claude Code guidance file (internal development tool)
+CLAUDE.md
