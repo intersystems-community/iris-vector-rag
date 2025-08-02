@@ -633,6 +633,12 @@ def main():
         action="store_true",
         help="Show what would be synced without making changes"
     )
+    parser.add_argument(
+        "--branch",
+        type=str,
+        default="master",
+        help="Git branch to push to (default: master)"
+    )
     
     args = parser.parse_args()
     
@@ -643,6 +649,10 @@ def main():
     try:
         # Load configuration with HARDCODED CORRECT DIRECTION
         config = get_default_config()
+        
+        # Override branch if specified
+        if hasattr(args, 'branch') and args.branch:
+            config.git_branch = args.branch
         
         # Initialize synchronizer
         synchronizer = PublicRepositorySynchronizer(config)
