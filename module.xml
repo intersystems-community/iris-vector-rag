@@ -6,7 +6,6 @@
       <Version>0.2.0</Version>
       <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend. Features unified Query() API, requirements-driven orchestrator, and 7 RAG techniques.</Description>
       <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings,ColBERT,CRAG,GraphRAG,HyDE</Keywords>
-      <Author>Thomas Dyar</Author>
       <License>MIT</License>
       <Repository>https://github.com/intersystems/iris-rag-templates</Repository>
       <Homepage>https://github.com/intersystems/iris-rag-templates</Homepage>
