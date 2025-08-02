@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Export generator="IRIS" version="26">
-  <Document name="intersystems-iris-rag.ZPM">
+  <Document name="iris-rag.ZPM">
     <Module>
-      <Name>intersystems-iris-rag</Name>
+      <Name>iris-rag</Name>
       <Version>0.2.0</Version>
       <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend.</Description>
       <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
-      <Author>InterSystems Developer Community</Author>
+      <Author>thomas.dyar@intersystems.com</Author>
       <License>MIT</License>
       <Repository>https://github.com/intersystems-community/iris-rag-templates</Repository>
       <Homepage>https://github.com/intersystems-community/iris-rag-templates</Homepage>
