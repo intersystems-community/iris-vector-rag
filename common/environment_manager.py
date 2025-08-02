@@ -78,7 +78,7 @@ class EnvironmentManager:
             # Quick check for intersystems_irispython package
             result = subprocess.run([
                 python_exe, "-c", 
-                "import iris; print(hasattr(iris, 'connect'))"
+                "try: import iris; print(hasattr(iris, 'connect')); except ImportError: import iris; print(hasattr(iris, 'connect'))"
             ], capture_output=True, text=True, timeout=5)
             
             return result.returncode == 0 and "True" in result.stdout

@@ -115,7 +115,7 @@ def test_ragas_evaluation_with_basic_rag():
             test_query = "What is diabetes and what causes it?"
             logger.info(f"🔍 Executing pipeline with query: '{test_query}'")
             
-            result = pipeline.execute(test_query, top_k=3)
+            result = pipeline.query(test_query, top_k=3)
             
             logger.info("📊 Pipeline execution result:")
             logger.info(f"  Query: {result['query']}")

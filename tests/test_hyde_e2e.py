@@ -7,18 +7,17 @@ import pytest
 import logging
 import os
 import sys
-from typing import List, Dict, Any, Callable, Tuple
 
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.experimental.hyde.pipeline import HyDEPipeline # Corrected import path and class name
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipeline
 from common.utils import get_embedding_func, get_llm_func # Updated import
 from common.iris_connector import get_iris_connection # Updated import
 from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists # Updated import
-from data.loader import process_and_load_documents # Path remains correct
+from data.loader_fixed import process_and_load_documents # Path remains correct
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
@@ -106,7 +105,7 @@ def test_hyde_e2e_abstract_query_cellular_energy(hyde_e2e_db_connection):
     if test_llm_func is None:
         pytest.skip("LLM function not available, skipping HyDE test that requires it.")
 
-    pipeline = HyDEPipelineV2(
+    pipeline = HyDERAGPipeline(
         iris_connector=conn,
         embedding_func=test_embedding_func,
         llm_func=test_llm_func
@@ -117,7 +116,7 @@ def test_hyde_e2e_abstract_query_cellular_energy(hyde_e2e_db_connection):
     abstract_query = "How do cells produce energy?"
     logger.info(f"Executing HyDE E2E test with abstract query: {abstract_query}")
     
-    results = pipeline.run(abstract_query, top_k=1) # Ask for top 1
+    results = pipeline.query(abstract_query, top_k=1) # Ask for top 1
 
     assert "retrieved_documents" in results, "HyDE result missing 'retrieved_documents' key"
     assert "answer" in results, "HyDE result missing 'answer' key"
@@ -161,7 +160,7 @@ def test_hyde_e2e_abstract_query_genetic_modification(hyde_e2e_db_connection):
     if test_llm_func is None:
         pytest.skip("LLM function not available, skipping HyDE test that requires it.")
 
-    pipeline = HyDEPipelineV2(
+    pipeline = HyDERAGPipeline(
         iris_connector=conn,
         embedding_func=test_embedding_func,
         llm_func=test_llm_func
@@ -172,7 +171,7 @@ def test_hyde_e2e_abstract_query_genetic_modification(hyde_e2e_db_connection):
     abstract_query_crispr = "What are modern methods for altering genetic code?"
     logger.info(f"Executing HyDE E2E test with abstract query: {abstract_query_crispr}")
 
-    results_crispr = pipeline.run(abstract_query_crispr, top_k=1)
+    results_crispr = pipeline.query(abstract_query_crispr, top_k=1)
 
     assert "hypothetical_document" in results_crispr
     hypothetical_doc_crispr = results_crispr["hypothetical_document"]

@@ -15,9 +15,7 @@ import threading
 import signal
 import os
 import subprocess
-import logging
-from unittest.mock import Mock, patch, MagicMock
-from typing import List, Dict, Any
+from unittest.mock import Mock, patch
 
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.controllers.reconciliation import (

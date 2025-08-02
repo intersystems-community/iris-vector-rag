@@ -7,7 +7,7 @@ Provides comprehensive system validation and integrity checking.
 import logging
 import time
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import json
 
@@ -163,7 +163,7 @@ class SystemValidator:
             for query in test_queries:
                 try:
                     query_start = time.time()
-                    result = pipeline.execute(query)
+                    result = pipeline.query(query)
                     query_time = (time.time() - query_start) * 1000
                     
                     # Validate result structure

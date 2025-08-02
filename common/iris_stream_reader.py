@@ -5,7 +5,7 @@ Handles reading IRIS stream objects properly from JDBC connections.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

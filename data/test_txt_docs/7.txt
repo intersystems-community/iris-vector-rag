@@ -1,0 +1,1 @@
+Redis is an in-memory data store used as a cache and message broker. It supports various data structures like strings, hashes, and sets.
