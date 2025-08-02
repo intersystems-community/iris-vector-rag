@@ -1,5 +1,10 @@
 version: '3.8' # Specify a compose file version
 
+# ENTERPRISE EDITION CONFIGURATION
+# This docker-compose file uses licensed IRIS Enterprise Edition.
+# For public/community use, please use docker-compose.yml instead,
+# which includes IRIS Community Edition.
+
 services:
   iris_licensed_db: # New service name
     image: containers.intersystems.com/intersystems/iris-arm64:2025.1 # Corrected image based on running container

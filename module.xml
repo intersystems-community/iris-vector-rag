@@ -3,10 +3,10 @@
   <Document name="intersystems-iris-rag.ZPM">
     <Module>
       <Name>intersystems-iris-rag</Name>
-      <Version>0.1.0</Version>
-      <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend.</Description>
-      <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
-      <Author>InterSystems IRIS RAG Templates Project</Author>
+      <Version>0.2.0</Version>
+      <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend. Features unified Query() API, requirements-driven orchestrator, and 7 RAG techniques.</Description>
+      <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings,ColBERT,CRAG,GraphRAG,HyDE</Keywords>
+      <Author>Thomas Dyar</Author>
       <License>MIT</License>
       <Repository>https://github.com/intersystems/iris-rag-templates</Repository>
       <Homepage>https://github.com/intersystems/iris-rag-templates</Homepage>
@@ -19,29 +19,40 @@
       </Dependencies>
       
       <Packaging>
+        <!-- Core ObjectScript Components -->
         <Resource Name="RAG.IPMInstaller.CLS" Directory="objectscript/"/>
         <Resource Name="RAG.VectorMigration.CLS" Directory="objectscript/"/>
         <Resource Name="RAG.IFindSetup.CLS" Directory="objectscript/"/>
         <Resource Name="RAG.SourceDocumentsIFind.CLS" Directory="objectscript/"/>
         <Resource Name="enable_vector_search.cos" Directory="objectscript/"/>
         <Resource Name="python_bridge.py" Directory="objectscript/"/>
+        
+        <!-- Core Python Packages -->
         <Resource Name="iris_rag" Directory="iris_rag/" Recurse="true"/>
+        <Resource Name="rag_templates" Directory="rag_templates/" Recurse="true"/>
         <Resource Name="common" Directory="common/" Recurse="true"/>
-        <Resource Name="basic_rag" Directory="basic_rag/" Recurse="true"/>
-        <Resource Name="hyde" Directory="hyde/" Recurse="true"/>
-        <Resource Name="crag" Directory="crag/" Recurse="true"/>
-        <Resource Name="colbert" Directory="colbert/" Recurse="true"/>
-        <Resource Name="noderag" Directory="noderag/" Recurse="true"/>
-        <Resource Name="graphrag" Directory="graphrag/" Recurse="true"/>
-        <Resource Name="hybrid_ifind_rag" Directory="hybrid_ifind_rag/" Recurse="true"/>
-        <Resource Name="chunking" Directory="chunking/" Recurse="true"/>
-        <Resource Name="eval" Directory="eval/" Recurse="true"/>
-        <Resource Name="examples" Directory="examples/" Recurse="true"/>
+        
+        <!-- Configuration and Setup -->
+        <Resource Name="quick_start" Directory="quick_start/" Recurse="true"/>
         <Resource Name="config" Directory="config/" Recurse="true"/>
+        
+        <!-- Documentation and Examples -->
         <Resource Name="docs" Directory="docs/" Recurse="true"/>
+        <Resource Name="examples" Directory="examples/" Recurse="true"/>
+        <Resource Name="eval" Directory="eval/" Recurse="true"/>
+        
+        <!-- Tools and Scripts -->
+        <Resource Name="tools" Directory="tools/" Recurse="true"/>
+        <Resource Name="scripts" Directory="scripts/" Recurse="true"/>
+        
+        <!-- Essential Project Files -->
         <Resource Name="README.md" Directory=""/>
+        <Resource Name="CHANGELOG.md" Directory=""/>
         <Resource Name="pyproject.toml" Directory=""/>
         <Resource Name="requirements.txt" Directory=""/>
+        <Resource Name="Makefile" Directory=""/>
+        <Resource Name="pytest.ini" Directory=""/>
+        <Resource Name=".clinerules" Directory=""/>
       </Packaging>
       
       <Lifecycle>
@@ -80,7 +91,7 @@
       
       <SystemRequirements>
         <SystemRequirement Name="IRIS" Version="2025.1"/>
-        <SystemRequirement Name="Python" Version="3.11"/>
+        <SystemRequirement Name="Python" Version="3.10"/>
       </SystemRequirements>
       
       <Manifest>
