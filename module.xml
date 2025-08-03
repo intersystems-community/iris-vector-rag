@@ -12,9 +12,6 @@
       
       <!-- Dependencies -->
       <Dependencies>
-        <ModuleReference>
-          <Name>%ZPM</Name>
-        </ModuleReference>
       </Dependencies>
       
       <!-- Installation Lifecycle -->
