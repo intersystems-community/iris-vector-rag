@@ -34,7 +34,7 @@ The RAG Templates framework is **production-ready** with comprehensive functiona
 ## 🚀 Feature Enhancements
 
 ### Short Term (Q1 2025)
-- [ ] **Multi-Modal RAG** - Image and document processing
+- [ ] **Multi-Modal RAG** - Image and document processing ([Specification](docs/MULTIMODAL_RAG_SPECIFICATION.md))
 - [ ] **RAG Chain Optimization** - Automatic prompt optimization
 - [ ] **Advanced Chunking** - ML-based semantic chunking
 - [ ] **Real-time Updates** - Live data synchronization
