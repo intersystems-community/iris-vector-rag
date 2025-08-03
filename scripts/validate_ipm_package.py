@@ -96,10 +96,10 @@ def validate_ipm_package(repo_path: str) -> Tuple[bool, List[str]]:
         objectscript_dir = repo_root / "objectscript"
         if objectscript_dir.exists():
             required_cls_files = [
-                "RAG.IPMInstaller.cls",
-                "RAG.VectorMigration.cls", 
-                "RAG.IFindSetup.cls",
-                "RAG.SourceDocumentsWithIFind.cls"
+                "RAG/IPMInstaller.CLS",
+                "RAG/VectorMigration.CLS", 
+                "RAG/IFindSetup.CLS",
+                "RAG/SourceDocumentsWithIFind.CLS"
             ]
             
             for cls_file in required_cls_files:
