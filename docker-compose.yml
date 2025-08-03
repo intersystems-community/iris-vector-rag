@@ -1,6 +1,6 @@
 services:
   iris_db:
-    image: intersystemsdc/iris-community:latest
+    image: intersystemsdc/iris-community:2025.1-zpm
     container_name: iris_db_rag_standalone_community
     ports:
       - "1972:1972"   # IRIS SuperServer port (host:container)
@@ -10,6 +10,7 @@ services:
       - ISC_DEFAULT_PASSWORD=SYS
     volumes:
       - iris_db_data:/usr/irissys/mgr # Named volume for IRIS data persistence
+      - .:/home/irisowner/dev # Mount project directory for ZPM access
     stdin_open: true # Keep container running
     tty: true        # Keep container running
     healthcheck:
