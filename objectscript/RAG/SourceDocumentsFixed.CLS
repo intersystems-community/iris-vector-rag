@@ -10,9 +10,8 @@ Property doc_id As %String(MAXLEN = 255) [ Required ];
 /// Document title
 Property title As %String(MAXLEN = 1000);
 
-/// Full text content - Using %String instead of %Stream to enable iFind
-/// Limited to 8000 chars to avoid stream field issues while supporting most documents
-Property text_content As %String(MAXLEN = 8000);
+/// Full text content - Using %Stream for proper IRIS handling
+Property text_content As %Stream.GlobalCharacter;
 
 /// Document abstract - Using %String instead of %Stream
 Property abstract As %String(MAXLEN = 4000);
@@ -26,8 +25,8 @@ Property keywords As %String(MAXLEN = 1000);
 /// Document metadata as JSON string
 Property metadata As %String(MAXLEN = 4000);
 
-/// Vector embedding as string
-Property embedding As %String(MAXLEN = 60000);
+/// Vector embedding as stream for large embeddings
+Property embedding As %Stream.GlobalCharacter;
 
 /// Creation timestamp
 Property created_at As %TimeStamp [ InitialExpression = {$ZDateTime($Horolog,3)} ];
