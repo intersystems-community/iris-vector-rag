@@ -283,6 +283,34 @@ class BasicRAGPipeline(RAGPipeline):
             self._store_documents(documents, embeddings=None)
             logger.info(f"Stored {len(documents)} documents without embeddings due to embedding failure")
     
+    def ingest_documents(self, documents: List[Document]) -> Dict[str, Any]:
+        """
+        Ingest documents into the pipeline using proper architecture.
+        
+        Args:
+            documents: List of Document objects to ingest
+            
+        Returns:
+            Dictionary with ingestion status and statistics
+        """
+        try:
+            # Use the load_documents method with Document objects via kwargs
+            self.load_documents("", documents=documents)
+            
+            return {
+                "status": "success",
+                "documents_processed": len(documents),
+                "pipeline_type": "basic"
+            }
+        except Exception as e:
+            logger.error(f"Document ingestion failed: {e}")
+            return {
+                "status": "error", 
+                "error": str(e),
+                "documents_processed": 0,
+                "pipeline_type": "basic"
+            }
+    
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute RAG query - THE single method for all RAG operations.
