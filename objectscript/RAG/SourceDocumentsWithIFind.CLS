@@ -30,7 +30,6 @@ Index DocIdIndex On doc_id [ Unique ];
 /// Index on creation timestamp for temporal queries
 Index CreatedAtIndex On created_at;
 
-
 /// Storage definition for the class
 Storage Default
 {
