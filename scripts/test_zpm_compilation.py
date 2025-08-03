@@ -74,6 +74,11 @@ def test_objectscript_syntax():
             print(f"❌ {cls_file.name}: Missing class declaration")
             return False
             
+        # Check for newline at end of file (IRIS requirement)
+        if not content.endswith('\n'):
+            print(f"❌ {cls_file.name}: Missing newline at end of file (IRIS ObjectScript requirement)")
+            return False
+            
         # Check for balanced braces (simple check)
         open_braces = content.count("{")
         close_braces = content.count("}")

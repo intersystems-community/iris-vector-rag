@@ -160,74 +160,59 @@ class CRAGPipeline(RAGPipeline):
         document_ids = self._store_documents(documents, embeddings)
         logger.info(f"CRAG: Loaded {len(documents)} documents with IDs: {document_ids}")
     
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> list:
+    def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
         """
-        Perform the retrieval step of the CRAG pipeline (required abstract method).
+        Execute the CRAG pipeline implementation.
         
         Args:
             query_text: The input query string
             top_k: Number of top relevant documents to retrieve
+            generate_answer: Whether to generate an answer
             **kwargs: Additional keyword arguments
             
         Returns:
-            List of retrieved Document objects
+            Standardized response with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
-        # Perform initial retrieval
-        initial_docs = self._initial_retrieval(query_text, top_k)
-        
-        # Evaluate retrieval quality
-        retrieval_status = self.evaluator.evaluate(query_text, initial_docs)
-        
-        # Apply corrective actions
-        corrected_docs = self._apply_corrective_actions(
-            query_text, initial_docs, retrieval_status, top_k
-        )
-        
-        return corrected_docs
-    
-    def run(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
-        """
-        Execute the CRAG pipeline.
-        
-        Args:
-            query: The input query string
-            top_k: Number of documents to retrieve
-            **kwargs: Additional parameters
-            
-        Returns:
-            Dictionary containing query, answer, and retrieved documents
-        """
-        logger.info(f"CRAG: Processing query: '{query[:50]}...'")
+        logger.info(f"CRAG: Processing query: '{query_text[:50]}...'")
         
         start_time = time.time()
         
         try:
             # Stage 1: Initial retrieval
-            initial_docs = self._initial_retrieval(query, top_k)
+            initial_docs = self._initial_retrieval(query_text, top_k)
             
             # Stage 2: Evaluate retrieval quality
-            retrieval_status = self.evaluator.evaluate(query, initial_docs)
+            retrieval_status = self.evaluator.evaluate(query_text, initial_docs)
             logger.info(f"CRAG: Retrieval status: {retrieval_status}")
             
             # Stage 3: Apply corrective actions based on evaluation
             corrected_docs = self._apply_corrective_actions(
-                query, initial_docs, retrieval_status, top_k
+                query_text, initial_docs, retrieval_status, top_k
             )
             
-            # Stage 4: Generate answer
-            answer = self._generate_answer(query, corrected_docs, retrieval_status)
+            # Stage 4: Generate answer if requested
+            answer = None
+            if generate_answer and self.llm_func:
+                answer = self._generate_answer(query_text, corrected_docs, retrieval_status)
+            elif generate_answer and not self.llm_func:
+                answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
             
             execution_time = time.time() - start_time
             
             result = {
-                "query": query,
+                "query": query_text,
                 "answer": answer,
                 "retrieved_documents": corrected_docs,
+                "contexts": [doc.page_content for doc in corrected_docs],
                 "execution_time": execution_time,
-                "technique": "CRAG",
-                "retrieval_status": retrieval_status,
-                "initial_doc_count": len(initial_docs),
-                "final_doc_count": len(corrected_docs)
+                "metadata": {
+                    "num_retrieved": len(corrected_docs),
+                    "pipeline_type": "crag",
+                    "generated_answer": generate_answer and answer is not None,
+                    "retrieval_status": retrieval_status,
+                    "initial_doc_count": len(initial_docs),
+                    "final_doc_count": len(corrected_docs)
+                }
             }
             
             logger.info(f"CRAG: Completed in {execution_time:.2f}s")
@@ -235,7 +220,20 @@ class CRAGPipeline(RAGPipeline):
             
         except Exception as e:
             logger.error(f"CRAG pipeline failed: {e}")
-            raise
+            return {
+                "query": query_text,
+                "answer": None,
+                "retrieved_documents": [],
+                "contexts": [],
+                "execution_time": 0.0,
+                "metadata": {
+                    "num_retrieved": 0,
+                    "pipeline_type": "crag",
+                    "generated_answer": False,
+                    "error": str(e)
+                }
+            }
+    
     
     def _initial_retrieval(self, query: str, top_k: int) -> List[Document]:
         """

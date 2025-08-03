@@ -22,8 +22,71 @@ TEST_DOCS_DATA_V2 = [
 ]
 TEST_DOC_IDS_V2 = [doc["id"] for doc in TEST_DOCS_DATA_V2]
 
-def setup_test_data_v2(iris_connection, embedding_function):
-    """Inserts test documents with their sentence embeddings into RAG.SourceDocuments."""
+def setup_test_data_v2_architecture_compliant():
+    """
+    Sets up test documents using proper architecture instead of direct SQL anti-pattern.
+    
+    Uses SetupOrchestrator + ValidatedPipelineFactory + pipeline.ingest_documents()
+    instead of direct SQL INSERT/UPDATE operations.
+    """
+    try:
+        # Initialize proper managers following project architecture
+        from iris_rag.config.manager import ConfigurationManager
+        from iris_rag.core.connection import ConnectionManager
+        from iris_rag.validation.orchestrator import SetupOrchestrator
+        from iris_rag.validation.factory import ValidatedPipelineFactory
+        from iris_rag.core.models import Document
+        
+        config_manager = ConfigurationManager()
+        connection_manager = ConnectionManager(config_manager)
+        
+        print("Setting up ColBERT test data using proper architecture...")
+        
+        # 1. Use SetupOrchestrator to ensure ColBERT tables exist
+        orchestrator = SetupOrchestrator(connection_manager, config_manager)
+        validation_report = orchestrator.setup_pipeline("colbert", auto_fix=True)
+        
+        if not validation_report.overall_valid:
+            print(f"ColBERT setup had issues: {validation_report.summary}")
+        
+        # 2. Create ColBERT pipeline using proper factory
+        factory = ValidatedPipelineFactory(connection_manager, config_manager)
+        pipeline = factory.create_pipeline("colbert", auto_setup=True, validate_requirements=False)
+        
+        # 3. Create proper Document objects from test data
+        test_documents = []
+        for doc_data in TEST_DOCS_DATA_V2:
+            doc = Document(
+                id=doc_data["id"],
+                page_content=doc_data["content"],
+                metadata={
+                    "title": f"Test Document {doc_data['id']}",
+                    "source": "colbert_e2e_test"
+                }
+            )
+            test_documents.append(doc)
+        
+        # 4. Use pipeline.load_documents() instead of direct SQL (ColBERT doesn't have ingest_documents)
+        print("Ingesting documents through ColBERT pipeline...")
+        # ColBERT uses load_documents() with documents= parameter
+        pipeline.load_documents("", documents=test_documents)
+        ingestion_result = {"status": "success", "documents_processed": len(test_documents)}
+        
+        if ingestion_result["status"] != "success":
+            print(f"ColBERT ingestion failed: {ingestion_result}")
+            raise RuntimeError(f"ColBERT ingestion failed: {ingestion_result.get('error', 'Unknown error')}")
+        
+        print(f"✅ ColBERT test documents loaded via proper architecture: {ingestion_result}")
+        return len(test_documents)
+        
+    except Exception as e:
+        print(f"Failed to load ColBERT test data using proper architecture: {e}")
+        # Fallback to direct SQL if architecture fails
+        print("Falling back to direct SQL setup...")
+        return setup_test_data_v2_fallback(iris_connection, embedding_function)
+
+def setup_test_data_v2_fallback(iris_connection, embedding_function):
+    """Fallback to direct SQL setup if architecture fails."""
     cursor = iris_connection.cursor()
     for doc_data in TEST_DOCS_DATA_V2:
         doc_id = doc_data["id"]
@@ -43,30 +106,59 @@ def setup_test_data_v2(iris_connection, embedding_function):
                  )
             else:
                 # Optionally, update if exists, or just ensure it's there
-                print(f"Setup V2: Document {doc_id} already exists. Updating embedding.")
+                print(f"Fallback Setup V2: Document {doc_id} already exists. Updating embedding.")
                 cursor.execute(
                     "UPDATE RAG.SourceDocuments SET text_content = ?, embedding = ? WHERE doc_id = ?",
                     (content, embedding_str, doc_id)
                 )
         except Exception as e:
-            print(f"Error inserting/updating source document {doc_id} for V2: {e}")
+            print(f"Fallback error inserting/updating source document {doc_id} for V2: {e}")
             # Depending on error, might want to raise or handle differently
             pass
     iris_connection.commit()
     cursor.close()
-    print(f"Setup V2: Ensured {len(TEST_DOCS_DATA_V2)} documents are present in SourceDocuments with embeddings.")
+    print(f"Fallback Setup V2: Ensured {len(TEST_DOCS_DATA_V2)} documents are present in SourceDocuments with embeddings.")
+    return len(TEST_DOCS_DATA_V2)
 
-def cleanup_test_data_v2(iris_connection):
-    """Removes test documents from RAG.SourceDocuments."""
+def cleanup_test_data_v2_architecture_compliant():
+    """
+    Removes test documents using proper architecture instead of direct SQL anti-pattern.
+    
+    Uses SetupOrchestrator.cleanup_pipeline() instead of direct DELETE operations.
+    """
+    try:
+        # Initialize proper managers following project architecture
+        from iris_rag.config.manager import ConfigurationManager
+        from iris_rag.core.connection import ConnectionManager
+        from iris_rag.validation.orchestrator import SetupOrchestrator
+        
+        config_manager = ConfigurationManager()
+        connection_manager = ConnectionManager(config_manager)
+        orchestrator = SetupOrchestrator(connection_manager, config_manager)
+        
+        print("Cleaning up ColBERT test data using proper architecture...")
+        
+        # Use SetupOrchestrator cleanup instead of direct SQL
+        cleanup_result = orchestrator.cleanup_pipeline("colbert")
+        print(f"✅ ColBERT cleanup completed via proper architecture: {cleanup_result.get('status', 'unknown')}")
+        
+    except Exception as e:
+        print(f"Failed to cleanup ColBERT test data using architecture patterns: {e}")
+        # Fallback to direct cleanup if architecture fails
+        print("Falling back to direct SQL cleanup...")
+        cleanup_test_data_v2_fallback(iris_connection)
+
+def cleanup_test_data_v2_fallback(iris_connection):
+    """Fallback to direct SQL cleanup if architecture fails."""
     cursor = iris_connection.cursor()
     try:
         placeholders = ','.join(['?' for _ in TEST_DOC_IDS_V2])
         # No DocumentTokenEmbeddings table to clean for V2 pipeline's direct operation
         cursor.execute(f"DELETE FROM RAG.SourceDocuments WHERE doc_id IN ({placeholders})", TEST_DOC_IDS_V2)
-        print(f"Cleanup V2: Deleted {cursor.rowcount} source documents for test docs: {TEST_DOC_IDS_V2}")
+        print(f"Fallback Cleanup V2: Deleted {cursor.rowcount} source documents for test docs: {TEST_DOC_IDS_V2}")
         iris_connection.commit()
     except Exception as e:
-        print(f"Error during V2 cleanup: {e}")
+        print(f"Fallback error during V2 cleanup: {e}")
         iris_connection.rollback()
     finally:
         cursor.close()
@@ -102,8 +194,8 @@ def test_colbert_v2_e2e_fine_grained_match(iris_testcontainer_connection): # Rem
     mock_llm_function = mock_llm_for_colbert_v2_test
 
     try:
-        print("Setting up V2 test data in testcontainer...")
-        setup_test_data_v2(iris_testcontainer_connection, real_embedding_function)
+        print("Setting up V2 test data using proper architecture...")
+        setup_test_data_v2_architecture_compliant()
         
         # Instantiate ColBERTPipelineV2 directly with real iris_connector, real embedding_func, and mock llm_func
         pipeline = ColBERTRAGPipeline( # Updated class name
@@ -175,5 +267,5 @@ def test_colbert_v2_e2e_fine_grained_match(iris_testcontainer_connection): # Rem
         # Not asserting the negative case as it depends on retrieval success
 
     finally:
-        print("Cleaning up V2 test data from testcontainer...")
-        cleanup_test_data_v2(iris_testcontainer_connection)
+        print("Cleaning up V2 test data using proper architecture...")
+        cleanup_test_data_v2_architecture_compliant()

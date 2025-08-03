@@ -170,16 +170,18 @@ class GraphRAGPipeline(RAGPipeline):
                 "pipeline_type": "graphrag"
             }
     
-    def query(self, query_text: str, top_k: int = 5) -> Dict[str, Any]:
+    def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
         """
         Execute a query using graph-based retrieval.
         
         Args:
             query_text: The query string
             top_k: Number of top documents to retrieve
+            generate_answer: Whether to generate an answer
+            **kwargs: Additional keyword arguments
             
         Returns:
-            Dictionary with query results
+            Standardized response with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
         start_time = time.time()
         logger.info(f"Processing GraphRAG query: {query_text}")
@@ -199,29 +201,40 @@ class GraphRAGPipeline(RAGPipeline):
                     "query": query_text,
                     "answer": "GraphRAG failed: Insufficient knowledge graph data for graph-based retrieval. Please use BasicRAG or ensure knowledge graph is properly populated.",
                     "retrieved_documents": [],
-                    "num_documents_retrieved": 0,
-                    "processing_time": time.time() - start_time,
-                    "pipeline_type": "graphrag",
-                    "failure_reason": "insufficient_graph_data"
+                    "contexts": [],
+                    "execution_time": time.time() - start_time,
+                    "metadata": {
+                        "num_retrieved": 0,
+                        "pipeline_type": "graphrag",
+                        "generated_answer": False,
+                        "failure_reason": "insufficient_graph_data",
+                        "query_entities": query_entities
+                    }
                 }
             
-            # Generate answer if LLM function is available
+            # Generate answer if requested and LLM function is available
             answer = None
-            if self.llm_func and relevant_docs:
+            if generate_answer and self.llm_func and relevant_docs:
                 context = self._build_context(relevant_docs)
                 prompt = self._build_prompt(query_text, context)
                 answer = self.llm_func(prompt)
+            elif generate_answer and not self.llm_func:
+                answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
             
             end_time = time.time()
             
             result = {
                 "query": query_text,
-                "query_entities": query_entities,
                 "answer": answer,
                 "retrieved_documents": relevant_docs,
-                "num_documents_retrieved": len(relevant_docs),
-                "processing_time": end_time - start_time,
-                "pipeline_type": "graphrag"
+                "contexts": [doc.page_content for doc in relevant_docs],
+                "execution_time": end_time - start_time,
+                "metadata": {
+                    "num_retrieved": len(relevant_docs),
+                    "pipeline_type": "graphrag",
+                    "generated_answer": generate_answer and answer is not None,
+                    "query_entities": query_entities
+                }
             }
             
             logger.info(f"GraphRAG query completed in {end_time - start_time:.2f}s. Retrieved {len(relevant_docs)} documents.")
@@ -232,10 +245,15 @@ class GraphRAGPipeline(RAGPipeline):
             return {
                 "query": query_text,
                 "answer": None,
-                "retrieved_documents": [], # Ensure this key exists on error
-                "num_documents_retrieved": 0,
-                "error": str(e),
-                "pipeline_type": "graphrag"
+                "retrieved_documents": [],
+                "contexts": [],
+                "execution_time": 0.0,
+                "metadata": {
+                    "num_retrieved": 0,
+                    "pipeline_type": "graphrag",
+                    "generated_answer": False,
+                    "error": str(e)
+                }
             }
 
     def _graph_based_retrieval(self, query_entities: List[str], top_k: int) -> List[Document]:
@@ -550,17 +568,17 @@ class GraphRAGPipeline(RAGPipeline):
             for rel in relationships:
                 insert_sql = """
                 INSERT INTO RAG.EntityRelationships
-                (relationship_id, document_id, source_entity, target_entity, relationship_type, strength)
+                (relationship_id, source_entity_id, target_entity_id, relationship_type, confidence_score, metadata)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """
                 
                 cursor.execute(insert_sql, [
                     rel["relationship_id"],
-                    document_id,
                     rel["source_entity"],
                     rel["target_entity"],
                     rel["relationship_type"],
-                    rel["strength"]
+                    rel["strength"],
+                    "{}"
                 ])
             
             connection.commit()
@@ -574,15 +592,62 @@ class GraphRAGPipeline(RAGPipeline):
             cursor.close()
     
     def _extract_query_entities(self, query_text: str) -> List[str]:
-        """Extract entities from query text."""
-        words = query_text.split()
-        entities = []
+        """Extract entities from query text by matching against known entities in the knowledge graph."""
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
         
-        for word in words:
-            if word[0].isupper() and len(word) > 3:
-                entities.append(word)
-        
-        return entities
+        try:
+            # Get all entity names from the knowledge graph
+            cursor.execute("SELECT DISTINCT entity_name FROM RAG.DocumentEntities")
+            known_entities = [row[0].lower() for row in cursor.fetchall()]
+            
+            # Also check knowledge graph nodes
+            cursor.execute("SELECT DISTINCT node_id FROM RAG.KnowledgeGraphNodes")
+            known_nodes = [row[0].lower() for row in cursor.fetchall()]
+            
+            # Combine all known entities
+            all_known_entities = set(known_entities + known_nodes)
+            
+            logger.debug(f"GraphRAG: Known entities in graph: {list(all_known_entities)[:10]}...")
+            
+            # Extract entities from query by matching words/phrases against known entities
+            query_lower = query_text.lower()
+            found_entities = []
+            
+            # Check for exact matches of known entities in the query
+            for entity in all_known_entities:
+                if entity in query_lower:
+                    found_entities.append(entity)
+            
+            # If no exact matches, try partial matches with individual words
+            if not found_entities:
+                words = query_lower.split()
+                for word in words:
+                    if len(word) > 3:  # Skip very short words
+                        # Check if this word appears in any known entity
+                        for entity in all_known_entities:
+                            if word in entity.lower() or entity.lower() in word:
+                                found_entities.append(entity)
+                                break
+            
+            # Remove duplicates and return original case entities
+            if found_entities:
+                # Get original case entities from database
+                placeholders = ','.join(['?' for _ in found_entities])
+                cursor.execute(f"SELECT DISTINCT entity_name FROM RAG.DocumentEntities WHERE LOWER(entity_name) IN ({placeholders})", found_entities)
+                original_case_entities = [row[0] for row in cursor.fetchall()]
+                
+                logger.info(f"GraphRAG: Found query entities: {original_case_entities}")
+                return original_case_entities
+            else:
+                logger.warning(f"GraphRAG: No entities found in query '{query_text}' that match knowledge graph")
+                return []
+                
+        except Exception as e:
+            logger.error(f"GraphRAG: Error extracting query entities: {e}")
+            return []
+        finally:
+            cursor.close()
     
     
     def _build_context(self, documents: List[Document]) -> str:

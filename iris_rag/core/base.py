@@ -1,8 +1,10 @@
 import abc
 import logging
+import warnings
 from typing import List, Dict, Any, Optional, Tuple
 from .models import Document
 from .vector_store import VectorStore
+from .response_standardizer import standardize_pipeline_response
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +36,7 @@ class RAGPipeline(abc.ABC):
         else:
             self.vector_store = vector_store
 
-    @abc.abstractmethod
-    def execute(self, query_text: str, **kwargs) -> dict:
+    def execute(self, query_text: str, **kwargs) -> Dict[str, Any]:
         """
         Executes the full RAG pipeline for a given query.
 
@@ -47,11 +48,16 @@ class RAGPipeline(abc.ABC):
             **kwargs: Additional keyword arguments specific to the pipeline implementation.
 
         Returns:
-            A dictionary containing the pipeline&#x27;s output, typically including
-            the original query, the generated answer, and retrieved documents.
-            The exact structure is defined by the `Standard Return Format` rule.
+            Standardized dictionary containing the pipeline's output with
+            keys: query, retrieved_documents, contexts, metadata, answer, execution_time
         """
-        pass
+        # Show deprecation warning but continue to work
+        warnings.warn(
+            "execute() method is deprecated. Use query() for standardized response format.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return self.query(query_text, **kwargs)
 
     @abc.abstractmethod
     def load_documents(self, documents_path: str, **kwargs) -> None:
@@ -68,20 +74,27 @@ class RAGPipeline(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> list:
+    def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
         """
-        Performs the retrieval step of the RAG pipeline.
-
-        Given a query, this method should return the most relevant document
-        chunks or passages from the knowledge base.
+        Unified query method that returns standardized response format.
+        
+        Each pipeline should override this method directly as per the pipeline architecture guide.
+        The response should be in standardized format with these keys:
+        - query: str
+        - answer: str 
+        - retrieved_documents: List[Document]
+        - contexts: List[str]
+        - execution_time: float
+        - metadata: Dict
 
         Args:
             query_text: The input query string.
             top_k: The number of top relevant documents to retrieve.
+            generate_answer: Whether to generate an answer (default: True)
             **kwargs: Additional keyword arguments for the query process.
 
         Returns:
-            A list of retrieved document objects or their representations.
+            Standardized dictionary with keys: query, retrieved_documents, contexts, metadata, answer, execution_time
         """
         pass
     
@@ -89,16 +102,22 @@ class RAGPipeline(abc.ABC):
         """
         Run the full RAG pipeline for a query (convenience method).
         
-        This method simply calls execute() to maintain backward compatibility.
+        This method now calls query() to ensure standardized response format.
         
         Args:
             query: The input query
-            **kwargs: Additional arguments passed to execute()
+            **kwargs: Additional arguments passed to query()
             
         Returns:
-            Dictionary with query, answer, and retrieved documents
+            Standardized dictionary with query, answer, and retrieved documents
         """
-        return self.execute(query, **kwargs)
+        # Show deprecation warning but continue to work
+        warnings.warn(
+            "run() method is deprecated. Use query() for standardized response format.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return self.query(query, **kwargs)
     
     # Protected helper methods for vector store operations
     def _retrieve_documents_by_vector(

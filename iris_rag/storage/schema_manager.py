@@ -8,7 +8,7 @@ automatic migration capabilities for vector dimensions and other schema changes.
 
 import logging
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 logger = logging.getLogger(__name__)
 
@@ -233,8 +233,8 @@ class SchemaManager:
         finally:
             cursor.close()
     
-    def _get_expected_schema_config(self, table_name: str) -> Dict[str, Any]:
-        """Get expected schema configuration based on current system config."""
+    def _get_expected_schema_config(self, table_name: str, pipeline_type: str = None) -> Dict[str, Any]:
+        """Get expected schema configuration based on current system config and pipeline requirements."""
         # Get model and dimension from centralized methods
         model_name = self.get_embedding_model(table_name)
         expected_dim = self.get_vector_dimension(table_name, model_name)
@@ -255,6 +255,10 @@ class SchemaManager:
             }
         }
         
+        # Enhanced: Get table requirements from pipeline if specified
+        if pipeline_type:
+            config.update(self._get_table_requirements_config(table_name, pipeline_type))
+        
         # Table-specific configurations
         if table_name == "DocumentEntities":
             config["configuration"].update({
@@ -274,10 +278,44 @@ class SchemaManager:
         
         return config
     
-    def needs_migration(self, table_name: str) -> bool:
+    def _get_table_requirements_config(self, table_name: str, pipeline_type: str) -> Dict[str, Any]:
+        """Extract table configuration from pipeline requirements."""
+        try:
+            from ..validation.requirements import get_pipeline_requirements
+            requirements = get_pipeline_requirements(pipeline_type)
+            
+            # Find the table requirement for this table
+            for table_req in requirements.required_tables:
+                if table_req.name == table_name:
+                    return {
+                        "text_content_type": table_req.text_content_type,
+                        "supports_ifind": table_req.supports_ifind,
+                        "supports_vector_search": table_req.supports_vector_search
+                    }
+            
+            # Check optional tables too
+            for table_req in requirements.optional_tables:
+                if table_req.name == table_name:
+                    return {
+                        "text_content_type": table_req.text_content_type,
+                        "supports_ifind": table_req.supports_ifind,
+                        "supports_vector_search": table_req.supports_vector_search
+                    }
+                    
+        except Exception as e:
+            logger.warning(f"Could not get table requirements for {pipeline_type}: {e}")
+        
+        # Default configuration
+        return {
+            "text_content_type": "LONGVARCHAR",
+            "supports_ifind": False,
+            "supports_vector_search": True
+        }
+    
+    def needs_migration(self, table_name: str, pipeline_type: str = None) -> bool:
         """Check if table needs migration based on configuration changes."""
         current_config = self.get_current_schema_config(table_name)
-        expected_config = self._get_expected_schema_config(table_name)
+        expected_config = self._get_expected_schema_config(table_name, pipeline_type)
         
         if not current_config:
             logger.info(f"Table {table_name} has no schema metadata - migration needed")
@@ -306,7 +344,7 @@ class SchemaManager:
         
         return False
     
-    def migrate_table(self, table_name: str, preserve_data: bool = False) -> bool:
+    def migrate_table(self, table_name: str, preserve_data: bool = False, pipeline_type: str = None) -> bool:
         """
         Migrate table to match expected configuration.
         
@@ -321,7 +359,7 @@ class SchemaManager:
         cursor = connection.cursor()
         
         try:
-            expected_config = self._get_expected_schema_config(table_name)
+            expected_config = self._get_expected_schema_config(table_name, pipeline_type)
             
             if table_name == "SourceDocuments":
                 success = self._migrate_source_documents_table(cursor, expected_config, preserve_data)
@@ -376,10 +414,14 @@ class SchemaManager:
             cursor.close()
     
     def _migrate_source_documents_table(self, cursor, expected_config: Dict[str, Any], preserve_data: bool) -> bool:
-        """Migrate SourceDocuments table with IRIS-specific workarounds."""
+        """Migrate SourceDocuments table with requirements-driven DDL generation."""
         try:
             vector_dim = expected_config["vector_dimension"]
             vector_data_type = expected_config.get("vector_data_type", "FLOAT")
+            
+            # Get text content type from pipeline requirements (if available)
+            text_content_type = expected_config.get("text_content_type", "LONGVARCHAR")
+            supports_ifind = expected_config.get("supports_ifind", False)
             
             # Try multiple table name approaches to work around IRIS schema issues
             table_attempts = [
@@ -390,13 +432,14 @@ class SchemaManager:
             for table_name in table_attempts:
                 try:
                     logger.info(f"🔧 Attempting to create SourceDocuments table as {table_name}")
+                    logger.info(f"   Text content type: {text_content_type}, iFind support: {supports_ifind}")
                     
-                    # Try to create the table directly (bypassing complex existence checks that cause SQLCODE -400)
+                    # Generate DDL based on requirements
                     create_sql = f"""
                     CREATE TABLE {table_name} (
                         doc_id VARCHAR(255) NOT NULL,
                         title VARCHAR(1000),
-                        text_content VARCHAR(MAX),
+                        text_content {text_content_type},
                         abstract VARCHAR(MAX),
                         authors VARCHAR(MAX),
                         keywords VARCHAR(MAX),
@@ -776,10 +819,14 @@ class SchemaManager:
             logger.error(f"Failed to update schema metadata for {table_name}: {e}")
             raise
     
-    def ensure_table_schema(self, table_name: str) -> bool:
+    def ensure_table_schema(self, table_name: str, pipeline_type: str = None) -> bool:
         """
         Ensure table schema matches current configuration.
         Performs migration if needed.
+
+        Args:
+            table_name: Name of the table to ensure
+            pipeline_type: Optional pipeline type for requirements-driven DDL
         
         Returns:
             True if schema is correct or migration successful, False otherwise
@@ -789,9 +836,9 @@ class SchemaManager:
             self.ensure_schema_metadata_table()
             
             # Check if migration is needed
-            if self.needs_migration(table_name):
+            if self.needs_migration(table_name, pipeline_type):
                 logger.info(f"Schema migration needed for {table_name}")
-                return self.migrate_table(table_name)
+                return self.migrate_table(table_name, pipeline_type=pipeline_type)
             else:
                 logger.info(f"Schema for {table_name} is up to date")
                 return True
@@ -1013,3 +1060,252 @@ class SchemaManager:
             ColBERT backend type ("native" or "pylate")
         """
         return self.colbert_backend
+    
+    # ========== AUDIT TESTING METHODS ==========
+    # These methods replace direct SQL anti-patterns in integration tests
+    
+    def get_table_count(self, table_name: str) -> int:
+        """
+        Get row count using proper connection management (replaces direct SQL in tests).
+        
+        Args:
+            table_name: Full table name (e.g., 'RAG.SourceDocuments')
+            
+        Returns:
+            Number of rows in the table
+        """
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        
+        try:
+            cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+            return cursor.fetchone()[0]
+        except Exception as e:
+            logger.error(f"Failed to get table count for {table_name}: {e}")
+            return 0
+        finally:
+            cursor.close()
+    
+    def get_sample_document_id(self, table_name: str) -> Optional[str]:
+        """
+        Get sample document ID using proper abstractions (replaces direct SQL in tests).
+        
+        Args:
+            table_name: Full table name (e.g., 'RAG.SourceDocuments')
+            
+        Returns:
+            Sample document ID or None if no documents exist
+        """
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        
+        try:
+            cursor.execute(f"SELECT TOP 1 doc_id FROM {table_name} WHERE doc_id IS NOT NULL")
+            result = cursor.fetchone()
+            return result[0] if result else None
+        except Exception as e:
+            logger.error(f"Failed to get sample document ID from {table_name}: {e}")
+            return None
+        finally:
+            cursor.close()
+    
+    def verify_table_structure(self, table_name: str) -> Dict[str, Any]:
+        """
+        Verify table structure using proper abstractions (replaces direct SQL in tests).
+        
+        Args:
+            table_name: Table name without schema (e.g., 'SourceDocuments')
+            
+        Returns:
+            Dictionary mapping column names to data types
+        """
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        
+        try:
+            cursor.execute("""
+                SELECT COLUMN_NAME, DATA_TYPE 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = ?
+                ORDER BY ORDINAL_POSITION
+            """, [table_name.upper()])
+            return {row[0]: row[1] for row in cursor.fetchall()}
+        except Exception as e:
+            logger.error(f"Failed to verify table structure for {table_name}: {e}")
+            return {}
+        finally:
+            cursor.close()
+    
+    def get_entity_statistics(self) -> Dict[str, Any]:
+        """
+        Get entity statistics using proper abstractions (replaces direct SQL in tests).
+        
+        Returns:
+            Dictionary with entity statistics
+        """
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        
+        try:
+            stats = {}
+            
+            # Total entities
+            cursor.execute("SELECT COUNT(*) FROM RAG.DocumentEntities")
+            stats['total_entities'] = cursor.fetchone()[0]
+            
+            # Entities by type
+            cursor.execute("""
+                SELECT entity_type, COUNT(*) as count 
+                FROM RAG.DocumentEntities 
+                GROUP BY entity_type 
+                ORDER BY count DESC
+            """)
+            stats['entities_by_type'] = {row[0]: row[1] for row in cursor.fetchall()}
+            
+            # Documents with entities
+            cursor.execute("SELECT COUNT(DISTINCT document_id) FROM RAG.DocumentEntities")
+            stats['documents_with_entities'] = cursor.fetchone()[0]
+            
+            return stats
+        except Exception as e:
+            logger.error(f"Failed to get entity statistics: {e}")
+            return {'total_entities': 0, 'entities_by_type': {}, 'documents_with_entities': 0}
+        finally:
+            cursor.close()
+    
+    def get_sample_entities(self, limit: int = 3) -> List[Dict[str, Any]]:
+        """
+        Get sample entities using proper abstractions (replaces direct SQL in tests).
+        
+        Args:
+            limit: Maximum number of entities to return
+            
+        Returns:
+            List of entity dictionaries
+        """
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        
+        try:
+            cursor.execute(f"""
+                SELECT entity_id, entity_text, entity_type 
+                FROM RAG.DocumentEntities 
+                LIMIT {limit}
+            """)
+            
+            entities = []
+            for row in cursor.fetchall():
+                entities.append({
+                    'id': row[0],
+                    'name': row[1],
+                    'type': row[2]
+                })
+            return entities
+        except Exception as e:
+            logger.error(f"Failed to get sample entities: {e}")
+            return []
+        finally:
+            cursor.close()
+    
+    def table_exists(self, table_name: str, schema: str = 'RAG') -> bool:
+        """
+        Check if table exists using proper abstractions (replaces direct SQL in tests).
+        
+        Args:
+            table_name: Name of the table (without schema)
+            schema: Schema name (default: 'RAG')
+            
+        Returns:
+            True if table exists, False otherwise
+        """
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        
+        try:
+            cursor.execute("""
+                SELECT COUNT(*) 
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+            """, [schema, table_name.upper()])
+            return cursor.fetchone()[0] > 0
+        except Exception as e:
+            logger.error(f"Failed to check if table {schema}.{table_name} exists: {e}")
+            return False
+        finally:
+            cursor.close()
+    
+    def get_table_row_count_by_pattern(self, table_pattern: str) -> Dict[str, int]:
+        """
+        Get row counts for tables matching a pattern (replaces direct SQL in tests).
+        
+        Args:
+            table_pattern: SQL LIKE pattern for table names
+            
+        Returns:
+            Dictionary mapping table names to row counts
+        """
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+        
+        try:
+            # Get tables matching pattern
+            cursor.execute("""
+                SELECT TABLE_NAME 
+                FROM INFORMATION_SCHEMA.TABLES 
+                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME LIKE ?
+            """, [table_pattern])
+            
+            table_names = [row[0] for row in cursor.fetchall()]
+            
+            # Get row counts for each table
+            counts = {}
+            for table_name in table_names:
+                try:
+                    cursor.execute(f"SELECT COUNT(*) FROM RAG.{table_name}")
+                    counts[table_name] = cursor.fetchone()[0]
+                except Exception as e:
+                    logger.warning(f"Failed to get count for table {table_name}: {e}")
+                    counts[table_name] = 0
+            
+            return counts
+        except Exception as e:
+            logger.error(f"Failed to get table counts for pattern {table_pattern}: {e}")
+            return {}
+        finally:
+            cursor.close()
+    
+    def validate_database_connectivity(self) -> Dict[str, Any]:
+        """
+        Validate database connectivity using proper abstractions (replaces direct SQL in tests).
+        
+        Returns:
+            Dictionary with connectivity validation results
+        """
+        try:
+            connection = self.connection_manager.get_connection()
+            cursor = connection.cursor()
+            
+            # Test basic connectivity
+            cursor.execute("SELECT 1 as test_value")
+            test_result = cursor.fetchone()[0]
+            
+            # Test schema access
+            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'RAG'")
+            rag_table_count = cursor.fetchone()[0]
+            
+            cursor.close()
+            
+            return {
+                'connectivity': True,
+                'test_query_result': test_result,
+                'rag_schema_accessible': True,
+                'rag_table_count': rag_table_count,
+                'connection_type': type(connection).__name__
+            }
+        except Exception as e:
+            logger.error(f"Database connectivity validation failed: {e}")
+            return {
+                'connectivity': False,
+                'error': str(e),
+                'connection_type': None
+            }

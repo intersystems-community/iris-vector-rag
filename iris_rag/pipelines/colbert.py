@@ -1069,26 +1069,86 @@ Answer:"""
         logger.info(f"Document loading for ColBERT pipeline: {documents_path}")
         logger.info("Use the setup orchestrator to generate token embeddings")
     
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> list:
+    def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
         """
-        Perform retrieval step of the ColBERT pipeline.
+        Execute the ColBERT pipeline with standardized response format.
         
         Args:
             query_text: The input query string
             top_k: Number of documents to retrieve
+            generate_answer: Whether to generate an answer (default: True)
             **kwargs: Additional parameters
             
         Returns:
-            List of retrieved documents
+            Standardized dictionary with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
-        # Generate query token embeddings
-        query_tokens = self.colbert_query_encoder(query_text)
+        import time
+        start_time = time.time()
         
-        # Convert to numpy array for consistency
-        import numpy as np
-        query_token_embeddings = np.array(query_tokens)
+        logger.info(f"ColBERT: Processing query: '{query_text[:50]}...'")
         
-        # Retrieve documents using ColBERT matching with correct parameters
-        retrieved_docs = self._retrieve_documents_with_colbert(query_text, query_token_embeddings, top_k)
-        
-        return retrieved_docs
+        try:
+            # Validate setup before proceeding
+            if not self.validate_setup():
+                logger.warning("ColBERT setup validation failed - pipeline may not work correctly")
+            
+            # Generate query token embeddings
+            query_tokens = self.colbert_query_encoder(query_text)
+            logger.debug(f"ColBERT: Generated {len(query_tokens)} query token embeddings")
+            
+            # Validate that we have token embeddings
+            if not query_tokens:
+                raise ValueError("ColBERT query encoder returned empty token embeddings")
+            
+            # Convert to numpy array for consistency
+            import numpy as np
+            query_token_embeddings = np.array(query_tokens)
+            
+            # Retrieve documents using ColBERT matching
+            retrieved_docs = self._retrieve_documents_with_colbert(query_text, query_token_embeddings, top_k)
+            
+            # Generate answer if requested
+            answer = None
+            if generate_answer and self.llm_func and retrieved_docs:
+                answer = self._generate_answer(query_text, retrieved_docs)
+            elif generate_answer and not self.llm_func:
+                answer = "No LLM function available for answer generation."
+            elif generate_answer and not retrieved_docs:
+                answer = "No relevant documents found to answer the query."
+            
+            execution_time = time.time() - start_time
+            
+            # Return standardized response format
+            result = {
+                "query": query_text,
+                "answer": answer,
+                "retrieved_documents": retrieved_docs,
+                "contexts": [getattr(doc, 'page_content', str(doc)) for doc in retrieved_docs],
+                "execution_time": execution_time,
+                "metadata": {
+                    "num_retrieved": len(retrieved_docs),
+                    "pipeline_type": "colbert",
+                    "generated_answer": generate_answer and answer is not None,
+                    "token_count": len(query_tokens),
+                    "search_method": "colbert_v2_hybrid"
+                }
+            }
+            
+            logger.info(f"ColBERT: Completed in {execution_time:.2f}s")
+            return result
+            
+        except Exception as e:
+            logger.error(f"ColBERT pipeline failed: {e}")
+            return {
+                "query": query_text,
+                "answer": None,
+                "retrieved_documents": [],
+                "contexts": [],
+                "execution_time": 0.0,
+                "metadata": {
+                    "num_retrieved": 0,
+                    "pipeline_type": "colbert",
+                    "generated_answer": False,
+                    "error": str(e)
+                }
+            }
