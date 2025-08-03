@@ -10,6 +10,14 @@
       <SourcesRoot>objectscript</SourcesRoot>
       <Resource Name="RAG.PKG"/>
       
+      <!-- Dependencies -->
+      <Dependencies>
+        <ModuleReference>
+          <Name>%ZPM</Name>
+          <Version>1.0.0</Version>
+        </ModuleReference>
+      </Dependencies>
+      
       <!-- Installation Lifecycle -->
       <Lifecycle>
         <Setup>RAG.IPMInstaller.Setup</Setup>

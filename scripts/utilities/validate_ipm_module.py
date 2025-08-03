@@ -166,11 +166,11 @@ class IPMModuleValidator:
             print("❌ objectscript directory not found")
             return
         
-        # Check required classes
+        # Check required classes (use .CLS extension for IRIS)
         required_classes = [
-            "RAG.IPMInstaller.cls",
-            "RAG.PythonBridge.cls",
-            "RAG.VectorMigration.cls"
+            "RAG/IPMInstaller.CLS",
+            "RAG/PythonBridge.CLS", 
+            "RAG/VectorMigration.CLS"
         ]
         
         class_results = {}
