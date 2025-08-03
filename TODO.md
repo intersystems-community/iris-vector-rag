@@ -1,19 +1,43 @@
 # Current TODO List
 
 ## High Priority  
-- [x] **URGENT**: Debug persistent ObjectScript compilation error in GitHub CI ✅ RESOLVED
-- [x] **Enhanced validation script** to prevent future ObjectScript syntax gaps ✅ COMPLETED
+- [x] **SPARC METHODOLOGY COMPLETE** - Architecture violation remediation finished ✅ **COMPLETED**
+  - [x] **Specification**: Defined proper architecture-compliant test data loading ✅ COMPLETED
+  - [x] **Pseudocode**: Designed SchemaManager/EmbeddingManager based test fixtures ✅ COMPLETED  
+  - [x] **Architecture**: Implemented proper utility-based data ingestion ✅ COMPLETED
+  - [x] **Refinement**: Replaced direct SQL anti-patterns with proper abstractions ✅ COMPLETED
+  - [x] **Completion**: Validated pipeline integration using proper architecture ✅ COMPLETED
+  - **Result**: Eliminated all direct SQL anti-patterns from test fixtures using SetupOrchestrator and ValidatedPipelineFactory
+
+## REVEALED BY INTEGRATION TESTING - NEW HIGH PRIORITY ITEMS
+- [ ] **CRITICAL**: Standardize pipeline return formats - only 1/7 pipelines return required keys
+  - **Issue**: HyDE, CRAG, GraphRAG, NodeRAG, HybridIFind missing required keys: `contexts`, `metadata`  
+  - **Impact**: Integration tests fail due to inconsistent response formats across pipelines
+  - **Required**: All pipelines must return standardized format with `query`, `retrieved_documents`, `contexts`, `metadata`
+
+- [ ] **HIGH**: Fix schema issues preventing pipeline initialization
+  - **Issue**: CRAG pipeline fails with "Field 'CHUNK_EMBEDDING' not found" error
+  - **Issue**: Missing tables: DocumentEntities, SourceDocumentsIFind for various pipelines
+  - **Required**: Schema manager must ensure all required tables exist before pipeline execution
+
+- [ ] **MEDIUM**: Fix SQL audit trail integration with real database operations  
+  - **Issue**: SQL audit logger not capturing actual database operations during pipeline execution
+  - **Required**: Hook audit middleware into actual IRIS connection managers used by pipelines
 
 ## Previously Completed
-- [x] Fix ObjectScript compilation errors in public GitHub repository
-- [x] Analyze and fix RAG.SourceDocumentsWithIFind class syntax errors  
-- [x] Fix RAG.IFindSetup table reference and method entry point issues
-- [x] Run IPM/ZPM validator script before syncing
-- [x] Test ZPM package compilation after fixes
-- [x] Sync fixes to public GitHub repository ✅ COMPLETED
-- [x] Fix ZPM dependency version in module.xml ✅ COMPLETED
+- [x] Fix ObjectScript compilation errors in public GitHub repository ✅ COMPLETED
+- [x] Enhanced validation script to prevent future ObjectScript syntax gaps ✅ COMPLETED  
+- [x] Critical fix for missing newline at end of ObjectScript file ✅ COMPLETED
 
-## Medium Priority
+## COMPLETED - GraphRAG Audit Trail Testing ✅
+- [x] **GraphRAG entity extraction logic** - query 'diabetes treatment' returns correct entities ✅ **COMPLETED**
+  - **Solution**: Entity extraction algorithm working correctly with fixed test data loading
+  - **Result**: GraphRAG successfully extracts entities and performs graph-based retrieval
+- [x] **GraphRAG SQL patterns** for audit validation ✅ **COMPLETED**
+  - **Solution**: Architecture-compliant test fixtures ensure proper SQL execution patterns
+  - **Result**: GraphRAG executes expected SQL operations in integration tests
+
+## Medium Priority - Post-Integration Test Fixes
 
 ## Completed Fixes
 - Removed SQL statements referencing tables during compilation from SourceDocumentsWithIFind.cls
@@ -37,6 +61,10 @@
 4. `Edit scripts/test_zpm_compilation.py` - Enhanced validation to catch consecutive brace patterns (refined to handle legitimate ObjectScript Try/Catch blocks)
 5. **🎉 GITHUB COMPILATION ERROR RESOLVED** - Clean deployment to community-edition-defaults branch
 6. **🔍 VALIDATION GAP CLOSED** - Enhanced ObjectScript syntax checking now catches problematic patterns while preserving valid code
+7. `git commit -m "feat: Enhanced ObjectScript validation..."` - Committed validation improvements
+8. `git push github community-edition-defaults` - Enhanced validation deployed (commit 7eb444c)
+9. `git commit -m "fix: Add missing newline..."` - **ROOT CAUSE FOUND**: Missing newline at EOF
+10. `git push github community-edition-defaults` - Critical newline fix deployed (commit b2b2965)
 
 ---
 *Last updated: 2025-08-03*
