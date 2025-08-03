@@ -2,47 +2,29 @@
 Class RAG.IFindSetup
 {
 
-/// Create a new table with iFind support since we can't alter existing table
+/// Create persistent class table for iFind functionality
 ClassMethod CreateIFindTable() As %Status
 {
     Try {
-        Write "Creating new table with iFind support...",!
+        Write "Setting up iFind table using persistent class...",!
         
-        // Create a new table that mirrors SourceDocuments but with iFind
-        &sql(CREATE TABLE RAG.SourceDocumentsIFind (
-            doc_id VARCHAR(200) PRIMARY KEY,
-            title VARCHAR(500),
-            text_content LONGVARCHAR,
-            authors LONGVARCHAR,
-            keywords LONGVARCHAR,
-            embedding VARCHAR(32000),
-            created_at TIMESTAMP
-        ))
-        
-        If SQLCODE '= 0 {
-            Write "Error creating table: SQLCODE=", SQLCODE, " MSG=", %msg,!
-            Return $$$ERROR($$$GeneralError, "Failed to create table")
+        // Compile the SourceDocumentsWithIFind class to create table
+        Set status = $System.OBJ.Compile("RAG.SourceDocumentsWithIFind.cls", "ck")
+        If $$$ISERR(status) {
+            Write "Error compiling class: ", $System.Status.GetErrorText(status),!
+            Return status
         }
         
-        Write "Table created successfully",!
+        Write "✅ iFind table class compiled successfully",!
         
-        // Now add the iFind index using ALTER TABLE
-        Write "Adding iFind index...",!
-        &sql(ALTER TABLE RAG.SourceDocumentsIFind ADD FULLTEXT INDEX idx_ifind (text_content))
-        
-        If SQLCODE '= 0 {
-            Write "Error creating iFind index: SQLCODE=", SQLCODE, " MSG=", %msg,!
-            // Try alternative syntax
-            Write "Trying alternative syntax...",!
-            &sql(CREATE FULLTEXT INDEX idx_ifind ON RAG.SourceDocumentsIFind (text_content))
-            
-            If SQLCODE '= 0 {
-                Write "Still failed: SQLCODE=", SQLCODE, " MSG=", %msg,!
-                Return $$$ERROR($$$GeneralError, "Failed to create iFind index")
-            }
+        // Test that the table was created
+        &sql(SELECT COUNT(*) INTO :count FROM RAG.SourceDocumentsWithIFind)
+        If SQLCODE = 0 {
+            Write "✅ Table created and accessible",!
+        } Else {
+            Write "Table creation verification failed: SQLCODE=", SQLCODE,!
         }
         
-        Write "✅ iFind index created successfully!",!
         Return $$$OK
         
     } Catch ex {
@@ -57,8 +39,11 @@ ClassMethod CopyDataToIFindTable() As %Status
     Try {
         Write "Copying data to iFind table...",!
         
-        &sql(INSERT INTO RAG.SourceDocumentsIFind 
-             SELECT * FROM RAG.SourceDocuments)
+        // Use INSERT with explicit column mapping for compatibility
+        &sql(INSERT INTO RAG.SourceDocumentsWithIFind 
+             (doc_id, title, text_content, authors, keywords, embedding, created_at)
+             SELECT doc_id, title, text_content, authors, keywords, embedding, created_at
+             FROM RAG.SourceDocuments)
         
         If SQLCODE = 0 {
             Write "✅ Copied ", %ROWCOUNT, " documents",!
@@ -74,7 +59,7 @@ ClassMethod CopyDataToIFindTable() As %Status
     }
 }
 
-/// Test iFind search using %CONTAINS
+/// Test iFind search using %FIND
 ClassMethod TestIFindSearch(searchText As %String) As %Status
 {
     Try {
@@ -82,8 +67,8 @@ ClassMethod TestIFindSearch(searchText As %String) As %Status
         
         &sql(DECLARE C1 CURSOR FOR
              SELECT TOP 10 doc_id, title
-             FROM RAG.SourceDocumentsIFind
-             WHERE %CONTAINS(text_content, :searchText))
+             FROM RAG.SourceDocumentsWithIFind
+             WHERE %FIND(text_content, :searchText) > 0)
         
         &sql(OPEN C1)
         
@@ -131,8 +116,8 @@ ClassMethod Setup() As %Status
     
     Write !,"✅ Setup complete!",!
     Write "Update hybrid_ifind_rag/pipeline.py to use:",!
-    Write "  FROM RAG.SourceDocumentsIFind",!
-    Write "  WHERE %CONTAINS(text_content, ?)",!
+    Write "  FROM RAG.SourceDocumentsWithIFind",!
+    Write "  WHERE %FIND(text_content, ?) > 0",!
     
     Return $$$OK
 }
