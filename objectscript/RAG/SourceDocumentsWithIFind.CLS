@@ -30,31 +30,6 @@ Index DocIdIndex On doc_id [ Unique ];
 /// Index on creation timestamp for temporal queries
 Index CreatedAtIndex On created_at;
 
-/// Test iFind search functionality
-ClassMethod TestSearch(searchText As %String = "diabetes") As %Status
-{
-    Set tSC = $$$OK
-    Try {
-        Write "Testing iFind search for: ", searchText, !
-        
-        // Use %FIND function which works with iFind
-        &sql(SELECT COUNT(*) INTO :count 
-             FROM RAG.SourceDocumentsWithIFind 
-             WHERE %FIND(text_content, :searchText) > 0)
-        
-        If SQLCODE = 0 {
-            Write "✓ Found ", count, " documents matching '", searchText, "'", !
-        } Else {
-            Write "Search completed with SQLCODE: ", SQLCODE, !
-        }
-        
-    } Catch ex {
-        Set tSC = ex.AsStatus()
-        Write "Error during search: ", ex.DisplayString(), !
-    }
-    
-    Quit tSC
-}
 
 /// Storage definition for the class
 Storage Default
