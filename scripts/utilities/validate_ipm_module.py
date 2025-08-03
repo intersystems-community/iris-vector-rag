@@ -81,14 +81,13 @@ class IPMModuleValidator:
             tree = ET.parse(module_xml_path)
             root = tree.getroot()
             
-            # Check required elements
+            # Check required elements (minimal ZPM structure)
             required_elements = [
                 ".//Name",
                 ".//Version", 
                 ".//Description",
                 ".//Dependencies",
-                ".//Packaging",
-                ".//Lifecycle"
+                ".//Packaging"
             ]
             
             missing_elements = []
@@ -96,7 +95,7 @@ class IPMModuleValidator:
                 if root.find(element_path) is None:
                     missing_elements.append(element_path)
             
-            # Check lifecycle methods
+            # Optional lifecycle methods (not required for minimal ZPM structure)
             lifecycle_methods = [
                 ".//Setup",
                 ".//Configure", 
@@ -105,9 +104,12 @@ class IPMModuleValidator:
             ]
             
             missing_lifecycle = []
-            for method_path in lifecycle_methods:
-                if root.find(method_path) is None:
-                    missing_lifecycle.append(method_path)
+            lifecycle_element = root.find(".//Lifecycle")
+            if lifecycle_element is not None:
+                # Only check for lifecycle methods if Lifecycle element exists
+                for method_path in lifecycle_methods:
+                    if root.find(method_path) is None:
+                        missing_lifecycle.append(method_path)
             
             # Check parameters
             parameters = root.findall(".//Parameter")
@@ -127,17 +129,22 @@ class IPMModuleValidator:
                 "valid_xml": True,
                 "has_required_elements": len(missing_elements) == 0,
                 "missing_elements": missing_elements,
-                "has_lifecycle_methods": len(missing_lifecycle) == 0,
+                "has_lifecycle_section": lifecycle_element is not None,
+                "has_lifecycle_methods": len(missing_lifecycle) == 0 if lifecycle_element is not None else True,
                 "missing_lifecycle": missing_lifecycle,
                 "has_parameters": len(missing_parameters) == 0,
                 "missing_parameters": missing_parameters,
                 "parameter_count": len(parameters)
             }
             
-            if len(missing_elements) == 0 and len(missing_lifecycle) == 0:
-                print("✅ module.xml structure is valid")
+            # Only require core elements, lifecycle is optional
+            if len(missing_elements) == 0:
+                if lifecycle_element is not None and len(missing_lifecycle) > 0:
+                    print(f"⚠️ module.xml lifecycle has issues: {missing_lifecycle}")
+                else:
+                    print("✅ module.xml structure is valid")
             else:
-                print(f"⚠️ module.xml has issues: {missing_elements + missing_lifecycle}")
+                print(f"⚠️ module.xml missing required elements: {missing_elements}")
                 
         except ET.ParseError as e:
             self.results["module_xml"] = {
@@ -420,9 +427,15 @@ class IPMModuleValidator:
     
     def calculate_overall_status(self) -> None:
         """Calculate overall validation status."""
-        checks = [
+        # Module XML check - only require core elements, lifecycle is optional
+        module_xml_valid = (
             self.results["module_xml"].get("valid_xml", False) and 
-            self.results["module_xml"].get("has_required_elements", False),
+            self.results["module_xml"].get("has_required_elements", False) and
+            self.results["module_xml"].get("has_lifecycle_methods", True)  # True if no lifecycle or all methods present
+        )
+        
+        checks = [
+            module_xml_valid,
             
             self.results["objectscript_classes"].get("all_classes_exist", False),
             
