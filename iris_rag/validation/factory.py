@@ -17,6 +17,7 @@ from ..pipelines.crag import CRAGPipeline
 from ..pipelines.hyde import HyDERAGPipeline
 from ..pipelines.graphrag import GraphRAGPipeline
 from ..pipelines.hybrid_ifind import HybridIFindRAGPipeline
+from ..pipelines.hybrid_vector_text import HybridVectorTextPipeline
 from ..pipelines.noderag import NodeRAGPipeline
 from ..pipelines.sql_rag import SQLRAGPipeline
 from ..pipelines.basic_rerank import BasicRAGRerankingPipeline
@@ -150,6 +151,12 @@ class ValidatedPipelineFactory:
                 config_manager=self.config_manager,
                 llm_func=llm_func
             )
+        elif pipeline_type == "hybrid_vector_text":
+            return HybridVectorTextPipeline(
+                connection_manager=self.connection_manager,
+                config_manager=self.config_manager,
+                llm_func=llm_func
+            )
         elif pipeline_type == "noderag":
             return NodeRAGPipeline(
                 connection_manager=self.connection_manager,
@@ -170,7 +177,7 @@ class ValidatedPipelineFactory:
                 llm_func=llm_func
             )
         else:
-            available_types = ["basic", "basic_rerank", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag", "sql_rag"]
+            available_types = ["basic", "basic_rerank", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "hybrid_vector_text", "noderag", "sql_rag"]
             raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available: {available_types}")
     
     def validate_pipeline_type(self, pipeline_type: str) -> Dict[str, Any]:
@@ -317,7 +324,7 @@ class ValidatedPipelineFactory:
         Returns:
             Dictionary of pipeline types and their status
         """
-        pipeline_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "noderag", "sql_rag"]
+        pipeline_types = ["basic", "colbert", "crag", "hyde", "graphrag", "hybrid_ifind", "hybrid_vector_text", "noderag", "sql_rag"]
         results = {}
         
         for pipeline_type in pipeline_types:
