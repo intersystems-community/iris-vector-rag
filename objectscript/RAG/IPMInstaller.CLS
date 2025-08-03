@@ -672,13 +672,13 @@ ClassMethod TestBasicFunctionality() As %Status
         Set tSC = ..CreateDatabaseSchema()
         If $$$ISERR(tSC) {
             Write "Schema creation failed: ", $System.Status.GetErrorText(tSC), !
-            Quit tSC
+            Quit
         }
         
         Set tSC = ..ConfigureVectorTables()
         If $$$ISERR(tSC) {
             Write "Vector table configuration failed: ", $System.Status.GetErrorText(tSC), !
-            Quit tSC
+            Quit
         }
         
         Write "✓ Database schema initialized for testing", !
