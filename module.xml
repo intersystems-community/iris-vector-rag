@@ -10,6 +10,10 @@
       <SourcesRoot>objectscript</SourcesRoot>
       <Resource Name="RAG.PKG"/>
       
+      <!-- Dependencies -->
+      <Dependencies>
+      </Dependencies>
+      
       <!-- Installation Lifecycle -->
       <Lifecycle>
         <Setup>RAG.IPMInstaller.Setup</Setup>
