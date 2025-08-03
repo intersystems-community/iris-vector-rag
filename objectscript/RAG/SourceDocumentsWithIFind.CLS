@@ -1,47 +1,96 @@
-Class RAG.SourceDocumentsWithIFind Extends %Persistent [ SqlTableName = SourceDocumentsIFind ]
+/// RAG SourceDocuments table with iFind support
+/// This class provides a table structure compatible with iFind functionality
+Class RAG.SourceDocumentsWithIFind Extends %Persistent
 {
-    Property doc_id As %String(MAXLEN = 255) [ Required ];
-    Property title As %String(MAXLEN = 1000);
-    Property text_content As %Stream.GlobalCharacter;
-    Property embedding As %String(MAXLEN = 60000);
-    Property created_at As %TimeStamp;
-    
-    Index DocIdIndex On doc_id [ Unique ];
-    
-    // This is the key - %iFind.Index.Basic on the STREAM field
-    Index TextContentFTI On (text_content) As %iFind.Index.Basic(
-        LANGUAGE = "en",
-        LOWER = 1,
-        INDEXOPTION = 2  // Enable stemming and decompounding
-    );
-    
-    Storage Default
-    {
-        <Data name="SourceDocumentsIFindDefaultData">
-            <Value name="1">
-                <Value>%%CLASSNAME</Value>
-            </Value>
-            <Value name="2">
-                <Value>doc_id</Value>
-            </Value>
-            <Value name="3">
-                <Value>title</Value>
-            </Value>
-            <Value name="4">
-                <Value>text_content</Value>
-            </Value>
-            <Value name="5">
-                <Value>embedding</Value>
-            </Value>
-            <Value name="6">
-                <Value>created_at</Value>
-            </Value>
-        </Data>
-        <DataLocation>^RAG.SourceDocumentsIFindD</DataLocation>
-        <DefaultData>SourceDocumentsIFindDefaultData</DefaultData>
-        <IdLocation>^RAG.SourceDocumentsIFindD</IdLocation>
-        <IndexLocation>^RAG.SourceDocumentsIFindI</IndexLocation>
-        <StreamLocation>^RAG.SourceDocumentsIFindS</StreamLocation>
-        <Type>%Storage.Persistent</Type>
+
+/// Document identifier
+Property doc_id As %String(MAXLEN = 255) [ Required ];
+
+/// Document title
+Property title As %String(MAXLEN = 500);
+
+/// Full text content - iFind works on any text field automatically
+Property text_content As %Stream.GlobalCharacter;
+
+/// Document authors
+Property authors As %String(MAXLEN = 1000);
+
+/// Document keywords  
+Property keywords As %String(MAXLEN = 1000);
+
+/// Vector embedding as string
+Property embedding As %String(MAXLEN = 60000);
+
+/// Creation timestamp
+Property created_at As %TimeStamp [ InitialExpression = {$ZDateTime($Horolog,3)} ];
+
+/// Index on document ID for fast lookups
+Index DocIdIndex On doc_id [ Unique ];
+
+/// Index on creation timestamp for temporal queries
+Index CreatedAtIndex On created_at;
+
+/// Test iFind search functionality
+ClassMethod TestSearch(searchText As %String = "diabetes") As %Status
+{
+    Set tSC = $$$OK
+    Try {
+        Write "Testing iFind search for: ", searchText, !
+        
+        // Use %FIND function which works with iFind
+        &sql(SELECT COUNT(*) INTO :count 
+             FROM RAG.SourceDocumentsWithIFind 
+             WHERE %FIND(text_content, :searchText) > 0)
+        
+        If SQLCODE = 0 {
+            Write "✓ Found ", count, " documents matching '", searchText, "'", !
+        } Else {
+            Write "Search completed with SQLCODE: ", SQLCODE, !
+        }
+        
+    } Catch ex {
+        Set tSC = ex.AsStatus()
+        Write "Error during search: ", ex.DisplayString(), !
     }
+    
+    Quit tSC
+}
+
+/// Storage definition for the class
+Storage Default
+{
+<Data name="SourceDocumentsWithIFindDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>doc_id</Value>
+</Value>
+<Value name="3">
+<Value>title</Value>
+</Value>
+<Value name="4">
+<Value>text_content</Value>
+</Value>
+<Value name="5">
+<Value>authors</Value>
+</Value>
+<Value name="6">
+<Value>keywords</Value>
+</Value>
+<Value name="7">
+<Value>embedding</Value>
+</Value>
+<Value name="8">
+<Value>created_at</Value>
+</Value>
+</Data>
+<DataLocation>^RAG.SourceDocumentsWithIFindD</DataLocation>
+<DefaultData>SourceDocumentsWithIFindDefaultData</DefaultData>
+<IdLocation>^RAG.SourceDocumentsWithIFindD</IdLocation>
+<IndexLocation>^RAG.SourceDocumentsWithIFindI</IndexLocation>
+<StreamLocation>^RAG.SourceDocumentsWithIFindS</StreamLocation>
+<Type>%Storage.Persistent</Type>
+}
+
 }
