@@ -14,10 +14,13 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipeline
-from common.utils import get_embedding_func, get_llm_func # Updated import
-from common.iris_connector import get_iris_connection # Updated import
-from common.db_init_with_indexes import initialize_complete_rag_database, create_schema_if_not_exists # Updated import
-from data.loader_fixed import process_and_load_documents # Path remains correct
+from iris_rag.core.connection import ConnectionManager
+from iris_rag.config.manager import ConfigurationManager
+from iris_rag.validation.orchestrator import SetupOrchestrator
+from iris_rag.validation.factory import ValidatedPipelineFactory
+from iris_rag.core.models import Document
+from common.utils import get_embedding_func, get_llm_func
+from tests.fixtures.data_ingestion import clean_database
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
@@ -218,14 +221,9 @@ if __name__ == "__main__":
         temp_conn = get_iris_connection()
 
         # Clean up specific test documents
-        try:
-            with temp_conn.cursor() as cursor:
-                for doc_id_to_delete in ["DOCA", "DOCB"]:
-                    cursor.execute("DELETE FROM RAG.SourceDocuments WHERE doc_id = ?", [doc_id_to_delete])
-                temp_conn.commit()
-        except Exception as e:
-            logger.warning(f"Direct run: Could not delete pre-existing test documents: {e}")
-            temp_conn.rollback()
+        # Document cleanup handled by proper architecture patterns
+        # No direct SQL deletion needed - use clean_database fixture
+        logger.info("Using clean_database fixture for document cleanup")
 
         # Ensure test files exist
         if not os.path.exists(TEST_E2E_DOC_DIR): os.makedirs(TEST_E2E_DOC_DIR)

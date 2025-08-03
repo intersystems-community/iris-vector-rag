@@ -9,7 +9,12 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from iris_rag.pipelines.crag import CRAGPipeline
-from common.utils import Document # Updated import
+from iris_rag.core.connection import ConnectionManager
+from iris_rag.config.manager import ConfigurationManager
+from iris_rag.validation.orchestrator import SetupOrchestrator
+from iris_rag.validation.factory import ValidatedPipelineFactory
+from iris_rag.core.models import Document
+from tests.fixtures.data_ingestion import clean_database
 # Fixtures like iris_testcontainer_connection, embedding_model_fixture,
 # llm_client_fixture will be automatically provided by pytest from conftest.py
 
@@ -145,28 +150,19 @@ def test_crag_jdbc_e2e_corrective_web_search_triggered(
     """
     caplog.set_level(logging.INFO) 
     
-    logger.info("Preparing database for CRAG JDBC E2E corrective web search test.")
-    with iris_testcontainer_connection.cursor() as cursor:
-        logger.info("Clearing RAG.DocumentChunks and RAG.SourceDocuments for test data.")
-        try:
-            cursor.execute("DELETE FROM RAG.DocumentChunks WHERE chunk_id LIKE 'crag_chunk_%'")
-            cursor.execute("DELETE FROM RAG.SourceDocuments WHERE doc_id LIKE 'doc_A' OR doc_id LIKE 'doc_B' OR doc_id LIKE 'doc_C'")
-            iris_testcontainer_connection.commit()
-        except Exception as e:
-            logger.warning(f"Could not clear tables (may be normal if first run): {e}")
-            iris_testcontainer_connection.rollback() # Rollback on error during clear
-            from common.db_init import initialize_database
-            try:
-                initialize_database(iris_testcontainer_connection, force_recreate=False)
-                logger.info("Re-ran initialize_database after clear attempt.")
-                # Try clearing again after ensuring schema exists
-                cursor.execute("DELETE FROM RAG.DocumentChunks WHERE chunk_id LIKE 'crag_chunk_%'")
-                cursor.execute("DELETE FROM RAG.SourceDocuments WHERE doc_id LIKE 'doc_A' OR doc_id LIKE 'doc_B' OR doc_id LIKE 'doc_C'")
-                iris_testcontainer_connection.commit()
-            except Exception as e_init:
-                 logger.error(f"Failed to initialize_database or clear after init: {e_init}")
-                 iris_testcontainer_connection.rollback()
-                 raise 
+    logger.info("Preparing database for CRAG E2E corrective web search test using proper architecture.")
+    
+    # Use proper architecture patterns for data setup instead of direct SQL
+    config_manager = ConfigurationManager()
+    connection_manager = ConnectionManager(config_manager)
+    
+    # Use SetupOrchestrator for pipeline preparation
+    orchestrator = SetupOrchestrator(connection_manager, config_manager)
+    setup_report = orchestrator.setup_pipeline('crag', auto_fix=True)
+    logger.info(f"CRAG setup orchestrator: {setup_report.status}")
+    
+    # Document cleanup and setup handled by clean_database fixture and pipeline ingestion
+    logger.info("Using clean_database fixture and pipeline ingestion for CRAG test data") 
     
     insert_crag_test_data(iris_testcontainer_connection, embedding_model_fixture, TEST_CHUNKS_FOR_CRAG)
 
