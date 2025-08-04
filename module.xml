@@ -13,14 +13,6 @@
       <!-- Dependencies -->
       <Dependencies>
       </Dependencies>
-      
-      <!-- Installation Lifecycle -->
-      <Lifecycle>
-        <Setup>RAG.IPMInstaller.Setup</Setup>
-        <Configure>RAG.IPMInstaller.Configure</Configure>
-        <Activate>RAG.IPMInstaller.Activate</Activate>
-        <Test>RAG.IPMInstaller.Test</Test>
-      </Lifecycle>
     </Module>
   </Document>
 </Export>

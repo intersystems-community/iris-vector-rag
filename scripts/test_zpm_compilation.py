@@ -22,14 +22,13 @@ def test_module_xml():
         tree = ET.parse(module_xml)
         root = tree.getroot()
         
-        # Check required elements
+        # Check required elements (minimal ZPM structure)
         required_elements = [
             ".//Name",
             ".//Version", 
             ".//Description",
             ".//Dependencies",
-            ".//Packaging",
-            ".//Lifecycle"
+            ".//Packaging"
         ]
         
         for element_path in required_elements:
