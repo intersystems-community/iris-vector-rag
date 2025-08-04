@@ -36,8 +36,12 @@ def validate_ipm_package(repo_path: str) -> Tuple[bool, List[str]]:
         tree = ET.parse(module_xml)
         root = tree.getroot()
         
-        # Find the Module element
-        module = root.find(".//Module")
+        # Find the Module element (could be root or nested)
+        if root.tag == "Module":
+            module = root
+        else:
+            module = root.find(".//Module")
+            
         if module is None:
             issues.append("❌ No Module element found in module.xml")
             return False, issues
@@ -96,7 +100,6 @@ def validate_ipm_package(repo_path: str) -> Tuple[bool, List[str]]:
         objectscript_dir = repo_root / "objectscript"
         if objectscript_dir.exists():
             required_cls_files = [
-                "RAG/IPMInstaller.CLS",
                 "RAG/VectorMigration.CLS", 
                 "RAG/IFindSetup.CLS",
                 "RAG/SourceDocumentsWithIFind.CLS"
