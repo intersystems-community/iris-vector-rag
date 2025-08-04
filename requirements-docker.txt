@@ -1,0 +1,17 @@
+# Docker-specific minimal requirements for IRIS ZPM compilation
+# This avoids heavy ML dependencies that cause build failures
+
+# Core IRIS dependencies only
+intersystems-irispython==5.1.2
+sqlalchemy>=2.0.0
+
+# Essential utilities
+requests>=2.31.0
+python-dotenv>=1.0.0
+PyYAML>=6.0
+
+# Database connectivity (minimal)
+jaydebeapi>=1.2.3
+
+# Testing (minimal)
+pytest>=7.4.0,<8.0.0

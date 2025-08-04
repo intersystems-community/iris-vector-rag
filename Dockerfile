@@ -27,7 +27,7 @@ ENV PATH "/usr/irissys/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sb
 COPY .iris_init /home/irisowner/.iris_init
 
 RUN --mount=type=bind,src=.,dst=. \
-    pip3 install -r requirements.txt && \
+    pip3 install -r requirements-docker.txt && \
     iris start IRIS && \
 	iris session IRIS < iris.script && \
     ([ $TESTS -eq 0 ] || iris session iris -U $NAMESPACE "##class(%ZPM.PackageManager).Shell(\"test $MODULE -v -only\",1,1)") && \
