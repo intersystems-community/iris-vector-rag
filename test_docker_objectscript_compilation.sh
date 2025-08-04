@@ -105,12 +105,12 @@ try {
 halt
 EOF
 
-# Copy test script to container
+# Copy test script to container (using correct container name from docker-compose.yml)
 docker cp test_compilation.cos iris_db_rag_standalone_community:/tmp/test_compilation.cos
 
 # Execute the test script
 log_info "Executing ObjectScript compilation test..."
-if docker-compose exec iris_db iris session IRIS -U USER < /tmp/test_compilation.cos > compilation_results.txt 2>&1; then
+if docker-compose exec iris_db bash -c "iris session IRIS -U USER < /tmp/test_compilation.cos" > compilation_results.txt 2>&1; then
     log_info "✅ ObjectScript test completed"
 else
     log_warn "ObjectScript test had issues, checking results..."
