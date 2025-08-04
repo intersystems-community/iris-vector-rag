@@ -175,7 +175,6 @@ class IPMModuleValidator:
         
         # Check required classes (use .CLS extension for IRIS)
         required_classes = [
-            "RAG/IPMInstaller.CLS",
             "RAG/PythonBridge.CLS", 
             "RAG/VectorMigration.CLS"
         ]
@@ -215,35 +214,8 @@ class IPMModuleValidator:
                     "error": f"Read error: {e}"
                 }
         
-        # Check for specific methods in IPMInstaller
-        installer_path = objectscript_dir / "RAG.IPMInstaller.cls"
-        if installer_path.exists():
-            try:
-                with open(installer_path, 'r', encoding='utf-8') as f:
-                    installer_content = f.read()
-                
-                required_methods = [
-                    "Setup",
-                    "Configure", 
-                    "Activate",
-                    "Test",
-                    "ValidateIRISVersion",
-                    "EnableVectorSearch",
-                    "InstallPythonPackage"
-                ]
-                
-                missing_methods = []
-                for method in required_methods:
-                    if f"ClassMethod {method}" not in installer_content:
-                        missing_methods.append(method)
-                
-                class_results["RAG.IPMInstaller.cls"]["required_methods"] = {
-                    "all_present": len(missing_methods) == 0,
-                    "missing": missing_methods
-                }
-                
-            except Exception as e:
-                class_results["RAG.IPMInstaller.cls"]["method_check_error"] = str(e)
+        # Note: IPMInstaller.CLS was removed to eliminate ZPM dependencies
+        # for Community Edition compatibility
         
         self.results["objectscript_classes"] = {
             "directory_exists": True,
