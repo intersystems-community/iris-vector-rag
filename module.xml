@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Export generator="IRIS" version="26">
-  <!-- Simple IRIS export without ZPM dependencies -->
-  <Class name="RAG.SourceDocumentsWithIFind">
-    <Super>%Persistent</Super>
-    <TimeStamp>65432,12345.123456</TimeStamp>
-  </Class>
-  <Class name="RAG.IFindSetup">
-    <TimeStamp>65432,12345.123456</TimeStamp>
-  </Class>
-  <Class name="RAG.SourceDocumentsFixed">
-    <Super>%Persistent</Super>
-    <TimeStamp>65432,12345.123456</TimeStamp>
-  </Class>
+  <!-- Simple IRIS module export without ZPM package manager dependencies -->
+  <Module>
+    <Name>iris-rag</Name>
+    <Version>0.2.0</Version>
+    <Description>A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend.</Description>
+    <Keywords>RAG,Vector Search,Machine Learning,AI,IRIS,Python,Embeddings</Keywords>
+    <Packaging>module</Packaging>
+    <SourcesRoot>objectscript</SourcesRoot>
+    <Resource Name="RAG.PKG"/>
+    
+    <!-- Dependencies section left empty to avoid ZPM issues -->
+    <Dependencies>
+    </Dependencies>
+  </Module>
 </Export>
