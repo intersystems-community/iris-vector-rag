@@ -9,8 +9,6 @@
       <Packaging>module</Packaging>
       <SourcesRoot>objectscript</SourcesRoot>
       <Resource Name="RAG.PKG"/>
-      
-      <!-- Dependencies -->
       <Dependencies>
       </Dependencies>
     </Module>

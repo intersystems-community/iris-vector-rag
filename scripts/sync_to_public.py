@@ -512,6 +512,7 @@ def get_default_config() -> SyncConfig:
                 "*.pyc", "__pycache__/", "*.log", "temp_*", "*.tmp",
                 "INTERNAL_ROADMAP.md",  # Exclude internal roadmap from public sync
                 "CRITICAL_SECURITY_AUDIT_REPORT.md",  # Contains sensitive API keys - NEVER sync
+                "OBJECTSCRIPT_SYNTAX_LEARNING_REPORT.md",  # Internal ObjectScript learning notes
                 "internal_*",           # Exclude any internal-prefixed docs
                 "private_*"             # Exclude any private-prefixed docs
             ]
