@@ -13,14 +13,10 @@ Following TDD workflow:
 import pytest
 import os
 import sys
-from typing import List, Dict, Any
 from unittest.mock import patch, MagicMock
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
-
-# Import test fixtures
-from tests.mocks.models import mock_embedding_func, mock_llm_func
 
 
 class TestSimpleAPIPhase1:

@@ -33,7 +33,7 @@ import json
 import time
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional, Callable
+from typing import Dict, Any
 from pathlib import Path
 
 # Configure logging
@@ -55,7 +55,7 @@ try:
     from iris_rag.core.models import Document
     from iris_rag.config.manager import ConfigurationManager
     from iris_rag.embeddings.manager import EmbeddingManager
-    from iris_rag.storage.iris import IRISStorage
+    from iris_rag.storage.enterprise_storage import IRISStorage
     from iris_rag.pipelines.basic import BasicRAGPipeline
     logger.info("✓ Successfully imported iris_rag package components")
 except ImportError as e:
@@ -68,8 +68,6 @@ except ImportError as e:
 # Import utilities
 from common.utils import get_embedding_func, get_llm_func
 from common.iris_connection_manager import get_iris_connection
-# Import data loading from pmc_processor instead
-from data.pmc_processor import process_pmc_files
 
 # Test configuration
 # Resolve PMC data directory path relative to project root
@@ -193,7 +191,7 @@ class ComprehensiveE2ETestRunner:
                 query_start = time.time()
                 
                 # Run the pipeline
-                result = pipeline.run(
+                result = pipeline.query(
                     query_data["query"],
                     top_k=5
                 )
@@ -263,7 +261,7 @@ class ComprehensiveE2ETestRunner:
                 query_start = time.time()
                 
                 # Run the pipeline
-                result = pipeline.run(
+                result = pipeline.query(
                     query_text=query_data["query"],
                     top_k=5
                 )
@@ -363,7 +361,7 @@ class ComprehensiveE2ETestRunner:
         # These should ideally be empty if all pipelines have dedicated iris_rag test methods.
         legacy_pipelines_to_compare = [
             # ("GraphRAG", GraphRAGPipeline), # Example: if still needing legacy run
-            # ("HyDE", HyDEPipeline)          # Example: if still needing legacy run
+            # ("HyDE", HyDERAGPipeline)          # Example: if still needing legacy run
         ]
 
         all_results = {}
@@ -473,7 +471,7 @@ class ComprehensiveE2ETestRunner:
                 
                 # Run the pipeline
                 # The HybridIFindRAGPipeline.execute method takes query_text directly
-                result = pipeline.execute(
+                result = pipeline.query(
                     query_text=query_data["query"], # Pass query_text directly
                     top_k=5
                 )
@@ -531,7 +529,7 @@ class ComprehensiveE2ETestRunner:
             for query_data in TEST_CONFIG["test_queries"]:
                 query_start_time = time.time()
                 # Using pipeline.execute as it's the standard defined in RAGPipeline base class
-                result = pipeline.execute(
+                result = pipeline.query(
                     query_text=query_data["query"],
                     top_k=5
                 )
@@ -672,7 +670,7 @@ def test_iris_rag_package_imports():
     from iris_rag.core.models import Document
     from iris_rag.config.manager import ConfigurationManager
     from iris_rag.embeddings.manager import EmbeddingManager
-    from iris_rag.storage.iris import IRISStorage
+    from iris_rag.storage.enterprise_storage import IRISStorage
     from iris_rag.pipelines.basic import BasicRAGPipeline
     
     # Test top-level package import

@@ -1,0 +1,641 @@
+# Sample Docker compose templates for testing
+
+minimal_template: |
+  version: '3.8'
+  
+  services:
+    iris:
+      image: intersystemsdc/iris-community:latest
+      container_name: rag_iris_minimal
+      ports:
+        - "1972:1972"
+        - "52773:52773"
+      environment:
+        - ISC_PASSWORD=SYS
+        - ISC_DATA_DIRECTORY=/opt/irisapp/data
+      volumes:
+        - iris_data:/opt/irisapp/data
+        - ./config/iris:/opt/irisapp/config
+      networks:
+        - rag_network
+      healthcheck:
+        test: ["CMD", "iris", "session", "iris", "-U", "USER", "##class(%SYSTEM.Process).CurrentDirectory()"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 60s
+    
+    rag_app:
+      image: python:3.11-slim
+      container_name: rag_app_minimal
+      ports:
+        - "8000:8000"
+      working_dir: /app
+      command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+      volumes:
+        - .:/app
+        - rag_data:/app/data
+      environment:
+        - IRIS_HOST=iris
+        - IRIS_PORT=1972
+        - IRIS_USERNAME=demo
+        - IRIS_PASSWORD=demo
+        - IRIS_NAMESPACE=USER
+        - PYTHONPATH=/app
+        - CHUNK_SIZE=1000
+        - CHUNK_OVERLAP=200
+        - BATCH_SIZE=16
+        - MAX_WORKERS=2
+      networks:
+        - rag_network
+      depends_on:
+        iris:
+          condition: service_healthy
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 30s
+  
+  volumes:
+    iris_data:
+      driver: local
+    rag_data:
+      driver: local
+  
+  networks:
+    rag_network:
+      driver: bridge
+
+standard_template: |
+  version: '3.8'
+  
+  services:
+    iris:
+      image: intersystemsdc/iris-community:latest
+      container_name: rag_iris_standard
+      ports:
+        - "1972:1972"
+        - "52773:52773"
+      environment:
+        - ISC_PASSWORD=SYS
+        - ISC_DATA_DIRECTORY=/opt/irisapp/data
+      volumes:
+        - iris_data:/opt/irisapp/data
+        - ./config/iris:/opt/irisapp/config
+      networks:
+        - rag_network
+      healthcheck:
+        test: ["CMD", "iris", "session", "iris", "-U", "USER", "##class(%SYSTEM.Process).CurrentDirectory()"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 60s
+    
+    rag_app:
+      image: python:3.11-slim
+      container_name: rag_app_standard
+      ports:
+        - "8000:8000"
+      working_dir: /app
+      command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+      volumes:
+        - .:/app
+        - rag_data:/app/data
+      environment:
+        - IRIS_HOST=iris
+        - IRIS_PORT=1972
+        - IRIS_USERNAME=demo
+        - IRIS_PASSWORD=demo
+        - IRIS_NAMESPACE=USER
+        - PYTHONPATH=/app
+        - CHUNK_SIZE=1000
+        - CHUNK_OVERLAP=200
+        - BATCH_SIZE=32
+        - MAX_WORKERS=4
+      networks:
+        - rag_network
+      depends_on:
+        iris:
+          condition: service_healthy
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 30s
+    
+    mcp_server:
+      image: node:18-alpine
+      container_name: rag_mcp_server_standard
+      ports:
+        - "3000:3000"
+      working_dir: /app
+      command: ["npm", "start"]
+      volumes:
+        - ./nodejs:/app
+      environment:
+        - NODE_ENV=production
+        - RAG_API_URL=http://rag_app:8000
+        - IRIS_HOST=iris
+        - IRIS_PORT=1972
+      networks:
+        - rag_network
+      depends_on:
+        iris:
+          condition: service_healthy
+        rag_app:
+          condition: service_healthy
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 30s
+  
+  volumes:
+    iris_data:
+      driver: local
+    rag_data:
+      driver: local
+  
+  networks:
+    rag_network:
+      driver: bridge
+
+extended_template: |
+  version: '3.8'
+  
+  services:
+    iris:
+      image: intersystemsdc/iris-community:latest
+      container_name: rag_iris_extended
+      ports:
+        - "1972:1972"
+        - "52773:52773"
+      environment:
+        - ISC_PASSWORD=SYS
+        - ISC_DATA_DIRECTORY=/opt/irisapp/data
+      volumes:
+        - iris_data:/opt/irisapp/data
+        - ./config/iris:/opt/irisapp/config
+      networks:
+        - rag_network
+      deploy:
+        resources:
+          limits:
+            memory: 4g
+            cpus: '2.0'
+          reservations:
+            memory: 2g
+            cpus: '1.0'
+      healthcheck:
+        test: ["CMD", "iris", "session", "iris", "-U", "USER", "##class(%SYSTEM.Process).CurrentDirectory()"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 60s
+    
+    rag_app:
+      image: python:3.11-slim
+      container_name: rag_app_extended
+      ports:
+        - "8000:8000"
+      working_dir: /app
+      command: ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+      volumes:
+        - .:/app
+        - rag_data:/app/data
+      environment:
+        - IRIS_HOST=iris
+        - IRIS_PORT=1972
+        - IRIS_USERNAME=demo
+        - IRIS_PASSWORD=demo
+        - IRIS_NAMESPACE=USER
+        - PYTHONPATH=/app
+        - CHUNK_SIZE=1000
+        - CHUNK_OVERLAP=200
+        - BATCH_SIZE=64
+        - MAX_WORKERS=8
+      networks:
+        - rag_network
+      deploy:
+        replicas: 3
+        resources:
+          limits:
+            memory: 2g
+            cpus: '1.0'
+          reservations:
+            memory: 1g
+            cpus: '0.5'
+      depends_on:
+        iris:
+          condition: service_healthy
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 30s
+    
+    mcp_server:
+      image: node:18-alpine
+      container_name: rag_mcp_server_extended
+      ports:
+        - "3000:3000"
+      working_dir: /app
+      command: ["npm", "start"]
+      volumes:
+        - ./nodejs:/app
+      environment:
+        - NODE_ENV=production
+        - RAG_API_URL=http://rag_app:8000
+        - IRIS_HOST=iris
+        - IRIS_PORT=1972
+      networks:
+        - rag_network
+      deploy:
+        replicas: 2
+        resources:
+          limits:
+            memory: 1g
+            cpus: '0.5'
+          reservations:
+            memory: 512m
+            cpus: '0.25'
+      depends_on:
+        iris:
+          condition: service_healthy
+        rag_app:
+          condition: service_healthy
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 30s
+    
+    nginx:
+      image: nginx:alpine
+      container_name: rag_nginx_extended
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
+        - ./config/nginx/certs:/etc/nginx/certs:ro
+      networks:
+        - rag_network
+      depends_on:
+        - rag_app
+        - mcp_server
+      deploy:
+        resources:
+          limits:
+            memory: 256m
+            cpus: '0.25'
+    
+    prometheus:
+      image: prom/prometheus:latest
+      container_name: rag_prometheus_extended
+      ports:
+        - "9090:9090"
+      volumes:
+        - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+        - prometheus_data:/prometheus
+      networks:
+        - rag_network
+      deploy:
+        resources:
+          limits:
+            memory: 1g
+            cpus: '0.5'
+    
+    grafana:
+      image: grafana/grafana:latest
+      container_name: rag_grafana_extended
+      ports:
+        - "3001:3000"
+      environment:
+        - GF_SECURITY_ADMIN_PASSWORD=admin
+      volumes:
+        - grafana_data:/var/lib/grafana
+      networks:
+        - rag_network
+      depends_on:
+        - prometheus
+      deploy:
+        resources:
+          limits:
+            memory: 512m
+            cpus: '0.25'
+  
+  volumes:
+    iris_data:
+      driver: local
+    rag_data:
+      driver: local
+    prometheus_data:
+      driver: local
+    grafana_data:
+      driver: local
+  
+  networks:
+    rag_network:
+      driver: bridge
+
+development_template: |
+  version: '3.8'
+  
+  services:
+    iris:
+      image: intersystemsdc/iris-community:latest
+      container_name: rag_iris_dev
+      ports:
+        - "1972:1972"
+        - "52773:52773"
+      environment:
+        - ISC_PASSWORD=SYS
+        - ISC_DATA_DIRECTORY=/opt/irisapp/data
+      volumes:
+        - iris_data:/opt/irisapp/data
+        - ./config/iris:/opt/irisapp/config
+      networks:
+        - rag_network_dev
+      healthcheck:
+        test: ["CMD", "iris", "session", "iris", "-U", "USER", "##class(%SYSTEM.Process).CurrentDirectory()"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 60s
+    
+    rag_app:
+      image: python:3.11-slim
+      container_name: rag_app_dev
+      ports:
+        - "8000:8000"
+        - "5678:5678"  # Debug port
+      working_dir: /app
+      command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "--wait-for-client", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+      volumes:
+        - .:/app  # Hot reload volume
+        - rag_data:/app/data
+      environment:
+        - IRIS_HOST=iris
+        - IRIS_PORT=1972
+        - IRIS_USERNAME=demo
+        - IRIS_PASSWORD=demo
+        - IRIS_NAMESPACE=USER
+        - PYTHONPATH=/app
+        - FLASK_ENV=development
+        - DEBUG=true
+        - PYTHONDEBUG=1
+      networks:
+        - rag_network_dev
+      depends_on:
+        iris:
+          condition: service_healthy
+    
+    mcp_server:
+      image: node:18-alpine
+      container_name: rag_mcp_server_dev
+      ports:
+        - "3000:3000"
+        - "9229:9229"  # Debug port
+      working_dir: /app
+      command: ["node", "--inspect=0.0.0.0:9229", "server.js"]
+      volumes:
+        - ./nodejs:/app
+      environment:
+        - NODE_ENV=development
+        - RAG_API_URL=http://rag_app:8000
+        - IRIS_HOST=iris
+        - IRIS_PORT=1972
+        - DEBUG=*
+      networks:
+        - rag_network_dev
+      depends_on:
+        iris:
+          condition: service_healthy
+        rag_app:
+          condition: service_started
+  
+  volumes:
+    iris_data:
+      driver: local
+    rag_data:
+      driver: local
+  
+  networks:
+    rag_network_dev:
+      driver: bridge
+
+testing_template: |
+  version: '3.8'
+  
+  services:
+    iris_test:
+      image: intersystemsdc/iris-community:latest
+      container_name: rag_iris_test
+      ports:
+        - "1973:1972"  # Different port for testing
+        - "52774:52773"
+      environment:
+        - ISC_PASSWORD=test
+        - ISC_DATA_DIRECTORY=/opt/irisapp/data
+      volumes:
+        - iris_test_data:/opt/irisapp/data
+        - test_data:/app/test_data
+      networks:
+        - rag_network_test
+      healthcheck:
+        test: ["CMD", "iris", "session", "iris", "-U", "TEST", "##class(%SYSTEM.Process).CurrentDirectory()"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 60s
+    
+    rag_app_test:
+      image: python:3.11-slim
+      container_name: rag_app_test
+      ports:
+        - "8001:8000"
+      working_dir: /app
+      command: ["python", "-m", "pytest", "-v", "--tb=short"]
+      volumes:
+        - .:/app
+        - test_data:/app/test_data
+      environment:
+        - IRIS_HOST=iris_test
+        - IRIS_PORT=1972
+        - IRIS_USERNAME=test
+        - IRIS_PASSWORD=test
+        - IRIS_NAMESPACE=TEST
+        - PYTHONPATH=/app
+        - TESTING=true
+      networks:
+        - rag_network_test
+      depends_on:
+        iris_test:
+          condition: service_healthy
+  
+  volumes:
+    iris_test_data:
+      driver: local
+    test_data:
+      driver: local
+  
+  networks:
+    rag_network_test:
+      driver: bridge
+
+production_template: |
+  version: '3.8'
+  
+  services:
+    iris:
+      image: intersystemsdc/iris-community:latest
+      container_name: rag_iris_prod
+      ports:
+        - "1972:1972"
+        - "52773:52773"
+      environment:
+        - ISC_PASSWORD=${IRIS_PASSWORD:-SYS}
+        - ISC_DATA_DIRECTORY=/opt/irisapp/data
+      volumes:
+        - iris_data:/opt/irisapp/data
+        - ./config/iris:/opt/irisapp/config
+        - ./backups:/opt/irisapp/backups
+      networks:
+        - rag_network_prod
+      deploy:
+        resources:
+          limits:
+            memory: 4g
+            cpus: '2.0'
+          reservations:
+            memory: 2g
+            cpus: '1.0'
+        restart_policy:
+          condition: on-failure
+          delay: 5s
+          max_attempts: 3
+      healthcheck:
+        test: ["CMD", "iris", "session", "iris", "-U", "USER", "##class(%SYSTEM.Process).CurrentDirectory()"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 60s
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+    
+    rag_app:
+      image: python:3.11-slim
+      container_name: rag_app_prod
+      ports:
+        - "8000:8000"
+      working_dir: /app
+      command: ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "main:app"]
+      volumes:
+        - .:/app
+        - rag_data:/app/data
+      environment:
+        - IRIS_HOST=iris
+        - IRIS_PORT=1972
+        - IRIS_USERNAME=${IRIS_USERNAME:-demo}
+        - IRIS_PASSWORD=${IRIS_PASSWORD:-demo}
+        - IRIS_NAMESPACE=USER
+        - PYTHONPATH=/app
+        - ENVIRONMENT=production
+      networks:
+        - rag_network_prod
+      deploy:
+        replicas: 3
+        resources:
+          limits:
+            memory: 2g
+            cpus: '1.0'
+          reservations:
+            memory: 1g
+            cpus: '0.5'
+        restart_policy:
+          condition: on-failure
+          delay: 5s
+          max_attempts: 3
+      depends_on:
+        iris:
+          condition: service_healthy
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 30s
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+    
+    nginx:
+      image: nginx:alpine
+      container_name: rag_nginx_prod
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
+        - /certs:/etc/nginx/certs:ro
+      environment:
+        - SSL_ENABLED=true
+      networks:
+        - rag_network_prod
+      depends_on:
+        - rag_app
+      deploy:
+        resources:
+          limits:
+            memory: 256m
+            cpus: '0.25'
+        restart_policy:
+          condition: on-failure
+      logging:
+        driver: json-file
+        options:
+          max-size: "10m"
+          max-file: "3"
+    
+    backup_agent:
+      image: backup-agent:latest
+      container_name: rag_backup_agent
+      volumes:
+        - iris_data:/data/iris:ro
+        - rag_data:/data/rag:ro
+        - ./backups:/backups
+      environment:
+        - BACKUP_SCHEDULE=0 2 * * *
+        - BACKUP_RETENTION=7d
+        - BACKUP_STORAGE=s3://backup-bucket
+      networks:
+        - rag_network_prod
+      deploy:
+        resources:
+          limits:
+            memory: 512m
+            cpus: '0.25'
+        restart_policy:
+          condition: on-failure
+  
+  volumes:
+    iris_data:
+      driver: local
+    rag_data:
+      driver: local
+  
+  networks:
+    rag_network_prod:
+      driver: bridge

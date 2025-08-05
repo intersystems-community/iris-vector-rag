@@ -1,8 +1,93 @@
 # RAG Templates - Enterprise RAG Framework
 
-**Production-ready RAG applications with InterSystems IRIS.** Zero-configuration APIs, enterprise-grade architecture, and seamless LangChain integration.
+**Production-ready RAG applications with InterSystems IRIS.** Zero-configuration APIs, enterprise-grade architecture, and seamless framework integration.
+
+## 🎯 For IRIS Customers
+
+**Already have data in IRIS?** Add RAG capabilities to your existing systems in minutes:
+
+```python
+# Non-destructive integration with existing IRIS data
+from rag_templates import ConfigurableRAG
+
+rag = ConfigurableRAG({
+    "database": {"existing_tables": {"YourSchema.YourTable": {...}}}
+})
+answer = rag.query("Your business question")
+```
+
+**Key Benefits for IRIS Customers:**
+- ✅ **No Data Migration**: Works with existing IRIS tables
+- ✅ **8 RAG Techniques**: Compare performance on your data  
+- ✅ **ObjectScript Integration**: Native calls from existing applications
+- ✅ **2x Faster**: IRIS WSGI deployment outperforms external solutions
+- ✅ **Enterprise Security**: Inherits your existing IRIS security model
+
+## 🧭 Where to Start
+
+**Choose your path based on your situation:**
+
+### 📊 I want to evaluate RAG techniques
+```bash
+make demo-performance    # Compare 8 RAG techniques on sample data
+make demo-chat-app      # Interactive demo with all features
+```
+
+### 🔄 I'm migrating from LangChain/LlamaIndex  
+```bash
+make demo-migration     # See side-by-side code comparisons
+```
+👉 **See:** [Framework Migration Guide](docs/FRAMEWORK_MIGRATION.md)
+
+### 🏥 I have existing data in IRIS
+```bash
+make quick-start-demo   # Setup with existing data integration
+```
+👉 **See:** [Existing Data Integration](docs/EXISTING_DATA_INTEGRATION.md)
+
+### 🚀 I want to start fresh
+```bash
+make quick-start        # Guided setup wizard
+```
 
 ## 🚀 Quick Start
+
+### 🆓 Free Community Edition (Default)
+**This project uses InterSystems IRIS Community Edition by default - completely free, no license required!**
+
+All Docker configurations (`docker-compose.yml`, `docker-compose.iris-only.yml`) use `intersystemsdc/iris-community:latest` for immediate, license-free usage. 
+
+**Community vs Enterprise Edition:**
+- **Community Edition** (Default): Free, full RAG functionality, perfect for development and production
+- **Enterprise Edition**: Licensed version with additional enterprise features (use `docker-compose.licensed.yml`)
+
+```bash
+# Start with Community Edition (default)
+docker-compose up -d
+
+# Or use the standalone Community Edition configuration
+docker-compose -f docker-compose.iris-only.yml up -d
+```
+
+### One-Command Setup
+Get started with a complete RAG system in minutes using our intelligent setup wizard:
+
+```bash
+# Interactive setup with profile selection
+make quick-start
+
+# Or choose a specific profile:
+make quick-start-minimal    # 50 docs, 2GB RAM - Perfect for development
+make quick-start-standard   # 500 docs, 4GB RAM - Production ready
+make quick-start-extended   # 5000 docs, 8GB RAM - Enterprise scale
+```
+
+The Quick Start system provides:
+- **🎯 Profile-based Configuration**: Minimal, Standard, and Extended profiles optimized for different use cases
+- **🔧 Interactive CLI Wizard**: Guided setup with intelligent defaults and validation
+- **🐳 Docker Integration**: Containerized environments with health monitoring
+- **📊 Health Monitoring**: Real-time system validation and performance tracking
+- **🔗 MCP Server Integration**: Microservice deployment with enterprise features
 
 ### Python - Zero Configuration
 ```python
@@ -15,7 +100,7 @@ answer = rag.query("What is machine learning?")
 print(answer)
 ```
 
-### JavaScript - Zero Configuration  
+### JavaScript - Zero Configuration
 ```javascript
 import { RAG } from '@rag-templates/core';
 
@@ -31,6 +116,27 @@ console.log(answer);
 Set bridge = ##class(RAG.PythonBridge).%New()
 Set result = bridge.Query("What is machine learning?", "basic")
 Write result.answer
+```
+
+### Quick Start Profiles
+
+| Profile | Documents | Memory | Use Case | Features |
+|---------|-----------|--------|----------|----------|
+| **Minimal** | 50 | 2GB | Development, Testing | Basic RAG, Local setup |
+| **Standard** | 500 | 4GB | Production, Demos | Multiple techniques, MCP server |
+| **Extended** | 5000 | 8GB | Enterprise, Scale | Full stack, Monitoring, Docker |
+
+### Quick Start Commands
+
+```bash
+# Check system status
+make quick-start-status
+
+# Clean up environment
+make quick-start-clean
+
+# Custom profile setup
+make quick-start-custom PROFILE=my-profile
 ```
 
 ## 🏗️ Core Architecture
@@ -51,6 +157,33 @@ from rag_templates.storage import IRISVectorStore
 vector_store = IRISVectorStore(connection_manager, config_manager)
 retriever = vector_store.as_retriever(search_kwargs={"k": 5})
 ```
+
+### Enterprise Storage & Existing Data Integration
+Seamlessly integrate RAG with your existing databases and enterprise data:
+
+```python
+# Use existing database tables
+config = {
+    "storage": {
+        "iris": {
+            "table_name": "MyCompany.Documents"  # Your existing table
+        }
+    }
+}
+
+# Enterprise storage with manual schema control
+from iris_rag.storage.enterprise_storage import IRISStorage
+storage = IRISStorage(connection, config)
+storage.initialize_schema()  # Adds RAG columns to existing tables
+```
+
+**Key Features:**
+- **Custom table support**: Use existing database tables without modification
+- **Non-destructive overlay**: Add RAG capabilities via views and auxiliary tables
+- **Schema migration**: Automatically add missing columns to legacy tables
+- **Security-hardened**: Input validation and SQL injection prevention
+
+See the [Existing Data Integration Guide](docs/EXISTING_DATA_INTEGRATION.md) for complete setup instructions.
 
 ### Configuration System
 Environment-aware configuration with validation:
@@ -73,6 +206,7 @@ config = ConfigurationManager()
 | **graphrag** | Graph-based knowledge retrieval | Structured knowledge bases | ✅ Production |
 | **hybrid_ifind** | Multi-modal search combination | Enterprise search | ✅ Production |
 | **noderag** | Node-based structured retrieval | Hierarchical data | ✅ Production |
+| **sql_rag** | Natural language to SQL conversion | Structured data queries | ✅ Production |
 
 *ColBERT: Includes experimental [Pylate integration](https://github.com/lightonai/pylate) with pluggable backend support (`native`/`pylate`).
 
@@ -110,7 +244,7 @@ rag = ConfigurableRAG(config)
 
 ## 🔗 MCP Integration
 
-The Model Context Protocol (MCP) integration allows you to easily deploy and manage RAG services as "microservices". This design enables flexible deployment across various environments and seamless integration with existing enterprise systems.
+The Multi-Cloud Platform (MCP) integration allows you to easily deploy and manage RAG services as microservices. This design enables flexible deployment across various environments and seamless integration with existing enterprise systems.
 
 ### Creating MCP Servers
 
@@ -137,14 +271,22 @@ For detailed setup and usage, refer to the [MCP Integration Guide](docs/MCP_INTE
 
 | Guide | Description |
 |-------|-------------|
+| **[🚀 Quick Start Guide](docs/QUICK_START_GUIDE.md)** | **NEW!** One-command setup with intelligent profiles |
 | **[📖 User Guide](docs/USER_GUIDE.md)** | Complete usage guide and best practices |
+| **[👨‍💻 Developer Guide](docs/DEVELOPER_GUIDE.md)** | Development setup, contribution guide, and best practices |
+| **[🔧 Pipeline Development Guide](docs/PIPELINE_DEVELOPMENT_GUIDE.md)** | **NEW!** How to create custom RAG pipelines with proper inheritance patterns |
 | **[🔗 MCP Integration Guide](docs/MCP_INTEGRATION_GUIDE.md)** | Multi-Cloud Platform integration, MCP server creation, and IRIS SQL tool usage |
 | **[📋 Documentation](docs/README.md)** | Additional documentation and guides |
 
 ## ✅ Verification
 
 ```bash
-# Quick setup and validation
+# Quick Start - One command setup and validation
+make quick-start-minimal    # Development setup with validation
+make quick-start-standard   # Production setup with validation
+make quick-start-extended   # Enterprise setup with validation
+
+# Manual setup and validation
 make setup-env && make install
 make validate-iris-rag && make test-unit
 
@@ -153,13 +295,22 @@ make load-1000 && make test-1000
 
 # Performance benchmarking
 make test-ragas-1000-enhanced
+
+# Quick Start system status
+make quick-start-status     # Check system health and configuration
 ```
 
 ## 🌟 Key Features
 
+- **🆓 Free Community Edition**: Default setup uses IRIS Community Edition - completely free, no license required
+- **🚀 One-Command Setup**: Complete RAG systems in minutes with intelligent profiles
+- **🎯 Profile-Based Configuration**: Minimal, Standard, Extended - optimized for every use case
+- **🔧 Interactive CLI Wizard**: Guided setup with validation and intelligent defaults
+- **🐳 Docker Integration**: Containerized environments with health monitoring
+- **📊 Real-Time Monitoring**: System health, performance metrics, and alerting
 - **Zero Configuration**: Production-ready defaults, works immediately
 - **Enterprise Architecture**: Schema management, migrations, monitoring
-- **LangChain Compatible**: Drop-in replacement for existing workflows  
+- **LangChain Compatible**: Drop-in replacement for existing workflows
 - **Multi-Language**: Python, JavaScript, and ObjectScript support
 - **MCP-First Design**: Trivial MCP server creation
 - **Advanced RAG**: 7+ sophisticated retrieval techniques
@@ -184,6 +335,16 @@ make test-ragas-1000-enhanced
 - **Embeddings**: [Sentence Transformers](https://github.com/UKPLab/sentence-transformers), [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings)
 - **LLM Integration**: [LangChain](https://github.com/langchain-ai/langchain), [OpenAI API](https://platform.openai.com/docs/api-reference)
 - **Evaluation**: [RAGAS Framework](https://github.com/explodinggradients/ragas)
+
+## 🛣️ Roadmap
+
+See our [Roadmap](ROADMAP.md) for planned features, architecture improvements, and long-term vision.
+
+**Upcoming Highlights:**
+- **Unified Connection Architecture** - Simplify IRIS database connections
+- **Multi-Modal RAG** - Image and document processing support  
+- **AutoRAG** - Automatic technique selection and optimization
+- **RAG Studio** - Visual pipeline builder for enterprise users
 
 ## 🤝 Contributing
 

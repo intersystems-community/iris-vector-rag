@@ -1,0 +1,1 @@
+InterSystems IRIS is a multi-model database that supports SQL, JSON, and object data models. It is used in high-performance transactional systems.

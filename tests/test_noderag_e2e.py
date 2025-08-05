@@ -1,5 +1,3 @@
-import pytest
-import json
 from unittest.mock import patch
 
 # Add project root to sys.path to allow imports
@@ -9,9 +7,14 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.experimental.noderag.pipeline import NodeRAGPipeline # Corrected import path and class name
-from common.utils import get_embedding_func, get_llm_func, Document # Updated import
-from common.jdbc_stream_utils import read_iris_stream # Updated import
+from common.utils import get_embedding_func
+from iris_rag.pipelines.noderag import NodeRAGPipeline
+from iris_rag.core.connection import ConnectionManager
+from iris_rag.config.manager import ConfigurationManager
+from iris_rag.validation.orchestrator import SetupOrchestrator
+from iris_rag.validation.factory import ValidatedPipelineFactory
+from iris_rag.core.models import Document
+from tests.fixtures.data_ingestion import clean_database
 
 # Test Data for NodeRAG
 # Document 1: Alpha Protocol
@@ -39,13 +42,26 @@ DOC3_CHUNKS_DATA = [
     {"id": "noderag_chunk_003_02", "doc_id": DOC3_ID, "text": "Primary focus of Delta is solar power.", "index": 1}
 ]
 
-TEST_DOCS_DATA_NODERAG = [
-    {"id": DOC1_ID, "title": "Alpha Protocol", "content": DOC1_CONTENT},
-    {"id": DOC2_ID, "title": "Project B Details", "content": DOC2_CONTENT},
-    {"id": DOC3_ID, "title": "Delta Project Overview", "content": DOC3_CONTENT},
+# Convert test data to Document objects for proper pipeline ingestion
+TEST_DOCUMENTS_NODERAG = [
+    Document(
+        id=DOC1_ID, 
+        page_content=DOC1_CONTENT, 
+        metadata={"title": "Alpha Protocol", "source": "test"}
+    ),
+    Document(
+        id=DOC2_ID, 
+        page_content=DOC2_CONTENT, 
+        metadata={"title": "Project B Details", "source": "test"}
+    ),
+    Document(
+        id=DOC3_ID, 
+        page_content=DOC3_CONTENT, 
+        metadata={"title": "Delta Project Overview", "source": "test"}
+    )
 ]
-TEST_DOC_IDS_NODERAG = [doc["id"] for doc in TEST_DOCS_DATA_NODERAG]
 
+TEST_DOC_IDS_NODERAG = [doc.id for doc in TEST_DOCUMENTS_NODERAG]
 ALL_CHUNKS_DATA_NODERAG = DOC1_CHUNKS_DATA + DOC2_CHUNKS_DATA + DOC3_CHUNKS_DATA
 TEST_CHUNK_IDS_NODERAG = [chunk["id"] for chunk in ALL_CHUNKS_DATA_NODERAG]
 
@@ -161,7 +177,7 @@ def test_noderag_e2e_relationship_query(iris_testcontainer_connection):
         print("Setting up NodeRAG test data in testcontainer...")
         setup_test_data_noderag(iris_testcontainer_connection, real_embedding_function)
         
-        pipeline = NodeRAGPipelineV2(
+        pipeline = NodeRAGPipeline(
             iris_connector=iris_testcontainer_connection,
             embedding_func=real_embedding_function,
             llm_func=mock_llm_function
@@ -173,7 +189,7 @@ def test_noderag_e2e_relationship_query(iris_testcontainer_connection):
         # and chunk "noderag_chunk_002_01" or "noderag_chunk_002_02" (Project B relation)
         # or potentially the full documents DOC1_ID, DOC2_ID if they score high enough.
         
-        results = pipeline.run(query=query, top_k=3, similarity_threshold=0.1) # top_k for merged results
+        results = pipeline.query(query=query, top_k=3, similarity_threshold=0.1) # top_k for merged results
 
         print(f"NodeRAG Query: {results['query']}")
         print(f"NodeRAG Answer: {results['answer']}")

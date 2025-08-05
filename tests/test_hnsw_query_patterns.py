@@ -14,7 +14,6 @@ import os
 import time
 import numpy as np
 import logging
-from typing import List, Dict, Any, Tuple
 from contextlib import contextmanager
 
 # Add the project root to the Python path
@@ -22,7 +21,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from common.iris_connector import get_iris_connection
 from common.utils import get_embedding_func
-from eval.metrics import calculate_hnsw_performance_metrics, calculate_hnsw_scalability_metrics
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

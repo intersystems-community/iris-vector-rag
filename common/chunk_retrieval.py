@@ -6,7 +6,7 @@ for use by RAG techniques that benefit from granular document access.
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from .utils import Document # Changed to relative import
 
 logger = logging.getLogger(__name__)

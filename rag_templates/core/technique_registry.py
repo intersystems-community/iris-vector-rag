@@ -9,7 +9,7 @@ import logging
 import yaml
 import os
 from typing import Dict, List, Any, Optional
-from .errors import ConfigurationError, ValidationError
+from .errors import ValidationError
 
 logger = logging.getLogger(__name__)
 

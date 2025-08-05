@@ -593,16 +593,65 @@ Answer:"""
         # 4. Optionally create knowledge graph nodes and edges
         pass
     
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> list:
+    def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
         """
-        Perform the retrieval step of the NodeRAG pipeline.
-        
+        Execute the NodeRAG pipeline with standardized response format.
+
         Args:
             query_text: The input query string
             top_k: Number of top relevant documents to retrieve
+            generate_answer: Whether to generate an answer (default: True)
             **kwargs: Additional keyword arguments
             
         Returns:
-            List of retrieved Document objects
+            Standardized dictionary with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
-        return self.retrieve_documents(query_text, top_k, **kwargs)
+        import time
+        start_time = time.time()
+        
+        try:
+            # Retrieve documents using graph-based approach
+            retrieved_documents = self.retrieve_documents(query_text, top_k, **kwargs)
+            
+            # Generate answer if requested
+            answer = None
+            if generate_answer and retrieved_documents:
+                answer = self.generate_answer(query_text, retrieved_documents)
+            elif generate_answer and not retrieved_documents:
+                answer = "I could not find enough information from the knowledge graph to answer your question."
+            
+            execution_time = time.time() - start_time
+            
+            # Return standardized response format
+            result = {
+                "query": query_text,
+                "answer": answer,
+                "retrieved_documents": retrieved_documents,
+                "contexts": [doc.page_content for doc in retrieved_documents],
+                "execution_time": execution_time,
+                "metadata": {
+                    "num_retrieved": len(retrieved_documents),
+                    "pipeline_type": "noderag",
+                    "generated_answer": generate_answer and answer is not None,
+                    "graph_traversal": "graph_based" if retrieved_documents else "no_results"
+                }
+            }
+            
+            self.logger.info(f"NodeRAG query completed in {execution_time:.2f}s")
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"NodeRAG query failed: {e}")
+            return {
+                "query": query_text,
+                "answer": None,
+                "retrieved_documents": [],
+                "contexts": [],
+                "execution_time": 0.0,
+                "metadata": {
+                    "num_retrieved": 0,
+                    "pipeline_type": "noderag",
+                    "generated_answer": False,
+                    "error": str(e)
+                }
+            }

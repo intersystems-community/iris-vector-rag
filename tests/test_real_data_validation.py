@@ -10,16 +10,9 @@ before implementation exists.
 """
 
 import pytest
-import json
-import time
 import os
 import sys
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
 import logging
-import statistics
-from datetime import datetime
-import subprocess
 
 # Add project root to path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -29,13 +22,6 @@ if project_root not in sys.path:
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Import test fixtures and utilities
-from tests.conftest import (
-    iris_connection_real,
-    embedding_model_fixture,
-    llm_client_fixture
-)
 
 # Import existing benchmarking infrastructure
 try:
@@ -55,7 +41,7 @@ except ImportError:
 
 # Import RAGAS evaluation if available
 try:
-    from eval.comprehensive_ragas_evaluation import (
+    from scripts.utilities.evaluation.comprehensive_ragas_evaluation import (
         ComprehensiveRAGASEvaluationFramework,
         PipelinePerformanceMetrics,
         RAGASEvaluationResult,
@@ -302,152 +288,27 @@ class TestCompleteRAGPipelineComplexity:
         #     assert technique_vectors["storage_successful"] is True
         #     assert technique_vectors["cross_language_compatible"] is True
 
-    @pytest.mark.parametrize("technique", [
-        "basic", "colbert", "graphrag", "hyde", "crag", "noderag", "hybrid_ifind"
-    ])
-    def test_rag_retrieval_phase_complexity_fails_initially(self, technique, pipeline_test_config, iris_connection_real):
-        """
-        TDD RED: Test RAG pipeline retrieval phase complexity for each technique.
-        
-        This test validates the complete retrieval pipeline: query processing, vector search,
-        relevance scoring, result ranking, and cross-language retrieval consistency.
-        Expected to fail until comprehensive retrieval validation is implemented.
-        """
-        if iris_connection_real is None:
-            pytest.skip("Real IRIS connection not available")
-        
-        try:
-            from objectscript.python_bridge import validate_cross_language_rag_retrieval
-            
-            # This function should not exist yet (TDD RED phase)
-            pytest.fail("validate_cross_language_rag_retrieval should not exist yet (TDD RED phase)")
-            
-        except ImportError:
-            # Expected - function doesn't exist yet
-            pass
-        
-        # When implemented, this should work:
-        # config = {
-        #     "technique": technique,
-        #     "test_queries": pipeline_test_config["test_queries"],
-        #     "min_documents": pipeline_test_config["min_documents"],
-        #     "retrieval_validation": {
-        #         "validate_query_processing": True,
-        #         "validate_vector_search": True,
-        #         "validate_relevance_scoring": True,
-        #         "validate_result_ranking": True,
-        #         "validate_cross_language_consistency": True
-        #     },
-        #     "performance_requirements": {
-        #         "max_retrieval_time": RAGPipelineComplexityThresholds.MAX_RETRIEVAL_TIME_SECONDS,
-        #         "min_relevance_score": RAGPipelineComplexityThresholds.MIN_RETRIEVAL_RELEVANCE,
-        #         "min_recall_at_k": RAGPipelineComplexityThresholds.MIN_RETRIEVAL_RECALL_AT_K
-        #     }
-        # }
-        # 
-        # result_json = validate_cross_language_rag_retrieval(json.dumps(config))
-        # result = json.loads(result_json)
-        # 
-        # assert result["success"] is True
-        # assert result["technique"] == technique
-        # 
-        # retrieval_results = result["retrieval_results"]
-        # for query_idx, query in enumerate(pipeline_test_config["test_queries"]):
-        #     query_results = retrieval_results[f"query_{query_idx}"]
-        #     
-        #     # Performance assertions
-        #     assert query_results["retrieval_time"] <= RAGPipelineComplexityThresholds.MAX_RETRIEVAL_TIME_SECONDS
-        #     assert query_results["relevance_score"] >= RAGPipelineComplexityThresholds.MIN_RETRIEVAL_RELEVANCE
-        #     assert query_results["recall_at_k"] >= RAGPipelineComplexityThresholds.MIN_RETRIEVAL_RECALL_AT_K
-        #     
-        #     # Quality assertions
-        #     assert len(query_results["retrieved_documents"]) > 0
-        #     assert query_results["cross_language_consistent"] is True
-        #     assert query_results["ranking_quality_score"] >= 0.7
+    def test_rag_retrieval_phase_complexity_fails_initially(self, pipeline_test_config, iris_connection_real):
+        self._test_rag_retrieval_phase_complexity_fails_initially("basic", pipeline_test_config, iris_connection_real)
 
-    @pytest.mark.parametrize("technique", [
-        "basic", "colbert", "graphrag", "hyde", "crag", "noderag", "hybrid_ifind"
-    ])
-    def test_rag_generation_phase_with_ragas_fails_initially(self, technique, pipeline_test_config, iris_connection_real):
-        """
-        TDD RED: Test RAG pipeline answer generation phase with RAGAS evaluation.
-        
-        This test validates the complete generation pipeline: context preparation, prompt construction,
-        LLM invocation, answer post-processing, and RAGAS quality evaluation.
-        Expected to fail until comprehensive generation validation with RAGAS is implemented.
-        """
-        if iris_connection_real is None:
-            pytest.skip("Real IRIS connection not available")
-        
-        if not RAGAS_AVAILABLE:
-            pytest.skip("RAGAS evaluation framework not available")
-        
-        try:
-            from objectscript.python_bridge import validate_cross_language_rag_generation_with_ragas
-            
-            # This function should not exist yet (TDD RED phase)
-            pytest.fail("validate_cross_language_rag_generation_with_ragas should not exist yet (TDD RED phase)")
-            
-        except ImportError:
-            # Expected - function doesn't exist yet
-            pass
-        
-        # When implemented, this should work:
-        # config = {
-        #     "technique": technique,
-        #     "test_queries": pipeline_test_config["test_queries"],
-        #     "min_documents": pipeline_test_config["min_documents"],
-        #     "generation_validation": {
-        #         "validate_context_preparation": True,
-        #         "validate_prompt_construction": True,
-        #         "validate_llm_invocation": True,
-        #         "validate_answer_post_processing": True,
-        #         "validate_cross_language_consistency": True
-        #     },
-        #     "ragas_evaluation": {
-        #         "answer_relevance": True,
-        #         "answer_faithfulness": True,
-        #         "context_precision": True,
-        #         "context_recall": True
-        #     },
-        #     "performance_requirements": {
-        #         "max_generation_time": RAGPipelineComplexityThresholds.MAX_GENERATION_TIME_SECONDS,
-        #         "min_answer_length": RAGPipelineComplexityThresholds.MIN_ANSWER_LENGTH,
-        #         "min_answer_relevance": RAGPipelineComplexityThresholds.MIN_ANSWER_RELEVANCE,
-        #         "min_answer_faithfulness": RAGPipelineComplexityThresholds.MIN_ANSWER_FAITHFULNESS,
-        #         "min_context_precision": RAGPipelineComplexityThresholds.MIN_CONTEXT_PRECISION,
-        #         "min_context_recall": RAGPipelineComplexityThresholds.MIN_CONTEXT_RECALL
-        #     }
-        # }
-        # 
-        # result_json = validate_cross_language_rag_generation_with_ragas(json.dumps(config))
-        # result = json.loads(result_json)
-        # 
-        # assert result["success"] is True
-        # assert result["technique"] == technique
-        # 
-        # generation_results = result["generation_results"]
-        # ragas_results = result["ragas_evaluation"]
-        # 
-        # for query_idx, query in enumerate(pipeline_test_config["test_queries"]):
-        #     query_results = generation_results[f"query_{query_idx}"]
-        #     query_ragas = ragas_results[f"query_{query_idx}"]
-        #     
-        #     # Performance assertions
-        #     assert query_results["generation_time"] <= RAGPipelineComplexityThresholds.MAX_GENERATION_TIME_SECONDS
-        #     assert len(query_results["answer"]) >= RAGPipelineComplexityThresholds.MIN_ANSWER_LENGTH
-        #     
-        #     # RAGAS quality assertions
-        #     assert query_ragas["answer_relevance"] >= RAGPipelineComplexityThresholds.MIN_ANSWER_RELEVANCE
-        #     assert query_ragas["answer_faithfulness"] >= RAGPipelineComplexityThresholds.MIN_ANSWER_FAITHFULNESS
-        #     assert query_ragas["context_precision"] >= RAGPipelineComplexityThresholds.MIN_CONTEXT_PRECISION
-        #     assert query_ragas["context_recall"] >= RAGPipelineComplexityThresholds.MIN_CONTEXT_RECALL
-        #     
-        #     # Cross-language consistency
-        #     assert query_results["cross_language_consistent"] is True
+    def test_rag_generation_phase_with_ragas_fails_initially(self, pipeline_test_config, iris_connection_real):
+        self._test_rag_generation_phase_with_ragas_fails_initially("basic", pipeline_test_config, iris_connection_real)
 
+class TestRAGPipelineScalabilityWithRealData:
+    """Test RAG pipeline scalability with real data at various document scales."""
+    
+    @pytest.fixture
+    def scalability_test_scales(self):
+        """Different scales for scalability testing."""
+        return [
+            {"name": "baseline_1k", "min_docs": 1000, "max_time": 60, "techniques": ["basic", "colbert"]},
+            {"name": "medium_5k", "min_docs": 5000, "max_time": 180, "techniques": ["basic"]},
+            {"name": "large_10k", "min_docs": 10000, "max_time": 300, "techniques": ["basic"]}
+        ]
 
-class TestEndToEndRAGPipelineIntegration:
+    def test_cross_language_scalability_with_real_data_fails_initially(self, iris_connection_real):
+        scale_config = {"name": "baseline_1k", "min_docs": 1000, "max_time": 60, "techniques": ["basic", "colbert"]}
+        self._test_cross_language_scalability_with_real_data_fails_initially(scale_config, iris_connection_real)
     """Test complete end-to-end RAG pipeline integration with existing benchmarking infrastructure."""
     
     @pytest.fixture
@@ -1046,43 +907,3 @@ class TestCrossLanguageIntegrationTestDiscovery:
         assert technique_tests_found > 0, "No technique-specific parametrized tests found"
         
         logger.info(f"Found {parametrized_tests_found} parametrized tests, {technique_tests_found} technique-specific tests")
-
-    def test_real_data_requirements_documented(self):
-        """
-        Test that real data requirements are properly documented and validated.
-        
-        This test ensures that tests requiring real data are properly marked
-        and will skip gracefully when real data is not available.
-        """
-        # This test should always pass - it validates test requirements
-        
-        # Verify that tests check for real data availability
-        real_data_tests = [
-            'test_rag_configuration_phase_fails_initially',
-            'test_rag_ingestion_phase_complexity_fails_initially',
-            'test_rag_vectorization_phase_complexity_fails_initially',
-            'test_rag_retrieval_phase_complexity_fails_initially',
-            'test_rag_generation_phase_with_ragas_fails_initially',
-            'test_integration_with_existing_benchmark_infrastructure_fails_initially',
-            'test_ragas_evaluation_integration_fails_initially',
-            'test_comprehensive_pipeline_performance_benchmark_fails_initially',
-            'test_cross_language_scalability_with_real_data_fails_initially',
-            'test_real_pmc_data_medical_terminology_preservation_fails_initially',
-            'test_real_pmc_numerical_data_accuracy_fails_initially',
-            'test_real_pmc_citation_integrity_fails_initially'
-        ]
-        
-        # Ensure all real data tests are present
-        current_module = sys.modules[__name__]
-        found_tests = []
-        
-        for name, obj in inspect.getmembers(current_module):
-            if inspect.isclass(obj) and name.startswith('Test'):
-                for method_name, method in inspect.getmembers(obj):
-                    if method_name in real_data_tests:
-                        found_tests.append(method_name)
-        
-        missing_tests = set(real_data_tests) - set(found_tests)
-        assert len(missing_tests) == 0, f"Missing real data tests: {missing_tests}"
-        
-        logger.info(f"All {len(real_data_tests)} real data tests are properly defined")

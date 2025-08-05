@@ -10,8 +10,7 @@ import hashlib
 import json
 import logging
 import time
-import warnings
-from typing import Any, Callable, Dict, Optional, Union, List
+from typing import Any, Dict, Optional, Union, List
 from dataclasses import dataclass
 
 from common.llm_cache_config import CacheConfig, load_cache_config
@@ -96,14 +95,29 @@ class LangchainCacheManager:
                 
             elif self.config.backend == "iris":
                 # Try to reuse existing IRIS connection first, fallback to URL-based connection
-                iris_connector = self._get_iris_connection_for_cache()
-                
-                self.cache_backend = create_iris_cache_backend(self.config, iris_connector)
-                
-                # Create Langchain-compatible cache wrapper
-                cache = LangchainIRISCacheWrapper(self.cache_backend)
-                langchain.llm_cache = cache
-                logger.info("Langchain IRIS cache configured")
+                try:
+                    iris_connector = self._get_iris_connection_for_cache()
+                    
+                    # Validate connection before creating cache backend
+                    if iris_connector is None:
+                        raise ConnectionError("Failed to setup IRIS cache table: _handle is NULL")
+                    
+                    self.cache_backend = create_iris_cache_backend(self.config, iris_connector)
+                    
+                    # Create Langchain-compatible cache wrapper
+                    cache = LangchainIRISCacheWrapper(self.cache_backend)
+                    langchain.llm_cache = cache
+                    logger.info("Langchain IRIS cache configured")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to setup IRIS cache table: {e}")
+                    if self.config.graceful_fallback:
+                        logger.info("Falling back to memory cache due to IRIS connection failure")
+                        cache = InMemoryCache()
+                        langchain.llm_cache = cache
+                        logger.info("Langchain memory cache configured as fallback")
+                    else:
+                        raise
                 
             else:
                 logger.error(f"Unsupported cache backend: {self.config.backend}. Supported backends: memory, iris")
@@ -130,6 +144,11 @@ class LangchainCacheManager:
         try:
             from common.iris_dbapi_connector import get_iris_dbapi_connection
             iris_connector = get_iris_dbapi_connection()
+            
+            # Validate the connection handle
+            if iris_connector is None:
+                raise ConnectionError("DBAPI connection returned NULL handle")
+            
             logger.info("Using DBAPI IRIS connection for cache")
             return iris_connector
         except Exception as e:
@@ -139,6 +158,11 @@ class LangchainCacheManager:
         try:
             from common.utils import get_iris_connector
             iris_connector = get_iris_connector()
+            
+            # Validate the connection handle
+            if iris_connector is None:
+                raise ConnectionError("URL-based connection returned NULL handle")
+            
             logger.info("Using URL-based IRIS connection for cache")
             return iris_connector
         except Exception as e:

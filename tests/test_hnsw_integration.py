@@ -14,7 +14,6 @@ import os
 import time
 import numpy as np
 import logging
-from typing import List, Dict, Any, Tuple
 
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -23,17 +22,17 @@ if project_root not in sys.path:
 
 from common.iris_connector import get_iris_connection # Updated import
 from common.db_vector_search import search_source_documents_dynamically, search_knowledge_graph_nodes_dynamically # Updated import
-from src.deprecated.basic_rag.pipeline import BasicRAGPipeline # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline
 from common.utils import get_embedding_func, get_llm_func # Updated import
 
 # Import other RAG techniques for integration testing
 try:
-    from src.experimental.noderag.pipeline import NodeRAGPipeline # Updated import
+    from iris_rag.pipelines.noderag import NodeRAGPipeline # Updated import
 except ImportError:
     NodeRAGPipeline = None
 
 try:
-    from src.experimental.hyde.pipeline import HyDEPipeline as HydeRAGPipeline # Updated import and aliased
+    from iris_rag.pipelines.hyde import HyDEPipeline as HydeRAGPipeline # Updated import and aliased
 except ImportError:
     HydeRAGPipeline = None
 
@@ -107,7 +106,7 @@ class TestHNSWIntegration:
             min_similarity = test_case["min_similarity"]
             
             # Run BasicRAG with HNSW
-            result = pipeline.run(query, top_k=10)
+            result = pipeline.query(query, top_k=10)
             
             # TDD: This should fail initially if integration doesn't work
             assert "answer" in result, f"BasicRAG should return an answer for: {query}"
@@ -289,7 +288,7 @@ class TestHNSWIntegration:
         test_query = "diabetes management strategies"
         
         start_time = time.time()
-        result = pipeline.run(test_query, top_k=8)
+        result = pipeline.query(test_query, top_k=8)
         end_time = time.time()
         
         total_time_ms = (end_time - start_time) * 1000
@@ -323,7 +322,7 @@ class TestHNSWIntegration:
         test_query = "cardiovascular disease prevention"
         
         start_time = time.time()
-        result = pipeline.run(test_query, top_k=8)
+        result = pipeline.query(test_query, top_k=8)
         end_time = time.time()
         
         total_time_ms = (end_time - start_time) * 1000

@@ -17,12 +17,11 @@ SUCCESS CRITERIA:
 - 100% success rate across all techniques
 """
 
-import pytest
 import time
 import json
 import logging
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from pathlib import Path
 
 # Configure logging
@@ -354,7 +353,7 @@ class ComprehensiveValidationTester:
             
             # Step 4: Execute query
             execution_start = time.time()
-            result = pipeline.run(self.test_query)
+            result = pipeline.query(self.test_query)
             execution_time = time.time() - execution_start
             
             total_time = time.time() - pipeline_start

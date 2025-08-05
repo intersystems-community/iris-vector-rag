@@ -31,13 +31,13 @@ from common.iris_connector import get_iris_connection # Updated import
 from common.embedding_utils import get_embedding_model # Updated import
 
 # Import all V2 pipelines
-from src.deprecated.basic_rag.pipeline_v2_fixed import BasicRAGPipelineV2Fixed as BasicRAGPipelineV2 # Updated import
-from src.experimental.noderag.pipeline import NodeRAGPipeline as NodeRAGPipelineV2 # Updated import
-from src.experimental.hyde.pipeline import HyDEPipeline as HyDEPipelineV2 # Updated import
-from src.experimental.crag.pipeline import CRAGPipeline as CRAGPipelineV2 # Updated import
-from src.deprecated.colbert.pipeline import OptimizedColbertRAGPipeline as ColBERTPipelineV2 # Updated import
-from src.deprecated.hybrid_ifind_rag.pipeline_v2 import HybridiFindRAGPipelineV2 # Updated import
-from src.experimental.graphrag.pipeline import GraphRAGPipeline as GraphRAGPipelineV2 # Updated import
+from iris_rag.pipelines.basic import BasicRAGPipeline as BasicRAGPipeline
+from iris_rag.pipelines.noderag import NodeRAGPipeline as NodeRAGPipelineV2
+from iris_rag.pipelines.hyde import HyDERAGPipeline as HyDERAGPipelineV2
+from iris_rag.pipelines.crag import CRAGPipeline as CRAGPipeline
+from iris_rag.pipelines.colbert import ColBERTRAGPipeline as ColBERTPipelineV2
+from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline as HybridIFindRAGPipelineV2
+from iris_rag.pipelines.graphrag import GraphRAGPipeline as GraphRAGPipeline
 
 # Test query (will be loaded from file)
 # TEST_QUERY = "What is diabetes and how is it treated?"
@@ -71,7 +71,7 @@ def test_pipeline_for_query(pipeline_class, pipeline_name, iris, embedding_func,
         pipeline = pipeline_class(iris, embedding_func, llm_func)
         
         # Run pipeline
-        result = pipeline.run(query_text, top_k=5)
+        result = pipeline.query(query_text, top_k=5)
         
         end_time = time.time()
         execution_time = end_time - start_time
@@ -236,7 +236,7 @@ def main():
     
     # Test only BasicRAG pipeline
     pipelines = [
-        (BasicRAGPipelineV2, "BasicRAG"),
+        (BasicRAGPipeline, "BasicRAG"),
     ]
     
     all_pipeline_runs = [] # To store results for RAGAS evaluation

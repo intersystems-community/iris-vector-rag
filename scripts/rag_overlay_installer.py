@@ -163,7 +163,9 @@ class RAGOverlayInstaller:
         
         json_parts = []
         for field in metadata_fields:
-            json_parts.append(f'", "{field}": "', {field}, '"')
+            json_parts.append(f'", "{field}": "')
+            json_parts.append(field) 
+            json_parts.append('"')
         
         return "".join(json_parts)
     

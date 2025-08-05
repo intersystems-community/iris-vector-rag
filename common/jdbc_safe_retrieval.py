@@ -4,7 +4,7 @@ Handles vector operations without parameter binding issues
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List
 from .utils import Document # Changed to relative import
 
 logger = logging.getLogger(__name__)

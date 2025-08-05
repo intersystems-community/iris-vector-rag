@@ -9,7 +9,6 @@ import os
 import tempfile
 import pytest
 from pathlib import Path
-from unittest.mock import patch
 
 from iris_rag.config.pipeline_config_service import PipelineConfigService
 from iris_rag.core.exceptions import PipelineConfigurationError

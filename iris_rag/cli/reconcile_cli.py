@@ -18,12 +18,7 @@ Usage:
 """
 
 import sys
-import time
 import logging
-import signal
-from typing import Optional
-from pathlib import Path
-
 import click
 
 from iris_rag.config.manager import ConfigurationManager

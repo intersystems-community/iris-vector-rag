@@ -9,7 +9,7 @@ import logging
 import time
 import json
 import numpy as np
-from typing import List, Dict, Any, Generator, Optional, Tuple, Callable
+from typing import List, Dict, Any, Optional, Tuple, Callable
 import os
 import sys
 
@@ -99,7 +99,8 @@ def load_documents_to_iris(
     documents: List[Dict[str, Any]],
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
     colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None,
-    batch_size: int = 250
+    batch_size: int = 250,
+    handle_chunks: bool = True
 ) -> Dict[str, Any]:
     """
     Load documents into IRIS database with comprehensive error handling and data validation.
@@ -110,6 +111,7 @@ def load_documents_to_iris(
         embedding_func: Optional function to generate embeddings for documents
         colbert_doc_encoder_func: Optional function for ColBERT token embeddings
         batch_size: Number of documents to insert in a single batch
+        handle_chunks: Whether to process chunked documents separately
         
     Returns:
         Dictionary with loading statistics
@@ -117,15 +119,48 @@ def load_documents_to_iris(
     start_time = time.time()
     loaded_doc_count = 0
     loaded_token_count = 0
+    loaded_chunk_count = 0
     error_count = 0
     
     try:
         cursor = connection.cursor()
         
-        # Prepare documents in batches
-        doc_batches = [documents[i:i+batch_size] for i in range(0, len(documents), batch_size)]
+        # Separate chunked and non-chunked documents
+        expanded_documents = []
+        for doc in documents:
+            if handle_chunks and doc.get("chunks"):
+                # Process chunks as separate documents
+                for chunk in doc["chunks"]:
+                    chunk_doc = {
+                        "doc_id": chunk["chunk_id"],
+                        "title": f"{doc.get('title', '')} [Chunk {chunk['chunk_index']}]",
+                        "abstract": chunk["text"][:500] + "..." if len(chunk["text"]) > 500 else chunk["text"],
+                        "content": chunk["text"],
+                        "authors": doc.get("authors", []),
+                        "keywords": doc.get("keywords", []),
+                        "metadata": {
+                            **doc.get("metadata", {}),
+                            "is_chunk": True,
+                            "parent_doc_id": doc["doc_id"],
+                            "chunk_index": chunk["chunk_index"],
+                            "chunk_metadata": chunk["metadata"]
+                        }
+                    }
+                    expanded_documents.append(chunk_doc)
+                    
+                # Also add the original document with a flag indicating it has chunks
+                original_doc = doc.copy()
+                original_doc["metadata"] = original_doc.get("metadata", {}).copy()
+                original_doc["metadata"]["has_chunks"] = True
+                original_doc["metadata"]["chunk_count"] = len(doc["chunks"])
+                expanded_documents.append(original_doc)
+            else:
+                expanded_documents.append(doc)
         
-        logger.info(f"Loading {len(documents)} SourceDocuments in {len(doc_batches)} batches.")
+        # Prepare documents in batches
+        doc_batches = [expanded_documents[i:i+batch_size] for i in range(0, len(expanded_documents), batch_size)]
+        
+        logger.info(f"Loading {len(expanded_documents)} documents ({len(documents)} original, expanded for chunks) in {len(doc_batches)} batches.")
         
         for batch_idx, current_doc_batch in enumerate(doc_batches):
             source_doc_batch_params = []
@@ -135,7 +170,12 @@ def load_documents_to_iris(
                 try:
                     embedding_vector = None
                     if embedding_func:
-                        text_to_embed = doc.get("abstract") or doc.get("title", "")
+                        # For chunks, use the chunk content; for regular docs, use abstract or title
+                        if doc.get("metadata", {}).get("is_chunk"):
+                            text_to_embed = doc.get("content", "")[:2000]  # Limit chunk size for embedding
+                        else:
+                            text_to_embed = doc.get("abstract") or doc.get("title", "")
+                            
                         if text_to_embed:
                             try:
                                 # Generate embedding with error handling
@@ -150,7 +190,7 @@ def load_documents_to_iris(
                                 logger.error(f"Error generating embedding for document {doc.get('doc_id')}: {e}")
                                 embedding_vector = None
                         else:
-                            logger.warning(f"Document {doc.get('doc_id')} has no abstract or title for sentence embedding.")
+                            logger.warning(f"Document {doc.get('doc_id')} has no content for embedding.")
                     
                     # Get document ID with validation
                     doc_id_value = doc.get("doc_id") or doc.get("pmc_id")
@@ -160,7 +200,11 @@ def load_documents_to_iris(
                     
                     # Validate and clean all text fields
                     title = validate_and_fix_text_field(doc.get("title"))
-                    abstract = validate_and_fix_text_field(doc.get("abstract"))
+                    # For chunks, use content as abstract; for regular docs, use abstract
+                    if doc.get("metadata", {}).get("is_chunk"):
+                        abstract = validate_and_fix_text_field(doc.get("content", ""))
+                    else:
+                        abstract = validate_and_fix_text_field(doc.get("abstract"))
                     
                     # Handle authors and keywords with validation
                     authors = doc.get("authors", [])
@@ -173,6 +217,11 @@ def load_documents_to_iris(
                         logger.warning(f"Error serializing metadata for doc {doc_id_value}: {e}")
                         authors_json = "[]"
                         keywords_json = "[]"
+                    
+                    # Add chunking info to metadata if present
+                    metadata = doc.get("metadata", {})
+                    if doc.get("metadata", {}).get("is_chunk"):
+                        loaded_chunk_count += 1
                     
                     doc_params = (
                         str(doc_id_value),
@@ -257,7 +306,7 @@ def load_documents_to_iris(
                 if (batch_idx + 1) % 1 == 0 or batch_idx == len(doc_batches) - 1:
                     elapsed = time.time() - start_time
                     rate = loaded_doc_count / elapsed if elapsed > 0 else 0
-                    logger.info(f"Loaded {loaded_doc_count}/{len(documents)} SourceDocuments. Loaded {loaded_token_count} token embeddings. ({rate:.2f} docs/sec)")
+                    logger.info(f"Loaded {loaded_doc_count}/{len(expanded_documents)} total documents ({loaded_chunk_count} chunks). Loaded {loaded_token_count} token embeddings. ({rate:.2f} docs/sec)")
                     
             except Exception as e:
                 logger.error(f"Error loading batch {batch_idx}: {e}")
@@ -274,7 +323,9 @@ def load_documents_to_iris(
     
     return {
         "total_documents": len(documents),
+        "total_expanded_documents": len(expanded_documents) if 'expanded_documents' in locals() else len(documents),
         "loaded_doc_count": loaded_doc_count,
+        "loaded_chunk_count": loaded_chunk_count,
         "loaded_token_count": loaded_token_count,
         "error_count": error_count,
         "duration_seconds": duration,

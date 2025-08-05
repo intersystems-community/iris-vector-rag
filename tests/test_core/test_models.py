@@ -1,5 +1,4 @@
 import pytest
-from dataclasses import dataclass, field, asdict
 
 # Attempt to import Document, will fail initially
 try:

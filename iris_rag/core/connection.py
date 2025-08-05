@@ -1,7 +1,6 @@
 import os
-import importlib
-from typing import Any, Dict, Optional
 import logging
+import importlib
 
 logger = logging.getLogger(__name__)
 
@@ -9,16 +8,8 @@ logger = logging.getLogger(__name__)
 try:
     from iris_rag.config.manager import ConfigurationManager
 except ImportError:
-    # Placeholder if ConfigurationManager doesn't exist yet
-    # This allows ConnectionManager to be defined, though tests requiring
-    # actual config loading will fail until ConfigurationManager is implemented.
-    class ConfigurationManager:
-        def __init__(self, config_path=None):
-            # This is a placeholder, real implementation will load from file/env
-            pass
-        def get(self, section_key):
-            # Placeholder: always return None. Tests should mock this.
-            return None
+    logger.error("ConfigurationManager not found. Ensure iris_rag package is installed correctly.")
+    raise ImportError("ConfigurationManager not available. Please check your installation.")
 
 class ConnectionManager:
     """
@@ -65,25 +56,36 @@ class ConnectionManager:
         if backend_name in self._connections:
             return self._connections[backend_name]
 
+        # Get database configuration
+        config_key = f"database:{backend_name}"
+        db_config = self.config_manager.get(config_key)
+        
+        if not db_config:
+            raise ValueError(f"Configuration for backend '{backend_name}' not found.")
+
         # Check for supported backend types
         if backend_name != "iris":
             # This can be expanded if more backends are officially supported
             raise ValueError(f"Unsupported database backend: {backend_name}")
 
-        # For IRIS backend, check configuration to determine connection type
+        # For IRIS backend, use the proven database utility
         try:
-            # Get storage configuration to determine connection type
-            storage_config = self.config_manager.get("storage:backends:iris")
-            connection_type = storage_config.get("connection_type", "dbapi") if storage_config else "dbapi"
+            logger.info(f"Establishing connection for backend '{backend_name}' using DBAPI")
             
-            logger.info(f"Establishing connection for backend '{backend_name}' using {connection_type.upper()}")
+            # Use the existing database utility instead of direct DBAPI imports
+            from common.iris_dbapi_connector import get_iris_dbapi_connection
             
-            # For now, always use the common iris_connection_manager which works
-            from common.iris_connection_manager import get_iris_connection
-            connection = get_iris_connection()
+            # Create connection using the proven utility function
+            connection = get_iris_dbapi_connection()
+            
+            if connection is None:
+                raise ConnectionError("IRIS connection utility returned None")
             
             self._connections[backend_name] = connection
             return connection
+        except ImportError as e:
+            logger.error(f"Failed to import database utility: {e}")
+            raise ImportError(f"Database utility not available: {e}")
         except Exception as e:
             # Catching a broad exception here as connection creation can raise various errors
             raise ConnectionError(f"Failed to connect to IRIS backend '{backend_name}': {e}")
@@ -92,7 +94,7 @@ class ConnectionManager:
         """Create a native IRIS DBAPI connection."""
         try:
             # Import the correct IRIS DBAPI module that has connect()
-            from intersystems_iris.dbapi import _DBAPI as iris
+            import iris
             
             # Get database configuration
             db_config = self.config_manager.get("database")
@@ -106,14 +108,16 @@ class ConnectionManager:
                     "db_password": os.getenv("IRIS_PASSWORD", "SYS")
                 }
             
-            # Create DBAPI connection using iris module
-            connection = iris.connect(
-                db_config.get("db_host", "localhost"),
-                db_config.get("db_port", 1972),
-                db_config.get("db_namespace", "USER"),
-                db_config.get("db_user", "_SYSTEM"),
-                db_config.get("db_password", "SYS")
-            )
+            # Use our utility connector instead of direct iris.connect
+            from common.iris_connection_manager import get_iris_connection
+            connection_config = {
+                "hostname": db_config.get("db_host", "localhost"),
+                "port": db_config.get("db_port", 1972),
+                "namespace": db_config.get("db_namespace", "USER"),
+                "username": db_config.get("db_user", "_SYSTEM"),
+                "password": db_config.get("db_password", "SYS")
+            }
+            connection = get_iris_connection(connection_config)
             
             logger.info("✅ Successfully connected to IRIS using native DBAPI")
             return connection

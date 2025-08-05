@@ -11,7 +11,6 @@ from ..core.base import RAGPipeline
 from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
-from ..storage.iris import IRISStorage
 from ..embeddings.manager import EmbeddingManager
 
 logger = logging.getLogger(__name__)
@@ -27,17 +26,33 @@ class HyDERAGPipeline(RAGPipeline):
     3. Context augmentation and LLM generation
     """
     
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager,
+    def __init__(self, connection_manager: Optional[ConnectionManager] = None,
+                 config_manager: Optional[ConfigurationManager] = None,
                  llm_func: Optional[Callable[[str], str]] = None, vector_store=None):
         """
         Initialize the HyDE RAG Pipeline.
         
         Args:
-            connection_manager: Manager for database connections
-            config_manager: Manager for configuration settings
+            connection_manager: Optional manager for database connections (defaults to new instance)
+            config_manager: Optional manager for configuration settings (defaults to new instance)
             llm_func: Optional LLM function for answer generation
             vector_store: Optional VectorStore instance
         """
+        # Create default instances if not provided
+        if connection_manager is None:
+            try:
+                connection_manager = ConnectionManager()
+            except Exception as e:
+                logger.warning(f"Failed to create default ConnectionManager: {e}")
+                connection_manager = None
+        
+        if config_manager is None:
+            try:
+                config_manager = ConfigurationManager()
+            except Exception as e:
+                logger.warning(f"Failed to create default ConfigurationManager: {e}")
+                config_manager = ConfigurationManager()  # Always need config manager
+        
         super().__init__(connection_manager, config_manager, vector_store)
         self.llm_func = llm_func
         
@@ -63,7 +78,7 @@ class HyDERAGPipeline(RAGPipeline):
             Dictionary containing query, answer, and retrieved documents
         """
         top_k = kwargs.get("top_k", 5)
-        return self.query(query_text, top_k)
+        return self._query_implementation(query_text, top_k, **kwargs)
     
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
@@ -150,16 +165,17 @@ class HyDERAGPipeline(RAGPipeline):
                 "pipeline_type": "hyde_rag"
             }
     
-    def query(self, query_text: str, top_k: int = 5) -> Dict[str, Any]:
+    def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
         """
         Execute a query using HyDE technique.
         
         Args:
             query_text: The query string
             top_k: Number of top documents to retrieve
+            generate_answer: Whether to generate an answer
             
         Returns:
-            Dictionary with query results
+            Standardized response with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
         start_time = time.time()
         logger.info(f"Processing HyDE query: {query_text}")
@@ -177,8 +193,8 @@ class HyDERAGPipeline(RAGPipeline):
             # Generate embedding for search text (query or hypothetical doc)
             search_embedding = self.embedding_manager.embed_text(search_text)
             
-            # Retrieve relevant documents
-            relevant_docs = self._retrieve_documents(search_embedding, top_k)
+            # Retrieve relevant documents as Document objects
+            relevant_docs = self._retrieve_documents_as_objects(search_embedding, top_k)
             
             # Generate answer if LLM function is available
             answer = None
@@ -187,16 +203,30 @@ class HyDERAGPipeline(RAGPipeline):
                 prompt = self._build_prompt(query_text, context)
                 answer = self.llm_func(prompt)
             
+            # Provide fallback message if answer is still None
+            if answer is None:
+                if not self.llm_func:
+                    answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
+                elif not relevant_docs:
+                    answer = "No relevant documents found for the query. Unable to generate an answer without context."
+                else:
+                    answer = "LLM function failed to generate an answer. Please check the LLM configuration."
+            
             end_time = time.time()
             
             result = {
                 "query": query_text,
-                "hypothetical_document": hypothetical_doc,
                 "answer": answer,
                 "retrieved_documents": relevant_docs,
-                "num_documents_retrieved": len(relevant_docs),
-                "processing_time": end_time - start_time,
-                "pipeline_type": "hyde_rag"
+                "contexts": [doc.page_content for doc in relevant_docs],
+                "execution_time": end_time - start_time,
+                "metadata": {
+                    "num_retrieved": len(relevant_docs),
+                    "pipeline_type": "hyde",
+                    "generated_answer": generate_answer and answer is not None,
+                    "hypothetical_document": hypothetical_doc,
+                    "use_hypothetical_doc": self.use_hypothetical_doc
+                }
             }
             
             logger.info(f"HyDE query completed in {end_time - start_time:.2f}s")
@@ -207,8 +237,15 @@ class HyDERAGPipeline(RAGPipeline):
             return {
                 "query": query_text,
                 "answer": None,
-                "error": str(e),
-                "pipeline_type": "hyde_rag"
+                "retrieved_documents": [],
+                "contexts": [],
+                "execution_time": 0.0,
+                "metadata": {
+                    "num_retrieved": 0,
+                    "pipeline_type": "hyde",
+                    "generated_answer": False,
+                    "error": str(e)
+                }
             }
     
     def _generate_hypothetical_document(self, query: str) -> str:
@@ -246,12 +283,30 @@ Hypothetical document:"""
         
         return documents
     
-    def _build_context(self, documents: List[Dict[str, Any]]) -> str:
+    def _retrieve_documents_as_objects(self, query_embedding: List[float], top_k: int) -> List[Document]:
+        """Retrieve relevant documents as Document objects for standardization."""
+        # Use base class helper method for vector search
+        results = self._retrieve_documents_by_vector(
+            query_embedding=query_embedding,
+            top_k=top_k
+        )
+        
+        # Return Document objects directly
+        documents = []
+        for doc, score in results:
+            # Add similarity score to metadata
+            doc.metadata = doc.metadata or {}
+            doc.metadata["similarity_score"] = float(score)
+            documents.append(doc)
+        
+        return documents
+    
+    def _build_context(self, documents: List[Document]) -> str:
         """Build context string from retrieved documents."""
         context_parts = []
         for i, doc in enumerate(documents, 1):
-            title = doc.get('title', 'Untitled')
-            content = doc.get('content', '')
+            title = doc.metadata.get('title', 'Untitled') if doc.metadata else 'Untitled'
+            content = doc.page_content or ''
             context_parts.append(f"[Document {i}: {title}]\n{content}")
         
         return "\n\n".join(context_parts)

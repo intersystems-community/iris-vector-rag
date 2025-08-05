@@ -21,7 +21,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 from common.iris_connector import get_iris_connection
-from common.vector_format_fix import format_vector_for_iris, VectorFormatError
+from common.vector_format_fix import format_vector_for_iris
 
 logger = logging.getLogger(__name__)
 
