@@ -1,6 +1,6 @@
 # MCP Integration Guide
 
-This guide provides detailed information on integrating with the Multi-Cloud Platform (MCP) and utilizing the IRIS SQL Tool within your RAG applications.
+This guide provides detailed information on integrating with Model Context Protocol (MCP) and utilizing the IRIS SQL Tool within your RAG applications.
 
 ## 1. Overview of MCP Integration
 
