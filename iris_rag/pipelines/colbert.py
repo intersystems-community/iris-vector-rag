@@ -1,4 +1,3 @@
-print("DEBUG: EXECUTING LATEST iris_rag/pipelines/colbert.py")
 """
 ColBERT RAG Pipeline implementation for iris_rag package.
 

@@ -410,14 +410,13 @@ class IRISVectorStore(VectorStore):
                 if embeddings and len(embeddings) > i:
                     logger.debug(f"Inserting document {doc.id} with embedding using insert_vector utility")
                     # Use the required insert_vector utility function for vector insertions/updates
-                    # Don't manually set ID for IDENTITY columns - let database auto-generate
                     success = insert_vector(
                         cursor=cursor,
                         table_name=self.table_name,
                         vector_column_name="embedding",
                         vector_data=embeddings[i],
                         target_dimension=self.vector_dimension,
-                        key_columns={"doc_id": doc.id},  # Only use doc_id, let ID auto-generate
+                        key_columns={"ID": doc.id, "doc_id": doc.id},
                         additional_data={"text_content": doc.page_content, "metadata": metadata_json}
                     )
                     if success:
@@ -438,8 +437,8 @@ class IRISVectorStore(VectorStore):
                     else:
                         # Safe insert without manually setting ID column (let database auto-generate)
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (doc_id, text_content, metadata)
-                        VALUES (?, ?, ?)
+                        INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata)
+                        VALUES (?, ?, ?, ?)
                         """
                         cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json])
                         logger.debug(f"Inserted new document {doc.id} without vector")

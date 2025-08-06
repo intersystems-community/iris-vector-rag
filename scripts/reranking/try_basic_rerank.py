@@ -1,9 +1,19 @@
 import logging
 import sys
 import os
+import openai
+from dotenv import load_dotenv
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 import iris_rag
+
+load_dotenv()
+
+# === CONFIGURATION ===
+USE_REAL_LLM = True  # Change to False to use dummy_llm
+OPENAI_MODEL = "gpt-4.1-mini"  # GPT-4.1 Mini
+client = openai.OpenAI()
 
 # Optional: Dummy LLM function
 def dummy_llm(prompt: str) -> str:
@@ -11,17 +21,34 @@ def dummy_llm(prompt: str) -> str:
     print(prompt)
     return "This is a dummy answer generated from the context."
 
+# Real LLM function using OpenAI GPT-4.1 Mini
+def openai_llm(prompt: str) -> str:
+    print("\n--- Prompt to LLM (OpenAI) ---\n")
+    print(prompt)
+
+    response = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant answering based on the context."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,
+    )
+    return response.choices[0].message.content.strip()
+
 def main():
     # Setup logging
-    logging.basicConfig(level=logging.DEBUG)  # Set to INFO or WARNING to reduce verbosity
+    logging.basicConfig(level=logging.WARNING)  # Set to INFO or WARNING to reduce verbosity
     logger = logging.getLogger()
+
+    llm_func = openai_llm if USE_REAL_LLM else dummy_llm
 
     print("Creating RAG Reranking Pipeline with Auto-Setup")
     # Create pipeline using iris_rag factory with auto_setup=True
     # This ensures database schema is properly initialized
     reranking_rag_pipeline = iris_rag.create_pipeline(
         pipeline_type="basic_rerank",
-        llm_func=dummy_llm,  # Replace with real LLM call if available
+        llm_func=llm_func, 
         auto_setup=True,     # Crucial: handles schema initialization automatically
         validate_requirements=True
     )
@@ -43,17 +70,7 @@ def main():
     print(f"Answer: {response['answer']}")
     print(f"Execution Time: {response['execution_time']:.2f}s")
 
-    # Step 4: Show retrieved sources
-    print("\n--- Retrieved Sources ---")
-    for source in response.get("sources", []):
-        print(source)
-
-    # Step 5: Show full context
-    print("\n--- Retrieved Contexts ---")
-    for i, ctx in enumerate(response['contexts'], 1):
-        print(f"\n[Context {i}]\n{ctx[:300]}...")
-
-    # Step 6: Clean up test data (as suggested by intern)
+    # Step 6: Clean up test data
     print("\n--- Cleanup ---")
     try:
         # Get document count before cleanup
@@ -66,10 +83,36 @@ def main():
         print(f"Documents in database before cleanup: {count_before}")
         
         # Clear documents from this test run (they should have the test data path in metadata)
-        cursor.execute("""
-            DELETE FROM RAG.SourceDocuments 
-            WHERE metadata LIKE '%test_txt_docs%'
-        """)
+        import json
+
+        # Step 1: Fetch all rows
+        cursor.execute("SELECT doc_id, metadata FROM RAG.SourceDocuments")
+        rows = cursor.fetchall()
+
+        # Step 2: Identify doc_ids to delete
+        doc_ids_to_delete = []
+
+        for row in rows:
+            doc_id = row[0]
+            metadata_raw = row[1]
+
+            # Decode metadata if it's a byte stream
+            if isinstance(metadata_raw, (bytes, bytearray)):
+                metadata_raw = metadata_raw.decode("utf-8")
+
+            try:
+                metadata_json = json.loads(metadata_raw)
+                source = metadata_json.get("source", "")
+                if "test_txt_docs" in source:
+                    doc_ids_to_delete.append(doc_id)
+            except (json.JSONDecodeError, TypeError) as e:
+                print(f"Skipping row {doc_id}: malformed metadata - {e}")
+
+        # Step 3: Delete matching rows
+        print(f"Found {len(doc_ids_to_delete)} documents to delete.")
+
+        for doc_id in doc_ids_to_delete:
+            cursor.execute("DELETE FROM RAG.SourceDocuments WHERE doc_id = ?", [doc_id])
         
         cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
         count_after = cursor.fetchone()[0]
