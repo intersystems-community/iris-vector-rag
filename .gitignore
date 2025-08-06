@@ -5,6 +5,7 @@ specs/
 eval_results/
 comprehensive_ragas_results/
 test_benchmark_results/
+.llm_cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
