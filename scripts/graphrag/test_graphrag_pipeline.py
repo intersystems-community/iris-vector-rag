@@ -45,14 +45,16 @@ def openai_llm(prompt: str) -> str:
 
 def main():
     # Setup logging
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger()
+
+    llm_func = openai_llm if USE_REAL_LLM else dummy_llm
 
     print("Creating GraphRAG Pipeline with Auto-Setup")
     # Create pipeline using iris_rag factory with auto_setup=True
     graph_rag_pipeline = iris_rag.create_pipeline(
         pipeline_type="graphrag",
-        llm_func=dummy_llm,  # Replace with real LLM call if available
+        llm_func=llm_func,  
         auto_setup=True,     # Crucial: handles schema initialization automatically
         validate_requirements=True
     )

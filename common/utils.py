@@ -208,7 +208,7 @@ def get_embedding_func(model_name_override: Optional[str] = None, provider: Opti
     return flexible_embedder
 
 
-def get_llm_func(provider: str = "openai", model_name: str = "gpt-3.5-turbo",
+def get_llm_func(provider: str = "openai", model_name: str = "gpt-4.1-mini",
                 enable_cache: Optional[bool] = None, **kwargs) -> Callable[[str], str]:
     """
     Returns a function that takes a prompt string and returns an LLM completion string.

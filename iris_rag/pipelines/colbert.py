@@ -964,7 +964,9 @@ Question: {query}
 Documents:
 {context}
 
-Answer:"""
+Please provide a comprehensive answer based on the information in the context documents. If the context doesn't contain enough information to fully answer the question, please indicate what information is missing.
+
+Answer:""" 
         
         # Generate answer using LLM
         answer = self.llm_func(prompt)
