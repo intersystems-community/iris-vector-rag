@@ -6,7 +6,7 @@ SHELL := /bin/bash
 # Standardized commands for development, testing, and data management
 # Uses Python virtual environment (.venv) for consistent dependency management
 
-.PHONY: help install clean setup-db load-data clear-rag-data populate-knowledge-graph populate-colbert-tokens populate-ifind-sync populate-all-pipelines check-graph-data lint format docker-up docker-down docker-logs test-dbapi test-jdbc validate-iris-rag validate-pipeline validate-all-pipelines auto-setup-pipeline auto-setup-all validate-all test-pipeline status setup-env check-data
+.PHONY: help install clean setup-db load-data clear-rag-data populate-knowledge-graph populate-colbert-tokens populate-ifind-sync populate-all-pipelines check-graph-data lint format docker-up docker-down docker-logs test-dbapi test-jdbc validate-iris-rag status setup-env check-data
 
 # Python virtual environment directory (managed by uv)
 VENV_DIR = .venv
@@ -23,12 +23,6 @@ help:
 	@echo "  make setup-env        - Set up Python virtual environment (.venv)"
 	@echo "  make install          - Install dependencies in the virtual environment"
 	@echo "  make setup-db         - Initialize IRIS database schema"
-	@echo ""
-	@echo "Validation & Auto-Setup:"
-	@echo "  make validate-pipeline PIPELINE=<type> - Validate specific pipeline"
-	@echo "  make validate-all-pipelines - Validate all 8 pipeline types"
-	@echo "  make auto-setup-pipeline PIPELINE=<type> - Auto-setup pipeline with validation"
-	@echo "  make auto-setup-all     - Auto-setup all pipelines with validation"
 	@echo ""
 	@echo "Data Management:"
 	@echo "  make load-data        - Load sample PMC documents (DBAPI)"
@@ -157,62 +151,6 @@ test-jdbc:
 	@echo "Testing JDBC connection (fallback)..."
 	uv run python -c "from common.iris_connection_manager import IRISConnectionManager; mgr = IRISConnectionManager(prefer_dbapi=False); conn = mgr.get_connection(); print(f'✓ {mgr.get_connection_type()} connection successful'); mgr.close()"
 
-# Pipeline-specific validation with auto-setup
-validate-pipeline:
-	@if [ -z "$(PIPELINE)" ]; then \
-		echo "Error: PIPELINE parameter required. Usage: make validate-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
-		exit 1; \
-	fi
-	@echo "Validating $(PIPELINE) pipeline with pre-condition checks..."
-	@PYTHONPATH=$(PWD) uv run python scripts/utilities/validate_pipeline.py validate $(PIPELINE)
-
-auto-setup-pipeline:
-	@if [ -z "$(PIPELINE)" ]; then \
-		echo "Error: PIPELINE parameter required. Usage: make auto-setup-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
-		exit 1; \
-	fi
-	@echo "Auto-setting up $(PIPELINE) pipeline with validation and embedding generation..."
-	@PYTHONPATH=$(PWD) uv run python scripts/utilities/validate_pipeline.py setup $(PIPELINE)
-
-auto-setup-all:
-	@echo "Auto-setting up all 8 pipeline types with validation..."
-	@for pipeline in basic colbert crag hyde graphrag noderag hybrid_ifind sql_rag; do \
-		echo ""; \
-		echo "=== Auto-setting up $$pipeline ==="; \
-		$(MAKE) auto-setup-pipeline PIPELINE=$$pipeline || echo "⚠ $$pipeline auto-setup failed"; \
-	done
-	@echo ""
-	@echo "=== ALL PIPELINE AUTO-SETUP COMPLETE ==="
-
-validate-all: validate-iris-rag test-dbapi check-data validate-all-pipelines
-	@echo ""
-	@echo "=== COMPREHENSIVE VALIDATION COMPLETE ==="
-	@echo "✓ iris_rag package validated"
-	@echo "✓ DBAPI connection tested"
-	@echo "✓ Database data checked"
-	@echo "✓ All pipeline types validated"
-	@echo ""
-	@echo "System is ready for RAG operations!"
-
-# Quick pipeline testing
-test-pipeline:
-	@if [ -z "$(PIPELINE)" ]; then \
-		echo "Error: PIPELINE parameter required. Usage: make test-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
-		exit 1; \
-	fi
-	@echo "Testing $(PIPELINE) pipeline with auto-setup..."
-	$(MAKE) auto-setup-pipeline PIPELINE=$(PIPELINE)
-	@echo "Running quick test for $(PIPELINE)..."
-	@$(PYTHON_RUN) -c "\
-import iris_rag; \
-from common.utils import get_llm_func; \
-from common.iris_connection_manager import get_iris_connection; \
-pipeline = iris_rag.create_pipeline('$(PIPELINE)', llm_func=get_llm_func(), external_connection=get_iris_connection(), auto_setup=True); \
-result = pipeline.run('What are the effects of BRCA1 mutations?', top_k=3); \
-print('✓ $(PIPELINE) pipeline test: ' + str(len(result.get('retrieved_documents', []))) + ' docs retrieved, answer length: ' + str(len(result.get('answer', ''))) + ' chars')"
 
 # Status check with auto-healing
 status:

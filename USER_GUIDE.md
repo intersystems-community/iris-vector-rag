@@ -398,49 +398,8 @@ make load-data
 ```bash
 # Validate all pipelines
 make validate-all-pipelines
-
-# Auto-setup missing pipelines
-make auto-setup-all
 ```
 
-#### Memory Issues
-- Reduce batch sizes in configuration
-- Use smaller embedding models
-- Process fewer documents at once
-
-#### Slow Performance
-```bash
-# Check system status
-make status
-
-# Run performance optimization
-make heal-data
-```
-
-### Getting Detailed Logs
-
-```bash
-# View database logs
-docker-compose logs -f
-
-# Check system readiness
-make check-readiness
-
-# Run comprehensive validation
-make validate-all
-```
-
-### Self-Healing Features
-
-The system includes automatic problem detection and fixing:
-
-```bash
-# Automatically fix common issues
-make heal-data
-
-# Check what was fixed
-make check-readiness
-```
 
 ## Getting Help
 
