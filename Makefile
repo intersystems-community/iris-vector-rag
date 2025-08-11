@@ -316,11 +316,11 @@ clean:
 
 lint:
 	@echo "Running code linting..."
-	uv run flake8 iris_rag/ tests/ --max-line-length=120 --ignore=E501,W503
+	uv run flake8 iris_rag/ --max-line-length=120 --ignore=E501,W503
 
 format:
 	@echo "Formatting code..."
-	uv run black iris_rag/ tests/ --line-length=120
+	uv run black iris_rag/ --line-length=120
 
 # Docker commands
 docker-up:

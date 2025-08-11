@@ -26,12 +26,12 @@ logger = logging.getLogger(__name__)
 class SQLRAGPipeline(RAGPipeline):
     """
     SQL-based RAG Pipeline that converts natural language to SQL queries.
-    
+
     This pipeline leverages the IrisSQLTool to convert natural language questions
     into IRIS-compliant SQL queries, executes them, and uses the results as context
     for generating comprehensive answers.
     """
-    
+
     # Prompt template for converting natural language to SQL
     QUESTION_TO_SQL_PROMPT_TEMPLATE = """
 You are an expert in converting natural language questions into SQL queries for a medical literature database.
@@ -91,7 +91,7 @@ Answer:
     def __init__(self, connection_manager, config_manager, llm_func=None, **kwargs):
         """
         Initialize the SQL RAG Pipeline.
-        
+
         Args:
             connection_manager: Database connection manager
             config_manager: Configuration manager
@@ -99,48 +99,46 @@ Answer:
             **kwargs: Additional keyword arguments
         """
         super().__init__(connection_manager, config_manager, **kwargs)
-        
+
         self.llm_func = llm_func
         self._sql_tool = None
-        
+
         # Initialize LLM function if not provided
         if not self.llm_func:
             try:
                 from common.utils import get_llm_func
+
                 self.llm_func = get_llm_func()
                 logger.info("SQLRAGPipeline: Initialized LLM function from common.utils")
             except ImportError:
                 logger.warning("SQLRAGPipeline: Could not import get_llm_func from common.utils")
-        
+
         logger.info("SQLRAGPipeline initialized successfully")
 
     @property
     def sql_tool(self) -> IrisSQLTool:
         """
         Lazy initialization of the IrisSQLTool.
-        
+
         Returns:
             IrisSQLTool instance
         """
         if self._sql_tool is None:
             # Get IRIS connection from connection manager
             iris_connector = self.connection_manager.get_connection("iris")
-            self._sql_tool = IrisSQLTool(
-                iris_connector=iris_connector,
-                llm_func=self.llm_func
-            )
+            self._sql_tool = IrisSQLTool(iris_connector=iris_connector, llm_func=self.llm_func)
             logger.debug("SQLRAGPipeline: Initialized IrisSQLTool")
-        
+
         return self._sql_tool
 
     def execute(self, query_text: str, **kwargs) -> Dict[str, Any]:
         """
         Execute the SQL RAG pipeline for a given natural language question.
-        
+
         Args:
             query_text: The natural language question
             **kwargs: Additional keyword arguments
-            
+
         Returns:
             Dictionary containing:
             - query: Original question
@@ -151,17 +149,17 @@ Answer:
             - execution_time: Time taken to execute the pipeline
         """
         start_time = time.time()
-        
+
         try:
             logger.info(f"SQLRAGPipeline: Processing question: {query_text[:100]}...")
-            
+
             # Step 1: Convert natural language question to SQL
             sql_query = self._generate_sql_query(query_text)
             logger.debug(f"SQLRAGPipeline: Generated SQL: {sql_query[:200]}...")
-            
+
             # Step 2: Execute SQL query using IrisSQLTool
             sql_result = self.sql_tool.search(sql_query)
-            
+
             if not sql_result["success"]:
                 logger.error(f"SQLRAGPipeline: SQL execution failed: {sql_result['error']}")
                 return {
@@ -172,25 +170,23 @@ Answer:
                     "sql_results": [],
                     "execution_time": time.time() - start_time,
                     "success": False,
-                    "error": sql_result["error"]
+                    "error": sql_result["error"],
                 }
-            
+
             sql_results = sql_result["results"]
             logger.info(f"SQLRAGPipeline: Retrieved {len(sql_results)} results from SQL query")
-            
+
             # Step 3: Generate answer using SQL results as context
             answer = self._generate_answer_from_sql_results(
-                question=query_text,
-                sql_query=sql_result["rewritten_query"] or sql_query,
-                sql_results=sql_results
+                question=query_text, sql_query=sql_result["rewritten_query"] or sql_query, sql_results=sql_results
             )
-            
+
             # Step 4: Format SQL results as documents for consistency with RAG interface
             retrieved_documents = self._format_sql_results_as_documents(sql_results)
-            
+
             execution_time = time.time() - start_time
             logger.info(f"SQLRAGPipeline: Completed in {execution_time:.2f} seconds")
-            
+
             return {
                 "query": query_text,
                 "answer": answer,
@@ -199,14 +195,14 @@ Answer:
                 "sql_results": sql_results,
                 "execution_time": execution_time,
                 "success": True,
-                "error": None
+                "error": None,
             }
-            
+
         except Exception as e:
             execution_time = time.time() - start_time
             error_msg = f"SQLRAGPipeline execution failed: {str(e)}"
             logger.error(error_msg, exc_info=True)
-            
+
             return {
                 "query": query_text,
                 "answer": "I encountered an error while processing your question. Please try rephrasing or contact support.",
@@ -215,38 +211,38 @@ Answer:
                 "sql_results": [],
                 "execution_time": execution_time,
                 "success": False,
-                "error": error_msg
+                "error": error_msg,
             }
 
     def query(self, query_text: str, top_k: int = 10, **kwargs) -> List[Document]:
         """
         Perform the retrieval step by converting question to SQL and executing it.
-        
+
         Args:
             query_text: The natural language question
             top_k: Maximum number of results to return (used in SQL LIMIT/TOP)
             **kwargs: Additional keyword arguments
-            
+
         Returns:
             List of Document objects representing the SQL results
         """
         try:
             # Generate SQL query with TOP clause for limiting results
             sql_query = self._generate_sql_query(query_text, top_k=top_k)
-            
+
             # Execute SQL query
             sql_result = self.sql_tool.search(sql_query)
-            
+
             if not sql_result["success"]:
                 logger.error(f"SQLRAGPipeline query failed: {sql_result['error']}")
                 return []
-            
+
             # Convert SQL results to Document objects
             documents = self._format_sql_results_as_documents(sql_result["results"])
-            
+
             logger.info(f"SQLRAGPipeline query: Retrieved {len(documents)} documents")
             return documents
-            
+
         except Exception as e:
             logger.error(f"SQLRAGPipeline query error: {e}", exc_info=True)
             return []
@@ -254,24 +250,24 @@ Answer:
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
         Load documents into the database.
-        
+
         Note: For SQL RAG, this would typically involve loading data into database tables
         rather than a vector store. This implementation delegates to the vector store
         for consistency with the RAG interface.
-        
+
         Args:
             documents_path: Path to documents to load
             **kwargs: Additional keyword arguments
         """
         logger.info(f"SQLRAGPipeline: Loading documents from {documents_path}")
-        
+
         # For SQL RAG, we might want to load documents into database tables
         # For now, we'll use the standard vector store approach for consistency
         try:
             # This would be implemented based on specific requirements
             # for loading data into SQL tables vs vector store
             logger.warning("SQLRAGPipeline: Document loading not yet implemented for SQL tables")
-            
+
         except Exception as e:
             logger.error(f"SQLRAGPipeline: Error loading documents: {e}", exc_info=True)
             raise
@@ -279,31 +275,31 @@ Answer:
     def _generate_sql_query(self, question: str, top_k: Optional[int] = None) -> str:
         """
         Generate SQL query from natural language question.
-        
+
         Args:
             question: Natural language question
             top_k: Optional limit for number of results
-            
+
         Returns:
             SQL query string
         """
         try:
             # Format the prompt
             prompt = self.QUESTION_TO_SQL_PROMPT_TEMPLATE.format(question=question)
-            
+
             # Get LLM response
             llm_response = self.llm_func(prompt)
-            
+
             # Parse the SQL query from the response
             sql_query = self._parse_sql_from_llm_response(llm_response)
-            
+
             # Add TOP clause if top_k is specified and not already present
             if top_k and "TOP" not in sql_query.upper() and "LIMIT" not in sql_query.upper():
                 # Insert TOP clause after SELECT
                 sql_query = sql_query.replace("SELECT", f"SELECT TOP {top_k}", 1)
-            
+
             return sql_query
-            
+
         except Exception as e:
             logger.error(f"Error generating SQL query: {e}")
             # Fallback to a basic query
@@ -312,21 +308,21 @@ Answer:
     def _parse_sql_from_llm_response(self, llm_response: str) -> str:
         """
         Parse SQL query from LLM response.
-        
+
         Args:
             llm_response: Raw LLM response
-            
+
         Returns:
             Extracted SQL query
         """
         try:
-            lines = llm_response.strip().split('\n')
+            lines = llm_response.strip().split("\n")
             sql_query = ""
             in_sql_section = False
-            
+
             for line in lines:
                 line = line.strip()
-                
+
                 if line.startswith("SQL_QUERY:"):
                     in_sql_section = True
                     continue
@@ -334,18 +330,18 @@ Answer:
                     break
                 elif in_sql_section and line:
                     sql_query += line + " "
-            
+
             sql_query = sql_query.strip()
-            
+
             if not sql_query:
                 # Fallback: try to find any SELECT statement in the response
                 for line in lines:
                     if "SELECT" in line.upper():
                         sql_query = line.strip()
                         break
-            
+
             return sql_query
-            
+
         except Exception as e:
             logger.error(f"Error parsing SQL from LLM response: {e}")
             raise
@@ -353,12 +349,12 @@ Answer:
     def _generate_answer_from_sql_results(self, question: str, sql_query: str, sql_results: List[Dict]) -> str:
         """
         Generate natural language answer from SQL results.
-        
+
         Args:
             question: Original question
             sql_query: SQL query that was executed
             sql_results: Results from SQL query
-            
+
         Returns:
             Generated answer string
         """
@@ -376,19 +372,17 @@ Answer:
                             value = value[:200] + "..."
                         results_text += f"  {key}: {value}\n"
                     results_text += "\n"
-            
+
             # Format the prompt
             prompt = self.ANSWER_GENERATION_PROMPT_TEMPLATE.format(
-                question=question,
-                sql_query=sql_query,
-                sql_results=results_text
+                question=question, sql_query=sql_query, sql_results=results_text
             )
-            
+
             # Generate answer using LLM
             answer = self.llm_func(prompt)
-            
+
             return answer.strip()
-            
+
         except Exception as e:
             logger.error(f"Error generating answer from SQL results: {e}")
             return f"I found {len(sql_results)} results in the database, but encountered an error generating a comprehensive answer. Please try rephrasing your question."
@@ -396,22 +390,22 @@ Answer:
     def _format_sql_results_as_documents(self, sql_results: List[Dict]) -> List[Document]:
         """
         Convert SQL results to Document objects for consistency with RAG interface.
-        
+
         Args:
             sql_results: List of SQL result dictionaries
-            
+
         Returns:
             List of Document objects
         """
         documents = []
-        
+
         for i, result in enumerate(sql_results):
             try:
                 # Create a document from the SQL result
                 # Use the first text field as content, or combine all fields
                 content = ""
                 metadata = {}
-                
+
                 for key, value in result.items():
                     if isinstance(value, str) and len(value) > 50:
                         # Likely a content field
@@ -422,21 +416,17 @@ Answer:
                     else:
                         # Likely metadata
                         metadata[key] = value
-                
+
                 if not content:
                     # If no substantial text content, combine all fields
                     content = "\n".join([f"{k}: {v}" for k, v in result.items()])
-                
-                doc = Document(
-                    id=f"sql_result_{i}",
-                    content=content,
-                    metadata=metadata
-                )
-                
+
+                doc = Document(id=f"sql_result_{i}", content=content, metadata=metadata)
+
                 documents.append(doc)
-                
+
             except Exception as e:
                 logger.warning(f"Error converting SQL result to Document: {e}")
                 continue
-        
+
         return documents

@@ -16,7 +16,7 @@ from ..core.base import RAGPipeline
 class ModuleLoader:
     """
     Service for dynamically loading pipeline classes from modules.
-    
+
     This service handles:
     - Dynamic import of Python modules
     - Loading specific classes from modules
@@ -32,14 +32,14 @@ class ModuleLoader:
     def load_pipeline_class(self, module_path: str, class_name: str) -> Type:
         """
         Load a pipeline class from the specified module.
-        
+
         Args:
             module_path: Python module path (e.g., 'iris_rag.pipelines.basic')
             class_name: Name of the class to load (e.g., 'BasicRAGPipeline')
-            
+
         Returns:
             The loaded pipeline class
-            
+
         Raises:
             ModuleLoadingError: If module or class cannot be loaded or is invalid
         """
@@ -66,17 +66,13 @@ class ModuleLoader:
 
             # Get the class from the module
             if not hasattr(module, class_name):
-                raise ModuleLoadingError(
-                    f"Class '{class_name}' not found in module '{module_path}'"
-                )
+                raise ModuleLoadingError(f"Class '{class_name}' not found in module '{module_path}'")
 
             pipeline_class = getattr(module, class_name)
 
             # Validate that it's a class and a subclass of RAGPipeline
             if not isinstance(pipeline_class, type):
-                raise ModuleLoadingError(
-                    f"'{class_name}' in module '{module_path}' is not a class"
-                )
+                raise ModuleLoadingError(f"'{class_name}' in module '{module_path}' is not a class")
 
             if not issubclass(pipeline_class, RAGPipeline):
                 raise ModuleLoadingError(

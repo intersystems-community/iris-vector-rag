@@ -21,18 +21,23 @@ logger = logging.getLogger(__name__)
 class GraphRAGPipeline(RAGPipeline):
     """
     GraphRAG pipeline implementation.
-    
+
     This pipeline implements graph-based RAG approach:
     1. Entity extraction and relationship mapping
     2. Graph-based retrieval using entity relationships
     3. Context augmentation and LLM generation
     """
-    
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager,
-                 vector_store=None, llm_func: Optional[Callable[[str], str]] = None):
+
+    def __init__(
+        self,
+        connection_manager: ConnectionManager,
+        config_manager: ConfigurationManager,
+        vector_store=None,
+        llm_func: Optional[Callable[[str], str]] = None,
+    ):
         """
         Initialize the GraphRAG Pipeline.
-        
+
         Args:
             connection_manager: Manager for database connections
             config_manager: Manager for configuration settings
@@ -41,38 +46,38 @@ class GraphRAGPipeline(RAGPipeline):
         """
         super().__init__(connection_manager, config_manager, vector_store)
         self.llm_func = llm_func
-        
+
         # Initialize components
         self.storage = IRISStorage(connection_manager, config_manager)
         self.embedding_manager = EmbeddingManager(config_manager)
         self.schema_manager = SchemaManager(connection_manager, config_manager)
-        
+
         # Get pipeline configuration
         self.pipeline_config = self.config_manager.get("pipelines:graphrag", {})
         self.top_k = self.pipeline_config.get("top_k", 5)
         self.max_entities = self.pipeline_config.get("max_entities", 10)
         self.relationship_depth = self.pipeline_config.get("relationship_depth", 2)
-        
+
         logger.info(f"Initialized GraphRAGPipeline with top_k={self.top_k}")
-    
+
     def execute(self, query_text: str, **kwargs) -> dict:
         """
         Execute the GraphRAG pipeline (required abstract method).
-        
+
         Args:
             query_text: The input query string
             **kwargs: Additional parameters
-            
+
         Returns:
             Dictionary containing query, answer, and retrieved documents
         """
         top_k = kwargs.get("top_k", 5)
         return self.query(query_text, top_k)
-    
+
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
         Load documents into the knowledge base (required abstract method).
-        
+
         Args:
             documents_path: Path to documents or directory
             **kwargs: Additional keyword arguments including:
@@ -88,114 +93,107 @@ class GraphRAGPipeline(RAGPipeline):
         else:
             # Load documents from path - basic implementation
             import os
+
             documents = []
-            
+
             if os.path.isfile(documents_path):
-                with open(documents_path, 'r', encoding='utf-8') as f:
+                with open(documents_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                doc = Document(
-                    page_content=content,
-                    metadata={"source": documents_path}
-                )
+                doc = Document(page_content=content, metadata={"source": documents_path})
                 documents.append(doc)
             elif os.path.isdir(documents_path):
                 for filename in os.listdir(documents_path):
                     file_path = os.path.join(documents_path, filename)
                     if os.path.isfile(file_path):
                         try:
-                            with open(file_path, 'r', encoding='utf-8') as f:
+                            with open(file_path, "r", encoding="utf-8") as f:
                                 content = f.read()
-                            doc = Document(
-                                page_content=content,
-                                metadata={"source": file_path, "filename": filename}
-                            )
+                            doc = Document(page_content=content, metadata={"source": file_path, "filename": filename})
                             documents.append(doc)
                         except Exception as e:
                             logger.warning(f"Failed to load file {file_path}: {e}")
-        
+
         # Use the ingest_documents method
         result = self.ingest_documents(documents)
         logger.info(f"GraphRAG: Loaded {len(documents)} documents - {result}")
-    
+
     def ingest_documents(self, documents: List[Document]) -> Dict[str, Any]:
         """
         Ingest documents with entity extraction and graph building.
-        
+
         Args:
             documents: List of documents to ingest
-            
+
         Returns:
             Dictionary with ingestion results
         """
         start_time = time.time()
         logger.info(f"Starting GraphRAG ingestion of {len(documents)} documents")
-        
+
         try:
             # Store documents first
             ingestion_result = self.storage.store_documents(documents)
-            
+
             # Extract entities and relationships
             entities_created = 0
             relationships_created = 0
-            
+
             for doc in documents:
                 entities = self._extract_entities(doc)
                 relationships = self._extract_relationships(doc, entities)
-                
+
                 self._store_entities(doc.id, entities)
                 self._store_relationships(doc.id, relationships)
-                
+
                 entities_created += len(entities)
                 relationships_created += len(relationships)
-            
+
             end_time = time.time()
-            
+
             result = {
                 "status": "success",
                 "documents_ingested": len(documents),
                 "entities_created": entities_created,
                 "relationships_created": relationships_created,
                 "processing_time": end_time - start_time,
-                "pipeline_type": "graphrag"
+                "pipeline_type": "graphrag",
             }
-            
+
             logger.info(f"GraphRAG ingestion completed: {result}")
             return result
-            
+
         except Exception as e:
             logger.error(f"GraphRAG ingestion failed: {e}")
-            return {
-                "status": "error",
-                "error": str(e),
-                "pipeline_type": "graphrag"
-            }
-    
+            return {"status": "error", "error": str(e), "pipeline_type": "graphrag"}
+
     def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
         """
         Execute a query using graph-based retrieval.
-        
+
         Args:
             query_text: The query string
             top_k: Number of top documents to retrieve
             generate_answer: Whether to generate an answer
             **kwargs: Additional keyword arguments
-            
+
         Returns:
             Standardized response with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
         start_time = time.time()
         logger.info(f"Processing GraphRAG query: {query_text}")
-        
+
         try:
             # Extract entities from query
             query_entities = self._extract_query_entities(query_text)
-            
+
             # Find related documents through graph traversal
             relevant_docs = self._graph_based_retrieval(query_entities, top_k)
-            
+
             # If no graph-based results, FAIL instead of silent fallback
             if not relevant_docs:
-                logger.error("GraphRAG: Graph-based retrieval failed - insufficient graph data. GraphRAG requires populated knowledge graph.")
+                logger.error(
+                    "GraphRAG: Graph-based retrieval failed - insufficient graph data. GraphRAG requires populated knowledge graph."
+                )
                 # Return failure result instead of falling back to vector search
                 return {
                     "query": query_text,
@@ -208,10 +206,10 @@ class GraphRAGPipeline(RAGPipeline):
                         "pipeline_type": "graphrag",
                         "generated_answer": False,
                         "failure_reason": "insufficient_graph_data",
-                        "query_entities": query_entities
-                    }
+                        "query_entities": query_entities,
+                    },
                 }
-            
+
             # Generate answer if requested and LLM function is available
             answer = None
             if generate_answer and self.llm_func and relevant_docs:
@@ -220,9 +218,9 @@ class GraphRAGPipeline(RAGPipeline):
                 answer = self.llm_func(prompt)
             elif generate_answer and not self.llm_func:
                 answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
-            
+
             end_time = time.time()
-            
+
             result = {
                 "query": query_text,
                 "answer": answer,
@@ -233,13 +231,15 @@ class GraphRAGPipeline(RAGPipeline):
                     "num_retrieved": len(relevant_docs),
                     "pipeline_type": "graphrag",
                     "generated_answer": generate_answer and answer is not None,
-                    "query_entities": query_entities
-                }
+                    "query_entities": query_entities,
+                },
             }
-            
-            logger.info(f"GraphRAG query completed in {end_time - start_time:.2f}s. Retrieved {len(relevant_docs)} documents.")
+
+            logger.info(
+                f"GraphRAG query completed in {end_time - start_time:.2f}s. Retrieved {len(relevant_docs)} documents."
+            )
             return result
-            
+
         except Exception as e:
             logger.error(f"GraphRAG query failed: {e}", exc_info=True)
             return {
@@ -252,8 +252,8 @@ class GraphRAGPipeline(RAGPipeline):
                     "num_retrieved": 0,
                     "pipeline_type": "graphrag",
                     "generated_answer": False,
-                    "error": str(e)
-                }
+                    "error": str(e),
+                },
             }
 
     def _graph_based_retrieval(self, query_entities: List[str], top_k: int) -> List[Document]:
@@ -271,7 +271,7 @@ class GraphRAGPipeline(RAGPipeline):
 
         try:
             entity_placeholders = ",".join(["?" for _ in query_entities])
-            
+
             # Stage 1: Get doc_ids and entity_matches
             # No dynamic comment needed here as we are not selecting text_content directly
             search_sql_stage1 = f"""
@@ -298,11 +298,11 @@ class GraphRAGPipeline(RAGPipeline):
                 # For simplicity, creating a new cursor for each sub-query or ensuring it's clean.
                 # However, for performance with many doc_ids, batching or a single cursor carefully managed would be better.
                 # For now, let's assume the main cursor can be reused if no open results.
-                
+
                 # Ensure the cursor is ready for a new query if it's being reused.
                 # Depending on DBAPI driver, this might not be strictly necessary if fetchall() was called.
                 # If issues arise, create a new cursor: content_cursor = connection.cursor()
-                
+
                 content_sql_stage2 = """
                 SELECT title, "text_content" AS graph_doc_content
                 FROM RAG.SourceDocuments
@@ -314,33 +314,35 @@ class GraphRAGPipeline(RAGPipeline):
 
                 if content_row:
                     title, doc_content_text = content_row
-                    
+
                     # VectorStore guarantees string content
                     page_content = str(doc_content_text) if doc_content_text else ""
                     title_str = str(title) if title else "N/A"
-                    
+
                     doc = Document(
                         id=doc_id,
-                        page_content=page_content, # Ensure page_content is a string
+                        page_content=page_content,  # Ensure page_content is a string
                         metadata={
                             "title": title_str,
                             "entity_matches": entity_matches_count,
-                            "retrieval_method": "graph_based_retrieval"
-                        }
+                            "retrieval_method": "graph_based_retrieval",
+                        },
                     )
                     retrieved_documents.append(doc)
                 else:
-                    logger.warning(f"GraphRAG Stage 2: No content found for doc_id {doc_id}, though it was matched in Stage 1.")
-            
+                    logger.warning(
+                        f"GraphRAG Stage 2: No content found for doc_id {doc_id}, though it was matched in Stage 1."
+                    )
+
             logger.info(f"GraphRAG: Retrieved {len(retrieved_documents)} documents after 2-stage query.")
 
         except Exception as e:
             logger.error(f"GraphRAG _graph_based_retrieval error: {e}", exc_info=True)
             # Fallback or re-raise might be needed depending on desired behavior
-            return [] # Return empty list on error to allow fallback
+            return []  # Return empty list on error to allow fallback
         finally:
             cursor.close()
-            
+
         return retrieved_documents
 
     def _vector_fallback_retrieval(self, query_embedding: List[float], top_k: int) -> List[Document]:
@@ -364,15 +366,15 @@ class GraphRAGPipeline(RAGPipeline):
                 # VectorStore guarantees string content
                 page_content = str(row[2]) if row[2] else ""
                 title_str = str(row[1]) if row[1] else "N/A"
-                
+
                 doc = Document(
                     id=row[0],
                     page_content=page_content,
                     metadata={
                         "title": title_str,
                         "similarity_score": float(row[3]) if row[3] is not None else 0.0,
-                        "retrieval_method": "vector_fallback"
-                    }
+                        "retrieval_method": "vector_fallback",
+                    },
                 )
                 retrieved_documents.append(doc)
             logger.info(f"GraphRAG Vector Fallback: Retrieved {len(retrieved_documents)} documents.")
@@ -386,86 +388,96 @@ class GraphRAGPipeline(RAGPipeline):
         """Extract entities from document text."""
         # Simple entity extraction - in practice, would use NER models
         text = document.page_content
-        
+
         # Basic keyword extraction as entities
         words = text.split()
         entities = []
-        
+
         # Extract capitalized words as potential entities
         for i, word in enumerate(words):
             if word[0].isupper() and len(word) > 3:
                 entity_embedding = self.embedding_manager.embed_text(word)
-                entities.append({
-                    "entity_id": f"{document.id}_entity_{i}",
-                    "entity_text": word,
-                    "entity_type": "KEYWORD",
-                    "position": i,
-                    "embedding": entity_embedding
-                })
-        
-        return entities[:self.max_entities]  # Limit number of entities
-    
+                entities.append(
+                    {
+                        "entity_id": f"{document.id}_entity_{i}",
+                        "entity_text": word,
+                        "entity_type": "KEYWORD",
+                        "position": i,
+                        "embedding": entity_embedding,
+                    }
+                )
+
+        return entities[: self.max_entities]  # Limit number of entities
+
     def _extract_relationships(self, document: Document, entities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Extract relationships between entities."""
         relationships = []
-        
+
         # Simple co-occurrence based relationships
         for i, entity1 in enumerate(entities):
-            for j, entity2 in enumerate(entities[i+1:], i+1):
+            for j, entity2 in enumerate(entities[i + 1 :], i + 1):
                 # Create relationship if entities are close in text
                 pos_diff = abs(entity1["position"] - entity2["position"])
                 if pos_diff <= 10:  # Within 10 words
-                    relationships.append({
-                        "relationship_id": f"{document.id}_rel_{i}_{j}",
-                        "source_entity": entity1["entity_id"],
-                        "target_entity": entity2["entity_id"],
-                        "relationship_type": "CO_OCCURS",
-                        "strength": 1.0 / (pos_diff + 1)  # Closer = stronger
-                    })
-        
+                    relationships.append(
+                        {
+                            "relationship_id": f"{document.id}_rel_{i}_{j}",
+                            "source_entity": entity1["entity_id"],
+                            "target_entity": entity2["entity_id"],
+                            "relationship_type": "CO_OCCURS",
+                            "strength": 1.0 / (pos_diff + 1),  # Closer = stronger
+                        }
+                    )
+
         return relationships
-    
+
     def _store_entities(self, document_id: str, entities: List[Dict[str, Any]]):
         """Store entities in the database with robust vector embedding handling."""
         # Ensure schema is correct before storing entities
         if not self.schema_manager.ensure_table_schema("DocumentEntities"):
             logger.error("Failed to ensure DocumentEntities table schema")
             raise RuntimeError("Schema validation failed for DocumentEntities table")
-        
+
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
-        
+
         try:
-            from common.vector_format_fix import format_vector_for_iris, VectorFormatError, validate_vector_for_iris, create_iris_vector_string, pad_vector_to_dimension
-            
+            from common.vector_format_fix import (
+                format_vector_for_iris,
+                VectorFormatError,
+                validate_vector_for_iris,
+                create_iris_vector_string,
+                pad_vector_to_dimension,
+            )
+
             successful_embeddings = 0
             failed_embeddings = 0
-            
+
             for entity in entities:
                 # Pre-validate entity data
                 if not all(key in entity for key in ["entity_id", "entity_text", "entity_type", "position"]):
                     logger.warning(f"Entity missing required fields: {entity}")
                     continue
-                
+
                 # Handle embedding storage with comprehensive validation
                 embedding_formatted = None
                 if "embedding" in entity and entity["embedding"] is not None:
                     try:
                         # Step 1: Format the vector using the proven utility
                         embedding_list = format_vector_for_iris(entity["embedding"])
-                        
+
                         # Step 2: Validate the formatted vector
                         if not validate_vector_for_iris(embedding_list):
                             raise VectorFormatError("Vector validation failed after formatting")
-                        
+
                         # Step 3: Create optimized string representation using new utility
                         # Use the non-bracketed version for TO_VECTOR() function
                         embedding_formatted = create_iris_vector_string(embedding_list)
-                        
+
                         # Step 4: Final validation
                         if not embedding_formatted or len(embedding_formatted) < 1:
                             raise VectorFormatError("Generated vector string is invalid")
-                        
+
                     except VectorFormatError as e:
                         logger.warning(f"Vector formatting error for entity {entity['entity_id']}: {e}")
                         failed_embeddings += 1
@@ -474,7 +486,7 @@ class GraphRAGPipeline(RAGPipeline):
                         logger.warning(f"Unexpected error processing embedding for entity {entity['entity_id']}: {e}")
                         failed_embeddings += 1
                         embedding_formatted = None
-                
+
                 # Store entity with or without embedding based on processing result
                 try:
                     if embedding_formatted is not None:
@@ -484,14 +496,17 @@ class GraphRAGPipeline(RAGPipeline):
                         (entity_id, document_id, entity_text, entity_type, position, embedding)
                         VALUES (?, ?, ?, ?, ?, TO_VECTOR(?))
                         """
-                        cursor.execute(insert_sql, [
-                            entity["entity_id"],
-                            document_id,
-                            entity["entity_text"],
-                            entity["entity_type"],
-                            entity["position"],
-                            embedding_formatted
-                        ])
+                        cursor.execute(
+                            insert_sql,
+                            [
+                                entity["entity_id"],
+                                document_id,
+                                entity["entity_text"],
+                                entity["entity_type"],
+                                entity["position"],
+                                embedding_formatted,
+                            ],
+                        )
                         successful_embeddings += 1
                     else:
                         # Store without embedding
@@ -500,41 +515,48 @@ class GraphRAGPipeline(RAGPipeline):
                         (entity_id, document_id, entity_text, entity_type, position)
                         VALUES (?, ?, ?, ?, ?)
                         """
-                        cursor.execute(insert_sql, [
-                            entity["entity_id"],
-                            document_id,
-                            entity["entity_text"],
-                            entity["entity_type"],
-                            entity["position"]
-                        ])
-                        
+                        cursor.execute(
+                            insert_sql,
+                            [
+                                entity["entity_id"],
+                                document_id,
+                                entity["entity_text"],
+                                entity["entity_type"],
+                                entity["position"],
+                            ],
+                        )
+
                 except Exception as sql_error:
                     # Log the error and store without embedding as fallback
                     logger.error(f"SQL insertion failed for entity {entity['entity_id']}: {sql_error}")
                     self._store_entity_without_embedding(cursor, entity, document_id)
                     if embedding_formatted is not None:
                         failed_embeddings += 1
-            
+
             connection.commit()
-            
+
             # Enhanced logging with detailed statistics
             total_entities = len(entities)
             entities_with_embeddings = sum(1 for e in entities if "embedding" in e and e["embedding"] is not None)
-            success_rate = (successful_embeddings / entities_with_embeddings * 100) if entities_with_embeddings > 0 else 0
-            
+            success_rate = (
+                (successful_embeddings / entities_with_embeddings * 100) if entities_with_embeddings > 0 else 0
+            )
+
             logger.info(f"Stored {total_entities} entities for document {document_id}")
-            logger.info(f"Embedding storage: {successful_embeddings}/{entities_with_embeddings} successful ({success_rate:.1f}%)")
-            
+            logger.info(
+                f"Embedding storage: {successful_embeddings}/{entities_with_embeddings} successful ({success_rate:.1f}%)"
+            )
+
             if failed_embeddings > 0:
                 logger.warning(f"Failed to store {failed_embeddings} embeddings due to formatting/validation errors")
-            
+
         except Exception as e:
             connection.rollback()
             logger.error(f"Failed to store entities for document {document_id}: {e}")
             raise e
         finally:
             cursor.close()
-    
+
     def _store_entity_without_embedding(self, cursor, entity: Dict[str, Any], document_id: str):
         """Store entity without embedding as fallback."""
         try:
@@ -543,27 +565,24 @@ class GraphRAGPipeline(RAGPipeline):
             (entity_id, document_id, entity_text, entity_type, position)
             VALUES (?, ?, ?, ?, ?)
             """
-            cursor.execute(insert_sql, [
-                entity["entity_id"],
-                document_id,
-                entity["entity_text"],
-                entity["entity_type"],
-                entity["position"]
-            ])
+            cursor.execute(
+                insert_sql,
+                [entity["entity_id"], document_id, entity["entity_text"], entity["entity_type"], entity["position"]],
+            )
             logger.info(f"Stored entity {entity['entity_id']} without embedding")
         except Exception as e:
             logger.error(f"Failed to store entity {entity['entity_id']} even without embedding: {e}")
             raise
-    
+
     def _store_relationships(self, document_id: str, relationships: List[Dict[str, Any]]):
         """Store relationships in the database."""
         if not relationships:
             logger.info(f"No relationships to store for document {document_id}")
             return
-            
+
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
-        
+
         try:
             for rel in relationships:
                 insert_sql = """
@@ -571,54 +590,57 @@ class GraphRAGPipeline(RAGPipeline):
                 (relationship_id, source_entity_id, target_entity_id, relationship_type, confidence_score, metadata)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """
-                
-                cursor.execute(insert_sql, [
-                    rel["relationship_id"],
-                    rel["source_entity"],
-                    rel["target_entity"],
-                    rel["relationship_type"],
-                    rel["strength"],
-                    "{}"
-                ])
-            
+
+                cursor.execute(
+                    insert_sql,
+                    [
+                        rel["relationship_id"],
+                        rel["source_entity"],
+                        rel["target_entity"],
+                        rel["relationship_type"],
+                        rel["strength"],
+                        "{}",
+                    ],
+                )
+
             connection.commit()
             logger.info(f"Stored {len(relationships)} relationships for document {document_id}")
-            
+
         except Exception as e:
             connection.rollback()
             logger.error(f"Failed to store relationships for document {document_id}: {e}")
             raise e
         finally:
             cursor.close()
-    
+
     def _extract_query_entities(self, query_text: str) -> List[str]:
         """Extract entities from query text by matching against known entities in the knowledge graph."""
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
-        
+
         try:
             # Get all entity names from the knowledge graph
             cursor.execute("SELECT DISTINCT entity_name FROM RAG.DocumentEntities")
             known_entities = [row[0].lower() for row in cursor.fetchall()]
-            
+
             # Also check knowledge graph nodes
             cursor.execute("SELECT DISTINCT node_id FROM RAG.KnowledgeGraphNodes")
             known_nodes = [row[0].lower() for row in cursor.fetchall()]
-            
+
             # Combine all known entities
             all_known_entities = set(known_entities + known_nodes)
-            
+
             logger.debug(f"GraphRAG: Known entities in graph: {list(all_known_entities)[:10]}...")
-            
+
             # Extract entities from query by matching words/phrases against known entities
             query_lower = query_text.lower()
             found_entities = []
-            
+
             # Check for exact matches of known entities in the query
             for entity in all_known_entities:
                 if entity in query_lower:
                     found_entities.append(entity)
-            
+
             # If no exact matches, try partial matches with individual words
             if not found_entities:
                 words = query_lower.split()
@@ -629,41 +651,43 @@ class GraphRAGPipeline(RAGPipeline):
                             if word in entity.lower() or entity.lower() in word:
                                 found_entities.append(entity)
                                 break
-            
+
             # Remove duplicates and return original case entities
             if found_entities:
                 # Get original case entities from database
-                placeholders = ','.join(['?' for _ in found_entities])
-                cursor.execute(f"SELECT DISTINCT entity_name FROM RAG.DocumentEntities WHERE LOWER(entity_name) IN ({placeholders})", found_entities)
+                placeholders = ",".join(["?" for _ in found_entities])
+                cursor.execute(
+                    f"SELECT DISTINCT entity_name FROM RAG.DocumentEntities WHERE LOWER(entity_name) IN ({placeholders})",
+                    found_entities,
+                )
                 original_case_entities = [row[0] for row in cursor.fetchall()]
-                
+
                 logger.info(f"GraphRAG: Found query entities: {original_case_entities}")
                 return original_case_entities
             else:
                 logger.warning(f"GraphRAG: No entities found in query '{query_text}' that match knowledge graph")
                 return []
-                
+
         except Exception as e:
             logger.error(f"GraphRAG: Error extracting query entities: {e}")
             return []
         finally:
             cursor.close()
-    
-    
+
     def _build_context(self, documents: List[Document]) -> str:
         """Build context string from retrieved Document objects."""
         context_parts = []
         if not documents:
             return "No documents retrieved to build context."
-            
+
         for i, doc in enumerate(documents, 1):
-            title = doc.metadata.get('title', 'Untitled') if doc.metadata else 'Untitled'
+            title = doc.metadata.get("title", "Untitled") if doc.metadata else "Untitled"
             # Ensure page_content is a string, even if None
             content = doc.page_content if doc.page_content is not None else ""
-            context_parts.append(f"[Document {i}: {title}]\n{content[:500]}...") # Truncate content for brevity
-        
+            context_parts.append(f"[Document {i}: {title}]\n{content[:500]}...")  # Truncate content for brevity
+
         return "\n\n".join(context_parts)
-    
+
     def _build_prompt(self, query: str, context: str) -> str:
         """Build prompt for LLM generation."""
         return f"""Based on the following retrieved documents, please answer the question.

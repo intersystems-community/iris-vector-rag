@@ -172,7 +172,6 @@ CREATE INDEX idx_relationships_type_strength ON RAG.Relationships (relationship_
 -- - BasicRAG: SourceDocuments table
 -- - HyDE: SourceDocuments table  
 -- - CRAG: SourceDocuments table
--- - OptimizedColBERT: DocumentTokenEmbeddings table
 -- - ColBERT: DocumentTokenEmbeddings table
 -- - NodeRAG: KnowledgeGraphNodes/Edges tables
 -- - GraphRAG: Entities/Relationships tables

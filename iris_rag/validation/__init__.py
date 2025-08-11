@@ -19,5 +19,5 @@ __all__ = [
     "SetupOrchestrator",
     "ValidatedPipelineFactory",
     "EmbeddingValidator",
-    "EmbeddingQualityIssues"
+    "EmbeddingQualityIssues",
 ]

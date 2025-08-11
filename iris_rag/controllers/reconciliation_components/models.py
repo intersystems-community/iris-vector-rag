@@ -20,6 +20,7 @@ QualityIssues = EmbeddingQualityIssues
 @dataclass
 class SystemState:
     """Represents the current observed state of the system."""
+
     total_documents: int
     total_token_embeddings: int
     avg_embedding_size: float
@@ -32,6 +33,7 @@ class SystemState:
 @dataclass
 class CompletenessRequirements:
     """Defines completeness requirements for the desired state."""
+
     require_all_docs: bool = True
     require_token_embeddings: bool = False
     min_embedding_quality_score: float = 0.8
@@ -41,6 +43,7 @@ class CompletenessRequirements:
 @dataclass
 class DesiredState:
     """Represents the desired target state for the system."""
+
     target_document_count: int
     embedding_model: str
     vector_dimensions: int
@@ -52,6 +55,7 @@ class DesiredState:
 @dataclass
 class DriftIssue:
     """Represents a specific drift issue detected during analysis."""
+
     issue_type: str
     severity: str  # "low", "medium", "high", "critical"
     description: str
@@ -62,6 +66,7 @@ class DriftIssue:
 @dataclass
 class DriftAnalysis:
     """Results of drift analysis between current and desired states."""
+
     has_drift: bool
     issues: List[DriftIssue] = field(default_factory=list)
     analysis_timestamp: datetime = field(default_factory=datetime.now)
@@ -70,6 +75,7 @@ class DriftAnalysis:
 @dataclass
 class ReconciliationAction:
     """Represents an action to be taken during reconciliation."""
+
     action_type: str
     description: str
     estimated_duration_seconds: float = 0.0
@@ -79,6 +85,7 @@ class ReconciliationAction:
 @dataclass
 class ConvergenceCheck:
     """Results of convergence verification after reconciliation."""
+
     converged: bool
     remaining_issues: List[DriftIssue] = field(default_factory=list)
     verification_timestamp: datetime = field(default_factory=datetime.now)
@@ -87,6 +94,7 @@ class ConvergenceCheck:
 @dataclass
 class ReconciliationResult:
     """Complete result of a reconciliation operation."""
+
     reconciliation_id: str
     success: bool
     current_state: SystemState

@@ -8,5 +8,5 @@ This allows the CLI to be executed as:
 
 from iris_rag.cli.reconcile_cli import reconcile
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     reconcile()
