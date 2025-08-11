@@ -11,21 +11,28 @@ tables:
     name: "SourceDocuments"
     description: "Primary document storage with embeddings"
     columns:
-      id: "doc_id"
-      title: "title"
-      content: "text_content"
-      authors: "authors"
-      keywords: "keywords"
-      embedding: "embedding"
-      metadata: "metadata"
-      created_at: "created_at"
+      id: id
+      doc_id: doc_id
+      title: title
+      abstract: abstract
+      text_content: text_content
+      authors: authors
+      keywords: keywords
+      embedding: embedding
+      metadata: metadata
+      created_at: created_at
     indexes:
-      - name: "idx_sourcedocs_embedding"
-        columns: ["embedding"]
-        type: "vector"
-      - name: "idx_sourcedocs_id"
-        columns: ["doc_id"]
-        type: "primary"
+      - name: idx_source_docs_id
+        columns:
+        - doc_id
+        type: primary
+      - name: idx_hnsw_source_embedding
+        columns:
+        - embedding
+        type: vector
+      - name: idx_source_docs_created
+        columns:
+        - created_at
 
   # Document chunks for CRAG/NodeRAG
   document_chunks:
@@ -33,69 +40,166 @@ tables:
     alias: "ChunkedDocuments" # Alternative name
     description: "Document chunks for CRAG and NodeRAG pipelines"
     columns:
-      id: "chunk_id"          # Standardized ID column
-      doc_id: "doc_id"
-      content: "chunk_text"
-      embedding: "chunk_embedding"
-      index: "chunk_index"
-      type: "chunk_type"
-      metadata: "metadata"
-      created_at: "created_at"
+      id: id
+      chunk_id: chunk_id
+      doc_id: doc_id
+      chunk_text: chunk_text
+      chunk_embedding: chunk_embedding
+      chunk_index: chunk_index
+      chunk_type: chunk_type
+      metadata: metadata
+      created_at: created_at
     indexes:
-      - name: "idx_chunks_doc_id"
-        columns: ["doc_id"]
-      - name: "idx_chunks_embedding"
-        columns: ["chunk_embedding"]
-        type: "vector"
+      - name: idx_chunks_doc_id
+        columns:
+        - doc_id
+      - name: idx_chunks_type
+        columns:
+        - chunk_type
+      - name: idx_hnsw_chunk_embedding
+        columns:
+        - chunk_embedding
+        type: vector
 
   # Entities for GraphRAG
   document_entities:
-    name: "Entities"
-    description: "Extracted entities for GraphRAG pipeline"
+    name: DocumentEntities
+    description: Entities extracted for GraphRAG
     columns:
-      entity_id: "entity_id"
-      doc_id: "source_doc_id"
-      entity_text: "entity_name"
-      entity_type: "entity_type"
-      description: "description"
-      embedding: "embedding"
-      created_at: "created_at"
+      id: id
+      entity_id: entity_id
+      document_id: document_id
+      entity_text: entity_text
+      entity_type: entity_type
+      position: position
+      embedding: embedding
+      created_at: created_at
     indexes:
-      - name: "idx_entities_doc_id"
-        columns: ["source_doc_id"]
-      - name: "idx_entities_type"
-        columns: ["entity_type"]
+    - name: idx_documententities_document_id
+      columns:
+      - document_id
+    - name: idx_documententities_entity_type
+      columns:
+      - entity_type
+    - name: idx_documententities_created_at
+      columns:
+      - created_at
+    - name: idx_hnsw_documententities_embedding
+      columns:
+      - embedding
+      type: vector
+
+    # Relationships for GraphRAG
+    entity_relationships:
+      name: EntityRelationships
+      description: Relationships between entities for GraphRAG
+      columns:
+        id: id
+        relationship_id: relationship_id
+        source_entity_id: source_entity_id
+        target_entity_id: target_entity_id
+        relationship_type: relationship_type
+        description: description
+        strength: strength
+        source_doc_id: source_doc_id
+        created_at: created_at
+      indexes:
+      - name: idx_relationships_id
+        columns:
+        - relationship_id
+      - name: idx_relationships_source
+        columns:
+        - source_entity_id
+      - name: idx_relationships_target
+        columns:
+        - target_entity_id
+      - name: idx_relationships_type
+        columns:
+        - relationship_type
+      - name: idx_relationships_entities
+        columns:
+        - source_entity_id
+        - target_entity_id
+      - name: idx_relationships_created
+        columns:
+        - created_at
+      - name: idx_relationships_type_strength
+        columns:
+        - relationship_type
+        - strength
+
+  # Knowledge graph nodes and edges for NodeRAG
+  knowledge_graph_nodes:
+    name: KnowledgeGraphNodes
+    description: Graph nodes for NodeRAG
+    columns:
+      id: id
+      node_id: node_id
+      node_type: node_type
+      content: content
+      embedding: embedding
+      metadata: metadata
+      created_at: created_at
+    indexes:
+    - name: idx_kg_nodes_id
+      columns:
+      - node_id
+    - name: idx_kg_nodes_type
+      columns:
+      - node_type
+    - name: idx_hnsw_kg_node_embedding
+      columns:
+      - embedding
+      type: vector
+
+  knowledge_graph_edges:
+    name: KnowledgeGraphEdges
+    description: Graph edges for NodeRAG
+    columns:
+      id: id
+      edge_id: edge_id
+      source_node_id: source_node_id
+      target_node_id: target_node_id
+      edge_type: edge_type
+      weight: weight
+      metadata: metadata
+      created_at: created_at
+    indexes:
+    - name: idx_kg_edges_id
+      columns:
+      - edge_id
+    - name: idx_kg_edges_source
+      columns:
+      - source_node_id
+    - name: idx_kg_edges_target
+      columns:
+      - target_node_id
+    - name: idx_kg_edges_type
+      columns:
+      - edge_type
 
   # Token embeddings for ColBERT
   document_token_embeddings:
-    name: "DocumentTokenEmbeddings"
-    description: "Token-level embeddings for ColBERT pipeline"
+    name: DocumentTokenEmbeddings
+    description: Token-level embeddings for ColBERT pipeline
     columns:
-      doc_id: "doc_id"
-      token_index: "token_index"
-      token_text: "token_text"
-      token_embedding: "token_embedding"
-      metadata: "metadata_json"
-      created_at: "created_at"
+      id: id
+      doc_id: doc_id
+      token_index: token_index
+      token_text: token_text
+      token_embedding: token_embedding
+      created_at: created_at
     indexes:
-      - name: "idx_tokens_doc_id"
-        columns: ["doc_id"]
-      - name: "idx_tokens_embedding"
-        columns: ["token_embedding"]
-        type: "vector"
-
-  # IFind optimization  
-  ifind_index:
-    name: "SourceDocuments"  # Use main table for now since IFind table doesn't exist
-    description: "Uses main SourceDocuments table for IFind operations"
-    columns:
-      doc_id: "doc_id"
-      content: "text_content"
-      created_at: "created_at"
-    indexes:
-      - name: "idx_ifind_doc_id"
-        columns: ["doc_id"]
-        type: "primary"
+    - name: idx_token_embeddings_doc
+      columns:
+      - doc_id
+    - name: idx_token_embeddings_token
+      columns:
+      - token_index
+    - name: idx_hnsw_token_embedding
+      columns:
+      - token_embedding
+      type: vector
 
 # Column name mappings for standardization
 column_mappings:

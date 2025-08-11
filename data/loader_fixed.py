@@ -132,9 +132,10 @@ def load_documents_to_iris(
                 # Process chunks as separate documents
                 for chunk in doc["chunks"]:
                     chunk_doc = {
+                        "id": chunk["chunk_id"],
                         "doc_id": chunk["chunk_id"],
                         "title": f"{doc.get('title', '')} [Chunk {chunk['chunk_index']}]",
-                        "abstract": chunk["text"][:500] + "..." if len(chunk["text"]) > 500 else chunk["text"],
+                        "abstract": doc.get("abstract", "No abstract available"),
                         "content": chunk["text"],
                         "authors": doc.get("authors", []),
                         "keywords": doc.get("keywords", []),
@@ -200,11 +201,17 @@ def load_documents_to_iris(
                     
                     # Validate and clean all text fields
                     title = validate_and_fix_text_field(doc.get("title"))
-                    # For chunks, use content as abstract; for regular docs, use abstract
-                    if doc.get("metadata", {}).get("is_chunk"):
-                        abstract = validate_and_fix_text_field(doc.get("content", ""))
-                    else:
-                        abstract = validate_and_fix_text_field(doc.get("abstract"))
+
+                    # # For chunks, use content as abstract; for regular docs, use abstract
+                    # if doc.get("metadata", {}).get("is_chunk"):
+                    #     abstract = validate_and_fix_text_field(doc.get("content", ""))
+                    # else:
+                    #     abstract = validate_and_fix_text_field(doc.get("abstract"))
+
+                    # Always use real abstract (from doc["abstract"])
+                    abstract = validate_and_fix_text_field(doc.get("abstract"))
+
+                    text_content = validate_and_fix_text_field(doc.get("content", ""))
                     
                     # Handle authors and keywords with validation
                     authors = doc.get("authors", [])
@@ -225,12 +232,15 @@ def load_documents_to_iris(
                     
                     doc_params = (
                         str(doc_id_value),
+                        str(doc_id_value),
                         title,
                         abstract,
+                        text_content,
                         authors_json,
                         keywords_json,
                         embedding_vector
                     )
+
                     source_doc_batch_params.append(doc_params)
                     docs_for_token_embedding.append(doc)
                     
@@ -247,8 +257,8 @@ def load_documents_to_iris(
                 # Use simple INSERT with proper VECTOR data
                 sql_source_docs = """
                 INSERT INTO RAG.SourceDocuments
-                (doc_id, title, text_content, authors, keywords, embedding)
-                VALUES (?, ?, ?, ?, ?, ?)
+                (id, doc_id, title, abstract, text_content, authors, keywords, embedding)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """
                 
                 logger.info(f"Executing batch {batch_idx} with {len(source_doc_batch_params)} documents")
@@ -292,8 +302,8 @@ def load_documents_to_iris(
                         try:
                             sql_token_embeddings = """
                             INSERT INTO RAG.DocumentTokenEmbeddings
-                            (doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
-                            VALUES (?, ?, ?, ?, ?)
+                            (id, doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
+                            VALUES (?, ?, ?, ?, ?, ?)
                             """
                             cursor.executemany(sql_token_embeddings, token_embedding_batch_params)
                             loaded_token_count += len(token_embedding_batch_params)
@@ -313,6 +323,9 @@ def load_documents_to_iris(
                 connection.rollback()
                 error_count += len(current_doc_batch)
         
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+        print("Total documents in RAG.SourceDocuments after loading:", cursor.fetchone()[0])
+
         cursor.close()
         
     except Exception as e:
@@ -321,7 +334,10 @@ def load_documents_to_iris(
     
     duration = time.time() - start_time
     
+    success_flag = loaded_doc_count > 0
+
     return {
+        "success": success_flag,
         "total_documents": len(documents),
         "total_expanded_documents": len(expanded_documents) if 'expanded_documents' in locals() else len(documents),
         "loaded_doc_count": loaded_doc_count,
@@ -382,7 +398,7 @@ def process_and_load_documents(
         
         # Combine stats
         return {
-            "success": True,
+            "success": load_stats.get("success", False),
             "processed_count": processed_count,
             "processed_directory": pmc_directory,
             **load_stats

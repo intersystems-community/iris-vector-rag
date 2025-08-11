@@ -43,13 +43,13 @@ def main():
 
     llm_func = openai_llm if USE_REAL_LLM else dummy_llm
 
-    print("Creating RAG Reranking Pipeline with Auto-Setup")
+    print("Creating RAG Reranking Pipeline")
     # Create pipeline using iris_rag factory with auto_setup=True
     # This ensures database schema is properly initialized
     reranking_rag_pipeline = iris_rag.create_pipeline(
         pipeline_type="basic_rerank",
         llm_func=llm_func, 
-        auto_setup=True,     # Crucial: handles schema initialization automatically
+        auto_setup=True,
         validate_requirements=True
     )
     print("✓ RAG Reranking Pipeline created successfully")

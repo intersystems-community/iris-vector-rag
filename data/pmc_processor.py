@@ -13,6 +13,19 @@ import time
 
 logger = logging.getLogger(__name__)
 
+def extract_abstract(root: ET.Element) -> str:
+    """
+    Extract the abstract text from PMC XML, handling nested sections.
+    """
+    abstract_node = root.find(".//abstract")
+    if abstract_node is not None:
+        return " ".join([
+            "".join(p.itertext()).strip()
+            for p in abstract_node.findall(".//p")
+            if p is not None
+        ])
+    return ""
+
 def _chunk_pmc_content(content: str, pmc_id: str, chunk_size: int = 8000, overlap: int = 400) -> List[Dict[str, Any]]:
     """
     Chunk PMC content into manageable pieces for LLM processing.
@@ -124,19 +137,7 @@ def extract_pmc_metadata(xml_file_path: str) -> Dict[str, Any]:
         title = title_elem.text if title_elem is not None and title_elem.text else "Unknown Title"
         
         # Extract abstract
-        abstract_elem = root.find(".//abstract")
-        abstract = ""
-        if abstract_elem is not None:
-            # Concatenate all paragraph text in the abstract
-            for p in abstract_elem.findall(".//p"):
-                if p.text:
-                    abstract += p.text + " "
-                # Get any other text within inline elements
-                for elem in p.findall(".//*"):
-                    if elem.text and elem.tag not in ["xref", "sup"]:  # Skip reference markers
-                        abstract += elem.text + " "
-                        
-        abstract = abstract.strip()
+        abstract = extract_abstract(root)
         
         # Extract authors
         authors = []

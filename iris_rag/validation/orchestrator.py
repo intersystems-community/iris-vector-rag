@@ -402,7 +402,7 @@ class SetupOrchestrator:
             self._generate_document_chunks()
 
             progress.next_step("Validating chunk embeddings")
-            self._validate_embeddings_after_generation("RAG.DocumentChunks", "embedding", "chunk")
+            self._validate_embeddings_after_generation("RAG.DocumentChunks", "chunk_embedding", "chunk")
 
             progress.next_step("Chunking setup complete")
             progress.complete()
@@ -423,6 +423,11 @@ class SetupOrchestrator:
         cursor = connection.cursor()
 
         try:
+
+            # Check total docs
+            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
+            print("Total documents in RAG.SourceDocuments:", cursor.fetchone()[0])
+
             # Check for documents without embeddings
             cursor.execute(
                 """
@@ -554,14 +559,13 @@ class SetupOrchestrator:
                 # Create table with configurable dimension
                 create_table_sql = f"""
                     CREATE TABLE RAG.DocumentTokenEmbeddings (
-                        id INTEGER IDENTITY PRIMARY KEY,
-                        doc_id VARCHAR(255) NOT NULL,
-                        token_index INTEGER NOT NULL,
+                        id VARCHAR(255) PRIMARY KEY,
+                        doc_id VARCHAR(255),
+                        token_index INTEGER,
                         token_text VARCHAR(500),
-                        token_embedding VECTOR(DOUBLE, {token_dimension}),
+                        token_embedding VECTOR(FLOAT, 128),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        INDEX idx_doc_id (doc_id),
-                        INDEX idx_token_index (token_index)
+                        FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(id)
                     )
                 """
                 cursor.execute(create_table_sql)
@@ -676,7 +680,7 @@ class SetupOrchestrator:
                 f"Diagnostic: Proceeding to call _generate_token_embeddings_for_documents with {len(docs_needing_embeddings)} documents."
             )
             batch_size = self.config_manager.get("pipelines:colbert:token_embedding_batch_size", 16)
-            results = self._generate_token_embeddings_for_documents(cursor, docs_needing_embeddings, batch_size)
+            results = self._generate_token_embeddings_for_documents(connection, cursor, docs_needing_embeddings, batch_size)
 
             # Final verification
             final_missing = self._identify_missing_token_embeddings(cursor, target_doc_ids_list)
@@ -839,7 +843,7 @@ class SetupOrchestrator:
 
         self.logger.info(f"Deleted existing token embeddings for {len(doc_ids)} documents")
 
-    def _generate_token_embeddings_for_documents(self, cursor, doc_ids: List[str], batch_size: int) -> Dict[str, int]:
+    def _generate_token_embeddings_for_documents(self, connection, cursor, doc_ids: List[str], batch_size: int) -> Dict[str, int]:
         """Generate token embeddings for specified documents."""
         # At the beginning of the method, log the number of doc_ids received and a sample of them
         self.logger.info(
@@ -906,12 +910,12 @@ class SetupOrchestrator:
                         total_failed += 1
 
                     # Commit after each document to ensure progress is saved
-                    cursor.connection.commit()
+                    connection.commit()
 
                 except Exception as e:
                     self.logger.warning(f"Failed to generate token embeddings for {doc_id}: {e}")
                     total_failed += 1
-                    cursor.connection.rollback()
+                    connection.rollback()
 
             # Progress logging
             if (i // batch_size + 1) % 5 == 0:
@@ -1049,15 +1053,16 @@ class SetupOrchestrator:
                 cursor.execute(
                     """
                     CREATE TABLE RAG.DocumentChunks (
-                        id INTEGER IDENTITY PRIMARY KEY,
-                        doc_id VARCHAR(255) NOT NULL,
-                        chunk_index INTEGER NOT NULL,
+                        id VARCHAR(255) PRIMARY KEY,
+                        chunk_id VARCHAR(255),
+                        doc_id VARCHAR(255),
                         chunk_text TEXT,
-                        embedding VECTOR(DOUBLE, 768),
+                        chunk_embedding VECTOR(FLOAT, 384),
+                        chunk_index INTEGER,
+                        chunk_type VARCHAR(100),
                         metadata TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        INDEX idx_doc_id (doc_id),
-                        INDEX idx_chunk_index (chunk_index)
+                        FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(id)
                     )
                 """
                 )
@@ -1129,10 +1134,11 @@ class SetupOrchestrator:
                                 cursor.execute(
                                     """
                                     INSERT INTO RAG.DocumentChunks
-                                    (chunk_id, doc_id, chunk_index, chunk_text, embedding, metadata)
-                                    VALUES (?, ?, ?, ?, TO_VECTOR(?), ?)
+                                    (id, chunk_id, doc_id, chunk_index, chunk_text, chunk_embedding, metadata)
+                                    VALUES (?, ?, ?, ?, ?, TO_VECTOR(?), ?)
                                 """,
                                     [
+                                        chunk_id,
                                         chunk_id,
                                         doc_id,
                                         chunk_index,
@@ -1340,9 +1346,13 @@ class SetupOrchestrator:
             cursor.execute(
                 """
                 CREATE TABLE RAG.KnowledgeGraphNodes (
-                    node_id VARCHAR(255) PRIMARY KEY,
-                    node_name VARCHAR(500),
-                    embedding VECTOR(DOUBLE, 384)
+                    id VARCHAR(255) PRIMARY KEY,
+                    node_id VARCHAR(255),
+                    node_type VARCHAR(100),
+                    content TEXT,
+                    embedding VECTOR(FLOAT, 384),
+                    metadata TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """
             )
@@ -1362,9 +1372,16 @@ class SetupOrchestrator:
             cursor.execute(
                 """
                 CREATE TABLE RAG.KnowledgeGraphEdges (
-                    edge_id VARCHAR(255) PRIMARY KEY,
-                    source_node_id VARCHAR(255) NOT NULL,
-                    target_node_id VARCHAR(255) NOT NULL
+                    id VARCHAR(255) PRIMARY KEY,
+                    edge_id VARCHAR(255),
+                    source_node_id VARCHAR(255),
+                    target_node_id VARCHAR(255),
+                    edge_type VARCHAR(100),
+                    weight DOUBLE DEFAULT 1.0,
+                    metadata TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (source_node_id) REFERENCES RAG.KnowledgeGraphNodes(id),
+                    FOREIGN KEY (target_node_id) REFERENCES RAG.KnowledgeGraphNodes(id)
                 )
             """
             )

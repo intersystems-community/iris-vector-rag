@@ -3,6 +3,9 @@ Test script for ColBERTRAG Pipeline.
 
 This script tests the ColBERTRAGPipeline implementation by executing a sample query
 and logging the results.
+
+MAKE SURE THAT DATA IS LOADED BEFORE RUNNING THIS TEST!
+run 'make load-data' from the project root to load sample data.
 """
 
 import logging
@@ -45,7 +48,7 @@ def openai_llm(prompt: str) -> str:
 
 def main():
     # Setup logging
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger()
 
     llm_func = openai_llm if USE_REAL_LLM else dummy_llm
@@ -69,7 +72,6 @@ def main():
     else:
         logger.error("❌ ColBERT validation failed")
         return
-
 
     print("Running ColBERTRAG Pipeline")
     # Run a sample query
