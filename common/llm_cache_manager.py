@@ -12,6 +12,7 @@ import logging
 import time
 from typing import Any, Dict, Optional, Union, List
 from dataclasses import dataclass
+from langchain_core.outputs import Generation
 
 from common.llm_cache_config import CacheConfig, load_cache_config
 from common.llm_cache_iris import IRISCacheBackend, create_iris_cache_backend

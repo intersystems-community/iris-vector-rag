@@ -67,8 +67,8 @@ def main():
 
     print("Running Basic RAG Pipeline")
     # Run a sample query
-    query = "What are the benefits of using retrieval augmented generation?"
-    # query = "What demographics are at risk of weight gain?"
+    # query = "What are the benefits of using retrieval augmented generation?"
+    query = "What demographics are at risk of weight gain?"
     response = basic_rag_pipeline.query(query, top_k=3)
 
     # Print final answer
@@ -77,7 +77,7 @@ def main():
     print(f"Answer: {response['answer']}")
     print(f"Execution Time: {response['execution_time']:.2f}s")
 
-    # Step 6: Clean up test data
+    # Step 6: Clean up test data that we added just for this script
     print("\n--- Cleanup ---")
     try:
         # Get document count before cleanup
