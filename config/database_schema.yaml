@@ -34,11 +34,11 @@ tables:
         columns:
         - created_at
 
-  # Document chunks for CRAG/NodeRAG
+  # Document chunks for CRAG
   document_chunks:
     name: "DocumentChunks"    # Current actual table name
     alias: "ChunkedDocuments" # Alternative name
-    description: "Document chunks for CRAG and NodeRAG pipelines"
+    description: "Document chunks for CRAG pipelines"
     columns:
       id: id
       chunk_id: chunk_id
@@ -91,7 +91,6 @@ data_types:
   text_content: "LONGVARCHAR"
   embedding: "VARCHAR(32000)"  # IRIS vector format
   vector_dimension: 384  # all-MiniLM-L6-v2 model
-  colbert_token_dimension: 768  # ColBERT token embeddings
   timestamp: "TIMESTAMP"
   metadata: "VARCHAR(4000)"
 

@@ -47,10 +47,6 @@ class Document:
     score: Optional[float] = None # For similarity score from retrieval
     metadata: Optional[Dict[str, Any]] = None # For title or other metadata
     embedding: Optional[List[float]] = field(default=None, repr=False) # Standard document embedding
-    # For ColBERT or other token-level models
-    colbert_tokens: Optional[List[str]] = field(default=None, repr=False)
-    colbert_token_embeddings: Optional[List[List[float]]] = field(default=None, repr=False) # Raw token embeddings
-    colbert_compressed_embeddings: Optional[List[Any]] = field(default=None, repr=False) # Compressed + scale factors
 
     def to_dict(self, include_embeddings: bool = False) -> Dict[str, Any]:
         data = {
@@ -60,9 +56,6 @@ class Document:
         }
         if include_embeddings:
             data["embedding"] = self.embedding
-            # Potentially add colbert fields if needed for serialization
-            # data["colbert_tokens"] = self.colbert_tokens 
-            # data["colbert_token_embeddings"] = self.colbert_token_embeddings
         return data
 
 # --- Model and Connector Wrappers ---
@@ -291,187 +284,6 @@ def get_llm_func(provider: str = "openai", model_name: str = "gpt-4.1-mini",
 
     return query_llm
 
-# --- ColBERT Specific Encoders ---
-# Placeholder for actual ColBERT model loading and encoding
-# For now, a mock function.
-# A real implementation would use a ColBERT checkpoint.
-# Expected output for loader: List[Tuple[str, List[float]]] -> [(token_text, token_embedding_vector), ...]
-def get_colbert_doc_encoder_func(model_name: str = None) -> Callable[[str], List[Tuple[str, List[float]]]]:
-    """
-    Returns a ColBERT document encoder function based on configuration.
-    Uses real ColBERT if backend is "native", otherwise falls back to mock.
-    """
-    # Get ColBERT configuration from config
-    colbert_backend = get_config_value("colbert.backend", "native")
-    colbert_model = model_name or get_config_value("colbert.model_name", "bert-base-uncased")
-    token_dimension = get_config_value("colbert.token_dimension", 768)
-    
-    if colbert_backend == "native" and colbert_model != "stub_colbert_doc_encoder":
-        logger.info(f"Using native ColBERT document encoder with model: {colbert_model}")
-        
-        try:
-            # Import and use real ColBERT interface
-            from iris_rag.embeddings.colbert_interface import RAGTemplatesColBERTInterface
-            colbert = RAGTemplatesColBERTInterface(
-                token_dimension=token_dimension
-            )
-            
-            def real_colbert_doc_encode(text: str) -> List[Tuple[str, List[float]]]:
-                # RAGTemplatesColBERTInterface.encode_document returns List[List[float]]
-                # We need to convert to List[Tuple[str, List[float]]]
-                tokens = text.split()[:100]  # Match the interface's token limit
-                embeddings = colbert.encode_document(text)
-                
-                # Pair tokens with embeddings
-                result = []
-                for i, embedding in enumerate(embeddings):
-                    token_text = tokens[i] if i < len(tokens) else f"token_{i}"
-                    result.append((token_text, embedding))
-                return result
-            
-            return real_colbert_doc_encode
-            
-        except Exception as e:
-            logger.warning(f"Failed to initialize real ColBERT encoder: {e}. Falling back to mock.")
-    
-    # Fallback to mock implementation
-    logger.info(f"Using mock ColBERT document encoder: {colbert_model}")
-
-    def mock_colbert_doc_encode(text: str) -> List[Tuple[str, List[float]]]:
-        tokens = text.split()[:100] # Limit to first 100 mock tokens
-        if not tokens:
-            return []
-        
-        token_embeddings_data = []
-        for i, token_str in enumerate(tokens):
-            # Create a simple mock embedding based on token index and length
-            mock_embedding = [( (i % 10) + len(token_str) % 10 ) * 0.01] * token_dimension
-            token_embeddings_data.append((token_str, mock_embedding))
-        return token_embeddings_data
-
-    return mock_colbert_doc_encode
-
-
-def get_colbert_query_encoder_func(model_name: str = None) -> Callable[[str], List[List[float]]]:
-    """
-    Returns a ColBERT query encoder function based on configuration.
-    Uses real ColBERT if backend is "native", otherwise falls back to mock.
-    Expected output: List[List[float]] -> [token_embedding_vector, ...]
-    """
-    # Get ColBERT configuration from config
-    colbert_backend = get_config_value("colbert.backend", "native")
-    colbert_model = model_name or get_config_value("colbert.model_name", "bert-base-uncased")
-    token_dimension = get_config_value("colbert.token_dimension", 768)
-    
-    if colbert_backend == "native" and colbert_model != "stub_colbert_query_encoder":
-        logger.info(f"Using native ColBERT query encoder with model: {colbert_model}")
-        
-        try:
-            # Import and use real ColBERT interface
-            from iris_rag.embeddings.colbert_interface import RAGTemplatesColBERTInterface
-            colbert = RAGTemplatesColBERTInterface(
-                token_dimension=token_dimension
-            )
-            
-            def real_colbert_query_encode(text: str) -> List[List[float]]:
-                return colbert.encode_query(text)
-            
-            return real_colbert_query_encode
-            
-        except Exception as e:
-            logger.warning(f"Failed to initialize real ColBERT query encoder: {e}. Falling back to mock.")
-    
-    # Fallback to mock implementation
-    logger.info(f"Using mock ColBERT query encoder: {colbert_model}")
-    
-    # Get ColBERT token embedding dimension from config or fallback
-    try:
-        from iris_rag.storage.schema_manager import SchemaManager
-        from common.iris_connection_manager import get_iris_connection
-        from iris_rag.config.manager import ConfigurationManager
-        
-        config_manager = ConfigurationManager('config/config.yaml')
-        connection_manager = type('CM', (), {'get_connection': get_iris_connection})()
-        schema_manager = SchemaManager(connection_manager, config_manager)
-        colbert_token_dimension = schema_manager.get_vector_dimension("DocumentTokenEmbeddings")
-        logger.info(f"Using ColBERT token dimension from schema manager: {colbert_token_dimension}D")
-    except Exception as e:
-        # For mock/stub encoders, use fallback dimension instead of hard failing
-        logger.warning(f"Cannot get ColBERT token dimension from schema manager: {e}")
-        colbert_token_dimension = token_dimension  # Use the config value as fallback
-        logger.info(f"Using fallback ColBERT token dimension: {colbert_token_dimension}D")
-    
-    logger.info(f"Using mock ColBERT query encoder: {model_name} with {colbert_token_dimension}D embeddings")
-
-    def mock_colbert_query_encode(text: str) -> List[List[float]]:
-        tokens = text.split()[:32]  # Limit to first 32 query tokens
-        if not tokens:
-            return []
-        
-        import numpy as np
-        import hashlib
-        
-        query_embeddings = []
-        # ColBERT token embeddings dimension determined by schema manager
-        embedding_dimension = colbert_token_dimension
-        
-        for i, token_str in enumerate(tokens):
-            # Create semantically meaningful embeddings based on token content
-            # Use hash of token for deterministic but varied embeddings
-            token_hash = int(hashlib.md5(token_str.encode()).hexdigest()[:8], 16)
-            np.random.seed(token_hash % 10000)  # Deterministic but varied seed
-            
-            # Generate diverse embedding with semantic variation
-            base_embedding = np.random.randn(embedding_dimension)
-            
-            # Add position-based variation to distinguish token positions
-            position_factor = (i + 1) / len(tokens)  # 0.x to 1.0
-            base_embedding += np.random.randn(embedding_dimension) * position_factor * 0.3
-            
-            # Add token length influence for semantic diversity
-            length_factor = min(len(token_str) / 10.0, 1.0)  # 0.0 to 1.0
-            base_embedding += np.random.randn(embedding_dimension) * length_factor * 0.2
-            
-            # Normalize to unit vector (important for cosine similarity)
-            norm = np.linalg.norm(base_embedding)
-            if norm > 0:
-                base_embedding = base_embedding / norm
-            
-            # Ensure embeddings are diverse (avoid near-identical values)
-            mock_embedding = base_embedding.tolist()
-            query_embeddings.append(mock_embedding)
-            
-            # Log first few tokens for debugging
-            if i < 3:
-                logger.debug(f"ColBERT Mock: Token '{token_str}' -> embedding range [{min(mock_embedding):.4f}, {max(mock_embedding):.4f}]")
-        
-        logger.info(f"ColBERT Mock: Generated {len(query_embeddings)} diverse token embeddings")
-        return query_embeddings
-
-    return mock_colbert_query_encode
-
-
-def get_colbert_doc_encoder_func_adapted(model_name: str = "stub_colbert_doc_encoder") -> Callable[[str], List[List[float]]]:
-    """
-    Returns an adapted ColBERT document encoder function that matches the OptimizedColBERT pipeline interface.
-    Takes a text string and returns just the token embeddings (without token text).
-    Expected output: List[List[float]] -> [token_embedding_vector, ...]
-    """
-    logger.info(f"Using adapted mock ColBERT document encoder: {model_name}")
-    
-    # Get the original encoder that returns tuples
-    original_encoder = get_colbert_doc_encoder_func(model_name)
-    
-    def adapted_colbert_doc_encode(text: str) -> List[List[float]]:
-        # Get the original output with token text and embeddings
-        token_data = original_encoder(text)
-        # Extract just the embeddings (second element of each tuple)
-        embeddings_only = [embedding for token_text, embedding in token_data]
-        return embeddings_only
-    
-    return adapted_colbert_doc_encode
-
-
 def get_iris_connector(db_url: Optional[str] = None):
     if db_url is None:
         db_url = os.getenv("IRIS_CONNECTION_URL")
@@ -543,32 +355,6 @@ def get_llm_func_for_embedded(provider: str = "stub", model_name: str = "stub-mo
         else:
             _llm_embedded = lambda prompt: "Error: LLM not configured for embedded"
     return _llm_embedded
-
-def get_colbert_query_encoder():
-    """
-    Get ColBERT query encoder function.
-    For now, this returns the same embedding function as a placeholder.
-    In a full implementation, this would use a specialized ColBERT model.
-    """
-    # For now, use the same embedding function as a placeholder
-    # In a real implementation, this would use a ColBERT-specific model
-    embedding_func = get_embedding_func()
-    
-    def colbert_query_encoder(query_text: str):
-        """
-        Encode a query using ColBERT-style encoding.
-        For now, this is a placeholder that uses standard embeddings.
-        """
-        # In a real ColBERT implementation, this would:
-        # 1. Tokenize the query
-        # 2. Generate token-level embeddings
-        # 3. Return a matrix of embeddings
-        
-        # Placeholder: return standard embedding
-        return embedding_func(query_text)
-    
-    return colbert_query_encoder
-
 
 if __name__ == '__main__':
     print("Testing common.utils...")

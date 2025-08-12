@@ -308,66 +308,41 @@ class ConfigurationManager:
 
         return default_config
 
-    def get_desired_embedding_state(self, pipeline_type: str = "colbert") -> Dict[str, Any]:
+    def get_desired_embedding_state(self, pipeline_type: str = "basic") -> Dict[str, Any]:
         """
         Get desired embedding state configuration for a specific pipeline.
 
         Args:
-            pipeline_type: The pipeline type (e.g., "colbert", "basic", "noderag")
+            pipeline_type: The pipeline type (e.g., "basic")
 
         Returns:
             Dictionary containing desired state configuration with defaults
         """
-        # Default configuration for ColBERT
-        if pipeline_type.lower() == "colbert":
-            default_config = {
-                "target_document_count": 1000,
-                "model_name": "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT",
-                "token_dimension": 768,
-                "validation": {
-                    "diversity_threshold": 0.7,
-                    "mock_detection_enabled": True,
-                    "min_embedding_quality_score": 0.8,
-                },
-                "completeness": {
-                    "require_all_docs": True,
-                    "require_token_embeddings": True,
-                    "min_completeness_percent": 95.0,
-                    "max_missing_documents": 50,
-                },
-                "remediation": {
-                    "auto_heal_missing_embeddings": True,
-                    "auto_migrate_schema": False,
-                    "embedding_generation_batch_size": 32,
-                    "max_remediation_time_minutes": 120,
-                    "backup_before_remediation": True,
-                },
-            }
-        else:
-            # Default for other pipeline types
-            default_config = {
-                "target_document_count": 1000,
-                "model_name": "all-MiniLM-L6-v2",
-                "vector_dimensions": 384,
-                "validation": {
-                    "diversity_threshold": 0.7,
-                    "mock_detection_enabled": False,
-                    "min_embedding_quality_score": 0.8,
-                },
-                "completeness": {
-                    "require_all_docs": True,
-                    "require_token_embeddings": False,
-                    "min_completeness_percent": 95.0,
-                    "max_missing_documents": 50,
-                },
-                "remediation": {
-                    "auto_heal_missing_embeddings": True,
-                    "auto_migrate_schema": False,
-                    "embedding_generation_batch_size": 32,
-                    "max_remediation_time_minutes": 120,
-                    "backup_before_remediation": True,
-                },
-            }
+        
+        # Default for other pipeline types
+        default_config = {
+            "target_document_count": 1000,
+            "model_name": "all-MiniLM-L6-v2",
+            "vector_dimensions": 384,
+            "validation": {
+                "diversity_threshold": 0.7,
+                "mock_detection_enabled": False,
+                "min_embedding_quality_score": 0.8,
+            },
+            "completeness": {
+                "require_all_docs": True,
+                "require_token_embeddings": False,
+                "min_completeness_percent": 95.0,
+                "max_missing_documents": 50,
+            },
+            "remediation": {
+                "auto_heal_missing_embeddings": True,
+                "auto_migrate_schema": False,
+                "embedding_generation_batch_size": 32,
+                "max_remediation_time_minutes": 120,
+                "backup_before_remediation": True,
+            },
+        }
 
         # Get user-defined config and merge with defaults
         user_config = self.get(pipeline_type, {})
@@ -406,12 +381,6 @@ class ConfigurationManager:
                     "embedding_model": "all-MiniLM-L6-v2",
                     "vector_dimensions": 384,
                 },
-                "colbert": {
-                    "required_embeddings": {"document_level": 1000, "token_level": 1000},
-                    "schema_version": "2.1",
-                    "embedding_model": "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT",
-                    "vector_dimensions": 768,
-                },
             },
         }
 
@@ -430,76 +399,6 @@ class ConfigurationManager:
         # and will need a proper implementation.
         if self.get("database:iris:host") is None and "database:iris:host" in self._schema.get("required", []):
             raise ConfigValidationError("Missing required config: database:iris:host")
-
-    def load_quick_start_template(
-        self,
-        template_name: str,
-        options: Optional[Dict[str, Any]] = None,
-        environment_variables: Optional[Dict[str, Any]] = None,
-        validation_rules: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Load and integrate a Quick Start configuration template.
-
-        This method uses the Quick Start integration system to load a template
-        and convert it to the iris_rag configuration format. The resulting
-        configuration is merged with the current configuration.
-
-        Args:
-            template_name: Name of the Quick Start template to load
-            options: Optional integration options (e.g., validation settings)
-            environment_variables: Optional environment variable overrides
-            validation_rules: Optional custom validation rules
-
-        Returns:
-            Dict containing the integrated configuration
-
-        Raises:
-            ImportError: If Quick Start integration system is not available
-            ConfigValidationError: If template integration fails
-        """
-        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-
-        try:
-            # Import the integration factory
-            from quick_start.config.integration_factory import IntegrationFactory
-
-            logger.info(f"Loading Quick Start template '{template_name}' for iris_rag")
-
-            # Create integration factory and integrate template
-            factory = IntegrationFactory()
-            result = factory.integrate_template(
-                template_name=template_name,
-                target_manager="iris_rag",
-                options=options or {},
-                environment_variables=environment_variables or {},
-                validation_rules=validation_rules or {},
-            )
-
-            if not result.success:
-                error_msg = f"Failed to integrate Quick Start template '{template_name}': {'; '.join(result.errors)}"
-                logger.error(error_msg)
-                raise ConfigValidationError(error_msg)
-
-            # Merge the converted configuration with current configuration
-            if result.converted_config:
-                self._merge_configuration(result.converted_config)
-                logger.info(f"Successfully integrated Quick Start template '{template_name}'")
-
-            # Log any warnings
-            for warning in result.warnings:
-                logger.warning(f"Quick Start integration warning: {warning}")
-
-            return result.converted_config
-
-        except ImportError as e:
-            error_msg = f"Quick Start integration system not available: {str(e)}"
-            logger.error(error_msg)
-            raise ImportError(error_msg)
-        except Exception as e:
-            error_msg = f"Failed to load Quick Start template '{template_name}': {str(e)}"
-            logger.error(error_msg)
-            raise ConfigValidationError(error_msg)
 
     def _merge_configuration(self, new_config: Dict[str, Any]):
         """
@@ -521,71 +420,6 @@ class ConfigurationManager:
                     target[key] = value
 
         deep_merge(self._config, new_config)
-
-    def list_quick_start_templates(self) -> Dict[str, Any]:
-        """
-        List available Quick Start templates and integration options.
-
-        Returns:
-            Dictionary containing available templates and adapter information
-
-        Raises:
-            ImportError: If Quick Start integration system is not available
-        """
-        try:
-            from quick_start.config.integration_factory import IntegrationFactory
-
-            factory = IntegrationFactory()
-            adapters = factory.list_available_adapters()
-
-            return {
-                "available_adapters": adapters,
-                "target_manager": "iris_rag",
-                "supported_options": [
-                    "flatten_inheritance",
-                    "validate_schema",
-                    "ensure_compatibility",
-                    "cross_language",
-                    "test_round_trip",
-                ],
-                "integration_factory_available": True,
-            }
-
-        except ImportError:
-            return {"integration_factory_available": False, "error": "Quick Start integration system not available"}
-
-    def validate_quick_start_integration(self, template_name: str) -> Dict[str, Any]:
-        """
-        Validate a Quick Start template integration without applying it.
-
-        Args:
-            template_name: Name of the template to validate
-
-        Returns:
-            Dictionary containing validation results
-        """
-        try:
-            from quick_start.config.integration_factory import IntegrationFactory, IntegrationRequest
-
-            factory = IntegrationFactory()
-            request = IntegrationRequest(template_name=template_name, target_manager="iris_rag")
-
-            issues = factory.validate_integration_request(request)
-
-            return {
-                "valid": len(issues) == 0,
-                "issues": issues,
-                "template_name": template_name,
-                "target_manager": "iris_rag",
-            }
-
-        except ImportError:
-            return {
-                "valid": False,
-                "issues": ["Quick Start integration system not available"],
-                "template_name": template_name,
-                "target_manager": "iris_rag",
-            }
 
     def get_database_config(self) -> Dict[str, Any]:
         """

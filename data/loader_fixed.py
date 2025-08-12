@@ -98,7 +98,6 @@ def load_documents_to_iris(
     connection,
     documents: List[Dict[str, Any]],
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
-    colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None,
     batch_size: int = 250,
     handle_chunks: bool = True
 ) -> Dict[str, Any]:
@@ -109,7 +108,6 @@ def load_documents_to_iris(
         connection: IRIS connection object
         documents: List of document dictionaries to load
         embedding_func: Optional function to generate embeddings for documents
-        colbert_doc_encoder_func: Optional function for ColBERT token embeddings
         batch_size: Number of documents to insert in a single batch
         handle_chunks: Whether to process chunked documents separately
         
@@ -264,52 +262,6 @@ def load_documents_to_iris(
                 logger.info(f"Executing batch {batch_idx} with {len(source_doc_batch_params)} documents")
                 cursor.executemany(sql_source_docs, source_doc_batch_params)
                 loaded_doc_count += len(source_doc_batch_params)
-                
-                # Process ColBERT token embeddings with validation
-                if colbert_doc_encoder_func:
-                    token_embedding_batch_params = []
-                    
-                    for doc_for_tokens in docs_for_token_embedding:
-                        try:
-                            doc_id = doc_for_tokens.get("doc_id") or doc_for_tokens.get("pmc_id")
-                            text_for_colbert = doc_for_tokens.get("abstract") or doc_for_tokens.get("title", "")
-                            
-                            if doc_id and text_for_colbert:
-                                text_for_colbert = validate_and_fix_text_field(text_for_colbert)
-                                
-                                # Get ColBERT token embeddings with error handling
-                                token_data = colbert_doc_encoder_func(text_for_colbert)
-                                if token_data and len(token_data) == 2:
-                                    tokens, embeddings = token_data
-                                    if tokens and embeddings and len(tokens) == len(embeddings):
-                                        for idx, (token_text, token_vec) in enumerate(zip(tokens, embeddings)):
-                                            # Validate and fix token embedding
-                                            token_vec_str = validate_and_fix_embedding(token_vec)
-                                            if token_vec_str:
-                                                token_text_clean = validate_and_fix_text_field(token_text)[:1000]
-                                                token_embedding_batch_params.append(
-                                                    (str(doc_id), idx, token_text_clean, token_vec_str, "{}")
-                                                )
-                                    else:
-                                        logger.warning(f"Token/embedding length mismatch for doc {doc_id}")
-                                else:
-                                    logger.warning(f"No token embeddings generated for doc {doc_id}")
-                                    
-                        except Exception as colbert_e:
-                            logger.error(f"Error generating ColBERT token embeddings for doc {doc_id}: {colbert_e}")
-                    
-                    if token_embedding_batch_params:
-                        try:
-                            sql_token_embeddings = """
-                            INSERT INTO RAG.DocumentTokenEmbeddings
-                            (id, doc_id, token_sequence_index, token_text, token_embedding, metadata_json)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                            """
-                            cursor.executemany(sql_token_embeddings, token_embedding_batch_params)
-                            loaded_token_count += len(token_embedding_batch_params)
-                            logger.info(f"✅ Loaded {len(token_embedding_batch_params)} token embeddings for batch {batch_idx}")
-                        except Exception as token_e:
-                            logger.error(f"❌ Failed to insert token embeddings for batch {batch_idx}: {token_e}")
 
                 connection.commit()
                 
@@ -352,7 +304,6 @@ def process_and_load_documents(
     pmc_directory: str, 
     connection=None, 
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
-    colbert_doc_encoder_func: Optional[Callable[[str], List[Tuple[str, List[float]]]]] = None,
     db_config: Optional[Dict[str, Any]] = None, # Added db_config parameter
     limit: int = 1000,
     batch_size: int = 50,
@@ -388,7 +339,6 @@ def process_and_load_documents(
             connection, 
             documents, 
             embedding_func, 
-            colbert_doc_encoder_func,
             batch_size
         )
         

@@ -102,11 +102,6 @@ def initialize_complete_rag_database(schema: str = "RAG"):
         expected_tables = [
             'SourceDocuments',
             'DocumentChunks', 
-            'Entities',
-            'Relationships',
-            'KnowledgeGraphNodes',
-            'KnowledgeGraphEdges',
-            'DocumentTokenEmbeddings'
         ]
         
         for table in expected_tables:

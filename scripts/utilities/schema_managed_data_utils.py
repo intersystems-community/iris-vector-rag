@@ -75,8 +75,8 @@ def clear_rag_data():
         try:
             # Clear tables in dependency order (children first)
             tables_to_clear = [
-                "SourceDocuments",
                 "DocumentChunks",
+                "SourceDocuments",
             ]
             
             total_cleared = 0

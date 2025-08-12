@@ -47,10 +47,6 @@ pipelines:
     chunk_overlap: 200
     default_top_k: 5
     embedding_batch_size: 32
-  colbert:
-    chunk_size: 1000
-    chunk_overlap: 200
-    default_top_k: 5
   crag:
     chunk_size: 1000
     chunk_overlap: 200

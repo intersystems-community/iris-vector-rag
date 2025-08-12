@@ -7,11 +7,6 @@ Each pipeline represents a different RAG technique or approach.
 
 __all__ = [
     "BasicRAGPipeline",
-    "ColBERTRAGPipeline",
     "CRAGPipeline",
-    "HyDERAGPipeline",
-    "GraphRAGPipeline",
-    "HybridIFindRAGPipeline",
     "BasicRAGRerankingPipeline",
-    "NodeRAGPipeline",
 ]

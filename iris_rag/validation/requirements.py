@@ -252,7 +252,7 @@ def get_pipeline_requirements(pipeline_type: str) -> PipelineRequirements:
     Get requirements for a specific pipeline type.
 
     Args:
-        pipeline_type: Type of pipeline (e.g., 'basic', 'colbert')
+        pipeline_type: Type of pipeline (e.g., 'basic')
 
     Returns:
         PipelineRequirements instance

@@ -50,12 +50,6 @@ class SchemaManager:
         )
         self.base_embedding_dimension = self.config_manager.get("embedding_model.dimension", 384)
 
-        # Load ColBERT configuration
-        colbert_config = self.config_manager.get("colbert", {})
-        self.colbert_backend = colbert_config.get("backend", "native")
-        self.colbert_token_dimension = colbert_config.get("token_dimension", 768)
-        self.colbert_model_name = colbert_config.get("model_name", "bert-base-uncased")
-
         # Validate configuration consistency
         self._validate_configuration()
 
@@ -67,7 +61,6 @@ class SchemaManager:
 
         logger.info(f"✅ Schema Manager: Configuration validated and loaded")
         logger.info(f"   Base embedding: {self.base_embedding_model} ({self.base_embedding_dimension}D)")
-        logger.info(f"   ColBERT backend: {self.colbert_backend} ({self.colbert_token_dimension}D)")
 
     def _validate_configuration(self):
         """Validate that configuration values make sense."""
@@ -76,21 +69,6 @@ class SchemaManager:
         # Validate base embedding dimension
         if not isinstance(self.base_embedding_dimension, int) or self.base_embedding_dimension <= 0:
             errors.append(f"Invalid base embedding dimension: {self.base_embedding_dimension}")
-
-        # Validate ColBERT token dimension
-        if not isinstance(self.colbert_token_dimension, int) or self.colbert_token_dimension <= 0:
-            errors.append(f"Invalid ColBERT token dimension: {self.colbert_token_dimension}")
-
-        # Validate ColBERT backend
-        valid_backends = ["native", "pylate"]
-        if self.colbert_backend not in valid_backends:
-            errors.append(f"Invalid ColBERT backend '{self.colbert_backend}', must be one of: {valid_backends}")
-
-        # Validate dimension relationships (document embeddings should be smaller than token embeddings)
-        if self.base_embedding_dimension >= self.colbert_token_dimension:
-            logger.warning(
-                f"Unusual: Document embeddings ({self.base_embedding_dimension}D) >= token embeddings ({self.colbert_token_dimension}D)"
-            )
 
         if errors:
             error_msg = "Configuration validation failed:\n" + "\n".join(f"  - {e}" for e in errors)
@@ -115,12 +93,6 @@ class SchemaManager:
 
         # Add configured models
         self._model_dimensions[self.base_embedding_model] = self.base_embedding_dimension
-        self._model_dimensions[self.colbert_model_name] = self.colbert_token_dimension
-
-        # Add legacy ColBERT models from config
-        legacy_doc_model = self.config_manager.get("colbert.document_encoder_model")
-        if legacy_doc_model:
-            self._model_dimensions[legacy_doc_model] = self.colbert_token_dimension
 
         logger.debug(f"Model-dimension mapping: {len(self._model_dimensions)} models configured")
 
@@ -284,7 +256,7 @@ class SchemaManager:
         elif table_name == "DocumentChunks":
             config["configuration"].update({
                 "table_type": "chunk_storage",
-                "created_by": "HybridIFind",
+                "created_by": "BasicRAG",
                 "expected_columns": [
                     "id", "chunk_id", "doc_id", "chunk_text", "chunk_embedding",
                     "chunk_index", "chunk_type", "metadata", "created_at"

@@ -159,15 +159,9 @@ class ResponseStandardizer:
 
         # Include pipeline-specific metadata
         pipeline_specific_keys = [
-            "hypothetical_document",  # HyDE
-            "query_entities",  # GraphRAG
-            "failure_reason",  # GraphRAG failure cases
             "retrieval_method",  # Various pipelines
             "similarity_scores",  # Vector-based pipelines
-            "token_count",  # ColBERT
             "processing_time",  # Alternative timing field
-            "entities_created",  # GraphRAG ingestion
-            "relationships_created",  # GraphRAG ingestion
         ]
 
         for key in pipeline_specific_keys:

@@ -50,7 +50,6 @@ class SetupOrchestrator:
     Orchestrates automated setup of pipeline requirements.
 
     This class handles:
-    - Generating missing token embeddings for ColBERT
     - Creating chunked embeddings for chunked pipelines
     - Dependency resolution and setup ordering
     - Progress tracking and error handling
@@ -102,19 +101,9 @@ class SetupOrchestrator:
         if pipeline_type in ["basic", "basic_rerank"]:
             self.logger.info(f"Using generic requirements fulfillment for {pipeline_type}")
             self._fulfill_requirements(requirements)
-        # LEGACY: Existing hardcoded methods for other pipelines
-        elif pipeline_type == "colbert":
-            self._setup_colbert_pipeline(requirements)
         elif pipeline_type == "crag":
             self._setup_crag_pipeline(requirements)
-        elif pipeline_type == "hyde":
-            self._setup_hyde_pipeline(requirements)
-        elif pipeline_type == "graphrag":
-            self._setup_graphrag_pipeline(requirements)
-        elif pipeline_type == "hybrid_ifind":
-            self._setup_hybrid_ifind_pipeline(requirements)
-        elif pipeline_type == "noderag":
-            self._setup_noderag_pipeline(requirements)
+
         else:
             self.logger.warning(f"No specific setup logic for {pipeline_type}")
             # Fallback: Try generic approach for unknown pipelines
@@ -210,180 +199,6 @@ class SetupOrchestrator:
 
         progress.next_step("Validating setup")
         progress.complete()
-
-    def _setup_colbert_pipeline(self, requirements: PipelineRequirements):
-        """Set up ColBERT pipeline requirements."""
-        progress = SetupProgress(5)
-
-        progress.next_step("Checking document embeddings")
-        self._ensure_document_embeddings()
-
-        progress.next_step("Creating token embeddings table")
-        self._create_token_embeddings_table()
-
-        progress.next_step("Generating token embeddings")
-        self._generate_token_embeddings()
-
-        progress.next_step("Validating token embeddings")
-        self._validate_embeddings_after_generation("RAG.DocumentTokenEmbeddings", "token_embedding", "token")
-
-        progress.next_step("Validating setup")
-        progress.complete()
-
-    def _setup_hyde_pipeline(self, requirements: PipelineRequirements):
-        """Set up HyDE pipeline requirements."""
-        progress = SetupProgress(2)
-
-        progress.next_step("Checking document embeddings")
-        self._ensure_document_embeddings()
-
-        progress.next_step("Validating setup")
-        progress.complete()
-
-    def _setup_graphrag_pipeline(self, requirements: PipelineRequirements):
-        """Set up GraphRAG pipeline requirements."""
-        progress = SetupProgress(2)
-
-        progress.next_step("Checking document embeddings")
-        self._ensure_document_embeddings()
-
-        progress.next_step("Validating setup")
-        progress.complete()
-
-    def _setup_hybrid_ifind_pipeline(self, requirements: PipelineRequirements):
-        """Set up Hybrid IFind pipeline requirements."""
-        progress = SetupProgress(2)
-
-        progress.next_step("Checking document embeddings")
-        self._ensure_document_embeddings()
-
-        progress.next_step("Validating setup")
-        progress.complete()
-
-    def _setup_noderag_pipeline(self, requirements: PipelineRequirements):
-        """Set up NodeRAG pipeline requirements."""
-        progress = SetupProgress(4)  # Incremented step count
-
-        progress.next_step("Checking document embeddings")
-        self._ensure_document_embeddings()
-
-        progress.next_step("Setting up optional knowledge graph tables")
-        self._setup_optional_knowledge_graph_tables()
-
-        progress.next_step("Populating and embedding knowledge graph nodes")  # New step
-        self._populate_and_embed_knowledge_graph_nodes()  # Call to new method
-
-        progress.next_step("Validating setup")
-        progress.complete()
-
-    def _populate_and_embed_knowledge_graph_nodes(self):
-        """
-        Populate RAG.KnowledgeGraphNodes from RAG.SourceDocuments and generate embeddings.
-        Nodes are created/updated, and embeddings are generated.
-        """
-        self.logger.info("Populating and embedding KnowledgeGraphNodes...")
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            # Check if nodes are already substantially populated with embeddings
-            # This is a simple heuristic to avoid full re-processing if already done.
-            try:
-                cursor.execute("SELECT COUNT(embedding) FROM RAG.KnowledgeGraphNodes WHERE embedding IS NOT NULL")
-                existing_embedded_nodes = cursor.fetchone()[0]
-                cursor.execute("SELECT COUNT(*) FROM RAG.KnowledgeGraphNodes")
-                total_nodes = cursor.fetchone()[0]
-
-                if total_nodes > 0 and (existing_embedded_nodes > 100 or (existing_embedded_nodes / total_nodes > 0.8)):
-                    self.logger.info(
-                        f"KnowledgeGraphNodes appear to be substantially populated with embeddings ({existing_embedded_nodes}/{total_nodes}). Skipping full population."
-                    )
-                    return
-            except Exception as table_check_exc:
-                self.logger.warning(
-                    f"Could not perform pre-check on KnowledgeGraphNodes, proceeding with population: {table_check_exc}"
-                )
-
-            self.logger.info("Fetching documents from SourceDocuments to create/update KnowledgeGraphNodes...")
-
-            # Using text_content as the primary source for node description
-            cursor.execute("SELECT doc_id, title, text_content FROM RAG.SourceDocuments WHERE text_content IS NOT NULL")
-            source_documents = cursor.fetchall()
-
-            if not source_documents:
-                self.logger.warning("No source documents found with text_content to populate KnowledgeGraphNodes.")
-                return
-
-            nodes_processed_count = 0
-            batch_size = self.config_manager.get("pipelines:noderag:node_embedding_batch_size", 50)
-            node_data_batch_for_embedding = []  # Stores dicts: {doc_id, title, text_content}
-
-            for doc_id, title, text_content in source_documents:
-                node_data_batch_for_embedding.append(
-                    {
-                        "node_id": doc_id,
-                        "node_name": title if title else "Untitled Document",
-                        # DIAGNOSTIC: All other fields removed for simplification
-                    }
-                )
-
-                if len(node_data_batch_for_embedding) >= batch_size:
-                    self._process_kg_node_batch_for_upsert(cursor, node_data_batch_for_embedding)
-                    nodes_processed_count += len(node_data_batch_for_embedding)
-                    node_data_batch_for_embedding = []
-
-            if node_data_batch_for_embedding:  # Process any remaining nodes
-                self._process_kg_node_batch_for_upsert(cursor, node_data_batch_for_embedding)
-                nodes_processed_count += len(node_data_batch_for_embedding)
-
-            connection.commit()
-            self.logger.info(f"Upserted and embedded {nodes_processed_count} nodes in KnowledgeGraphNodes.")
-
-        except Exception as e:
-            self.logger.error(f"Error populating/embedding KnowledgeGraphNodes: {e}", exc_info=True)
-            connection.rollback()
-        finally:
-            cursor.close()
-
-    def _process_kg_node_batch_for_upsert(self, cursor, node_batch_data: List[Dict]):
-        """Helper to upsert a batch of nodes and their embeddings into KnowledgeGraphNodes."""
-
-        # Generate embeddings for the node names/titles
-        descriptions = [item["node_name"] for item in node_batch_data]
-        if not descriptions:
-            return
-
-        embeddings = self.embedding_manager.embed_texts(descriptions)
-
-        for i, item_data in enumerate(node_batch_data):
-            node_id = item_data["node_id"]
-            node_embedding_list = embeddings[i]
-            iris_vector_str = f"[{','.join(map(str, node_embedding_list))}]"
-
-            try:
-                # Check if node exists
-                cursor.execute("SELECT COUNT(*) FROM RAG.KnowledgeGraphNodes WHERE node_id = ?", (node_id,))
-                node_exists = cursor.fetchone()[0] > 0
-
-                if node_exists:
-                    update_sql = """
-                        UPDATE RAG.KnowledgeGraphNodes
-                        SET node_name = ?
-                        WHERE node_id = ?
-                    """
-                    cursor.execute(update_sql, (item_data["node_name"], node_id))
-                else:
-                    insert_sql = """
-                        INSERT INTO RAG.KnowledgeGraphNodes
-                        (node_id, node_name, embedding)
-                        VALUES (?, ?, TO_VECTOR(?))
-                    """
-                    cursor.execute(insert_sql, (node_id, item_data["node_name"], iris_vector_str))
-            except Exception as e:
-                self.logger.error(
-                    f"Error upserting node {node_id} in _process_kg_node_batch_for_upsert (DIAGNOSTIC): {e}",
-                    exc_info=False,
-                )
 
     def _setup_optional_chunking(self, requirements: PipelineRequirements):
         """Set up optional chunking enhancement if requested."""
@@ -538,45 +353,6 @@ class SetupOrchestrator:
         finally:
             cursor.close()
 
-    def _create_token_embeddings_table(self):
-        """Create table for token embeddings if it doesn't exist."""
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            # Get token embedding dimension from config
-            token_dimension = self.config_manager.get("pipelines:colbert:token_embedding_dimension", 384)
-
-            # Check if table exists
-            cursor.execute(
-                """
-                SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'DocumentTokenEmbeddings'
-            """
-            )
-
-            if cursor.fetchone()[0] == 0:
-                # Create table with configurable dimension
-                create_table_sql = f"""
-                    CREATE TABLE RAG.DocumentTokenEmbeddings (
-                        id VARCHAR(255) PRIMARY KEY,
-                        doc_id VARCHAR(255),
-                        token_index INTEGER,
-                        token_text VARCHAR(500),
-                        token_embedding VECTOR(FLOAT, 128),
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(id)
-                    )
-                """
-                cursor.execute(create_table_sql)
-                connection.commit()
-                self.logger.info(f"Created DocumentTokenEmbeddings table with {token_dimension}-dimensional vectors")
-            else:
-                self.logger.info("DocumentTokenEmbeddings table already exists")
-
-        finally:
-            cursor.close()
-
     def heal_token_embeddings(self, target_doc_count: int = 1000, force_regenerate: bool = False) -> Dict[str, Any]:
         """
         Heal missing token embeddings for specified document count.
@@ -679,7 +455,7 @@ class SetupOrchestrator:
             self.logger.info(
                 f"Diagnostic: Proceeding to call _generate_token_embeddings_for_documents with {len(docs_needing_embeddings)} documents."
             )
-            batch_size = self.config_manager.get("pipelines:colbert:token_embedding_batch_size", 16)
+            batch_size = 16
             results = self._generate_token_embeddings_for_documents(connection, cursor, docs_needing_embeddings, batch_size)
 
             # Final verification
@@ -854,7 +630,7 @@ class SetupOrchestrator:
             return {"processed": 0, "failed": 0}
 
         # Get configuration parameters
-        max_tokens = self.config_manager.get("pipelines:colbert:max_tokens_per_document", 512)
+        max_tokens = 512
 
         # Fetch document content for specified doc_ids
         doc_content_map = {}
@@ -870,8 +646,6 @@ class SetupOrchestrator:
             self.logger.warning("No document content found for token embedding generation")
             return {"processed": 0, "failed": 0}
 
-        self.logger.info(f"Generating ColBERT token embeddings for {len(doc_content_map)} documents")
-
         total_processed = 0
         total_failed = 0
 
@@ -884,15 +658,8 @@ class SetupOrchestrator:
             current_batch_doc_ids = [doc_id for doc_id, _ in batch]
             self.logger.info(f"Processing batch {i//batch_size + 1} with doc_ids: {current_batch_doc_ids}")
 
-            # Log the batch texts to embed before calling colbert_embedding_func.tokenize_and_embed_documents_for_indexing
             batch_texts_to_embed = [content for _, content in batch]
             self.logger.debug(f"Batch texts to embed: {batch_texts_to_embed}")
-
-            # Note: In a full ColBERT implementation, this would call:
-            # processed_colbert_data = colbert_embedding_func.tokenize_and_embed_documents_for_indexing(batch_texts_to_embed)
-            # self.logger.debug(f"Processed ColBERT data structure for batch: {type(processed_colbert_data)}")
-            # if isinstance(processed_colbert_data, dict):
-            #     self.logger.debug(f"ColBERT data keys: {list(processed_colbert_data.keys())}")
 
             for doc_id, content in batch:
                 self.logger.debug(
@@ -933,7 +700,6 @@ class SetupOrchestrator:
 
         try:
             # Simple tokenization approach for demonstration
-            # In a full ColBERT implementation, this would use proper ColBERT tokenization
             tokens = content.split()[:max_tokens]  # Limit tokens
 
             # Log the tokens data before iterating to insert them
@@ -946,7 +712,7 @@ class SetupOrchestrator:
 
             if not tokens_data_for_doc and content and content.strip():  # If content was valid but no tokens generated
                 self.logger.warning(
-                    f"Doc_id: {doc_id} had valid content '{content}' but resulted in 0 tokens. Check ColBERT processing for this content."
+                    f"Doc_id: {doc_id} had valid content '{content}' but resulted in 0 tokens."
                 )
 
             if not tokens:
@@ -959,9 +725,6 @@ class SetupOrchestrator:
 
             # Log the number of tokens being inserted for a given doc_id
             self.logger.info(f"Attempting to insert {len(tokens_data_for_doc)} tokens for doc_id {doc_id}")
-
-            # Note: If the ColBERT embedding function is called, log this call
-            # self.logger.info(f"Calling ColBERT tokenize_and_embed for doc_id: {doc_id}")
 
             # Generate embeddings for each token using the embedding manager
             for token_index, token_text in enumerate(tokens):
@@ -1008,31 +771,6 @@ class SetupOrchestrator:
         except Exception as e:
             self.logger.warning(f"Error processing tokens for document {doc_id}: {e}")
             return {"success": False, "reason": str(e)}
-
-    def _generate_token_embeddings(self):
-        """Generate token embeddings for ColBERT using proper ColBERT encoding."""
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            # Check if token embeddings already exist
-            cursor.execute("SELECT COUNT(*) FROM RAG.DocumentTokenEmbeddings")
-            existing_count = cursor.fetchone()[0]
-
-            if existing_count > 0:
-                self.logger.info(f"Token embeddings already exist ({existing_count} tokens)")
-                return
-
-            # Use the new healing method with default parameters
-            result = self.heal_token_embeddings(target_doc_count=1000, force_regenerate=False)
-
-            if result["status"] == "complete":
-                self.logger.info("Token embedding generation completed successfully")
-            else:
-                self.logger.warning(f"Token embedding generation completed with issues: {result}")
-
-        finally:
-            cursor.close()
 
     def _create_chunks_table(self):
         """Create table for document chunks if it doesn't exist."""
@@ -1294,102 +1032,5 @@ class SetupOrchestrator:
 
         except Exception as e:
             self.logger.error(f"Error validating {embedding_type} embeddings in {table}.{column}: {e}")
-        finally:
-            cursor.close()
-
-    def generate_missing_embeddings(self, pipeline_type: str) -> Dict[str, Any]:
-        """
-        Generate missing embeddings for a specific pipeline type.
-
-        Args:
-            pipeline_type: Type of pipeline
-
-        Returns:
-            Summary of generation results
-        """
-        self.logger.info(f"Generating missing embeddings for {pipeline_type}")
-
-        requirements = get_pipeline_requirements(pipeline_type)
-        results = {}
-
-        for embedding_req in requirements.required_embeddings:
-            if embedding_req.name == "document_embeddings":
-                self._ensure_document_embeddings()
-                results["document_embeddings"] = "completed"
-            elif embedding_req.name == "token_embeddings":
-                self._create_token_embeddings_table()
-                self._generate_token_embeddings()
-                results["token_embeddings"] = "completed"
-            elif embedding_req.name == "chunk_embeddings":
-                self._create_chunks_table()
-                self._generate_document_chunks()
-                results["chunk_embeddings"] = "completed"
-
-        return results
-
-    def _setup_optional_knowledge_graph_tables(self):
-        """Set up optional knowledge graph tables for NodeRAG if they don't exist."""
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            # Attempt to drop KnowledgeGraphNodes table if it exists
-            try:
-                cursor.execute("DROP TABLE RAG.KnowledgeGraphNodes")
-                self.logger.info("Dropped existing RAG.KnowledgeGraphNodes table.")
-                connection.commit()  # Commit drop before create
-            except Exception as drop_e:
-                self.logger.info(f"Could not drop RAG.KnowledgeGraphNodes (may not exist or other issue): {drop_e}")
-                connection.rollback()  # Rollback if drop fails to ensure clean state for create
-
-            # Create KnowledgeGraphNodes table with embedding column
-            cursor.execute(
-                """
-                CREATE TABLE RAG.KnowledgeGraphNodes (
-                    id VARCHAR(255) PRIMARY KEY,
-                    node_id VARCHAR(255),
-                    node_type VARCHAR(100),
-                    content TEXT,
-                    embedding VECTOR(FLOAT, 384),
-                    metadata TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """
-            )
-            self.logger.info("Created RAG.KnowledgeGraphNodes table with embedding column")
-            connection.commit()  # Commit create
-
-            # Attempt to drop KnowledgeGraphEdges table if it exists
-            try:
-                cursor.execute("DROP TABLE RAG.KnowledgeGraphEdges")
-                self.logger.info("Dropped existing RAG.KnowledgeGraphEdges table.")
-                connection.commit()  # Commit drop before create
-            except Exception as drop_e:
-                self.logger.info(f"Could not drop RAG.KnowledgeGraphEdges (may not exist or other issue): {drop_e}")
-                connection.rollback()
-
-            # Create KnowledgeGraphEdges table (DIAGNOSTIC - MINIMAL SCHEMA)
-            cursor.execute(
-                """
-                CREATE TABLE RAG.KnowledgeGraphEdges (
-                    id VARCHAR(255) PRIMARY KEY,
-                    edge_id VARCHAR(255),
-                    source_node_id VARCHAR(255),
-                    target_node_id VARCHAR(255),
-                    edge_type VARCHAR(100),
-                    weight DOUBLE DEFAULT 1.0,
-                    metadata TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (source_node_id) REFERENCES RAG.KnowledgeGraphNodes(id),
-                    FOREIGN KEY (target_node_id) REFERENCES RAG.KnowledgeGraphNodes(id)
-                )
-            """
-            )
-            self.logger.info("Created RAG.KnowledgeGraphEdges table (DIAGNOSTIC - MINIMAL SCHEMA)")
-            connection.commit()  # Commit create
-
-        except Exception as e:
-            self.logger.error(f"Error setting up knowledge graph tables: {e}")
-            connection.rollback()
         finally:
             cursor.close()

@@ -274,7 +274,6 @@ class ValidatedPipelineFactory:
         """
         pipeline_types = [
             "basic",
-            "colbert",
             "crag",
         ]
         results = {}
