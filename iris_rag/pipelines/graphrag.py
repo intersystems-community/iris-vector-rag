@@ -60,20 +60,6 @@ class GraphRAGPipeline(RAGPipeline):
 
         logger.info(f"Initialized GraphRAGPipeline with top_k={self.top_k}")
 
-    def execute(self, query_text: str, **kwargs) -> dict:
-        """
-        Execute the GraphRAG pipeline (required abstract method).
-
-        Args:
-            query_text: The input query string
-            **kwargs: Additional parameters
-
-        Returns:
-            Dictionary containing query, answer, and retrieved documents
-        """
-        top_k = kwargs.get("top_k", 5)
-        return self.query(query_text, top_k)
-
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
         Load documents into the knowledge base (required abstract method).

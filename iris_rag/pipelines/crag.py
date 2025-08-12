@@ -111,20 +111,6 @@ class CRAGPipeline(RAGPipeline):
 
         logger.info("CRAGPipeline initialized successfully")
 
-    def execute(self, query_text: str, **kwargs) -> dict:
-        """
-        Execute the CRAG pipeline (required abstract method).
-
-        Args:
-            query_text: The input query string
-            **kwargs: Additional parameters
-
-        Returns:
-            Dictionary containing query, answer, and retrieved documents
-        """
-        top_k_execute = kwargs.pop("top_k", 5)  # Get top_k and remove from kwargs
-        return self.run(query_text, top_k=top_k_execute, **kwargs)  # Pass top_k explicitly
-
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
         Load documents into the knowledge base (required abstract method).

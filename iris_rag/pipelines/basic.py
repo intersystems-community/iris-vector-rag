@@ -383,32 +383,6 @@ class BasicRAGPipeline(RAGPipeline):
         logger.info(f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved")
         return response
 
-    def run(self, query: str, **kwargs) -> Dict[str, Any]:
-        """
-        Run the full RAG pipeline for a query (main API method).
-
-        Args:
-            query: The input query
-            **kwargs: Additional arguments including:
-                - top_k: Number of documents to retrieve
-                - include_sources: Whether to include source information
-                - custom_prompt: Custom prompt template
-
-        Returns:
-            Dictionary with query, answer, and retrieved documents
-        """
-        logger.warning("run() is deprecated - use query() method directly")
-        return self.query(query, **kwargs)
-
-    def execute(self, query_text: str, **kwargs) -> Dict[str, Any]:
-        """
-        Backward compatibility method - calls main query() method.
-
-        DEPRECATED: Use query() directly instead.
-        """
-        logger.warning("execute() is deprecated - use query() method directly")
-        return self.query(query_text, **kwargs)
-
     def retrieve(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
         """
         Convenience method to get just the documents (no answer generation).

@@ -38,29 +38,6 @@ class RAGPipeline(abc.ABC):
         else:
             self.vector_store = vector_store
 
-    def execute(self, query_text: str, **kwargs) -> Dict[str, Any]:
-        """
-        Executes the full RAG pipeline for a given query.
-
-        This method should orchestrate the retrieval, augmentation, and generation
-        steps of the pipeline.
-
-        Args:
-            query_text: The input query string.
-            **kwargs: Additional keyword arguments specific to the pipeline implementation.
-
-        Returns:
-            Standardized dictionary containing the pipeline's output with
-            keys: query, retrieved_documents, contexts, metadata, answer, execution_time
-        """
-        # Show deprecation warning but continue to work
-        warnings.warn(
-            "execute() method is deprecated. Use query() for standardized response format.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.query(query_text, **kwargs)
-
     @abc.abstractmethod
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
@@ -99,27 +76,6 @@ class RAGPipeline(abc.ABC):
             Standardized dictionary with keys: query, retrieved_documents, contexts, metadata, answer, execution_time
         """
         pass
-
-    def run(self, query: str, **kwargs) -> Dict[str, Any]:
-        """
-        Run the full RAG pipeline for a query (convenience method).
-
-        This method now calls query() to ensure standardized response format.
-
-        Args:
-            query: The input query
-            **kwargs: Additional arguments passed to query()
-
-        Returns:
-            Standardized dictionary with query, answer, and retrieved documents
-        """
-        # Show deprecation warning but continue to work
-        warnings.warn(
-            "run() method is deprecated. Use query() for standardized response format.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.query(query, **kwargs)
 
     # Protected helper methods for vector store operations
     def _retrieve_documents_by_vector(

@@ -586,48 +586,6 @@ Answer:"""
 
         return self.llm_func(prompt)
 
-    def run(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
-        """
-        Run the complete NodeRAG pipeline.
-
-        Args:
-            query: Search query
-            top_k: Number of documents to retrieve
-            **kwargs: Additional parameters
-
-        Returns:
-            Dictionary containing query, answer, and retrieved documents
-        """
-        self.logger.info(f"NodeRAG: Running pipeline for query: '{query[:50]}...'")
-
-        # Retrieve documents
-        documents = self.retrieve_documents(query, top_k, **kwargs)
-
-        # Generate answer
-        answer = self.generate_answer(query, documents)
-
-        return {
-            "query": query,
-            "answer": answer,
-            "retrieved_documents": [
-                {"id": doc.id, "content": doc.page_content, "metadata": doc.metadata} for doc in documents
-            ],
-            "document_count": len(documents),
-        }
-
-    def execute(self, query_text: str, **kwargs) -> dict:
-        """
-        Execute the full NodeRAG pipeline.
-
-        Args:
-            query_text: The input query string
-            **kwargs: Additional keyword arguments
-
-        Returns:
-            Dictionary containing query, answer, and retrieved documents
-        """
-        return self.run(query_text, **kwargs)
-
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
         Load documents into the knowledge base.

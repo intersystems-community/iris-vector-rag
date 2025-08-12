@@ -200,80 +200,6 @@ class ColBERTRAGPipeline(RAGPipeline):
         finally:
             cursor.close()
 
-    def execute(self, query_text: str, **kwargs) -> Dict[str, Any]:
-        """
-        Execute the ColBERT RAG pipeline (required abstract method).
-
-        Args:
-            query_text: The input query string
-            **kwargs: Additional parameters including top_k
-
-        Returns:
-            Dictionary containing query, answer, and retrieved documents
-        """
-        top_k = kwargs.get("top_k", 5)
-        return self.run(query_text, top_k, **kwargs)
-
-    def run(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
-        """
-        Execute the ColBERT RAG pipeline.
-
-        Args:
-            query: The input query string
-            top_k: Number of documents to retrieve
-            **kwargs: Additional parameters
-
-        Returns:
-            Dictionary containing query, answer, and retrieved documents
-        """
-        logger.info(f"ColBERT: Processing query: '{query[:50]}...'")
-
-        # Validate setup before proceeding
-        if not self.validate_setup():
-            logger.warning("ColBERT setup validation failed - pipeline may not work correctly")
-
-        start_time = self._get_current_time()
-
-        try:
-            # Stage 1: Generate query token embeddings
-            query_token_embeddings = self.colbert_query_encoder(query)
-            logger.debug(f"ColBERT: Generated {len(query_token_embeddings)} query token embeddings")
-
-            # Validate that we have token embeddings
-            if not query_token_embeddings:
-                raise ValueError("ColBERT query encoder returned empty token embeddings")
-
-            # Stage 2: Use IRISVectorStore for ColBERT search (with query_text for proper doc-level embedding)
-            search_results = self.vector_store.colbert_search(
-                query_token_embeddings=query_token_embeddings,
-                k=top_k,
-                query_text=query,  # Pass query text for proper 384D document embedding generation
-            )
-
-            # Convert results to Document list for compatibility
-            retrieved_docs = [doc for doc, score in search_results]
-
-            # Stage 3: Generate answer using LLM
-            answer = self._generate_answer(query, retrieved_docs)
-
-            execution_time = self._get_current_time() - start_time
-
-            result = {
-                "query": query,
-                "answer": answer,
-                "retrieved_documents": retrieved_docs,
-                "execution_time": execution_time,
-                "technique": "ColBERT",
-                "token_count": len(query_token_embeddings),
-            }
-
-            logger.info(f"ColBERT: Completed in {execution_time:.2f}s")
-            return result
-
-        except Exception as e:
-            logger.error(f"ColBERT pipeline failed: {e}")
-            raise
-
     def _retrieve_candidate_documents_hnsw(self, query_text: str, k: int = 30) -> List[int]:
         """
         Stage 1: Retrieve candidate documents using document-level HNSW vector search.
@@ -1121,19 +1047,6 @@ Answer:"""
             return False
         finally:
             cursor.close()
-
-    def execute(self, query_text: str, **kwargs) -> dict:
-        """
-        Execute the ColBERT RAG pipeline (alias for run method).
-
-        Args:
-            query_text: The input query string
-            **kwargs: Additional parameters
-
-        Returns:
-            Dictionary containing pipeline results
-        """
-        return self.run(query_text, **kwargs)
 
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """
