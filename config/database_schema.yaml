@@ -68,7 +68,7 @@ tables:
     columns:
       id: id
       entity_id: entity_id
-      document_id: document_id
+      doc_id: document_id
       entity_text: entity_text
       entity_type: entity_type
       position: position

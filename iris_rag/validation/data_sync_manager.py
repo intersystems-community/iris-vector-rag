@@ -212,14 +212,14 @@ class DataSyncManager:
                 # Extract basic entities from title and content
                 entities = self._extract_basic_entities(title, str(content) if content else "")
 
-                for entity_name, entity_type in entities:
+                for entity_text, entity_type in entities:
                     try:
                         cursor.execute(
                             """
-                            INSERT INTO RAG.DocumentEntities (doc_id, entity_name, entity_type)
+                            INSERT INTO RAG.DocumentEntities (doc_id, entity_text, entity_type)
                             VALUES (?, ?, ?)
                         """,
-                            [doc_id, entity_name, entity_type],
+                            [doc_id, entity_text, entity_type],
                         )
                         entities_added += 1
                     except Exception:

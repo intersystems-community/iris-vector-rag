@@ -134,12 +134,12 @@ def ensure_schema_indexes(cursor, schema_name: str = "RAG") -> bool:
         
         # Entities indexes
         ("idx_entities_id", f"{schema_name}.Entities", "entity_id"),
-        ("idx_entities_name", f"{schema_name}.Entities", "entity_name"),
+        ("idx_entities_text", f"{schema_name}.Entities", "entity_text"),
         ("idx_entities_type", f"{schema_name}.Entities", "entity_type"),
         ("idx_entities_source_doc", f"{schema_name}.Entities", "source_doc_id"),
         ("idx_hnsw_entity_embedding", f"{schema_name}.Entities", "embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
         ("idx_entities_created", f"{schema_name}.Entities", "created_at"),
-        ("idx_entities_type_name", f"{schema_name}.Entities", "entity_type, entity_name"),
+        ("idx_entities_type_name", f"{schema_name}.Entities", "entity_type, entity_text"),
         
         # Relationships indexes
         ("idx_relationships_id", f"{schema_name}.Relationships", "relationship_id"),
