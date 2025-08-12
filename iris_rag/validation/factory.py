@@ -10,14 +10,13 @@ from typing import Optional, Callable, Dict, Any
 from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
-from ..embeddings.manager import EmbeddingManager  # Import EmbeddingManager
+from ..embeddings.manager import EmbeddingManager
 from ..pipelines.basic import BasicRAGPipeline
 from ..pipelines.colbert import ColBERTRAGPipeline
 from ..pipelines.crag import CRAGPipeline
 from ..pipelines.hyde import HyDERAGPipeline
 from ..pipelines.graphrag import GraphRAGPipeline
 from ..pipelines.hybrid_ifind import HybridIFindRAGPipeline
-from ..pipelines.hybrid_vector_text import HybridVectorTextPipeline
 from ..pipelines.noderag import NodeRAGPipeline
 from ..pipelines.sql_rag import SQLRAGPipeline
 from ..pipelines.basic_rerank import BasicRAGRerankingPipeline
@@ -146,10 +145,6 @@ class ValidatedPipelineFactory:
             return HybridIFindRAGPipeline(
                 connection_manager=self.connection_manager, config_manager=self.config_manager, llm_func=llm_func
             )
-        elif pipeline_type == "hybrid_vector_text":
-            return HybridVectorTextPipeline(
-                connection_manager=self.connection_manager, config_manager=self.config_manager, llm_func=llm_func
-            )
         elif pipeline_type == "noderag":
             return NodeRAGPipeline(
                 connection_manager=self.connection_manager,
@@ -174,7 +169,6 @@ class ValidatedPipelineFactory:
                 "hyde",
                 "graphrag",
                 "hybrid_ifind",
-                "hybrid_vector_text",
                 "noderag",
                 "sql_rag",
             ]
@@ -327,7 +321,6 @@ class ValidatedPipelineFactory:
             "hyde",
             "graphrag",
             "hybrid_ifind",
-            "hybrid_vector_text",
             "noderag",
             "sql_rag",
         ]
