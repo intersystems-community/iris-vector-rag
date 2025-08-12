@@ -45,7 +45,7 @@ def openai_llm(prompt: str) -> str:
 
 def main():
     # Setup logging
-    logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger()
 
     llm_func = openai_llm if USE_REAL_LLM else dummy_llm
@@ -60,14 +60,9 @@ def main():
     )
     print("✓ GraphRAG Pipeline created successfully")
 
-    print("Loading data")
-    # Load documents from a folder (update the path as necessary)
-    doc_path = "../../data/test_txt_docs"
-    graph_rag_pipeline.load_documents(doc_path)
-
     print("Running GraphRAG Pipeline")
     # Run a sample query
-    query = "What are the benefits of using RAG pipelines?"
+    query = "What demographics are at risk of weight gain?"
     response = graph_rag_pipeline.query(query, top_k=3)
 
     # Print final answer
@@ -75,64 +70,6 @@ def main():
     print(f"Query: {response['query']}")
     print(f"Answer: {response['answer']}")
     print(f"Execution Time: {response['execution_time']:.2f}s")
-
-    # Step 6: Clean up test data
-    print("\n--- Cleanup ---")
-    try:
-        # Get document count before cleanup
-        connection = graph_rag_pipeline.connection_manager.get_connection()
-        cursor = connection.cursor()
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
-        count_before = cursor.fetchone()[0]
-        
-        # Clear all documents loaded during this test
-        print(f"Documents in database before cleanup: {count_before}")
-        
-        # Clear documents from this test run (they should have the test data path in metadata)
-        import json
-
-        # Step 1: Fetch all rows
-        cursor.execute("SELECT doc_id, metadata FROM RAG.SourceDocuments")
-        rows = cursor.fetchall()
-
-        # Step 2: Identify doc_ids to delete
-        doc_ids_to_delete = []
-
-        for row in rows:
-            doc_id = row[0]
-            metadata_raw = row[1]
-
-            # Decode metadata if it's a byte stream
-            if isinstance(metadata_raw, (bytes, bytearray)):
-                metadata_raw = metadata_raw.decode("utf-8")
-
-            try:
-                metadata_json = json.loads(metadata_raw)
-                source = metadata_json.get("source", "")
-                if "test_txt_docs" in source:
-                    doc_ids_to_delete.append(doc_id)
-            except (json.JSONDecodeError, TypeError) as e:
-                print(f"Skipping row {doc_id}: malformed metadata - {e}")
-
-        # Step 3: Delete matching rows
-        print(f"Found {len(doc_ids_to_delete)} documents to delete.")
-
-        for doc_id in doc_ids_to_delete:
-            cursor.execute("DELETE FROM RAG.SourceDocuments WHERE doc_id = ?", [doc_id])
-        
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
-        count_after = cursor.fetchone()[0]
-        documents_removed = count_before - count_after
-        
-        connection.commit()
-        cursor.close()
-        
-        print(f"Documents removed: {documents_removed}")
-        print(f"Documents remaining: {count_after}")
-        print("✅ Cleanup completed successfully")
-        
-    except Exception as cleanup_error:
-        print(f"⚠️ Cleanup failed (this is usually fine): {cleanup_error}")
 
 if __name__ == "__main__":
     main()

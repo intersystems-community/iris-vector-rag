@@ -263,8 +263,8 @@ class GraphRAGPipeline(RAGPipeline):
             search_sql_stage1 = f"""
             SELECT TOP {top_k} d.doc_id, COUNT(*) as entity_matches
             FROM RAG.SourceDocuments d
-            JOIN RAG.DocumentEntities e ON d.doc_id = e.doc_id
-            WHERE e.entity_name IN ({entity_placeholders})
+            JOIN RAG.DocumentEntities e ON d.doc_id = e.document_id
+            WHERE e.entity_text IN ({entity_placeholders})
             GROUP BY d.doc_id
             ORDER BY entity_matches DESC
             """
@@ -420,9 +420,10 @@ class GraphRAGPipeline(RAGPipeline):
     def _store_entities(self, document_id: str, entities: List[Dict[str, Any]]):
         """Store entities in the database with robust vector embedding handling."""
         # Ensure schema is correct before storing entities
-        if not self.schema_manager.ensure_table_schema("DocumentEntities"):
-            logger.error("Failed to ensure DocumentEntities table schema")
-            raise RuntimeError("Schema validation failed for DocumentEntities table")
+        for table in ["SourceDocuments", "DocumentEntities", "EntityRelationships"]:
+            if not self.schema_manager.ensure_table_schema(table):
+                logger.error(f"Failed to ensure table schema fpr {table}")
+                raise RuntimeError(f"Schema validation failed for {table}")
 
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
@@ -573,8 +574,8 @@ class GraphRAGPipeline(RAGPipeline):
             for rel in relationships:
                 insert_sql = """
                 INSERT INTO RAG.EntityRelationships
-                (relationship_id, source_entity_id, target_entity_id, relationship_type, confidence_score, metadata)
-                VALUES (?, ?, ?, ?, ?, ?)
+                (relationship_id, source_entity_id, target_entity_id, relationship_type, confidence_score, source_doc_id, metadata)
+                VALUES (?, ?, ?, ?, ?, ?, )
                 """
 
                 cursor.execute(
@@ -585,6 +586,7 @@ class GraphRAGPipeline(RAGPipeline):
                         rel["target_entity"],
                         rel["relationship_type"],
                         rel["strength"],
+                        document_id,
                         "{}",
                     ],
                 )
@@ -606,7 +608,7 @@ class GraphRAGPipeline(RAGPipeline):
 
         try:
             # Get all entity names from the knowledge graph
-            cursor.execute("SELECT DISTINCT entity_name FROM RAG.DocumentEntities")
+            cursor.execute("SELECT DISTINCT entity_text FROM RAG.DocumentEntities")
             known_entities = [row[0].lower() for row in cursor.fetchall()]
 
             # Also check knowledge graph nodes
@@ -643,7 +645,7 @@ class GraphRAGPipeline(RAGPipeline):
                 # Get original case entities from database
                 placeholders = ",".join(["?" for _ in found_entities])
                 cursor.execute(
-                    f"SELECT DISTINCT entity_name FROM RAG.DocumentEntities WHERE LOWER(entity_name) IN ({placeholders})",
+                    f"SELECT DISTINCT entity_text FROM RAG.DocumentEntities WHERE LOWER(entity_text) IN ({placeholders})",
                     found_entities,
                 )
                 original_case_entities = [row[0] for row in cursor.fetchall()]

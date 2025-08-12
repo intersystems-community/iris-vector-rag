@@ -65,17 +65,6 @@ pipelines:
       ifind_weight: 0.3
       vector_weight: 0.7
 
-  - name: "HybridVectorTextRAG"
-    module: "iris_rag.pipelines.hybrid_vector_text"
-    class: "HybridVectorTextPipeline"
-    enabled: true
-    params:
-      top_k: 5
-      vector_weight: 0.7
-      text_weight: 0.3
-      enable_text_search: true
-      min_text_score: 0.1
-
   - name: "SQLRAG"
     module: "iris_rag.pipelines.sql_rag"
     class: "SQLRAGPipeline"
@@ -112,20 +101,3 @@ framework:
   embeddings:
     model: "text-embedding-3-small"
     dimension: 1536
-
-# Pipeline-specific configurations
-pipeline_configs:
-  basic_reranking:
-    rerank_factor: 2
-    reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
-    chunk_size: 1000
-    chunk_overlap: 200
-    default_top_k: 5
-    
-  hybrid_vector_text:
-    table_name: "RAG.SourceDocuments"  # Single table approach
-    vector_weight: 0.7
-    text_weight: 0.3
-    enable_text_search: true
-    min_text_score: 0.1
-    fallback_to_like: true  # Use LIKE search if iFind fails
