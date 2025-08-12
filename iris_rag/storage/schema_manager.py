@@ -134,32 +134,12 @@ class SchemaManager:
                 "default_model": self.base_embedding_model,
                 "dimension": self.base_embedding_dimension,
             },
-            "DocumentTokenEmbeddings": {
-                "embedding_column": "token_embedding",
-                "uses_token_embeddings": True,
-                "default_model": self.colbert_model_name,
-                "dimension": self.colbert_token_dimension,
-                "colbert_backend": self.colbert_backend,
-            },
-            "DocumentEntities": {
-                "embedding_column": "embedding",
-                "uses_document_embeddings": True,
-                "default_model": self.base_embedding_model,
-                "dimension": self.base_embedding_dimension,
-            },
             "DocumentChunks": {
                 "embedding_column": "chunk_embedding",
                 "uses_document_embeddings": True,
                 "default_model": self.base_embedding_model,
                 "dimension": self.base_embedding_dimension,
             },
-            "EntityRelationships": {
-                "embedding_column": None,
-                "uses_document_embeddings": False,
-                "default_model": None,
-                "dimension": None
-            }
-
         }
 
         logger.debug(f"Table configurations: {len(self._table_configs)} tables configured")
@@ -310,50 +290,6 @@ class SchemaManager:
                     "chunk_index", "chunk_type", "metadata", "created_at"
                 ]
             })
-        elif table_name == "DocumentEntities":
-            config["configuration"].update({
-                "table_type": "entity_storage",
-                "created_by": "GraphRAG",
-                "expected_columns": [
-                    "id", "entity_id", "document_id", "entity_text", "entity_type",
-                    "position", "embedding", "created_at"
-                ]
-            })
-        elif table_name == "DocumentTokenEmbeddings":
-            config["configuration"].update({
-                "table_type": "token_storage",
-                "created_by": "ColBERT",
-                "expected_columns": [
-                    "id", "doc_id", "token_index", "token_text", "token_embedding", "created_at"
-                ]
-            })
-        elif table_name == "KnowledgeGraphNodes":
-            config["configuration"].update({
-                "table_type": "node_storage",
-                "created_by": "NodeRAG",
-                "expected_columns": [
-                    "id", "node_id", "node_type", "node_properties", "embedding", "created_at"
-                ]
-            })
-        elif table_name == "KnowledgeGraphEdges":
-            config["configuration"].update({
-                "table_type": "edge_storage",
-                "created_by": "NodeRAG",
-                "expected_columns": [
-                    "id", "edge_id", "source_node_id", "target_node_id", "edge_type",
-                    "edge_properties", "weight", "created_at"
-                ]
-            })
-        elif table_name == "EntityRelationships":
-            config["configuration"].update({
-                "table_type": "relationship_storage",
-                "created_by": "GraphRAG",
-                "expected_columns": [
-                    "id", "relationship_id", "source_entity_id", "target_entity_id", "relationship_type",
-                    "description", "strength", "source_doc_id", "created_at"
-                ]
-            })
-
 
         return config
 
@@ -369,7 +305,6 @@ class SchemaManager:
                 if table_req.name == table_name:
                     return {
                         "text_content_type": table_req.text_content_type,
-                        "supports_ifind": table_req.supports_ifind,
                         "supports_vector_search": table_req.supports_vector_search,
                     }
 
@@ -378,7 +313,6 @@ class SchemaManager:
                 if table_req.name == table_name:
                     return {
                         "text_content_type": table_req.text_content_type,
-                        "supports_ifind": table_req.supports_ifind,
                         "supports_vector_search": table_req.supports_vector_search,
                     }
 
@@ -386,7 +320,7 @@ class SchemaManager:
             logger.warning(f"Could not get table requirements for {pipeline_type}: {e}")
 
         # Default configuration
-        return {"text_content_type": "LONGVARCHAR", "supports_ifind": False, "supports_vector_search": True}
+        return {"text_content_type": "LONGVARCHAR", "supports_vector_search": True}
 
     def needs_migration(self, table_name: str, pipeline_type: str = None) -> bool:
         """Check if table needs migration based on configuration and physical structure."""
@@ -466,38 +400,6 @@ class SchemaManager:
                 else:
                     connection.rollback()
                     return False
-            elif table_name == "DocumentTokenEmbeddings":
-                success = self._migrate_document_token_embeddings_table(cursor, expected_config, preserve_data)
-                if success:
-                    connection.commit()
-                    return True
-                else:
-                    connection.rollback()
-                    return False
-            elif table_name == "DocumentEntities":
-                success = self._migrate_document_entities_table(cursor, expected_config, preserve_data)
-                if success:
-                    connection.commit()
-                    return True
-                else:
-                    connection.rollback()
-                    return False
-            elif table_name == "KnowledgeGraphNodes":
-                success = self._migrate_knowledge_graph_nodes_table(cursor, expected_config, preserve_data)
-                if success:
-                    connection.commit()
-                    return True
-                else:
-                    connection.rollback()
-                    return False
-            elif table_name == "KnowledgeGraphEdges":
-                success = self._migrate_knowledge_graph_edges_table(cursor, expected_config, preserve_data)
-                if success:
-                    connection.commit()
-                    return True
-                else:
-                    connection.rollback()
-                    return False
             elif table_name == "DocumentChunks":
                 success = self._migrate_document_chunks_table(cursor, expected_config, preserve_data)
                 if success:
@@ -506,15 +408,6 @@ class SchemaManager:
                 else:
                     connection.rollback()
                     return False
-            elif table_name == "EntityRelationships":
-                success = self._migrate_entity_relationships_table(cursor, expected_config, preserve_data)
-                if success:
-                    connection.commit()
-                    return True
-                else:
-                    connection.rollback()
-                    return False
-
 
             # Add other table migrations as needed
             logger.warning(f"No migration handler for table {table_name}")
@@ -550,8 +443,6 @@ class SchemaManager:
                     logger.info("Checking for foreign key constraints on SourceDocuments...")
                     known_constraints = [
                         ("DOCUMENTCHUNKSFKEY2", "DocumentChunks"),
-                        ("ENTITYRELATIONSHIPSFKEY4", "EntityRelationships"),
-                        ("DOCUMENTTOKENEMBEDDIFKEY2", "DocumentTokenEmbeddings"),
                     ]
                     
                     for constraint_name, referencing_table in known_constraints:
@@ -634,364 +525,6 @@ class SchemaManager:
 
         except Exception as e:
             logger.error(f"Failed to migrate SourceDocuments table: {e}")
-            return False
-
-
-    def _migrate_entity_relationships_table(self, cursor, expected_config: Dict[str, Any], preserve_data: bool) -> bool:
-        """Migrate EntityRelationships table for GraphRAG."""
-        try:
-            logger.info("🔧 Migrating EntityRelationships table")
-
-            cursor.execute("DROP TABLE IF EXISTS RAG.EntityRelationships")
-
-            create_sql = """
-            CREATE TABLE RAG.EntityRelationships (
-                id VARCHAR(255) PRIMARY KEY,
-                relationship_id VARCHAR(255),
-                source_entity_id VARCHAR(255),
-                target_entity_id VARCHAR(255),
-                relationship_type VARCHAR(100),
-                description TEXT,
-                strength FLOAT DEFAULT 1.0,
-                source_doc_id VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_entity_id) REFERENCES RAG.DocumentEntities(id),
-                FOREIGN KEY (target_entity_id) REFERENCES RAG.DocumentEntities(id),
-                FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(id)
-            )
-            """
-            cursor.execute(create_sql)
-
-            indexes = [
-                "CREATE INDEX idx_relationships_id ON RAG.EntityRelationships (relationship_id)",
-                "CREATE INDEX idx_relationships_source ON RAG.EntityRelationships (source_entity_id)",
-                "CREATE INDEX idx_relationships_target ON RAG.EntityRelationships (target_entity_id)",
-                "CREATE INDEX idx_relationships_type ON RAG.EntityRelationships (relationship_type)",
-                "CREATE INDEX idx_relationships_entities ON RAG.EntityRelationships (source_entity_id, target_entity_id)",
-                "CREATE INDEX idx_relationships_created ON RAG.EntityRelationships (created_at)",
-                "CREATE INDEX idx_relationships_type_strength ON RAG.EntityRelationships (relationship_type, strength)",
-            ]
-
-            for index_sql in indexes:
-                try:
-                    cursor.execute(index_sql)
-                except Exception as e:
-                    logger.warning(f"Failed to create index on EntityRelationships: {e}")
-
-            self._update_schema_metadata(cursor, "EntityRelationships", expected_config)
-            logger.info("✅ EntityRelationships table migrated successfully")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to migrate EntityRelationships table: {e}")
-            return False
-
-
-    def _migrate_document_token_embeddings_table(
-        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
-    ) -> bool:
-        """Migrate DocumentTokenEmbeddings table."""
-        try:
-            vector_dim = expected_config["vector_dimension"]
-            vector_data_type = expected_config.get("vector_data_type", "FLOAT")
-
-            logger.info(
-                f"🔧 Migrating DocumentTokenEmbeddings table to {vector_dim}-dimensional vectors with {vector_data_type} data type"
-            )
-
-            # For now, we'll drop and recreate (data preservation can be added later)
-            if preserve_data:
-                logger.warning("Data preservation not yet implemented - data will be lost")
-
-            # Check if table has data
-            try:
-                cursor.execute("SELECT COUNT(*) FROM RAG.DocumentTokenEmbeddings")
-                row_count = cursor.fetchone()[0]
-                if row_count > 0:
-                    logger.warning(f"Dropping table with {row_count} existing rows")
-            except:
-                pass  # Table might not exist
-
-            # Drop existing table
-            cursor.execute("DROP TABLE IF EXISTS RAG.DocumentTokenEmbeddings")
-            logger.info("Successfully dropped DocumentTokenEmbeddings table")
-
-            # Create new table with correct dimension and data type
-            create_sql = f"""
-            CREATE TABLE RAG.DocumentTokenEmbeddings (
-                id VARCHAR(255) PRIMARY KEY,
-                doc_id VARCHAR(255),
-                token_index INTEGER,
-                token_text VARCHAR(500),
-                token_embedding VECTOR(FLOAT, 128),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(id)
-            )
-            """
-            cursor.execute(create_sql)
-
-            # Create indexes
-            indexes = [
-                "CREATE INDEX idx_documenttokenembeddings_doc_id ON RAG.DocumentTokenEmbeddings (doc_id)",
-                "CREATE INDEX idx_documenttokenembeddings_created_at ON RAG.DocumentTokenEmbeddings (created_at)",
-            ]
-
-            for index_sql in indexes:
-                try:
-                    cursor.execute(index_sql)
-                except Exception as e:
-                    logger.warning(f"Failed to create index: {e}")
-
-            # Update schema metadata
-            self._update_schema_metadata(cursor, "DocumentTokenEmbeddings", expected_config)
-
-            logger.info(f"✅ DocumentTokenEmbeddings table migrated to {vector_dim}-dimensional vectors")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to migrate DocumentTokenEmbeddings table: {e}")
-            return False
-
-    def _migrate_document_entities_table(self, cursor, expected_config: Dict[str, Any], preserve_data: bool) -> bool:
-        """Migrate DocumentEntities table."""
-        try:
-            vector_dim = expected_config["vector_dimension"]
-            vector_data_type = expected_config.get("vector_data_type", "FLOAT")
-
-            logger.info(
-                f"🔧 Migrating DocumentEntities table to {vector_dim}-dimensional vectors with {vector_data_type} data type"
-            )
-
-            # For now, we'll drop and recreate (data preservation can be added later)
-            if preserve_data:
-                logger.warning("Data preservation not yet implemented - data will be lost")
-
-            # Check if table has data
-            try:
-                cursor.execute("SELECT COUNT(*) FROM RAG.DocumentEntities")
-                row_count = cursor.fetchone()[0]
-                if row_count > 0:
-                    logger.warning(f"Dropping table with {row_count} existing rows")
-            except:
-                pass  # Table might not exist
-
-            # Handle foreign key constraints before dropping table
-            try:
-                # First, identify and drop foreign key constraints that reference this table
-                logger.info("Checking for foreign key constraints on DocumentEntities...")
-
-                # Handle the specific foreign key constraints we know about
-                # Based on the error message: ENTITYRELATIONSHIPSFKEY2 and ENTITYRELATIONSHIPSFKEY3 in table RAG.ENTITYRELATIONSHIPS
-                known_constraints = [
-                    ("ENTITYRELATIONSHIPSFKEY2", "EntityRelationships"),
-                    ("ENTITYRELATIONSHIPSFKEY3", "EntityRelationships"),
-                ]
-
-                dropped_constraints = []
-
-                for constraint_name, referencing_table in known_constraints:
-                    try:
-                        logger.info(f"Dropping foreign key constraint {constraint_name} from RAG.{referencing_table}")
-                        cursor.execute(f"ALTER TABLE RAG.{referencing_table} DROP CONSTRAINT {constraint_name}")
-                        dropped_constraints.append((constraint_name, referencing_table))
-                        logger.info(f"✓ Successfully dropped constraint {constraint_name}")
-                    except Exception as fk_error:
-                        logger.warning(f"Could not drop foreign key {constraint_name}: {fk_error}")
-                        # If we can't drop the constraint, try dropping the entire referencing table
-                        try:
-                            logger.info(f"Attempting to drop referencing table RAG.{referencing_table}")
-                            cursor.execute(f"DROP TABLE IF EXISTS RAG.{referencing_table}")
-                            logger.info(f"✓ Dropped referencing table RAG.{referencing_table}")
-                        except Exception as table_error:
-                            logger.warning(f"Could not drop referencing table {referencing_table}: {table_error}")
-
-                # Now drop the table
-                cursor.execute("DROP TABLE IF EXISTS RAG.DocumentEntities")
-                logger.info("Successfully dropped DocumentEntities table")
-
-            except Exception as drop_error:
-                logger.error(f"Failed to handle foreign key constraints and drop table: {drop_error}")
-                # If we can't drop due to constraints, try to work with existing table structure
-                logger.info("Attempting to work with existing table structure...")
-                return True  # Consider this a successful "migration" for now
-
-            # Create new table with correct dimension and data type
-            create_sql = f"""
-            CREATE TABLE RAG.DocumentEntities (
-                id VARCHAR(255) PRIMARY KEY,
-                entity_id VARCHAR(255),
-                document_id VARCHAR(255),
-                entity_text VARCHAR(1000),
-                entity_type VARCHAR(100),
-                position INTEGER,
-                embedding VECTOR(FLOAT, 384),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-            cursor.execute(create_sql)
-
-            # Create indexes
-            indexes = [
-                "CREATE INDEX idx_documententities_document_id ON RAG.DocumentEntities (document_id)",
-                "CREATE INDEX idx_documententities_entity_type ON RAG.DocumentEntities (entity_type)",
-                "CREATE INDEX idx_documententities_created_at ON RAG.DocumentEntities (created_at)",
-            ]
-
-            for index_sql in indexes:
-                try:
-                    cursor.execute(index_sql)
-                except Exception as e:
-                    logger.warning(f"Failed to create index: {e}")
-
-            # Update schema metadata
-            self._update_schema_metadata(cursor, "DocumentEntities", expected_config)
-
-            logger.info(f"✅ DocumentEntities table migrated to {vector_dim}-dimensional vectors")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to migrate DocumentEntities table: {e}")
-            return False
-
-    def _migrate_knowledge_graph_nodes_table(
-        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
-    ) -> bool:
-        """Migrate KnowledgeGraphNodes table."""
-        try:
-            vector_dim = expected_config["vector_dimension"]
-            vector_data_type = expected_config.get("vector_data_type", "FLOAT")
-
-            logger.info(
-                f"🔧 Migrating KnowledgeGraphNodes table to {vector_dim}-dimensional vectors with {vector_data_type} data type"
-            )
-
-            # For now, we'll drop and recreate (data preservation can be added later)
-            if preserve_data:
-                logger.warning("Data preservation not yet implemented - data will be lost")
-
-            # Check if table has data
-            try:
-                cursor.execute("SELECT COUNT(*) FROM RAG.KnowledgeGraphNodes")
-                row_count = cursor.fetchone()[0]
-                if row_count > 0:
-                    logger.warning(f"Dropping table with {row_count} existing rows")
-            except:
-                pass  # Table might not exist
-
-            # Handle foreign key constraints before dropping table
-            try:
-                # Drop referencing tables first (edges reference nodes)
-                cursor.execute("DROP TABLE IF EXISTS RAG.KnowledgeGraphEdges")
-                logger.info("Dropped KnowledgeGraphEdges table (references nodes)")
-            except Exception as e:
-                logger.warning(f"Could not drop KnowledgeGraphEdges: {e}")
-
-            # Now drop the nodes table
-            cursor.execute("DROP TABLE IF EXISTS RAG.KnowledgeGraphNodes")
-            logger.info("Successfully dropped KnowledgeGraphNodes table")
-
-            # Create new table with correct dimension and data type
-            create_sql = f"""
-            CREATE TABLE RAG.KnowledgeGraphNodes (
-                id VARCHAR(255) PRIMARY KEY,
-                node_id VARCHAR(255),
-                node_type VARCHAR(100),
-                content TEXT,
-                embedding VECTOR(FLOAT, 384),
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-            """
-            cursor.execute(create_sql)
-
-            # Create indexes
-            indexes = [
-                "CREATE INDEX idx_knowledgegraphnodes_node_type ON RAG.KnowledgeGraphNodes (node_type)",
-                "CREATE INDEX idx_knowledgegraphnodes_created_at ON RAG.KnowledgeGraphNodes (created_at)",
-            ]
-
-            for index_sql in indexes:
-                try:
-                    cursor.execute(index_sql)
-                except Exception as e:
-                    logger.warning(f"Failed to create index: {e}")
-
-            # Update schema metadata
-            self._update_schema_metadata(cursor, "KnowledgeGraphNodes", expected_config)
-
-            logger.info(f"✅ KnowledgeGraphNodes table migrated to {vector_dim}-dimensional vectors")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to migrate KnowledgeGraphNodes table: {e}")
-            return False
-
-    def _migrate_knowledge_graph_edges_table(
-        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
-    ) -> bool:
-        """Migrate KnowledgeGraphEdges table."""
-        try:
-            logger.info("🔧 Migrating KnowledgeGraphEdges table")
-
-            # For now, we'll drop and recreate (data preservation can be added later)
-            if preserve_data:
-                logger.warning("Data preservation not yet implemented - data will be lost")
-
-            # Check if table has data
-            try:
-                cursor.execute("SELECT COUNT(*) FROM RAG.KnowledgeGraphEdges")
-                row_count = cursor.fetchone()[0]
-                if row_count > 0:
-                    logger.warning(f"Dropping table with {row_count} existing rows")
-            except:
-                pass  # Table might not exist
-
-            # Drop existing table
-            cursor.execute("DROP TABLE IF EXISTS RAG.KnowledgeGraphEdges")
-            logger.info("Successfully dropped KnowledgeGraphEdges table")
-
-            # Create new table (edges typically don't need embeddings)
-            create_sql = f"""
-            CREATE TABLE RAG.KnowledgeGraphEdges (
-                id VARCHAR(255) PRIMARY KEY,
-                edge_id VARCHAR(255),
-                source_node_id VARCHAR(255),
-                target_node_id VARCHAR(255),
-                edge_type VARCHAR(100),
-                weight DOUBLE DEFAULT 1.0,
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_node_id) REFERENCES RAG.KnowledgeGraphNodes(id),
-                FOREIGN KEY (target_node_id) REFERENCES RAG.KnowledgeGraphNodes(id)
-            )
-            """
-            cursor.execute(create_sql)
-
-            # Create indexes
-            indexes = [
-                "CREATE INDEX idx_knowledgegraphedges_source ON RAG.KnowledgeGraphEdges (source_node_id)",
-                "CREATE INDEX idx_knowledgegraphedges_target ON RAG.KnowledgeGraphEdges (target_node_id)",
-                "CREATE INDEX idx_knowledgegraphedges_edge_type ON RAG.KnowledgeGraphEdges (edge_type)",
-                "CREATE INDEX idx_knowledgegraphedges_created_at ON RAG.KnowledgeGraphEdges (created_at)",
-            ]
-
-            for index_sql in indexes:
-                try:
-                    cursor.execute(index_sql)
-                except Exception as e:
-                    logger.warning(f"Failed to create index: {e}")
-
-            # Update schema metadata (edges don't typically have vector dimensions)
-            edges_config = expected_config.copy()
-            edges_config["vector_dimension"] = None
-            edges_config["embedding_model"] = None
-            self._update_schema_metadata(cursor, "KnowledgeGraphEdges", edges_config)
-
-            logger.info("✅ KnowledgeGraphEdges table migrated successfully")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to migrate KnowledgeGraphEdges table: {e}")
             return False
 
     def _update_schema_metadata(self, cursor, table_name: str, config: Dict[str, Any]):
@@ -1154,21 +687,6 @@ class SchemaManager:
         logger.debug(f"Schema Manager: {table_name} with model {model_name or 'default'} -> {dimension}D")
         return dimension
 
-    def get_colbert_config(self) -> Dict[str, Any]:
-        """
-        Get ColBERT configuration from the schema manager.
-
-        Returns:
-            Dictionary with ColBERT configuration
-        """
-        return {
-            "backend": self.colbert_backend,
-            "token_dimension": self.colbert_token_dimension,
-            "model_name": self.colbert_model_name,
-            "document_dimension": self.base_embedding_dimension,
-            "document_model": self.base_embedding_model,
-        }
-
     def validate_vector_dimension(self, table_name: str, provided_dimension: int, context: str = "") -> None:
         """
         Validate that a provided dimension matches schema manager's expectation.
@@ -1276,90 +794,9 @@ class SchemaManager:
 
         return status
 
-    # Additional getter methods for database state validator
-    def get_base_embedding_dimension(self) -> int:
-        """
-        Get the base embedding dimension from configuration.
-
-        Returns:
-            Base embedding dimension
-        """
-        return self.base_embedding_dimension
-
-    def get_colbert_token_dimension(self) -> int:
-        """
-        Get the ColBERT token embedding dimension from configuration.
-
-        Returns:
-            ColBERT token embedding dimension
-        """
-        return self.colbert_token_dimension
-
-    def get_base_embedding_model(self) -> str:
-        """
-        Get the base embedding model name from configuration.
-
-        Returns:
-            Base embedding model name
-        """
-        return self.base_embedding_model
-
-    def get_colbert_backend(self) -> str:
-        """
-        Get the ColBERT backend type from configuration.
-
-        Returns:
-            ColBERT backend type ("native" or "pylate")
-        """
-        return self.colbert_backend
 
     # ========== AUDIT TESTING METHODS ==========
     # These methods replace direct SQL anti-patterns in integration tests
-
-    def get_table_count(self, table_name: str) -> int:
-        """
-        Get row count using proper connection management (replaces direct SQL in tests).
-
-        Args:
-            table_name: Full table name (e.g., 'RAG.SourceDocuments')
-
-        Returns:
-            Number of rows in the table
-        """
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-            return cursor.fetchone()[0]
-        except Exception as e:
-            logger.error(f"Failed to get table count for {table_name}: {e}")
-            return 0
-        finally:
-            cursor.close()
-
-    def get_sample_document_id(self, table_name: str) -> Optional[str]:
-        """
-        Get sample document ID using proper abstractions (replaces direct SQL in tests).
-
-        Args:
-            table_name: Full table name (e.g., 'RAG.SourceDocuments')
-
-        Returns:
-            Sample document ID or None if no documents exist
-        """
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            cursor.execute(f"SELECT TOP 1 doc_id FROM {table_name} WHERE doc_id IS NOT NULL")
-            result = cursor.fetchone()
-            return result[0] if result else None
-        except Exception as e:
-            logger.error(f"Failed to get sample document ID from {table_name}: {e}")
-            return None
-        finally:
-            cursor.close()
 
     def verify_table_structure(self, table_name: str) -> Dict[str, Any]:
         """
@@ -1390,179 +827,3 @@ class SchemaManager:
             return {}
         finally:
             cursor.close()
-
-    def get_entity_statistics(self) -> Dict[str, Any]:
-        """
-        Get entity statistics using proper abstractions (replaces direct SQL in tests).
-
-        Returns:
-            Dictionary with entity statistics
-        """
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            stats = {}
-
-            # Total entities
-            cursor.execute("SELECT COUNT(*) FROM RAG.DocumentEntities")
-            stats["total_entities"] = cursor.fetchone()[0]
-
-            # Entities by type
-            cursor.execute(
-                """
-                SELECT entity_type, COUNT(*) as count 
-                FROM RAG.DocumentEntities 
-                GROUP BY entity_type 
-                ORDER BY count DESC
-            """
-            )
-            stats["entities_by_type"] = {row[0]: row[1] for row in cursor.fetchall()}
-
-            # Documents with entities
-            cursor.execute("SELECT COUNT(DISTINCT document_id) FROM RAG.DocumentEntities")
-            stats["documents_with_entities"] = cursor.fetchone()[0]
-
-            return stats
-        except Exception as e:
-            logger.error(f"Failed to get entity statistics: {e}")
-            return {"total_entities": 0, "entities_by_type": {}, "documents_with_entities": 0}
-        finally:
-            cursor.close()
-
-    def get_sample_entities(self, limit: int = 3) -> List[Dict[str, Any]]:
-        """
-        Get sample entities using proper abstractions (replaces direct SQL in tests).
-
-        Args:
-            limit: Maximum number of entities to return
-
-        Returns:
-            List of entity dictionaries
-        """
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            cursor.execute(
-                f"""
-                SELECT entity_id, entity_text, entity_type 
-                FROM RAG.DocumentEntities 
-                LIMIT {limit}
-            """
-            )
-
-            entities = []
-            for row in cursor.fetchall():
-                entities.append({"id": row[0], "name": row[1], "type": row[2]})
-            return entities
-        except Exception as e:
-            logger.error(f"Failed to get sample entities: {e}")
-            return []
-        finally:
-            cursor.close()
-
-    def table_exists(self, table_name: str, schema: str = "RAG") -> bool:
-        """
-        Check if table exists using proper abstractions (replaces direct SQL in tests).
-
-        Args:
-            table_name: Name of the table (without schema)
-            schema: Schema name (default: 'RAG')
-
-        Returns:
-            True if table exists, False otherwise
-        """
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            cursor.execute(
-                """
-                SELECT COUNT(*) 
-                FROM INFORMATION_SCHEMA.TABLES 
-                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-            """,
-                [schema, table_name.upper()],
-            )
-            return cursor.fetchone()[0] > 0
-        except Exception as e:
-            logger.error(f"Failed to check if table {schema}.{table_name} exists: {e}")
-            return False
-        finally:
-            cursor.close()
-
-    def get_table_row_count_by_pattern(self, table_pattern: str) -> Dict[str, int]:
-        """
-        Get row counts for tables matching a pattern (replaces direct SQL in tests).
-
-        Args:
-            table_pattern: SQL LIKE pattern for table names
-
-        Returns:
-            Dictionary mapping table names to row counts
-        """
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-
-        try:
-            # Get tables matching pattern
-            cursor.execute(
-                """
-                SELECT TABLE_NAME 
-                FROM INFORMATION_SCHEMA.TABLES 
-                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME LIKE ?
-            """,
-                [table_pattern],
-            )
-
-            table_names = [row[0] for row in cursor.fetchall()]
-
-            # Get row counts for each table
-            counts = {}
-            for table_name in table_names:
-                try:
-                    cursor.execute(f"SELECT COUNT(*) FROM RAG.{table_name}")
-                    counts[table_name] = cursor.fetchone()[0]
-                except Exception as e:
-                    logger.warning(f"Failed to get count for table {table_name}: {e}")
-                    counts[table_name] = 0
-
-            return counts
-        except Exception as e:
-            logger.error(f"Failed to get table counts for pattern {table_pattern}: {e}")
-            return {}
-        finally:
-            cursor.close()
-
-    def validate_database_connectivity(self) -> Dict[str, Any]:
-        """
-        Validate database connectivity using proper abstractions (replaces direct SQL in tests).
-
-        Returns:
-            Dictionary with connectivity validation results
-        """
-        try:
-            connection = self.connection_manager.get_connection()
-            cursor = connection.cursor()
-
-            # Test basic connectivity
-            cursor.execute("SELECT 1 as test_value")
-            test_result = cursor.fetchone()[0]
-
-            # Test schema access
-            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'RAG'")
-            rag_table_count = cursor.fetchone()[0]
-
-            cursor.close()
-
-            return {
-                "connectivity": True,
-                "test_query_result": test_result,
-                "rag_schema_accessible": True,
-                "rag_table_count": rag_table_count,
-                "connection_type": type(connection).__name__,
-            }
-        except Exception as e:
-            logger.error(f"Database connectivity validation failed: {e}")
-            return {"connectivity": False, "error": str(e), "connection_type": None}

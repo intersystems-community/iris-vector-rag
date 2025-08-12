@@ -6,7 +6,7 @@ SHELL := /bin/bash
 # Standardized commands for development, testing, and data management
 # Uses Python virtual environment (.venv) for consistent dependency management
 
-.PHONY: help install clean setup-db load-data clear-rag-data populate-knowledge-graph populate-colbert-tokens populate-ifind-sync populate-all-pipelines check-graph-data lint format docker-up docker-down docker-logs test-dbapi test-jdbc validate-iris-rag status setup-env check-data
+.PHONY: help install clean setup-db load-data clear-rag-data lint format test-dbapi test-jdbc validate-iris-rag status setup-env check-data
 
 # Python virtual environment directory (managed by uv)
 VENV_DIR = .venv
@@ -29,19 +29,10 @@ help:
 	@echo "  make check-data       - Check current document count"
 	@echo "  make clear-rag-data   - Clear all rows from RAG document tables (DocumentChunks and SourceDocuments)"
 	@echo ""
-	@echo "GraphRAG Data Population:"
-	@echo "  make populate-knowledge-graph - Create knowledge graph nodes and edges" 
-	@echo "  make check-graph-data - Check GraphRAG data status (entities, nodes, edges)"
-	@echo ""
 	@echo "Development:"
 	@echo "  make clean            - Clean up temporary files"
 	@echo "  make lint             - Run code linting"
 	@echo "  make format           - Format code"
-	@echo ""
-	@echo "Docker:"
-	@echo "  make docker-up        - Start IRIS container"
-	@echo "  make docker-down      - Stop IRIS container"
-	@echo "  make docker-logs      - View IRIS container logs"
 	@echo ""
 	@echo "Environment Info:"
 	@echo "  Environment managed by uv (automatic virtual environment)"
@@ -87,28 +78,6 @@ check-data:
 clear-rag-data:
 	@echo "Clearing RAG document tables using schema manager..."
 	uv run python scripts/utilities/schema_managed_data_utils.py --clear
-
-populate-knowledge-graph:
-	@echo "Creating knowledge graph nodes and edges using schema manager..."
-	uv run python scripts/utilities/schema_managed_graph_populator.py --populate
-
-check-graph-data:
-	@echo "Checking GraphRAG data status using schema manager..."
-	uv run python scripts/utilities/schema_managed_graph_populator.py --check
-
-populate-colbert-tokens:
-	@echo "Ensuring ColBERT token embeddings coverage..."
-	uv run python scripts/utilities/process_documents_with_colbert.py --directory data/pmc_oas_downloaded --limit 1000 --batch-size 50
-
-populate-ifind-sync:
-	@echo "Synchronizing IFind tables for HybridIFind pipeline..."
-	uv run python scripts/utilities/schema_managed_data_utils.py --sync-ifind
-
-populate-all-pipelines: populate-graph-all populate-more-graph-entities populate-colbert-tokens populate-ifind-sync
-	@echo "🚀 Complete data population for ALL pipeline types finished!"
-	@echo "✓ GraphRAG: Enhanced entity coverage"
-	@echo "✓ ColBERT: Token embeddings processed"  
-	@echo "✓ HybridIFind: IFind tables synchronized"
 
 # Development tools
 clean:

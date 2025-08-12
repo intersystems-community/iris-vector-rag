@@ -22,7 +22,11 @@ make load-data
 # 6. Test that you can access the iris_rag package
 make validate-iris-rag
 
-# 7. Try the various pipeline scripts! 
+# 7. Create your .env file and add your API keys in
+
+# 8. Try the various pipeline scripts! 
+# Note: these scripts currently use OpenAI's ChatGPT as the LLM, so having an API key is essential.
+# The first time you run any script after loading new data will take a long time due to overhead of initial chunking, embedding, and storage
 cd scripts/basic
 python try_basic_rag_pipeline.py
 ```

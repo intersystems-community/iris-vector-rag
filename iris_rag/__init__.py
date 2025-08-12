@@ -6,7 +6,6 @@ from .core.base import RAGPipeline
 from .core.connection import ConnectionManager
 from .config.manager import ConfigurationManager
 from .pipelines.basic import BasicRAGPipeline
-from .pipelines.colbert import ColBERTRAGPipeline
 from .pipelines.crag import CRAGPipeline
 
 # Import validation components
@@ -101,10 +100,6 @@ def _create_pipeline_legacy(
         return BasicRAGRerankingPipeline(
             connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func
         )
-    elif pipeline_type == "colbert":
-        return ColBERTRAGPipeline(
-            connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func, **kwargs
-        )
     elif pipeline_type == "crag":
         # Extract embedding_func from kwargs if provided
         embedding_func = kwargs.get("embedding_func")
@@ -114,39 +109,11 @@ def _create_pipeline_legacy(
             embedding_func=embedding_func,
             llm_func=llm_func,
         )
-    elif pipeline_type == "hyde":
-        from .pipelines.hyde import HyDERAGPipeline
-
-        return HyDERAGPipeline(connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func)
-    elif pipeline_type == "graphrag":
-        from .pipelines.graphrag import GraphRAGPipeline
-
-        return GraphRAGPipeline(connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func)
-    elif pipeline_type == "hybrid_ifind":
-        from .pipelines.hybrid_ifind import HybridIFindRAGPipeline
-
-        return HybridIFindRAGPipeline(
-            connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func
-        )
-    elif pipeline_type == "noderag":
-        from .pipelines.noderag import NodeRAGPipeline
-
-        return NodeRAGPipeline(connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func)
-    elif pipeline_type == "sql_rag":
-        from .pipelines.sql_rag import SQLRAGPipeline
-
-        return SQLRAGPipeline(connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func)
     else:
         available_types = [
             "basic",
             "basic_rerank",
-            "colbert",
             "crag",
-            "hyde",
-            "graphrag",
-            "hybrid_ifind",
-            "noderag",
-            "sql_rag",
         ]
         raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available: {available_types}")
 
@@ -246,7 +213,6 @@ __all__ = [
     "ConnectionManager",
     "ConfigurationManager",
     "BasicRAGPipeline",
-    "ColBERTRAGPipeline",
     "CRAGPipeline",
     "ValidatedPipelineFactory",
     "PreConditionValidator",

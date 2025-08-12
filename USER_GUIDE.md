@@ -1,32 +1,5 @@
 # User Guide
 
-Complete guide for installing, configuring, and using RAG Templates with InterSystems IRIS.
-
-### Setup
-
-```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd rag-templates
-
-# 2. Set up the Python virtual environment and install dependencies
-make setup-env  # This will create .venv and install core dependencies
-make install    # This will install all dependencies from requirements.txt
-
-# 3. Activate the virtual environment (if not already done by make setup-env/install)
-#    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# 4. Start the database
-docker-compose up -d
-
-# 5. Initialize and load sample data
-make setup-db
-make load-data
-
-# 6. Test your installation
-make validate-iris-rag
-```
-
 ## System Requirements
 
 ### Minimum Requirements
@@ -179,43 +152,6 @@ print(f"Answer: {result['answer']}")
 print(f"Found {len(result['retrieved_documents'])} relevant documents")
 ```
 
-### Quick Test
-
-```bash
-# Test that everything is working
-make test-pipeline PIPELINE=basic
-```
-
-## Using the CLI Tool (ragctl)
-
-The [`ragctl`](../ragctl) command-line tool provides easy access to common operations.
-
-### Basic Commands
-
-```bash
-# Check system status
-./ragctl status
-
-# Validate configuration
-./ragctl validate
-
-# Run reconciliation (data integrity check)
-./ragctl run --pipeline basic
-
-# Get help
-./ragctl --help
-```
-
-### Alternative CLI Access
-
-```bash
-# Using Python module
-python -m iris_rag.cli --help
-
-# Direct execution
-python iris_rag/cli/__main__.py --help
-```
-
 ## Document Management
 
 ### Loading Your Documents
@@ -298,34 +234,15 @@ The system supports multiple RAG (Retrieval Augmented Generation) techniques:
 
 ### Basic RAG
 - **Best for**: General question answering
-- **How to use**: `create_pipeline("basic")`
 - **Features**: Standard vector similarity search
 
-### ColBERT
-- **Best for**: High-precision retrieval
-- **How to use**: `create_pipeline("colbert")`
-- **Features**: Token-level embeddings with late interaction
+### Basic RAG
+- **Best for**: General question answering with more precision
+- **Features**: Overretrieval with reranking done using a cross encoder
 
 ### CRAG (Corrective RAG)
 - **Best for**: Self-correcting answers
-- **How to use**: `create_pipeline("crag")`
 - **Features**: Automatic quality assessment and correction
-
-### Other Techniques
-- **GraphRAG**: Knowledge graph-enhanced retrieval
-- **HyDE**: Hypothetical document embeddings
-- **NodeRAG**: Node-based document representation
-- **Hybrid iFindRAG**: Combines multiple search strategies
-
-### Testing All Techniques
-
-```bash
-# Validate all available techniques
-make validate-all-pipelines
-
-# Test all techniques with sample data
-make auto-setup-all
-```
 
 ## Common Use Cases
 
@@ -349,24 +266,6 @@ pipeline = create_pipeline("crag")
 # Ask complex research questions
 result = pipeline.query("What are the latest developments in AI?")
 print(result["answer"])
-```
-
-### 3. Technical Documentation Search
-
-```python
-# Use ColBERT for precise technical queries
-pipeline = create_pipeline("colbert")
-
-# Search technical documentation
-result = pipeline.query("How do I configure the database connection?")
-print(result["answer"])
-```
-
-### 4. Batch Processing
-
-```bash
-# Process multiple queries efficiently
-make eval-all-ragas-1000
 ```
 
 ## Troubleshooting
@@ -393,74 +292,3 @@ make check-data
 # If no documents, load sample data
 make load-data
 ```
-
-#### "Pipeline not found" Error
-```bash
-# Validate all pipelines
-make validate-all-pipelines
-```
-
-
-## Getting Help
-
-### Documentation
-- **[Developer Guide](DEVELOPER_GUIDE.md)**: Technical details and architecture
-- **[Configuration Guide](CONFIGURATION.md)**: Advanced configuration options
-- **[Performance Guide](guides/PERFORMANCE_GUIDE.md)**: Optimization tips
-- **[Security Guide](guides/SECURITY_GUIDE.md)**: Security best practices
-
-### Command Reference
-```bash
-# See all available commands
-make help
-
-# Get CLI help
-./ragctl --help
-
-# Test specific components
-make validate-iris-rag
-make test-dbapi
-make check-data
-```
-
-### Quick Diagnostics
-
-```bash
-# Complete system check
-make status
-
-# Validate everything is working
-make validate-all
-
-# Run a quick test
-make test-pipeline PIPELINE=basic
-```
-
-### Environment Information
-
-```bash
-# Check your environment
-make env-info
-
-# Verify conda environment
-conda info --envs
-
-# Check Python packages
-pip list | grep -E "(iris|torch|transformers)"
-```
-
-### Support Resources
-
-1. **Check the logs**: Most issues are explained in the system logs
-2. **Run diagnostics**: Use `make status` to identify problems
-3. **Use self-healing**: Run `make heal-data` to fix common issues
-4. **Validate setup**: Use `make validate-all` to ensure everything is configured correctly
-
-### Performance Tips
-
-- Start with the Basic RAG pipeline for testing
-- Use `make load-data` to load sample documents before testing
-- Run `make heal-data` if you encounter data consistency issues
-- Use `make validate-all-pipelines` to ensure all techniques are properly configured
-
-The system is designed to be self-healing and will automatically detect and fix many common issues. When in doubt, run the validation and healing commands to restore the system to a working state.

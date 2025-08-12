@@ -12,13 +12,7 @@ from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
 from ..embeddings.manager import EmbeddingManager
 from ..pipelines.basic import BasicRAGPipeline
-from ..pipelines.colbert import ColBERTRAGPipeline
 from ..pipelines.crag import CRAGPipeline
-from ..pipelines.hyde import HyDERAGPipeline
-from ..pipelines.graphrag import GraphRAGPipeline
-from ..pipelines.hybrid_ifind import HybridIFindRAGPipeline
-from ..pipelines.noderag import NodeRAGPipeline
-from ..pipelines.sql_rag import SQLRAGPipeline
 from ..pipelines.basic_rerank import BasicRAGRerankingPipeline
 from .requirements import get_pipeline_requirements
 from .validator import PreConditionValidator
@@ -122,38 +116,8 @@ class ValidatedPipelineFactory:
             return BasicRAGPipeline(
                 connection_manager=self.connection_manager, config_manager=self.config_manager, llm_func=llm_func
             )
-        elif pipeline_type == "colbert":
-            return ColBERTRAGPipeline(
-                connection_manager=self.connection_manager,
-                config_manager=self.config_manager,
-                llm_func=llm_func,
-                **kwargs,
-            )
         elif pipeline_type == "crag":
             return CRAGPipeline(
-                connection_manager=self.connection_manager, config_manager=self.config_manager, llm_func=llm_func
-            )
-        elif pipeline_type == "hyde":
-            return HyDERAGPipeline(
-                connection_manager=self.connection_manager, config_manager=self.config_manager, llm_func=llm_func
-            )
-        elif pipeline_type == "graphrag":
-            return GraphRAGPipeline(
-                connection_manager=self.connection_manager, config_manager=self.config_manager, llm_func=llm_func
-            )
-        elif pipeline_type == "hybrid_ifind":
-            return HybridIFindRAGPipeline(
-                connection_manager=self.connection_manager, config_manager=self.config_manager, llm_func=llm_func
-            )
-        elif pipeline_type == "noderag":
-            return NodeRAGPipeline(
-                connection_manager=self.connection_manager,
-                config_manager=self.config_manager,
-                embedding_manager=self.embedding_manager,  # Pass embedding_manager
-                llm_func=llm_func,
-            )
-        elif pipeline_type == "sql_rag":
-            return SQLRAGPipeline(
                 connection_manager=self.connection_manager, config_manager=self.config_manager, llm_func=llm_func
             )
         elif pipeline_type == "basic_rerank":
@@ -164,13 +128,7 @@ class ValidatedPipelineFactory:
             available_types = [
                 "basic",
                 "basic_rerank",
-                "colbert",
                 "crag",
-                "hyde",
-                "graphrag",
-                "hybrid_ifind",
-                "noderag",
-                "sql_rag",
             ]
             raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available: {available_types}")
 
@@ -318,11 +276,6 @@ class ValidatedPipelineFactory:
             "basic",
             "colbert",
             "crag",
-            "hyde",
-            "graphrag",
-            "hybrid_ifind",
-            "noderag",
-            "sql_rag",
         ]
         results = {}
 
