@@ -61,7 +61,8 @@ def main():
 
     print("Running RAG + Reranking Pipeline")
     # Step 2: Run a sample query
-    query = "What is InterSystems IRIS?"
+    # query = "What is InterSystems IRIS?"
+    query = "What has recent research found on auditory signalling?"
     response = reranking_rag_pipeline.query(query, top_k=3)
 
     # Step 3: Print final answer
@@ -105,8 +106,9 @@ def main():
                 source = metadata_json.get("source", "")
                 if "test_txt_docs" in source:
                     doc_ids_to_delete.append(doc_id)
+                    logger.info(f"Should delete row with doc_id: {doc_id}")
             except (json.JSONDecodeError, TypeError) as e:
-                print(f"Skipping row {doc_id}: malformed metadata - {e}")
+                logger.info(f"Skipping row {doc_id}: malformed metadata - {e}")
 
         # Step 3: Delete matching rows
         print(f"Found {len(doc_ids_to_delete)} documents to delete.")

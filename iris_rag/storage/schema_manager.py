@@ -234,10 +234,15 @@ class SchemaManager:
                     # Expected format: (schema_version, vector_dim, embedding_model, config_json)
                     schema_version, vector_dim, embedding_model, config_json = result
                     config = json.loads(config_json) if config_json else {}
+
+                    # This won't actually exist in config yet
+                    vector_data_type = config.get("vector_data_type", "FLOAT")  # Default to FLOAT
+
                     return {
                         "schema_version": schema_version,
                         "vector_dimension": vector_dim,
                         "embedding_model": embedding_model,
+                        "vector_data_type": vector_data_type,   
                         "configuration": config,
                     }
                 elif len(result) == 1:

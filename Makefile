@@ -77,9 +77,7 @@ validate-all-pipelines:
 
 # Data management (DBAPI-first)
 load-data:
-	@echo "STEP 1: Removing existing data in tables..."
-	$(MAKE) clear-rag-data 
-	@echo "STEP 2: Loading sample PMC documents using DBAPI..."
+	@echo "Loading sample PMC documents using DBAPI..."
 	uv run python -c "from data.loader_fixed import process_and_load_documents; result = process_and_load_documents('data/sample_10_docs', limit=10); print(f'Loaded: {result}')"
 
 check-data:

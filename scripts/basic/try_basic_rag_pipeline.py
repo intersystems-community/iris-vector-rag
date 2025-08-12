@@ -67,7 +67,8 @@ def main():
 
     print("Running Basic RAG Pipeline")
     # Run a sample query
-    query = "What are the benefits of using RAG pipelines?"
+    query = "What are the benefits of using retrieval augmented generation?"
+    # query = "What demographics are at risk of weight gain?"
     response = basic_rag_pipeline.query(query, top_k=3)
 
     # Print final answer
@@ -110,9 +111,10 @@ def main():
                 metadata_json = json.loads(metadata_raw)
                 source = metadata_json.get("source", "")
                 if "test_txt_docs" in source:
+                    logger.info(f"Should delete row with doc_id: {doc_id}")
                     doc_ids_to_delete.append(doc_id)
             except (json.JSONDecodeError, TypeError) as e:
-                print(f"Skipping row {doc_id}: malformed metadata - {e}")
+                logger.info(f"Skipping row with doc_id: {doc_id} - malformed metadata - {e}")
 
         # Step 3: Delete matching rows
         print(f"Found {len(doc_ids_to_delete)} documents to delete.")

@@ -19,9 +19,12 @@ docker-compose up -d
 make setup-db
 make load-data
 
-# 6. Test your installation
+# 6. Test that you can access the iris_rag package
 make validate-iris-rag
 
+# 7. Try the various pipeline scripts! 
+cd scripts/basic
+python try_basic_rag_pipeline.py
 ```
 
 ## 📚 References & Research

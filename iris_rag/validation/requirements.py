@@ -101,7 +101,7 @@ class BasicRAGRequirements(PipelineRequirements):
     def required_embeddings(self) -> List[EmbeddingRequirement]:
         return [
             EmbeddingRequirement(
-                name="document_embeddings",
+                name="embedding",
                 table="RAG.SourceDocuments",
                 column="embedding",
                 description="Document-level embeddings for vector search",
