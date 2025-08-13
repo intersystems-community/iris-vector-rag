@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from .iris_connection_manager import get_iris_connection
+from .iris_index_utils import create_indexes_from_sql_file, ensure_schema_indexes
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -43,16 +44,52 @@ def initialize_complete_rag_database(schema: str = "RAG"):
             # Split by semicolons and execute each statement
             statements = [stmt.strip() for stmt in sql_content.split(';') if stmt.strip()]
             
-            for i, statement in enumerate(statements):
+            # Separate table creation from index creation
+            table_statements = []
+            index_statements = []
+            
+            for statement in statements:
                 if statement and not statement.startswith('--'):
+                    if statement.upper().startswith('CREATE INDEX'):
+                        index_statements.append(statement)
+                    else:
+                        table_statements.append(statement)
+            
+            # Execute table creation statements first
+            for i, statement in enumerate(table_statements):
+                try:
+                    cursor.execute(statement)
+                    logger.debug(f"✅ Executed table statement {i+1}/{len(table_statements)}")
+                except Exception as e:
+                    if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
+                        logger.debug(f"⚠️ Table statement {i+1} - object already exists")
+                    else:
+                        logger.warning(f"⚠️ Table statement {i+1} failed: {e}")
+            
+            # Use the index utility for index creation
+            if index_statements:
+                logger.info("Creating indexes with proper error handling...")
+                failed_indexes = []
+                for statement in index_statements:
                     try:
+                        # Replace "CREATE INDEX IF NOT EXISTS" with "CREATE INDEX"
+                        statement = statement.replace('IF NOT EXISTS', '').replace('if not exists', '')
                         cursor.execute(statement)
-                        logger.debug(f"✅ Executed statement {i+1}/{len(statements)}")
+                        logger.debug(f"✅ Created index: {statement[:50]}...")
                     except Exception as e:
-                        if "already exists" in str(e).lower() or "duplicate" in str(e).lower():
-                            logger.debug(f"⚠️ Statement {i+1} - object already exists")
+                        error_str = str(e).lower()
+                        if any(indicator in error_str for indicator in [
+                            'already exists', 'duplicate', 'index exists', 'name already used'
+                        ]):
+                            logger.debug(f"⚠️ Index already exists (ignored): {statement[:50]}...")
                         else:
-                            logger.warning(f"⚠️ Statement {i+1} failed: {e}")
+                            logger.warning(f"⚠️ Index creation failed: {statement[:50]}... Error: {e}")
+                            failed_indexes.append(statement)
+                
+                if failed_indexes:
+                    logger.warning(f"⚠️ {len(failed_indexes)} indexes failed to create")
+                else:
+                    logger.info("✅ All indexes created successfully")
             
             logger.info(f"✅ Schema initialization completed for {schema}")
         else:
@@ -65,11 +102,6 @@ def initialize_complete_rag_database(schema: str = "RAG"):
         expected_tables = [
             'SourceDocuments',
             'DocumentChunks', 
-            'Entities',
-            'Relationships',
-            'KnowledgeGraphNodes',
-            'KnowledgeGraphEdges',
-            'DocumentTokenEmbeddings'
         ]
         
         for table in expected_tables:
@@ -118,11 +150,7 @@ if __name__ == "__main__":
     if success:
         print(f"🎉 Database initialization completed successfully for schema: {args.schema}")
         print("📋 All tables and indexes are ready for:")
-        print("   - BasicRAG, HyDE, CRAG")
-        print("   - OptimizedColBERT, ColBERT") 
-        print("   - NodeRAG, GraphRAG")
-        print("   - HybridiFindRAG")
-        print("   - All performance optimizations included")
+        print("   - BasicRAG, ReRanking, CRAG")
     else:
         print("❌ Database initialization failed")
         sys.exit(1)

@@ -1,169 +1,35 @@
-# RAG Templates - Enterprise RAG Framework
-
-**Production-ready RAG applications with InterSystems IRIS.** Zero-configuration APIs, enterprise-grade architecture, and seamless LangChain integration.
-
-## 🚀 Quick Start
-
-### Python - Zero Configuration
-```python
-from rag_templates import RAG
-
-# Works immediately - no setup required
-rag = RAG()
-rag.add_documents(["Your documents here"])
-answer = rag.query("What is machine learning?")
-print(answer)
-```
-
-### JavaScript - Zero Configuration  
-```javascript
-import { RAG } from '@rag-templates/core';
-
-const rag = new RAG();
-await rag.addDocuments(["Your documents here"]);
-const answer = await rag.query("What is machine learning?");
-console.log(answer);
-```
-
-### ObjectScript Integration
-```objectscript
-// Direct IRIS integration via Embedded Python
-Set bridge = ##class(RAG.PythonBridge).%New()
-Set result = bridge.Query("What is machine learning?", "basic")
-Write result.answer
-```
-
-## 🏗️ Core Architecture
-
-### Schema Manager
-Centralized schema management with automatic migration support:
-- **Universal dimension authority** for all vector tables
-- **Automatic schema detection** and migration
-- **Customizable table names** and field configurations
-- **Version tracking** and rollback capabilities
-
-### IRISVectorStore Interface
-LangChain-compatible vector store with enterprise features:
-```python
-from rag_templates.storage import IRISVectorStore
-
-# Drop-in LangChain replacement
-vector_store = IRISVectorStore(connection_manager, config_manager)
-retriever = vector_store.as_retriever(search_kwargs={"k": 5})
-```
-
-### Configuration System
-Environment-aware configuration with validation:
-```python
-from rag_templates.config import ConfigurationManager
-
-config = ConfigurationManager()
-# Supports RAG_DATABASE__IRIS__HOST env vars
-# Automatic YAML loading with schema validation
-```
-
-## 🛠️ Available RAG Techniques
-
-| Technique | Description | Best For | Status |
-|-----------|-------------|----------|---------|
-| **basic** | Standard vector similarity | General purpose, fast queries | ✅ Production |
-| **colbert** | Token-level embeddings with MaxSim | High precision retrieval | ✅ Production* |
-| **crag** | Corrective RAG with self-correction | Accuracy-critical applications | ✅ Production |
-| **hyde** | Hypothetical Document Embeddings | Complex reasoning tasks | ✅ Production |
-| **graphrag** | Graph-based knowledge retrieval | Structured knowledge bases | ✅ Production |
-| **hybrid_ifind** | Multi-modal search combination | Enterprise search | ✅ Production |
-| **noderag** | Node-based structured retrieval | Hierarchical data | ✅ Production |
-
-*ColBERT: Includes experimental [Pylate integration](https://github.com/lightonai/pylate) with pluggable backend support (`native`/`pylate`).
-
-## 🎯 Developer Experience
-
-### Three-Tier API Design
-
-**Simple API** - Zero configuration for prototypes:
-```python
-rag = RAG()  # Works immediately
-```
-
-**Standard API** - Production configuration:
-```python
-rag = ConfigurableRAG({
-    'technique': 'colbert',
-    'llm_provider': 'openai'
-})
-```
-
-**Enterprise API** - Full control:
-```python
-config = ConfigManager.from_file('enterprise-config.yaml')
-rag = ConfigurableRAG(config)
-```
-
-### Key Configuration Options
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `RAG_DATABASE__IRIS__HOST` | IRIS database host | `localhost` |
-| `RAG_EMBEDDING__MODEL` | Embedding model name | `all-MiniLM-L6-v2` |
-| `RAG_LLM__PROVIDER` | LLM provider | `openai` |
-| `RAG_TECHNIQUE` | RAG technique to use | `basic` |
-
-## 🔗 MCP Integration
-
-The Multi-Cloud Platform (MCP) integration allows you to easily deploy and manage RAG services as microservices. This design enables flexible deployment across various environments and seamless integration with existing enterprise systems.
-
-### Creating MCP Servers
-
-Create MCP servers in minutes:
-```javascript
-import { createMCPServer } from '@rag-templates/mcp';
-
-const server = createMCPServer({
-    name: "knowledge-server",
-    description: "Company knowledge base",
-    ragConfig: { technique: 'graphrag' }
-});
-
-server.start();
-```
-
-### IRIS SQL Tool Integration
-
-The IRIS SQL tool provides direct SQL access and advanced vector search capabilities within your MCP-deployed RAG services. It allows for efficient data manipulation and retrieval directly from InterSystems IRIS databases, leveraging its powerful SQL and vector functionalities. This integration streamlines data management for RAG applications, enabling complex queries and high-performance vector lookups.
-
-For detailed setup and usage, refer to the [MCP Integration Guide](docs/MCP_INTEGRATION_GUIDE.md).
-
-## 📚 Documentation
-
-| Guide | Description |
-|-------|-------------|
-| **[📖 User Guide](docs/USER_GUIDE.md)** | Complete usage guide and best practices |
-| **[🔗 MCP Integration Guide](docs/MCP_INTEGRATION_GUIDE.md)** | Multi-Cloud Platform integration, MCP server creation, and IRIS SQL tool usage |
-| **[📋 Documentation](docs/README.md)** | Additional documentation and guides |
-
-## ✅ Verification
+## Set up
 
 ```bash
-# Quick setup and validation
-make setup-env && make install
-make validate-iris-rag && make test-unit
+# 1. Clone the repository
+git clone <repository-url>
+cd rag-templates
 
-# Full end-to-end testing with 1000+ documents
-make load-1000 && make test-1000
+# 2. Set up the Python virtual environment and install dependencies
+make setup-env  # This will create .venv and install core dependencies
+make install    # This will install all dependencies from requirements.txt
 
-# Performance benchmarking
-make test-ragas-1000-enhanced
+# 3. Activate the virtual environment (if not already done by make setup-env/install)
+#    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# 4. Start the database
+docker-compose up -d
+
+# 5. Initialize and load sample data
+make setup-db
+make load-data
+
+# 6. Test that you can access the iris_rag package
+make validate-iris-rag
+
+# 7. Create your .env file and add your API keys in
+
+# 8. Try the various pipeline scripts! 
+# Note: these scripts currently use OpenAI's ChatGPT as the LLM, so having an API key is essential.
+# The first time you run any script after loading new data will take a long time due to overhead of initial chunking, embedding, and storage
+cd scripts/basic
+python try_basic_rag_pipeline.py
 ```
-
-## 🌟 Key Features
-
-- **Zero Configuration**: Production-ready defaults, works immediately
-- **Enterprise Architecture**: Schema management, migrations, monitoring
-- **LangChain Compatible**: Drop-in replacement for existing workflows  
-- **Multi-Language**: Python, JavaScript, and ObjectScript support
-- **MCP-First Design**: Trivial MCP server creation
-- **Advanced RAG**: 7+ sophisticated retrieval techniques
-- **Performance Optimized**: Built-in caching and optimization
 
 ## 📚 References & Research
 
@@ -185,14 +51,7 @@ make test-ragas-1000-enhanced
 - **LLM Integration**: [LangChain](https://github.com/langchain-ai/langchain), [OpenAI API](https://platform.openai.com/docs/api-reference)
 - **Evaluation**: [RAGAS Framework](https://github.com/explodinggradients/ragas)
 
-## 🤝 Contributing
-
-We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
----
-
-**Transform your RAG development from complex to enterprise-ready. Start building in minutes, scale to production.**

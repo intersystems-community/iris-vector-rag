@@ -11,15 +11,6 @@ pipelines:
       chunk_size: 1000
       similarity_threshold: 0.7
 
-  - name: "HyDERAG"
-    module: "iris_rag.pipelines.hyde"
-    class: "HyDERAGPipeline"
-    enabled: true
-    params:
-      top_k: 5
-      use_hypothetical_doc: true
-      temperature: 0.1
-
   - name: "CRAG"
     module: "iris_rag.pipelines.crag"
     class: "CRAGPipeline"
@@ -29,50 +20,14 @@ pipelines:
       confidence_threshold: 0.8
       use_web_search: false
 
-  - name: "ColBERTRAG"
-    module: "iris_rag.pipelines.colbert"
-    class: "ColBERTRAGPipeline"
-    enabled: true
-    params:
-      top_k: 10
-      max_query_length: 512
-      doc_maxlen: 180
-
-  - name: "NodeRAG"
-    module: "iris_rag.pipelines.noderag"
-    class: "NodeRAGPipeline"
+  - name: "BasicRAGReranking"
+    module: "iris_rag.pipelines.basic_rerank"
+    class: "BasicRAGRerankingPipeline"
     enabled: true
     params:
       top_k: 5
-      node_chunk_size: 512
-      overlap: 50
-
-  - name: "GraphRAG"
-    module: "iris_rag.pipelines.graphrag"
-    class: "GraphRAGPipeline"
-    enabled: true
-    params:
-      top_k: 5
-      community_level: 2
-      use_global_search: true
-
-  - name: "HybridIFindRAG"
-    module: "iris_rag.pipelines.hybrid_ifind"
-    class: "HybridIFindRAGPipeline"
-    enabled: true
-    params:
-      top_k: 5
-      ifind_weight: 0.3
-      vector_weight: 0.7
-
-  # Example of an external/hypothetical pipeline
-  - name: "AdvancedExternalRAG"
-    module: "external_package.rag_pipelines"
-    class: "AdvancedRAGPipeline"
-    enabled: false
-    params:
-      custom_param: "value"
-      advanced_feature: true
+      reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+      rerank_factor: 2
 
 # Framework dependencies (shared across all pipelines)
 framework:

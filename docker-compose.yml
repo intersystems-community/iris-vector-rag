@@ -10,6 +10,7 @@ services:
       - ISC_DEFAULT_PASSWORD=SYS
     volumes:
       - iris_db_data:/usr/irissys/mgr # Named volume for IRIS data persistence
+      - .:/home/irisowner/dev # Mount project directory for ZPM access
     stdin_open: true # Keep container running
     tty: true        # Keep container running
     healthcheck:
