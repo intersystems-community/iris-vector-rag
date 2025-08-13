@@ -49,7 +49,6 @@ python try_basic_rag_pipeline.py
 - **Vector Databases**: [InterSystems IRIS Vector Search](https://docs.intersystems.com/iris20241/csp/docbook/DocBook.UI.Page.cls?KEY=GSQL_vecsearch)
 - **Embeddings**: [Sentence Transformers](https://github.com/UKPLab/sentence-transformers), [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings)
 - **LLM Integration**: [LangChain](https://github.com/langchain-ai/langchain), [OpenAI API](https://platform.openai.com/docs/api-reference)
-- **Evaluation**: [RAGAS Framework](https://github.com/explodinggradients/ragas)
 
 ## 📄 License
 
