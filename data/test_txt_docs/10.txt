@@ -1,1 +1,0 @@
-RAG stands for Retrieval-Augmented Generation. It combines document retrieval with LLM-based generation to produce grounded answers.

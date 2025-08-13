@@ -3,6 +3,9 @@ Test script for CRAG Pipeline.
 
 This script tests the CRAGPipeline implementation by executing a sample query
 and logging the results.
+
+Please make sure to load your data before running this script.
+Run make load-data in the project root to load the data.
 """
 
 import logging
