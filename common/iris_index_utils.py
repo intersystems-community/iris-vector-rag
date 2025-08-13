@@ -131,40 +131,6 @@ def ensure_schema_indexes(cursor, schema_name: str = "RAG") -> bool:
         ("idx_chunks_doc_id", f"{schema_name}.DocumentChunks", "doc_id"),
         ("idx_chunks_type", f"{schema_name}.DocumentChunks", "chunk_type"),
         ("idx_hnsw_chunk_embedding", f"{schema_name}.DocumentChunks", "chunk_embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
-        
-        # Entities indexes
-        ("idx_entities_id", f"{schema_name}.Entities", "entity_id"),
-        ("idx_entities_name", f"{schema_name}.Entities", "entity_name"),
-        ("idx_entities_type", f"{schema_name}.Entities", "entity_type"),
-        ("idx_entities_source_doc", f"{schema_name}.Entities", "source_doc_id"),
-        ("idx_hnsw_entity_embedding", f"{schema_name}.Entities", "embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
-        ("idx_entities_created", f"{schema_name}.Entities", "created_at"),
-        ("idx_entities_type_name", f"{schema_name}.Entities", "entity_type, entity_name"),
-        
-        # Relationships indexes
-        ("idx_relationships_id", f"{schema_name}.Relationships", "relationship_id"),
-        ("idx_relationships_source", f"{schema_name}.Relationships", "source_entity_id"),
-        ("idx_relationships_target", f"{schema_name}.Relationships", "target_entity_id"),
-        ("idx_relationships_type", f"{schema_name}.Relationships", "relationship_type"),
-        ("idx_relationships_entities", f"{schema_name}.Relationships", "source_entity_id, target_entity_id"),
-        ("idx_relationships_created", f"{schema_name}.Relationships", "created_at"),
-        ("idx_relationships_type_strength", f"{schema_name}.Relationships", "relationship_type, strength"),
-        
-        # KnowledgeGraphNodes indexes
-        ("idx_kg_nodes_id", f"{schema_name}.KnowledgeGraphNodes", "node_id"),
-        ("idx_kg_nodes_type", f"{schema_name}.KnowledgeGraphNodes", "node_type"),
-        ("idx_hnsw_kg_node_embedding", f"{schema_name}.KnowledgeGraphNodes", "embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
-        
-        # KnowledgeGraphEdges indexes
-        ("idx_kg_edges_id", f"{schema_name}.KnowledgeGraphEdges", "edge_id"),
-        ("idx_kg_edges_source", f"{schema_name}.KnowledgeGraphEdges", "source_node_id"),
-        ("idx_kg_edges_target", f"{schema_name}.KnowledgeGraphEdges", "target_node_id"),
-        ("idx_kg_edges_type", f"{schema_name}.KnowledgeGraphEdges", "edge_type"),
-        
-        # DocumentTokenEmbeddings indexes
-        ("idx_token_embeddings_doc", f"{schema_name}.DocumentTokenEmbeddings", "doc_id"),
-        ("idx_token_embeddings_token", f"{schema_name}.DocumentTokenEmbeddings", "token_index"),
-        ("idx_hnsw_token_embedding", f"{schema_name}.DocumentTokenEmbeddings", "token_embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
     ]
     
     success_count = 0

@@ -26,18 +26,9 @@ pipelines:
     chunk_overlap: 200
     default_top_k: 5
     embedding_batch_size: 32
-  colbert:
-    token_embedding_dimension: 384
-    max_tokens_per_document: 512
-    token_embedding_batch_size: 16
-    use_colbert_tokenizer: true
 
 embeddings:
   default_provider: "sentence_transformers"
   sentence_transformers:
     model_name: "all-MiniLM-L6-v2"
-    device: "cpu"
-  colbert:
-    model_name: "colbert-ir/colbertv2.0"
-    token_dimension: 384
     device: "cpu"

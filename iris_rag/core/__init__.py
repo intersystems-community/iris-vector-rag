@@ -10,7 +10,7 @@ from .vector_store_exceptions import (
     VectorStoreError,
     VectorStoreConnectionError,
     VectorStoreDataError,
-    VectorStoreCLOBError
+    VectorStoreCLOBError,
 )
 
 __all__ = [
@@ -21,5 +21,5 @@ __all__ = [
     "VectorStoreError",
     "VectorStoreConnectionError",
     "VectorStoreDataError",
-    "VectorStoreCLOBError"
+    "VectorStoreCLOBError",
 ]

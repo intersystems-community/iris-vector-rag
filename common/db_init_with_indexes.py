@@ -102,11 +102,6 @@ def initialize_complete_rag_database(schema: str = "RAG"):
         expected_tables = [
             'SourceDocuments',
             'DocumentChunks', 
-            'Entities',
-            'Relationships',
-            'KnowledgeGraphNodes',
-            'KnowledgeGraphEdges',
-            'DocumentTokenEmbeddings'
         ]
         
         for table in expected_tables:
@@ -155,11 +150,7 @@ if __name__ == "__main__":
     if success:
         print(f"🎉 Database initialization completed successfully for schema: {args.schema}")
         print("📋 All tables and indexes are ready for:")
-        print("   - BasicRAG, HyDE, CRAG")
-        print("   - OptimizedColBERT, ColBERT") 
-        print("   - NodeRAG, GraphRAG")
-        print("   - HybridiFindRAG")
-        print("   - All performance optimizations included")
+        print("   - BasicRAG, ReRanking, CRAG")
     else:
         print("❌ Database initialization failed")
         sys.exit(1)

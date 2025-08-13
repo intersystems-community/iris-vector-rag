@@ -1,1 +1,0 @@
-OpenAI's GPT models can generate text, summarize content, and perform question-answering with high accuracy.

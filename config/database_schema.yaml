@@ -11,91 +11,55 @@ tables:
     name: "SourceDocuments"
     description: "Primary document storage with embeddings"
     columns:
-      id: "doc_id"
-      title: "title"
-      content: "text_content"
-      authors: "authors"
-      keywords: "keywords"
-      embedding: "embedding"
-      metadata: "metadata"
-      created_at: "created_at"
+      id: id
+      doc_id: doc_id
+      title: title
+      abstract: abstract
+      text_content: text_content
+      authors: authors
+      keywords: keywords
+      embedding: embedding
+      metadata: metadata
+      created_at: created_at
     indexes:
-      - name: "idx_sourcedocs_embedding"
-        columns: ["embedding"]
-        type: "vector"
-      - name: "idx_sourcedocs_id"
-        columns: ["doc_id"]
-        type: "primary"
+      - name: idx_source_docs_id
+        columns:
+        - doc_id
+        type: primary
+      - name: idx_hnsw_source_embedding
+        columns:
+        - embedding
+        type: vector
+      - name: idx_source_docs_created
+        columns:
+        - created_at
 
-  # Document chunks for CRAG/NodeRAG
+  # Document chunks for CRAG
   document_chunks:
     name: "DocumentChunks"    # Current actual table name
     alias: "ChunkedDocuments" # Alternative name
-    description: "Document chunks for CRAG and NodeRAG pipelines"
+    description: "Document chunks for CRAG pipelines"
     columns:
-      id: "chunk_id"          # Standardized ID column
-      doc_id: "doc_id"
-      content: "chunk_text"
-      embedding: "chunk_embedding"
-      index: "chunk_index"
-      type: "chunk_type"
-      metadata: "metadata"
-      created_at: "created_at"
+      id: id
+      chunk_id: chunk_id
+      doc_id: doc_id
+      chunk_text: chunk_text
+      chunk_embedding: chunk_embedding
+      chunk_index: chunk_index
+      chunk_type: chunk_type
+      metadata: metadata
+      created_at: created_at
     indexes:
-      - name: "idx_chunks_doc_id"
-        columns: ["doc_id"]
-      - name: "idx_chunks_embedding"
-        columns: ["chunk_embedding"]
-        type: "vector"
-
-  # Entities for GraphRAG
-  document_entities:
-    name: "Entities"
-    description: "Extracted entities for GraphRAG pipeline"
-    columns:
-      entity_id: "entity_id"
-      doc_id: "source_doc_id"
-      entity_text: "entity_name"
-      entity_type: "entity_type"
-      description: "description"
-      embedding: "embedding"
-      created_at: "created_at"
-    indexes:
-      - name: "idx_entities_doc_id"
-        columns: ["source_doc_id"]
-      - name: "idx_entities_type"
-        columns: ["entity_type"]
-
-  # Token embeddings for ColBERT
-  document_token_embeddings:
-    name: "DocumentTokenEmbeddings"
-    description: "Token-level embeddings for ColBERT pipeline"
-    columns:
-      doc_id: "doc_id"
-      token_index: "token_index"
-      token_text: "token_text"
-      token_embedding: "token_embedding"
-      metadata: "metadata_json"
-      created_at: "created_at"
-    indexes:
-      - name: "idx_tokens_doc_id"
-        columns: ["doc_id"]
-      - name: "idx_tokens_embedding"
-        columns: ["token_embedding"]
-        type: "vector"
-
-  # IFind optimization  
-  ifind_index:
-    name: "SourceDocuments"  # Use main table for now since IFind table doesn't exist
-    description: "Uses main SourceDocuments table for IFind operations"
-    columns:
-      doc_id: "doc_id"
-      content: "text_content"
-      created_at: "created_at"
-    indexes:
-      - name: "idx_ifind_doc_id"
-        columns: ["doc_id"]
-        type: "primary"
+      - name: idx_chunks_doc_id
+        columns:
+        - doc_id
+      - name: idx_chunks_type
+        columns:
+        - chunk_type
+      - name: idx_hnsw_chunk_embedding
+        columns:
+        - chunk_embedding
+        type: vector
 
 # Column name mappings for standardization
 column_mappings:
@@ -127,7 +91,6 @@ data_types:
   text_content: "LONGVARCHAR"
   embedding: "VARCHAR(32000)"  # IRIS vector format
   vector_dimension: 384  # all-MiniLM-L6-v2 model
-  colbert_token_dimension: 768  # ColBERT token embeddings
   timestamp: "TIMESTAMP"
   metadata: "VARCHAR(4000)"
 

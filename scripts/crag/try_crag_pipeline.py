@@ -1,8 +1,8 @@
 """
-Test script for Basic RAG Re-Ranking Pipeline.
+Test script for CRAG Pipeline.
 
-Re-Ranking Pipeline is a variant of the Basic RAG Pipeline that includes
-initial overretrieval and a re-ranking step to improve the final answer quality.
+This script tests the CRAGPipeline implementation by executing a sample query
+and logging the results.
 
 Please make sure to load your data before running this script.
 Run make load-data in the project root to load the data.
@@ -48,29 +48,28 @@ def openai_llm(prompt: str) -> str:
 
 def main():
     # Setup logging
-    logging.basicConfig(level=logging.WARNING)  # Set to INFO or WARNING to reduce verbosity
+    logging.basicConfig(level=logging.WARNING)
     logger = logging.getLogger()
 
     llm_func = openai_llm if USE_REAL_LLM else dummy_llm
 
-    print("Creating RAG Reranking Pipeline")
+    print("Creating CRAG Pipeline with Auto-Setup")
     # Create pipeline using iris_rag factory with auto_setup=True
-    # This ensures database schema is properly initialized
-    reranking_rag_pipeline = iris_rag.create_pipeline(
-        pipeline_type="basic_rerank",
-        llm_func=llm_func, 
-        auto_setup=True,
+    crag_pipeline = iris_rag.create_pipeline(
+        pipeline_type="crag",
+        llm_func=llm_func,  
+        auto_setup=True,   
         validate_requirements=True
     )
-    print("✓ RAG Reranking Pipeline created successfully")
+    print("✓ CRAG Pipeline created successfully")
 
-    print("Running RAG + Reranking Pipeline")
+    print("Running CRAG Pipeline")
     # Run a sample query
-    query = "What has recent research found on auditory signalling?"
-    response = reranking_rag_pipeline.query(query, top_k=3)
+    query = "What demographics are at risk of weight gain?"
+    response = crag_pipeline.query(query, top_k=3)
 
-    # Step 3: Print final answer
-    print("\n========== RAG + Reranking Pipeline Output ==========")
+    # Print final answer
+    print("\n========== CRAG Pipeline Output ==========")
     print(f"Query: {response['query']}")
     print(f"Answer: {response['answer']}")
     print(f"Execution Time: {response['execution_time']:.2f}s")

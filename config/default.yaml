@@ -27,17 +27,6 @@ pipelines:
     retrieval_limit: 5
     similarity_threshold: 0.7
     max_context_length: 4000
-  
-  colbert:
-    max_query_length: 32
-    doc_maxlen: 180
-    mask_punctuation: true
-    num_candidates: 30
-    token_embedding_dimension: 384
-  
-  hyde:
-    num_hypothetical_docs: 3
-    hypothesis_length: 100
 
 # Vector Search Configuration
 vector_search:

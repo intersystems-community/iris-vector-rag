@@ -43,8 +43,7 @@ test_results/
 test_logs/
 benchmark_results/
 iris_container_data/
-colbert-workspace.code-workspace
-graphrag-workspace.code-workspace
+
 *.log
 # Add .venv to prevent host's venv from being copied
 .venv
