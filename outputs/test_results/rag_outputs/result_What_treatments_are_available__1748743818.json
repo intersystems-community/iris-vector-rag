@@ -1,0 +1,26 @@
+{
+  "query": "What treatments are available for Alzheimer's disease?",
+  "answer": "Based on the provided information from the knowledge graph, there is no direct answer to the question about the treatments available for Alzheimer's disease. Additional information or documents related to Alzheimer's treatments would be needed to provide a comprehensive answer.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11604056', 'content': '65', 'score': 1.0}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11016520', 'content': '84', 'score': 0.95}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11604056', 'content': '109', 'score': 0.9}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11062983', 'content': '112', 'score': 0.85}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11265167', 'content': '84', 'score': 0.8}"
+    }
+  ]
+}

@@ -29,6 +29,16 @@ pipelines:
       reranker_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
       rerank_factor: 2
 
+  - name: "GraphRAG"
+    module: "iris_rag.pipelines.graphrag"
+    class: "GraphRAGPipeline"
+    enabled: true
+    params:
+      top_k: 10
+      max_depth: 2
+      max_entities: 50
+      similarity_threshold: 0.1
+
 # Framework dependencies (shared across all pipelines)
 framework:
   llm:

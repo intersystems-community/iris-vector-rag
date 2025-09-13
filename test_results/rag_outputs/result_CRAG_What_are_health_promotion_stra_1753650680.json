@@ -1,0 +1,5 @@
+{
+  "query": "What are health promotion strategies?",
+  "answer": "CRAG pipeline error: [SQLCODE: <-29>:<Field not found in the applicable tables>]\r\n[Location: <Prepare>]\r\n[%msg: < Field 'CHUNK_EMBEDDING' not found in the applicable tables^SELECT TOP :%qpar(1) doc_id , chunk_text , VECTOR_COSINE ( chunk_embedding ,>]",
+  "retrieved_documents": []
+}

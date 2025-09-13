@@ -9,4 +9,5 @@ __all__ = [
     "BasicRAGPipeline",
     "CRAGPipeline",
     "BasicRAGRerankingPipeline",
+    "GraphRAGPipeline",
 ]

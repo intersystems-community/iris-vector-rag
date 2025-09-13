@@ -1,0 +1,46 @@
+{
+  "query": "How does COVID-19 affect the respiratory system?",
+  "answer": "I cannot answer that question based on the provided information.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11649971', 'content': '80', 'score': 0.5067712068557739, 'title': 'Phenotypic switch of vascular smooth muscle cells in COVID\u201019: Role of cholesterol, calcium, and phosphate'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11641233', 'content': '79', 'score': 0.4430971145629883, 'title': 'Oral Health Implications of SARS-CoV-2/COVID-19: A Systematic Review'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11650986', 'content': '69', 'score': 0.44067543745040894, 'title': 'Effect of wild-type vaccine doses on BA.5 hybrid immunity, disease severity, and XBB reinfection risk'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704894', 'content': '83', 'score': 0.4298807680606842, 'title': 'SARS-CoV-2 Infection Risk and COVID-19 Prevalence and Mortality in Cancer Patients During the First Wave of COVID-19 Pandemic in a Virus Epicenter in Northern Italy'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11623957', 'content': '83', 'score': 0.4212283790111542, 'title': 'SARS-CoV-2 and the ocular surface: test accuracy and viral\\nload'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11651336', 'content': '78', 'score': 0.4187523126602173, 'title': 'Navigating the Diagnostic Maze: A Case of Post-COVID-19 Tenosynovitis'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11649547', 'content': '65', 'score': 0.39272329211235046, 'title': 'A blood-based mRNA signature distinguishes people with Long COVID from recovered individuals'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11650996', 'content': '82', 'score': 0.3918497562408447, 'title': 'Recombination across distant coronavirid species and genera is a rare event with distinct genomic features'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11651578', 'content': '84', 'score': 0.3739139139652252, 'title': 'To test or not to test? A new behavioral epidemiology framework for COVID-19'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11649915', 'content': '86', 'score': 0.3637858033180237, 'title': 'Viral N protein hijacks deaminase-containing RNA granules to enhance SARS-CoV-2 mutagenesis'}"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "query": "What are common treatments for type 2 diabetes?",
+  "answer": "Common treatments for type 2 diabetes include monitoring blood sugar levels, insulin therapy, and lifestyle changes such as dietary modifications and exercise.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'crag_chunk_0', 'content': 'com.intersystems.jdbc.IRISInputStream@646be2c3', 'score': 1.0}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'crag_chunk_1', 'content': 'Type 2 diabetes develops when the body becomes resistant to insulin or when the pancreas is unable to produce enough insulin.', 'score': 1.0}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'crag_chunk_2', 'content': 'Treatment for diabetes includes monitoring blood sugar, insulin therapy, and lifestyle changes including diet and exercise.', 'score': 1.0}"
+    }
+  ]
+}

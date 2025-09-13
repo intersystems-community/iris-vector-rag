@@ -1,0 +1,212 @@
+{
+  "benchmark_metadata": {
+    "timestamp": "2025-06-19T21:20:24.503162",
+    "duration_seconds": 2.872314,
+    "schema_version": "config-driven",
+    "total_operations": 7
+  },
+  "summary_statistics": {
+    "avg_operation_time_ms": 54.89,
+    "max_operation_time_ms": 116.02,
+    "min_operation_time_ms": 0.98,
+    "total_memory_used_mb": 1.33
+  },
+  "bottlenecks": [
+    {
+      "operation": "complex_select_query",
+      "duration_ms": 116.02187156677246,
+      "severity": "medium"
+    }
+  ],
+  "system_metrics": {
+    "benchmark_start": {
+      "timestamp": "2025-06-19T21:20:24.503199",
+      "total_memory_gb": 128.0,
+      "available_memory_gb": 47.29,
+      "memory_usage_percent": 63.1,
+      "cpu_count": 16,
+      "cpu_usage_percent": 44.8,
+      "disk_usage_percent": 0.3
+    },
+    "benchmark_end": {
+      "timestamp": "2025-06-19T21:20:25.508620",
+      "total_memory_gb": 128.0,
+      "available_memory_gb": 47.58,
+      "memory_usage_percent": 62.8,
+      "cpu_count": 16,
+      "cpu_usage_percent": 12.9,
+      "disk_usage_percent": 0.3
+    }
+  },
+  "detailed_results": {
+    "database_benchmarks": {
+      "simple_count": {
+        "operation": "simple_count_query",
+        "duration_ms": 1.4388561248779297,
+        "memory_mb": 0.015625,
+        "cpu_percent": 0.0,
+        "rows_processed": 1,
+        "throughput_per_sec": 0.0
+      },
+      "complex_select": {
+        "operation": "complex_select_query",
+        "duration_ms": 116.02187156677246,
+        "memory_mb": 0.078125,
+        "cpu_percent": 0.0,
+        "rows_processed": 0,
+        "throughput_per_sec": 0.0
+      },
+      "token_count": {
+        "operation": "token_count_query",
+        "duration_ms": 0.9820461273193359,
+        "memory_mb": 0.0,
+        "cpu_percent": 0.0,
+        "rows_processed": 1,
+        "throughput_per_sec": 0.0
+      },
+      "join_query": {
+        "operation": "join_query",
+        "duration_ms": 106.44793510437012,
+        "memory_mb": 0.0625,
+        "cpu_percent": 0.0,
+        "rows_processed": 50,
+        "throughput_per_sec": 0.0
+      }
+    },
+    "total_documents": 970,
+    "total_tokens": 79899,
+    "vector_benchmarks": {
+      "vector_similarity": {
+        "operation": "vector_similarity_simulation",
+        "duration_ms": 61.151981353759766,
+        "memory_mb": 0.28125,
+        "cpu_percent": 0.0,
+        "rows_processed": 47,
+        "throughput_per_sec": 0.0
+      },
+      "embedding_retrieval": {
+        "operation": "embedding_retrieval",
+        "duration_ms": 53.65705490112305,
+        "memory_mb": 0.75,
+        "cpu_percent": 0.0,
+        "rows_processed": 50,
+        "throughput_per_sec": 0.0
+      }
+    },
+    "readiness_benchmark": {
+      "operation": "pipeline_readiness_check",
+      "duration_ms": 44.50798034667969,
+      "memory_mb": 0.140625,
+      "cpu_percent": 0.0,
+      "rows_processed": 7,
+      "throughput_per_sec": 0.0
+    },
+    "pipeline_readiness": {
+      "BasicRAG": {
+        "ready": true,
+        "table_counts": {
+          "source_documents": 970
+        }
+      },
+      "HyDE": {
+        "ready": true,
+        "table_counts": {
+          "source_documents": 970
+        }
+      },
+      "CRAG": {
+        "ready": false,
+        "table_counts": {
+          "source_documents": 970,
+          "document_chunks": 0
+        }
+      },
+      "GraphRAG": {
+        "ready": false,
+        "table_counts": {
+          "source_documents": 970,
+          "document_entities": 0
+        }
+      },
+      "ColBERT": {
+        "ready": true,
+        "table_counts": {
+          "source_documents": 970,
+          "document_token_embeddings": 79899
+        }
+      },
+      "NodeRAG": {
+        "ready": false,
+        "table_counts": {
+          "source_documents": 970,
+          "document_chunks": 0
+        }
+      },
+      "HybridIFind": {
+        "ready": false,
+        "table_counts": {
+          "source_documents": 970,
+          "ifind_index": -1
+        }
+      }
+    }
+  },
+  "all_operation_metrics": [
+    {
+      "operation": "simple_count_query",
+      "duration_ms": 1.4388561248779297,
+      "memory_mb": 0.015625,
+      "cpu_percent": 0.0,
+      "rows_processed": 1,
+      "throughput_per_sec": 0.0
+    },
+    {
+      "operation": "complex_select_query",
+      "duration_ms": 116.02187156677246,
+      "memory_mb": 0.078125,
+      "cpu_percent": 0.0,
+      "rows_processed": 0,
+      "throughput_per_sec": 0.0
+    },
+    {
+      "operation": "token_count_query",
+      "duration_ms": 0.9820461273193359,
+      "memory_mb": 0.0,
+      "cpu_percent": 0.0,
+      "rows_processed": 1,
+      "throughput_per_sec": 0.0
+    },
+    {
+      "operation": "join_query",
+      "duration_ms": 106.44793510437012,
+      "memory_mb": 0.0625,
+      "cpu_percent": 0.0,
+      "rows_processed": 50,
+      "throughput_per_sec": 0.0
+    },
+    {
+      "operation": "vector_similarity_simulation",
+      "duration_ms": 61.151981353759766,
+      "memory_mb": 0.28125,
+      "cpu_percent": 0.0,
+      "rows_processed": 47,
+      "throughput_per_sec": 0.0
+    },
+    {
+      "operation": "embedding_retrieval",
+      "duration_ms": 53.65705490112305,
+      "memory_mb": 0.75,
+      "cpu_percent": 0.0,
+      "rows_processed": 50,
+      "throughput_per_sec": 0.0
+    },
+    {
+      "operation": "pipeline_readiness_check",
+      "duration_ms": 44.50798034667969,
+      "memory_mb": 0.140625,
+      "cpu_percent": 0.0,
+      "rows_processed": 7,
+      "throughput_per_sec": 0.0
+    }
+  ]
+}

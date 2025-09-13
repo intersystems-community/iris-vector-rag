@@ -1,0 +1,46 @@
+{
+  "query": "How does COVID-19 affect the respiratory system?",
+  "answer": "COVID-19 primarily affects the respiratory system by causing symptoms such as cough, shortness of breath, and in severe cases, pneumonia and acute respiratory distress syndrome. It can lead to difficulty breathing and respiratory failure in some cases.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11650986', 'content': '69', 'score': 0.5116482973098755, 'title': 'Effect of wild-type vaccine doses on BA.5 hybrid immunity, disease severity, and XBB reinfection risk'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11649971', 'content': '80', 'score': 0.501253068447113, 'title': 'Phenotypic switch of vascular smooth muscle cells in COVID\u201019: Role of cholesterol, calcium, and phosphate'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704894', 'content': '83', 'score': 0.47324681282043457, 'title': 'SARS-CoV-2 Infection Risk and COVID-19 Prevalence and Mortality in Cancer Patients During the First Wave of COVID-19 Pandemic in a Virus Epicenter in Northern Italy'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11641233', 'content': '79', 'score': 0.40786975622177124, 'title': 'Oral Health Implications of SARS-CoV-2/COVID-19: A Systematic Review'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11651097', 'content': '67', 'score': 0.40171006321907043, 'title': 'Cigarette smoke-induced disordered microbiota aggravates the severity of influenza A virus infection'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11650996', 'content': '82', 'score': 0.3992488384246826, 'title': 'Recombination across distant coronavirid species and genera is a rare event with distinct genomic features'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11651336', 'content': '78', 'score': 0.3953333795070648, 'title': 'Navigating the Diagnostic Maze: A Case of Post-COVID-19 Tenosynovitis'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704668', 'content': '77', 'score': 0.39157870411872864, 'title': 'Main Ingredient of Yinhua Pinggan Granules Combined with Meropenem Alleviated Lung Injury Induced by Multidrug-Resistant '}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11651551', 'content': '65', 'score': 0.39066457748413086, 'title': 'Association between in situ ventilation and human-generated aerosol exposure in meatpacking plants during the COVID-19 pandemic'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11623957', 'content': '83', 'score': 0.3893595039844513, 'title': 'SARS-CoV-2 and the ocular surface: test accuracy and viral\\nload'}"
+    }
+  ]
+}

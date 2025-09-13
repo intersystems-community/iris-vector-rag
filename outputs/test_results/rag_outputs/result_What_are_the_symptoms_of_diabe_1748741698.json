@@ -1,0 +1,46 @@
+{
+  "query": "What are the symptoms of diabetes?",
+  "answer": "I cannot answer that question based on the provided information.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'sample', 'content': '68', 'score': 0.4046347737312317, 'title': 'Diabetes Treatment Review'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11736522_gen_146', 'content': '84', 'score': 0.2531437277793884, 'title': 'The association of body mass index and odds of type 2 diabetes mellitus varies by race/ethnicity'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11755213_gen_89', 'content': '76', 'score': 0.21079674363136292, 'title': 'Low-Vision Rehabilitation Services in Saudi Arabia: A Nationwide Survey of Optometrists on Current Status and Future Directions'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752434_gen_60', 'content': '76', 'score': 0.15974335372447968, 'title': 'Late-Onset Subretinal Silicone Oil Migration through Optic Disc Coloboma'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11755207_gen_92', 'content': '80', 'score': 0.15091273188591003, 'title': 'Pernicious Anemia Presenting With Severe Hemolytic Anemia'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748215611', 'content': '83', 'score': 0.1473691165447235, 'title': 'Serum glial fibrillary protein reflects early brain injury dynamics and cognitive changes after deep brain stimulation surgery'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752171_gen_96', 'content': '84', 'score': 0.1377451866865158, 'title': 'Twelve\u2010month change in quantitative '}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11755212_gen_22', 'content': '80', 'score': 0.1174820214509964, 'title': 'Protocol to quantitatively assess glycolysis and related carbon metabolic fluxes using stable isotope tracing in Crabtree-positive yeasts'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752175_gen_3', 'content': '10', 'score': 0.11712028086185455, 'title': '\\n'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11736523_gen_108', 'content': '78', 'score': 0.10248831659555435, 'title': 'Neutrophil\u2010Lymphocyte Ratio as Predictor for Acute Infection After Primary Total Joint Arthroplasty in Rheumatoid Arthritis Patients'}"
+    }
+  ]
+}

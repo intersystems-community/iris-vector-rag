@@ -1,0 +1,46 @@
+{
+  "query": "What are common treatments for type 2 diabetes?",
+  "answer": "I cannot answer that question based on the provided information.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'sample', 'content': '68', 'score': 0.870128333568573, 'title': 'Diabetes Treatment Review'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704577', 'content': '80', 'score': 0.530694305896759, 'title': 'Preoperative management of diabetes mellitus: A comparative narrative review of the recommendations of three professional organizations with Hamad Medical Corporation guidelines'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11651687', 'content': '69', 'score': 0.49546873569488525, 'title': 'Effects of Genetic Risk on Incident Type 2 Diabetes and Glycemia: The T2D-GENE Lifestyle Intervention Trial'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704873', 'content': '67', 'score': 0.4601188600063324, 'title': 'Continuous Intravenous Insulin Infusion in Patients with Diabetes Mellitus After Coronary Artery Bypass Grafting: Impact on Glycemic Control Parameters and Postoperative Complications'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11650328', 'content': '76', 'score': 0.459644615650177, 'title': 'Lipodystrophy With an Uncommon Clinical Presentation in a Patient With Insulin-Requiring Type 2 Diabetes Mellitus'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11630531', 'content': '80', 'score': 0.41746219992637634, 'title': 'Physiology and Pharmacology of Effects of GLP-1-based Therapies on Gastric, Biliary and Intestinal Motility'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704682', 'content': '73', 'score': 0.3925352990627289, 'title': 'Increasing Prescription of SGLT2 Inhibitors with Expanded Indications to the Elderly Population in Japan'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11651726', 'content': '83', 'score': 0.38533052802085876, 'title': 'Semaglutide Inducing Resolution of Proliferative Diabetic Retinopathy: A Case Report'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11736522_gen_146', 'content': '84', 'score': 0.37792131304740906, 'title': 'The association of body mass index and odds of type 2 diabetes mellitus varies by race/ethnicity'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11583430', 'content': '67', 'score': 0.3101496696472168, 'title': 'Carbon dots: synthesis, sensing mechanisms, and potential applications as promising materials for glucose sensors'}"
+    }
+  ]
+}

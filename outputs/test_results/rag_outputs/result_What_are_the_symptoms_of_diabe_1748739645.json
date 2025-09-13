@@ -1,0 +1,26 @@
+{
+  "query": "What are the symptoms of diabetes?",
+  "answer": "I cannot answer the question about the symptoms of diabetes based on the provided information.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11650328', 'content': 76, 'score': 0.40238964557647705, 'metadata': {'title': 'Lipodystrophy With an Uncommon Clinical Presentation in a Patient With Insulin-Requiring Type 2 Diabetes Mellitus'}}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11649725', 'content': 80, 'score': 0.343251496553421, 'metadata': {'title': 'Parental Psychosocial Variables and Glycemic Control in T1D Pediatric Age: A Systematic Review'}}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704873', 'content': 67, 'score': 0.3341060280799866, 'metadata': {'title': 'Continuous Intravenous Insulin Infusion in Patients with Diabetes Mellitus After Coronary Artery Bypass Grafting: Impact on Glycemic Control Parameters and Postoperative Complications'}}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704577', 'content': 80, 'score': 0.3336302936077118, 'metadata': {'title': 'Preoperative management of diabetes mellitus: A comparative narrative review of the recommendations of three professional organizations with Hamad Medical Corporation guidelines'}}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'sample', 'content': 68, 'score': 0.3235229253768921, 'metadata': {'title': 'Diabetes Treatment Review'}}"
+    }
+  ]
+}

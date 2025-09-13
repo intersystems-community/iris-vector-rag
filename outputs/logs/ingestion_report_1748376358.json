@@ -1,0 +1,24 @@
+{
+  "ingestion_summary": {
+    "target_docs": 100000,
+    "final_docs": 99992,
+    "success_rate": 99.992,
+    "total_time_seconds": 4652.4055552482605,
+    "error_count": 0,
+    "batch_count": 100,
+    "files_processed": 49990,
+    "files_failed": 0,
+    "schema_type": "RAG"
+  },
+  "performance_metrics": {
+    "ingestion_rate_docs_per_second": 21.492537314852434,
+    "peak_memory_gb": 46.078826904296875,
+    "avg_cpu_percent": 42.05257731958763,
+    "disk_usage_gb": 33.234762627450166
+  },
+  "error_details": {
+    "failed_files": [],
+    "error_rate": 0.0
+  },
+  "timestamp": "2025-05-27T16:05:58.139784"
+}

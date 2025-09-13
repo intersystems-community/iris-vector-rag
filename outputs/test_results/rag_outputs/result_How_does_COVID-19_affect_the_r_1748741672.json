@@ -1,0 +1,46 @@
+{
+  "query": "How does COVID-19 affect the respiratory system?",
+  "answer": "COVID-19 primarily affects the respiratory system by causing symptoms such as fever, cough, shortness of breath, and in severe cases, pneumonia. The virus can also lead to acute respiratory distress syndrome (ARDS) in some individuals, where the lungs become severely inflamed and filled with fluid, making it difficult to breathe. It can also result in long-term lung damage in some cases.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11718561_gen_158', 'content': '84', 'score': 0.2953077256679535, 'title': 'Transient Poor R-wave Progression Associated with Asymptomatic Pneumothorax'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704918', 'content': '68', 'score': 0.26591387391090393, 'title': 'Decoding innate lymphoid cells and innate-like lymphocytes in asthma: pathways to mechanisms and therapies'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704851', 'content': '73', 'score': 0.23827706277370453, 'title': 'Innovative strategies targeting oral microbial dysbiosis: unraveling mechanisms and advancing therapies for periodontitis'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752427_gen_18', 'content': '52', 'score': 0.2342190444469452, 'title': '45. Nasal Airflow Improvement After Rhinofiller: Evaluation Using Proms and Rhinomanometry'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752172_gen_5', 'content': '83', 'score': 0.20843103528022766, 'title': 'Successful Treatment of Critically Severe Empyema With Bronchopleural Fistula via '}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752430_gen_62', 'content': '69', 'score': 0.1961001306772232, 'title': 'Exploring the Genetic Basis of Wild Boar ('}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748215610', 'content': '68', 'score': 0.1935098022222519, 'title': 'Dogs with sepsis are more hypercoagulable and have higher fibrinolysis inhibitor activities than dogs with non-septic systemic inflammation'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752432_gen_61', 'content': '73', 'score': 0.19120243191719055, 'title': 'Infodemic Versus Viral Information Spread: Key Differences and Open Challenges'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752436_gen_59', 'content': '83', 'score': 0.1824221909046173, 'title': 'SO8. Acute Rejection is Associated With Signature Donor-derived Cell Free DNA Profile Following Face Transplantation in a Rodent'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752184_gen_0', 'content': '67', 'score': 0.1778622567653656, 'title': 'Clinical utility of right atrial strain to estimate pulmonary hypertension in comparison with right ventricular free wall longitudinal strain'}"
+    }
+  ]
+}

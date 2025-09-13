@@ -1,0 +1,46 @@
+{
+  "query": "How does COVID-19 affect the respiratory system?",
+  "answer": "COVID-19 primarily affects the respiratory system by causing symptoms such as cough, shortness of breath, and pneumonia in severe cases. It can also lead to acute respiratory distress syndrome (ARDS) and respiratory failure in some individuals.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11718561_gen_158', 'content': '84', 'score': 0.325795978307724, 'title': 'Transient Poor R-wave Progression Associated with Asymptomatic Pneumothorax'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752172_gen_5', 'content': '83', 'score': 0.2659478485584259, 'title': 'Successful Treatment of Critically Severe Empyema With Bronchopleural Fistula via '}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704918', 'content': '68', 'score': 0.2637275755405426, 'title': 'Decoding innate lymphoid cells and innate-like lymphocytes in asthma: pathways to mechanisms and therapies'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752427_gen_18', 'content': '52', 'score': 0.26084667444229126, 'title': '45. Nasal Airflow Improvement After Rhinofiller: Evaluation Using Proms and Rhinomanometry'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704851', 'content': '73', 'score': 0.2323181927204132, 'title': 'Innovative strategies targeting oral microbial dysbiosis: unraveling mechanisms and advancing therapies for periodontitis'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752184_gen_0', 'content': '67', 'score': 0.21944032609462738, 'title': 'Clinical utility of right atrial strain to estimate pulmonary hypertension in comparison with right ventricular free wall longitudinal strain'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752430_gen_62', 'content': '69', 'score': 0.19918309152126312, 'title': 'Exploring the Genetic Basis of Wild Boar ('}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748215610', 'content': '68', 'score': 0.19363024830818176, 'title': 'Dogs with sepsis are more hypercoagulable and have higher fibrinolysis inhibitor activities than dogs with non-septic systemic inflammation'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752432_gen_61', 'content': '73', 'score': 0.19264085590839386, 'title': 'Infodemic Versus Viral Information Spread: Key Differences and Open Challenges'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11752436_gen_59', 'content': '83', 'score': 0.17724578082561493, 'title': 'SO8. Acute Rejection is Associated With Signature Donor-derived Cell Free DNA Profile Following Face Transplantation in a Rodent'}"
+    }
+  ]
+}

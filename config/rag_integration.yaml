@@ -1,0 +1,181 @@
+# RAG Integration Configuration
+# Environment-independent configuration for rag-templates bridge adapter
+# No hardcoded secrets or connection strings - use environment variables
+
+# Default RAG technique selection
+default_technique: "basic"
+fallback_technique: "basic"
+
+# Query processing configuration
+query_timeout: 30  # seconds
+max_concurrent_queries: 10
+response_cache_ttl: 300  # seconds
+
+# Circuit breaker configuration for fault tolerance
+circuit_breaker:
+  failure_threshold: 5
+  recovery_timeout: 60  # seconds
+  half_open_max_calls: 3
+
+# Performance targets and monitoring
+performance:
+  target_latency_p95_ms: 500
+  target_memory_api_latency_ms: 200
+  target_config_load_time_ms: 50
+  target_error_recovery_time_ms: 1000
+  metrics_collection_interval: 60  # seconds
+  
+# Pipeline-specific configurations
+pipelines:
+  basic:
+    chunk_size: 1000
+    chunk_overlap: 200
+    default_top_k: 5
+    similarity_threshold: 0.7
+    
+  crag:
+    chunk_size: 800
+    chunk_overlap: 150
+    default_top_k: 10
+    confidence_threshold: 0.8
+    web_search_enabled: false
+    corrective_threshold: 0.6
+    
+  graphrag:
+    max_depth: 2
+    max_entities: 50
+    default_top_k: 10
+    relationship_weight_threshold: 0.5
+    entity_similarity_threshold: 0.7
+    
+  basic_reranking:
+    chunk_size: 1000
+    chunk_overlap: 200
+    default_top_k: 20  # Higher for reranking
+    rerank_top_k: 5
+    reranking_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+# Incremental indexing configuration (LightRAG patterns)
+incremental_indexing:
+  enabled: true
+  batch_size: 100
+  max_batch_wait_time: 30  # seconds
+  change_detection_interval: 300  # seconds
+  
+# Integration patterns with kg-ticket-resolver
+kg_integration:
+  memory_sync_interval: 600  # seconds
+  max_memory_context_size: 5000  # tokens
+  context_overlap_ratio: 0.2
+  
+  # Memory node types
+  memory_nodes:
+    project_memory:
+      retention_days: 90
+      max_entries: 1000
+    ticket_memory:
+      retention_days: 30
+      max_entries: 500
+    insight_memory:
+      retention_days: 180
+      max_entries: 200
+    trend_memory:
+      retention_days: 365
+      max_entries: 100
+
+# Error handling and graceful degradation
+error_handling:
+  max_retries: 3
+  retry_backoff_factor: 2
+  fallback_enabled: true
+  graceful_degradation:
+    - technique: "graphrag"
+      fallback: "basic"
+    - technique: "crag"
+      fallback: "basic"
+
+# Health monitoring configuration
+health_monitoring:
+  check_interval: 30  # seconds
+  endpoint_timeout: 5  # seconds
+  unhealthy_threshold: 3  # consecutive failures
+  
+  checks:
+    - name: "database_connection"
+      enabled: true
+    - name: "vector_store_health"
+      enabled: true
+    - name: "pipeline_availability"
+      enabled: true
+    - name: "memory_system_health"
+      enabled: true
+
+# Observability and monitoring hooks
+observability:
+  metrics_enabled: true
+  tracing_enabled: true
+  logging_level: "INFO"
+  
+  # Performance monitoring
+  performance_monitoring:
+    enabled: true
+    sample_rate: 0.1  # 10% sampling
+    slow_query_threshold_ms: 1000
+    
+  # Integration monitoring
+  integration_monitoring:
+    kg_memory_sync_tracking: true
+    pipeline_usage_tracking: true
+    error_rate_alerting: true
+    
+# Environment variable mappings (no actual values stored)
+environment:
+  database:
+    host: "${IRIS_HOST}"
+    port: "${IRIS_PORT}"
+    username: "${IRIS_USERNAME}"
+    password: "${IRIS_PASSWORD}"
+    namespace: "${IRIS_NAMESPACE:RAG}"
+    
+  embedding:
+    provider: "${EMBEDDING_PROVIDER:openai}"
+    model: "${EMBEDDING_MODEL:text-embedding-ada-002}"
+    api_key: "${OPENAI_API_KEY}"
+    
+  llm:
+    provider: "${LLM_PROVIDER:openai}"
+    model: "${LLM_MODEL:gpt-4}"
+    api_key: "${OPENAI_API_KEY}"
+    max_tokens: "${LLM_MAX_TOKENS:2000}"
+    
+  kg_memory:
+    system_type: "${KG_MEMORY_SYSTEM:mem0}"
+    connection_string: "${KG_MEMORY_CONNECTION}"
+    api_key: "${KG_MEMORY_API_KEY}"
+
+# Development and testing overrides
+development:
+  mock_enabled: false
+  test_mode: false
+  debug_logging: false
+  performance_simulation:
+    enabled: false
+    latency_multiplier: 1.0
+    
+# Production optimizations
+production:
+  connection_pooling:
+    enabled: true
+    max_connections: 20
+    connection_timeout: 30
+    
+  caching:
+    enabled: true
+    redis_url: "${REDIS_URL}"
+    cache_ttl: 3600
+    max_cache_size_mb: 500
+    
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 1000
+    burst_capacity: 100

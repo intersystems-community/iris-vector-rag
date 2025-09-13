@@ -1,0 +1,26 @@
+{
+  "query": "What are the symptoms of diabetes?",
+  "answer": "I cannot answer that question based on the provided context.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'sample', 'content': 68, 'score': 0.3235229253768921, 'metadata': {'title': 'Diabetes Treatment Review'}}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11736522_gen_146', 'content': 84, 'score': 0.26094913482666016, 'metadata': {'title': 'The association of body mass index and odds of type 2 diabetes mellitus varies by race/ethnicity'}}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11755213_gen_89', 'content': 76, 'score': 0.16053901612758636, 'metadata': {'title': 'Low-Vision Rehabilitation Services in Saudi Arabia: A Nationwide Survey of Optometrists on Current Status and Future Directions'}}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11755207_gen_92', 'content': 80, 'score': 0.15453696250915527, 'metadata': {'title': 'Pernicious Anemia Presenting With Severe Hemolytic Anemia'}}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11755212_gen_22', 'content': 80, 'score': 0.14957129955291748, 'metadata': {'title': 'Protocol to quantitatively assess glycolysis and related carbon metabolic fluxes using stable isotope tracing in Crabtree-positive yeasts'}}"
+    }
+  ]
+}

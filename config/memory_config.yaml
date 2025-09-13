@@ -1,0 +1,163 @@
+# RAG Memory Component Configuration
+# Generic configuration for memory-enabled RAG applications
+
+rag_memory_config:
+  # Temporal window configurations
+  temporal_windows:
+    - name: "short_term"
+      duration_days: 7
+      cleanup_frequency: "daily"
+      retention_policy: "expire"
+    - name: "medium_term" 
+      duration_days: 30
+      cleanup_frequency: "weekly"
+      retention_policy: "expire"
+    - name: "long_term"
+      duration_days: 90
+      cleanup_frequency: "monthly" 
+      retention_policy: "archive"
+    - name: "permanent"
+      duration_days: 3650  # 10 years
+      cleanup_frequency: "yearly"
+      retention_policy: "keep"
+
+  # Knowledge extraction configuration
+  knowledge_extraction:
+    entity_extraction:
+      method: "spacy"  # Options: spacy, regex, nltk, custom
+      confidence_threshold: 0.8
+      max_entities_per_document: 50
+      model_name: "en_core_web_sm"  # For spacy
+    
+    relationship_extraction:
+      method: "dependency_parsing"  # Options: dependency_parsing, pattern_based
+      max_distance: 3
+      confidence_threshold: 0.7
+      relationship_types: ["has", "is", "contains", "causes", "affects"]
+    
+    pattern_clustering:
+      similarity_threshold: 0.85
+      max_cluster_size: 20
+      clustering_method: "semantic"  # Options: semantic, lexical
+
+  # Persistence configuration  
+  persistence:
+    storage_backend: "iris"  # Options: iris, postgres, sqlite, memory
+    connection_config:
+      # Connection details would be environment-specific
+      use_connection_manager: true
+    batch_size: 100
+    enable_compression: true
+    index_config:
+      entity_index: true
+      temporal_index: true
+      similarity_index: true
+      full_text_search: true
+
+  # Performance configuration
+  performance:
+    cache_config:
+      l1_size: 1000      # In-memory cache size
+      l2_size: 10000     # Secondary cache size
+      ttl_seconds: 3600  # 1 hour TTL
+      enable_compression: false
+    
+    parallel_processing:
+      max_workers: 4
+      batch_size: 50
+      enable_async: true
+    
+    performance_targets:
+      extraction_time_ms: 50.0
+      retrieval_time_ms: 100.0
+      storage_time_ms: 20.0
+      incremental_update_time_ms: 30000.0  # 30s for 1K docs
+
+  # Memory enhancement configuration
+  enhancement:
+    enable_pattern_extraction: true
+    enable_temporal_storage: true
+    enable_context_enrichment: true
+    default_temporal_window: "short_term"
+    max_context_items: 5
+    context_relevance_threshold: 0.6
+    query_enrichment_method: "context_prepend"  # Options: context_prepend, context_append, weighted_merge
+
+  # Integration configuration
+  integration:
+    rag_techniques:
+      - "basic_rag"
+      - "crag"
+      - "graphrag"
+      - "basic_rag_reranking"
+    
+    bridge_integration:
+      use_rag_templates_bridge: true
+      circuit_breaker_integration: true
+      performance_monitoring: true
+    
+    incremental_learning:
+      enable_cdc_integration: true
+      enable_graph_union: true
+      learning_frequency: "realtime"  # Options: realtime, batch, scheduled
+      
+  # Application-specific extensions
+  custom_config:
+    # Applications can add domain-specific configuration here
+    domain: "general"  # e.g., "biomedical", "legal", "financial"
+    
+    # Plugin configurations
+    plugins:
+      enabled: []  # List of enabled plugins
+      config: {}   # Plugin-specific configuration
+    
+    # Monitoring and alerting
+    monitoring:
+      enable_metrics_collection: true
+      metrics_export_interval: 60  # seconds
+      alert_thresholds:
+        memory_usage_mb: 1000
+        response_time_ms: 200
+        error_rate_percent: 5.0
+    
+    # Security settings
+    security:
+      enable_content_sanitization: true
+      pii_detection: false
+      encryption_at_rest: false
+    
+    # Experimental features
+    experimental:
+      enable_advanced_clustering: false
+      enable_semantic_similarity: true
+      enable_cross_domain_learning: false
+
+# Environment-specific overrides
+# These would be handled by environment-specific configuration files
+
+development:
+  rag_memory_config:
+    performance:
+      cache_config:
+        l1_size: 100  # Smaller cache for development
+    persistence:
+      storage_backend: "memory"  # Use in-memory for development
+    
+production:
+  rag_memory_config:
+    performance:
+      cache_config:
+        l1_size: 5000  # Larger cache for production
+      parallel_processing:
+        max_workers: 8  # More workers for production
+    persistence:
+      enable_compression: true
+      batch_size: 500  # Larger batches for production
+
+testing:
+  rag_memory_config:
+    persistence:
+      storage_backend: "memory"
+    performance:
+      performance_targets:
+        extraction_time_ms: 10.0  # Faster for testing

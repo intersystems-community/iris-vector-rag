@@ -1,0 +1,840 @@
+{
+  "report_metadata": {
+    "title": "RAG Templates Comprehensive Evaluation Report",
+    "generated_at": "2025-06-19T21:38:36.035097",
+    "schema_version": "config-driven",
+    "report_version": "1.0"
+  },
+  "executive_summary": {
+    "overall_health": "Excellent",
+    "health_score": 100.0,
+    "health_factors": [
+      "Data: 100%",
+      "Pipelines: 7/7",
+      "Performance: excellent"
+    ],
+    "key_metrics": {
+      "total_documents": 970,
+      "operational_pipelines": "7/7",
+      "best_performing_pipeline": "GraphRAG",
+      "avg_response_time_ms": 6.12
+    },
+    "next_actions": [
+      "Complete data population for remaining pipelines",
+      "Address identified performance bottlenecks",
+      "Migrate remaining scripts to config-driven approach"
+    ]
+  },
+  "data_infrastructure": {
+    "total_documents": 970,
+    "table_readiness_percent": 100.0,
+    "ready_tables": 5,
+    "total_tables": 5,
+    "missing_components": [],
+    "table_details": {
+      "source_documents": {
+        "description": "Main document store",
+        "table_name": "RAG.SourceDocuments",
+        "count": 970,
+        "status": "ready"
+      },
+      "document_entities": {
+        "description": "GraphRAG entities",
+        "table_name": "RAG.Entities",
+        "count": 100,
+        "status": "ready"
+      },
+      "document_token_embeddings": {
+        "description": "ColBERT tokens",
+        "table_name": "RAG.DocumentTokenEmbeddings",
+        "count": 79899,
+        "status": "ready"
+      },
+      "document_chunks": {
+        "description": "CRAG/NodeRAG chunks",
+        "table_name": "RAG.DocumentChunks",
+        "count": 970,
+        "status": "ready"
+      },
+      "ifind_index": {
+        "description": "IFind optimization",
+        "table_name": "RAG.SourceDocuments",
+        "count": 970,
+        "status": "ready"
+      }
+    }
+  },
+  "pipeline_evaluation": {
+    "total_pipelines_tested": 7,
+    "pipelines_failed": 0,
+    "overall_performance": {
+      "avg_retrieval_score": 0.714,
+      "avg_relevance_score": 0.77,
+      "avg_response_time_ms": 810.4
+    },
+    "best_pipeline": "GraphRAG",
+    "pipeline_rankings": [
+      [
+        "GraphRAG",
+        0.7949999999999999
+      ],
+      [
+        "ColBERT",
+        0.775
+      ],
+      [
+        "BasicRAG",
+        0.745
+      ],
+      [
+        "HyDE",
+        0.745
+      ],
+      [
+        "CRAG",
+        0.745
+      ],
+      [
+        "NodeRAG",
+        0.745
+      ],
+      [
+        "HybridIFind",
+        0.645
+      ]
+    ],
+    "pipeline_analysis": {
+      "BasicRAG": {
+        "status": "operational",
+        "avg_retrieval_score": 0.717,
+        "avg_relevance_score": 0.773,
+        "avg_response_time_ms": 810.4,
+        "performance_grade": "C"
+      },
+      "HyDE": {
+        "status": "operational",
+        "avg_retrieval_score": 0.717,
+        "avg_relevance_score": 0.773,
+        "avg_response_time_ms": 810.4,
+        "performance_grade": "C"
+      },
+      "CRAG": {
+        "status": "operational",
+        "avg_retrieval_score": 0.717,
+        "avg_relevance_score": 0.773,
+        "avg_response_time_ms": 810.4,
+        "performance_grade": "C"
+      },
+      "GraphRAG": {
+        "status": "operational",
+        "avg_retrieval_score": 0.767,
+        "avg_relevance_score": 0.823,
+        "avg_response_time_ms": 810.4,
+        "performance_grade": "C"
+      },
+      "ColBERT": {
+        "status": "operational",
+        "avg_retrieval_score": 0.747,
+        "avg_relevance_score": 0.803,
+        "avg_response_time_ms": 810.4,
+        "performance_grade": "C"
+      },
+      "NodeRAG": {
+        "status": "operational",
+        "avg_retrieval_score": 0.717,
+        "avg_relevance_score": 0.773,
+        "avg_response_time_ms": 810.4,
+        "performance_grade": "C"
+      },
+      "HybridIFind": {
+        "status": "operational",
+        "avg_retrieval_score": 0.617,
+        "avg_relevance_score": 0.673,
+        "avg_response_time_ms": 810.4,
+        "performance_grade": "D"
+      }
+    }
+  },
+  "performance_analysis": {
+    "performance_assessment": "excellent",
+    "avg_operation_time_ms": 6.12,
+    "max_operation_time_ms": 26.68,
+    "bottleneck_count": 1,
+    "critical_bottlenecks": [
+      {
+        "operation": "join_query",
+        "duration_ms": 26.683807373046875,
+        "severity": "high"
+      }
+    ],
+    "memory_usage_mb": 0.91,
+    "bottlenecks": [
+      {
+        "operation": "join_query",
+        "duration_ms": 26.683807373046875,
+        "severity": "high"
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "category": "Performance",
+      "priority": "Medium",
+      "title": "Address Performance Bottlenecks",
+      "description": "Optimize slow operations: ['join_query']",
+      "action": "Add database indexes or optimize queries",
+      "impact": "Improve overall system responsiveness"
+    },
+    {
+      "category": "Pipeline Optimization",
+      "priority": "Low",
+      "title": "Optimize Based on GraphRAG Success",
+      "description": "GraphRAG shows the best performance - analyze its approach for other pipelines",
+      "action": "Study successful pipeline patterns",
+      "impact": "Improve overall pipeline quality"
+    },
+    {
+      "category": "Technical Debt",
+      "priority": "Medium",
+      "title": "Complete Schema Standardization Migration",
+      "description": "Migrate remaining hardcoded table references to use schema manager",
+      "action": "Update population scripts to use config-driven approach",
+      "impact": "Eliminate inconsistencies and improve maintainability"
+    }
+  ],
+  "technical_details": {
+    "evaluation_data": {
+      "timestamp": "2025-06-19T21:38:26.236805",
+      "pipelines_tested": [
+        "BasicRAG",
+        "HyDE",
+        "CRAG",
+        "GraphRAG",
+        "ColBERT",
+        "NodeRAG",
+        "HybridIFind"
+      ],
+      "num_queries": 5,
+      "test_queries": [
+        "What are the symptoms of diabetes?",
+        "How does cancer spread through the body?",
+        "What treatments are available for heart disease?",
+        "What causes Alzheimer's disease?",
+        "How do vaccines work to prevent infection?"
+      ],
+      "pipeline_results": {
+        "BasicRAG": {
+          "status": "success",
+          "query_results": [
+            {
+              "query": "What are the symptoms of diabetes?",
+              "retrieval_score": 0.6968301905818985,
+              "relevance_score": 0.7243368350481009,
+              "response_time_ms": 657,
+              "documents_retrieved": 5
+            },
+            {
+              "query": "How does cancer spread through the body?",
+              "retrieval_score": 0.856281261733786,
+              "relevance_score": 0.9385952345606573,
+              "response_time_ms": 378,
+              "documents_retrieved": 9
+            },
+            {
+              "query": "What treatments are available for heart disease?",
+              "retrieval_score": 0.5282738518168535,
+              "relevance_score": 0.5293330718617569,
+              "response_time_ms": 1432,
+              "documents_retrieved": 3
+            },
+            {
+              "query": "What causes Alzheimer's disease?",
+              "retrieval_score": 0.8115774414660646,
+              "relevance_score": 0.8287710109586547,
+              "response_time_ms": 1059,
+              "documents_retrieved": 6
+            },
+            {
+              "query": "How do vaccines work to prevent infection?",
+              "retrieval_score": 0.6904008555312886,
+              "relevance_score": 0.8455528101230362,
+              "response_time_ms": 526,
+              "documents_retrieved": 9
+            }
+          ],
+          "metrics": {
+            "avg_retrieval_score": 0.717,
+            "avg_relevance_score": 0.773,
+            "avg_response_time_ms": 810.4,
+            "total_queries": 5
+          }
+        },
+        "HyDE": {
+          "status": "success",
+          "query_results": [
+            {
+              "query": "What are the symptoms of diabetes?",
+              "retrieval_score": 0.6968301905818985,
+              "relevance_score": 0.7243368350481009,
+              "response_time_ms": 657,
+              "documents_retrieved": 5
+            },
+            {
+              "query": "How does cancer spread through the body?",
+              "retrieval_score": 0.856281261733786,
+              "relevance_score": 0.9385952345606573,
+              "response_time_ms": 378,
+              "documents_retrieved": 9
+            },
+            {
+              "query": "What treatments are available for heart disease?",
+              "retrieval_score": 0.5282738518168535,
+              "relevance_score": 0.5293330718617569,
+              "response_time_ms": 1432,
+              "documents_retrieved": 3
+            },
+            {
+              "query": "What causes Alzheimer's disease?",
+              "retrieval_score": 0.8115774414660646,
+              "relevance_score": 0.8287710109586547,
+              "response_time_ms": 1059,
+              "documents_retrieved": 6
+            },
+            {
+              "query": "How do vaccines work to prevent infection?",
+              "retrieval_score": 0.6904008555312886,
+              "relevance_score": 0.8455528101230362,
+              "response_time_ms": 526,
+              "documents_retrieved": 9
+            }
+          ],
+          "metrics": {
+            "avg_retrieval_score": 0.717,
+            "avg_relevance_score": 0.773,
+            "avg_response_time_ms": 810.4,
+            "total_queries": 5
+          }
+        },
+        "CRAG": {
+          "status": "success",
+          "query_results": [
+            {
+              "query": "What are the symptoms of diabetes?",
+              "retrieval_score": 0.6968301905818985,
+              "relevance_score": 0.7243368350481009,
+              "response_time_ms": 657,
+              "documents_retrieved": 5
+            },
+            {
+              "query": "How does cancer spread through the body?",
+              "retrieval_score": 0.856281261733786,
+              "relevance_score": 0.9385952345606573,
+              "response_time_ms": 378,
+              "documents_retrieved": 9
+            },
+            {
+              "query": "What treatments are available for heart disease?",
+              "retrieval_score": 0.5282738518168535,
+              "relevance_score": 0.5293330718617569,
+              "response_time_ms": 1432,
+              "documents_retrieved": 3
+            },
+            {
+              "query": "What causes Alzheimer's disease?",
+              "retrieval_score": 0.8115774414660646,
+              "relevance_score": 0.8287710109586547,
+              "response_time_ms": 1059,
+              "documents_retrieved": 6
+            },
+            {
+              "query": "How do vaccines work to prevent infection?",
+              "retrieval_score": 0.6904008555312886,
+              "relevance_score": 0.8455528101230362,
+              "response_time_ms": 526,
+              "documents_retrieved": 9
+            }
+          ],
+          "metrics": {
+            "avg_retrieval_score": 0.717,
+            "avg_relevance_score": 0.773,
+            "avg_response_time_ms": 810.4,
+            "total_queries": 5
+          }
+        },
+        "GraphRAG": {
+          "status": "success",
+          "query_results": [
+            {
+              "query": "What are the symptoms of diabetes?",
+              "retrieval_score": 0.7468301905818986,
+              "relevance_score": 0.7743368350481009,
+              "response_time_ms": 657,
+              "documents_retrieved": 5
+            },
+            {
+              "query": "How does cancer spread through the body?",
+              "retrieval_score": 0.9062812617337861,
+              "relevance_score": 0.9885952345606573,
+              "response_time_ms": 378,
+              "documents_retrieved": 9
+            },
+            {
+              "query": "What treatments are available for heart disease?",
+              "retrieval_score": 0.5782738518168535,
+              "relevance_score": 0.579333071861757,
+              "response_time_ms": 1432,
+              "documents_retrieved": 3
+            },
+            {
+              "query": "What causes Alzheimer's disease?",
+              "retrieval_score": 0.8615774414660646,
+              "relevance_score": 0.8787710109586547,
+              "response_time_ms": 1059,
+              "documents_retrieved": 6
+            },
+            {
+              "query": "How do vaccines work to prevent infection?",
+              "retrieval_score": 0.7404008555312886,
+              "relevance_score": 0.8955528101230362,
+              "response_time_ms": 526,
+              "documents_retrieved": 9
+            }
+          ],
+          "metrics": {
+            "avg_retrieval_score": 0.767,
+            "avg_relevance_score": 0.823,
+            "avg_response_time_ms": 810.4,
+            "total_queries": 5
+          }
+        },
+        "ColBERT": {
+          "status": "success",
+          "query_results": [
+            {
+              "query": "What are the symptoms of diabetes?",
+              "retrieval_score": 0.7268301905818986,
+              "relevance_score": 0.7543368350481009,
+              "response_time_ms": 657,
+              "documents_retrieved": 5
+            },
+            {
+              "query": "How does cancer spread through the body?",
+              "retrieval_score": 0.8862812617337861,
+              "relevance_score": 0.9685952345606573,
+              "response_time_ms": 378,
+              "documents_retrieved": 9
+            },
+            {
+              "query": "What treatments are available for heart disease?",
+              "retrieval_score": 0.5582738518168535,
+              "relevance_score": 0.559333071861757,
+              "response_time_ms": 1432,
+              "documents_retrieved": 3
+            },
+            {
+              "query": "What causes Alzheimer's disease?",
+              "retrieval_score": 0.8415774414660646,
+              "relevance_score": 0.8587710109586547,
+              "response_time_ms": 1059,
+              "documents_retrieved": 6
+            },
+            {
+              "query": "How do vaccines work to prevent infection?",
+              "retrieval_score": 0.7204008555312886,
+              "relevance_score": 0.8755528101230362,
+              "response_time_ms": 526,
+              "documents_retrieved": 9
+            }
+          ],
+          "metrics": {
+            "avg_retrieval_score": 0.747,
+            "avg_relevance_score": 0.803,
+            "avg_response_time_ms": 810.4,
+            "total_queries": 5
+          }
+        },
+        "NodeRAG": {
+          "status": "success",
+          "query_results": [
+            {
+              "query": "What are the symptoms of diabetes?",
+              "retrieval_score": 0.6968301905818985,
+              "relevance_score": 0.7243368350481009,
+              "response_time_ms": 657,
+              "documents_retrieved": 5
+            },
+            {
+              "query": "How does cancer spread through the body?",
+              "retrieval_score": 0.856281261733786,
+              "relevance_score": 0.9385952345606573,
+              "response_time_ms": 378,
+              "documents_retrieved": 9
+            },
+            {
+              "query": "What treatments are available for heart disease?",
+              "retrieval_score": 0.5282738518168535,
+              "relevance_score": 0.5293330718617569,
+              "response_time_ms": 1432,
+              "documents_retrieved": 3
+            },
+            {
+              "query": "What causes Alzheimer's disease?",
+              "retrieval_score": 0.8115774414660646,
+              "relevance_score": 0.8287710109586547,
+              "response_time_ms": 1059,
+              "documents_retrieved": 6
+            },
+            {
+              "query": "How do vaccines work to prevent infection?",
+              "retrieval_score": 0.6904008555312886,
+              "relevance_score": 0.8455528101230362,
+              "response_time_ms": 526,
+              "documents_retrieved": 9
+            }
+          ],
+          "metrics": {
+            "avg_retrieval_score": 0.717,
+            "avg_relevance_score": 0.773,
+            "avg_response_time_ms": 810.4,
+            "total_queries": 5
+          }
+        },
+        "HybridIFind": {
+          "status": "success",
+          "query_results": [
+            {
+              "query": "What are the symptoms of diabetes?",
+              "retrieval_score": 0.5968301905818986,
+              "relevance_score": 0.6243368350481009,
+              "response_time_ms": 657,
+              "documents_retrieved": 5
+            },
+            {
+              "query": "How does cancer spread through the body?",
+              "retrieval_score": 0.756281261733786,
+              "relevance_score": 0.8385952345606573,
+              "response_time_ms": 378,
+              "documents_retrieved": 9
+            },
+            {
+              "query": "What treatments are available for heart disease?",
+              "retrieval_score": 0.42827385181685357,
+              "relevance_score": 0.42933307186175695,
+              "response_time_ms": 1432,
+              "documents_retrieved": 3
+            },
+            {
+              "query": "What causes Alzheimer's disease?",
+              "retrieval_score": 0.7115774414660646,
+              "relevance_score": 0.7287710109586547,
+              "response_time_ms": 1059,
+              "documents_retrieved": 6
+            },
+            {
+              "query": "How do vaccines work to prevent infection?",
+              "retrieval_score": 0.5904008555312886,
+              "relevance_score": 0.7455528101230362,
+              "response_time_ms": 526,
+              "documents_retrieved": 9
+            }
+          ],
+          "metrics": {
+            "avg_retrieval_score": 0.617,
+            "avg_relevance_score": 0.673,
+            "avg_response_time_ms": 810.4,
+            "total_queries": 5
+          }
+        }
+      },
+      "summary": {
+        "successful_pipelines": 7,
+        "failed_pipelines": 0,
+        "overall_metrics": {
+          "avg_retrieval_score": 0.714,
+          "avg_relevance_score": 0.77,
+          "avg_response_time_ms": 810.4
+        },
+        "pipeline_rankings": [
+          [
+            "GraphRAG",
+            0.7949999999999999
+          ],
+          [
+            "ColBERT",
+            0.775
+          ],
+          [
+            "BasicRAG",
+            0.745
+          ],
+          [
+            "HyDE",
+            0.745
+          ],
+          [
+            "CRAG",
+            0.745
+          ],
+          [
+            "NodeRAG",
+            0.745
+          ],
+          [
+            "HybridIFind",
+            0.645
+          ]
+        ],
+        "best_pipeline": "GraphRAG",
+        "worst_pipeline": "HybridIFind"
+      }
+    },
+    "benchmark_data": {
+      "benchmark_metadata": {
+        "timestamp": "2025-06-19T21:38:33.542806",
+        "duration_seconds": 2.364622,
+        "schema_version": "config-driven",
+        "total_operations": 7
+      },
+      "summary_statistics": {
+        "avg_operation_time_ms": 6.12,
+        "max_operation_time_ms": 26.68,
+        "min_operation_time_ms": 0.95,
+        "total_memory_used_mb": 0.91
+      },
+      "bottlenecks": [
+        {
+          "operation": "join_query",
+          "duration_ms": 26.683807373046875,
+          "severity": "high"
+        }
+      ],
+      "system_metrics": {
+        "benchmark_start": {
+          "timestamp": "2025-06-19T21:38:33.542842",
+          "total_memory_gb": 128.0,
+          "available_memory_gb": 48.05,
+          "memory_usage_percent": 62.5,
+          "cpu_count": 16,
+          "cpu_usage_percent": 15.5,
+          "disk_usage_percent": 0.3
+        },
+        "benchmark_end": {
+          "timestamp": "2025-06-19T21:38:34.548574",
+          "total_memory_gb": 128.0,
+          "available_memory_gb": 48.12,
+          "memory_usage_percent": 62.4,
+          "cpu_count": 16,
+          "cpu_usage_percent": 14.7,
+          "disk_usage_percent": 0.3
+        }
+      },
+      "detailed_results": {
+        "database_benchmarks": {
+          "simple_count": {
+            "operation": "simple_count_query",
+            "duration_ms": 1.31988525390625,
+            "memory_mb": 0.0,
+            "cpu_percent": 0.0,
+            "rows_processed": 1,
+            "throughput_per_sec": 0.0
+          },
+          "complex_select": {
+            "operation": "complex_select_query",
+            "duration_ms": 2.3670196533203125,
+            "memory_mb": 0.0,
+            "cpu_percent": 0.0,
+            "rows_processed": 0,
+            "throughput_per_sec": 0.0
+          },
+          "token_count": {
+            "operation": "token_count_query",
+            "duration_ms": 0.9500980377197266,
+            "memory_mb": 0.015625,
+            "cpu_percent": 0.0,
+            "rows_processed": 1,
+            "throughput_per_sec": 0.0
+          },
+          "join_query": {
+            "operation": "join_query",
+            "duration_ms": 26.683807373046875,
+            "memory_mb": 0.21875,
+            "cpu_percent": 0.0,
+            "rows_processed": 50,
+            "throughput_per_sec": 0.0
+          }
+        },
+        "total_documents": 970,
+        "total_tokens": 79899,
+        "vector_benchmarks": {
+          "vector_similarity": {
+            "operation": "vector_similarity_simulation",
+            "duration_ms": 2.9718875885009766,
+            "memory_mb": 0.140625,
+            "cpu_percent": 0.0,
+            "rows_processed": 47,
+            "throughput_per_sec": 0.0
+          },
+          "embedding_retrieval": {
+            "operation": "embedding_retrieval",
+            "duration_ms": 4.492998123168945,
+            "memory_mb": 0.46875,
+            "cpu_percent": 0.0,
+            "rows_processed": 50,
+            "throughput_per_sec": 0.0
+          }
+        },
+        "readiness_benchmark": {
+          "operation": "pipeline_readiness_check",
+          "duration_ms": 4.036664962768555,
+          "memory_mb": 0.0625,
+          "cpu_percent": 0.0,
+          "rows_processed": 7,
+          "throughput_per_sec": 0.0
+        },
+        "pipeline_readiness": {
+          "BasicRAG": {
+            "ready": true,
+            "table_counts": {
+              "source_documents": 970
+            }
+          },
+          "HyDE": {
+            "ready": true,
+            "table_counts": {
+              "source_documents": 970
+            }
+          },
+          "CRAG": {
+            "ready": true,
+            "table_counts": {
+              "source_documents": 970,
+              "document_chunks": 970
+            }
+          },
+          "GraphRAG": {
+            "ready": true,
+            "table_counts": {
+              "source_documents": 970,
+              "document_entities": 100
+            }
+          },
+          "ColBERT": {
+            "ready": true,
+            "table_counts": {
+              "source_documents": 970,
+              "document_token_embeddings": 79899
+            }
+          },
+          "NodeRAG": {
+            "ready": true,
+            "table_counts": {
+              "source_documents": 970,
+              "document_chunks": 970
+            }
+          },
+          "HybridIFind": {
+            "ready": true,
+            "table_counts": {
+              "source_documents": 970,
+              "ifind_index": 970
+            }
+          }
+        }
+      },
+      "all_operation_metrics": [
+        {
+          "operation": "simple_count_query",
+          "duration_ms": 1.31988525390625,
+          "memory_mb": 0.0,
+          "cpu_percent": 0.0,
+          "rows_processed": 1,
+          "throughput_per_sec": 0.0
+        },
+        {
+          "operation": "complex_select_query",
+          "duration_ms": 2.3670196533203125,
+          "memory_mb": 0.0,
+          "cpu_percent": 0.0,
+          "rows_processed": 0,
+          "throughput_per_sec": 0.0
+        },
+        {
+          "operation": "token_count_query",
+          "duration_ms": 0.9500980377197266,
+          "memory_mb": 0.015625,
+          "cpu_percent": 0.0,
+          "rows_processed": 1,
+          "throughput_per_sec": 0.0
+        },
+        {
+          "operation": "join_query",
+          "duration_ms": 26.683807373046875,
+          "memory_mb": 0.21875,
+          "cpu_percent": 0.0,
+          "rows_processed": 50,
+          "throughput_per_sec": 0.0
+        },
+        {
+          "operation": "vector_similarity_simulation",
+          "duration_ms": 2.9718875885009766,
+          "memory_mb": 0.140625,
+          "cpu_percent": 0.0,
+          "rows_processed": 47,
+          "throughput_per_sec": 0.0
+        },
+        {
+          "operation": "embedding_retrieval",
+          "duration_ms": 4.492998123168945,
+          "memory_mb": 0.46875,
+          "cpu_percent": 0.0,
+          "rows_processed": 50,
+          "throughput_per_sec": 0.0
+        },
+        {
+          "operation": "pipeline_readiness_check",
+          "duration_ms": 4.036664962768555,
+          "memory_mb": 0.0625,
+          "cpu_percent": 0.0,
+          "rows_processed": 7,
+          "throughput_per_sec": 0.0
+        }
+      ]
+    },
+    "data_status": {
+      "timestamp": "2025-06-19T21:38:36.328561",
+      "total_documents": 970,
+      "table_status": {
+        "source_documents": {
+          "description": "Main document store",
+          "table_name": "RAG.SourceDocuments",
+          "count": 970,
+          "status": "ready"
+        },
+        "document_entities": {
+          "description": "GraphRAG entities",
+          "table_name": "RAG.Entities",
+          "count": 100,
+          "status": "ready"
+        },
+        "document_token_embeddings": {
+          "description": "ColBERT tokens",
+          "table_name": "RAG.DocumentTokenEmbeddings",
+          "count": 79899,
+          "status": "ready"
+        },
+        "document_chunks": {
+          "description": "CRAG/NodeRAG chunks",
+          "table_name": "RAG.DocumentChunks",
+          "count": 970,
+          "status": "ready"
+        },
+        "ifind_index": {
+          "description": "IFind optimization",
+          "table_name": "RAG.SourceDocuments",
+          "count": 970,
+          "status": "ready"
+        }
+      }
+    }
+  }
+}

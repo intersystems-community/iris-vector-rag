@@ -1,0 +1,46 @@
+{
+  "query": "What are the symptoms of diabetes?",
+  "answer": "I cannot answer based on the provided information.",
+  "retrieved_documents": [
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11650328', 'content': '76', 'score': 0.472889244556427, 'title': 'Lipodystrophy With an Uncommon Clinical Presentation in a Patient With Insulin-Requiring Type 2 Diabetes Mellitus'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'sample', 'content': '68', 'score': 0.40546026825904846, 'title': 'Diabetes Treatment Review'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704873', 'content': '67', 'score': 0.37384870648384094, 'title': 'Continuous Intravenous Insulin Infusion in Patients with Diabetes Mellitus After Coronary Artery Bypass Grafting: Impact on Glycemic Control Parameters and Postoperative Complications'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11622444', 'content': '67', 'score': 0.37228572368621826, 'title': 'Comparison of HIF-1\u03b1 and survivin levels in patients with\\ndiabetes and retinopathy of varying severity'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC1748704577', 'content': '80', 'score': 0.3545578718185425, 'title': 'Preoperative management of diabetes mellitus: A comparative narrative review of the recommendations of three professional organizations with Hamad Medical Corporation guidelines'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11649646', 'content': '80', 'score': 0.3195085823535919, 'title': 'Predicting the diabetic foot in the population of type 2 diabetes mellitus from tongue images and clinical information using multi-modal deep learning'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11583430', 'content': '67', 'score': 0.30977749824523926, 'title': 'Carbon dots: synthesis, sensing mechanisms, and potential applications as promising materials for glucose sensors'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11619924', 'content': '80', 'score': 0.3081597089767456, 'title': 'Partial regression of peripapillary myelinated nerve fibers after\\nnon-arteritic anterior ischemic optic neuropathy'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11649725', 'content': '80', 'score': 0.30731093883514404, 'title': 'Parental Psychosocial Variables and Glycemic Control in T1D Pediatric Age: A Systematic Review'}"
+    },
+    {
+      "id": "unknown",
+      "content": "{'id': 'PMC11635448', 'content': '82', 'score': 0.3037671446800232, 'title': 'Relationship Between 1,5 Anhydroglucitol, Glycemia, and Breastfeeding During Pregnancy and Postpartum: A Pilot Study'}"
+    }
+  ]
+}
