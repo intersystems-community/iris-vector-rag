@@ -13,22 +13,21 @@ Architecture:
 - Clean service boundaries with kg-ticket-resolver
 """
 
+import asyncio
 import logging
 import time
-import asyncio
-from typing import Dict, List, Any, Optional, Union, Callable
-from dataclasses import dataclass, asdict
-from enum import Enum
 from contextlib import asynccontextmanager
-import traceback
+from dataclasses import asdict, dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
+from iris_rag.config.manager import ConfigurationManager
 from iris_rag.core.base import RAGPipeline
+from iris_rag.core.connection import ConnectionManager
 from iris_rag.pipelines.basic import BasicRAGPipeline
+from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
 from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
-from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,7 @@ class PerformanceMetrics:
     avg_response_time_ms: float = 0.0
     p95_response_time_ms: float = 0.0
     technique_usage: Dict[str, int] = None
-    
+
     def __post_init__(self):
         if self.technique_usage is None:
             self.technique_usage = {}
@@ -86,7 +85,7 @@ class PerformanceMetrics:
 class RAGTemplatesBridge:
     """
     Unified interface adapter for RAG pipeline access from kg-ticket-resolver.
-    
+
     Provides:
     - Seamless switching between RAG techniques
     - Consistent response format
@@ -94,17 +93,17 @@ class RAGTemplatesBridge:
     - Performance monitoring and metrics
     - Incremental indexing support
     """
-    
+
     def __init__(self, config_path: Optional[str] = None):
         """
         Initialize the RAG Templates Bridge.
-        
+
         Args:
             config_path: Optional path to configuration file
         """
         self.config_manager = ConfigurationManager(config_path)
         self.connection_manager = ConnectionManager()
-        
+
         # Load bridge configuration
         self.bridge_config = self.config_manager.get("rag_integration", {})
         self.default_technique = RAGTechnique(
@@ -113,22 +112,22 @@ class RAGTemplatesBridge:
         self.fallback_technique = RAGTechnique(
             self.bridge_config.get("fallback_technique", "basic")
         )
-        
+
         # Initialize pipeline registry
         self._pipelines: Dict[RAGTechnique, RAGPipeline] = {}
         self._circuit_breakers: Dict[RAGTechnique, Dict] = {}
-        
+
         # Performance tracking
         self.metrics = PerformanceMetrics()
         self._response_times: List[float] = []
-        
+
         # Circuit breaker configuration
         self.cb_config = CircuitBreakerConfig(**self.bridge_config.get("circuit_breaker", {}))
-        
+
         # Initialize available techniques
         self._initialize_pipelines()
         self._initialize_circuit_breakers()
-        
+
         logger.info(f"RAG Templates Bridge initialized with techniques: {list(self._pipelines.keys())}")
 
     def _initialize_pipelines(self) -> None:
@@ -139,7 +138,7 @@ class RAGTemplatesBridge:
             RAGTechnique.GRAPH: GraphRAGPipeline,
             RAGTechnique.RERANKING: BasicRAGRerankingPipeline,
         }
-        
+
         for technique, pipeline_class in pipeline_classes.items():
             try:
                 pipeline = pipeline_class(
@@ -165,7 +164,7 @@ class RAGTemplatesBridge:
         """Check if circuit breaker allows execution."""
         cb = self._circuit_breakers[technique]
         current_time = time.time()
-        
+
         if cb["state"] == CircuitBreakerState.OPEN:
             if current_time - cb["last_failure_time"] > self.cb_config.recovery_timeout:
                 cb["state"] = CircuitBreakerState.HALF_OPEN
@@ -173,13 +172,13 @@ class RAGTemplatesBridge:
                 logger.info(f"Circuit breaker for {technique.value} moved to HALF_OPEN")
             else:
                 return False
-                
+
         elif cb["state"] == CircuitBreakerState.HALF_OPEN:
             if cb["success_count"] >= self.cb_config.half_open_max_calls:
                 cb["state"] = CircuitBreakerState.CLOSED
                 cb["failure_count"] = 0
                 logger.info(f"Circuit breaker for {technique.value} moved to CLOSED")
-        
+
         return True
 
     def _record_success(self, technique: RAGTechnique) -> None:
@@ -195,7 +194,7 @@ class RAGTemplatesBridge:
         cb = self._circuit_breakers[technique]
         cb["failure_count"] += 1
         cb["last_failure_time"] = time.time()
-        
+
         if cb["failure_count"] >= self.cb_config.failure_threshold:
             cb["state"] = CircuitBreakerState.OPEN
             logger.warning(f"Circuit breaker for {technique.value} moved to OPEN")
@@ -208,17 +207,17 @@ class RAGTemplatesBridge:
     ) -> RAGResponse:
         """
         Execute RAG query with specified or default technique.
-        
+
         Args:
             query_text: The query to process
             technique: RAG technique to use (defaults to configured default)
             **kwargs: Additional arguments for the pipeline
-            
+
         Returns:
             RAGResponse: Standardized response object
         """
         start_time = time.time()
-        
+
         # Normalize technique parameter
         if isinstance(technique, str):
             try:
@@ -238,35 +237,35 @@ class RAGTemplatesBridge:
                 return error_response
         elif technique is None:
             technique = self.default_technique
-            
+
         # Track metrics
         self.metrics.total_queries += 1
         self.metrics.technique_usage[technique.value] = (
             self.metrics.technique_usage.get(technique.value, 0) + 1
         )
-        
+
         try:
             # Check circuit breaker
             if not self._check_circuit_breaker(technique):
                 logger.warning(f"Circuit breaker open for {technique.value}, falling back")
                 technique = self.fallback_technique
-                
+
             # Get pipeline
             pipeline = self._pipelines.get(technique)
             if not pipeline:
                 raise ValueError(f"Pipeline not available: {technique.value}")
-                
+
             # Execute query
             result = await self._execute_pipeline_query(pipeline, query_text, **kwargs)
-            
+
             # Record success
             self._record_success(technique)
             self.metrics.successful_queries += 1
-            
+
             # Calculate processing time
             processing_time = (time.time() - start_time) * 1000
             self._response_times.append(processing_time)
-            
+
             # Create standardized response
             response = RAGResponse(
                 answer=result.get("answer", ""),
@@ -280,17 +279,17 @@ class RAGTemplatesBridge:
                     "timestamp": time.time()
                 }
             )
-            
+
             logger.info(f"Query processed successfully with {technique.value} in {processing_time:.2f}ms")
             return response
-            
+
         except Exception as e:
             # Record failure
             self._record_failure(technique)
             self.metrics.failed_queries += 1
-            
+
             processing_time = (time.time() - start_time) * 1000
-            
+
             error_response = RAGResponse(
                 answer="",
                 sources=[],
@@ -300,14 +299,14 @@ class RAGTemplatesBridge:
                 metadata={"error_type": type(e).__name__},
                 error=str(e)
             )
-            
+
             logger.error(f"Query failed with {technique.value}: {e}")
             return error_response
 
     async def _execute_pipeline_query(self, pipeline: RAGPipeline, query_text: str, **kwargs) -> Dict[str, Any]:
         """Execute query on specific pipeline with timeout."""
         timeout = self.bridge_config.get("query_timeout", 30)
-        
+
         try:
             # Use asyncio.wait_for for timeout handling
             result = await asyncio.wait_for(
@@ -326,7 +325,7 @@ class RAGTemplatesBridge:
         if self._response_times:
             self.metrics.avg_response_time_ms = sum(self._response_times) / len(self._response_times)
             self.metrics.p95_response_time_ms = sorted(self._response_times)[int(len(self._response_times) * 0.95)]
-        
+
         return asdict(self.metrics)
 
     def get_health_status(self) -> Dict[str, Any]:
@@ -337,7 +336,7 @@ class RAGTemplatesBridge:
             "circuit_breakers": {},
             "metrics": self.get_metrics()
         }
-        
+
         for technique, pipeline in self._pipelines.items():
             try:
                 # Simple health check - attempt to get pipeline config
@@ -345,10 +344,10 @@ class RAGTemplatesBridge:
                 health["pipelines"][technique.value] = "healthy"
             except Exception as e:
                 health["pipelines"][technique.value] = f"unhealthy: {e}"
-                
+
         for technique, cb in self._circuit_breakers.items():
             health["circuit_breakers"][technique.value] = cb["state"].value
-            
+
         return health
 
     async def index_documents(
@@ -359,12 +358,12 @@ class RAGTemplatesBridge:
     ) -> Dict[str, Any]:
         """
         Index documents using specified technique with incremental support.
-        
+
         Args:
             documents: List of documents to index
             technique: RAG technique to use for indexing
             incremental: Whether to use incremental indexing
-            
+
         Returns:
             Dict with indexing results
         """
@@ -372,13 +371,13 @@ class RAGTemplatesBridge:
             technique = RAGTechnique(technique)
         elif technique is None:
             technique = self.default_technique
-            
+
         pipeline = self._pipelines.get(technique)
         if not pipeline:
             raise ValueError(f"Pipeline not available: {technique.value}")
-            
+
         start_time = time.time()
-        
+
         try:
             # Convert documents to required format
             from iris_rag.core.models import Document
@@ -386,14 +385,14 @@ class RAGTemplatesBridge:
                 Document(page_content=doc.get("content", ""), metadata=doc.get("metadata", {}))
                 for doc in documents
             ]
-            
+
             # Use pipeline's load_documents method
             await asyncio.get_event_loop().run_in_executor(
                 None, pipeline.load_documents, "", documents=doc_objects
             )
-            
+
             processing_time = (time.time() - start_time) * 1000
-            
+
             return {
                 "status": "success",
                 "documents_indexed": len(documents),
@@ -401,7 +400,7 @@ class RAGTemplatesBridge:
                 "processing_time_ms": processing_time,
                 "incremental": incremental
             }
-            
+
         except Exception as e:
             logger.error(f"Document indexing failed: {e}")
             return {
@@ -416,14 +415,14 @@ class RAGTemplatesBridge:
         """Context manager for safe pipeline access."""
         if isinstance(technique, str):
             technique = RAGTechnique(technique)
-            
+
         pipeline = self._pipelines.get(technique)
         if not pipeline:
             raise ValueError(f"Pipeline not available: {technique.value}")
-            
+
         try:
             yield pipeline
-        except Exception as e:
+    except Exception:
             self._record_failure(technique)
             raise
         else:
@@ -432,7 +431,7 @@ class RAGTemplatesBridge:
     async def health_check(self) -> Dict[str, Any]:
         """
         Perform comprehensive health check of all components.
-        
+
         Returns:
             Dict containing health status of bridge, pipelines, and dependencies
         """
@@ -449,7 +448,7 @@ class RAGTemplatesBridge:
             },
             "metrics": await self.get_performance_metrics()
         }
-        
+
         # Check pipeline health
         for technique, pipeline in self._pipelines.items():
             try:
@@ -468,7 +467,7 @@ class RAGTemplatesBridge:
                     "error": str(e)
                 }
                 health_status["status"] = "degraded"
-        
+
         # Check circuit breaker states
         for technique, cb in self._circuit_breakers.items():
             cb_status = cb["state"].value
@@ -478,11 +477,11 @@ class RAGTemplatesBridge:
             }
             if cb_status == "open":
                 health_status["status"] = "degraded"
-        
+
         # Check dependencies
         try:
             # Test database connectivity
-            conn_health = self.connection_manager.get_connection()
+            self.connection_manager.get_connection()
             health_status["components"]["dependencies"]["database"] = {"status": "healthy"}
         except Exception as e:
             health_status["components"]["dependencies"]["database"] = {
@@ -490,14 +489,14 @@ class RAGTemplatesBridge:
                 "error": str(e)
             }
             health_status["status"] = "unhealthy"
-        
+
         health_status["check_duration_ms"] = (time.time() - start_time) * 1000
         return health_status
 
     async def get_available_techniques(self) -> List[str]:
         """
         Get list of available RAG techniques.
-        
+
         Returns:
             List of technique names that are currently available
         """
@@ -507,27 +506,26 @@ class RAGTemplatesBridge:
             cb = self._circuit_breakers.get(technique, {})
             if cb.get("state", CircuitBreakerState.CLOSED) != CircuitBreakerState.OPEN:
                 available.append(technique.value)
-        
+
         # Always include fallback technique if available
-        if (self.fallback_technique.value not in available and
-            self.fallback_technique in self._pipelines):
+        if (self.fallback_technique.value not in available and self.fallback_technique in self._pipelines):
             available.append(self.fallback_technique.value)
-            
+
         return available
 
     async def get_performance_metrics(self) -> Dict[str, Any]:
         """
         Get comprehensive performance metrics.
-        
+
         Returns:
             Dict containing current performance metrics and SLO compliance
         """
         current_metrics = self.get_metrics()
-        
+
         # Add SLO compliance checks
         config_targets = self.bridge_config.get("performance", {})
         p95_target = config_targets.get("target_latency_p95_ms", 500)
-        
+
         slo_compliance = {
             "p95_latency_compliant": current_metrics["p95_response_time_ms"] <= p95_target,
             "p95_target_ms": p95_target,
@@ -535,7 +533,7 @@ class RAGTemplatesBridge:
                 current_metrics["successful_queries"] / max(current_metrics["total_queries"], 1)
             ) * 100
         }
-        
+
         return {
             **current_metrics,
             "slo_compliance": slo_compliance,

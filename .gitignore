@@ -155,3 +155,30 @@ ingestion_checkpoint.pkl
 data/pmc_100k_downloaded/
 
 temp_iris.key
+
+# Output and temporary directories that accumulate files
+outputs/logs/
+outputs/temp/
+test_results/temp/
+reports/temp/
+comprehensive_ragas_results/temp/
+benchmarks/temp/
+coverage_html/temp/
+
+# Additional temporary file patterns
+*.tmp
+*.temp
+*.pid
+*.lock
+*.swp
+*~
+.mypy_cache/
+
+# Test and evaluation outputs (keep structure but ignore content)
+outputs/**/*.log
+test_results/**/*.log
+reports/**/*.log
+evaluation_framework/**/*.log
+test-results/
+coverage_html/
+lint-results/
