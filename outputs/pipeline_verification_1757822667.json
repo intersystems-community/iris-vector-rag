@@ -1,0 +1,130 @@
+{
+  "test_metadata": {
+    "timestamp": "2025-09-14T00:04:27.453434",
+    "duration_seconds": 0.227607,
+    "test_type": "comprehensive_pipeline_ragas_verification"
+  },
+  "import_tests": {
+    "BasicRAG": true,
+    "CRAG": true,
+    "GraphRAG": true,
+    "BasicRAGReranking": true,
+    "PyLateColBERT": true
+  },
+  "instantiation_tests": {
+    "BasicRAG": {
+      "instantiation_success": false,
+      "error_type": "AttributeError",
+      "error_message": "'NoneType' object has no attribute 'cursor'",
+      "fallback_detected": false,
+      "mock_detected": false,
+      "fail_hard_verified": false
+    },
+    "CRAG": {
+      "instantiation_success": false,
+      "error_type": "AttributeError",
+      "error_message": "'NoneType' object has no attribute 'cursor'",
+      "fallback_detected": false,
+      "mock_detected": false,
+      "fail_hard_verified": false
+    },
+    "GraphRAG": {
+      "instantiation_success": false,
+      "error_type": "AttributeError",
+      "error_message": "'NoneType' object has no attribute 'cursor'",
+      "fallback_detected": false,
+      "mock_detected": false,
+      "fail_hard_verified": false
+    },
+    "BasicRAGReranking": {
+      "instantiation_success": false,
+      "error_type": "AttributeError",
+      "error_message": "'NoneType' object has no attribute 'cursor'",
+      "fallback_detected": false,
+      "mock_detected": false,
+      "fail_hard_verified": false
+    },
+    "PyLateColBERT": {
+      "instantiation_success": false,
+      "error_type": "AttributeError",
+      "error_message": "'NoneType' object has no attribute 'cursor'",
+      "fallback_detected": false,
+      "mock_detected": false,
+      "fail_hard_verified": false
+    }
+  },
+  "mock_detection": {
+    "MockColBERTPipeline": false,
+    "MockConnection": false,
+    "MockConfig": false,
+    "MockEmbedding": false,
+    "MockRetrieval": false,
+    "_mock_": true,
+    "fallback_used": false,
+    "fallback_statistics": false
+  },
+  "factory_integration": {
+    "config_loaded": true,
+    "pipelines_found": [
+      "BasicRAG",
+      "CRAG",
+      "BasicRAGReranking",
+      "GraphRAG",
+      "ColBERT"
+    ],
+    "expected_pipelines": [
+      "BasicRAG",
+      "CRAG",
+      "BasicRAGReranking",
+      "GraphRAG",
+      "ColBERT"
+    ],
+    "all_pipelines_registered": true,
+    "colbert_config": {
+      "name": "ColBERT",
+      "module": "iris_rag.pipelines.colbert_pylate.pylate_pipeline",
+      "class": "PyLateColBERTPipeline",
+      "enabled": true,
+      "params": {
+        "top_k": 5,
+        "rerank_factor": 2,
+        "model_name": "lightonai/GTE-ModernColBERT-v1",
+        "batch_size": 32,
+        "use_native_reranking": true,
+        "cache_embeddings": true,
+        "max_doc_length": 4096
+      }
+    }
+  },
+  "summary": {
+    "pipeline_imports": {
+      "successful": 5,
+      "total": 5,
+      "success_rate": 1.0
+    },
+    "pipeline_instantiation": {
+      "successful": 0,
+      "total": 5,
+      "success_rate": 0.0
+    },
+    "fallback_detection": {
+      "fallbacks_detected": 0,
+      "clean_pipelines": 5
+    },
+    "mock_detection": {
+      "mocks_in_pipelines": 0,
+      "mock_patterns_in_code": 1,
+      "clean_codebase": false
+    },
+    "pylate_verification": {
+      "fail_hard_confirmed": false,
+      "no_fallback_logic": true
+    },
+    "overall_status": {
+      "all_pipelines_clean": true,
+      "codebase_clean": false,
+      "pylate_properly_implemented": false,
+      "verification_passed": false
+    }
+  }
+}

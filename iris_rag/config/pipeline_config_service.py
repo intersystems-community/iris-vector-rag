@@ -45,12 +45,15 @@ class PipelineConfigService:
             config_path = resolve_project_relative_path(config_file_path)
             self.logger.debug(f"Resolved config path: {config_path}")
         except Exception as e:
-            raise PipelineConfigurationError(f"Failed to resolve configuration path '{config_file_path}': {str(e)}")
+            raise PipelineConfigurationError(
+                f"Failed to resolve configuration path '{config_file_path}': {str(e)}"
+            )
 
         # Check if file exists
         if not config_path.exists():
             raise PipelineConfigurationError(
-                f"Configuration file not found: {config_path} " f"(resolved from '{config_file_path}')"
+                f"Configuration file not found: {config_path} "
+                f"(resolved from '{config_file_path}')"
             )
 
         try:
@@ -64,7 +67,9 @@ class PipelineConfigService:
             # Extract pipeline definitions
             pipelines = config_data.get("pipelines", [])
             if not isinstance(pipelines, list):
-                raise PipelineConfigurationError("Configuration must contain a 'pipelines' list")
+                raise PipelineConfigurationError(
+                    "Configuration must contain a 'pipelines' list"
+                )
 
             # Validate each pipeline definition
             validated_pipelines = []

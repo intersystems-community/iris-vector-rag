@@ -1,0 +1,27 @@
+{
+  "run_id": "real_eval_20250913_225420",
+  "documents_processed": 1913,
+  "questions_evaluated": 500,
+  "execution_time_seconds": 4124.51237988472,
+  "execution_time_minutes": 68.74187299807866,
+  "pipeline_results": {
+    "BasicRAGPipeline": {
+      "metrics": {
+        "faithfulness": 0.0006000000000000001,
+        "answer_relevancy": 0.0,
+        "context_precision": 0.7997999999999982,
+        "context_recall": 0.75,
+        "answer_similarity": 0.7900000000000048,
+        "answer_correctness": 0.8298400000000016,
+        "overall_score": 0.5283733333333341
+      },
+      "total_questions": 500
+    }
+  },
+  "infrastructure": {
+    "vector_database": "InterSystems IRIS",
+    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "llm_model": "gpt-4o-mini",
+    "evaluation_framework": "RAGAS with real LLM judges"
+  }
+}

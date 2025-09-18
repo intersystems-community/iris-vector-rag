@@ -92,7 +92,11 @@ def process_document_row(row_dict: Dict[str, Any]) -> Dict[str, Any]:
             elif isinstance(value, (list, tuple)):
                 # Process lists/tuples of values
                 processed_row[key] = [
-                    process_document_row(item) if isinstance(item, dict) else convert_clob_to_string(item)
+                    (
+                        process_document_row(item)
+                        if isinstance(item, dict)
+                        else convert_clob_to_string(item)
+                    )
                     for item in value
                 ]
             else:
@@ -129,10 +133,14 @@ def ensure_string_content(document_data: Dict[str, Any]) -> Dict[str, Any]:
 
     # Process page_content specifically
     if "page_content" in document_data:
-        processed_data["page_content"] = convert_clob_to_string(document_data["page_content"])
+        processed_data["page_content"] = convert_clob_to_string(
+            document_data["page_content"]
+        )
     elif "text_content" in document_data:
         # Handle alternative column name
-        processed_data["page_content"] = convert_clob_to_string(document_data["text_content"])
+        processed_data["page_content"] = convert_clob_to_string(
+            document_data["text_content"]
+        )
 
     # Process metadata
     if "metadata" in document_data:

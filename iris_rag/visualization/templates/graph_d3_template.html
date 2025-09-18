@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Knowledge Graph - D3.js Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .graph-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        
+        .node {
+            cursor: pointer;
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        
+        .node.seed {
+            stroke: #00ff00;
+            stroke-width: 4px;
+        }
+        
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        
+        .node-label {
+            font-size: 12px;
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #333;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .control-btn {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .control-btn:hover {
+            background: #0056b3;
+        }
+        
+        .legend {
+            float: right;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-left: 20px;
+            width: 200px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Knowledge Graph Visualization</h1>
+        <p>Query: <strong>{{QUERY_TEXT}}</strong></p>
+        
+        <div class="legend">
+            <h4>Entity Types</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FF6B6B;"></div>
+                <span>Person</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #4ECDC4;"></div>
+                <span>Disease</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #45B7D1;"></div>
+                <span>Drug</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #96CEB4;"></div>
+                <span>Treatment</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FECA57;"></div>
+                <span>Symptom</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00FF00;"></div>
+                <span>Seed Entity</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn" onclick="restartSimulation()">Restart Layout</button>
+            <button class="control-btn" onclick="centerGraph()">Center Graph</button>
+            <button class="control-btn" onclick="toggleLabels()">Toggle Labels</button>
+            <button class="control-btn" onclick="exportPNG()">Export PNG</button>
+            <button class="control-btn" onclick="showStats()">Show Stats</button>
+        </div>
+        
+        <div class="graph-container">
+            <svg id="graph"></svg>
+        </div>
+    </div>
+    
+    <div class="tooltip" id="tooltip"></div>
+    
+    <script>
+        // Graph data
+        const graphData = {
+            nodes: {{GRAPH_NODES}},
+            links: {{GRAPH_LINKS}}
+        };
+        
+        // Set up SVG
+        const width = 1160;
+        const height = 600;
+        
+        const svg = d3.select("#graph")
+            .attr("width", width)
+            .attr("height", height);
+        
+        // Create groups for links and nodes
+        const linkGroup = svg.append("g").attr("class", "links");
+        const nodeGroup = svg.append("g").attr("class", "nodes");
+        const labelGroup = svg.append("g").attr("class", "labels");
+        
+        // Set up simulation
+        const simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(25));
+        
+        // Create links
+        const link = linkGroup.selectAll("line")
+            .data(graphData.links)
+            .enter().append("line")
+            .attr("class", "link")
+            .attr("stroke-width", d => Math.sqrt(d.weight * 3))
+            .attr("stroke", d => d.confidence > 0.7 ? "#333" : "#999");
+        
+        // Create nodes
+        const node = nodeGroup.selectAll("circle")
+            .data(graphData.nodes)
+            .enter().append("circle")
+            .attr("class", d => d.isSeed ? "node seed" : "node")
+            .attr("r", d => d.size)
+            .attr("fill", d => d.color)
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+        
+        // Create labels
+        let labelsVisible = true;
+        const label = labelGroup.selectAll("text")
+            .data(graphData.nodes)
+            .enter().append("text")
+            .attr("class", "node-label")
+            .text(d => d.name.length > 15 ? d.name.substring(0, 15) + "..." : d.name);
+        
+        // Tooltip
+        const tooltip = d3.select("#tooltip");
+        
+        // Add hover events
+        node.on("mouseover", function(event, d) {
+            tooltip.style("opacity", 1)
+                .html(`
+                    <strong>${d.name}</strong><br/>
+                    Type: ${d.type}<br/>
+                    ID: ${d.id}<br/>
+                    ${d.isSeed ? '<strong>SEED ENTITY</strong>' : ''}
+                `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", function() {
+            tooltip.style("opacity", 0);
+        });
+        
+        // Add click events for node selection
+        node.on("click", function(event, d) {
+            // Highlight connected nodes
+            const connectedNodes = new Set();
+            graphData.links.forEach(link => {
+                if (link.source.id === d.id) connectedNodes.add(link.target.id);
+                if (link.target.id === d.id) connectedNodes.add(link.source.id);
+            });
+            
+            node.style("opacity", n => connectedNodes.has(n.id) || n.id === d.id ? 1.0 : 0.3);
+            link.style("opacity", l => l.source.id === d.id || l.target.id === d.id ? 1.0 : 0.1);
+        });
+        
+        // Double click to reset highlighting
+        svg.on("dblclick", function() {
+            node.style("opacity", 1.0);
+            link.style("opacity", 0.6);
+        });
+        
+        // Update positions on simulation tick
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+            
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+            
+            label
+                .attr("x", d => d.x)
+                .attr("y", d => d.y + 4);
+        });
+        
+        // Drag functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+        
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+        
+        // Control functions
+        function restartSimulation() {
+            simulation.alpha(1).restart();
+        }
+        
+        function centerGraph() {
+            simulation.force("center", d3.forceCenter(width / 2, height / 2));
+            simulation.alpha(0.3).restart();
+        }
+        
+        function toggleLabels() {
+            labelsVisible = !labelsVisible;
+            label.style("display", labelsVisible ? "block" : "none");
+        }
+        
+        function showStats() {
+            const stats = `
+                Nodes: ${graphData.nodes.length}
+                Links: ${graphData.links.length}
+                Seed Entities: ${graphData.nodes.filter(n => n.isSeed).length}
+                Entity Types: ${new Set(graphData.nodes.map(n => n.type)).size}
+            `;
+            alert(stats);
+        }
+        
+        function exportPNG() {
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext('2d');
+            
+            // Set white background
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, width, height);
+            
+            // Convert SVG to data URL and draw on canvas
+            const svgData = new XMLSerializer().serializeToString(svg.node());
+            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            const img = new Image();
+            img.onload = function() {
+                context.drawImage(img, 0, 0);
+                URL.revokeObjectURL(url);
+                
+                // Download the image
+                const link = document.createElement('a');
+                link.download = 'knowledge-graph.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            };
+            img.src = url;
+        }
+    </script>
+</body>
+</html>

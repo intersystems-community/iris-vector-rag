@@ -57,7 +57,9 @@ def create_pipeline(
     # Initialize connection manager
     if external_connection:
         # Create a wrapper connection manager that uses the external connection
-        connection_manager = ExternalConnectionWrapper(external_connection, config_manager)
+        connection_manager = ExternalConnectionWrapper(
+            external_connection, config_manager
+        )
     else:
         connection_manager = ConnectionManager(config_manager)
 
@@ -65,7 +67,11 @@ def create_pipeline(
     if validate_requirements:
         factory = ValidatedPipelineFactory(connection_manager, config_manager)
         return factory.create_pipeline(
-            pipeline_type=pipeline_type, llm_func=llm_func, auto_setup=auto_setup, validate_requirements=True, **kwargs
+            pipeline_type=pipeline_type,
+            llm_func=llm_func,
+            auto_setup=auto_setup,
+            validate_requirements=True,
+            **kwargs,
         )
 
     # Legacy creation without validation
@@ -79,9 +85,13 @@ def create_pipeline(
         # Use 'stub' provider for testing if not specified otherwise in config or kwargs
         llm_provider = config_manager.get("llm.provider", "stub")
         llm_model_name = config_manager.get("llm.model_name", "stub-model")
-        effective_llm_func = get_llm_func(provider=llm_provider, model_name=llm_model_name, **kwargs)
+        effective_llm_func = get_llm_func(
+            provider=llm_provider, model_name=llm_model_name, **kwargs
+        )
 
-    return _create_pipeline_legacy(pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs)
+    return _create_pipeline_legacy(
+        pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs
+    )
 
 
 def _create_pipeline_legacy(
@@ -93,12 +103,18 @@ def _create_pipeline_legacy(
 ) -> RAGPipeline:
     """Legacy pipeline creation without validation."""
     if pipeline_type == "basic":
-        return BasicRAGPipeline(connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func)
+        return BasicRAGPipeline(
+            connection_manager=connection_manager,
+            config_manager=config_manager,
+            llm_func=llm_func,
+        )
     elif pipeline_type == "basic_rerank":
         from .pipelines.basic_rerank import BasicRAGRerankingPipeline
 
         return BasicRAGRerankingPipeline(
-            connection_manager=connection_manager, config_manager=config_manager, llm_func=llm_func
+            connection_manager=connection_manager,
+            config_manager=config_manager,
+            llm_func=llm_func,
         )
     elif pipeline_type == "crag":
         # Extract embedding_func from kwargs if provided
@@ -115,7 +131,9 @@ def _create_pipeline_legacy(
             "basic_rerank",
             "crag",
         ]
-        raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available: {available_types}")
+        raise ValueError(
+            f"Unknown pipeline type: {pipeline_type}. Available: {available_types}"
+        )
 
 
 def validate_pipeline(
@@ -135,7 +153,9 @@ def validate_pipeline(
     config_manager = ConfigurationManager(config_path)
 
     if external_connection:
-        connection_manager = ExternalConnectionWrapper(external_connection, config_manager)
+        connection_manager = ExternalConnectionWrapper(
+            external_connection, config_manager
+        )
     else:
         connection_manager = ConnectionManager(config_manager)
 
@@ -143,7 +163,9 @@ def validate_pipeline(
     return factory.validate_pipeline_type(pipeline_type)
 
 
-def setup_pipeline(pipeline_type: str, config_path: Optional[str] = None, external_connection=None) -> Dict[str, Any]:
+def setup_pipeline(
+    pipeline_type: str, config_path: Optional[str] = None, external_connection=None
+) -> Dict[str, Any]:
     """
     Set up all requirements for a pipeline type.
 
@@ -158,7 +180,9 @@ def setup_pipeline(pipeline_type: str, config_path: Optional[str] = None, extern
     config_manager = ConfigurationManager(config_path)
 
     if external_connection:
-        connection_manager = ExternalConnectionWrapper(external_connection, config_manager)
+        connection_manager = ExternalConnectionWrapper(
+            external_connection, config_manager
+        )
     else:
         connection_manager = ConnectionManager(config_manager)
 
@@ -183,7 +207,9 @@ def get_pipeline_status(
     config_manager = ConfigurationManager(config_path)
 
     if external_connection:
-        connection_manager = ExternalConnectionWrapper(external_connection, config_manager)
+        connection_manager = ExternalConnectionWrapper(
+            external_connection, config_manager
+        )
     else:
         connection_manager = ConnectionManager(config_manager)
 

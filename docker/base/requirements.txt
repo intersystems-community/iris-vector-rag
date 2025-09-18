@@ -1,0 +1,59 @@
+# =============================================================================
+# RAG Templates Base Dependencies
+# =============================================================================
+# Common dependencies shared across all services in the RAG framework
+# =============================================================================
+
+# Core Python utilities
+setuptools>=68.0.0
+wheel>=0.41.0
+pip>=23.0.0
+
+# Configuration and environment management
+python-dotenv>=1.0.0
+pydantic>=2.4.0
+pydantic-settings>=2.0.0
+pyyaml>=6.0.1
+toml>=0.10.2
+
+# Logging and monitoring
+loguru>=0.7.0
+structlog>=23.1.0
+
+# HTTP and networking
+httpx>=0.25.0
+requests>=2.31.0
+urllib3>=2.0.0
+
+# Async support
+asyncio>=3.4.3
+aiohttp>=3.8.0
+
+# Database connectivity
+intersystems-iris>=0.8.0
+redis>=5.0.0
+psycopg2-binary>=2.9.7
+
+# Utilities
+tenacity>=8.2.0
+click>=8.1.0
+rich>=13.5.0
+typer>=0.9.0
+
+# Security
+cryptography>=41.0.0
+passlib>=1.7.4
+
+# JSON and data handling
+orjson>=3.9.0
+msgpack>=1.0.0
+
+# Date and time utilities
+python-dateutil>=2.8.0
+pendulum>=2.1.0
+
+# File and path utilities
+pathlib2>=2.3.0
+
+# Text processing basics
+markupsafe>=2.1.0

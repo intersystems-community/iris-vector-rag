@@ -1,10 +1,8 @@
 import abc
 import logging
-import warnings
 from typing import List, Dict, Any, Optional, Tuple
 from .models import Document
 from .vector_store import VectorStore
-from .response_standardizer import standardize_pipeline_response
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +16,12 @@ class RAGPipeline(abc.ABC):
     interchangeably within the framework.
     """
 
-    def __init__(self, connection_manager, config_manager, vector_store: Optional[VectorStore] = None):
+    def __init__(
+        self,
+        connection_manager,
+        config_manager,
+        vector_store: Optional[VectorStore] = None,
+    ):
         """
         Initialize the RAG pipeline with connection and configuration managers.
 
@@ -50,10 +53,11 @@ class RAGPipeline(abc.ABC):
             documents_path: Path to the documents or directory of documents.
             **kwargs: Additional keyword arguments for document loading.
         """
-        pass
 
     @abc.abstractmethod
-    def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
+    def query(
+        self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs
+    ) -> Dict[str, Any]:
         """
         Unified query method that returns standardized response format.
 
@@ -75,11 +79,13 @@ class RAGPipeline(abc.ABC):
         Returns:
             Standardized dictionary with keys: query, retrieved_documents, contexts, metadata, answer, execution_time
         """
-        pass
 
     # Protected helper methods for vector store operations
     def _retrieve_documents_by_vector(
-        self, query_embedding: List[float], top_k: int, metadata_filter: Optional[Dict[str, Any]] = None
+        self,
+        query_embedding: List[float],
+        top_k: int,
+        metadata_filter: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Retrieve documents using vector similarity search.
@@ -92,7 +98,9 @@ class RAGPipeline(abc.ABC):
         Returns:
             List of tuples containing (Document, similarity_score)
         """
-        return self.vector_store.similarity_search(query_embedding=query_embedding, top_k=top_k, filter=metadata_filter)
+        return self.vector_store.similarity_search(
+            query_embedding=query_embedding, top_k=top_k, filter=metadata_filter
+        )
 
     def _get_documents_by_ids(self, document_ids: List[str]) -> List[Document]:
         """
@@ -106,7 +114,9 @@ class RAGPipeline(abc.ABC):
         """
         return self.vector_store.fetch_documents_by_ids(document_ids)
 
-    def _store_documents(self, documents: List[Document], embeddings: Optional[List[List[float]]] = None) -> List[str]:
+    def _store_documents(
+        self, documents: List[Document], embeddings: Optional[List[List[float]]] = None
+    ) -> List[str]:
         """
         Store documents in the vector store.
 
@@ -195,5 +205,7 @@ class RAGPipeline(abc.ABC):
             return self.query(query, top_k, **kwargs)
         except NotImplementedError:
             # If query() is not implemented, return empty list
-            logger.warning(f"Query method not implemented for {self.__class__.__name__}")
+            logger.warning(
+                f"Query method not implemented for {self.__class__.__name__}"
+            )
             return []

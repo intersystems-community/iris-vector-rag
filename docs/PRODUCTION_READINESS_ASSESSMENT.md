@@ -1,5 +1,7 @@
 # PRODUCTION_READINESS_ASSESSMENT
 
+> Status source of truth: Implementation and production readiness are governed by [UNIFIED_PROJECT_ROADMAP.md](UNIFIED_PROJECT_ROADMAP.md) — “E2E Testing Infrastructure Development” and “Implementation Completion Program.” This document summarizes validated artifacts only and defers ongoing status to the roadmap.
+
 Production readiness assessment for rag-templates based strictly on validated test artifacts and implemented source. All file and API references are clickable and point to real code or reports.
 
 ## Executive Summary

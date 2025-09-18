@@ -1,5 +1,7 @@
 # RAG Templates Service Boundaries & Integration Patterns
 
+> Status source of truth: Implementation progress and E2E readiness live in [UNIFIED_PROJECT_ROADMAP.md](../UNIFIED_PROJECT_ROADMAP.md). This guide documents boundaries/patterns; defer status to the roadmap.
+
 ## 1. Executive Summary
 
 This document defines the service boundaries and integration patterns for the RAG-Templates Adapter Layer (M1), establishing clean separation between the rag-templates RAG ecosystem and the kg-ticket-resolver knowledge graph memory system while ensuring extensible, resilient, and performant integration.

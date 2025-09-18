@@ -1,5 +1,7 @@
 # IRIS RAG MCP Server - Comprehensive Architecture Overview
 
+> Status source of truth: Implementation scope and E2E readiness are governed by [UNIFIED_PROJECT_ROADMAP.md](../UNIFIED_PROJECT_ROADMAP.md). Architectural guidance here should not be treated as an implementation claim; consult the roadmap for current status.
+
 ## 1. Executive Summary
 
 This document provides a comprehensive overview of the IRIS RAG MCP (Model Context Protocol) server architecture, integrating all architectural components into a cohesive, enterprise-scale system design. The architecture supports 8 RAG techniques with modular design, clear service boundaries, and enterprise scalability from 1000+ to 92K+ documents.

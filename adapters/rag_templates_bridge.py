@@ -422,7 +422,7 @@ class RAGTemplatesBridge:
 
         try:
             yield pipeline
-    except Exception:
+        except Exception:
             self._record_failure(technique)
             raise
         else:

@@ -68,7 +68,11 @@ class IRISStorage:
     specifically optimized for IRIS database operations.
     """
 
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager):
+    def __init__(
+        self,
+        connection_manager: ConnectionManager,
+        config_manager: ConfigurationManager,
+    ):
         """
         Initialize IRIS storage with connection and configuration managers.
 
@@ -134,7 +138,9 @@ class IRISStorage:
                         cursor.execute(create_table_sql)
                         logger.info(f"✅ Successfully recreated {table_name} table")
                     except Exception as drop_err:
-                        logger.warning(f"Could not drop {table_name} (foreign keys?): {drop_err}")
+                        logger.warning(
+                            f"Could not drop {table_name} (foreign keys?): {drop_err}"
+                        )
                         logger.info(f"Clearing all rows from {table_name} instead")
                         cursor.execute(f"DELETE FROM {table_name}")
 
@@ -144,7 +150,9 @@ class IRISStorage:
                     break
 
                 except Exception as table_error:
-                    logger.warning(f"Failed to create table {table_name}: {table_error}")
+                    logger.warning(
+                        f"Failed to create table {table_name}: {table_error}"
+                    )
                     if table_name == table_attempts[-1]:  # Last attempt
                         raise Exception("All table creation attempts failed")
                     continue
@@ -163,17 +171,23 @@ class IRISStorage:
                 utils = IRISSQLUtils()
 
                 # Create optimized vector index with HNSW parameters
-                index_success = utils.optimize_vector_table(connection, self.table_name, "embedding", vector_config)
+                index_success = utils.optimize_vector_table(
+                    connection, self.table_name, "embedding", vector_config
+                )
 
                 if index_success:
-                    logger.info(f"Created optimized vector index for table: {self.table_name}")
+                    logger.info(
+                        f"Created optimized vector index for table: {self.table_name}"
+                    )
                     logger.info(
                         f"HNSW parameters: M={vector_config.get('M')}, "
                         f"efConstruction={vector_config.get('efConstruction')}, "
                         f"Distance={vector_config.get('Distance')}"
                     )
                 else:
-                    logger.warning(f"Could not create optimized vector index for table: {self.table_name}")
+                    logger.warning(
+                        f"Could not create optimized vector index for table: {self.table_name}"
+                    )
 
             except Exception as e:
                 logger.warning(f"Could not create vector index: {e}")
@@ -189,7 +203,9 @@ class IRISStorage:
         finally:
             cursor.close()
 
-    def store_document(self, document: Document, embedding: Optional[List[float]] = None) -> None:
+    def store_document(
+        self, document: Document, embedding: Optional[List[float]] = None
+    ) -> None:
         """
         Store a single document with optional embedding.
 
@@ -224,10 +240,14 @@ class IRISStorage:
                 check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE 1=0"
                 cursor.execute(check_sql)
             except Exception as table_error:
-                logger.info(f"Table {self.table_name} not accessible, initializing schema: {table_error}")
+                logger.info(
+                    f"Table {self.table_name} not accessible, initializing schema: {table_error}"
+                )
                 cursor.close()  # Close cursor before schema initialization
                 self.initialize_schema()
-                cursor = connection.cursor()  # Get new cursor after schema initialization
+                cursor = (
+                    connection.cursor()
+                )  # Get new cursor after schema initialization
 
             documents_stored = 0
             documents_updated = 0
@@ -252,7 +272,16 @@ class IRISStorage:
                         """
                         embedding_str = json.dumps(embeddings[i])
                         title = doc.metadata.get("title", "")
-                        cursor.execute(update_sql, [title, doc.page_content, metadata_json, embedding_str, doc.id])
+                        cursor.execute(
+                            update_sql,
+                            [
+                                title,
+                                doc.page_content,
+                                metadata_json,
+                                embedding_str,
+                                doc.id,
+                            ],
+                        )
                     else:
                         update_sql = f"""
                         UPDATE {self.table_name}
@@ -260,7 +289,9 @@ class IRISStorage:
                         WHERE doc_id = ?
                         """
                         title = doc.metadata.get("title", "")
-                        cursor.execute(update_sql, [title, doc.page_content, metadata_json, doc.id])
+                        cursor.execute(
+                            update_sql, [title, doc.page_content, metadata_json, doc.id]
+                        )
                     documents_updated += 1
                 else:
                     # Insert new document with all available fields
@@ -294,7 +325,16 @@ class IRISStorage:
                         VALUES (?, ?, ?, ?, ?, ?, ?)
                         """
                         cursor.execute(
-                            insert_sql, [doc.id, title, doc.page_content, abstract, authors, keywords, metadata_json]
+                            insert_sql,
+                            [
+                                doc.id,
+                                title,
+                                doc.page_content,
+                                abstract,
+                                authors,
+                                keywords,
+                                metadata_json,
+                            ],
                         )
                     documents_stored += 1
 
@@ -308,7 +348,9 @@ class IRISStorage:
                 "table_name": self.table_name,
             }
 
-            logger.info(f"Stored {documents_stored} new and updated {documents_updated} documents in {self.table_name}")
+            logger.info(
+                f"Stored {documents_stored} new and updated {documents_updated} documents in {self.table_name}"
+            )
             return result
 
         except Exception as e:
@@ -356,7 +398,9 @@ class IRISStorage:
             documents = []
             for row in rows:
                 doc_id, actual_content_column_value, metadata_json = row
-                logger.debug(f"IRISStorage.retrieve_documents_by_ids - Fetched doc_id: {doc_id}, type: {type(doc_id)}")
+                logger.debug(
+                    f"IRISStorage.retrieve_documents_by_ids - Fetched doc_id: {doc_id}, type: {type(doc_id)}"
+                )
 
                 # Convert CLOB to string if necessary
                 page_content = _convert_clob_to_string(actual_content_column_value)
@@ -381,7 +425,10 @@ class IRISStorage:
             cursor.close()
 
     def vector_search(
-        self, query_embedding: List[float], top_k: int = 5, metadata_filter: Optional[Dict[str, Any]] = None
+        self,
+        query_embedding: List[float],
+        top_k: int = 5,
+        metadata_filter: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Perform vector similarity search.
@@ -427,8 +474,12 @@ class IRISStorage:
 
             results = []
             for row in rows:
-                doc_id, actual_content_column_value, metadata_json, similarity_score = row
-                logger.debug(f"IRISStorage.vector_search - Fetched doc_id: {doc_id}, type: {type(doc_id)}")
+                doc_id, actual_content_column_value, metadata_json, similarity_score = (
+                    row
+                )
+                logger.debug(
+                    f"IRISStorage.vector_search - Fetched doc_id: {doc_id}, type: {type(doc_id)}"
+                )
 
                 # Convert CLOB to string if necessary
                 page_content = _convert_clob_to_string(actual_content_column_value)
@@ -453,7 +504,10 @@ class IRISStorage:
             cursor.close()
 
     def _fallback_text_search(
-        self, query_embedding: List[float], top_k: int, metadata_filter: Optional[Dict[str, Any]] = None
+        self,
+        query_embedding: List[float],
+        top_k: int,
+        metadata_filter: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Fallback text-based search when vector search is not available.
@@ -491,7 +545,9 @@ class IRISStorage:
             results = []
             for row in rows:
                 doc_id, actual_content_column_value, metadata_json = row
-                logger.debug(f"IRISStorage._fallback_text_search - Fetched doc_id: {doc_id}, type: {type(doc_id)}")
+                logger.debug(
+                    f"IRISStorage._fallback_text_search - Fetched doc_id: {doc_id}, type: {type(doc_id)}"
+                )
 
                 # Convert CLOB to string if necessary
                 page_content = _convert_clob_to_string(actual_content_column_value)
@@ -506,7 +562,9 @@ class IRISStorage:
                 # Use a default similarity score for fallback
                 results.append((document, 0.5))
 
-            logger.warning(f"Used fallback text search, returned {len(results)} results")
+            logger.warning(
+                f"Used fallback text search, returned {len(results)} results"
+            )
             return results
 
         except Exception as e:

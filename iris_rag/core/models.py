@@ -8,7 +8,9 @@ def default_id_factory():
     return str(uuid.uuid4())
 
 
-@dataclass(frozen=True)  # frozen=True makes instances hashable if all fields are hashable
+@dataclass(
+    frozen=True
+)  # frozen=True makes instances hashable if all fields are hashable
 class Document:
     """
     Represents a single document or a piece of text content.
@@ -122,6 +124,244 @@ class Document:
             raise TypeError("id must be a string.")
         if not self.id:
             raise ValueError("id cannot be empty.")
+
+
+@dataclass(frozen=True)
+class Entity:
+    """
+    Represents an extracted entity from text processing.
+
+    Attributes:
+        text: The actual text span of the entity as it appears in the source
+        entity_type: The type/category of the entity (e.g., PERSON, DISEASE, DRUG, etc.)
+        confidence: Confidence score of the extraction (0.0 to 1.0)
+        start_offset: Character offset where entity starts in source text
+        end_offset: Character offset where entity ends in source text
+        source_document_id: ID of the document this entity was extracted from
+        metadata: Additional information about the entity (embeddings, context, etc.)
+        id: Unique identifier for the entity
+    """
+
+    text: str
+    entity_type: str
+    confidence: float
+    start_offset: int
+    end_offset: int
+    source_document_id: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    id: str = field(default_factory=default_id_factory)
+
+    def __hash__(self):
+        """Convert dict metadata to hashable form for hashing."""
+        meta_tuple = tuple(sorted(self.metadata.items()))
+        return hash(
+            (
+                self.text,
+                self.entity_type,
+                self.confidence,
+                self.start_offset,
+                self.end_offset,
+                self.source_document_id,
+                meta_tuple,
+                self.id,
+            )
+        )
+
+    def __post_init__(self):
+        """Post-initialization validation."""
+        if not isinstance(self.text, str) or not self.text.strip():
+            raise ValueError("Entity text must be a non-empty string.")
+        if not isinstance(self.entity_type, str) or not self.entity_type.strip():
+            raise ValueError("Entity type must be a non-empty string.")
+        if not (0.0 <= self.confidence <= 1.0):
+            raise ValueError("Confidence must be between 0.0 and 1.0.")
+        if not isinstance(self.start_offset, int) or self.start_offset < 0:
+            raise ValueError("Start offset must be a non-negative integer.")
+        if not isinstance(self.end_offset, int) or self.end_offset < self.start_offset:
+            raise ValueError("End offset must be >= start offset.")
+        if (
+            not isinstance(self.source_document_id, str)
+            or not self.source_document_id.strip()
+        ):
+            raise ValueError("Source document ID must be a non-empty string.")
+        if not isinstance(self.metadata, dict):
+            raise TypeError("Metadata must be a dictionary.")
+        if not isinstance(self.id, str) or not self.id.strip():
+            raise ValueError("Entity ID must be a non-empty string.")
+
+
+@dataclass(frozen=True)
+class Relationship:
+    """
+    Represents a relationship between two entities.
+
+    Attributes:
+        source_entity_id: ID of the source entity in the relationship
+        target_entity_id: ID of the target entity in the relationship
+        relationship_type: Type of relationship (e.g., "causes", "treats", "interacts_with")
+        confidence: Confidence score of the relationship extraction (0.0 to 1.0)
+        source_document_id: ID of the document where this relationship was found
+        metadata: Additional information about the relationship (context, evidence, etc.)
+        id: Unique identifier for the relationship
+    """
+
+    source_entity_id: str
+    target_entity_id: str
+    relationship_type: str
+    confidence: float
+    source_document_id: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    id: str = field(default_factory=default_id_factory)
+
+    def __hash__(self):
+        """Convert dict metadata to hashable form for hashing."""
+        meta_tuple = tuple(sorted(self.metadata.items()))
+        return hash(
+            (
+                self.source_entity_id,
+                self.target_entity_id,
+                self.relationship_type,
+                self.confidence,
+                self.source_document_id,
+                meta_tuple,
+                self.id,
+            )
+        )
+
+    def __post_init__(self):
+        """Post-initialization validation."""
+        if (
+            not isinstance(self.source_entity_id, str)
+            or not self.source_entity_id.strip()
+        ):
+            raise ValueError("Source entity ID must be a non-empty string.")
+        if (
+            not isinstance(self.target_entity_id, str)
+            or not self.target_entity_id.strip()
+        ):
+            raise ValueError("Target entity ID must be a non-empty string.")
+        if self.source_entity_id == self.target_entity_id:
+            raise ValueError("Source and target entity IDs cannot be the same.")
+        if (
+            not isinstance(self.relationship_type, str)
+            or not self.relationship_type.strip()
+        ):
+            raise ValueError("Relationship type must be a non-empty string.")
+        if not (0.0 <= self.confidence <= 1.0):
+            raise ValueError("Confidence must be between 0.0 and 1.0.")
+        if (
+            not isinstance(self.source_document_id, str)
+            or not self.source_document_id.strip()
+        ):
+            raise ValueError("Source document ID must be a non-empty string.")
+        if not isinstance(self.metadata, dict):
+            raise TypeError("Metadata must be a dictionary.")
+        if not isinstance(self.id, str) or not self.id.strip():
+            raise ValueError("Relationship ID must be a non-empty string.")
+
+
+# Common entity types for biomedical domain (based on SOTA research)
+class EntityTypes:
+    """Standard entity types for biomedical and general domain extraction."""
+
+    # Biomedical entities (from OpenMed and medical NER research)
+    PERSON = "PERSON"
+    DISEASE = "DISEASE"
+    DRUG = "DRUG"
+    TREATMENT = "TREATMENT"
+    SYMPTOM = "SYMPTOM"
+    GENE = "GENE"
+    PROTEIN = "PROTEIN"
+    ANATOMY = "ANATOMY"
+    PROCEDURE = "PROCEDURE"
+    DEVICE = "DEVICE"
+
+    # General entities
+    ORGANIZATION = "ORGANIZATION"
+    LOCATION = "LOCATION"
+    DATE = "DATE"
+    MONEY = "MONEY"
+    PERCENT = "PERCENT"
+    PRODUCT = "PRODUCT"
+    EVENT = "EVENT"
+
+    @classmethod
+    def all_types(cls) -> set:
+        """Return all available entity types."""
+        return {
+            cls.PERSON,
+            cls.DISEASE,
+            cls.DRUG,
+            cls.TREATMENT,
+            cls.SYMPTOM,
+            cls.GENE,
+            cls.PROTEIN,
+            cls.ANATOMY,
+            cls.PROCEDURE,
+            cls.DEVICE,
+            cls.ORGANIZATION,
+            cls.LOCATION,
+            cls.DATE,
+            cls.MONEY,
+            cls.PERCENT,
+            cls.PRODUCT,
+            cls.EVENT,
+        }
+
+    @classmethod
+    def biomedical_types(cls) -> set:
+        """Return biomedical-specific entity types."""
+        return {
+            cls.PERSON,
+            cls.DISEASE,
+            cls.DRUG,
+            cls.TREATMENT,
+            cls.SYMPTOM,
+            cls.GENE,
+            cls.PROTEIN,
+            cls.ANATOMY,
+            cls.PROCEDURE,
+            cls.DEVICE,
+        }
+
+
+# Common relationship types
+class RelationshipTypes:
+    """Standard relationship types for entity connections."""
+
+    # Medical/biomedical relationships
+    TREATS = "treats"
+    CAUSES = "causes"
+    PREVENTS = "prevents"
+    INTERACTS_WITH = "interacts_with"
+    LOCATED_IN = "located_in"
+    PART_OF = "part_of"
+    ASSOCIATED_WITH = "associated_with"
+
+    # General relationships
+    MENTIONS = "mentions"
+    REFERS_TO = "refers_to"
+    WORKS_FOR = "works_for"
+    BASED_IN = "based_in"
+    HAPPENS_ON = "happens_on"
+
+    @classmethod
+    def all_types(cls) -> set:
+        """Return all available relationship types."""
+        return {
+            cls.TREATS,
+            cls.CAUSES,
+            cls.PREVENTS,
+            cls.INTERACTS_WITH,
+            cls.LOCATED_IN,
+            cls.PART_OF,
+            cls.ASSOCIATED_WITH,
+            cls.MENTIONS,
+            cls.REFERS_TO,
+            cls.WORKS_FOR,
+            cls.BASED_IN,
+            cls.HAPPENS_ON,
+        }
 
 
 # Example of how other models might be added later:

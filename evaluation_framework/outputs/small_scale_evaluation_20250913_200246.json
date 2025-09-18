@@ -1,0 +1,56 @@
+{
+  "experiment_metadata": {
+    "timestamp": "20250913_200246",
+    "total_documents": 5,
+    "total_questions": 5,
+    "pipelines_evaluated": [
+      "BasicRAGPipeline",
+      "CRAGPipeline",
+      "GraphRAGPipeline",
+      "BasicRAGRerankingPipeline"
+    ]
+  },
+  "pipeline_results": {
+    "BasicRAGPipeline": {
+      "faithfulness": 0.8799999999999999,
+      "answer_relevancy": 0.78,
+      "context_precision": 0.88,
+      "context_recall": 0.8800000000000001,
+      "answer_similarity": 0.88,
+      "answer_correctness": 0.48,
+      "overall_score": 0.7966666666666667
+    },
+    "CRAGPipeline": {
+      "faithfulness": 0.85,
+      "answer_relevancy": 0.8500000000000001,
+      "context_precision": 0.85,
+      "context_recall": 0.7000000000000001,
+      "answer_similarity": 0.95,
+      "answer_correctness": 0.95,
+      "overall_score": 0.8583333333333334
+    },
+    "GraphRAGPipeline": {
+      "faithfulness": 0.7899999999999999,
+      "answer_relevancy": 0.99,
+      "context_precision": 0.79,
+      "context_recall": 0.79,
+      "answer_similarity": 0.89,
+      "answer_correctness": 0.54,
+      "overall_score": 0.7983333333333333
+    },
+    "BasicRAGRerankingPipeline": {
+      "faithfulness": 0.95,
+      "answer_relevancy": 0.75,
+      "context_precision": 0.75,
+      "context_recall": 0.65,
+      "answer_similarity": 0.85,
+      "answer_correctness": 0.8500000000000001,
+      "overall_score": 0.7999999999999999
+    }
+  },
+  "summary": {
+    "best_pipeline": "CRAGPipeline",
+    "evaluation_status": "COMPLETED",
+    "readiness_for_scale": true
+  }
+}

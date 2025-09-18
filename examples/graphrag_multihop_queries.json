@@ -1,0 +1,518 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Curated set of complex multi-hop queries for GraphRAG demonstration",
+    "domain": "Medical/Healthcare",
+    "created": "2024-09-14",
+    "total_queries": 24,
+    "query_categories": [
+      "2-hop-simple",
+      "3-hop-complex", 
+      "4-hop-reasoning",
+      "temporal-reasoning",
+      "multi-comorbidity",
+      "drug-interaction-chain",
+      "cascading-effects"
+    ]
+  },
+  "queries": {
+    "2_hop_queries": [
+      {
+        "id": "2hop_001",
+        "query": "What treatments are used for diseases that share symptoms with diabetes?",
+        "category": "symptom-treatment-discovery",
+        "difficulty": "moderate",
+        "expected_hops": 2,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find diseases that share symptoms with diabetes",
+            "start_entities": ["diabetes", "Type 2 diabetes"],
+            "relationships": ["has_symptom", "causes_symptom"],
+            "target_entities": ["frequent urination", "excessive thirst", "fatigue", "hypertension", "kidney disease"]
+          },
+          "hop_2": {
+            "description": "Find treatments for those diseases",
+            "start_entities": ["hypertension", "kidney disease", "metabolic syndrome"],
+            "relationships": ["treated_by", "prevented_by"],
+            "target_entities": ["ACE inhibitors", "lifestyle changes", "dialysis", "blood pressure medications"]
+          }
+        },
+        "expected_entities": [
+          "diabetes", "hypertension", "kidney disease", "frequent urination", 
+          "ACE inhibitors", "lisinopril", "lifestyle changes", "exercise"
+        ],
+        "expected_relationships": [
+          "diabetes -> has_symptom -> frequent urination",
+          "hypertension -> has_symptom -> frequent urination", 
+          "hypertension -> treated_by -> ACE inhibitors",
+          "kidney disease -> treated_by -> dialysis"
+        ],
+        "success_criteria": {
+          "min_documents": 3,
+          "must_include_entities": ["diabetes", "hypertension", "ACE inhibitors"],
+          "must_traverse_relationships": ["has_symptom", "treated_by"]
+        }
+      },
+      {
+        "id": "2hop_002", 
+        "query": "Which medications interact with drugs commonly prescribed for diabetes complications?",
+        "category": "drug-interaction-discovery",
+        "difficulty": "moderate",
+        "expected_hops": 2,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find common diabetes complications and their drugs",
+            "start_entities": ["diabetes", "Type 2 diabetes"],
+            "relationships": ["causes_complication", "treated_by"],
+            "target_entities": ["hypertension", "kidney disease", "cardiovascular disease", "metformin", "ACE inhibitors"]
+          },
+          "hop_2": {
+            "description": "Find drugs that interact with diabetes complication medications",
+            "start_entities": ["metformin", "ACE inhibitors", "lisinopril"],
+            "relationships": ["interacts_with", "contraindicated_with"],
+            "target_entities": ["NSAIDs", "potassium supplements", "lithium", "insulin"]
+          }
+        },
+        "expected_entities": [
+          "diabetes", "metformin", "ACE inhibitors", "lisinopril", "hypertension",
+          "NSAIDs", "potassium supplements", "kidney disease"
+        ],
+        "expected_relationships": [
+          "diabetes -> causes_complication -> hypertension",
+          "hypertension -> treated_by -> ACE inhibitors",
+          "ACE inhibitors -> interacts_with -> NSAIDs",
+          "metformin -> contraindicated_with -> kidney disease"
+        ],
+        "success_criteria": {
+          "min_documents": 3,
+          "must_include_entities": ["metformin", "ACE inhibitors", "NSAIDs"],
+          "must_traverse_relationships": ["causes_complication", "interacts_with"]
+        }
+      },
+      {
+        "id": "2hop_003",
+        "query": "What are the side effects of medications used to prevent diabetes complications?",
+        "category": "prevention-side-effects",
+        "difficulty": "moderate", 
+        "expected_hops": 2,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find medications used to prevent diabetes complications",
+            "start_entities": ["diabetes", "diabetic complications"],
+            "relationships": ["prevented_by", "reduces_risk_of"],
+            "target_entities": ["ACE inhibitors", "statins", "metformin", "SGLT-2 inhibitors"]
+          },
+          "hop_2": {
+            "description": "Find side effects of these preventive medications",
+            "start_entities": ["ACE inhibitors", "statins", "metformin"],
+            "relationships": ["causes_side_effect", "has_adverse_effect"],
+            "target_entities": ["dry cough", "muscle pain", "gastrointestinal upset", "hyperkalemia"]
+          }
+        },
+        "expected_entities": [
+          "diabetes", "ACE inhibitors", "statins", "metformin", 
+          "dry cough", "muscle pain", "gastrointestinal upset"
+        ],
+        "expected_relationships": [
+          "ACE inhibitors -> prevents -> diabetic nephropathy",
+          "ACE inhibitors -> causes_side_effect -> dry cough",
+          "statins -> prevents -> cardiovascular disease",
+          "statins -> causes_side_effect -> muscle pain"
+        ],
+        "success_criteria": {
+          "min_documents": 3,
+          "must_include_entities": ["ACE inhibitors", "statins", "dry cough"],
+          "must_traverse_relationships": ["prevents", "causes_side_effect"]
+        }
+      }
+    ],
+    "3_hop_queries": [
+      {
+        "id": "3hop_001",
+        "query": "Which medications interact with drugs used to treat conditions related to COVID-19 complications?",
+        "category": "covid-drug-interaction-chain",
+        "difficulty": "complex",
+        "expected_hops": 3,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find conditions related to COVID-19 complications",
+            "start_entities": ["COVID-19", "SARS-CoV-2"],
+            "relationships": ["causes_complication", "worsens_condition"],
+            "target_entities": ["diabetes", "hypertension", "kidney disease", "cardiovascular disease"]
+          },
+          "hop_2": {
+            "description": "Find drugs used to treat these COVID-related conditions",
+            "start_entities": ["diabetes", "hypertension", "kidney disease"],
+            "relationships": ["treated_by", "managed_with"],
+            "target_entities": ["metformin", "ACE inhibitors", "insulin", "diuretics"]
+          },
+          "hop_3": {
+            "description": "Find medications that interact with these treatment drugs",
+            "start_entities": ["metformin", "ACE inhibitors", "insulin"],
+            "relationships": ["interacts_with", "potentiates", "antagonizes"],
+            "target_entities": ["NSAIDs", "corticosteroids", "anticoagulants", "beta-blockers"]
+          }
+        },
+        "expected_entities": [
+          "COVID-19", "diabetes", "hypertension", "metformin", "ACE inhibitors", 
+          "NSAIDs", "corticosteroids", "insulin", "anticoagulants"
+        ],
+        "expected_relationships": [
+          "COVID-19 -> worsens_condition -> diabetes",
+          "diabetes -> treated_by -> metformin", 
+          "metformin -> interacts_with -> corticosteroids",
+          "hypertension -> treated_by -> ACE inhibitors",
+          "ACE inhibitors -> interacts_with -> NSAIDs"
+        ],
+        "success_criteria": {
+          "min_documents": 4,
+          "must_include_entities": ["COVID-19", "diabetes", "metformin", "corticosteroids"],
+          "must_traverse_relationships": ["worsens_condition", "treated_by", "interacts_with"]
+        }
+      },
+      {
+        "id": "3hop_002",
+        "query": "What are the common risk factors between diseases treated with metformin and diseases prevented by statins?",
+        "category": "risk-factor-convergence",
+        "difficulty": "complex",
+        "expected_hops": 3,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find diseases treated with metformin",
+            "start_entities": ["metformin"],
+            "relationships": ["treats", "indicated_for"],
+            "target_entities": ["Type 2 diabetes", "PCOS", "metabolic syndrome", "prediabetes"]
+          },
+          "hop_2": {
+            "description": "Find diseases prevented by statins",
+            "start_entities": ["statins", "atorvastatin", "rosuvastatin"],
+            "relationships": ["prevents", "reduces_risk_of"],
+            "target_entities": ["cardiovascular disease", "stroke", "heart attack", "atherosclerosis"]
+          },
+          "hop_3": {
+            "description": "Find common risk factors between these disease groups",
+            "start_entities": ["Type 2 diabetes", "cardiovascular disease", "metabolic syndrome"],
+            "relationships": ["has_risk_factor", "caused_by"],
+            "target_entities": ["obesity", "sedentary lifestyle", "high cholesterol", "insulin resistance", "family history"]
+          }
+        },
+        "expected_entities": [
+          "metformin", "Type 2 diabetes", "statins", "cardiovascular disease",
+          "obesity", "insulin resistance", "high cholesterol", "metabolic syndrome"
+        ],
+        "expected_relationships": [
+          "metformin -> treats -> Type 2 diabetes",
+          "statins -> prevents -> cardiovascular disease",
+          "Type 2 diabetes -> has_risk_factor -> obesity",
+          "cardiovascular disease -> has_risk_factor -> obesity",
+          "Type 2 diabetes -> has_risk_factor -> insulin resistance"
+        ],
+        "success_criteria": {
+          "min_documents": 4,
+          "must_include_entities": ["metformin", "statins", "obesity", "insulin resistance"],
+          "must_traverse_relationships": ["treats", "prevents", "has_risk_factor"]
+        }
+      },
+      {
+        "id": "3hop_003",
+        "query": "How do treatments for diabetes complications affect other cardiovascular medications?",
+        "category": "treatment-interaction-cascade",
+        "difficulty": "complex",
+        "expected_hops": 3,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find diabetes complications and their treatments",
+            "start_entities": ["diabetes", "diabetic complications"],
+            "relationships": ["causes_complication", "treated_by"],
+            "target_entities": ["diabetic nephropathy", "diabetic retinopathy", "ACE inhibitors", "SGLT-2 inhibitors"]
+          },
+          "hop_2": {
+            "description": "Find cardiovascular medications used in diabetic patients",
+            "start_entities": ["cardiovascular disease", "hypertension"],
+            "relationships": ["treated_by", "managed_with"],
+            "target_entities": ["beta-blockers", "calcium channel blockers", "diuretics", "anticoagulants"]
+          },
+          "hop_3": {
+            "description": "Find interactions between diabetes complication treatments and cardiovascular drugs",
+            "start_entities": ["ACE inhibitors", "SGLT-2 inhibitors", "beta-blockers"],
+            "relationships": ["interacts_with", "potentiates", "reduces_efficacy"],
+            "target_entities": ["hyperkalemia", "hypotension", "masked hypoglycemia", "dehydration"]
+          }
+        },
+        "expected_entities": [
+          "diabetes", "diabetic nephropathy", "ACE inhibitors", "beta-blockers",
+          "hyperkalemia", "hypotension", "SGLT-2 inhibitors", "diuretics"
+        ],
+        "expected_relationships": [
+          "diabetes -> causes_complication -> diabetic nephropathy",
+          "diabetic nephropathy -> treated_by -> ACE inhibitors",
+          "ACE inhibitors -> interacts_with -> beta-blockers",
+          "ACE inhibitors -> causes -> hyperkalemia"
+        ],
+        "success_criteria": {
+          "min_documents": 4,
+          "must_include_entities": ["ACE inhibitors", "beta-blockers", "hyperkalemia"],
+          "must_traverse_relationships": ["causes_complication", "treated_by", "interacts_with"]
+        }
+      }
+    ],
+    "complex_reasoning_queries": [
+      {
+        "id": "complex_001",
+        "query": "How have treatment recommendations evolved for conditions that were later found to be related to long COVID?",
+        "category": "temporal-evolution-analysis",
+        "difficulty": "very_complex",
+        "expected_hops": 4,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find conditions now known to be related to long COVID",
+            "start_entities": ["long COVID", "post-COVID syndrome"],
+            "relationships": ["associated_with", "manifests_as"],
+            "target_entities": ["diabetes", "cardiovascular disease", "chronic fatigue", "brain fog", "POTS"]
+          },
+          "hop_2": {
+            "description": "Find historical treatments for these conditions pre-COVID",
+            "start_entities": ["diabetes", "cardiovascular disease", "chronic fatigue"],
+            "relationships": ["historically_treated_by", "traditional_treatment"],
+            "target_entities": ["metformin", "ACE inhibitors", "rest therapy", "antidepressants"]
+          },
+          "hop_3": {
+            "description": "Find current post-COVID treatment modifications",
+            "start_entities": ["post-COVID diabetes", "post-COVID cardiovascular issues"],
+            "relationships": ["now_treated_by", "modified_treatment"],
+            "target_entities": ["continuous glucose monitoring", "cardiac rehabilitation", "pacing therapy", "anti-inflammatory drugs"]
+          },
+          "hop_4": {
+            "description": "Find evidence for treatment evolution and effectiveness",
+            "start_entities": ["continuous glucose monitoring", "pacing therapy"],
+            "relationships": ["evidence_shows", "outcomes_improved_by"],
+            "target_entities": ["better glucose control", "reduced crash episodes", "improved quality of life"]
+          }
+        },
+        "expected_entities": [
+          "long COVID", "diabetes", "chronic fatigue", "metformin", "pacing therapy",
+          "continuous glucose monitoring", "better glucose control", "POTS"
+        ],
+        "expected_relationships": [
+          "long COVID -> associated_with -> diabetes",
+          "diabetes -> historically_treated_by -> metformin",
+          "post-COVID diabetes -> now_treated_by -> continuous glucose monitoring",
+          "pacing therapy -> outcomes_improved_by -> reduced crash episodes"
+        ],
+        "success_criteria": {
+          "min_documents": 5,
+          "must_include_entities": ["long COVID", "diabetes", "pacing therapy"],
+          "must_traverse_relationships": ["associated_with", "historically_treated_by", "now_treated_by"]
+        }
+      },
+      {
+        "id": "complex_002",
+        "query": "What are the cascading effects of diabetes on organ systems and their treatment interactions?",
+        "category": "cascading-system-effects",
+        "difficulty": "very_complex",
+        "expected_hops": 4,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find organ systems affected by diabetes",
+            "start_entities": ["diabetes", "Type 2 diabetes"],
+            "relationships": ["affects_organ", "damages"],
+            "target_entities": ["kidneys", "heart", "eyes", "nerves", "blood vessels"]
+          },
+          "hop_2": {
+            "description": "Find specific complications in each organ system",
+            "start_entities": ["kidneys", "heart", "eyes", "nerves"],
+            "relationships": ["develops_condition", "leads_to"],
+            "target_entities": ["diabetic nephropathy", "cardiovascular disease", "diabetic retinopathy", "neuropathy"]
+          },
+          "hop_3": {
+            "description": "Find treatments for each organ-specific complication",
+            "start_entities": ["diabetic nephropathy", "cardiovascular disease", "diabetic retinopathy"],
+            "relationships": ["treated_by", "managed_with"],
+            "target_entities": ["ACE inhibitors", "statins", "laser therapy", "antiplatelet drugs", "neuropathy medications"]
+          },
+          "hop_4": {
+            "description": "Find interactions between multi-organ treatments",
+            "start_entities": ["ACE inhibitors", "statins", "antiplatelet drugs"],
+            "relationships": ["interacts_with", "potentiates", "contraindicated_with"],
+            "target_entities": ["bleeding risk", "kidney function decline", "muscle toxicity", "hypotension"]
+          }
+        },
+        "expected_entities": [
+          "diabetes", "kidneys", "heart", "diabetic nephropathy", "cardiovascular disease",
+          "ACE inhibitors", "statins", "bleeding risk", "hypotension"
+        ],
+        "expected_relationships": [
+          "diabetes -> affects_organ -> kidneys",
+          "kidneys -> develops_condition -> diabetic nephropathy",
+          "diabetic nephropathy -> treated_by -> ACE inhibitors",
+          "ACE inhibitors -> interacts_with -> antiplatelet drugs"
+        ],
+        "success_criteria": {
+          "min_documents": 5,
+          "must_include_entities": ["diabetes", "diabetic nephropathy", "ACE inhibitors", "bleeding risk"],
+          "must_traverse_relationships": ["affects_organ", "develops_condition", "treated_by", "interacts_with"]
+        }
+      },
+      {
+        "id": "complex_003",
+        "query": "Which medication combinations are contraindicated for patients with multiple comorbidities including diabetes?",
+        "category": "multi-comorbidity-contraindications",
+        "difficulty": "very_complex",
+        "expected_hops": 4,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Find common comorbidities with diabetes",
+            "start_entities": ["diabetes", "Type 2 diabetes"],
+            "relationships": ["comorbid_with", "often_occurs_with"],
+            "target_entities": ["hypertension", "kidney disease", "heart failure", "obesity", "depression"]
+          },
+          "hop_2": {
+            "description": "Find medications for each comorbidity",
+            "start_entities": ["diabetes", "hypertension", "kidney disease", "heart failure"],
+            "relationships": ["treated_by", "first_line_treatment"],
+            "target_entities": ["metformin", "ACE inhibitors", "diuretics", "beta-blockers", "insulin"]
+          },
+          "hop_3": {
+            "description": "Find dangerous drug combinations",
+            "start_entities": ["metformin", "ACE inhibitors", "diuretics", "beta-blockers"],
+            "relationships": ["contraindicated_with", "dangerous_combination"],
+            "target_entities": ["NSAIDs", "lithium", "aminoglycosides", "contrast agents"]
+          },
+          "hop_4": {
+            "description": "Find specific risks of these contraindicated combinations",
+            "start_entities": ["ACE inhibitors + NSAIDs", "metformin + contrast agents"],
+            "relationships": ["causes_risk", "leads_to"],
+            "target_entities": ["acute kidney injury", "lactic acidosis", "hyperkalemia", "heart failure exacerbation"]
+          }
+        },
+        "expected_entities": [
+          "diabetes", "hypertension", "kidney disease", "metformin", "ACE inhibitors",
+          "NSAIDs", "acute kidney injury", "lactic acidosis", "contrast agents"
+        ],
+        "expected_relationships": [
+          "diabetes -> comorbid_with -> hypertension",
+          "hypertension -> treated_by -> ACE inhibitors",
+          "ACE inhibitors -> contraindicated_with -> NSAIDs",
+          "ACE inhibitors + NSAIDs -> causes_risk -> acute kidney injury"
+        ],
+        "success_criteria": {
+          "min_documents": 5,
+          "must_include_entities": ["diabetes", "ACE inhibitors", "NSAIDs", "acute kidney injury"],
+          "must_traverse_relationships": ["comorbid_with", "treated_by", "contraindicated_with", "causes_risk"]
+        }
+      }
+    ],
+    "specialized_queries": [
+      {
+        "id": "temporal_001",
+        "query": "How has the understanding of metformin's mechanism evolved to include cardiovascular and cancer benefits?",
+        "category": "knowledge-evolution",
+        "difficulty": "complex",
+        "expected_hops": 3,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Original understanding of metformin mechanism",
+            "start_entities": ["metformin"],
+            "relationships": ["originally_known_to", "primary_mechanism"],
+            "target_entities": ["reduce glucose production", "improve insulin sensitivity", "AMPK activation"]
+          },
+          "hop_2": {
+            "description": "Expanded mechanisms discovered",
+            "start_entities": ["metformin", "AMPK activation"],
+            "relationships": ["also_affects", "discovered_to"],
+            "target_entities": ["inflammation", "cancer pathways", "cardiovascular protection", "mTOR pathway"]
+          },
+          "hop_3": {
+            "description": "Clinical benefits beyond diabetes",
+            "start_entities": ["cardiovascular protection", "cancer pathways"],
+            "relationships": ["leads_to_benefit", "reduces_risk"],
+            "target_entities": ["reduced heart attacks", "lower cancer incidence", "improved survival", "weight loss"]
+          }
+        },
+        "success_criteria": {
+          "min_documents": 4,
+          "must_include_entities": ["metformin", "AMPK activation", "cardiovascular protection"],
+          "must_traverse_relationships": ["primary_mechanism", "discovered_to", "reduces_risk"]
+        }
+      },
+      {
+        "id": "drug_development_001", 
+        "query": "What led to the development of SGLT-2 inhibitors and their unexpected cardiovascular benefits?",
+        "category": "drug-development-serendipity",
+        "difficulty": "complex",
+        "expected_hops": 3,
+        "reasoning_path": {
+          "hop_1": {
+            "description": "Original diabetes treatment gap",
+            "start_entities": ["Type 2 diabetes", "glucose control"],
+            "relationships": ["inadequate_control_with", "need_for"],
+            "target_entities": ["metformin", "insulin", "novel mechanisms", "glucose elimination"]
+          },
+          "hop_2": {
+            "description": "SGLT-2 mechanism discovery and development",
+            "start_entities": ["glucose elimination", "kidney function"],
+            "relationships": ["led_to_discovery", "mechanism_involves"],
+            "target_entities": ["SGLT-2 transporters", "empagliflozin", "glucose excretion", "osmotic diuresis"]
+          },
+          "hop_3": {
+            "description": "Unexpected cardiovascular benefits discovered",
+            "start_entities": ["empagliflozin", "osmotic diuresis"],
+            "relationships": ["unexpected_benefit", "clinical_trials_showed"],
+            "target_entities": ["cardiovascular death reduction", "heart failure improvement", "kidney protection"]
+          }
+        },
+        "success_criteria": {
+          "min_documents": 3,
+          "must_include_entities": ["SGLT-2 inhibitors", "empagliflozin", "cardiovascular death reduction"],
+          "must_traverse_relationships": ["led_to_discovery", "unexpected_benefit"]
+        }
+      }
+    ]
+  },
+  "evaluation_metrics": {
+    "path_completeness": {
+      "description": "Percentage of expected reasoning path completed",
+      "scoring": {
+        "excellent": ">90% path completion",
+        "good": "75-90% path completion", 
+        "fair": "50-75% path completion",
+        "poor": "<50% path completion"
+      }
+    },
+    "entity_coverage": {
+      "description": "Percentage of expected entities found",
+      "scoring": {
+        "excellent": ">80% entities found",
+        "good": "60-80% entities found",
+        "fair": "40-60% entities found", 
+        "poor": "<40% entities found"
+      }
+    },
+    "relationship_accuracy": {
+      "description": "Accuracy of relationship traversal",
+      "scoring": {
+        "excellent": ">85% correct relationships",
+        "good": "70-85% correct relationships",
+        "fair": "50-70% correct relationships",
+        "poor": "<50% correct relationships"
+      }
+    },
+    "answer_quality": {
+      "description": "Quality and comprehensiveness of final answer",
+      "criteria": [
+        "Addresses all aspects of the query",
+        "Demonstrates multi-hop reasoning",
+        "Includes relevant medical details",
+        "Shows understanding of relationships",
+        "Provides actionable insights"
+      ]
+    }
+  },
+  "usage_instructions": {
+    "setup": "Load the GraphRAG pipeline with medical documents covering diabetes, cardiovascular disease, kidney disease, and drug interactions",
+    "execution": "Run queries in order of increasing complexity to demonstrate progressive capabilities",
+    "validation": "Compare results against expected reasoning paths and entity coverage",
+    "visualization": "Use the traversal paths to create knowledge graph visualizations showing multi-hop connections"
+  },
+  "medical_disclaimer": "These queries are for demonstration purposes only and should not be used for actual medical decision-making. Always consult healthcare professionals for medical advice."
+}

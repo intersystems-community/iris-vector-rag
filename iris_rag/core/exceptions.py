@@ -6,6 +6,16 @@ particularly for pipeline configuration and loading operations.
 """
 
 
+class RAGException(Exception):
+    """
+    Base exception for all IRIS RAG framework exceptions.
+
+    This is the base class for all custom exceptions in the IRIS RAG system.
+    It provides a common interface for error handling and allows for
+    centralized exception management.
+    """
+
+
 class PipelineConfigurationError(Exception):
     """
     Raised when pipeline configuration is invalid or malformed.
@@ -17,8 +27,6 @@ class PipelineConfigurationError(Exception):
     - Invalid parameter values are provided
     """
 
-    pass
-
 
 class PipelineNotFoundError(Exception):
     """
@@ -29,8 +37,6 @@ class PipelineNotFoundError(Exception):
     - Pipeline is disabled in configuration
     - Pipeline definition is malformed
     """
-
-    pass
 
 
 class PipelineCreationError(Exception):
@@ -44,8 +50,6 @@ class PipelineCreationError(Exception):
     - Invalid parameters are passed to constructor
     """
 
-    pass
-
 
 class ModuleLoadingError(Exception):
     """
@@ -57,5 +61,3 @@ class ModuleLoadingError(Exception):
     - Module import raises an exception
     - Class is not found in module
     """
-
-    pass

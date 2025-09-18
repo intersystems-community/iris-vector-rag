@@ -1,0 +1,33 @@
+batch_size: 32
+compute_resources:
+  cpu_cores: 8
+  gpu_enabled: false
+  memory_gb: 32
+data_source: data/pmc_documents
+enable_caching: true
+enable_checkpointing: true
+experiment_description: Comprehensive evaluation of biomedical RAG pipelines over
+  10,000 PMC documents
+experiment_name: biomedical_rag_10k_evaluation
+experiment_version: 1.0.0
+generate_final_report: true
+generate_interactive_dashboard: true
+generate_visualizations: true
+max_documents: 10000
+max_questions: 2000
+max_workers: 8
+min_document_quality: 0.3
+min_question_quality: 0.5
+output_base_dir: outputs/production_evaluation/results
+pipelines_to_evaluate:
+- BasicRAGPipeline
+- CRAGPipeline
+- GraphRAGPipeline
+- BasicRAGRerankingPipeline
+- PyLateColBERTPipeline
+random_seed: 42
+save_intermediate_results: true
+save_model_artifacts: true
+statistical_significance_threshold: 0.05
+test_questions_per_pipeline: 100
+vector_db_config: {}

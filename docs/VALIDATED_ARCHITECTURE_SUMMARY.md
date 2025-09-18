@@ -1,5 +1,7 @@
 # VALIDATED_ARCHITECTURE_SUMMARY
 
+> Status source of truth: Implementation completion and E2E coverage are tracked in [UNIFIED_PROJECT_ROADMAP.md](UNIFIED_PROJECT_ROADMAP.md). This document describes architecture validated by artifacts; for current scope and gaps see the roadmap.
+
 Validated architecture summary for rag-templates based solely on implemented code and generated validation artifacts. All references below link to source files or reports.
 
 ## System Boundaries

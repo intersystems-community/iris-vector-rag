@@ -1,5 +1,7 @@
 # RAG Templates Performance Targets & Monitoring Architecture
 
+> Status source of truth: Current implementation and testing status are centralized in [UNIFIED_PROJECT_ROADMAP.md](../UNIFIED_PROJECT_ROADMAP.md). This document specifies targets and architecture; defer status claims to the roadmap.
+
 ## 1. Executive Summary
 
 This document defines the performance targets, monitoring hooks, and observability architecture for the RAG-Templates Adapter Layer (M1), ensuring sub-second response times, comprehensive metrics collection, and proactive system health monitoring.

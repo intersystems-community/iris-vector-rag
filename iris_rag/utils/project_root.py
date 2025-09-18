@@ -73,7 +73,8 @@ def get_config_path(config_filename: str) -> Path:
 
     if not config_path.exists():
         raise FileNotFoundError(
-            f"Configuration file not found: {config_path}. " f"Project root detected as: {project_root}"
+            f"Configuration file not found: {config_path}. "
+            f"Project root detected as: {project_root}"
         )
 
     return config_path

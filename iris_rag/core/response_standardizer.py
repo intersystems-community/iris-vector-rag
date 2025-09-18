@@ -10,8 +10,7 @@ Addresses the critical issue where only 1/7 pipelines returned required keys
 """
 
 import logging
-import time
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any
 from .models import Document
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,9 @@ class ResponseStandardizer:
     """
 
     @staticmethod
-    def standardize_response(raw_response: Dict[str, Any], pipeline_type: str = "unknown") -> Dict[str, Any]:
+    def standardize_response(
+        raw_response: Dict[str, Any], pipeline_type: str = "unknown"
+    ) -> Dict[str, Any]:
         """
         Transform any pipeline response to standardized format.
 
@@ -49,7 +50,9 @@ class ResponseStandardizer:
             contexts = ResponseStandardizer._generate_contexts(raw_response, documents)
 
             # Build comprehensive metadata
-            metadata = ResponseStandardizer._build_metadata(raw_response, pipeline_type, documents)
+            metadata = ResponseStandardizer._build_metadata(
+                raw_response, pipeline_type, documents
+            )
 
             # Normalize timing information
             execution_time = ResponseStandardizer._normalize_timing(raw_response)
@@ -92,7 +95,12 @@ class ResponseStandardizer:
     def _extract_documents(raw_response: Dict[str, Any]) -> List[Document]:
         """Extract Document objects from various response formats."""
         # Try different common field names
-        document_fields = ["retrieved_documents", "documents", "results", "search_results"]
+        document_fields = [
+            "retrieved_documents",
+            "documents",
+            "results",
+            "search_results",
+        ]
 
         for field in document_fields:
             if field in raw_response:
@@ -129,7 +137,9 @@ class ResponseStandardizer:
         return document_objects
 
     @staticmethod
-    def _generate_contexts(raw_response: Dict[str, Any], documents: List[Document]) -> List[str]:
+    def _generate_contexts(
+        raw_response: Dict[str, Any], documents: List[Document]
+    ) -> List[str]:
         """Generate context strings from documents if not present in response."""
         # Check if contexts already exist
         if "contexts" in raw_response:
@@ -145,11 +155,15 @@ class ResponseStandardizer:
             else:
                 contexts.append("")
 
-        logger.debug(f"Generated {len(contexts)} contexts from {len(documents)} documents")
+        logger.debug(
+            f"Generated {len(contexts)} contexts from {len(documents)} documents"
+        )
         return contexts
 
     @staticmethod
-    def _build_metadata(raw_response: Dict[str, Any], pipeline_type: str, documents: List[Document]) -> Dict[str, Any]:
+    def _build_metadata(
+        raw_response: Dict[str, Any], pipeline_type: str, documents: List[Document]
+    ) -> Dict[str, Any]:
         """Build comprehensive metadata from response."""
         metadata = {
             "pipeline_type": pipeline_type,
@@ -178,7 +192,13 @@ class ResponseStandardizer:
     def _normalize_timing(raw_response: Dict[str, Any]) -> float:
         """Extract and normalize timing information."""
         # Try different timing field names
-        timing_fields = ["execution_time", "processing_time", "response_time", "query_time", "total_time"]
+        timing_fields = [
+            "execution_time",
+            "processing_time",
+            "response_time",
+            "query_time",
+            "total_time",
+        ]
 
         for field in timing_fields:
             if field in raw_response:
@@ -190,7 +210,9 @@ class ResponseStandardizer:
         return 0.0
 
 
-def standardize_pipeline_response(response: Dict[str, Any], pipeline_type: str = "unknown") -> Dict[str, Any]:
+def standardize_pipeline_response(
+    response: Dict[str, Any], pipeline_type: str = "unknown"
+) -> Dict[str, Any]:
     """
     Convenience function to standardize pipeline responses.
 

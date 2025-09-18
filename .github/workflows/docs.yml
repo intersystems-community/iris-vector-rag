@@ -1,0 +1,356 @@
+name: Documentation Build and Deploy
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '**.md'
+      - 'mkdocs.yml'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.10"
+
+jobs:
+  lint-docs:
+    name: Lint Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install documentation dependencies
+        run: |
+          pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+          pip install markdownlint-cli2 vale
+          
+      - name: Lint Markdown files
+        run: |
+          markdownlint-cli2 "**/*.md" "#node_modules"
+          
+      - name: Check documentation structure
+        run: |
+          python scripts/ci/check-docs-structure.py
+          
+      - name: Validate internal links
+        run: |
+          python scripts/ci/validate-doc-links.py
+          
+      - name: Spell check documentation
+        run: |
+          vale docs/
+
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint-docs
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: "1.6.1"
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: docs-venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          
+      - name: Install dependencies
+        run: |
+          poetry install --with docs
+          
+      - name: Generate API documentation
+        run: |
+          poetry run sphinx-apidoc -f -o docs/api/ src/
+          poetry run sphinx-apidoc -f -o docs/api/ iris_rag/
+          poetry run sphinx-apidoc -f -o docs/api/ mem0_integration/
+          
+      - name: Build MkDocs site
+        run: |
+          poetry run mkdocs build --strict
+          
+      - name: Test documentation site
+        run: |
+          # Test that all pages load correctly
+          python scripts/ci/test-docs-site.py
+          
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: site/
+
+  deploy-docs-staging:
+    name: Deploy Documentation to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build-docs
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: docs-staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download documentation artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation
+          path: site/
+          
+      - name: Deploy to staging
+        run: |
+          # Deploy to staging documentation server
+          echo "Deploying documentation to staging"
+          # Add actual staging deployment commands here
+          
+      - name: Update staging URL comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📖 Documentation staging preview available at: https://docs-staging.rag-templates.dev'
+            })
+
+  deploy-docs-production:
+    name: Deploy Documentation to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-docs
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: docs-production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Download documentation artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation
+          path: site/
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          cname: docs.rag-templates.dev
+          
+      - name: Deploy to custom domain
+        run: |
+          # Deploy to custom documentation hosting
+          echo "Deploying documentation to production"
+          # Add actual production deployment commands here
+          
+      - name: Update search index
+        run: |
+          # Update documentation search index
+          curl -X POST "${{ secrets.SEARCH_INDEX_WEBHOOK }}" \
+            -H "Authorization: Bearer ${{ secrets.SEARCH_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"action": "reindex", "url": "https://docs.rag-templates.dev"}'
+
+  generate-changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install changelog generator
+        run: |
+          pip install auto-changelog gitpython
+          
+      - name: Generate changelog
+        run: |
+          auto-changelog --output CHANGELOG.md
+          
+      - name: Commit changelog
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add CHANGELOG.md
+          if ! git diff --staged --quiet; then
+            git commit -m "docs: update changelog [skip ci]"
+            git push
+          fi
+
+  validate-examples:
+    name: Validate Documentation Examples
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: "1.6.1"
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,test
+          
+      - name: Extract and test code examples
+        run: |
+          # Extract code blocks from documentation
+          python scripts/ci/extract-doc-examples.py
+          
+          # Test extracted examples
+          python scripts/ci/test-doc-examples.py
+          
+      - name: Validate API examples
+        run: |
+          # Test API documentation examples
+          poetry run pytest tests/docs/ -v
+          
+      - name: Upload example test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: example-test-results
+          path: docs/examples/test-results/
+
+  accessibility-check:
+    name: Accessibility Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-docs
+    
+    steps:
+      - name: Download documentation artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation
+          path: site/
+          
+      - name: Serve documentation locally
+        run: |
+          cd site
+          python -m http.server 8000 &
+          sleep 5
+          
+      - name: Run accessibility tests
+        run: |
+          npm install -g @axe-core/cli
+          axe http://localhost:8000 --exit
+          
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: './lighthouse-ci.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+  check-broken-links:
+    name: Check for Broken Links
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-docs
+    
+    steps:
+      - name: Download documentation artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation
+          path: site/
+          
+      - name: Serve documentation locally
+        run: |
+          cd site
+          python -m http.server 8000 &
+          sleep 5
+          
+      - name: Check for broken links
+        run: |
+          npm install -g broken-link-checker
+          blc http://localhost:8000 --recursive --ordered --exclude-external
+
+  performance-audit:
+    name: Documentation Performance Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Download documentation artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation
+          path: site/
+          
+      - name: Serve documentation locally
+        run: |
+          cd site
+          python -m http.server 8000 &
+          sleep 5
+          
+      - name: Run performance audit
+        run: |
+          npm install -g lighthouse
+          lighthouse http://localhost:8000 --output=json --output-path=lighthouse-report.json
+          
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-report
+          path: lighthouse-report.json

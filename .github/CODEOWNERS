@@ -1,0 +1,60 @@
+# Global ownership - these users are default reviewers for all changes
+* @maintainers
+
+# Core configuration and architecture
+/src/config/ @maintainers @config-team
+/docs/architecture/ @maintainers @architecture-team
+/docs/specifications/ @maintainers @architecture-team
+
+# CI/CD and infrastructure
+/.github/ @maintainers @devops-team
+/scripts/ci/ @maintainers @devops-team
+/docker-compose*.yml @maintainers @devops-team
+/Dockerfile* @maintainers @devops-team
+/infrastructure/ @maintainers @devops-team
+
+# Testing infrastructure
+/tests/ @maintainers @qa-team
+/pytest.ini @maintainers @qa-team
+/.coveragerc @maintainers @qa-team
+/tox.ini @maintainers @qa-team
+
+# Memory integration (Mem0)
+/mem0_integration/ @maintainers @memory-team
+/docs/guides/mem0_* @maintainers @memory-team
+/docs/setup/mem0_* @maintainers @memory-team
+/templates/mem0_setup/ @maintainers @memory-team
+
+# MCP server integration
+/src/mcp/ @maintainers @mcp-team
+/docs/guides/*mcp* @maintainers @mcp-team
+/scripts/*mcp* @maintainers @mcp-team
+
+# Database and data layer
+/src/data/ @maintainers @data-team
+/mem0_integration/data/ @maintainers @data-team
+/mem0_integration/adapters/ @maintainers @data-team
+
+# Documentation
+/docs/ @maintainers @docs-team
+/README.md @maintainers @docs-team
+/CONTRIBUTING.md @maintainers @docs-team
+
+# Security-sensitive files
+/requirements*.txt @maintainers @security-team
+/.env.example @maintainers @security-team
+/scripts/security/ @maintainers @security-team
+
+# Templates and examples
+/templates/ @maintainers @docs-team
+/examples/ @maintainers @docs-team
+
+# Configuration files
+/pyproject.toml @maintainers
+/setup.py @maintainers
+/setup.cfg @maintainers
+/requirements.txt @maintainers
+
+# Git and development configuration
+/.gitignore @maintainers
+/.pre-commit-config.yaml @maintainers @devops-team

@@ -1,14 +1,11 @@
 import os
 import yaml
-import logging
 from typing import Any, Optional, Dict
 
 
 # Define a specific exception for configuration errors
 class ConfigValidationError(ValueError):
     """Custom exception for configuration validation errors."""
-
-    pass
 
 
 class ConfigurationManager:
@@ -24,7 +21,9 @@ class ConfigurationManager:
     ENV_PREFIX = "RAG_"
     DELIMITER = "__"  # Double underscore for nesting in env vars
 
-    def __init__(self, config_path: Optional[str] = None, schema: Optional[Dict] = None):
+    def __init__(
+        self, config_path: Optional[str] = None, schema: Optional[Dict] = None
+    ):
         """
         Initializes the ConfigurationManager.
 
@@ -43,7 +42,9 @@ class ConfigurationManager:
                 self._config = yaml.safe_load(f) or {}
         else:
             # Load default configuration
-            default_config_path = os.path.join(os.path.dirname(__file__), "default_config.yaml")
+            default_config_path = os.path.join(
+                os.path.dirname(__file__), "default_config.yaml"
+            )
             if os.path.exists(default_config_path):
                 with open(default_config_path, "r") as f:
                     self._config = yaml.safe_load(f) or {}
@@ -69,9 +70,14 @@ class ConfigurationManager:
                 for i, key_part in enumerate(keys):
                     if i == len(keys) - 1:  # Last key part
                         # Attempt to cast to original type if possible
-                        original_value_at_level = self._get_value_by_keys(self._config, keys[:-1])
+                        original_value_at_level = self._get_value_by_keys(
+                            self._config, keys[:-1]
+                        )
                         original_type = None
-                        if isinstance(original_value_at_level, dict) and key_part in original_value_at_level:
+                        if (
+                            isinstance(original_value_at_level, dict)
+                            and key_part in original_value_at_level
+                        ):
                             original_type = type(original_value_at_level[key_part])
 
                         casted_value = self._cast_value(value, original_type)
@@ -200,7 +206,12 @@ class ConfigurationManager:
         Returns:
             Dictionary containing vector index configuration with defaults
         """
-        default_config = {"type": "HNSW", "M": 16, "efConstruction": 200, "Distance": "COSINE"}
+        default_config = {
+            "type": "HNSW",
+            "M": 16,
+            "efConstruction": 200,
+            "Distance": "COSINE",
+        }
 
         # Get user-defined config and merge with defaults
         user_config = self.get("vector_index", {})
@@ -212,10 +223,16 @@ class ConfigurationManager:
             env_overrides = {}
             for key, value in user_config.items():
                 if key.lower() == "m":
-                    env_overrides["M"] = int(value) if isinstance(value, str) and value.isdigit() else value
+                    env_overrides["M"] = (
+                        int(value)
+                        if isinstance(value, str) and value.isdigit()
+                        else value
+                    )
                 elif key.lower() == "efconstruction":
                     env_overrides["efConstruction"] = (
-                        int(value) if isinstance(value, str) and value.isdigit() else value
+                        int(value)
+                        if isinstance(value, str) and value.isdigit()
+                        else value
                     )
                 elif key.lower() == "distance":
                     env_overrides["Distance"] = value
@@ -260,7 +277,10 @@ class ConfigurationManager:
         if not default_config["dimension"]:
             # Use direct config lookup instead of dimension utils to avoid circular dependency
             model_name = default_config["model"]
-            if model_name == "sentence-transformers/all-MiniLM-L6-v2" or model_name == "all-MiniLM-L6-v2":
+            if (
+                model_name == "sentence-transformers/all-MiniLM-L6-v2"
+                or model_name == "all-MiniLM-L6-v2"
+            ):
                 default_config["dimension"] = 384
             elif model_name == "text-embedding-ada-002":
                 default_config["dimension"] = 1536
@@ -291,8 +311,16 @@ class ConfigurationManager:
                 "memory_limit_gb": 8,
                 "cpu_limit_percent": 70,
             },
-            "error_handling": {"max_retries": 3, "retry_delay_seconds": 30, "rollback_on_failure": True},
-            "monitoring": {"enable_progress_tracking": True, "log_level": "INFO", "alert_on_failures": True},
+            "error_handling": {
+                "max_retries": 3,
+                "retry_delay_seconds": 30,
+                "rollback_on_failure": True,
+            },
+            "monitoring": {
+                "enable_progress_tracking": True,
+                "log_level": "INFO",
+                "alert_on_failures": True,
+            },
             "pipeline_overrides": {},
         }
 
@@ -301,14 +329,20 @@ class ConfigurationManager:
         if isinstance(user_config, dict):
             # Deep merge nested dictionaries
             for key, value in user_config.items():
-                if key in default_config and isinstance(default_config[key], dict) and isinstance(value, dict):
+                if (
+                    key in default_config
+                    and isinstance(default_config[key], dict)
+                    and isinstance(value, dict)
+                ):
                     default_config[key].update(value)
                 else:
                     default_config[key] = value
 
         return default_config
 
-    def get_desired_embedding_state(self, pipeline_type: str = "basic") -> Dict[str, Any]:
+    def get_desired_embedding_state(
+        self, pipeline_type: str = "basic"
+    ) -> Dict[str, Any]:
         """
         Get desired embedding state configuration for a specific pipeline.
 
@@ -318,7 +352,7 @@ class ConfigurationManager:
         Returns:
             Dictionary containing desired state configuration with defaults
         """
-        
+
         # Default for other pipeline types
         default_config = {
             "target_document_count": 1000,
@@ -349,14 +383,20 @@ class ConfigurationManager:
         if isinstance(user_config, dict):
             # Deep merge nested dictionaries
             for key, value in user_config.items():
-                if key in default_config and isinstance(default_config[key], dict) and isinstance(value, dict):
+                if (
+                    key in default_config
+                    and isinstance(default_config[key], dict)
+                    and isinstance(value, dict)
+                ):
                     default_config[key].update(value)
                 else:
                     default_config[key] = value
 
         return default_config
 
-    def get_target_state_config(self, environment: str = "development") -> Dict[str, Any]:
+    def get_target_state_config(
+        self, environment: str = "development"
+    ) -> Dict[str, Any]:
         """
         Get target state configuration for a specific environment.
 
@@ -397,7 +437,9 @@ class ConfigurationManager:
 
         # This part is just illustrative for the test_config_validation_error_required_key
         # and will need a proper implementation.
-        if self.get("database:iris:host") is None and "database:iris:host" in self._schema.get("required", []):
+        if self.get(
+            "database:iris:host"
+        ) is None and "database:iris:host" in self._schema.get("required", []):
             raise ConfigValidationError("Missing required config: database:iris:host")
 
     def _merge_configuration(self, new_config: Dict[str, Any]):
@@ -414,7 +456,11 @@ class ConfigurationManager:
         def deep_merge(target: Dict[str, Any], source: Dict[str, Any]):
             """Recursively merge source into target."""
             for key, value in source.items():
-                if key in target and isinstance(target[key], dict) and isinstance(value, dict):
+                if (
+                    key in target
+                    and isinstance(target[key], dict)
+                    and isinstance(value, dict)
+                ):
                     deep_merge(target[key], value)
                 else:
                     target[key] = value

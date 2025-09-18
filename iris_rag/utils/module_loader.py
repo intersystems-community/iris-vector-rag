@@ -66,13 +66,17 @@ class ModuleLoader:
 
             # Get the class from the module
             if not hasattr(module, class_name):
-                raise ModuleLoadingError(f"Class '{class_name}' not found in module '{module_path}'")
+                raise ModuleLoadingError(
+                    f"Class '{class_name}' not found in module '{module_path}'"
+                )
 
             pipeline_class = getattr(module, class_name)
 
             # Validate that it's a class and a subclass of RAGPipeline
             if not isinstance(pipeline_class, type):
-                raise ModuleLoadingError(f"'{class_name}' in module '{module_path}' is not a class")
+                raise ModuleLoadingError(
+                    f"'{class_name}' in module '{module_path}' is not a class"
+                )
 
             if not issubclass(pipeline_class, RAGPipeline):
                 raise ModuleLoadingError(
@@ -88,7 +92,9 @@ class ModuleLoader:
             raise ModuleLoadingError(error_msg)
 
         except AttributeError as e:
-            error_msg = f"Class '{class_name}' not found in module '{module_path}': {str(e)}"
+            error_msg = (
+                f"Class '{class_name}' not found in module '{module_path}': {str(e)}"
+            )
             self.logger.error(error_msg)
             raise ModuleLoadingError(error_msg)
 

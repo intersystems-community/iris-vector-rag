@@ -21,7 +21,9 @@ class VectorStore(ABC):
     """
 
     @abstractmethod
-    def add_documents(self, documents: List[Document], embeddings: Optional[List[List[float]]] = None) -> List[str]:
+    def add_documents(
+        self, documents: List[Document], embeddings: Optional[List[List[float]]] = None
+    ) -> List[str]:
         """
         Add documents to the vector store.
 
@@ -38,7 +40,6 @@ class VectorStore(ABC):
             VectorStoreDataError: If document data is malformed
             VectorStoreConnectionError: If there are connection issues
         """
-        pass
 
     @abstractmethod
     def delete_documents(self, ids: List[str]) -> bool:
@@ -54,11 +55,13 @@ class VectorStore(ABC):
         Raises:
             VectorStoreConnectionError: If there are connection issues
         """
-        pass
 
     @abstractmethod
     def similarity_search(
-        self, query_embedding: List[float], top_k: int, filter: Optional[Dict[str, Any]] = None
+        self,
+        query_embedding: List[float],
+        top_k: int,
+        filter: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Perform similarity search using a query embedding.
@@ -76,7 +79,6 @@ class VectorStore(ABC):
         Raises:
             VectorStoreConnectionError: If there are connection issues
         """
-        pass
 
     @abstractmethod
     def fetch_documents_by_ids(self, ids: List[str]) -> List[Document]:
@@ -93,7 +95,6 @@ class VectorStore(ABC):
         Raises:
             VectorStoreConnectionError: If there are connection issues
         """
-        pass
 
     @abstractmethod
     def get_document_count(self) -> int:
@@ -106,7 +107,6 @@ class VectorStore(ABC):
         Raises:
             VectorStoreConnectionError: If there are connection issues
         """
-        pass
 
     @abstractmethod
     def clear_documents(self) -> None:
@@ -118,4 +118,3 @@ class VectorStore(ABC):
         Raises:
             VectorStoreConnectionError: If there are connection issues
         """
-        pass

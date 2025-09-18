@@ -8,7 +8,7 @@ automatic migration capabilities for vector dimensions and other schema changes.
 
 import logging
 import json
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,9 @@ class SchemaManager:
         self.base_embedding_model = self.config_manager.get(
             "embedding_model.name", "sentence-transformers/all-MiniLM-L6-v2"
         )
-        self.base_embedding_dimension = self.config_manager.get("embedding_model.dimension", 384)
+        self.base_embedding_dimension = self.config_manager.get(
+            "embedding_model.dimension", 384
+        )
 
         # Validate configuration consistency
         self._validate_configuration()
@@ -60,18 +62,27 @@ class SchemaManager:
         self._build_table_configurations()
 
         logger.info(f"✅ Schema Manager: Configuration validated and loaded")
-        logger.info(f"   Base embedding: {self.base_embedding_model} ({self.base_embedding_dimension}D)")
+        logger.info(
+            f"   Base embedding: {self.base_embedding_model} ({self.base_embedding_dimension}D)"
+        )
 
     def _validate_configuration(self):
         """Validate that configuration values make sense."""
         errors = []
 
         # Validate base embedding dimension
-        if not isinstance(self.base_embedding_dimension, int) or self.base_embedding_dimension <= 0:
-            errors.append(f"Invalid base embedding dimension: {self.base_embedding_dimension}")
+        if (
+            not isinstance(self.base_embedding_dimension, int)
+            or self.base_embedding_dimension <= 0
+        ):
+            errors.append(
+                f"Invalid base embedding dimension: {self.base_embedding_dimension}"
+            )
 
         if errors:
-            error_msg = "Configuration validation failed:\n" + "\n".join(f"  - {e}" for e in errors)
+            error_msg = "Configuration validation failed:\n" + "\n".join(
+                f"  - {e}" for e in errors
+            )
             logger.error(error_msg)
             raise ValueError(error_msg)
 
@@ -92,9 +103,13 @@ class SchemaManager:
         }
 
         # Add configured models
-        self._model_dimensions[self.base_embedding_model] = self.base_embedding_dimension
+        self._model_dimensions[self.base_embedding_model] = (
+            self.base_embedding_dimension
+        )
 
-        logger.debug(f"Model-dimension mapping: {len(self._model_dimensions)} models configured")
+        logger.debug(
+            f"Model-dimension mapping: {len(self._model_dimensions)} models configured"
+        )
 
     def _build_table_configurations(self):
         """Build table-specific configurations from config."""
@@ -112,9 +127,27 @@ class SchemaManager:
                 "default_model": self.base_embedding_model,
                 "dimension": self.base_embedding_dimension,
             },
+            "Entities": {
+                "embedding_column": "embedding",
+                "uses_document_embeddings": True,
+                "default_model": self.base_embedding_model,
+                "dimension": self.base_embedding_dimension,
+                "supports_vector_search": True,
+                "supports_graph_traversal": True,
+            },
+            "EntityRelationships": {
+                "embedding_column": None,
+                "uses_document_embeddings": False,
+                "default_model": self.base_embedding_model,  # Required by get_embedding_model
+                "dimension": 0,  # No embeddings
+                "supports_vector_search": False,
+                "supports_graph_traversal": True,
+            },
         }
 
-        logger.debug(f"Table configurations: {len(self._table_configs)} tables configured")
+        logger.debug(
+            f"Table configurations: {len(self._table_configs)} tables configured"
+        )
 
     def ensure_schema_metadata_table(self):
         """Create schema metadata table if it doesn't exist."""
@@ -125,7 +158,10 @@ class SchemaManager:
             # Try different schema approaches in order of preference
             schema_attempts = [
                 ("RAG", "RAG.SchemaMetadata"),
-                ("current user", "SchemaMetadata"),  # No schema prefix = current user's schema
+                (
+                    "current user",
+                    "SchemaMetadata",
+                ),  # No schema prefix = current user's schema
             ]
 
             for schema_name, table_name in schema_attempts:
@@ -144,22 +180,32 @@ class SchemaManager:
                     """
                     cursor.execute(create_sql)
                     connection.commit()
-                    logger.info(f"✅ Schema metadata table ensured in {schema_name} schema")
+                    logger.info(
+                        f"✅ Schema metadata table ensured in {schema_name} schema"
+                    )
                     break
                 except Exception as schema_error:
-                    logger.warning(f"Failed to create schema metadata table in {schema_name} schema: {schema_error}")
-                    if (schema_name, table_name) == schema_attempts[-1]:  # Last schema attempt
+                    logger.warning(
+                        f"Failed to create schema metadata table in {schema_name} schema: {schema_error}"
+                    )
+                    if (schema_name, table_name) == schema_attempts[
+                        -1
+                    ]:  # Last schema attempt
                         # Instead of raising, log warning and continue without metadata table
                         logger.warning(
                             "Schema metadata table creation failed in all schemas. Continuing without metadata table."
                         )
-                        logger.warning("This may affect schema versioning but basic functionality will work.")
+                        logger.warning(
+                            "This may affect schema versioning but basic functionality will work."
+                        )
                         return  # Exit gracefully
                     continue
 
         except Exception as e:
             logger.error(f"Failed to create schema metadata table: {e}")
-            logger.warning("Continuing without schema metadata table. Basic functionality will work.")
+            logger.warning(
+                "Continuing without schema metadata table. Basic functionality will work."
+            )
             # Don't raise - allow the system to continue without metadata table
         finally:
             cursor.close()
@@ -188,13 +234,15 @@ class SchemaManager:
                     config = json.loads(config_json) if config_json else {}
 
                     # This won't actually exist in config yet
-                    vector_data_type = config.get("vector_data_type", "FLOAT")  # Default to FLOAT
+                    vector_data_type = config.get(
+                        "vector_data_type", "FLOAT"
+                    )  # Default to FLOAT
 
                     return {
                         "schema_version": schema_version,
                         "vector_dimension": vector_dim,
                         "embedding_model": embedding_model,
-                        "vector_data_type": vector_data_type,   
+                        "vector_data_type": vector_data_type,
                         "configuration": config,
                     }
                 elif len(result) == 1:
@@ -217,14 +265,18 @@ class SchemaManager:
         finally:
             cursor.close()
 
-    def _get_expected_schema_config(self, table_name: str, pipeline_type: str = None) -> Dict[str, Any]:
+    def _get_expected_schema_config(
+        self, table_name: str, pipeline_type: str = None
+    ) -> Dict[str, Any]:
         """Get expected schema configuration based on current system config and pipeline requirements."""
         # Get model and dimension from centralized methods
         model_name = self.get_embedding_model(table_name)
         expected_dim = self.get_vector_dimension(table_name, model_name)
 
         # Get vector data type from configuration, default to FLOAT
-        vector_data_type = self.config_manager.get("storage:iris:vector_data_type", "FLOAT")
+        vector_data_type = self.config_manager.get(
+            "storage:iris:vector_data_type", "FLOAT"
+        )
 
         # Base configuration
         config = {
@@ -241,31 +293,110 @@ class SchemaManager:
 
         # Enhanced: Get table requirements from pipeline if specified
         if pipeline_type:
-            config.update(self._get_table_requirements_config(table_name, pipeline_type))
+            config.update(
+                self._get_table_requirements_config(table_name, pipeline_type)
+            )
 
         # Table-specific configurations
         if table_name == "SourceDocuments":
-            config["configuration"].update({
-                "table_type": "document_storage",
-                "created_by": "BasicRAG",
-                "expected_columns": [
-                    "id", "doc_id", "title", "abstract", "text_content", "authors",
-                    "keywords", "embedding", "metadata", "created_at"
-                ]
-            })
+            config["configuration"].update(
+                {
+                    "table_type": "document_storage",
+                    "created_by": "BasicRAG",
+                    "expected_columns": [
+                        "id",
+                        "doc_id",
+                        "title",
+                        "abstract",
+                        "text_content",
+                        "authors",
+                        "keywords",
+                        "embedding",
+                        "metadata",
+                        "created_at",
+                    ],
+                }
+            )
         elif table_name == "DocumentChunks":
-            config["configuration"].update({
-                "table_type": "chunk_storage",
-                "created_by": "BasicRAG",
-                "expected_columns": [
-                    "id", "chunk_id", "doc_id", "chunk_text", "chunk_embedding",
-                    "chunk_index", "chunk_type", "metadata", "created_at"
-                ]
-            })
+            config["configuration"].update(
+                {
+                    "table_type": "chunk_storage",
+                    "created_by": "BasicRAG",
+                    "expected_columns": [
+                        "id",
+                        "chunk_id",
+                        "doc_id",
+                        "chunk_text",
+                        "chunk_embedding",
+                        "chunk_index",
+                        "chunk_type",
+                        "metadata",
+                        "created_at",
+                    ],
+                }
+            )
+        elif table_name == "Entities":
+            config["configuration"].update(
+                {
+                    "table_type": "entity_storage",
+                    "created_by": "GraphRAG",
+                    "expected_columns": [
+                        "entity_id",
+                        "entity_name",
+                        "entity_type",
+                        "source_doc_id",
+                        "description",
+                        "embedding",
+                        "created_at",
+                    ],
+                    "foreign_keys": [
+                        {
+                            "column": "source_doc_id",
+                            "references": "RAG.SourceDocuments(doc_id)",
+                            "on_delete": "CASCADE",
+                        }
+                    ],
+                    "indexes": [
+                        "idx_entities_name_lower",
+                        "idx_entities_type",
+                        "idx_entities_source_doc",
+                    ],
+                }
+            )
+        elif table_name == "EntityRelationships":
+            config["configuration"].update(
+                {
+                    "table_type": "relationship_storage",
+                    "created_by": "GraphRAG",
+                    "expected_columns": [
+                        "relationship_id",
+                        "source_entity_id",
+                        "target_entity_id",
+                        "relationship_type",
+                        "metadata",
+                        "created_at",
+                    ],
+                    "foreign_keys": [
+                        {
+                            "column": "source_entity_id",
+                            "references": "RAG.Entities(entity_id)",
+                            "on_delete": "CASCADE",
+                        },
+                        {
+                            "column": "target_entity_id",
+                            "references": "RAG.Entities(entity_id)",
+                            "on_delete": "CASCADE",
+                        },
+                    ],
+                    "indexes": ["idx_rel_source", "idx_rel_target"],
+                }
+            )
 
         return config
 
-    def _get_table_requirements_config(self, table_name: str, pipeline_type: str) -> Dict[str, Any]:
+    def _get_table_requirements_config(
+        self, table_name: str, pipeline_type: str
+    ) -> Dict[str, Any]:
         """Extract table configuration from pipeline requirements."""
         try:
             from ..validation.requirements import get_pipeline_requirements
@@ -319,7 +450,11 @@ class SchemaManager:
                 return True
 
         # Compare nested configuration keys
-        nested_keys = ["managed_by_schema_manager", "supports_vector_search", "auto_migration"]
+        nested_keys = [
+            "managed_by_schema_manager",
+            "supports_vector_search",
+            "auto_migration",
+        ]
         for key in nested_keys:
             cur_val = current_config.get("configuration", {}).get(key)
             exp_val = expected_config.get("configuration", {}).get(key)
@@ -331,7 +466,9 @@ class SchemaManager:
                 return True
 
         # ✅ NEW: Check that all expected columns exist in physical table
-        expected_columns = expected_config.get("configuration", {}).get("expected_columns", [])
+        expected_columns = expected_config.get("configuration", {}).get(
+            "expected_columns", []
+        )
         if expected_columns:
             try:
                 physical_columns = self.verify_table_structure(table_name)
@@ -339,15 +476,21 @@ class SchemaManager:
 
                 for col in expected_columns:
                     if col.lower() not in physical_col_names:
-                        logger.info(f"Migration required for {table_name}: missing column '{col}' in physical schema.")
+                        logger.info(
+                            f"Migration required for {table_name}: missing column '{col}' in physical schema."
+                        )
                         return True
             except Exception as e:
-                logger.warning(f"Could not verify physical structure of {table_name}: {e}")
+                logger.warning(
+                    f"Could not verify physical structure of {table_name}: {e}"
+                )
                 return True  # Be conservative and migrate if in doubt
 
         return False
 
-    def migrate_table(self, table_name: str, preserve_data: bool = False, pipeline_type: str = None) -> bool:
+    def migrate_table(
+        self, table_name: str, preserve_data: bool = False, pipeline_type: str = None
+    ) -> bool:
         """
         Migrate table to match expected configuration.
 
@@ -362,10 +505,14 @@ class SchemaManager:
         cursor = connection.cursor()
 
         try:
-            expected_config = self._get_expected_schema_config(table_name, pipeline_type)
+            expected_config = self._get_expected_schema_config(
+                table_name, pipeline_type
+            )
 
             if table_name == "SourceDocuments":
-                success = self._migrate_source_documents_table(cursor, expected_config, preserve_data)
+                success = self._migrate_source_documents_table(
+                    cursor, expected_config, preserve_data
+                )
                 if success:
                     connection.commit()
                     return True
@@ -373,7 +520,29 @@ class SchemaManager:
                     connection.rollback()
                     return False
             elif table_name == "DocumentChunks":
-                success = self._migrate_document_chunks_table(cursor, expected_config, preserve_data)
+                success = self._migrate_document_chunks_table(
+                    cursor, expected_config, preserve_data
+                )
+                if success:
+                    connection.commit()
+                    return True
+                else:
+                    connection.rollback()
+                    return False
+            elif table_name == "Entities":
+                success = self._migrate_entities_table(
+                    cursor, expected_config, preserve_data
+                )
+                if success:
+                    connection.commit()
+                    return True
+                else:
+                    connection.rollback()
+                    return False
+            elif table_name == "EntityRelationships":
+                success = self._migrate_entity_relationships_table(
+                    cursor, expected_config, preserve_data
+                )
                 if success:
                     connection.commit()
                     return True
@@ -392,7 +561,9 @@ class SchemaManager:
         finally:
             cursor.close()
 
-    def _migrate_source_documents_table(self, cursor, expected_config: Dict[str, Any], preserve_data: bool) -> bool:
+    def _migrate_source_documents_table(
+        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
+    ) -> bool:
         """Migrate SourceDocuments table with requirements-driven DDL generation."""
         try:
             vector_dim = expected_config["vector_dimension"]
@@ -403,46 +574,72 @@ class SchemaManager:
             # Try multiple table name approaches to work around IRIS schema issues
             table_attempts = [
                 "RAG.SourceDocuments",  # Preferred
-                "SourceDocuments",      # Fallback
+                "SourceDocuments",  # Fallback
             ]
 
             for table_name in table_attempts:
                 try:
-                    logger.info(f"🔧 Attempting to create SourceDocuments table as {table_name}")
-                    logger.info(f"   Text content type: {text_content_type}, iFind support: {supports_ifind}")
+                    logger.info(
+                        f"🔧 Attempting to create SourceDocuments table as {table_name}"
+                    )
+                    logger.info(
+                        f"   Text content type: {text_content_type}, iFind support: {supports_ifind}"
+                    )
 
                     # Handle foreign key constraints from referencing tables
-                    logger.info("Checking for foreign key constraints on SourceDocuments...")
+                    logger.info(
+                        "Checking for foreign key constraints on SourceDocuments..."
+                    )
                     known_constraints = [
                         ("DOCUMENTCHUNKSFKEY2", "DocumentChunks"),
                     ]
-                    
+
                     for constraint_name, referencing_table in known_constraints:
                         # Check if referencing table exists first
-                        cursor.execute("""
+                        cursor.execute(
+                            """
                             SELECT COUNT(*) 
                             FROM INFORMATION_SCHEMA.TABLES 
                             WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = ?
-                        """, [referencing_table.upper()])
+                        """,
+                            [referencing_table.upper()],
+                        )
                         table_exists = cursor.fetchone()[0] > 0
 
                         if not table_exists:
-                            logger.info(f"Referencing table RAG.{referencing_table} does not exist — skipping constraint drop")
+                            logger.info(
+                                f"Referencing table RAG.{referencing_table} does not exist — skipping constraint drop"
+                            )
                             continue
 
                         try:
-                            logger.info(f"Dropping foreign key constraint {constraint_name} from RAG.{referencing_table}")
-                            cursor.execute(f"ALTER TABLE RAG.{referencing_table} DROP CONSTRAINT {constraint_name}")
-                            logger.info(f"✓ Successfully dropped constraint {constraint_name}")
+                            logger.info(
+                                f"Dropping foreign key constraint {constraint_name} from RAG.{referencing_table}"
+                            )
+                            cursor.execute(
+                                f"ALTER TABLE RAG.{referencing_table} DROP CONSTRAINT {constraint_name}"
+                            )
+                            logger.info(
+                                f"✓ Successfully dropped constraint {constraint_name}"
+                            )
                         except Exception as fk_error:
-                            logger.warning(f"Could not drop foreign key {constraint_name}: {fk_error}")
+                            logger.warning(
+                                f"Could not drop foreign key {constraint_name}: {fk_error}"
+                            )
                             try:
-                                logger.info(f"Attempting to drop referencing table RAG.{referencing_table}")
-                                cursor.execute(f"DROP TABLE IF EXISTS RAG.{referencing_table}")
-                                logger.info(f"✓ Dropped referencing table RAG.{referencing_table}")
+                                logger.info(
+                                    f"Attempting to drop referencing table RAG.{referencing_table}"
+                                )
+                                cursor.execute(
+                                    f"DROP TABLE IF EXISTS RAG.{referencing_table}"
+                                )
+                                logger.info(
+                                    f"✓ Dropped referencing table RAG.{referencing_table}"
+                                )
                             except Exception as table_error:
-                                logger.warning(f"Could not drop referencing table {referencing_table}: {table_error}")
-
+                                logger.warning(
+                                    f"Could not drop referencing table {referencing_table}: {table_error}"
+                                )
 
                     # Drop existing table
                     cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
@@ -479,15 +676,21 @@ class SchemaManager:
 
                     # Schema metadata
                     try:
-                        self._update_schema_metadata(cursor, "SourceDocuments", expected_config)
+                        self._update_schema_metadata(
+                            cursor, "SourceDocuments", expected_config
+                        )
                     except Exception as meta_error:
                         logger.debug(f"Schema metadata update failed: {meta_error}")
 
-                    logger.info(f"✅ SourceDocuments table created successfully as {table_name}")
+                    logger.info(
+                        f"✅ SourceDocuments table created successfully as {table_name}"
+                    )
                     return True
 
                 except Exception as table_error:
-                    logger.warning(f"Failed to create table as {table_name}: {table_error}")
+                    logger.warning(
+                        f"Failed to create table as {table_name}: {table_error}"
+                    )
                     if table_name == table_attempts[-1]:
                         logger.error("All table creation attempts failed")
                         return False
@@ -503,7 +706,9 @@ class SchemaManager:
         """Update schema metadata for a table."""
         try:
             # Use MERGE or INSERT/UPDATE pattern
-            cursor.execute("DELETE FROM RAG.SchemaMetadata WHERE table_name = ?", [table_name])
+            cursor.execute(
+                "DELETE FROM RAG.SchemaMetadata WHERE table_name = ?", [table_name]
+            )
 
             # Handle configuration serialization safely
             configuration_json = None
@@ -511,7 +716,9 @@ class SchemaManager:
                 try:
                     configuration_json = json.dumps(config["configuration"])
                 except (TypeError, ValueError) as json_error:
-                    logger.warning(f"Could not serialize configuration for {table_name}: {json_error}")
+                    logger.warning(
+                        f"Could not serialize configuration for {table_name}: {json_error}"
+                    )
                     configuration_json = json.dumps({"error": "serialization_failed"})
 
             cursor.execute(
@@ -535,16 +742,22 @@ class SchemaManager:
             logger.error(f"Failed to update schema metadata for {table_name}: {e}")
             raise
 
-    def _migrate_document_chunks_table(self, cursor, expected_config: Dict[str, Any], preserve_data: bool) -> bool:
+    def _migrate_document_chunks_table(
+        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
+    ) -> bool:
         """Migrate DocumentChunks table."""
         try:
             vector_dim = expected_config["vector_dimension"]
             vector_data_type = expected_config.get("vector_data_type", "FLOAT")
 
-            logger.info(f"🔧 Migrating DocumentChunks table to {vector_dim}D vectors with {vector_data_type} type")
+            logger.info(
+                f"🔧 Migrating DocumentChunks table to {vector_dim}D vectors with {vector_data_type} type"
+            )
 
             if preserve_data:
-                logger.warning("Data preservation not implemented — table will be dropped")
+                logger.warning(
+                    "Data preservation not implemented — table will be dropped"
+                )
 
             cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks")
 
@@ -580,12 +793,11 @@ class SchemaManager:
         except Exception as e:
             logger.error(f"Failed to migrate DocumentChunks table: {e}")
             return False
-        
 
     def ensure_table_schema(self, table_name: str, pipeline_type: str = None) -> bool:
         """
         Ensure table schema matches current configuration.
-        Performs migration if needed.
+        Performs migration if needed and ensures vector indexes exist.
 
         Args:
             table_name: Name of the table to ensure
@@ -601,16 +813,26 @@ class SchemaManager:
             # Check if migration is needed
             if self.needs_migration(table_name, pipeline_type):
                 logger.info(f"Schema migration needed for {table_name}")
-                return self.migrate_table(table_name, pipeline_type=pipeline_type)
+                success = self.migrate_table(table_name, pipeline_type=pipeline_type)
+                if not success:
+                    return False
             else:
                 logger.info(f"Schema for {table_name} is up to date")
-                return True
+
+            # Ensure vector indexes after schema is correct
+            if table_name in ["SourceDocuments", "Entities"]:
+                logger.info(f"🔍 Ensuring vector indexes for {table_name}")
+                self.ensure_all_vector_indexes()
+
+            return True
 
         except Exception as e:
             logger.error(f"Failed to ensure schema for {table_name}: {e}")
             return False
 
-    def get_vector_dimension(self, table_name: str = "SourceDocuments", model_name: str = None) -> int:
+    def get_vector_dimension(
+        self, table_name: str = "SourceDocuments", model_name: str = None
+    ) -> int:
         """
         Universal method to get vector dimension for any table.
         This is the SINGLE SOURCE OF TRUTH for all vector dimensions.
@@ -634,11 +856,16 @@ class SchemaManager:
             dimension = self._table_configs[table_name]["dimension"]
 
             # If model override specified, use model mapping
-            if model_name and model_name != self._table_configs[table_name]["default_model"]:
+            if (
+                model_name
+                and model_name != self._table_configs[table_name]["default_model"]
+            ):
                 if model_name in self._model_dimensions:
                     dimension = self._model_dimensions[model_name]
                 else:
-                    logger.warning(f"Unknown model '{model_name}' for {table_name}, using table default: {dimension}")
+                    logger.warning(
+                        f"Unknown model '{model_name}' for {table_name}, using table default: {dimension}"
+                    )
 
         else:
             # Fallback: Try model-based lookup for unknown tables
@@ -656,10 +883,14 @@ class SchemaManager:
         # Cache the result
         self._dimension_cache[cache_key] = dimension
 
-        logger.debug(f"Schema Manager: {table_name} with model {model_name or 'default'} -> {dimension}D")
+        logger.debug(
+            f"Schema Manager: {table_name} with model {model_name or 'default'} -> {dimension}D"
+        )
         return dimension
 
-    def validate_vector_dimension(self, table_name: str, provided_dimension: int, context: str = "") -> None:
+    def validate_vector_dimension(
+        self, table_name: str, provided_dimension: int, context: str = ""
+    ) -> None:
         """
         Validate that a provided dimension matches schema manager's expectation.
 
@@ -726,10 +957,17 @@ class SchemaManager:
 
                 results["table_dimensions"][table_name] = {
                     "expected": expected_dimension,
-                    "current": current_config.get("vector_dimension") if current_config else None,
+                    "current": (
+                        current_config.get("vector_dimension")
+                        if current_config
+                        else None
+                    ),
                 }
 
-                if current_config and current_config.get("vector_dimension") != expected_dimension:
+                if (
+                    current_config
+                    and current_config.get("vector_dimension") != expected_dimension
+                ):
                     results["consistent"] = False
                     results["issues"].append(
                         {
@@ -742,7 +980,9 @@ class SchemaManager:
 
             except Exception as e:
                 results["consistent"] = False
-                results["issues"].append({"table": table_name, "issue": "validation_error", "error": str(e)})
+                results["issues"].append(
+                    {"table": table_name, "issue": "validation_error", "error": str(e)}
+                )
 
         return results
 
@@ -766,6 +1006,272 @@ class SchemaManager:
 
         return status
 
+    def _migrate_entities_table(
+        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
+    ) -> bool:
+        """Migrate RAG.Entities table with proper schema and foreign keys."""
+        try:
+            vector_dim = expected_config["vector_dimension"]
+            vector_data_type = expected_config.get("vector_data_type", "FLOAT")
+
+            # Try multiple table name approaches
+            table_attempts = [
+                "RAG.Entities",  # Preferred
+                "Entities",  # Fallback
+            ]
+
+            for table_name in table_attempts:
+                try:
+                    logger.info(
+                        f"🔧 Attempting to create Entities table as {table_name}"
+                    )
+
+                    # Drop existing table if it exists
+                    cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+                    logger.info(f"Dropped existing {table_name} table")
+
+                    # Create with correct schema
+                    create_sql = f"""
+                    CREATE TABLE {table_name} (
+                        entity_id VARCHAR(255) PRIMARY KEY,
+                        entity_name VARCHAR(1000) NOT NULL,
+                        entity_type VARCHAR(255) NOT NULL,
+                        source_doc_id VARCHAR(255) NOT NULL,
+                        description TEXT NULL,
+                        embedding VECTOR({vector_data_type}, {vector_dim}) NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(doc_id) ON DELETE CASCADE
+                    )
+                    """
+                    cursor.execute(create_sql)
+                    logger.info(f"✅ Successfully created {table_name} table")
+
+                    # Create indexes for GraphRAG query performance
+                    indexes = [
+                        f"CREATE INDEX idx_entities_name_lower ON {table_name} (LOWER(entity_name))",
+                        f"CREATE INDEX idx_entities_type ON {table_name} (entity_type)",
+                        f"CREATE INDEX idx_entities_source_doc ON {table_name} (source_doc_id)",
+                    ]
+                    for index_sql in indexes:
+                        try:
+                            cursor.execute(index_sql)
+                            logger.debug(f"Created index: {index_sql}")
+                        except Exception as e:
+                            logger.warning(f"Failed to create index: {e}")
+
+                    # Update schema metadata
+                    try:
+                        self._update_schema_metadata(
+                            cursor, "Entities", expected_config
+                        )
+                    except Exception as meta_error:
+                        logger.debug(f"Schema metadata update failed: {meta_error}")
+
+                    logger.info(
+                        f"✅ Entities table created successfully as {table_name}"
+                    )
+                    return True
+
+                except Exception as table_error:
+                    logger.warning(
+                        f"Failed to create table as {table_name}: {table_error}"
+                    )
+                    if table_name == table_attempts[-1]:
+                        logger.error("All table creation attempts failed")
+                        return False
+                    continue
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Failed to migrate Entities table: {e}")
+            return False
+
+    def _migrate_entity_relationships_table(
+        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
+    ) -> bool:
+        """Migrate RAG.EntityRelationships table with proper schema and foreign keys."""
+        try:
+            # Try multiple table name approaches
+            table_attempts = [
+                "RAG.EntityRelationships",  # Preferred
+                "EntityRelationships",  # Fallback
+            ]
+
+            for table_name in table_attempts:
+                try:
+                    logger.info(
+                        f"🔧 Attempting to create EntityRelationships table as {table_name}"
+                    )
+
+                    # Drop existing table if it exists
+                    cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+                    logger.info(f"Dropped existing {table_name} table")
+
+                    # Create with correct schema
+                    create_sql = f"""
+                    CREATE TABLE {table_name} (
+                        relationship_id VARCHAR(255) PRIMARY KEY,
+                        source_entity_id VARCHAR(255) NOT NULL,
+                        target_entity_id VARCHAR(255) NOT NULL,
+                        relationship_type VARCHAR(255) NOT NULL,
+                        metadata TEXT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (source_entity_id) REFERENCES RAG.Entities(entity_id) ON DELETE CASCADE,
+                        FOREIGN KEY (target_entity_id) REFERENCES RAG.Entities(entity_id) ON DELETE CASCADE
+                    )
+                    """
+                    cursor.execute(create_sql)
+                    logger.info(f"✅ Successfully created {table_name} table")
+
+                    # Create indexes for GraphRAG traversal performance
+                    indexes = [
+                        f"CREATE INDEX idx_rel_source ON {table_name} (source_entity_id)",
+                        f"CREATE INDEX idx_rel_target ON {table_name} (target_entity_id)",
+                    ]
+                    for index_sql in indexes:
+                        try:
+                            cursor.execute(index_sql)
+                            logger.debug(f"Created index: {index_sql}")
+                        except Exception as e:
+                            logger.warning(f"Failed to create index: {e}")
+
+                    # Update schema metadata
+                    try:
+                        self._update_schema_metadata(
+                            cursor, "EntityRelationships", expected_config
+                        )
+                    except Exception as meta_error:
+                        logger.debug(f"Schema metadata update failed: {meta_error}")
+
+                    logger.info(
+                        f"✅ EntityRelationships table created successfully as {table_name}"
+                    )
+                    return True
+
+                except Exception as table_error:
+                    logger.warning(
+                        f"Failed to create table as {table_name}: {table_error}"
+                    )
+                    if table_name == table_attempts[-1]:
+                        logger.error("All table creation attempts failed")
+                        return False
+                    continue
+
+            return False
+
+        except Exception as e:
+            logger.error(f"Failed to migrate EntityRelationships table: {e}")
+            return False
+
+    def ensure_vector_hnsw_index(
+        self, cursor, table: str, column: str, index_name: str, try_acorn: bool = True
+    ) -> None:
+        """
+        Ensure HNSW vector index exists on the specified table and column.
+
+        Attempts to create index with ACORN=1 optimization first, falls back to standard HNSW.
+        This function is idempotent - no-op if index already exists.
+
+        Args:
+            cursor: Database cursor
+            table: Table name (e.g., "RAG.SourceDocuments")
+            column: Vector column name (e.g., "embedding")
+            index_name: Index name (e.g., "idx_SourceDocuments_embedding")
+            try_acorn: Whether to attempt ACORN=1 optimization (default: True)
+        """
+        try:
+            # Check if index already exists
+            check_sql = """
+                SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES
+                WHERE TABLE_NAME = ? AND INDEX_NAME = ?
+            """
+            cursor.execute(check_sql, [table.split(".")[-1], index_name])
+            index_exists = cursor.fetchone()[0] > 0
+
+            if index_exists:
+                logger.debug(
+                    f"HNSW index {index_name} already exists on {table}.{column}"
+                )
+                return
+
+            # Try to create index with ACORN=1 first
+            if try_acorn:
+                try:
+                    acorn_sql = f"CREATE INDEX {index_name} ON {table}({column}) AS HNSW WITH (ACORN=1)"
+                    logger.info(
+                        f"Creating HNSW index with ACORN=1: {index_name} on {table}.{column}"
+                    )
+                    cursor.execute(acorn_sql)
+                    logger.info(
+                        f"✅ Successfully created HNSW index with ACORN=1: {index_name}"
+                    )
+                    return
+                except Exception as acorn_error:
+                    logger.warning(
+                        f"ACORN=1 syntax not supported, falling back to standard HNSW: {acorn_error}"
+                    )
+
+            # Fallback to standard HNSW
+            standard_sql = f"CREATE INDEX {index_name} ON {table}({column}) AS HNSW"
+            logger.info(
+                f"Creating standard HNSW index: {index_name} on {table}.{column}"
+            )
+            cursor.execute(standard_sql)
+            logger.info(f"✅ Successfully created standard HNSW index: {index_name}")
+
+        except Exception as e:
+            logger.error(
+                f"Failed to create HNSW index {index_name} on {table}.{column}: {e}"
+            )
+            # Don't raise - allow system to continue without index
+            logger.warning(
+                "Continuing without vector index - this may impact performance"
+            )
+
+    def ensure_all_vector_indexes(self) -> None:
+        """
+        Ensure all required vector indexes exist at startup.
+
+        Creates HNSW indexes (with ACORN=1 when available) for all vector columns
+        across the RAG system.
+        """
+        connection = self.connection_manager.get_connection()
+        cursor = connection.cursor()
+
+        try:
+            # Define vector indexes to ensure
+            vector_indexes = [
+                {
+                    "table": "RAG.SourceDocuments",
+                    "column": "embedding",
+                    "index_name": "idx_SourceDocuments_embedding",
+                },
+                {
+                    "table": "RAG.Entities",
+                    "column": "embedding",
+                    "index_name": "idx_Entities_embedding",
+                },
+            ]
+
+            logger.info("Ensuring HNSW vector indexes...")
+            for index_def in vector_indexes:
+                self.ensure_vector_hnsw_index(
+                    cursor,
+                    index_def["table"],
+                    index_def["column"],
+                    index_def["index_name"],
+                    try_acorn=True,
+                )
+
+            connection.commit()
+            logger.info("✅ Vector index ensure process completed")
+
+        except Exception as e:
+            logger.error(f"Error during vector index ensure process: {e}")
+            connection.rollback()
+        finally:
+            cursor.close()
 
     # ========== AUDIT TESTING METHODS ==========
     # These methods replace direct SQL anti-patterns in integration tests

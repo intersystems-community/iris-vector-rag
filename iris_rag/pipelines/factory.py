@@ -10,7 +10,11 @@ from typing import Dict, Any, Optional
 
 from ..config.pipeline_config_service import PipelineConfigService
 from ..utils.module_loader import ModuleLoader
-from ..core.exceptions import PipelineNotFoundError, PipelineCreationError, ModuleLoadingError
+from ..core.exceptions import (
+    PipelineNotFoundError,
+    PipelineCreationError,
+    ModuleLoadingError,
+)
 from ..core.base import RAGPipeline
 
 
@@ -26,7 +30,10 @@ class PipelineFactory:
     """
 
     def __init__(
-        self, config_service: PipelineConfigService, module_loader: ModuleLoader, framework_dependencies: Dict[str, Any]
+        self,
+        config_service: PipelineConfigService,
+        module_loader: ModuleLoader,
+        framework_dependencies: Dict[str, Any],
     ):
         """
         Initialize the pipeline factory.
@@ -64,7 +71,9 @@ class PipelineFactory:
 
         # Find the pipeline definition
         if pipeline_name not in self._pipeline_definitions:
-            raise PipelineNotFoundError(f"Pipeline '{pipeline_name}' not found in configuration")
+            raise PipelineNotFoundError(
+                f"Pipeline '{pipeline_name}' not found in configuration"
+            )
 
         pipeline_def = self._pipeline_definitions[pipeline_name]
 
@@ -74,20 +83,26 @@ class PipelineFactory:
 
         try:
             # Load the pipeline class
-            pipeline_class = self.module_loader.load_pipeline_class(pipeline_def["module"], pipeline_def["class"])
+            pipeline_class = self.module_loader.load_pipeline_class(
+                pipeline_def["module"], pipeline_def["class"]
+            )
 
             # Prepare constructor arguments
             # Pipelines expect (connection_manager, config_manager) as positional args
             # and other arguments as keyword arguments
             framework_kwargs = {
                 **self.framework_dependencies,  # Framework dependencies (llm_func, vector_store)
-                **pipeline_def.get("params", {}),  # Pipeline-specific parameters (filtered to avoid conflicts)
+                **pipeline_def.get(
+                    "params", {}
+                ),  # Pipeline-specific parameters (filtered to avoid conflicts)
             }
 
             # Filter out parameters that might conflict with constructor signature
             # Most pipelines don't accept arbitrary config parameters in constructor
             allowed_kwargs = {"llm_func", "vector_store"}
-            filtered_kwargs = {k: v for k, v in framework_kwargs.items() if k in allowed_kwargs}
+            filtered_kwargs = {
+                k: v for k, v in framework_kwargs.items() if k in allowed_kwargs
+            }
 
             # Create the pipeline instance with required positional args and filtered kwargs
             pipeline_instance = pipeline_class(
@@ -133,7 +148,9 @@ class PipelineFactory:
                 pipelines[pipeline_name] = pipeline
 
             except (PipelineNotFoundError, PipelineCreationError) as e:
-                self.logger.error(f"Failed to create pipeline '{pipeline_name}': {str(e)}")
+                self.logger.error(
+                    f"Failed to create pipeline '{pipeline_name}': {str(e)}"
+                )
                 # Continue with other pipelines
                 continue
 
@@ -145,12 +162,18 @@ class PipelineFactory:
         try:
             # This should be configurable, but for now use a default path
             config_path = "config/pipelines.yaml"
-            definitions_list = self.config_service.load_pipeline_definitions(config_path)
+            definitions_list = self.config_service.load_pipeline_definitions(
+                config_path
+            )
 
             # Convert list to dictionary for easier lookup
-            self._pipeline_definitions = {definition["name"]: definition for definition in definitions_list}
+            self._pipeline_definitions = {
+                definition["name"]: definition for definition in definitions_list
+            }
 
-            self.logger.debug(f"Loaded {len(self._pipeline_definitions)} pipeline definitions")
+            self.logger.debug(
+                f"Loaded {len(self._pipeline_definitions)} pipeline definitions"
+            )
 
         except Exception as e:
             error_msg = f"Failed to load pipeline definitions: {str(e)}"

@@ -55,7 +55,11 @@ class SetupOrchestrator:
     - Progress tracking and error handling
     """
 
-    def __init__(self, connection_manager: ConnectionManager, config_manager: ConfigurationManager):
+    def __init__(
+        self,
+        connection_manager: ConnectionManager,
+        config_manager: ConfigurationManager,
+    ):
         """
         Initialize the setup orchestrator.
 
@@ -69,7 +73,9 @@ class SetupOrchestrator:
         self.validator = PreConditionValidator(connection_manager)
         self.logger = logging.getLogger(__name__)
 
-    def setup_pipeline(self, pipeline_type: str, auto_fix: bool = True) -> ValidationReport:
+    def setup_pipeline(
+        self, pipeline_type: str, auto_fix: bool = True
+    ) -> ValidationReport:
         """
         Set up all requirements for a pipeline type.
 
@@ -99,7 +105,9 @@ class SetupOrchestrator:
         # Perform setup based on pipeline type
         # NEW: Use generic requirements-driven approach for basic pipelines
         if pipeline_type in ["basic", "basic_rerank"]:
-            self.logger.info(f"Using generic requirements fulfillment for {pipeline_type}")
+            self.logger.info(
+                f"Using generic requirements fulfillment for {pipeline_type}"
+            )
             self._fulfill_requirements(requirements)
         elif pipeline_type == "crag":
             self._setup_crag_pipeline(requirements)
@@ -107,7 +115,9 @@ class SetupOrchestrator:
         else:
             self.logger.warning(f"No specific setup logic for {pipeline_type}")
             # Fallback: Try generic approach for unknown pipelines
-            self.logger.info(f"Attempting generic requirements fulfillment for {pipeline_type}")
+            self.logger.info(
+                f"Attempting generic requirements fulfillment for {pipeline_type}"
+            )
             self._fulfill_requirements(requirements)
 
         # Check for optional chunking enhancement
@@ -158,7 +168,9 @@ class SetupOrchestrator:
             self._fulfill_optional_requirement(optional_req)
 
         progress.complete()
-        self.logger.info(f"Generic requirements fulfillment completed for {requirements.pipeline_name}")
+        self.logger.info(
+            f"Generic requirements fulfillment completed for {requirements.pipeline_name}"
+        )
 
     def _fulfill_table_requirement(self, table_req):
         """Fulfill a table requirement."""
@@ -168,12 +180,20 @@ class SetupOrchestrator:
 
     def _fulfill_embedding_requirement(self, embedding_req):
         """Fulfill an embedding requirement generically."""
-        if embedding_req.table == "RAG.SourceDocuments" and embedding_req.column == "embedding":
+        if (
+            embedding_req.table == "RAG.SourceDocuments"
+            and embedding_req.column == "embedding"
+        ):
             self._ensure_document_embeddings()
-        elif embedding_req.table == "RAG.DocumentTokenEmbeddings" and embedding_req.column == "token_embedding":
+        elif (
+            embedding_req.table == "RAG.DocumentTokenEmbeddings"
+            and embedding_req.column == "token_embedding"
+        ):
             self._ensure_token_embeddings()
         else:
-            self.logger.warning(f"Unknown embedding requirement: {embedding_req.table}.{embedding_req.column}")
+            self.logger.warning(
+                f"Unknown embedding requirement: {embedding_req.table}.{embedding_req.column}"
+            )
 
     def _fulfill_optional_requirement(self, optional_req):
         """Fulfill an optional requirement."""
@@ -203,8 +223,12 @@ class SetupOrchestrator:
     def _setup_optional_chunking(self, requirements: PipelineRequirements):
         """Set up optional chunking enhancement if requested."""
         # Check if chunking tables/embeddings are in optional requirements
-        has_chunk_table = any(table.name == "DocumentChunks" for table in requirements.optional_tables)
-        has_chunk_embeddings = any(emb.name == "chunk_embeddings" for emb in requirements.optional_embeddings)
+        has_chunk_table = any(
+            table.name == "DocumentChunks" for table in requirements.optional_tables
+        )
+        has_chunk_embeddings = any(
+            emb.name == "chunk_embeddings" for emb in requirements.optional_embeddings
+        )
 
         if has_chunk_table or has_chunk_embeddings:
             self.logger.info("Setting up optional chunking enhancement")
@@ -217,7 +241,9 @@ class SetupOrchestrator:
             self._generate_document_chunks()
 
             progress.next_step("Validating chunk embeddings")
-            self._validate_embeddings_after_generation("RAG.DocumentChunks", "chunk_embedding", "chunk")
+            self._validate_embeddings_after_generation(
+                "RAG.DocumentChunks", "chunk_embedding", "chunk"
+            )
 
             progress.next_step("Chunking setup complete")
             progress.complete()
@@ -258,7 +284,9 @@ class SetupOrchestrator:
                 self._generate_missing_document_embeddings()
 
                 # Validate that embeddings were actually generated
-                self._validate_embeddings_after_generation("RAG.SourceDocuments", "embedding", "document")
+                self._validate_embeddings_after_generation(
+                    "RAG.SourceDocuments", "embedding", "document"
+                )
             else:
                 self.logger.info("All documents have embeddings")
 
@@ -293,7 +321,9 @@ class SetupOrchestrator:
                 batch = documents[i : i + batch_size]
 
                 # Generate embeddings for batch
-                texts = [doc[1] if doc[1] else "" for doc in batch]  # Handle None content
+                texts = [
+                    doc[1] if doc[1] else "" for doc in batch
+                ]  # Handle None content
 
                 try:
                     embeddings = self.embedding_manager.embed_texts(texts)
@@ -321,7 +351,9 @@ class SetupOrchestrator:
                             total_processed += 1
 
                         except Exception as doc_error:
-                            self.logger.warning(f"Failed to update embedding for {doc_id}: {doc_error}")
+                            self.logger.warning(
+                                f"Failed to update embedding for {doc_id}: {doc_error}"
+                            )
                             total_failed += 1
 
                     connection.commit()
@@ -330,7 +362,9 @@ class SetupOrchestrator:
                     )
 
                 except Exception as batch_error:
-                    self.logger.error(f"Failed to generate embeddings for batch {i//batch_size + 1}: {batch_error}")
+                    self.logger.error(
+                        f"Failed to generate embeddings for batch {i//batch_size + 1}: {batch_error}"
+                    )
                     total_failed += len(batch)
                     connection.rollback()
 
@@ -348,12 +382,16 @@ class SetupOrchestrator:
             )
 
             if remaining_missing > 0:
-                self.logger.warning(f"Still have {remaining_missing} documents without embeddings after generation")
+                self.logger.warning(
+                    f"Still have {remaining_missing} documents without embeddings after generation"
+                )
 
         finally:
             cursor.close()
 
-    def heal_token_embeddings(self, target_doc_count: int = 1000, force_regenerate: bool = False) -> Dict[str, Any]:
+    def heal_token_embeddings(
+        self, target_doc_count: int = 1000, force_regenerate: bool = False
+    ) -> Dict[str, Any]:
         """
         Heal missing token embeddings for specified document count.
 
@@ -374,14 +412,25 @@ class SetupOrchestrator:
 
         try:
             # Get target document set (deterministic ordering) - now returns List[Dict[str, str]]
-            target_doc_ids_with_content = self._get_target_document_set(cursor, target_doc_count)
+            target_doc_ids_with_content = self._get_target_document_set(
+                cursor, target_doc_count
+            )
 
             if not target_doc_ids_with_content:
-                self.logger.warning("No documents returned by _get_target_document_set.")
-                return {"status": "no_documents", "processed": 0, "failed": 0, "skipped_doc_ids_bad_content": []}
+                self.logger.warning(
+                    "No documents returned by _get_target_document_set."
+                )
+                return {
+                    "status": "no_documents",
+                    "processed": 0,
+                    "failed": 0,
+                    "skipped_doc_ids_bad_content": [],
+                }
 
             # This map is used later to get content for docs that need healing
-            target_doc_ids_with_content_map = {item["doc_id"]: item["content"] for item in target_doc_ids_with_content}
+            target_doc_ids_with_content_map = {
+                item["doc_id"]: item["content"] for item in target_doc_ids_with_content
+            }
             target_doc_ids_list = list(target_doc_ids_with_content_map.keys())
 
             # Initialize tracking for skipped documents due to bad content
@@ -393,10 +442,16 @@ class SetupOrchestrator:
                 self._delete_token_embeddings_for_documents(cursor, target_doc_ids_list)
                 connection.commit()
                 docs_needing_embeddings = target_doc_ids_list
-                self.logger.info(f"Force regenerate: processing all {len(docs_needing_embeddings)} target documents")
+                self.logger.info(
+                    f"Force regenerate: processing all {len(docs_needing_embeddings)} target documents"
+                )
             else:
-                doc_ids_missing_embeddings = self._identify_missing_token_embeddings(cursor, target_doc_ids_list)
-                self.logger.info(f"Found {len(doc_ids_missing_embeddings)} documents missing token embeddings")
+                doc_ids_missing_embeddings = self._identify_missing_token_embeddings(
+                    cursor, target_doc_ids_list
+                )
+                self.logger.info(
+                    f"Found {len(doc_ids_missing_embeddings)} documents missing token embeddings"
+                )
 
                 docs_to_process_data = {}
                 skipped_due_to_missing_content_ids = []  # Keep this for the return
@@ -420,13 +475,21 @@ class SetupOrchestrator:
                 # docs_needing_embeddings is what's actually used for generation call
                 # This variable is critical.
                 docs_needing_embeddings = list(docs_to_process_data.keys())
-                self.logger.info(f"Diagnostic: docs_to_process_data contains {len(docs_to_process_data)} items.")
-                self.logger.info(f"Diagnostic: docs_needing_embeddings contains {len(docs_needing_embeddings)} items.")
+                self.logger.info(
+                    f"Diagnostic: docs_to_process_data contains {len(docs_to_process_data)} items."
+                )
+                self.logger.info(
+                    f"Diagnostic: docs_needing_embeddings contains {len(docs_needing_embeddings)} items."
+                )
 
                 # This is the critical check that seems to be using old logic/state
                 if not docs_needing_embeddings:  # Check based on the derived list
-                    self.logger.warning("Diagnostic: Path taken - 'if not docs_needing_embeddings' is TRUE.")
-                    self.logger.warning("No valid documents to process after filtering for content.")  # New log message
+                    self.logger.warning(
+                        "Diagnostic: Path taken - 'if not docs_needing_embeddings' is TRUE."
+                    )
+                    self.logger.warning(
+                        "No valid documents to process after filtering for content."
+                    )  # New log message
                     return {
                         "status": "no_valid_content",  # More specific status
                         "processed": 0,
@@ -438,7 +501,9 @@ class SetupOrchestrator:
                         "duration": time.time() - start_time,
                     }
                 else:
-                    self.logger.info("Diagnostic: Path taken - 'if not docs_needing_embeddings' is FALSE.")
+                    self.logger.info(
+                        "Diagnostic: Path taken - 'if not docs_needing_embeddings' is FALSE."
+                    )
 
             # Check if we have any documents to process after all filtering
             if not docs_needing_embeddings:
@@ -456,10 +521,14 @@ class SetupOrchestrator:
                 f"Diagnostic: Proceeding to call _generate_token_embeddings_for_documents with {len(docs_needing_embeddings)} documents."
             )
             batch_size = 16
-            results = self._generate_token_embeddings_for_documents(connection, cursor, docs_needing_embeddings, batch_size)
+            results = self._generate_token_embeddings_for_documents(
+                connection, cursor, docs_needing_embeddings, batch_size
+            )
 
             # Final verification
-            final_missing = self._identify_missing_token_embeddings(cursor, target_doc_ids_list)
+            final_missing = self._identify_missing_token_embeddings(
+                cursor, target_doc_ids_list
+            )
 
             duration = time.time() - start_time
             self.logger.info(
@@ -479,9 +548,17 @@ class SetupOrchestrator:
             }
 
         except Exception as e:
-            self.logger.error(f"Error during token embedding healing: {e}", exc_info=True)
+            self.logger.error(
+                f"Error during token embedding healing: {e}", exc_info=True
+            )
             connection.rollback()
-            return {"status": "error", "error": str(e), "processed": 0, "failed": 0, "skipped_doc_ids_bad_content": []}
+            return {
+                "status": "error",
+                "error": str(e),
+                "processed": 0,
+                "failed": 0,
+                "skipped_doc_ids_bad_content": [],
+            }
         finally:
             cursor.close()
 
@@ -534,15 +611,21 @@ class SetupOrchestrator:
                     stream_data = content_val.read()
                     if isinstance(stream_data, bytes):
                         actual_content = stream_data.decode("utf-8")
-                    elif isinstance(stream_data, str):  # Should ideally be bytes from stream
+                    elif isinstance(
+                        stream_data, str
+                    ):  # Should ideally be bytes from stream
                         actual_content = stream_data
                     else:  # Fallback if read() returns something unexpected
-                        actual_content = str(stream_data) if stream_data is not None else None
+                        actual_content = (
+                            str(stream_data) if stream_data is not None else None
+                        )
 
                     if hasattr(content_val, "close"):  # Close the stream if possible
                         content_val.close()
                 except Exception as e:
-                    self.logger.error(f"Error reading stream content for doc_id {doc_id}: {e}")
+                    self.logger.error(
+                        f"Error reading stream content for doc_id {doc_id}: {e}"
+                    )
                     actual_content = None  # Or handle as appropriate
             elif isinstance(content_val, str):
                 actual_content = content_val
@@ -566,9 +649,13 @@ class SetupOrchestrator:
 
         return processed_docs
 
-    def _identify_missing_token_embeddings(self, cursor, target_doc_ids: List[str]) -> List[str]:
+    def _identify_missing_token_embeddings(
+        self, cursor, target_doc_ids: List[str]
+    ) -> List[str]:
         """Identify documents missing token embeddings within target set."""
-        self.logger.info(f"_identify_missing_token_embeddings: Received {len(target_doc_ids)} target_doc_ids to check.")
+        self.logger.info(
+            f"_identify_missing_token_embeddings: Received {len(target_doc_ids)} target_doc_ids to check."
+        )
         if not target_doc_ids:
             return []
 
@@ -615,11 +702,17 @@ class SetupOrchestrator:
             return
 
         for doc_id in doc_ids:
-            cursor.execute("DELETE FROM RAG.DocumentTokenEmbeddings WHERE doc_id = ?", [doc_id])
+            cursor.execute(
+                "DELETE FROM RAG.DocumentTokenEmbeddings WHERE doc_id = ?", [doc_id]
+            )
 
-        self.logger.info(f"Deleted existing token embeddings for {len(doc_ids)} documents")
+        self.logger.info(
+            f"Deleted existing token embeddings for {len(doc_ids)} documents"
+        )
 
-    def _generate_token_embeddings_for_documents(self, connection, cursor, doc_ids: List[str], batch_size: int) -> Dict[str, int]:
+    def _generate_token_embeddings_for_documents(
+        self, connection, cursor, doc_ids: List[str], batch_size: int
+    ) -> Dict[str, int]:
         """Generate token embeddings for specified documents."""
         # At the beginning of the method, log the number of doc_ids received and a sample of them
         self.logger.info(
@@ -636,14 +729,17 @@ class SetupOrchestrator:
         doc_content_map = {}
         for doc_id in doc_ids:
             cursor.execute(
-                "SELECT abstract FROM RAG.SourceDocuments WHERE doc_id = ? AND abstract IS NOT NULL", [doc_id]
+                "SELECT abstract FROM RAG.SourceDocuments WHERE doc_id = ? AND abstract IS NOT NULL",
+                [doc_id],
             )
             result = cursor.fetchone()
             if result and result[0]:
                 doc_content_map[doc_id] = result[0]
 
         if not doc_content_map:
-            self.logger.warning("No document content found for token embedding generation")
+            self.logger.warning(
+                "No document content found for token embedding generation"
+            )
             return {"processed": 0, "failed": 0}
 
         total_processed = 0
@@ -656,7 +752,9 @@ class SetupOrchestrator:
 
             # Inside the loop, log the current batch of doc_ids
             current_batch_doc_ids = [doc_id for doc_id, _ in batch]
-            self.logger.info(f"Processing batch {i//batch_size + 1} with doc_ids: {current_batch_doc_ids}")
+            self.logger.info(
+                f"Processing batch {i//batch_size + 1} with doc_ids: {current_batch_doc_ids}"
+            )
 
             batch_texts_to_embed = [content for _, content in batch]
             self.logger.debug(f"Batch texts to embed: {batch_texts_to_embed}")
@@ -666,11 +764,15 @@ class SetupOrchestrator:
                     f"Processing doc_id: {doc_id} for token embedding. Content length: {len(content) if content else 0}"
                 )
                 if not content:
-                    self.logger.warning(f"Skipping doc_id: {doc_id} due to empty or None content.")
+                    self.logger.warning(
+                        f"Skipping doc_id: {doc_id} due to empty or None content."
+                    )
                     total_failed += 1
                     continue
                 try:
-                    result = self._process_document_tokens(cursor, doc_id, content, max_tokens)
+                    result = self._process_document_tokens(
+                        cursor, doc_id, content, max_tokens
+                    )
                     if result["success"]:
                         total_processed += 1
                     else:
@@ -680,7 +782,9 @@ class SetupOrchestrator:
                     connection.commit()
 
                 except Exception as e:
-                    self.logger.warning(f"Failed to generate token embeddings for {doc_id}: {e}")
+                    self.logger.warning(
+                        f"Failed to generate token embeddings for {doc_id}: {e}"
+                    )
                     total_failed += 1
                     connection.rollback()
 
@@ -693,10 +797,14 @@ class SetupOrchestrator:
 
         return {"processed": total_processed, "failed": total_failed}
 
-    def _process_document_tokens(self, cursor, doc_id: str, content: str, max_tokens: int) -> Dict[str, Any]:
+    def _process_document_tokens(
+        self, cursor, doc_id: str, content: str, max_tokens: int
+    ) -> Dict[str, Any]:
         """Process tokens for a single document."""
         # At the beginning, log the doc_id and repr(content) received
-        self.logger.info(f"_process_document_tokens: Processing doc_id: {doc_id}, Content repr: {repr(content)}")
+        self.logger.info(
+            f"_process_document_tokens: Processing doc_id: {doc_id}, Content repr: {repr(content)}"
+        )
 
         try:
             # Simple tokenization approach for demonstration
@@ -710,7 +818,9 @@ class SetupOrchestrator:
                 f"For doc_id: {doc_id} with content repr: {repr(content)}, generated {len(tokens_data_for_doc)} tokens/embeddings."
             )
 
-            if not tokens_data_for_doc and content and content.strip():  # If content was valid but no tokens generated
+            if (
+                not tokens_data_for_doc and content and content.strip()
+            ):  # If content was valid but no tokens generated
                 self.logger.warning(
                     f"Doc_id: {doc_id} had valid content '{content}' but resulted in 0 tokens."
                 )
@@ -724,7 +834,9 @@ class SetupOrchestrator:
             self.logger.info(f"Tokens data for doc_id {doc_id}: {tokens_data_for_doc}")
 
             # Log the number of tokens being inserted for a given doc_id
-            self.logger.info(f"Attempting to insert {len(tokens_data_for_doc)} tokens for doc_id {doc_id}")
+            self.logger.info(
+                f"Attempting to insert {len(tokens_data_for_doc)} tokens for doc_id {doc_id}"
+            )
 
             # Generate embeddings for each token using the embedding manager
             for token_index, token_text in enumerate(tokens):
@@ -758,7 +870,9 @@ class SetupOrchestrator:
                     tokens_processed += 1
 
                 except Exception as token_error:
-                    self.logger.debug(f"Failed to generate embedding for token '{token_text}': {token_error}")
+                    self.logger.debug(
+                        f"Failed to generate embedding for token '{token_text}': {token_error}"
+                    )
                     tokens_failed += 1
                     continue
 
@@ -823,11 +937,15 @@ class SetupOrchestrator:
             existing_count = cursor.fetchone()[0]
 
             if existing_count > 0:
-                self.logger.info(f"Document chunks already exist ({existing_count} chunks)")
+                self.logger.info(
+                    f"Document chunks already exist ({existing_count} chunks)"
+                )
                 return
 
             # Get documents for chunking
-            cursor.execute("SELECT doc_id, text_content as content FROM RAG.SourceDocuments")
+            cursor.execute(
+                "SELECT doc_id, text_content as content FROM RAG.SourceDocuments"
+            )
             documents = cursor.fetchall()
 
             if not documents:
@@ -847,7 +965,9 @@ class SetupOrchestrator:
 
                 try:
                     # Simple chunking logic
-                    chunks = self._split_text_into_chunks(content, chunk_size, chunk_overlap)
+                    chunks = self._split_text_into_chunks(
+                        content, chunk_size, chunk_overlap
+                    )
 
                     if not chunks:
                         continue
@@ -857,7 +977,9 @@ class SetupOrchestrator:
                         chunk_embeddings = self.embedding_manager.embed_texts(chunks)
 
                         # Store chunks with consistent vector format
-                        for chunk_index, (chunk_text, embedding) in enumerate(zip(chunks, chunk_embeddings)):
+                        for chunk_index, (chunk_text, embedding) in enumerate(
+                            zip(chunks, chunk_embeddings)
+                        ):
                             try:
                                 # Ensure embedding is a list
                                 if hasattr(embedding, "tolist"):
@@ -888,7 +1010,9 @@ class SetupOrchestrator:
                                 total_chunks_processed += 1
 
                             except Exception as chunk_error:
-                                self.logger.warning(f"Failed to store chunk {chunk_index} for {doc_id}: {chunk_error}")
+                                self.logger.warning(
+                                    f"Failed to store chunk {chunk_index} for {doc_id}: {chunk_error}"
+                                )
                                 total_chunks_failed += 1
 
                         connection.commit()
@@ -900,12 +1024,16 @@ class SetupOrchestrator:
                             )
 
                     except Exception as embedding_error:
-                        self.logger.warning(f"Failed to generate embeddings for chunks in {doc_id}: {embedding_error}")
+                        self.logger.warning(
+                            f"Failed to generate embeddings for chunks in {doc_id}: {embedding_error}"
+                        )
                         total_chunks_failed += len(chunks)
                         connection.rollback()
 
                 except Exception as doc_error:
-                    self.logger.warning(f"Failed to process document {doc_id}: {doc_error}")
+                    self.logger.warning(
+                        f"Failed to process document {doc_id}: {doc_error}"
+                    )
                     continue
 
             # Final verification
@@ -918,7 +1046,9 @@ class SetupOrchestrator:
 
             if final_count == 0:
                 self.logger.error("No chunks were generated successfully")
-            elif total_chunks_failed > total_chunks_processed * 0.1:  # More than 10% failure rate
+            elif (
+                total_chunks_failed > total_chunks_processed * 0.1
+            ):  # More than 10% failure rate
                 self.logger.warning(
                     f"High failure rate in chunk generation: {total_chunks_failed}/{total_chunks_processed + total_chunks_failed}"
                 )
@@ -926,7 +1056,9 @@ class SetupOrchestrator:
         finally:
             cursor.close()
 
-    def _split_text_into_chunks(self, text: str, chunk_size: int, overlap: int) -> List[str]:
+    def _split_text_into_chunks(
+        self, text: str, chunk_size: int, overlap: int
+    ) -> List[str]:
         """Split text into overlapping chunks."""
         if text is None:
             text = ""
@@ -955,7 +1087,9 @@ class SetupOrchestrator:
 
         return chunks
 
-    def _validate_embeddings_after_generation(self, table: str, column: str, embedding_type: str):
+    def _validate_embeddings_after_generation(
+        self, table: str, column: str, embedding_type: str
+    ):
         """
         Validate that embeddings were successfully generated and are in the correct format.
 
@@ -983,11 +1117,15 @@ class SetupOrchestrator:
             rows_with_embeddings = result[1]
 
             if total_rows == 0:
-                self.logger.warning(f"No data found in {table} for {embedding_type} embedding validation")
+                self.logger.warning(
+                    f"No data found in {table} for {embedding_type} embedding validation"
+                )
                 return
 
             if rows_with_embeddings == 0:
-                self.logger.error(f"No {embedding_type} embeddings were generated in {table}.{column}")
+                self.logger.error(
+                    f"No {embedding_type} embeddings were generated in {table}.{column}"
+                )
                 return
 
             # Check embedding format
@@ -1031,6 +1169,8 @@ class SetupOrchestrator:
                 )
 
         except Exception as e:
-            self.logger.error(f"Error validating {embedding_type} embeddings in {table}.{column}: {e}")
+            self.logger.error(
+                f"Error validating {embedding_type} embeddings in {table}.{column}: {e}"
+            )
         finally:
             cursor.close()

@@ -1,5 +1,7 @@
 # PROJECT_COMPLETION_REPORT_VALIDATED
 
+> Status source of truth: Ongoing implementation and testing progress are centralized in [UNIFIED_PROJECT_ROADMAP.md](UNIFIED_PROJECT_ROADMAP.md). This report lists validated achievements only and defers remaining claims to the roadmap.
+
 Validated completion report for rag-templates based strictly on test artifacts and runtime validation. All claims below link to source files or generated reports.
 
 ## ✅ Verified Achievements

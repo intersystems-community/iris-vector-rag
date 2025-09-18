@@ -31,8 +31,12 @@ class EmbeddingManager:
         self.embedding_config = self.config_manager.get("embeddings", {})
 
         # Get primary and fallback backends
-        self.primary_backend = self.embedding_config.get("primary_backend", "sentence_transformers")
-        self.fallback_backends = self.embedding_config.get("fallback_backends", ["openai"])
+        self.primary_backend = self.embedding_config.get(
+            "primary_backend", "sentence_transformers"
+        )
+        self.fallback_backends = self.embedding_config.get(
+            "fallback_backends", ["openai"]
+        )
 
         # Cache for loaded embedding functions
         self._embedding_functions: Dict[str, Callable] = {}
@@ -52,11 +56,15 @@ class EmbeddingManager:
         """
         try:
             if backend_name == "sentence_transformers":
-                self._embedding_functions[backend_name] = self._create_sentence_transformers_function()
+                self._embedding_functions[backend_name] = (
+                    self._create_sentence_transformers_function()
+                )
             elif backend_name == "openai":
                 self._embedding_functions[backend_name] = self._create_openai_function()
             elif backend_name == "huggingface":
-                self._embedding_functions[backend_name] = self._create_huggingface_function()
+                self._embedding_functions[backend_name] = (
+                    self._create_huggingface_function()
+                )
             else:
                 logger.warning(f"Unknown embedding backend: {backend_name}")
                 return False
@@ -73,7 +81,9 @@ class EmbeddingManager:
         try:
             from sentence_transformers import SentenceTransformer
 
-            model_name = self.embedding_config.get("sentence_transformers", {}).get("model_name", "all-MiniLM-L6-v2")
+            model_name = self.embedding_config.get("sentence_transformers", {}).get(
+                "model_name", "all-MiniLM-L6-v2"
+            )
             model = SentenceTransformer(model_name)
 
             def embed_texts(texts: List[str]) -> List[List[float]]:
@@ -83,7 +93,9 @@ class EmbeddingManager:
             return embed_texts
 
         except ImportError:
-            logger.error("sentence-transformers not available. Install with: pip install sentence-transformers")
+            logger.error(
+                "sentence-transformers not available. Install with: pip install sentence-transformers"
+            )
             raise
         except Exception as e:
             logger.error(f"Failed to create sentence transformers function: {e}")
@@ -95,7 +107,9 @@ class EmbeddingManager:
             import openai
 
             openai_config = self.embedding_config.get("openai", {})
-            api_key = openai_config.get("api_key") or self.config_manager.get("openai:api_key")
+            api_key = openai_config.get("api_key") or self.config_manager.get(
+                "openai:api_key"
+            )
             model_name = openai_config.get("model_name", "text-embedding-ada-002")
 
             if not api_key:
@@ -123,13 +137,17 @@ class EmbeddingManager:
             import torch
 
             hf_config = self.embedding_config.get("huggingface", {})
-            model_name = hf_config.get("model_name", "sentence-transformers/all-MiniLM-L6-v2")
+            model_name = hf_config.get(
+                "model_name", "sentence-transformers/all-MiniLM-L6-v2"
+            )
 
             tokenizer, model = download_huggingface_model(model_name)
 
             def embed_texts(texts: List[str]) -> List[List[float]]:
                 # Tokenize and encode
-                encoded_input = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+                encoded_input = tokenizer(
+                    texts, padding=True, truncation=True, return_tensors="pt"
+                )
 
                 # Generate embeddings
                 with torch.no_grad():
@@ -142,7 +160,9 @@ class EmbeddingManager:
             return embed_texts
 
         except ImportError:
-            logger.error("transformers not available. Install with: pip install transformers torch")
+            logger.error(
+                "transformers not available. Install with: pip install transformers torch"
+            )
             raise
         except Exception as e:
             logger.error(f"Failed to create Hugging Face function: {e}")
@@ -170,7 +190,9 @@ class EmbeddingManager:
                 text_hash = hashlib.md5(text.encode()).hexdigest()
 
                 # Convert hash to numbers and normalize
-                hash_numbers = [int(text_hash[i : i + 2], 16) for i in range(0, len(text_hash), 2)]
+                hash_numbers = [
+                    int(text_hash[i : i + 2], 16) for i in range(0, len(text_hash), 2)
+                ]
 
                 # Pad or truncate to desired dimension (get from config or use 384 fallback)
                 target_dim = self.embedding_config.get("dimension", 384)
@@ -199,6 +221,18 @@ class EmbeddingManager:
         """
         embeddings = self.embed_texts([text])
         return embeddings[0]
+
+    def generate_embedding(self, text: str) -> List[float]:
+        """
+        Generate embedding for a single text (alias for embed_text for compatibility).
+
+        Args:
+            text: Input text to embed
+
+        Returns:
+            Embedding vector as list of floats
+        """
+        return self.embed_text(text)
 
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
         """
@@ -251,7 +285,9 @@ class EmbeddingManager:
             return dimension
 
         # Try to get from embedding config's model mapping
-        model_name = self.embedding_config.get("sentence_transformers", {}).get("model_name", "all-MiniLM-L6-v2")
+        model_name = self.embedding_config.get("sentence_transformers", {}).get(
+            "model_name", "all-MiniLM-L6-v2"
+        )
 
         # Use direct model-to-dimension mapping instead of dimension utils
         known_dimensions = {

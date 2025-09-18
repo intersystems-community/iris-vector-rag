@@ -1,6 +1,5 @@
 import os
 import logging
-import importlib
 
 logger = logging.getLogger(__name__)
 
@@ -8,8 +7,12 @@ logger = logging.getLogger(__name__)
 try:
     from iris_rag.config.manager import ConfigurationManager
 except ImportError:
-    logger.error("ConfigurationManager not found. Ensure iris_rag package is installed correctly.")
-    raise ImportError("ConfigurationManager not available. Please check your installation.")
+    logger.error(
+        "ConfigurationManager not found. Ensure iris_rag package is installed correctly."
+    )
+    raise ImportError(
+        "ConfigurationManager not available. Please check your installation."
+    )
 
 
 class ConnectionManager:
@@ -71,7 +74,9 @@ class ConnectionManager:
 
         # For IRIS backend, use the proven database utility
         try:
-            logger.info(f"Establishing connection for backend '{backend_name}' using DBAPI")
+            logger.info(
+                f"Establishing connection for backend '{backend_name}' using DBAPI"
+            )
 
             # Use the existing database utility instead of direct DBAPI imports
             from common.iris_dbapi_connector import get_iris_dbapi_connection
@@ -89,13 +94,15 @@ class ConnectionManager:
             raise ImportError(f"Database utility not available: {e}")
         except Exception as e:
             # Catching a broad exception here as connection creation can raise various errors
-            raise ConnectionError(f"Failed to connect to IRIS backend '{backend_name}': {e}")
+            raise ConnectionError(
+                f"Failed to connect to IRIS backend '{backend_name}': {e}"
+            )
 
     def _create_dbapi_connection(self):
         """Create a native IRIS DBAPI connection."""
         try:
             # Import the correct IRIS DBAPI module that has connect()
-            import iris
+            pass
 
             # Get database configuration
             db_config = self.config_manager.get("database")
@@ -126,7 +133,9 @@ class ConnectionManager:
 
         except ImportError as e:
             logger.error(f"Native IRIS DBAPI not available: {e}")
-            raise ImportError("iris package not installed. Install with: pip install intersystems-irispython")
+            raise ImportError(
+                "iris package not installed. Install with: pip install intersystems-irispython"
+            )
         except Exception as e:
             logger.error(f"Failed to create DBAPI connection: {e}")
             raise ConnectionError(f"DBAPI connection failed: {e}")

@@ -58,11 +58,9 @@ class MockConnection:
         
     def commit(self):
         """Mock commit."""
-        pass
         
     def rollback(self):
         """Mock rollback."""
-        pass
         
     def close(self):
         """Mock close."""
@@ -165,8 +163,8 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
             from iris_rag.pipelines.crag import CRAGPipeline
             pipeline_class = CRAGPipeline
         elif pipeline_type == "colbert":
-            from iris_rag.pipelines.colbert import ColBERTRAGPipeline
-            pipeline_class = ColBERTRAGPipeline
+            from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+            pipeline_class = PyLateColBERTPipeline
         elif pipeline_type == "noderag":
             from iris_rag.pipelines.noderag import NodeRAGPipeline
             pipeline_class = NodeRAGPipeline

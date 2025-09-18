@@ -1,5 +1,7 @@
 """
 GraphRAG Pipeline implementation using knowledge graph traversal.
+
+PRODUCTION-HARDENED VERSION: No fallbacks, fail-hard validation, integrated entity extraction.
 """
 
 import logging
@@ -8,17 +10,32 @@ from typing import List, Dict, Any, Optional, Callable, Set, Tuple
 from ..core.base import RAGPipeline
 from ..core.models import Document
 from ..core.connection import ConnectionManager
+from ..core.exceptions import RAGException
 from ..config.manager import ConfigurationManager
 from ..embeddings.manager import EmbeddingManager
+from ..services.entity_extraction import EntityExtractionService
 
 logger = logging.getLogger(__name__)
 
 
+class GraphRAGException(RAGException):
+    """Exception raised when GraphRAG operations fail."""
+
+
+class KnowledgeGraphNotPopulatedException(GraphRAGException):
+    """Exception raised when knowledge graph is not populated with entities."""
+
+
+class EntityExtractionFailedException(GraphRAGException):
+    """Exception raised when entity extraction fails during document loading."""
+
+
 class GraphRAGPipeline(RAGPipeline):
     """
-    GraphRAG pipeline using RAG.Entities and RAG.EntityRelationships tables.
-    
-    Fixed implementation that uses the correct schema and performs true knowledge graph traversal.
+    Production-hardened GraphRAG pipeline with fail-hard validation.
+
+    No fallbacks to vector search. Either performs true knowledge graph operations
+    or fails explicitly with clear error messages.
     """
 
     def __init__(
@@ -32,19 +49,24 @@ class GraphRAGPipeline(RAGPipeline):
             try:
                 connection_manager = ConnectionManager()
             except Exception as e:
-                logger.warning(f"Failed to create default ConnectionManager: {e}")
-                connection_manager = None
+                raise GraphRAGException(f"Failed to create ConnectionManager: {e}")
 
         if config_manager is None:
             try:
                 config_manager = ConfigurationManager()
             except Exception as e:
-                logger.warning(f"Failed to create default ConfigurationManager: {e}")
-                config_manager = ConfigurationManager()
+                raise GraphRAGException(f"Failed to create ConfigurationManager: {e}")
 
         super().__init__(connection_manager, config_manager, vector_store)
         self.llm_func = llm_func
         self.embedding_manager = EmbeddingManager(config_manager)
+
+        # Initialize entity extraction service
+        self.entity_extraction_service = EntityExtractionService(
+            config_manager=config_manager,
+            connection_manager=connection_manager,
+            embedding_manager=self.embedding_manager,
+        )
 
         # Configuration
         self.pipeline_config = self.config_manager.get("pipelines:graphrag", {})
@@ -52,8 +74,17 @@ class GraphRAGPipeline(RAGPipeline):
         self.max_depth = self.pipeline_config.get("max_depth", 2)
         self.max_entities = self.pipeline_config.get("max_entities", 50)
 
+        logger.info(
+            "Production-hardened GraphRAG pipeline initialized with entity extraction"
+        )
+
     def load_documents(self, documents_path: str, **kwargs) -> None:
-        """Load documents. GraphRAG relies on pre-built knowledge graphs."""
+        """
+        Load documents with integrated entity extraction.
+
+        This method extracts entities and relationships from documents and stores them
+        in the knowledge graph tables (RAG.Entities and RAG.EntityRelationships).
+        """
         start_time = time.time()
 
         if "documents" in kwargs:
@@ -63,17 +94,63 @@ class GraphRAGPipeline(RAGPipeline):
         else:
             documents = self._load_documents_from_path(documents_path)
 
+        if not documents:
+            raise GraphRAGException("No documents found to load")
+
+        # Store documents first (for vector search compatibility)
         generate_embeddings = kwargs.get("generate_embeddings", True)
         if generate_embeddings:
             self.vector_store.add_documents(documents, auto_chunk=True)
         else:
             self._store_documents(documents)
 
+        # Extract entities and relationships for knowledge graph
+        total_entities = 0
+        total_relationships = 0
+        failed_documents = []
+
+        for doc in documents:
+            try:
+                logger.info(f"Processing document {doc.id} for entity extraction")
+                result = self.entity_extraction_service.process_document(doc)
+
+                if not result.get("stored", False):
+                    raise EntityExtractionFailedException(
+                        f"Failed to store entities for document {doc.id}"
+                    )
+
+                total_entities += result["entities_count"]
+                total_relationships += result["relationships_count"]
+
+                logger.debug(
+                    f"Document {doc.id}: {result['entities_count']} entities, {result['relationships_count']} relationships"
+                )
+
+            except Exception as e:
+                failed_documents.append(doc.id)
+                logger.error(f"Entity extraction failed for document {doc.id}: {e}")
+
+        # Fail hard if entity extraction failed for any documents
+        if failed_documents:
+            raise EntityExtractionFailedException(
+                f"Entity extraction failed for {len(failed_documents)} documents: {failed_documents}"
+            )
+
+        # Validate that we have entities in the knowledge graph
+        if total_entities == 0:
+            raise KnowledgeGraphNotPopulatedException(
+                "No entities were extracted from documents. Knowledge graph is empty."
+            )
+
         processing_time = time.time() - start_time
-        logger.info(f"GraphRAG: Loaded {len(documents)} documents in {processing_time:.2f}s")
+        logger.info(
+            f"GraphRAG: Loaded {len(documents)} documents with {total_entities} entities "
+            f"and {total_relationships} relationships in {processing_time:.2f}s"
+        )
 
     def _load_documents_from_path(self, documents_path: str) -> List[Document]:
         import os
+
         documents = []
         if os.path.isfile(documents_path):
             documents.append(self._load_single_file(documents_path))
@@ -89,6 +166,7 @@ class GraphRAGPipeline(RAGPipeline):
 
     def _load_single_file(self, file_path: str) -> Document:
         import os
+
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
         metadata = {
@@ -99,27 +177,32 @@ class GraphRAGPipeline(RAGPipeline):
         return Document(page_content=content, metadata=metadata)
 
     def query(self, query_text: str, top_k: int = 10, **kwargs) -> Dict[str, Any]:
-        """Execute GraphRAG query with knowledge graph traversal."""
+        """
+        Execute GraphRAG query with knowledge graph traversal.
+
+        Fails hard if knowledge graph is not populated or query cannot be processed.
+        """
         start_time = time.time()
+        start_perf = time.perf_counter()
 
         include_sources = kwargs.get("include_sources", True)
         custom_prompt = kwargs.get("custom_prompt")
         generate_answer = kwargs.get("generate_answer", True)
 
-        # Step 1: Knowledge graph retrieval
-        try:
-            retrieved_documents, method = self._retrieve_via_kg(query_text, top_k)
-        except Exception as e:
-            logger.warning(f"GraphRAG KG retrieval failed: {e}")
-            retrieved_documents = self._fallback_vector_search(query_text, top_k)
-            method = "fallback_vector_search"
+        # Validate knowledge graph is populated before allowing queries
+        self._validate_knowledge_graph()
 
-        # Step 2: Generate answer
+        # Knowledge graph retrieval - fail hard if it doesn't work
+        retrieved_documents, method = self._retrieve_via_kg(query_text, top_k)
+
+        # Generate answer
         if generate_answer and self.llm_func and retrieved_documents:
             try:
-                answer = self._generate_answer(query_text, retrieved_documents, custom_prompt)
+                answer = self._generate_answer(
+                    query_text, retrieved_documents, custom_prompt
+                )
             except Exception as e:
-                logger.warning(f"Answer generation failed: {e}")
+                logger.error(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
         elif not generate_answer:
             answer = None
@@ -129,6 +212,7 @@ class GraphRAGPipeline(RAGPipeline):
             answer = "No LLM function provided. Retrieved documents only."
 
         execution_time = time.time() - start_time
+        execution_time_ms = (time.perf_counter() - start_perf) * 1000.0
 
         response = {
             "query": query_text,
@@ -139,136 +223,300 @@ class GraphRAGPipeline(RAGPipeline):
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
                 "processing_time": execution_time,
+                "processing_time_ms": execution_time_ms,
                 "pipeline_type": "graphrag",
                 "retrieval_method": method,
                 "generated_answer": generate_answer and answer is not None,
             },
         }
 
+        # Attach DB instrumentation if available
+        if hasattr(self, "_debug_db_execs"):
+            response["metadata"]["db_exec_count"] = int(self._debug_db_execs)
+        if hasattr(self, "_debug_step_times"):
+            response["metadata"]["step_timings_ms"] = dict(self._debug_step_times)
+
         if include_sources:
             response["sources"] = self._extract_sources(retrieved_documents)
 
-        logger.info(f"GraphRAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs via {method}")
+        logger.info(
+            f"GraphRAG query completed in {execution_time:.2f}s ({execution_time_ms:.1f}ms) - "
+            f"{len(retrieved_documents)} docs via {method}; db_exec_count={response['metadata'].get('db_exec_count', 'n/a')}"
+        )
         return response
 
-    def _retrieve_via_kg(self, query_text: str, top_k: int) -> Tuple[List[Document], str]:
-        """Retrieve documents via knowledge graph traversal."""
-        # Find seed entities
+    def _validate_knowledge_graph(self) -> None:
+        """
+        Validate that the knowledge graph has entities before allowing queries.
+
+        Raises KnowledgeGraphNotPopulatedException if no entities exist.
+        """
+        if not self.connection_manager:
+            raise GraphRAGException(
+                "No connection manager available for GraphRAG validation"
+            )
+
+        connection = None
+        cursor = None
+        try:
+            connection = self.connection_manager.get_connection()
+            conn_type = (
+                f"{connection.__class__.__module__}.{connection.__class__.__name__}"
+            )
+            cursor = connection.cursor()
+
+            # Check if we have any entities
+            t0 = time.perf_counter()
+            cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
+            entity_count = cursor.fetchone()[0]
+            elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+            if entity_count == 0:
+                raise KnowledgeGraphNotPopulatedException(
+                    "Knowledge graph is empty. No entities found in RAG.Entities table. "
+                    "Load documents with entity extraction before querying GraphRAG."
+                )
+
+            logger.info(
+                f"Knowledge graph validation passed: {entity_count} entities found (query {elapsed_ms:.1f}ms, conn={conn_type})"
+            )
+
+        except Exception as e:
+            if isinstance(e, KnowledgeGraphNotPopulatedException):
+                raise
+            raise GraphRAGException(f"Knowledge graph validation failed: {e}")
+        finally:
+            if cursor:
+                try:
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing cursor: {e}")
+
+    def _retrieve_via_kg(
+        self, query_text: str, top_k: int
+    ) -> Tuple[List[Document], str]:
+        """
+        Retrieve documents via knowledge graph traversal.
+
+        Fails hard if any step fails - no fallbacks to vector search.
+        """
+        # Initialize per-query debug instrumentation
+        self._debug_db_execs = 0
+        self._debug_step_times = {}
+
+        # Find seed entities - fail hard if none found
+        t0 = time.perf_counter()
         seed_entities = self._find_seed_entities(query_text)
-        if not seed_entities:
-            return self._fallback_vector_search(query_text, top_k), "fallback_vector_search"
+        self._debug_step_times["find_seed_entities_ms"] = (
+            time.perf_counter() - t0
+        ) * 1000.0
 
-        # Traverse graph
+        # Traverse graph - fail hard if no relevant entities found
+        t1 = time.perf_counter()
         relevant_entities = self._traverse_graph(seed_entities)
-        if not relevant_entities:
-            return self._fallback_vector_search(query_text, top_k), "fallback_vector_search"
+        self._debug_step_times["traverse_graph_ms"] = (
+            time.perf_counter() - t1
+        ) * 1000.0
 
-        # Get documents
+        # Get documents - fail hard if no documents found
+        t2 = time.perf_counter()
         docs = self._get_documents_from_entities(relevant_entities, top_k)
-        if not docs:
-            return self._fallback_vector_search(query_text, top_k), "fallback_vector_search"
+        self._debug_step_times["get_documents_ms"] = (time.perf_counter() - t2) * 1000.0
 
+        logger.debug(
+            f"GraphRAG retrieval steps: seed={self._debug_step_times['find_seed_entities_ms']:.1f}ms, "
+            f"traverse={self._debug_step_times['traverse_graph_ms']:.1f}ms, "
+            f"docs={self._debug_step_times['get_documents_ms']:.1f}ms, db_execs={self._debug_db_execs}"
+        )
         return docs, "knowledge_graph_traversal"
 
     def _find_seed_entities(self, query_text: str) -> List[Tuple[str, str, float]]:
-        """Find seed entities using RAG.Entities table."""
-        if not self.connection_manager or not self.connection_manager.connection:
-            return []
+        """
+        Find seed entities using RAG.Entities table.
 
+        Fails hard if no entities are found for the query.
+        """
+        if not self.connection_manager:
+            raise GraphRAGException(
+                "No connection manager available for seed entity search"
+            )
+
+        connection = None
         cursor = None
         seed_entities = []
-        try:
-            cursor = self.connection_manager.connection.cursor()
-            query_keywords = query_text.lower().split()[:5]
-            
-            if query_keywords:
-                conditions = []
-                params = []
-                for keyword in query_keywords:
-                    conditions.append("LOWER(entity_name) LIKE ?")
-                    params.append(f"%{keyword}%")
 
-                query = f"""
-                    SELECT TOP 10 entity_id, entity_name, entity_type
-                    FROM RAG.Entities
-                    WHERE {' OR '.join(conditions)}
-                      AND entity_type IN ('PERSON', 'ORG', 'DISEASE', 'DRUG', 'TREATMENT', 'SYMPTOM')
-                """
-                cursor.execute(query, params)
-                results = cursor.fetchall()
-                
-                for entity_id, entity_name, entity_type in results:
-                    seed_entities.append((str(entity_id), str(entity_name), 0.9))
+        try:
+            connection = self.connection_manager.get_connection()
+            conn_type = (
+                f"{connection.__class__.__module__}.{connection.__class__.__name__}"
+            )
+            cursor = connection.cursor()
+            query_keywords = query_text.lower().split()[:5]
+
+            if not query_keywords:
+                raise GraphRAGException("Query contains no searchable keywords")
+
+            conditions = []
+            params = []
+            for keyword in query_keywords:
+                conditions.append("LOWER(entity_name) LIKE ?")
+                params.append(f"%{keyword}%")
+
+            query = f"""
+                SELECT TOP 10 entity_id, entity_name, entity_type
+                FROM RAG.Entities
+                WHERE {' OR '.join(conditions)}
+                  AND entity_type IN ('PERSON', 'ORG', 'DISEASE', 'DRUG', 'TREATMENT', 'SYMPTOM')
+            """
+            logger.debug(
+                f"GraphRAG: Executing seed entity query with {len(query_keywords)} keywords (conn={conn_type})"
+            )
+            t0 = time.perf_counter()
+            # Track DB round-trips
+            self._debug_db_execs = getattr(self, "_debug_db_execs", 0) + 1
+            cursor.execute(query, params)
+            results = cursor.fetchall()
+            elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+            for entity_id, entity_name, entity_type in results:
+                seed_entities.append((str(entity_id), str(entity_name), 0.9))
+
+            if not seed_entities:
+                raise GraphRAGException(
+                    f"No seed entities found for query '{query_text}'. "
+                    f"Knowledge graph may not contain relevant entities for this query."
+                )
+
+            logger.info(
+                f"GraphRAG: Found {len(seed_entities)} seed entities for query: '{query_text}' (query {elapsed_ms:.1f}ms, conn={conn_type})"
+            )
 
         except Exception as e:
-            logger.error(f"Error finding seed entities: {e}")
+            if isinstance(e, GraphRAGException):
+                raise
+            raise GraphRAGException(f"Database error finding seed entities: {e}")
         finally:
             if cursor:
-                cursor.close()
+                try:
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing cursor: {e}")
 
         return seed_entities
 
     def _traverse_graph(self, seed_entities: List[Tuple[str, str, float]]) -> Set[str]:
-        """Traverse knowledge graph using RAG.EntityRelationships."""
-        if not seed_entities or not self.connection_manager or not self.connection_manager.connection:
-            return set()
+        """
+        Traverse knowledge graph using RAG.EntityRelationships.
+
+        Fails hard if no relationships exist or traversal fails.
+        """
+        if not seed_entities:
+            raise GraphRAGException("No seed entities provided for graph traversal")
+
+        if not self.connection_manager:
+            raise GraphRAGException(
+                "No connection manager available for graph traversal"
+            )
 
         relevant_entities: Set[str] = {e[0] for e in seed_entities}
         current_entities: Set[str] = {e[0] for e in seed_entities}
-        
+
+        connection = None
         cursor = None
         try:
-            cursor = self.connection_manager.connection.cursor()
-            
+            connection = self.connection_manager.get_connection()
+            conn_type = (
+                f"{connection.__class__.__module__}.{connection.__class__.__name__}"
+            )
+            cursor = connection.cursor()
+
             for depth in range(self.max_depth):
                 if len(relevant_entities) >= self.max_entities or not current_entities:
                     break
 
                 entity_list = list(current_entities)
-                placeholders = ','.join(['?' for _ in entity_list])
-                
+                placeholders = ",".join(["?" for _ in entity_list])
+
                 query = f"""
                     SELECT DISTINCT r.target_entity_id
-                    FROM RAG.EntityRelationships r 
+                    FROM RAG.EntityRelationships r
                     WHERE r.source_entity_id IN ({placeholders})
                     UNION
                     SELECT DISTINCT r.source_entity_id
-                    FROM RAG.EntityRelationships r 
+                    FROM RAG.EntityRelationships r
                     WHERE r.target_entity_id IN ({placeholders})
                 """
-                
+
+                logger.debug(
+                    f"GraphRAG: Traversing graph at depth {depth} with {len(current_entities)} entities (conn={conn_type})"
+                )
+                t0 = time.perf_counter()
+                # Track DB round-trips
+                self._debug_db_execs = getattr(self, "_debug_db_execs", 0) + 1
                 cursor.execute(query, entity_list + entity_list)
                 results = cursor.fetchall()
-                
+                elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
                 next_entities = set()
                 for (entity_id,) in results:
                     entity_id_str = str(entity_id)
                     if entity_id_str not in relevant_entities:
                         relevant_entities.add(entity_id_str)
                         next_entities.add(entity_id_str)
-                
+
                 current_entities = next_entities
-                
+                logger.debug(
+                    f"GraphRAG: Depth {depth} - {len(results)} edges, {len(next_entities)} new entities (query {elapsed_ms:.1f}ms)"
+                )
+
         except Exception as e:
-            logger.error(f"Error traversing graph: {e}")
+            raise GraphRAGException(f"Database error traversing graph: {e}")
         finally:
             if cursor:
-                cursor.close()
+                try:
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing cursor: {e}")
 
+        if len(relevant_entities) == len(seed_entities):
+            raise GraphRAGException(
+                "Graph traversal found no additional entities. "
+                "Knowledge graph may lack relationships for the given entities."
+            )
+
+        logger.info(
+            f"GraphRAG: Graph traversal completed with {len(relevant_entities)} total entities"
+        )
         return relevant_entities
 
-    def _get_documents_from_entities(self, entity_ids: Set[str], top_k: int) -> List[Document]:
-        """Get documents associated with entities."""
-        if not entity_ids or not self.connection_manager or not self.connection_manager.connection:
-            return []
+    def _get_documents_from_entities(
+        self, entity_ids: Set[str], top_k: int
+    ) -> List[Document]:
+        """
+        Get documents associated with entities.
 
+        Fails hard if no documents are found for the entities.
+        """
+        if not entity_ids:
+            raise GraphRAGException("No entity IDs provided for document retrieval")
+
+        if not self.connection_manager:
+            raise GraphRAGException(
+                "No connection manager available for document retrieval"
+            )
+
+        connection = None
         cursor = None
         docs = []
         try:
-            cursor = self.connection_manager.connection.cursor()
+            connection = self.connection_manager.get_connection()
+            conn_type = (
+                f"{connection.__class__.__module__}.{connection.__class__.__name__}"
+            )
+            cursor = connection.cursor()
             entity_list = list(entity_ids)[:50]
-            placeholders = ','.join(['?' for _ in entity_list])
-            
+            placeholders = ",".join(["?" for _ in entity_list])
+
             query = f"""
                 SELECT DISTINCT sd.doc_id, sd.text_content, sd.title
                 FROM RAG.SourceDocuments sd
@@ -276,10 +524,23 @@ class GraphRAGPipeline(RAGPipeline):
                 WHERE e.entity_id IN ({placeholders})
                 ORDER BY sd.doc_id
             """
-            
+
+            logger.debug(
+                f"GraphRAG: Retrieving documents for {len(entity_list)} entities (conn={conn_type})"
+            )
+            t0 = time.perf_counter()
+            # Track DB round-trips
+            self._debug_db_execs = getattr(self, "_debug_db_execs", 0) + 1
             cursor.execute(query, entity_list)
             results = cursor.fetchall()
-            
+            elapsed_ms = (time.perf_counter() - t0) * 1000.0
+
+            if not results:
+                raise GraphRAGException(
+                    f"No documents found for {len(entity_list)} entities. "
+                    f"Knowledge graph entities may not be properly linked to source documents."
+                )
+
             seen_ids = set()
             for doc_id, content, title in results:
                 doc_id_str = str(doc_id)
@@ -287,21 +548,35 @@ class GraphRAGPipeline(RAGPipeline):
                     seen_ids.add(doc_id_str)
                     content_str = self._read_iris_data(content)
                     title_str = self._read_iris_data(title)
-                    
-                    docs.append(Document(
-                        id=doc_id_str,
-                        page_content=content_str,
-                        metadata={'title': title_str, 'retrieval_method': 'knowledge_graph'}
-                    ))
-                    
+
+                    docs.append(
+                        Document(
+                            id=doc_id_str,
+                            page_content=content_str,
+                            metadata={
+                                "title": title_str,
+                                "retrieval_method": "knowledge_graph",
+                            },
+                        )
+                    )
+
                     if len(docs) >= top_k:
                         break
-                        
+
+            logger.info(
+                f"GraphRAG: Retrieved {len(docs)} documents from knowledge graph (query {elapsed_ms:.1f}ms, conn={conn_type})"
+            )
+
         except Exception as e:
-            logger.error(f"Error getting documents: {e}")
+            if isinstance(e, GraphRAGException):
+                raise
+            raise GraphRAGException(f"Database error getting documents: {e}")
         finally:
             if cursor:
-                cursor.close()
+                try:
+                    cursor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing cursor: {e}")
 
         return docs
 
@@ -310,30 +585,19 @@ class GraphRAGPipeline(RAGPipeline):
         if data is None:
             return ""
         try:
-            import jaydebeapi
-            if hasattr(self.connection_manager, 'connection') and isinstance(self.connection_manager.connection, jaydebeapi.Connection):
-                if hasattr(data, 'read'):
-                    return data.read().decode('utf-8') if data else ""
+            connection = self.connection_manager.get_connection()
+            if hasattr(connection, "__class__") and "jaydebeapi" in str(
+                connection.__class__
+            ):
+                if hasattr(data, "read"):
+                    return data.read().decode("utf-8") if data else ""
         except ImportError:
             pass
         return str(data or "")
 
-    def _fallback_vector_search(self, query_text: str, top_k: int) -> List[Document]:
-        """Fallback to vector search."""
-        try:
-            if hasattr(self, "vector_store") and self.vector_store:
-                docs = self.vector_store.similarity_search(query_text, k=top_k)
-                for doc in docs:
-                    if doc.metadata:
-                        doc.metadata['retrieval_method'] = 'vector_fallback'
-                    else:
-                        doc.metadata = {'retrieval_method': 'vector_fallback'}
-                return docs
-        except Exception as e:
-            logger.error(f"Vector search failed: {e}")
-        return []
-
-    def _generate_answer(self, query: str, documents: List[Document], custom_prompt: Optional[str] = None) -> str:
+    def _generate_answer(
+        self, query: str, documents: List[Document], custom_prompt: Optional[str] = None
+    ) -> str:
         """Generate answer using LLM."""
         if not documents:
             return "No relevant documents found to answer the query."
@@ -341,7 +605,9 @@ class GraphRAGPipeline(RAGPipeline):
         context_parts = []
         for doc in documents[:5]:  # Limit context
             doc_content = str(doc.page_content or "")[:1000]
-            title = doc.metadata.get('title', 'Untitled') if doc.metadata else 'Untitled'
+            title = (
+                doc.metadata.get("title", "Untitled") if doc.metadata else "Untitled"
+            )
             context_parts.append(f"Document {doc.id} ({title}):\n{doc_content}")
 
         context = "\n\n".join(context_parts)
@@ -368,12 +634,26 @@ Answer:"""
         """Extract source information."""
         sources = []
         for doc in documents:
-            sources.append({
-                "document_id": doc.id,
-                "source": doc.metadata.get("source", "Unknown") if doc.metadata else "Unknown",
-                "title": doc.metadata.get("title", "Unknown") if doc.metadata else "Unknown",
-                "retrieval_method": doc.metadata.get("retrieval_method", "unknown") if doc.metadata else "unknown",
-            })
+            sources.append(
+                {
+                    "document_id": doc.id,
+                    "source": (
+                        doc.metadata.get("source", "Unknown")
+                        if doc.metadata
+                        else "Unknown"
+                    ),
+                    "title": (
+                        doc.metadata.get("title", "Unknown")
+                        if doc.metadata
+                        else "Unknown"
+                    ),
+                    "retrieval_method": (
+                        doc.metadata.get("retrieval_method", "unknown")
+                        if doc.metadata
+                        else "unknown"
+                    ),
+                }
+            )
         return sources
 
     def retrieve(self, query_text: str, top_k: int = 10, **kwargs) -> List[Document]:

@@ -6,15 +6,20 @@ Setup configuration for rag-templates Library Consumption Framework.
 from setuptools import setup, find_packages
 import os
 
+
 # Read README for long description
 def read_readme():
     with open("README.md", "r", encoding="utf-8") as fh:
         return fh.read()
 
+
 # Read requirements
 def read_requirements():
     with open("requirements.txt", "r", encoding="utf-8") as fh:
-        return [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+        return [
+            line.strip() for line in fh if line.strip() and not line.startswith("#")
+        ]
+
 
 # Read version
 def read_version():
@@ -24,6 +29,7 @@ def read_version():
             if line.startswith("__version__"):
                 return line.split("=")[1].strip().strip('"').strip("'")
     return "0.1.0"
+
 
 setup(
     name="rag-templates",

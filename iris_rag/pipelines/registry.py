@@ -50,7 +50,9 @@ class PipelineRegistry:
             # Store the pipelines in the registry
             self._pipelines = pipelines
 
-            self.logger.info(f"Registered {len(pipelines)} pipelines: {list(pipelines.keys())}")
+            self.logger.info(
+                f"Registered {len(pipelines)} pipelines: {list(pipelines.keys())}"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to register pipelines: {str(e)}")

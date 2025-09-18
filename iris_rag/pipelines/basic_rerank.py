@@ -58,17 +58,19 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
 
     def __init__(
         self,
-        connection_manager,
-        config_manager,
-        reranker_func: Optional[Callable[[str, List[Document]], List[Tuple[Document, float]]]] = None,
+        connection_manager=None,
+        config_manager=None,
+        reranker_func: Optional[
+            Callable[[str, List[Document]], List[Tuple[Document, float]]]
+        ] = None,
         **kwargs,
     ):
         """
         Initialize the Basic RAG Reranking Pipeline.
 
         Args:
-            connection_manager: Manager for database connections
-            config_manager: Manager for configuration settings
+            connection_manager: Optional manager for database connections (defaults to new instance)
+            config_manager: Optional manager for configuration settings (defaults to new instance)
             reranker_func: Optional custom reranker function. If None, uses default HuggingFace reranker.
             **kwargs: Additional arguments passed to parent BasicRAGPipeline
         """
@@ -83,12 +85,16 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
 
         # Reranking parameters
         self.rerank_factor = self.reranking_config.get("rerank_factor", 2)
-        self.reranker_model = self.reranking_config.get("reranker_model", "cross-encoder/ms-marco-MiniLM-L-6-v2")
+        self.reranker_model = self.reranking_config.get(
+            "reranker_model", "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        )
 
         # Set reranker function (default to HuggingFace if none provided)
         self.reranker_func = reranker_func or hf_reranker
 
-        logger.info(f"Initialized BasicRAGRerankingPipeline with rerank_factor={self.rerank_factor}")
+        logger.info(
+            f"Initialized BasicRAGRerankingPipeline with rerank_factor={self.rerank_factor}"
+        )
 
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
@@ -118,7 +124,9 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         # Get initial candidates using parent pipeline's query method
         # Set generate_answer=False initially to avoid duplicate LLM calls
         parent_kwargs = kwargs.copy()
-        parent_kwargs["generate_answer"] = False  # We'll generate answer after reranking
+        parent_kwargs["generate_answer"] = (
+            False  # We'll generate answer after reranking
+        )
 
         parent_result = super().query(query_text, top_k=initial_k, **parent_kwargs)
         candidate_documents = parent_result.get("retrieved_documents", [])
@@ -126,8 +134,12 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         # Always rerank if we have multiple candidates and a reranker (fixes the logic issue!)
         if len(candidate_documents) > 1 and self.reranker_func:
             try:
-                final_documents = self._rerank_documents(query_text, candidate_documents, top_k)
-                logger.debug(f"Reranked {len(candidate_documents)} documents, returning top {len(final_documents)}")
+                final_documents = self._rerank_documents(
+                    query_text, candidate_documents, top_k
+                )
+                logger.debug(
+                    f"Reranked {len(candidate_documents)} documents, returning top {len(final_documents)}"
+                )
                 reranked = True
             except Exception as e:
                 logger.warning(f"Reranking failed, falling back to original order: {e}")
@@ -138,7 +150,9 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
             final_documents = candidate_documents[:top_k]
             reranked = False
             if len(candidate_documents) <= 1:
-                logger.debug(f"Only {len(candidate_documents)} candidates found, no reranking needed")
+                logger.debug(
+                    f"Only {len(candidate_documents)} candidates found, no reranking needed"
+                )
             else:
                 logger.debug(f"No reranker available, returning top {top_k} documents")
 
@@ -147,7 +161,9 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         if generate_answer and self.llm_func and final_documents:
             try:
                 custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(query_text, final_documents, custom_prompt)
+                answer = self._generate_answer(
+                    query_text, final_documents, custom_prompt
+                )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
@@ -181,10 +197,14 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         if include_sources:
             response["sources"] = self._extract_sources(final_documents)
 
-        logger.info(f"Reranking RAG query completed - {len(final_documents)} docs returned (reranked: {reranked})")
+        logger.info(
+            f"Reranking RAG query completed - {len(final_documents)} docs returned (reranked: {reranked})"
+        )
         return response
 
-    def _rerank_documents(self, query_text: str, documents: List[Document], top_k: int = 5) -> List[Document]:
+    def _rerank_documents(
+        self, query_text: str, documents: List[Document], top_k: int = 5
+    ) -> List[Document]:
         """
         Apply reranking function to reorder retrieved documents.
 
@@ -197,13 +217,17 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
             Reranked list of top-k documents
         """
         try:
-            logger.debug(f"Reranking {len(documents)} documents for query: {query_text[:50]}...")
+            logger.debug(
+                f"Reranking {len(documents)} documents for query: {query_text[:50]}..."
+            )
 
             # Apply reranker function
             reranked_results = self.reranker_func(query_text, documents)
 
             # Sort by score (descending)
-            reranked_results = sorted(reranked_results, key=lambda x: x[1], reverse=True)
+            reranked_results = sorted(
+                reranked_results, key=lambda x: x[1], reverse=True
+            )
 
             # Log reranking results
             if logger.isEnabledFor(logging.DEBUG):
@@ -227,7 +251,9 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         Returns:
             Dictionary with pipeline information
         """
-        info = super().get_pipeline_info() if hasattr(super(), "get_pipeline_info") else {}
+        info = (
+            super().get_pipeline_info() if hasattr(super(), "get_pipeline_info") else {}
+        )
 
         info.update(
             {

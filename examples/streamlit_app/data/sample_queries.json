@@ -1,0 +1,289 @@
+{
+  "sample_queries": {
+    "basic": {
+      "name": "Basic Questions",
+      "description": "Simple factual questions suitable for all pipelines",
+      "queries": [
+        {
+          "id": "basic_001",
+          "query": "What is machine learning?",
+          "category": "definition",
+          "difficulty": "easy",
+          "expected_topics": ["machine learning", "definition", "algorithms", "data"]
+        },
+        {
+          "id": "basic_002", 
+          "query": "How does a neural network work?",
+          "category": "explanation",
+          "difficulty": "easy",
+          "expected_topics": ["neural networks", "neurons", "layers", "weights"]
+        },
+        {
+          "id": "basic_003",
+          "query": "What are the main types of machine learning?",
+          "category": "classification",
+          "difficulty": "easy",
+          "expected_topics": ["supervised", "unsupervised", "reinforcement learning"]
+        },
+        {
+          "id": "basic_004",
+          "query": "What is the difference between AI and machine learning?",
+          "category": "comparison",
+          "difficulty": "easy",
+          "expected_topics": ["artificial intelligence", "machine learning", "differences"]
+        },
+        {
+          "id": "basic_005",
+          "query": "What programming languages are used for machine learning?",
+          "category": "tools",
+          "difficulty": "easy",
+          "expected_topics": ["Python", "R", "Julia", "programming languages"]
+        }
+      ]
+    },
+    "intermediate": {
+      "name": "Intermediate Questions", 
+      "description": "More complex questions requiring deeper understanding",
+      "queries": [
+        {
+          "id": "inter_001",
+          "query": "How do you prevent overfitting in machine learning models?",
+          "category": "problem_solving",
+          "difficulty": "medium",
+          "expected_topics": ["overfitting", "regularization", "cross-validation", "techniques"]
+        },
+        {
+          "id": "inter_002",
+          "query": "What is the bias-variance tradeoff and why is it important?",
+          "category": "theory",
+          "difficulty": "medium", 
+          "expected_topics": ["bias", "variance", "tradeoff", "model complexity"]
+        },
+        {
+          "id": "inter_003",
+          "query": "Compare random forests and gradient boosting algorithms",
+          "category": "comparison",
+          "difficulty": "medium",
+          "expected_topics": ["random forests", "gradient boosting", "ensemble methods"]
+        },
+        {
+          "id": "inter_004",
+          "query": "How do convolutional neural networks process images?",
+          "category": "technical",
+          "difficulty": "medium",
+          "expected_topics": ["CNN", "convolution", "pooling", "image processing"]
+        },
+        {
+          "id": "inter_005",
+          "query": "What are the key considerations for feature engineering?",
+          "category": "methodology",
+          "difficulty": "medium",
+          "expected_topics": ["feature engineering", "data preprocessing", "feature selection"]
+        }
+      ]
+    },
+    "advanced": {
+      "name": "Advanced Questions",
+      "description": "Complex, multi-faceted questions requiring comprehensive analysis",
+      "queries": [
+        {
+          "id": "adv_001",
+          "query": "How would you design a recommendation system for a large e-commerce platform, considering scalability, real-time updates, and cold start problems?",
+          "category": "system_design",
+          "difficulty": "hard",
+          "expected_topics": ["recommendation systems", "scalability", "cold start", "collaborative filtering"]
+        },
+        {
+          "id": "adv_002",
+          "query": "Explain the mathematical foundations of transformer architectures and their advantages over RNNs for natural language processing",
+          "category": "technical_deep",
+          "difficulty": "hard",
+          "expected_topics": ["transformers", "attention mechanism", "RNN", "NLP", "mathematics"]
+        },
+        {
+          "id": "adv_003",
+          "query": "What are the ethical implications of using machine learning in hiring decisions, and how can bias be mitigated?",
+          "category": "ethics",
+          "difficulty": "hard",
+          "expected_topics": ["AI ethics", "hiring bias", "fairness", "mitigation strategies"]
+        },
+        {
+          "id": "adv_004",
+          "query": "Design a distributed machine learning system for training models on petabyte-scale datasets",
+          "category": "architecture",
+          "difficulty": "hard",
+          "expected_topics": ["distributed computing", "big data", "model parallelism", "data parallelism"]
+        },
+        {
+          "id": "adv_005",
+          "query": "How do you implement differential privacy in machine learning while maintaining model performance?",
+          "category": "privacy",
+          "difficulty": "hard",
+          "expected_topics": ["differential privacy", "privacy-preserving ML", "performance tradeoffs"]
+        }
+      ]
+    },
+    "domain_specific": {
+      "name": "Domain-Specific Questions",
+      "description": "Questions requiring specialized knowledge in specific domains",
+      "queries": [
+        {
+          "id": "domain_001",
+          "query": "How is machine learning used in drug discovery and what are the main challenges?",
+          "category": "healthcare",
+          "difficulty": "medium",
+          "expected_topics": ["drug discovery", "pharmaceutical", "healthcare AI", "challenges"]
+        },
+        {
+          "id": "domain_002",
+          "query": "What role does machine learning play in autonomous vehicle perception systems?",
+          "category": "automotive",
+          "difficulty": "medium",
+          "expected_topics": ["autonomous vehicles", "perception", "computer vision", "safety"]
+        },
+        {
+          "id": "domain_003",
+          "query": "How are machine learning models used for fraud detection in financial services?",
+          "category": "finance",
+          "difficulty": "medium",
+          "expected_topics": ["fraud detection", "financial services", "anomaly detection"]
+        },
+        {
+          "id": "domain_004",
+          "query": "What machine learning techniques are used for climate modeling and prediction?",
+          "category": "climate",
+          "difficulty": "medium",
+          "expected_topics": ["climate modeling", "prediction", "environmental science"]
+        },
+        {
+          "id": "domain_005",
+          "query": "How does machine learning enhance cybersecurity threat detection?",
+          "category": "cybersecurity",
+          "difficulty": "medium",
+          "expected_topics": ["cybersecurity", "threat detection", "anomaly detection", "security"]
+        }
+      ]
+    },
+    "rag_specific": {
+      "name": "RAG-Specific Questions",
+      "description": "Questions specifically designed to test RAG pipeline capabilities",
+      "queries": [
+        {
+          "id": "rag_001",
+          "query": "What are the key components of a retrieval-augmented generation system?",
+          "category": "rag_architecture",
+          "difficulty": "medium",
+          "expected_topics": ["RAG", "retrieval", "generation", "components"]
+        },
+        {
+          "id": "rag_002",
+          "query": "How do you evaluate the quality of retrieved documents in a RAG system?",
+          "category": "rag_evaluation",
+          "difficulty": "medium",
+          "expected_topics": ["document evaluation", "relevance scoring", "metrics"]
+        },
+        {
+          "id": "rag_003",
+          "query": "Compare vector similarity search with traditional keyword search for document retrieval",
+          "category": "rag_comparison",
+          "difficulty": "medium",
+          "expected_topics": ["vector search", "keyword search", "embeddings", "similarity"]
+        },
+        {
+          "id": "rag_004",
+          "query": "What are the advantages of using reranking in RAG pipelines?",
+          "category": "rag_optimization",
+          "difficulty": "medium",
+          "expected_topics": ["reranking", "relevance improvement", "pipeline optimization"]
+        },
+        {
+          "id": "rag_005",
+          "query": "How does corrective RAG (CRAG) improve upon basic RAG implementations?",
+          "category": "rag_advanced",
+          "difficulty": "hard",
+          "expected_topics": ["CRAG", "correction mechanisms", "self-improvement"]
+        }
+      ]
+    },
+    "multi_hop": {
+      "name": "Multi-hop Reasoning",
+      "description": "Questions requiring multiple steps of reasoning across different sources",
+      "queries": [
+        {
+          "id": "multi_001",
+          "query": "If transformer models use attention mechanisms and attention mechanisms help with long-range dependencies, how do transformers compare to LSTMs for sequence modeling?",
+          "category": "multi_step",
+          "difficulty": "hard",
+          "expected_topics": ["transformers", "attention", "LSTM", "sequence modeling", "comparison"]
+        },
+        {
+          "id": "multi_002",
+          "query": "Given that gradient descent is used for optimization and neural networks use backpropagation for training, what are the limitations of gradient-based optimization in deep learning?",
+          "category": "multi_step", 
+          "difficulty": "hard",
+          "expected_topics": ["gradient descent", "backpropagation", "optimization", "limitations"]
+        },
+        {
+          "id": "multi_003",
+          "query": "Since overfitting occurs when models are too complex and regularization helps prevent overfitting, what regularization techniques work best for different types of neural networks?",
+          "category": "multi_step",
+          "difficulty": "hard",
+          "expected_topics": ["overfitting", "regularization", "neural networks", "techniques"]
+        }
+      ]
+    }
+  },
+  "test_scenarios": {
+    "pipeline_comparison": {
+      "name": "Pipeline Comparison Tests",
+      "description": "Scenarios specifically designed to highlight differences between RAG pipelines",
+      "scenarios": [
+        {
+          "id": "comp_001",
+          "name": "Relevance Test",
+          "query": "What is the difference between supervised and unsupervised learning?",
+          "expected_differences": {
+            "BasicRAG": "Should provide basic definitions",
+            "BasicRerank": "Should provide more relevant, reordered results",
+            "CRAG": "Should correct any irrelevant retrievals",
+            "GraphRAG": "Should show relationships between concepts"
+          }
+        },
+        {
+          "id": "comp_002", 
+          "name": "Complex Query Test",
+          "query": "How do attention mechanisms in transformers address the limitations of RNNs in handling long sequences?",
+          "expected_differences": {
+            "BasicRAG": "May retrieve separate documents about each concept",
+            "BasicRerank": "Should prioritize documents that discuss both concepts",
+            "CRAG": "Should validate relevance and potentially search for additional context",
+            "GraphRAG": "Should leverage entity relationships between transformers, attention, and RNNs"
+          }
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "created": "2024-01-01",
+    "description": "Comprehensive sample queries for testing RAG pipeline capabilities",
+    "total_queries": 27,
+    "categories": [
+      "basic",
+      "intermediate", 
+      "advanced",
+      "domain_specific",
+      "rag_specific",
+      "multi_hop"
+    ],
+    "difficulty_levels": ["easy", "medium", "hard"],
+    "usage_notes": [
+      "Basic queries are suitable for initial testing and demonstrations",
+      "Intermediate queries test deeper understanding and retrieval quality", 
+      "Advanced queries challenge the system with complex, multi-faceted problems",
+      "Domain-specific queries test knowledge in specialized areas",
+      "RAG-specific queries are designed to test RAG system capabilities",
+      "Multi-hop queries require reasoning across multiple retrieved documents"
+    ]
+  }
+}

@@ -14,8 +14,6 @@ class VectorStoreError(Exception):
     allowing for broad exception handling when needed.
     """
 
-    pass
-
 
 class VectorStoreConnectionError(VectorStoreError):
     """
@@ -25,8 +23,6 @@ class VectorStoreConnectionError(VectorStoreError):
     authentication failures, and other connection-related problems.
     """
 
-    pass
-
 
 class VectorStoreDataError(VectorStoreError):
     """
@@ -35,8 +31,6 @@ class VectorStoreDataError(VectorStoreError):
     This includes malformed documents, invalid embeddings, schema violations,
     and other data integrity problems.
     """
-
-    pass
 
 
 class VectorStoreCLOBError(VectorStoreDataError):
@@ -48,8 +42,6 @@ class VectorStoreCLOBError(VectorStoreDataError):
     from databases that store large text fields as CLOBs.
     """
 
-    pass
-
 
 class VectorStoreConfigurationError(VectorStoreError):
     """
@@ -58,5 +50,3 @@ class VectorStoreConfigurationError(VectorStoreError):
     This includes invalid table names, unsupported configuration values,
     and other configuration validation failures.
     """
-
-    pass

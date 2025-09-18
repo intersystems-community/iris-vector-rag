@@ -56,7 +56,9 @@ class PreConditionValidator:
         self.connection_manager = connection_manager
         self.logger = logging.getLogger(__name__)
 
-    def validate_pipeline_requirements(self, requirements: PipelineRequirements) -> ValidationReport:
+    def validate_pipeline_requirements(
+        self, requirements: PipelineRequirements
+    ) -> ValidationReport:
         """
         Validate all requirements for a pipeline.
 
@@ -92,16 +94,24 @@ class PreConditionValidator:
 
         # Determine overall validity (only based on required components)
         required_table_valid = all(
-            result.is_valid for name, result in table_validations.items() if not name.endswith("_optional")
+            result.is_valid
+            for name, result in table_validations.items()
+            if not name.endswith("_optional")
         )
         required_embedding_valid = all(
-            result.is_valid for name, result in embedding_validations.items() if not name.endswith("_optional")
+            result.is_valid
+            for name, result in embedding_validations.items()
+            if not name.endswith("_optional")
         )
         overall_valid = required_table_valid and required_embedding_valid
 
         # Generate summary and suggestions
-        summary = self._generate_summary(overall_valid, table_validations, embedding_validations)
-        setup_suggestions = self._generate_setup_suggestions(requirements, table_validations, embedding_validations)
+        summary = self._generate_summary(
+            overall_valid, table_validations, embedding_validations
+        )
+        setup_suggestions = self._generate_setup_suggestions(
+            requirements, table_validations, embedding_validations
+        )
 
         return ValidationReport(
             pipeline_name=requirements.pipeline_name,
@@ -112,7 +122,9 @@ class PreConditionValidator:
             setup_suggestions=setup_suggestions,
         )
 
-    def _validate_table_requirement(self, table_req: TableRequirement) -> ValidationResult:
+    def _validate_table_requirement(
+        self, table_req: TableRequirement
+    ) -> ValidationResult:
         """
         Validate a single table requirement.
 
@@ -139,7 +151,10 @@ class PreConditionValidator:
                     return ValidationResult(
                         is_valid=False,
                         message=f"Table {table_name} has {row_count} rows, but requires at least {table_req.min_rows}",
-                        details={"row_count": row_count, "min_required": table_req.min_rows},
+                        details={
+                            "row_count": row_count,
+                            "min_required": table_req.min_rows,
+                        },
                         suggestions=[f"Load more data into {table_name}"],
                     )
 
@@ -155,7 +170,10 @@ class PreConditionValidator:
                     is_valid=False,
                     message=f"Table {table_name} does not exist or is not accessible: {e}",
                     details={"error": str(e)},
-                    suggestions=[f"Create table {table_name}", f"Check database permissions"],
+                    suggestions=[
+                        f"Create table {table_name}",
+                        f"Check database permissions",
+                    ],
                 )
 
         except Exception as e:
@@ -163,13 +181,18 @@ class PreConditionValidator:
                 is_valid=False,
                 message=f"Database connection error: {e}",
                 details={"error": str(e)},
-                suggestions=["Check database connection", "Verify connection configuration"],
+                suggestions=[
+                    "Check database connection",
+                    "Verify connection configuration",
+                ],
             )
         finally:
             if "cursor" in locals():
                 cursor.close()
 
-    def _validate_embedding_requirement(self, embedding_req: EmbeddingRequirement) -> ValidationResult:
+    def _validate_embedding_requirement(
+        self, embedding_req: EmbeddingRequirement
+    ) -> ValidationResult:
         """
         Validate a single embedding requirement.
 
@@ -223,7 +246,9 @@ class PreConditionValidator:
                         "rows_with_embeddings": rows_with_embeddings,
                         "completeness_ratio": completeness_ratio,
                     },
-                    suggestions=[f"Generate missing embeddings for {embedding_req.table}"],
+                    suggestions=[
+                        f"Generate missing embeddings for {embedding_req.table}"
+                    ],
                 )
 
             # Validate embedding format (check for correct IRIS VECTOR format)
@@ -250,16 +275,26 @@ class PreConditionValidator:
                     return ValidationResult(
                         is_valid=False,
                         message=f"Embeddings stored as strings instead of VECTOR type in {embedding_req.table}.{embedding_req.column}",
-                        details={"sample_embedding": embedding_str[:100], "format_issue": "string_instead_of_vector"},
-                        suggestions=[f"Convert embeddings to VECTOR type using TO_VECTOR() in {embedding_req.table}"],
+                        details={
+                            "sample_embedding": embedding_str[:100],
+                            "format_issue": "string_instead_of_vector",
+                        },
+                        suggestions=[
+                            f"Convert embeddings to VECTOR type using TO_VECTOR() in {embedding_req.table}"
+                        ],
                     )
                 else:
                     # Invalid format
                     return ValidationResult(
                         is_valid=False,
                         message=f"Invalid embedding format in {embedding_req.table}.{embedding_req.column}",
-                        details={"sample_embedding": embedding_str[:100], "format_issue": "unrecognized_format"},
-                        suggestions=[f"Regenerate embeddings with correct VECTOR format for {embedding_req.table}"],
+                        details={
+                            "sample_embedding": embedding_str[:100],
+                            "format_issue": "unrecognized_format",
+                        },
+                        suggestions=[
+                            f"Regenerate embeddings with correct VECTOR format for {embedding_req.table}"
+                        ],
                     )
 
             return ValidationResult(
@@ -297,12 +332,18 @@ class PreConditionValidator:
         issues = []
 
         # Table issues
-        failed_tables = [name for name, result in table_validations.items() if not result.is_valid]
+        failed_tables = [
+            name for name, result in table_validations.items() if not result.is_valid
+        ]
         if failed_tables:
             issues.append(f"Table issues: {', '.join(failed_tables)}")
 
         # Embedding issues
-        failed_embeddings = [name for name, result in embedding_validations.items() if not result.is_valid]
+        failed_embeddings = [
+            name
+            for name, result in embedding_validations.items()
+            if not result.is_valid
+        ]
         if failed_embeddings:
             issues.append(f"Embedding issues: {', '.join(failed_embeddings)}")
 
@@ -326,7 +367,9 @@ class PreConditionValidator:
 
         # Add pipeline-specific suggestions
         if not all(result.is_valid for result in table_validations.values()):
-            suggestions.append(f"Run setup orchestrator for {requirements.pipeline_name}")
+            suggestions.append(
+                f"Run setup orchestrator for {requirements.pipeline_name}"
+            )
 
         if not all(result.is_valid for result in embedding_validations.values()):
             suggestions.append("Use SetupOrchestrator.generate_missing_embeddings()")

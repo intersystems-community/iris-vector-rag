@@ -136,7 +136,9 @@ class CRAGPipeline(RAGPipeline):
             if os.path.isfile(documents_path):
                 with open(documents_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                doc = Document(page_content=content, metadata={"source": documents_path})
+                doc = Document(
+                    page_content=content, metadata={"source": documents_path}
+                )
                 documents.append(doc)
             elif os.path.isdir(documents_path):
                 for filename in os.listdir(documents_path):
@@ -145,7 +147,10 @@ class CRAGPipeline(RAGPipeline):
                         try:
                             with open(file_path, "r", encoding="utf-8") as f:
                                 content = f.read()
-                            doc = Document(page_content=content, metadata={"source": file_path, "filename": filename})
+                            doc = Document(
+                                page_content=content,
+                                metadata={"source": file_path, "filename": filename},
+                            )
                             documents.append(doc)
                         except Exception as e:
                             logger.warning(f"Failed to load file {file_path}: {e}")
@@ -153,12 +158,16 @@ class CRAGPipeline(RAGPipeline):
         # Store documents using vector store
         embeddings = None
         if self.embedding_func:
-            embeddings = [self.embedding_func([doc.page_content])[0] for doc in documents]
+            embeddings = [
+                self.embedding_func([doc.page_content])[0] for doc in documents
+            ]
 
         document_ids = self._store_documents(documents, embeddings)
         logger.info(f"CRAG: Loaded {len(documents)} documents with IDs: {document_ids}")
 
-    def query(self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs) -> Dict[str, Any]:
+    def query(
+        self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs
+    ) -> Dict[str, Any]:
         """
         Execute the CRAG pipeline implementation.
 
@@ -184,12 +193,16 @@ class CRAGPipeline(RAGPipeline):
             logger.info(f"CRAG: Retrieval status: {retrieval_status}")
 
             # Stage 3: Apply corrective actions based on evaluation
-            corrected_docs = self._apply_corrective_actions(query_text, initial_docs, retrieval_status, top_k)
+            corrected_docs = self._apply_corrective_actions(
+                query_text, initial_docs, retrieval_status, top_k
+            )
 
             # Stage 4: Generate answer if requested
             answer = None
             if generate_answer and self.llm_func:
-                answer = self._generate_answer(query_text, corrected_docs, retrieval_status)
+                answer = self._generate_answer(
+                    query_text, corrected_docs, retrieval_status
+                )
             elif generate_answer and not self.llm_func:
                 answer = "No LLM function available for answer generation. Please configure an LLM function to generate answers."
 
@@ -222,7 +235,12 @@ class CRAGPipeline(RAGPipeline):
                 "retrieved_documents": [],
                 "contexts": [],
                 "execution_time": 0.0,
-                "metadata": {"num_retrieved": 0, "pipeline_type": "crag", "generated_answer": False, "error": str(e)},
+                "metadata": {
+                    "num_retrieved": 0,
+                    "pipeline_type": "crag",
+                    "generated_answer": False,
+                    "error": str(e),
+                },
             }
 
     def _initial_retrieval(self, query: str, top_k: int) -> List[Document]:
@@ -240,22 +258,37 @@ class CRAGPipeline(RAGPipeline):
 
         # Generate query embedding
         query_embedding = self.embedding_func([query])[0]
-        logger.debug(f"CRAG _initial_retrieval() generated embedding: length={len(query_embedding)}")
+        logger.debug(
+            f"CRAG _initial_retrieval() generated embedding: length={len(query_embedding)}"
+        )
 
         # Use vector store helper method
-        results = self._retrieve_documents_by_vector(query_embedding=query_embedding, top_k=top_k)
+        results = self._retrieve_documents_by_vector(
+            query_embedding=query_embedding, top_k=top_k
+        )
 
         retrieved_docs = []
         for doc, similarity_score in results:
             # Update metadata with retrieval information
-            doc.metadata.update({"similarity_score": similarity_score, "retrieval_method": "initial_vector_similarity"})
+            doc.metadata.update(
+                {
+                    "similarity_score": similarity_score,
+                    "retrieval_method": "initial_vector_similarity",
+                }
+            )
             retrieved_docs.append(doc)
 
-        logger.debug(f"CRAG _initial_retrieval() exit: found {len(retrieved_docs)} documents")
+        logger.debug(
+            f"CRAG _initial_retrieval() exit: found {len(retrieved_docs)} documents"
+        )
         return retrieved_docs
 
     def _apply_corrective_actions(
-        self, query: str, initial_docs: List[Document], status: RetrievalStatus, top_k: int
+        self,
+        query: str,
+        initial_docs: List[Document],
+        status: RetrievalStatus,
+        top_k: int,
     ) -> List[Document]:
         """
         Apply corrective actions based on retrieval evaluation.
@@ -275,13 +308,19 @@ class CRAGPipeline(RAGPipeline):
 
         if status == "confident":
             # High confidence - use initial results
-            logger.debug("CRAG _apply_corrective_actions(): High confidence - using initial retrieval")
-            logger.debug(f"CRAG _apply_corrective_actions() exit (confident): returning {len(initial_docs)} documents")
+            logger.debug(
+                "CRAG _apply_corrective_actions(): High confidence - using initial retrieval"
+            )
+            logger.debug(
+                f"CRAG _apply_corrective_actions() exit (confident): returning {len(initial_docs)} documents"
+            )
             return initial_docs
 
         elif status == "ambiguous":
             # Medium confidence - enhance with additional retrieval
-            logger.debug("CRAG _apply_corrective_actions(): Ambiguous results - enhancing with additional retrieval")
+            logger.debug(
+                "CRAG _apply_corrective_actions(): Ambiguous results - enhancing with additional retrieval"
+            )
             enhanced_docs = self._enhance_retrieval(query, initial_docs, top_k)
             logger.debug(
                 f"CRAG _apply_corrective_actions() exit (ambiguous): returning {len(enhanced_docs)} enhanced documents"
@@ -290,14 +329,18 @@ class CRAGPipeline(RAGPipeline):
 
         else:  # disoriented
             # Low confidence - perform web search or knowledge base expansion
-            logger.debug("CRAG _apply_corrective_actions(): Low confidence - performing knowledge base expansion")
+            logger.debug(
+                "CRAG _apply_corrective_actions(): Low confidence - performing knowledge base expansion"
+            )
             expanded_docs = self._knowledge_base_expansion(query, top_k)
             logger.debug(
                 f"CRAG _apply_corrective_actions() exit (disoriented): returning {len(expanded_docs)} expanded documents"
             )
             return expanded_docs
 
-    def _enhance_retrieval(self, query: str, initial_docs: List[Document], top_k: int) -> List[Document]:
+    def _enhance_retrieval(
+        self, query: str, initial_docs: List[Document], top_k: int
+    ) -> List[Document]:
         """
         Enhance retrieval with additional strategies for ambiguous cases.
 
@@ -315,7 +358,9 @@ class CRAGPipeline(RAGPipeline):
 
         # Try chunk-based retrieval for more granular results
         enhanced_docs = list(initial_docs)  # Start with initial docs
-        logger.debug(f"CRAG _enhance_retrieval() starting with {len(enhanced_docs)} initial documents")
+        logger.debug(
+            f"CRAG _enhance_retrieval() starting with {len(enhanced_docs)} initial documents"
+        )
 
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
@@ -340,7 +385,9 @@ class CRAGPipeline(RAGPipeline):
             # Execute with embedding as parameter
             cursor.execute(chunk_sql, [query_embedding_str])
             chunk_results = cursor.fetchall()
-            logger.debug(f"CRAG _enhance_retrieval() chunk-based query returned {len(chunk_results)} chunks")
+            logger.debug(
+                f"CRAG _enhance_retrieval() chunk-based query returned {len(chunk_results)} chunks"
+            )
 
             # Add chunk-based results
             for row in chunk_results:
@@ -358,17 +405,23 @@ class CRAGPipeline(RAGPipeline):
                 )
                 enhanced_docs.append(doc)
 
-            logger.debug(f"CRAG _enhance_retrieval() after adding chunks: {len(enhanced_docs)} total documents")
+            logger.debug(
+                f"CRAG _enhance_retrieval() after adding chunks: {len(enhanced_docs)} total documents"
+            )
 
             # Remove duplicates and limit results
             seen_content = set()
             unique_docs = []
             for doc in enhanced_docs:
-                content_hash = hash(doc.page_content[:100])  # Use first 100 chars as hash
+                content_hash = hash(
+                    doc.page_content[:100]
+                )  # Use first 100 chars as hash
                 if content_hash not in seen_content:
                     seen_content.add(content_hash)
                     unique_docs.append(doc)
-                    if len(unique_docs) >= top_k * 2:  # Allow more docs for ambiguous cases
+                    if (
+                        len(unique_docs) >= top_k * 2
+                    ):  # Allow more docs for ambiguous cases
                         break
 
             logger.debug(
@@ -390,7 +443,9 @@ class CRAGPipeline(RAGPipeline):
         Returns:
             Expanded document list from knowledge base
         """
-        logger.debug(f"CRAG _knowledge_base_expansion() entry: query='{query}', top_k={top_k}")
+        logger.debug(
+            f"CRAG _knowledge_base_expansion() entry: query='{query}', top_k={top_k}"
+        )
 
         # For disoriented cases, try broader search strategies
         connection = self.connection_manager.get_connection()
@@ -399,7 +454,9 @@ class CRAGPipeline(RAGPipeline):
         try:
             # ADDED: Log sample text_content from DB for comparison (moved to top)
             try:
-                sample_docs_sql = "SELECT TOP 3 doc_id, %ID, text_content FROM RAG.SourceDocuments"
+                sample_docs_sql = (
+                    "SELECT TOP 3 doc_id, %ID, text_content FROM RAG.SourceDocuments"
+                )
                 sample_cursor = connection.cursor()  # Create a new cursor for this
                 sample_cursor.execute(sample_docs_sql)
                 sample_db_docs = sample_cursor.fetchall()
@@ -408,7 +465,9 @@ class CRAGPipeline(RAGPipeline):
                 )
                 sample_cursor.close()
             except Exception as e_sample:
-                logger.error(f"CRAG _knowledge_base_expansion(): Error fetching sample docs for logging: {e_sample}")
+                logger.error(
+                    f"CRAG _knowledge_base_expansion(): Error fetching sample docs for logging: {e_sample}"
+                )
 
             # Use semantic search instead of keyword search for better results
             # This avoids IRIS stream field limitations with LIKE operations
@@ -438,7 +497,9 @@ class CRAGPipeline(RAGPipeline):
                 like_params = [query_embedding_str]
 
             except Exception as e:
-                logger.warning(f"CRAG _knowledge_base_expansion(): Semantic search failed, using simple retrieval: {e}")
+                logger.warning(
+                    f"CRAG _knowledge_base_expansion(): Semantic search failed, using simple retrieval: {e}"
+                )
                 # Fallback: just get some documents
                 sql = f"""
                     SELECT TOP {top_k * 2}
@@ -454,7 +515,9 @@ class CRAGPipeline(RAGPipeline):
             # Execute with parameters
             cursor.execute(sql, like_params)
             results = cursor.fetchall()
-            logger.debug(f"CRAG _knowledge_base_expansion() database query returned {len(results)} rows")
+            logger.debug(
+                f"CRAG _knowledge_base_expansion() database query returned {len(results)} rows"
+            )
 
             expanded_docs = []
             for row in results:
@@ -464,7 +527,10 @@ class CRAGPipeline(RAGPipeline):
                 doc = Document(
                     id=row[0],
                     page_content=page_content,
-                    metadata={"similarity_score": float(row[2]), "retrieval_method": "knowledge_base_expansion"},
+                    metadata={
+                        "similarity_score": float(row[2]),
+                        "retrieval_method": "knowledge_base_expansion",
+                    },
                 )
                 expanded_docs.append(doc)
 
@@ -477,7 +543,9 @@ class CRAGPipeline(RAGPipeline):
         finally:
             cursor.close()
 
-    def _generate_answer(self, query: str, documents: List[Document], status: RetrievalStatus) -> str:
+    def _generate_answer(
+        self, query: str, documents: List[Document], status: RetrievalStatus
+    ) -> str:
         """
         Generate answer using retrieved documents and LLM.
 
@@ -494,7 +562,9 @@ class CRAGPipeline(RAGPipeline):
         )
 
         if not documents:
-            logger.debug("CRAG _generate_answer(): No documents provided, returning default message")
+            logger.debug(
+                "CRAG _generate_answer(): No documents provided, returning default message"
+            )
             return "I couldn't find relevant information to answer your question. Please try rephrasing your query."
 
         # Prepare context based on retrieval status
@@ -518,7 +588,9 @@ class CRAGPipeline(RAGPipeline):
             )
 
         context = "\n\n".join(context_parts)
-        logger.debug(f"CRAG _generate_answer() prepared context: length={len(context)} characters")
+        logger.debug(
+            f"CRAG _generate_answer() prepared context: length={len(context)} characters"
+        )
 
         # Create prompt for LLM with confidence indication
         prompt = f"""Please answer the question based on the provided documents.
@@ -531,7 +603,9 @@ Please provide a comprehensive answer. If the information is uncertain or incomp
 
 Answer:"""
 
-        logger.debug(f"CRAG _generate_answer() calling LLM with prompt length={len(prompt)}")
+        logger.debug(
+            f"CRAG _generate_answer() calling LLM with prompt length={len(prompt)}"
+        )
 
         # Generate answer using LLM
         answer = self.llm_func(prompt)
@@ -547,7 +621,11 @@ class RetrievalEvaluator:
     Evaluates the quality of retrieved documents for CRAG.
     """
 
-    def __init__(self, llm_func: Optional[Callable] = None, embedding_func: Optional[Callable] = None):
+    def __init__(
+        self,
+        llm_func: Optional[Callable] = None,
+        embedding_func: Optional[Callable] = None,
+    ):
         self.llm_func = llm_func
         self.embedding_func = embedding_func
         logger.debug("RetrievalEvaluator initialized")
@@ -568,7 +646,9 @@ class RetrievalEvaluator:
         )
 
         if not documents:
-            logger.debug("CRAG RetrievalEvaluator.evaluate(): No documents provided - status: disoriented")
+            logger.debug(
+                "CRAG RetrievalEvaluator.evaluate(): No documents provided - status: disoriented"
+            )
             return "disoriented"
 
         # VectorStore guarantees string content, but ensure it's a string for safety
@@ -580,12 +660,16 @@ class RetrievalEvaluator:
             if safe_page_content != doc.page_content:
                 from ..core.models import Document
 
-                safe_doc = Document(id=doc.id, page_content=safe_page_content, metadata=doc.metadata)
+                safe_doc = Document(
+                    id=doc.id, page_content=safe_page_content, metadata=doc.metadata
+                )
                 safe_documents.append(safe_doc)
             else:
                 safe_documents.append(doc)
 
-        logger.debug(f"CRAG RetrievalEvaluator.evaluate(): processed {len(safe_documents)} safe documents")
+        logger.debug(
+            f"CRAG RetrievalEvaluator.evaluate(): processed {len(safe_documents)} safe documents"
+        )
 
         # Simple heuristic evaluation based on similarity scores
         scores = []
@@ -593,17 +677,25 @@ class RetrievalEvaluator:
             if hasattr(doc, "metadata") and "similarity_score" in doc.metadata:
                 score = doc.metadata["similarity_score"]
                 scores.append(score)
-                logger.debug(f"CRAG RetrievalEvaluator.evaluate(): document {i} (id={doc.id}) similarity_score={score}")
+                logger.debug(
+                    f"CRAG RetrievalEvaluator.evaluate(): document {i} (id={doc.id}) similarity_score={score}"
+                )
             else:
-                logger.debug(f"CRAG RetrievalEvaluator.evaluate(): document {i} (id={doc.id}) has no similarity_score")
+                logger.debug(
+                    f"CRAG RetrievalEvaluator.evaluate(): document {i} (id={doc.id}) has no similarity_score"
+                )
 
         if not scores:
-            logger.debug("CRAG RetrievalEvaluator.evaluate(): No similarity scores found - status: ambiguous")
+            logger.debug(
+                "CRAG RetrievalEvaluator.evaluate(): No similarity scores found - status: ambiguous"
+            )
             return "ambiguous"
 
         avg_score = sum(scores) / len(scores)
         max_score = max(scores)
-        logger.debug(f"CRAG RetrievalEvaluator.evaluate(): score analysis - avg={avg_score:.3f}, max={max_score:.3f}")
+        logger.debug(
+            f"CRAG RetrievalEvaluator.evaluate(): score analysis - avg={avg_score:.3f}, max={max_score:.3f}"
+        )
 
         # Confidence thresholds
         if max_score > 0.8 and avg_score > 0.6:

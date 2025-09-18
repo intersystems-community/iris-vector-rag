@@ -24,7 +24,7 @@ from iris_rag.config.manager import ConfigurationManager
 from iris_rag.pipelines.basic import BasicRAGPipeline
 from iris_rag.pipelines.hyde import HyDERAGPipeline
 from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.colbert import ColBERTRAGPipeline
+from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
 from iris_rag.pipelines.noderag import NodeRAGPipeline
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
 from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
@@ -107,11 +107,9 @@ class MockConnection:
         
     def commit(self):
         """Mock commit."""
-        pass
         
     def rollback(self):
         """Mock rollback."""
-        pass
         
     def close(self):
         """Mock close."""

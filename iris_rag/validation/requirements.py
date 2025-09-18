@@ -47,19 +47,16 @@ class PipelineRequirements(ABC):
     @abstractmethod
     def pipeline_name(self) -> str:
         """Name of the pipeline."""
-        pass
 
     @property
     @abstractmethod
     def required_tables(self) -> List[TableRequirement]:
         """List of required database tables."""
-        pass
 
     @property
     @abstractmethod
     def required_embeddings(self) -> List[EmbeddingRequirement]:
         """List of required embeddings."""
-        pass
 
     @property
     def optional_tables(self) -> List[TableRequirement]:
@@ -93,7 +90,10 @@ class BasicRAGRequirements(PipelineRequirements):
     def required_tables(self) -> List[TableRequirement]:
         return [
             TableRequirement(
-                name="SourceDocuments", schema="RAG", description="Main document storage table", min_rows=1
+                name="SourceDocuments",
+                schema="RAG",
+                description="Main document storage table",
+                min_rows=1,
             )
         ]
 
@@ -146,7 +146,10 @@ class CRAGRequirements(PipelineRequirements):
     def required_tables(self) -> List[TableRequirement]:
         return [
             TableRequirement(
-                name="SourceDocuments", schema="RAG", description="Main document storage table", min_rows=1
+                name="SourceDocuments",
+                schema="RAG",
+                description="Main document storage table",
+                min_rows=1,
             )
         ]
 
@@ -186,6 +189,7 @@ class CRAGRequirements(PipelineRequirements):
                 required=False,
             )
         ]
+
 
 class BasicRAGRerankingRequirements(PipelineRequirements):
     """Requirements for Basic RAG with Reranking pipeline."""
@@ -198,7 +202,10 @@ class BasicRAGRerankingRequirements(PipelineRequirements):
     def required_tables(self) -> List[TableRequirement]:
         return [
             TableRequirement(
-                name="SourceDocuments", schema="RAG", description="Main document storage table", min_rows=1
+                name="SourceDocuments",
+                schema="RAG",
+                description="Main document storage table",
+                min_rows=1,
             )
         ]
 
@@ -240,12 +247,84 @@ class BasicRAGRerankingRequirements(PipelineRequirements):
         ]
 
 
+class GraphRAGRequirements(PipelineRequirements):
+    """
+    Requirements for GraphRAG pipeline.
+
+    This defines Phase 1 requirements (SQL tables) while maintaining compatibility
+    with the planned Phase 2 IRIS Globals Optimization for high-performance
+    pointer chasing operations.
+
+    Future Enhancement Roadmap:
+    - Phase 2: IRIS globals optimization with direct pointer chasing
+    - ObjectScript integration for graph traversal operations
+    - Globals structure: ^RAG.Entity, ^RAG.Graph, ^RAG.Path
+    - See: docs/architecture/GRAPHRAG_KNOWLEDGE_GRAPH_ARCHITECTURE.md
+    """
+
+    @property
+    def pipeline_name(self) -> str:
+        return "graphrag"
+
+    @property
+    def required_tables(self) -> List[TableRequirement]:
+        return [
+            TableRequirement(
+                name="SourceDocuments",
+                schema="RAG",
+                description="Document storage with embeddings",
+                min_rows=1,
+                supports_vector_search=True,
+            ),
+            TableRequirement(
+                name="Entities",
+                schema="RAG",
+                description="Extracted entities with embeddings",
+                min_rows=1,  # Require minimum entities for graph queries
+                supports_vector_search=True,
+            ),
+            TableRequirement(
+                name="EntityRelationships",
+                schema="RAG",
+                description="Entity relationships for graph traversal",
+                min_rows=1,  # Require minimum relationships for connectivity
+                supports_vector_search=False,  # Relationships don't need vector search
+            ),
+        ]
+
+    @property
+    def required_embeddings(self) -> List[EmbeddingRequirement]:
+        return [
+            EmbeddingRequirement(
+                name="document_embeddings",
+                table="RAG.SourceDocuments",
+                column="embedding",
+                description="Document-level embeddings for vector search",
+            )
+        ]
+
+    @property
+    def optional_embeddings(self) -> List[EmbeddingRequirement]:
+        """Optional embeddings for enhanced functionality."""
+        return [
+            EmbeddingRequirement(
+                name="entity_embeddings",
+                table="RAG.Entities",
+                column="entity_embeddings",
+                description="Entity-level embeddings for semantic entity search (optional)",
+                required=False,
+            )
+        ]
+
+
 # Registry of pipeline requirements
 PIPELINE_REQUIREMENTS_REGISTRY = {
     "basic": BasicRAGRequirements,
     "basic_rerank": BasicRAGRerankingRequirements,
-    "crag": CRAGRequirements
+    "crag": CRAGRequirements,
+    "graphrag": GraphRAGRequirements,
 }
+
 
 def get_pipeline_requirements(pipeline_type: str) -> PipelineRequirements:
     """
@@ -262,7 +341,9 @@ def get_pipeline_requirements(pipeline_type: str) -> PipelineRequirements:
     """
     if pipeline_type not in PIPELINE_REQUIREMENTS_REGISTRY:
         available_types = list(PIPELINE_REQUIREMENTS_REGISTRY.keys())
-        raise ValueError(f"Unknown pipeline type: {pipeline_type}. Available types: {available_types}")
+        raise ValueError(
+            f"Unknown pipeline type: {pipeline_type}. Available types: {available_types}"
+        )
 
     requirements_class = PIPELINE_REQUIREMENTS_REGISTRY[pipeline_type]
     return requirements_class()

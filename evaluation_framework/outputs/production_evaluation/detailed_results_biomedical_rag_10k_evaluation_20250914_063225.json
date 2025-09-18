@@ -1,0 +1,21 @@
+{
+  "experiment_id": "biomedical_rag_10k_evaluation_20250914_063231",
+  "status": "failed",
+  "execution_time_seconds": 0.0016720294952392578,
+  "total_documents": 10000,
+  "total_questions": 2000,
+  "pipelines_evaluated": [
+    "BasicRAGPipeline",
+    "CRAGPipeline",
+    "GraphRAGPipeline",
+    "BasicRAGRerankingPipeline"
+  ],
+  "results_directory": "outputs/production_evaluation/results/biomedical_rag_10k_evaluation_20250914_063231",
+  "pipeline_results": {},
+  "comparative_analysis": {
+    "summary": "Analysis incomplete"
+  },
+  "recommendations": [
+    "No recommendations available"
+  ]
+}

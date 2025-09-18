@@ -98,14 +98,18 @@ class BasicRAGPipeline(RAGPipeline):
         if generate_embeddings:
             # Use vector store's automatic chunking and embedding generation
             self.vector_store.add_documents(
-                documents, auto_chunk=True, chunking_strategy=kwargs.get("chunking_strategy", "fixed_size")
+                documents,
+                auto_chunk=True,
+                chunking_strategy=kwargs.get("chunking_strategy", "fixed_size"),
             )
         else:
             # Store documents without embeddings using vector store
             self._store_documents(documents)
 
         processing_time = time.time() - start_time
-        logger.info(f"Loaded {len(documents)} documents in {processing_time:.2f} seconds")
+        logger.info(
+            f"Loaded {len(documents)} documents in {processing_time:.2f} seconds"
+        )
 
     def _load_documents_from_path(self, documents_path: str) -> List[Document]:
         """
@@ -179,12 +183,20 @@ class BasicRAGPipeline(RAGPipeline):
 
             for i, chunk_text in enumerate(chunks):
                 chunk_metadata = doc.metadata.copy()
-                chunk_metadata.update({"chunk_index": i, "parent_document_id": doc.id, "chunk_size": len(chunk_text)})
+                chunk_metadata.update(
+                    {
+                        "chunk_index": i,
+                        "parent_document_id": doc.id,
+                        "chunk_size": len(chunk_text),
+                    }
+                )
 
                 chunk_doc = Document(page_content=chunk_text, metadata=chunk_metadata)
                 chunked_documents.append(chunk_doc)
 
-        logger.info(f"Chunked {len(documents)} documents into {len(chunked_documents)} chunks")
+        logger.info(
+            f"Chunked {len(documents)} documents into {len(chunked_documents)} chunks"
+        )
         return chunked_documents
 
     def _split_text(self, text: str) -> List[str]:
@@ -229,7 +241,9 @@ class BasicRAGPipeline(RAGPipeline):
 
         return chunks
 
-    def _store_documents(self, documents: List[Document], embeddings: Optional[List[List[float]]] = None) -> None:
+    def _store_documents(
+        self, documents: List[Document], embeddings: Optional[List[List[float]]] = None
+    ) -> None:
         """
         Store documents in the vector store with optional embeddings.
 
@@ -257,23 +271,35 @@ class BasicRAGPipeline(RAGPipeline):
 
             for i in range(0, len(texts), batch_size):
                 batch_texts = texts[i : i + batch_size]
-                logger.debug(f"Generating embeddings for batch {i//batch_size + 1}: {len(batch_texts)} texts")
+                logger.debug(
+                    f"Generating embeddings for batch {i//batch_size + 1}: {len(batch_texts)} texts"
+                )
                 batch_embeddings = self.embedding_manager.embed_texts(batch_texts)
-                logger.debug(f"Generated {len(batch_embeddings) if batch_embeddings else 0} embeddings")
+                logger.debug(
+                    f"Generated {len(batch_embeddings) if batch_embeddings else 0} embeddings"
+                )
                 if batch_embeddings:
                     all_embeddings.extend(batch_embeddings)
 
-            logger.info(f"Total embeddings generated: {len(all_embeddings)} for {len(documents)} documents")
+            logger.info(
+                f"Total embeddings generated: {len(all_embeddings)} for {len(documents)} documents"
+            )
 
             # Store documents with embeddings using vector store
             self._store_documents(documents, all_embeddings)
-            logger.info(f"Generated and stored embeddings for {len(documents)} documents")
+            logger.info(
+                f"Generated and stored embeddings for {len(documents)} documents"
+            )
 
         except Exception as e:
             # If embedding generation fails, fall back to storing documents without embeddings
-            logger.warning(f"Embedding generation failed: {e}. Storing documents without embeddings.")
+            logger.warning(
+                f"Embedding generation failed: {e}. Storing documents without embeddings."
+            )
             self._store_documents(documents, embeddings=None)
-            logger.info(f"Stored {len(documents)} documents without embeddings due to embedding failure")
+            logger.info(
+                f"Stored {len(documents)} documents without embeddings due to embedding failure"
+            )
 
     def ingest_documents(self, documents: List[Document]) -> Dict[str, Any]:
         """
@@ -289,10 +315,19 @@ class BasicRAGPipeline(RAGPipeline):
             # Use the load_documents method with Document objects via kwargs
             self.load_documents("", documents=documents)
 
-            return {"status": "success", "documents_processed": len(documents), "pipeline_type": "basic"}
+            return {
+                "status": "success",
+                "documents_processed": len(documents),
+                "pipeline_type": "basic",
+            }
         except Exception as e:
             logger.error(f"Document ingestion failed: {e}")
-            return {"status": "error", "error": str(e), "documents_processed": 0, "pipeline_type": "basic"}
+            return {
+                "status": "error",
+                "error": str(e),
+                "documents_processed": 0,
+                "pipeline_type": "basic",
+            }
 
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
@@ -329,14 +364,16 @@ class BasicRAGPipeline(RAGPipeline):
         include_sources = kwargs.get("include_sources", True)
         custom_prompt = kwargs.get("custom_prompt")
         generate_answer = kwargs.get("generate_answer", True)
-        metadata_filter = kwargs.get("metadata_filter")
-        similarity_threshold = kwargs.get("similarity_threshold", 0.0)
+        kwargs.get("metadata_filter")
+        kwargs.get("similarity_threshold", 0.0)
 
         # Step 1: Retrieve relevant documents
         try:
             # Use vector store for retrieval
             if hasattr(self, "vector_store") and self.vector_store:
-                retrieved_documents = self.vector_store.similarity_search(query_text, k=top_k)
+                retrieved_documents = self.vector_store.similarity_search(
+                    query_text, k=top_k
+                )
             else:
                 logger.warning("No vector store available")
                 retrieved_documents = []
@@ -347,7 +384,9 @@ class BasicRAGPipeline(RAGPipeline):
         # Step 2: Generate answer using LLM (if enabled and LLM available)
         if generate_answer and self.llm_func and retrieved_documents:
             try:
-                answer = self._generate_answer(query_text, retrieved_documents, custom_prompt)
+                answer = self._generate_answer(
+                    query_text, retrieved_documents, custom_prompt
+                )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
@@ -366,7 +405,9 @@ class BasicRAGPipeline(RAGPipeline):
             "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
-            "contexts": [doc.page_content for doc in retrieved_documents],  # String contexts for RAGAS
+            "contexts": [
+                doc.page_content for doc in retrieved_documents
+            ],  # String contexts for RAGAS
             "execution_time": execution_time,  # Required for RAGAS debug harness
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
@@ -380,7 +421,9 @@ class BasicRAGPipeline(RAGPipeline):
         if include_sources:
             response["sources"] = self._extract_sources(retrieved_documents)
 
-        logger.info(f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved")
+        logger.info(
+            f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved"
+        )
         return response
 
     def retrieve(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
@@ -412,7 +455,9 @@ class BasicRAGPipeline(RAGPipeline):
         result = self.query(question, **kwargs)
         return result.get("answer", "No answer generated")
 
-    def _generate_answer(self, query: str, documents: List[Document], custom_prompt: Optional[str] = None) -> str:
+    def _generate_answer(
+        self, query: str, documents: List[Document], custom_prompt: Optional[str] = None
+    ) -> str:
         """
         Generate an answer using the LLM and retrieved documents.
 
@@ -431,7 +476,9 @@ class BasicRAGPipeline(RAGPipeline):
         context_parts = []
         for i, doc in enumerate(documents, 1):
             source = doc.metadata.get("source", "Unknown")
-            context_parts.append(f"Document {i} (Source: {source}):\n{doc.page_content}")
+            context_parts.append(
+                f"Document {i} (Source: {source}):\n{doc.page_content}"
+            )
 
         context = "\n\n".join(context_parts)
 

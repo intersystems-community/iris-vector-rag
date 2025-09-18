@@ -39,6 +39,19 @@ pipelines:
       max_entities: 50
       similarity_threshold: 0.1
 
+  - name: "ColBERT"
+    module: "iris_rag.pipelines.colbert_pylate.pylate_pipeline"
+    class: "PyLateColBERTPipeline"
+    enabled: true
+    params:
+      top_k: 5
+      rerank_factor: 2
+      model_name: "lightonai/GTE-ModernColBERT-v1"
+      batch_size: 32
+      use_native_reranking: true
+      cache_embeddings: true
+      max_doc_length: 4096
+
 # Framework dependencies (shared across all pipelines)
 framework:
   llm:

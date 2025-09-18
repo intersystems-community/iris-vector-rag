@@ -140,7 +140,7 @@ esac
 
 # Add coverage options
 if [[ "$COVERAGE" == true ]]; then
-    PYTEST_CMD+=" --cov=src --cov=iris_rag --cov=mem0_integration"
+    PYTEST_CMD+=" --cov=rag_templates --cov=iris_rag --cov=mem0_integration"
     PYTEST_CMD+=" --cov-report=term-missing"
     PYTEST_CMD+=" --cov-report=html:${OUTPUT_DIR}/htmlcov"
     PYTEST_CMD+=" --cov-report=xml:${OUTPUT_DIR}/coverage.xml"

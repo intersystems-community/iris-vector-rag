@@ -7,7 +7,6 @@ for InterSystems IRIS, including CLOB handling and vector search capabilities.
 
 import json
 import logging
-import numpy as np
 from common.db_vector_utils import insert_vector
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -16,7 +15,6 @@ from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
 from ..core.vector_store_exceptions import (
-    VectorStoreError,
     VectorStoreConnectionError,
     VectorStoreDataError,
     VectorStoreCLOBError,
@@ -89,7 +87,9 @@ class IRISVectorStore(VectorStore):
 
                 self.chunking_service = DocumentChunkingService(self.chunking_config)
             except ImportError:
-                logger.warning("DocumentChunkingService not available, disabling auto chunking")
+                logger.warning(
+                    "DocumentChunkingService not available, disabling auto chunking"
+                )
                 self.auto_chunk = False
 
         # Get vector dimension from schema manager (single source of truth)
@@ -98,9 +98,13 @@ class IRISVectorStore(VectorStore):
         else:
             from .schema_manager import SchemaManager
 
-            self.schema_manager = SchemaManager(self.connection_manager, self.config_manager)
+            self.schema_manager = SchemaManager(
+                self.connection_manager, self.config_manager
+            )
         table_short_name = self.table_name.replace("RAG.", "")
-        self.vector_dimension = self.schema_manager.get_vector_dimension(table_short_name)
+        self.vector_dimension = self.schema_manager.get_vector_dimension(
+            table_short_name
+        )
 
         # Validate table name for security
         self._validate_table_name(self.table_name)
@@ -134,7 +138,9 @@ class IRISVectorStore(VectorStore):
             if os.environ.get("PYTEST_CURRENT_TEST") is None:
                 self._get_connection()
         except Exception as e:
-            raise VectorStoreConnectionError(f"Failed to initialize IRIS connection: {e}")
+            raise VectorStoreConnectionError(
+                f"Failed to initialize IRIS connection: {e}"
+            )
 
     def _get_connection(self):
         """Get or create database connection."""
@@ -156,14 +162,21 @@ class IRISVectorStore(VectorStore):
             try:
                 # Use schema manager to ensure proper table creation
                 table_short_name = self.table_name.replace("RAG.", "")
-                expected_config = {"vector_dimension": self.vector_dimension, "vector_data_type": "FLOAT"}
+                expected_config = {
+                    "vector_dimension": self.vector_dimension,
+                    "vector_data_type": "FLOAT",
+                }
                 success = self.schema_manager.ensure_table_schema(table_short_name)
                 if success:
                     logger.info(f"✅ Successfully created table {self.table_name}")
                 else:
-                    logger.warning(f"⚠️ Table creation may have failed for {self.table_name}")
+                    logger.warning(
+                        f"⚠️ Table creation may have failed for {self.table_name}"
+                    )
             except Exception as create_error:
-                logger.error(f"Failed to create table {self.table_name}: {create_error}")
+                logger.error(
+                    f"Failed to create table {self.table_name}: {create_error}"
+                )
                 # Don't raise here - let the subsequent operations fail with clearer errors
 
     def _validate_table_name(self, table_name: str) -> None:
@@ -230,8 +243,12 @@ class IRISVectorStore(VectorStore):
         table_lower = table_name.lower()
         for pattern in dangerous_patterns:
             if pattern in table_lower:
-                logger.error(f"Security violation: Dangerous pattern in table name: {table_name}")
-                raise VectorStoreConfigurationError(f"Table name contains restricted pattern: {pattern}")
+                logger.error(
+                    f"Security violation: Dangerous pattern in table name: {table_name}"
+                )
+                raise VectorStoreConfigurationError(
+                    f"Table name contains restricted pattern: {pattern}"
+                )
 
         logger.info(f"✅ Custom table name validated: {table_name}")
 
@@ -247,7 +264,9 @@ class IRISVectorStore(VectorStore):
         """
         for key in filter_dict.keys():
             if key not in self._allowed_filter_keys:
-                logger.warning(f"Security violation: Invalid filter key attempted: {key}")
+                logger.warning(
+                    f"Security violation: Invalid filter key attempted: {key}"
+                )
                 raise VectorStoreDataError(f"Invalid filter key: {key}")
 
     def _validate_filter_values(self, filter_dict: Dict[str, Any]) -> None:
@@ -262,8 +281,12 @@ class IRISVectorStore(VectorStore):
         """
         for key, value in filter_dict.items():
             if value is None or callable(value) or isinstance(value, (list, dict)):
-                logger.warning(f"Security violation: Invalid filter value type for key '{key}': {type(value).__name__}")
-                raise VectorStoreDataError(f"Invalid filter value for key '{key}': {type(value).__name__}")
+                logger.warning(
+                    f"Security violation: Invalid filter value type for key '{key}': {type(value).__name__}"
+                )
+                raise VectorStoreDataError(
+                    f"Invalid filter value for key '{key}': {type(value).__name__}"
+                )
 
     def _sanitize_error_message(self, error: Exception, operation: str) -> str:
         """
@@ -312,13 +335,17 @@ class IRISVectorStore(VectorStore):
 
             return Document(
                 id=processed_data.get("doc_id", processed_data.get("id", "")),
-                page_content=processed_data.get("text_content", processed_data.get("page_content", "")),
+                page_content=processed_data.get(
+                    "text_content", processed_data.get("page_content", "")
+                ),
                 metadata=metadata,
             )
         except Exception as e:
             raise VectorStoreCLOBError(f"Failed to process document data: {e}")
 
-    def _chunk_document(self, document: Document, chunking_strategy: Optional[str] = None) -> List[Document]:
+    def _chunk_document(
+        self, document: Document, chunking_strategy: Optional[str] = None
+    ) -> List[Document]:
         """
         Chunk a document using the specified strategy.
 
@@ -336,28 +363,40 @@ class IRISVectorStore(VectorStore):
         try:
             # Use the chunking service to chunk the document
             # The chunking service expects (doc_id, text, strategy_name)
-            strategy_name = chunking_strategy or self.chunking_config.get("strategy", "fixed_size")
-            chunk_records = self.chunking_service.chunk_document(document.id, document.page_content, strategy_name)
+            strategy_name = chunking_strategy or self.chunking_config.get(
+                "strategy", "fixed_size"
+            )
+            chunk_records = self.chunking_service.chunk_document(
+                document.id, document.page_content, strategy_name
+            )
 
             # Convert chunk records to Document objects with unique IDs
             chunked_documents = []
             for chunk_record in chunk_records:
                 # Use the unique chunk_id as the Document ID to avoid collisions
                 chunk_doc = Document(
-                    id=chunk_record["chunk_id"],  # This is unique: "doc-123_chunk_fixed_size_0"
-                    page_content=chunk_record["chunk_text"],  # Note: chunk service uses "chunk_text"
+                    id=chunk_record[
+                        "chunk_id"
+                    ],  # This is unique: "doc-123_chunk_fixed_size_0"
+                    page_content=chunk_record[
+                        "chunk_text"
+                    ],  # Note: chunk service uses "chunk_text"
                     metadata={
                         **document.metadata,  # Inherit original metadata
                         "parent_doc_id": document.id,  # Reference to original document
                         "chunk_index": chunk_record.get("chunk_index", 0),
                         "chunk_strategy": strategy_name,
                         "start_pos": chunk_record.get("start_position", 0),
-                        "end_pos": chunk_record.get("end_position", len(chunk_record["chunk_text"])),
+                        "end_pos": chunk_record.get(
+                            "end_position", len(chunk_record["chunk_text"])
+                        ),
                     },
                 )
                 chunked_documents.append(chunk_doc)
 
-            logger.debug(f"Document {document.id} chunked into {len(chunked_documents)} pieces with unique IDs")
+            logger.debug(
+                f"Document {document.id} chunked into {len(chunked_documents)} pieces with unique IDs"
+            )
             return chunked_documents
 
         except Exception as e:
@@ -398,7 +437,9 @@ class IRISVectorStore(VectorStore):
                 dim = 768  # Default dimension
             return [[0.0] * dim for _ in documents]
 
-    def _store_documents(self, documents: List[Document], embeddings: Optional[List[List[float]]] = None) -> List[str]:
+    def _store_documents(
+        self, documents: List[Document], embeddings: Optional[List[List[float]]] = None
+    ) -> List[str]:
         """
         Store documents in the database with optional embeddings.
 
@@ -423,12 +464,18 @@ class IRISVectorStore(VectorStore):
 
             # If embeddings are provided, ensure the table has the proper vector schema
             if embeddings:
-                logger.debug(f"Embeddings provided: {len(embeddings)} embeddings - ensuring vector schema")
+                logger.debug(
+                    f"Embeddings provided: {len(embeddings)} embeddings - ensuring vector schema"
+                )
                 table_short_name = self.table_name.replace("RAG.", "")
                 # Force schema update to ensure embedding column exists
-                schema_success = self.schema_manager.ensure_table_schema(table_short_name)
+                schema_success = self.schema_manager.ensure_table_schema(
+                    table_short_name
+                )
                 if not schema_success:
-                    logger.warning(f"Schema update may have failed for {self.table_name} - proceeding anyway")
+                    logger.warning(
+                        f"Schema update may have failed for {self.table_name} - proceeding anyway"
+                    )
 
             added_ids = []
             logger.debug(
@@ -445,20 +492,28 @@ class IRISVectorStore(VectorStore):
 
                 # Always use insert_vector utility for consistent handling (it works with or without embeddings)
                 if embeddings and len(embeddings) > i:
-                    logger.debug(f"Inserting document {doc.id} with embedding using insert_vector utility")
+                    logger.debug(
+                        f"Inserting document {doc.id} with embedding using insert_vector utility"
+                    )
                     # Use the required insert_vector utility function for vector insertions/updates
+                    # Avoid setting ID manually - let IRIS auto-generate it and use doc_id as business key
                     success = insert_vector(
                         cursor=cursor,
                         table_name=self.table_name,
                         vector_column_name="embedding",
                         vector_data=embeddings[i],
                         target_dimension=self.vector_dimension,
-                        key_columns={"ID": doc.id, "doc_id": doc.id},
-                        additional_data={"text_content": doc.page_content, "metadata": metadata_json},
+                        key_columns={"doc_id": doc.id},
+                        additional_data={
+                            "text_content": doc.page_content,
+                            "metadata": metadata_json,
+                        },
                     )
                     if success:
                         added_ids.append(doc.id)
-                        logger.debug(f"Successfully upserted document {doc.id} with vector")
+                        logger.debug(
+                            f"Successfully upserted document {doc.id} with vector"
+                        )
                     else:
                         logger.error(f"Failed to upsert document {doc.id} with vector")
                 else:
@@ -469,15 +524,21 @@ class IRISVectorStore(VectorStore):
                         SET text_content = ?, metadata = ?
                         WHERE doc_id = ?
                         """
-                        cursor.execute(update_sql, [doc.page_content, metadata_json, doc.id])
-                        logger.debug(f"Updated existing document {doc.id} without vector")
+                        cursor.execute(
+                            update_sql, [doc.page_content, metadata_json, doc.id]
+                        )
+                        logger.debug(
+                            f"Updated existing document {doc.id} without vector"
+                        )
                     else:
                         # Safe insert without manually setting ID column (let database auto-generate)
                         insert_sql = f"""
-                        INSERT INTO {self.table_name} (ID, doc_id, text_content, metadata)
-                        VALUES (?, ?, ?, ?)
+                        INSERT INTO {self.table_name} (doc_id, text_content, metadata)
+                        VALUES (?, ?, ?)
                         """
-                        cursor.execute(insert_sql, [doc.id, doc.page_content, metadata_json])
+                        cursor.execute(
+                            insert_sql, [doc.id, doc.page_content, metadata_json]
+                        )
                         logger.debug(f"Inserted new document {doc.id} without vector")
 
                     added_ids.append(doc.id)
@@ -526,9 +587,13 @@ class IRISVectorStore(VectorStore):
         # Process documents through chunking if enabled
         processed_documents = []
         if should_chunk and self.chunking_service:
-            logger.debug(f"Auto-chunking enabled, processing {len(documents)} documents")
+            logger.debug(
+                f"Auto-chunking enabled, processing {len(documents)} documents"
+            )
             # Use provided strategy or fall back to configured strategy
-            effective_strategy = chunking_strategy or self.chunking_config.get("strategy", "fixed_size")
+            effective_strategy = chunking_strategy or self.chunking_config.get(
+                "strategy", "fixed_size"
+            )
             for doc in documents:
                 # Check if document exceeds threshold
                 threshold = self.chunking_config.get("threshold", 1000)
@@ -541,11 +606,15 @@ class IRISVectorStore(VectorStore):
                     logger.debug(f"Document {doc.id} below threshold, not chunked")
         else:
             processed_documents = documents
-            logger.debug(f"Auto-chunking disabled, using {len(documents)} original documents")
+            logger.debug(
+                f"Auto-chunking disabled, using {len(documents)} original documents"
+            )
 
         # Generate embeddings if not provided and auto-chunking is enabled
         if embeddings is None and processed_documents and should_chunk:
-            logger.debug("No embeddings provided, generating embeddings for processed documents")
+            logger.debug(
+                "No embeddings provided, generating embeddings for processed documents"
+            )
             embeddings = self._generate_embeddings(processed_documents)
         elif embeddings and len(embeddings) != len(processed_documents):
             # If embeddings were provided but count doesn't match after chunking, regenerate
@@ -580,7 +649,9 @@ class IRISVectorStore(VectorStore):
 
         try:
             placeholders = ",".join(["?" for _ in ids])
-            delete_sql = f"DELETE FROM {self.table_name} WHERE doc_id IN ({placeholders})"
+            delete_sql = (
+                f"DELETE FROM {self.table_name} WHERE doc_id IN ({placeholders})"
+            )
             cursor.execute(delete_sql, ids)
 
             deleted_count = cursor.rowcount
@@ -593,12 +664,17 @@ class IRISVectorStore(VectorStore):
             connection.rollback()
             sanitized_error = self._sanitize_error_message(e, "delete_documents")
             logger.error(sanitized_error)
-            raise VectorStoreConnectionError(f"Failed to delete documents: {sanitized_error}")
+            raise VectorStoreConnectionError(
+                f"Failed to delete documents: {sanitized_error}"
+            )
         finally:
             cursor.close()
 
     def similarity_search_by_embedding(
-        self, query_embedding: List[float], top_k: int, filter: Optional[Dict[str, Any]] = None
+        self,
+        query_embedding: List[float],
+        top_k: int,
+        filter: Optional[Dict[str, Any]] = None,
     ) -> List[Tuple[Document, float]]:
         """
         Perform similarity search using a query embedding.
@@ -620,11 +696,11 @@ class IRISVectorStore(VectorStore):
         cursor = connection.cursor()
 
         try:
-            # Use the new parameter-based vector_sql_utils functions
-            from common.vector_sql_utils import format_vector_search_sql_with_params, execute_vector_search_with_params
-
-            # Format embedding as bracket-delimited string for IRIS
-            embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
+            # Use the safe vector utilities (proven pattern)
+            from common.vector_sql_utils import (
+                build_safe_vector_dot_sql,
+                execute_safe_vector_search,
+            )
 
             # Build metadata filter clause if needed
             additional_where = None
@@ -632,14 +708,18 @@ class IRISVectorStore(VectorStore):
                 filter_conditions = []
                 for key, value in filter.items():
                     # Key is already validated, safe to use in f-string
-                    filter_conditions.append(f"JSON_EXTRACT(metadata, '$.{key}') = '{str(value)}'")
+                    filter_conditions.append(
+                        f"JSON_EXTRACT(metadata, '$.{key}') = '{str(value)}'"
+                    )
 
                 if filter_conditions:
                     additional_where = " AND ".join(filter_conditions)
 
             # Get current vector dimension from schema manager
             table_short_name = self.table_name.replace("RAG.", "")
-            expected_dimension = self.schema_manager.get_vector_dimension(table_short_name)
+            expected_dimension = self.schema_manager.get_vector_dimension(
+                table_short_name
+            )
 
             # Validate query embedding dimension matches expected
             if len(query_embedding) != expected_dimension:
@@ -651,28 +731,31 @@ class IRISVectorStore(VectorStore):
                 f"Vector search: query={len(query_embedding)}D, expected={expected_dimension}D, table={table_short_name}"
             )
 
-            # Format the SQL using the new parameter-based function
-            sql = format_vector_search_sql_with_params(
-                table_name=self.table_name,
+            # Build SQL using the safe helper (single parameter pattern)
+            sql = build_safe_vector_dot_sql(
+                table=self.table_name,
                 vector_column="embedding",
-                embedding_dim=expected_dimension,
-                top_k=top_k,
                 id_column="doc_id",
-                content_column="text_content",
+                extra_columns=["text_content"],
+                top_k=top_k,
                 additional_where=additional_where,
             )
 
-            # Execute using the parameter-based function
-            print("SQL: ", sql)
+            # Execute using the safe helper (pass vector as list directly)
+            logger.debug(
+                f"Executing safe vector search with {len(query_embedding)}D vector"
+            )
             try:
-                rows = execute_vector_search_with_params(cursor, sql, embedding_str, self.table_name)
+                rows = execute_safe_vector_search(cursor, sql, query_embedding)
             except Exception as e:
                 # Check if this is a table not found error
                 if "Table" in str(e) and "not found" in str(e):
-                    logger.info(f"Table {self.table_name} not found, attempting to create it automatically")
+                    logger.info(
+                        f"Table {self.table_name} not found, attempting to create it automatically"
+                    )
                     self._create_table_automatically()
                     # Retry the search after table creation
-                    rows = execute_vector_search_with_params(cursor, sql, embedding_str, self.table_name)
+                    rows = execute_safe_vector_search(cursor, sql, query_embedding)
                 else:
                     # Re-raise other errors
                     raise
@@ -689,7 +772,9 @@ class IRISVectorStore(VectorStore):
                     metadata_map = {row[0]: row[1] for row in cursor.fetchall()}
                 except (TypeError, AttributeError):
                     # Handle Mock objects by skipping metadata fetch
-                    logger.debug("Rows is not iterable (likely a Mock object), skipping metadata fetch")
+                    logger.debug(
+                        "Rows is not iterable (likely a Mock object), skipping metadata fetch"
+                    )
                     metadata_map = {}
 
             results = []
@@ -698,23 +783,35 @@ class IRISVectorStore(VectorStore):
                 row_iterator = iter(rows)
             except (TypeError, AttributeError):
                 # Handle Mock objects by returning empty results
-                logger.debug("Rows is not iterable (likely a Mock object), returning empty results")
+                logger.debug(
+                    "Rows is not iterable (likely a Mock object), returning empty results"
+                )
                 return []
 
             for row in rows:
                 doc_id, text_content, similarity_score = row
 
                 # Get metadata from the map
-                metadata_json = metadata_map.get(doc_id, None) if "metadata_map" in locals() else None
+                metadata_json = (
+                    metadata_map.get(doc_id, None)
+                    if "metadata_map" in locals()
+                    else None
+                )
 
                 # Process row data to ensure string content
-                document_data = {"doc_id": doc_id, "text_content": text_content, "metadata": metadata_json}
+                document_data = {
+                    "doc_id": doc_id,
+                    "text_content": text_content,
+                    "metadata": metadata_json,
+                }
 
                 document = self._ensure_string_content(document_data)
                 # Handle similarity_score that might be a list or single value
                 if isinstance(similarity_score, (list, tuple)):
                     # If it's a list/tuple, take the first element
-                    score_value = float(similarity_score[0]) if similarity_score else 0.0
+                    score_value = (
+                        float(similarity_score[0]) if similarity_score else 0.0
+                    )
                 elif similarity_score is not None:
                     # If it's already a single value, use it directly
                     score_value = float(similarity_score)
@@ -730,7 +827,9 @@ class IRISVectorStore(VectorStore):
                 logger.debug(f"Vector search returned {result_count} results")
             except (TypeError, AttributeError):
                 # Handle Mock objects or other non-sequence types
-                logger.debug("Vector search returned results (count unavailable due to mock object)")
+                logger.debug(
+                    "Vector search returned results (count unavailable due to mock object)"
+                )
             return results
 
         except Exception as e:
@@ -754,7 +853,9 @@ class IRISVectorStore(VectorStore):
             table_short_name = self.table_name.replace("RAG.", "")
 
             # Get expected configuration for this table
-            expected_config = self.schema_manager._get_expected_schema_config(table_short_name)
+            expected_config = self.schema_manager._get_expected_schema_config(
+                table_short_name
+            )
 
             # Get a connection and cursor
             connection = self._get_connection()
@@ -767,8 +868,10 @@ class IRISVectorStore(VectorStore):
                         cursor, expected_config, preserve_data=False
                     )
                 elif table_short_name == "DocumentTokenEmbeddings":
-                    success = self.schema_manager._migrate_document_token_embeddings_table(
-                        cursor, expected_config, preserve_data=False
+                    success = (
+                        self.schema_manager._migrate_document_token_embeddings_table(
+                            cursor, expected_config, preserve_data=False
+                        )
                     )
                 elif table_short_name == "DocumentEntities":
                     success = self.schema_manager._migrate_document_entities_table(
@@ -783,7 +886,9 @@ class IRISVectorStore(VectorStore):
                         cursor, expected_config, preserve_data=False
                     )
                 else:
-                    logger.warning(f"Unknown table type: {table_short_name}, cannot create automatically")
+                    logger.warning(
+                        f"Unknown table type: {table_short_name}, cannot create automatically"
+                    )
                     success = False
 
                 if success:
@@ -830,7 +935,11 @@ class IRISVectorStore(VectorStore):
                 doc_id, text_content, metadata_json = row
 
                 # Process row data to ensure string content
-                document_data = {"doc_id": doc_id, "text_content": text_content, "metadata": metadata_json}
+                document_data = {
+                    "doc_id": doc_id,
+                    "text_content": text_content,
+                    "metadata": metadata_json,
+                }
 
                 document = self._ensure_string_content(document_data)
                 documents.append(document)
@@ -841,7 +950,9 @@ class IRISVectorStore(VectorStore):
         except Exception as e:
             sanitized_error = self._sanitize_error_message(e, "fetch_documents_by_ids")
             logger.error(sanitized_error)
-            raise VectorStoreConnectionError(f"Failed to fetch documents by IDs: {sanitized_error}")
+            raise VectorStoreConnectionError(
+                f"Failed to fetch documents by IDs: {sanitized_error}"
+            )
         finally:
             cursor.close()
 
@@ -862,7 +973,9 @@ class IRISVectorStore(VectorStore):
         except Exception as e:
             sanitized_error = self._sanitize_error_message(e, "get_document_count")
             logger.error(sanitized_error)
-            raise VectorStoreConnectionError(f"Failed to get document count: {sanitized_error}")
+            raise VectorStoreConnectionError(
+                f"Failed to get document count: {sanitized_error}"
+            )
         finally:
             cursor.close()
 
@@ -883,7 +996,9 @@ class IRISVectorStore(VectorStore):
             connection.rollback()
             sanitized_error = self._sanitize_error_message(e, "clear_documents")
             logger.error(sanitized_error)
-            raise VectorStoreConnectionError(f"Failed to clear documents: {sanitized_error}")
+            raise VectorStoreConnectionError(
+                f"Failed to clear documents: {sanitized_error}"
+            )
         finally:
             cursor.close()
 
@@ -912,7 +1027,9 @@ class IRISVectorStore(VectorStore):
                 query_embedding = embedding_func.embed_query(query)
 
             # Call our implementation and return just documents for LangChain
-            results = self.similarity_search_by_embedding(query_embedding, k, filter_param)
+            results = self.similarity_search_by_embedding(
+                query_embedding, k, filter_param
+            )
             return [doc for doc, score in results]
 
         else:
@@ -921,5 +1038,6 @@ class IRISVectorStore(VectorStore):
             top_k = args[1] if len(args) > 1 else kwargs.get("top_k", 5)
             filter_param = args[2] if len(args) > 2 else kwargs.get("filter")
 
-            return self.similarity_search_by_embedding(query_embedding, top_k, filter_param)
-
+            return self.similarity_search_by_embedding(
+                query_embedding, top_k, filter_param
+            )
