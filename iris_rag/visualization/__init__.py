@@ -6,5 +6,6 @@ knowledge graphs, entity relationships, and traversal paths in the GraphRAG pipe
 """
 
 from .graph_visualizer import GraphVisualizer
+from .multi_pipeline_comparator import MultiPipelineComparator
 
-__all__ = ["GraphVisualizer"]
+__all__ = ["GraphVisualizer", "MultiPipelineComparator"]
