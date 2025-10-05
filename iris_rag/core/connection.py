@@ -36,6 +36,7 @@ class ConnectionManager:
         """
         self._connections = {}  # Initialize as instance variable
         self._connection_times = {}  # Track connection creation time
+        self._connection_use_counts = {}  # Track number of times connection used
         if config_manager is None:
             # This will eventually load from a default path or environment
             self.config_manager = ConfigurationManager()
@@ -62,6 +63,27 @@ class ConnectionManager:
             logger.warning(f"Connection health check failed: {e}")
             return False
 
+    def invalidate_connection(self, backend_name: str = "iris"):
+        """
+        Invalidate a cached connection so it will be recreated on next request.
+
+        Use this when you encounter connection errors to force a fresh connection.
+
+        Args:
+            backend_name: The name of the backend whose connection to invalidate
+        """
+        if backend_name in self._connections:
+            logger.info(f"Invalidating connection for {backend_name}")
+            try:
+                self._connections[backend_name].close()
+            except:
+                pass
+            del self._connections[backend_name]
+            if backend_name in self._connection_times:
+                del self._connection_times[backend_name]
+            if backend_name in self._connection_use_counts:
+                del self._connection_use_counts[backend_name]
+
     def get_connection(self, backend_name: str = "iris"):
         """
         Retrieves or creates a database connection for the specified backend.
@@ -84,18 +106,32 @@ class ConnectionManager:
         if backend_name in self._connections:
             connection = self._connections[backend_name]
             connection_age = time.time() - self._connection_times.get(backend_name, 0)
+            use_count = self._connection_use_counts.get(backend_name, 0)
 
-            # Refresh connection if older than 20 minutes or unhealthy
-            if connection_age > 1200 or not self._is_connection_healthy(connection):
-                logger.info(f"Refreshing stale connection for {backend_name} (age: {connection_age:.0f}s)")
-                try:
-                    connection.close()
-                except:
-                    pass
-                del self._connections[backend_name]
-                del self._connection_times[backend_name]
+            # Check health only if connection is old (>20 minutes)
+            # Don't refresh based on use count - causes IRIS driver segfaults
+            should_health_check = connection_age > 1200
+
+            if should_health_check:
+                is_healthy = self._is_connection_healthy(connection)
+                if not is_healthy:
+                    logger.info(f"Refreshing unhealthy connection for {backend_name} (age: {connection_age:.0f}s, uses: {use_count})")
+                    try:
+                        connection.close()
+                    except:
+                        pass
+                    del self._connections[backend_name]
+                    del self._connection_times[backend_name]
+                    del self._connection_use_counts[backend_name]
+                else:
+                    # Health check passed, reset use count and continue
+                    self._connection_use_counts[backend_name] = 0
+                    logger.debug(f"Connection health check passed (age: {connection_age:.0f}s, uses: {use_count})")
+                    return connection
             else:
-                return self._connections[backend_name]
+                # Track usage and return cached connection
+                self._connection_use_counts[backend_name] = use_count + 1
+                return connection
 
         # Get database configuration
         config_key = f"database:{backend_name}"
