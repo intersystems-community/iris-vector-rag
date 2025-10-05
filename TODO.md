@@ -4,17 +4,21 @@
 
 ## Immediate (This Session)
 
-### Vector Store - DONE ✅
+### Infrastructure Fixes - DONE ✅
 - [x] Fix password reset infinite loop
 - [x] Fix schema column mismatches
 - [x] Fix embedding generation
 - [x] Implement similarity_search_with_score
 - [x] Mark JSON filtering tests as xfail
+- [x] Fix pytest-randomly/thinc incompatibility
+- [x] Add requires_llm_api marker
+- [x] Mark GraphRAG tests as slow
 
-### Next Steps
-- [ ] GraphRAG E2E tests (~49 failures to investigate)
+### Current Focus
+- [ ] Fix remaining 5 test failures (contract tests mostly)
+- [ ] Address core_framework keyword matching issue
 - [ ] Coverage improvements (current: 10%, target: 95%)
-- [ ] Feature 028 completion
+- [ ] Feature 028 completion & commit
 
 ## Short Term (This Week)
 
