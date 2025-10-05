@@ -18,8 +18,12 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 import pytest_asyncio
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add repository root to Python path for imports
 repo_root = Path(__file__).parent.parent
