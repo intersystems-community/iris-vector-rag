@@ -3,7 +3,7 @@ database:
   iris:
     driver: "intersystems_iris.dbapi._DBAPI"
     host: "localhost"
-    port: "1972"
+    port: "1974"
     namespace: "USER"
     username: "_SYSTEM"
     password: "SYS"
@@ -40,18 +40,22 @@ embeddings:
 # Entity extraction configuration
 entity_extraction:
   enabled: true
-  method: "ontology_hybrid"              # ontology_hybrid, llm_basic, pattern_only, hybrid
+  method: "llm_basic"                    # ontology_hybrid, llm_basic, pattern_only, hybrid
   confidence_threshold: 0.7              # Minimum confidence score for entities
-  entity_types:                         # Enabled entity types (auto-detected from ontology if available)
-    - "ENTITY"
-    - "CONCEPT" 
-    - "PROCESS"
-    - "RESOURCE"
-    - "EVENT"
+  entity_types:                         # Enabled entity types (matches pattern definitions)
+    - "DRUG"
+    - "DISEASE"
+    - "GENE"
+    - "ANATOMY"
+    - "PROCEDURE"
+    - "SYMPTOM"
+    - "TREATMENT"
+    - "PERSON"
+    - "ORGANIZATION"
   llm:
-    model: "gpt-4"                       # LLM model for extraction
+    model: "qwen2.5:7b"                  # LLM model for extraction (Ollama) - 7B for speed
     temperature: 0.1                     # Low temperature for consistent extraction
-    max_tokens: 2000                     # Max tokens for LLM response
+    max_tokens: 1000                     # Max tokens for LLM response (reduced for speed)
   storage:
     entities_table: "RAG.Entities"      # Database table for entities
     relationships_table: "RAG.EntityRelationships"  # Table for relationships
@@ -131,6 +135,67 @@ graphrag:
   max_depth: 2                           # Maximum graph traversal depth
   max_entities: 50                       # Maximum entities per traversal
   enable_vector_fallback: false          # Fallback to vector search if graph fails
+
+# IRIS Graph Core Hybrid Search Configuration
+iris_graph_core:
+  enabled: true                          # Enable iris_graph_core hybrid search capabilities
+
+  # RRF (Reciprocal Rank Fusion) Configuration
+  rrf:
+    c_parameter: 60                      # RRF constant (typically 60)
+    default_vector_k: 30                 # Default number of vector candidates
+    default_text_k: 30                   # Default number of text candidates
+    default_weights: [0.5, 0.3, 0.2]    # Default fusion weights [vector, text, graph]
+
+  # HNSW Vector Search Optimization
+  hnsw:
+    enabled: true                        # Enable HNSW-optimized vector search
+    fallback_to_csv: true                # Fall back to CSV parsing if HNSW unavailable
+    M: 16                                # HNSW M parameter (bi-directional links)
+    efConstruction: 200                  # HNSW efConstruction parameter
+    distance: "COSINE"                   # Distance metric: COSINE, EUCLIDEAN, DOT
+    try_acorn: false                     # Try ACORN=1 optimization (requires licensed IRIS)
+    community_edition_compatible: true   # Ensure compatibility with IRIS Community Edition
+    # For licensed IRIS users: Set try_acorn: true and use intersystemsdc/iris-ml:latest
+    # For community users: Keep try_acorn: false and use intersystemsdc/iris-community:latest
+
+  # Text Search Configuration
+  text_search:
+    enable_ifind: true                   # Use IRIS iFind for enhanced text search
+    fallback_to_like: true               # Fall back to LIKE patterns if iFind unavailable
+    min_confidence_threshold: 0          # Minimum confidence for text results (0-1000)
+    use_stemming: true                   # Enable stemming in iFind
+    use_stopwords: true                  # Enable stopword filtering in iFind
+
+  # Graph Traversal Configuration
+  graph_traversal:
+    max_expansion_depth: 2               # Maximum depth for neighborhood expansion
+    default_confidence_threshold: 500   # Default confidence threshold (0-1000)
+    max_entities_per_expansion: 50       # Maximum entities per expansion step
+    use_json_table_filtering: true       # Use JSON_TABLE for confidence filtering
+
+  # Hybrid Search Method Configuration
+  hybrid_search:
+    default_method: "rrf"                # Default method: hybrid, rrf, vector, text, kg
+    adaptive_routing: true               # Enable adaptive query routing
+    enable_multi_modal: true             # Enable multi-modal search fusion
+
+  # Schema Management for Graph Core Tables
+  schema:
+    auto_create_tables: true             # Automatically create iris_graph_core tables
+    auto_migrate_schema: true            # Automatically migrate schema changes
+    required_tables:                     # Tables required for iris_graph_core
+      - "rdf_labels"
+      - "rdf_props"
+      - "rdf_edges"
+      - "kg_NodeEmbeddings_optimized"
+
+  # Performance and Optimization
+  performance:
+    cache_vector_queries: true           # Cache frequently used vector queries
+    cache_text_queries: true             # Cache frequently used text queries
+    max_cache_size: 1000                 # Maximum number of cached queries
+    query_timeout_ms: 30000              # Query timeout in milliseconds
   
   # General ontology integration for GraphRAG
   ontology_integration:
