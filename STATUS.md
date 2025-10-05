@@ -30,7 +30,18 @@
 
 ## Latest Work (2025-10-05)
 
-### Vector Store Fixes (Feature 028)
+### Test Infrastructure Fixes (Feature 028) - Session 2
+Fixed critical connection/port issues:
+1. ✅ Environment variables not loaded in tests (added load_dotenv to tests/conftest.py)
+2. ✅ Port configuration confusion (Docker maps 1972→11972, must use 11972 in .env)
+3. ✅ ConnectionManager connecting to wrong database (due to missing env vars)
+
+**Impact**:
+- Basic Pipeline E2E: 10 failures → 3 failures (70% improvement)
+- 19/22 tests passing (86%)
+- Remaining 3 failures are test data/logic issues, not infrastructure
+
+### Vector Store Fixes (Feature 028) - Session 1
 Fixed critical issues:
 1. ✅ Password reset infinite loop
 2. ✅ Schema column standardization (doc_id/text_content)
