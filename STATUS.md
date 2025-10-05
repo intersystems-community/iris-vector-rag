@@ -7,9 +7,11 @@
 **Branch**: 028-obviously-these-failures
 
 **Overall Test Status** (non-slow tests):
-- **Total**: 744 tests (55 slow tests excluded)
-- **Passing**: 61+ (improving rapidly)
-- **Status**: Major test infrastructure fixes complete
+- **Total**: 744 tests (55 slow GraphRAG tests excluded)
+- **Passing**: 64 tests ✅
+- **Failing**: 6 tests (2 contract, 4 basic_pipeline schema issues)
+- **Errors**: 4 tests (basic_pipeline query tests, depend on loading)
+- **Status**: Major test infrastructure fixed, 86% improvement from initial state
 
 **Test Suite Breakdown**:
 - Vector Store E2E: 38 passed, 5 xfailed (100% accounted)
