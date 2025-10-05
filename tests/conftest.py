@@ -545,7 +545,7 @@ def database_with_clean_schema(request):
 
     request.addfinalizer(cleanup)
 
-    yield conn, test_state
+    yield conn
 
     # Cleanup runs here automatically via addfinalizer
 
