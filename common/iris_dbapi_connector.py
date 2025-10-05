@@ -2,10 +2,93 @@
 Connector for InterSystems IRIS using Python DBAPI
 """
 
-import os
 import logging
+import os
+import subprocess
+import re
 
 logger = logging.getLogger(__name__)
+
+
+def auto_detect_iris_port():
+    """
+    Auto-detect running IRIS instance and its SuperServer port.
+
+    Checks in priority order:
+    1. Docker containers with IRIS (port 1972 mapped)
+    2. Native IRIS instances via 'iris list' command
+
+    Returns:
+        int: SuperServer port of first accessible instance, or None if none found.
+    """
+    # Priority 1: Check for Docker IRIS containers
+    try:
+        result = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}\t{{.Ports}}"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+
+        if result.returncode == 0:
+            # Look for IRIS containers with port mappings
+            for line in result.stdout.split('\n'):
+                if 'iris' in line.lower() and '1972' in line:
+                    # Parse port mapping like "0.0.0.0:1972->1972/tcp"
+                    # Extract the external port (first number)
+                    match = re.search(r'0\.0\.0\.0:(\d+)->1972/tcp', line)
+                    if match:
+                        port = int(match.group(1))
+                        logger.info(f"✅ Auto-detected Docker IRIS on port {port}")
+                        return port
+
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        logger.debug("Docker not available or timed out, trying native IRIS")
+    except Exception as e:
+        logger.debug(f"Docker check failed: {e}")
+
+    # Priority 2: Check native IRIS instances
+    try:
+        result = subprocess.run(
+            ["iris", "list"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+
+        if result.returncode != 0:
+            logger.warning(f"'iris list' command failed with exit code {result.returncode}")
+            return None
+
+        # Parse output for running instances
+        # Format: "status:       running, since ..."
+        # Then next section: "SuperServers: <port>"
+        lines = result.stdout.split('\n')
+
+        for i, line in enumerate(lines):
+            if 'status:' in line and 'running' in line:
+                # Found a running instance, look for SuperServers port in next few lines
+                for j in range(i+1, min(i+5, len(lines))):
+                    if 'SuperServers:' in lines[j]:
+                        # Extract port number
+                        match = re.search(r'SuperServers:\s+(\d+)', lines[j])
+                        if match:
+                            port = int(match.group(1))
+                            logger.info(f"✅ Auto-detected native IRIS on SuperServer port {port}")
+                            return port
+
+        logger.warning("No running IRIS instances found")
+        return None
+
+    except FileNotFoundError:
+        logger.warning("'iris' command not found in PATH - cannot auto-detect")
+        return None
+    except subprocess.TimeoutExpired:
+        logger.warning("'iris list' command timed out")
+        return None
+    except Exception as e:
+        logger.warning(f"Failed to auto-detect IRIS port: {e}")
+        return None
 
 
 def _get_iris_dbapi_module():
@@ -67,7 +150,10 @@ def _get_iris_dbapi_module():
 
 def get_iris_dbapi_connection():
     """
-    Establishes a connection to InterSystems IRIS using DBAPI.
+    Establishes a connection to InterSystems IRIS using direct iris.connect().
+
+    This replaces the problematic DBAPI connection that had SSL errors.
+    Uses direct iris.connect() which is proven to work reliably.
 
     Reads connection parameters from environment variables:
     - IRIS_HOST
@@ -75,23 +161,31 @@ def get_iris_dbapi_connection():
     - IRIS_NAMESPACE
     - IRIS_USER
     - IRIS_PASSWORD
-    - IRIS_CONNECTION_STRING (if provided, overrides individual parameters)
 
     Returns:
-        A DBAPI connection object or None if connection fails.
+        A direct IRIS connection object or None if connection fails.
     """
-    # Get the DBAPI module using lazy loading to avoid circular imports
-    irisdbapi = get_iris_dbapi_module()
-
-    if not irisdbapi:
-        logger.error(
-            "Cannot create DBAPI connection: InterSystems IRIS DBAPI module is not available."
-        )
+    # Use direct iris import instead of DBAPI
+    try:
+        import iris
+    except ImportError as e:
+        logger.error(f"Cannot import iris module: {e}")
         return None
 
-    # For the iris module, we need to create a native connection first, then use it for DBAPI
+    # Get connection parameters from environment with auto-detection fallback
     host = os.environ.get("IRIS_HOST", "localhost")
-    port = int(os.environ.get("IRIS_PORT", 1972))
+
+    # Auto-detect port if not set in environment
+    port_env = os.environ.get("IRIS_PORT")
+    if port_env:
+        port = int(port_env)
+        logger.info(f"Using IRIS port from environment: {port}")
+    else:
+        port = auto_detect_iris_port()
+        if port is None:
+            logger.warning("Could not auto-detect IRIS port, falling back to default 1972")
+            port = 1972
+
     namespace = os.environ.get("IRIS_NAMESPACE", "USER")
     user = os.environ.get("IRIS_USER", "_SYSTEM")
     password = os.environ.get("IRIS_PASSWORD", "SYS")
@@ -101,25 +195,19 @@ def get_iris_dbapi_connection():
             f"Attempting IRIS connection to {host}:{port}/{namespace} as user {user}"
         )
 
-        # Use the correct connection parameters format
-        conn = irisdbapi.connect(
-            hostname=host,
-            port=port,
-            namespace=namespace,
-            username=user,
-            password=password,
-        )
+        # Use direct iris.connect() - this avoids SSL issues
+        conn = iris.connect(host, port, namespace, user, password)
 
-        # Validate the connection handle
+        # Validate the connection
         if conn is None:
-            logger.error("DBAPI connection failed: _handle is NULL")
+            logger.error("Direct IRIS connection failed: connection is None")
             return None
 
         # Test the connection with a simple query
         try:
             cursor = conn.cursor()
             if cursor is None:
-                logger.error("DBAPI connection failed: cursor is NULL")
+                logger.error("Direct IRIS connection failed: cursor is None")
                 conn.close()
                 return None
 
@@ -128,23 +216,23 @@ def get_iris_dbapi_connection():
             cursor.close()
 
             if result is None:
-                logger.error("DBAPI connection failed: test query returned NULL")
+                logger.error("Direct IRIS connection failed: test query returned None")
                 conn.close()
                 return None
 
         except Exception as test_e:
-            logger.error(f"DBAPI connection validation failed: {test_e}")
+            logger.error(f"Direct IRIS connection validation failed: {test_e}")
             try:
                 conn.close()
             except:
                 pass
             return None
 
-        logger.info("Successfully connected to IRIS using DBAPI interface.")
+        logger.info("✅ Successfully connected to IRIS using direct iris.connect()")
         return conn
 
     except Exception as e:
-        logger.error(f"DBAPI connection failed: {e}")
+        logger.error(f"Direct IRIS connection failed: {e}")
         return None
 
 
