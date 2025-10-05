@@ -190,50 +190,73 @@ def get_iris_dbapi_connection():
     user = os.environ.get("IRIS_USER", "_SYSTEM")
     password = os.environ.get("IRIS_PASSWORD", "SYS")
 
-    try:
-        logger.info(
-            f"Attempting IRIS connection to {host}:{port}/{namespace} as user {user}"
-        )
+    # Retry connection with exponential backoff for transient errors
+    max_retries = 3
+    retry_delay = 0.5  # Start with 500ms delay
 
-        # Use direct iris.connect() - this avoids SSL issues
-        conn = iris.connect(host, port, namespace, user, password)
-
-        # Validate the connection
-        if conn is None:
-            logger.error("Direct IRIS connection failed: connection is None")
-            return None
-
-        # Test the connection with a simple query
+    for attempt in range(max_retries):
         try:
-            cursor = conn.cursor()
-            if cursor is None:
-                logger.error("Direct IRIS connection failed: cursor is None")
-                conn.close()
+            if attempt > 0:
+                import time
+                logger.info(f"Retry attempt {attempt + 1}/{max_retries} after {retry_delay}s delay")
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+
+            logger.info(
+                f"Attempting IRIS connection to {host}:{port}/{namespace} as user {user}"
+            )
+
+            # Use direct iris.connect() - this avoids SSL issues
+            conn = iris.connect(host, port, namespace, user, password)
+
+            # Validate the connection
+            if conn is None:
+                logger.error("Direct IRIS connection failed: connection is None")
+                if attempt < max_retries - 1:
+                    continue
                 return None
 
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            cursor.close()
-
-            if result is None:
-                logger.error("Direct IRIS connection failed: test query returned None")
-                conn.close()
-                return None
-
-        except Exception as test_e:
-            logger.error(f"Direct IRIS connection validation failed: {test_e}")
+            # Test the connection with a simple query
             try:
-                conn.close()
-            except:
-                pass
+                cursor = conn.cursor()
+                if cursor is None:
+                    logger.error("Direct IRIS connection failed: cursor is None")
+                    conn.close()
+                    if attempt < max_retries - 1:
+                        continue
+                    return None
+
+                cursor.execute("SELECT 1")
+                result = cursor.fetchone()
+                cursor.close()
+
+                if result is None:
+                    logger.error("Direct IRIS connection failed: test query returned None")
+                    conn.close()
+                    if attempt < max_retries - 1:
+                        continue
+                    return None
+
+            except Exception as test_e:
+                logger.error(f"Direct IRIS connection validation failed: {test_e}")
+                try:
+                    conn.close()
+                except:
+                    pass
+                if attempt < max_retries - 1:
+                    continue
+                return None
+
+            logger.info("✅ Successfully connected to IRIS using direct iris.connect()")
+            return conn
+
+        except Exception as e:
+            logger.error(f"Direct IRIS connection failed (attempt {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                continue
             return None
 
-        logger.info("✅ Successfully connected to IRIS using direct iris.connect()")
-        return conn
-
-    except Exception as e:
-        logger.error(f"Direct IRIS connection failed: {e}")
-        return None
+    return None
 
 
 # Lazy-loaded DBAPI module - initialized only when needed
