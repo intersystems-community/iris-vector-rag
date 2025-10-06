@@ -47,8 +47,10 @@ def test_pipeline_with_queries(
 
     try:
         # Ensure environment variables are set for consistent connection
-        os.environ["IRIS_HOST"] = "localhost"
-        os.environ["IRIS_PORT"] = "1974"
+        # Use environment variable if set (from Makefile), otherwise default to auto-detect port
+        if "IRIS_HOST" not in os.environ:
+            os.environ["IRIS_HOST"] = "localhost"
+        # DON'T override IRIS_PORT if already set by make target (e.g., 11972 for Docker)
 
         # Verify entities exist before testing GraphRAG pipelines
         if "graphrag" in pipeline_type:
@@ -384,9 +386,12 @@ def main():
     """Main entry point."""
     setup_logging()
 
-    # Set environment variables early to ensure consistent connection
-    os.environ["IRIS_HOST"] = "localhost"
-    os.environ["IRIS_PORT"] = "1974"
+    # Use environment variables from Makefile if set, otherwise use defaults
+    # Makefile sets IRIS_PORT=11972 for Docker IRIS
+    if "IRIS_HOST" not in os.environ:
+        os.environ["IRIS_HOST"] = "localhost"
+    if "IRIS_PORT" not in os.environ:
+        os.environ["IRIS_PORT"] = "1974"  # Default, but Makefile overrides this
 
     logger.info("🚀 Starting Simple Working RAGAS Evaluation")
     logger.info("=" * 60)
@@ -415,8 +420,12 @@ def main():
         },
     ]
 
-    # Test all available pipelines for comprehensive comparison
-    pipeline_types = ["basic", "basic_rerank", "crag", "graphrag", "hybrid_graphrag"]
+    # Get pipeline types from environment (set by Makefile) or use defaults
+    default_pipelines = "basic,basic_rerank,crag,graphrag,pylate_colbert"
+    pipeline_types_str = os.environ.get("RAGAS_PIPELINES", default_pipelines)
+    pipeline_types = [p.strip() for p in pipeline_types_str.split(",")]
+    logger.info(f"Testing pipelines: {', '.join(pipeline_types)}")
+
     results = {}
 
     start_time = time.time()

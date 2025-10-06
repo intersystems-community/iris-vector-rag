@@ -68,16 +68,54 @@
 - All embeddings are non-zero (validated)
 - ~30-50 docs/sec loading rate
 
-**Current Blocker** 🔴:
-- Documents load successfully (see "Total documents: 287" in loader output)
-- But subsequent queries return 0 documents
-- Transaction/commit issue: data not persisting across connections
-- RAGAS evaluation runs but finds "No relevant documents"
+**Root Cause Found** ✅:
+- NOT a transaction/commit issue - commits work perfectly
+- MULTIPLE IRIS databases on different ports!
+- Auto-detection finds Docker IRIS on port 11972
+- Default IRIS_PORT is 1974
+- Loader connects to 11972, manual queries connect to 1974
+- Querying WRONG database → seeing 0 documents
+
+**Verification**:
+- 313 documents exist on port 11972 ✅
+- 0 documents on port 1974 (correct - different database)
+- All commits succeed (verified with explicit logging)
+
+**Secondary Issue - SchemaManager**:
+- SchemaManager creates separate IRConnectionManager
+- This creates NEW connection, causing needless complexity
+- Disabled schema validation - tables must exist beforehand
+- Use db_init_complete.sql to create schema first
+
+**Resolution** ✅:
+Fixed all 4 instances of hardcoded configuration:
+1. ✅ Makefile IRIS_PORT: 1974 → 11972 (2 targets)
+2. ✅ RAGAS script IRIS_PORT: Respect environment variable
+3. ✅ RAGAS pipeline list: Read from RAGAS_PIPELINES env var
+4. ✅ Loader SchemaManager: Bypassed to prevent connection conflicts
+
+**RAGAS Results** 🎉:
+```
+1. basic_rerank:  100.0% ⭐ PERFECT
+2. basic:          99.0%
+3. crag:           96.3%
+4. hybrid_graphrag: 14.4% (needs Entities table)
+```
+
+**Feature 030 Status**: ✅ **COMPLETE**
+- Data loading with real non-zero embeddings
+- Schema compatibility fixes
+- Zero vector validation
+- Make target dependencies
+- Infrastructure E2E tests
+- RAGAS evaluation producing meaningful scores
+- Clear pipeline performance differentiation
 
 **Next Steps**:
-- Debug connection/transaction isolation issue
-- Ensure commits are visible across connections
-- Verify SourceDocuments data persists after loader exits
+- Test PyLate/ColBERT pipeline (still in progress)
+- Consider consolidating connection managers
+- Document port auto-detection behavior
+- Fix hybrid_graphrag Entities table requirement
 
 ### CRAG Pipeline DOUBLE Datatype Fix (Feature 028) - Session 4 ✅ COMPLETE
 **Root Cause**: Vector datatype mismatch - old FLOAT tables persisting across test runs

@@ -398,6 +398,86 @@ ANTHROPIC_API_KEY=test_key
                       for line in ragas_target_lines), \
                 "RAGAS target descriptions should mention '5 pipelines'"
 
+    # =============================================================================
+    # Dynamic Pipeline Discovery Tests (Feature 031)
+    # =============================================================================
+
+    def test_get_pipeline_types_script_exists(self):
+        """Verify helper script file exists at expected location."""
+        script_path = Path("scripts/utils/get_pipeline_types.py")
+        assert script_path.exists(), "Helper script not found"
+        assert script_path.is_file(), "Helper script path is not a file"
+
+    def test_get_pipeline_types_output_format(self):
+        """Verify helper script outputs comma-separated list."""
+        result = subprocess.run(
+            ["python", "scripts/utils/get_pipeline_types.py"],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"Script failed: {result.stderr}"
+
+        output = result.stdout.strip()
+        assert "," in output, "Output must contain commas"
+        assert " " not in output, "Output must not contain spaces"
+
+        pipelines = output.split(",")
+        assert len(pipelines) > 0, "Must have at least one pipeline"
+        for name in pipelines:
+            assert name.isidentifier() or "_" in name, f"Invalid pipeline name: {name}"
+
+    def test_get_pipeline_types_matches_factory(self):
+        """Verify helper script output matches iris_rag factory."""
+        # Get helper script output
+        result = subprocess.run(
+            ["python", "scripts/utils/get_pipeline_types.py"],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
+        script_output = set(result.stdout.strip().split(","))
+
+        # Expected factory types (as of 2025-10-06)
+        expected_types = {"basic", "basic_rerank", "crag", "graphrag", "pylate_colbert"}
+
+        assert script_output == expected_types, \
+            f"Helper output {script_output} doesn't match factory {expected_types}"
+
+    def test_ragas_target_uses_dynamic_pipelines(self):
+        """Verify Makefile test-ragas-sample target calls helper script."""
+        makefile_path = Path("Makefile")
+        makefile_content = makefile_path.read_text()
+
+        # Find test-ragas-sample target
+        lines = makefile_content.split('\n')
+        found_target = False
+        found_helper_call = False
+
+        for line in lines:
+            if 'test-ragas-sample:' in line:
+                found_target = True
+            if found_target and 'get_pipeline_types.py' in line:
+                found_helper_call = True
+                break
+
+        assert found_target, "test-ragas-sample target not found in Makefile"
+        assert found_helper_call, "Makefile doesn't call get_pipeline_types.py helper"
+
+    def test_ragas_target_respects_env_override(self):
+        """Verify RAGAS_PIPELINES env var overrides helper script."""
+        makefile_path = Path("Makefile")
+        makefile_content = makefile_path.read_text()
+
+        # Check for pattern: ${RAGAS_PIPELINES:-$(shell ...)}
+        # This ensures env var takes precedence
+        assert "RAGAS_PIPELINES:-" in makefile_content or \
+               "RAGAS_PIPELINES:=" in makefile_content, \
+               "Makefile doesn't preserve env var override capability"
+
+    # =============================================================================
+    # RAGAS Evaluation Tests
+    # =============================================================================
+
     @pytest.mark.slow
     def test_make_test_ragas_sample_target(self):
         """Test 'make test-ragas-sample' target runs sample evaluation.

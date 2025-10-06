@@ -662,10 +662,10 @@ test-ragas-1000: ## E2E: Download+load 1000 PMC docs, run RAGAS across all 5 pip
 	$(call print_message,$(BLUE),E2E RAGAS on 1000 PMC documents)
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	export IRIS_HOST=localhost; \
-	export IRIS_PORT=1974; \
+	export IRIS_PORT=11972; \
 	export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
 	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-15}; \
-	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"basic,basic_rerank,crag,graphrag,pylate_colbert"}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-$$(.venv/bin/python scripts/utils/get_pipeline_types.py)}; \
 	python scripts/utilities/download_real_pmc_docs.py; \
 	python scripts/generate_ragas_evaluation.py; \
 	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
@@ -678,10 +678,10 @@ test-ragas-sample: load-data ## E2E: Quick RAGAS on sample 10 PMC docs using MCP
 	$(call print_message,$(BLUE),Quick RAGAS on sample 10 PMC docs)
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	export IRIS_HOST=localhost; \
-	export IRIS_PORT=1974; \
+	export IRIS_PORT=11972; \
 	export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/sample_10_docs}; \
 	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-8}; \
-	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"basic,basic_rerank,crag,graphrag,pylate_colbert"}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-$$(.venv/bin/python scripts/utils/get_pipeline_types.py)}; \
 	python scripts/simple_working_ragas.py; \
 	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
 
@@ -694,7 +694,7 @@ test-ragas-1000-real: docker-up docker-wait ## E2E: Download+load 1000 PMC docs,
 t@set -a; [ -f .env ] && . ./.env; set +a; \
 	@export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
 	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-15}; \
-	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"basic,basic_rerank,crag,graphrag,pylate_colbert"}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-$$(.venv/bin/python scripts/utils/get_pipeline_types.py)}; \
 	python scripts/utilities/download_real_pmc_docs.py; \
 	python scripts/generate_ragas_evaluation.py; \
 	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
