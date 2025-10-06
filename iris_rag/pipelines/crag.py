@@ -389,15 +389,15 @@ class CRAGPipeline(RAGPipeline):
         try:
             # Generate query embedding
             query_embedding = self.embedding_func([query])[0]
-            # Format embedding for IRIS SQL - must embed directly in SQL
-            query_embedding_str = ",".join([f"{x:.10f}" for x in query_embedding])
+            # Format embedding for IRIS SQL - must embed directly in SQL with brackets
+            query_embedding_str = "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
 
             # Try chunk-based retrieval with parameterized query
             chunk_sql = f"""
                 SELECT TOP {top_k}
                     doc_id,
                     chunk_text,
-                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?)) as similarity_score
+                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?, DOUBLE, 384)) as similarity_score
                 FROM RAG.DocumentChunks
                 WHERE chunk_embedding IS NOT NULL
                 ORDER BY similarity_score DESC
@@ -498,8 +498,8 @@ class CRAGPipeline(RAGPipeline):
                 if isinstance(query_embedding, list) and len(query_embedding) > 0:
                     if isinstance(query_embedding[0], list):
                         query_embedding = query_embedding[0]
-                # Use working pattern from archived CRAG V2 (lines 50-59)
-                query_embedding_str = ",".join([f"{x:.10f}" for x in query_embedding])
+                # Use working pattern from archived CRAG V2 (lines 50-59) - add brackets for TO_VECTOR
+                query_embedding_str = "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
                 logger.debug(
                     f"CRAG _knowledge_base_expansion() generated embedding for semantic search: length={len(query_embedding)}"
                 )
@@ -509,7 +509,7 @@ class CRAGPipeline(RAGPipeline):
                     SELECT TOP {top_k * 2}
                         doc_id,
                         text_content,
-                        VECTOR_COSINE(embedding, TO_VECTOR(?)) as similarity_score
+                        VECTOR_COSINE(embedding, TO_VECTOR(?, DOUBLE, 384)) as similarity_score
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY similarity_score DESC

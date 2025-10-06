@@ -28,7 +28,7 @@ CREATE TABLE RAG.DocumentChunks (
     chunk_id VARCHAR(255),
     doc_id VARCHAR(255),
     chunk_text TEXT,
-    chunk_embedding VECTOR(FLOAT, 384),
+    chunk_embedding VECTOR(DOUBLE, 384),
     chunk_index INTEGER,
     chunk_type VARCHAR(100),
     metadata TEXT,
