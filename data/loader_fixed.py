@@ -346,8 +346,12 @@ def load_documents_to_iris(
 
                 loaded_doc_count += batch_success_count
                 logger.info(f"Batch {batch_idx}: batch_success_count={batch_success_count}, loaded_doc_count now={loaded_doc_count}")
-                connection.commit()
-                logger.debug(f"Batch {batch_idx}: commit successful")
+                try:
+                    connection.commit()
+                    logger.info(f"Batch {batch_idx}: ✓ COMMIT successful")
+                except Exception as commit_err:
+                    logger.error(f"Batch {batch_idx}: ❌ COMMIT FAILED: {commit_err}")
+                    raise
 
                 if (batch_idx + 1) % 1 == 0 or batch_idx == len(doc_batches) - 1:
                     elapsed = time.time() - start_time
@@ -425,20 +429,15 @@ def process_and_load_documents(
             }
 
     try:
-        # Ensure schema exists for SourceDocuments
-        try:
-            from iris_rag.config.manager import ConfigurationManager as IRConfigManager
-            from iris_rag.core.connection import (
-                ConnectionManager as IRConnectionManager,
-            )
-            from iris_rag.storage.schema_manager import SchemaManager as IRSchemaManager
-
-            ir_config = IRConfigManager()
-            ir_conn_mgr = IRConnectionManager(ir_config)
-            schema_mgr = IRSchemaManager(ir_conn_mgr, ir_config)
-            schema_mgr.ensure_table_schema("SourceDocuments")
-        except Exception as se:
-            logger.warning(f"Could not ensure schema: {se}")
+        # Schema validation DISABLED - prevents connection conflicts
+        # SourceDocuments table must exist before running this loader
+        # Use db_init_complete.sql or pipeline setup to create tables
+        #
+        # Problem: SchemaManager creates separate IRConnectionManager with new connection
+        # This causes transaction isolation - loader commits to conn A,
+        # but queries use conn B and can't see uncommitted data from conn A
+        #
+        # Solution: Skip schema manager, require tables to exist beforehand
         # Process and collect documents
         logger.info(f"Processing up to {limit} documents from {pmc_directory}")
         documents = list(process_pmc_files(pmc_directory, limit))
