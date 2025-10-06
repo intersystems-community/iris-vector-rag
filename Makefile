@@ -658,14 +658,14 @@ logs:
 # RAGAS E2E EVALUATION
 # =============================================================================
 .PHONY: test-ragas-1000
-test-ragas-1000: ## E2E: Download+load 1000 PMC docs, run RAGAS across pipelines (incl. HybridGraphRAG)
+test-ragas-1000: ## E2E: Download+load 1000 PMC docs, run RAGAS across all 5 pipelines
 	$(call print_message,$(BLUE),E2E RAGAS on 1000 PMC documents)
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	export IRIS_HOST=localhost; \
 	export IRIS_PORT=1974; \
 	export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
 	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-15}; \
-	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"BasicRAG,BasicRerank,CRAG,GraphRAG,HybridGraphRAG"}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"basic,basic_rerank,crag,graphrag,pylate_colbert"}; \
 	python scripts/utilities/download_real_pmc_docs.py; \
 	python scripts/generate_ragas_evaluation.py; \
 	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
@@ -674,14 +674,14 @@ test-ragas-1000: ## E2E: Download+load 1000 PMC docs, run RAGAS across pipelines
 # RAGAS QUICK SMOKE TEST
 # =============================================================================
 .PHONY: test-ragas-sample
-test-ragas-sample: ## E2E: Quick RAGAS on sample 10 PMC docs using MCP IRIS
+test-ragas-sample: load-data ## E2E: Quick RAGAS on sample 10 PMC docs using MCP IRIS
 	$(call print_message,$(BLUE),Quick RAGAS on sample 10 PMC docs)
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	export IRIS_HOST=localhost; \
 	export IRIS_PORT=1974; \
 	export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/sample_10_docs}; \
 	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-8}; \
-	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"BasicRAG,BasicRerank,CRAG,GraphRAG,HybridGraphRAG"}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"basic,basic_rerank,crag,graphrag,pylate_colbert"}; \
 	python scripts/simple_working_ragas.py; \
 	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
 
