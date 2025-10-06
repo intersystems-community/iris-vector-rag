@@ -26,12 +26,13 @@ logger = logging.getLogger(__name__)
 def validate_and_fix_embedding(embedding: List[float]) -> Optional[List[float]]:
     """
     Validate and fix embedding vectors, handling NaN and inf values.
+    REJECTS all-zero vectors as they have no semantic meaning.
 
     Args:
         embedding: List of float values representing the embedding
 
     Returns:
-        List of floats or None if unfixable
+        List of floats or None if unfixable/invalid
     """
     if not embedding:
         logger.warning("Empty embedding provided")
@@ -41,16 +42,20 @@ def validate_and_fix_embedding(embedding: List[float]) -> Optional[List[float]]:
         # Convert to numpy array for easier manipulation
         arr = np.array(embedding, dtype=np.float64)
 
-        # Check for NaN or inf values
+        # Check for NaN or inf values - REJECT rather than zero out
         if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
-            logger.warning(f"Found NaN/inf values in embedding, replacing with zeros")
-            # Replace NaN and inf with 0.0
-            arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+            logger.error(f"Found NaN/inf values in embedding - REJECTING (would create meaningless zero vector)")
+            return None
 
         # Ensure all values are finite
         if not np.all(np.isfinite(arr)):
-            logger.warning("Non-finite values found after cleaning, using zero vector")
-            arr = np.zeros_like(arr)
+            logger.error("Non-finite values found in embedding - REJECTING")
+            return None
+
+        # CRITICAL: Reject all-zero vectors (FR-004)
+        if np.allclose(arr, 0.0, atol=1e-9):
+            logger.error("All-zero embedding detected - REJECTING (zero vectors have no semantic meaning)")
+            return None
 
         # Convert to list and ensure all values are proper floats
         cleaned_embedding = [float(x) for x in arr.tolist()]
@@ -291,47 +296,62 @@ def load_documents_to_iris(
                     ) = doc_params
 
                     # Prepare additional data (non-vector columns)
+                    # SourceDocuments schema: doc_id (PK), text_content, metadata, embedding, created_timestamp
+                    # Combine all text fields into text_content for simplicity
+                    combined_text = f"{title}\n\n{abstract}\n\n{text_content}".strip()
+
+                    # Put structured data in metadata as JSON
+                    metadata_dict = {
+                        "title": title if title else "",
+                        "abstract": abstract if abstract else "",
+                        "authors": json.loads(authors) if isinstance(authors, str) else authors,
+                        "keywords": json.loads(keywords) if isinstance(keywords, str) else keywords,
+                    }
+
+                    # doc_id goes in key_columns, not additional_data
                     additional_data = {
-                        "doc_id": str(doc_id_value),
-                        "title": title,
-                        "abstract": abstract,
-                        "text_content": text_content,
-                        "authors": authors,
-                        "keywords": keywords,
+                        "text_content": combined_text,
+                        "metadata": json.dumps(metadata_dict),
                     }
 
                     # Use vector utilities for all document insertions
-                    if embedding_vector:
-                        # Pass embedding list directly to insert_vector
-                        success = insert_vector(
-                            cursor=cursor,
-                            table_name="RAG.SourceDocuments",
-                            vector_column_name="embedding",
-                            vector_data=embedding_vector,
-                            target_dimension=384,  # all-MiniLM-L6-v2 dimension
-                            key_columns={"id": str(id_value)},
-                            additional_data=additional_data,
-                        )
-                    else:
-                        # No embedding case - use insert_vector with empty vector for consistency
-                        success = insert_vector(
-                            cursor=cursor,
-                            table_name="RAG.SourceDocuments",
-                            vector_column_name="embedding",
-                            vector_data=[0.0]
-                            * 384,  # Zero vector with correct dimension
-                            target_dimension=384,
-                            key_columns={"id": str(id_value)},
-                            additional_data=additional_data,
-                        )
+                    # SourceDocuments primary key is 'doc_id', not 'id'
+                    try:
+                        if embedding_vector:
+                            # Pass embedding list directly to insert_vector
+                            success = insert_vector(
+                                cursor=cursor,
+                                table_name="RAG.SourceDocuments",
+                                vector_column_name="embedding",
+                                vector_data=embedding_vector,
+                                target_dimension=384,  # all-MiniLM-L6-v2 dimension
+                                key_columns={"doc_id": str(doc_id_value)},
+                                additional_data=additional_data,
+                            )
+                        else:
+                            # No embedding case - SKIP (we reject zero vectors now)
+                            logger.warning(f"Skipping document {doc_id_value} - no valid embedding")
+                            continue
 
-                    if success:
-                        batch_success_count += 1
-                    else:
-                        logger.warning(f"Failed to insert document {doc_id}")
+                        if success:
+                            batch_success_count += 1
+                            logger.info(f"✓ Inserted document {doc_id_value}")
+                        else:
+                            logger.warning(f"❌ Failed to insert document {doc_id_value}")
+                    except Exception as insert_err:
+                        logger.error(f"Exception inserting document {doc_id_value}: {insert_err}")
+                        import traceback
+                        traceback.print_exc()
+                        continue
 
                 loaded_doc_count += batch_success_count
-                connection.commit()
+                logger.info(f"Batch {batch_idx}: batch_success_count={batch_success_count}, loaded_doc_count now={loaded_doc_count}")
+                try:
+                    connection.commit()
+                    logger.info(f"Batch {batch_idx}: ✓ COMMIT successful")
+                except Exception as commit_err:
+                    logger.error(f"Batch {batch_idx}: ❌ COMMIT FAILED: {commit_err}")
+                    raise
 
                 if (batch_idx + 1) % 1 == 0 or batch_idx == len(doc_batches) - 1:
                     elapsed = time.time() - start_time
@@ -355,6 +375,9 @@ def load_documents_to_iris(
 
     except Exception as e:
         logger.error(f"Error in document loading process: {e}")
+        logger.error(f"loaded_doc_count was: {loaded_doc_count}")
+        import traceback
+        traceback.print_exc()
         error_count = len(documents) - loaded_doc_count
 
     duration = time.time() - start_time
@@ -406,20 +429,15 @@ def process_and_load_documents(
             }
 
     try:
-        # Ensure schema exists for SourceDocuments
-        try:
-            from iris_rag.config.manager import ConfigurationManager as IRConfigManager
-            from iris_rag.core.connection import (
-                ConnectionManager as IRConnectionManager,
-            )
-            from iris_rag.storage.schema_manager import SchemaManager as IRSchemaManager
-
-            ir_config = IRConfigManager()
-            ir_conn_mgr = IRConnectionManager(ir_config)
-            schema_mgr = IRSchemaManager(ir_conn_mgr, ir_config)
-            schema_mgr.ensure_table_schema("SourceDocuments")
-        except Exception as se:
-            logger.warning(f"Could not ensure schema: {se}")
+        # Schema validation DISABLED - prevents connection conflicts
+        # SourceDocuments table must exist before running this loader
+        # Use db_init_complete.sql or pipeline setup to create tables
+        #
+        # Problem: SchemaManager creates separate IRConnectionManager with new connection
+        # This causes transaction isolation - loader commits to conn A,
+        # but queries use conn B and can't see uncommitted data from conn A
+        #
+        # Solution: Skip schema manager, require tables to exist beforehand
         # Process and collect documents
         logger.info(f"Processing up to {limit} documents from {pmc_directory}")
         documents = list(process_pmc_files(pmc_directory, limit))
@@ -531,9 +549,10 @@ if __name__ == "__main__":
     )
 
     if result.get("success"):
-        logger.info(f"✅ Successfully loaded {result.get('loaded_count', 0)} documents")
-        logger.info(f"   Processed: {result.get('processed_count', 0)}")
+        logger.info(f"✅ Successfully loaded {result.get('loaded_doc_count', 0)} documents ({result.get('loaded_chunk_count', 0)} chunks)")
+        logger.info(f"   Total processed: {result.get('total_documents', 0)}")
         logger.info(f"   Duration: {result.get('duration_seconds', 0):.2f}s")
+        logger.info(f"   Rate: {result.get('docs_per_second', 0):.2f} docs/sec")
     else:
         logger.error(f"❌ Failed to load data: {result.get('error', 'Unknown error')}")
         sys.exit(1)

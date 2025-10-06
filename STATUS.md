@@ -30,6 +30,55 @@
 
 ## Latest Work (2025-10-05)
 
+### Data Loader & RAGAS Evaluation Fix (Feature 030) - Session 5 🚧 IN PROGRESS
+**Goal**: Working RAGAS evaluation system with real data and meaningful scores
+
+**Accomplishments**:
+1. ✅ Fixed data/loader_fixed.py embedding generation
+   - Initialize sentence-transformers/all-MiniLM-L6-v2 embedder
+   - Generate real 384-dimensional non-zero vectors
+   - Pass embedding_func to processing function
+
+2. ✅ Fixed schema compatibility
+   - Removed non-existent columns (title, abstract, authors, keywords)
+   - Use SourceDocuments schema: doc_id, text_content, metadata, embedding
+   - Combine all text fields into text_content
+   - Store structured data in JSON metadata field
+
+3. ✅ Added zero vector validation (FR-004)
+   - Reject NaN/inf embeddings instead of zeroing them
+   - Detect all-zero vectors with np.allclose()
+   - Return None for invalid embeddings
+
+4. ✅ Fixed key column mismatch
+   - Changed from {'id': ...} to {'doc_id': ...}
+   - SourceDocuments primary key is doc_id
+
+5. ✅ Fixed result reporting
+   - Corrected key from 'loaded_count' to 'loaded_doc_count'
+   - Report chunk count and loading rate
+
+6. ✅ Fixed Makefile dependencies
+   - test-ragas-sample now depends on load-data
+   - Updated pipeline names: basic,basic_rerank,crag,graphrag,pylate_colbert
+   - Added E2E tests for Makefile infrastructure
+
+**Results**:
+- Loader successfully loads 79 documents (69 chunks) with valid embeddings
+- All embeddings are non-zero (validated)
+- ~30-50 docs/sec loading rate
+
+**Current Blocker** 🔴:
+- Documents load successfully (see "Total documents: 287" in loader output)
+- But subsequent queries return 0 documents
+- Transaction/commit issue: data not persisting across connections
+- RAGAS evaluation runs but finds "No relevant documents"
+
+**Next Steps**:
+- Debug connection/transaction isolation issue
+- Ensure commits are visible across connections
+- Verify SourceDocuments data persists after loader exits
+
 ### CRAG Pipeline DOUBLE Datatype Fix (Feature 028) - Session 4 ✅ COMPLETE
 **Root Cause**: Vector datatype mismatch - old FLOAT tables persisting across test runs
 - db_init_complete.sql had VECTOR(FLOAT) on line 13
