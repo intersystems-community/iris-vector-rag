@@ -123,9 +123,12 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
                 self.stats["documents_indexed"] = len(docs)
         else:
             # List of Document objects
-            # Store documents for PyLate reranking
+            # Store documents for PyLate reranking with metadata
             for i, doc in enumerate(documents):
                 self._document_store[str(i)] = doc
+                # Validate metadata exists
+                if not hasattr(doc, "metadata") or not doc.metadata:
+                    logger.warning(f"Document {i} has no metadata")
 
             # Call parent to handle vector store indexing
             # Use new API: load_documents("", documents=documents)
@@ -135,12 +138,15 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         logger.info(
             f"Loaded {self.stats['documents_indexed']} documents for PyLate ColBERT"
         )
+        logger.debug(
+            f"Stored {len(self._document_store)} docs with metadata in document store"
+        )
 
         # Return status dict for compatibility
         return {
             "status": "success",
             "num_documents": self.stats["documents_indexed"],
-            "pipeline_type": "colbert_pylate"
+            "pipeline_type": "colbert_pylate",
         }
 
     def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
@@ -182,6 +188,18 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             logger.debug(
                 f"No reranking applied, returning {len(final_documents)} documents"
             )
+
+        # Restore metadata from document store
+        final_documents = self._restore_metadata(final_documents)
+
+        # Debug: Verify metadata restoration
+        for i, doc in enumerate(final_documents):
+            if not hasattr(doc, "metadata") or not doc.metadata:
+                logger.warning(f"Document {i} missing metadata after restoration")
+
+        logger.debug(
+            f"Query returned {len(final_documents)} docs with restored metadata"
+        )
 
         # Generate answer if requested (same as BasicRAGReranking)
         generate_answer = kwargs.get("generate_answer", True)
@@ -257,6 +275,35 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             return [documents[doc_id] for doc_id in reranked_ids]
         else:
             raise RuntimeError("PyLate reranking returned empty results")
+
+    def _restore_metadata(self, retrieved_docs: List[Document]) -> List[Document]:
+        """
+        Restore metadata from document store to retrieved documents.
+
+        Matches retrieved documents to stored documents by page_content
+        and re-attaches complete metadata from the original documents.
+        """
+        restored_docs = []
+        for doc in retrieved_docs:
+            # Find matching document in store by content
+            metadata_restored = False
+            for _stored_id, stored_doc in self._document_store.items():
+                if stored_doc.page_content == doc.page_content:
+                    # Create new Document with restored metadata (Document is frozen)
+                    restored_doc = Document(
+                        page_content=doc.page_content,
+                        metadata=stored_doc.metadata.copy(),
+                    )
+                    restored_docs.append(restored_doc)
+                    metadata_restored = True
+                    break
+
+            # If no match found, keep original document
+            if not metadata_restored:
+                restored_docs.append(doc)
+
+        logger.debug(f"Restored metadata for {len(restored_docs)} documents")
+        return restored_docs
 
     def get_pipeline_info(self) -> Dict[str, Any]:
         """Get pipeline information with consistent format."""
