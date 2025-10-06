@@ -350,6 +350,54 @@ ANTHROPIC_API_KEY=test_key
     # Testing Targets Tests
     # =============================================================================
 
+    def test_ragas_sample_has_load_data_dependency(self):
+        """Test test-ragas-sample depends on load-data to ensure DB has documents."""
+        # Check Makefile content for dependency
+        makefile_path = Path("Makefile")
+        if makefile_path.exists():
+            makefile_content = makefile_path.read_text()
+            # Find test-ragas-sample target definition
+            for line in makefile_content.split('\n'):
+                if 'test-ragas-sample:' in line and not line.strip().startswith('#'):
+                    assert 'load-data' in line, \
+                        "test-ragas-sample should have load-data as a dependency"
+                    break
+
+    def test_ragas_targets_use_factory_pipeline_names(self):
+        """Test RAGAS targets use correct factory pipeline names, not legacy names."""
+        makefile_path = Path("Makefile")
+        if makefile_path.exists():
+            makefile_content = makefile_path.read_text()
+
+            # Should use factory names: basic,basic_rerank,crag,graphrag,pylate_colbert
+            assert "basic,basic_rerank,crag,graphrag,pylate_colbert" in makefile_content, \
+                "RAGAS targets should use correct factory pipeline names"
+
+            # Should NOT use legacy names in active targets
+            ragas_lines = [line for line in makefile_content.split('\n')
+                          if 'RAGAS_PIPELINES' in line and not line.strip().startswith('#')]
+
+            for line in ragas_lines:
+                assert "BasicRAG" not in line, \
+                    "RAGAS targets should not use legacy name 'BasicRAG', use 'basic'"
+                assert "HybridGraphRAG" not in line, \
+                    "RAGAS targets should not reference non-existent 'HybridGraphRAG'"
+
+    def test_ragas_targets_reference_5_pipelines(self):
+        """Test RAGAS target descriptions accurately mention 5 pipelines."""
+        makefile_path = Path("Makefile")
+        if makefile_path.exists():
+            makefile_content = makefile_path.read_text()
+
+            # Check test-ragas-sample and test-ragas-1000 descriptions
+            ragas_target_lines = [line for line in makefile_content.split('\n')
+                                 if 'test-ragas' in line and '##' in line]
+
+            # At least one should mention 5 pipelines
+            assert any('5 pipeline' in line.lower() or 'all 5' in line.lower()
+                      for line in ragas_target_lines), \
+                "RAGAS target descriptions should mention '5 pipelines'"
+
     @pytest.mark.slow
     def test_make_test_ragas_sample_target(self):
         """Test 'make test-ragas-sample' target runs sample evaluation.
