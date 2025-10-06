@@ -8,8 +8,9 @@ to identify and merge duplicate entities in knowledge graphs during incremental 
 import logging
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Any, Callable
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import numpy as np
 
 from iris_rag.core.connection import IRISConnectionManager

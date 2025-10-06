@@ -1,0 +1,417 @@
+{
+  "results": [
+    {
+      "pipeline_type": "basic",
+      "total_queries": 5,
+      "successful_queries": 5,
+      "success_rate": 1.0,
+      "avg_answer_length": 232.6,
+      "avg_contexts_retrieved": 3.0,
+      "avg_query_time": 1.2651538571511896,
+      "total_time": 6.325769285755948,
+      "queries_per_second": 0.7904176984858982,
+      "results": [
+        {
+          "query": "Query 1",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 1",
+          "num_contexts": 3,
+          "answer_length": 227,
+          "query_time": 1.1668239870320836,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 2",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 2",
+          "num_contexts": 3,
+          "answer_length": 229,
+          "query_time": 1.369377331216698,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 3",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 3",
+          "num_contexts": 3,
+          "answer_length": 217,
+          "query_time": 1.4057256348617286,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 4",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 4",
+          "num_contexts": 3,
+          "answer_length": 244,
+          "query_time": 0.9806310460886516,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 5",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 5",
+          "num_contexts": 3,
+          "answer_length": 246,
+          "query_time": 1.4032112865567865,
+          "success": true,
+          "retrieved_docs": 3
+        }
+      ]
+    },
+    {
+      "pipeline_type": "basic_rerank",
+      "total_queries": 5,
+      "successful_queries": 5,
+      "success_rate": 1.0,
+      "avg_answer_length": 240.6,
+      "avg_contexts_retrieved": 3.0,
+      "avg_query_time": 1.645567181267855,
+      "total_time": 8.227835906339275,
+      "queries_per_second": 0.6076932083863833,
+      "results": [
+        {
+          "query": "Query 1",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 1",
+          "num_contexts": 3,
+          "answer_length": 227,
+          "query_time": 1.7685699469043352,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 2",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 2",
+          "num_contexts": 3,
+          "answer_length": 242,
+          "query_time": 1.503520585978173,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 3",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 3",
+          "num_contexts": 3,
+          "answer_length": 259,
+          "query_time": 1.544038657709652,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 4",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 4",
+          "num_contexts": 3,
+          "answer_length": 252,
+          "query_time": 1.7034136557244746,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 5",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 5",
+          "num_contexts": 3,
+          "answer_length": 223,
+          "query_time": 1.7082930600226403,
+          "success": true,
+          "retrieved_docs": 3
+        }
+      ]
+    },
+    {
+      "pipeline_type": "pylate_colbert",
+      "total_queries": 5,
+      "successful_queries": 5,
+      "success_rate": 1.0,
+      "avg_answer_length": 261.4,
+      "avg_contexts_retrieved": 3.0,
+      "avg_query_time": 1.5424281644646085,
+      "total_time": 7.712140822323042,
+      "queries_per_second": 0.6483284103847452,
+      "results": [
+        {
+          "query": "Query 1",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 1",
+          "num_contexts": 3,
+          "answer_length": 265,
+          "query_time": 1.4432752319785234,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 2",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 2",
+          "num_contexts": 3,
+          "answer_length": 246,
+          "query_time": 1.8139638718721582,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 3",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 3",
+          "num_contexts": 3,
+          "answer_length": 274,
+          "query_time": 1.4477101489736202,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 4",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 4",
+          "num_contexts": 3,
+          "answer_length": 253,
+          "query_time": 1.4952001654807983,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 5",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 5",
+          "num_contexts": 3,
+          "answer_length": 269,
+          "query_time": 1.5119914040179425,
+          "success": true,
+          "retrieved_docs": 3
+        }
+      ]
+    },
+    {
+      "pipeline_type": "crag",
+      "total_queries": 5,
+      "successful_queries": 5,
+      "success_rate": 1.0,
+      "avg_answer_length": 269.4,
+      "avg_contexts_retrieved": 3.0,
+      "avg_query_time": 2.1160903779387317,
+      "total_time": 10.58045188969366,
+      "queries_per_second": 0.472569607813298,
+      "results": [
+        {
+          "query": "Query 1",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 1",
+          "num_contexts": 3,
+          "answer_length": 268,
+          "query_time": 2.520509322150494,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 2",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 2",
+          "num_contexts": 3,
+          "answer_length": 284,
+          "query_time": 2.1329930981843317,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 3",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 3",
+          "num_contexts": 3,
+          "answer_length": 272,
+          "query_time": 1.9882055670504049,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 4",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 4",
+          "num_contexts": 3,
+          "answer_length": 242,
+          "query_time": 1.87542586498832,
+          "success": true,
+          "retrieved_docs": 3
+        },
+        {
+          "query": "Query 5",
+          "answer": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "contexts": [
+            "Context 0",
+            "Context 1",
+            "Context 2"
+          ],
+          "ground_truth": "Ground truth 5",
+          "num_contexts": 3,
+          "answer_length": 281,
+          "query_time": 2.0633180373201094,
+          "success": true,
+          "retrieved_docs": 3
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "timestamp": "2025-10-03T23:06:59.011231",
+    "pipelines_tested": 4,
+    "rankings": {
+      "by_success_rate": [
+        {
+          "pipeline": "basic",
+          "score": 1.0
+        },
+        {
+          "pipeline": "basic_rerank",
+          "score": 1.0
+        },
+        {
+          "pipeline": "pylate_colbert",
+          "score": 1.0
+        },
+        {
+          "pipeline": "crag",
+          "score": 1.0
+        }
+      ],
+      "by_speed": [
+        {
+          "pipeline": "basic",
+          "avg_time": 1.2651538571511896
+        },
+        {
+          "pipeline": "pylate_colbert",
+          "avg_time": 1.5424281644646085
+        },
+        {
+          "pipeline": "basic_rerank",
+          "avg_time": 1.645567181267855
+        },
+        {
+          "pipeline": "crag",
+          "avg_time": 2.1160903779387317
+        }
+      ],
+      "by_answer_quality": [
+        {
+          "pipeline": "crag",
+          "avg_length": 269.4
+        },
+        {
+          "pipeline": "pylate_colbert",
+          "avg_length": 261.4
+        },
+        {
+          "pipeline": "basic_rerank",
+          "avg_length": 240.6
+        },
+        {
+          "pipeline": "basic",
+          "avg_length": 232.6
+        }
+      ]
+    }
+  },
+  "note": "This is a DEMO with mock data. For real results, use test_pylate_ragas_comparison.py with IRIS database."
+}

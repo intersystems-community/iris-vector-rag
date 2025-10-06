@@ -10,10 +10,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag.pipelines.basic import BasicRAGPipeline
 from common.iris_connection_manager import IRISConnectionManager as ConnectionManager
-from iris_rag.config.manager import ConfigurationManager
 from common.utils import get_llm_func
+from iris_rag.config.manager import ConfigurationManager
+from iris_rag.pipelines.basic import BasicRAGPipeline
 
 
 def test_retrieval():

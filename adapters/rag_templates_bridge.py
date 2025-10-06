@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 
 class RAGTechnique(Enum):
     """Supported RAG techniques."""
+
     BASIC = "basic"
     CRAG = "crag"
     GRAPH = "graphrag"
@@ -42,6 +43,7 @@ class RAGTechnique(Enum):
 
 class CircuitBreakerState(Enum):
     """Circuit breaker states for fault tolerance."""
+
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
@@ -50,6 +52,7 @@ class CircuitBreakerState(Enum):
 @dataclass
 class RAGResponse:
     """Standardized response format for kg-ticket-resolver."""
+
     answer: str
     sources: List[Dict[str, Any]]
     confidence_score: float
@@ -62,6 +65,7 @@ class RAGResponse:
 @dataclass
 class CircuitBreakerConfig:
     """Configuration for circuit breaker pattern."""
+
     failure_threshold: int = 5
     recovery_timeout: int = 60
     half_open_max_calls: int = 3
@@ -70,6 +74,7 @@ class CircuitBreakerConfig:
 @dataclass
 class PerformanceMetrics:
     """Performance tracking metrics."""
+
     total_queries: int = 0
     successful_queries: int = 0
     failed_queries: int = 0
@@ -122,13 +127,17 @@ class RAGTemplatesBridge:
         self._response_times: List[float] = []
 
         # Circuit breaker configuration
-        self.cb_config = CircuitBreakerConfig(**self.bridge_config.get("circuit_breaker", {}))
+        self.cb_config = CircuitBreakerConfig(
+            **self.bridge_config.get("circuit_breaker", {})
+        )
 
         # Initialize available techniques
         self._initialize_pipelines()
         self._initialize_circuit_breakers()
 
-        logger.info(f"RAG Templates Bridge initialized with techniques: {list(self._pipelines.keys())}")
+        logger.info(
+            f"RAG Templates Bridge initialized with techniques: {list(self._pipelines.keys())}"
+        )
 
     def _initialize_pipelines(self) -> None:
         """Initialize available RAG pipelines."""
@@ -143,7 +152,7 @@ class RAGTemplatesBridge:
             try:
                 pipeline = pipeline_class(
                     connection_manager=self.connection_manager,
-                    config_manager=self.config_manager
+                    config_manager=self.config_manager,
                 )
                 self._pipelines[technique] = pipeline
                 logger.info(f"Initialized {technique.value} pipeline")
@@ -157,7 +166,7 @@ class RAGTemplatesBridge:
                 "state": CircuitBreakerState.CLOSED,
                 "failure_count": 0,
                 "last_failure_time": 0,
-                "success_count": 0
+                "success_count": 0,
             }
 
     def _check_circuit_breaker(self, technique: RAGTechnique) -> bool:
@@ -203,7 +212,7 @@ class RAGTemplatesBridge:
         self,
         query_text: str,
         technique: Optional[Union[str, RAGTechnique]] = None,
-        **kwargs
+        **kwargs,
     ) -> RAGResponse:
         """
         Execute RAG query with specified or default technique.
@@ -231,7 +240,7 @@ class RAGTemplatesBridge:
                     technique_used="invalid",
                     processing_time_ms=processing_time,
                     metadata={"error_type": "InvalidTechnique"},
-                    error=f"Invalid RAG technique: {technique}"
+                    error=f"Invalid RAG technique: {technique}",
                 )
                 logger.error(f"Invalid technique specified: {technique}")
                 return error_response
@@ -247,7 +256,9 @@ class RAGTemplatesBridge:
         try:
             # Check circuit breaker
             if not self._check_circuit_breaker(technique):
-                logger.warning(f"Circuit breaker open for {technique.value}, falling back")
+                logger.warning(
+                    f"Circuit breaker open for {technique.value}, falling back"
+                )
                 technique = self.fallback_technique
 
             # Get pipeline
@@ -276,11 +287,13 @@ class RAGTemplatesBridge:
                 metadata={
                     "query_id": kwargs.get("query_id"),
                     "user_context": kwargs.get("user_context"),
-                    "timestamp": time.time()
-                }
+                    "timestamp": time.time(),
+                },
             )
 
-            logger.info(f"Query processed successfully with {technique.value} in {processing_time:.2f}ms")
+            logger.info(
+                f"Query processed successfully with {technique.value} in {processing_time:.2f}ms"
+            )
             return response
 
         except Exception as e:
@@ -297,13 +310,15 @@ class RAGTemplatesBridge:
                 technique_used=technique.value,
                 processing_time_ms=processing_time,
                 metadata={"error_type": type(e).__name__},
-                error=str(e)
+                error=str(e),
             )
 
             logger.error(f"Query failed with {technique.value}: {e}")
             return error_response
 
-    async def _execute_pipeline_query(self, pipeline: RAGPipeline, query_text: str, **kwargs) -> Dict[str, Any]:
+    async def _execute_pipeline_query(
+        self, pipeline: RAGPipeline, query_text: str, **kwargs
+    ) -> Dict[str, Any]:
         """Execute query on specific pipeline with timeout."""
         timeout = self.bridge_config.get("query_timeout", 30)
 
@@ -313,7 +328,7 @@ class RAGTemplatesBridge:
                 asyncio.get_event_loop().run_in_executor(
                     None, pipeline.query, query_text
                 ),
-                timeout=timeout
+                timeout=timeout,
             )
             return result
         except asyncio.TimeoutError:
@@ -323,8 +338,12 @@ class RAGTemplatesBridge:
         """Get current performance metrics."""
         # Update calculated metrics
         if self._response_times:
-            self.metrics.avg_response_time_ms = sum(self._response_times) / len(self._response_times)
-            self.metrics.p95_response_time_ms = sorted(self._response_times)[int(len(self._response_times) * 0.95)]
+            self.metrics.avg_response_time_ms = sum(self._response_times) / len(
+                self._response_times
+            )
+            self.metrics.p95_response_time_ms = sorted(self._response_times)[
+                int(len(self._response_times) * 0.95)
+            ]
 
         return asdict(self.metrics)
 
@@ -334,7 +353,7 @@ class RAGTemplatesBridge:
             "bridge_status": "healthy",
             "pipelines": {},
             "circuit_breakers": {},
-            "metrics": self.get_metrics()
+            "metrics": self.get_metrics(),
         }
 
         for technique, pipeline in self._pipelines.items():
@@ -354,7 +373,7 @@ class RAGTemplatesBridge:
         self,
         documents: List[Dict[str, Any]],
         technique: Optional[Union[str, RAGTechnique]] = None,
-        incremental: bool = True
+        incremental: bool = True,
     ) -> Dict[str, Any]:
         """
         Index documents using specified technique with incremental support.
@@ -381,8 +400,12 @@ class RAGTemplatesBridge:
         try:
             # Convert documents to required format
             from iris_rag.core.models import Document
+
             doc_objects = [
-                Document(page_content=doc.get("content", ""), metadata=doc.get("metadata", {}))
+                Document(
+                    page_content=doc.get("content", ""),
+                    metadata=doc.get("metadata", {}),
+                )
                 for doc in documents
             ]
 
@@ -398,7 +421,7 @@ class RAGTemplatesBridge:
                 "documents_indexed": len(documents),
                 "technique_used": technique.value,
                 "processing_time_ms": processing_time,
-                "incremental": incremental
+                "incremental": incremental,
             }
 
         except Exception as e:
@@ -407,7 +430,7 @@ class RAGTemplatesBridge:
                 "status": "error",
                 "error": str(e),
                 "technique_used": technique.value,
-                "processing_time_ms": (time.time() - start_time) * 1000
+                "processing_time_ms": (time.time() - start_time) * 1000,
             }
 
     @asynccontextmanager
@@ -444,27 +467,29 @@ class RAGTemplatesBridge:
                 "bridge": {"status": "healthy"},
                 "pipelines": {},
                 "circuit_breakers": {},
-                "dependencies": {}
+                "dependencies": {},
             },
-            "metrics": await self.get_performance_metrics()
+            "metrics": await self.get_performance_metrics(),
         }
 
         # Check pipeline health
         for technique, pipeline in self._pipelines.items():
             try:
                 # Perform lightweight health check
-                if hasattr(pipeline, 'health_check'):
+                if hasattr(pipeline, "health_check"):
                     await asyncio.get_event_loop().run_in_executor(
                         None, pipeline.health_check
                     )
                 else:
                     # Fallback: check if pipeline can access its configuration
                     _ = pipeline.config_manager
-                health_status["components"]["pipelines"][technique.value] = {"status": "healthy"}
+                health_status["components"]["pipelines"][technique.value] = {
+                    "status": "healthy"
+                }
             except Exception as e:
                 health_status["components"]["pipelines"][technique.value] = {
                     "status": "unhealthy",
-                    "error": str(e)
+                    "error": str(e),
                 }
                 health_status["status"] = "degraded"
 
@@ -473,7 +498,7 @@ class RAGTemplatesBridge:
             cb_status = cb["state"].value
             health_status["components"]["circuit_breakers"][technique.value] = {
                 "state": cb_status,
-                "failure_count": cb["failure_count"]
+                "failure_count": cb["failure_count"],
             }
             if cb_status == "open":
                 health_status["status"] = "degraded"
@@ -482,11 +507,13 @@ class RAGTemplatesBridge:
         try:
             # Test database connectivity
             self.connection_manager.get_connection()
-            health_status["components"]["dependencies"]["database"] = {"status": "healthy"}
+            health_status["components"]["dependencies"]["database"] = {
+                "status": "healthy"
+            }
         except Exception as e:
             health_status["components"]["dependencies"]["database"] = {
                 "status": "unhealthy",
-                "error": str(e)
+                "error": str(e),
             }
             health_status["status"] = "unhealthy"
 
@@ -508,7 +535,10 @@ class RAGTemplatesBridge:
                 available.append(technique.value)
 
         # Always include fallback technique if available
-        if (self.fallback_technique.value not in available and self.fallback_technique in self._pipelines):
+        if (
+            self.fallback_technique.value not in available
+            and self.fallback_technique in self._pipelines
+        ):
             available.append(self.fallback_technique.value)
 
         return available
@@ -527,11 +557,14 @@ class RAGTemplatesBridge:
         p95_target = config_targets.get("target_latency_p95_ms", 500)
 
         slo_compliance = {
-            "p95_latency_compliant": current_metrics["p95_response_time_ms"] <= p95_target,
+            "p95_latency_compliant": current_metrics["p95_response_time_ms"]
+            <= p95_target,
             "p95_target_ms": p95_target,
             "success_rate": (
-                current_metrics["successful_queries"] / max(current_metrics["total_queries"], 1)
-            ) * 100
+                current_metrics["successful_queries"]
+                / max(current_metrics["total_queries"], 1)
+            )
+            * 100,
         }
 
         return {
@@ -541,5 +574,5 @@ class RAGTemplatesBridge:
                 technique.value: cb["state"].value
                 for technique, cb in self._circuit_breakers.items()
             },
-            "available_techniques": await self.get_available_techniques()
+            "available_techniques": await self.get_available_techniques(),
         }

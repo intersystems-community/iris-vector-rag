@@ -6,41 +6,23 @@ Provides generic temporal storage patterns adaptable to any time-based memory ne
 Demonstrates configurable time windows, retention policies, and performance optimization.
 """
 
+import hashlib
 import logging
 import time
-import hashlib
-from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
-from iris_rag.memory.models import MemoryItem, TemporalWindow, TemporalWindowConfig
 from iris_rag.core.connection import ConnectionManager
+from iris_rag.memory.models import (
+    MemoryItem,
+    TemporalContext,
+    TemporalQuery,
+    TemporalWindow,
+    TemporalWindowConfig,
+)
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class TemporalQuery:
-    """Query for temporal memory retrieval."""
-
-    query_text: str
-    window: TemporalWindow
-    max_results: int = 10
-    relevance_threshold: float = 0.5
-    include_expired: bool = False
-    context_filters: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class TemporalContext:
-    """Temporal context result."""
-
-    window: TemporalWindow
-    items: List[MemoryItem] = field(default_factory=list)
-    total_items_in_window: int = 0
-    avg_relevance_score: float = 0.0
-    window_start: datetime = field(default_factory=datetime.utcnow)
-    window_end: datetime = field(default_factory=datetime.utcnow)
 
 
 class TemporalMemoryManager:

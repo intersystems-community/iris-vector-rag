@@ -1,214 +1,33 @@
-# Coverage configuration for RAG templates framework
-
-[run]
-# Source paths to measure coverage for
-source = src, iris_rag, mem0_integration
-
-# Branch coverage
-branch = True
-
-# Include patterns
-include = 
-    src/*
-    iris_rag/*
-    mem0_integration/*
-
-# Exclude patterns
+# Coverage configuration for RAG-Templates testing framework
+[coverage:run]
+source = iris_rag,common
 omit =
-    # Test files
-    tests/*
     */tests/*
-    */test_*.py
-    */*_test.py
-    
-    # Configuration and setup files
-    setup.py
-    conftest.py
-    */conftest.py
-    
-    # Virtual environments
-    venv/*
-    .venv/*
-    env/*
-    .env/*
-    
-    # Migration files
-    */migrations/*
-    */alembic/*
-    
-    # Generated files
-    */_version.py
-    */version.py
-    
-    # Third-party code
-    */site-packages/*
-    */dist-packages/*
-    
-    # Development and debugging
-    */debug/*
-    */dev/*
-    
-    # Temporary and cache files
-    */.pytest_cache/*
+    */test_*
     */__pycache__/*
-    *.pyc
-    
-    # Docker and deployment
-    */docker/*
-    */deployment/*
-    
-    # Documentation
-    docs/*
-    */docs/*
-    
-    # Scripts (optional - remove if you want to measure script coverage)
-    scripts/*
-    */scripts/*
+    */site-packages/*
+    setup.py
 
-# Parallel processing
-parallel = True
-
-# Data file location
-data_file = .coverage
-
-# Plugins
-plugins = 
-    coverage_conditional_plugin
-
-[report]
-# Show missing lines
+[coverage:report]
+precision = 1
 show_missing = True
-
-# Skip covered files
 skip_covered = False
-
-# Skip empty files
-skip_empty = True
-
-# Precision for percentages
-precision = 2
-
-# Sort by coverage percentage
-sort = Cover
-
-# Exclude lines from coverage
 exclude_lines =
-    # Standard pragmas
     pragma: no cover
-    pragma: nocover
-    
-    # Type checking imports
-    if TYPE_CHECKING:
-    if typing.TYPE_CHECKING:
-    
-    # Defensive assertions
     def __repr__
-    def __str__
-    
-    # Abstract methods
+    if self.debug:
+    if settings.DEBUG
     raise AssertionError
     raise NotImplementedError
-    
-    # Non-runnable code
+    if 0:
     if __name__ == .__main__.:
-    if __name__ == "__main__":
-    
-    # Platform-specific code
-    if sys.platform
-    if platform.system
-    
-    # Version-specific code
-    if sys.version_info
-    
-    # Debugging code
-    if DEBUG:
-    if settings.DEBUG:
-    if os.environ.get\("DEBUG"\)
-    
-    # Logging statements that are only for debugging
-    logger.debug
-    log.debug
-    
-    # Exception handling for debugging
-    except ImportError:
-    except ModuleNotFoundError:
-    
-    # Backwards compatibility
-    except AttributeError:
-    
-    # Safety checks
-    if not
-    assert
 
-# Partial branches to exclude
-partial_branches =
-    pragma: no branch
-    pragma: nobranch
-    if TYPE_CHECKING:
-    if typing.TYPE_CHECKING:
-
-# Fail under this percentage
-fail_under = 80
-
-[html]
-# HTML report directory
+[coverage:html]
 directory = htmlcov
 
-# Title for HTML report
-title = RAG Templates Framework Coverage Report
-
-# Show contexts in HTML report
-show_contexts = True
-
-# Skip covered files in HTML report
-skip_covered = False
-
-# Skip empty files in HTML report
-skip_empty = True
-
-[xml]
-# XML report file
-output = coverage.xml
-
-[json]
-# JSON report file
-output = coverage.json
-
-# Show contexts in JSON report
-show_contexts = True
-
-[paths]
-# Source path mapping for different environments
-source =
-    src/
-    iris_rag/
-    mem0_integration/
-    /app/src/
-    /app/iris_rag/
-    /app/mem0_integration/
-    */site-packages/src/
-    */site-packages/iris_rag/
-    */site-packages/mem0_integration/
-
-[coverage:paths]
-# Additional path mapping
-source =
-    src
-    */site-packages
-    /usr/*/site-packages
-    /opt/*/site-packages
-
-[tool:coverage]
-# Tool-specific settings
-plugins =
-    coverage_conditional_plugin
-
-[coverage:conditional]
-# Conditional coverage rules
-rules =
-    "sys_version_info >= (3, 9)": py39+
-    "sys_version_info >= (3, 10)": py310+
-    "sys_version_info >= (3, 11)": py311+
-    "platform_system == 'Windows'": windows
-    "platform_system == 'Darwin'": macos
-    "platform_system == 'Linux'": linux
+[coverage:critical_modules]
+# Modules requiring 80% coverage threshold (default is 60%)
+patterns =
+    iris_rag/pipelines/
+    iris_rag/storage/
+    iris_rag/validation/

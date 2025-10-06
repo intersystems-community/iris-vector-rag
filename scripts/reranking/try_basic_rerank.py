@@ -9,8 +9,9 @@ Run make load-data in the project root to load the data.
 """
 
 import logging
-import sys
 import os
+import sys
+
 import openai
 from dotenv import load_dotenv
 

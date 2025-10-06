@@ -1,6 +1,7 @@
 import abc
 import logging
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
 from .models import Document
 from .vector_store import VectorStore
 

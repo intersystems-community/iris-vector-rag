@@ -7,7 +7,7 @@ follow strict E2E principles:
 
 - NO MOCKS or stubs anywhere in the test chain
 - MUST use real IRIS database connections
-- MUST use realistic PMC biomedical data  
+- MUST use realistic PMC biomedical data
 - MUST test complete workflows end-to-end
 - MUST validate actual behavior and performance
 

@@ -1,6 +1,6 @@
 import uuid
 from dataclasses import dataclass, field
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 def default_id_factory():
@@ -276,6 +276,12 @@ class EntityTypes:
     PROCEDURE = "PROCEDURE"
     DEVICE = "DEVICE"
 
+    # Additional medical entity types for comprehensive coverage
+    VIRUS = "VIRUS"
+    BACTERIA = "BACTERIA"
+    VACCINE = "VACCINE"
+    BIOMARKER = "BIOMARKER"
+
     # General entities
     ORGANIZATION = "ORGANIZATION"
     LOCATION = "LOCATION"
@@ -339,6 +345,7 @@ class RelationshipTypes:
     ASSOCIATED_WITH = "associated_with"
 
     # General relationships
+    RELATED_TO = "related_to"
     MENTIONS = "mentions"
     REFERS_TO = "refers_to"
     WORKS_FOR = "works_for"
@@ -356,12 +363,375 @@ class RelationshipTypes:
             cls.LOCATED_IN,
             cls.PART_OF,
             cls.ASSOCIATED_WITH,
+            cls.RELATED_TO,
             cls.MENTIONS,
             cls.REFERS_TO,
             cls.WORKS_FOR,
             cls.BASED_IN,
             cls.HAPPENS_ON,
         }
+
+
+# Coverage Analysis Models
+
+from datetime import datetime
+from typing import List
+import re
+
+
+# Critical modules requiring 80% coverage per constitutional requirements
+CRITICAL_MODULES = {
+    "iris_rag.config",
+    "iris_rag.validation",
+    "iris_rag.pipelines",
+    "iris_rag.services",
+    "iris_rag.storage"
+}
+
+
+@dataclass
+class CoverageReport:
+    """Data model for coverage analysis reports.
+
+    Represents a complete coverage analysis with overall metrics,
+    module-level breakdowns, and metadata for tracking and comparison.
+    """
+
+    # Required fields
+    report_id: str
+    timestamp: datetime
+    overall_coverage_percentage: float
+    total_lines: int
+    covered_lines: int
+    analysis_duration_seconds: float
+
+    # Optional metadata fields
+    git_commit_hash: str = None
+    ci_build_id: str = None
+    branch_coverage_percentage: float = None
+
+    # Module coverage breakdown
+    module_coverage: List[Dict[str, Any]] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Validate report data after initialization."""
+        self._validate_percentages()
+        self._validate_line_counts()
+        self._validate_report_id()
+
+    def _validate_percentages(self):
+        """Validate coverage percentages are within valid range."""
+        if not 0 <= self.overall_coverage_percentage <= 100:
+            raise ValueError("Coverage percentage must be between 0 and 100")
+
+        if self.branch_coverage_percentage is not None:
+            if not 0 <= self.branch_coverage_percentage <= 100:
+                raise ValueError("Branch coverage percentage must be between 0 and 100")
+
+    def _validate_line_counts(self):
+        """Validate line count consistency."""
+        if self.covered_lines > self.total_lines:
+            raise ValueError("Covered lines cannot exceed total lines")
+
+        if self.total_lines < 0 or self.covered_lines < 0:
+            raise ValueError("Line counts must be non-negative")
+
+    def _validate_report_id(self):
+        """Validate report ID format."""
+        if not self.report_id or len(self.report_id.strip()) == 0:
+            raise ValueError("Invalid report ID format")
+
+        if len(self.report_id) > 100:
+            raise ValueError("Invalid report ID format")
+
+        # Check for invalid characters
+        if not re.match(r'^[a-zA-Z0-9\-_]+$', self.report_id):
+            raise ValueError("Invalid report ID format")
+
+    @classmethod
+    def from_line_counts(
+        cls,
+        report_id: str,
+        timestamp: datetime,
+        total_lines: int,
+        covered_lines: int,
+        analysis_duration_seconds: float,
+        **kwargs
+    ) -> 'CoverageReport':
+        """Create report with automatic percentage calculation."""
+        if total_lines == 0:
+            overall_coverage_percentage = 0.0
+        else:
+            overall_coverage_percentage = (covered_lines / total_lines) * 100.0
+
+        return cls(
+            report_id=report_id,
+            timestamp=timestamp,
+            overall_coverage_percentage=overall_coverage_percentage,
+            total_lines=total_lines,
+            covered_lines=covered_lines,
+            analysis_duration_seconds=analysis_duration_seconds,
+            **kwargs
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize report to dictionary for API responses."""
+        data = {
+            'report_id': self.report_id,
+            'timestamp': self.timestamp.isoformat(),
+            'overall_coverage_percentage': self.overall_coverage_percentage,
+            'total_lines': self.total_lines,
+            'covered_lines': self.covered_lines,
+            'analysis_duration_seconds': self.analysis_duration_seconds,
+            'module_coverage': self.module_coverage
+        }
+
+        # Add optional fields if present
+        if self.git_commit_hash:
+            data['git_commit_hash'] = self.git_commit_hash
+        if self.ci_build_id:
+            data['ci_build_id'] = self.ci_build_id
+        if self.branch_coverage_percentage is not None:
+            data['branch_coverage_percentage'] = self.branch_coverage_percentage
+
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'CoverageReport':
+        """Deserialize report from dictionary data."""
+        # Parse timestamp
+        if isinstance(data['timestamp'], str):
+            timestamp = datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00'))
+        else:
+            timestamp = data['timestamp']
+
+        # Extract required fields
+        required_fields = {
+            'report_id': data['report_id'],
+            'timestamp': timestamp,
+            'overall_coverage_percentage': data['overall_coverage_percentage'],
+            'total_lines': data['total_lines'],
+            'covered_lines': data['covered_lines'],
+            'analysis_duration_seconds': data['analysis_duration_seconds']
+        }
+
+        # Extract optional fields
+        optional_fields = {}
+        for field_name in ['git_commit_hash', 'ci_build_id', 'branch_coverage_percentage', 'module_coverage']:
+            if field_name in data:
+                optional_fields[field_name] = data[field_name]
+
+        return cls(**required_fields, **optional_fields)
+
+    def __lt__(self, other: 'CoverageReport') -> bool:
+        """Compare reports by coverage percentage."""
+        if not isinstance(other, CoverageReport):
+            return NotImplemented
+        return self.overall_coverage_percentage < other.overall_coverage_percentage
+
+    def __gt__(self, other: 'CoverageReport') -> bool:
+        """Compare reports by coverage percentage."""
+        if not isinstance(other, CoverageReport):
+            return NotImplemented
+        return self.overall_coverage_percentage > other.overall_coverage_percentage
+
+    def __eq__(self, other: 'CoverageReport') -> bool:
+        """Compare reports by ID and timestamp."""
+        if not isinstance(other, CoverageReport):
+            return NotImplemented
+        return (self.report_id == other.report_id and
+                self.timestamp == other.timestamp)
+
+    def __ne__(self, other: 'CoverageReport') -> bool:
+        """Compare reports by ID and timestamp."""
+        return not self.__eq__(other)
+
+    def generate_summary(self) -> str:
+        """Generate human-readable summary text."""
+        # Format numbers with commas
+        total_lines_formatted = f"{self.total_lines:,}"
+        covered_lines_formatted = f"{self.covered_lines:,}"
+
+        # Calculate analysis time in human-readable format
+        duration_minutes = int(self.analysis_duration_seconds // 60)
+        duration_seconds = int(self.analysis_duration_seconds % 60)
+
+        if duration_minutes > 0:
+            duration_str = f"{duration_minutes}m {duration_seconds}s"
+        else:
+            duration_str = f"{duration_seconds}s"
+
+        # Generate summary
+        summary = (
+            f"Coverage Report {self.report_id}: "
+            f"{self.overall_coverage_percentage:.1f}% coverage "
+            f"({covered_lines_formatted} of {total_lines_formatted} lines covered). "
+            f"Analysis completed in {duration_str} on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}."
+        )
+
+        # Add module count if available
+        if self.module_coverage:
+            summary += f" Analyzed {len(self.module_coverage)} modules."
+
+        # Add branch coverage if available
+        if self.branch_coverage_percentage is not None:
+            summary += f" Branch coverage: {self.branch_coverage_percentage:.1f}%."
+
+        return summary
+
+
+@dataclass
+class ModuleCoverage:
+    """Data model for module-level coverage analysis.
+
+    Represents coverage metrics for a specific module including
+    critical module status, target validation, and detailed breakdowns.
+    """
+
+    # Required fields
+    module_name: str
+    file_path: str
+    coverage_percentage: float
+    total_lines: int
+    covered_lines: int
+    is_critical_module: bool
+    target_coverage_percentage: float
+
+    # Optional detailed fields
+    uncovered_lines: List[int] = field(default_factory=list)
+    priority_level: str = None
+    is_legacy_module: bool = False
+    exemption_justification: str = None
+    analysis_time_ms: float = None
+    vector_operation_coverage: float = None
+
+    def __post_init__(self):
+        """Validate module data after initialization."""
+        self._validate_percentages()
+        self._validate_line_counts()
+        self._validate_module_name()
+        self._calculate_derived_fields()
+
+    def _validate_percentages(self):
+        """Validate coverage percentages are within valid range."""
+        if not 0 <= self.coverage_percentage <= 100:
+            raise ValueError("Coverage percentage must be between 0 and 100")
+
+        if not 0 <= self.target_coverage_percentage <= 100:
+            raise ValueError("Target coverage percentage must be between 0 and 100")
+
+        if self.vector_operation_coverage is not None:
+            if not 0 <= self.vector_operation_coverage <= 100:
+                raise ValueError("Vector operation coverage must be between 0 and 100")
+
+    def _validate_line_counts(self):
+        """Validate line count consistency."""
+        if self.covered_lines > self.total_lines:
+            raise ValueError("Covered lines cannot exceed total lines")
+
+        if self.total_lines < 0 or self.covered_lines < 0:
+            raise ValueError("Line counts must be non-negative")
+
+    def _validate_module_name(self):
+        """Validate module name format."""
+        if not self.module_name or len(self.module_name.strip()) == 0:
+            raise ValueError("Invalid module name format")
+
+        # Check for unreasonably deep nesting
+        if self.module_name.count('.') > 10:
+            raise ValueError("Invalid module name format")
+
+        # Basic format validation for Python module names
+        if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)*$', self.module_name):
+            # Allow some special characters for test modules
+            if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_.-]*$', self.module_name):
+                raise ValueError("Invalid module name format")
+
+    def _calculate_derived_fields(self):
+        """Calculate derived fields based on module data."""
+        # Set priority level if not explicitly provided
+        if self.priority_level is None:
+            self.priority_level = self._calculate_priority_level()
+
+    def _calculate_priority_level(self) -> str:
+        """Calculate priority level based on module characteristics."""
+        # High priority: config and validation (foundational)
+        if self.module_name in ["iris_rag.config", "iris_rag.validation"]:
+            return "HIGH"
+
+        # Medium/High priority: other critical modules
+        if self.is_critical_module:
+            return "MEDIUM"
+
+        # Lower priority for non-critical modules
+        return "LOW"
+
+    @property
+    def target_met(self) -> bool:
+        """Check if module meets its coverage target."""
+        return self.coverage_percentage >= self.target_coverage_percentage
+
+    @classmethod
+    def create_for_module(
+        cls,
+        module_name: str,
+        file_path: str,
+        coverage_percentage: float,
+        total_lines: int,
+        covered_lines: int,
+        **kwargs
+    ) -> 'ModuleCoverage':
+        """Create ModuleCoverage with automatic critical module detection."""
+        # Determine if module is critical
+        is_critical = module_name in CRITICAL_MODULES
+
+        # Set target coverage based on critical status
+        if is_critical:
+            target_coverage = 80.0
+        else:
+            target_coverage = 60.0
+
+        # Override target if explicitly provided
+        if 'target_coverage_percentage' in kwargs:
+            target_coverage = kwargs.pop('target_coverage_percentage')
+
+        return cls(
+            module_name=module_name,
+            file_path=file_path,
+            coverage_percentage=coverage_percentage,
+            total_lines=total_lines,
+            covered_lines=covered_lines,
+            is_critical_module=is_critical,
+            target_coverage_percentage=target_coverage,
+            **kwargs
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize module coverage to dictionary for API responses."""
+        data = {
+            'module_name': self.module_name,
+            'file_path': self.file_path,
+            'coverage_percentage': self.coverage_percentage,
+            'total_lines': self.total_lines,
+            'covered_lines': self.covered_lines,
+            'is_critical_module': self.is_critical_module,
+            'target_coverage_percentage': self.target_coverage_percentage,
+            'target_met': self.target_met,
+            'uncovered_lines': self.uncovered_lines,
+            'is_legacy_module': self.is_legacy_module
+        }
+
+        # Add optional fields if present
+        if self.priority_level:
+            data['priority_level'] = self.priority_level
+        if self.exemption_justification:
+            data['exemption_justification'] = self.exemption_justification
+        if self.analysis_time_ms is not None:
+            data['analysis_time_ms'] = self.analysis_time_ms
+        if self.vector_operation_coverage is not None:
+            data['vector_operation_coverage'] = self.vector_operation_coverage
+
+        return data
 
 
 # Example of how other models might be added later:

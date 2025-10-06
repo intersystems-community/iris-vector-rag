@@ -6,10 +6,11 @@ data and dependencies before execution.
 """
 
 import logging
-from typing import Dict, List, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List
+
 from ..core.connection import ConnectionManager
-from .requirements import PipelineRequirements, TableRequirement, EmbeddingRequirement
+from .requirements import EmbeddingRequirement, PipelineRequirements, TableRequirement
 
 logger = logging.getLogger(__name__)
 

@@ -7,10 +7,11 @@ including document insertion, vector search, and metadata queries.
 
 import json
 import logging
-from typing import List, Dict, Any, Optional, Tuple
-from ..core.models import Document
-from ..core.connection import ConnectionManager
+from typing import Any, Dict, List, Optional, Tuple
+
 from ..config.manager import ConfigurationManager
+from ..core.connection import ConnectionManager
+from ..core.models import Document
 
 logger = logging.getLogger(__name__)
 

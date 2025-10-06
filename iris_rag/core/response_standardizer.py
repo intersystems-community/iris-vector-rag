@@ -10,7 +10,8 @@ Addresses the critical issue where only 1/7 pipelines returned required keys
 """
 
 import logging
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from .models import Document
 
 logger = logging.getLogger(__name__)

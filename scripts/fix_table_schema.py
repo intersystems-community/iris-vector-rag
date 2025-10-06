@@ -5,14 +5,14 @@ This fixes the ID column issue where the table has an auto-generated ID column
 but the code expects to use doc_id as the primary key.
 """
 
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from iris_rag.storage.schema_manager import SchemaManager
 from common.iris_connection_manager import IRISConnectionManager
 from iris_rag.config.manager import ConfigurationManager
+from iris_rag.storage.schema_manager import SchemaManager
 
 
 def main():

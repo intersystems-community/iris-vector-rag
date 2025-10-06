@@ -4,7 +4,7 @@ Uses DBAPI primarily, JDBC only as emergency fallback.
 """
 
 import logging
-from typing import Optional, Any, Dict
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

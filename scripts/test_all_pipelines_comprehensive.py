@@ -4,30 +4,33 @@ Comprehensive pipeline test that properly mocks database connections.
 Tests all RAG pipelines with their actual interfaces.
 """
 
+import json
 import os
 import sys
-import json
 import traceback
 from datetime import datetime
-from typing import Dict, Any, List, Optional
-from unittest.mock import Mock, MagicMock, patch
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, Mock, patch
 
 # Add the project root to the path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-from common.utils import get_llm_func, get_embedding_func, 
-from iris_rag.core.models import Document
+from common.utils import (
+    get_embedding_func,
+    get_llm_func,
+)
 from iris_rag.config.manager import ConfigurationManager
+from iris_rag.core.models import Document
 
 # Pipeline imports
 from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.hyde import HyDERAGPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
-from iris_rag.pipelines.noderag import NodeRAGPipeline
+from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
 from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
+from iris_rag.pipelines.hyde import HyDERAGPipeline
+from iris_rag.pipelines.noderag import NodeRAGPipeline
 
 PIPELINE_INFO = {
     "basic": {

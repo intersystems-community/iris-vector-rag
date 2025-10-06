@@ -7,9 +7,9 @@ for their specific memory requirements.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class MemoryType(Enum):
@@ -301,6 +301,30 @@ class LearningResult:
     def total_changes(self) -> int:
         """Total number of changes made."""
         return len(self.new_patterns) + len(self.updated_patterns)
+
+
+@dataclass
+class TemporalQuery:
+    """Query for temporal memory retrieval."""
+
+    query_text: str
+    window: "TemporalWindow"  # Forward reference to avoid circular import
+    max_results: int = 10
+    relevance_threshold: float = 0.5
+    include_expired: bool = False
+    context_filters: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class TemporalContext:
+    """Temporal context result."""
+
+    window: "TemporalWindow"  # Forward reference to avoid circular import
+    items: List["MemoryItem"] = field(default_factory=list)
+    total_items_in_window: int = 0
+    avg_relevance_score: float = 0.0
+    window_start: datetime = field(default_factory=datetime.utcnow)
+    window_end: datetime = field(default_factory=datetime.utcnow)
 
 
 @dataclass

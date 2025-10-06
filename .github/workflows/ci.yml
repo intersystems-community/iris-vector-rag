@@ -293,6 +293,86 @@ jobs:
           name: test-results-e2e
           path: test-results-e2e.xml
 
+  example-tests:
+    name: Example Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: unit-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+
+      - name: Cache Poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-${{ runner.os }}-${{ env.POETRY_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,test
+
+      - name: Start IRIS database for example tests
+        run: |
+          docker-compose -f docker-compose.licensed.yml up -d iris
+          sleep 30
+          python evaluation_framework/test_iris_connectivity.py
+
+      - name: Run example tests (live database)
+        run: |
+          chmod +x scripts/ci/run-example-tests.sh
+          poetry run scripts/ci/run-example-tests.sh --mode real --verbose --continue-on-failure
+        env:
+          IRIS_HOST: localhost
+          IRIS_PORT: 21972
+          IRIS_USERNAME: _SYSTEM
+          IRIS_PASSWORD: SYS
+
+      - name: Upload example test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: example-test-results
+          path: test-results/examples/
+
+      - name: Comment on PR with example test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'test-results/examples/ci_summary.txt';
+
+            if (fs.existsSync(path)) {
+              const summary = fs.readFileSync(path, 'utf8');
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🧪 Example Test Results\n\n\`\`\`\n${summary}\n\`\`\``
+              });
+            }
+
   performance-tests:
     name: Performance Tests
     runs-on: ubuntu-latest
@@ -433,7 +513,7 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [unit-tests, integration-tests, build-and-test-docker, security-scan]
+    needs: [unit-tests, integration-tests, example-tests, build-and-test-docker, security-scan]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     environment: staging
     
@@ -455,7 +535,7 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [unit-tests, integration-tests, e2e-tests, build-and-test-docker, security-scan, performance-tests]
+    needs: [unit-tests, integration-tests, e2e-tests, example-tests, build-and-test-docker, security-scan, performance-tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
     

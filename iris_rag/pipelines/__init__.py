@@ -6,10 +6,27 @@ Each pipeline represents a different RAG technique or approach.
 """
 
 from .basic import BasicRAGPipeline
-from .crag import CRAGPipeline
 from .basic_rerank import BasicRAGRerankingPipeline
-from .graphrag import GraphRAGPipeline
 from .colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+from .crag import CRAGPipeline
+from .graphrag import GraphRAGPipeline
+
+# Optional imports with graceful fallback
+try:
+    from .hybrid_graphrag import HybridGraphRAGPipeline
+
+    HYBRID_GRAPHRAG_AVAILABLE = True
+except ImportError:
+    HybridGraphRAGPipeline = None
+    HYBRID_GRAPHRAG_AVAILABLE = False
+
+try:
+    from .iris_global_graphrag import IRISGlobalGraphRAGPipeline
+
+    IRIS_GLOBAL_GRAPHRAG_AVAILABLE = True
+except ImportError:
+    IRISGlobalGraphRAGPipeline = None
+    IRIS_GLOBAL_GRAPHRAG_AVAILABLE = False
 
 __all__ = [
     "BasicRAGPipeline",
@@ -18,3 +35,9 @@ __all__ = [
     "GraphRAGPipeline",
     "PyLateColBERTPipeline",
 ]
+
+if HYBRID_GRAPHRAG_AVAILABLE:
+    __all__.append("HybridGraphRAGPipeline")
+
+if IRIS_GLOBAL_GRAPHRAG_AVAILABLE:
+    __all__.append("IRISGlobalGraphRAGPipeline")

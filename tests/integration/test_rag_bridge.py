@@ -5,17 +5,19 @@ Tests the unified interface between rag-templates RAG ecosystem and kg-ticket-re
 validating performance SLOs, circuit breaker patterns, and error handling.
 """
 
-import pytest
 import asyncio
 import time
 from unittest.mock import Mock, patch
 
+import pytest
+import pytest_asyncio
+
 from adapters.rag_templates_bridge import (
-    RAGTemplatesBridge,
-    RAGResponse,
-    RAGTechnique,
     CircuitBreakerState,
     PerformanceMetrics,
+    RAGResponse,
+    RAGTechnique,
+    RAGTemplatesBridge,
 )
 
 
@@ -66,7 +68,7 @@ class TestRAGTemplatesBridge:
         pipeline.load_documents = Mock()
         return pipeline
 
-    @pytest.fixture
+    @pytest_asyncio.fixture
     async def bridge(self, mock_config_manager, mock_connection_manager):
         """Create bridge instance with mocked dependencies."""
         with patch(
@@ -121,6 +123,7 @@ class TestRAGTemplatesBridge:
 
             return bridge
 
+    @pytest.mark.asyncio
     async def test_all_rag_techniques_accessible(self, bridge):
         """Test that all RAG techniques are accessible through unified interface."""
         test_query = "What is machine learning?"
@@ -143,6 +146,7 @@ class TestRAGTemplatesBridge:
             assert response.processing_time_ms > 0
             assert response.error is None
 
+    @pytest.mark.asyncio
     async def test_performance_slo_compliance(self, bridge):
         """Test that performance meets SLO requirements (<500ms p95)."""
         test_query = "Performance test query"
@@ -166,6 +170,7 @@ class TestRAGTemplatesBridge:
         assert "slo_compliance" in metrics
         assert metrics["slo_compliance"]["p95_target_ms"] == 500
 
+    @pytest.mark.asyncio
     async def test_circuit_breaker_functionality(self, bridge):
         """Test circuit breaker pattern and automatic fallback."""
         test_query = "Circuit breaker test"
@@ -189,6 +194,7 @@ class TestRAGTemplatesBridge:
         response = await bridge.query(test_query, technique="crag")
         assert response.technique_used == bridge.fallback_technique.value
 
+    @pytest.mark.asyncio
     async def test_graceful_error_handling(self, bridge):
         """Test graceful degradation and error handling."""
         test_query = "Error handling test"
@@ -206,6 +212,7 @@ class TestRAGTemplatesBridge:
         assert response.confidence_score == 0.0
         assert "Test error" in response.error
 
+    @pytest.mark.asyncio
     async def test_configuration_validation(self, bridge):
         """Test configuration loading and validation."""
         # Test available techniques
@@ -223,6 +230,7 @@ class TestRAGTemplatesBridge:
         assert "slo_compliance" in metrics
         assert "p95_target_ms" in metrics["slo_compliance"]
 
+    @pytest.mark.asyncio
     async def test_kg_ticket_resolver_integration_patterns(self, bridge):
         """Test integration patterns with kg-ticket-resolver."""
         # Simulate kg-ticket-resolver query patterns
@@ -252,6 +260,7 @@ class TestRAGTemplatesBridge:
             assert response.metadata["user_context"] == context["user_context"]
             assert "timestamp" in response.metadata
 
+    @pytest.mark.asyncio
     async def test_incremental_indexing_support(self, bridge):
         """Test incremental indexing functionality."""
         test_documents = [
@@ -276,6 +285,7 @@ class TestRAGTemplatesBridge:
         assert result["incremental"] is True
         assert result["processing_time_ms"] > 0
 
+    @pytest.mark.asyncio
     async def test_health_check_comprehensive(self, bridge):
         """Test comprehensive health check functionality."""
         health = await bridge.health_check()
@@ -296,6 +306,7 @@ class TestRAGTemplatesBridge:
             pipeline_health = health["components"]["pipelines"][technique.value]
             assert "status" in pipeline_health
 
+    @pytest.mark.asyncio
     async def test_concurrent_query_handling(self, bridge):
         """Test handling of concurrent queries."""
         test_query = "Concurrent test query"
@@ -315,6 +326,7 @@ class TestRAGTemplatesBridge:
             assert response.technique_used == "basic"
             assert response.error is None
 
+    @pytest.mark.asyncio
     async def test_technique_auto_selection(self, bridge):
         """Test automatic technique selection when not specified."""
         test_query = "Auto selection test"
@@ -325,6 +337,7 @@ class TestRAGTemplatesBridge:
         assert isinstance(response, RAGResponse)
         assert response.error is None
 
+    @pytest.mark.asyncio
     async def test_metrics_collection_accuracy(self, bridge):
         """Test accuracy of performance metrics collection."""
         # Reset metrics
@@ -350,6 +363,7 @@ class TestRAGTemplatesBridge:
         assert metrics["successful_queries"] == successful_queries
         assert metrics["failed_queries"] == failed_queries
 
+    @pytest.mark.asyncio
     async def test_circuit_breaker_recovery(self, bridge):
         """Test circuit breaker recovery mechanism."""
         technique = RAGTechnique.BASIC
@@ -379,6 +393,7 @@ class TestRAGTemplatesBridge:
 class TestPerformanceBenchmarks:
     """Performance-focused tests for SLO validation."""
 
+    @pytest.mark.asyncio
     async def test_cold_start_performance(self):
         """Test bridge initialization performance (<50ms)."""
         with patch("adapters.rag_templates_bridge.ConfigurationManager"), patch(
@@ -391,6 +406,7 @@ class TestPerformanceBenchmarks:
 
             assert init_time < 50, f"Cold start took {init_time}ms, exceeds 50ms target"
 
+    @pytest.mark.asyncio
     async def test_error_recovery_performance(self, bridge):
         """Test error recovery within 1s target."""
         # Simulate failure and measure recovery time
@@ -417,6 +433,7 @@ class TestPerformanceBenchmarks:
 class TestRAGBridgeIntegration:
     """End-to-end integration tests."""
 
+    @pytest.mark.asyncio
     async def test_full_workflow_integration(self):
         """Test complete workflow from query to response."""
         # This would integrate with actual pipelines in a full test environment

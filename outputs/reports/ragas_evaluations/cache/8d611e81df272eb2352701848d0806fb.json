@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "BasicRAG",
+  "query": "How do immunotherapy treatments work in cancer patients?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.48175621032714844,
+  "success": true,
+  "error": null
+}

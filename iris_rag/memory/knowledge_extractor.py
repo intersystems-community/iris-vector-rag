@@ -6,17 +6,17 @@ Extracts reusable knowledge patterns from any RAG technique response.
 Provides configurable entity and relationship extraction methods.
 """
 
-import logging
-import time
 import hashlib
+import logging
 import re
-from typing import List, Dict, Any, Optional
+import time
+from typing import Any, Dict, List, Optional
 
 from iris_rag.memory.models import (
     Entity,
-    Relationship,
-    KnowledgePattern,
     KnowledgeExtractionConfig,
+    KnowledgePattern,
+    Relationship,
 )
 
 logger = logging.getLogger(__name__)

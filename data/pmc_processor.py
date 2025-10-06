@@ -5,11 +5,11 @@ This module provides functions for processing PMC XML files and extracting
 relevant metadata (abstract, author, title, keywords).
 """
 
-import os
 import logging
-import xml.etree.ElementTree as ET
-from typing import Dict, Any, Generator, List
+import os
 import time
+import xml.etree.ElementTree as ET
+from typing import Any, Dict, Generator, List
 
 logger = logging.getLogger(__name__)
 

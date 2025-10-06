@@ -3,10 +3,12 @@
 Test script to verify connection sharing is working properly.
 """
 
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import logging
 
 from common.connection_singleton import (
     get_shared_iris_connection,
@@ -15,7 +17,6 @@ from common.connection_singleton import (
 from iris_rag.config.manager import ConfigurationManager
 from iris_rag.storage.schema_manager import SchemaManager
 from iris_rag.storage.vector_store_iris import IRISVectorStore
-import logging
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

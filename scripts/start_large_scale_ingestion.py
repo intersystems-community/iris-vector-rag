@@ -5,17 +5,18 @@ Kicks off background ingestion of 1000+ PMC documents
 """
 
 import os
+import signal
+import subprocess
 import sys
 import time
-import subprocess
-import signal
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add project paths
 current_dir = Path(__file__).parent
 project_root = current_dir.parent
 sys.path.insert(0, str(project_root))
+
 
 def count_pmc_files():
     """Count available PMC documents."""
@@ -25,34 +26,36 @@ def count_pmc_files():
         return len(xml_files)
     return 0
 
+
 def test_database_connection():
     """Quick test of database connection."""
     try:
         from common.config import get_iris_config
         from common.iris_client import IRISClient
-        
+
         print("🔌 Testing database connection...")
         config = get_iris_config()
-        
+
         with IRISClient(config) as client:
             # Simple test query
             result = client.query("SELECT 1 as test")
-            if result and result[0].get('test') == 1:
+            if result and result[0].get("test") == 1:
                 print("✅ Database connection successful!")
                 return True
             else:
                 print("❌ Database connection failed - no results")
                 return False
-                
+
     except Exception as e:
         print(f"❌ Database connection failed: {e}")
         return False
+
 
 def start_ingestion_process():
     """Start the large-scale ingestion process in background."""
     print("\n🚀 STARTING LARGE-SCALE PMC INGESTION")
     print("=" * 50)
-    
+
     # Create ingestion script
     ingestion_script = """#!/usr/bin/env python3
 import sys
@@ -135,59 +138,63 @@ def basic_ingestion():
 if __name__ == "__main__":
     sys.exit(main())
 """
-    
+
     # Write ingestion script
     ingestion_file = project_root / "scripts" / "run_ingestion.py"
-    with open(ingestion_file, 'w') as f:
+    with open(ingestion_file, "w") as f:
         f.write(ingestion_script)
-    
+
     # Make executable
     os.chmod(ingestion_file, 0o755)
-    
+
     # Create logs directory
     logs_dir = project_root / "logs"
     logs_dir.mkdir(exist_ok=True)
-    
+
     # Start ingestion in background
     timestamp = int(time.time())
     log_file = logs_dir / f"ingestion_{timestamp}.log"
-    
+
     print(f"📝 Ingestion logs will be written to: {log_file}")
     print("🏃 Starting ingestion process...")
-    
+
     # Start subprocess
-    process = subprocess.Popen([
-        sys.executable, str(ingestion_file)
-    ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    
+    process = subprocess.Popen(
+        [sys.executable, str(ingestion_file)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+
     print(f"✅ Ingestion process started (PID: {process.pid})")
     print(f"📋 Monitor progress with: tail -f {log_file}")
     print("🔄 Process will continue in background while we develop visualizations...")
-    
+
     return process
+
 
 def main():
     """Main function."""
     print("🚀 LARGE-SCALE PMC INGESTION STARTER")
     print("=" * 60)
     print(f"⏰ Started at: {datetime.now()}")
-    
+
     # Count available files
     file_count = count_pmc_files()
     print(f"📊 Available PMC files: {file_count}")
-    
+
     if file_count < 100:
         print("⚠️  Warning: Less than 100 PMC files available")
         print("   Consider downloading more PMC documents for large-scale evaluation")
-    
+
     # Test database connection
     if not test_database_connection():
         print("⚠️  Database connection failed - ingestion may have issues")
         print("   Continuing anyway - some ingestion modes can work offline")
-    
+
     # Start ingestion
     process = start_ingestion_process()
-    
+
     print("\n" + "=" * 60)
     print("🎯 NEXT STEPS:")
     print("1. Ingestion is now running in background")
@@ -195,8 +202,9 @@ def main():
     print("3. Monitor ingestion progress in logs/")
     print("4. Visualizations will be ready when ingestion completes")
     print("=" * 60)
-    
+
     return process
+
 
 if __name__ == "__main__":
     main()

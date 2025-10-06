@@ -6,7 +6,8 @@ for multiple backends and graceful fallback mechanisms.
 """
 
 import logging
-from typing import List, Optional, Dict, Callable
+from typing import Callable, Dict, List, Optional
+
 from ..config.manager import ConfigurationManager
 
 logger = logging.getLogger(__name__)
@@ -133,8 +134,9 @@ class EmbeddingManager:
     def _create_huggingface_function(self) -> Callable:
         """Create Hugging Face embedding function."""
         try:
-            from common.huggingface_utils import download_huggingface_model
             import torch
+
+            from common.huggingface_utils import download_huggingface_model
 
             hf_config = self.embedding_config.get("huggingface", {})
             model_name = hf_config.get(
@@ -233,6 +235,18 @@ class EmbeddingManager:
             Embedding vector as list of floats
         """
         return self.embed_text(text)
+
+    def get_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """
+        Generate embeddings for multiple texts (alias for embed_texts for HybridGraphRAG compatibility).
+
+        Args:
+            texts: List of input texts to embed
+
+        Returns:
+            List of embedding vectors
+        """
+        return self.embed_texts(texts)
 
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
         """

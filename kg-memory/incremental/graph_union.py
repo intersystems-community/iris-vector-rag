@@ -6,12 +6,12 @@ This module implements V̂ ∪ V̂' (entity union) and Ê ∪ Ê' (relationship 
 for efficient knowledge graph updates with atomic transactions and rollback capability.
 """
 
+import json
 import logging
 import time
-import json
 from dataclasses import dataclass, field
-from typing import Set, List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Set
 
 from iris_rag.core.connection import ConnectionManager
 from iris_rag.storage.schema_manager import SchemaManager

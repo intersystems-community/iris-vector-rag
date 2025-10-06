@@ -3,10 +3,10 @@ Centralized connection manager for RAG pipelines
 Handles JDBC, ODBC, and future dbapi connections with a unified interface
 """
 
-import os
 import logging
-from typing import Any, List, Optional
+import os
 from contextlib import contextmanager
+from typing import Any, List, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -1,0 +1,1320 @@
+<?xml version="1.0"  ?><!DOCTYPE pmc-articleset PUBLIC "-//NLM//DTD ARTICLE SET 2.0//EN" "https://dtd.nlm.nih.gov/ncbi/pmc/articleset/nlm-articleset-2.0.dtd"><pmc-articleset><article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:ali="http://www.niso.org/schemas/ali/1.0/" article-type="research-article" xml:lang="en" dtd-version="1.4"><processing-meta base-tagset="archiving" mathml-version="3.0" table-model="xhtml" tagset-family="jats"><restricted-by>pmc</restricted-by></processing-meta><front><journal-meta><journal-id journal-id-type="nlm-ta">Sci Rep</journal-id><journal-id journal-id-type="iso-abbrev">Sci Rep</journal-id><journal-id journal-id-type="pmc-domain-id">1579</journal-id><journal-id journal-id-type="pmc-domain">scirep</journal-id><journal-title-group><journal-title>Scientific Reports</journal-title></journal-title-group><issn pub-type="epub">2045-2322</issn><publisher><publisher-name>Nature Publishing Group</publisher-name></publisher></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC12475181</article-id><article-id pub-id-type="pmcid-ver">PMC12475181.1</article-id><article-id pub-id-type="pmcaid">12475181</article-id><article-id pub-id-type="pmcaiid">12475181</article-id><article-id pub-id-type="pmid">41006393</article-id><article-id pub-id-type="doi">10.1038/s41598-025-12220-2</article-id><article-id pub-id-type="publisher-id">12220</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group subj-group-type="heading"><subject>Article</subject></subj-group></article-categories><title-group><article-title>A physics-based fingerprinting approach for efficient device identification in OWC system</article-title></title-group><contrib-group><contrib contrib-type="author"><name name-style="western"><surname>Chen</surname><given-names initials="X">Xuanbang</given-names></name><xref ref-type="aff" rid="Aff1">1</xref><xref ref-type="aff" rid="Aff2">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Liu</surname><given-names initials="Z">Ziqi</given-names></name><xref ref-type="aff" rid="Aff1">1</xref></contrib><contrib contrib-type="author" corresp="yes"><name name-style="western"><surname>Wang</surname><given-names initials="Y">Yuhao</given-names></name><address><email>wangyuhao@ncu.edu.cn</email></address><xref ref-type="aff" rid="Aff2">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Dai</surname><given-names initials="C">Chunlai</given-names></name><xref ref-type="aff" rid="Aff2">2</xref></contrib><contrib contrib-type="author" corresp="yes"><name name-style="western"><surname>Zhang</surname><given-names initials="X">Xun</given-names></name><address><email>xun.zhang@ieee.org</email></address><xref ref-type="aff" rid="Aff1">1</xref><xref ref-type="aff" rid="Aff3">3</xref></contrib><aff id="Aff1"><label>1</label><institution-wrap><institution-id institution-id-type="ROR">https://ror.org/00yw34h52</institution-id><institution-id institution-id-type="GRID">grid.466360.1</institution-id><institution-id institution-id-type="ISNI">0000 0000 8830 3129</institution-id><institution>Isep, LISITE, </institution></institution-wrap>92130 Issy-les-Moulineaux, France </aff><aff id="Aff2"><label>2</label><institution-wrap><institution-id institution-id-type="ROR">https://ror.org/042v6xz23</institution-id><institution-id institution-id-type="GRID">grid.260463.5</institution-id><institution-id institution-id-type="ISNI">0000 0001 2182 8825</institution-id><institution>Present Address: School of Information Engineering, </institution><institution>Nanchang University, </institution></institution-wrap>Nanchang, 330031 China </aff><aff id="Aff3"><label>3</label><institution-wrap><institution-id institution-id-type="ROR">https://ror.org/04mvpxy20</institution-id><institution-id institution-id-type="GRID">grid.411440.4</institution-id><institution-id institution-id-type="ISNI">0000 0001 0238 8414</institution-id><institution>School of Information Engineering Huzhou University, </institution></institution-wrap>313000 Huzhou, China </aff></contrib-group><pub-date pub-type="epub"><day>26</day><month>9</month><year>2025</year></pub-date><pub-date pub-type="collection"><year>2025</year></pub-date><volume>15</volume><issue-id pub-id-type="pmc-issue-id">478255</issue-id><elocation-id>33061</elocation-id><history><date date-type="received"><day>16</day><month>3</month><year>2025</year></date><date date-type="accepted"><day>15</day><month>7</month><year>2025</year></date></history><pub-history><event event-type="pmc-release"><date><day>26</day><month>09</month><year>2025</year></date></event><event event-type="pmc-live"><date><day>28</day><month>09</month><year>2025</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2025-09-28 17:25:21.950"><day>28</day><month>09</month><year>2025</year></date></event></pub-history><permissions><copyright-statement>&#169; The Author(s) 2025</copyright-statement><copyright-year>2025</copyright-year><license><ali:license_ref specific-use="textmining" content-type="ccbyncndlicense">https://creativecommons.org/licenses/by-nc-nd/4.0/</ali:license_ref><license-p><bold>Open Access</bold> This article is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License, which permits any non-commercial use, sharing, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons licence, and indicate if you modified the licensed material. You do not have permission under this licence to share adapted material derived from this article or parts of it. The images or other third party material in this article are included in the article&#8217;s Creative Commons licence, unless indicated otherwise in a credit line to the material. If material is not included in the article&#8217;s Creative Commons licence and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder. To view a copy of this licence, visit <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://creativecommons.org/licenses/by-nc-nd/4.0/">http://creativecommons.org/licenses/by-nc-nd/4.0/</ext-link>.</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="41598_2025_Article_12220.pdf"/><abstract id="Abs1"><p id="Par1">Traditional device fingerprinting methods primarily rely on data-intensive deep learning models, treating devices as black boxes. However, these approaches suffer from high computational complexity and sensitivity to noise, making them impractical for large-scale Internet-of-Things (IoT) deployments that demand real-time processing and energy efficiency. To address these challenges, we propose a physics-based fingerprinting model for optical wireless communication (OWC) systems. Instead of relying solely on statistical features, small yet significant non-linear response variations in LEDs are quantified as lumped parameters in an equivalent circuit model, serving as the foundation for physical fingerprint features. This physics-based fingerprint is not only interpretable but also enables compact feature representation, reducing reliance on extensive training data. Experimental results demonstrate that our method achieves an average classification accuracy of 90.88% under varying signal-to-noise ratio (SNR) conditions. Furthermore, compared to convolutional neural network (CNN) and long short-term memory (LSTM)-based models, our approach achieves higher accuracy with significantly lower computational overhead, making it particularly well-suited for resource-constrained IoT environments. By reducing both dataset dimensionality and training sample requirements, our framework provides an efficient and scalable solution for device authentication in OWC networks.</p></abstract><kwd-group kwd-group-type="npg-subject"><title>Subject terms</title><kwd>Applied optics</kwd><kwd>Applied physics</kwd><kwd>Electrical and electronic engineering</kwd></kwd-group><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>issue-copyright-statement</meta-name><meta-value>&#169; Springer Nature Limited 2025</meta-value></custom-meta></custom-meta-group></article-meta></front><body><sec id="Sec1"><title>Introduction</title><p id="Par2">The sixth-generation (6G) network is poised to support a massive Internet of Things (IoT) ecosystem, driving transformative applications such as extended reality (XR), augmented and virtual reality (AR/VR), industrial automation, and pervasive smart technologies<sup><xref ref-type="bibr" rid="CR1">1</xref>&#8211;<xref ref-type="bibr" rid="CR3">3</xref></sup>. However, the existing RF spectrum struggles to accommodate the escalating capacity demands of these diverse services. Leveraging its unregulated wide spectrum and immunity to electromagnetic interference<sup><xref ref-type="bibr" rid="CR4">4</xref>&#8211;<xref ref-type="bibr" rid="CR6">6</xref></sup>, optical wireless communication (OWC) has emerged as a compelling solution to address the limitations of RF spectrum resources. Much like RF communication, OWC must address critical security challenges to safeguard transmissions against threats such as eavesdropping, denial-of-service (DoS) attacks, jamming, and node compromise. As reliance on OWC networks for secure data transmission grows, enhancing their security has become an increasingly urgent focus.</p><p id="Par3">Numerous research on enhancing the security of OWC networks has explored various mechanisms to address vulnerabilities, including physical-layer security (PLS) strategies, secure coding frameworks, and authentication protocols. Studies have demonstrated the significance of channel characteristics, such as inter-symbol interference (ISI) caused by multipath reflections, in influencing secrecy performance<sup><xref ref-type="bibr" rid="CR7">7</xref>,<xref ref-type="bibr" rid="CR8">8</xref></sup>. Mitigation strategies leveraging advanced transmission policies and cooperative access point designs have proven effective in reducing eavesdropping risks. Additionally, secure coding techniques, particularly those based on polar codes, have emerged as a promising approach to degrade eavesdropper channels, ensuring both reliability and confidentiality of transmitted data<sup><xref ref-type="bibr" rid="CR9">9</xref></sup>. Authentication and key generation protocols tailored for OWC systems, especially those designed for wide-area IoT connectivity and optical OFDM systems, have further enhanced communication security while maintaining computational efficiency<sup><xref ref-type="bibr" rid="CR10">10</xref>,<xref ref-type="bibr" rid="CR11">11</xref></sup>. Moreover, optimization-based solutions, such as power allocation policies in NOMA-aided OWC networks, have been shown to effectively balance user fairness, system efficiency, and secrecy rates<sup><xref ref-type="bibr" rid="CR12">12</xref></sup>. Collectively, these advancements illustrate a multifaceted approach to strengthening the security of OWC networks, addressing both foundational vulnerabilities and system-level challenges in diverse deployment scenarios.</p><p id="Par4">Beyond cryptographic methods, leveraging unique, non-replicable device characteristics as fingerprints represents an effective strategy for physical-layer device identification and authentication. Inconsistent batches and manufacturing tolerances in wireless communication devices, such as Wi-Fi, ZigBee, and LoRa, introduce unintentional modulations, resulting in distinctive device fingerprints<sup><xref ref-type="bibr" rid="CR13">13</xref>&#8211;<xref ref-type="bibr" rid="CR18">18</xref></sup>. Similarly, optical fingerprints have garnered significant research interest. For instance, a deep learning-based approach for hardware fingerprinting of fiber-optic Ethernet devices was proposed in<sup><xref ref-type="bibr" rid="CR19">19</xref></sup>, employing a constellation diagram feature extraction method based on a baseband modulation system with amplitude-only waveforms. This method, validated on an intensity modulation/direct detection system with 24 fiber-optic Ethernet devices, achieved classification accuracies of 99.49% and 96.29% under signal-to-noise ratio (SNR) levels of 30 dB and 10 dB, respectively. A feature separation network (TF-FSN) for fingerprinting visible light transmitters was introduced in<sup><xref ref-type="bibr" rid="CR20">20</xref></sup>, utilizing a two-stage training strategy to construct a robust classifier. This approach achieved recognition and verification accuracies of 92.65% and 98%, respectively, across varying distances and SNR levels. Despite their effectiveness, these methods heavily rely on large datasets for model training, underscoring the lack of lightweight feature extraction techniques for device fingerprinting in OWC systems, particularly under the growing demand for scalability in large-scale IoT deployments and resource-constrained edge computing scenarios. In our prior work<sup><xref ref-type="bibr" rid="CR21">21</xref></sup>, the feasibility of using circuit parameters derived from an empirical equivalent LED circuit as fingerprint features was preliminarily validated, achieving a classification accuracy of 97.7%. However, the existing model was limited to insufficient features and validating devices, requiring further exploration and improvement.</p><p id="Par5">Motivated by the use of circuit parameters to represent the unique electrical characteristics of devices, this paper derives an accurate equivalent circuit model for LEDs and proposes a lightweight method for extracting LED-based physical fingerprints for device identification in OWC systems. Different from most deep learning-based identification schemes, the proposed method compresses raw signal features containing redundant information and leverages simple machine learning techniques to achieve high classification accuracy. The main contributions of this work are summarized as follows: <list list-type="order"><list-item><p id="Par6">We propose an OWC device identification mechanism based on the unique nonlinear transmission response of LEDs, by capturing the LED intrinsic physical characteristics.</p></list-item><list-item><p id="Par7">An OWC-based experimental testbed is established to collect the fingerprint dataset from commercial LEDs. The PSO algorithm is employed to extract physics-based fingerprints, which are also visualized as a heatmap pattern.</p></list-item><list-item><p id="Par8">Comprehensive comparisons with traditional deep learning classifiers are conducted. The results validate the effectiveness of the proposed method in extracting intrinsic characteristics while maintaining computational efficiency.</p></list-item></list>The remainder of this paper is structured as follows. Section &#8220;<xref rid="Sec2" ref-type="sec">Proposed method</xref>&#8221; provides an in-depth discussion of the device identification mechanism in OWC systems and the development of the physics-based fingerprint model. Section &#8220;<xref rid="Sec5" ref-type="sec">Data collection and fingerprint extraction</xref>&#8221; describes the fingerprint extraction algorithm alongside the experimental testbed for dataset collection. Section &#8220;<xref rid="Sec6" ref-type="sec">Results and discussion</xref>&#8221; presents a comprehensive evaluation of the proposed fingerprint model, including comparisons with advanced deep learning-based schemes. Finally, Section &#8220;<xref rid="Sec7" ref-type="sec">Discussion</xref>&#8221; concludes the paper.</p></sec><sec id="Sec2"><title>Proposed method</title><sec id="Sec3"><title>System model</title><p id="Par9">Fig. <xref rid="Fig1" ref-type="fig">1</xref> illustrates a typical structure of the device identification mechanism in an LED-based OWC system. In general, user message is transmitted to the user end through digital-to-analog converter (DAC), driver module, LED, and transmission channel. The user end typically incorporates a photodiode, trans-impedance amplifier (TIA) and analog-to-digital converter (ADC) to convert optical signals into voltage signals that can be processed by the user end. Consequently, the received signal inherently carries characteristics from each component of the physical link. The received signal <inline-formula id="IEq1"><alternatives><tex-math id="d33e303">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$y^i(t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq1.gif"/></alternatives></inline-formula> from the <inline-formula id="IEq2"><alternatives><tex-math id="d33e309">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq2.gif"/></alternatives></inline-formula>-th LED can be represented as: <disp-formula id="Equ1"><label>1a</label><alternatives><tex-math id="d33e315">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned}&amp;x(t) = A \cos \left( 2 \pi \left( f_0 + \frac{Bt}{T}\right) t \right) , \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ1.gif"/></alternatives></disp-formula><disp-formula id="Equ2"><label>1b</label><alternatives><tex-math id="d33e321">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned}&amp;y^i(t)= \int x(t)h_{s}^i(t)dt, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ2.gif"/></alternatives></disp-formula></p><p id="Par10">
+<fig id="Fig1" position="float" orientation="portrait"><label>Fig. 1</label><caption><p>The diagram of device identification in OWC system based on hardware fingerprint.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO1" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig1_HTML.jpg"/></fig>
+</p><p id="Par11"><inline-formula id="IEq3"><alternatives><tex-math id="d33e338">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$x(t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq3.gif"/></alternatives></inline-formula> is the wide-band signal which represents the user message. <inline-formula id="IEq4"><alternatives><tex-math id="d33e344">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$A$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq4.gif"/></alternatives></inline-formula> denotes the amplitude of the signal . The frequency starts at <inline-formula id="IEq5"><alternatives><tex-math id="d33e350">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$f_0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq5.gif"/></alternatives></inline-formula> when <inline-formula id="IEq6"><alternatives><tex-math id="d33e356">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t = 0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq6.gif"/></alternatives></inline-formula> and linearly increases over time, reaching <inline-formula id="IEq7"><alternatives><tex-math id="d33e362">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$f_0 + B$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq7.gif"/></alternatives></inline-formula> at <inline-formula id="IEq8"><alternatives><tex-math id="d33e368">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t = T$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq8.gif"/></alternatives></inline-formula>. The bandwidth <inline-formula id="IEq9"><alternatives><tex-math id="d33e375">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$B$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq9.gif"/></alternatives></inline-formula> indicates the range of frequencies swept, while <inline-formula id="IEq10"><alternatives><tex-math id="d33e381">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$T$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq10.gif"/></alternatives></inline-formula> is the total sweep duration. <inline-formula id="IEq11"><alternatives><tex-math id="d33e387">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$h_{s}^i(t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq11.gif"/></alternatives></inline-formula> denotes the system transfer response between the <inline-formula id="IEq12"><alternatives><tex-math id="d33e393">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq2.gif"/></alternatives></inline-formula>-th LED and the optical receiver, which can be written as:<disp-formula id="Equ3"><label>2</label><alternatives><tex-math id="d33e399">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} \begin{aligned}&amp;h_{s}^i(t) = h_\textrm{LED}^i(t)*h_\textrm{rx}^i(t) *h_\textrm{d}^i(t) *h^i_\textrm{c}(t), \end{aligned} \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ3.gif"/></alternatives></disp-formula><inline-formula id="IEq13"><alternatives><tex-math id="d33e405">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$h^i_\textrm{rx}(t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq13.gif"/></alternatives></inline-formula> and <inline-formula id="IEq14"><alternatives><tex-math id="d33e412">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$h^i_\textrm{d}(t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq14.gif"/></alternatives></inline-formula> represent the response of the LED driver module and the optical receiver, respectively. To ensure the distortionless transmission of signals, wide-band modules are required, which the response can be considered as <inline-formula id="IEq15"><alternatives><tex-math id="d33e418">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$g^i_\textrm{d}\delta (t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq15.gif"/></alternatives></inline-formula> and <inline-formula id="IEq16"><alternatives><tex-math id="d33e424">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$g^i_\textrm{rx}\delta (t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq16.gif"/></alternatives></inline-formula>, respectively. Here, <inline-formula id="IEq17"><alternatives><tex-math id="d33e430">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$g^i_\textrm{d}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq17.gif"/></alternatives></inline-formula> denotes the gain of the LED driver module, while <inline-formula id="IEq18"><alternatives><tex-math id="d33e436">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$g^i_\textrm{rx}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq18.gif"/></alternatives></inline-formula> represents the combined gain, including the photodiode&#8217;s photoelectric conversion gain and the trans-impedance amplifier (TIA) current-to-voltage amplification. <inline-formula id="IEq19"><alternatives><tex-math id="d33e442">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\delta (\cdot )$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq19.gif"/></alternatives></inline-formula> is the Dirac delta function. As shown in Fig. <xref rid="Fig1" ref-type="fig">1</xref>, the receiver front-end mainly contains an optical lens, PD, and TIA. The energy received from the LED can be calculated by the Lambertian radiant intensity. It is related to the distance <inline-formula id="IEq20"><alternatives><tex-math id="d33e452">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$d^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq20.gif"/></alternatives></inline-formula> (between the <italic toggle="yes">i</italic>th-LED and the receiver front-end) and the irradiance angle <inline-formula id="IEq21"><alternatives><tex-math id="d33e461">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\phi$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq21.gif"/></alternatives></inline-formula> of the light<sup><xref ref-type="bibr" rid="CR22">22</xref></sup>. The channel gain of the line-of-sight (LoS) link is given as<disp-formula id="Equ4"><label>3</label><alternatives><tex-math id="d33e471">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} \begin{aligned}&amp;h_c^{i}(t) = \frac{(m+1)A_\textrm{r}}{2\pi {d^i}^2}\cos ^m(\phi )\cos (\psi )g(\psi )\delta \left( t-\frac{d^i}{c}\right) , \end{aligned} \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ4.gif"/></alternatives></disp-formula>where <inline-formula id="IEq22"><alternatives><tex-math id="d33e479">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$m=-\mathrm {ln2/ln(cos\phi _{1/2})}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq22.gif"/></alternatives></inline-formula> denotes the Lambertian emission order and <inline-formula id="IEq23"><alternatives><tex-math id="d33e485">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\phi _{1/2}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq23.gif"/></alternatives></inline-formula> is the emission semi-angle of the LED. <inline-formula id="IEq24"><alternatives><tex-math id="d33e491">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$A_\textrm{r}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq24.gif"/></alternatives></inline-formula> and <inline-formula id="IEq25"><alternatives><tex-math id="d33e497">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$g(\psi )$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq25.gif"/></alternatives></inline-formula> represent the physical detection area of the receiver front-end and the lens gain, respectively. c is the light speed.<disp-formula id="Equ5"><label>4</label><alternatives><tex-math id="d33e503">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} g(\psi )=\left\{ \begin{array}{ccc} \displaystyle {\frac{n^2}{\sin ^2(\Psi )}} , &amp; &amp; {0&lt; \psi &lt; \Psi }, \vspace{1.2ex} \\ 0 ,&amp; &amp; {\psi \ge \Psi } , \end{array} \right. \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ5.gif"/></alternatives></disp-formula>where <inline-formula id="IEq26"><alternatives><tex-math id="d33e510">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\psi$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq26.gif"/></alternatives></inline-formula> represents the incidence angle of the light. As indicated in (<xref rid="Equ3" ref-type="disp-formula">2</xref>), unique variations in the received signal may originate from the LED, driver module, channel, or receiver. However, commercial hardware components, such as the driver module and receiver, are specifically designed for communication, which means manufacturing tolerances have minimal impact on performance. In contrast, LEDs contain a severe nonlinearity due to their primary purpose of lighting. Thus, the following sections focus on identifying the subtle differences within the LED, given the responses of the driver module, channel, and receiver are consistent (same driver module and receiver, fixed distance).</p></sec><sec id="Sec4"><title>Intrinsic feature</title><p id="Par12">As depicted in the dotted box of Fig. <xref rid="Fig1" ref-type="fig">1</xref>, the differences between LED devices can be intricately analyzed through the carrier transport process. Electrons are injected from the N-type contact and holes from the P-type contact, both in quantities proportional to the input signal <inline-formula id="IEq27"><alternatives><tex-math id="d33e527">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$x(t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq3.gif"/></alternatives></inline-formula>. Electrons traverse the n-type GaN layer into the conduction band, while holes are injected into the valence band through the p-type GaN layer. Driven by the electric field, these carriers migrate toward the multi-quantum well (MQW) region. The electron blocking layer (EBL), situated between the MQW and the p-type GaN layer, plays a critical role in suppressing electron overflow from the MQW, thereby enhancing carrier confinement. Within the MQW, confined electrons and holes accumulate and recombine radiatively, emitting photons. These photons propagate through the epitaxial layers, culminating in light emission from the LED structure.</p><p id="Par13">The electrical-to-optical response <inline-formula id="IEq28"><alternatives><tex-math id="d33e535">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$h^i_\textrm{LED}(t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq28.gif"/></alternatives></inline-formula> of LED is closely related to these various internal physical properties, and manufacturing tolerances introduce subtle differences that affect its performance. Specifically, variations in quantum well thickness <inline-formula id="IEq29"><alternatives><tex-math id="d33e541">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L_\textrm{mq}^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq29.gif"/></alternatives></inline-formula> affect the emission wavelength and efficiency, thicker or thinner wells alter the recombination region, thereby influencing the emission spectrum. Moreover, minor differences in doping concentration in the n-type <inline-formula id="IEq30"><alternatives><tex-math id="d33e547">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$N_d$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq30.gif"/></alternatives></inline-formula> and p-type <inline-formula id="IEq31"><alternatives><tex-math id="d33e553">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$N_a$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq31.gif"/></alternatives></inline-formula> layers impact carrier distribution and recombination rates, affecting light output intensity and response speed. Typically, GaN-based LEDs use silicon for n-type doping and magnesium for p-type doping, with doping concentrations on the order of <inline-formula id="IEq32"><alternatives><tex-math id="d33e559">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$1 \times 10^{18}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq32.gif"/></alternatives></inline-formula>
+<inline-formula id="IEq33"><alternatives><tex-math id="d33e566">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\hbox {cm}^{-3}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq33.gif"/></alternatives></inline-formula>, normally accompanied by a 5% fluctuation<sup><xref ref-type="bibr" rid="CR23">23</xref></sup>. Additionally, variations in defect density and lattice quality affect non-radiative recombination rates, reducing light efficiency. Internal material stress <inline-formula id="IEq34"><alternatives><tex-math id="d33e576">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\sigma$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq34.gif"/></alternatives></inline-formula> may also shift energy band structures, causing spectral deviations. These factors collectively contribute to slight electro-optical response differences, even among LEDs from the same batch.</p><p id="Par14">Unlike the treatment of RF transmitters as black boxes in RF fingerprint, the differences in LED photon emission mechanisms are traceable. The carrier rate equations are used to describe the generation, recombination, and transport processes of carriers (electrons and holes) within the LED. By analyzing carrier behavior, we can reduce the high-dimensional spectral variations in the received signal to a few physical characteristics, forming the distinctive fingerprint of the LED<sup><xref ref-type="bibr" rid="CR24">24</xref></sup>. Based on the Boltzmann distribution of carriers and the definitions of capacitance and resistance, the equivalent cladding capacitance <inline-formula id="IEq35"><alternatives><tex-math id="d33e588">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_c^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq35.gif"/></alternatives></inline-formula>, the junction capacitance <inline-formula id="IEq36"><alternatives><tex-math id="d33e594">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_q^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq36.gif"/></alternatives></inline-formula> within the quantum well, and the junction resistance <inline-formula id="IEq37"><alternatives><tex-math id="d33e600">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_q^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq37.gif"/></alternatives></inline-formula> for the <inline-formula id="IEq38"><alternatives><tex-math id="d33e606">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq2.gif"/></alternatives></inline-formula>-th LED can be expressed as: <disp-formula id="Equ6"><label>5a</label><alternatives><tex-math id="d33e613">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} C_c^i&amp;=\frac{q^2n_0^iA_c^iL_c^i}{\eta KT}\textrm{exp}\left(\frac{qV_a}{\eta KT}\right)\alpha (t), \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ6.gif"/></alternatives></disp-formula><disp-formula id="Equ7"><label>5b</label><alternatives><tex-math id="d33e619">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} C_{q}^i&amp;= \sum _{m=1}^M \frac{1}{C_{mq}^i} \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ7.gif"/></alternatives></disp-formula><disp-formula id="Equ8"><label>5c</label><alternatives><tex-math id="d33e625">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned}&amp;=\sum _{m=1}^M\frac{qA_{mq}^iL_{mq}^in_{mq}^i\exp \left( \frac{\xi \left( V_a\right) }{KT}\right) }{KT\left( 1+\exp \left( \frac{\xi \left( V_a\right) }{KT}\right) \right) }\frac{d\xi \left( V_a\right) }{dV_a}\alpha (t) \nonumber \\ \frac{1}{R_{q}^i}&amp;= \sum _{m=1}^M \frac{1}{R_{mq}^i}=\sum _{m=1}^M qA_{mq}^iL_{mq}^i\alpha (n_{mq}^i)\frac{dn_{mq}^i}{dV_a}\alpha (t) \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ8.gif"/></alternatives></disp-formula> where the size of each layer is described by its length <inline-formula id="IEq39"><alternatives><tex-math id="d33e632">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq39.gif"/></alternatives></inline-formula> and effective area <inline-formula id="IEq40"><alternatives><tex-math id="d33e638">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$A^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq40.gif"/></alternatives></inline-formula>. <italic toggle="yes">q</italic>,<italic toggle="yes">K</italic>, <italic toggle="yes">T</italic>, <inline-formula id="IEq41"><alternatives><tex-math id="d33e654">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq41.gif"/></alternatives></inline-formula>, and denote the charge of a single electron, Boltzmann&#8217;s constant, temperature, and nonideality factor of the Shockley diode equation, respectively. <inline-formula id="IEq42"><alternatives><tex-math id="d33e660">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$n_0^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq42.gif"/></alternatives></inline-formula> and <inline-formula id="IEq43"><alternatives><tex-math id="d33e666">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$n_{mq}^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq43.gif"/></alternatives></inline-formula> represent the equilibrium minority concentration in cladding layer and <italic toggle="yes">m</italic>-th quantum wells, respectively. <inline-formula id="IEq44"><alternatives><tex-math id="d33e675">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha (t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq44.gif"/></alternatives></inline-formula> denotes the degradation effect caused by defect formation<sup><xref ref-type="bibr" rid="CR25">25</xref></sup>. <inline-formula id="IEq45"><alternatives><tex-math id="d33e686">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\xi \left( V_a\right)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq45.gif"/></alternatives></inline-formula> represents the energy difference between the quasi-Fermi level and the conduction band edge, expressed as a polynomial function of the applied bias <inline-formula id="IEq46"><alternatives><tex-math id="d33e692">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$V_a$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq46.gif"/></alternatives></inline-formula>. <inline-formula id="IEq47"><alternatives><tex-math id="d33e698">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha (n_{mq}^i)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq47.gif"/></alternatives></inline-formula> is a polynomial in <inline-formula id="IEq48"><alternatives><tex-math id="d33e704">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$n_{mq}^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq43.gif"/></alternatives></inline-formula>. It can be seen apparently in eqs. (<xref rid="Sec4" ref-type="sec">5</xref>a), (<xref rid="Sec4" ref-type="sec">5</xref>b), and (<xref rid="Sec4" ref-type="sec">5</xref>c) that the values of equivalent circuit parameters are sensitive to the manufacturing deviations (e.g. <inline-formula id="IEq49"><alternatives><tex-math id="d33e720">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq39.gif"/></alternatives></inline-formula> and <inline-formula id="IEq50"><alternatives><tex-math id="d33e726">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$A^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq40.gif"/></alternatives></inline-formula>). It is worth noting that the bias voltage <inline-formula id="IEq51"><alternatives><tex-math id="d33e732">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$V_a$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq46.gif"/></alternatives></inline-formula>, temperature <inline-formula id="IEq52"><alternatives><tex-math id="d33e738">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$T$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq10.gif"/></alternatives></inline-formula>, and material degradation can also influence the parameters. For instance, elevated temperature alters carrier mobility and minority carrier concentrations, thereby impacting <inline-formula id="IEq53"><alternatives><tex-math id="d33e745">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_c, R_q$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq53.gif"/></alternatives></inline-formula>, and <inline-formula id="IEq54"><alternatives><tex-math id="d33e751">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_q$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq54.gif"/></alternatives></inline-formula>. Aging effects, modeled by the degradation term <inline-formula id="IEq55"><alternatives><tex-math id="d33e757">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha (t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq44.gif"/></alternatives></inline-formula>, increase non-radiative recombination and shift equivalent values. In this case, our study focuses on the intrinsic differences caused by batch inconsistencies under short-term conditions, where the bias voltage and temperature are considered consistent as well.</p><p id="Par15">The equivalent resistance <inline-formula id="IEq56"><alternatives><tex-math id="d33e765">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_c^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq56.gif"/></alternatives></inline-formula> primarily comprises two components: the contact resistance at the electrode interfaces and the carrier transport resistance within the cladding layer of the LED structure. Based on the definition of resistance, it is determined by the interplay between the material&#8217;s resistivity, the length of the conductive path, and the cross-sectional area. In semiconductors, resistivity is further influenced by carrier concentration and mobility. Therefore, the equivalent resistance can be expressed as:<disp-formula id="Equ9"><label>6</label><alternatives><tex-math id="d33e771">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} \begin{aligned} R_c^i&amp;=qN_\textrm{D}^i\mu _{n} \frac{L_c^i}{A_c^i}+qN_\textrm{A}^i\mu _{p} \frac{L_b^i}{A_b^i}. \end{aligned} \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ9.gif"/></alternatives></disp-formula>where <inline-formula id="IEq57"><alternatives><tex-math id="d33e778">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$N_D^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq57.gif"/></alternatives></inline-formula> and <inline-formula id="IEq58"><alternatives><tex-math id="d33e784">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$N_A^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq58.gif"/></alternatives></inline-formula> are the donor and acceptor concentrations in the cladding layer, <inline-formula id="IEq59"><alternatives><tex-math id="d33e790">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\mu _n$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq59.gif"/></alternatives></inline-formula> and <inline-formula id="IEq60"><alternatives><tex-math id="d33e797">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\mu _p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq60.gif"/></alternatives></inline-formula> are the mobilities of electrons and holes, <inline-formula id="IEq61"><alternatives><tex-math id="d33e803">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L_c^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq61.gif"/></alternatives></inline-formula> and <inline-formula id="IEq62"><alternatives><tex-math id="d33e809">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L_b^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq62.gif"/></alternatives></inline-formula> denote the thicknesses of the electron and hole conduction paths in the cladding layer, and <inline-formula id="IEq63"><alternatives><tex-math id="d33e815">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$A_c^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq63.gif"/></alternatives></inline-formula> and <inline-formula id="IEq64"><alternatives><tex-math id="d33e821">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$A_b^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq64.gif"/></alternatives></inline-formula> refer to their respective cross-sectional areas.</p><p id="Par16">Moreover, the transmission response of LEDs is not only affected by carrier transport effects within the PN junction but also by parasitic effects generated by the LED encapsulation process, which arise from the structural and material properties of the package<sup><xref ref-type="bibr" rid="CR26">26</xref></sup>. These parasitic effects typically manifest themselves in the form of parasitic resistance <inline-formula id="IEq65"><alternatives><tex-math id="d33e833">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R^i_p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq65.gif"/></alternatives></inline-formula>, capacitance <inline-formula id="IEq66"><alternatives><tex-math id="d33e839">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C^i_p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq66.gif"/></alternatives></inline-formula>, and inductance <inline-formula id="IEq67"><alternatives><tex-math id="d33e845">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L^i_p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq67.gif"/></alternatives></inline-formula>, which are unavoidable by-products of the physical interfaces and interconnections within the package. Specifically, bonding wires and conductive tracks generate parasitic inductance, while the proximity of dielectric materials and conductive components generates parasitic capacitance. In addition, resistive losses in the bonding and interconnect materials introduce parasitic resistance. Notably, variations in bonding wire lengths and discrepancies in packaging processes introduce significant deviations in the values of these parasitic parameters. Such differences, arising from manufacturing tolerances or inconsistencies, result in variability in the electrical characteristics of the LED. These parasitics collectively alter the transmission response of LED, with their impact becoming more pronounced in high-speed OWC systems, which can be expressed as<sup><xref ref-type="bibr" rid="CR27">27</xref></sup>: <disp-formula id="Equ10"><label>7a</label><alternatives><tex-math id="d33e856">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} L_p^i&amp;= L_s^i+L_m^i = \frac{l^i\mu _{\textrm{r}}\mu _{0}}{4\pi }\ln \left( \frac{2h^i}{r^i}\right) ^2\left( 1+\left( \frac{2h^i}{d^i}\right) ^2\right) \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ10.gif"/></alternatives></disp-formula><disp-formula id="Equ11"><label>7b</label><alternatives><tex-math id="d33e862">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} C_p^i&amp;= C_s^i+C_m^i+C_{io}^i \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ11.gif"/></alternatives></disp-formula><disp-formula id="Equ12"><label>7c</label><alternatives><tex-math id="d33e868">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned}&amp;=\varepsilon _0 \varepsilon _{\mathrm {r(eff)}} \left( \frac{l^i\pi \left( 2 + \frac{\ln \left( 1+\left( \frac{2h^i}{d^i}\right) ^2\right) }{\ln \left( \frac{2h^i}{r^i}\right) } \right) }{\ln \left( \frac{2h^i}{r^i}\right) } + \frac{A^i}{h^i} \right) \nonumber \\ {R_{p}^i}&amp;=\frac{l^i}{\pi \sigma {r^i}^2}\left( 0.25 d^i\sqrt{\pi \sigma f\mu _0}+0.2654\right) \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ12.gif"/></alternatives></disp-formula> where <inline-formula id="IEq68"><alternatives><tex-math id="d33e875">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\mu _0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq68.gif"/></alternatives></inline-formula> is the permeability in a vacuum, <inline-formula id="IEq69"><alternatives><tex-math id="d33e881">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$h^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq69.gif"/></alternatives></inline-formula> is the height above the substrate, <inline-formula id="IEq70"><alternatives><tex-math id="d33e887">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$r$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq70.gif"/></alternatives></inline-formula> is the wire radius, and <inline-formula id="IEq71"><alternatives><tex-math id="d33e893">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\mu _r^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq71.gif"/></alternatives></inline-formula> is the relative permeability. <inline-formula id="IEq72"><alternatives><tex-math id="d33e900">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\varepsilon _0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq72.gif"/></alternatives></inline-formula> represents the permittivity of free space, and <inline-formula id="IEq73"><alternatives><tex-math id="d33e906">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\varepsilon _{\mathrm {r(eff)}}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq73.gif"/></alternatives></inline-formula> denotes the effective relative dielectric constant of the dielectric material. Consequently, the inherent material and structural variations of LEDs can be characterized through the lumped parameters of their equivalent circuits. The small-signal equivalent circuit model of the LED is illustrated in Fig. <xref rid="Fig2" ref-type="fig">2</xref>. Additionally, the equivalent circuit parameters of the LED vary with the applied bias. Here, we consider <inline-formula id="IEq74"><alternatives><tex-math id="d33e915">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$V_a$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq46.gif"/></alternatives></inline-formula> as a fixed injection bias, which corresponds to the approximately linear region of the LED&#8217;s operating characteristic.<fig id="Fig2" position="float" orientation="portrait"><label>Fig. 2</label><caption><p>The equivalent circuit structure for the proposed physics-based features.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO2" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig2_HTML.jpg"/></fig></p><p id="Par17">Correspondingly, the transfer function of LED can be expressed as: <disp-formula id="Equ13"><label>8a</label><alternatives><tex-math id="d33e930">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} s_1^i&amp;= -R_\textrm{c}^iC_\textrm{p}^iR_\textrm{q}^iC_\textrm{q}^iL_\textrm{p}^i \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ13.gif"/></alternatives></disp-formula><disp-formula id="Equ14"><label>8b</label><alternatives><tex-math id="d33e936">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} s_2^i&amp;= R_\textrm{c}^iC_\textrm{p}^iR_\textrm{q}^iC_\textrm{q}^iR_\textrm{P}^i + R_\textrm{q}^iC_\textrm{p}^iL_\textrm{p}^i + R_\textrm{c}^iC_\textrm{p}^iL_\textrm{p}^i + R_\textrm{q}^iC_\textrm{q}^iL_\textrm{p}^i \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ14.gif"/></alternatives></disp-formula><disp-formula id="Equ15"><label>8c</label><alternatives><tex-math id="d33e942">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} s_3^i&amp;= R_\textrm{q}^iC_\textrm{q}^iR_\textrm{p}^i + R_\textrm{c}^iC_\textrm{p}^iR_\textrm{p}^i + R_\textrm{q}^iC_\textrm{p}^iR_\textrm{p}^i + R_\textrm{q}^iC_\textrm{q}^iR_\textrm{c}^i + L_\textrm{p}^i \\ s_4^i&amp;= R_\textrm{p}^i + R_\textrm{c}^i + R_\textrm{q}^i \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ15.gif"/></alternatives></disp-formula><disp-formula id="Equ16"><label>8d</label><alternatives><tex-math id="d33e948">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} h_\textrm{LED}^i(t)&amp;= \mathcal {F}^{-1}\{H^i_\textrm{LED}(jw)\} \nonumber \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ16.gif"/></alternatives></disp-formula><disp-formula id="Equ17"><label>8e</label><alternatives><tex-math id="d33e954">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned}&amp;= \frac{1}{2\pi } \int _{-\infty }^{\infty } \frac{\eta ^i_{LEE}}{jw^3 s_1^i - w^2 s_2^i + jw s_3^i + s_4^i} e^{jwt} \, dw, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ17.gif"/></alternatives></disp-formula> where <inline-formula id="IEq75"><alternatives><tex-math id="d33e961">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$w$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq75.gif"/></alternatives></inline-formula> is the angular frequency, and <inline-formula id="IEq76"><alternatives><tex-math id="d33e967">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$j$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq76.gif"/></alternatives></inline-formula> is the imaginary unit. <inline-formula id="IEq77"><alternatives><tex-math id="d33e974">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\mathcal {F}(\cdot )$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq77.gif"/></alternatives></inline-formula> represents the inverse Fourier transform function. <inline-formula id="IEq78"><alternatives><tex-math id="d33e980">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta _\textrm{LEE}^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq78.gif"/></alternatives></inline-formula> denotes the light extraction efficiency of the <inline-formula id="IEq79"><alternatives><tex-math id="d33e986">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq2.gif"/></alternatives></inline-formula>-th LED. Although <inline-formula id="IEq80"><alternatives><tex-math id="d33e992">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta _\textrm{LEE}^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq78.gif"/></alternatives></inline-formula> exhibits slight variations among different LEDs, it lacks frequency dependency, making it challenging to decouple from channel attenuation. Since <inline-formula id="IEq81"><alternatives><tex-math id="d33e998">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_\textrm{c}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq81.gif"/></alternatives></inline-formula> and <inline-formula id="IEq82"><alternatives><tex-math id="d33e1004">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_\textrm{p}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq82.gif"/></alternatives></inline-formula> are directly connected in parallel, and <inline-formula id="IEq83"><alternatives><tex-math id="d33e1011">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_\textrm{c}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq81.gif"/></alternatives></inline-formula> is several orders of magnitude smaller than <inline-formula id="IEq84"><alternatives><tex-math id="d33e1017">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_\textrm{p}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq82.gif"/></alternatives></inline-formula>, <inline-formula id="IEq85"><alternatives><tex-math id="d33e1023">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_\textrm{c}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq81.gif"/></alternatives></inline-formula> is directly incorporated into <inline-formula id="IEq86"><alternatives><tex-math id="d33e1029">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_\textrm{p}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq82.gif"/></alternatives></inline-formula> in <xref rid="Equ10" ref-type="disp-formula">7</xref>(b). Hence, the physics-based feature matrix is constructed as <inline-formula id="IEq87"><alternatives><tex-math id="d33e1038">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$[R_\textrm{p}^i,L_\textrm{p}^i,C_\textrm{p}^i,R_\textrm{c}^i,R_\textrm{q}^i,C_\textrm{q}^i]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq87.gif"/></alternatives></inline-formula>.</p><p id="Par18">To enhance the distinctiveness and variability of fingerprint features for better visual representation, a fingerprint heatmap pattern was developed. Six unit vectors, <inline-formula id="IEq88"><alternatives><tex-math id="d33e1046">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\textbf{v}_1, \textbf{v}_2, \dots , \textbf{v}_6$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq88.gif"/></alternatives></inline-formula>, represent directions at <inline-formula id="IEq89"><alternatives><tex-math id="d33e1052">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$0^{\circ }$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq89.gif"/></alternatives></inline-formula>, <inline-formula id="IEq90"><alternatives><tex-math id="d33e1058">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$60^{\circ }$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq90.gif"/></alternatives></inline-formula>, <inline-formula id="IEq91"><alternatives><tex-math id="d33e1064">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$120^{\circ }$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq91.gif"/></alternatives></inline-formula>, <inline-formula id="IEq92"><alternatives><tex-math id="d33e1070">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$180^{\circ }$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq92.gif"/></alternatives></inline-formula>, <inline-formula id="IEq93"><alternatives><tex-math id="d33e1077">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$240^{\circ }$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq93.gif"/></alternatives></inline-formula>, and <inline-formula id="IEq94"><alternatives><tex-math id="d33e1083">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$300^{\circ }$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq94.gif"/></alternatives></inline-formula>. The magnitudes of the extracted physics-based fingerprint features determine the pattern&#8217;s lengths in each direction. Due to the significant scale differences among capacitance (<inline-formula id="IEq95"><alternatives><tex-math id="d33e1089">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_q^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq36.gif"/></alternatives></inline-formula>, <inline-formula id="IEq96"><alternatives><tex-math id="d33e1095">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_p^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq96.gif"/></alternatives></inline-formula>), resistance (<inline-formula id="IEq97"><alternatives><tex-math id="d33e1101">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_q^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq37.gif"/></alternatives></inline-formula>, <inline-formula id="IEq98"><alternatives><tex-math id="d33e1107">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_c^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq56.gif"/></alternatives></inline-formula>, <inline-formula id="IEq99"><alternatives><tex-math id="d33e1114">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_p^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq99.gif"/></alternatives></inline-formula>), and inductance (<inline-formula id="IEq100"><alternatives><tex-math id="d33e1120">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L_p^i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq100.gif"/></alternatives></inline-formula>), normalization was applied to these feature values. Fig. <xref rid="Fig3" ref-type="fig">3</xref> illustrates the vector pattern of the proposed fingerprint.<disp-formula id="Equ18"><label>9</label><alternatives><tex-math id="d33e1129">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} \begin{aligned} \text {Pattern} = [R_q^i \textbf{v}_1, C_q^i \textbf{v}_2, R_c^i \textbf{v}_3, C_p^i \textbf{v}_4, L_p^i \textbf{v}_5, R_p^i \textbf{v}_6], \end{aligned} \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ18.gif"/></alternatives></disp-formula><fig id="Fig3" position="float" orientation="portrait"><label>Fig. 3</label><caption><p>Visualization of the compressed physics-based fingerprint features.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO3" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig3_HTML.jpg"/></fig></p><p id="Par19">Using the proposed fingerprint feature model, the <inline-formula id="IEq101"><alternatives><tex-math id="d33e1144">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$N$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq101.gif"/></alternatives></inline-formula> frequency points of the original received power spectrum can be compressed into six physics-based features. When the number of LED samples is <inline-formula id="IEq102"><alternatives><tex-math id="d33e1150">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$M$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq102.gif"/></alternatives></inline-formula>, the size of the fingerprint training set is reduced from <inline-formula id="IEq103"><alternatives><tex-math id="d33e1156">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$N \times M$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq103.gif"/></alternatives></inline-formula> to <inline-formula id="IEq104"><alternatives><tex-math id="d33e1162">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$6 \times M$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq104.gif"/></alternatives></inline-formula>. The value of <inline-formula id="IEq105"><alternatives><tex-math id="d33e1168">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$N$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq101.gif"/></alternatives></inline-formula> depends on the number of FFT points, which is typically greater than <inline-formula id="IEq106"><alternatives><tex-math id="d33e1175">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$2^8$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq106.gif"/></alternatives></inline-formula> to capture sufficient spectral details.</p></sec></sec><sec id="Sec5"><title>Data collection and fingerprint extraction</title><p id="Par20">An experimental dataset was constructed using signals from 15 LEDs (Cree, XPE2-White) to investigate the fingerprint characteristics of LEDs. The experimental setup is shown in Fig. <xref rid="Fig4" ref-type="fig">4</xref>. A vector network analyzer (VNA, Rohde &amp; Schwarz, ZNB20) generated frequency-sweep signals with a transmitted electrical power of -5 dBm. These signals, amplified by a power amplifier (Mini-Circuits, ZHL-6A-S+), spanned a frequency range of 100 kHz to 100 MHz, with 400 frequency points sampled. A bias-T (Mini-Circuits, ZX85-12G-S+) drove the LEDs with amplified signals under a fixed DC bias of 200 mA. Due to the limited output power of a single LED, the testing distance was set to 10 cm. The lens and photodetector (PD, Newport 1602A), integrated with a trans-impedance amplifier (TIA) featuring sufficient bandwidth, are employed to enhance signal strength. For each LED, the received power spectrum was measured 50 times, averaged, and recorded into the initial dataset.<fig id="Fig4" position="float" orientation="portrait"><label>Fig. 4</label><caption><p>(<bold>a</bold>) Different LED samples. (<bold>b</bold>) Experimental setup for collecting the PSD dataset of LEDs.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO4" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig4_HTML.jpg"/></fig></p><p id="Par21">To enhance the robustness of the model under varying environmental conditions, Gaussian white noise was introduced to the dataset, simulating realistic noise scenarios with signal-to-noise ratios (SNRs) between 10 dB and 30 dB. This range was chosen to cover both high-quality and challenging signal conditions, reflecting potential real-world applications of the OWC system in environments with varying electromagnetic interference<sup><xref ref-type="bibr" rid="CR15">15</xref>,<xref ref-type="bibr" rid="CR20">20</xref></sup>. Specifically, the training set comprised signals from all 15 LEDs, each processed 1,000 times under a fixed SNR of 30 dB, yielding a total of 15,000 training samples. For testing, 3,000 samples were generated under varying noise conditions, with SNRs randomly distributed between 10 dB and 29.9 dB.</p><p id="Par22">Fig. <xref rid="Fig5" ref-type="fig">5</xref> illustrates the power spectral density (PSD) collected from a common photodetector using 15 different LED transmitters. The unique characteristics within the received signal accurately reflect the nonlinear differences of the LEDs, as the measurement position and receiver setup remain consistent throughout the experiments. The red line in Fig. <xref rid="Fig5" ref-type="fig">5</xref> represents the initially collected PSD, while the blue line shows the PSD with added noise at 30 dB. As observed in Fig. <xref rid="Fig5" ref-type="fig">5</xref>, the PSDs from different transmitters appear quite similar, making it challenging to distinguish between them. Additionally, spectrum-based features tend to be highly dimensional. Leveraging the physical characteristics discussed in Section 2, we can efficiently extract physics-based fingerprint features directly from the received signal&#8217;s PSD, as demonstrated in (<xref rid="Equ19" ref-type="disp-formula">10</xref>).<fig id="Fig5" position="float" orientation="portrait"><label>Fig. 5</label><caption><p>Initial (red line) and noised PSDs (blue line) from 15 LED-based transmitters (from Tx1 to Tx15).</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO5" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig5_HTML.jpg"/></fig></p><p id="Par23"><disp-formula id="Equ19"><label>10</label><alternatives><tex-math id="d33e1233">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} \begin{aligned} |Y(j\omega )| = \frac{g_d g_c g_{rx} \eta _{\text {EQE}}}{\sqrt{(-\omega ^2 s_2 + s_4)^2 + (\omega ^3 s_1 + \omega s_3)^2}} \cdot |X(j\omega )|. \end{aligned} \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_12220_Article_Equ19.gif"/></alternatives></disp-formula>The fingerprint extraction (FE) algorithm employs Particle Swarm Optimization (PSO) to determine the fingerprint vectors of LEDs, including parameters <inline-formula id="IEq107"><alternatives><tex-math id="d33e1240">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_\textrm{p}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq107.gif"/></alternatives></inline-formula>, <inline-formula id="IEq108"><alternatives><tex-math id="d33e1246">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L_\textrm{p}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq108.gif"/></alternatives></inline-formula>, <inline-formula id="IEq109"><alternatives><tex-math id="d33e1252">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_\textrm{p}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq82.gif"/></alternatives></inline-formula>, <inline-formula id="IEq110"><alternatives><tex-math id="d33e1258">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_\textrm{c}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq110.gif"/></alternatives></inline-formula>, <inline-formula id="IEq111"><alternatives><tex-math id="d33e1264">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_\textrm{q}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq111.gif"/></alternatives></inline-formula>, and <inline-formula id="IEq112"><alternatives><tex-math id="d33e1271">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_\textrm{q}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq112.gif"/></alternatives></inline-formula>. The objective function minimizes the squared error between the modeled admittance spectrum <inline-formula id="IEq113"><alternatives><tex-math id="d33e1277">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$Y(j\omega , \varvec{\beta })$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq113.gif"/></alternatives></inline-formula> and the measured power spectrum <inline-formula id="IEq114"><alternatives><tex-math id="d33e1283">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$A_\textrm{dB}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq114.gif"/></alternatives></inline-formula>. Here, <inline-formula id="IEq115"><alternatives><tex-math id="d33e1289">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\beta _7$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq115.gif"/></alternatives></inline-formula> represents the gain factor derived from the LED driver, electro-optical conversion, channel attenuation, and optical receiver amplification. The search space for each parameter is carefully defined to ensure physical relevance and optimization convergence. Particle positions and velocities are initialized randomly, and the optimization iteratively updates these based on inertia weight (<inline-formula id="IEq116"><alternatives><tex-math id="d33e1295">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq116.gif"/></alternatives></inline-formula>), cognitive acceleration (<inline-formula id="IEq117"><alternatives><tex-math id="d33e1301">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$c_1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq117.gif"/></alternatives></inline-formula>), and social acceleration (<inline-formula id="IEq118"><alternatives><tex-math id="d33e1308">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$c_2$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq118.gif"/></alternatives></inline-formula>).</p><p id="Par24">
+<fig position="anchor" id="Figa" orientation="portrait"><label>Algorithm 1</label><caption><p>PSO-Based LED Fingerprint Extraction</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" id="MO6" orientation="portrait" xlink:href="41598_2025_12220_Figa_HTML.jpg"/></fig>
+</p><p id="Par25">Fig. <xref rid="Fig6" ref-type="fig">6</xref> illustrates the heatmap patterns of the extracted physics-based fingerprints for 15 different LED-based transmitters. Each heatmap visualizes six key physics-based features. The normalization coefficients applied to the six physics-based features are defined as [0.025, 4e-8, 0.1, 1e-9, 2e-10, 0.1], ensuring that all feature values are scaled consistently within the visualization. In the heatmap, the origin is set at the coordinate (0,&#160;0), where the blue vertex represents resistive features, while the red vertex indicates capacitive and inductive features. The length of each vector corresponds to the normalized physics-based feature values, with longer vectors indicating higher feature magnitudes. The color distribution in the heatmap reflects the relative size of these values, providing an intuitive visual representation of the physical characteristics extracted from each LED device.</p><p id="Par26">It can be observed that most transmitters exhibit unique fingerprint patterns, characterized by distinct variations in specific features. For instance, Tx11, Tx12, and Tx13 all demonstrate strong <inline-formula id="IEq119"><alternatives><tex-math id="d33e1331">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L_p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq119.gif"/></alternatives></inline-formula>, as evidenced by the extended vector lengths pointing towards the inductance direction. Notably, Tx11 also maintains a moderate capacitive balance, whereas Tx12 and Tx13 show lower <inline-formula id="IEq120"><alternatives><tex-math id="d33e1337">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq120.gif"/></alternatives></inline-formula>. This discrepancy could be due to differences in LED packaging, such as variations in bonding wire lengths or encapsulation materials, which predominantly influence the parasitics. Unlike these parasitic parameters (<inline-formula id="IEq121"><alternatives><tex-math id="d33e1343">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq121.gif"/></alternatives></inline-formula>, <inline-formula id="IEq122"><alternatives><tex-math id="d33e1349">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$L_p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq119.gif"/></alternatives></inline-formula>, <inline-formula id="IEq123"><alternatives><tex-math id="d33e1355">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_p$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq120.gif"/></alternatives></inline-formula>), the intrinsic properties of the LED (<inline-formula id="IEq124"><alternatives><tex-math id="d33e1362">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_c$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq124.gif"/></alternatives></inline-formula>, <inline-formula id="IEq125"><alternatives><tex-math id="d33e1368">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$R_q$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq125.gif"/></alternatives></inline-formula>, <inline-formula id="IEq126"><alternatives><tex-math id="d33e1374">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$C_q$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq54.gif"/></alternatives></inline-formula>) remain relatively stable across different transmitters, showing consistent behavior without extreme fluctuations. This stability is likely a result of the controlled manufacturing processes that maintain high precision in the internal structure of the LEDs. By leveraging the underlying physical mechanisms, our approach compresses traditional spectrum-based features into physical representations of both parasitic and intrinsic features of the LED. In the following section, we will provide a detailed classification analysis of the proposed features for validation.<fig id="Fig6" position="float" orientation="portrait"><label>Fig. 6</label><caption><p>Extracted fingerprint heatmap patterns for the 15 LED-based transmitters using the initial PSD dataset.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO7" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig6_HTML.jpg"/></fig></p></sec><sec id="Sec6"><title>Results and discussion</title><p id="Par27">To evaluate the effectiveness of the proposed physics-based fingerprint features in short-term device classification, three experiments were conducted using different machine learning (ML) algorithms: KNN, Bayes, and Decision Tree. A dataset of 15,000 samples, augmented at a signal-to-noise ratio (SNR) of 30 dB, was used for training, while testing was performed on samples with SNRs ranging from 10 to 29 dB. As summarized in Table <xref rid="Tab1" ref-type="table">1</xref>, KNN achieved the highest average classification accuracy at 90.88%, followed closely by the Decision Tree at 89.05%, while Bayes yielded a comparatively lower accuracy of 75.06%. These results demonstrate the robustness of the proposed fingerprint features, which consistently achieve high classification accuracy using traditional ML methods, even under challenging testing conditions with variable SNRs.<table-wrap id="Tab1" position="float" orientation="portrait"><label>Table 1</label><caption><p>Classification results based on ML algorithms.</p></caption><table frame="hsides" rules="groups"><thead><tr><th align="left" colspan="1" rowspan="1"/><th align="left" colspan="1" rowspan="1">Training</th><th align="left" colspan="2" rowspan="1">Testing</th></tr></thead><tbody><tr><td align="left" colspan="1" rowspan="1">Samples</td><td align="left" colspan="1" rowspan="1">15000</td><td align="left" colspan="2" rowspan="1">3000</td></tr><tr><td align="left" colspan="1" rowspan="1">SNR(dB)</td><td align="left" colspan="1" rowspan="1">30</td><td align="left" colspan="2" rowspan="1">10&#8211;29</td></tr></tbody></table><table frame="hsides" rules="groups"><thead><tr><th align="left" colspan="1" rowspan="1"/><th align="left" colspan="1" rowspan="1">KNN</th><th align="left" colspan="1" rowspan="1">Bayes</th><th align="left" colspan="1" rowspan="1">Decision tree</th></tr></thead><tbody><tr><td align="left" colspan="1" rowspan="1">Average accuracy</td><td align="left" colspan="1" rowspan="1">90.88%</td><td align="left" colspan="1" rowspan="1">75.06%</td><td align="left" colspan="1" rowspan="1">89.05%</td></tr></tbody></table></table-wrap></p><p id="Par28">Fig. <xref rid="Fig7" ref-type="fig">7</xref> shows the confusion matrix results for the proposed fingerprint-based classification using the three classifiers. The diagonal elements reflect correctly classified samples, while the off-diagonal elements indicate misclassifications between different LED transmitters. The KNN classifier (Fig. <xref rid="Fig7" ref-type="fig">7</xref>(a)) demonstrates robust classification performance, with most diagonal values exceeding 0.9. However, there is a clear misclassification pattern between transmitter Tx 9 and 14, where 16% of Tx 9 samples are incorrectly identified as Tx 14. This confusion may stem from the similar features shared by Tx 9 and Tx 14, as illustrated in Fig. <xref rid="Fig6" ref-type="fig">6</xref>. The Bayes classifier delivers moderate performance, with prominent misclassifications among Tx 1, 12, and 15, possibly due to its limited ability to capture subtle correlations between intrinsic LED features. While the decision tree classifier achieves a classification accuracy comparable to KNN, its most significant error arises from misclassifying Tx 9 as Tx 7 and 14.<fig id="Fig7" position="float" orientation="portrait"><label>Fig. 7</label><caption><p>Confusion matrix results of proposed fingerprint-based (<bold>a</bold>) KNN, (<bold>b</bold>) Bayes, and (<bold>c</bold>) decision tree classifiers.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO8" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig7_HTML.jpg"/></fig></p><p id="Par29">We have further detailed the variation in classification accuracy of the proposed fingerprint features under different SNR conditions, as shown in Fig. <xref rid="Fig8" ref-type="fig">8</xref>. Additionally, we investigated the stability of the proposed physics-based feature classifier across partial training datasets containing 1%, 10%, 20%, and 100% of the full data. From Fig. <xref rid="Fig8" ref-type="fig">8</xref>, it can be observed that the classification accuracy of all three algorithms decreases as the SNR decreases. Both KNN and Bayes classifiers achieve classification accuracies exceeding 99% when the SNR is above 20 dB. Furthermore, KNN and Decision Tree consistently outperform the Bayes classifier across all SNR levels. Notably, classifier accuracy remains relatively stable regardless of the training set size. Taking KNN as an example, the algorithm achieves average classification accuracies of 90.08%, 90.85%, 90.88%, and 90.88% for 1% (150 samples), 10% (1500 samples), 20% (3000 samples), and 100% (15,000 samples) training datasets, respectively. When the dataset size is reduced to 1% of the original dataset, the average accuracy decreases by only 0.80%. This result highlights the robustness of the proposed fingerprint features, demonstrating strong performance even with significantly reduced training samples.<fig id="Fig8" position="float" orientation="portrait"><label>Fig. 8</label><caption><p>Classification accuracy versus SNR under the different sizes of the training dataset.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO9" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig8_HTML.jpg"/></fig></p><p id="Par30">To further validate the effectiveness of the proposed physics-based feature, we compared it with traditional deep learning classification methods and existing circuit model features. Convolutional neural network (CNN) and long short-term memory (LSTM) methods were implemented on the noised dataset (30 dB) to train the classifiers. The CNN processes one-dimensional feature vectors with an input size of 400, employing two convolutional layers with kernels generating 16 and 32 feature maps, respectively. These layers are followed by batch normalization, ReLU activation, and max-pooling with a size and stride of <inline-formula id="IEq128"><alternatives><tex-math id="d33e1495">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$2 \times 1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_12220_Article_IEq128.gif"/></alternatives></inline-formula>. The training was conducted using the Adam optimizer for 30 epochs with an initial learning rate of 0.001. The LSTM network also uses a 400-dimensional input, followed by a single LSTM layer with six hidden units configured to output only the last sequence state. A ReLU activation layer and a fully connected classification layer were appended. Both networks utilized a shuffled training dataset for robust performance evaluation. Furthermore, comparisons were conducted with existing circuit features<sup><xref ref-type="bibr" rid="CR21">21</xref></sup> classified using the same KNN classifier. It is worth noting that the KNN classifier was also trained using the same 15,000 samples (30 dB) to ensure a fair comparison with the deep learning methods.</p><p id="Par31">Fig. <xref rid="Fig9" ref-type="fig">9</xref> presents the classification accuracy of various methods across different SNR levels. The proposed model, when combined with KNN, consistently outperforms all other approaches, demonstrating superior accuracy across the entire SNR range. Notably, it achieves a significant performance advantage in low-SNR conditions (e.g., below 15 dB). The CNN also exhibits strong performance in high-SNR scenarios, benefiting from its learning ability to effectively extract intricate features. However, its reliance on high-dimensional spectrogram input makes it more sensitive to noise, which explains the accuracy drop under low SNR. Meanwhile, the circuit-based features<sup><xref ref-type="bibr" rid="CR21">21</xref></sup> with KNN yield moderate results but underperform compared to the proposed approach. This is attributed to the superior representational capability of the proposed physics-based features, which more accurately capture the complete nonlinear characteristics of LEDs, including enhanced features such as parasitics and resistance of radiative recombination. Interestingly, we also observe that under low-SNR conditions, the feature model can occasionally outperform our multi-feature physics-based model. This phenomenon is likely due to the accumulation of noise across multiple extracted parameters. The LSTM model, in particular, is less effective in this task, as its sequential modeling nature is not well suited for processing frequency-domain data, leading to underperformance across most SNR levels. In contrast, the proposed fingerprint features are compact, noise-resilient, and physically meaningful to enable a more stable classification.<fig id="Fig9" position="float" orientation="portrait"><label>Fig. 9</label><caption><p>Anti-noise accuracy comparison with the state-of-the-art methods.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO10" position="float" orientation="portrait" xlink:href="41598_2025_12220_Fig9_HTML.jpg"/></fig></p><p id="Par32">Table <xref rid="Tab2" ref-type="table">2</xref> presents a comparative analysis of different methods across multiple aspects, including feature types, classifier complexity, training time, and average classification accuracy, highlighting the efficiency of the proposed physics-based feature approach. While CNN and LSTM models achieve competitive classification performance, their effectiveness comes at the cost of high computational demands. These models rely on spectrogram-based features, leading to a substantial number of trainable parameters&#8212;97,115 for CNN and 9,873 for LSTM. Consequently, they require extensive training times of 111 seconds and 433 seconds, respectively, making them impractical for real-time applications or deployment in resource-constrained environments. In contrast, the proposed physics-based feature model leverages only six selected features, significantly reducing computational complexity while achieving the highest classification accuracy (90.88%). For both the proposed model and the circuit-based baseline, we adopted the same KNN classifier to ensure that differences in performance are attributable to feature design rather than classifier complexity. Unlike deep learning models, which require extensive training and parameter tuning, the proposed method employs a lightweight KNN classifier, chosen for its simplicity and suitability for small-scale, non-parametric classification tasks, eliminating the need for deep architectures and large-scale optimization. Meanwhile, the circuit-based feature approach, which utilizes only two features, further minimizes computational overhead but at the expense of lower classification accuracy (81.29%), underscoring the trade-off between model simplicity and predictive performance. The results reaffirm the advantages of physics-informed features in balancing efficiency and accuracy, offering a lightweight yet highly effective classification approach without the computational burden associated with deep learning methods.<table-wrap id="Tab2" position="float" orientation="portrait"><label>Table 2</label><caption><p>Comparison of different aspects with the state of art methods.</p></caption><table frame="hsides" rules="groups"><thead><tr><th align="left" rowspan="2" colspan="1">Feature</th><th align="left" rowspan="2" colspan="1">Dataset division (Train/Validate/Test)</th><th align="left" colspan="3" rowspan="1">Classifier</th><th align="left" rowspan="2" colspan="1">Training time</th><th align="left" rowspan="2" colspan="1">Average accuracy</th></tr><tr><th align="left" colspan="1" rowspan="1">Name</th><th align="left" colspan="1" rowspan="1">Layers</th><th align="left" colspan="1" rowspan="1">Parameters</th></tr></thead><tbody><tr><td align="left" colspan="1" rowspan="1">Spectrogram</td><td align="left" colspan="1" rowspan="1">0.58/0.25/0.17</td><td align="left" colspan="1" rowspan="1">CNN<sup><xref ref-type="bibr" rid="CR20">20</xref></sup></td><td align="left" colspan="1" rowspan="1">10</td><td align="left" colspan="1" rowspan="1">97115</td><td align="left" colspan="1" rowspan="1">111 s</td><td align="left" colspan="1" rowspan="1">86.8%</td></tr><tr><td align="left" colspan="1" rowspan="1">Spectrogram</td><td align="left" colspan="1" rowspan="1">0.58/0.25/0.17</td><td align="left" colspan="1" rowspan="1">LSTM</td><td align="left" colspan="1" rowspan="1">5</td><td align="left" colspan="1" rowspan="1">9873</td><td align="left" colspan="1" rowspan="1">433 s</td><td align="left" colspan="1" rowspan="1">82.23%</td></tr><tr><td align="left" colspan="1" rowspan="1">Circuit model<sup><xref ref-type="bibr" rid="CR21">21</xref></sup></td><td align="left" colspan="1" rowspan="1">0.83/-/0.17</td><td align="left" colspan="1" rowspan="1">KNN</td><td align="left" colspan="1" rowspan="1">&#8211;</td><td align="left" colspan="1" rowspan="1">&#8211;</td><td align="left" colspan="1" rowspan="1">&#8211;</td><td align="left" colspan="1" rowspan="1">81.29%</td></tr><tr><td align="left" colspan="1" rowspan="1">Physics-based</td><td align="left" colspan="1" rowspan="1">0.83/-/0.17</td><td align="left" colspan="1" rowspan="1">KNN</td><td align="left" colspan="1" rowspan="1">&#8211;</td><td align="left" colspan="1" rowspan="1">&#8211;</td><td align="left" colspan="1" rowspan="1">&#8211;</td><td align="left" colspan="1" rowspan="1">90.88%</td></tr></tbody></table></table-wrap></p></sec><sec id="Sec7"><title>Discussion</title><p id="Par33">This paper presented a lightweight, physics-based fingerprinting model for device identification in optical wireless communication (OWC) systems. By capturing intrinsic variations in LEDs, such as packaging parasitics and carrier diffusion, and modeling them as lumped physical parameters within an equivalent circuit, the proposed approach transforms complex power spectral data into compact, interpretable features. Extensive experimental evaluations demonstrated the robustness of the method, achieving high classification accuracy across various noise conditions, even with minimal training data. Compared to conventional deep learning-based methods, the proposed approach significantly reduces computational complexity and model size, making it particularly suitable for resource-constrained environments.</p><p id="Par34">The current work focuses on validating the short-term effectiveness of the fingerprinting model, providing a strong foundation for its application in practical scenarios. Future research will investigate the long-term reliability of these fingerprints under factors such as temperature variation, temporal degradation, and even channel states, aiming to enhance the model by compensating for such effects and ensuring consistent identification performance. These findings underscore the potential of leveraging physical device characteristics to improve the efficiency and scalability of device identification in modern IoT ecosystems, offering a practical framework for secure and efficient device identification in large-scale OWC deployments.</p></sec></body><back><fn-group><fn><p><bold>Publisher&#8217;s note</bold></p><p>Springer Nature remains neutral with regard to jurisdictional claims in published maps and institutional affiliations.</p></fn></fn-group><notes notes-type="author-contribution"><title>Author contributions</title><p>Conceptualization was done by X.Z., X.C., and Y. W.; investigation was done by Z.L. and X.C.; experimental measurements were done by X.C., C.D., and Z.L.; data curation was done by X.C.; writing-original draft preparation were done by X.C.; writing-review and editing were done by X.Z. and Y.W.; supervision was done by X.Z.. All authors have read and agreed to the published version of the manuscript.</p></notes><notes notes-type="data-availability"><title>Data availability</title><p>The datasets generated and analyzed during the current study are not publicly available due to fingerprint data are collected internally in laboratories, but are available from the corresponding author on reasonable request.</p></notes><notes><title>Declarations</title><notes id="FPar1" notes-type="COI-statement"><title>Competing interests</title><p id="Par38">The authors declare no competing interests.</p></notes></notes><ref-list id="Bib1"><title>References</title><ref id="CR1"><label>1.</label><citation-alternatives><element-citation id="ec-CR1" publication-type="book"><person-group person-group-type="author"><name name-style="western"><surname>Liberg</surname><given-names>O</given-names></name><etal/></person-group><source>Cellular Internet of Things</source><year>2020</year><publisher-name>Acad. Press</publisher-name></element-citation><mixed-citation id="mc-CR1" publication-type="book">Liberg, O. et al. <italic toggle="yes">Cellular Internet of Things</italic> (Acad. Press, 2020).</mixed-citation></citation-alternatives></ref><ref id="CR2"><label>2.</label><citation-alternatives><element-citation id="ec-CR2" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Reising</surname><given-names>DR</given-names></name><name name-style="western"><surname>Cancelleri</surname><given-names>J</given-names></name><name name-style="western"><surname>Loveless</surname><given-names>TD</given-names></name><name name-style="western"><surname>Kandah</surname><given-names>FI</given-names></name><name name-style="western"><surname>Skjellum</surname><given-names>A</given-names></name></person-group><article-title>Radio identity verification-based IOT security using RFDNA fingerprints and SVM</article-title><source>IEEE Internet Things J.</source><year>2021</year><volume>8</volume><fpage>8356</fpage><lpage>8371</lpage><pub-id pub-id-type="doi">10.1109/JIOT.2020.3045305</pub-id></element-citation><mixed-citation id="mc-CR2" publication-type="journal">Reising, D. R., Cancelleri, J., Loveless, T. D., Kandah, F. I. &amp; Skjellum, A. Radio identity verification-based IOT security using RFDNA fingerprints and SVM. <italic toggle="yes">IEEE Internet Things J.</italic><bold>8</bold>, 8356&#8211;8371 (2021).</mixed-citation></citation-alternatives></ref><ref id="CR3"><label>3.</label><citation-alternatives><element-citation id="ec-CR3" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Al-Garadi</surname><given-names>MA</given-names></name><etal/></person-group><article-title>A survey of machine and deep learning methods for internet of things (IOT) security</article-title><source>IEEE Commun. Surv. Tut.</source><year>2020</year><volume>22</volume><fpage>1646</fpage><lpage>1685</lpage><pub-id pub-id-type="doi">10.1109/COMST.2020.2988293</pub-id></element-citation><mixed-citation id="mc-CR3" publication-type="journal">Al-Garadi, M. A. et al. A survey of machine and deep learning methods for internet of things (IOT) security. <italic toggle="yes">IEEE Commun. Surv. Tut.</italic><bold>22</bold>, 1646&#8211;1685 (2020).</mixed-citation></citation-alternatives></ref><ref id="CR4"><label>4.</label><citation-alternatives><element-citation id="ec-CR4" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Karunatilaka</surname><given-names>D</given-names></name><name name-style="western"><surname>Zafar</surname><given-names>F</given-names></name><name name-style="western"><surname>Kalavally</surname><given-names>V</given-names></name><name name-style="western"><surname>Parthiban</surname><given-names>R</given-names></name></person-group><article-title>Led based indoor visible light communications: State of the art</article-title><source>IEEE Commun. Surv. Tutor.</source><year>2015</year><volume>17</volume><fpage>1649</fpage><lpage>1678</lpage><pub-id pub-id-type="doi">10.1109/COMST.2015.2417576</pub-id></element-citation><mixed-citation id="mc-CR4" publication-type="journal">Karunatilaka, D., Zafar, F., Kalavally, V. &amp; Parthiban, R. Led based indoor visible light communications: State of the art. <italic toggle="yes">IEEE Commun. Surv. Tutor.</italic><bold>17</bold>, 1649&#8211;1678 (2015).</mixed-citation></citation-alternatives></ref><ref id="CR5"><label>5.</label><citation-alternatives><element-citation id="ec-CR5" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Ma</surname><given-names>S</given-names></name><etal/></person-group><article-title>Spectral and energy efficiency of ACO-OFDM in visible light communication systems</article-title><source>IEEE Trans. Wirel. Commun.</source><year>2022</year><volume>21</volume><fpage>2147</fpage><lpage>2161</lpage><pub-id pub-id-type="doi">10.1109/TWC.2021.3109735</pub-id></element-citation><mixed-citation id="mc-CR5" publication-type="journal">Ma, S. et al. Spectral and energy efficiency of ACO-OFDM in visible light communication systems. <italic toggle="yes">IEEE Trans. Wirel. Commun.</italic><bold>21</bold>, 2147&#8211;2161 (2022).</mixed-citation></citation-alternatives></ref><ref id="CR6"><label>6.</label><citation-alternatives><element-citation id="ec-CR6" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Chi</surname><given-names>N</given-names></name><name name-style="western"><surname>Zhou</surname><given-names>Y</given-names></name><name name-style="western"><surname>Wei</surname><given-names>Y</given-names></name><name name-style="western"><surname>Hu</surname><given-names>F</given-names></name></person-group><article-title>Visible light communication in 6g: Advances, challenges, and prospects</article-title><source>IEEE Veh. Technol. Mag.</source><year>2020</year><volume>15</volume><fpage>93</fpage><lpage>102</lpage><pub-id pub-id-type="doi">10.1109/MVT.2020.3017153</pub-id></element-citation><mixed-citation id="mc-CR6" publication-type="journal">Chi, N., Zhou, Y., Wei, Y. &amp; Hu, F. Visible light communication in 6g: Advances, challenges, and prospects. <italic toggle="yes">IEEE Veh. Technol. Mag.</italic><bold>15</bold>, 93&#8211;102 (2020).</mixed-citation></citation-alternatives></ref><ref id="CR7"><label>7.</label><citation-alternatives><element-citation id="ec-CR7" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Yang</surname><given-names>F</given-names></name><name name-style="western"><surname>Wang</surname><given-names>J</given-names></name><name name-style="western"><surname>Dong</surname><given-names>Y</given-names></name></person-group><article-title>Physical-layer security for indoor VLC wiretap systems under multipath reflections</article-title><source>IEEE Trans. Wirel. Commun.</source><year>2022</year><volume>21</volume><fpage>11179</fpage><lpage>11192</lpage><pub-id pub-id-type="doi">10.1109/TWC.2022.3190362</pub-id></element-citation><mixed-citation id="mc-CR7" publication-type="journal">Yang, F., Wang, J. &amp; Dong, Y. Physical-layer security for indoor VLC wiretap systems under multipath reflections. <italic toggle="yes">IEEE Trans. Wirel. Commun.</italic><bold>21</bold>, 11179&#8211;11192 (2022).</mixed-citation></citation-alternatives></ref><ref id="CR8"><label>8.</label><citation-alternatives><element-citation id="ec-CR8" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Yin</surname><given-names>L</given-names></name><name name-style="western"><surname>Haas</surname><given-names>H</given-names></name></person-group><article-title>Physical-layer security in multiuser visible light communication networks</article-title><source>IEEE J. Sel. Areas Commun.</source><year>2018</year><volume>36</volume><fpage>162</fpage><lpage>174</lpage><pub-id pub-id-type="doi">10.1109/JSAC.2017.2774429</pub-id></element-citation><mixed-citation id="mc-CR8" publication-type="journal">Yin, L. &amp; Haas, H. Physical-layer security in multiuser visible light communication networks. <italic toggle="yes">IEEE J. Sel. Areas Commun.</italic><bold>36</bold>, 162&#8211;174 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR9"><label>9.</label><citation-alternatives><element-citation id="ec-CR9" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Che</surname><given-names>Z</given-names></name><etal/></person-group><article-title>A physical-layer secure coding scheme for indoor visible light communication based on polar codes</article-title><source>IEEE Photonics J.</source><year>2018</year><volume>10</volume><fpage>1</fpage><lpage>13</lpage><pub-id pub-id-type="doi">10.1109/JPHOT.2018.2869931</pub-id></element-citation><mixed-citation id="mc-CR9" publication-type="journal">Che, Z. et al. A physical-layer secure coding scheme for indoor visible light communication based on polar codes. <italic toggle="yes">IEEE Photonics J.</italic><bold>10</bold>, 1&#8211;13 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR10"><label>10.</label><citation-alternatives><element-citation id="ec-CR10" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Sejan</surname><given-names>MAS</given-names></name><name name-style="western"><surname>Chung</surname><given-names>W-Y</given-names></name></person-group><article-title>Secure VLC for wide-area indoor IOT connectivity</article-title><source>IEEE Internet Things J.</source><year>2023</year><volume>10</volume><fpage>180</fpage><lpage>193</lpage><pub-id pub-id-type="doi">10.1109/JIOT.2022.3201272</pub-id></element-citation><mixed-citation id="mc-CR10" publication-type="journal">Sejan, M. A. S. &amp; Chung, W.-Y. Secure VLC for wide-area indoor IOT connectivity. <italic toggle="yes">IEEE Internet Things J.</italic><bold>10</bold>, 180&#8211;193 (2023).</mixed-citation></citation-alternatives></ref><ref id="CR11"><label>11.</label><citation-alternatives><element-citation id="ec-CR11" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Al-Moliki</surname><given-names>YM</given-names></name><name name-style="western"><surname>Alresheedi</surname><given-names>MT</given-names></name><name name-style="western"><surname>Al-Harthi</surname><given-names>Y</given-names></name></person-group><article-title>Secret key generation protocol for optical OFDM systems in indoor VLC networks</article-title><source>IEEE Photonics J.</source><year>2017</year><volume>9</volume><fpage>1</fpage><lpage>15</lpage><pub-id pub-id-type="doi">10.1109/JPHOT.2017.2667400</pub-id></element-citation><mixed-citation id="mc-CR11" publication-type="journal">Al-Moliki, Y. M., Alresheedi, M. T. &amp; Al-Harthi, Y. Secret key generation protocol for optical OFDM systems in indoor VLC networks. <italic toggle="yes">IEEE Photonics J.</italic><bold>9</bold>, 1&#8211;15 (2017).</mixed-citation></citation-alternatives></ref><ref id="CR12"><label>12.</label><mixed-citation publication-type="other">Li, G. <italic toggle="yes">et al.</italic> Qos-aware secure transmission design for vlc with semi-grant-free noma scheme. <italic toggle="yes">Opt. Express</italic> 11923&#8211;11939 (2023).<pub-id pub-id-type="doi" assigning-authority="pmc">10.1364/OE.485673</pub-id><pub-id pub-id-type="pmid">37155816</pub-id></mixed-citation></ref><ref id="CR13"><label>13.</label><citation-alternatives><element-citation id="ec-CR13" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Xu</surname><given-names>Q</given-names></name><name name-style="western"><surname>Zheng</surname><given-names>R</given-names></name><name name-style="western"><surname>Saad</surname><given-names>W</given-names></name><name name-style="western"><surname>Han</surname><given-names>Z</given-names></name></person-group><article-title>Device fingerprinting in wireless networks: Challenges and opportunities</article-title><source>IEEE Commun. Surv. Tutorials</source><year>2016</year><volume>18</volume><fpage>94</fpage><lpage>104</lpage><pub-id pub-id-type="doi">10.1109/COMST.2015.2476338</pub-id></element-citation><mixed-citation id="mc-CR13" publication-type="journal">Xu, Q., Zheng, R., Saad, W. &amp; Han, Z. Device fingerprinting in wireless networks: Challenges and opportunities. <italic toggle="yes">IEEE Commun. Surv. Tutorials</italic><bold>18</bold>, 94&#8211;104 (2016).</mixed-citation></citation-alternatives></ref><ref id="CR14"><label>14.</label><citation-alternatives><element-citation id="ec-CR14" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Yan</surname><given-names>D</given-names></name><etal/></person-group><article-title>Real-time identification of rogue wi-fi connections in the wild</article-title><source>IEEE Internet Things J.</source><year>2023</year><volume>10</volume><fpage>6042</fpage><lpage>6058</lpage><pub-id pub-id-type="doi">10.1109/JIOT.2022.3223682</pub-id></element-citation><mixed-citation id="mc-CR14" publication-type="journal">Yan, D. et al. Real-time identification of rogue wi-fi connections in the wild. <italic toggle="yes">IEEE Internet Things J.</italic><bold>10</bold>, 6042&#8211;6058 (2023).</mixed-citation></citation-alternatives></ref><ref id="CR15"><label>15.</label><citation-alternatives><element-citation id="ec-CR15" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>He</surname><given-names>J</given-names></name><etal/></person-group><article-title>Radio frequency fingerprint identification with hybrid time-varying distortions</article-title><source>IEEE Trans. Wirel. Commun.</source><year>2023</year><volume>22</volume><fpage>6724</fpage><lpage>6736</lpage><pub-id pub-id-type="doi">10.1109/TWC.2023.3245070</pub-id></element-citation><mixed-citation id="mc-CR15" publication-type="journal">He, J. et al. Radio frequency fingerprint identification with hybrid time-varying distortions. <italic toggle="yes">IEEE Trans. Wirel. Commun.</italic><bold>22</bold>, 6724&#8211;6736 (2023).</mixed-citation></citation-alternatives></ref><ref id="CR16"><label>16.</label><citation-alternatives><element-citation id="ec-CR16" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Shi</surname><given-names>J</given-names></name><name name-style="western"><surname>Peng</surname><given-names>L</given-names></name><name name-style="western"><surname>Fu</surname><given-names>H</given-names></name><name name-style="western"><surname>Hu</surname><given-names>A</given-names></name></person-group><article-title>Robust RF fingerprint extraction based on cyclic shift characteristic</article-title><source>IEEE Internet Things J.</source><year>2023</year><volume>10</volume><fpage>19218</fpage><lpage>19233</lpage><pub-id pub-id-type="doi">10.1109/JIOT.2023.3281644</pub-id></element-citation><mixed-citation id="mc-CR16" publication-type="journal">Shi, J., Peng, L., Fu, H. &amp; Hu, A. Robust RF fingerprint extraction based on cyclic shift characteristic. <italic toggle="yes">IEEE Internet Things J.</italic><bold>10</bold>, 19218&#8211;19233 (2023).</mixed-citation></citation-alternatives></ref><ref id="CR17"><label>17.</label><mixed-citation publication-type="other">Das, R., Gadre, A., Zhang, S., Kumar, S. &amp; Moura, J. M.&#160;F. A deep learning approach to iot authentication. In <italic toggle="yes">Proc. IEEE Int. Conf. Commun. (ICC)</italic>, 1&#8211;6 (Kansas City, MO, USA, 2018).</mixed-citation></ref><ref id="CR18"><label>18.</label><citation-alternatives><element-citation id="ec-CR18" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Shen</surname><given-names>G</given-names></name><name name-style="western"><surname>Zhang</surname><given-names>J</given-names></name><name name-style="western"><surname>Marshall</surname><given-names>A</given-names></name><name name-style="western"><surname>Cavallaro</surname><given-names>JR</given-names></name></person-group><article-title>Towards scalable and channel-robust radio frequency fingerprint identification for LORA</article-title><source>IEEE Trans. Inf. Forensics Secur.</source><year>2022</year><volume>17</volume><fpage>774</fpage><lpage>787</lpage><pub-id pub-id-type="doi">10.1109/TIFS.2022.3152404</pub-id></element-citation><mixed-citation id="mc-CR18" publication-type="journal">Shen, G., Zhang, J., Marshall, A. &amp; Cavallaro, J. R. Towards scalable and channel-robust radio frequency fingerprint identification for LORA. <italic toggle="yes">IEEE Trans. Inf. Forensics Secur.</italic><bold>17</bold>, 774&#8211;787 (2022).</mixed-citation></citation-alternatives></ref><ref id="CR19"><label>19.</label><mixed-citation publication-type="other">Peng, L. &amp; Hu, A. A design of deep learning based optical fiber ethernet device fingerprint identification system. In <italic toggle="yes">ICC 2019 - 2019 IEEE Int. Conf. Commun. (ICC)</italic>, 1&#8211;6 (Shanghai, China, 2019).</mixed-citation></ref><ref id="CR20"><label>20.</label><citation-alternatives><element-citation id="ec-CR20" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Liu</surname><given-names>W</given-names></name><name name-style="western"><surname>Li</surname><given-names>X</given-names></name><name name-style="western"><surname>Huang</surname><given-names>Z</given-names></name><name name-style="western"><surname>Wang</surname><given-names>X</given-names></name></person-group><article-title>Transmitter fingerprinting for VLC systems via deep feature separation network</article-title><source>IEEE Photonics J.</source><year>2021</year><volume>13</volume><fpage>1</fpage><lpage>7</lpage></element-citation><mixed-citation id="mc-CR20" publication-type="journal">Liu, W., Li, X., Huang, Z. &amp; Wang, X. Transmitter fingerprinting for VLC systems via deep feature separation network. <italic toggle="yes">IEEE Photonics J.</italic><bold>13</bold>, 1&#8211;7 (2021).</mixed-citation></citation-alternatives></ref><ref id="CR21"><label>21.</label><citation-alternatives><element-citation id="ec-CR21" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Shi</surname><given-names>D</given-names></name><etal/></person-group><article-title>On improving 5g internet of radio light security based on led fingerprint identification method</article-title><source>Sensors</source><year>2021</year><volume>21</volume><fpage>1515</fpage><pub-id pub-id-type="doi">10.3390/s21041515</pub-id><pub-id pub-id-type="pmid">33671615</pub-id><pub-id pub-id-type="pmcid">PMC7927084</pub-id></element-citation><mixed-citation id="mc-CR21" publication-type="journal">Shi, D. et al. On improving 5g internet of radio light security based on led fingerprint identification method. <italic toggle="yes">Sensors</italic><bold>21</bold>, 1515 (2021).<pub-id pub-id-type="pmid">33671615</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.3390/s21041515</pub-id><pub-id pub-id-type="pmcid">PMC7927084</pub-id></mixed-citation></citation-alternatives></ref><ref id="CR22"><label>22.</label><citation-alternatives><element-citation id="ec-CR22" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Liu</surname><given-names>X</given-names></name><etal/></person-group><article-title>Beamforming design for secure miso visible light communication networks with slipt</article-title><source>IEEE Trans. Commun.</source><year>2020</year><volume>68</volume><fpage>7795</fpage><lpage>7809</lpage><pub-id pub-id-type="doi">10.1109/TCOMM.2020.3019818</pub-id></element-citation><mixed-citation id="mc-CR22" publication-type="journal">Liu, X. et al. Beamforming design for secure miso visible light communication networks with slipt. <italic toggle="yes">IEEE Trans. Commun.</italic><bold>68</bold>, 7795&#8211;7809 (2020).</mixed-citation></citation-alternatives></ref><ref id="CR23"><label>23.</label><citation-alternatives><element-citation id="ec-CR23" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Brochen</surname><given-names>S</given-names></name><etal/></person-group><article-title>Dependence of the mg-related acceptor ionization energy with the acceptor concentration in p-type GAN layers grown by molecular beam epitaxy</article-title><source>Appl. Phys. Lett.</source><year>2013</year><volume>103</volume><fpage>032102</fpage><pub-id pub-id-type="doi">10.1063/1.4813598</pub-id></element-citation><mixed-citation id="mc-CR23" publication-type="journal">Brochen, S. et al. Dependence of the mg-related acceptor ionization energy with the acceptor concentration in p-type GAN layers grown by molecular beam epitaxy. <italic toggle="yes">Appl. Phys. Lett.</italic><bold>103</bold>, 032102 (2013).</mixed-citation></citation-alternatives></ref><ref id="CR24"><label>24.</label><citation-alternatives><element-citation id="ec-CR24" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Shi</surname><given-names>D</given-names></name><etal/></person-group><article-title>Physics-based modeling of GAN MQW led for visible light communication systems</article-title><source>IEEE Trans. Electron Devices</source><year>2024</year><volume>71</volume><fpage>337</fpage><lpage>342</lpage><pub-id pub-id-type="doi">10.1109/TED.2023.3312632</pub-id></element-citation><mixed-citation id="mc-CR24" publication-type="journal">Shi, D. et al. Physics-based modeling of GAN MQW led for visible light communication systems. <italic toggle="yes">IEEE Trans. Electron Devices</italic><bold>71</bold>, 337&#8211;342 (2024).</mixed-citation></citation-alternatives></ref><ref id="CR25"><label>25.</label><citation-alternatives><element-citation id="ec-CR25" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Manyakhin</surname><given-names>F</given-names></name><name name-style="western"><surname>Kovalev</surname><given-names>A</given-names></name><name name-style="western"><surname>Yunovich</surname><given-names>A</given-names></name></person-group><article-title>Aging mechanisms of INGAN/ALGAN/GAN light-emitting diodes operating at high currents</article-title><source>MRS Internet J. Nitride Semicond. Res.</source><year>1998</year><volume>3</volume><fpage>1</fpage><lpage>6</lpage><pub-id pub-id-type="doi">10.1557/S1092578300001253</pub-id></element-citation><mixed-citation id="mc-CR25" publication-type="journal">Manyakhin, F., Kovalev, A. &amp; Yunovich, A. Aging mechanisms of INGAN/ALGAN/GAN light-emitting diodes operating at high currents. <italic toggle="yes">MRS Internet J. Nitride Semicond. Res.</italic><bold>3</bold>, 1&#8211;6 (1998).</mixed-citation></citation-alternatives></ref><ref id="CR26"><label>26.</label><citation-alternatives><element-citation id="ec-CR26" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Nazarian</surname><given-names>AL</given-names></name><etal/></person-group><article-title>A physics-based causal bond-wire model for RF applications</article-title><source>IEEE Trans. Microwave Theory Techn.</source><year>2012</year><volume>60</volume><fpage>3683</fpage><lpage>3692</lpage><pub-id pub-id-type="doi">10.1109/TMTT.2012.2217983</pub-id></element-citation><mixed-citation id="mc-CR26" publication-type="journal">Nazarian, A. L. et al. A physics-based causal bond-wire model for RF applications. <italic toggle="yes">IEEE Trans. Microwave Theory Techn.</italic><bold>60</bold>, 3683&#8211;3692 (2012).</mixed-citation></citation-alternatives></ref><ref id="CR27"><label>27.</label><citation-alternatives><element-citation id="ec-CR27" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Alimenti</surname><given-names>F</given-names></name><name name-style="western"><surname>Mezzanotte</surname><given-names>P</given-names></name><name name-style="western"><surname>Roselli</surname><given-names>L</given-names></name><name name-style="western"><surname>Sorrentino</surname><given-names>R</given-names></name></person-group><article-title>Modeling and characterization of the bonding-wire interconnection</article-title><source>IEEE Trans. Microwave Theory Techn.</source><year>2001</year><volume>49</volume><fpage>142</fpage><lpage>150</lpage><pub-id pub-id-type="doi">10.1109/22.899975</pub-id></element-citation><mixed-citation id="mc-CR27" publication-type="journal">Alimenti, F., Mezzanotte, P., Roselli, L. &amp; Sorrentino, R. Modeling and characterization of the bonding-wire interconnection. <italic toggle="yes">IEEE Trans. Microwave Theory Techn.</italic><bold>49</bold>, 142&#8211;150 (2001).</mixed-citation></citation-alternatives></ref></ref-list></back></article></pmc-articleset>

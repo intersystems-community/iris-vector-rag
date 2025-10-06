@@ -9,8 +9,8 @@ This pipeline implements Corrective Retrieval-Augmented Generation:
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Callable, Literal
 import time
+from typing import Any, Callable, Dict, List, Literal, Optional
 
 from ..core.base import RAGPipeline
 from ..core.models import Document
@@ -109,7 +109,28 @@ class CRAGPipeline(RAGPipeline):
         # Initialize retrieval evaluator
         self.evaluator = RetrievalEvaluator(self.llm_func, self.embedding_func)
 
+        # Ensure required database tables exist for CRAG operations
+        self._ensure_crag_tables()
+
         logger.info("CRAGPipeline initialized successfully")
+
+    def _ensure_crag_tables(self) -> None:
+        """
+        Ensure required tables exist for CRAG operations.
+
+        This method ensures the DocumentChunks table exists, which is required
+        for chunk-based retrieval enhancement in the CRAG pipeline.
+        """
+        try:
+            from ..storage.schema_manager import SchemaManager
+
+            schema_manager = SchemaManager(self.connection_manager, self.config_manager)
+            schema_manager.ensure_table_schema("DocumentChunks")
+            logger.info("CRAG: DocumentChunks table schema ensured")
+
+        except Exception as e:
+            logger.warning(f"CRAG: Could not ensure DocumentChunks table: {e}")
+            # Don't fail initialization - the pipeline can still work with basic retrieval
 
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """

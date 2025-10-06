@@ -11,35 +11,37 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 import intersystems_irispython._IRIS as iris
+
 from common.iris_connection_manager import IRISConnectionManager
+
 
 def check_database_state():
     """Check what's actually in the database."""
-    
+
     # Connect to IRIS
     connection_manager = IRISConnectionManager()
     connection = connection_manager.get_connection()
-    
+
     if not connection:
         print("❌ Failed to connect to IRIS database")
         return
-    
+
     print("✅ Connected to IRIS database")
     print("=" * 60)
-    
+
     try:
         # Check all RAG tables
         tables_to_check = [
             "RAG.Documents",
-            "RAG.Chunks", 
+            "RAG.Chunks",
             "RAG.Entities",
             "RAG.Relationships",
-            "RAG.SourceDocuments"
+            "RAG.SourceDocuments",
         ]
-        
+
         print("📊 TABLE ROW COUNTS:")
         print("-" * 40)
-        
+
         for table in tables_to_check:
             try:
                 query = f"SELECT COUNT(*) FROM {table}"
@@ -48,10 +50,10 @@ def check_database_state():
                 print(f"{table:<25} {row_count:>10} rows")
             except Exception as e:
                 print(f"{table:<25} {'ERROR':>10} - {str(e)[:50]}")
-        
+
         print("\n🔍 DETAILED ANALYSIS:")
         print("-" * 40)
-        
+
         # Check for embeddings specifically
         try:
             query = "SELECT COUNT(*) FROM RAG.Chunks WHERE embedding IS NOT NULL"
@@ -60,7 +62,7 @@ def check_database_state():
             print(f"📈 Chunks with embeddings: {embedding_count}")
         except Exception as e:
             print(f"📈 Embeddings check failed: {e}")
-        
+
         # Check document content lengths
         try:
             query = "SELECT COUNT(*), AVG(LENGTH(content)) FROM RAG.Documents WHERE content IS NOT NULL"
@@ -69,14 +71,16 @@ def check_database_state():
                 row = result.one()
                 doc_count = row[0] if row[0] is not None else 0
                 avg_length = row[1] if row[1] is not None else 0
-                print(f"📄 Documents with content: {doc_count}, avg length: {avg_length:.0f} chars")
+                print(
+                    f"📄 Documents with content: {doc_count}, avg length: {avg_length:.0f} chars"
+                )
         except Exception as e:
             print(f"📄 Document content check failed: {e}")
-        
+
         # Sample some actual data
         print("\n📝 SAMPLE DATA:")
         print("-" * 40)
-        
+
         # Sample documents
         try:
             query = "SELECT TOP 3 title, LENGTH(content) as content_len FROM RAG.Documents WHERE title IS NOT NULL"
@@ -88,7 +92,7 @@ def check_database_state():
                     print(f"Doc {i+1}: {title}... ({content_len} chars)")
         except Exception as e:
             print(f"Sample docs failed: {e}")
-        
+
         # Sample entities
         try:
             query = "SELECT TOP 5 entity_name, entity_type FROM RAG.Entities"
@@ -101,11 +105,11 @@ def check_database_state():
                     print(f"  - {name} ({etype})")
         except Exception as e:
             print(f"Sample entities failed: {e}")
-        
+
         # Check if we have any vector data at all
         print("\n🔢 VECTOR/EMBEDDING STATUS:")
         print("-" * 40)
-        
+
         try:
             # Check chunks table structure
             query = "SELECT TOP 1 embedding FROM RAG.Chunks WHERE embedding IS NOT NULL"
@@ -116,7 +120,7 @@ def check_database_state():
                 print("❌ No embeddings found in chunks table")
         except Exception as e:
             print(f"❌ Embedding check failed: {e}")
-        
+
         # Check what pipelines might have been used
         try:
             query = "SELECT DISTINCT source FROM RAG.Documents"
@@ -128,13 +132,14 @@ def check_database_state():
                     print(f"  - {source}")
         except Exception as e:
             print(f"Source check failed: {e}")
-            
+
     except Exception as e:
         print(f"💥 Database check failed: {e}")
-    
+
     finally:
         connection_manager.close_connection()
         print("\n🔌 Database connection closed")
+
 
 if __name__ == "__main__":
     check_database_state()

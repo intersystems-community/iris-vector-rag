@@ -3,8 +3,8 @@
 Direct test of mem0 functionality and error reproduction
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add paths for imports

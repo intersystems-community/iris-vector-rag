@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
+import logging
 import sys
 import time
-import logging
 from pathlib import Path
 
 # Add project paths
@@ -11,46 +11,56 @@ sys.path.insert(0, str(project_root))
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(f'logs/ingestion_{int(time.time())}.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler(f"logs/ingestion_{int(time.time())}.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 
 logger = logging.getLogger(__name__)
 
+
 def main():
     logger.info("Starting PMC document ingestion...")
-    
+
     # Use simple ingestion approach
     logger.info("Beginning large-scale ingestion of PMC documents...")
-    
+
     try:
         results = process_pmc_files()
-        logger.info(f"Ingestion completed! Processed {results.get('total_processed', 0)} documents")
+        logger.info(
+            f"Ingestion completed! Processed {results.get('total_processed', 0)} documents"
+        )
         return 0
     except Exception as e:
         logger.error(f"Ingestion failed: {e}")
         return 1
+
 
 def process_pmc_files():
     """
     REAL ingestion using loader_fixed with embeddings and schema ensure.
     Processes PMC XML files, generates embeddings, and loads into IRIS.
     """
-    import os
     import glob
     import json
+    import os
     from datetime import datetime
 
     # Ensure output directory exists
     out_dir = Path("outputs/logs")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    pmc_directory = "data/downloaded_pmc_docs"
+    pmc_directory = (
+        os.getenv("EVAL_DATASET_DIR")
+        or os.getenv("EVAL_PMC_DIR")
+        or "data/downloaded_pmc_docs"
+    )
     pmc_files = glob.glob(os.path.join(pmc_directory, "*.xml"))
-    logger.info(f"Found {len(pmc_files)} PMC files to process (REAL ingestion)")
+    logger.info(
+        f"Using PMC directory: {pmc_directory} - Found {len(pmc_files)} PMC files to process"
+    )
 
     if not pmc_files:
         logger.error("No PMC files found!")
@@ -71,11 +81,13 @@ def process_pmc_files():
         limit = max(2000, len(pmc_files))  # ensure we cover all current files
         batch_size = 50
 
-        logger.info(f"Starting REAL ingestion with limit={limit}, batch_size={batch_size}")
+        logger.info(
+            f"Starting REAL ingestion with limit={limit}, batch_size={batch_size}"
+        )
         stats = process_and_load_documents(
             pmc_directory=pmc_directory,
-            connection=None,                 # let loader create and manage connection
-            embedding_func=embedding_func,   # REAL embeddings
+            connection=None,  # let loader create and manage connection
+            embedding_func=embedding_func,  # REAL embeddings
             db_config=None,
             limit=limit,
             batch_size=batch_size,
@@ -105,6 +117,7 @@ def process_pmc_files():
     except Exception as e:
         logger.error(f"REAL ingestion failed: {e}")
         return {"total_processed": 0, "successful": 0, "failed": 0}
+
 
 if __name__ == "__main__":
     sys.exit(main())

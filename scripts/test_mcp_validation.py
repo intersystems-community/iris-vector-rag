@@ -4,11 +4,11 @@ Enhanced mem0/Supabase MCP Integration Validation Test
 Creates persistent memories to validate end-to-end functionality
 """
 
-import os
-import sys
 import logging
-from datetime import datetime
+import os
 import re
+import sys
+from datetime import datetime
 
 # Setup logging
 logging.basicConfig(
