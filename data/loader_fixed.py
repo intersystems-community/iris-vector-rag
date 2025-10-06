@@ -473,6 +473,24 @@ if __name__ == "__main__":
 
     logger.info("🚀 Starting data loader")
 
+    # Create embedding function
+    logger.info("Initializing embedding model...")
+    try:
+        from sentence_transformers import SentenceTransformer
+
+        model_name = "sentence-transformers/all-MiniLM-L6-v2"
+        model = SentenceTransformer(model_name)
+
+        def embedding_func(texts):
+            """Generate embeddings for a list of texts."""
+            return model.encode(texts, convert_to_numpy=True).tolist()
+
+        logger.info(f"✓ Embedding model initialized: {model_name}")
+    except Exception as e:
+        logger.error(f"Failed to initialize embedding model: {e}")
+        logger.error("Cannot load documents without embeddings - exiting")
+        sys.exit(1)
+
     # Use sample data directory
     pmc_dir = os.path.join(os.path.dirname(__file__), "sample_10_docs")
 
@@ -504,9 +522,10 @@ if __name__ == "__main__":
 
         logger.info(f"✓ Created {len(sample_docs)} sample documents")
 
-    # Load the documents
+    # Load the documents with embeddings
     result = process_and_load_documents(
         pmc_directory=pmc_dir,
+        embedding_func=embedding_func,
         limit=10,
         batch_size=10
     )
