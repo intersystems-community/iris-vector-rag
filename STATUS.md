@@ -30,6 +30,22 @@
 
 ## Latest Work (2025-10-05)
 
+### CRAG Pipeline Schema Fix (Feature 028) - Session 3
+Fixed DocumentChunks table creation:
+1. ✅ Added DocumentChunks to SchemaManager.standard_tables list
+2. ✅ Implemented _create_document_chunks_table() method
+3. ✅ Integrated DocumentChunks creation into _ensure_standard_table()
+
+**Impact**:
+- CRAG Pipeline E2E: 20/34 → 29/34 passing (59% → 85%)
+- Fixed all schema-related failures
+- Remaining 5 failures are vector datatype mismatches + test assertions (not schema issues)
+
+**Discovered Issue**: ColBERT/PyLate pipeline NOT in main factory (`iris_rag/__init__.py`)
+- Only in specialized RAGAS scripts
+- Not included in general pipeline creation or RAGAS evaluations
+- Should be added to `available_types` list
+
 ### Test Infrastructure Fixes (Feature 028) - Session 2
 Fixed critical connection/port issues:
 1. ✅ Environment variables not loaded in tests (added load_dotenv to tests/conftest.py)
