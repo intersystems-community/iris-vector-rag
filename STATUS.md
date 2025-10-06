@@ -41,10 +41,12 @@ Fixed DocumentChunks table creation:
 - Fixed all schema-related failures
 - Remaining 5 failures are vector datatype mismatches + test assertions (not schema issues)
 
-**Discovered Issue**: ColBERT/PyLate pipeline NOT in main factory (`iris_rag/__init__.py`)
-- Only in specialized RAGAS scripts
-- Not included in general pipeline creation or RAGAS evaluations
-- Should be added to `available_types` list
+**Fixed Issue**: ColBERT/PyLate pipeline now in main factory (branch 029-add-colbert-to-factory)
+- Added `pylate_colbert` to `iris_rag/__init__.py` factory (lines 138-145)
+- Updated `available_types` list (line 152)
+- Updated docstring with all 5 pipeline types (lines 40-45)
+- Now accessible via `create_pipeline('pylate_colbert')`
+- Will be included in RAGAS evaluations that use the factory
 
 ### Test Infrastructure Fixes (Feature 028) - Session 2
 Fixed critical connection/port issues:
