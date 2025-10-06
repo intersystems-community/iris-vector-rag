@@ -460,3 +460,61 @@ def process_and_load_documents(
             "loaded_count": 0,
             "duration_seconds": time.time() - start_time,
         }
+
+
+if __name__ == "__main__":
+    """Load sample PMC documents when run directly."""
+    import logging
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    logger.info("🚀 Starting data loader")
+
+    # Use sample data directory
+    pmc_dir = os.path.join(os.path.dirname(__file__), "sample_10_docs")
+
+    if not os.path.exists(pmc_dir):
+        logger.warning(f"Sample directory not found: {pmc_dir}")
+        logger.info("Creating sample directory and generating synthetic documents...")
+        os.makedirs(pmc_dir, exist_ok=True)
+
+        # Create a few sample documents
+        sample_docs = [
+            {
+                "title": "Introduction to Diabetes Management",
+                "text": "Diabetes is a chronic condition affecting blood sugar levels. Common symptoms include increased thirst, frequent urination, and fatigue."
+            },
+            {
+                "title": "COVID-19 Transmission Mechanisms",
+                "text": "COVID-19 is primarily transmitted through respiratory droplets and aerosols. The virus can spread when infected individuals cough, sneeze, or talk."
+            },
+            {
+                "title": "Chemotherapy Side Effects",
+                "text": "Common side effects of chemotherapy include nausea, hair loss, fatigue, and increased infection risk. These effects vary by drug type and patient."
+            }
+        ]
+
+        for i, doc in enumerate(sample_docs):
+            doc_file = os.path.join(pmc_dir, f"sample_doc_{i+1}.json")
+            with open(doc_file, 'w') as f:
+                json.dump(doc, f, indent=2)
+
+        logger.info(f"✓ Created {len(sample_docs)} sample documents")
+
+    # Load the documents
+    result = process_and_load_documents(
+        pmc_directory=pmc_dir,
+        limit=10,
+        batch_size=10
+    )
+
+    if result.get("success"):
+        logger.info(f"✅ Successfully loaded {result.get('loaded_count', 0)} documents")
+        logger.info(f"   Processed: {result.get('processed_count', 0)}")
+        logger.info(f"   Duration: {result.get('duration_seconds', 0):.2f}s")
+    else:
+        logger.error(f"❌ Failed to load data: {result.get('error', 'Unknown error')}")
+        sys.exit(1)
