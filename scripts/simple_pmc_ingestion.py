@@ -4,10 +4,10 @@ Simple PMC Document Ingestion - Working version
 Processes PMC documents using existing infrastructure
 """
 
+import glob
+import logging
 import sys
 import time
-import logging
-import glob
 from pathlib import Path
 
 # Add project paths
@@ -18,23 +18,24 @@ sys.path.insert(0, str(project_root))
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(f'logs/simple_ingestion_{int(time.time())}.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler(f"logs/simple_ingestion_{int(time.time())}.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 
 logger = logging.getLogger(__name__)
+
 
 def process_pmc_files():
     """
     REAL ingestion using loader_fixed with embeddings and schema ensure.
     This simple script now performs true ingestion into IRIS.
     """
-    import os
     import glob
     import json
+    import os
     from datetime import datetime
 
     out_dir = Path("outputs/logs")
@@ -60,7 +61,9 @@ def process_pmc_files():
         limit = max(2000, len(pmc_files))
         batch_size = 50
 
-        logger.info(f"Starting REAL ingestion with limit={limit}, batch_size={batch_size}")
+        logger.info(
+            f"Starting REAL ingestion with limit={limit}, batch_size={batch_size}"
+        )
         stats = process_and_load_documents(
             pmc_directory=pmc_directory,
             connection=None,
@@ -93,17 +96,21 @@ def process_pmc_files():
         logger.error(f"REAL ingestion failed: {e}")
         return {"total_processed": 0, "successful": 0, "failed": 0}
 
+
 def main():
     """Main function."""
     logger.info("Starting simple PMC document ingestion...")
-    
+
     try:
         results = process_pmc_files()
-        logger.info(f"Ingestion completed successfully! Processed {results['total_processed']} documents")
+        logger.info(
+            f"Ingestion completed successfully! Processed {results['total_processed']} documents"
+        )
         return 0
     except Exception as e:
         logger.error(f"Ingestion failed: {e}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

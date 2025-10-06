@@ -5,13 +5,14 @@ This module handles loading processed documents into the IRIS database,
 with comprehensive fixes for NaN handling, vector format consistency, and data validation.
 """
 
-import logging
-import time
 import json
-import numpy as np
-from typing import List, Dict, Any, Optional, Callable
+import logging
 import os
 import sys
+import time
+from typing import Any, Callable, Dict, List, Optional
+
+import numpy as np
 
 # Add the project root to the path to ensure imports work correctly
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -279,8 +280,8 @@ def load_documents_to_iris(
                 batch_success_count = 0
                 for doc_params in source_doc_batch_params:
                     (
-                        doc_id,
-                        _,
+                        id_value,
+                        doc_id_value,
                         title,
                         abstract,
                         text_content,
@@ -291,6 +292,7 @@ def load_documents_to_iris(
 
                     # Prepare additional data (non-vector columns)
                     additional_data = {
+                        "doc_id": str(doc_id_value),
                         "title": title,
                         "abstract": abstract,
                         "text_content": text_content,
@@ -307,7 +309,7 @@ def load_documents_to_iris(
                             vector_column_name="embedding",
                             vector_data=embedding_vector,
                             target_dimension=384,  # all-MiniLM-L6-v2 dimension
-                            key_columns={"doc_id": doc_id},
+                            key_columns={"id": str(id_value)},
                             additional_data=additional_data,
                         )
                     else:
@@ -319,7 +321,7 @@ def load_documents_to_iris(
                             vector_data=[0.0]
                             * 384,  # Zero vector with correct dimension
                             target_dimension=384,
-                            key_columns={"doc_id": doc_id},
+                            key_columns={"id": str(id_value)},
                             additional_data=additional_data,
                         )
 
@@ -406,10 +408,10 @@ def process_and_load_documents(
     try:
         # Ensure schema exists for SourceDocuments
         try:
+            from iris_rag.config.manager import ConfigurationManager as IRConfigManager
             from iris_rag.core.connection import (
                 ConnectionManager as IRConnectionManager,
             )
-            from iris_rag.config.manager import ConfigurationManager as IRConfigManager
             from iris_rag.storage.schema_manager import SchemaManager as IRSchemaManager
 
             ir_config = IRConfigManager()

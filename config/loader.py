@@ -1,5 +1,6 @@
-import yaml
 import os
+
+import yaml
 
 CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "config.yaml")
 

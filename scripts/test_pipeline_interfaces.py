@@ -4,27 +4,27 @@ Test script to examine the actual interfaces of RAG pipelines.
 This helps understand what methods each pipeline provides.
 """
 
+import inspect
+import json
 import os
 import sys
-import json
-import inspect
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Add the project root to the path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-from common.utils import get_llm_func, get_embedding_func
+from common.utils import get_embedding_func, get_llm_func
 from iris_rag.config.manager import ConfigurationManager
 
 # Pipeline imports
 from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.hyde import HyDERAGPipeline
 from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.noderag import NodeRAGPipeline
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
 from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
+from iris_rag.pipelines.hyde import HyDERAGPipeline
+from iris_rag.pipelines.noderag import NodeRAGPipeline
 
 PIPELINE_CLASSES = {
     "basic": BasicRAGPipeline,

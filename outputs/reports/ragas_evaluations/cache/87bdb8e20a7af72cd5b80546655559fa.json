@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "CRAG",
+  "query": "How do vaccines stimulate immune system responses?",
+  "answer": null,
+  "contexts": [],
+  "execution_time": 0.13837194442749023,
+  "success": true,
+  "error": null
+}

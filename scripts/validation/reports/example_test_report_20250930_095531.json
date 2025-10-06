@@ -1,0 +1,53 @@
+{
+  "timestamp": "20250930_095531",
+  "summary": {
+    "total": 3,
+    "passed": 1,
+    "failed": 2,
+    "success_rate": 0.3333333333333333,
+    "avg_execution_time": 4.171004295349121,
+    "avg_memory_usage": 39.395833333333336
+  },
+  "results": [
+    {
+      "script_path": "basic/try_basic_rag_pipeline.py",
+      "success": false,
+      "execution_time": 4.358719825744629,
+      "exit_code": 1,
+      "error_message": "Script failed with exit code 1: Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/basic/try_basic_rag_pipeline.py\", line 85, in <module>\n    main()\n  File \"/Users/tdyar/ws/rag-templates/scripts/basic/try_basic_rag_pipeline.py\", line 64, in main\n    basic_rag_pipeline = iris_rag.create_pipeline(\n                         ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 69, in create_pipeline\n    return factory.create_pipeline(\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/factory.py\", line 91, in create_pipeline\n    validation_report = self._validate_and_setup(pipeline_type, auto_setup)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/factory.py\", line 117, in _validate_and_setup\n    validation_report = self.orchestrator.setup_pipeline(\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py\", line 111, in setup_pipeline\n    self._fulfill_requirements(requirements)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py\", line 163, in _fulfill_requirements\n    self._fulfill_embedding_requirement(embedding_req)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py\", line 187, in _fulfill_embedding_requirement\n    self._ensure_document_embeddings()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py\", line 269, in _ensure_document_embeddings\n    cursor.execute(\"SELECT COUNT(*) FROM RAG.SourceDocuments\")\niris.dbapi.ProgrammingError: <SQL ERROR>; Details: [SQLCODE: <-30>:<Table or view not found>]\n[Location: <Prepare>]\n[%msg: < Table 'RAG.SOURCEDOCUMENTS' not found>]",
+      "peak_memory_mb": 39.328125,
+      "avg_cpu_percent": 0.0,
+      "validation_score": 0.0,
+      "validation_issues": [],
+      "timestamp": 1759240518.957338
+    },
+    {
+      "script_path": "basic/try_hybrid_graphrag_pipeline.py",
+      "success": true,
+      "execution_time": 3.562220811843872,
+      "exit_code": 0,
+      "error_message": "",
+      "peak_memory_mb": 39.421875,
+      "avg_cpu_percent": 0.0,
+      "validation_score": 0.09999999999999998,
+      "validation_issues": [
+        "Missing required field: answer",
+        "Missing required field: sources",
+        "Missing required field: metadata"
+      ],
+      "timestamp": 1759240523.316297
+    },
+    {
+      "script_path": "reranking/try_basic_rerank.py",
+      "success": false,
+      "execution_time": 4.592072248458862,
+      "exit_code": 1,
+      "error_message": "Script failed with exit code 1: Traceback (most recent call last):\n  File \"/Users/tdyar/ws/rag-templates/scripts/reranking/try_basic_rerank.py\", line 88, in <module>\n    main()\n  File \"/Users/tdyar/ws/rag-templates/scripts/reranking/try_basic_rerank.py\", line 67, in main\n    reranking_rag_pipeline = iris_rag.create_pipeline(\n                             ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/__init__.py\", line 69, in create_pipeline\n    return factory.create_pipeline(\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/factory.py\", line 91, in create_pipeline\n    validation_report = self._validate_and_setup(pipeline_type, auto_setup)\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/factory.py\", line 117, in _validate_and_setup\n    validation_report = self.orchestrator.setup_pipeline(\n                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py\", line 111, in setup_pipeline\n    self._fulfill_requirements(requirements)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py\", line 163, in _fulfill_requirements\n    self._fulfill_embedding_requirement(embedding_req)\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py\", line 187, in _fulfill_embedding_requirement\n    self._ensure_document_embeddings()\n  File \"/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py\", line 269, in _ensure_document_embeddings\n    cursor.execute(\"SELECT COUNT(*) FROM RAG.SourceDocuments\")\niris.dbapi.ProgrammingError: <SQL ERROR>; Details: [SQLCODE: <-30>:<Table or view not found>]\n[Location: <Prepare>]\n[%msg: < Table 'RAG.SOURCEDOCUMENTS' not found>]",
+      "peak_memory_mb": 39.4375,
+      "avg_cpu_percent": 0.0,
+      "validation_score": 0.0,
+      "validation_issues": [],
+      "timestamp": 1759240526.8792372
+    }
+  ]
+}

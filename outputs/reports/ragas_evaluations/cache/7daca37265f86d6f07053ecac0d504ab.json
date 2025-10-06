@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "BasicRerank",
+  "query": "What are the latest developments in Alzheimer's disease research?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.5448441505432129,
+  "success": true,
+  "error": null
+}

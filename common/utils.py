@@ -1,14 +1,15 @@
 # common/utils.py
-import time
-from dataclasses import dataclass, field
-from typing import List, Callable, Any, Optional, Dict, Tuple  # Added Tuple
+import logging  # Added for logger usage in get_llm_func
 
 # import sqlalchemy  # Removed - not needed for IRIS
 import os
-import logging  # Added for logger usage in get_llm_func
+import time
+from dataclasses import dataclass, field
+from pathlib import Path  # Added for config path
+from typing import Any, Callable, Dict, List, Optional, Tuple  # Added Tuple
+
 import numpy as np
 import yaml  # Added for config loading
-from pathlib import Path  # Added for config path
 
 logger = logging.getLogger(__name__)  # Added for logger usage
 
@@ -172,8 +173,9 @@ def build_hf_embedder(model_name: str):
         # Add memory pressure detection for bulk operations
         if len(texts) > 10:  # Bulk operation detected
             try:
-                import psutil
                 import gc
+
+                import psutil
 
                 process = psutil.Process()
                 memory_mb = process.memory_info().rss / 1024 / 1024
@@ -276,7 +278,7 @@ def get_llm_func(
 
     if provider == "openai" and not os.getenv("OPENAI_API_KEY"):
         try:
-            from dotenv import load_dotenv, find_dotenv
+            from dotenv import find_dotenv, load_dotenv
 
             project_root = os.path.abspath(
                 os.path.join(os.path.dirname(__file__), "..")
@@ -533,11 +535,11 @@ def _setup_caching_if_needed(enable_cache: Optional[bool] = None) -> bool:
         True if caching is enabled, False otherwise
     """
     try:
-        from common.llm_cache_manager import (
-            setup_langchain_cache,
-            is_langchain_cache_configured,
-        )
         from common.llm_cache_config import load_cache_config
+        from common.llm_cache_manager import (
+            is_langchain_cache_configured,
+            setup_langchain_cache,
+        )
 
         # Load configuration
         config = load_cache_config()

@@ -7,11 +7,12 @@ pipeline using vector similarity search and LLM generation.
 
 import logging
 import time
-from typing import List, Dict, Any, Optional, Callable
-from ..core.base import RAGPipeline
-from ..core.models import Document
-from ..core.connection import ConnectionManager
+from typing import Any, Callable, Dict, List, Optional
+
 from ..config.manager import ConfigurationManager
+from ..core.base import RAGPipeline
+from ..core.connection import ConnectionManager
+from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
 
 logger = logging.getLogger(__name__)

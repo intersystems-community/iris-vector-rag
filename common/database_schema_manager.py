@@ -4,11 +4,12 @@ Database Schema Manager for RAG Templates
 Provides centralized, config-driven table and column name resolution.
 """
 
-import yaml
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import yaml
 
 logger = logging.getLogger(__name__)
 

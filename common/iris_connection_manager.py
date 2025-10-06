@@ -15,9 +15,9 @@ Environment Priority:
 3. System Python as fallback
 """
 
-import os
 import logging
-from typing import Optional, Any, Dict
+import os
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -86,9 +86,27 @@ class IRISConnectionManager:
             logger.info("✓ Connected using JDBC")
             return self._connection
         except Exception as e:
+            # Check if this is a password change issue
+            if "Password change required" in str(e) or "password change required" in str(e).lower():
+                logger.warning("⚠️  IRIS password change required. Attempting automatic remediation...")
+
+                try:
+                    from tests.utils.iris_password_reset import reset_iris_password_if_needed
+
+                    if reset_iris_password_if_needed(e, max_retries=1):
+                        logger.info("✓ Password reset successful. Retrying connection...")
+                        # Retry connection after password reset
+                        self._connection = None  # Clear failed connection
+                        # NOTE: No recursion here - just let it fall through to raise
+                        # The next connection attempt will use updated env vars
+                        logger.info("Password reset complete. Please retry your operation.")
+                except ImportError:
+                    logger.warning("Password reset utility not available. Manual reset required.")
+
             logger.error(f"All connection methods failed. JDBC error: {e}")
             raise ConnectionError(
-                "Failed to establish database connection with both DBAPI and JDBC"
+                "Failed to establish database connection with both DBAPI and JDBC. "
+                "If password was just reset, please retry your operation."
             )
 
     def _get_dbapi_connection(self, config: Optional[Dict[str, Any]] = None) -> Any:
@@ -156,6 +174,30 @@ class IRISConnectionManager:
         except AttributeError as e:
             raise ImportError(f"IRIS DBAPI not properly configured: {e}")
         except Exception as e:
+            # Check if this is a password change issue
+            if "Password change required" in str(e) or "password change required" in str(e).lower():
+                logger.warning("⚠️  IRIS password change required. Attempting automatic remediation...")
+
+                try:
+                    from tests.utils.iris_password_reset import reset_iris_password_if_needed
+
+                    if reset_iris_password_if_needed(e, max_retries=1):
+                        logger.info("✓ Password reset successful. Retrying DBAPI connection...")
+                        # Retry connection after password reset - refetch params to get new password from env
+                        import iris
+                        conn_params_refreshed = self._get_connection_params(config)
+                        return iris.connect(
+                            hostname=conn_params_refreshed["hostname"],
+                            port=conn_params_refreshed["port"],
+                            namespace=conn_params_refreshed["namespace"],
+                            username=conn_params_refreshed["username"],
+                            password=conn_params_refreshed["password"],
+                        )
+                    else:
+                        logger.error("✗ Automatic password reset failed.")
+                except ImportError:
+                    logger.warning("Password reset utility not available.")
+
             raise ConnectionError(f"Failed to create DBAPI connection: {e}")
 
     def _get_jdbc_connection(self, config: Optional[Dict[str, Any]] = None) -> Any:
@@ -238,7 +280,7 @@ class IRISConnectionManager:
         # Default parameters
         params = {
             "hostname": os.environ.get("IRIS_HOST", "localhost"),
-            "port": int(os.environ.get("IRIS_PORT", "1972")),
+            "port": int(os.environ.get("IRIS_PORT", "1974")),
             "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
             "username": os.environ.get("IRIS_USERNAME", "SuperUser"),
             "password": os.environ.get("IRIS_PASSWORD", "SYS"),

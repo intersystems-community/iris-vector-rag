@@ -4,19 +4,19 @@ Comprehensive pipeline status test script.
 Tests all available RAG pipeline types and reports their status.
 """
 
+import json
 import os
 import sys
-import json
 import traceback
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # Add the project root to the path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
+from common.utils import get_embedding_func, get_llm_func
 from iris_rag import create_pipeline
-from common.utils import get_llm_func, get_embedding_func
 
 # List of all pipeline types to test
 PIPELINE_TYPES = [

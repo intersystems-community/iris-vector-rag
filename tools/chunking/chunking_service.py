@@ -5,15 +5,15 @@ This module provides a comprehensive document chunking service that implements
 multiple chunking strategies for improved vector retrieval effectiveness.
 """
 
-import logging
 import json
-import re
-import sys
+import logging
 import os
-from typing import List, Dict, Any
-from dataclasses import dataclass
-from abc import ABC, abstractmethod
+import re
 import statistics
+import sys
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Dict, List
 
 # Add the project root to the path
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))

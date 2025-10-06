@@ -10,11 +10,11 @@ import hashlib
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Iterator, Optional, Any
 from datetime import datetime
+from typing import Any, Dict, Iterator, List, Optional
 
-from iris_rag.core.connection import ConnectionManager
 from iris_rag.config.manager import ConfigurationManager
+from iris_rag.core.connection import ConnectionManager
 from iris_rag.core.models import Document
 
 logger = logging.getLogger(__name__)

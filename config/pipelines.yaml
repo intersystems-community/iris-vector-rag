@@ -30,14 +30,40 @@ pipelines:
       rerank_factor: 2
 
   - name: "GraphRAG"
-    module: "iris_rag.pipelines.graphrag"
-    class: "GraphRAGPipeline"
+    module: "iris_rag.pipelines.hybrid_graphrag"
+    class: "HybridGraphRAGPipeline"
     enabled: true
+    description: "Production GraphRAG with hybrid retrieval and graceful fallback"
+    schema_requirements:
+      tables:
+        - "SourceDocuments"
+        - "Entities"
+        - "EntityRelationships"
+        - "KG_NODEEMBEDDINGS_OPTIMIZED"
+        - "RDF_EDGES"
+        - "RDF_LABELS"
+        - "RDF_PROPS"
+      indexes:
+        - name: "idx_kg_nodeembeddings_vector"
+          table: "KG_NODEEMBEDDINGS_OPTIMIZED"
+          type: "HNSW"
+          required: false
+      schema_manager: "HybridGraphRAGSchemaManager"
+    dependencies:
+      - "iris_graph_core"
+      - "vector_embeddings"
+      - "knowledge_graph"
+    retrieval_methods:
+      - "kg"
+      - "vector"
+      - "text"
+      - "hybrid"
     params:
       top_k: 10
       max_depth: 2
       max_entities: 50
-      similarity_threshold: 0.1
+      fusion_weights: [0.4, 0.3, 0.3]
+      fallback_to_graphrag: true
 
   - name: "ColBERT"
     module: "iris_rag.pipelines.colbert_pylate.pylate_pipeline"
@@ -51,6 +77,45 @@ pipelines:
       use_native_reranking: true
       cache_embeddings: true
       max_doc_length: 4096
+
+  - name: "IRISGlobalGraphRAG"
+    module: "iris_rag.pipelines.iris_global_graphrag"
+    class: "IRISGlobalGraphRAGPipeline"
+    enabled: true
+    schema_requirements:
+      tables:
+        - "paper_content"
+      indexes:
+        - name: "HNSWIndex"
+          table: "paper_content"
+          column: "paper_vector"
+          type: "HNSW"
+          required: true
+          parameters:
+            distance: "DotProduct"
+      globals:
+        - "^GraphContent"
+        - "^GraphRelations"
+      schema_manager: "IRISGlobalGraphRAGSchemaManager"
+    dependencies:
+      - "IRIS-Global-GraphRAG"
+      - "sentence_transformers"
+      - "iris_python"
+    features:
+      - "globals_graph_storage"
+      - "interactive_visualization"
+      - "academic_paper_extraction"
+      - "side_by_side_comparison"
+    params:
+      top_k: 5
+      embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+      vector_dimension: 384
+      graph_content_global: "GraphContent"
+      graph_relations_global: "GraphRelations"
+      enable_visualization: true
+      enable_comparison_ui: true
+      project_path: null  # Auto-discovery or set via config
+
 
 # Framework dependencies (shared across all pipelines)
 framework:

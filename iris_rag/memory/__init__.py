@@ -7,15 +7,17 @@ These components demonstrate how to add memory capabilities to any RAG pipeline.
 """
 
 from .knowledge_extractor import (
-    KnowledgePatternExtractor,
-    KnowledgePattern,
     Entity,
+    KnowledgePattern,
+    KnowledgePatternExtractor,
     Relationship,
 )
-from .temporal_manager import TemporalMemoryManager, TemporalWindow, MemoryItem
-from .incremental_manager import IncrementalLearningManager, LearningResult
-from .rag_integration import MemoryEnabledRAGPipeline, EnrichedRAGResponse
 from .models import GenericMemoryItem, MemoryConfig
+from .rag_integration import EnrichedRAGResponse, MemoryEnabledRAGPipeline
+from .temporal_manager import MemoryItem, TemporalMemoryManager, TemporalWindow
+
+# Incremental manager disabled (requires external kg_memory package)
+_HAS_INCREMENTAL_MANAGER = False
 
 __all__ = [
     # Knowledge extraction
@@ -27,9 +29,6 @@ __all__ = [
     "TemporalMemoryManager",
     "TemporalWindow",
     "MemoryItem",
-    # Incremental learning
-    "IncrementalLearningManager",
-    "LearningResult",
     # RAG integration
     "MemoryEnabledRAGPipeline",
     "EnrichedRAGResponse",

@@ -1,9 +1,14 @@
 #!/bin/bash
 # =============================================================================
-# RAG Templates Framework - Health Check Script
+# RAG Templates Framework - Health Check Script (macOS-compatible, no Redis)
 # =============================================================================
-# This script verifies that all services are running correctly and provides
-# detailed health status information for troubleshooting
+# Verifies that essential services are running correctly and provides
+# health status. Designed to work on macOS default bash (v3.2).
+#
+# Changes:
+# - Removed Redis checks (no Redis dependency)
+# - System resource checks (disk/memory) are informational and do not block readiness
+# - Optional HTTP checks can be skipped with SKIP_HTTP=1
 # =============================================================================
 
 set -euo pipefail
@@ -29,103 +34,111 @@ JSON_OUTPUT=false
 CONTINUOUS=false
 INTERVAL=30
 
-# Health check results
-declare -A HEALTH_STATUS
-declare -A HEALTH_DETAILS
+# Storage (portable replacement for associative arrays)
+SERVICES=""
 
-# Function to print colored output
+sanitize_key() {
+  echo "$1" | tr '[:lower:]' '[:upper:]' | sed -E 's/[^A-Z0-9_]+/_/g'
+}
+
+has_service() {
+  local s="$1"
+  case " $SERVICES " in *" $s "*) return 0 ;; *) return 1 ;; esac
+}
+
+add_service() {
+  local s="$1"
+  if ! has_service "$s"; then
+    if [ -z "$SERVICES" ]; then SERVICES="$s"; else SERVICES="$SERVICES $s"; fi
+  fi
+}
+
+set_health() {
+  # set_health <service_name> <status> [details]
+  local service="$1" ; local status="$2" ; local details="${3:-}"
+  local key ; key="$(sanitize_key "$service")"
+  add_service "$service"
+  eval "HEALTH_STATUS_${key}=\"\$status\""
+  if [ -n "$details" ]; then
+    eval "HEALTH_DETAILS_${key}=\"\$details\""
+  else
+    eval "unset HEALTH_DETAILS_${key} 2>/dev/null || true"
+  fi
+}
+
+get_health_status()  { local key; key="$(sanitize_key "$1")"; eval "printf '%s' \"\${HEALTH_STATUS_${key}:-}\""; }
+get_health_details() { local key; key="$(sanitize_key "$1")"; eval "printf '%s' \"\${HEALTH_DETAILS_${key}:-}\""; }
+
 print_message() {
-    local color=$1
-    local message=$2
-    if [[ "$JSON_OUTPUT" != true ]]; then
-        echo -e "${color}[HEALTH]${NC} ${message}"
-    fi
+  local color=$1 ; local message=$2
+  if [[ "$JSON_OUTPUT" != true ]]; then echo -e "${color}[HEALTH]${NC} ${message}"; fi
 }
 
-# Function to log messages
 log_message() {
-    local message=$1
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] $message" >> "$LOG_FILE"
+  local message=$1 ; local timestamp
+  timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+  echo "[$timestamp] $message" >> "$LOG_FILE"
 }
 
-# Function to check Docker service status
 check_docker_service() {
-    local service=$1
-    local container_name="${service}"
-    
-    print_message "$BLUE" "Checking Docker service: $service"
-    
-    # Check if container exists and is running
-    if docker-compose -f "$COMPOSE_FILE" ps "$service" | grep -q "Up" 2>/dev/null; then
-        HEALTH_STATUS["$service"]="running"
-        
-        # Get container details
-        local container_id=$(docker-compose -f "$COMPOSE_FILE" ps -q "$service")
-        local uptime=$(docker inspect --format='{{.State.StartedAt}}' "$container_id" 2>/dev/null | xargs date -d)
-        local memory_usage=$(docker stats --no-stream --format "{{.MemUsage}}" "$container_id" 2>/dev/null)
-        local cpu_usage=$(docker stats --no-stream --format "{{.CPUPerc}}" "$container_id" 2>/dev/null)
-        
-        HEALTH_DETAILS["$service"]="uptime=$uptime,memory=$memory_usage,cpu=$cpu_usage"
-        
-        # Check health status if available
-        local health_status=$(docker inspect --format='{{.State.Health.Status}}' "$container_id" 2>/dev/null || echo "unknown")
-        if [[ "$health_status" == "healthy" ]]; then
-            HEALTH_STATUS["$service"]="healthy"
-            print_message "$GREEN" "✓ $service is healthy"
-        elif [[ "$health_status" == "unhealthy" ]]; then
-            HEALTH_STATUS["$service"]="unhealthy"
-            print_message "$RED" "✗ $service is unhealthy"
-        else
-            print_message "$YELLOW" "○ $service is running (no health check)"
-        fi
+  local service=$1
+  print_message "$BLUE" "Checking Docker service: $service"
+
+  if docker-compose -f "$COMPOSE_FILE" ps "$service" | grep -q "Up" 2>/dev/null; then
+    local container_id started_at memory_usage cpu_usage details health_status
+    container_id="$(docker-compose -f "$COMPOSE_FILE" ps -q "$service")"
+    started_at="$(docker inspect --format='{{.State.StartedAt}}' "$container_id" 2>/dev/null || true)"
+    memory_usage="$(docker stats --no-stream --format "{{.MemUsage}}" "$container_id" 2>/dev/null || true)"
+    cpu_usage="$(docker stats --no-stream --format "{{.CPUPerc}}" "$container_id" 2>/dev/null || true)"
+    details="uptime=$started_at,memory=$memory_usage,cpu=$cpu_usage"
+    health_status="$(docker inspect --format='{{.State.Health.Status}}' "$container_id" 2>/dev/null || echo "unknown")"
+
+    if [[ "$health_status" == "healthy" ]]; then
+      set_health "$service" "healthy" "$details"; print_message "$GREEN" "✓ $service is healthy"
+    elif [[ "$health_status" == "unhealthy" ]]; then
+      set_health "$service" "unhealthy" "$details"; print_message "$RED" "✗ $service is unhealthy"
     else
-        HEALTH_STATUS["$service"]="stopped"
-        HEALTH_DETAILS["$service"]="container not running"
-        print_message "$RED" "✗ $service is not running"
+      set_health "$service" "running" "$details"; print_message "$YELLOW" "○ $service is running (no health check)"
     fi
+  else
+    set_health "$service" "stopped" "container not running"
+    print_message "$RED" "✗ $service is not running"
+  fi
 }
 
-# Function to check HTTP endpoint
 check_http_endpoint() {
-    local service=$1
-    local url=$2
-    local expected_status=${3:-200}
-    
-    print_message "$BLUE" "Checking HTTP endpoint: $service ($url)"
-    
-    local response_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")
-    local response_time=$(curl -s -o /dev/null -w "%{time_total}" "$url" 2>/dev/null || echo "0")
-    
-    if [[ "$response_code" == "$expected_status" ]]; then
-        HEALTH_STATUS["${service}_http"]="healthy"
-        HEALTH_DETAILS["${service}_http"]="status=$response_code,response_time=${response_time}s"
-        print_message "$GREEN" "✓ $service HTTP endpoint is responding"
-    else
-        HEALTH_STATUS["${service}_http"]="unhealthy"
-        HEALTH_DETAILS["${service}_http"]="status=$response_code,response_time=${response_time}s"
-        print_message "$RED" "✗ $service HTTP endpoint failed (status: $response_code)"
-    fi
+  local service=$1 ; local url=$2 ; local expected_status=${3:-200}
+  print_message "$BLUE" "Checking HTTP endpoint: $service ($url)"
+
+  local response_code response_time
+  response_code="$(curl -s -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || echo "000")"
+  response_time="$(curl -s -o /dev/null -w "%{time_total}" "$url" 2>/dev/null || echo "0")"
+
+  local svc="${service}_http"
+  if [[ "$response_code" == "$expected_status" ]]; then
+    set_health "$svc" "healthy" "status=$response_code,response_time=${response_time}s"
+    print_message "$GREEN" "✓ $service HTTP endpoint is responding"
+  else
+    set_health "$svc" "unhealthy" "status=$response_code,response_time=${response_time}s"
+    print_message "$RED" "✗ $service HTTP endpoint failed (status: $response_code)"
+  fi
 }
 
-# Function to check database connectivity
 check_database_connectivity() {
-    print_message "$BLUE" "Checking IRIS database connectivity"
-    
-    # Test database connection
-    local db_test=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' 2>/dev/null || echo "ERROR"
+  print_message "$BLUE" "Checking IRIS database connectivity"
+
+  local db_test
+  db_test=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' 2>/dev/null || echo "ERROR"
 write "DB_CONNECTION_OK"
 halt
 EOF
 )
-    
-    if echo "$db_test" | grep -q "DB_CONNECTION_OK"; then
-        HEALTH_STATUS["database"]="healthy"
-        HEALTH_DETAILS["database"]="connection successful"
-        print_message "$GREEN" "✓ Database connectivity OK"
-        
-        # Check if RAG tables exist
-        local table_check=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' 2>/dev/null || echo "0"
+  if echo "$db_test" | grep -q "DB_CONNECTION_OK"; then
+    set_health "database" "healthy" "connection successful"
+    print_message "$GREEN" "✓ Database connectivity OK"
+
+    local table_check
+    table_check=$(docker-compose -f "$COMPOSE_FILE" exec -T iris_db iris session iris -U%SYS << 'EOF' 2>/dev/null || echo "0"
 set stmt = ##class(%SQL.Statement).%New()
 set result = stmt.%ExecDirect("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE 'rag_%'")
 if result.%Next() {
@@ -136,317 +149,210 @@ if result.%Next() {
 halt
 EOF
 )
-        
-        table_check=$(echo "$table_check" | tr -d '\r\n' | sed 's/[^0-9]//g')
-        if [[ -n "$table_check" && "$table_check" -gt 0 ]]; then
-            print_message "$GREEN" "✓ RAG database schema exists ($table_check tables)"
-        else
-            print_message "$YELLOW" "○ RAG database schema not found"
-        fi
+    table_check=$(echo "$table_check" | tr -d '\r\n' | sed 's/[^0-9]//g')
+    if [[ -n "$table_check" && "$table_check" -gt 0 ]]; then
+      print_message "$GREEN" "✓ RAG database schema exists ($table_check tables)"
     else
-        HEALTH_STATUS["database"]="unhealthy"
-        HEALTH_DETAILS["database"]="connection failed"
-        print_message "$RED" "✗ Database connectivity failed"
+      print_message "$YELLOW" "○ RAG database schema not found"
     fi
+  else
+    set_health "database" "unhealthy" "connection failed"
+    print_message "$RED" "✗ Database connectivity failed"
+  fi
 }
 
-# Function to check Redis connectivity
-check_redis_connectivity() {
-    print_message "$BLUE" "Checking Redis connectivity"
-    
-    local redis_test=$(docker-compose -f "$COMPOSE_FILE" exec -T redis redis-cli ping 2>/dev/null || echo "ERROR")
-    
-    if echo "$redis_test" | grep -q "PONG"; then
-        HEALTH_STATUS["redis_conn"]="healthy"
-        
-        # Get Redis info
-        local redis_info=$(docker-compose -f "$COMPOSE_FILE" exec -T redis redis-cli info memory 2>/dev/null | grep "used_memory_human" | cut -d: -f2 | tr -d '\r\n')
-        HEALTH_DETAILS["redis_conn"]="ping successful,memory_used=$redis_info"
-        print_message "$GREEN" "✓ Redis connectivity OK (memory: $redis_info)"
-    else
-        HEALTH_STATUS["redis_conn"]="unhealthy"
-        HEALTH_DETAILS["redis_conn"]="ping failed"
-        print_message "$RED" "✗ Redis connectivity failed"
-    fi
-}
-
-# Function to check system resources
 check_system_resources() {
-    print_message "$BLUE" "Checking system resources"
-    
-    # Check disk space
-    local disk_usage=$(df -h "$PROJECT_ROOT" | tail -n 1 | awk '{print $5}' | sed 's/%//')
-    if [[ "$disk_usage" -lt 80 ]]; then
-        HEALTH_STATUS["disk"]="healthy"
-        print_message "$GREEN" "✓ Disk usage OK (${disk_usage}%)"
-    elif [[ "$disk_usage" -lt 90 ]]; then
-        HEALTH_STATUS["disk"]="warning"
-        print_message "$YELLOW" "○ Disk usage warning (${disk_usage}%)"
-    else
-        HEALTH_STATUS["disk"]="critical"
-        print_message "$RED" "✗ Disk usage critical (${disk_usage}%)"
+  print_message "$BLUE" "Checking system resources"
+
+  # Disk usage: informational only
+  local disk_usage
+  disk_usage="$(df -h "$PROJECT_ROOT" | tail -n 1 | awk '{print $5}' | sed 's/%//')"
+  print_message "$BLUE" "Disk usage: ${disk_usage}%"
+  set_health "disk" "info" "usage=${disk_usage}%"
+
+  # Memory usage: informational only (portable calculation)
+  local mem_percent="0"
+  if command -v free >/dev/null 2>&1; then
+    mem_percent="$(free -m | awk '/Mem:/ {printf \"%.1f\", $3/$2*100}')"
+  elif command -v vm_stat >/dev/null 2>&1; then
+    local free_pages active_pages inactive_pages speculative_pages wired_pages purgeable_pages used_pages total_pages
+    free_pages=$(vm_stat | awk '/Pages free/ {print $3}' | tr -d '.')
+    active_pages=$(vm_stat | awk '/Pages active/ {print $3}' | tr -d '.')
+    inactive_pages=$(vm_stat | awk '/Pages inactive/ {print $3}' | tr -d '.')
+    speculative_pages=$(vm_stat | awk '/Pages speculative/ {print $3}' | tr -d '.')
+    wired_pages=$(vm_stat | awk '/Pages wired down/ {print $4}' | tr -d '.')
+    purgeable_pages=$(vm_stat | awk '/Pages purgeable/ {print $3}' | tr -d '.')
+    used_pages=$((active_pages + inactive_pages + speculative_pages + wired_pages - purgeable_pages))
+    total_pages=$((used_pages + free_pages))
+    if [[ "${total_pages:-0}" -gt 0 ]]; then
+      mem_percent=$(awk -v u="${used_pages:-0}" -v t="${total_pages:-1}" 'BEGIN { printf "%.1f", (u/t)*100 }')
     fi
-    
-    # Check memory usage
-    local memory_info=$(free -m | grep "Mem:" | awk '{printf "%.1f", $3/$2 * 100}')
-    if (( $(echo "$memory_info < 80" | bc -l) )); then
-        HEALTH_STATUS["memory"]="healthy"
-        print_message "$GREEN" "✓ Memory usage OK (${memory_info}%)"
-    elif (( $(echo "$memory_info < 90" | bc -l) )); then
-        HEALTH_STATUS["memory"]="warning"
-        print_message "$YELLOW" "○ Memory usage warning (${memory_info}%)"
-    else
-        HEALTH_STATUS["memory"]="critical"
-        print_message "$RED" "✗ Memory usage critical (${memory_info}%)"
-    fi
-    
-    HEALTH_DETAILS["system"]="disk=${disk_usage}%,memory=${memory_info}%"
+  fi
+  print_message "$BLUE" "Memory usage: ${mem_percent}%"
+  set_health "memory" "info" "usage=${mem_percent}%"
+
+  set_health "system" "info" "disk=${disk_usage:-unknown}%,memory=${mem_percent}%"
 }
 
-# Function to perform comprehensive health check
 perform_health_check() {
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    
-    if [[ "$JSON_OUTPUT" != true ]]; then
-        print_message "$BLUE" "Starting health check at $timestamp"
-        echo "==========================================="
-    fi
-    
-    # Clear previous results
-    HEALTH_STATUS=()
-    HEALTH_DETAILS=()
-    
-    # Core services
-    check_docker_service "iris_db"
-    check_docker_service "redis"
-    check_docker_service "rag_api"
-    check_docker_service "streamlit_app"
-    
-    # Optional services (if running)
-    if docker-compose -f "$COMPOSE_FILE" ps jupyter | grep -q "Up" 2>/dev/null; then
-        check_docker_service "jupyter"
-    fi
-    
-    if docker-compose -f "$COMPOSE_FILE" ps nginx | grep -q "Up" 2>/dev/null; then
-        check_docker_service "nginx"
-    fi
-    
-    if docker-compose -f "$COMPOSE_FILE" ps monitoring | grep -q "Up" 2>/dev/null; then
-        check_docker_service "monitoring"
-    fi
-    
-    # Connectivity checks
-    check_database_connectivity
-    check_redis_connectivity
-    
-    # HTTP endpoint checks
+  local timestamp ; timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+  if [[ "$JSON_OUTPUT" != true ]]; then
+    print_message "$BLUE" "Starting health check at $timestamp"
+    echo "==========================================="
+  fi
+
+  SERVICES=""
+
+  # Essential core services only (no Redis)
+  check_docker_service "iris_db"
+  check_docker_service "rag_api"
+  check_docker_service "streamlit_app"
+
+  # Optional services (if running)
+  if docker-compose -f "$COMPOSE_FILE" ps jupyter | grep -q "Up" 2>/dev/null; then check_docker_service "jupyter"; fi
+  if docker-compose -f "$COMPOSE_FILE" ps nginx | grep -q "Up" 2>/dev/null; then check_docker_service "nginx"; fi
+  if docker-compose -f "$COMPOSE_FILE" ps monitoring | grep -q "Up" 2>/dev/null; then check_docker_service "monitoring"; fi
+
+  # Connectivity checks
+  check_database_connectivity
+
+  # HTTP endpoint checks (optional)
+  if [[ "${SKIP_HTTP:-0}" != "1" ]]; then
     check_http_endpoint "rag_api" "http://localhost:8000/health"
     check_http_endpoint "streamlit_app" "http://localhost:8501/_stcore/health"
-    
-    # System resource checks
-    check_system_resources
-    
-    # Log results
-    log_message "Health check completed at $timestamp"
-    for service in "${!HEALTH_STATUS[@]}"; do
-        log_message "Service $service: ${HEALTH_STATUS[$service]} - ${HEALTH_DETAILS[$service]:-}"
-    done
+  else
+    print_message "$YELLOW" "Skipping HTTP endpoint checks (SKIP_HTTP=1)"
+  fi
+
+  # System resource checks (informational)
+  check_system_resources
+
+  log_message "Health check completed at $timestamp"
+  for service in $SERVICES; do
+    local details ; details="$(get_health_details "$service")"
+    log_message "Service $service: $(get_health_status "$service") - ${details:-}"
+  done
 }
 
-# Function to output results
-output_results() {
-    if [[ "$JSON_OUTPUT" == true ]]; then
-        # JSON output
-        echo "{"
-        echo "  \"timestamp\": \"$(date -Iseconds)\","
-        echo "  \"overall_status\": \"$(get_overall_status)\","
-        echo "  \"services\": {"
-        
-        local first=true
-        for service in "${!HEALTH_STATUS[@]}"; do
-            if [[ "$first" != true ]]; then
-                echo ","
-            fi
-            echo -n "    \"$service\": {"
-            echo -n "\"status\": \"${HEALTH_STATUS[$service]}\""
-            if [[ -n "${HEALTH_DETAILS[$service]:-}" ]]; then
-                echo -n ", \"details\": \"${HEALTH_DETAILS[$service]}\""
-            fi
-            echo -n "}"
-            first=false
-        done
-        echo
-        echo "  }"
-        echo "}"
-    else
-        # Human-readable output
-        echo "==========================================="
-        print_message "$BLUE" "Health Check Summary"
-        echo "==========================================="
-        
-        local healthy=0
-        local total=0
-        
-        for service in "${!HEALTH_STATUS[@]}"; do
-            local status="${HEALTH_STATUS[$service]}"
-            local details="${HEALTH_DETAILS[$service]:-}"
-            
-            case "$status" in
-                "healthy")
-                    echo -e "  ${GREEN}✓${NC} $service: $status"
-                    ((healthy++))
-                    ;;
-                "running")
-                    echo -e "  ${YELLOW}○${NC} $service: $status"
-                    ;;
-                "warning")
-                    echo -e "  ${YELLOW}⚠${NC} $service: $status"
-                    ;;
-                *)
-                    echo -e "  ${RED}✗${NC} $service: $status"
-                    ;;
-            esac
-            
-            if [[ "$VERBOSE" == true && -n "$details" ]]; then
-                echo "    Details: $details"
-            fi
-            ((total++))
-        done
-        
-        echo "==========================================="
-        local overall=$(get_overall_status)
-        case "$overall" in
-            "healthy")
-                print_message "$GREEN" "Overall Status: $overall ($healthy/$total services healthy)"
-                ;;
-            "degraded")
-                print_message "$YELLOW" "Overall Status: $overall ($healthy/$total services healthy)"
-                ;;
-            *)
-                print_message "$RED" "Overall Status: $overall ($healthy/$total services healthy)"
-                ;;
-        esac
-    fi
-}
-
-# Function to get overall status
 get_overall_status() {
-    local unhealthy=0
-    local total=0
-    
-    for status in "${HEALTH_STATUS[@]}"; do
-        if [[ "$status" != "healthy" && "$status" != "running" ]]; then
-            ((unhealthy++))
-        fi
-        ((total++))
-    done
-    
-    if [[ $unhealthy -eq 0 ]]; then
-        echo "healthy"
-    elif [[ $unhealthy -lt 3 ]]; then
-        echo "degraded"
-    else
-        echo "unhealthy"
+  local unhealthy=0 total=0
+  for service in $SERVICES; do
+    local status ; status="$(get_health_status "$service")"
+    # Only count truly unhealthy/stopped services
+    if [[ "$status" != "healthy" && "$status" != "running" && "$status" != "info" ]]; then
+      ((unhealthy++))
     fi
+    ((total++))
+  done
+
+  if [[ $unhealthy -eq 0 ]]; then
+    echo "healthy"
+  elif [[ $unhealthy -lt 3 ]]; then
+    echo "degraded"
+  else
+    echo "unhealthy"
+  fi
 }
 
-# Function to show usage
+output_results() {
+  if [[ "$JSON_OUTPUT" == true ]]; then
+    echo "{"
+    echo "  \"timestamp\": \"$(date -Iseconds)\","
+    echo "  \"overall_status\": \"$(get_overall_status)\","
+    echo "  \"services\": {"
+    local first=true
+    for service in $SERVICES; do
+      if [[ "$first" != true ]]; then echo ","; fi
+      local status details ; status="$(get_health_status "$service")" ; details="$(get_health_details "$service")"
+      printf "    \"%s\": {\"status\": \"%s\"" "$service" "$status"
+      if [[ -n "$details" ]]; then printf ", \"details\": \"%s\"" "$details"; fi
+      printf "}"
+      first=false
+    done
+    echo
+    echo "  }"
+    echo "}"
+  else
+    echo "==========================================="
+    print_message "$BLUE" "Health Check Summary"
+    echo "==========================================="
+
+    local healthy=0 total=0
+    for service in $SERVICES; do
+      local status details ; status="$(get_health_status "$service")" ; details="$(get_health_details "$service")"
+      case "$status" in
+        "healthy") echo -e "  ${GREEN}✓${NC} $service: $status"; ((healthy++)) ;;
+        "running") echo -e "  ${YELLOW}○${NC} $service: $status" ;;
+        "info")    echo -e "  ${BLUE}i${NC} $service: $details" ;;
+        "degraded"|"warning") echo -e "  ${YELLOW}⚠${NC} $service: $status" ;;
+        *)         echo -e "  ${RED}✗${NC} $service: $status" ;;
+      esac
+      if [[ "$VERBOSE" == true && -n "$details" ]]; then echo "    Details: $details"; fi
+      ((total++))
+    done
+
+    echo "==========================================="
+    local overall ; overall="$(get_overall_status)"
+    case "$overall" in
+      "healthy")  print_message "$GREEN" "Overall Status: $overall ($healthy/$total services healthy)" ;;
+      "degraded") print_message "$YELLOW" "Overall Status: $overall ($healthy/$total services healthy)" ;;
+      *)          print_message "$RED" "Overall Status: $overall ($healthy/$total services healthy)" ;;
+    esac
+  fi
+}
+
 show_usage() {
-    cat << EOF
+  cat << EOF
 Usage: $0 [OPTIONS]
 
 Health check script for RAG Templates Framework
 
 OPTIONS:
-    -v, --verbose           Show detailed information
-    -j, --json              Output results in JSON format
-    -c, --continuous        Run continuously with interval
-    -i, --interval SECONDS  Interval for continuous mode [default: 30]
-    -h, --help              Show this help message
+  -v, --verbose           Show detailed information
+  -j, --json              Output results in JSON format
+  -c, --continuous        Run continuously with interval
+  -i, --interval SECONDS  Interval for continuous mode [default: 30]
+  -h, --help              Show this help message
 
-EXAMPLES:
-    $0                      # Basic health check
-    $0 --verbose            # Detailed health check
-    $0 --json               # JSON output for monitoring
-    $0 --continuous         # Monitor continuously
+Env:
+  SKIP_HTTP=1  Skip HTTP endpoint checks
 
 EOF
 }
 
-# Parse command line arguments
 while [[ $# -gt 0 ]]; do
-    case $1 in
-        -v|--verbose)
-            VERBOSE=true
-            shift
-            ;;
-        -j|--json)
-            JSON_OUTPUT=true
-            shift
-            ;;
-        -c|--continuous)
-            CONTINUOUS=true
-            shift
-            ;;
-        -i|--interval)
-            INTERVAL="$2"
-            shift 2
-            ;;
-        -h|--help)
-            show_usage
-            exit 0
-            ;;
-        *)
-            print_message "$RED" "Unknown option: $1"
-            show_usage
-            exit 1
-            ;;
-    esac
+  case $1 in
+    -v|--verbose)    VERBOSE=true; shift ;;
+    -j|--json)       JSON_OUTPUT=true; shift ;;
+    -c|--continuous) CONTINUOUS=true; shift ;;
+    -i|--interval)   INTERVAL="$2"; shift 2 ;;
+    -h|--help)       show_usage; exit 0 ;;
+    *)               print_message "$RED" "Unknown option: $1"; show_usage; exit 1 ;;
+  esac
 done
 
-# Main execution
 main() {
-    # Change to project root
-    cd "$PROJECT_ROOT"
-    
-    # Create log directory
-    mkdir -p "$(dirname "$LOG_FILE")"
-    
-    if [[ "$CONTINUOUS" == true ]]; then
-        # Continuous monitoring
-        while true; do
-            perform_health_check
-            output_results
-            
-            if [[ "$JSON_OUTPUT" != true ]]; then
-                print_message "$BLUE" "Next check in ${INTERVAL}s... (Ctrl+C to stop)"
-            fi
-            
-            sleep "$INTERVAL"
-        done
-    else
-        # Single check
-        perform_health_check
-        output_results
-        
-        # Exit with appropriate code
-        local overall=$(get_overall_status)
-        case "$overall" in
-            "healthy")
-                exit 0
-                ;;
-            "degraded")
-                exit 1
-                ;;
-            *)
-                exit 2
-                ;;
-        esac
-    fi
+  cd "$PROJECT_ROOT"
+  mkdir -p "$(dirname "$LOG_FILE")"
+
+  if [[ "$CONTINUOUS" == true ]]; then
+    while true; do
+      perform_health_check
+      output_results
+      if [[ "$JSON_OUTPUT" != true ]]; then print_message "$BLUE" "Next check in ${INTERVAL}s... (Ctrl+C to stop)"; fi
+      sleep "$INTERVAL"
+    done
+  else
+    perform_health_check
+    output_results
+    local overall ; overall="$(get_overall_status)"
+    case "$overall" in
+      "healthy")  exit 0 ;;
+      "degraded") exit 1 ;;
+      *)          exit 2 ;;
+    esac
+  fi
 }
 
-# Error handling
 trap 'print_message "$RED" "Health check script failed"' ERR
-
-# Run main function
 main "$@"

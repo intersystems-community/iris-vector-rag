@@ -160,7 +160,7 @@ def format_vector_search_sql(
         ...     "text_content"
         ... )
         'SELECT TOP 10 doc_id, text_content,
-            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', 'FLOAT', 768)) AS score
+            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', DOUBLE, 768)) AS score
          FROM SourceDocuments
          WHERE embedding IS NOT NULL
          ORDER BY score DESC'
@@ -199,12 +199,13 @@ def format_vector_search_sql(
         select_parts.extend([", ", content_column])
 
     # Construct TO_VECTOR call carefully to avoid parameter detection
+    # Use DOUBLE datatype to match VECTOR(DOUBLE, dimension) schema
     vector_func_parts = [
         ", VECTOR_COSINE(",
         vector_column,
         ", TO_VECTOR('",
         vector_string,
-        "', 'FLOAT', ",
+        "', DOUBLE, ",
         embedding_dim_str,
         ")) AS score",
     ]
@@ -286,10 +287,11 @@ def format_vector_search_sql_with_params(
         select_parts.extend([", ", content_column])
 
     # Construct TO_VECTOR call with ? placeholder but avoid embedding dimension parameterization
+    # Use DOUBLE datatype to match VECTOR(DOUBLE, dimension) schema
     vector_func_parts = [
         ", VECTOR_COSINE(",
         vector_column,
-        ", TO_VECTOR(?, 'FLOAT', ",
+        ", TO_VECTOR(?, DOUBLE, ",
         embedding_dim_str,
         ")) AS score",
     ]
@@ -435,31 +437,35 @@ def execute_vector_search_with_params(
 def build_safe_vector_dot_sql(
     table: str,
     vector_column: str,
+    vector_string: str,
+    vector_dimension: int,
     id_column: str = "doc_id",
     extra_columns: list[str] | None = None,
     top_k: int = 5,
     additional_where: str | None = None,
 ) -> str:
     """
-    Build safe vector search SQL using single parameter pattern.
+    Build safe vector search SQL with embedded vector string.
 
-    This is the ONLY proven pattern for IRIS vector queries that works reliably.
-    Uses VECTOR_DOT_PRODUCT with TO_VECTOR(?) for single parameter binding.
+    CRITICAL: TO_VECTOR() does NOT accept parameter markers (?, :param, etc.)
+    Vector string MUST be embedded directly in SQL with data type and dimension.
 
     Args:
         table: Table name (e.g., "RAG.SourceDocuments")
         vector_column: Vector column name (e.g., "embedding")
+        vector_string: Vector as bracketed comma-separated string (e.g., "[0.1,0.2,0.3]")
+        vector_dimension: Dimension of the vector (e.g., 384)
         id_column: ID column name (default: "doc_id")
         extra_columns: Additional columns to select (optional)
         top_k: Number of results to return (default: 5)
         additional_where: Additional WHERE conditions (optional)
 
     Returns:
-        str: Safe SQL query with single ? parameter for vector
+        str: Safe SQL query with embedded vector string
 
     Example:
-        sql = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", "doc_id", ["title"], 5)
-        results = execute_safe_vector_search(cursor, sql, [0.1, 0.2, 0.3])
+        sql = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", "[0.1,0.2,0.3]", 384, "doc_id", ["title"], 5)
+        cursor.execute(sql)  # No parameters needed - vector embedded in SQL
     """
     # Validate identifiers to prevent SQL injection
     import re
@@ -482,11 +488,22 @@ def build_safe_vector_dot_sql(
     if not isinstance(top_k, int) or top_k <= 0:
         raise ValueError(f"Invalid top_k value: {top_k}")
 
+    # Validate vector_dimension
+    if not isinstance(vector_dimension, int) or vector_dimension <= 0:
+        raise ValueError(f"Invalid vector_dimension: {vector_dimension}")
+
+    # Validate vector string (security check)
+    if not validate_vector_string(vector_string):
+        raise ValueError(f"Invalid vector string: {vector_string}")
+
     # Build SELECT clause
     select_parts = [f"SELECT TOP {top_k} {id_column}"]
     if extra_columns:
         select_parts.extend([f", {col}" for col in extra_columns])
-    select_parts.append(f", VECTOR_DOT_PRODUCT({vector_column}, TO_VECTOR(?)) AS score")
+    # IMPORTANT: Embed vector string directly with DOUBLE type and dimension
+    # TO_VECTOR does NOT accept ? parameters
+    # Use DOUBLE to match the VECTOR(DOUBLE, dimension) column definition
+    select_parts.append(f", VECTOR_DOT_PRODUCT({vector_column}, TO_VECTOR('{vector_string}', DOUBLE, {vector_dimension})) AS score")
 
     # Build FROM clause
     from_clause = f" FROM {table}"
@@ -505,31 +522,27 @@ def build_safe_vector_dot_sql(
 
 
 def execute_safe_vector_search(
-    cursor, sql: str, vector_list: list[float]
+    cursor, sql: str
 ) -> list[tuple]:
     """
-    Execute safe vector search with single parameter.
+    Execute safe vector search with embedded vector string.
 
-    This function safely executes vector queries using the single parameter pattern
-    that is proven to work with IRIS vector operations.
+    IMPORTANT: The vector string is already embedded in the SQL
+    (from build_safe_vector_dot_sql), so NO parameters are passed.
 
     Args:
         cursor: Database cursor
-        sql: SQL query from build_safe_vector_dot_sql()
-        vector_list: Vector as list of floats (e.g., [0.1, 0.2, 0.3])
+        sql: SQL query from build_safe_vector_dot_sql() with embedded vector
 
     Returns:
         list[tuple]: Query results
 
     Example:
-        sql = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding")
-        results = execute_safe_vector_search(cursor, sql, [0.1, 0.2, 0.3])
+        sql = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", "[0.1,0.2,0.3]")
+        results = execute_safe_vector_search(cursor, sql)
     """
-    # Convert vector list to comma-separated string
-    vector_str = ",".join(map(str, vector_list))
-
-    # Execute with single parameter
-    cursor.execute(sql, (vector_str,))
+    # Execute with NO parameters - vector is embedded in SQL
+    cursor.execute(sql)
     return cursor.fetchall()
 
 

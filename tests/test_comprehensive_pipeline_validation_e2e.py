@@ -9,20 +9,21 @@ This test provides SIMPLE but BULLETPROOF validation of our 4 real pipelines:
 NO FAKE RESULTS. NO STALE RESULTS. REAL METRICS ONLY.
 """
 
-import logging
-import time
 import json
+import logging
 import os
+import time
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional
+
+from iris_rag.core.models import Document
 
 # Use the ACTUAL pipeline implementations we verified
 from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.pipelines.graphrag import GraphRAGPipeline
-from iris_rag.core.models import Document
 
 logger = logging.getLogger(__name__)
 

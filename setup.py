@@ -3,8 +3,9 @@
 Setup configuration for rag-templates Library Consumption Framework.
 """
 
-from setuptools import setup, find_packages
 import os
+
+from setuptools import find_packages, setup
 
 
 # Read README for long description
@@ -23,7 +24,7 @@ def read_requirements():
 
 # Read version
 def read_version():
-    version_file = os.path.join("rag_templates", "__init__.py")
+    version_file = os.path.join("iris_rag", "__init__.py")
     with open(version_file, "r", encoding="utf-8") as fh:
         for line in fh:
             if line.startswith("__version__"):
@@ -80,6 +81,10 @@ setup(
             "fastapi>=0.100.0",
             "uvicorn>=0.23.0",
         ],
+        "hybrid-graphrag": [
+            "iris-vector-graph>=2.0.0",
+            "scipy>=1.7.0",
+        ],
         "all": [
             "pytest>=7.0.0",
             "pytest-asyncio>=0.21.0",
@@ -92,16 +97,18 @@ setup(
             "mcp>=0.1.0",
             "fastapi>=0.100.0",
             "uvicorn>=0.23.0",
+            "iris-vector-graph>=2.0.0",
+            "scipy>=1.7.0",
         ],
     },
     entry_points={
         "console_scripts": [
-            "rag-templates=rag_templates.cli:main",
+            "rag-templates=iris_rag.cli:main",
         ],
     },
     include_package_data=True,
     package_data={
-        "rag_templates": [
+        "iris_rag": [
             "config/*.yaml",
             "config/*.json",
             "templates/*.yaml",

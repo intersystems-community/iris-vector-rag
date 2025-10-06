@@ -118,7 +118,8 @@ dev = [
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
     "build>=0.10.0",
-    "twine>=4.0.0"
+    "twine>=4.0.0",
+    "gitpython==3.1.43",
 ]
 mcp = [
     "mcp>=0.1.0",
@@ -135,18 +136,18 @@ Repository = "https://github.com/intersystems/rag-templates"
 Changelog = "https://github.com/intersystems/rag-templates/blob/main/CHANGELOG.md"
 
 [project.scripts]
-rag-templates = "rag_templates.cli:main"
+rag-templates = "iris_rag.cli:main"
 
 [tool.setuptools]
-packages = ["rag_templates"]
+packages = ["iris_rag", "common", "adapters", "evaluation_framework"]
 
 [tool.setuptools.dynamic]
-version = {attr = "rag_templates.__version__"}
+version = {attr = "iris_rag.__version__"}
 
 [tool.setuptools.package-data]
-rag_templates = [
+iris_rag = [
     "config/*.yaml",
-    "config/*.json", 
+    "config/*.json",
     "templates/*.yaml",
     "templates/*.json"
 ]
@@ -173,7 +174,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 88
-known_first_party = ["rag_templates"]
+known_first_party = ["iris_rag", "common", "adapters", "evaluation_framework"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -211,7 +212,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["rag_templates"]
+source = ["iris_rag", "common", "adapters", "evaluation_framework"]
 omit = [
     "*/tests/*",
     "*/test_*",

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +70,11 @@ def insert_vector(
 
     column_names_sql = ", ".join(other_column_names + [vector_column_name])
 
+    # IMPORTANT: TO_VECTOR() does NOT accept parameter markers (?, :param, etc.)
+    # Must embed the vector string directly in SQL
+    # Use DOUBLE to match the VECTOR(DOUBLE, dimension) column definition
     placeholders_list = ["?" for _ in other_column_names] + [
-        f"TO_VECTOR(?, FLOAT, {target_dimension})"
+        f"TO_VECTOR('{embedding_str}', DOUBLE, {target_dimension})"
     ]
     placeholders_sql = ", ".join(placeholders_list)
 
@@ -92,7 +95,8 @@ def insert_vector(
     sql_query = (
         f"INSERT INTO {table_name} ({column_names_sql}) VALUES ({placeholders_sql})"
     )
-    params = other_column_values + [embedding_str]
+    # Don't pass embedding_str as a parameter - it's embedded in SQL above
+    params = other_column_values
 
     try:
         logger.debug(f"DB Vector Util: Executing INSERT: {sql_query}")
@@ -128,11 +132,12 @@ def insert_vector(
                     set_clauses.append(f"{col} = ?")
                     update_params.append(all_columns_dict[col])
 
-            # Add vector column to SET clause
+            # Add vector column to SET clause - TO_VECTOR doesn't accept parameters
+            # Use DOUBLE to match the VECTOR(DOUBLE, dimension) column definition
             set_clauses.append(
-                f"{vector_column_name} = TO_VECTOR(?, FLOAT, {target_dimension})"
+                f"{vector_column_name} = TO_VECTOR('{embedding_str}', DOUBLE, {target_dimension})"
             )
-            update_params.append(embedding_str)
+            # Don't append embedding_str to params - it's embedded in SQL above
 
             # Add key columns to WHERE clause
             where_clauses = []

@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "timestamp": "20250920_130155",
+    "dataset": "PMC 10K documents",
+    "num_queries": 10,
+    "pipelines_evaluated": [],
+    "execution_time_minutes": 7.669130961100261e-07,
+    "target_accuracy": 0.8,
+    "configuration": {
+      "num_queries": 10,
+      "pipelines": [
+        "GraphRAG",
+        "HybridGraphRAG"
+      ],
+      "output_dir": "outputs/reports/ragas_evaluations",
+      "use_cache": true,
+      "parallel_execution": true,
+      "confidence_level": 0.95,
+      "target_accuracy": 0.8
+    }
+  },
+  "pipeline_metrics": {},
+  "comparative_analysis": {
+    "best_overall": "None",
+    "best_per_metric": {}
+  },
+  "detailed_results": {}
+}

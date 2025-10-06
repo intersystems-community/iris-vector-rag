@@ -1,0 +1,362 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RAGAS Evaluation Report - 20250928_231426</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background-color: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .metric-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .metric-table th, .metric-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .metric-table th { background-color: #4CAF50; color: white; }
+        .pipeline-section { margin: 30px 0; border: 1px solid #ddd; padding: 20px; border-radius: 5px; }
+        .success { color: green; font-weight: bold; }
+        .warning { color: orange; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .best { background-color: #d4edda; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>RAGAS Evaluation Report</h1>
+        <p><strong>Timestamp:</strong> 20250928_231426</p>
+        <p><strong>Dataset:</strong> PMC 10K documents</p>
+        <p><strong>Queries:</strong> 15</p>
+        <p><strong>Pipelines:</strong> BasicRAG, BasicRerank, CRAG, GraphRAG, HybridGraphRAG</p>
+    </div>
+    
+    <h2>Executive Summary</h2>
+    <ul>
+        <li><strong>Best Overall Pipeline:</strong> BasicRAG</li>
+        <li><strong>Target Accuracy (80%) Achievement:</strong> 
+            <span class='error'>✗ NOT ACHIEVED</span>
+        </li>
+    </ul>
+    
+    <h2>Pipeline Performance Comparison</h2>
+    <table class="metric-table">
+        <tr>
+            <th>Pipeline</th>
+            <th>Answer Correctness</th>
+            <th>Faithfulness</th>
+            <th>Context Precision</th>
+            <th>Context Recall</th>
+            <th>Answer Relevance</th>
+        </tr>
+
+        <tr class="best">
+            <td><strong>BasicRAG</strong></td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+        </tr>
+
+        <tr class="">
+            <td><strong>BasicRerank</strong></td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+        </tr>
+
+        <tr class="">
+            <td><strong>CRAG</strong></td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+        </tr>
+
+        <tr class="">
+            <td><strong>GraphRAG</strong></td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+        </tr>
+
+        <tr class="">
+            <td><strong>HybridGraphRAG</strong></td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+            <td>0.000 ± 0.000</td>
+        </tr>
+
+    </table>
+    
+    <h2>Detailed Pipeline Results</h2>
+
+    <div class="pipeline-section">
+        <h3>BasicRAG</h3>
+        <table class="metric-table">
+            <tr><th>Metric</th><th>Mean</th><th>Std Dev</th><th>95% CI</th><th>Min</th><th>Max</th></tr>
+
+            <tr>
+                <td>Answer Correctness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Faithfulness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Precision</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Recall</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Answer Relevancy</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="pipeline-section">
+        <h3>BasicRerank</h3>
+        <table class="metric-table">
+            <tr><th>Metric</th><th>Mean</th><th>Std Dev</th><th>95% CI</th><th>Min</th><th>Max</th></tr>
+
+            <tr>
+                <td>Answer Correctness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Faithfulness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Precision</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Recall</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Answer Relevancy</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="pipeline-section">
+        <h3>CRAG</h3>
+        <table class="metric-table">
+            <tr><th>Metric</th><th>Mean</th><th>Std Dev</th><th>95% CI</th><th>Min</th><th>Max</th></tr>
+
+            <tr>
+                <td>Answer Correctness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Faithfulness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Precision</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Recall</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Answer Relevancy</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="pipeline-section">
+        <h3>GraphRAG</h3>
+        <table class="metric-table">
+            <tr><th>Metric</th><th>Mean</th><th>Std Dev</th><th>95% CI</th><th>Min</th><th>Max</th></tr>
+
+            <tr>
+                <td>Answer Correctness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Faithfulness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Precision</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Recall</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Answer Relevancy</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+        </table>
+    </div>
+
+    <div class="pipeline-section">
+        <h3>HybridGraphRAG</h3>
+        <table class="metric-table">
+            <tr><th>Metric</th><th>Mean</th><th>Std Dev</th><th>95% CI</th><th>Min</th><th>Max</th></tr>
+
+            <tr>
+                <td>Answer Correctness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Faithfulness</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Precision</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Context Recall</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+            <tr>
+                <td>Answer Relevancy</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+                <td>[0.0000, 0.0000]</td>
+                <td>0.0000</td>
+                <td>0.0000</td>
+            </tr>
+
+        </table>
+    </div>
+
+</body>
+</html>

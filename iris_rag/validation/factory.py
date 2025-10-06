@@ -6,17 +6,20 @@ before creating pipeline instances.
 """
 
 import logging
-from typing import Optional, Callable, Dict, Any
+from typing import Any, Callable, Dict, Optional
+
+from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
-from ..config.manager import ConfigurationManager
 from ..embeddings.manager import EmbeddingManager
 from ..pipelines.basic import BasicRAGPipeline
-from ..pipelines.crag import CRAGPipeline
 from ..pipelines.basic_rerank import BasicRAGRerankingPipeline
+from ..pipelines.crag import CRAGPipeline
+from ..pipelines.graphrag import GraphRAGPipeline
+from ..pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+from .orchestrator import SetupOrchestrator
 from .requirements import get_pipeline_requirements
 from .validator import PreConditionValidator
-from .orchestrator import SetupOrchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -121,30 +124,50 @@ class ValidatedPipelineFactory:
     def _create_pipeline_instance(
         self, pipeline_type: str, llm_func: Optional[Callable[[str], str]], **kwargs
     ) -> RAGPipeline:
-        """Create the actual pipeline instance."""
+        """Create the actual pipeline instance with proper schema manager."""
+        # Create appropriate schema manager for the pipeline type
+        from ..storage.schema_manager import SchemaManager
+
+        schema_manager = SchemaManager.create_schema_manager(
+            pipeline_type, self.connection_manager, self.config_manager
+        )
+
+        # Ensure schema requirements are met
+        if not schema_manager.ensure_pipeline_schema(pipeline_type):
+            logger.warning(
+                f"Some schema requirements for {pipeline_type} could not be ensured"
+            )
+
+        # Create pipeline instance with schema manager
+        pipeline_kwargs = {
+            "connection_manager": self.connection_manager,
+            "config_manager": self.config_manager,
+            "llm_func": llm_func,
+            **kwargs,
+        }
+
+        # For pipelines that accept schema_manager, pass it
+        # Currently only HybridGraphRAG explicitly accepts schema_manager
+        if pipeline_type == "hybrid_graphrag":
+            pipeline_kwargs["schema_manager"] = schema_manager
+
         if pipeline_type == "basic":
-            return BasicRAGPipeline(
-                connection_manager=self.connection_manager,
-                config_manager=self.config_manager,
-                llm_func=llm_func,
-            )
+            return BasicRAGPipeline(**pipeline_kwargs)
         elif pipeline_type == "crag":
-            return CRAGPipeline(
-                connection_manager=self.connection_manager,
-                config_manager=self.config_manager,
-                llm_func=llm_func,
-            )
+            return CRAGPipeline(**pipeline_kwargs)
         elif pipeline_type == "basic_rerank":
-            return BasicRAGRerankingPipeline(
-                connection_manager=self.connection_manager,
-                config_manager=self.config_manager,
-                llm_func=llm_func,
-            )
+            return BasicRAGRerankingPipeline(**pipeline_kwargs)
+        elif pipeline_type == "graphrag":
+            return GraphRAGPipeline(**pipeline_kwargs)
+        elif pipeline_type == "hybrid_graphrag":
+            return HybridGraphRAGPipeline(**pipeline_kwargs)
         else:
             available_types = [
                 "basic",
                 "basic_rerank",
                 "crag",
+                "graphrag",
+                "hybrid_graphrag",
             ]
             raise ValueError(
                 f"Unknown pipeline type: {pipeline_type}. Available: {available_types}"

@@ -6,9 +6,9 @@ This module provides robust schema versioning, configuration tracking, and
 automatic migration capabilities for vector dimensions and other schema changes.
 """
 
-import logging
 import json
-from typing import Dict, Any, Optional
+import logging
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -142,6 +142,48 @@ class SchemaManager:
                 "dimension": 0,  # No embeddings
                 "supports_vector_search": False,
                 "supports_graph_traversal": True,
+            },
+            # IRIS Graph Core Tables for Hybrid Search
+            "rdf_labels": {
+                "embedding_column": None,
+                "uses_document_embeddings": False,
+                "default_model": self.base_embedding_model,
+                "dimension": 0,  # No embeddings
+                "supports_vector_search": False,
+                "supports_graph_traversal": True,
+                "table_type": "graph_metadata",
+                "created_by": "iris_graph_core",
+            },
+            "rdf_props": {
+                "embedding_column": None,
+                "uses_document_embeddings": False,
+                "default_model": self.base_embedding_model,
+                "dimension": 0,  # No embeddings
+                "supports_vector_search": False,
+                "supports_graph_traversal": True,
+                "table_type": "graph_properties",
+                "created_by": "iris_graph_core",
+            },
+            "rdf_edges": {
+                "embedding_column": None,
+                "uses_document_embeddings": False,
+                "default_model": self.base_embedding_model,
+                "dimension": 0,  # No embeddings
+                "supports_vector_search": False,
+                "supports_graph_traversal": True,
+                "table_type": "graph_relationships",
+                "created_by": "iris_graph_core",
+            },
+            "kg_NodeEmbeddings_optimized": {
+                "embedding_column": "emb",
+                "uses_document_embeddings": True,
+                "default_model": self.base_embedding_model,
+                "dimension": self.base_embedding_dimension,
+                "supports_vector_search": True,
+                "supports_graph_traversal": False,
+                "table_type": "optimized_vectors",
+                "created_by": "iris_graph_core",
+                "requires_hnsw_index": True,
             },
         }
 
@@ -352,7 +394,7 @@ class SchemaManager:
                     "foreign_keys": [
                         {
                             "column": "source_doc_id",
-                            "references": "RAG.SourceDocuments(doc_id)",
+                            "references": "RAG.SourceDocuments(id)",
                             "on_delete": "CASCADE",
                         }
                     ],
@@ -389,6 +431,72 @@ class SchemaManager:
                         },
                     ],
                     "indexes": ["idx_rel_source", "idx_rel_target"],
+                }
+            )
+        # IRIS Graph Core Tables
+        elif table_name == "rdf_labels":
+            config["configuration"].update(
+                {
+                    "table_type": "graph_metadata",
+                    "created_by": "iris_graph_core",
+                    "expected_columns": [
+                        "s",  # subject
+                        "label",  # entity type/label
+                    ],
+                    "indexes": [
+                        "idx_labels_label_s",
+                        "idx_labels_s_label",
+                    ],
+                }
+            )
+        elif table_name == "rdf_props":
+            config["configuration"].update(
+                {
+                    "table_type": "graph_properties",
+                    "created_by": "iris_graph_core",
+                    "expected_columns": [
+                        "s",  # subject
+                        "key",  # property key
+                        "val",  # property value
+                    ],
+                    "indexes": [
+                        "idx_props_s_key",
+                        "idx_props_key_val",
+                    ],
+                }
+            )
+        elif table_name == "rdf_edges":
+            config["configuration"].update(
+                {
+                    "table_type": "graph_relationships",
+                    "created_by": "iris_graph_core",
+                    "expected_columns": [
+                        "edge_id",  # primary key
+                        "s",  # subject
+                        "p",  # predicate
+                        "o_id",  # object
+                        "qualifiers",  # JSON metadata with confidence
+                    ],
+                    "indexes": [
+                        "idx_edges_s_p",
+                        "idx_edges_p_oid",
+                        "idx_edges_s",
+                    ],
+                }
+            )
+        elif table_name == "kg_NodeEmbeddings_optimized":
+            config["configuration"].update(
+                {
+                    "table_type": "optimized_vectors",
+                    "created_by": "iris_graph_core",
+                    "expected_columns": [
+                        "id",  # entity identifier
+                        "emb",  # vector embedding (optimized VECTOR type)
+                    ],
+                    "indexes": [
+                        "HNSW_NodeEmb_Optimized",  # HNSW index for fast similarity
+                    ],
+                    "requires_hnsw_optimization": True,
                 }
             )
 
@@ -549,6 +657,47 @@ class SchemaManager:
                 else:
                     connection.rollback()
                     return False
+            # IRIS Graph Core table migrations
+            elif table_name == "rdf_labels":
+                success = self._migrate_rdf_labels_table(
+                    cursor, expected_config, preserve_data
+                )
+                if success:
+                    connection.commit()
+                    return True
+                else:
+                    connection.rollback()
+                    return False
+            elif table_name == "rdf_props":
+                success = self._migrate_rdf_props_table(
+                    cursor, expected_config, preserve_data
+                )
+                if success:
+                    connection.commit()
+                    return True
+                else:
+                    connection.rollback()
+                    return False
+            elif table_name == "rdf_edges":
+                success = self._migrate_rdf_edges_table(
+                    cursor, expected_config, preserve_data
+                )
+                if success:
+                    connection.commit()
+                    return True
+                else:
+                    connection.rollback()
+                    return False
+            elif table_name == "kg_NodeEmbeddings_optimized":
+                success = self._migrate_kg_node_embeddings_optimized_table(
+                    cursor, expected_config, preserve_data
+                )
+                if success:
+                    connection.commit()
+                    return True
+                else:
+                    connection.rollback()
+                    return False
 
             # Add other table migrations as needed
             logger.warning(f"No migration handler for table {table_name}")
@@ -649,7 +798,7 @@ class SchemaManager:
                     create_sql = f"""
                     CREATE TABLE {table_name} (
                         id VARCHAR(255) PRIMARY KEY,
-                        doc_id VARCHAR(255),
+                        doc_id VARCHAR(255) UNIQUE,
                         title VARCHAR(1000),
                         abstract VARCHAR(MAX),
                         text_content {text_content_type},
@@ -663,9 +812,8 @@ class SchemaManager:
                     cursor.execute(create_sql)
                     logger.info(f"✅ Successfully created {table_name} table")
 
-                    # Indexes
+                    # Indexes (doc_id is UNIQUE via table constraint; add created_at index)
                     indexes = [
-                        f"CREATE INDEX idx_source_docs_id ON {table_name} (doc_id)",
                         f"CREATE INDEX idx_source_docs_created ON {table_name} (created_at)",
                     ]
                     for index_sql in indexes:
@@ -1020,6 +1168,16 @@ class SchemaManager:
                 "Entities",  # Fallback
             ]
 
+            # Ensure SourceDocuments.doc_id is unique so Entities FK can reference it
+            try:
+                cursor.execute(
+                    "CREATE UNIQUE INDEX idx_source_docs_doc_id_unique ON RAG.SourceDocuments (doc_id)"
+                )
+                logger.info("✅ Ensured unique index on RAG.SourceDocuments(doc_id)")
+            except Exception as e:
+                # Index may already exist or another benign condition; proceed
+                logger.debug(f"Unique index ensure for SourceDocuments.doc_id: {e}")
+
             for table_name in table_attempts:
                 try:
                     logger.info(
@@ -1040,7 +1198,7 @@ class SchemaManager:
                         description TEXT NULL,
                         embedding VECTOR({vector_data_type}, {vector_dim}) NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(doc_id) ON DELETE CASCADE
+                        FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(id) ON DELETE CASCADE
                     )
                     """
                     cursor.execute(create_sql)
@@ -1048,7 +1206,7 @@ class SchemaManager:
 
                     # Create indexes for GraphRAG query performance
                     indexes = [
-                        f"CREATE INDEX idx_entities_name_lower ON {table_name} (LOWER(entity_name))",
+                        f"CREATE INDEX idx_entities_name ON {table_name} (entity_name)",
                         f"CREATE INDEX idx_entities_type ON {table_name} (entity_type)",
                         f"CREATE INDEX idx_entities_source_doc ON {table_name} (source_doc_id)",
                     ]
@@ -1224,10 +1382,12 @@ class SchemaManager:
             logger.error(
                 f"Failed to create HNSW index {index_name} on {table}.{column}: {e}"
             )
-            # Don't raise - allow system to continue without index
             logger.warning(
                 "Continuing without vector index - this may impact performance"
             )
+            # Re-raise to comply with Constitutional Principle VI: Explicit Error Handling
+            # Caller can decide whether to continue or abort based on business logic
+            raise
 
     def ensure_all_vector_indexes(self) -> None:
         """
@@ -1255,14 +1415,27 @@ class SchemaManager:
             ]
 
             logger.info("Ensuring HNSW vector indexes...")
+            errors = []
+
             for index_def in vector_indexes:
-                self.ensure_vector_hnsw_index(
-                    cursor,
-                    index_def["table"],
-                    index_def["column"],
-                    index_def["index_name"],
-                    try_acorn=True,
-                )
+                try:
+                    self.ensure_vector_hnsw_index(
+                        cursor,
+                        index_def["table"],
+                        index_def["column"],
+                        index_def["index_name"],
+                        try_acorn=True,
+                    )
+                except Exception as index_error:
+                    # Collect error but continue with other indexes
+                    error_msg = f"Failed to create index {index_def['index_name']}: {index_error}"
+                    errors.append(error_msg)
+                    logger.error(error_msg)
+
+            if errors:
+                # If any errors occurred, raise a comprehensive exception
+                all_errors = "; ".join(errors)
+                raise Exception(f"Vector index creation errors: {all_errors}")
 
             connection.commit()
             logger.info("✅ Vector index ensure process completed")
@@ -1305,3 +1478,478 @@ class SchemaManager:
             return {}
         finally:
             cursor.close()
+
+    # ========== IRIS GRAPH CORE TABLE MIGRATION METHODS ==========
+
+    def _migrate_rdf_labels_table(
+        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
+    ) -> bool:
+        """Migrate rdf_labels table for entity type/label mapping."""
+        try:
+            logger.info("🔧 Migrating rdf_labels table for IRIS Graph Core")
+
+            # Drop existing table if it exists (for now - data preservation not implemented)
+            cursor.execute("DROP TABLE IF EXISTS rdf_labels")
+            logger.info("Dropped existing rdf_labels table")
+
+            # Create table with proper schema
+            create_sql = """
+            CREATE TABLE rdf_labels (
+                s      VARCHAR(256) NOT NULL,
+                label  VARCHAR(128) NOT NULL
+            )
+            """
+            cursor.execute(create_sql)
+            logger.info("✅ Successfully created rdf_labels table")
+
+            # Create indexes for GraphRAG performance
+            indexes = [
+                "CREATE INDEX idx_labels_label_s ON rdf_labels(label, s)",
+                "CREATE INDEX idx_labels_s_label ON rdf_labels(s, label)",
+            ]
+            for index_sql in indexes:
+                try:
+                    cursor.execute(index_sql)
+                    logger.debug(f"Created index: {index_sql}")
+                except Exception as e:
+                    logger.warning(f"Failed to create index: {e}")
+
+            # Update schema metadata
+            try:
+                self._update_schema_metadata(cursor, "rdf_labels", expected_config)
+            except Exception as meta_error:
+                logger.debug(f"Schema metadata update failed: {meta_error}")
+
+            logger.info("✅ rdf_labels table migrated successfully")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to migrate rdf_labels table: {e}")
+            return False
+
+    def _migrate_rdf_props_table(
+        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
+    ) -> bool:
+        """Migrate rdf_props table for entity properties."""
+        try:
+            logger.info("🔧 Migrating rdf_props table for IRIS Graph Core")
+
+            # Drop existing table if it exists
+            cursor.execute("DROP TABLE IF EXISTS rdf_props")
+            logger.info("Dropped existing rdf_props table")
+
+            # Create table with proper schema
+            create_sql = """
+            CREATE TABLE rdf_props (
+                s      VARCHAR(256) NOT NULL,
+                key    VARCHAR(128) NOT NULL,
+                val    VARCHAR(4000)
+            )
+            """
+            cursor.execute(create_sql)
+            logger.info("✅ Successfully created rdf_props table")
+
+            # Create indexes for property lookup performance
+            indexes = [
+                "CREATE INDEX idx_props_s_key ON rdf_props(s, key)",
+                "CREATE INDEX idx_props_key_val ON rdf_props(key, val)",
+            ]
+            for index_sql in indexes:
+                try:
+                    cursor.execute(index_sql)
+                    logger.debug(f"Created index: {index_sql}")
+                except Exception as e:
+                    logger.warning(f"Failed to create index: {e}")
+
+            # Update schema metadata
+            try:
+                self._update_schema_metadata(cursor, "rdf_props", expected_config)
+            except Exception as meta_error:
+                logger.debug(f"Schema metadata update failed: {meta_error}")
+
+            logger.info("✅ rdf_props table migrated successfully")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to migrate rdf_props table: {e}")
+            return False
+
+    def _migrate_rdf_edges_table(
+        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
+    ) -> bool:
+        """Migrate rdf_edges table for graph relationships with JSON confidence."""
+        try:
+            logger.info("🔧 Migrating rdf_edges table for IRIS Graph Core")
+
+            # Drop existing table if it exists
+            cursor.execute("DROP TABLE IF EXISTS rdf_edges")
+            logger.info("Dropped existing rdf_edges table")
+
+            # Create table with proper schema including JSON qualifiers
+            create_sql = """
+            CREATE TABLE rdf_edges (
+                edge_id    BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+                s          VARCHAR(256) NOT NULL,
+                p          VARCHAR(128) NOT NULL,
+                o_id       VARCHAR(256) NOT NULL,
+                qualifiers JSON
+            )
+            """
+            cursor.execute(create_sql)
+            logger.info("✅ Successfully created rdf_edges table")
+
+            # Create indexes for graph traversal performance
+            indexes = [
+                "CREATE INDEX idx_edges_s_p ON rdf_edges(s, p)",
+                "CREATE INDEX idx_edges_p_oid ON rdf_edges(p, o_id)",
+                "CREATE INDEX idx_edges_s ON rdf_edges(s)",
+            ]
+            for index_sql in indexes:
+                try:
+                    cursor.execute(index_sql)
+                    logger.debug(f"Created index: {index_sql}")
+                except Exception as e:
+                    logger.warning(f"Failed to create index: {e}")
+
+            # Update schema metadata
+            try:
+                self._update_schema_metadata(cursor, "rdf_edges", expected_config)
+            except Exception as meta_error:
+                logger.debug(f"Schema metadata update failed: {meta_error}")
+
+            logger.info("✅ rdf_edges table migrated successfully")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to migrate rdf_edges table: {e}")
+            return False
+
+    def _migrate_kg_node_embeddings_optimized_table(
+        self, cursor, expected_config: Dict[str, Any], preserve_data: bool
+    ) -> bool:
+        """Migrate kg_NodeEmbeddings_optimized table for HNSW vector search."""
+        try:
+            vector_dim = expected_config["vector_dimension"]
+            vector_data_type = expected_config.get("vector_data_type", "FLOAT")
+
+            logger.info(
+                f"🔧 Migrating kg_NodeEmbeddings_optimized table to {vector_dim}D vectors with {vector_data_type} type"
+            )
+
+            # Drop existing table if it exists
+            cursor.execute("DROP TABLE IF EXISTS kg_NodeEmbeddings_optimized")
+            logger.info("Dropped existing kg_NodeEmbeddings_optimized table")
+
+            # Create table with optimized VECTOR column
+            create_sql = f"""
+            CREATE TABLE kg_NodeEmbeddings_optimized (
+                id   VARCHAR(256) PRIMARY KEY,
+                emb  VECTOR({vector_data_type}, {vector_dim}) NOT NULL
+            )
+            """
+            cursor.execute(create_sql)
+            logger.info("✅ Successfully created kg_NodeEmbeddings_optimized table")
+
+            # Create HNSW index for high-performance vector search
+            try:
+                self.ensure_vector_hnsw_index(
+                    cursor,
+                    "kg_NodeEmbeddings_optimized",
+                    "emb",
+                    "HNSW_NodeEmb_Optimized",
+                    try_acorn=True,
+                )
+                logger.info("✅ HNSW index created for optimized vector table")
+            except Exception as index_error:
+                logger.warning(f"HNSW index creation failed: {index_error}")
+
+            # Update schema metadata
+            try:
+                self._update_schema_metadata(
+                    cursor, "kg_NodeEmbeddings_optimized", expected_config
+                )
+            except Exception as meta_error:
+                logger.debug(f"Schema metadata update failed: {meta_error}")
+
+            logger.info("✅ kg_NodeEmbeddings_optimized table migrated successfully")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to migrate kg_NodeEmbeddings_optimized table: {e}")
+            return False
+
+    @classmethod
+    def create_schema_manager(
+        cls, pipeline_type: str, connection_manager, config_manager
+    ):
+        """
+        Factory method to create appropriate schema manager for pipeline type.
+
+        Args:
+            pipeline_type: Type of pipeline (e.g., 'hybrid_graphrag', 'graphrag')
+            connection_manager: Database connection manager
+            config_manager: Configuration manager
+
+        Returns:
+            Appropriate schema manager instance
+        """
+        # Get pipeline requirements
+        requirements = config_manager.get_pipeline_requirements(pipeline_type)
+        schema_manager_type = requirements.get("schema_manager", "SchemaManager")
+
+        if schema_manager_type == "HybridGraphRAGSchemaManager":
+            from .hybrid_schema_manager import HybridGraphRAGSchemaManager
+
+            logger.info(f"Creating HybridGraphRAGSchemaManager for {pipeline_type}")
+            return HybridGraphRAGSchemaManager(connection_manager, config_manager)
+        elif pipeline_type in ["graphrag", "hybrid_graphrag"]:
+            # Enhanced schema manager for graph-based pipelines
+            logger.info(f"Creating enhanced SchemaManager for {pipeline_type}")
+            manager = cls(connection_manager, config_manager)
+            manager.pipeline_type = pipeline_type
+            return manager
+        else:
+            logger.info(f"Creating standard SchemaManager for {pipeline_type}")
+            return cls(connection_manager, config_manager)
+
+    def ensure_pipeline_schema(self, pipeline_type: str) -> bool:
+        """
+        Ensure schema for specific pipeline type based on requirements.
+
+        Args:
+            pipeline_type: The pipeline type to ensure schema for
+
+        Returns:
+            True if all schema requirements were met successfully
+        """
+        try:
+            logger.info(f"Ensuring schema for pipeline type: {pipeline_type}")
+            requirements = self.config_manager.get_pipeline_requirements(pipeline_type)
+            schema_requirements = requirements.get("schema_requirements", {})
+
+            # Ensure required tables
+            required_tables = schema_requirements.get("tables", [])
+            for table_name in required_tables:
+                if not self.ensure_table_schema(table_name, pipeline_type):
+                    logger.error(f"Failed to ensure required table: {table_name}")
+                    return False
+                else:
+                    logger.info(f"✅ Table {table_name} ensured for {pipeline_type}")
+
+            # Create required indexes
+            required_indexes = schema_requirements.get("indexes", [])
+            for index_config in required_indexes:
+                if not self._ensure_index(index_config):
+                    if index_config.get("required", True):
+                        logger.error(
+                            f"Failed to create required index: {index_config['name']}"
+                        )
+                        return False
+                    else:
+                        logger.info(
+                            f"Optional index not created: {index_config['name']}"
+                        )
+
+            logger.info(f"✅ Schema ensured successfully for {pipeline_type}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to ensure schema for {pipeline_type}: {e}")
+            return False
+
+    def ensure_table_schema(self, table_name: str, pipeline_type: str = None) -> bool:
+        """
+        Ensure a specific table exists with proper schema.
+
+        Args:
+            table_name: Name of the table to ensure
+            pipeline_type: Optional pipeline type for context
+
+        Returns:
+            True if table exists or was created successfully
+        """
+        try:
+            # Check if this is a standard RAG table
+            standard_tables = ["SourceDocuments", "Entities", "EntityRelationships"]
+            if table_name in standard_tables:
+                return self._ensure_standard_table(table_name)
+            else:
+                # For other tables, delegate to specialized managers
+                logger.warning(
+                    f"Table {table_name} not recognized as standard RAG table"
+                )
+                return False
+
+        except Exception as e:
+            logger.error(f"Failed to ensure table {table_name}: {e}")
+            return False
+
+    def _ensure_standard_table(self, table_name: str) -> bool:
+        """Ensure standard RAG tables exist."""
+        try:
+            conn = self.connection_manager.get_connection()
+            cursor = conn.cursor()
+
+            # Check if table exists
+            cursor.execute(
+                f"""
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = '{table_name}'
+            """
+            )
+
+            exists = cursor.fetchone()[0] > 0
+
+            if exists:
+                logger.warning(f"Table RAG.{table_name} already exists - NOT checking schema!")
+                cursor.close()
+                return True
+
+            # Create table based on type
+            if table_name == "SourceDocuments":
+                success = self._create_source_documents_table(cursor)
+            elif table_name == "Entities":
+                success = self._create_entities_table(cursor)
+            elif table_name == "EntityRelationships":
+                success = self._create_entity_relationships_table(cursor)
+            else:
+                logger.error(f"Unknown standard table: {table_name}")
+                cursor.close()
+                return False
+
+            if success:
+                conn.commit()
+                logger.info(f"✅ Successfully created table RAG.{table_name}")
+            else:
+                conn.rollback()
+                logger.error(f"❌ Failed to create table RAG.{table_name}")
+
+            cursor.close()
+            return success
+
+        except Exception as e:
+            logger.error(f"Error ensuring standard table {table_name}: {e}")
+            try:
+                conn.rollback()
+                cursor.close()
+            except:
+                pass
+            return False
+
+    def _create_source_documents_table(self, cursor) -> bool:
+        """Create SourceDocuments table."""
+        try:
+            embedding_config = self.config_manager.get_embedding_config()
+            dimension = embedding_config.get("dimension", 384)
+
+            create_sql = f"""
+            CREATE TABLE RAG.SourceDocuments (
+                doc_id VARCHAR(255) NOT NULL,
+                text_content VARCHAR(10000),
+                metadata VARCHAR(2000),
+                embedding VECTOR(DOUBLE, {dimension}),
+                created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                PRIMARY KEY (doc_id)
+            )
+            """
+            cursor.execute(create_sql)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create SourceDocuments table: {e}")
+            return False
+
+    def _create_entities_table(self, cursor) -> bool:
+        """Create Entities table."""
+        try:
+            create_sql = """
+            CREATE TABLE RAG.Entities (
+                entity_id VARCHAR(255) NOT NULL,
+                entity_name VARCHAR(500) NOT NULL,
+                entity_type VARCHAR(100),
+                description VARCHAR(2000),
+                confidence DOUBLE DEFAULT 1.0,
+                source_doc_id VARCHAR(255),
+                created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                PRIMARY KEY (entity_id)
+            )
+            """
+            cursor.execute(create_sql)
+
+            # Create indexes
+            indexes = [
+                "CREATE INDEX idx_entities_name ON RAG.Entities (entity_name)",
+                "CREATE INDEX idx_entities_type ON RAG.Entities (entity_type)",
+            ]
+
+            for index_sql in indexes:
+                cursor.execute(index_sql)
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create Entities table: {e}")
+            return False
+
+    def _create_entity_relationships_table(self, cursor) -> bool:
+        """Create EntityRelationships table."""
+        try:
+            create_sql = """
+            CREATE TABLE RAG.EntityRelationships (
+                relationship_id VARCHAR(255) NOT NULL,
+                source_entity_id VARCHAR(255) NOT NULL,
+                target_entity_id VARCHAR(255) NOT NULL,
+                relationship_type VARCHAR(255),
+                weight DOUBLE DEFAULT 1.0,
+                confidence DOUBLE DEFAULT 1.0,
+                source_document VARCHAR(255),
+                created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                PRIMARY KEY (relationship_id)
+            )
+            """
+            cursor.execute(create_sql)
+
+            # Create indexes
+            indexes = [
+                "CREATE INDEX idx_relationships_source ON RAG.EntityRelationships (source_entity_id)",
+                "CREATE INDEX idx_relationships_target ON RAG.EntityRelationships (target_entity_id)",
+                "CREATE INDEX idx_relationships_type ON RAG.EntityRelationships (relationship_type)",
+            ]
+
+            for index_sql in indexes:
+                cursor.execute(index_sql)
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create EntityRelationships table: {e}")
+            return False
+
+    def _ensure_index(self, index_config: Dict[str, Any]) -> bool:
+        """Create an index based on configuration."""
+        try:
+            conn = self.connection_manager.get_connection()
+            cursor = conn.cursor()
+
+            index_name = index_config.get("name")
+            table_name = index_config.get("table")
+            index_type = index_config.get("type", "BTREE")
+
+            # Basic index creation - could be enhanced for specific types
+            if index_type == "HNSW":
+                # HNSW indexes require special handling
+                logger.info(f"HNSW index {index_name} requires specialized creation")
+                cursor.close()
+                return (
+                    index_config.get("required", True) == False
+                )  # Optional indexes return True
+
+            cursor.close()
+            return True
+
+        except Exception as e:
+            logger.error(
+                f"Failed to create index {index_config.get('name', 'unknown')}: {e}"
+            )
+            return False

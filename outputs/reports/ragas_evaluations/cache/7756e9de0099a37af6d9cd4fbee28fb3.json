@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "BasicRerank",
+  "query": "What are the biomarkers used for early detection of kidney disease?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.5926151275634766,
+  "success": true,
+  "error": null
+}

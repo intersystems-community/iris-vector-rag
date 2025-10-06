@@ -6,9 +6,10 @@ eliminating code duplication through proper inheritance.
 """
 
 import logging
-from typing import List, Dict, Any, Optional, Callable, Tuple
-from .basic import BasicRAGPipeline
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 from ..core.models import Document
+from .basic import BasicRAGPipeline
 
 logger = logging.getLogger(__name__)
 

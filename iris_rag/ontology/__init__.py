@@ -1,7 +1,7 @@
 """
 IRIS RAG Ontology Support Module
 
-This module provides advanced ontology support for GraphRAG to enable domain-specific 
+This module provides advanced ontology support for GraphRAG to enable domain-specific
 knowledge representation and reasoning. It supports loading ontologies in various formats
 (OWL, RDF, SKOS) and provides reasoning capabilities for enhanced entity extraction.
 
@@ -20,44 +20,31 @@ Components:
 - plugins: Domain-specific ontology implementations
 """
 
+from .loader import OntologyLoader, OWLLoader, RDFLoader, SKOSLoader
 from .models import (
     Concept,
-    OntologyRelationship,
     ConceptHierarchy,
+    InferenceRule,
+    OntologyRelationship,
     SemanticMapping,
-    InferenceRule
 )
-
-from .loader import (
-    OntologyLoader,
-    OWLLoader,
-    RDFLoader,
-    SKOSLoader
-)
-
-from .reasoner import (
-    OntologyReasoner,
-    InferenceEngine,
-    QueryExpander
-)
+from .reasoner import InferenceEngine, OntologyReasoner, QueryExpander
 
 __version__ = "1.0.0"
 __all__ = [
     # Models
     "Concept",
-    "OntologyRelationship", 
+    "OntologyRelationship",
     "ConceptHierarchy",
     "SemanticMapping",
     "InferenceRule",
-    
     # Loaders
     "OntologyLoader",
-    "OWLLoader", 
+    "OWLLoader",
     "RDFLoader",
     "SKOSLoader",
-    
     # Reasoning
     "OntologyReasoner",
     "InferenceEngine",
-    "QueryExpander"
+    "QueryExpander",
 ]

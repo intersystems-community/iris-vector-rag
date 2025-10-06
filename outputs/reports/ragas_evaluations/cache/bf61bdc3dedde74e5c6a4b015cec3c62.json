@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "HybridGraphRAG",
+  "query": "What are the mechanisms of antibiotic resistance in bacterial infections?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.16274094581604004,
+  "success": true,
+  "error": null
+}

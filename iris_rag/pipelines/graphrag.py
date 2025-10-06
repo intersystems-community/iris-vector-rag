@@ -6,14 +6,16 @@ PRODUCTION-HARDENED VERSION: No fallbacks, fail-hard validation, integrated enti
 
 import logging
 import time
-from typing import List, Dict, Any, Optional, Callable, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+
+from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
-from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..core.exceptions import RAGException
-from ..config.manager import ConfigurationManager
+from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
 from ..services.entity_extraction import EntityExtractionService
+from ..storage.schema_manager import SchemaManager
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +106,16 @@ class GraphRAGPipeline(RAGPipeline):
         else:
             self._store_documents(documents)
 
+        # Ensure knowledge graph tables exist BEFORE extraction/storage
+        try:
+            schema_manager = SchemaManager(self.connection_manager, self.config_manager)
+            schema_manager.ensure_table_schema("Entities")
+            schema_manager.ensure_table_schema("EntityRelationships")
+        except Exception as e:
+            logger.warning(
+                f"Could not ensure knowledge graph tables before extraction: {e}"
+            )
+
         # Extract entities and relationships for knowledge graph
         total_entities = 0
         total_relationships = 0
@@ -114,27 +126,30 @@ class GraphRAGPipeline(RAGPipeline):
                 logger.info(f"Processing document {doc.id} for entity extraction")
                 result = self.entity_extraction_service.process_document(doc)
 
+                # Log warning if no entities stored, but don't fail
+                # (tickets without technical content may have zero extractable entities)
                 if not result.get("stored", False):
-                    raise EntityExtractionFailedException(
-                        f"Failed to store entities for document {doc.id}"
+                    logger.warning(
+                        f"No entities stored for document {doc.id} - may lack extractable technical content"
+                    )
+                else:
+                    total_entities += result.get(
+                        "entities_count", result.get("entities_extracted", 0)
+                    )
+                    total_relationships += result.get(
+                        "relationships_count", result.get("relationships_extracted", 0)
                     )
 
-                total_entities += result["entities_count"]
-                total_relationships += result["relationships_count"]
-
-                logger.debug(
-                    f"Document {doc.id}: {result['entities_count']} entities, {result['relationships_count']} relationships"
-                )
+                    logger.debug(
+                        f"Document {doc.id}: {result.get('entities_extracted', 0)} entities, {result.get('relationships_extracted', 0)} relationships"
+                    )
 
             except Exception as e:
-                failed_documents.append(doc.id)
-                logger.error(f"Entity extraction failed for document {doc.id}: {e}")
+                # Log error but continue processing other documents
+                logger.warning(f"Entity extraction error for document {doc.id}: {e}")
 
-        # Fail hard if entity extraction failed for any documents
-        if failed_documents:
-            raise EntityExtractionFailedException(
-                f"Entity extraction failed for {len(failed_documents)} documents: {failed_documents}"
-            )
+        # Only fail if we got zero entities across ALL documents
+        # (suggests a systematic failure rather than content issues)
 
         # Validate that we have entities in the knowledge graph
         if total_entities == 0:
@@ -192,8 +207,21 @@ class GraphRAGPipeline(RAGPipeline):
         # Validate knowledge graph is populated before allowing queries
         self._validate_knowledge_graph()
 
-        # Knowledge graph retrieval - fail hard if it doesn't work
-        retrieved_documents, method = self._retrieve_via_kg(query_text, top_k)
+        # Knowledge graph retrieval with smart fallback to vector search
+        try:
+            retrieved_documents, method = self._retrieve_via_kg(query_text, top_k)
+        except GraphRAGException as e:
+            logger.warning(f"GraphRAG fallback: {e}")
+            # Fall back to vector search when entities aren't found
+            if "No seed entities found" in str(e) or "No documents found" in str(e):
+                logger.info(
+                    f"GraphRAG: Falling back to vector search for query: '{query_text}'"
+                )
+                retrieved_documents = self._fallback_to_vector_search(query_text, top_k)
+                method = "vector_fallback"
+            else:
+                # Re-raise other GraphRAG exceptions (validation failures, etc.)
+                raise
 
         # Generate answer
         if generate_answer and self.llm_func and retrieved_documents:
@@ -264,6 +292,16 @@ class GraphRAGPipeline(RAGPipeline):
                 f"{connection.__class__.__module__}.{connection.__class__.__name__}"
             )
             cursor = connection.cursor()
+
+            # Ensure knowledge graph tables exist
+            try:
+                schema_manager = SchemaManager(
+                    self.connection_manager, self.config_manager
+                )
+                schema_manager.ensure_table_schema("Entities")
+                schema_manager.ensure_table_schema("EntityRelationships")
+            except Exception as e:
+                logger.warning(f"Could not ensure knowledge graph tables: {e}")
 
             # Check if we have any entities
             t0 = time.perf_counter()
@@ -351,7 +389,12 @@ class GraphRAGPipeline(RAGPipeline):
                 f"{connection.__class__.__module__}.{connection.__class__.__name__}"
             )
             cursor = connection.cursor()
-            query_keywords = query_text.lower().split()[:5]
+
+            # Clean query text and extract keywords, removing punctuation
+            import re
+
+            cleaned_query = re.sub(r"[^\w\s]", " ", query_text.lower())
+            query_keywords = [kw for kw in cleaned_query.split() if len(kw) > 2][:5]
 
             if not query_keywords:
                 raise GraphRAGException("Query contains no searchable keywords")
@@ -366,7 +409,6 @@ class GraphRAGPipeline(RAGPipeline):
                 SELECT TOP 10 entity_id, entity_name, entity_type
                 FROM RAG.Entities
                 WHERE {' OR '.join(conditions)}
-                  AND entity_type IN ('PERSON', 'ORG', 'DISEASE', 'DRUG', 'TREATMENT', 'SYMPTOM')
             """
             logger.debug(
                 f"GraphRAG: Executing seed entity query with {len(query_keywords)} keywords (conn={conn_type})"
@@ -518,11 +560,11 @@ class GraphRAGPipeline(RAGPipeline):
             placeholders = ",".join(["?" for _ in entity_list])
 
             query = f"""
-                SELECT DISTINCT sd.doc_id, sd.text_content, sd.title
+                SELECT DISTINCT sd.id, sd.text_content, sd.title
                 FROM RAG.SourceDocuments sd
-                JOIN RAG.Entities e ON sd.doc_id = e.source_doc_id
+                JOIN RAG.Entities e ON sd.id = e.source_doc_id
                 WHERE e.entity_id IN ({placeholders})
-                ORDER BY sd.doc_id
+                ORDER BY sd.id
             """
 
             logger.debug(
@@ -579,6 +621,62 @@ class GraphRAGPipeline(RAGPipeline):
                     logger.warning(f"Error closing cursor: {e}")
 
         return docs
+
+    def _fallback_to_vector_search(self, query_text: str, top_k: int) -> List[Document]:
+        """
+        Fallback to vector search when knowledge graph can't handle the query.
+
+        This implements the spec requirement (FR-006) for entity-not-found fallback.
+        """
+        logger.info(
+            f"GraphRAG: Executing vector search fallback for query: '{query_text}'"
+        )
+
+        if not self.vector_store:
+            logger.warning(
+                "No vector store available for fallback - returning empty results"
+            )
+            return []
+
+        try:
+            # Use vector store for similarity search
+            results = self.vector_store.similarity_search(query_text, k=top_k)
+
+            # Convert results to Document objects if needed
+            documents = []
+            for result in results:
+                if hasattr(result, "page_content"):
+                    # Already a Document-like object
+                    doc = Document(
+                        id=getattr(result, "id", str(len(documents))),
+                        page_content=result.page_content,
+                        metadata={
+                            **(
+                                result.metadata
+                                if hasattr(result, "metadata") and result.metadata
+                                else {}
+                            ),
+                            "retrieval_method": "vector_fallback",
+                        },
+                    )
+                    documents.append(doc)
+                else:
+                    # Create Document from string result
+                    doc = Document(
+                        id=str(len(documents)),
+                        page_content=str(result),
+                        metadata={"retrieval_method": "vector_fallback"},
+                    )
+                    documents.append(doc)
+
+            logger.info(
+                f"GraphRAG: Vector fallback retrieved {len(documents)} documents"
+            )
+            return documents
+
+        except Exception as e:
+            logger.error(f"Vector search fallback failed: {e}")
+            return []
 
     def _read_iris_data(self, data) -> str:
         """Handle IRIS stream data."""

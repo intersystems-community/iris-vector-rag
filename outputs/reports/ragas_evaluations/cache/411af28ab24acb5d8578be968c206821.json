@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "HybridGraphRAG",
+  "query": "How do immunotherapy treatments work in cancer patients?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.30359911918640137,
+  "success": true,
+  "error": null
+}

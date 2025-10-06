@@ -4,19 +4,22 @@ Pipeline status test with mock connections.
 Tests all available RAG pipeline types without requiring a real IRIS connection.
 """
 
+import json
 import os
 import sys
-import json
 import traceback
 from datetime import datetime
-from typing import Dict, Any, List, Optional
-from unittest.mock import Mock, MagicMock, patch
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, Mock, patch
 
 # Add the project root to the path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
-from common.utils import get_llm_func, get_embedding_func, 
+from common.utils import (
+    get_embedding_func,
+    get_llm_func,
+)
 from iris_rag.core.models import Document
 
 # List of all pipeline types to test
@@ -143,7 +146,7 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
         print(f"1. Setting up mocks and importing pipeline...")
         
         from iris_rag.config.manager import ConfigurationManager
-        
+
         # Create mock config manager
         mock_config = ConfigurationManager()
         mock_conn_manager = MockConnectionManager(mock_config)
@@ -163,7 +166,9 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
             from iris_rag.pipelines.crag import CRAGPipeline
             pipeline_class = CRAGPipeline
         elif pipeline_type == "colbert":
-            from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+            from iris_rag.pipelines.colbert_pylate.pylate_pipeline import (
+                PyLateColBERTPipeline,
+            )
             pipeline_class = PyLateColBERTPipeline
         elif pipeline_type == "noderag":
             from iris_rag.pipelines.noderag import NodeRAGPipeline

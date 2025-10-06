@@ -7,10 +7,10 @@ from .connection import ConnectionManager
 from .models import Document
 from .vector_store import VectorStore
 from .vector_store_exceptions import (
-    VectorStoreError,
+    VectorStoreCLOBError,
     VectorStoreConnectionError,
     VectorStoreDataError,
-    VectorStoreCLOBError,
+    VectorStoreError,
 )
 
 __all__ = [

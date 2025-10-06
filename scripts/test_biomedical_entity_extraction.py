@@ -13,11 +13,13 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 import logging
-from typing import List, Dict, Any
+from collections import Counter
+from typing import Any, Dict, List
+
+import spacy
+
 from common.iris_connection_manager import get_iris_connection
 from data.pmc_processor import process_pmc_files
-import spacy
-from collections import Counter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

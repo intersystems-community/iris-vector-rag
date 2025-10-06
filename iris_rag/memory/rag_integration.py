@@ -6,23 +6,23 @@ Demonstrates how to add memory capabilities to any RAG pipeline.
 Provides base patterns for memory-enabled RAG systems.
 """
 
+import asyncio
 import logging
 import time
-import asyncio
-from typing import List, Dict, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
+from iris_rag.core.connection import ConnectionManager
+from iris_rag.memory.knowledge_extractor import KnowledgePatternExtractor
 from iris_rag.memory.models import (
     EnrichedRAGResponse,
-    MemoryConfig,
     KnowledgePattern,
+    MemoryConfig,
     MemoryItem,
-    TemporalWindow,
     TemporalQuery,
+    TemporalWindow,
 )
-from iris_rag.memory.knowledge_extractor import KnowledgePatternExtractor
 from iris_rag.memory.temporal_manager import TemporalMemoryManager
-from iris_rag.core.connection import ConnectionManager
 
 logger = logging.getLogger(__name__)
 
@@ -402,9 +402,9 @@ def create_memory_enabled_pipeline(
 
 async def example_basic_rag_with_memory():
     """Example: Adding memory to BasicRAG."""
-    from iris_rag.pipelines.basic import BasicRAGPipeline
-    from iris_rag.core.connection import ConnectionManager
     from iris_rag.config.manager import ConfigurationManager
+    from iris_rag.core.connection import ConnectionManager
+    from iris_rag.pipelines.basic import BasicRAGPipeline
 
     # Initialize components
     config_manager = ConfigurationManager()

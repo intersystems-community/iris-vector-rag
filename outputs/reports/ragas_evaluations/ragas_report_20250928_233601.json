@@ -1,0 +1,707 @@
+{
+  "metadata": {
+    "timestamp": "20250928_233601",
+    "dataset": "PMC 10K documents",
+    "num_queries": 8,
+    "pipelines_evaluated": [
+      "BasicRAG",
+      "BasicRerank",
+      "CRAG",
+      "GraphRAG",
+      "HybridGraphRAG"
+    ],
+    "execution_time_minutes": 0.004037038485209147,
+    "target_accuracy": 0.8,
+    "configuration": {
+      "num_queries": 8,
+      "pipelines": [
+        "BasicRAG",
+        "BasicRerank",
+        "CRAG",
+        "GraphRAG",
+        "HybridGraphRAG"
+      ],
+      "output_dir": "outputs/reports/ragas_evaluations",
+      "use_cache": true,
+      "parallel_execution": true,
+      "confidence_level": 0.95,
+      "target_accuracy": 0.8
+    }
+  },
+  "pipeline_metrics": {
+    "BasicRAG": {
+      "answer_correctness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "faithfulness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_precision": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_recall": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "answer_relevancy": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      }
+    },
+    "BasicRerank": {
+      "answer_correctness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "faithfulness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_precision": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_recall": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "answer_relevancy": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      }
+    },
+    "CRAG": {
+      "answer_correctness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "faithfulness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_precision": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_recall": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "answer_relevancy": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      }
+    },
+    "GraphRAG": {
+      "answer_correctness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "faithfulness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_precision": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_recall": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "answer_relevancy": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      }
+    },
+    "HybridGraphRAG": {
+      "answer_correctness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "faithfulness": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_precision": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "context_recall": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      },
+      "answer_relevancy": {
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "confidence_95": [
+          0.0,
+          0.0
+        ],
+        "median": 0.0
+      }
+    }
+  },
+  "comparative_analysis": {
+    "best_overall": "BasicRAG",
+    "best_per_metric": {
+      "answer_correctness": "BasicRAG",
+      "faithfulness": "BasicRAG",
+      "context_precision": "BasicRAG",
+      "context_recall": "BasicRAG",
+      "answer_relevancy": "BasicRAG"
+    },
+    "overall_scores": {
+      "BasicRAG": 0.0,
+      "BasicRerank": 0.0,
+      "CRAG": 0.0,
+      "GraphRAG": 0.0,
+      "HybridGraphRAG": 0.0
+    }
+  },
+  "detailed_results": {
+    "BasicRAG": [
+      {
+        "pipeline_name": "BasicRAG",
+        "query": "How does COVID-19 affect respiratory function and lung capacity?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 1.2694473266601562,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRAG",
+        "query": "What are the most effective interventions for managing hypertension?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 1.2516751289367676,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRAG",
+        "query": "What are the risk factors and prevention strategies for cardiovascular disease?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 1.437819242477417,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRAG",
+        "query": "What are the current treatment options for type 2 diabetes mellitus?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 1.2076327800750732,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRAG",
+        "query": "How do immunotherapy treatments work in cancer patients?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.48175621032714844,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRAG",
+        "query": "What are the latest developments in Alzheimer's disease research?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.48004794120788574,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRAG",
+        "query": "How effective are different pain management strategies for chronic conditions?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.6736180782318115,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRAG",
+        "query": "What are the symptoms and diagnostic criteria for depression?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.8198771476745605,
+        "success": true,
+        "error": null
+      }
+    ],
+    "BasicRerank": [
+      {
+        "pipeline_name": "BasicRerank",
+        "query": "How does COVID-19 affect respiratory function and lung capacity?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.6682696342468262,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRerank",
+        "query": "What are the current treatment options for type 2 diabetes mellitus?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.634000301361084,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRerank",
+        "query": "What are the risk factors and prevention strategies for cardiovascular disease?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.6131870746612549,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRerank",
+        "query": "What are the most effective interventions for managing hypertension?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.6690278053283691,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRerank",
+        "query": "What are the latest developments in Alzheimer's disease research?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.5448441505432129,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRerank",
+        "query": "How do immunotherapy treatments work in cancer patients?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.6141629219055176,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRerank",
+        "query": "How effective are different pain management strategies for chronic conditions?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.541499137878418,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "BasicRerank",
+        "query": "What are the symptoms and diagnostic criteria for depression?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.5791749954223633,
+        "success": true,
+        "error": null
+      }
+    ],
+    "CRAG": [
+      {
+        "pipeline_name": "CRAG",
+        "query": "How does COVID-19 affect respiratory function and lung capacity?",
+        "answer": null,
+        "contexts": [],
+        "execution_time": 0.1717052459716797,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "CRAG",
+        "query": "What are the risk factors and prevention strategies for cardiovascular disease?",
+        "answer": null,
+        "contexts": [],
+        "execution_time": 0.17197537422180176,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "CRAG",
+        "query": "What are the most effective interventions for managing hypertension?",
+        "answer": null,
+        "contexts": [],
+        "execution_time": 0.17287802696228027,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "CRAG",
+        "query": "What are the current treatment options for type 2 diabetes mellitus?",
+        "answer": null,
+        "contexts": [],
+        "execution_time": 0.17101001739501953,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "CRAG",
+        "query": "What are the latest developments in Alzheimer's disease research?",
+        "answer": null,
+        "contexts": [],
+        "execution_time": 0.16682910919189453,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "CRAG",
+        "query": "How do immunotherapy treatments work in cancer patients?",
+        "answer": null,
+        "contexts": [],
+        "execution_time": 0.16844916343688965,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "CRAG",
+        "query": "What are the symptoms and diagnostic criteria for depression?",
+        "answer": null,
+        "contexts": [],
+        "execution_time": 0.13189291954040527,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "CRAG",
+        "query": "How effective are different pain management strategies for chronic conditions?",
+        "answer": null,
+        "contexts": [],
+        "execution_time": 0.16682195663452148,
+        "success": true,
+        "error": null
+      }
+    ],
+    "GraphRAG": [
+      {
+        "pipeline_name": "GraphRAG",
+        "query": "What are the current treatment options for type 2 diabetes mellitus?",
+        "answer": "",
+        "contexts": [],
+        "execution_time": 0.0,
+        "success": false,
+        "error": "Knowledge graph is empty. No entities found in RAG.Entities table. Load documents with entity extraction before querying GraphRAG."
+      },
+      {
+        "pipeline_name": "GraphRAG",
+        "query": "How does COVID-19 affect respiratory function and lung capacity?",
+        "answer": "",
+        "contexts": [],
+        "execution_time": 0.0,
+        "success": false,
+        "error": "Knowledge graph is empty. No entities found in RAG.Entities table. Load documents with entity extraction before querying GraphRAG."
+      },
+      {
+        "pipeline_name": "GraphRAG",
+        "query": "What are the most effective interventions for managing hypertension?",
+        "answer": "",
+        "contexts": [],
+        "execution_time": 0.0,
+        "success": false,
+        "error": "Knowledge graph is empty. No entities found in RAG.Entities table. Load documents with entity extraction before querying GraphRAG."
+      },
+      {
+        "pipeline_name": "GraphRAG",
+        "query": "What are the risk factors and prevention strategies for cardiovascular disease?",
+        "answer": "",
+        "contexts": [],
+        "execution_time": 0.0,
+        "success": false,
+        "error": "Knowledge graph is empty. No entities found in RAG.Entities table. Load documents with entity extraction before querying GraphRAG."
+      },
+      {
+        "pipeline_name": "GraphRAG",
+        "query": "How do immunotherapy treatments work in cancer patients?",
+        "answer": "",
+        "contexts": [],
+        "execution_time": 0.0,
+        "success": false,
+        "error": "Knowledge graph is empty. No entities found in RAG.Entities table. Load documents with entity extraction before querying GraphRAG."
+      },
+      {
+        "pipeline_name": "GraphRAG",
+        "query": "What are the symptoms and diagnostic criteria for depression?",
+        "answer": "",
+        "contexts": [],
+        "execution_time": 0.0,
+        "success": false,
+        "error": "Knowledge graph is empty. No entities found in RAG.Entities table. Load documents with entity extraction before querying GraphRAG."
+      },
+      {
+        "pipeline_name": "GraphRAG",
+        "query": "How effective are different pain management strategies for chronic conditions?",
+        "answer": "",
+        "contexts": [],
+        "execution_time": 0.0,
+        "success": false,
+        "error": "Knowledge graph is empty. No entities found in RAG.Entities table. Load documents with entity extraction before querying GraphRAG."
+      },
+      {
+        "pipeline_name": "GraphRAG",
+        "query": "What are the latest developments in Alzheimer's disease research?",
+        "answer": "",
+        "contexts": [],
+        "execution_time": 0.0,
+        "success": false,
+        "error": "Knowledge graph is empty. No entities found in RAG.Entities table. Load documents with entity extraction before querying GraphRAG."
+      }
+    ],
+    "HybridGraphRAG": [
+      {
+        "pipeline_name": "HybridGraphRAG",
+        "query": "What are the most effective interventions for managing hypertension?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.26748108863830566,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "HybridGraphRAG",
+        "query": "How does COVID-19 affect respiratory function and lung capacity?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.2236628532409668,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "HybridGraphRAG",
+        "query": "What are the risk factors and prevention strategies for cardiovascular disease?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.26877617835998535,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "HybridGraphRAG",
+        "query": "How do immunotherapy treatments work in cancer patients?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.30359911918640137,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "HybridGraphRAG",
+        "query": "What are the current treatment options for type 2 diabetes mellitus?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.265408992767334,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "HybridGraphRAG",
+        "query": "What are the latest developments in Alzheimer's disease research?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.3066408634185791,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "HybridGraphRAG",
+        "query": "How effective are different pain management strategies for chronic conditions?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.30233073234558105,
+        "success": true,
+        "error": null
+      },
+      {
+        "pipeline_name": "HybridGraphRAG",
+        "query": "What are the symptoms and diagnostic criteria for depression?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "execution_time": 0.35395097732543945,
+        "success": true,
+        "error": null
+      }
+    ]
+  }
+}

@@ -11,20 +11,20 @@ Validates that the RAG Templates Bridge meets all specified requirements:
 """
 
 import asyncio
-import time
+import os
 import statistics
 import sys
-import os
-from typing import Dict, Any
+import time
+from typing import Any, Dict
 from unittest.mock import Mock, patch
 
 # Add the project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from adapters.rag_templates_bridge import (
-    RAGTemplatesBridge,
-    RAGTechnique,
     CircuitBreakerState,
+    RAGTechnique,
+    RAGTemplatesBridge,
 )
 
 

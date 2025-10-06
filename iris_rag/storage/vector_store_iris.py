@@ -485,7 +485,7 @@ class IRISVectorStore(VectorStore):
             for i, doc in enumerate(documents):
                 metadata_json = json.dumps(doc.metadata)
 
-                # Check if document exists - use consistent column name doc_id
+                # Check if document exists - use doc_id column (correct schema)
                 check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE doc_id = ?"
                 cursor.execute(check_sql, [doc.id])
                 exists = cursor.fetchone()[0] > 0
@@ -496,7 +496,7 @@ class IRISVectorStore(VectorStore):
                         f"Inserting document {doc.id} with embedding using insert_vector utility"
                     )
                     # Use the required insert_vector utility function for vector insertions/updates
-                    # Avoid setting ID manually - let IRIS auto-generate it and use doc_id as business key
+                    # Use doc_id and text_content per the actual IRIS schema
                     success = insert_vector(
                         cursor=cursor,
                         table_name=self.table_name,
@@ -517,7 +517,7 @@ class IRISVectorStore(VectorStore):
                     else:
                         logger.error(f"Failed to upsert document {doc.id} with vector")
                 else:
-                    # Insert without embedding - use safe insert that avoids ID column
+                    # Insert without embedding - use correct schema (doc_id, text_content, metadata)
                     if exists:
                         update_sql = f"""
                         UPDATE {self.table_name}
@@ -531,7 +531,7 @@ class IRISVectorStore(VectorStore):
                             f"Updated existing document {doc.id} without vector"
                         )
                     else:
-                        # Safe insert without manually setting ID column (let database auto-generate)
+                        # Insert using correct schema
                         insert_sql = f"""
                         INSERT INTO {self.table_name} (doc_id, text_content, metadata)
                         VALUES (?, ?, ?)
@@ -610,8 +610,8 @@ class IRISVectorStore(VectorStore):
                 f"Auto-chunking disabled, using {len(documents)} original documents"
             )
 
-        # Generate embeddings if not provided and auto-chunking is enabled
-        if embeddings is None and processed_documents and should_chunk:
+        # Generate embeddings if not provided (regardless of chunking)
+        if embeddings is None and processed_documents:
             logger.debug(
                 "No embeddings provided, generating embeddings for processed documents"
             )
@@ -708,8 +708,10 @@ class IRISVectorStore(VectorStore):
                 filter_conditions = []
                 for key, value in filter.items():
                     # Key is already validated, safe to use in f-string
+                    # Use IRIS JSON_VALUE function instead of JSON_EXTRACT
+                    # JSON_VALUE returns a string, so we compare as strings
                     filter_conditions.append(
-                        f"JSON_EXTRACT(metadata, '$.{key}') = '{str(value)}'"
+                        f"JSON_VALUE(metadata, '$.{key}') = '{str(value)}'"
                     )
 
                 if filter_conditions:
@@ -731,22 +733,29 @@ class IRISVectorStore(VectorStore):
                 f"Vector search: query={len(query_embedding)}D, expected={expected_dimension}D, table={table_short_name}"
             )
 
-            # Build SQL using the safe helper (single parameter pattern)
+            # Convert query embedding to bracketed string format for TO_VECTOR
+            # IMPORTANT: TO_VECTOR() does NOT accept parameter markers
+            embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
+
+            # Build SQL with embedded vector string (no parameters)
+            # Use new schema columns: doc_id and text_content
             sql = build_safe_vector_dot_sql(
                 table=self.table_name,
                 vector_column="embedding",
+                vector_string=embedding_str,
+                vector_dimension=expected_dimension,
                 id_column="doc_id",
                 extra_columns=["text_content"],
                 top_k=top_k,
                 additional_where=additional_where,
             )
 
-            # Execute using the safe helper (pass vector as list directly)
+            # Execute using the safe helper (vector already embedded in SQL)
             logger.debug(
                 f"Executing safe vector search with {len(query_embedding)}D vector"
             )
             try:
-                rows = execute_safe_vector_search(cursor, sql, query_embedding)
+                rows = execute_safe_vector_search(cursor, sql)
             except Exception as e:
                 # Check if this is a table not found error
                 if "Table" in str(e) and "not found" in str(e):
@@ -755,8 +764,11 @@ class IRISVectorStore(VectorStore):
                     )
                     self._create_table_automatically()
                     # Retry the search after table creation
-                    rows = execute_safe_vector_search(cursor, sql, query_embedding)
+                    rows = execute_safe_vector_search(cursor, sql)
                 else:
+                    # Log the SQL that failed for debugging
+                    logger.error(f"Vector search SQL that failed: {sql[:500]}...")
+                    logger.error(f"Error details: {type(e).__name__}: {e}")
                     # Re-raise other errors
                     raise
 
@@ -767,6 +779,7 @@ class IRISVectorStore(VectorStore):
                 try:
                     doc_ids = [row[0] for row in rows]
                     placeholders = ",".join(["?" for _ in doc_ids])
+                    # Use 'doc_id' column (correct schema)
                     metadata_sql = f"SELECT doc_id, metadata FROM {self.table_name} WHERE doc_id IN ({placeholders})"
                     cursor.execute(metadata_sql, doc_ids)
                     metadata_map = {row[0]: row[1] for row in cursor.fetchall()}
@@ -789,7 +802,7 @@ class IRISVectorStore(VectorStore):
                 return []
 
             for row in rows:
-                doc_id, text_content, similarity_score = row
+                doc_id, content, similarity_score = row
 
                 # Get metadata from the map
                 metadata_json = (
@@ -801,7 +814,7 @@ class IRISVectorStore(VectorStore):
                 # Process row data to ensure string content
                 document_data = {
                     "doc_id": doc_id,
-                    "text_content": text_content,
+                    "text_content": content,
                     "metadata": metadata_json,
                 }
 
@@ -921,31 +934,58 @@ class IRISVectorStore(VectorStore):
 
         try:
             placeholders = ",".join(["?" for _ in ids])
-            select_sql = f"""
-            SELECT doc_id, text_content, metadata
-            FROM {self.table_name}
-            WHERE doc_id IN ({placeholders})
-            """
 
-            cursor.execute(select_sql, ids)
-            rows = cursor.fetchall()
+            # Try new schema first (doc_id, text_content)
+            try:
+                select_sql = f"""
+                SELECT doc_id, text_content, metadata
+                FROM {self.table_name}
+                WHERE doc_id IN ({placeholders})
+                """
+                cursor.execute(select_sql, ids)
+                rows = cursor.fetchall()
 
-            documents = []
-            for row in rows:
-                doc_id, text_content, metadata_json = row
+                documents = []
+                for row in rows:
+                    doc_id, text_content, metadata_json = row
+                    document_data = {
+                        "doc_id": doc_id,
+                        "text_content": text_content,
+                        "metadata": metadata_json,
+                    }
+                    document = self._ensure_string_content(document_data)
+                    documents.append(document)
 
-                # Process row data to ensure string content
-                document_data = {
-                    "doc_id": doc_id,
-                    "text_content": text_content,
-                    "metadata": metadata_json,
-                }
+                logger.debug(f"Fetched {len(documents)} documents by IDs using new schema")
+                return documents
 
-                document = self._ensure_string_content(document_data)
-                documents.append(document)
+            except Exception as new_schema_error:
+                # Fallback to simple schema (id, content)
+                if "not found in the applicable tables" in str(new_schema_error):
+                    logger.debug("Falling back to simple schema (id, content)")
+                    select_sql = f"""
+                    SELECT id, content, metadata
+                    FROM {self.table_name}
+                    WHERE id IN ({placeholders})
+                    """
+                    cursor.execute(select_sql, ids)
+                    rows = cursor.fetchall()
 
-            logger.debug(f"Fetched {len(documents)} documents by IDs")
-            return documents
+                    documents = []
+                    for row in rows:
+                        doc_id, text_content, metadata_json = row
+                        document_data = {
+                            "doc_id": doc_id,
+                            "text_content": text_content,
+                            "metadata": metadata_json,
+                        }
+                        document = self._ensure_string_content(document_data)
+                        documents.append(document)
+
+                    logger.debug(f"Fetched {len(documents)} documents by IDs using simple schema")
+                    return documents
+                else:
+                    raise
 
         except Exception as e:
             sanitized_error = self._sanitize_error_message(e, "fetch_documents_by_ids")
@@ -975,6 +1015,72 @@ class IRISVectorStore(VectorStore):
             logger.error(sanitized_error)
             raise VectorStoreConnectionError(
                 f"Failed to get document count: {sanitized_error}"
+            )
+        finally:
+            cursor.close()
+
+    def get_all_documents(self) -> List[Document]:
+        """
+        Retrieve all documents from the vector store.
+
+        Returns:
+            List of all Document objects in the store
+        """
+        connection = self._get_connection()
+        cursor = connection.cursor()
+
+        try:
+            # Try new schema first (doc_id, text_content)
+            try:
+                cursor.execute(
+                    f"SELECT doc_id, text_content, metadata FROM {self.table_name}"
+                )
+                rows = cursor.fetchall()
+
+                documents = []
+                for row in rows:
+                    doc_id, text_content, metadata_json = row
+                    document_data = {
+                        "doc_id": doc_id,
+                        "text_content": text_content,
+                        "metadata": metadata_json,
+                    }
+                    document = self._ensure_string_content(document_data)
+                    documents.append(document)
+
+                logger.debug(f"Retrieved {len(documents)} documents using new schema")
+                return documents
+
+            except Exception as new_schema_error:
+                # Fallback to simple schema (id, content)
+                if "not found in the applicable tables" in str(new_schema_error):
+                    logger.debug("Falling back to simple schema for get_all_documents")
+                    cursor.execute(
+                        f"SELECT id, content, metadata FROM {self.table_name}"
+                    )
+                    rows = cursor.fetchall()
+
+                    documents = []
+                    for row in rows:
+                        doc_id, text_content, metadata_json = row
+                        document_data = {
+                            "doc_id": doc_id,
+                            "text_content": text_content,
+                            "metadata": metadata_json,
+                        }
+                        document = self._ensure_string_content(document_data)
+                        documents.append(document)
+
+                    logger.debug(f"Retrieved {len(documents)} documents using simple schema")
+                    return documents
+                else:
+                    raise
+
+        except Exception as e:
+            sanitized_error = self._sanitize_error_message(e, "get_all_documents")
+            logger.error(sanitized_error)
+            raise VectorStoreConnectionError(
+                f"Failed to get all documents: {sanitized_error}"
             )
         finally:
             cursor.close()
@@ -1041,3 +1147,24 @@ class IRISVectorStore(VectorStore):
             return self.similarity_search_by_embedding(
                 query_embedding, top_k, filter_param
             )
+
+    def similarity_search_with_score(self, query: str, k: int = 4, filter: Optional[Dict[str, Any]] = None) -> List[Tuple[Document, float]]:
+        """
+        Perform similarity search and return results with scores.
+
+        Args:
+            query: Text query to search for
+            k: Maximum number of results to return
+            filter: Optional metadata filters to apply
+
+        Returns:
+            List of tuples containing (Document, similarity_score)
+        """
+        # Get embedding function for text query
+        from ..embeddings.manager import EmbeddingManager
+
+        embedding_manager = EmbeddingManager(self.config_manager)
+        query_embedding = embedding_manager.embed_text(query)
+
+        # Call similarity_search_by_embedding which already returns (doc, score) tuples
+        return self.similarity_search_by_embedding(query_embedding, k, filter)

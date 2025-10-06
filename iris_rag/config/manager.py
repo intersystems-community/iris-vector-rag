@@ -1,6 +1,7 @@
 import os
+from typing import Any, Dict, Optional
+
 import yaml
-from typing import Any, Optional, Dict
 
 
 # Define a specific exception for configuration errors
@@ -37,7 +38,9 @@ class ConfigurationManager:
 
         if config_path:
             if not os.path.exists(config_path):
-                raise FileNotFoundError(f"Configuration file not found: {config_path}")
+                raise ConfigValidationError(
+                    f"Configuration file not found: {config_path}"
+                )
             with open(config_path, "r") as f:
                 self._config = yaml.safe_load(f) or {}
         else:
@@ -476,14 +479,23 @@ class ConfigurationManager:
         """
         default_config = {
             "host": "localhost",
-            "port": "1972",  # Keep as string for consistency
+            "port": 1974,  # Integer for proper type casting
             "namespace": "USER",
             "username": "_SYSTEM",
             "password": "SYS",
             "driver_path": None,
         }
 
-        # Map environment variables to config keys
+        # First apply user-defined database config from YAML (this includes env var overrides)
+        user_config = self.get("database", {})
+        if isinstance(user_config, dict):
+            # Handle nested IRIS config
+            if "iris" in user_config and isinstance(user_config["iris"], dict):
+                default_config.update(user_config["iris"])
+            else:
+                default_config.update(user_config)
+
+        # Map environment variables to config keys (legacy support)
         env_mappings = {
             "IRIS_HOST": "host",
             "IRIS_PORT": "port",
@@ -493,17 +505,17 @@ class ConfigurationManager:
             "IRIS_DRIVER_PATH": "driver_path",
         }
 
-        # Override with environment variables
+        # Override with environment variables (legacy format)
         for env_key, config_key in env_mappings.items():
             if env_key in os.environ:
                 value = os.environ[env_key]
-                # Keep port as string for config compatibility
+                # Cast port to int for proper type
+                if config_key == "port":
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        pass  # Keep as string if casting fails
                 default_config[config_key] = value
-
-        # Also check for user-defined database config in YAML
-        user_config = self.get("database", {})
-        if isinstance(user_config, dict):
-            default_config.update(user_config)
 
         return default_config
 
@@ -564,3 +576,94 @@ class ConfigurationManager:
         # Check YAML config
         top_k = self.get("default_top_k", 5)
         return int(top_k)
+
+    def get_pipeline_requirements(self, pipeline_type: str) -> Dict[str, Any]:
+        """
+        Get pipeline-specific requirements including schema needs.
+
+        Args:
+            pipeline_type: The type of pipeline (e.g., 'graphrag', 'hybrid_graphrag')
+
+        Returns:
+            Dictionary containing pipeline requirements
+        """
+        # Load pipeline configurations
+        # Look for config in project root relative to this file
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        pipeline_config_path = os.path.join(project_root, "config", "pipelines.yaml")
+
+        pipelines_config = {}
+        if os.path.exists(pipeline_config_path):
+            with open(pipeline_config_path, "r") as f:
+                config_data = yaml.safe_load(f) or {}
+                if "pipelines" in config_data:
+                    # Convert list format to dict format for easier lookup
+                    for pipeline in config_data["pipelines"]:
+                        if isinstance(pipeline, dict) and "name" in pipeline:
+                            # Store with multiple keys for case-insensitive lookup
+                            name = pipeline["name"]
+                            pipelines_config[name] = pipeline
+                            pipelines_config[name.lower()] = pipeline
+
+        # Look for pipeline configuration (try multiple case variations)
+        pipeline_config = {}
+
+        # Try exact match first
+        if pipeline_type in pipelines_config:
+            pipeline_config = pipelines_config[pipeline_type]
+        # Try lowercase
+        elif pipeline_type.lower() in pipelines_config:
+            pipeline_config = pipelines_config[pipeline_type.lower()]
+        # Try case-insensitive search
+        else:
+            for name, config in pipelines_config.items():
+                if name.lower() == pipeline_type.lower():
+                    pipeline_config = config
+                    break
+
+        return {
+            "schema_requirements": pipeline_config.get("schema_requirements", {}),
+            "schema_manager": pipeline_config.get("schema_requirements", {}).get(
+                "schema_manager", "SchemaManager"
+            ),
+            "dependencies": pipeline_config.get("dependencies", []),
+            "retrieval_methods": pipeline_config.get("retrieval_methods", []),
+            "params": pipeline_config.get("params", {}),
+            "enabled": pipeline_config.get("enabled", True),
+        }
+
+    def get_hybrid_graphrag_config(self) -> Dict[str, Any]:
+        """
+        Get HybridGraphRAG-specific configuration.
+
+        Returns:
+            Dictionary containing HybridGraphRAG configuration
+        """
+        default_config = {
+            "enabled": True,
+            "schema_auto_setup": True,
+            "fallback_to_graphrag": True,
+            "iris_graph_core": {
+                "enabled": True,
+                "auto_create_tables": True,
+                "community_edition_compatible": True,
+            },
+            "fusion_weights": [0.4, 0.3, 0.3],  # [vector, text, graph]
+            "retrieval_methods": ["kg", "vector", "text", "hybrid"],
+        }
+
+        # Get user-defined config and merge with defaults
+        user_config = self.get("hybrid_graphrag", {})
+        if isinstance(user_config, dict):
+            # Deep merge nested dictionaries
+            for key, value in user_config.items():
+                if (
+                    key in default_config
+                    and isinstance(default_config[key], dict)
+                    and isinstance(value, dict)
+                ):
+                    default_config[key].update(value)
+                else:
+                    default_config[key] = value
+
+        return default_config

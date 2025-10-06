@@ -11,12 +11,12 @@ Developers can override by setting FORCE_ENV environment variable or by
 activating their preferred environment before running scripts.
 """
 
-import os
-import sys
-import subprocess
 import logging
-from typing import Optional, Dict, Any
+import os
+import subprocess
+import sys
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ def get_iris_connection_in_best_env():
             if hasattr(iris, "connect"):
                 return iris.connect(
                     hostname=os.environ.get("IRIS_HOST", "localhost"),
-                    port=int(os.environ.get("IRIS_PORT", "1972")),
+                    port=int(os.environ.get("IRIS_PORT", "1974")),
                     namespace=os.environ.get("IRIS_NAMESPACE", "USER"),
                     username=os.environ.get("IRIS_USERNAME", "SuperUser"),
                     password=os.environ.get("IRIS_PASSWORD", "SYS"),

@@ -5,14 +5,14 @@ Tests both direct mem0 functionality and MCP server responsiveness.
 Bypasses interface issues to verify actual server functionality.
 """
 
+import json
 import os
 import sys
 import time
-import json
-from pathlib import Path
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
 import traceback
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -215,8 +215,8 @@ class Mem0ComprehensiveTest:
         start_time = time.time()
 
         try:
-            import subprocess
             import socket
+            import subprocess
 
             # Check if mem0 MCP server process might be running
             host = os.getenv("MCP_SERVER_HOST", "localhost")

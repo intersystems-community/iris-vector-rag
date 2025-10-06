@@ -6,7 +6,8 @@ must follow, ensuring consistent interfaces across different storage backends.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
 from .models import Document
 
 

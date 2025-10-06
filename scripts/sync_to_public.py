@@ -19,17 +19,17 @@ Usage:
     python scripts/sync_to_public.py --validate-sync
 """
 
-import os
-import sys
 import argparse
-import subprocess
-import shutil
-import logging
 import fnmatch
-from pathlib import Path
-from typing import List, Dict, Optional, Set
+import logging
+import os
+import shutil
+import subprocess
+import sys
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set
 
 # Setup logging
 logging.basicConfig(

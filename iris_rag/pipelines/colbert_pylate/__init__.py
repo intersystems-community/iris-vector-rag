@@ -7,4 +7,4 @@ Provides efficient late interaction retrieval with PLAID indexing.
 
 from .pylate_pipeline import PyLateColBERTPipeline
 
-__all__ = ['PyLateColBERTPipeline']
+__all__ = ["PyLateColBERTPipeline"]

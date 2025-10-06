@@ -1,0 +1,72 @@
+name: TDD Compliance Check
+
+on:
+  pull_request:
+    paths:
+      - 'tests/contract/**'
+      - 'tests/**/*_contract.py'
+      - 'scripts/validate_tdd_compliance.py'
+
+jobs:
+  tdd-compliance:
+    runs-on: ubuntu-latest
+    name: Validate TDD Compliance
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for git analysis
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install GitPython
+        run: |
+          pip install GitPython
+
+      - name: Run TDD compliance check
+        id: tdd_check
+        run: |
+          python scripts/validate_tdd_compliance.py --json > tdd_results.json
+          cat tdd_results.json
+
+      - name: Post results as PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('tdd_results.json', 'utf8'));
+
+            const emoji = results.violation_count === 0 ? '✅' : '⚠️';
+            const status = results.violation_count === 0 ? 'PASSED' : 'VIOLATIONS FOUND';
+
+            let comment = `## ${emoji} TDD Compliance Check: ${status}\n\n`;
+            comment += `- **Total Contract Tests**: ${results.total_tests}\n`;
+            comment += `- **Compliant Tests**: ${results.compliant_count}\n`;
+            comment += `- **Violations**: ${results.violation_count}\n`;
+            comment += `- **Compliance Rate**: ${results.compliance_rate.toFixed(1)}%\n`;
+
+            if (results.violations.length > 0) {
+              comment += '\n### ❌ Violations Found:\n';
+              results.violations.forEach(v => {
+                comment += `- **${v.test_file}**: ${v.violation_type} - ${v.details}\n`;
+              });
+              comment += '\n**Action Required**: Contract tests must fail before implementation!';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Check compliance (non-blocking)
+        run: |
+          # Currently non-blocking - just warn
+          # To make blocking, change to: python scripts/validate_tdd_compliance.py --fail-on-violations
+          echo "TDD compliance check complete. See PR comment for details."

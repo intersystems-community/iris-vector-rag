@@ -4,8 +4,8 @@ Complete database initialization script with all tables and indexes.
 This script creates a fresh RAG database with all optimizations included.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add project root to path

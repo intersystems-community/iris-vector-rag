@@ -7,8 +7,8 @@ embedding model (sentence-transformers/all-MiniLM-L6-v2) to ensure
 384-dimensional embeddings.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add project root to path

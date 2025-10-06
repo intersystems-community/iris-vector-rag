@@ -1,0 +1,325 @@
+openapi: 3.0.3
+info:
+  title: Test Coverage Enhancement API
+  version: 1.0.0
+  description: API contracts for test coverage analysis and reporting system
+
+paths:
+  /coverage/analyze:
+    post:
+      summary: Execute coverage analysis
+      description: Run comprehensive test suite with coverage analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_modules:
+                  type: array
+                  items:
+                    type: string
+                  description: Specific modules to analyze (optional, defaults to all)
+                include_slow_tests:
+                  type: boolean
+                  default: true
+                  description: Whether to include slow-running tests
+                output_format:
+                  type: string
+                  enum: [terminal, html, xml, json]
+                  default: terminal
+                  description: Coverage report output format
+              required: []
+      responses:
+        '200':
+          description: Coverage analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverageReport'
+        '400':
+          description: Invalid analysis parameters
+        '408':
+          description: Analysis timeout (exceeded 5 minutes)
+        '422':
+          description: Coverage targets not met
+
+  /coverage/reports/{report_id}:
+    get:
+      summary: Retrieve coverage report
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique coverage report identifier
+      responses:
+        '200':
+          description: Coverage report details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverageReport'
+        '404':
+          description: Coverage report not found
+
+  /coverage/modules/{module_name}:
+    get:
+      summary: Get module-specific coverage
+      parameters:
+        - name: module_name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Module name (e.g., iris_rag.config)
+      responses:
+        '200':
+          description: Module coverage details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModuleCoverage'
+        '404':
+          description: Module not found
+
+  /coverage/trends:
+    get:
+      summary: Get coverage trends
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [monthly, quarterly, yearly]
+            default: monthly
+          description: Trend reporting period
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            default: 6
+          description: Number of periods to return
+      responses:
+        '200':
+          description: Coverage trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CoverageTrend'
+
+  /coverage/validate:
+    post:
+      summary: Validate coverage targets
+      description: Check if current coverage meets all requirements
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enforce_critical_modules:
+                  type: boolean
+                  default: true
+                  description: Whether to enforce 80% target for critical modules
+                allow_legacy_exemptions:
+                  type: boolean
+                  default: true
+                  description: Whether to apply exemptions for legacy modules
+      responses:
+        '200':
+          description: Coverage validation results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  overall_target_met:
+                    type: boolean
+                    description: Whether 60% overall target is met
+                  critical_modules_target_met:
+                    type: boolean
+                    description: Whether 80% critical module targets are met
+                  failing_modules:
+                    type: array
+                    items:
+                      type: string
+                    description: Modules not meeting their targets
+                  validation_summary:
+                    type: string
+                    description: Human-readable validation summary
+        '422':
+          description: Coverage targets not met
+
+components:
+  schemas:
+    CoverageReport:
+      type: object
+      properties:
+        report_id:
+          type: string
+          description: Unique identifier for coverage run
+        timestamp:
+          type: string
+          format: date-time
+          description: When coverage analysis was performed
+        overall_coverage_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Overall coverage percentage (target >= 60%)
+        total_lines:
+          type: integer
+          minimum: 0
+          description: Total lines of code analyzed
+        covered_lines:
+          type: integer
+          minimum: 0
+          description: Lines covered by tests
+        branch_coverage_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Branch coverage analysis
+        function_coverage_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Function coverage analysis
+        module_coverage:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleCoverage'
+          description: Per-module coverage breakdown
+        analysis_duration_seconds:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 300
+          description: Coverage analysis time (target < 300s)
+        test_execution_duration_seconds:
+          type: number
+          format: float
+          minimum: 0
+          description: Test execution time with coverage
+        git_commit_hash:
+          type: string
+          description: Git commit for this coverage run
+        ci_build_id:
+          type: string
+          description: CI build identifier
+      required:
+        - report_id
+        - timestamp
+        - overall_coverage_percentage
+        - total_lines
+        - covered_lines
+        - analysis_duration_seconds
+
+    ModuleCoverage:
+      type: object
+      properties:
+        module_name:
+          type: string
+          description: Module name (e.g., iris_rag.config)
+        file_path:
+          type: string
+          description: Relative path to module file
+        coverage_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Coverage percentage for this module
+        total_lines:
+          type: integer
+          minimum: 0
+          description: Total lines in module
+        covered_lines:
+          type: integer
+          minimum: 0
+          description: Covered lines in module
+        uncovered_lines:
+          type: array
+          items:
+            type: integer
+          description: Line numbers not covered by tests
+        is_critical_module:
+          type: boolean
+          description: Whether module requires 80% coverage
+        is_legacy_module:
+          type: boolean
+          description: Whether module has reduced coverage requirements
+        target_coverage_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Target coverage for this module
+        priority_level:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+          description: Module priority based on clarifications
+      required:
+        - module_name
+        - file_path
+        - coverage_percentage
+        - total_lines
+        - covered_lines
+        - is_critical_module
+        - target_coverage_percentage
+
+    CoverageTrend:
+      type: object
+      properties:
+        trend_id:
+          type: string
+          description: Unique identifier for trend record
+        month_year:
+          type: string
+          pattern: '^[0-9]{4}-[0-9]{2}$'
+          description: Month and year (e.g., 2025-10)
+        baseline_coverage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Coverage at start of period
+        current_coverage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Current coverage percentage
+        coverage_delta:
+          type: number
+          format: float
+          description: Change in coverage during period
+        milestone_achieved:
+          type: boolean
+          description: Whether period milestone was met
+        critical_modules_at_target:
+          type: integer
+          minimum: 0
+          description: Number of critical modules at 80%
+        total_critical_modules:
+          type: integer
+          minimum: 0
+          description: Total number of critical modules
+      required:
+        - trend_id
+        - month_year
+        - baseline_coverage
+        - current_coverage
+        - coverage_delta
+        - milestone_achieved

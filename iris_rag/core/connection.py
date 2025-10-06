@@ -1,5 +1,6 @@
-import os
 import logging
+import os
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -34,17 +35,61 @@ class ConnectionManager:
                             ConfigurationManager will be instantiated.
         """
         self._connections = {}  # Initialize as instance variable
+        self._connection_times = {}  # Track connection creation time
+        self._connection_use_counts = {}  # Track number of times connection used
         if config_manager is None:
             # This will eventually load from a default path or environment
             self.config_manager = ConfigurationManager()
         else:
             self.config_manager = config_manager
 
+    def _is_connection_healthy(self, connection) -> bool:
+        """
+        Check if a connection is still healthy and responsive.
+
+        Args:
+            connection: The database connection to check
+
+        Returns:
+            True if connection is healthy, False otherwise
+        """
+        try:
+            cursor = connection.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            cursor.close()
+            return True
+        except Exception as e:
+            logger.warning(f"Connection health check failed: {e}")
+            return False
+
+    def invalidate_connection(self, backend_name: str = "iris"):
+        """
+        Invalidate a cached connection so it will be recreated on next request.
+
+        Use this when you encounter connection errors to force a fresh connection.
+
+        Args:
+            backend_name: The name of the backend whose connection to invalidate
+        """
+        if backend_name in self._connections:
+            logger.info(f"Invalidating connection for {backend_name}")
+            try:
+                self._connections[backend_name].close()
+            except:
+                pass
+            del self._connections[backend_name]
+            if backend_name in self._connection_times:
+                del self._connection_times[backend_name]
+            if backend_name in self._connection_use_counts:
+                del self._connection_use_counts[backend_name]
+
     def get_connection(self, backend_name: str = "iris"):
         """
         Retrieves or creates a database connection for the specified backend.
 
-        Connections are cached to avoid redundant establishments.
+        Connections are cached but health-checked before reuse. Stale connections
+        are automatically refreshed to prevent timeouts during long-running operations.
 
         Args:
             backend_name: The name of the database backend (e.g., 'iris').
@@ -57,8 +102,36 @@ class ConnectionManager:
             ValueError: If the backend is unsupported or configuration is missing.
             ImportError: If the required database driver cannot be imported.
         """
+        # Check if we have a cached connection
         if backend_name in self._connections:
-            return self._connections[backend_name]
+            connection = self._connections[backend_name]
+            connection_age = time.time() - self._connection_times.get(backend_name, 0)
+            use_count = self._connection_use_counts.get(backend_name, 0)
+
+            # Check health only if connection is old (>20 minutes)
+            # Don't refresh based on use count - causes IRIS driver segfaults
+            should_health_check = connection_age > 1200
+
+            if should_health_check:
+                is_healthy = self._is_connection_healthy(connection)
+                if not is_healthy:
+                    logger.info(f"Refreshing unhealthy connection for {backend_name} (age: {connection_age:.0f}s, uses: {use_count})")
+                    try:
+                        connection.close()
+                    except:
+                        pass
+                    del self._connections[backend_name]
+                    del self._connection_times[backend_name]
+                    del self._connection_use_counts[backend_name]
+                else:
+                    # Health check passed, reset use count and continue
+                    self._connection_use_counts[backend_name] = 0
+                    logger.debug(f"Connection health check passed (age: {connection_age:.0f}s, uses: {use_count})")
+                    return connection
+            else:
+                # Track usage and return cached connection
+                self._connection_use_counts[backend_name] = use_count + 1
+                return connection
 
         # Get database configuration
         config_key = f"database:{backend_name}"
@@ -88,6 +161,7 @@ class ConnectionManager:
                 raise ConnectionError("IRIS connection utility returned None")
 
             self._connections[backend_name] = connection
+            self._connection_times[backend_name] = time.time()
             return connection
         except ImportError as e:
             logger.error(f"Failed to import database utility: {e}")
@@ -110,7 +184,7 @@ class ConnectionManager:
                 # Fallback to environment variables
                 db_config = {
                     "db_host": os.getenv("IRIS_HOST", "localhost"),
-                    "db_port": int(os.getenv("IRIS_PORT", "1972")),
+                    "db_port": int(os.getenv("IRIS_PORT", "1974")),
                     "db_namespace": os.getenv("IRIS_NAMESPACE", "USER"),
                     "db_user": os.getenv("IRIS_USERNAME", "_SYSTEM"),
                     "db_password": os.getenv("IRIS_PASSWORD", "SYS"),
@@ -121,7 +195,7 @@ class ConnectionManager:
 
             connection_config = {
                 "hostname": db_config.get("db_host", "localhost"),
-                "port": db_config.get("db_port", 1972),
+                "port": db_config.get("db_port", 1974),
                 "namespace": db_config.get("db_namespace", "USER"),
                 "username": db_config.get("db_user", "_SYSTEM"),
                 "password": db_config.get("db_password", "SYS"),

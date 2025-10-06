@@ -1,19 +1,21 @@
 # iris_rag package
 # This file makes the iris_rag directory a Python package.
 
-from typing import Dict, Any, Optional, Callable, List
+from typing import Any, Callable, Dict, List, Optional
+
+from common.utils import get_llm_func  # Import get_llm_func
+
+from .config.manager import ConfigurationManager
 from .core.base import RAGPipeline
 from .core.connection import ConnectionManager
-from .config.manager import ConfigurationManager
 from .pipelines.basic import BasicRAGPipeline
 from .pipelines.crag import CRAGPipeline
 
 # Import validation components
 from .validation.factory import ValidatedPipelineFactory, create_validated_pipeline
-from .validation.validator import PreConditionValidator
 from .validation.orchestrator import SetupOrchestrator
 from .validation.requirements import get_pipeline_requirements
-from common.utils import get_llm_func  # Import get_llm_func
+from .validation.validator import PreConditionValidator
 
 # Package version
 __version__ = "0.1.0"
@@ -125,11 +127,20 @@ def _create_pipeline_legacy(
             embedding_func=embedding_func,
             llm_func=llm_func,
         )
+    elif pipeline_type == "graphrag":
+        from .pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+
+        return HybridGraphRAGPipeline(
+            connection_manager=connection_manager,
+            config_manager=config_manager,
+            llm_func=llm_func,
+        )
     else:
         available_types = [
             "basic",
             "basic_rerank",
             "crag",
+            "graphrag",
         ]
         raise ValueError(
             f"Unknown pipeline type: {pipeline_type}. Available: {available_types}"

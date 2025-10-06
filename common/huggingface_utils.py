@@ -2,11 +2,11 @@
 HuggingFace model download utilities with rate limiting and retry logic.
 """
 
-import time
 import logging
 import random
-from typing import Tuple, Any, Optional
+import time
 from functools import wraps
+from typing import Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def download_huggingface_model(
         Tuple of (tokenizer, model)
     """
     try:
-        from transformers import AutoTokenizer, AutoModel
+        from transformers import AutoModel, AutoTokenizer
 
         logger.info(f"Downloading HuggingFace model: {model_name}")
 

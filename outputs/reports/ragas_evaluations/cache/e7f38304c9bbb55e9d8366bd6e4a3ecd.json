@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "CRAG",
+  "query": "How does COVID-19 affect respiratory function and lung capacity?",
+  "answer": null,
+  "contexts": [],
+  "execution_time": 0.1717052459716797,
+  "success": true,
+  "error": null
+}

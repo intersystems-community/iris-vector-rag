@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "HybridGraphRAG",
+  "query": "What nutritional interventions are recommended for metabolic syndrome?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.11976480484008789,
+  "success": true,
+  "error": null
+}

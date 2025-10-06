@@ -5,8 +5,8 @@ This module defines the data and embedding requirements for different RAG pipeli
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -317,12 +317,177 @@ class GraphRAGRequirements(PipelineRequirements):
         ]
 
 
+class HybridGraphRAGRequirements(PipelineRequirements):
+    """
+    Requirements for HybridGraphRAG pipeline.
+
+    Inherits GraphRAG requirements but with enhanced capabilities when iris_graph_core
+    is available. Provides graceful fallback to GraphRAG behavior when enhanced
+    features are unavailable.
+    """
+
+    @property
+    def pipeline_name(self) -> str:
+        return "hybrid_graphrag"
+
+    @property
+    def required_tables(self) -> List[TableRequirement]:
+        """Same core requirements as GraphRAG - ensures graceful fallback."""
+        return [
+            TableRequirement(
+                name="SourceDocuments",
+                schema="RAG",
+                description="Document storage with embeddings",
+                min_rows=1,
+                supports_vector_search=True,
+            ),
+            TableRequirement(
+                name="Entities",
+                schema="RAG",
+                description="Extracted entities with embeddings",
+                min_rows=1,
+                supports_vector_search=True,
+            ),
+            TableRequirement(
+                name="EntityRelationships",
+                schema="RAG",
+                description="Entity relationships for graph traversal",
+                min_rows=1,
+                supports_vector_search=False,
+            ),
+        ]
+
+    @property
+    def required_embeddings(self) -> List[EmbeddingRequirement]:
+        """Same core embeddings as GraphRAG."""
+        return [
+            EmbeddingRequirement(
+                name="document_embeddings",
+                table="RAG.SourceDocuments",
+                column="embedding",
+                description="Document-level embeddings for vector search",
+            )
+        ]
+
+    @property
+    def optional_tables(self) -> List[TableRequirement]:
+        """Optional iris_graph_core enhancement tables."""
+        return [
+            TableRequirement(
+                name="kg_NodeEmbeddings_optimized",
+                schema="SQLUSER",
+                description="Optimized HNSW vector indexes (iris_graph_core)",
+                required=False,
+                supports_vector_search=True,
+            ),
+            TableRequirement(
+                name="rdf_labels",
+                schema="SQLUSER",
+                description="RDF label mappings (iris_graph_core)",
+                required=False,
+                supports_vector_search=False,
+            ),
+            TableRequirement(
+                name="rdf_props",
+                schema="SQLUSER",
+                description="RDF property mappings (iris_graph_core)",
+                required=False,
+                supports_vector_search=False,
+            ),
+            TableRequirement(
+                name="rdf_edges",
+                schema="SQLUSER",
+                description="RDF edge mappings (iris_graph_core)",
+                required=False,
+                supports_vector_search=False,
+            ),
+        ]
+
+    @property
+    def optional_embeddings(self) -> List[EmbeddingRequirement]:
+        """Optional enhanced embeddings for hybrid capabilities."""
+        return [
+            EmbeddingRequirement(
+                name="entity_embeddings",
+                table="RAG.Entities",
+                column="entity_embeddings",
+                description="Entity-level embeddings for semantic entity search",
+                required=False,
+            ),
+            EmbeddingRequirement(
+                name="hnsw_optimized_embeddings",
+                table="SQLUSER.kg_NodeEmbeddings_optimized",
+                column="embedding",
+                description="HNSW-optimized embeddings (iris_graph_core enhancement)",
+                required=False,
+            ),
+        ]
+
+
+class PyLateColBERTRequirements(PipelineRequirements):
+    """Requirements for PyLate ColBERT pipeline."""
+
+    @property
+    def pipeline_name(self) -> str:
+        return "pylate_colbert"
+
+    @property
+    def required_tables(self) -> List[TableRequirement]:
+        return [
+            TableRequirement(
+                name="SourceDocuments",
+                schema="RAG",
+                description="Main document storage table",
+                min_rows=1,
+            )
+        ]
+
+    @property
+    def required_embeddings(self) -> List[EmbeddingRequirement]:
+        return [
+            EmbeddingRequirement(
+                name="document_embeddings",
+                table="RAG.SourceDocuments",
+                column="embedding",
+                description="Document-level embeddings for vector search",
+            )
+        ]
+
+    @property
+    def optional_tables(self) -> List[TableRequirement]:
+        """Optional tables for enhanced functionality."""
+        return [
+            TableRequirement(
+                name="DocumentChunks",
+                schema="RAG",
+                description="Document chunks for granular retrieval (optional enhancement)",
+                required=False,
+                min_rows=0,
+            )
+        ]
+
+    @property
+    def optional_embeddings(self) -> List[EmbeddingRequirement]:
+        """Optional embeddings for ColBERT late interaction."""
+        return [
+            EmbeddingRequirement(
+                name="chunk_embeddings",
+                table="RAG.DocumentChunks",
+                column="embedding",
+                description="Chunk-level embeddings for reranking (optional)",
+                required=False,
+            )
+        ]
+
+
 # Registry of pipeline requirements
 PIPELINE_REQUIREMENTS_REGISTRY = {
     "basic": BasicRAGRequirements,
     "basic_rerank": BasicRAGRerankingRequirements,
+    "pylate_colbert": PyLateColBERTRequirements,
     "crag": CRAGRequirements,
     "graphrag": GraphRAGRequirements,
+    "hybrid_graphrag": HybridGraphRAGRequirements,
 }
 
 
