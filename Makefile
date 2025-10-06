@@ -694,7 +694,7 @@ test-ragas-1000-real: docker-up docker-wait ## E2E: Download+load 1000 PMC docs,
 t@set -a; [ -f .env ] && . ./.env; set +a; \
 	@export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
 	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-15}; \
-	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"BasicRAG,BasicRerank,CRAG,GraphRAG,HybridGraphRAG"}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-"basic,basic_rerank,crag,graphrag,pylate_colbert"}; \
 	python scripts/utilities/download_real_pmc_docs.py; \
 	python scripts/generate_ragas_evaluation.py; \
 	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
@@ -708,7 +708,7 @@ test-ragas-sample-docker: docker-up docker-wait ## Quick RAGAS (GraphRAG + Hybri
 	@$(DOCKER_COMPOSE) exec rag_api /bin/bash -lc "\
 export EVAL_PMC_DIR=\"${EVAL_PMC_DIR:-/app/data/sample_10_docs}\"; \
 export RAGAS_NUM_QUERIES=\"${RAGAS_NUM_QUERIES:-8}\"; \
-export RAGAS_PIPELINES=\"${RAGAS_PIPELINES:-GraphRAG,HybridGraphRAG}\"; \
+export RAGAS_PIPELINES=\"${RAGAS_PIPELINES:-graphrag,pylate_colbert}\"; \
 python scripts/generate_ragas_evaluation.py; \
 echo 'RAGAS reports are in outputs/reports/ragas_evaluations'"
 
@@ -717,13 +717,13 @@ test-ragas-1000-docker: docker-up docker-wait ## E2E RAGAS on 1000 PMC docs (dow
 	$(call print_message,$(BLUE),Downloading PMC docs on host)
 	@export EVAL_PMC_DIR=${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
 	export RAGAS_NUM_QUERIES=${RAGAS_NUM_QUERIES:-15}; \
-	export RAGAS_PIPELINES=${RAGAS_PIPELINES:-"BasicRAG,BasicRerank,CRAG,GraphRAG,HybridGraphRAG"}; \
+	export RAGAS_PIPELINES=${RAGAS_PIPELINES:-"basic,basic_rerank,crag,graphrag,pylate_colbert"}; \
 	python scripts/utilities/download_real_pmc_docs.py
 	$(call print_message,$(BLUE),Running RAGAS (dockerized))
 	@$(DOCKER_COMPOSE) exec rag_api /bin/bash -lc "\
 export EVAL_PMC_DIR=\"${EVAL_PMC_DIR:-/app/data/downloaded_pmc_docs}\"; \
 export RAGAS_NUM_QUERIES=\"${RAGAS_NUM_QUERIES:-15}\"; \
-export RAGAS_PIPELINES=\"${RAGAS_PIPELINES:-BasicRAG,BasicRerank,CRAG,GraphRAG,HybridGraphRAG}\"; \
+export RAGAS_PIPELINES=\"${RAGAS_PIPELINES:-basic,basic_rerank,crag,graphrag,pylate_colbert}\"; \
 python scripts/generate_ragas_evaluation.py; \
 echo 'RAGAS reports are in outputs/reports/ragas_evaluations'"
 
