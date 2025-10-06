@@ -184,7 +184,7 @@ class EntityStorageAdapter:
                     embedding_str = json.dumps(embedding)
                     update_sql = f"""
                         UPDATE {self.entities_table}
-                        SET entity_name = ?, entity_type = ?, source_doc_id = ?, description = ?, embedding = TO_VECTOR(?)
+                        SET entity_name = ?, entity_type = ?, source_doc_id = ?, description = ?, embedding = TO_VECTOR(?, DOUBLE, 384)
                         WHERE entity_id = ?
                     """
                     params = [
@@ -219,7 +219,7 @@ class EntityStorageAdapter:
                     insert_sql = f"""
                         INSERT INTO {self.entities_table}
                         (entity_id, entity_name, entity_type, source_doc_id, description, embedding)
-                        VALUES (?, ?, ?, ?, ?, TO_VECTOR(?))
+                        VALUES (?, ?, ?, ?, ?, TO_VECTOR(?, DOUBLE, 384))
                     """
                     params = [
                         entity_id,

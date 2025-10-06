@@ -12,6 +12,53 @@ from iris_rag.core.models import Document
 from iris_rag.pipelines.crag import CRAGPipeline
 from iris_rag.storage.vector_store_iris import IRISVectorStore
 from common.utils import get_llm_func, get_embedding_func
+from common.iris_connection_manager import get_iris_connection
+
+
+@pytest.fixture(scope="session", autouse=True)
+def clean_database_once():
+    """Drop and recreate tables at session start with correct DOUBLE schema."""
+    conn = get_iris_connection()
+    cursor = conn.cursor()
+
+    # Drop tables completely
+    cursor.execute('DROP TABLE IF EXISTS RAG.DocumentChunks CASCADE')
+    cursor.execute('DROP TABLE IF EXISTS RAG.SourceDocuments CASCADE')
+    conn.commit()
+
+    # Recreate with DOUBLE datatype
+    cursor.execute('''
+    CREATE TABLE RAG.SourceDocuments (
+        doc_id VARCHAR(255) PRIMARY KEY,
+        text_content TEXT,
+        metadata TEXT,
+        embedding VECTOR(DOUBLE, 384),
+        created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    cursor.execute("CREATE INDEX idx_hnsw_source_embedding ON RAG.SourceDocuments (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')")
+
+    cursor.execute('''
+    CREATE TABLE RAG.DocumentChunks (
+        id VARCHAR(255) PRIMARY KEY,
+        chunk_id VARCHAR(255),
+        doc_id VARCHAR(255),
+        chunk_text TEXT,
+        chunk_embedding VECTOR(DOUBLE, 384),
+        chunk_index INTEGER,
+        chunk_type VARCHAR(100),
+        metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
+    )
+    ''')
+    cursor.execute('CREATE INDEX idx_chunks_doc_id ON RAG.DocumentChunks (doc_id)')
+    cursor.execute('CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)')
+    cursor.execute("CREATE INDEX idx_hnsw_chunk_embedding ON RAG.DocumentChunks (chunk_embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')")
+
+    conn.commit()
+    cursor.close()
+    yield
 
 
 @pytest.fixture(scope="module")

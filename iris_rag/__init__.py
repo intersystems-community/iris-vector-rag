@@ -37,7 +37,12 @@ def create_pipeline(
     Factory function to create RAG pipeline instances with validation.
 
     Args:
-        pipeline_type: The type of pipeline to create (e.g., "basic").
+        pipeline_type: The type of pipeline to create. Available types:
+            - "basic": Basic RAG with vector similarity search
+            - "basic_rerank": Basic RAG with reranking
+            - "crag": Corrective RAG with retrieval evaluation
+            - "graphrag": Graph-based RAG with entity relationships
+            - "pylate_colbert": ColBERT-based dense retrieval
         config_path: Optional path to configuration file.
         llm_func: Optional LLM function for answer generation.
         embedding_func: Optional embedding function for vector generation.
@@ -135,12 +140,21 @@ def _create_pipeline_legacy(
             config_manager=config_manager,
             llm_func=llm_func,
         )
+    elif pipeline_type == "pylate_colbert":
+        from .pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+
+        return PyLateColBERTPipeline(
+            connection_manager=connection_manager,
+            config_manager=config_manager,
+            llm_func=llm_func,
+        )
     else:
         available_types = [
             "basic",
             "basic_rerank",
             "crag",
             "graphrag",
+            "pylate_colbert",
         ]
         raise ValueError(
             f"Unknown pipeline type: {pipeline_type}. Available: {available_types}"

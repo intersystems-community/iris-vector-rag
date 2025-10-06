@@ -14,11 +14,17 @@
 - [x] Add requires_llm_api marker
 - [x] Mark GraphRAG tests as slow
 
-### Current Focus
-- [ ] Fix remaining 5 test failures (contract tests mostly)
-- [ ] Address core_framework keyword matching issue
+### Current Focus - DONE ✅
+- [x] Fix CRAG DocumentChunks table creation
+- [x] Fix CRAG vector datatype mismatch (FLOAT→DOUBLE)
+- [x] Add ColBERT/PyLate to main pipeline factory
+- [x] Feature 028 session 3 complete & committed
+
+### Next Steps
+- [ ] Fix remaining CRAG test assertion strictness (5 tests)
+- [ ] Address PyLate metadata preservation test (1 test)
 - [ ] Coverage improvements (current: 10%, target: 95%)
-- [ ] Feature 028 completion & commit
+- [ ] Merge ColBERT factory branch to main
 
 ## Short Term (This Week)
 

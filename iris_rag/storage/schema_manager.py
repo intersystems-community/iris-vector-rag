@@ -1770,7 +1770,7 @@ class SchemaManager:
         """
         try:
             # Check if this is a standard RAG table
-            standard_tables = ["SourceDocuments", "Entities", "EntityRelationships"]
+            standard_tables = ["SourceDocuments", "DocumentChunks", "Entities", "EntityRelationships"]
             if table_name in standard_tables:
                 return self._ensure_standard_table(table_name)
             else:
@@ -1813,6 +1813,8 @@ class SchemaManager:
                 success = self._create_entities_table(cursor)
             elif table_name == "EntityRelationships":
                 success = self._create_entity_relationships_table(cursor)
+            elif table_name == "DocumentChunks":
+                success = self._create_document_chunks_table(cursor)
             else:
                 logger.error(f"Unknown standard table: {table_name}")
                 cursor.close()
@@ -1924,6 +1926,41 @@ class SchemaManager:
             return True
         except Exception as e:
             logger.error(f"Failed to create EntityRelationships table: {e}")
+            return False
+
+    def _create_document_chunks_table(self, cursor) -> bool:
+        """Create DocumentChunks table."""
+        try:
+            dimension = self.config_manager.get("embedding:dimension", 384)
+
+            create_sql = f"""
+            CREATE TABLE RAG.DocumentChunks (
+                id VARCHAR(255) PRIMARY KEY,
+                chunk_id VARCHAR(255),
+                doc_id VARCHAR(255),
+                chunk_text TEXT,
+                chunk_embedding VECTOR(DOUBLE, {dimension}),
+                chunk_index INTEGER,
+                chunk_type VARCHAR(100),
+                metadata TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
+            )
+            """
+            cursor.execute(create_sql)
+
+            # Create indexes
+            indexes = [
+                "CREATE INDEX idx_chunks_doc_id ON RAG.DocumentChunks (doc_id)",
+                "CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)",
+            ]
+
+            for index_sql in indexes:
+                cursor.execute(index_sql)
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create DocumentChunks table: {e}")
             return False
 
     def _ensure_index(self, index_config: Dict[str, Any]) -> bool:
