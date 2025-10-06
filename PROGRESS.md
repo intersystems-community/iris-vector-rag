@@ -3,12 +3,24 @@
 ## Current Goal
 Increase code coverage from 9% to 60% overall and 80% for critical modules (config, validation, pipelines, services, storage).
 
-## Latest Update: 2025-10-04 - PYLATE & VECTOR STORE TESTS FIXED ✅
+## Latest Update: 2025-10-05 - CRAG SCHEMA FIXES & COLBERT FACTORY INTEGRATION ✅
+
+### ✅ Feature 028: Test Infrastructure Resilience (Sessions 1-3 Complete)
+
+**Major Test Infrastructure Improvements:**
+- Session 1: Vector Store fixes (38/43 passing, 5 xfailed)
+- Session 2: Environment/port configuration fixes (Basic Pipeline 86%)
+- Session 3: CRAG schema fixes (29/34 passing, 85%)
+
+**ColBERT Factory Integration (NEW):**
+- Added PyLate/ColBERT to main pipeline factory (`iris_rag/__init__.py`)
+- Now accessible via `create_pipeline('pylate_colbert')`
+- Enables ColBERT in general RAGAS evaluations
 
 ### ✅ Phase 3.4: E2E Test API Alignment (In Progress)
 
 Successfully fixed API mismatches between test expectations and actual implementations.
-**76 E2E tests now passing** (up from 66) through PyLate API fixes and vector store connection management.
+**~92% E2E tests now passing** through systematic infrastructure and schema fixes.
 
 ### ✅ Phase 3.1-3.3 Complete: Test Repair Initiative
 
