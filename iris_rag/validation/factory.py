@@ -161,6 +161,9 @@ class ValidatedPipelineFactory:
             return GraphRAGPipeline(**pipeline_kwargs)
         elif pipeline_type == "hybrid_graphrag":
             return HybridGraphRAGPipeline(**pipeline_kwargs)
+        elif pipeline_type == "pylate_colbert":
+            from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+            return PyLateColBERTPipeline(**pipeline_kwargs)
         else:
             available_types = [
                 "basic",
@@ -168,6 +171,7 @@ class ValidatedPipelineFactory:
                 "crag",
                 "graphrag",
                 "hybrid_graphrag",
+                "pylate_colbert",
             ]
             raise ValueError(
                 f"Unknown pipeline type: {pipeline_type}. Available: {available_types}"
