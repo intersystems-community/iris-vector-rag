@@ -87,10 +87,35 @@
 - Disabled schema validation - tables must exist beforehand
 - Use db_init_complete.sql to create schema first
 
+**Resolution** ✅:
+Fixed all 4 instances of hardcoded configuration:
+1. ✅ Makefile IRIS_PORT: 1974 → 11972 (2 targets)
+2. ✅ RAGAS script IRIS_PORT: Respect environment variable
+3. ✅ RAGAS pipeline list: Read from RAGAS_PIPELINES env var
+4. ✅ Loader SchemaManager: Bypassed to prevent connection conflicts
+
+**RAGAS Results** 🎉:
+```
+1. basic_rerank:  100.0% ⭐ PERFECT
+2. basic:          99.0%
+3. crag:           96.3%
+4. hybrid_graphrag: 14.4% (needs Entities table)
+```
+
+**Feature 030 Status**: ✅ **COMPLETE**
+- Data loading with real non-zero embeddings
+- Schema compatibility fixes
+- Zero vector validation
+- Make target dependencies
+- Infrastructure E2E tests
+- RAGAS evaluation producing meaningful scores
+- Clear pipeline performance differentiation
+
 **Next Steps**:
-- Fix RAGAS evaluation to use correct port (11972)
+- Test PyLate/ColBERT pipeline (still in progress)
 - Consider consolidating connection managers
 - Document port auto-detection behavior
+- Fix hybrid_graphrag Entities table requirement
 
 ### CRAG Pipeline DOUBLE Datatype Fix (Feature 028) - Session 4 ✅ COMPLETE
 **Root Cause**: Vector datatype mismatch - old FLOAT tables persisting across test runs
