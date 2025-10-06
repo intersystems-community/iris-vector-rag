@@ -68,16 +68,29 @@
 - All embeddings are non-zero (validated)
 - ~30-50 docs/sec loading rate
 
-**Current Blocker** 🔴:
-- Documents load successfully (see "Total documents: 287" in loader output)
-- But subsequent queries return 0 documents
-- Transaction/commit issue: data not persisting across connections
-- RAGAS evaluation runs but finds "No relevant documents"
+**Root Cause Found** ✅:
+- NOT a transaction/commit issue - commits work perfectly
+- MULTIPLE IRIS databases on different ports!
+- Auto-detection finds Docker IRIS on port 11972
+- Default IRIS_PORT is 1974
+- Loader connects to 11972, manual queries connect to 1974
+- Querying WRONG database → seeing 0 documents
+
+**Verification**:
+- 313 documents exist on port 11972 ✅
+- 0 documents on port 1974 (correct - different database)
+- All commits succeed (verified with explicit logging)
+
+**Secondary Issue - SchemaManager**:
+- SchemaManager creates separate IRConnectionManager
+- This creates NEW connection, causing needless complexity
+- Disabled schema validation - tables must exist beforehand
+- Use db_init_complete.sql to create schema first
 
 **Next Steps**:
-- Debug connection/transaction isolation issue
-- Ensure commits are visible across connections
-- Verify SourceDocuments data persists after loader exits
+- Fix RAGAS evaluation to use correct port (11972)
+- Consider consolidating connection managers
+- Document port auto-detection behavior
 
 ### CRAG Pipeline DOUBLE Datatype Fix (Feature 028) - Session 4 ✅ COMPLETE
 **Root Cause**: Vector datatype mismatch - old FLOAT tables persisting across test runs
