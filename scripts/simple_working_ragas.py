@@ -420,8 +420,12 @@ def main():
         },
     ]
 
-    # Test all available pipelines for comprehensive comparison
-    pipeline_types = ["basic", "basic_rerank", "crag", "graphrag", "hybrid_graphrag"]
+    # Get pipeline types from environment (set by Makefile) or use defaults
+    default_pipelines = "basic,basic_rerank,crag,graphrag,pylate_colbert"
+    pipeline_types_str = os.environ.get("RAGAS_PIPELINES", default_pipelines)
+    pipeline_types = [p.strip() for p in pipeline_types_str.split(",")]
+    logger.info(f"Testing pipelines: {', '.join(pipeline_types)}")
+
     results = {}
 
     start_time = time.time()
