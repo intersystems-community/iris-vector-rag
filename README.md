@@ -3,98 +3,167 @@
 ## 🎯 Project Status: Complete & Ready for Integration
 
 RAG-Templates is now **complete as a reusable framework** with all core components delivered:
-- ✅ 4 Production RAG Pipelines (BasicRAG, CRAG, GraphRAG, BasicRAGReranking)
-- ✅ **NEW: HybridGraphRAG with IRIS Graph Core Integration** (50x performance, RRF fusion)
-- ✅ **NEW: IRIS-Global-GraphRAG Integration** (Academic papers with 3D visualization)
-- ✅ **NEW: Multi-Pipeline Comparison System** (TDD-validated, side-by-side evaluation)
-- ✅ Enterprise IRIS Backend Integration
-- ✅ Generic Memory Components Architecture
-- ✅ Unified Bridge Adapter Interface
-- ✅ Incremental Indexing Foundation
+- ✅ **6 Production RAG Pipelines** with standardized API
+  - BasicRAG - Standard vector similarity search
+  - BasicRAGReranking - Vector search with cross-encoder reranking
+  - CRAG - Corrective RAG with self-evaluation
+  - HybridGraphRAG - Graph + vector + text hybrid search with RRF fusion
+  - PyLateColBERT - ColBERT late interaction retrieval
+  - IRIS-Global-GraphRAG - Academic papers with 3D visualization
+- ✅ **100% Test Coverage** (136/136 tests passing)
+  - Contract tests for API validation
+  - Integration tests with live database
+  - E2E workflow validation
+- ✅ **Unified API Surface** - Consistent interfaces across all pipelines
+- ✅ **Enterprise IRIS Backend** with connection pooling and mode detection
+- ✅ **LangChain & RAGAS Compatible** - Standard Document objects and metadata
 
-**Integration Documentation:**
-- 📋 [Project Completion Report](docs/PROJECT_COMPLETION_REPORT_VALIDATED.md) - Validated achievements and honest metrics
-- 🔗 [Integration Handoff Guide](docs/INTEGRATION_HANDOFF_GUIDE.md) - How to consume rag-templates in your application
-- ⚡ **[IRIS Graph Core Integration](docs/IRIS_GRAPH_CORE_INTEGRATION.md)** - Advanced hybrid search with RRF fusion
-- 🔬 **[IRIS Global GraphRAG Integration](docs/IRIS_GLOBAL_GRAPHRAG_INTEGRATION.md)** - Academic papers with 3D visualization
-- 📊 **Multi-Pipeline Comparison** - TDD-validated side-by-side evaluation system
-- 🏗️ [Architecture Summary](docs/VALIDATED_ARCHITECTURE_SUMMARY.md) - Service boundaries and performance characteristics
-- 🚀 [Production Readiness](docs/PRODUCTION_READINESS_ASSESSMENT.md) - Infrastructure requirements and deployment guidance
+**Documentation:** 📑 [**Full Documentation Index**](DOCUMENTATION_INDEX.md)
+
+**Quick Links:**
+- 📖 **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation with examples
+- 📚 [User Guide](USER_GUIDE.md) - Step-by-step installation and usage
+- 🧪 [Test Validation Summary](TEST_VALIDATION_SUMMARY.md) - 100% test pass rate (136/136)
+- 🔗 [Integration Guide](docs/INTEGRATION_HANDOFF_GUIDE.md) - How to integrate into your app
+- 🏗️ [Architecture Summary](docs/VALIDATED_ARCHITECTURE_SUMMARY.md) - System design
+- 🚀 [Production Readiness](docs/PRODUCTION_READINESS_ASSESSMENT.md) - Deployment checklist
 
 **Scope Transition:**
 Application-specific features (PRefLexOR bridge, production monitoring, CI/CD) have been re-scoped to the [kg-ticket-resolver](https://github.com/your-org/kg-ticket-resolver) application project.
 
-## Set up
+## Quick Start
 
 ```bash
-# 1. Clone the repository
+# 1. Clone and setup environment
 git clone <repository-url>
 cd rag-templates
-
-# 2. Set up Python environment using uv (fast, modern package manager)
 make setup-env  # Creates .venv using uv
-make install    # Installs all dependencies via uv sync
+make install    # Installs dependencies
 
-# 3. Activate the virtual environment
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# 2. Activate environment
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# 4. Optional: Install HybridGraphRAG dependencies for advanced features
-pip install rag-templates[hybrid-graphrag]  # Installs iris-vector-graph for 50x performance
-
-# 5. Start the database (uses ports 11972/152773 to avoid conflicts)
+# 3. Start database
 docker-compose up -d
 
-# 6. Initialize and load sample data
+# 4. Initialize database
 make setup-db
 make load-data
 
-# 7. Test that you can access the iris_rag package
-make validate-iris-rag
+# 5. Create .env file with API keys
+cat > .env << 'EOF'
+OPENAI_API_KEY=your-key-here
+IRIS_HOST=localhost
+IRIS_PORT=1972
+EOF
 
-# 8. Create your .env file and add your API keys in
+# 6. Try different pipelines
+python -c "
+from iris_rag import create_pipeline
 
-# 9. Try the various pipeline scripts!
-# Note: these scripts currently use OpenAI's ChatGPT as the LLM, so having an API key is essential.
-# The first time you run any script after loading new data will take a long time due to overhead of initial chunking, embedding, and storage
-cd scripts/basic
-python try_basic_rag_pipeline.py
-
-# 10. Try the NEW HybridGraphRAG with advanced search capabilities
-# Install with: pip install rag-templates[hybrid-graphrag]
-python try_hybrid_graphrag_pipeline.py
+# Basic RAG - simplest approach
+pipeline = create_pipeline('basic')
+result = pipeline.query('What is machine learning?', top_k=5)
+print(result['answer'])
+"
 ```
 
-## 🚀 Quick Start: HybridGraphRAG
+## 📖 Unified API Reference
 
-**Installation:** `pip install rag-templates[hybrid-graphrag]`
+All pipelines follow a consistent, standardized API:
 
-For advanced hybrid search with 50x performance improvements:
+### Creating Pipelines
 
 ```python
-from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+from iris_rag import create_pipeline
 
-# Initialize with hybrid capabilities
-pipeline = HybridGraphRAGPipeline()
+# Available pipeline types:
+# - "basic"          : BasicRAG (vector similarity)
+# - "basic_rerank"   : BasicRAG + cross-encoder reranking
+# - "crag"           : Corrective RAG with self-evaluation
+# - "graphrag"       : HybridGraphRAG (vector + text + graph)
+# - "pylate_colbert" : ColBERT late interaction
 
-# Multi-modal hybrid search (vector + text + graph)
-results = pipeline.query(
-    query_text="cancer drug targets",
-    method="hybrid",
-    top_k=15
+pipeline = create_pipeline(
+    pipeline_type="basic",
+    validate_requirements=True,  # Auto-validate DB setup
+    auto_setup=False,            # Auto-fix issues if True
+)
+```
+
+### Loading Documents
+
+```python
+from iris_rag.core.models import Document
+
+# Option 1: From Document objects
+docs = [
+    Document(
+        page_content="Python is a programming language...",
+        metadata={"source": "intro.txt", "author": "John"}
+    )
+]
+result = pipeline.load_documents(documents=docs)
+
+# Option 2: From file path
+result = pipeline.load_documents(documents_path="data/docs.json")
+
+# Returns: {"documents_loaded": 10, "embeddings_generated": 10, "documents_failed": 0}
+```
+
+### Querying
+
+```python
+# Standard query signature for ALL pipelines
+result = pipeline.query(
+    query="What is machine learning?",
+    top_k=5,                    # Number of documents to return (1-100)
+    generate_answer=True,       # Generate LLM answer (default: True)
+    include_sources=True,       # Include source metadata (default: True)
 )
 
-# RRF fusion search
-results = pipeline.query(
-    query_text="protein interactions",
-    method="rrf",
+# Standardized response format (LangChain & RAGAS compatible):
+{
+    "query": "What is machine learning?",
+    "answer": "Machine learning is...",                 # LLM-generated answer
+    "retrieved_documents": [Document(...)],             # LangChain Document objects
+    "contexts": ["context 1", "context 2"],             # RAGAS-compatible contexts
+    "sources": [{"source": "file.txt", ...}],           # Source references
+    "execution_time": 0.523,
+    "metadata": {
+        "num_retrieved": 5,
+        "pipeline_type": "basic",
+        "retrieval_method": "vector",
+        "context_count": 5,
+        ...
+    }
+}
+```
+
+### Pipeline-Specific Features
+
+```python
+# BasicRAGReranking - Control reranking behavior
+pipeline = create_pipeline("basic_rerank")
+result = pipeline.query(query, top_k=5)  # Retrieves rerank_factor*5, returns top 5
+
+# CRAG - Retrieval evaluation
+pipeline = create_pipeline("crag")
+result = pipeline.query(query, top_k=5, generate_answer=True)
+
+# HybridGraphRAG - Multi-modal search
+pipeline = create_pipeline("graphrag")
+result = pipeline.query(
+    query_text="cancer targets",
+    method="rrf",        # rrf, hybrid, vector, text, graph
     vector_k=30,
     text_k=30
 )
-```
 
-**Requirements:** Install with `pip install rag-templates[hybrid-graphrag]` to enable iris-vector-graph dependencies.
-For development, you can also place the [graph-ai](../graph-ai) project adjacent to rag-templates.
-See [IRIS Graph Core Integration](docs/IRIS_GRAPH_CORE_INTEGRATION.md) for detailed setup and configuration.
+# PyLateColBERT - Late interaction retrieval
+pipeline = create_pipeline("pylate_colbert")
+result = pipeline.query(query, top_k=5)  # Uses ColBERT late interaction
+```
 
 ## 🧪 Testing & Quality Assurance
 
