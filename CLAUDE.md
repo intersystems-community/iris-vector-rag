@@ -91,13 +91,15 @@ make test-ragas-1000-docker
   - **validation/**: Pipeline validation and requirements checking
   - **memory/**: Memory management and incremental indexing components
 
-### Available RAG Pipelines
-1. **BasicRAGPipeline**: Standard vector similarity search with LLM generation
-2. **BasicRAGRerankingPipeline**: Basic RAG with reranking for improved relevance
-3. **CRAGPipeline**: Corrective RAG with relevance evaluation and correction
-4. **GraphRAGPipeline**: Graph-based RAG using entity relationships and communities
-5. **HybridGraphRAGPipeline**: Advanced hybrid search combining vector, text, and graph retrieval
-6. **PyLateColBERTPipeline**: ColBERT-based dense retrieval pipeline
+### Available RAG Pipelines (via `create_pipeline()`)
+1. **`basic`** → BasicRAGPipeline - Standard vector similarity search
+2. **`basic_rerank`** → BasicRAGRerankingPipeline - Vector search + cross-encoder reranking
+3. **`crag`** → CRAGPipeline - Corrective RAG with self-evaluation
+4. **`graphrag`** → HybridGraphRAGPipeline - Hybrid search (vector + text + graph + RRF)
+5. **`pylate_colbert`** → PyLateColBERTPipeline - ColBERT late interaction retrieval
+
+**Additional Pipeline (Direct Import):**
+6. **IRIS-Global-GraphRAG** - Academic papers with 3D visualization and global communities
 
 ### Key Integration Points
 - **Vector Database**: InterSystems IRIS with native vector search capabilities
@@ -109,17 +111,22 @@ make test-ragas-1000-docker
 ```python
 from iris_rag import create_pipeline
 
-# Create with validation
+# Create with validation (recommended)
 pipeline = create_pipeline(
-    pipeline_type="basic",
-    validate_requirements=True,
-    auto_setup=True
+    pipeline_type="basic",           # basic, basic_rerank, crag, graphrag, pylate_colbert
+    validate_requirements=True,       # Auto-validate DB setup
+    auto_setup=False                 # Auto-fix issues if True
 )
 
-# Create specific pipeline types
-basic_pipeline = create_pipeline("basic")
-graphrag_pipeline = create_pipeline("graphrag")
-hybrid_pipeline = create_pipeline("hybrid_graphrag")  # Requires graph-ai adjacency
+# All pipelines share the same standardized API
+result = pipeline.query(query="What is diabetes?", top_k=5)
+
+# Standardized response format (100% LangChain & RAGAS compatible):
+# - result["answer"]: LLM-generated answer
+# - result["retrieved_documents"]: List[Document] with full metadata
+# - result["contexts"]: List[str] for RAGAS evaluation
+# - result["sources"]: Source references in metadata
+# - result["metadata"]: Pipeline-specific metadata fields
 ```
 
 ### Testing Architecture

@@ -135,21 +135,23 @@ The system automatically manages database schema changes when you update configu
 ### Using Python
 
 ```python
-from iris_rag.pipelines.factory import create_pipeline
-from common.utils import get_llm_func
-from common.iris_connection_manager import get_iris_connection
+from iris_rag import create_pipeline
 
-# Create a basic RAG pipeline
-pipeline = create_pipeline(
-    pipeline_type="basic",
-    llm_func=get_llm_func(),
-    external_connection=get_iris_connection()
-)
+# Create a basic RAG pipeline (auto-validates database setup)
+pipeline = create_pipeline(pipeline_type="basic", validate_requirements=True)
 
-# Ask a question
+# Ask a question - standardized API across all pipelines
 result = pipeline.query("What is machine learning?", top_k=5)
 print(f"Answer: {result['answer']}")
 print(f"Found {len(result['retrieved_documents'])} relevant documents")
+
+# Access retrieved contexts (RAGAS compatible)
+for i, context in enumerate(result['contexts'], 1):
+    print(f"Context {i}: {context[:100]}...")
+
+# Access source metadata (LangChain compatible)
+for doc in result['retrieved_documents']:
+    print(f"Source: {doc.metadata.get('source', 'Unknown')}")
 ```
 
 ## Document Management
@@ -228,21 +230,40 @@ make test-pipeline PIPELINE=basic
 make test-1000
 ```
 
-## Available RAG Techniques
+## Available RAG Pipelines
 
-The system supports multiple RAG (Retrieval Augmented Generation) techniques:
+The system supports 6 production-ready RAG techniques with unified API:
 
-### Basic RAG
-- **Best for**: General question answering
+### 1. BasicRAG (`basic`)
+- **Best for**: General question answering, simple use cases
 - **Features**: Standard vector similarity search
+- **Example**: `pipeline = create_pipeline("basic")`
 
-### Basic RAG
-- **Best for**: General question answering with more precision
-- **Features**: Overretrieval with reranking done using a cross encoder
+### 2. BasicRAGReranking (`basic_rerank`)
+- **Best for**: Improved precision in document retrieval
+- **Features**: Over-retrieval with cross-encoder reranking
+- **Example**: `pipeline = create_pipeline("basic_rerank")`
 
-### CRAG (Corrective RAG)
-- **Best for**: Self-correcting answers
-- **Features**: Automatic quality assessment and correction
+### 3. CRAG - Corrective RAG (`crag`)
+- **Best for**: Self-correcting, high-quality answers
+- **Features**: Automatic relevance evaluation and correction
+- **Example**: `pipeline = create_pipeline("crag")`
+
+### 4. HybridGraphRAG (`graphrag`)
+- **Best for**: Complex knowledge graphs, multi-hop reasoning
+- **Features**: Vector + Text + Graph search with RRF fusion
+- **Example**: `pipeline = create_pipeline("graphrag")`
+- **Requires**: `pip install rag-templates[hybrid-graphrag]`
+
+### 5. PyLateColBERT (`pylate_colbert`)
+- **Best for**: Precision retrieval with late interaction
+- **Features**: ColBERT-style token-level matching
+- **Example**: `pipeline = create_pipeline("pylate_colbert")`
+
+### 6. IRIS-Global-GraphRAG
+- **Best for**: Academic papers, 3D visualization
+- **Features**: Global community detection, hierarchical summaries
+- **Direct import**: `from iris_rag.pipelines.iris_global_graphrag import ...`
 
 ## Common Use Cases
 
