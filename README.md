@@ -28,9 +28,6 @@ RAG-Templates is now **complete as a reusable framework** with all core componen
 - 🏗️ [Architecture Summary](docs/VALIDATED_ARCHITECTURE_SUMMARY.md) - System design
 - 🚀 [Production Readiness](docs/PRODUCTION_READINESS_ASSESSMENT.md) - Deployment checklist
 
-**Scope Transition:**
-Application-specific features (PRefLexOR bridge, production monitoring, CI/CD) have been re-scoped to the [kg-ticket-resolver](https://github.com/your-org/kg-ticket-resolver) application project.
-
 ## Quick Start
 
 ```bash
