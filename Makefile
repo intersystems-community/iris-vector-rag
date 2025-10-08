@@ -857,3 +857,34 @@ coverage-help: ## Show coverage analysis commands help
 	@echo -e "  coverage-trends        - Generate trend analysis"
 	@echo -e "  coverage-validate      - Validate all targets"
 
+# =============================================================================
+# BACKEND MODE TESTING (Feature 035)
+# =============================================================================
+
+.PHONY: test-community
+test-community: ## Run tests with Community Edition backend mode
+	$(call print_message,$(BLUE),Running tests in Community mode)
+	@IRIS_BACKEND_MODE=community python -m pytest tests/ -v -m "requires_backend_mode or contract" --tb=short
+	$(call print_message,$(GREEN),Community mode tests completed)
+
+.PHONY: test-enterprise
+test-enterprise: ## Run tests with Enterprise Edition backend mode
+	$(call print_message,$(BLUE),Running tests in Enterprise mode)
+	@IRIS_BACKEND_MODE=enterprise python -m pytest tests/ -v -m "requires_backend_mode or contract" --tb=short
+	$(call print_message,$(GREEN),Enterprise mode tests completed)
+
+.PHONY: test-mode-switching
+test-mode-switching: ## Run backend mode switching integration tests
+	$(call print_message,$(BLUE),Testing backend mode switching)
+	@python -m pytest tests/integration/test_mode_switching.py -v --tb=short
+	$(call print_message,$(GREEN),Mode switching tests completed)
+
+.PHONY: test-backend-contracts
+test-backend-contracts: ## Run all backend mode contract tests
+	$(call print_message,$(BLUE),Running backend mode contract tests)
+	@python -m pytest tests/contract/test_backend_mode_config.py -v
+	@python -m pytest tests/contract/test_edition_detection.py -v
+	@python -m pytest tests/contract/test_connection_pooling.py -v
+	@python -m pytest tests/contract/test_execution_strategies.py -v
+	$(call print_message,$(GREEN),Backend mode contract tests completed)
+

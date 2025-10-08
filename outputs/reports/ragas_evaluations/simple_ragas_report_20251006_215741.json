@@ -1,0 +1,8 @@
+{
+  "graphrag": {
+    "pipeline_type": "graphrag",
+    "results": [],
+    "success_rate": 0.0,
+    "error": "[SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.ENTITIES' not found>]"
+  }
+}

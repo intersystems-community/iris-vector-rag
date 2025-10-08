@@ -447,6 +447,98 @@ except Exception:
         )
 
 
+# ============================================================================
+# Feature 035: Backend Mode Fixtures
+# ============================================================================
+
+@pytest.fixture(scope="session")
+def backend_configuration():
+    """
+    Session-scoped backend configuration fixture.
+
+    Loads backend mode configuration from environment/config file.
+    Logs configuration at session start per FR-012.
+
+    Returns:
+        BackendConfiguration instance
+    """
+    from iris_rag.testing.backend_manager import (
+        load_configuration,
+        log_session_start,
+    )
+
+    config = load_configuration()
+    log_session_start(config)
+    return config
+
+
+@pytest.fixture(scope="session")
+def backend_mode(backend_configuration):
+    """
+    Session-scoped backend mode fixture.
+
+    Returns:
+        BackendMode enum value (COMMUNITY or ENTERPRISE)
+    """
+    return backend_configuration.mode
+
+
+@pytest.fixture(scope="session")
+def connection_pool(backend_configuration):
+    """
+    Session-scoped connection pool fixture.
+
+    Creates connection pool with mode-appropriate limits:
+    - Community: 1 connection
+    - Enterprise: 999 connections
+
+    Returns:
+        ConnectionPool instance
+    """
+    from iris_rag.testing.connection_pool import ConnectionPool
+
+    return ConnectionPool(mode=backend_configuration.mode)
+
+
+@pytest.fixture(scope="session")
+def iris_devtools_bridge(backend_configuration):
+    """
+    Session-scoped iris-devtools bridge fixture.
+
+    Provides access to iris-devtools container lifecycle and
+    database state management operations.
+
+    Returns:
+        IrisDevToolsBridge instance
+
+    Raises:
+        IrisDevtoolsMissingError: If iris-devtools not available
+    """
+    from iris_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
+
+    return IrisDevToolsBridge(
+        iris_devtools_path=backend_configuration.iris_devtools_path
+    )
+
+
+@pytest.fixture
+def iris_connection(connection_pool):
+    """
+    Function-scoped IRIS connection fixture.
+
+    Acquires connection from pool, yields to test, then releases.
+    Enforces mode-specific connection limits.
+
+    Yields:
+        Active IRIS database connection
+
+    Raises:
+        ConnectionPoolTimeout: If pool limit exceeded
+    """
+    with connection_pool.acquire(timeout=30.0) as conn:
+        yield conn
+
+
 def pytest_collection_modifyitems(config, items):
     """Modify test collection to add markers based on location."""
     for item in items:
@@ -575,3 +667,234 @@ def validate_schema_once():
         )
 
     return results
+
+
+# ============================================================================
+# Feature 034: HybridGraphRAG Query Path Testing Fixtures
+# ============================================================================
+
+
+@pytest.fixture
+def mock_iris_graph_core_unavailable(mocker):
+    """
+    Mock iris_graph_core as unavailable for testing graceful degradation.
+
+    This fixture simulates the scenario where iris_graph_core is not installed
+    or cannot be imported, allowing tests to validate fallback behavior.
+
+    Usage:
+        def test_fallback(graphrag_pipeline, mock_iris_graph_core_unavailable):
+            # iris_graph_core methods will raise AttributeError
+            result = graphrag_pipeline.query("test", method="hybrid")
+            assert result.metadata['retrieval_method'] == 'vector_fallback'
+    """
+    # Mock the IRIS_GRAPH_CORE_AVAILABLE flag if it exists
+    try:
+        mocker.patch('iris_rag.pipelines.hybrid_graphrag.IRIS_GRAPH_CORE_AVAILABLE', False)
+    except AttributeError:
+        pass  # Flag doesn't exist, no need to mock
+
+    return mocker
+
+
+@pytest.fixture
+def mock_zero_results_retrieval(mocker):
+    """
+    Mock retrieval methods to return 0 results for testing fallback.
+
+    Returns a callable that mocks a specific retrieval method to return empty results.
+
+    Usage:
+        def test_fallback(graphrag_pipeline, mock_zero_results_retrieval):
+            mock_zero_results_retrieval(graphrag_pipeline, 'retrieve_via_hybrid_fusion')
+            result = graphrag_pipeline.query("test", method="hybrid")
+            assert result.metadata['retrieval_method'] == 'vector_fallback'
+    """
+    def mock_retrieval_method(pipeline, method_name):
+        """Mock a specific retrieval method to return 0 results."""
+        if hasattr(pipeline, 'retrieval_methods'):
+            mocker.patch.object(
+                pipeline.retrieval_methods,
+                method_name,
+                return_value=([], method_name.replace('retrieve_via_', ''))
+            )
+        else:
+            # Fallback to mocking the private method directly
+            mocker.patch.object(
+                pipeline,
+                f'_{method_name}',
+                return_value=([], method_name.replace('retrieve_via_', ''))
+            )
+
+    return mock_retrieval_method
+
+
+@pytest.fixture
+def mock_connection_failure(mocker):
+    """
+    Mock iris_graph_core connection failure for error handling tests.
+
+    Returns a callable that mocks a specific retrieval method to raise ConnectionError.
+
+    Usage:
+        def test_error(graphrag_pipeline, mock_connection_failure):
+            mock_connection_failure(graphrag_pipeline, 'retrieve_via_rrf')
+            result = graphrag_pipeline.query("test", method="rrf")
+            assert result.metadata['retrieval_method'] == 'vector_fallback'
+    """
+    def mock_retrieval_error(pipeline, method_name, error_msg="Connection failed"):
+        """Mock a specific retrieval method to raise connection error."""
+        if hasattr(pipeline, 'retrieval_methods'):
+            mocker.patch.object(
+                pipeline.retrieval_methods,
+                method_name,
+                side_effect=ConnectionError(error_msg)
+            )
+        else:
+            mocker.patch.object(
+                pipeline,
+                f'_{method_name}',
+                side_effect=ConnectionError(error_msg)
+            )
+
+    return mock_retrieval_error
+
+
+# ============================================================================
+# Feature 036: Pipeline Testing Fixtures
+# ============================================================================
+
+@pytest.fixture(scope="session")
+def basic_rag_pipeline(request):
+    """
+    Session-scoped fixture for BasicRAG pipeline.
+
+    Creates BasicRAG pipeline with validation enabled for integration tests,
+    disabled for contract tests. Tests API contracts, error handling, and dimension validation.
+
+    Returns:
+        BasicRAGPipeline instance
+
+    Requirements: FR-001, FR-007
+    """
+    from iris_rag import create_pipeline
+    import os
+
+    # Update port from environment if needed
+    if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
+        os.environ['IRIS_PORT'] = '1972'
+
+    # Integration tests need validation, contract tests don't
+    validate = 'integration' in str(request.node.fspath)
+
+    return create_pipeline("basic", validate_requirements=validate)
+
+
+@pytest.fixture(scope="session")
+def crag_pipeline(request):
+    """
+    Session-scoped fixture for CRAG pipeline.
+
+    Creates CRAG pipeline with validation for integration tests.
+    Tests API contracts, error handling, fallback mechanisms, and dimension validation.
+
+    Returns:
+        CRAGPipeline instance
+
+    Requirements: FR-001, FR-007, FR-015
+    """
+    from iris_rag import create_pipeline
+    import os
+
+    if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
+        os.environ['IRIS_PORT'] = '1972'
+
+    validate = 'integration' in str(request.node.fspath)
+    return create_pipeline("crag", validate_requirements=validate)
+
+
+@pytest.fixture(scope="session")
+def basic_rerank_pipeline(request):
+    """
+    Session-scoped fixture for BasicRerankRAG pipeline.
+
+    Creates BasicRerankRAG pipeline with validation for integration tests.
+    Tests API contracts, error handling, fallback mechanisms, and dimension validation.
+
+    Returns:
+        BasicRerankRAGPipeline instance
+
+    Requirements: FR-001, FR-007, FR-016
+    """
+    from iris_rag import create_pipeline
+    import os
+
+    if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
+        os.environ['IRIS_PORT'] = '1972'
+
+    validate = 'integration' in str(request.node.fspath)
+    return create_pipeline("basic_rerank", validate_requirements=validate)
+
+
+@pytest.fixture(scope="session")
+def pylate_colbert_pipeline(request):
+    """
+    Session-scoped fixture for PyLateColBERT pipeline.
+
+    Creates PyLateColBERT pipeline with validation for integration tests.
+    Tests API contracts, error handling, fallback mechanisms, and dimension validation.
+
+    Returns:
+        PyLateColBERTPipeline instance
+
+    Requirements: FR-001, FR-007, FR-015
+    """
+    from iris_rag import create_pipeline
+    import os
+
+    if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
+        os.environ['IRIS_PORT'] = '1972'
+
+    validate = 'integration' in str(request.node.fspath)
+    return create_pipeline("pylate_colbert", validate_requirements=validate)
+
+
+@pytest.fixture
+def sample_query():
+    """
+    Function-scoped fixture providing a sample test query.
+
+    Returns:
+        str: Sample query about diabetes symptoms
+
+    Usage:
+        def test_query(basic_rag_pipeline, sample_query):
+            result = basic_rag_pipeline.query(sample_query)
+            assert len(result['contexts']) > 0
+    """
+    return "What are the symptoms of diabetes?"
+
+
+@pytest.fixture
+def sample_documents():
+    """
+    Function-scoped fixture providing sample documents for testing.
+
+    Returns:
+        list: List of document dictionaries with doc_id, title, content, metadata
+
+    Usage:
+        def test_load(basic_rag_pipeline, sample_documents):
+            result = basic_rag_pipeline.load_documents(sample_documents)
+            assert result['documents_loaded'] > 0
+    """
+    import json
+    import os
+
+    # Load from sample data file
+    data_path = os.path.join(os.path.dirname(__file__), 'data', 'sample_pmc_docs_basic.json')
+
+    with open(data_path, 'r') as f:
+        data = json.load(f)
+
+    return data['documents']

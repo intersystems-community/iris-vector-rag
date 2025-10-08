@@ -245,49 +245,83 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
     ) -> tuple[List[Document], str]:
         """Retrieve documents using multi-modal hybrid search fusion."""
         try:
-            return self.retrieval_methods.retrieve_via_hybrid_fusion(
+            documents, method = self.retrieval_methods.retrieve_via_hybrid_fusion(
                 query_text, top_k, self._get_document_content_for_entity, **kwargs
             )
+            # If iris_graph_core returns 0 results, fall back to vector search
+            if not documents:
+                logger.warning(
+                    "Hybrid fusion returned 0 results. Falling back to vector search."
+                )
+                fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+                return fallback_docs, "vector_fallback"
+            return documents, method
         except Exception as e:
             logger.error(f"Hybrid fusion retrieval failed: {e}")
-            # Fallback to standard KG retrieval
-            return self._retrieve_via_kg(query_text, top_k)
+            # Fallback to vector search instead of KG traversal
+            logger.info("Falling back to IRISVectorStore vector search")
+            fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+            return fallback_docs, "vector_fallback"
 
     def _retrieve_via_rrf(
         self, query_text: str, top_k: int, **kwargs
     ) -> tuple[List[Document], str]:
         """Retrieve documents using RRF (Reciprocal Rank Fusion)."""
         try:
-            return self.retrieval_methods.retrieve_via_rrf(
+            documents, method = self.retrieval_methods.retrieve_via_rrf(
                 query_text, top_k, self._get_document_content_for_entity, **kwargs
             )
+            # If RRF returns 0 results, fall back to vector search
+            if not documents:
+                logger.warning("RRF returned 0 results. Falling back to vector search.")
+                fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+                return fallback_docs, "vector_fallback"
+            return documents, method
         except Exception as e:
             logger.error(f"RRF retrieval failed: {e}")
-            return self._retrieve_via_kg(query_text, top_k)
+            logger.info("Falling back to IRISVectorStore vector search")
+            fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+            return fallback_docs, "vector_fallback"
 
     def _retrieve_via_enhanced_text(
         self, query_text: str, top_k: int, **kwargs
     ) -> tuple[List[Document], str]:
         """Retrieve documents using enhanced IRIS iFind text search."""
         try:
-            return self.retrieval_methods.retrieve_via_enhanced_text(
+            documents, method = self.retrieval_methods.retrieve_via_enhanced_text(
                 query_text, top_k, self._get_document_content_for_entity, **kwargs
             )
+            # If text search returns 0 results, fall back to vector search
+            if not documents:
+                logger.warning("Text search returned 0 results. Falling back to vector search.")
+                fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+                return fallback_docs, "vector_fallback"
+            return documents, method
         except Exception as e:
             logger.error(f"Enhanced text retrieval failed: {e}")
-            return self._retrieve_via_kg(query_text, top_k)
+            logger.info("Falling back to IRISVectorStore vector search")
+            fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+            return fallback_docs, "vector_fallback"
 
     def _retrieve_via_hnsw_vector(
         self, query_text: str, top_k: int, **kwargs
     ) -> tuple[List[Document], str]:
         """Retrieve documents using HNSW-optimized vector search."""
         try:
-            return self.retrieval_methods.retrieve_via_hnsw_vector(
+            documents, method = self.retrieval_methods.retrieve_via_hnsw_vector(
                 query_text, top_k, self._get_document_content_for_entity, **kwargs
             )
+            # If HNSW returns 0 results, fall back to IRISVectorStore
+            if not documents:
+                logger.warning("HNSW vector search returned 0 results. Falling back to IRISVectorStore.")
+                fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+                return fallback_docs, "vector_fallback"
+            return documents, method
         except Exception as e:
             logger.error(f"HNSW vector retrieval failed: {e}")
-            return self._retrieve_via_kg(query_text, top_k)
+            logger.info("Falling back to IRISVectorStore vector search")
+            fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+            return fallback_docs, "vector_fallback"
 
     def _enhanced_hybrid_fallback(
         self, query_text: str, top_k: int, method: str, **kwargs

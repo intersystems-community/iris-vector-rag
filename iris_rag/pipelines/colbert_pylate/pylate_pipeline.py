@@ -109,18 +109,52 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         self.model = models.ColBERT(model_name_or_path=self.model_name)
         logger.info(f"PyLate model '{self.model_name}' loaded")
 
-    def load_documents(self, documents, **kwargs) -> Dict[str, Any]:
-        """Load documents and prepare for retrieval."""
+    def load_documents(self, documents=None, documents_path: str = None, **kwargs) -> Dict[str, Any]:
+        """
+        Load documents and prepare for retrieval.
+
+        Args:
+            documents: List of documents (dicts or Document objects) to load directly
+            documents_path: Optional path to documents file or directory
+            **kwargs: Additional arguments
+
+        Returns:
+            Dict with load status:
+                - documents_loaded: Number of documents successfully loaded
+                - embeddings_generated: Number of embeddings generated
+                - documents_failed: Number of documents that failed to load
+        """
+        # Validation: require either documents or documents_path
+        if documents is None and documents_path is None:
+            raise ValueError(
+                "Error: Missing required input\n"
+                "Context: PyLateColBERT document loading\n"
+                "Expected: Either 'documents' list or 'documents_path' string\n"
+                "Actual: Both are None\n"
+                "Fix: Provide documents=[...] or documents_path='path/to/docs.json'"
+            )
+
+        # Validation: empty documents list
+        if documents is not None and isinstance(documents, list) and len(documents) == 0:
+            raise ValueError(
+                "Error: Empty documents list\n"
+                "Context: PyLateColBERT document loading\n"
+                "Expected: Non-empty list of documents\n"
+                "Actual: Empty list []\n"
+                "Fix: Provide at least one document in the list"
+            )
+
         # Handle both file paths and Document objects
-        if isinstance(documents, str):
+        if documents_path is not None:
             # File path - delegate to parent
-            result = super().load_documents(documents, **kwargs)
+            result = super().load_documents(documents_path=documents_path, **kwargs)
             if result and "documents" in result:
                 docs = result["documents"]
                 # Store documents for PyLate reranking
                 for i, doc in enumerate(docs):
                     self._document_store[str(i)] = doc
                 self.stats["documents_indexed"] = len(docs)
+            return result
         else:
             # List of Document objects
             # Store documents for PyLate reranking with metadata
@@ -131,25 +165,19 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
                     logger.warning(f"Document {i} has no metadata")
 
             # Call parent to handle vector store indexing
-            # Use new API: load_documents("", documents=documents)
-            super().load_documents("", documents=documents, **kwargs)
-            self.stats["documents_indexed"] = len(documents)
+            result = super().load_documents(documents=documents, **kwargs)
+            self.stats["documents_indexed"] = result.get("documents_loaded", len(documents))
 
-        logger.info(
-            f"Loaded {self.stats['documents_indexed']} documents for PyLate ColBERT"
-        )
-        logger.debug(
-            f"Stored {len(self._document_store)} docs with metadata in document store"
-        )
+            logger.info(
+                f"Loaded {self.stats['documents_indexed']} documents for PyLate ColBERT"
+            )
+            logger.debug(
+                f"Stored {len(self._document_store)} docs with metadata in document store"
+            )
 
-        # Return status dict for compatibility
-        return {
-            "status": "success",
-            "num_documents": self.stats["documents_indexed"],
-            "pipeline_type": "colbert_pylate",
-        }
+            return result
 
-    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute ColBERT query with PyLate native reranking.
 
@@ -157,7 +185,35 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         1. Retrieve initial candidates (rerank_factor * top_k)
         2. Apply PyLate native reranking
         3. Return top_k documents with consistent response format
+
+        Args:
+            query: The query text
+            top_k: Number of documents to return after reranking (must be between 1 and 100)
+            **kwargs: Additional arguments
+
+        Returns:
+            Dictionary with complete RAG response including reranked documents
         """
+        # Validate query
+        if not query or query.strip() == "":
+            raise ValueError(
+                "Error: Query parameter is required and cannot be empty\n"
+                "Context: PyLateColBERT pipeline query operation\n"
+                "Expected: Non-empty query string\n"
+                "Actual: Empty or whitespace-only string\n"
+                "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
+            )
+
+        # Validate top_k
+        if top_k < 1 or top_k > 100:
+            raise ValueError(
+                f"Error: top_k parameter out of valid range\n"
+                f"Context: PyLateColBERT pipeline query operation\n"
+                f"Expected: Integer between 1 and 100 (inclusive)\n"
+                f"Actual: {top_k}\n"
+                f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
+            )
+
         # Calculate initial retrieval size
         initial_k = min(top_k * self.rerank_factor, 100)
 
@@ -165,7 +221,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         parent_kwargs = kwargs.copy()
         parent_kwargs["generate_answer"] = False  # Generate after reranking
 
-        parent_result = super().query(query_text, top_k=initial_k, **parent_kwargs)
+        parent_result = super().query(query, top_k=initial_k, **parent_kwargs)
         candidate_documents = parent_result.get("retrieved_documents", [])
 
         # Apply PyLate native reranking if available and beneficial
@@ -175,7 +231,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             and self.is_initialized
         ):
             final_documents = self._pylate_rerank(
-                query_text, candidate_documents, top_k
+                query, candidate_documents, top_k
             )
             reranked = True
             self.stats["reranking_operations"] += 1
@@ -207,7 +263,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             try:
                 custom_prompt = kwargs.get("custom_prompt")
                 answer = self._generate_answer(
-                    query_text, final_documents, custom_prompt
+                    query, final_documents, custom_prompt
                 )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
@@ -220,11 +276,15 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             answer = "No LLM function provided. Retrieved documents only."
 
         # Build response with consistent format
+        contexts_list = [doc.page_content for doc in final_documents]
+        sources = self._extract_sources(final_documents) if kwargs.get("include_sources", True) else []
+        retrieval_method = kwargs.get("method", "colbert_pylate")
+
         response = {
-            "query": query_text,
+            "query": query,
             "answer": answer,
             "retrieved_documents": final_documents,
-            "contexts": [doc.page_content for doc in final_documents],
+            "contexts": contexts_list,
             "execution_time": parent_result.get("execution_time", 0.0),
             "metadata": {
                 "num_retrieved": len(final_documents),
@@ -236,13 +296,15 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
                 "generated_answer": generate_answer and answer is not None,
                 "model_name": self.model_name,
                 "native_reranking": self.use_native_reranking,
+                "retrieval_method": retrieval_method,  # FR-003: Include retrieval method
+                "context_count": len(contexts_list),  # FR-003: Include context count
+                "sources": sources,  # FR-003: Include sources in metadata
             },
         }
 
-        # Add sources if requested
-        include_sources = kwargs.get("include_sources", True)
-        if include_sources:
-            response["sources"] = self._extract_sources(final_documents)
+        # Add sources to top level if requested
+        if kwargs.get("include_sources", True):
+            response["sources"] = sources
 
         self.stats["queries_processed"] += 1
         logger.info(

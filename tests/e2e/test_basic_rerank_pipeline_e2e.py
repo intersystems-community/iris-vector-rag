@@ -115,7 +115,7 @@ class TestBasicRerankPipelineDocumentLoading:
 
     def test_load_documents_from_list(self, rerank_pipeline, sample_documents):
         """Test loading documents from a list."""
-        rerank_pipeline.load_documents("", documents=sample_documents)
+        rerank_pipeline.load_documents(documents=sample_documents)
 
         # Verify documents can be queried
         result = rerank_pipeline.query("Python programming", top_k=2, generate_answer=False)
@@ -130,7 +130,7 @@ class TestBasicRerankPipelineDocumentLoading:
             page_content="Test document for single loading with reranking support.",
         )
 
-        rerank_pipeline.load_documents("", documents=[doc])
+        rerank_pipeline.load_documents(documents=[doc])
 
         result = rerank_pipeline.query("single loading", top_k=1, generate_answer=False)
         assert result is not None
@@ -145,7 +145,7 @@ class TestBasicRerankPipelineDocumentLoading:
             )
         ]
 
-        rerank_pipeline.load_documents("", documents=docs)
+        rerank_pipeline.load_documents(documents=docs)
         result = rerank_pipeline.query("testing frameworks", top_k=1, generate_answer=False)
         assert result is not None
 
@@ -156,7 +156,7 @@ class TestBasicRerankPipelineQuerying:
     @pytest.fixture(autouse=True)
     def setup_documents(self, rerank_pipeline, sample_documents):
         """Load documents before each test."""
-        rerank_pipeline.load_documents("", documents=sample_documents)
+        rerank_pipeline.load_documents(documents=sample_documents)
 
     def test_simple_query_with_reranking(self, rerank_pipeline):
         """Test a simple query with reranking enabled."""
@@ -209,7 +209,7 @@ class TestBasicRerankPipelineRerankFactor:
 
     def test_rerank_factor_default(self, rerank_pipeline, sample_documents):
         """Test default rerank_factor behavior."""
-        rerank_pipeline.load_documents("", documents=sample_documents)
+        rerank_pipeline.load_documents(documents=sample_documents)
 
         result = rerank_pipeline.query("Python", top_k=3, generate_answer=False)
 
@@ -228,7 +228,7 @@ class TestBasicRerankPipelineRerankFactor:
         )
         pipeline.rerank_factor = 3
 
-        pipeline.load_documents("", documents=sample_documents)
+        pipeline.load_documents(documents=sample_documents)
 
         result = pipeline.query("machine learning", top_k=2, generate_answer=False)
 
@@ -239,7 +239,7 @@ class TestBasicRerankPipelineRerankFactor:
 
     def test_rerank_factor_single_result(self, rerank_pipeline, sample_documents):
         """Test reranking when only one result is requested."""
-        rerank_pipeline.load_documents("", documents=sample_documents)
+        rerank_pipeline.load_documents(documents=sample_documents)
 
         result = rerank_pipeline.query("Python", top_k=1, generate_answer=False)
 
@@ -252,7 +252,7 @@ class TestBasicRerankPipelineRerankingBehavior:
     @pytest.fixture(autouse=True)
     def setup_documents(self, rerank_pipeline, sample_documents):
         """Load documents before each test."""
-        rerank_pipeline.load_documents("", documents=sample_documents)
+        rerank_pipeline.load_documents(documents=sample_documents)
 
     def test_reranking_improves_relevance(self, rerank_pipeline):
         """Test that reranking improves document relevance ordering."""
@@ -301,7 +301,7 @@ class TestBasicRerankPipelineWithoutReranker:
         )
         pipeline.reranker_func = None
 
-        pipeline.load_documents("", documents=sample_documents)
+        pipeline.load_documents(documents=sample_documents)
 
         result = pipeline.query("Python", top_k=3, generate_answer=False)
 
@@ -316,8 +316,10 @@ class TestBasicRerankPipelineErrorHandling:
 
     def test_query_with_invalid_top_k(self, rerank_pipeline):
         """Test query with invalid top_k value."""
-        result = rerank_pipeline.query("test", top_k=0, generate_answer=False)
-        assert result is not None
+        # New API validates and raises ValueError
+        import pytest
+        with pytest.raises(ValueError, match="top_k parameter out of valid range"):
+            rerank_pipeline.query("test", top_k=0, generate_answer=False)
 
     def test_query_on_empty_database(self, rerank_pipeline):
         """Test query when no documents are loaded."""
@@ -348,7 +350,7 @@ class TestBasicRerankPipelineIntegration:
                 page_content="France is a country in Western Europe.",
             ),
         ]
-        rerank_pipeline.load_documents("", documents=docs)
+        rerank_pipeline.load_documents(documents=docs)
 
         result = rerank_pipeline.query(
             "What is the capital of France?",
@@ -372,7 +374,7 @@ class TestBasicRerankPipelineIntegration:
             for i in range(20)
         ]
 
-        rerank_pipeline.load_documents("", documents=docs)
+        rerank_pipeline.load_documents(documents=docs)
 
         result = rerank_pipeline.query("topic content", top_k=5, generate_answer=False)
         assert result is not None
@@ -380,7 +382,7 @@ class TestBasicRerankPipelineIntegration:
 
     def test_sequential_queries_with_reranking(self, rerank_pipeline, sample_documents):
         """Test multiple sequential queries with reranking."""
-        rerank_pipeline.load_documents("", documents=sample_documents)
+        rerank_pipeline.load_documents(documents=sample_documents)
 
         queries = [
             "What is Python?",
@@ -400,7 +402,7 @@ class TestBasicRerankPipelinePerformance:
 
     def test_execution_time_tracking(self, rerank_pipeline, sample_documents):
         """Test that execution time is tracked."""
-        rerank_pipeline.load_documents("", documents=sample_documents)
+        rerank_pipeline.load_documents(documents=sample_documents)
 
         result = rerank_pipeline.query("test", top_k=3, generate_answer=False)
 
@@ -416,7 +418,7 @@ class TestBasicRerankPipelinePerformance:
             )
             for i in range(50)
         ]
-        rerank_pipeline.load_documents("", documents=docs)
+        rerank_pipeline.load_documents(documents=docs)
 
         result = rerank_pipeline.query("performance test", top_k=10, generate_answer=False)
 
@@ -449,7 +451,7 @@ class TestBasicRerankPipelineCustomReranker:
             reranker_func=custom_reranker,
         )
 
-        pipeline.load_documents("", documents=sample_documents)
+        pipeline.load_documents(documents=sample_documents)
 
         result = pipeline.query("Python machine learning", top_k=3, generate_answer=False)
 
