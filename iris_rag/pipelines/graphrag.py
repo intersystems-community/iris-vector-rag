@@ -669,13 +669,23 @@ class GraphRAGPipeline(RAGPipeline):
                     )
                     documents.append(doc)
 
-            logger.info(
-                f"GraphRAG: Vector fallback retrieved {len(documents)} documents"
-            )
+            if len(documents) == 0:
+                # FR-004: Log diagnostic information when 0 results returned
+                logger.info(
+                    f"Vector search returned 0 results for query: '{query_text[:50]}...'"
+                )
+                logger.debug(f"Top-K parameter: {top_k}")
+                logger.debug(f"Query text: {query_text}")
+            else:
+                logger.info(
+                    f"GraphRAG: Vector fallback retrieved {len(documents)} documents"
+                )
             return documents
 
         except Exception as e:
             logger.error(f"Vector search fallback failed: {e}")
+            logger.debug(f"Query text: {query_text}")
+            logger.debug(f"Top-K parameter: {top_k}")
             return []
 
     def _read_iris_data(self, data) -> str:

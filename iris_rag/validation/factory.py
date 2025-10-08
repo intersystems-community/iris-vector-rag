@@ -158,8 +158,6 @@ class ValidatedPipelineFactory:
         elif pipeline_type == "basic_rerank":
             return BasicRAGRerankingPipeline(**pipeline_kwargs)
         elif pipeline_type == "graphrag":
-            return GraphRAGPipeline(**pipeline_kwargs)
-        elif pipeline_type == "hybrid_graphrag":
             return HybridGraphRAGPipeline(**pipeline_kwargs)
         elif pipeline_type == "pylate_colbert":
             from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
@@ -170,7 +168,6 @@ class ValidatedPipelineFactory:
                 "basic_rerank",
                 "crag",
                 "graphrag",
-                "hybrid_graphrag",
                 "pylate_colbert",
             ]
             raise ValueError(

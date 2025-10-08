@@ -31,6 +31,12 @@ pytest tests/unit/                  # Unit tests only
 pytest tests/integration/           # Integration tests only
 pytest tests/e2e/                   # End-to-end tests only
 pytest --cov=iris_rag --cov=rag_templates  # With coverage
+
+# Backend mode testing (Feature 035)
+make test-community                 # Test with Community Edition mode (1 connection)
+make test-enterprise                # Test with Enterprise Edition mode (999 connections)
+make test-backend-contracts         # Run backend mode contract tests
+IRIS_BACKEND_MODE=community pytest tests/  # Manual backend mode override
 ```
 
 ### Linting and Formatting
@@ -120,7 +126,41 @@ hybrid_pipeline = create_pipeline("hybrid_graphrag")  # Requires graph-ai adjace
 - **Unit Tests**: `tests/unit/` - Component-level testing
 - **Integration Tests**: `tests/integration/` - Cross-component functionality
 - **E2E Tests**: `tests/e2e/` - Full pipeline workflows
+- **Contract Tests**: `tests/contract/` - API contract validation (TDD approach)
 - **Enterprise Scale Tests**: 10K document testing with mocking support
+
+### Backend Mode Configuration (Feature 035)
+**Purpose**: Prevent license pool exhaustion in IRIS Community Edition while allowing parallel execution in Enterprise Edition.
+
+**Modes**:
+- **Community**: Single connection limit, sequential test execution
+- **Enterprise**: 999 connections, parallel test execution
+
+**Configuration Precedence** (highest to lowest):
+1. `IRIS_BACKEND_MODE` environment variable
+2. `.specify/config/backend_modes.yaml` file
+3. Default (community mode)
+
+**Usage Examples**:
+```python
+# Pytest fixtures (auto-configured)
+def test_example(iris_connection, backend_configuration):
+    assert backend_configuration.max_connections == 1  # community mode
+
+# Manual configuration
+from iris_rag.testing import load_configuration, ConnectionPool
+
+config = load_configuration()
+pool = ConnectionPool(mode=config.mode)
+with pool.acquire() as conn:
+    # Use connection
+    pass
+```
+
+**Troubleshooting**:
+- **License pool exhaustion**: Switch to `IRIS_BACKEND_MODE=community`
+- **Tests timing out**: Check connection pool limits with `config.max_connections`
+- **Edition mismatch error**: Set `IRIS_BACKEND_MODE` to match your IRIS edition
 
 ### Configuration Management
 - **Default Config**: `iris_rag/config/default_config.yaml`

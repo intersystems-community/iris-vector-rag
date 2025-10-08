@@ -74,7 +74,7 @@ class TestBasicRAGPipelineDocumentLoading:
     def test_load_documents_from_list(self, basic_pipeline, sample_documents):
         """Test loading documents from a list."""
         # load_documents returns None on success
-        basic_pipeline.load_documents("", documents=sample_documents)
+        basic_pipeline.load_documents(documents=sample_documents)
 
         # Verify documents can be queried
         result = basic_pipeline.query("Python programming", top_k=1, generate_answer=False)
@@ -85,7 +85,7 @@ class TestBasicRAGPipelineDocumentLoading:
         """Test loading a single document."""
         doc = Document(id="single1", page_content="Test document for single loading.")
 
-        basic_pipeline.load_documents("", documents=[doc])
+        basic_pipeline.load_documents(documents=[doc])
 
         # Verify document is searchable
         result = basic_pipeline.query("single loading", top_k=1, generate_answer=False)
@@ -101,7 +101,7 @@ class TestBasicRAGPipelineDocumentLoading:
             )
         ]
 
-        basic_pipeline.load_documents("", documents=docs)
+        basic_pipeline.load_documents(documents=docs)
 
         # Verify document is searchable
         result = basic_pipeline.query("testing frameworks", top_k=1, generate_answer=False)
@@ -109,16 +109,18 @@ class TestBasicRAGPipelineDocumentLoading:
 
     def test_load_empty_document_list(self, basic_pipeline):
         """Test loading empty document list."""
-        # Should not raise an error
-        basic_pipeline.load_documents("", documents=[])
+        # New API validates and rejects empty lists
+        import pytest
+        with pytest.raises(ValueError, match="Empty documents list"):
+            basic_pipeline.load_documents(documents=[])
 
     def test_reload_same_documents(self, basic_pipeline, sample_documents):
         """Test reloading the same documents (upsert behavior)."""
         # First load
-        basic_pipeline.load_documents("", documents=sample_documents[:2])
+        basic_pipeline.load_documents(documents=sample_documents[:2])
 
         # Reload same documents - should not error
-        basic_pipeline.load_documents("", documents=sample_documents[:2])
+        basic_pipeline.load_documents(documents=sample_documents[:2])
 
         # Verify documents are still searchable
         result = basic_pipeline.query("Python", top_k=1, generate_answer=False)
@@ -131,7 +133,7 @@ class TestBasicRAGPipelineQuerying:
     @pytest.fixture(autouse=True)
     def setup_documents(self, basic_pipeline, sample_documents):
         """Load documents before each test."""
-        basic_pipeline.load_documents("", documents=sample_documents)
+        basic_pipeline.load_documents(documents=sample_documents)
 
     def test_simple_query(self, basic_pipeline):
         """Test a simple query."""
@@ -197,7 +199,7 @@ class TestBasicRAGPipelineMetadata:
 
     def test_query_result_structure(self, basic_pipeline, sample_documents):
         """Test that query results have expected structure."""
-        basic_pipeline.load_documents("", documents=sample_documents)
+        basic_pipeline.load_documents(documents=sample_documents)
 
         result = basic_pipeline.query("machine learning", top_k=3, generate_answer=False)
 
@@ -208,7 +210,7 @@ class TestBasicRAGPipelineMetadata:
 
     def test_query_metadata_tracking(self, basic_pipeline, sample_documents):
         """Test that query metadata is tracked."""
-        basic_pipeline.load_documents("", documents=sample_documents)
+        basic_pipeline.load_documents(documents=sample_documents)
 
         result = basic_pipeline.query("test query", top_k=3, generate_answer=False)
 
@@ -219,7 +221,7 @@ class TestBasicRAGPipelineMetadata:
 
     def test_execution_time_tracking(self, basic_pipeline, sample_documents):
         """Test that execution time is tracked."""
-        basic_pipeline.load_documents("", documents=sample_documents)
+        basic_pipeline.load_documents(documents=sample_documents)
 
         result = basic_pipeline.query("test", top_k=3, generate_answer=False)
 
@@ -258,15 +260,16 @@ class TestBasicRAGPipelineErrorHandling:
 
     def test_query_with_invalid_top_k(self, basic_pipeline):
         """Test query with invalid top_k value."""
-        # Should handle gracefully
-        result = basic_pipeline.query("test", top_k=0, generate_answer=False)
-        assert result is not None
+        # New API validates and raises ValueError
+        import pytest
+        with pytest.raises(ValueError, match="top_k parameter out of valid range"):
+            basic_pipeline.query("test", top_k=0, generate_answer=False)
 
     def test_load_documents_with_none(self, basic_pipeline):
         """Test loading None as documents."""
         # Should handle gracefully
         try:
-            basic_pipeline.load_documents("", documents=None)
+            basic_pipeline.load_documents(documents=None)
         except (TypeError, ValueError):
             # Expected to raise an error
             pass
@@ -282,7 +285,7 @@ class TestBasicRAGPipelineIntegration:
             Document(id="wf1", page_content="The capital of France is Paris."),
             Document(id="wf2", page_content="Paris is known for the Eiffel Tower."),
         ]
-        basic_pipeline.load_documents("", documents=docs)
+        basic_pipeline.load_documents(documents=docs)
 
         # Query
         result = basic_pipeline.query("What is the capital of France?", top_k=2, generate_answer=True)
@@ -300,7 +303,7 @@ class TestBasicRAGPipelineIntegration:
         ]
 
         # Should not raise an error
-        basic_pipeline.load_documents("", documents=docs)
+        basic_pipeline.load_documents(documents=docs)
 
         # Verify documents are searchable
         result = basic_pipeline.query("topic content", top_k=5, generate_answer=False)
@@ -313,7 +316,7 @@ class TestBasicRAGPipelineIntegration:
             Document(id=f"qbatch{i}", page_content=f"Information about subject {i}")
             for i in range(15)
         ]
-        basic_pipeline.load_documents("", documents=docs)
+        basic_pipeline.load_documents(documents=docs)
 
         result = basic_pipeline.query("subject information", top_k=5, generate_answer=False)
 

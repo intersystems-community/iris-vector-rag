@@ -290,6 +290,14 @@ class GraphRAGRequirements(PipelineRequirements):
                 min_rows=1,  # Require minimum relationships for connectivity
                 supports_vector_search=False,  # Relationships don't need vector search
             ),
+            TableRequirement(
+                name="Communities",
+                schema="RAG",
+                description="Entity communities for hierarchical summarization",
+                min_rows=0,  # Optional - can work without communities initially
+                required=False,  # Optional table
+                supports_vector_search=False,
+            ),
         ]
 
     @property

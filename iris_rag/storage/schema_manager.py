@@ -1770,7 +1770,7 @@ class SchemaManager:
         """
         try:
             # Check if this is a standard RAG table
-            standard_tables = ["SourceDocuments", "DocumentChunks", "Entities", "EntityRelationships"]
+            standard_tables = ["SourceDocuments", "DocumentChunks", "Entities", "EntityRelationships", "Communities"]
             if table_name in standard_tables:
                 return self._ensure_standard_table(table_name)
             else:
@@ -1813,6 +1813,8 @@ class SchemaManager:
                 success = self._create_entities_table(cursor)
             elif table_name == "EntityRelationships":
                 success = self._create_entity_relationships_table(cursor)
+            elif table_name == "Communities":
+                success = self._create_communities_table(cursor)
             elif table_name == "DocumentChunks":
                 success = self._create_document_chunks_table(cursor)
             else:
@@ -1926,6 +1928,45 @@ class SchemaManager:
             return True
         except Exception as e:
             logger.error(f"Failed to create EntityRelationships table: {e}")
+            return False
+
+    def _create_communities_table(self, cursor) -> bool:
+        """Create Communities table for GraphRAG community detection."""
+        try:
+            create_sql = """
+            CREATE TABLE RAG.Communities (
+                community_id VARCHAR(255) NOT NULL,
+                name VARCHAR(500),
+                description VARCHAR(5000),
+                entity_ids VARCHAR(10000),
+                entity_count INT DEFAULT 0,
+                hierarchy_level INT DEFAULT 0,
+                parent_community_id VARCHAR(255),
+                summary VARCHAR(5000),
+                confidence DOUBLE DEFAULT 1.0,
+                created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+                PRIMARY KEY (community_id)
+            )
+            """
+            cursor.execute(create_sql)
+
+            # Create indexes
+            indexes = [
+                "CREATE INDEX idx_communities_level ON RAG.Communities (hierarchy_level)",
+                "CREATE INDEX idx_communities_parent ON RAG.Communities (parent_community_id)",
+            ]
+
+            for index_sql in indexes:
+                try:
+                    cursor.execute(index_sql)
+                except Exception as idx_error:
+                    logger.warning(f"Index creation warning: {idx_error}")
+
+            logger.info("✅ Communities table created successfully")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create Communities table: {e}")
             return False
 
     def _create_document_chunks_table(self, cursor) -> bool:

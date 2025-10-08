@@ -1,0 +1,8 @@
+{
+  "": {
+    "pipeline_type": "",
+    "results": [],
+    "success_rate": 0.0,
+    "error": "Unknown pipeline type: . Available types: ['basic', 'basic_rerank', 'pylate_colbert', 'crag', 'graphrag', 'hybrid_graphrag']"
+  }
+}
