@@ -198,7 +198,7 @@ hybridgraphrag-plugin/
 ├── setup.py                    # Entry point registration
 ├── pyproject.toml              # Modern packaging
 ├── README.md                   # Installation and usage
-├── CHANGELOG.md                # Version history
+├── docs/docs/docs/CHANGELOG.md                # Version history
 ├── hybridgraphrag/
 │   ├── __init__.py             # Plugin class and interface
 │   ├── pipeline.py             # HybridGraphRAGPipeline (moved)
