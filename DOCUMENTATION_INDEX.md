@@ -56,10 +56,10 @@
 
 | Document | Description | Audience |
 |----------|-------------|----------|
-| [STATUS.md](STATUS.md) | Current project status | Everyone |
-| [PROGRESS.md](PROGRESS.md) | Development progress tracking | Team |
-| [TODO.md](TODO.md) | Outstanding tasks | Team |
-| [CHANGELOG.md](CHANGELOG.md) | Version history and changes | Everyone |
+| [docs/docs/STATUS.md](docs/docs/STATUS.md) | Current project status | Everyone |
+| [docs/docs/PROGRESS.md](docs/docs/PROGRESS.md) | Development progress tracking | Team |
+| [docs/docs/TODO.md](docs/docs/TODO.md) | Outstanding tasks | Team |
+| [docs/docs/docs/CHANGELOG.md](docs/docs/docs/CHANGELOG.md) | Version history and changes | Everyone |
 
 ## 🔍 Specialized Topics
 

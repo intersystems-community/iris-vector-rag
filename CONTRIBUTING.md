@@ -408,7 +408,7 @@ We use [Semantic Versioning](https://semver.org/):
 
 2. **Update Version and Changelog**
    - Update version in `setup.py` and `pyproject.toml`
-   - Update `CHANGELOG.md` with release notes
+   - Update `docs/docs/docs/CHANGELOG.md` with release notes
 
 3. **Final Testing**
    ```bash

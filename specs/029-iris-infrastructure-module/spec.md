@@ -129,7 +129,7 @@ iris-devtools/
 ├── pyproject.toml
 ├── README.md
 ├── CONSTITUTION.md            # Module principles
-└── CHANGELOG.md
+└── docs/docs/docs/CHANGELOG.md
 ```
 
 ## Core Components
