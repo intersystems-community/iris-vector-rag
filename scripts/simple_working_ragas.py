@@ -32,6 +32,118 @@ from iris_rag import create_pipeline
 logger = logging.getLogger(__name__)
 
 
+def check_graphrag_prerequisites() -> Dict[str, Any]:
+    """Check if GraphRAG prerequisites (entity data) are met.
+
+    Returns:
+        {
+            "has_entities": bool,
+            "entities_count": int,
+            "relationships_count": int,
+            "sufficient_data": bool
+        }
+    """
+    from iris_rag.config.manager import ConfigurationManager
+    from iris_rag.core.connection import ConnectionManager
+
+    try:
+        config = ConfigurationManager()
+        conn_mgr = ConnectionManager(config)
+        conn = conn_mgr.get_connection()
+        cursor = conn.cursor()
+
+        # Check Entities table
+        cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
+        entities_count = cursor.fetchone()[0]
+
+        # Check EntityRelationships table
+        cursor.execute("SELECT COUNT(*) FROM RAG.EntityRelationships")
+        relationships_count = cursor.fetchone()[0]
+
+        cursor.close()
+
+        return {
+            "has_entities": entities_count > 0,
+            "entities_count": entities_count,
+            "relationships_count": relationships_count,
+            "sufficient_data": entities_count > 0,
+        }
+    except Exception as e:
+        logger.error(f"Error checking GraphRAG prerequisites: {e}")
+        return {
+            "has_entities": False,
+            "entities_count": 0,
+            "relationships_count": 0,
+            "sufficient_data": False,
+        }
+
+
+def load_documents_with_entities(
+    pipeline: Any, documents_path: str, logger_instance: logging.Logger
+) -> Dict[str, Any]:
+    """Load documents using GraphRAG pipeline to extract entities.
+
+    Args:
+        pipeline: GraphRAG pipeline instance
+        documents_path: Path to documents directory
+        logger_instance: Logger instance for output
+
+    Returns:
+        {
+            "documents_loaded": int,
+            "entities_extracted": int,
+            "relationships_extracted": int,
+            "success": bool,
+            "error": Optional[str]
+        }
+    """
+    try:
+        logger_instance.info(
+            f"📄 Loading documents from {documents_path} with entity extraction..."
+        )
+
+        # Load documents using GraphRAG's load_documents method
+        # This will extract entities and store them in the knowledge graph
+        pipeline.load_documents(documents_path)
+
+        # Check how many entities were extracted
+        entity_check = check_graphrag_prerequisites()
+
+        return {
+            "documents_loaded": True,  # If we got here, loading succeeded
+            "entities_extracted": entity_check["entities_count"],
+            "relationships_extracted": entity_check["relationships_count"],
+            "success": True,
+            "error": None,
+        }
+    except Exception as e:
+        logger_instance.error(f"Failed to load documents with entity extraction: {e}")
+        return {
+            "documents_loaded": 0,
+            "entities_extracted": 0,
+            "relationships_extracted": 0,
+            "success": False,
+            "error": str(e),
+        }
+
+
+def log_graphrag_skip(
+    logger_instance: logging.Logger, reason: str, entities_count: int
+) -> None:
+    """Log informational message when GraphRAG evaluation is skipped.
+
+    Args:
+        logger_instance: Logger instance
+        reason: Human-readable skip reason
+        entities_count: Current entity count from database
+    """
+    logger_instance.info(f"⏭️  Skipping GraphRAG evaluation: {reason}")
+    logger_instance.info(f"   Entity count: {entities_count}")
+    logger_instance.info(
+        "   To enable GraphRAG: load documents with entity extraction"
+    )
+
+
 def setup_logging():
     """Setup logging."""
     logging.basicConfig(
@@ -52,35 +164,52 @@ def test_pipeline_with_queries(
             os.environ["IRIS_HOST"] = "localhost"
         # DON'T override IRIS_PORT if already set by make target (e.g., 11972 for Docker)
 
-        # Create pipeline - it will use IRIS_HOST and IRIS_PORT from environment
-        # auto_setup=True will create all required tables including Entities for GraphRAG
-        pipeline = create_pipeline(
-            pipeline_type, validate_requirements=True, auto_setup=True
-        )
-
-        # Verify entities exist after creating GraphRAG pipelines
+        # Check GraphRAG prerequisites before creating pipeline
         if "graphrag" in pipeline_type:
-            from iris_rag.config.manager import ConfigurationManager
-            from iris_rag.core.connection import ConnectionManager
+            entity_check = check_graphrag_prerequisites()
+            logger.info(
+                f"📊 GraphRAG entity check: {entity_check['entities_count']} entities, "
+                f"{entity_check['relationships_count']} relationships"
+            )
 
-            config = ConfigurationManager()
-            conn_mgr = ConnectionManager(config)
-            conn = conn_mgr.get_connection()
-            cursor = conn.cursor()
-            try:
-                cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
-                entity_count = cursor.fetchone()[0]
-                logger.info(
-                    f"📊 {pipeline_type}: Found {entity_count} entities in knowledge graph"
+            if not entity_check["sufficient_data"]:
+                logger.info("⚙️  No entity data found. Auto-loading documents with entity extraction...")
+
+                # Create GraphRAG pipeline first (needed for load_documents)
+                pipeline = create_pipeline(
+                    pipeline_type, validate_requirements=True, auto_setup=True
                 )
-                if entity_count == 0:
-                    logger.warning(
-                        f"⚠️  {pipeline_type}: No entities found - knowledge graph is empty"
+
+                # Load documents with entity extraction
+                documents_path = os.getenv("EVAL_PMC_DIR", "data/sample_10_docs")
+                load_result = load_documents_with_entities(
+                    pipeline=pipeline,
+                    documents_path=documents_path,
+                    logger_instance=logger
+                )
+
+                if load_result["success"]:
+                    logger.info(
+                        f"✅ Entity extraction complete: {load_result['entities_extracted']} entities, "
+                        f"{load_result['relationships_extracted']} relationships"
                     )
-            except Exception as e:
-                logger.error(f"❌ {pipeline_type}: Failed to check entities: {e}")
-            finally:
-                cursor.close()
+                    # Pipeline already created, continue with evaluation
+                else:
+                    # Entity extraction failed - skip GraphRAG evaluation
+                    logger.error(f"❌ Entity extraction failed: {load_result.get('error', 'Unknown error')}")
+                    log_graphrag_skip(logger, "Entity extraction failed", 0)
+                    raise Exception(f"GraphRAG entity extraction failed: {load_result.get('error')}")
+            else:
+                # Entity data exists, create pipeline normally
+                logger.info(f"✅ Sufficient entity data found, creating GraphRAG pipeline...")
+                pipeline = create_pipeline(
+                    pipeline_type, validate_requirements=True, auto_setup=True
+                )
+        else:
+            # Non-GraphRAG pipeline, create normally
+            pipeline = create_pipeline(
+                pipeline_type, validate_requirements=True, auto_setup=True
+            )
 
         # Set up LLM function - this is crucial for getting real answers
         llm_func = get_llm_func("openai", "gpt-4o-mini")
