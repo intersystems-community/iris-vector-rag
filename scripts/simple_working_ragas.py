@@ -52,7 +52,13 @@ def test_pipeline_with_queries(
             os.environ["IRIS_HOST"] = "localhost"
         # DON'T override IRIS_PORT if already set by make target (e.g., 11972 for Docker)
 
-        # Verify entities exist before testing GraphRAG pipelines
+        # Create pipeline - it will use IRIS_HOST and IRIS_PORT from environment
+        # auto_setup=True will create all required tables including Entities for GraphRAG
+        pipeline = create_pipeline(
+            pipeline_type, validate_requirements=True, auto_setup=True
+        )
+
+        # Verify entities exist after creating GraphRAG pipelines
         if "graphrag" in pipeline_type:
             from iris_rag.config.manager import ConfigurationManager
             from iris_rag.core.connection import ConnectionManager
@@ -61,23 +67,20 @@ def test_pipeline_with_queries(
             conn_mgr = ConnectionManager(config)
             conn = conn_mgr.get_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
-            entity_count = cursor.fetchone()[0]
-            cursor.close()
-
-            logger.info(
-                f"📊 {pipeline_type}: Found {entity_count} entities in knowledge graph"
-            )
-
-            if entity_count == 0:
-                logger.warning(
-                    f"⚠️  {pipeline_type}: No entities found - this will fail!"
+            try:
+                cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
+                entity_count = cursor.fetchone()[0]
+                logger.info(
+                    f"📊 {pipeline_type}: Found {entity_count} entities in knowledge graph"
                 )
-
-        # Create pipeline - it will use IRIS_HOST and IRIS_PORT from environment
-        pipeline = create_pipeline(
-            pipeline_type, validate_requirements=True, auto_setup=True
-        )
+                if entity_count == 0:
+                    logger.warning(
+                        f"⚠️  {pipeline_type}: No entities found - knowledge graph is empty"
+                    )
+            except Exception as e:
+                logger.error(f"❌ {pipeline_type}: Failed to check entities: {e}")
+            finally:
+                cursor.close()
 
         # Set up LLM function - this is crucial for getting real answers
         llm_func = get_llm_func("openai", "gpt-4o-mini")
