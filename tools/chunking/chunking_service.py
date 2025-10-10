@@ -400,15 +400,9 @@ class DocumentChunkingService:
         for i, chunk in enumerate(chunks):
             chunk_id = f"{doc_id}_chunk_{strategy_name}_{i}"
 
-            # Generate embedding
-            try:
-                embedding = self.embedding_func([chunk.text])[0]
-                embedding_str = ",".join(map(str, embedding))
-            except Exception as e:
-                logger.warning(
-                    f"Failed to generate embedding for chunk {chunk_id}: {e}"
-                )
-                embedding_str = None
+            # Skip embedding generation - embeddings should be generated
+            # by the vector store after chunking is complete
+            embedding_str = None
 
             chunk_records.append(
                 {
