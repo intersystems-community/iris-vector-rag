@@ -367,7 +367,7 @@ class SchemaManager:
                     "expected_columns": [
                         "id",
                         "chunk_id",
-                        "doc_id",
+                        "source_document_id",
                         "chunk_text",
                         "chunk_embedding",
                         "chunk_index",
@@ -657,8 +657,8 @@ class SchemaManager:
                 else:
                     connection.rollback()
                     return False
-            # IRIS Graph Core table migrations
-            elif table_name == "rdf_labels":
+            # IRIS Graph Core table migrations (case-insensitive)
+            elif table_name.lower() == "rdf_labels":
                 success = self._migrate_rdf_labels_table(
                     cursor, expected_config, preserve_data
                 )
@@ -668,7 +668,7 @@ class SchemaManager:
                 else:
                     connection.rollback()
                     return False
-            elif table_name == "rdf_props":
+            elif table_name.lower() == "rdf_props":
                 success = self._migrate_rdf_props_table(
                     cursor, expected_config, preserve_data
                 )
@@ -678,7 +678,7 @@ class SchemaManager:
                 else:
                     connection.rollback()
                     return False
-            elif table_name == "rdf_edges":
+            elif table_name.lower() == "rdf_edges":
                 success = self._migrate_rdf_edges_table(
                     cursor, expected_config, preserve_data
                 )
@@ -688,7 +688,7 @@ class SchemaManager:
                 else:
                     connection.rollback()
                     return False
-            elif table_name == "kg_NodeEmbeddings_optimized":
+            elif table_name.lower() == "kg_nodeembeddings_optimized":
                 success = self._migrate_kg_node_embeddings_optimized_table(
                     cursor, expected_config, preserve_data
                 )
@@ -797,8 +797,7 @@ class SchemaManager:
                     # Recreate with correct schema
                     create_sql = f"""
                     CREATE TABLE {table_name} (
-                        id VARCHAR(255) PRIMARY KEY,
-                        doc_id VARCHAR(255) UNIQUE,
+                        doc_id VARCHAR(255) PRIMARY KEY,
                         title VARCHAR(1000),
                         abstract VARCHAR(MAX),
                         text_content {text_content_type},
@@ -890,6 +889,38 @@ class SchemaManager:
             logger.error(f"Failed to update schema metadata for {table_name}: {e}")
             raise
 
+    def _migrate_documentchunks_add_chunk_id(self, cursor):
+        """Add chunk_id column and index if missing (idempotent migration).
+
+        This migration adds the chunk_id field that was added to the schema
+        definition but not present in existing databases.
+        """
+        try:
+            # Check if chunk_id column exists
+            cursor.execute("""
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = 'RAG'
+                  AND TABLE_NAME = 'DOCUMENTCHUNKS'
+                  AND COLUMN_NAME = 'chunk_id'
+            """)
+            if cursor.fetchone():
+                logger.info("chunk_id column already exists, skipping migration")
+                return
+
+            # Add chunk_id column
+            logger.info("Adding chunk_id column to RAG.DocumentChunks...")
+            cursor.execute("ALTER TABLE RAG.DocumentChunks ADD chunk_id VARCHAR(255)")
+
+            # Create index on chunk_id
+            logger.info("Creating index on chunk_id...")
+            cursor.execute("CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)")
+
+            logger.info("✓ Migration complete: chunk_id column and index added")
+        except Exception as e:
+            logger.error(f"Migration failed: {e}")
+            raise
+
     def _migrate_document_chunks_table(
         self, cursor, expected_config: Dict[str, Any], preserve_data: bool
     ) -> bool:
@@ -902,31 +933,45 @@ class SchemaManager:
                 f"🔧 Migrating DocumentChunks table to {vector_dim}D vectors with {vector_data_type} type"
             )
 
-            if preserve_data:
-                logger.warning(
-                    "Data preservation not implemented — table will be dropped"
-                )
+            # Check if table exists
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'DOCUMENTCHUNKS'
+            """)
+            table_exists = cursor.fetchone()[0] > 0
 
-            cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks")
+            if table_exists and preserve_data:
+                # Just add the missing chunk_id column if needed
+                logger.info("Table exists and preserving data - checking for chunk_id column")
+                self._migrate_documentchunks_add_chunk_id(cursor)
+                self._update_schema_metadata(cursor, "DocumentChunks", expected_config)
+                logger.info("✅ DocumentChunks table migrated successfully (preserved data)")
+                return True
+
+            # If no preservation or table doesn't exist, create it fresh
+            if table_exists:
+                cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks")
 
             create_sql = f"""
             CREATE TABLE RAG.DocumentChunks (
                 id VARCHAR(255) PRIMARY KEY,
                 chunk_id VARCHAR(255),
-                doc_id VARCHAR(255),
+                source_document_id VARCHAR(255),
                 chunk_text TEXT,
                 chunk_embedding VECTOR(FLOAT, 384),
                 chunk_index INTEGER,
                 chunk_type VARCHAR(100),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(id)
+                FOREIGN KEY (source_document_id) REFERENCES RAG.SourceDocuments(id)
             )
             """
             cursor.execute(create_sql)
 
             for index_sql in [
-                "CREATE INDEX idx_chunks_doc_id ON RAG.DocumentChunks (doc_id)",
+                "CREATE INDEX idx_chunks_source_doc_id ON RAG.DocumentChunks (source_document_id)",
+                "CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)",
                 "CREATE INDEX idx_chunks_type ON RAG.DocumentChunks (chunk_type)",
             ]:
                 try:
@@ -1586,13 +1631,14 @@ class SchemaManager:
             logger.info("Dropped existing rdf_edges table")
 
             # Create table with proper schema including JSON qualifiers
+            # IRIS uses IDENTITY instead of GENERATED BY DEFAULT AS IDENTITY
             create_sql = """
             CREATE TABLE rdf_edges (
-                edge_id    BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+                edge_id    BIGINT IDENTITY PRIMARY KEY,
                 s          VARCHAR(256) NOT NULL,
                 p          VARCHAR(128) NOT NULL,
                 o_id       VARCHAR(256) NOT NULL,
-                qualifiers JSON
+                qualifiers VARCHAR(4000)
             )
             """
             cursor.execute(create_sql)
@@ -1773,10 +1819,22 @@ class SchemaManager:
             standard_tables = ["SourceDocuments", "DocumentChunks", "Entities", "EntityRelationships", "Communities"]
             if table_name in standard_tables:
                 return self._ensure_standard_table(table_name)
+
+            # Check if this is an iris-vector-graph table (case-insensitive comparison)
+            iris_graph_tables = ["rdf_labels", "rdf_props", "rdf_edges", "kg_NodeEmbeddings_optimized"]
+            iris_graph_tables_lower = [t.lower() for t in iris_graph_tables]
+            if table_name.lower() in iris_graph_tables_lower:
+                # Check if migration is needed (this will create the table if it doesn't exist)
+                if self.needs_migration(table_name, pipeline_type):
+                    logger.info(f"Creating iris-vector-graph table: {table_name}")
+                    return self.migrate_table(table_name, pipeline_type=pipeline_type)
+                else:
+                    logger.info(f"Table {table_name} already exists and is up to date")
+                    return True
             else:
                 # For other tables, delegate to specialized managers
                 logger.warning(
-                    f"Table {table_name} not recognized as standard RAG table"
+                    f"Table {table_name} not recognized as standard RAG or iris-vector-graph table"
                 )
                 return False
 
@@ -1850,7 +1908,7 @@ class SchemaManager:
             create_sql = f"""
             CREATE TABLE RAG.SourceDocuments (
                 doc_id VARCHAR(255) NOT NULL,
-                text_content VARCHAR(10000),
+                text_content LONGVARCHAR,
                 metadata VARCHAR(2000),
                 embedding VECTOR(DOUBLE, {dimension}),
                 created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1978,21 +2036,21 @@ class SchemaManager:
             CREATE TABLE RAG.DocumentChunks (
                 id VARCHAR(255) PRIMARY KEY,
                 chunk_id VARCHAR(255),
-                doc_id VARCHAR(255),
+                source_document_id VARCHAR(255),
                 chunk_text TEXT,
                 chunk_embedding VECTOR(DOUBLE, {dimension}),
                 chunk_index INTEGER,
                 chunk_type VARCHAR(100),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
+                FOREIGN KEY (source_document_id) REFERENCES RAG.SourceDocuments(id)
             )
             """
             cursor.execute(create_sql)
 
             # Create indexes
             indexes = [
-                "CREATE INDEX idx_chunks_doc_id ON RAG.DocumentChunks (doc_id)",
+                "CREATE INDEX idx_chunks_source_doc_id ON RAG.DocumentChunks (source_document_id)",
                 "CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)",
             ]
 
