@@ -12,7 +12,7 @@ testcontainers-iris>=1.2.0
 testcontainers>=3.7.0
 
 # Machine Learning and Embeddings
-sentence-transformers>=2.3,<3
+sentence-transformers>=2.3,<6
 huggingface-hub>=0.20,<1
 torch>=2.7.0
 torchvision>=0.22.0
