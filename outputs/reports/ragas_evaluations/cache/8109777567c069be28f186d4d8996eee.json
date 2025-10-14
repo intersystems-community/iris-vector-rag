@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "HybridGraphRAG",
-  "query": "What are the most effective interventions for managing hypertension?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.26748108863830566,
-  "success": true,
-  "error": null
-}

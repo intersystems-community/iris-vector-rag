@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "HybridGraphRAG",
-  "query": "What are the symptoms and diagnostic criteria for depression?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.35395097732543945,
-  "success": true,
-  "error": null
-}

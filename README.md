@@ -1,241 +1,322 @@
-# RAG-Templates
+# IRIS Vector RAG
 
-## 🎯 Project Status: Complete & Ready for Integration
+**Production-ready Retrieval-Augmented Generation (RAG) pipelines powered by InterSystems IRIS Vector Search**
 
-RAG-Templates is now **complete as a reusable framework** with all core components delivered:
-- ✅ **6 Production RAG Pipelines** with standardized API
-  - BasicRAG - Standard vector similarity search
-  - BasicRAGReranking - Vector search with cross-encoder reranking
-  - CRAG - Corrective RAG with self-evaluation
-  - HybridGraphRAG - Graph + vector + text hybrid search with RRF fusion
-  - PyLateColBERT - ColBERT late interaction retrieval
-  - IRIS-Global-GraphRAG - Academic papers with 3D visualization
-- ✅ **100% Test Coverage** (136/136 tests passing)
-  - Contract tests for API validation
-  - Integration tests with live database
-  - E2E workflow validation
-- ✅ **Unified API Surface** - Consistent interfaces across all pipelines
-- ✅ **Enterprise IRIS Backend** with connection pooling and mode detection
-- ✅ **LangChain & RAGAS Compatible** - Standard Document objects and metadata
+Build intelligent applications that combine the power of large language models with your enterprise data using battle-tested RAG patterns and native vector search capabilities.
 
-**Documentation:** 📑 [**Full Documentation Index**](DOCUMENTATION_INDEX.md)
+## Why IRIS Vector RAG?
 
-**Quick Links:**
-- 📖 **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation with examples
-- 📚 [User Guide](USER_GUIDE.md) - Step-by-step installation and usage
-- 🧪 [Test Validation Summary](TEST_VALIDATION_SUMMARY.md) - 100% test pass rate (136/136)
-- 🔗 [Integration Guide](docs/INTEGRATION_HANDOFF_GUIDE.md) - How to integrate into your app
-- 🏗️ [Architecture Summary](docs/VALIDATED_ARCHITECTURE_SUMMARY.md) - System design
-- 🚀 [Production Readiness](docs/PRODUCTION_READINESS_ASSESSMENT.md) - Deployment checklist
+- **🚀 Production-Ready Pipelines** - Six proven RAG architectures ready to deploy
+- **⚡ Native Vector Search** - Leverage InterSystems IRIS's built-in vector database capabilities
+- **🔧 Unified API** - Consistent interface across all pipeline types
+- **📊 Enterprise-Grade** - Connection pooling, ACID transactions, and horizontal scaling built-in
+- **🧪 100% Test Coverage** - Comprehensive test suite with 136 passing tests
+- **🔗 Framework Compatible** - Works seamlessly with LangChain and RAGAS
+
+## Available Pipelines
+
+| Pipeline | Use Case | Retrieval Method | Best For |
+|----------|----------|------------------|----------|
+| **BasicRAG** | Standard retrieval | Vector similarity | General-purpose Q&A, simple use cases |
+| **BasicRAGReranking** | Improved relevance | Vector + cross-encoder reranking | Higher precision requirements |
+| **CRAG** | Self-correcting retrieval | Vector + evaluation + web search | Fact-checking, dynamic knowledge |
+| **HybridGraphRAG** | Multi-modal retrieval | Vector + text + graph + RRF fusion | Complex entity relationships |
+| **PyLateColBERT** | Late interaction | ColBERT contextualized embeddings | Fine-grained semantic matching |
+| **IRIS-Global-GraphRAG** | Community detection | Graph communities + 3D visualization | Academic research, large corpora |
 
 ## Quick Start
 
+### Installation
+
 ```bash
-# 1. Clone and setup environment
-git clone <repository-url>
-cd rag-templates
-make setup-env  # Creates .venv using uv
-make install    # Installs dependencies
+# Clone repository
+git clone https://github.com/intersystems-community/iris-vector-rag.git
+cd iris-vector-rag
 
-# 2. Activate environment
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# Setup environment (requires uv)
+make setup-env
+make install
+source .venv/bin/activate
+```
 
-# 3. Start database
+### Database Setup
+
+```bash
+# Start IRIS database (Docker)
 docker-compose up -d
 
-# 4. Initialize database
+# Initialize database
 make setup-db
 make load-data
+```
 
-# 5. Create .env file with API keys
+### Create .env file
+
+```bash
 cat > .env << 'EOF'
 OPENAI_API_KEY=your-key-here
 IRIS_HOST=localhost
 IRIS_PORT=1972
+IRIS_NAMESPACE=USER
+IRIS_USERNAME=_SYSTEM
+IRIS_PASSWORD=SYS
 EOF
-
-# 6. Try different pipelines
-python -c "
-from iris_rag import create_pipeline
-
-# Basic RAG - simplest approach
-pipeline = create_pipeline('basic')
-result = pipeline.query('What is machine learning?', top_k=5)
-print(result['answer'])
-"
 ```
 
-## 📖 Unified API Reference
-
-All pipelines follow a consistent, standardized API:
-
-### Creating Pipelines
+### Your First Query
 
 ```python
 from iris_rag import create_pipeline
 
-# Available pipeline types:
-# - "basic"          : BasicRAG (vector similarity)
-# - "basic_rerank"   : BasicRAG + cross-encoder reranking
-# - "crag"           : Corrective RAG with self-evaluation
-# - "graphrag"       : HybridGraphRAG (vector + text + graph)
-# - "pylate_colbert" : ColBERT late interaction
+# Create pipeline (validates database setup automatically)
+pipeline = create_pipeline('basic', validate_requirements=True)
 
-pipeline = create_pipeline(
-    pipeline_type="basic",
-    validate_requirements=True,  # Auto-validate DB setup
-    auto_setup=False,            # Auto-fix issues if True
-)
-```
+# Load your documents
+pipeline.load_documents(documents_path="data/docs.json")
 
-### Loading Documents
-
-```python
-from iris_rag.core.models import Document
-
-# Option 1: From Document objects
-docs = [
-    Document(
-        page_content="Python is a programming language...",
-        metadata={"source": "intro.txt", "author": "John"}
-    )
-]
-result = pipeline.load_documents(documents=docs)
-
-# Option 2: From file path
-result = pipeline.load_documents(documents_path="data/docs.json")
-
-# Returns: {"documents_loaded": 10, "embeddings_generated": 10, "documents_failed": 0}
-```
-
-### Querying
-
-```python
-# Standard query signature for ALL pipelines
+# Query with LLM-generated answer
 result = pipeline.query(
     query="What is machine learning?",
-    top_k=5,                    # Number of documents to return (1-100)
-    generate_answer=True,       # Generate LLM answer (default: True)
-    include_sources=True,       # Include source metadata (default: True)
+    top_k=5,
+    generate_answer=True
 )
 
-# Standardized response format (LangChain & RAGAS compatible):
+print(result['answer'])
+print(result['sources'])
+```
+
+## Unified API
+
+All pipelines share the same interface for easy experimentation:
+
+```python
+from iris_rag import create_pipeline
+
+# Try different pipelines with the same code
+for pipeline_type in ['basic', 'basic_rerank', 'crag', 'graphrag']:
+    pipeline = create_pipeline(pipeline_type)
+    result = pipeline.query("What are cancer treatment targets?", top_k=5)
+
+    print(f"\n{pipeline_type.upper()}:")
+    print(f"Answer: {result['answer'][:200]}...")
+    print(f"Retrieved: {len(result['retrieved_documents'])} documents")
+    print(f"Sources: {result['sources']}")
+```
+
+### Standardized Response Format
+
+All pipelines return responses compatible with LangChain and RAGAS:
+
+```python
 {
-    "query": "What is machine learning?",
-    "answer": "Machine learning is...",                 # LLM-generated answer
-    "retrieved_documents": [Document(...)],             # LangChain Document objects
-    "contexts": ["context 1", "context 2"],             # RAGAS-compatible contexts
-    "sources": [{"source": "file.txt", ...}],           # Source references
+    "query": "What is diabetes?",
+    "answer": "Diabetes is a chronic condition...",           # LLM-generated answer
+    "retrieved_documents": [Document(...)],                   # LangChain Document objects
+    "contexts": ["context 1", "context 2"],                   # RAGAS-compatible contexts
+    "sources": [{"source": "medical.pdf", "page": 12}],      # Source references
     "execution_time": 0.523,
     "metadata": {
         "num_retrieved": 5,
         "pipeline_type": "basic",
-        "retrieval_method": "vector",
-        "context_count": 5,
-        ...
+        "retrieval_method": "vector"
     }
 }
 ```
 
-### Pipeline-Specific Features
+## Enterprise Features
+
+### Connection Pooling
+
+IRIS Vector RAG includes built-in connection pooling for high-performance production deployments:
 
 ```python
-# BasicRAGReranking - Control reranking behavior
-pipeline = create_pipeline("basic_rerank")
-result = pipeline.query(query, top_k=5)  # Retrieves rerank_factor*5, returns top 5
+from iris_rag.storage import IRISVectorStore
 
-# CRAG - Retrieval evaluation
-pipeline = create_pipeline("crag")
-result = pipeline.query(query, top_k=5, generate_answer=True)
-
-# HybridGraphRAG - Multi-modal search
-pipeline = create_pipeline("graphrag")
-result = pipeline.query(
-    query_text="cancer targets",
-    method="rrf",        # rrf, hybrid, vector, text, graph
-    vector_k=30,
-    text_k=30
-)
-
-# PyLateColBERT - Late interaction retrieval
-pipeline = create_pipeline("pylate_colbert")
-result = pipeline.query(query, top_k=5)  # Uses ColBERT late interaction
+# Automatic connection pool management
+store = IRISVectorStore()
+# Pool handles concurrency automatically
 ```
 
-## 🧪 Testing & Quality Assurance
+### ACID Transactions
 
-The RAG-Templates framework includes comprehensive testing tools to ensure code quality and maintainability:
+All write operations are ACID-compliant:
 
-### Testing Compliance Tools
+```python
+# Load documents with transactional safety
+result = pipeline.load_documents(documents)
 
-**Coverage Warnings** - Automated coverage monitoring without failing builds
-- Warns when modules fall below 60% coverage (80% for critical modules)
-- Configure critical modules in `.coveragerc`
-- [Detailed Documentation](docs/testing/coverage-warnings.md)
+if not result['success']:
+    # Automatic rollback on failure
+    print(f"Failed: {result['error']}")
+```
 
-**Error Message Validation** - Ensures helpful test failure messages
-- Validates three-part structure: What failed, Why, and Action to take
-- Provides improvement suggestions for unclear messages
-- [Best Practices Guide](docs/testing/error-messages.md)
+### Horizontal Scaling
 
-**TDD Compliance** - Validates Test-Driven Development workflow
-- Ensures contract tests failed before implementation
-- Integrates with CI/CD for automated checking
-- [TDD Workflow Guide](docs/testing/tdd-compliance.md)
+IRIS supports distributed deployment with:
+- Multi-node clustering
+- Automatic load balancing
+- Distributed vector search
+- Enterprise resilience features
 
-### Running Tests
+## Pipeline-Specific Examples
+
+### CRAG (Corrective RAG)
+
+Self-correcting retrieval with web search fallback:
+
+```python
+pipeline = create_pipeline('crag')
+
+result = pipeline.query(
+    query="Latest developments in quantum computing",
+    top_k=5,
+    generate_answer=True
+)
+
+# CRAG automatically evaluates relevance and falls back to web search if needed
+print(f"Retrieval method used: {result['metadata']['retrieval_method']}")
+```
+
+### HybridGraphRAG
+
+Multi-modal search combining vector, text, and knowledge graph:
+
+```python
+pipeline = create_pipeline('graphrag')
+
+result = pipeline.query(
+    query_text="cancer treatment targets",
+    method="rrf",        # Reciprocal Rank Fusion
+    vector_k=30,
+    text_k=30,
+    graph_k=10
+)
+
+# Returns entities, relationships, and context
+print(f"Retrieved entities: {len(result['metadata']['entities'])}")
+print(f"Retrieved relationships: {len(result['metadata']['relationships'])}")
+```
+
+### PyLate ColBERT
+
+Fine-grained late interaction retrieval:
+
+```python
+pipeline = create_pipeline('pylate_colbert')
+
+# ColBERT computes token-level interactions
+result = pipeline.query(
+    query="symptoms of diabetes",
+    top_k=5
+)
+
+# Higher precision through contextualized matching
+print(result['answer'])
+```
+
+## Test Fixture System
+
+IRIS Vector RAG includes a high-performance test fixture system for reproducible testing:
 
 ```bash
-# Run all tests with coverage
-pytest --cov=iris_rag --cov=common
+# List available fixtures
+make fixture-list
+
+# Load .DAT fixture (100-200x faster than JSON)
+make fixture-load FIXTURE=medical-graphrag-20
+
+# Validate fixture integrity
+make fixture-validate FIXTURE=medical-graphrag-20
+```
+
+### Using Fixtures in Tests
+
+```python
+import pytest
+
+@pytest.mark.dat_fixture("medical-graphrag-20")
+def test_with_fixture():
+    # Fixture automatically loaded with 21 entities, 15 relationships
+    pipeline = create_pipeline("graphrag")
+    result = pipeline.query("What are cancer treatment targets?")
+    assert len(result["retrieved_documents"]) > 0
+```
+
+**Learn more**: See `tests/fixtures/README.md` for complete fixture documentation.
+
+## Architecture
+
+```
+iris_rag/
+├── core/           # Abstract base classes (RAGPipeline, VectorStore)
+├── pipelines/      # Pipeline implementations
+│   ├── basic.py
+│   ├── basic_reranking.py
+│   ├── crag.py
+│   ├── graphrag.py
+│   ├── hybrid_graphrag.py
+│   └── colbert_pylate/
+├── storage/        # Vector store implementations
+│   └── vector_store_iris.py
+├── services/       # Business logic (entity extraction, storage)
+├── config/         # Configuration management
+└── validation/     # Pipeline validation framework
+```
+
+## Testing
+
+```bash
+# Run all tests
+make test
 
 # Run specific test categories
-pytest tests/unit/          # Unit tests only
+pytest tests/unit/          # Unit tests
 pytest tests/integration/   # Integration tests
 pytest tests/contract/      # Contract tests
 
-# Validate TDD compliance
-python scripts/validate_tdd_compliance.py
-
-# Check requirement-task mapping
-python scripts/validate_task_mapping.py --spec specs/*/spec.md --tasks specs/*/tasks.md
+# Run with coverage
+pytest --cov=iris_rag --cov-report=term-missing
 ```
 
-### Pre-commit Hooks
+## RAGAS Evaluation
 
-Install pre-commit hooks for automated quality checks:
+Evaluate pipeline performance with RAGAS metrics:
 
 ```bash
-pip install pre-commit
-pre-commit install
+# Quick evaluation (sample data)
+make test-ragas-sample
+
+# Full evaluation (1000 documents)
+make test-ragas-1000
 ```
 
-This enables:
-- TDD compliance checking on contract test commits
-- Requirement-task mapping validation
-- Code formatting (black, isort)
-- Error message quality reminders
+## Documentation
 
-## 📚 References & Research
+- **[User Guide](USER_GUIDE.md)** - Complete installation and usage guide
+- **[API Reference](docs/API_REFERENCE.md)** - Detailed API documentation
+- **[Fixture Guide](tests/fixtures/README.md)** - Test fixture system
+- **[Architecture](docs/VALIDATED_ARCHITECTURE_SUMMARY.md)** - System design details
+- **[Production Readiness](docs/PRODUCTION_READINESS_ASSESSMENT.md)** - Deployment checklist
 
-### RAG Technique Papers & Implementations
+## Contributing
 
-| Technique | Original Paper | Key Repository | Additional Resources |
-|-----------|---------------|----------------|---------------------|
-| **Basic RAG** | [Retrieval-Augmented Generation](https://arxiv.org/abs/2005.11401) | [Facebook Research](https://github.com/facebookresearch/RAG) | [LangChain RAG](https://python.langchain.com/docs/tutorials/rag/) |
-| **ColBERT** | [ColBERT: Efficient and Effective Passage Retrieval](https://arxiv.org/abs/2004.12832) | [Stanford ColBERT](https://github.com/stanford-futuredata/ColBERT) | [Pylate Integration](https://github.com/lightonai/pylate) |
-| **CRAG** | [Corrective Retrieval Augmented Generation](https://arxiv.org/abs/2401.15884) | [CRAG Implementation](https://github.com/HuskyInSalt/CRAG) | [LangGraph CRAG](https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_crag/) |
-| **HyDE** | [Precise Zero-Shot Dense Retrieval](https://arxiv.org/abs/2212.10496) | [HyDE Official](https://github.com/texttron/hyde) | [LangChain HyDE](https://python.langchain.com/docs/how_to/hyde/) |
-| **GraphRAG** | [From Local to Global: A Graph RAG Approach](https://arxiv.org/abs/2404.16130) | [Microsoft GraphRAG](https://github.com/microsoft/graphrag) | [Neo4j GraphRAG](https://github.com/neo4j/neo4j-graphrag-python) |
-| **NodeRAG** | [Hierarchical Text Retrieval](https://arxiv.org/abs/2310.20501) | [NodeRAG Implementation](https://github.com/microsoft/noderag) | [Hierarchical Retrieval](https://python.langchain.com/docs/how_to/parent_document_retriever/) |
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing guidelines, and contribution workflow.
 
-### Core Technologies
+## Research & References
 
-- **Vector Databases**: [InterSystems IRIS Vector Search](https://docs.intersystems.com/iris20241/csp/docbook/DocBook.UI.Page.cls?KEY=GSQL_vecsearch)
-- **Embeddings**: [Sentence Transformers](https://github.com/UKPLab/sentence-transformers), [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings)
-- **LLM Integration**: [LangChain](https://github.com/langchain-ai/langchain), [OpenAI API](https://platform.openai.com/docs/api-reference)
+This implementation is based on the following research:
 
-## 📄 License
+- **Basic RAG**: Lewis et al., [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401), NeurIPS 2020
+- **CRAG**: Yan et al., [Corrective Retrieval Augmented Generation](https://arxiv.org/abs/2401.15884), arXiv 2024
+- **GraphRAG**: Edge et al., [From Local to Global: A Graph RAG Approach to Query-Focused Summarization](https://arxiv.org/abs/2404.16130), arXiv 2024
+- **ColBERT**: Khattab & Zaharia, [ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT](https://arxiv.org/abs/2004.12832), SIGIR 2020
 
-MIT License - see [LICENSE](LICENSE) file for details.
+## License
 
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/intersystems-community/iris-vector-rag/issues)
+- **Documentation**: [Full Documentation](docs/)
+- **IRIS Vector Search**: [Official Documentation](https://docs.intersystems.com/iris20241/csp/docbook/DocBook.UI.Page.cls?KEY=GSQL_vecsearch)

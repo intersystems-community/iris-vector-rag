@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRerank",
-  "query": "How does COVID-19 affect respiratory function and lung capacity?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.6682696342468262,
-  "success": true,
-  "error": null
-}
