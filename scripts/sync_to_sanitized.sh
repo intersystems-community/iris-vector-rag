@@ -132,6 +132,17 @@ if [[ "$DRY_RUN" == "false" ]]; then
         --exclude='*.egg-info' \
         --exclude='.DS_Store' \
         --exclude='redaction_changes.json' \
+        --exclude='.claude/' \
+        --exclude='.cursor/' \
+        --exclude='.aider*' \
+        --exclude='.clinerules' \
+        --exclude='.specify/' \
+        --exclude='specs/' \
+        --exclude='CLAUDE.md' \
+        --exclude='IMPLEMENTATION_*.md' \
+        --exclude='*.log' \
+        --exclude='push_*.log' \
+        --exclude='test-results/' \
         "$REPO_ROOT/" "$SANITIZED_DIR/"
     echo -e "${GREEN}✓ Files copied successfully${NC}"
 else
