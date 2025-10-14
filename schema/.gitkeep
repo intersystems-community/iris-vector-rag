@@ -1,3 +1,0 @@
-# This file ensures the schema/ directory is tracked by git
-# This directory contains shared schema definitions for all language interfaces
-# It will be removed once actual schema files are added

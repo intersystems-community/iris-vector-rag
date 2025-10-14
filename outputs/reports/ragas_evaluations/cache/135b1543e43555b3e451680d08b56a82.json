@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "BasicRerank",
+  "query": "What are the genetic factors associated with breast cancer risk?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.5654997825622559,
+  "success": true,
+  "error": null
+}

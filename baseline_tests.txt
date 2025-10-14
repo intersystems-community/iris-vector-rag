@@ -1,0 +1,4 @@
+Baseline Test Status (2025-10-08)
+=====================================
+Note: Full test suite requires IRIS backend. Cleanup operations are database-independent.
+Manual validation approach per quickstart.md will be used.

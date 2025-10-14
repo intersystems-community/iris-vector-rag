@@ -30,21 +30,6 @@ logging:
 testing:
   min_docs_e2e: 1000         # Minimum documents required for E2E tests
 
-# ColBERT Specific Configuration
-colbert:
-  # Backend selection: "native" for our real ColBERT, "pylate" for external library
-  backend: "native"
-  
-  # ColBERT configuration
-  token_dimension: 768  # Dimension for token embeddings
-  model_name: "bert-base-uncased"  # HuggingFace model name
-  device: "cpu"  # Device to run on ("cpu" or "cuda")
-  
-  # Legacy configuration (still supported)
-  document_encoder_model: "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT" # Model for ColBERT document token embeddings
-  # query_encoder_model: "lightonai/GTE-ModernColBERT-v1" # Can be same or different for query side
-  candidate_pool_size: 100 # Number of candidates for Stage 1 retrieval before ColBERT re-ranking
-
 # Storage Backend Configuration for iris_rag
 storage:
   backends:
@@ -62,10 +47,6 @@ pipelines:
     chunk_overlap: 200
     default_top_k: 5
     embedding_batch_size: 32
-  colbert:
-    chunk_size: 1000
-    chunk_overlap: 200
-    default_top_k: 5
   crag:
     chunk_size: 1000
     chunk_overlap: 200
@@ -76,85 +57,3 @@ embeddings:
   backend: "sentence_transformers"
   model: "sentence-transformers/all-MiniLM-L6-v2"
   dimension: 384
-
-# Reconciliation Framework Configuration
-# (Commented out by default - uncomment and customize as needed)
-# reconciliation:
-#   enabled: true
-#   mode: "progressive"  # progressive | complete | emergency
-#   interval_hours: 24
-#   performance:
-#     max_concurrent_pipelines: 3
-#     batch_size_documents: 100
-#     batch_size_embeddings: 50
-#     memory_limit_gb: 8
-#     cpu_limit_percent: 70
-#   error_handling:
-#     max_retries: 3
-#     retry_delay_seconds: 30
-#     rollback_on_failure: true
-#   monitoring:
-#     enable_progress_tracking: true
-#     log_level: "INFO"
-#     alert_on_failures: true
-
-# Enhanced ColBERT Configuration for Reconciliation
-# (Extends the existing colbert section with reconciliation-specific settings)
-# colbert:
-#   # Existing settings (already defined above)
-#   document_encoder_model: "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT"
-#   candidate_pool_size: 100
-#
-#   # Reconciliation-specific settings (uncomment to enable)
-#   target_document_count: 1000
-#   model_name: "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT"
-#   token_dimension: 768
-#   validation:
-#     diversity_threshold: 0.7
-#     mock_detection_enabled: true
-#     min_embedding_quality_score: 0.8
-#   completeness:
-#     require_all_docs: true
-#     require_token_embeddings: true
-#     min_completeness_percent: 95.0
-#     max_missing_documents: 50
-#   remediation:
-#     auto_heal_missing_embeddings: true
-#     auto_migrate_schema: false
-#     embedding_generation_batch_size: 32
-#     max_remediation_time_minutes: 120
-#     backup_before_remediation: true
-
-# Target States Configuration
-# (Commented out by default - uncomment and customize for different environments)
-# target_states:
-#   development:
-#     document_count: 1000
-#     pipelines:
-#       basic:
-#         required_embeddings: {"document_level": 1000}
-#         schema_version: "2.1"
-#         embedding_model: "all-MiniLM-L6-v2"
-#         vector_dimensions: 384
-#       colbert:
-#         required_embeddings:
-#           document_level: 1000
-#           token_level: 1000
-#         schema_version: "2.1"
-#         embedding_model: "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT"
-#         vector_dimensions: 768
-#   production:
-#     document_count: 50000
-#     pipelines:
-#       basic:
-#         required_embeddings: {"document_level": 50000}
-#         schema_version: "2.1"
-#         embedding_model: "all-MiniLM-L6-v2"
-#         vector_dimensions: 384
-#       colbert:
-#         required_embeddings:
-#           document_level: 50000
-#           token_level: 50000
-#         schema_version: "2.1"
-#         embedding_model: "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT"
-#         vector_dimensions: 768

@@ -1,0 +1,32 @@
+{
+  "basic": {
+    "pipeline_type": "basic",
+    "results": [],
+    "success_rate": 0.0,
+    "error": "Failed to connect to IRIS backend 'iris': IRIS connection utility returned None"
+  },
+  "basic_rerank": {
+    "pipeline_type": "basic_rerank",
+    "results": [],
+    "success_rate": 0.0,
+    "error": "Failed to connect to IRIS backend 'iris': IRIS connection utility returned None"
+  },
+  "crag": {
+    "pipeline_type": "crag",
+    "results": [],
+    "success_rate": 0.0,
+    "error": "Failed to connect to IRIS backend 'iris': IRIS connection utility returned None"
+  },
+  "graphrag": {
+    "pipeline_type": "graphrag",
+    "results": [],
+    "success_rate": 0.0,
+    "error": "Failed to connect to IRIS backend 'iris': IRIS connection utility returned None"
+  },
+  "pylate_colbert": {
+    "pipeline_type": "pylate_colbert",
+    "results": [],
+    "success_rate": 0.0,
+    "error": "Failed to connect to IRIS backend 'iris': IRIS connection utility returned None"
+  }
+}

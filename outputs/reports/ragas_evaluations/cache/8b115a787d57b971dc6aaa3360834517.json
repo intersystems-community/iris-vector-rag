@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "BasicRAG",
+  "query": "What are the risk factors and prevention strategies for cardiovascular disease?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 1.437819242477417,
+  "success": true,
+  "error": null
+}
