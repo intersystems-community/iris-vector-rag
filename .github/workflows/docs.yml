@@ -81,7 +81,7 @@ jobs:
           virtualenvs-in-project: true
           
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .venv
           key: docs-venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
