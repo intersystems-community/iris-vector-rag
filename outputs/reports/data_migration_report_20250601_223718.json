@@ -1,0 +1,22 @@
+{
+  "start_time": "2025-06-01T22:36:59.933902",
+  "tables_migrated": [],
+  "errors": [
+    {
+      "table": "RAG.SourceDocuments",
+      "column": "embedding",
+      "error": "java.sql.SQLException: [SQLCODE: <-255>:<A value of SQL type Vector is not allowed in a GROUP BY or ORDER BY clause>]\r\n[Location: <ServerLoop>]\r\n[%msg: <A value of SQL type Vector is not allowed in a GROUP BY or ORDER BY clause. compiling embedded cached query from %sqlcq.USER.j37252s9.mac>]",
+      "timestamp": "2025-06-01T22:37:03.850158"
+    },
+    {
+      "table": "RAG.DocumentTokenEmbeddings",
+      "column": "token_embedding",
+      "error": "java.sql.SQLException: [SQLCODE: <-255>:<A value of SQL type Vector is not allowed in a GROUP BY or ORDER BY clause>]\r\n[Location: <ServerLoop>]\r\n[%msg: <A value of SQL type Vector is not allowed in a GROUP BY or ORDER BY clause. compiling embedded cached query from %sqlcq.USER.j37252s9.mac>]",
+      "timestamp": "2025-06-01T22:37:18.133522"
+    }
+  ],
+  "warnings": [],
+  "verification_results": {},
+  "end_time": "2025-06-01T22:37:18.134021",
+  "success": false
+}

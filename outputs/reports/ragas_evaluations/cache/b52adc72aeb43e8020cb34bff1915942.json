@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "BasicRerank",
+  "query": "What are the mechanisms of antibiotic resistance in bacterial infections?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.6688008308410645,
+  "success": true,
+  "error": null
+}

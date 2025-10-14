@@ -1,0 +1,77 @@
+{
+  "test_summary": {
+    "total_techniques": 7,
+    "successful_techniques": 0,
+    "failed_techniques": 7,
+    "success_rate": 0.0,
+    "total_execution_time": 7.869403123855591,
+    "test_timestamp": "2025-06-05T06:34:19.962175"
+  },
+  "technique_results": {
+    "BasicRAG": {
+      "technique": "BasicRAG",
+      "status": "FAILED",
+      "error": "BasicRAGPipeline.__init__() missing 3 required positional arguments: 'iris_connector', 'embedding_func', and 'llm_func'",
+      "execution_time": 0.29074525833129883,
+      "answer": null,
+      "retrieved_docs": 0
+    },
+    "ColBERT": {
+      "technique": "ColBERT",
+      "status": "FAILED",
+      "error": "module 'core_pipelines.colbert_pipeline' has no attribute 'ColBERTPipeline'",
+      "execution_time": 0.0007691383361816406,
+      "answer": null,
+      "retrieved_docs": 0
+    },
+    "CRAG": {
+      "technique": "CRAG",
+      "status": "FAILED",
+      "error": "CRAGPipeline.__init__() missing 3 required positional arguments: 'iris_connector', 'embedding_func', and 'llm_func'",
+      "execution_time": 0.0002319812774658203,
+      "answer": null,
+      "retrieved_docs": 0
+    },
+    "GraphRAG": {
+      "technique": "GraphRAG",
+      "status": "FAILED",
+      "error": "GraphRAGPipeline.__init__() missing 3 required positional arguments: 'iris_connector', 'embedding_func', and 'llm_func'",
+      "execution_time": 0.0004801750183105469,
+      "answer": null,
+      "retrieved_docs": 0
+    },
+    "HyDE": {
+      "technique": "HyDE",
+      "status": "FAILED",
+      "error": "HyDEPipeline.__init__() missing 3 required positional arguments: 'iris_connector', 'embedding_func', and 'llm_func'",
+      "execution_time": 0.0005178451538085938,
+      "answer": null,
+      "retrieved_docs": 0
+    },
+    "NodeRAG": {
+      "technique": "NodeRAG",
+      "status": "FAILED",
+      "error": "NodeRAGPipeline.__init__() missing 3 required positional arguments: 'iris_connector', 'embedding_func', and 'llm_func'",
+      "execution_time": 0.00039505958557128906,
+      "answer": null,
+      "retrieved_docs": 0
+    },
+    "HybridIFindRAG": {
+      "technique": "HybridIFindRAG",
+      "status": "FAILED",
+      "error": "module 'hybrid_ifind_rag.pipeline' has no attribute 'HybridIFindRAGPipeline'",
+      "execution_time": 0.0035200119018554688,
+      "answer": null,
+      "retrieved_docs": 0
+    }
+  },
+  "dbapi_compatibility": {
+    "connection_method": "intersystems_iris.dbapi._DBAPI.connect()",
+    "connection_successful": true,
+    "basic_functionality": true
+  },
+  "recommendations": [
+    "\u26a0\ufe0f 7 techniques need attention: BasicRAG, ColBERT, CRAG, GraphRAG, HyDE, NodeRAG, HybridIFindRAG",
+    "\ud83d\udd27 Review failed techniques for DBAPI compatibility issues"
+  ]
+}

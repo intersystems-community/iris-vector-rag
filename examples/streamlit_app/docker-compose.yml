@@ -1,0 +1,202 @@
+# Docker Compose configuration for Streamlit RAG Pipeline Demo
+# Provides complete development and production environments
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Streamlit Application Service
+  # ============================================================================
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: rag-demo-app
+    ports:
+      - "8501:8501"
+    environment:
+      # Application Configuration
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      - STREAMLIT_THEME=${STREAMLIT_THEME:-light}
+      - DEBUG_MODE=${DEBUG_MODE:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      
+      # API Keys (from environment)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_ORG_ID=${OPENAI_ORG_ID}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - COHERE_API_KEY=${COHERE_API_KEY}
+      
+      # Vector Database Configuration
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENVIRONMENT=${PINECONE_ENVIRONMENT}
+      
+      # Search API Configuration
+      - GOOGLE_SEARCH_API_KEY=${GOOGLE_SEARCH_API_KEY}
+      - BING_SEARCH_API_KEY=${BING_SEARCH_API_KEY}
+      
+      # Database Configuration
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://rag_user:rag_password@postgres:5432/rag_db
+    
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+    
+    depends_on:
+      - redis
+      - postgres
+    
+    networks:
+      - rag-network
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ============================================================================
+  # Redis Cache Service
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: rag-demo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # PostgreSQL Database Service
+  # ============================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: rag-demo-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=rag_db
+      - POSTGRES_USER=rag_user
+      - POSTGRES_PASSWORD=rag_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag_user -d rag_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # ChromaDB Vector Database Service
+  # ============================================================================
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: rag-demo-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb-data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================================================
+  # Monitoring and Observability (Optional)
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rag-demo-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - rag-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rag-demo-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - rag-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+# ============================================================================
+# Networks Configuration
+# ============================================================================
+networks:
+  rag-network:
+    driver: bridge
+    name: rag-demo-network
+
+# ============================================================================
+# Volumes Configuration
+# ============================================================================
+volumes:
+  redis-data:
+    driver: local
+    name: rag-demo-redis-data
+  
+  postgres-data:
+    driver: local
+    name: rag-demo-postgres-data
+  
+  chromadb-data:
+    driver: local
+    name: rag-demo-chromadb-data
+  
+  prometheus-data:
+    driver: local
+    name: rag-demo-prometheus-data
+  
+  grafana-data:
+    driver: local
+    name: rag-demo-grafana-data

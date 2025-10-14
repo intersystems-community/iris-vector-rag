@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "HybridGraphRAG",
+  "query": "What are the risk factors and prevention strategies for cardiovascular disease?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.26877617835998535,
+  "success": true,
+  "error": null
+}

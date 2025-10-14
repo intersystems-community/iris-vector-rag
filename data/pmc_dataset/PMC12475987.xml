@@ -1,0 +1,470 @@
+<?xml version="1.0"  ?><!DOCTYPE pmc-articleset PUBLIC "-//NLM//DTD ARTICLE SET 2.0//EN" "https://dtd.nlm.nih.gov/ncbi/pmc/articleset/nlm-articleset-2.0.dtd"><pmc-articleset><article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:ali="http://www.niso.org/schemas/ali/1.0/" xml:lang="en" article-type="research-article" dtd-version="1.4"><processing-meta base-tagset="archiving" mathml-version="3.0" table-model="xhtml" tagset-family="jats"><restricted-by>pmc</restricted-by></processing-meta><front><journal-meta><journal-id journal-id-type="nlm-ta">Cureus</journal-id><journal-id journal-id-type="iso-abbrev">Cureus</journal-id><journal-id journal-id-type="pmc-domain-id">2757</journal-id><journal-id journal-id-type="pmc-domain">cureus</journal-id><journal-title-group><journal-title>Cureus</journal-title></journal-title-group><issn pub-type="epub">2168-8184</issn><publisher><publisher-name>Cureus Inc.</publisher-name></publisher></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC12475987</article-id><article-id pub-id-type="pmcid-ver">PMC12475987.1</article-id><article-id pub-id-type="pmcaid">12475987</article-id><article-id pub-id-type="pmcaiid">12475987</article-id><article-id pub-id-type="doi">10.7759/cureus.91165</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group subj-group-type="heading"><subject>Psychology</subject></subj-group><subj-group><subject>Epidemiology/Public Health</subject></subj-group><subj-group><subject>Public Health</subject></subj-group></article-categories><title-group><article-title>Smartphone Addiction and Its Psychosocial Correlates Among University Students</article-title></title-group><contrib-group><contrib contrib-type="editor"><name name-style="western"><surname>Muacevic</surname><given-names initials="A">Alexander</given-names></name></contrib><contrib contrib-type="editor"><name name-style="western"><surname>Adler</surname><given-names initials="JR">John R</given-names></name></contrib></contrib-group><contrib-group><contrib contrib-type="author" corresp="yes"><name name-style="western"><surname>Alhassan</surname><given-names initials="MA">Mohammed A</given-names></name><xref rid="aff-1" ref-type="aff">1</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Al-Otaibi</surname><given-names initials="EM">Emad M</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Bin Ofaysan</surname><given-names initials="MS">Meshal S</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Alarjani</surname><given-names initials="KH">Khalid H</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Alzuhairi</surname><given-names initials="MO">Maan O</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Alarfaj</surname><given-names initials="NS">Nawaf S</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Al-murayt</surname><given-names initials="FS">Faisal S</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Alotaibi</surname><given-names initials="BM">Bader M</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Alanazi</surname><given-names initials="KF">Khalid F</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Alfawaz</surname><given-names initials="AM">Abdulelah M</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Musa</surname><given-names initials="A">Anas</given-names></name><xref rid="aff-3" ref-type="aff">3</xref></contrib></contrib-group><aff id="aff-1">
+<label>1</label>
+Pediatric Medicine, Prince Sattam Bin Abdulaziz University, Al-kharj, SAU </aff><aff id="aff-2">
+<label>2</label>
+Public Health, Prince Sattam Bin Abdulaziz University, Al-kharj, SAU </aff><aff id="aff-3">
+<label>3</label>
+Cardiology, Rashid Hospital, Abu Dhabi, ARE </aff><author-notes><corresp id="cor1">
+Mohammed A. Alhassan <email>ma.alhassan@psau.edu.sa</email></corresp></author-notes><pub-date date-type="pub" publication-format="electronic"><day>28</day><month>8</month><year>2025</year></pub-date><pub-date date-type="collection" publication-format="electronic"><month>8</month><year>2025</year></pub-date><volume>17</volume><issue>8</issue><issue-id pub-id-type="pmc-issue-id">494304</issue-id><elocation-id>e91165</elocation-id><history><date date-type="accepted"><day>27</day><month>8</month><year>2025</year></date></history><pub-history><event event-type="pmc-release"><date><day>28</day><month>08</month><year>2025</year></date></event><event event-type="pmc-live"><date><day>28</day><month>09</month><year>2025</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2025-09-28 20:25:39.430"><day>28</day><month>09</month><year>2025</year></date></event></pub-history><permissions><copyright-statement>Copyright &#169; 2025, Alhassan et al.</copyright-statement><copyright-year>2025</copyright-year><copyright-holder>Alhassan et al.</copyright-holder><license><ali:license_ref specific-use="textmining" content-type="ccbylicense">https://creativecommons.org/licenses/by/4.0/</ali:license_ref><license-p>This is an open access article distributed under the terms of the Creative Commons Attribution License CC-BY 4.0., which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are credited.</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="cureus-0017-00000091165.pdf"/><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://cureus.com/articles/399590-smartphone-addiction-and-its-psychosocial-correlates-among-university-students">This article is available from https://cureus.com/articles/399590-smartphone-addiction-and-its-psychosocial-correlates-among-university-students</self-uri><abstract><p>Background: Addiction to smartphones is an increasingly recognized behavioral issue among university students. It has potentially adverse effects on mental and psychosocial well-being.</p><p>Objectives: To assess the prevalence of smartphone addiction and examine its associations with six psychosocial and behavioral health measures among university students.</p><p>Methods: A cross-sectional, web-based survey was conducted among university students in Saudi Arabia. Using convenience sampling, we collected demographic data along with validated instruments: the 10-item Smartphone Addiction Scale-Short Version (SAS-SV) for addiction risk, and five additional validated scales for assessing depression, anxiety, sleep quality, physical activity, and social connectedness. Data were analyzed using Stata&#8239;17 (StatCorp LLC, College Station, TX) with descriptive statistics, between-group tests (t&#8209;tests, Mann-Whitney U, &#967;&#178;), Spearman correlations, and crude logistic regression analyses.</p><p>Results: A total of 383 students completed the survey, with a mean daily smartphone use of 7.6&#8239;&#177;&#8239;3.5&#8239;hrs. Overall, 268 (70.0%) individuals screened at risk for smartphone addiction, with no significant differences by gender, age, or academic grades. However, a higher risk was observed in computer engineering and business students (p&#8239;=&#8239;0.043) and among those who used phones for longer periods daily (p&#8239;&lt;&#8239;0.001). Probable depression and anxiety were present in 176 (45.9%) and 162 (42.3%) participants, respectively, and were associated with increased odds of smartphone addiction (odds ratio (OR)&#8239;=&#8239;3.83, 95&#8239;%&#8239;CI&#8239;2.35-6.25; OR&#8239;=&#8239;3.11, 95&#8239;%&#8239;CI&#8239;1.91-5.06). Physical activity and better sleep quality were inversely associated with addiction risk (OR&#8239;=&#8239;0.54, 95&#8239;%&#8239;CI&#8239;0.34-0.86; OR&#8239;=&#8239;0.78, 95&#8239;%&#8239;CI&#8239;0.63-0.96), while loneliness (34.0% vs. 15.7%, p&#8239;&lt;&#8239;0.001) and negative perceptions of smartphone impact (OR&#8239;=&#8239;3.50, p&#8239;=&#8239;0.001) correlated with higher addiction risk. Smartphone&#8209;addiction scores correlated positively with depression (r&#8239;=&#8239;0.43) and anxiety (r&#8239;=&#8239;0.35) and negatively with sleep quality (r&#8239;=&#8239;-0.13) and physical activity (r&#8239;=&#8239;-0.20) scores (all p&#8239;&lt;&#8239;0.05). Frequent engagement in creative activities (OR = 0.47, p = 0.018) was associated with reduced odds of smartphone addiction.</p><p>Conclusion: Smartphone addiction risk was exceptionally high and strongly linked to depression, anxiety, and loneliness, whereas better sleep, regular physical activity, and creative engagement were protective. These findings reiterate the need for integrated interventions targeting students, combining digital literacy education, mental&#8209;health screening, and lifestyle promotion.</p></abstract><kwd-group kwd-group-type="author"><kwd>anxiety</kwd><kwd>depression</kwd><kwd>exercise</kwd><kwd>internet addiction disorder</kwd><kwd>loneliness</kwd><kwd>mental health</kwd><kwd>sleep quality</kwd></kwd-group><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta></custom-meta-group></article-meta></front><body><sec sec-type="intro"><title>Introduction</title><p>Smartphones have become an integral part of the daily lives of young adults, particularly university students, whose academic, social, and recreational activities often revolve around digital platforms. Although these devices offer significant benefits, excessive or maladaptive use has raised concerns regarding their impact on mental health, sleep, academic performance, and general well-being [<xref rid="REF1" ref-type="bibr">1</xref>]. The concept of smartphone addiction, sometimes referred to as problematic smartphone use, has gained increasing recognition as a behavioral addiction characterized by compulsive usage, withdrawal symptoms, and functional impairments [<xref rid="REF2" ref-type="bibr">2</xref>].</p><p>Prevalence estimates vary widely across settings, with studies reporting smartphone addiction risks affecting 20% to over 60% of university students globally [<xref rid="REF3" ref-type="bibr">3</xref>]. Such overuse has been associated with depression, anxiety, poor sleep quality, physical inactivity, and decreased academic functioning [<xref rid="REF4" ref-type="bibr">4</xref>]. In Saudi Arabia, where smartphone penetration is among the highest in the world [<xref rid="REF5" ref-type="bibr">5</xref>], the university student population may be particularly vulnerable to the adverse effects of digital overuse.</p><p>Despite growing concern about the mental health and behavioral consequences of excessive smartphone use, only a few studies have examined the interplay between smartphone addiction and psychosocial and behavioral correlations in this population [<xref rid="REF6" ref-type="bibr">6</xref>,<xref rid="REF7" ref-type="bibr">7</xref>]. To our knowledge, no study in Saudi Arabia has yet examined how depression, anxiety, sleep quality, physical activity, social connectedness, and engagement in creative activities interact in this context among university students. This study seeks to fill these gaps by estimating current smartphone addiction prevalence and exploring its associations with six key psychosocial and behavioral measures: depression, anxiety, sleep quality, physical activity, social connectedness, and engagement in creative activities. We included the frequency of engagement in creative activities as an exploratory behavioral correlate to examine its association with smartphone addiction risk.</p></sec><sec sec-type="materials|methods"><title>Materials and methods</title><p>Study design and setting</p><p>We conducted a web-based survey among students at Prince Sattam Bin Abdulaziz University in Saudi Arabia from August 2024 to April 2025. The university includes various colleges across medical, engineering, business, and humanities disciplines.</p><p>Inclusions and sampling</p><p>Full-time undergraduate students were eligible for inclusion. Students who were part-time, had withdrawn from the semester, or were exchange students were excluded from the study. A non-probability convenience sampling strategy was used. Data collectors identified WhatsApp groups (end-to-end encrypted) representing various student batches across multiple colleges without applying predefined selection criteria. The web-based questionnaire link was distributed to these groups, and all members were invited to participate voluntarily. Only responses submitted through the online form were included in the analysis. A minimum sample size of 293 was estimated for a 95% confidence level, 5% margin of error, design effect of 1, population size of ~26,000, and hypothesized prevalence of 26% [<xref rid="REF8" ref-type="bibr">8</xref>]; the achieved sample was 383.</p><p>Ethical considerations</p><p>The study was approved by the Standing Committee of Bioethics Research of Prince Sattam Bin Abdulaziz University (SCBR-441/2025). Informed consent was obtained electronically via a checkbox prior to survey initiation. All data were collected anonymously and treated confidentially.</p><p>Information obtained and measures</p><p>Sociodemographic data, Grade Point Average, hours of smartphone use per day, primary purpose of smartphone use, and perceived effect on academic performance were obtained. Overall perceived impact of smartphone use was captured with a single item (positive,&#8217; &#8216;negative,&#8217; &#8216;neutral&#8217;). The frequency of engagement in creative activities was assessed through a structured questionnaire: &#8220;How often do you engage in creative or hands-on activities (e.g., drawing, crafting, playing a musical instrument, cooking) in your free time?&#8221; with three Likert options. Validated measures were used to assess Smartphone addiction using the 10-item Smartphone Addiction Scale-Short Version (SAS-SV), scored on a 6-point Likert scale. Gender-specific cut-offs (males &#8805;31, females &#8805;33) were used to define addiction risk [<xref rid="REF9" ref-type="bibr">9</xref>].</p><p>Depression and anxiety were assessed using the Patient Health Questionnaire-2 (PHQ-2) [<xref rid="REF10" ref-type="bibr">10</xref>] and Generalized Anxiety Disorder-2 (GAD-2) [<xref rid="REF11" ref-type="bibr">11</xref>] instruments, respectively, with a score &#8805;3 indicating probable major depression or anxiety disorder. PHQ-2 and GAD-2 are screening instruments indicating probable symptoms and do not constitute clinical diagnoses. Sleep quality was measured using the Single-Item Sleep Quality Scale (SQS), a validated 0-10 visual analogue scale, categorized into five levels from terrible to excellent [<xref rid="REF12" ref-type="bibr">12</xref>]. Physical activity was evaluated using the Exercise Vital Sign (EVS) [<xref rid="REF13" ref-type="bibr">13</xref>], categorizing participants as physically active (&#8805;150 minutes/week) or inactive (&lt;150 minutes/week). Social connectedness was assessed via a validated 3-item scale, scored from 0 to 9, with higher scores indicating greater perceived connectedness [<xref rid="REF14" ref-type="bibr">14</xref>]. The questionnaire was prepared in English and Modern Standard Arabic [<xref rid="REF15" ref-type="bibr">15</xref>] and pilot-tested among 10 students to assess clarity, formatting, and flow; no issues were identified, and no changes were required. All instruments are publicly available for academic use and require no formal permission beyond proper citation; we used the original versions without modification.</p><p>Data handling and statistical analysis</p><p>Data were analyzed using Stata version 17, 2021 (StataCorp&#160;LLC, College Station, TX). Visual inspection of histograms and Q-Q plots was used to assess normality. Descriptive statistics were reported as means (SD) or frequencies (%). Between-group comparisons used t-tests, Mann-Whitney U tests, and chi-square tests as appropriate. Correlation analyses were conducted using Spearman&#8217;s rho. Crude odds ratios (OR) were calculated using simple logistic regression. Because no a priori confounder set was specified and the analysis was exploratory, adjusted multivariable models were not fitted, and associations were interpreted descriptively. Figures were generated with assistance from Julius AI (Infographics Generation AI chatbot, Caesar&#160;Labs,&#160;Inc., 2025, July&#160;21) and verified in Stata.</p></sec><sec sec-type="results"><title>Results</title><p>Participant characteristics and smartphone addiction</p><p>A total of 383 university students participated in the study. Most participants were enrolled in Medicine (20.9%; n=80), Humanities (18.8%; n=72), and Computer Engineering (16.7%; n=64). The majority (80.2%; n=307) of students lived with their families. The primary reported purposes for smartphone use included social media (30.8%; n=118) and watching videos (25.6%; n=98), while academic purposes constituted 15.1% (n=58). The mean daily smartphone usage was 7.64 hours (SD = 3.46) (Table <xref rid="TAB1" ref-type="table">1</xref>).</p><table-wrap position="float" id="TAB1" orientation="portrait"><label>Table 1</label><caption><title>Characteristics of participants by smartphone addiction risk (N = 383)</title><p>* Represents a significant p-value. Categorical comparisons used &#967;&#178; tests; continuous/ordinal variables used t-tests or Mann&#8211;Whitney U tests as appropriate. Cells are n (row %); the Total column is n (% of N=383).</p></caption><table frame="hsides" rules="groups"><tbody><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Variable</td><td rowspan="1" colspan="1">Category</td><td rowspan="1" colspan="1">Not at Risk; n = 115 (30.0%)</td><td rowspan="1" colspan="1">At Risk; n = 268 (70.0%)</td><td rowspan="1" colspan="1">Total; n = 383</td><td rowspan="1" colspan="1">p-value</td></tr><tr><td rowspan="2" colspan="1">Gender</td><td rowspan="1" colspan="1">Male</td><td rowspan="1" colspan="1">75 (28.2%)</td><td rowspan="1" colspan="1">191 (71.8%)</td><td rowspan="1" colspan="1">266 (69.5%)</td><td rowspan="1" colspan="1">0.239</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Female</td><td rowspan="1" colspan="1">40 (34.2%)</td><td rowspan="1" colspan="1">77 (65.8%)</td><td rowspan="1" colspan="1">117 (30.5%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">Age (years; median (IQR))</td><td rowspan="1" colspan="1">&#8211;</td><td rowspan="1" colspan="1">21 (20, 22)</td><td rowspan="1" colspan="1">21 (20, 22)</td><td rowspan="1" colspan="1">21 (20, 22)</td><td rowspan="1" colspan="1">0.115</td></tr><tr style="background-color:#ccc"><td rowspan="3" colspan="1">Marital Status</td><td rowspan="1" colspan="1">Single</td><td rowspan="1" colspan="1">110 (29.4%)</td><td rowspan="1" colspan="1">264 (70.6%)</td><td rowspan="1" colspan="1">374 (97.7%)</td><td rowspan="1" colspan="1">0.125</td></tr><tr><td rowspan="1" colspan="1">Married</td><td rowspan="1" colspan="1">2 (40.0%)</td><td rowspan="1" colspan="1">3 (60.0%)</td><td rowspan="1" colspan="1">5 (1.3%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Divorced/Widowed</td><td rowspan="1" colspan="1">3 (75.0%)</td><td rowspan="1" colspan="1">1 (25.0%)</td><td rowspan="1" colspan="1">4 (1.0%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="9" colspan="1">College</td><td rowspan="1" colspan="1">Medicine</td><td rowspan="1" colspan="1">20 (25.0%)</td><td rowspan="1" colspan="1">60 (75.0%)</td><td rowspan="1" colspan="1">80 (20.9%)</td><td rowspan="1" colspan="1">0.043*</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Law</td><td rowspan="1" colspan="1">8 (42.1%)</td><td rowspan="1" colspan="1">11 (57.9%)</td><td rowspan="1" colspan="1">19 (5.0%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">Applied Med Sciences</td><td rowspan="1" colspan="1">11 (35.5%)</td><td rowspan="1" colspan="1">20 (64.5%)</td><td rowspan="1" colspan="1">31 (8.1%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Pharmacy</td><td rowspan="1" colspan="1">6 (24.0%)</td><td rowspan="1" colspan="1">19 (76.0%)</td><td rowspan="1" colspan="1">25 (6.5%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">Computer Engineering</td><td rowspan="1" colspan="1">12 (18.8%)</td><td rowspan="1" colspan="1">52 (81.3%)</td><td rowspan="1" colspan="1">64 (16.7%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Engineering</td><td rowspan="1" colspan="1">8 (34.8%)</td><td rowspan="1" colspan="1">15 (65.2%)</td><td rowspan="1" colspan="1">23 (6.0%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">Business Administration</td><td rowspan="1" colspan="1">8 (21.1%)</td><td rowspan="1" colspan="1">30 (78.9%)</td><td rowspan="1" colspan="1">38 (9.9%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Humanities</td><td rowspan="1" colspan="1">32 (44.4%)</td><td rowspan="1" colspan="1">40 (55.6%)</td><td rowspan="1" colspan="1">72 (18.8%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">Other</td><td rowspan="1" colspan="1">10 (32.3%)</td><td rowspan="1" colspan="1">21 (67.7%)</td><td rowspan="1" colspan="1">31 (8.1%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Academic Year</td><td rowspan="1" colspan="1">&#8211;</td><td rowspan="1" colspan="1">&#8211;</td><td rowspan="1" colspan="1">&#8211;</td><td rowspan="1" colspan="1">&#8211;</td><td rowspan="1" colspan="1">0.519</td></tr><tr><td rowspan="2" colspan="1">Accommodation</td><td rowspan="1" colspan="1">With Family</td><td rowspan="1" colspan="1">97 (31.6%)</td><td rowspan="1" colspan="1">210 (68.4%)</td><td rowspan="1" colspan="1">307 (80.2%)</td><td rowspan="1" colspan="1">0.178</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Dormitory</td><td rowspan="1" colspan="1">18 (23.7%)</td><td rowspan="1" colspan="1">58 (76.3%)</td><td rowspan="1" colspan="1">76 (19.8%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">Smartphone Use (hrs/day); mean (SD)</td><td rowspan="1" colspan="1">&#8211;</td><td rowspan="1" colspan="1">6.5 (3.3)</td><td rowspan="1" colspan="1">8.2 (3.4)</td><td rowspan="1" colspan="1">7.6 (3.5)</td><td rowspan="1" colspan="1">&lt;0.001*</td></tr><tr style="background-color:#ccc"><td rowspan="7" colspan="1">Primary Use Purpose</td><td rowspan="1" colspan="1">Academic</td><td rowspan="1" colspan="1">22 (37.9%)</td><td rowspan="1" colspan="1">36 (62.1%)</td><td rowspan="1" colspan="1">58 (15.1%)</td><td rowspan="1" colspan="1">0.532</td></tr><tr><td rowspan="1" colspan="1">General reading</td><td rowspan="1" colspan="1">12 (41.4%)</td><td rowspan="1" colspan="1">17 (58.6%)</td><td rowspan="1" colspan="1">29 (7.6%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Gaming</td><td rowspan="1" colspan="1">6 (31.6%)</td><td rowspan="1" colspan="1">13 (68.4%)</td><td rowspan="1" colspan="1">19 (5.0%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">Messaging/communication</td><td rowspan="1" colspan="1">11 (24.4%)</td><td rowspan="1" colspan="1">34 (75.6%)</td><td rowspan="1" colspan="1">45 (11.7%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Watching videos</td><td rowspan="1" colspan="1">28 (28.6%)</td><td rowspan="1" colspan="1">70 (71.4%)</td><td rowspan="1" colspan="1">98 (25.6%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">Social media</td><td rowspan="1" colspan="1">31 (26.3%)</td><td rowspan="1" colspan="1">87 (73.7%)</td><td rowspan="1" colspan="1">118 (30.8%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Other</td><td rowspan="1" colspan="1">5 (31.3%)</td><td rowspan="1" colspan="1">11 (68.8%)</td><td rowspan="1" colspan="1">16 (4.2%)</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">GPA; median (IQR)</td><td rowspan="1" colspan="1">&#8211;</td><td rowspan="1" colspan="1">4 (3.5, 4.5)</td><td rowspan="1" colspan="1">4 (3.5, 4.5)</td><td rowspan="1" colspan="1">4 (3.5, 4.5)</td><td rowspan="1" colspan="1">0.395</td></tr></tbody></table></table-wrap><p>The mean score on the SAS-SV among participants was 37.48 (SD = 10.47). Based on established cutoffs, 268 students (70.0%) were classified as being at risk of smartphone addiction. Out of the total male respondents, 191 (71.80%) were found to be at risk of smartphone addiction, while 77 (65.81%) of the total female respondents were at risk. There was no statistically significant association between smartphone addiction risk and gender (p = 0.239), age (p = 0.115), or GPA (p = 0.395). A significant association was observed between academic discipline and addiction risk (p = 0.043). Higher proportions of students at risk of smartphone addiction were found in the Colleges of Computer Engineering and Business Administration, while the proportion was lower among students in Humanities. Students at risk of addiction reported longer daily smartphone usage (p &lt; 0.001). No significant differences were found between groups regarding the primary purpose of smartphone use (p = 0.532) (Table <xref rid="TAB1" ref-type="table">1</xref>).</p><p>Associations with mental health and lifestyle variables</p><p>Probable major depression (PHQ-2 &#8805; 3) and potential anxiety (GAD-2 &#8805; 3) were found in 45.9% (n=176) and 42.3% (n=162) of students, respectively. Poor/terrible sleep quality (as measured by SQS) and physical inactivity (as measured by Exercise Vital Sign (EVS)) were reported by 30.5% (n = 117) and 69.5% (n = 266) of students, respectively (Table <xref rid="TAB2" ref-type="table">2</xref>).</p><table-wrap position="float" id="TAB2" orientation="portrait"><label>Table 2</label><caption><title>Descriptive statistics for phone addiction, psychological, sleep, and physical activity measures (N = 383)</title><p>EVS:&#160;Exercise Vital Sign.</p></caption><table frame="hsides" rules="groups"><tbody><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Variable</td><td rowspan="1" colspan="1">Category / Metric</td><td rowspan="1" colspan="1">n</td><td rowspan="1" colspan="1">% / Value</td></tr><tr><td rowspan="3" colspan="1">Smartphone Addiction (SAS-SV)</td><td rowspan="1" colspan="1">Mean (SD)</td><td rowspan="1" colspan="1">&#8212;</td><td rowspan="1" colspan="1">37.48 (10.47)</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">At risk of smartphone addiction</td><td rowspan="1" colspan="1">268</td><td rowspan="1" colspan="1">70.0%</td></tr><tr><td rowspan="1" colspan="1">Not at risk</td><td rowspan="1" colspan="1">115</td><td rowspan="1" colspan="1">30.0%</td></tr><tr style="background-color:#ccc"><td rowspan="2" colspan="1">Depression (PHQ-2)</td><td rowspan="1" colspan="1">Probable major depression</td><td rowspan="1" colspan="1">176</td><td rowspan="1" colspan="1">45.9%</td></tr><tr><td rowspan="1" colspan="1">Not likely depressed</td><td rowspan="1" colspan="1">207</td><td rowspan="1" colspan="1">54.1%</td></tr><tr style="background-color:#ccc"><td rowspan="2" colspan="1">Anxiety (GAD-2)</td><td rowspan="1" colspan="1">Probable anxiety disorder</td><td rowspan="1" colspan="1">162</td><td rowspan="1" colspan="1">42.3%</td></tr><tr><td rowspan="1" colspan="1">Not likely anxious</td><td rowspan="1" colspan="1">221</td><td rowspan="1" colspan="1">57.7%</td></tr><tr style="background-color:#ccc"><td rowspan="5" colspan="1">Sleep Quality (SQS)</td><td rowspan="1" colspan="1">Terrible</td><td rowspan="1" colspan="1">33</td><td rowspan="1" colspan="1">8.6%</td></tr><tr><td rowspan="1" colspan="1">Poor</td><td rowspan="1" colspan="1">84</td><td rowspan="1" colspan="1">21.9%</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Fair</td><td rowspan="1" colspan="1">157</td><td rowspan="1" colspan="1">41.0%</td></tr><tr><td rowspan="1" colspan="1">Good</td><td rowspan="1" colspan="1">77</td><td rowspan="1" colspan="1">20.1%</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Excellent</td><td rowspan="1" colspan="1">32</td><td rowspan="1" colspan="1">8.4%</td></tr><tr><td rowspan="2" colspan="1">Physical Activity (EVS)</td><td rowspan="1" colspan="1">Physically inactive</td><td rowspan="1" colspan="1">266</td><td rowspan="1" colspan="1">69.5%</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">Physically active</td><td rowspan="1" colspan="1">117</td><td rowspan="1" colspan="1">30.5%</td></tr></tbody></table></table-wrap><p>Crude odds of smartphone addiction were significantly higher in students with probable depression (OR = 3.83, 95% CI: 2.35-6.25) and anxiety (OR = 3.11, 95% CI: 1.91-5.06). Being physically active was associated with significantly lower odds of smartphone addiction (OR = 0.54; 95% CI: 0.34-0.86; p = 0.009). Sleep quality was inversely associated with addiction risk (OR = 0.78; 95% CI: 0.63-0.96; p = 0.022). A significant association was found between loneliness/social isolation and smartphone addiction risk (p &lt; 0.001). Participants reporting frequent feelings of loneliness or isolation were substantially more likely to exhibit signs of smartphone addiction (34.0% vs. 15.7%; p&lt; 0.001). In contrast, there was no significant association between social connection frequency or emotional support and smartphone addiction risk (p = 0.737 and p = 0.289, respectively). Frequent engagement in creative activities (OR = 0.47, p = 0.018) was associated with reduced odds of smartphone addiction. Negative perceptions of smartphone impact were linked to higher addiction risk (OR = 3.50, p = 0.001) (Figure <xref rid="FIG1" ref-type="fig">1</xref> and appendix).</p><fig position="anchor" fig-type="figure" id="FIG1" orientation="portrait"><label>Figure 1</label><caption><title>Univariate associations between selected variables and risk of smartphone addiction among university students (N = 383)</title><p>Effect on academic performance is perceived, not actual grades.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="cureus-0017-00000091165-i01.jpg"/></fig><p>Smartphone addiction scores were significantly correlated with probable major depression (r = 0.43, p &lt; .001), generalized anxiety (r = 0.35, p &lt; .001), and negatively with sleep quality (r = -0.13, p = .012) and physical activity (r = -0.20, p &lt; .001). PHQ-2 and GAD-2 scores were strongly positively correlated and both showed inverse associations with SQS and EVS (Figures <xref rid="FIG2" ref-type="fig">2</xref>, <xref rid="FIG3" ref-type="fig">3</xref>).</p><fig position="anchor" fig-type="figure" id="FIG2" orientation="portrait"><label>Figure 2</label><caption><title>Correlation matrix of smartphone addiction and psychosocial/behavioral variables</title><p>Spearman&#8217;s rank correlation coefficients (r&#8347;) and corresponding p-values are displayed for the associations between smartphone addiction (SAS-SV), depressive symptoms (PHQ-2), anxiety symptoms (GAD-2), sleep quality (SQS), and physical activity (EVS). Positive values (red hues) indicate direct associations, while negative values (blue hues) indicate inverse associations.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="cureus-0017-00000091165-i02.jpg"/></fig><fig position="anchor" fig-type="figure" id="FIG3" orientation="portrait"><label>Figure 3</label><caption><title>Correlations between smartphone addiction and psychosocial/behavioral variables</title><p>Four plots illustrate the relationships between smartphone addiction (SAS-SV scores) and depressive symptoms (PHQ-2) (A), anxiety symptoms (GAD-2) (B), sleep quality (SQS) (C), and physical activity levels (EVS; minutes/week) (D). A bar plot shows median SAS-SV scores by rounded hours of daily smartphone use (E).</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="cureus-0017-00000091165-i03.jpg"/></fig></sec><sec sec-type="discussion"><title>Discussion</title><p>This study found a high prevalence of smartphone addiction risk among university students in Saudi Arabia, consistent with prior regional studies. Across seven Saudi investigations that employed the Smartphone&#8239;Addiction&#8239;Scale or its short version between 2017 and&#8239;2025, a total of 4,147 participants were surveyed, and 1,731 (42&#8239;%) met addiction criteria (Figure <xref rid="FIG4" ref-type="fig">4</xref>). Prevalence ranged from 19.1&#8239;% (371&#8239;of&#8239;1,941) in a multicenter university sample [<xref rid="REF16" ref-type="bibr">16</xref>] to 71.9&#8239;% (136&#8239;of&#8239;189) among dental students [<xref rid="REF17" ref-type="bibr">17</xref>]. A community adult survey found 64.0&#8239;% (453&#8239;of&#8239;708) [<xref rid="REF7" ref-type="bibr">7</xref>], while medical students' estimates were 36.5&#8239;% (66&#8239;of&#8239;181) [<xref rid="REF18" ref-type="bibr">18</xref>] and 36.0&#8239;% (72&#8239;of&#8239;200) [<xref rid="REF19" ref-type="bibr">19</xref>]. Another undergraduate cohort reported 67.0&#8239;% (365&#8239;of&#8239;545) [<xref rid="REF20" ref-type="bibr">20</xref>], and our present study recorded 70.0&#8239;% (268&#8239;of&#8239;383) (Figure <xref rid="FIG4" ref-type="fig">4</xref>). With the exception of the 2020 university survey, all estimates exceed the recent global pooled prevalence of smartphone addiction (26.99&#8239;%; 95&#8239;%&#8239;CI&#8239;22.73-31.73) reported in a 64-country meta-analysis&#8239;[<xref rid="REF8" ref-type="bibr">8</xref>].</p><fig position="anchor" fig-type="figure" id="FIG4" orientation="portrait"><label>Figure 4</label><caption><title>Prevalence of smartphone addiction in Saudi&#8208;based studies that used the Smartphone&#8239;Addiction&#8239;Scales (SAS or SAS&#8209;SV), 2017&#8211;2025</title><p>Image Credit: Mohammed Abdulrahman Alhassan</p><p>References [<xref rid="REF7" ref-type="bibr">7</xref>, <xref rid="REF16" ref-type="bibr">16</xref>-<xref rid="REF20" ref-type="bibr">20</xref>].</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="cureus-0017-00000091165-i04.jpg"/></fig><p>Given the consistently high risk observed, particularly among health science undergraduates, Saudi universities and public health agencies should consider targeted screening and digital&#8209;literacy interventions. We identified a greater number of students willing to reduce their time spent using smartphones, a point that might encourage preventive interventions. Future research ought to adopt nationally representative sampling frames and employ prospective designs to elucidate longitudinal health impacts and modifiable risk factors.</p><p>Excessive smartphone use was associated with depressive and anxiety symptoms; students with probable depression or anxiety had significantly higher odds of smartphone addiction, more than threefold in both cases. These findings are in line with prior studies that highlight maladaptive smartphone use as both a consequence and a contributor to psychological distress [<xref rid="REF21" ref-type="bibr">21</xref>]. Engagement in protective health behaviors, such as regular physical activity and better sleep, was inversely associated with addiction risk. These findings support theories of behavioral displacement, where excessive smartphone use may erode time and motivation for sleep and exercise [<xref rid="REF22" ref-type="bibr">22</xref>]. Engagement in creative or hands-on activities was associated with lower odds of smartphone addiction; these activities may warrant evaluation as potential strategies in future research. Even occasional involvement in creative or hands-on activities (e.g., arts, writing, manual tasks) was associated with significantly reduced odds of addiction. This pattern is consistent with the possibility that alternative rewarding activities are associated with a lower likelihood of compulsive smartphone behaviors [<xref rid="REF23" ref-type="bibr">23</xref>].</p><p>Perceptions about smartphone use were also strongly associated with addiction risk. Students who viewed smartphone use as academically detrimental or overall negative were significantly more likely to be classified as addicted. These findings may reflect retrospective awareness of negative impacts or internal conflict associated with use patterns. Only loneliness showed a significant relationship with smartphone addiction, consistent with prior studies linking subjective social isolation to problematic technology use [<xref rid="REF24" ref-type="bibr">24</xref>]. In contrast, structural and perceived support domains were not predictive, highlighting the unique role of felt loneliness in digital overdependence.</p><p>We believe the strength of our study lies in being, to our knowledge, the first in Saudi Arabia to investigate the interrelationships among six psychosocial constructs simultaneously using validated instruments. However, the cross-sectional design limits causal inference, and convenience sampling without a known response rate may affect generalizability. As participation was based on accessibility and willingness to respond, the sample may not be fully representative of the broader university student population, and findings should be interpreted with consideration of potential selection bias. Data were collected from August 2024 to April 2025, which may introduce temporal heterogeneity. All measures were self-reported and may be subject to recall and social desirability bias. Reported odds ratios are crude (unadjusted) and should be interpreted as exploratory associations.</p></sec><sec sec-type="conclusions"><title>Conclusions</title><p>In conclusion, smartphone addiction risk affected 70% of our undergraduates and 42% of&#8239;4,198 Saudi participants pooled from seven SAS/SAS&#8209;SV studies, confirming a substantial national burden. Depressive and anxiety symptoms were associated with roughly threefold higher odds of smartphone addiction risk, whereas better sleep quality, regular physical activity, and engagement in creative activities were associated with lower odds; students reporting loneliness also had higher odds of addiction. These findings highlight the complex interplay between psychological and behavioral factors that drive excessive smartphone use. University health programs may consider pairing digital-literacy training with mental health screening and lifestyle promotion initiatives. Future representative longitudinal studies are needed to clarify causal pathways and test multifaceted interventions.</p></sec></body><back><ack><p>The authors would like to acknowledge the Deanship of Scientific Research at Prince Sattam Bin Abdulaziz University for supporting this work. We acknowledge the use of ChatGPT (OpenAI) as a writing aid to assist with drafting and editing sections of this manuscript, primarily for refining academic language and clarity. All AI-generated text was critically reviewed and approved by the authors to ensure conceptual accuracy and integrity.</p></ack><fn-group content-type="conflict"><title>Disclosures</title><fn fn-type="COI-statement"><p><bold>Human subjects:</bold> Informed consent for treatment and open access publication was obtained or waived by all participants in this study. Standing Committee of Bioethics Research issued approval SCBR-441/2025.</p><p><bold>Animal subjects:</bold> All authors have confirmed that this study did not involve animal subjects or tissue.</p><p><bold>Conflicts of interest:</bold> In compliance with the ICMJE uniform disclosure form, all authors declare the following:</p><p><bold>Payment/services info:</bold> All authors have declared that no financial support was received from any organization for the submitted work.</p><p><bold>Financial relationships:</bold> All authors have declared that they have no financial relationships at present or within the previous three years with any organizations that might have an interest in the submitted work.</p><p><bold>Other relationships:</bold> All authors have declared that there are no other relationships or activities that could appear to have influenced the submitted work.</p></fn></fn-group><fn-group content-type="other"><title>Author Contributions</title><fn fn-type="other"><p><bold>Concept and design:</bold>&#160; Mohammed A. Alhassan , Emad M. Al-Otaibi, Meshal S. Bin Ofaysan, Khalid H. Alarjani, Maan O. Alzuhairi , Nawaf S. Alarfaj, Faisal S. Al-murayt, Bader M. Alotaibi, Khalid F. Alanazi, Abdulelah M. Alfawaz </p><p><bold>Acquisition, analysis, or interpretation of data:</bold>&#160; Mohammed A. Alhassan , Emad M. Al-Otaibi, Meshal S. Bin Ofaysan, Khalid H. Alarjani, Maan O. Alzuhairi , Nawaf S. Alarfaj, Faisal S. Al-murayt, Bader M. Alotaibi, Khalid F. Alanazi, Abdulelah M. Alfawaz , Anas Musa</p><p><bold>Drafting of the manuscript:</bold>&#160; Mohammed A. Alhassan , Anas Musa</p><p><bold>Critical review of the manuscript for important intellectual content:</bold>&#160; Mohammed A. Alhassan , Emad M. Al-Otaibi, Meshal S. Bin Ofaysan, Khalid H. Alarjani, Maan O. Alzuhairi , Nawaf S. Alarfaj, Faisal S. Al-murayt, Bader M. Alotaibi, Khalid F. Alanazi, Abdulelah M. Alfawaz , Anas Musa</p><p><bold>Supervision:</bold>&#160; Mohammed A. Alhassan </p></fn></fn-group><app-group><app><title>Appendices</title><table-wrap position="anchor" id="TAB3" orientation="portrait"><label>Table 3</label><caption><title>Univariate associations with risk of smartphone addiction (N = 383)</title><p>* Represents a significant p-value.</p></caption><table frame="hsides" rules="groups"><tbody><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Variable
+</td><td rowspan="1" colspan="1">
+Category
+</td><td rowspan="1" colspan="1">
+Not at risk, n (%)
+</td><td rowspan="1" colspan="1">
+At risk, n (%)
+</td><td rowspan="1" colspan="1">
+Total (N)
+</td><td rowspan="1" colspan="1">
+&#967;&#178; / z
+</td><td rowspan="1" colspan="1">
+p-value
+</td></tr><tr><td rowspan="2" colspan="1">
+Depression risk (PHQ-2 &#8805; 3)
+</td><td rowspan="1" colspan="1">
+Not likely depressed
+</td><td rowspan="1" colspan="1">
+87 (42.0%)
+</td><td rowspan="1" colspan="1">
+120 (58.0%)
+</td><td rowspan="1" colspan="1">
+207
+</td><td rowspan="2" colspan="1">
+&#967;&#178; = 29.66
+</td><td rowspan="2" colspan="1">
+&lt;0.001*
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Probable major depression
+</td><td rowspan="1" colspan="1">
+28 (15.9%)
+</td><td rowspan="1" colspan="1">
+148 (84.1%)
+</td><td rowspan="1" colspan="1">
+176
+</td></tr><tr><td rowspan="2" colspan="1">
+Anxiety risk (GAD-2 &#8805; 3)
+</td><td rowspan="1" colspan="1">
+Not likely anxious
+</td><td rowspan="1" colspan="1">
+87 (39.4%)
+</td><td rowspan="1" colspan="1">
+134 (60.6%)
+</td><td rowspan="1" colspan="1">
+221
+</td><td rowspan="2" colspan="1">
+&#967;&#178; = 20.66
+</td><td rowspan="2" colspan="1">
+&lt;0.001*
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Probable anxiety disorder
+</td><td rowspan="1" colspan="1">
+28 (17.3%)
+</td><td rowspan="1" colspan="1">
+134 (82.7%)
+</td><td rowspan="1" colspan="1">
+162
+</td></tr><tr><td rowspan="5" colspan="1">
+Sleep quality
+</td><td rowspan="1" colspan="1">
+Terrible
+</td><td rowspan="1" colspan="1">
+11 (33.3%)
+</td><td rowspan="1" colspan="1">
+22 (66.7%)
+</td><td rowspan="1" colspan="1">
+33
+</td><td rowspan="5" colspan="1">
+&#967;&#178; = 10.14
+</td><td rowspan="5" colspan="1">
+0.038*
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Poor
+</td><td rowspan="1" colspan="1">
+16 (19.1%)
+</td><td rowspan="1" colspan="1">
+68 (81.0%)
+</td><td rowspan="1" colspan="1">
+84
+</td></tr><tr><td rowspan="1" colspan="1">
+Fair
+</td><td rowspan="1" colspan="1">
+45 (28.7%)
+</td><td rowspan="1" colspan="1">
+112 (71.3%)
+</td><td rowspan="1" colspan="1">
+157
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Good
+</td><td rowspan="1" colspan="1">
+29 (37.7%)
+</td><td rowspan="1" colspan="1">
+48 (62.3%)
+</td><td rowspan="1" colspan="1">
+77
+</td></tr><tr><td rowspan="1" colspan="1">
+Excellent
+</td><td rowspan="1" colspan="1">
+14 (43.8%)
+</td><td rowspan="1" colspan="1">
+18 (56.2%)
+</td><td rowspan="1" colspan="1">
+32
+</td></tr><tr style="background-color:#ccc"><td rowspan="2" colspan="1">
+Physical activity
+</td><td rowspan="1" colspan="1">
+Physically inactive
+</td><td rowspan="1" colspan="1">
+69 (25.9%)
+</td><td rowspan="1" colspan="1">
+197 (74.1%)
+</td><td rowspan="1" colspan="1">
+266
+</td><td rowspan="2" colspan="1">
+&#967;&#178; = 6.30
+</td><td rowspan="2" colspan="1">
+0.012*
+</td></tr><tr><td rowspan="1" colspan="1">
+Physically active
+</td><td rowspan="1" colspan="1">
+46 (39.3%)
+</td><td rowspan="1" colspan="1">
+71 (60.7%)
+</td><td rowspan="1" colspan="1">
+117
+</td></tr><tr style="background-color:#ccc"><td rowspan="2" colspan="1">
+Social Connection
+</td><td rowspan="1" colspan="1">
+Not at risk
+</td><td rowspan="1" colspan="1">
+45 (39.1%)
+</td><td rowspan="1" colspan="1">
+100 (37.3%)
+</td><td rowspan="1" colspan="1">
+145 (37.9%)
+</td><td rowspan="2" colspan="1">
+&#967;&#178; = 0.11
+</td><td rowspan="2" colspan="1">
+0.737
+</td></tr><tr><td rowspan="1" colspan="1">
+At risk of social disconnection
+</td><td rowspan="1" colspan="1">
+70 (60.9%)
+</td><td rowspan="1" colspan="1">
+168 (62.7%)
+</td><td rowspan="1" colspan="1">
+238 (62.1%)
+</td></tr><tr style="background-color:#ccc"><td rowspan="2" colspan="1">
+Emotional Support
+</td><td rowspan="1" colspan="1">
+Not at risk
+</td><td rowspan="1" colspan="1">
+46 (40.0%)
+</td><td rowspan="1" colspan="1">
+92 (34.3%)
+</td><td rowspan="1" colspan="1">
+138 (36.0%)
+</td><td rowspan="2" colspan="1">
+&#967;&#178; = 1.12
+</td><td rowspan="2" colspan="1">
+0.289
+</td></tr><tr><td rowspan="1" colspan="1">
+At risk of lacking emotional support
+</td><td rowspan="1" colspan="1">
+69 (60.0%)
+</td><td rowspan="1" colspan="1">
+176 (65.7%)
+</td><td rowspan="1" colspan="1">
+245 (64.0%)
+</td></tr><tr style="background-color:#ccc"><td rowspan="2" colspan="1">
+Loneliness/Social Isolation
+</td><td rowspan="1" colspan="1">
+Not at risk
+</td><td rowspan="1" colspan="1">
+97 (84.4%)
+</td><td rowspan="1" colspan="1">
+177 (66.0%)
+</td><td rowspan="1" colspan="1">
+274 (71.5%)
+</td><td rowspan="2" colspan="1">
+&#967;&#178; = 13.24
+</td><td rowspan="2" colspan="1">
+&lt;0.001*
+</td></tr><tr><td rowspan="1" colspan="1">
+At risk
+</td><td rowspan="1" colspan="1">
+18 (15.7%)
+</td><td rowspan="1" colspan="1">
+91 (34.0%)
+</td><td rowspan="1" colspan="1">
+109 (28.5%)
+</td></tr><tr style="background-color:#ccc"><td rowspan="3" colspan="1">
+Smartphone use affected academics?
+</td><td rowspan="1" colspan="1">
+Yes, positively
+</td><td rowspan="1" colspan="1">
+51 (35.2%)
+</td><td rowspan="1" colspan="1">
+94 (64.8%)
+</td><td rowspan="1" colspan="1">
+145
+</td><td rowspan="3" colspan="1">
+&#967;&#178; = 30.24
+</td><td rowspan="3" colspan="1">
+&lt;0.001*
+</td></tr><tr><td rowspan="1" colspan="1">
+Yes, negatively
+</td><td rowspan="1" colspan="1">
+16 (12.5%)
+</td><td rowspan="1" colspan="1">
+112 (87.5%)
+</td><td rowspan="1" colspan="1">
+128
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+No
+</td><td rowspan="1" colspan="1">
+48 (43.6%)
+</td><td rowspan="1" colspan="1">
+62 (56.4%)
+</td><td rowspan="1" colspan="1">
+110
+</td></tr><tr><td rowspan="3" colspan="1">
+Perceived effect of smartphone use
+</td><td rowspan="1" colspan="1">
+Positive
+</td><td rowspan="1" colspan="1">
+31 (33.7%)
+</td><td rowspan="1" colspan="1">
+61 (66.3%)
+</td><td rowspan="1" colspan="1">
+92
+</td><td rowspan="3" colspan="1">
+&#967;&#178; = 20.80
+</td><td rowspan="3" colspan="1">
+&lt;0.001*
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Negative
+</td><td rowspan="1" colspan="1">
+13 (12.6%)
+</td><td rowspan="1" colspan="1">
+90 (87.4%)
+</td><td rowspan="1" colspan="1">
+103
+</td></tr><tr><td rowspan="1" colspan="1">
+Neutral
+</td><td rowspan="1" colspan="1">
+71 (37.8%)
+</td><td rowspan="1" colspan="1">
+117 (62.2%)
+</td><td rowspan="1" colspan="1">
+188
+</td></tr><tr style="background-color:#ccc"><td rowspan="3" colspan="1">
+Creative activity frequency
+</td><td rowspan="1" colspan="1">
+Occasionally
+</td><td rowspan="1" colspan="1">
+56 (35.7%)
+</td><td rowspan="1" colspan="1">
+101 (64.3%)
+</td><td rowspan="1" colspan="1">
+157
+</td><td rowspan="3" colspan="1">
+&#967;&#178; = 9.29
+</td><td rowspan="3" colspan="1">
+0.010*
+</td></tr><tr><td rowspan="1" colspan="1">
+Frequently
+</td><td rowspan="1" colspan="1">
+25 (36.8%)
+</td><td rowspan="1" colspan="1">
+43 (63.2%)
+</td><td rowspan="1" colspan="1">
+68
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Rarely or never
+</td><td rowspan="1" colspan="1">
+34 (21.5%)
+</td><td rowspan="1" colspan="1">
+124 (78.5%)
+</td><td rowspan="1" colspan="1">
+158
+</td></tr><tr><td rowspan="3" colspan="1">
+Desire to reduce smartphone use
+</td><td rowspan="1" colspan="1">
+Yes
+</td><td rowspan="1" colspan="1">
+55 (23.7%)
+</td><td rowspan="1" colspan="1">
+177 (76.3%)
+</td><td rowspan="1" colspan="1">
+232
+</td><td rowspan="3" colspan="1">
+&#967;&#178; = 11.43
+</td><td rowspan="3" colspan="1">
+0.003*
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+No
+</td><td rowspan="1" colspan="1">
+32 (41.6%)
+</td><td rowspan="1" colspan="1">
+45 (58.4%)
+</td><td rowspan="1" colspan="1">
+77
+</td></tr><tr><td rowspan="1" colspan="1">
+Not sure
+</td><td rowspan="1" colspan="1">
+28 (37.8%)
+</td><td rowspan="1" colspan="1">
+46 (62.2%)
+</td><td rowspan="1" colspan="1">
+74
+</td></tr></tbody></table></table-wrap><table-wrap position="anchor" id="TAB4" orientation="portrait"><label>Table 4</label><caption><title>Univariate associations and crude odds ratios for risk of smartphone addiction (N = 383)</title><p>Each one-step improvement in sleep quality or creative engagement is significantly associated with lower odds of smartphone addiction.</p><p>* Represents a significant p-value.</p></caption><table frame="hsides" rules="groups"><tbody><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Variable
+</td><td rowspan="1" colspan="1">
+Category
+</td><td rowspan="1" colspan="1">
+OR (95% CI)
+</td><td rowspan="1" colspan="1">
+p-value
+</td></tr><tr><td rowspan="1" colspan="1">
+Depression risk (PHQ-2 &#8805; 3)
+</td><td rowspan="1" colspan="1">
+Probable major depression (Vs not likely depressed)
+</td><td rowspan="1" colspan="1">
+3.83 (2.35&#8211;6.25)
+</td><td rowspan="1" colspan="1">
+&lt;0.001*
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Anxiety risk (GAD-2 &#8805; 3)
+</td><td rowspan="1" colspan="1">
+Probable anxiety disorder (Vs likely no anxiety disorder)
+</td><td rowspan="1" colspan="1">
+3.11 (1.91&#8211;5.06)
+</td><td rowspan="1" colspan="1">
+&lt;0.001*
+</td></tr><tr><td rowspan="1" colspan="1">
+Physical activity
+</td><td rowspan="1" colspan="1">
+Physically active (Vs inactive)
+</td><td rowspan="1" colspan="1">
+0.54 (0.34&#8211;0.86)
+</td><td rowspan="1" colspan="1">
+0.009*
+</td></tr><tr style="background-color:#ccc"><td rowspan="5" colspan="1">
+Sleep quality
+</td><td rowspan="1" colspan="1">
+As ordinal variable
+</td><td rowspan="1" colspan="1">
+0.78 (0.63&#8211;0.96)
+</td><td rowspan="1" colspan="1">
+0.022*
+</td></tr><tr><td rowspan="1" colspan="1">
+Poor (Vs terrible as a reference)
+</td><td rowspan="1" colspan="1">
+2.12 (0.86&#8211;5.26)
+</td><td rowspan="1" colspan="1">
+0.103
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Fair
+</td><td rowspan="1" colspan="1">
+1.24 (0.56&#8211;2.78)
+</td><td rowspan="1" colspan="1">
+0.593
+</td></tr><tr><td rowspan="1" colspan="1">
+Good
+</td><td rowspan="1" colspan="1">
+0.79 (0.33&#8211;1.91)
+</td><td rowspan="1" colspan="1">
+0.599
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Excellent
+</td><td rowspan="1" colspan="1">
+0.64 (0.23&#8211;1.80)
+</td><td rowspan="1" colspan="1">
+0.395
+</td></tr><tr><td rowspan="1" colspan="1">
+Social Connection
+</td><td rowspan="1" colspan="1">
+At risk (vs. not at risk)
+</td><td rowspan="1" colspan="1">
+1.08 (0.69&#8211;1.69)
+</td><td rowspan="1" colspan="1">
+0.737
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Emotional Support
+</td><td rowspan="1" colspan="1">
+At risk (vs. not at risk)
+</td><td rowspan="1" colspan="1">
+1.28 (0.81&#8211;2.00)
+</td><td rowspan="1" colspan="1">
+0.290
+</td></tr><tr><td rowspan="1" colspan="1">
+Loneliness/Social Isolation
+</td><td rowspan="1" colspan="1">
+At risk (vs. not at risk)
+</td><td rowspan="1" colspan="1">
+2.77 (1.58&#8211;4.86)
+</td><td rowspan="1" colspan="1">
+&lt;0.001*
+</td></tr><tr style="background-color:#ccc"><td rowspan="2" colspan="1">
+Academic performance affected
+</td><td rowspan="1" colspan="1">
+Yes, negatively (vs. positively as reference)
+</td><td rowspan="1" colspan="1">
+3.72 (1.98&#8211;7.00)
+</td><td rowspan="1" colspan="1">
+&lt;0.001*
+</td></tr><tr><td rowspan="1" colspan="1">
+No
+</td><td rowspan="1" colspan="1">
+1.05 (0.56&#8211;1.97)
+</td><td rowspan="1" colspan="1">
+0.875
+</td></tr><tr style="background-color:#ccc"><td rowspan="2" colspan="1">
+Perceived effect of smartphone use
+</td><td rowspan="1" colspan="1">
+Negative (vs. positive as a reference)
+</td><td rowspan="1" colspan="1">
+3.50 (1.65&#8211;7.41)
+</td><td rowspan="1" colspan="1">
+0.001*
+</td></tr><tr><td rowspan="1" colspan="1">
+Neutral
+</td><td rowspan="1" colspan="1">
+1.49 (0.75&#8211;2.97)
+</td><td rowspan="1" colspan="1">
+0.259
+</td></tr><tr style="background-color:#ccc"><td rowspan="3" colspan="1">
+Creative activity frequency
+</td><td rowspan="1" colspan="1">
+As ordinal variable
+</td><td rowspan="1" colspan="1">
+0.66 (0.49&#8211;0.89)
+</td><td rowspan="1" colspan="1">
+0.006*
+</td></tr><tr><td rowspan="1" colspan="1">
+Occasionally (vs. rarely/never as a reference)
+</td><td rowspan="1" colspan="1">
+0.49 (0.30&#8211;0.82)
+</td><td rowspan="1" colspan="1">
+0.006*
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Frequently
+</td><td rowspan="1" colspan="1">
+0.47 (0.25&#8211;0.88)
+</td><td rowspan="1" colspan="1">
+0.018*
+</td></tr><tr><td rowspan="2" colspan="1">
+Desire to reduce smartphone use
+</td><td rowspan="1" colspan="1">
+No (vs. yes as a reference)
+</td><td rowspan="1" colspan="1">
+0.44 (0.24&#8211;0.82)
+</td><td rowspan="1" colspan="1">
+0.009*
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Not sure
+</td><td rowspan="1" colspan="1">
+0.56 (0.31&#8211;1.01)
+</td><td rowspan="1" colspan="1">
+0.053
+</td></tr></tbody></table></table-wrap></app></app-group><ref-list><title>References</title><ref id="REF1"><label>1</label><element-citation publication-type="journal"><article-title>Prevalence of problematic smartphone usage and associated mental health outcomes amongst children and young people: a systematic review, meta-analysis and GRADE of the evidence</article-title><source>BMC Psychiatry</source><person-group><name name-style="western"><surname>Sohn</surname><given-names>SY</given-names></name><name name-style="western"><surname>Rees</surname><given-names>P</given-names></name><name name-style="western"><surname>Wildridge</surname><given-names>B</given-names></name><name name-style="western"><surname>Kalk</surname><given-names>NJ</given-names></name><name name-style="western"><surname>Carter</surname><given-names>B</given-names></name></person-group><fpage>356</fpage><volume>19</volume><year>2019</year><pub-id pub-id-type="pmid">31779637</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1186/s12888-019-2350-x</pub-id><pub-id pub-id-type="pmcid">PMC6883663</pub-id></element-citation></ref><ref id="REF2"><label>2</label><element-citation publication-type="journal"><article-title>Can disordered mobile phone use be considered a behavioral addiction? An update on current evidence and a comprehensive model for future research</article-title><source>Curr Addict Rep</source><person-group><name name-style="western"><surname>Billieux</surname><given-names>J</given-names></name><name name-style="western"><surname>Maurage</surname><given-names>P</given-names></name><name name-style="western"><surname>Lopez-Fernandez</surname><given-names>O</given-names></name><name name-style="western"><surname>Kuss</surname><given-names>DJ</given-names></name><name name-style="western"><surname>Griffiths</surname><given-names>MD</given-names></name></person-group><fpage>156</fpage><lpage>162</lpage><volume>2</volume><year>2015</year></element-citation></ref><ref id="REF3"><label>3</label><element-citation publication-type="journal"><article-title>Smartphone addiction is increasing across the world: a meta-analysis of 24 countries</article-title><source>Comput Human Behav</source><person-group><name name-style="western"><surname>Olson</surname><given-names>JA</given-names></name><name name-style="western"><surname>Sandra</surname><given-names>DA</given-names></name><name name-style="western"><surname>Colucci</surname><given-names>&#201;S</given-names></name><etal/></person-group><fpage>107138</fpage><volume>129</volume><year>2022</year></element-citation></ref><ref id="REF4"><label>4</label><element-citation publication-type="journal"><article-title>Relationship of smartphone use severity with sleep quality, depression, and anxiety in university students</article-title><source>J Behav Addict</source><person-group><name name-style="western"><surname>Demirci</surname><given-names>K</given-names></name><name name-style="western"><surname>Akg&#246;n&#252;l</surname><given-names>M</given-names></name><name name-style="western"><surname>Akpinar</surname><given-names>A</given-names></name></person-group><fpage>85</fpage><lpage>92</lpage><volume>4</volume><year>2015</year><pub-id pub-id-type="pmid">26132913</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1556/2006.4.2015.010</pub-id><pub-id pub-id-type="pmcid">PMC4500888</pub-id></element-citation></ref><ref id="REF5"><label>5</label><element-citation publication-type="webpage"><article-title>Digital 2025: Saudi Arabia-DataReportal-Global Digital Insights</article-title><date-in-citation content-type="access-date"><month>7</month><year>2025</year></date-in-citation><year>2025</year><uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://datareportal.com/reports/digital-2025-saudi-arabia">https://datareportal.com/reports/digital-2025-saudi-arabia</uri></element-citation></ref><ref id="REF6"><label>6</label><element-citation publication-type="journal"><article-title>Smartphone addiction among university students in Riyadh, Saudi Arabia</article-title><source>Saudi Med J</source><person-group><name name-style="western"><surname>Alosaimi</surname><given-names>FD</given-names></name><name name-style="western"><surname>Alyahya</surname><given-names>H</given-names></name><name name-style="western"><surname>Alshahwan</surname><given-names>H</given-names></name><name name-style="western"><surname>Al Mahyijari</surname><given-names>N</given-names></name><name name-style="western"><surname>Shaik</surname><given-names>SA</given-names></name></person-group><fpage>675</fpage><lpage>683</lpage><volume>37</volume><year>2016</year><pub-id pub-id-type="pmid">27279515</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.15537/smj.2016.6.14430</pub-id><pub-id pub-id-type="pmcid">PMC4931650</pub-id></element-citation></ref><ref id="REF7"><label>7</label><element-citation publication-type="journal"><article-title>Prevalence and associated factors of problematic use of smartphones among adults in Qassim, Saudi Arabia: cross-sectional survey</article-title><source>JMIR Public Health Surveill</source><person-group><name name-style="western"><surname>Al-Mohaimeed</surname><given-names>A</given-names></name><name name-style="western"><surname>Alharbi</surname><given-names>M</given-names></name><name name-style="western"><surname>Mahmud</surname><given-names>I</given-names></name></person-group><fpage>0</fpage><volume>8</volume><year>2022</year><pub-id pub-id-type="doi" assigning-authority="pmc">10.2196/37451</pub-id><pub-id pub-id-type="pmcid">PMC9171592</pub-id><pub-id pub-id-type="pmid">35604756</pub-id></element-citation></ref><ref id="REF8"><label>8</label><element-citation publication-type="journal"><article-title>Global prevalence of digital addiction in general population: a systematic review and meta-analysis</article-title><source>Clin Psychol Rev</source><person-group><name name-style="western"><surname>Meng</surname><given-names>SQ</given-names></name><name name-style="western"><surname>Cheng</surname><given-names>JL</given-names></name><name name-style="western"><surname>Li</surname><given-names>YY</given-names></name><etal/></person-group><fpage>102128</fpage><volume>92</volume><year>2022</year><pub-id pub-id-type="pmid">35150965</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.cpr.2022.102128</pub-id></element-citation></ref><ref id="REF9"><label>9</label><element-citation publication-type="journal"><article-title>The smartphone addiction scale: development and validation of a short version for adolescents</article-title><source>PLoS One</source><person-group><name name-style="western"><surname>Kwon</surname><given-names>M</given-names></name><name name-style="western"><surname>Kim</surname><given-names>DJ</given-names></name><name name-style="western"><surname>Cho</surname><given-names>H</given-names></name><name name-style="western"><surname>Yang</surname><given-names>S</given-names></name></person-group><fpage>0</fpage><volume>8</volume><year>2013</year><pub-id pub-id-type="doi" assigning-authority="pmc">10.1371/journal.pone.0083558</pub-id><pub-id pub-id-type="pmcid">PMC3877074</pub-id><pub-id pub-id-type="pmid">24391787</pub-id></element-citation></ref><ref id="REF10"><label>10</label><element-citation publication-type="journal"><article-title>The Patient Health Questionnaire-2: validity of a two-item depression screener</article-title><source>Med Care</source><person-group><name name-style="western"><surname>Kroenke</surname><given-names>K</given-names></name><name name-style="western"><surname>Spitzer</surname><given-names>RL</given-names></name><name name-style="western"><surname>Williams</surname><given-names>JB</given-names></name></person-group><fpage>1284</fpage><lpage>1292</lpage><volume>41</volume><year>2003</year><pub-id pub-id-type="pmid">14583691</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1097/01.MLR.0000093487.78664.3C</pub-id></element-citation></ref><ref id="REF11"><label>11</label><element-citation publication-type="journal"><article-title>Anxiety disorders in primary care: prevalence, impairment, comorbidity, and detection</article-title><source>Ann Intern Med</source><person-group><name name-style="western"><surname>Kroenke</surname><given-names>K</given-names></name><name name-style="western"><surname>Spitzer</surname><given-names>RL</given-names></name><name name-style="western"><surname>Williams</surname><given-names>JB</given-names></name><name name-style="western"><surname>Monahan</surname><given-names>PO</given-names></name><name name-style="western"><surname>L&#246;we</surname><given-names>B</given-names></name></person-group><fpage>317</fpage><lpage>325</lpage><volume>146</volume><year>2007</year><pub-id pub-id-type="pmid">17339617</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.7326/0003-4819-146-5-200703060-00004</pub-id></element-citation></ref><ref id="REF12"><label>12</label><element-citation publication-type="journal"><article-title>A new single-item sleep quality scale: results of psychometric evaluation in patients with chronic primary insomnia and depression</article-title><source>J Clin Sleep Med</source><person-group><name name-style="western"><surname>Snyder</surname><given-names>E</given-names></name><name name-style="western"><surname>Cai</surname><given-names>B</given-names></name><name name-style="western"><surname>DeMuro</surname><given-names>C</given-names></name><name name-style="western"><surname>Morrison</surname><given-names>MF</given-names></name><name name-style="western"><surname>Ball</surname><given-names>W</given-names></name></person-group><fpage>1849</fpage><lpage>1857</lpage><volume>14</volume><year>2018</year><pub-id pub-id-type="pmid">30373688</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.5664/jcsm.7478</pub-id><pub-id pub-id-type="pmcid">PMC6223557</pub-id></element-citation></ref><ref id="REF13"><label>13</label><element-citation publication-type="journal"><article-title>Initial validation of an exercise "vital sign" in electronic medical records</article-title><source>Med Sci Sports Exerc</source><person-group><name name-style="western"><surname>Coleman</surname><given-names>KJ</given-names></name><name name-style="western"><surname>Ngor</surname><given-names>E</given-names></name><name name-style="western"><surname>Reynolds</surname><given-names>K</given-names></name><etal/></person-group><fpage>2071</fpage><lpage>2076</lpage><volume>44</volume><year>2012</year><pub-id pub-id-type="pmid">22688832</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1249/MSS.0b013e3182630ec1</pub-id></element-citation></ref><ref id="REF14"><label>14</label><element-citation publication-type="journal"><article-title>A brief but comprehensive three-item social connectedness screener for use in social risk assessment tools</article-title><source>PLoS One</source><person-group><name name-style="western"><surname>Gordon</surname><given-names>NP</given-names></name><name name-style="western"><surname>Stiefel</surname><given-names>MC</given-names></name></person-group><fpage>0</fpage><volume>19</volume><year>2024</year><pub-id pub-id-type="doi" assigning-authority="pmc">10.1371/journal.pone.0307107</pub-id><pub-id pub-id-type="pmcid">PMC11259274</pub-id><pub-id pub-id-type="pmid">39028701</pub-id></element-citation></ref><ref id="REF15"><label>15</label><element-citation publication-type="journal"><article-title>Reliability of the Arabic smartphone addiction scale and smartphone addiction scale-short version in two different Moroccan samples</article-title><source>Cyberpsychol Behav Soc Netw</source><person-group><name name-style="western"><surname>Sfendla</surname><given-names>A</given-names></name><name name-style="western"><surname>Laita</surname><given-names>M</given-names></name><name name-style="western"><surname>Nejjar</surname><given-names>B</given-names></name><name name-style="western"><surname>Souirti</surname><given-names>Z</given-names></name><name name-style="western"><surname>Touhami</surname><given-names>AA</given-names></name><name name-style="western"><surname>Senhaji</surname><given-names>M</given-names></name></person-group><fpage>325</fpage><lpage>332</lpage><volume>21</volume><year>2018</year><pub-id pub-id-type="pmid">29762065</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1089/cyber.2017.0411</pub-id></element-citation></ref><ref id="REF16"><label>16</label><element-citation publication-type="journal"><article-title>Smartphone addiction and its complications related to health and daily activities among university students in Saudi Arabia: a multicenter study</article-title><source>J Family Med Prim Care</source><person-group><name name-style="western"><surname>Alkhateeb</surname><given-names>A</given-names></name><name name-style="western"><surname>Alboali</surname><given-names>R</given-names></name><name name-style="western"><surname>Alharbi</surname><given-names>W</given-names></name><name name-style="western"><surname>Saleh</surname><given-names>O</given-names></name></person-group><fpage>3220</fpage><lpage>3224</lpage><volume>9</volume><year>2020</year><pub-id pub-id-type="pmid">33102273</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.4103/jfmpc.jfmpc_1224_19</pub-id><pub-id pub-id-type="pmcid">PMC7567211</pub-id></element-citation></ref><ref id="REF17"><label>17</label><element-citation publication-type="journal"><article-title>Smart phone usage and addiction among dental students in Saudi Arabia: a cross sectional study</article-title><source>Int J Adolesc Med Health</source><person-group><name name-style="western"><surname>Venkatesh</surname><given-names>E</given-names></name><name name-style="western"><surname>Jemal</surname><given-names>MY</given-names></name><name name-style="western"><surname>Samani</surname><given-names>AS</given-names></name></person-group><volume>31</volume><year>2017</year><pub-id pub-id-type="doi" assigning-authority="pmc">10.1515/ijamh-2016-0133</pub-id><pub-id pub-id-type="pmid">28384117</pub-id></element-citation></ref><ref id="REF18"><label>18</label><element-citation publication-type="journal"><article-title>Prevalence and factors associated with smartphone addiction among medical students at King Abdulaziz University, Jeddah</article-title><source>Pak J Med Sci</source><person-group><name name-style="western"><surname>Alhazmi</surname><given-names>AA</given-names></name><name name-style="western"><surname>Alzahrani</surname><given-names>SH</given-names></name><name name-style="western"><surname>Baig</surname><given-names>M</given-names></name><name name-style="western"><surname>Salawati</surname><given-names>EM</given-names></name><name name-style="western"><surname>Alkatheri</surname><given-names>A</given-names></name></person-group><fpage>984</fpage><lpage>988</lpage><volume>34</volume><year>2018</year><pub-id pub-id-type="pmid">30190766</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.12669/pjms.344.15294</pub-id><pub-id pub-id-type="pmcid">PMC6115587</pub-id></element-citation></ref><ref id="REF19"><label>19</label><element-citation publication-type="journal"><article-title>Smartphone addiction and its association with hypertension and quality of sleep among medical students of Northern Border University, Arar, Saudi Arabia</article-title><source>Saudi Med J</source><person-group><name name-style="western"><surname>Aftab</surname><given-names>T</given-names></name><name name-style="western"><surname>Khyzer</surname><given-names>E</given-names></name></person-group><fpage>1013</fpage><lpage>1019</lpage><volume>44</volume><year>2023</year><pub-id pub-id-type="pmid">37777264</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.15537/smj.2023.44.10.20230402</pub-id><pub-id pub-id-type="pmcid">PMC10541975</pub-id></element-citation></ref><ref id="REF20"><label>20</label><element-citation publication-type="journal"><article-title>Smartphone addiction prevalence and its association on academic performance, physical health, and mental well-being among university students in Umm Al-Qura University (UQU), Saudi Arabia</article-title><source>Int J Environ Res Public Health</source><person-group><name name-style="western"><surname>Alotaibi</surname><given-names>MS</given-names></name><name name-style="western"><surname>Fox</surname><given-names>M</given-names></name><name name-style="western"><surname>Coman</surname><given-names>R</given-names></name><name name-style="western"><surname>Ratan</surname><given-names>ZA</given-names></name><name name-style="western"><surname>Hosseinzadeh</surname><given-names>H</given-names></name></person-group><volume>19</volume><year>2022</year><pub-id pub-id-type="doi" assigning-authority="pmc">10.3390/ijerph19063710</pub-id><pub-id pub-id-type="pmcid">PMC8954621</pub-id><pub-id pub-id-type="pmid">35329397</pub-id></element-citation></ref><ref id="REF21"><label>21</label><element-citation publication-type="journal"><article-title>The impact of psychological distress on problematic smartphone use among college students: The mediating role of metacognitions about smartphone use</article-title><source>Front Psychol</source><person-group><name name-style="western"><surname>Chen</surname><given-names>H</given-names></name><name name-style="western"><surname>Ma</surname><given-names>J</given-names></name><name name-style="western"><surname>Guan</surname><given-names>J</given-names></name><name name-style="western"><surname>Yin</surname><given-names>L</given-names></name><name name-style="western"><surname>Shi</surname><given-names>Z</given-names></name><name name-style="western"><surname>Zhang</surname><given-names>Y</given-names></name></person-group><fpage>932838</fpage><volume>13</volume><year>2022</year><pub-id pub-id-type="pmid">36204746</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.3389/fpsyg.2022.932838</pub-id><pub-id pub-id-type="pmcid">PMC9530889</pub-id></element-citation></ref><ref id="REF22"><label>22</label><element-citation publication-type="journal"><article-title>The effects of smartphones on well-being: theoretical integration and research agenda</article-title><source>Curr Opin Psychol</source><person-group><name name-style="western"><surname>Kushlev</surname><given-names>K</given-names></name><name name-style="western"><surname>Leitao</surname><given-names>MR</given-names></name></person-group><fpage>77</fpage><lpage>82</lpage><volume>36</volume><year>2020</year><pub-id pub-id-type="pmid">32563707</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.copsyc.2020.05.001</pub-id></element-citation></ref><ref id="REF23"><label>23</label><element-citation publication-type="journal"><article-title>Exercise as an alternative approach for treating smartphone addiction: a systematic review and meta-analysis of random controlled trials</article-title><source>Int J Environ Res Public Health</source><person-group><name name-style="western"><surname>Liu</surname><given-names>S</given-names></name><name name-style="western"><surname>Xiao</surname><given-names>T</given-names></name><name name-style="western"><surname>Yang</surname><given-names>L</given-names></name><name name-style="western"><surname>Loprinzi</surname><given-names>PD</given-names></name></person-group><volume>16</volume><year>2019</year><pub-id pub-id-type="doi" assigning-authority="pmc">10.3390/ijerph16203912</pub-id><pub-id pub-id-type="pmcid">PMC6843500</pub-id><pub-id pub-id-type="pmid">31618879</pub-id></element-citation></ref><ref id="REF24"><label>24</label><element-citation publication-type="journal"><article-title>The mediating role of loneliness in the relationship between smartphone addiction and subjective well-being</article-title><source>Sci Rep</source><person-group><name name-style="western"><surname>Su</surname><given-names>P</given-names></name><name name-style="western"><surname>He</surname><given-names>M</given-names></name></person-group><fpage>1</fpage><lpage>7</lpage><volume>14</volume><year>2024</year><uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.nature.com/articles/s41598-024-54546-3">https://www.nature.com/articles/s41598-024-54546-3</uri><pub-id pub-id-type="pmid">38396186</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1038/s41598-024-54546-3</pub-id><pub-id pub-id-type="pmcid">PMC10891110</pub-id></element-citation></ref></ref-list></back></article></pmc-articleset>

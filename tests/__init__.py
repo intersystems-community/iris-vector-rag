@@ -1,1 +1,1 @@
-# tests package
+"""Test package for RAG-Templates framework."""

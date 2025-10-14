@@ -1,0 +1,1423 @@
+<?xml version="1.0"  ?><!DOCTYPE pmc-articleset PUBLIC "-//NLM//DTD ARTICLE SET 2.0//EN" "https://dtd.nlm.nih.gov/ncbi/pmc/articleset/nlm-articleset-2.0.dtd"><pmc-articleset><article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:ali="http://www.niso.org/schemas/ali/1.0/" article-type="research-article" xml:lang="en" dtd-version="1.4"><processing-meta base-tagset="archiving" mathml-version="3.0" table-model="xhtml" tagset-family="jats"><restricted-by>pmc</restricted-by></processing-meta><front><journal-meta><journal-id journal-id-type="nlm-ta">Sci Rep</journal-id><journal-id journal-id-type="iso-abbrev">Sci Rep</journal-id><journal-id journal-id-type="pmc-domain-id">1579</journal-id><journal-id journal-id-type="pmc-domain">scirep</journal-id><journal-title-group><journal-title>Scientific Reports</journal-title></journal-title-group><issn pub-type="epub">2045-2322</issn><publisher><publisher-name>Nature Publishing Group</publisher-name></publisher></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC12475123</article-id><article-id pub-id-type="pmcid-ver">PMC12475123.1</article-id><article-id pub-id-type="pmcaid">12475123</article-id><article-id pub-id-type="pmcaiid">12475123</article-id><article-id pub-id-type="pmid">41006366</article-id><article-id pub-id-type="doi">10.1038/s41598-025-07884-9</article-id><article-id pub-id-type="publisher-id">7884</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group subj-group-type="heading"><subject>Article</subject></subj-group></article-categories><title-group><article-title>A unified framework for deriving and visualizing soliton solutions in the paraxial nonlinear Schr&#246;dinger equation</article-title></title-group><contrib-group><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">https://orcid.org/0000-0002-4167-3119</contrib-id><name name-style="western"><surname>Khabyah</surname><given-names initials="AA">Ali Al</given-names></name><xref ref-type="aff" rid="Aff1">1</xref></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">https://orcid.org/0000-0003-3434-9908</contrib-id><name name-style="western"><surname>Ahmad</surname><given-names initials="A">Ali</given-names></name><xref ref-type="aff" rid="Aff2">2</xref></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">https://orcid.org/0000-0002-5047-9908</contrib-id><name name-style="western"><surname>Koam</surname><given-names initials="ANA">Ali N. A.</given-names></name><xref ref-type="aff" rid="Aff3">3</xref></contrib><contrib contrib-type="author"><contrib-id contrib-id-type="orcid" authenticated="false">https://orcid.org/0000-0002-2542-3320</contrib-id><name name-style="western"><surname>Almarashi</surname><given-names initials="A">Adel</given-names></name><xref ref-type="aff" rid="Aff3">3</xref></contrib><contrib contrib-type="author" corresp="yes"><contrib-id contrib-id-type="orcid" authenticated="false">https://orcid.org/0000-0002-3559-2953</contrib-id><name name-style="western"><surname>Othman</surname><given-names initials="HA">Hakeem A</given-names></name><address><email>hakim_albdoie@yahoo.com</email></address><xref ref-type="aff" rid="Aff4">4</xref></contrib><aff id="Aff1"><label>1</label><institution-wrap><institution-id institution-id-type="ROR">https://ror.org/052kwzs30</institution-id><institution-id institution-id-type="GRID">grid.412144.6</institution-id><institution-id institution-id-type="ISNI">0000 0004 1790 7100</institution-id><institution>Department of Mathematics, College of Science, </institution><institution>King Khalid University, </institution></institution-wrap>61413 Abha, Saudi Arabia </aff><aff id="Aff2"><label>2</label><institution-wrap><institution-id institution-id-type="ROR">https://ror.org/02bjnq803</institution-id><institution-id institution-id-type="GRID">grid.411831.e</institution-id><institution-id institution-id-type="ISNI">0000 0004 0398 1027</institution-id><institution>Department of Computer Science, College of Engineering and Computer Science, </institution><institution>Jazan University, </institution></institution-wrap>Jazan, Saudi Arabia </aff><aff id="Aff3"><label>3</label><institution-wrap><institution-id institution-id-type="ROR">https://ror.org/02bjnq803</institution-id><institution-id institution-id-type="GRID">grid.411831.e</institution-id><institution-id institution-id-type="ISNI">0000 0004 0398 1027</institution-id><institution>Department of Mathematics,College of Science, </institution><institution>Jazan University, </institution></institution-wrap>P.O. Box: 114, 45142 Jazan, Kingdom of Saudi Arabia </aff><aff id="Aff4"><label>4</label><institution-wrap><institution-id institution-id-type="ROR">https://ror.org/0505vtn61</institution-id><institution>Department of Mathematics, </institution><institution>Albaydha University, </institution></institution-wrap>Albaydha, Yemen </aff></contrib-group><pub-date pub-type="epub"><day>26</day><month>9</month><year>2025</year></pub-date><pub-date pub-type="collection"><year>2025</year></pub-date><volume>15</volume><issue-id pub-id-type="pmc-issue-id">478255</issue-id><elocation-id>32950</elocation-id><history><date date-type="received"><day>11</day><month>1</month><year>2025</year></date><date date-type="accepted"><day>17</day><month>6</month><year>2025</year></date></history><pub-history><event event-type="pmc-release"><date><day>26</day><month>09</month><year>2025</year></date></event><event event-type="pmc-live"><date><day>28</day><month>09</month><year>2025</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2025-09-28 16:25:18.507"><day>28</day><month>09</month><year>2025</year></date></event></pub-history><permissions><copyright-statement>&#169; The Author(s) 2025</copyright-statement><copyright-year>2025</copyright-year><license><ali:license_ref specific-use="textmining" content-type="ccbylicense">https://creativecommons.org/licenses/by/4.0/</ali:license_ref><license-p><bold>Open Access</bold> This article is licensed under a Creative Commons Attribution 4.0 International License, which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons licence, and indicate if changes were made. The images or other third party material in this article are included in the article&#8217;s Creative Commons licence, unless indicated otherwise in a credit line to the material. If material is not included in the article&#8217;s Creative Commons licence and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder. To view a copy of this licence, visit <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="uri" xlink:href="https://creativecommons.org/licenses/by/4.0/">http://creativecommons.org/licenses/by/4.0/</ext-link>.</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="41598_2025_Article_7884.pdf"/><abstract id="Abs1"><p id="Par1">This research investigates the paraxial nonlinear Schr&#246;dinger equation commonly used in quantum mechanics, plasma physics, and nonlinear fiber optics. Employing the extended modified auxiliary equation mapping method, we obtained different soliton solutions, which were tested via Hamiltonian method of stability analysis. The dynamic behavior of the solutions was realized by making use of Stream Density graphs, 3D slice contour graphs, Linear graphs, Density linear graphs, and 2D graphs. The results obtained were tabulated systematically to ensure accuracy; therefore, this research would be of practical use in soliton dynamics and nonlinear wave propagation and can be useful in furtherance of mathematics and bio-mathematics as well as industrial research. The given model and soliton solutions can be efficaciously used to model pulse propagation in optical fibers, investigate energy localization in plasmas, and examine wave packet dynamics in quantum systems. Such uses highlight the practical relevance of paraxial nonlinear Schr&#246;dinger equation to promote technologies in telecommunications, fusion science, and nanoscale materials science.</p></abstract><kwd-group xml:lang="en"><title>Keywords</title><kwd>Graphical visualization</kwd><kwd>Solitons</kwd><kwd>Paraxial nonlinear Schr&#246;dinger equation</kwd></kwd-group><kwd-group kwd-group-type="npg-subject"><title>Subject terms</title><kwd>Mathematics and computing</kwd><kwd>Physics</kwd></kwd-group><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>issue-copyright-statement</meta-name><meta-value>&#169; Springer Nature Limited 2025</meta-value></custom-meta></custom-meta-group></article-meta></front><body><sec id="Sec1"><title>Introduction</title><p id="Par2">Nonlinear evolution equations (NLEEs) find widespread application in many areas of applied sciences and engineering because of their capability to describe numerous intricate physical processes. Closed-form analytical developments of NLEEs are as much of mathematical interest as they are of value in understanding nonlinear wave behaviors of those processes in real-world systems. Such behaviors span many disciplines such as fiber optics, sound wave propagation, oceanography, shallow water hydrodynamics, fluid mechanics, nonlinear optics, plasma dynamics, neural networks, chaos, diffusion and reaction processes, solid-state dynamics, quantum dynamics, biological mathematics, and electromagnetic fields. One notable case is propagation of ultra-short electromagnetic pulses in nonlinear media, an n-dimensional process controlled by the subtle interaction of material dispersion, diffraction, and nonlinear behavior. This dynamic interaction may result in solitons (or light bullets), i.e., pulses of light that preserve their profile because of an exact balancing of dispersive and nonlinear effects. Solitons find useful applications in areas ranging from optical microscopy to data storage, laser acceleration of particles, Bose-Einstein condensation, and high-resolution signal transmission.</p><p id="Par3">Another basic idea in nonlinear wave theory is modulational instability (MI), arising due to interaction between linear dispersion or diffraction and nonlinear self-action of waves. MI is a widespread mechanism governing wave development in many nonlinear systems<sup><xref ref-type="bibr" rid="CR1">1</xref>&#8211;<xref ref-type="bibr" rid="CR4">4</xref></sup>.</p><p id="Par4">With increasing curiosity about nonlinear dynamics in numerous areas of science, research into NLEEs has emerged as an overarching theme. The majority of nonlinear behaviors in physical systems can be represented by these types of equations. Consequently, there has arisen an imperative to develop efficient means to discover exact solutions of NLEEs, particularly traveling wave solutions (TWS) since they model such behaviors in many physical systems.</p><p id="Par5">Exact nonlinear Schr<inline-formula id="IEq1"><alternatives><tex-math id="d33e233">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation (NLSE) solutions have great significance in mathematical physics because of their capability of representing stable localized solitons of waves, known as optical solitons. Solitons result by carefully balancing dispersion and nonlinearity, and as such, the NLSE became an elemental model of wave propagation in nonlinear dispersive media. Besides its standard form, NLSE acts as a master framework generating many extended and varied models to address specific physical effects or limitations in diverse systems<sup><xref ref-type="bibr" rid="CR5">5</xref>&#8211;<xref ref-type="bibr" rid="CR9">9</xref></sup>. The generalized forms of NLSE include the Gerdjikov-Ivanov equation to account for self-steepening and Raman effects, Manakov model to describe propagation in birefringent fibers, Gabitov-Turitsyn equation to simulate dispersion-managed systems, Kundu-Eckhaus and Chen-Lee-Liu equations to include higher-order nonlinearities, and complex Ginzburg-Landau equation and Biswas-Milovic equation to model dissipative regimes. Other well-known models that result from or relate to NLSE include the Maxwell-Bloch system, Schr<inline-formula id="IEq2"><alternatives><tex-math id="d33e246">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger-Hirota equation to describe dispersive solitons, and integrable Sasa-Satsuma equation. Here, to gain insights about soliton propagation in different types of nonlinear wave guides, in this investigation, we consider an individual NLSE-based model and analyze its exact soliton solutions in specific physical regimes.</p><p id="Par6">The paraxial nonlinear Schr<inline-formula id="IEq3"><alternatives><tex-math id="d33e254">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation has been the target of many investigations by using integration strategies, analytical methods, and numerical schemes. Some other new methods which can be applied recently to the paraxial nonlinear schr<inline-formula id="IEq4"><alternatives><tex-math id="d33e260">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation are the semi-inverse variational principle<sup><xref ref-type="bibr" rid="CR10">10</xref></sup>, Lie symmetry analysis<sup><xref ref-type="bibr" rid="CR11">11</xref></sup>, conservation law methods<sup><xref ref-type="bibr" rid="CR12">12</xref></sup>, techniques for integrable nonlocal LPD equations<sup><xref ref-type="bibr" rid="CR13">13</xref>,<xref ref-type="bibr" rid="CR14">14</xref></sup>, improved Adomian decomposition method<sup><xref ref-type="bibr" rid="CR15">15</xref></sup>, tanh expansion method<sup><xref ref-type="bibr" rid="CR16">16</xref></sup>, modified simple equation method<sup><xref ref-type="bibr" rid="CR17">17</xref></sup>, modified extended direct algebraic method<sup><xref ref-type="bibr" rid="CR18">18</xref></sup>, undetermined coefficients method<sup><xref ref-type="bibr" rid="CR19">19</xref></sup>, Riccati equation approach<sup><xref ref-type="bibr" rid="CR20">20</xref></sup>. Nonlinear partial differential equations (NLPDEs) are fundamental across numerous scientific fields.</p><p id="Par7">To accurately describe the physical processes represented by these equations, robust methodologies are required to obtain precise solutions. Selecting an appropriate approach for applying and interpreting PDEs is crucial in this research. Given that each PDE has unique characteristics, various effective approaches have been developed; however, no universal method suits all types of PDEs. Well-known techniques include the tanh expansion<sup><xref ref-type="bibr" rid="CR21">21</xref></sup>, modified extended tanh expansion<sup><xref ref-type="bibr" rid="CR22">22</xref></sup>, Adomian&#8217;s decomposition<sup><xref ref-type="bibr" rid="CR23">23</xref></sup>, B<inline-formula id="IEq5"><alternatives><tex-math id="d33e325">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{a}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq5.gif"/></alternatives></inline-formula>cklund transformation<sup><xref ref-type="bibr" rid="CR24">24</xref></sup>, Painlev<inline-formula id="IEq6"><alternatives><tex-math id="d33e336">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\acute{e}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq6.gif"/></alternatives></inline-formula> expansion<sup><xref ref-type="bibr" rid="CR25">25</xref></sup>, fractional homotopy analysis method<sup><xref ref-type="bibr" rid="CR26">26</xref></sup>, Kudryashov&#8217;s method<sup><xref ref-type="bibr" rid="CR27">27</xref>,<xref ref-type="bibr" rid="CR28">28</xref></sup>, and the exponential rational function method<sup><xref ref-type="bibr" rid="CR29">29</xref></sup>. Also noteworthy are the Khater approach<sup><xref ref-type="bibr" rid="CR30">30</xref></sup> and the enhanced generalized Riccati equation mapping method<sup><xref ref-type="bibr" rid="CR31">31</xref></sup>. This study revisits the generalized auxiliary equation mapping technique, originally developed by Sirendaoreji<sup><xref ref-type="bibr" rid="CR32">32</xref></sup>. Employing an appropriate auxiliary equation simplifies computations and facilitates the discovery of various types of exact solutions.</p><p id="Par8">Recent scientific developments in nonlinear science have revealed the power of different analytical approaches to find exact analytical solutions of nonlinear evolution equations (NLEEs) in numerous physical models. Some examples include applications of exact analytical schemes to solitons in optics and nonlinear waves, fluid flow, fractional-order models, and geophysical models of waves, illustrating the accuracy and flexibility of such approaches<sup><xref ref-type="bibr" rid="CR33">33</xref>&#8211;<xref ref-type="bibr" rid="CR39">39</xref></sup>. Such studies greatly advance understanding of waves and represent powerful mathematics to describe intricate nonlinear processes.</p><p id="Par9">The Extended Modified Auxiliary Equation Mapping (EMAMEM) method has some main advantages when compared to standard algorithms for computing soliton solutions. The method is capable of extracting a broader class of exact solutions, such as hybrid and complex solitons, by virtue of its flexible mapping mechanism. The technique is computational and reduces nonlinear PDEs to simpler lower-dimensional ODEs systematically, making it effective and applicable to both integrable and non-integrable systems. Furthermore, there is consistency between EMAMEM and tools for carrying out stability analysis, such that physically sound and mathematically exact solutions can be obtained. Its flexibility allows it to be an effective tool in the analysis of nonlinear wave dynamics in different scientific disciplines.</p><p id="Par10">The paraxial nonlinear Schr<inline-formula id="IEq7"><alternatives><tex-math id="d33e387">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation (PNLSE) is considered in this research since it describes light-wave propagation in nonlinear media with paraxial approximation. The equation describes both linear diffraction and nonlinear processes like self-focusing and defocusing depending on medium properties. The more details and variations of this model can be found in<sup><xref ref-type="bibr" rid="CR40">40</xref>&#8211;<xref ref-type="bibr" rid="CR45">45</xref></sup> The EMAMEM approach is used as an efficient tool to find soliton solutions and study how they behave when subject to stochastic perturbations. Stability of resulting solitary wave solutions is investigated with the Hamiltonian method, and findings are presented in tabular form to provide clarity and consistency. Consider the equation<disp-formula id="Equ1"><label>1.1</label><alternatives><tex-math id="d33e400">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} i Q_y +\frac{\alpha }{2}Q_{xx}+\frac{\beta }{2} Q_{tt} -\gamma |Q|^2 Q=0. \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ1.gif"/></alternatives></disp-formula>This is the general paraxial nonlinear Schr<inline-formula id="IEq8"><alternatives><tex-math id="d33e407">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation that takes into consideration both temporal dispersion and spatial variation, as well as nonlinear interaction between fields. It controls evolution of the complex envelope <italic toggle="yes">q</italic>(<italic toggle="yes">x</italic>,&#160;<italic toggle="yes">y</italic>,&#160;<italic toggle="yes">t</italic>) as it travels along the direction of propagation, <italic toggle="yes">y</italic>, considering spatial and temporal dispersive effects. The real parameters <inline-formula id="IEq9"><alternatives><tex-math id="d33e429">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq9.gif"/></alternatives></inline-formula>, <inline-formula id="IEq10"><alternatives><tex-math id="d33e435">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\beta$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq10.gif"/></alternatives></inline-formula>, and <inline-formula id="IEq11"><alternatives><tex-math id="d33e442">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\gamma$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq11.gif"/></alternatives></inline-formula> in Eq. (<xref rid="Equ1" ref-type="disp-formula">1.1</xref>) refer to diffraction, dispersion, and Kerr nonlinearity, respectively. Eq. (<xref rid="Equ1" ref-type="disp-formula">1.1</xref>) takes the form of the elliptic NLSE when <inline-formula id="IEq12"><alternatives><tex-math id="d33e454">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha \beta &gt; 0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq12.gif"/></alternatives></inline-formula>, and becomes the hyperbolic NLSE when <inline-formula id="IEq13"><alternatives><tex-math id="d33e460">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha \beta &lt; 0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq13.gif"/></alternatives></inline-formula><sup><xref ref-type="bibr" rid="CR46">46</xref>,<xref ref-type="bibr" rid="CR47">47</xref></sup>. This equation can remarkably model (2+1)-dimensional spatial dynamics in cubic Kerr media when group-velocity dispersion is neglected; when this occurs, <italic toggle="yes">x</italic> and <italic toggle="yes">t</italic> refer to transversal spatial coordinates, and <italic toggle="yes">y</italic> refers to longitudal propagation coordinate, and we assume <inline-formula id="IEq14"><alternatives><tex-math id="d33e482">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha = \beta &gt; 0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq14.gif"/></alternatives></inline-formula>. The organization of the article is as follows:</p><p id="Par11">Section &#8220;<xref rid="Sec1" ref-type="sec">Introduction</xref>&#8221; provides a brief overview of the paraxial nonlinear schr<inline-formula id="IEq15"><alternatives><tex-math id="d33e493">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation. The algorithm used in the proposed method is explained in detail in Section &#8220;<xref rid="Sec2" ref-type="sec">Methodology of extended modified AEM method</xref>&#8221;. Section &#8220;<xref rid="Sec3" ref-type="sec">Stability analysis</xref>&#8221; demonstrates the stability of paraxial nonlinear schr<inline-formula id="IEq16"><alternatives><tex-math id="d33e505">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation. Graphical visualization of the solutions are presented in Section &#8220;<xref rid="Sec4" ref-type="sec">Graph-based data visualization</xref>&#8221;. Section &#8220;<xref rid="Sec5" ref-type="sec">Discussions and results</xref>&#8221; offer results and discussion along with concluding remark.</p></sec><sec id="Sec2"><title>Methodology of extended modified AEM method</title><p id="Par12">We here apply newly formulated Extended Modified Auxiliary Equation Mapping Method (EMAMEM) by Seadawy<sup><xref ref-type="bibr" rid="CR48">48</xref></sup> to the paraxial nonlinear Schr&#246;dinger equation. The advanced analytical algorithm is employed to find a larger group of general and new traveling wave solutions. With the flexibility of EMAMEM, we can construct systematically exact solutions that uncover complex nonlinear wave dynamics of the system resulting from interaction of diffraction, dispersion, and Kerr nonlinearity.</p><p id="Par13">The nonlinear partial differential equation is given as<disp-formula id="Equ2"><label>2.1</label><alternatives><tex-math id="d33e528">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} M(w, w_t, w_x, w_y, w_{xx}, \ldots ) = 0, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ2.gif"/></alternatives></disp-formula>where <inline-formula id="IEq17"><alternatives><tex-math id="d33e535">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$M$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq17.gif"/></alternatives></inline-formula> is a polynomial in <inline-formula id="IEq18"><alternatives><tex-math id="d33e541">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$w(x, y, t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq18.gif"/></alternatives></inline-formula>. To obtain the exact traveling wave solution, apply the traveling wave transformation in the following form:<disp-formula id="Equ3"><label>2.2</label><alternatives><tex-math id="d33e547">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} w(x, y, t) = w(\xi ), \quad \xi = \sum _{i=0}^m \kappa _i x_i, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ3.gif"/></alternatives></disp-formula>where <inline-formula id="IEq19"><alternatives><tex-math id="d33e554">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\kappa _i$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq19.gif"/></alternatives></inline-formula>, <inline-formula id="IEq20"><alternatives><tex-math id="d33e561">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$i = 0, 1, 2, \ldots , m$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq20.gif"/></alternatives></inline-formula> are constants. Applying this transformation, Eq. (<xref rid="Equ2" ref-type="disp-formula">2.1</xref>) is simplified to a nonlinear ODE of the given form.<disp-formula id="Equ4"><label>2.3</label><alternatives><tex-math id="d33e570">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} N(w, w', w'', w''', \ldots ) = 0, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ4.gif"/></alternatives></disp-formula>We have a nonlinear ordinary differential equation (NLODE), where <inline-formula id="IEq21"><alternatives><tex-math id="d33e577">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$N$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq21.gif"/></alternatives></inline-formula> denotes a polynomial in <inline-formula id="IEq22"><alternatives><tex-math id="d33e583">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$w(\xi )$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq22.gif"/></alternatives></inline-formula> along with its associated total derivatives <inline-formula id="IEq23"><alternatives><tex-math id="d33e589">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$w',~w'',~w''',\ldots$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq23.gif"/></alternatives></inline-formula>. Next, we assume that <inline-formula id="IEq24"><alternatives><tex-math id="d33e596">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$w(\xi )$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq22.gif"/></alternatives></inline-formula> satisfies a general solution expressed as a series in terms of <inline-formula id="IEq25"><alternatives><tex-math id="d33e602">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\psi (\xi )$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq25.gif"/></alternatives></inline-formula>. Accordingly, we propose that the solution of the equation can be written in the following form:<disp-formula id="Equ5"><label>2.4</label><alternatives><tex-math id="d33e608">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} w=w(\xi )=\sum ^{n}_{j=0}a_{j}\psi ^{j}(\xi )+\sum ^{-n}_{j=-1}b_{-j}\psi ^{j}(\xi )+\sum ^{n}_{j=2}c_{j}\psi ^{j-2}(\xi )\psi ^{'}(\xi )+\sum ^{n}_{j=1}d_{j}\bigg (\frac{\psi ^{'}(\xi )}{\psi (\xi )}\bigg )^{j}, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ5.gif"/></alternatives></disp-formula>where <inline-formula id="IEq26"><alternatives><tex-math id="d33e615">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$a_k$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq26.gif"/></alternatives></inline-formula>, <inline-formula id="IEq27"><alternatives><tex-math id="d33e621">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$b_k$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq27.gif"/></alternatives></inline-formula>, <inline-formula id="IEq28"><alternatives><tex-math id="d33e627">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$c_k$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq28.gif"/></alternatives></inline-formula>, and <inline-formula id="IEq29"><alternatives><tex-math id="d33e634">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$d_k$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq29.gif"/></alternatives></inline-formula> are arbitrary constants that will be determined later. In this framework, <inline-formula id="IEq30"><alternatives><tex-math id="d33e640">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\psi (\xi )$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq25.gif"/></alternatives></inline-formula> is assumed to satisfy the following generalized auxiliary equation:<disp-formula id="Equ6"><label>2.5</label><alternatives><tex-math id="d33e646">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} \psi ^{'^{2}}=(\frac{d\psi }{d\xi })^{2}=\beta _{1}\psi ^{2}(\xi )+\beta _{2}\psi ^{3}(\xi )+\beta _{3}\psi ^{4}(\xi ), \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ6.gif"/></alternatives></disp-formula>where <inline-formula id="IEq31"><alternatives><tex-math id="d33e653">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\beta _1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq31.gif"/></alternatives></inline-formula>, <inline-formula id="IEq32"><alternatives><tex-math id="d33e659">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\beta _2$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq32.gif"/></alternatives></inline-formula>, <inline-formula id="IEq33"><alternatives><tex-math id="d33e665">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\beta _3$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq33.gif"/></alternatives></inline-formula> are constants to be determined.</p><p id="Par14">The transformation is given by:<disp-formula id="Equ7"><label>2.6</label><alternatives><tex-math id="d33e673">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} z(x,y,t)= Q(\eta ) e^{i \phi }, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ7.gif"/></alternatives></disp-formula>where<disp-formula id="Equ8"><label>2.7</label><alternatives><tex-math id="d33e680">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} \eta = x+y-\nu t, ~~~ \phi =\kappa x+\theta y -\nu t. \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ8.gif"/></alternatives></disp-formula>Put Eq. (<xref rid="Equ7" ref-type="disp-formula">2.6</xref>) and Eq. (<xref rid="Equ8" ref-type="disp-formula">2.7</xref>) in Eq. (<xref rid="Equ1" ref-type="disp-formula">1.1</xref>), we get this,<disp-formula id="Equ9"><label>2.8</label><alternatives><tex-math id="d33e697">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} A Q''(\eta )+B Q(\eta )-2 \gamma \kappa Q(\eta )^3, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ9.gif"/></alternatives></disp-formula>where <inline-formula id="IEq34"><alternatives><tex-math id="d33e704">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$~~A= \alpha (\kappa -1) \nu ^2-1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq34.gif"/></alternatives></inline-formula> and <inline-formula id="IEq35"><alternatives><tex-math id="d33e710">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$~~B= \kappa \left( \alpha (\kappa -1) \nu ^2-2 \theta +\kappa \right)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq35.gif"/></alternatives></inline-formula>. Using the homogeneous balance principle, the non-linear term <inline-formula id="IEq36"><alternatives><tex-math id="d33e716">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$Q^3$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq36.gif"/></alternatives></inline-formula> with higher order derivative term <italic toggle="yes">Q</italic> then give <inline-formula id="IEq37"><alternatives><tex-math id="d33e725">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$M+2=3M,$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq37.gif"/></alternatives></inline-formula> which implies <inline-formula id="IEq38"><alternatives><tex-math id="d33e732">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$~~M=1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq38.gif"/></alternatives></inline-formula>. Therefore, we assume the solution takes the following form:<disp-formula id="Equ10"><label>2.9</label><alternatives><tex-math id="d33e738">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} Q = a_1 \psi (\eta )+a_0+\frac{b_1}{\psi (\eta )}+\frac{d_1 \psi '(\eta )}{\psi (\eta )}, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ10.gif"/></alternatives></disp-formula>where <inline-formula id="IEq39"><alternatives><tex-math id="d33e745">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$a_0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq39.gif"/></alternatives></inline-formula>, <inline-formula id="IEq40"><alternatives><tex-math id="d33e751">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$a_1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq40.gif"/></alternatives></inline-formula>, <inline-formula id="IEq41"><alternatives><tex-math id="d33e757">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$b_1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq41.gif"/></alternatives></inline-formula>, and <inline-formula id="IEq42"><alternatives><tex-math id="d33e763">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$d_1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq42.gif"/></alternatives></inline-formula> are constants to be determined.</p><p id="Par15">
+<bold>Family 1:</bold>
+<disp-formula id="Equ11"><label>2.10</label><alternatives><tex-math id="d33e774">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} a_{0}= &amp; 0,~~a_{1}= -\frac{\sqrt{h} \sqrt{\alpha \kappa \nu ^2-\alpha \nu ^2-1}}{2 \sqrt{\gamma } \sqrt{\kappa }},~~b_{1}= 0,\nonumber \\ d_{1}= &amp; -\frac{i \sqrt{-\alpha \kappa \nu ^2+\alpha \nu ^2+1}}{2 \sqrt{\gamma } \sqrt{\kappa }}.\nonumber \\ z_{1}(x,y,t)= &amp; \Bigg ( \frac{1}{4} e^{(-i \phi )} \bigg ( \frac{ \frac{4 \sqrt{h} \kappa \left( j \tanh \left( E \left( \eta + \eta _0\right) \right) + 1\right) ^2 \left( \alpha (\kappa - 1) \nu ^2 - 2 \theta + \kappa \right) }{ g \sqrt{\alpha (\kappa - 1) \nu ^2 - 1}} - i E j \text {sech}\left( E \left( \eta + \eta _0\right) \right) ^2 \sqrt{2 - 2 \alpha (\kappa - 1) \nu ^2} }{\sqrt{\gamma } \sqrt{\kappa } \left( j \tanh \left( E \left( \eta + \eta _0\right) \right) + 1\right) }\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t,\nonumber \\ E= &amp; \sqrt{\frac{\kappa \left( \alpha (\kappa -1) \nu ^2-2 \theta +\kappa \right) }{\alpha (\kappa -1) \nu ^2-1}}.\nonumber \\ z_{2}(x,y, t)= &amp; \Bigg ( e^{(-i \phi )} \bigg (-\frac{\sqrt{h} \sqrt{\frac{f}{h}} \sqrt{\alpha \kappa \nu ^2-\alpha \nu ^2-1} \left( \frac{F j}{G+\rho }+1\right) }{4 \sqrt{\gamma } \sqrt{\kappa }}-\frac{i \sqrt{-\alpha \kappa \nu ^2+\alpha \nu ^2+1} \left( \frac{\sqrt{f} G j}{G+\rho }-\frac{\sqrt{f} F^2 j}{(G+\rho )^2}\right) }{2 \sqrt{\gamma } \sqrt{\kappa } \left( \frac{F j}{G+\rho }+1\right) }\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t, \nonumber \\ F= &amp; \sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) \nonumber \\ G= &amp; \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) .\nonumber \\ z_{3}(x,y, t)= &amp; \Bigg ( e^{(-i \phi )} \bigg ( \frac{f \sqrt{h} H \sqrt{\alpha \kappa \nu ^2-\alpha \nu ^2-1}}{2 \sqrt{\gamma } g \sqrt{\kappa }}+\frac{i \sqrt{f} j \sqrt{-\alpha \kappa \nu ^2+\alpha \nu ^2+1} \left( -F \sigma +G \rho \sqrt{\sigma ^2+1}+1\right) }{2 \sqrt{\gamma } H \sqrt{\kappa } (F+\sigma )^2}\bigg ) \Bigg ),\nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t,\nonumber \\ F= &amp; \sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) ,\nonumber \\ G= &amp; \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) ,\nonumber \\ H= &amp; \frac{j \left( \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) +\rho \sqrt{\sigma ^2+1}\right) }{\sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) +\sigma }+1. \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ11.gif"/></alternatives></disp-formula>
+<bold>Family 2:</bold>
+<disp-formula id="Equ12"><label>2.11</label><alternatives><tex-math id="d33e784">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} a_{0}= &amp; \frac{1}{2} \left( \frac{\sqrt{2} \kappa ^2}{\sqrt{-\gamma \kappa ^2 (2 \theta -\kappa )}}-\frac{2 \sqrt{2} \theta \kappa }{\sqrt{-\gamma \kappa ^2 (2 \theta -\kappa )}}\right) ,a_{1}= -\frac{g}{2 \sqrt{2} \sqrt{\gamma \kappa ^3-2 \gamma \theta \kappa ^2}},\nonumber \\ b_{1}= &amp; 0,~~d_{1}= 0. \nonumber \\ z_{4}(x,y, t)= &amp; \Bigg ( e^{(-i \phi )} \bigg ( \frac{1}{2} \left( \frac{\sqrt{2} \kappa ^2}{\sqrt{-\gamma \kappa ^2 (2 \theta -\kappa )}}-\frac{2 \sqrt{2} \theta \kappa }{\sqrt{-\gamma \kappa ^2 (2 \theta -\kappa )}}\right) +\frac{f (j K+1)}{2 \sqrt{2} \sqrt{\gamma \kappa ^3-2 \gamma \theta \kappa ^2}}\bigg ) \Bigg ),\nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t, \nonumber \\ K= &amp; \tanh \left( \frac{1}{2} \sqrt{f} \left( \eta +\eta _0\right) \right) . \nonumber \\ z_{5}(x,y, t)= &amp; \Bigg ( e^{(-i \phi )} \bigg ( \frac{1}{2} \left( \frac{\sqrt{2} \kappa ^2}{\sqrt{-\gamma \kappa ^2 (2 \theta -\kappa )}}-\frac{2 \sqrt{2} \theta \kappa }{\sqrt{-\gamma \kappa ^2 (2 \theta -\kappa )}}\right) -\frac{g H \sqrt{\frac{f}{h}}}{4 \sqrt{2} \sqrt{\gamma \kappa ^3-2 \gamma \theta \kappa ^2}}\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t, \nonumber \\ H= &amp; \frac{j \left( \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) +\rho \sqrt{\sigma ^2+1}\right) }{\sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) +\sigma }+1.\nonumber \\ z_{6}(x,y,t)= &amp; \Bigg ( e^{(-i \phi )} \bigg ( \frac{1}{2} \left( \frac{\sqrt{2} \kappa ^2}{\sqrt{-\gamma \kappa ^2 (2 \theta -\kappa )}}-\frac{2 \sqrt{2} \theta \kappa }{\sqrt{-\gamma \kappa ^2 (2 \theta -\kappa )}}\right) +\frac{f L}{2 \sqrt{2} \sqrt{\gamma \kappa ^3-2 \gamma \theta \kappa ^2}}\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t, \nonumber \\ L= &amp; \frac{j \left( \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) +\rho \sqrt{\sigma ^2+1}\right) }{\sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) +\sigma }+1. \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ12.gif"/></alternatives></disp-formula>
+<bold>Family 3:</bold>
+<disp-formula id="Equ13"><label>2.12</label><alternatives><tex-math id="d33e795">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} a_{0}= &amp; 0,~~a_{1}=\frac{i \sqrt{h}}{2 \sqrt{\gamma } \sqrt{\kappa }},~~b_{1}= 0,~~d_{1}= \frac{i}{2 \sqrt{\gamma } \sqrt{\kappa }}. \nonumber \\ z_{7}(x,y, t)= &amp; \Bigg ( e^{(-i \phi )} \bigg ( \frac{i \sqrt{f} j M^2}{4 \sqrt{\gamma } \sqrt{\kappa } N}-\frac{i f \sqrt{h} N}{2 \sqrt{\gamma } g \sqrt{\kappa }}\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t, \nonumber \\ M= &amp; \text {sech} \left( \frac{1}{2} \sqrt{f} \left( \eta +\eta _0\right) \right) ,\nonumber \\ N= &amp; j \tanh \left( \frac{1}{2} \sqrt{f} \left( \eta +\eta _0\right) \right) +1.\nonumber \\ z_{8}(x,y, t)= &amp; \Bigg ( e^{(-i \phi )} \bigg ( \frac{i \left( \frac{\sqrt{f} G j}{G+\rho }-\frac{\sqrt{f} F^2 j}{(G+\rho )^2}\right) }{2 \sqrt{\gamma } \sqrt{\kappa } \left( \frac{F j}{G+\rho }+1\right) }+\frac{i \sqrt{h} \sqrt{\frac{f}{h}} \left( \frac{F j}{G+\rho }+1\right) }{4 \sqrt{\gamma } \sqrt{\kappa }}\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t,\nonumber \\ F= &amp; \sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) ,\nonumber \\ G= &amp; \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) . \nonumber \\ z_{9}(x,y, t)= &amp; \Bigg ( e^{(-i \phi )} \bigg ( -\frac{i f \sqrt{h} \left( \frac{j \left( G+\rho \sqrt{\sigma ^2+1}\right) }{F+\sigma }+1\right) }{2 \sqrt{\gamma } g \sqrt{\kappa }}-\frac{i \sqrt{f} j \left( -F \sigma +G \rho \sqrt{\sigma ^2+1}+1\right) }{2 \sqrt{\gamma } \sqrt{\kappa } (F+\sigma )^2 \left( \frac{j \left( G+\rho \sqrt{\sigma ^2+1}\right) }{F+\sigma }+1\right) }\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x+y-\nu t,\nonumber \\ F= &amp; \sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) ,\nonumber \\ G= &amp; \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) . \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ13.gif"/></alternatives></disp-formula>
+<bold>Family 4:</bold>
+<disp-formula id="Equ14"><label>2.13</label><alternatives><tex-math id="d33e805">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} a_{0}= &amp; 0,~~a_{1}=0,~~b_{1}= 0,~~d_{1}= \frac{\sqrt{-2 \theta +\kappa +1}}{\sqrt{2 \gamma f-\gamma \kappa }},~~ \alpha = \frac{2 f-2 \theta \kappa +\kappa ^2}{(\kappa -1) \nu ^2 (2 f-\kappa )}. \nonumber \\ z_{10}(x,y, t)= &amp; \Bigg ( e^{-i \phi } \bigg ( \frac{\sqrt{f} j \sqrt{-2 \theta + \kappa + 1} \, \text {sech} \left( \frac{1}{2} \sqrt{f} \left( \eta + \eta _0\right) \right) ^2}{2 \sqrt{2 \gamma f - \gamma \kappa } \left( j \tanh \left( \frac{1}{2} \sqrt{f} \left( \eta + \eta _0\right) \right) + 1\right) }\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x + y - \nu t. \nonumber \\ z_{11}(x,y, t)= &amp; \Bigg ( e^{-i \phi } \bigg ( \frac{\sqrt{-2 \theta +\kappa +1} \left( \frac{\sqrt{f} G j}{G+\rho }-\frac{\sqrt{f} F^2 j}{(G+\rho )^2}\right) }{\sqrt{2 \gamma f-\gamma \kappa } \left( \frac{F j}{G+\rho }+1\right) }\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x + y - \nu t, \nonumber \\ F= &amp; \sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) , \nonumber \\ G= &amp; \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) . \nonumber \\ z_{12}(x,y, t)= &amp; \Bigg ( e^{-i \phi } \bigg ( -\frac{\sqrt{f} j \sqrt{-2 \theta +\kappa +1} \left( -F \sigma +G \rho \sqrt{\sigma ^2+1}+1\right) }{(F+\sigma )^2 \sqrt{2 \gamma f-\gamma \kappa } \left( \frac{j \left( G+\rho \sqrt{\sigma ^2+1}\right) }{F+\sigma }+1\right) }\bigg ) \Bigg ), \nonumber \\ \text {where} \quad \eta= &amp; x + y - \nu t, \nonumber \\ F= &amp; \sinh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) , \nonumber \\ G= &amp; \cosh \left( \sqrt{f} \left( \eta +\eta _0\right) \right) . \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ14.gif"/></alternatives></disp-formula>
+</p></sec><sec id="Sec3"><title>Stability analysis</title><p id="Par16">We investigated the stability of traveling wave solutions to Eq.&#160;(<xref rid="Equ9" ref-type="disp-formula">2.8</xref>) by using the Hamiltonian method where Hamiltonian-system (HS) momentum is given by<disp-formula id="Equ15"><label>3.1</label><alternatives><tex-math id="d33e819">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} U=\int ^{\infty }_{-\infty }\frac{z(x)^{2}}{2}dx, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ15.gif"/></alternatives></disp-formula>with <inline-formula id="IEq43"><alternatives><tex-math id="d33e826">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq43.gif"/></alternatives></inline-formula> denoting the traveling wave solution. The condition of stability mandates that<disp-formula id="Equ16"><label>3.2</label><alternatives><tex-math id="d33e832">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\begin{aligned} \frac{\partial ~U}{\partial ~\nu }&gt;0, \end{aligned}$$\end{document}</tex-math><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="anchor" orientation="portrait" xlink:href="41598_2025_7884_Article_Equ16.gif"/></alternatives></disp-formula>where <inline-formula id="IEq44"><alternatives><tex-math id="d33e839">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\nu$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq44.gif"/></alternatives></inline-formula> represents the velocity of waves. The Eqs.&#160;(<xref rid="Equ15" ref-type="disp-formula">3.1</xref>) and (<xref rid="Equ16" ref-type="disp-formula">3.2</xref>) are used to establish specific regimes and ranges of parameters where the traveling waves of the HS behave in a stable manner. By using these requirements of stability in their corresponding valid ranges, we identified the stability behavior of resulting solutions as given in Table&#160;<xref rid="Tab1" ref-type="table">1</xref>.<table-wrap id="Tab1" position="float" orientation="portrait"><label>Table 1</label><caption><p>Stability Analysis of <inline-formula id="IEq45"><alternatives><tex-math id="d33e861">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{i}(x,y,t)~~~i=1,2,3,\dots ,12.$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq45.gif"/></alternatives></inline-formula>.</p></caption><table frame="hsides" rules="groups"><thead><tr><th align="left" colspan="1" rowspan="1">No</th><th align="left" colspan="1" rowspan="1">Solution</th><th align="left" colspan="1" rowspan="1">Stability</th><th align="left" colspan="1" rowspan="1">Values of the variables</th></tr></thead><tbody><tr><td align="left" colspan="1" rowspan="1">1</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq46"><alternatives><tex-math id="d33e888">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{1}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq46.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq47"><alternatives><tex-math id="d33e897">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\theta = 1.9,\alpha = 1.7,\nu = 1.6,\kappa = 1.5,j = 1,\eta _0 = 1.3,h = 1.1, g = 1.2$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq47.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq48"><alternatives><tex-math id="d33e906">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">2</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq49"><alternatives><tex-math id="d33e916">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{2}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq49.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq50"><alternatives><tex-math id="d33e925">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta _0 = 1.3,h = 1.1,g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8, y = 2, k = 1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq50.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq51"><alternatives><tex-math id="d33e934">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">3</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq52"><alternatives><tex-math id="d33e944">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{3}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq52.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq53"><alternatives><tex-math id="d33e953">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$j = 1,\eta _0 = 1.3,h= 1.1, g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8,\sigma = 1,y = 2,k = -1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq53.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq54"><alternatives><tex-math id="d33e962">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">4</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq55"><alternatives><tex-math id="d33e972">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{4}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq55.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq56"><alternatives><tex-math id="d33e981">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha = 1.7,\nu = 1.6,\kappa = 1.5,j = 1,\eta _0 = 1.3,h = 1.1, g = 1.2,\gamma = 1.4$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq56.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq57"><alternatives><tex-math id="d33e990">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">5</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq58"><alternatives><tex-math id="d33e1000">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{5}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq58.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq59"><alternatives><tex-math id="d33e1009">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha = 1.7,\nu = 1.9,\kappa = 1.5,j = 1,\eta _0 = 1.5, h = 1.1,g = 1.2,\rho = 1,f = 1.8$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq59.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq60"><alternatives><tex-math id="d33e1018">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">6</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq61"><alternatives><tex-math id="d33e1028">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{6}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq61.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Unstable</td><td align="left" colspan="1" rowspan="1">Singular solution</td></tr><tr><td align="left" colspan="1" rowspan="1">7</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq62"><alternatives><tex-math id="d33e1042">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{7}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq62.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq63"><alternatives><tex-math id="d33e1051">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\nu = 1.5,\kappa = 1.5,j = 1,\eta _0 = 1.9,h = 1.1, g = 1.2,\gamma = 1.4,f = 1.3$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq63.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq64"><alternatives><tex-math id="d33e1060">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">8</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq65"><alternatives><tex-math id="d33e1070">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{8}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq65.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq66"><alternatives><tex-math id="d33e1079">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta _0 = 1.5,h = 1.1, g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8, y = 2, k = -1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq66.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq67"><alternatives><tex-math id="d33e1088">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-2,2]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq67.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">9</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq68"><alternatives><tex-math id="d33e1098">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{9}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq68.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq69"><alternatives><tex-math id="d33e1107">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\theta = 1.9,\alpha = 1.7,\nu = 1.2,\kappa = 1.5,j = 1,\eta _0 = 1.9,h = 1.1, g = 1.2$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq69.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq70"><alternatives><tex-math id="d33e1116">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-2,2]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq67.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">10</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq71"><alternatives><tex-math id="d33e1126">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{10}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq71.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq72"><alternatives><tex-math id="d33e1135">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\nu = 1.2,\kappa = 1.5,j = 1,\eta _0 = 1.1, h = 1.6, g = 1.2,\gamma = 1.4, f = 1.8$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq72.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq73"><alternatives><tex-math id="d33e1144">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-2,2]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq67.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">11</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq74"><alternatives><tex-math id="d33e1154">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{11}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq74.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq75"><alternatives><tex-math id="d33e1163">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta _0 = 1.3,h = 1.1, g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8, y = 2, k = -1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq75.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq76"><alternatives><tex-math id="d33e1172">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-2,2]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq67.gif"/></alternatives></inline-formula></td></tr><tr><td align="left" colspan="1" rowspan="1">12</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq77"><alternatives><tex-math id="d33e1183">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{12}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq77.gif"/></alternatives></inline-formula></td><td align="left" colspan="1" rowspan="1">Stable</td><td align="left" colspan="1" rowspan="1"><inline-formula id="IEq78"><alternatives><tex-math id="d33e1192">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\theta = 1.9,\alpha = 1.7,\nu = 1.6,\kappa = 1.5,j = 1,\eta _0 = 1.3,h = 1.1, g = 1.2$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq47.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq79"><alternatives><tex-math id="d33e1201">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula></td></tr></tbody></table></table-wrap></p></sec><sec id="Sec4"><title>Graph-based data visualization</title><p id="Par17">Using Mathematica 14.0, this part presents graphical representations of our recently discovered solutions in several dimensions (various kinds of rational, trigonometric, mixed, and hyperbolic functions). The objective is to have a deeper understanding of the physical interpretation of the model presented by Eq. (<xref rid="Equ9" ref-type="disp-formula">2.8</xref>). Figs. <xref rid="Fig1" ref-type="fig">1</xref>, <xref rid="Fig2" ref-type="fig">2</xref>, <xref rid="Fig3" ref-type="fig">3</xref>, <xref rid="Fig4" ref-type="fig">4</xref>, <xref rid="Fig5" ref-type="fig">5</xref>, <xref rid="Fig6" ref-type="fig">6</xref>, <xref rid="Fig7" ref-type="fig">7</xref>, <xref rid="Fig8" ref-type="fig">8</xref>, <xref rid="Fig9" ref-type="fig">9</xref>, <xref rid="Fig10" ref-type="fig">10</xref>, <xref rid="Fig11" ref-type="fig">11</xref> and <xref rid="Fig12" ref-type="fig">12</xref> give 2D graph, 3D slice contour, density linear, stream density and linear plots which describes the behaviour of the system and types of the family of soliton solutions presented by Eq. (<xref rid="Equ11" ref-type="disp-formula">2.10</xref>)&#8211;Eq. (<xref rid="Equ14" ref-type="disp-formula">2.13</xref>).<fig id="Fig1" position="float" orientation="portrait"><label>Fig. 1</label><caption><p>Graphic representation of <inline-formula id="IEq80"><alternatives><tex-math id="d33e1263">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{1}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq46.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq81"><alternatives><tex-math id="d33e1269">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\theta = 1.9,\alpha = 1.7,\nu = 1.6,\kappa = 1.5,j = 1,\eta _0 = 1.3,h = 1.1, g = 1.2$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq47.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq82"><alternatives><tex-math id="d33e1278">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO1" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig1_HTML.jpg"/></fig><fig id="Fig2" position="float" orientation="portrait"><label>Fig. 2</label><caption><p>Graphic representation of <inline-formula id="IEq83"><alternatives><tex-math id="d33e1292">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{2}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq49.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq84"><alternatives><tex-math id="d33e1298">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta _0 = 1.3,h = 1.1,g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8, y = 2, k = 1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq50.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq85"><alternatives><tex-math id="d33e1307">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO2" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig2_HTML.jpg"/></fig><fig id="Fig3" position="float" orientation="portrait"><label>Fig. 3</label><caption><p>Graphic representation of <inline-formula id="IEq86"><alternatives><tex-math id="d33e1321">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{3}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq52.gif"/></alternatives></inline-formula> in various dimensions with<inline-formula id="IEq87"><alternatives><tex-math id="d33e1327">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$j = 1,\eta _0 = 1.3,h= 1.1, g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8,\sigma = 1,y = 2,k = -1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq53.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq88"><alternatives><tex-math id="d33e1336">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO3" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig3_HTML.jpg"/></fig><fig id="Fig4" position="float" orientation="portrait"><label>Fig. 4</label><caption><p>Graphic representation of <inline-formula id="IEq89"><alternatives><tex-math id="d33e1351">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{4}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq55.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq90"><alternatives><tex-math id="d33e1357">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha = 1.7,\nu = 1.6,\kappa = 1.5,j = 1,\eta _0 = 1.3,h = 1.1, g = 1.2,\gamma = 1.4$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq56.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq91"><alternatives><tex-math id="d33e1366">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO4" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig4_HTML.jpg"/></fig><fig id="Fig5" position="float" orientation="portrait"><label>Fig. 5</label><caption><p>Graphic representation of <inline-formula id="IEq92"><alternatives><tex-math id="d33e1380">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{5}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq58.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq93"><alternatives><tex-math id="d33e1386">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha = 1.7,\nu = 1.9,\kappa = 1.5,j = 1,\eta _0 = 1.5, h = 1.1,g = 1.2,\rho = 1,f = 1.8$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq59.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq94"><alternatives><tex-math id="d33e1395">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO5" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig5_HTML.jpg"/></fig><fig id="Fig6" position="float" orientation="portrait"><label>Fig. 6</label><caption><p>Graphic representation of <inline-formula id="IEq95"><alternatives><tex-math id="d33e1409">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{6}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq61.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq96"><alternatives><tex-math id="d33e1415">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$h = 1.1,g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8,\sigma = 1,y = 2,k = 1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq96.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq97"><alternatives><tex-math id="d33e1424">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO6" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig6_HTML.jpg"/></fig><fig id="Fig7" position="float" orientation="portrait"><label>Fig. 7</label><caption><p>Graphic representation of <inline-formula id="IEq98"><alternatives><tex-math id="d33e1438">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{7}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq62.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq99"><alternatives><tex-math id="d33e1444">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\nu = 1.5,\kappa = 1.5,j = 1,\eta _0 = 1.9,h = 1.1, g = 1.2,\gamma = 1.4,f = 1.3$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq63.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq100"><alternatives><tex-math id="d33e1453">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO7" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig7_HTML.jpg"/></fig><fig id="Fig8" position="float" orientation="portrait"><label>Fig. 8</label><caption><p>Graphic representation of <inline-formula id="IEq101"><alternatives><tex-math id="d33e1467">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{8}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq65.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq102"><alternatives><tex-math id="d33e1473">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta _0 = 1.5,h = 1.1, g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8, y = 2, k = -1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq66.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq103"><alternatives><tex-math id="d33e1482">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-2,2]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq67.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO8" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig8_HTML.jpg"/></fig><fig id="Fig9" position="float" orientation="portrait"><label>Fig. 9</label><caption><p>Graphic representation of <inline-formula id="IEq104"><alternatives><tex-math id="d33e1496">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{9}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq68.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq105"><alternatives><tex-math id="d33e1502">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\theta = 1.9,\alpha = 1.7,\nu = 1.2,\kappa = 1.5,j = 1,\eta _0 = 1.9,h = 1.1, g = 1.2$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq69.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq106"><alternatives><tex-math id="d33e1511">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-2,2]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq67.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO9" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig9_HTML.jpg"/></fig><fig id="Fig10" position="float" orientation="portrait"><label>Fig. 10</label><caption><p>Graphic representation of <inline-formula id="IEq107"><alternatives><tex-math id="d33e1525">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{10}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq71.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq108"><alternatives><tex-math id="d33e1531">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\nu = 1.2,\kappa = 1.5,j = 1,\eta _0 = 1.1, h = 1.6, g = 1.2,\gamma = 1.4, f = 1.8$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq72.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq109"><alternatives><tex-math id="d33e1540">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-2,2]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq67.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO10" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig10_HTML.jpg"/></fig><fig id="Fig11" position="float" orientation="portrait"><label>Fig. 11</label><caption><p>Graphic representation of <inline-formula id="IEq110"><alternatives><tex-math id="d33e1554">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{11}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq74.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq111"><alternatives><tex-math id="d33e1560">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\eta _0 = 1.3,h = 1.1, g = 1.2,\gamma = 1.4,\rho = 1,f = 1.8, y = 2, k = -1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq75.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq112"><alternatives><tex-math id="d33e1569">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-2,2]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq67.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO11" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig11_HTML.jpg"/></fig><fig id="Fig12" position="float" orientation="portrait"><label>Fig. 12</label><caption><p>Graphic representation of <inline-formula id="IEq113"><alternatives><tex-math id="d33e1583">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_{12}(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq77.gif"/></alternatives></inline-formula> in various dimensions with <inline-formula id="IEq114"><alternatives><tex-math id="d33e1589">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\theta = 1.9,\alpha = 1.7,\nu = 1.6,\kappa = 1.5,j = 1,\eta _0 = 1.3,h = 1.1, g = 1.2$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq47.gif"/></alternatives></inline-formula>, <italic toggle="yes">x</italic>, <inline-formula id="IEq115"><alternatives><tex-math id="d33e1598">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$t~\varepsilon ~[-3,3]$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq48.gif"/></alternatives></inline-formula>.</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" id="MO12" position="float" orientation="portrait" xlink:href="41598_2025_7884_Fig12_HTML.jpg"/></fig></p><p id="Par18">The Figs. <xref rid="Fig1" ref-type="fig">1</xref>, <xref rid="Fig2" ref-type="fig">2</xref>, <xref rid="Fig3" ref-type="fig">3</xref>, <xref rid="Fig4" ref-type="fig">4</xref>, <xref rid="Fig5" ref-type="fig">5</xref>, <xref rid="Fig6" ref-type="fig">6</xref>, <xref rid="Fig7" ref-type="fig">7</xref>, <xref rid="Fig8" ref-type="fig">8</xref>, <xref rid="Fig9" ref-type="fig">9</xref>, <xref rid="Fig10" ref-type="fig">10</xref>, <xref rid="Fig11" ref-type="fig">11</xref> and <xref rid="Fig12" ref-type="fig">12</xref> depict varieties of soliton profiles obtained as exact solutions of nonlinear evolution equations <inline-formula id="IEq116"><alternatives><tex-math id="d33e1646">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$z_i(x,y,t)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq116.gif"/></alternatives></inline-formula>. From them, we can see bright, dark, and singular solitons, visualized as 2D line graphs, 3D surface plots, density plots, and stream flow plots. Each figure depicts unique spatiotemporal dynamics within different regimes of parameters, exhibiting localized maxima, intensity minima, and steep wavefronts-illustrating the soliton solution&#8217;s capability to capture intricate nonlinear dynamics.</p><p id="Par19">Moreover, Figs. <xref rid="Fig1" ref-type="fig">1</xref>, <xref rid="Fig2" ref-type="fig">2</xref>, <xref rid="Fig3" ref-type="fig">3</xref>, <xref rid="Fig4" ref-type="fig">4</xref>, <xref rid="Fig5" ref-type="fig">5</xref>, <xref rid="Fig6" ref-type="fig">6</xref>, <xref rid="Fig7" ref-type="fig">7</xref>, <xref rid="Fig8" ref-type="fig">8</xref>, <xref rid="Fig9" ref-type="fig">9</xref>, <xref rid="Fig10" ref-type="fig">10</xref>, <xref rid="Fig11" ref-type="fig">11</xref> and <xref rid="Fig12" ref-type="fig">12</xref> can be clearly classified by analysis to reflect soliton types according to their graphical characteristics. Bright solitons, as depicted by localized peaks or humps against flat or zero backgrounds, can be seen in Figs. <xref rid="Fig1" ref-type="fig">1</xref>, <xref rid="Fig2" ref-type="fig">2</xref>, <xref rid="Fig3" ref-type="fig">3</xref>, <xref rid="Fig7" ref-type="fig">7</xref>, <xref rid="Fig9" ref-type="fig">9</xref>, <xref rid="Fig11" ref-type="fig">11</xref> and <xref rid="Fig12" ref-type="fig">12</xref>, where energy concentration and maxima of wave amplitude stand out. On the other hand, dark solitons, indicated by localized minima of intensity or by a notch in an otherwise continuous wave background, can be seen in Figs. <xref rid="Fig4" ref-type="fig">4</xref>, <xref rid="Fig5" ref-type="fig">5</xref>, <xref rid="Fig6" ref-type="fig">6</xref>, <xref rid="Fig8" ref-type="fig">8</xref>, and <xref rid="Fig10" ref-type="fig">10</xref> and can be determined by depressions in amplitude or in density, highlighting differences in soliton nature between different solutions. This analysis can be verified using the following condition on the families of solutions, bright solitons arise when <inline-formula id="IEq117"><alternatives><tex-math id="d33e1730">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\gamma &gt; 0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq117.gif"/></alternatives></inline-formula> and <inline-formula id="IEq118"><alternatives><tex-math id="d33e1736">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha (\kappa - 1)\nu ^2 &lt; 1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq118.gif"/></alternatives></inline-formula>, typically featuring a <inline-formula id="IEq119"><alternatives><tex-math id="d33e1742">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\text {sech}^2(...)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq119.gif"/></alternatives></inline-formula> profile. In contrast, dark solitons occur for <inline-formula id="IEq120"><alternatives><tex-math id="d33e1748">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\gamma &lt; 0$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq120.gif"/></alternatives></inline-formula> with <inline-formula id="IEq121"><alternatives><tex-math id="d33e1754">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha (\kappa - 1)\nu ^2 &gt; 1$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq121.gif"/></alternatives></inline-formula>, characterized by a <inline-formula id="IEq122"><alternatives><tex-math id="d33e1761">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\tanh (...)$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq122.gif"/></alternatives></inline-formula> profile.</p></sec><sec id="Sec5"><title>Discussions and results</title><p id="Par20">This section identifies and emphasizes the differences and commonalities between the recently obtained sets of solutions and those already reported in the literature by using traditional analytical approaches to the paraxial nonlinear Schr<inline-formula id="IEq123"><alternatives><tex-math id="d33e1771">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation.<list list-type="bullet"><list-item><p id="Par21">Firstly, our method as presented in Eq.&#160;(<xref rid="Equ5" ref-type="disp-formula">2.4</xref>) uses a set of three parameters and results in a structurally different and new formulation. This structural difference is one of the most outstanding differences with previous efforts.</p></list-item><list-item><p id="Par22">Secondly, we use computational software like &#8220;Mathematica 14.0&#8221; to represent the multidimensional behaviors of the newly obtained solutions by specifying different sets of constant values <inline-formula id="IEq124"><alternatives><tex-math id="d33e1787">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$a_j$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq124.gif"/></alternatives></inline-formula>, <inline-formula id="IEq125"><alternatives><tex-math id="d33e1793">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$b_{-j}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq125.gif"/></alternatives></inline-formula>, <inline-formula id="IEq126"><alternatives><tex-math id="d33e1799">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$c_j$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq126.gif"/></alternatives></inline-formula>, and <inline-formula id="IEq127"><alternatives><tex-math id="d33e1805">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$d_j$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq127.gif"/></alternatives></inline-formula>.</p></list-item><list-item><p id="Par23">Specifically, Eq.&#160;(<xref rid="Equ5" ref-type="disp-formula">2.4</xref>) can give rise to a rich variety of analytical solutions, such as rational, trigonometric, hyperbolic, and combination function types, embodying the flexibility and applicability of the presented method. Additionally, the results obtained by applying &#8220;extended trial equation method&#8221;, &#8220;modified auxiliary expansion method&#8221;, &#8220;modified extended mapping method&#8221;, &#8220;modified extended direct algebraic method&#8221;, &#8220;improved simple equation method&#8221;, and &#8220;modified extended auxiliary equation mapping scheme&#8221; differ sharply from results that we have recently obtained. The discrepancies can be observed by comparing with results presented in<sup><xref ref-type="bibr" rid="CR40">40</xref>&#8211;<xref ref-type="bibr" rid="CR45">45</xref></sup>.</p></list-item></list></p></sec><sec id="Sec6"><title>Concluding remarks</title><p id="Par24">This study was dedicated to the paraxial nonlinear Schr<inline-formula id="IEq128"><alternatives><tex-math id="d33e1828">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation, which describes the interaction of spatial diffraction, temporal dispersion, and Kerr nonlinearity in (2+1)-dimensional media. The parameters <inline-formula id="IEq129"><alternatives><tex-math id="d33e1834">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\alpha$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq9.gif"/></alternatives></inline-formula>, <inline-formula id="IEq130"><alternatives><tex-math id="d33e1840">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\beta$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq10.gif"/></alternatives></inline-formula>, and <inline-formula id="IEq131"><alternatives><tex-math id="d33e1846">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\gamma$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq11.gif"/></alternatives></inline-formula> signify these physical phenomena, respectively, and control soliton solution evolution along the propagation coordinate. With the aid of the Extended Modified Auxiliary Equation Mapping (EMAMEM) method, numerous exact bright and dark soliton solutions were obtained. The tradeoff between dispersion and nonlinearity in these solutions identifies dominating factors behind energy localization and stable pulse propagation in instances such as optical fibers, plasmas, and quantum media.</p><p id="Par25">The Hamiltonian method was employed to confirm the stability of these solitons, and their dynamic evolution was realized with precise graphical analyses. In contrast to traditional approaches such as Inverse Scattering Transform or Hirota&#8217;s method, EMAMEM is more versatile and effective in generating varied and physically realistic solutions. The results do not just advance nonlinear wave equations mathematically, and they provide useful information for practical application in nonlinear quantum systems, plasma physics, and photonics as well.</p><p id="Par26">The paraxial nonlinear Schr<inline-formula id="IEq132"><alternatives><tex-math id="d33e1856">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger model is an effective tool to study the evolution of wave packets subject to the joint action of dispersion, diffraction, and nonlinearity. Aside from exact solitons, dynamic behavior of the model can be investigated using advanced tools like sensitivity analysis, chaotic analysis, and Lyapunov exponents, measuring the system&#8217;s sensitivity to initial values. Such tools unveil deeper understanding of the system&#8217;s predictability and resilience and possible transition to complicated, unstable regimes.</p></sec></body><back><fn-group><fn><p><bold>Publisher&#8217;s note</bold></p><p>Springer Nature remains neutral with regard to jurisdictional claims in published maps and institutional affiliations.</p></fn></fn-group><ack><title>Acknowledgements</title><p>The authors extend their appreciation to the Deanship of Research and Graduate Studies at King Khalid University for funding this work through the Large Research Project under Grant Number RGP2/455/46.</p></ack><notes notes-type="author-contribution"><title>Author contributions</title><p> A.A.K.: Conceptualization, Methodology, Investigation, Writing&#8212;Original Draft, Funding acquisition. A.A.: Conceptualization, Methodology, Software, Data Curation, Writing&#8212;Review &amp; Editing. A.N.A.K.: Project administration, Supervision, Writing&#8212;Review &amp; Editing, Funding acquisition. A.A.: Data Curation, Investigation, Validation, Verification, Writing&#8212;Original Draft. H.A.O.: Formal analysis, Investigation, Resources, Visualization, Writing&#8212;Original Draft.</p></notes><notes notes-type="data-availability"><title>Data availability</title><p>The data that support the findings of this study is within the manuscript.</p></notes><notes><title>Declarations</title><notes id="FPar1" notes-type="COI-statement"><title>Competing interest</title><p id="Par30">The author declares that he has no conflict of interest.</p></notes></notes><ref-list id="Bib1"><title>References</title><ref id="CR1"><label>1.</label><citation-alternatives><element-citation id="ec-CR1" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Samina</surname><given-names>S</given-names></name><name name-style="western"><surname>Jhangeer</surname><given-names>A</given-names></name><name name-style="western"><surname>Chen</surname><given-names>Z</given-names></name></person-group><article-title>A study of phase portraits, multistability and velocity profile of magneto-hydrodynamic Jeffery-Hamel flow nanofluid</article-title><source>Chin. J. Phys.</source><year>2022</year><volume>80</volume><fpage>397</fpage><lpage>413</lpage><pub-id pub-id-type="doi">10.1016/j.cjph.2022.06.020</pub-id></element-citation><mixed-citation id="mc-CR1" publication-type="journal">Samina, S., Jhangeer, A. &amp; Chen, Z. A study of phase portraits, multistability and velocity profile of magneto-hydrodynamic Jeffery-Hamel flow nanofluid. <italic toggle="yes">Chin. J. Phys.</italic><bold>80</bold>, 397&#8211;413 (2022).</mixed-citation></citation-alternatives></ref><ref id="CR2"><label>2.</label><citation-alternatives><element-citation id="ec-CR2" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Rehman</surname><given-names>HU</given-names></name><name name-style="western"><surname>Awan</surname><given-names>AU</given-names></name><name name-style="western"><surname>Tag-ElDin</surname><given-names>EM</given-names></name><name name-style="western"><surname>Alhazmi</surname><given-names>SE</given-names></name><name name-style="western"><surname>Yassen</surname><given-names>MF</given-names></name><name name-style="western"><surname>Haider</surname><given-names>R</given-names></name></person-group><article-title>Extended hyperbolic function method for the (2+ 1)-dimensional nonlinear soliton equation</article-title><source>Results Phys.</source><year>2022</year><volume>40</volume><fpage>105802</fpage><pub-id pub-id-type="doi">10.1016/j.rinp.2022.105802</pub-id></element-citation><mixed-citation id="mc-CR2" publication-type="journal">Rehman, H. U. et al. Extended hyperbolic function method for the (2+ 1)-dimensional nonlinear soliton equation. <italic toggle="yes">Results Phys.</italic><bold>40</bold>, 105802 (2022).</mixed-citation></citation-alternatives></ref><ref id="CR3"><label>3.</label><citation-alternatives><element-citation id="ec-CR3" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>ur Rehman</surname><given-names>H</given-names></name><name name-style="western"><surname>Awan</surname><given-names>A. U</given-names></name><name name-style="western"><surname>Habib</surname><given-names>A</given-names></name><name name-style="western"><surname>Gamaoun</surname><given-names>F</given-names></name><name name-style="western"><surname>El Din</surname><given-names>E. M. T</given-names></name><name name-style="western"><surname>Galal</surname><given-names>A. M</given-names></name></person-group><article-title>Solitary wave solutions for a strain wave equation in a microstructured solid</article-title><source>Results Phys.</source><year>2022</year><volume>39</volume><fpage>105755</fpage><pub-id pub-id-type="doi">10.1016/j.rinp.2022.105755</pub-id></element-citation><mixed-citation id="mc-CR3" publication-type="journal">ur Rehman, H. et al. Solitary wave solutions for a strain wave equation in a microstructured solid. <italic toggle="yes">Results Phys.</italic><bold>39</bold>, 105755 (2022).</mixed-citation></citation-alternatives></ref><ref id="CR4"><label>4.</label><citation-alternatives><element-citation id="ec-CR4" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Riaz</surname><given-names>MB</given-names></name><name name-style="western"><surname>Jhangeer</surname><given-names>A</given-names></name><name name-style="western"><surname>Atangana</surname><given-names>A</given-names></name><name name-style="western"><surname>Awrejcewicz</surname><given-names>J</given-names></name><name name-style="western"><surname>Munawar</surname><given-names>M</given-names></name></person-group><article-title>Supernonlinear wave, associated analytical solitons, and sensitivity analysis in a two-component Maxwellian plasma</article-title><source>J. King Saud Univ.-Sci.</source><year>2022</year><volume>34</volume><issue>5</issue><fpage>102108</fpage><pub-id pub-id-type="doi">10.1016/j.jksus.2022.102108</pub-id></element-citation><mixed-citation id="mc-CR4" publication-type="journal">Riaz, M. B., Jhangeer, A., Atangana, A., Awrejcewicz, J. &amp; Munawar, M. Supernonlinear wave, associated analytical solitons, and sensitivity analysis in a two-component Maxwellian plasma. <italic toggle="yes">J. King Saud Univ.-Sci.</italic><bold>34</bold>(5), 102108 (2022).</mixed-citation></citation-alternatives></ref><ref id="CR5"><label>5.</label><citation-alternatives><element-citation id="ec-CR5" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Cheemaa</surname><given-names>N</given-names></name><name name-style="western"><surname>Chen</surname><given-names>S</given-names></name><name name-style="western"><surname>Seadawy</surname><given-names>AR</given-names></name></person-group><article-title>Propagation of isolated waves of coupled nonlinear (2+ 1)-dimensional Maccari system in plasma physics</article-title><source>Results Phys.</source><year>2020</year><volume>17</volume><fpage>102987</fpage><pub-id pub-id-type="doi">10.1016/j.rinp.2020.102987</pub-id></element-citation><mixed-citation id="mc-CR5" publication-type="journal">Cheemaa, N., Chen, S. &amp; Seadawy, A. R. Propagation of isolated waves of coupled nonlinear (2+ 1)-dimensional Maccari system in plasma physics. <italic toggle="yes">Results Phys.</italic><bold>17</bold>, 102987 (2020).</mixed-citation></citation-alternatives></ref><ref id="CR6"><label>6.</label><citation-alternatives><element-citation id="ec-CR6" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Cheemaa</surname><given-names>N</given-names></name><name name-style="western"><surname>Seadawy</surname><given-names>AR</given-names></name><name name-style="western"><surname>Chen</surname><given-names>S</given-names></name></person-group><article-title>More general families of exact solitary wave solutions of the nonlinear Schr<inline-formula id="IEq147"><alternatives><tex-math id="d33e2065">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation with their applications in nonlinear optics</article-title><source>Eur. Phys. J. Plus</source><year>2018</year><volume>133</volume><fpage>1</fpage><lpage>9</lpage><pub-id pub-id-type="doi">10.1140/epjp/i2018-12354-9</pub-id></element-citation><mixed-citation id="mc-CR6" publication-type="journal">Cheemaa, N., Seadawy, A. R. &amp; Chen, S. More general families of exact solitary wave solutions of the nonlinear Schr<inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/>dinger equation with their applications in nonlinear optics. <italic toggle="yes">Eur. Phys. J. Plus</italic><bold>133</bold>, 1&#8211;9 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR7"><label>7.</label><citation-alternatives><element-citation id="ec-CR7" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Cheemaa</surname><given-names>N</given-names></name><name name-style="western"><surname>Younis</surname><given-names>M</given-names></name></person-group><article-title>New and more general traveling wave solutions for nonlinear Schr<inline-formula id="IEq149"><alternatives><tex-math id="d33e2102">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation</article-title><source>Waves Random Complex Media</source><year>2016</year><volume>26</volume><issue>1</issue><fpage>30</fpage><lpage>41</lpage><pub-id pub-id-type="doi">10.1080/17455030.2015.1099761</pub-id></element-citation><mixed-citation id="mc-CR7" publication-type="journal">Cheemaa, N. &amp; Younis, M. New and more general traveling wave solutions for nonlinear Schr<inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/>dinger equation. <italic toggle="yes">Waves Random Complex Media</italic><bold>26</bold>(1), 30&#8211;41 (2016).</mixed-citation></citation-alternatives></ref><ref id="CR8"><label>8.</label><citation-alternatives><element-citation id="ec-CR8" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Pan</surname><given-names>C</given-names></name><name name-style="western"><surname>Cheemaa</surname><given-names>N</given-names></name><name name-style="western"><surname>Lin</surname><given-names>W</given-names></name><name name-style="western"><surname>Inc</surname><given-names>M</given-names></name></person-group><article-title>Nonlinear fiber optics with water wave flumes: dynamics of the optical solitons of the derivative nonlinear Schr<inline-formula id="IEq151"><alternatives><tex-math id="d33e2151">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation</article-title><source>Opt. Quant. Electron.</source><year>2024</year><volume>56</volume><issue>3</issue><fpage>434</fpage><pub-id pub-id-type="doi">10.1007/s11082-023-05985-1</pub-id></element-citation><mixed-citation id="mc-CR8" publication-type="journal">Pan, C., Cheemaa, N., Lin, W. &amp; Inc, M. Nonlinear fiber optics with water wave flumes: dynamics of the optical solitons of the derivative nonlinear Schr<inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/>dinger equation. <italic toggle="yes">Opt. Quant. Electron.</italic><bold>56</bold>(3), 434 (2024).</mixed-citation></citation-alternatives></ref><ref id="CR9"><label>9.</label><citation-alternatives><element-citation id="ec-CR9" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Younis</surname><given-names>M</given-names></name><name name-style="western"><surname>Cheemaa</surname><given-names>N</given-names></name><name name-style="western"><surname>Mahmood</surname><given-names>SA</given-names></name><name name-style="western"><surname>Rizvi</surname><given-names>ST</given-names></name></person-group><article-title>On optical solitons: the chiral nonlinear Schr<inline-formula id="IEq153"><alternatives><tex-math id="d33e2197">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation with perturbation and Bohm potential</article-title><source>Opt. Quant. Electron.</source><year>2016</year><volume>48</volume><fpage>1</fpage><lpage>14</lpage><pub-id pub-id-type="doi">10.1007/s11082-016-0809-2</pub-id></element-citation><mixed-citation id="mc-CR9" publication-type="journal">Younis, M., Cheemaa, N., Mahmood, S. A. &amp; Rizvi, S. T. On optical solitons: the chiral nonlinear Schr<inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/>dinger equation with perturbation and Bohm potential. <italic toggle="yes">Opt. Quant. Electron.</italic><bold>48</bold>, 1&#8211;14 (2016).</mixed-citation></citation-alternatives></ref><ref id="CR10"><label>10.</label><citation-alternatives><element-citation id="ec-CR10" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Alqahtani</surname><given-names>RT</given-names></name><name name-style="western"><surname>Babatin</surname><given-names>MM</given-names></name><name name-style="western"><surname>Biswas</surname><given-names>A</given-names></name></person-group><article-title>Bright optical solitons for Lakshmanan-Porsezian-Daniel model by semi-inverse variational principle</article-title><source>Optik</source><year>2018</year><volume>154</volume><fpage>109</fpage><lpage>114</lpage><pub-id pub-id-type="doi">10.1016/j.ijleo.2017.09.112</pub-id></element-citation><mixed-citation id="mc-CR10" publication-type="journal">Alqahtani, R. T., Babatin, M. M. &amp; Biswas, A. Bright optical solitons for Lakshmanan-Porsezian-Daniel model by semi-inverse variational principle. <italic toggle="yes">Optik</italic><bold>154</bold>, 109&#8211;114 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR11"><label>11.</label><citation-alternatives><element-citation id="ec-CR11" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Biswas</surname><given-names>A</given-names></name></person-group><article-title>Theory of optical couplers</article-title><source>Opt. Quant. Etectr.</source><year>2020</year><volume>35</volume><fpage>221</fpage><lpage>235</lpage><pub-id pub-id-type="doi">10.1023/A:1022852801087</pub-id></element-citation><mixed-citation id="mc-CR11" publication-type="journal">Biswas, A. Theory of optical couplers. <italic toggle="yes">Opt. Quant. Etectr.</italic><bold>35</bold>, 221&#8211;235 (2020).</mixed-citation></citation-alternatives></ref><ref id="CR12"><label>12.</label><citation-alternatives><element-citation id="ec-CR12" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Biswas</surname><given-names>A</given-names></name></person-group><article-title>Conservation laws for optical solitons of Lakshmanan-Porsezian-Daniel model</article-title><source>Proc. Roman. Acad. Ser A.</source><year>2018</year><volume>19</volume><issue>1</issue><fpage>39</fpage><lpage>44</lpage></element-citation><mixed-citation id="mc-CR12" publication-type="journal">Biswas, A. Conservation laws for optical solitons of Lakshmanan-Porsezian-Daniel model. <italic toggle="yes">Proc. Roman. Acad. Ser A.</italic><bold>19</bold>(1), 39&#8211;44 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR13"><label>13.</label><citation-alternatives><element-citation id="ec-CR13" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Liu</surname><given-names>DQW</given-names></name></person-group><article-title>Dynamical behavior of solution in integrable nonlocal Lakshmanan-Porsezian-Daniel equation</article-title><source>Commun. Theor.</source><year>2016</year><volume>65</volume><issue>6</issue><fpage>671</fpage><pub-id pub-id-type="doi">10.1088/0253-6102/65/6/671</pub-id></element-citation><mixed-citation id="mc-CR13" publication-type="journal">Liu, D. Q. W. Dynamical behavior of solution in integrable nonlocal Lakshmanan-Porsezian-Daniel equation. <italic toggle="yes">Commun. Theor.</italic><bold>65</bold>(6), 671 (2016).</mixed-citation></citation-alternatives></ref><ref id="CR14"><label>14.</label><citation-alternatives><element-citation id="ec-CR14" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Jawad</surname><given-names>AJM</given-names></name></person-group><article-title>Optical solitons to Lakshmanan-Porsezian-Daniel model for three nonlinearcforms</article-title><source>Optik</source><year>2018</year><volume>160</volume><fpage>197</fpage><lpage>202</lpage><pub-id pub-id-type="doi">10.1016/j.ijleo.2018.01.121</pub-id></element-citation><mixed-citation id="mc-CR14" publication-type="journal">Jawad, A. J. M. Optical solitons to Lakshmanan-Porsezian-Daniel model for three nonlinearcforms. <italic toggle="yes">Optik</italic><bold>160</bold>, 197&#8211;202 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR15"><label>15.</label><citation-alternatives><element-citation id="ec-CR15" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Al Qarni</surname><given-names>AA</given-names></name><etal/></person-group><article-title>Bright optical solitons for Lakshmanan-Porsezian-Daniel model with spatiotem-pora dispersion by improved Adomian decomposition method</article-title><source>Optik</source><year>2018</year><volume>181</volume><fpage>891</fpage><lpage>897</lpage><pub-id pub-id-type="doi">10.1016/j.ijleo.2018.12.172</pub-id></element-citation><mixed-citation id="mc-CR15" publication-type="journal">Al Qarni, A. A. et al. Bright optical solitons for Lakshmanan-Porsezian-Daniel model with spatiotem-pora dispersion by improved Adomian decomposition method. <italic toggle="yes">Optik</italic><bold>181</bold>, 891&#8211;897 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR16"><label>16.</label><citation-alternatives><element-citation id="ec-CR16" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Manafian</surname><given-names>J</given-names></name><name name-style="western"><surname>Foroutan</surname><given-names>M</given-names></name><name name-style="western"><surname>Guzali</surname><given-names>A</given-names></name></person-group><article-title>Applications of the ETEM for obtaining optical soliton solutions for the Lakshmanan-Porsezian-Daniel model</article-title><source>Eur. Phys. J. Plus</source><year>2017</year><pub-id pub-id-type="doi">10.1140/epjp/i2017-11762-7</pub-id></element-citation><mixed-citation id="mc-CR16" publication-type="journal">Manafian, J., Foroutan, M. &amp; Guzali, A. Applications of the ETEM for obtaining optical soliton solutions for the Lakshmanan-Porsezian-Daniel model. <italic toggle="yes">Eur. Phys. J. Plus</italic>10.1140/epjp/i2017-11762-7 (2017).</mixed-citation></citation-alternatives></ref><ref id="CR17"><label>17.</label><citation-alternatives><element-citation id="ec-CR17" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Biswas</surname><given-names>A</given-names></name><etal/></person-group><article-title>Optical solitons with Lakshamanan-Porsezian-Daniel model using a couple of integration schemes</article-title><source>Optik</source><year>2018</year><volume>158</volume><fpage>705</fpage><lpage>711</lpage><pub-id pub-id-type="doi">10.1016/j.ijleo.2017.12.190</pub-id></element-citation><mixed-citation id="mc-CR17" publication-type="journal">Biswas, A. et al. Optical solitons with Lakshamanan-Porsezian-Daniel model using a couple of integration schemes. <italic toggle="yes">Optik</italic><bold>158</bold>, 705&#8211;711 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR18"><label>18.</label><citation-alternatives><element-citation id="ec-CR18" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Hubert</surname><given-names>MB</given-names></name><name name-style="western"><surname>Betchewe</surname><given-names>G</given-names></name><name name-style="western"><surname>Justin</surname><given-names>M</given-names></name><name name-style="western"><surname>Doka</surname><given-names>SY</given-names></name><name name-style="western"><surname>Crepin</surname><given-names>KT</given-names></name><name name-style="western"><surname>Biswas</surname><given-names>A</given-names></name><name name-style="western"><surname>Zhou</surname><given-names>Q</given-names></name><name name-style="western"><surname>Alshomrani</surname><given-names>AS</given-names></name><name name-style="western"><surname>Ekici</surname><given-names>M</given-names></name><name name-style="western"><surname>Moshokoa</surname><given-names>SP</given-names></name><name name-style="western"><surname>Belic</surname><given-names>M</given-names></name></person-group><article-title>Optical solitons with Lakshmanan&#8211;Porsezian&#8211;Daniel model by modified extended direct algebraic method</article-title><source>Optik</source><year>2018</year><volume>162</volume><fpage>228</fpage><lpage>236</lpage><pub-id pub-id-type="doi">10.1016/j.ijleo.2018.02.091</pub-id></element-citation><mixed-citation id="mc-CR18" publication-type="journal">Hubert, M. B. et al. Optical solitons with Lakshmanan&#8211;Porsezian&#8211;Daniel model by modified extended direct algebraic method. <italic toggle="yes">Optik</italic><bold>162</bold>, 228&#8211;236 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR19"><label>19.</label><citation-alternatives><element-citation id="ec-CR19" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Vega-Guzman</surname><given-names>J</given-names></name><name name-style="western"><surname>Alqahtani</surname><given-names>RT</given-names></name><name name-style="western"><surname>Zhou</surname><given-names>Q</given-names></name><name name-style="western"><surname>Mahmood</surname><given-names>MF</given-names></name><name name-style="western"><surname>Moshokoa</surname><given-names>SP</given-names></name><name name-style="western"><surname>Ullah</surname><given-names>MZ</given-names></name><name name-style="western"><surname>Biswas</surname><given-names>A</given-names></name><name name-style="western"><surname>Belic</surname><given-names>M</given-names></name></person-group><article-title>Optical solitons for Lakshmanan&#8211;Porsezian&#8211;Daniel model with spatio-temporal dispersion using the method of undetermined coefficients</article-title><source>Optik</source><year>2017</year><volume>144</volume><fpage>115</fpage><lpage>123</lpage><pub-id pub-id-type="doi">10.1016/j.ijleo.2017.06.102</pub-id></element-citation><mixed-citation id="mc-CR19" publication-type="journal">Vega-Guzman, J. et al. Optical solitons for Lakshmanan&#8211;Porsezian&#8211;Daniel model with spatio-temporal dispersion using the method of undetermined coefficients. <italic toggle="yes">Optik</italic><bold>144</bold>, 115&#8211;123 (2017).</mixed-citation></citation-alternatives></ref><ref id="CR20"><label>20.</label><citation-alternatives><element-citation id="ec-CR20" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>AlQarni</surname><given-names>AA</given-names></name><etal/></person-group><article-title>Optical solitons for Lakshmanan&#8211;Porsezian&#8211;Daniel model by Riccati equation approach</article-title><source>Optik</source><year>2019</year><volume>182</volume><fpage>922</fpage><lpage>929</lpage><pub-id pub-id-type="doi">10.1016/j.ijleo.2019.01.057</pub-id></element-citation><mixed-citation id="mc-CR20" publication-type="journal">AlQarni, A. A. et al. Optical solitons for Lakshmanan&#8211;Porsezian&#8211;Daniel model by Riccati equation approach. <italic toggle="yes">Optik</italic><bold>182</bold>, 922&#8211;929 (2019).</mixed-citation></citation-alternatives></ref><ref id="CR21"><label>21.</label><citation-alternatives><element-citation id="ec-CR21" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Malfliet</surname><given-names>W</given-names></name></person-group><article-title>Solitary wave solutions of nonlinear wave equations</article-title><source>Am. J. Phys.</source><year>1998</year><volume>60</volume><issue>7</issue><fpage>650</fpage><pub-id pub-id-type="doi">10.1119/1.17120</pub-id></element-citation><mixed-citation id="mc-CR21" publication-type="journal">Malfliet, W. Solitary wave solutions of nonlinear wave equations. <italic toggle="yes">Am. J. Phys.</italic><bold>60</bold>(7), 650 (1998).</mixed-citation></citation-alternatives></ref><ref id="CR22"><label>22.</label><citation-alternatives><element-citation id="ec-CR22" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Zahran</surname><given-names>EHM</given-names></name><name name-style="western"><surname>Khater</surname><given-names>MMA</given-names></name></person-group><article-title>Modified extended tanh-function method and its applications to the Bogoyavlenskii equation</article-title><source>Appl. Math. Model.</source><year>2016</year><volume>40</volume><issue>3</issue><fpage>1769</fpage><lpage>1775</lpage><pub-id pub-id-type="doi">10.1016/j.apm.2015.08.018</pub-id></element-citation><mixed-citation id="mc-CR22" publication-type="journal">Zahran, E. H. M. &amp; Khater, M. M. A. Modified extended tanh-function method and its applications to the Bogoyavlenskii equation. <italic toggle="yes">Appl. Math. Model.</italic><bold>40</bold>(3), 1769&#8211;1775 (2016).</mixed-citation></citation-alternatives></ref><ref id="CR23"><label>23.</label><citation-alternatives><element-citation id="ec-CR23" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Xie</surname><given-names>FD</given-names></name><name name-style="western"><surname>Chen</surname><given-names>J</given-names></name><name name-style="western"><surname>L&#252;</surname><given-names>ZS</given-names></name></person-group><article-title>Using symbolic computation to exactly solve the integrable BroerKaup equations in (2+1)-dimensional spaces</article-title><source>Commun. Theor. Phys.</source><year>2005</year><volume>43</volume><issue>4</issue><fpage>585</fpage><lpage>590</lpage><pub-id pub-id-type="doi">10.1088/0253-6102/43/4/003</pub-id></element-citation><mixed-citation id="mc-CR23" publication-type="journal">Xie, F. D., Chen, J. &amp; L&#252;, Z. S. Using symbolic computation to exactly solve the integrable BroerKaup equations in (2+1)-dimensional spaces. <italic toggle="yes">Commun. Theor. Phys.</italic><bold>43</bold>(4), 585&#8211;590 (2005).</mixed-citation></citation-alternatives></ref><ref id="CR24"><label>24.</label><citation-alternatives><element-citation id="ec-CR24" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Inan</surname><given-names>IE</given-names></name><name name-style="western"><surname>Ugurlu</surname><given-names>Y</given-names></name><name name-style="western"><surname>Bulut</surname><given-names>H</given-names></name></person-group><article-title>Auto-B&#228;cklund transformation for some nonlinear partial differential equation</article-title><source>Optik</source><year>2016</year><volume>127</volume><issue>22</issue><fpage>10780</fpage><lpage>10785</lpage><pub-id pub-id-type="doi">10.1016/j.ijleo.2016.08.115</pub-id></element-citation><mixed-citation id="mc-CR24" publication-type="journal">Inan, I. E., Ugurlu, Y. &amp; Bulut, H. Auto-B&#228;cklund transformation for some nonlinear partial differential equation. <italic toggle="yes">Optik</italic><bold>127</bold>(22), 10780&#8211;10785 (2016).</mixed-citation></citation-alternatives></ref><ref id="CR25"><label>25.</label><citation-alternatives><element-citation id="ec-CR25" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Hu</surname><given-names>HC</given-names></name><name name-style="western"><surname>Jia</surname><given-names>XQ</given-names></name><name name-style="western"><surname>Sang</surname><given-names>BW</given-names></name></person-group><article-title>Painlev&#233; analysis and symmetry group for the coupled Zakharov-Kuznetsov equation</article-title><source>Phys. Lett., Sect. A: General, Atomic Solid State Phys.</source><year>2011</year><volume>375</volume><issue>39</issue><fpage>3459</fpage><lpage>3463</lpage><pub-id pub-id-type="doi">10.1016/j.physleta.2011.07.058</pub-id></element-citation><mixed-citation id="mc-CR25" publication-type="journal">Hu, H. C., Jia, X. Q. &amp; Sang, B. W. Painlev&#233; analysis and symmetry group for the coupled Zakharov-Kuznetsov equation. <italic toggle="yes">Phys. Lett., Sect. A: General, Atomic Solid State Phys.</italic><bold>375</bold>(39), 3459&#8211;3463 (2011).</mixed-citation></citation-alternatives></ref><ref id="CR26"><label>26.</label><citation-alternatives><element-citation id="ec-CR26" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Kumar</surname><given-names>D</given-names></name><name name-style="western"><surname>Agarwal</surname><given-names>RP</given-names></name><name name-style="western"><surname>Singh</surname><given-names>J</given-names></name></person-group><article-title>A modified numerical scheme and convergence analysis for fractional model of Lienard&#8217;s equation</article-title><source>J. Comput. Appl. Math.</source><year>2018</year><volume>339</volume><fpage>405</fpage><lpage>413</lpage><pub-id pub-id-type="doi">10.1016/j.cam.2017.03.011</pub-id></element-citation><mixed-citation id="mc-CR26" publication-type="journal">Kumar, D., Agarwal, R. P. &amp; Singh, J. A modified numerical scheme and convergence analysis for fractional model of Lienard&#8217;s equation. <italic toggle="yes">J. Comput. Appl. Math.</italic><bold>339</bold>, 405&#8211;413 (2018).</mixed-citation></citation-alternatives></ref><ref id="CR27"><label>27.</label><citation-alternatives><element-citation id="ec-CR27" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Kudryashov</surname><given-names>NA</given-names></name></person-group><article-title>One method for finding exact solutions of nonlinear differential equations</article-title><source>Commun. Nonlinear Sci. Numer. Simul.</source><year>2012</year><volume>17</volume><issue>6</issue><fpage>2248</fpage><lpage>2253</lpage><pub-id pub-id-type="doi">10.1016/j.cnsns.2011.10.016</pub-id></element-citation><mixed-citation id="mc-CR27" publication-type="journal">Kudryashov, N. A. One method for finding exact solutions of nonlinear differential equations. <italic toggle="yes">Commun. Nonlinear Sci. Numer. Simul.</italic><bold>17</bold>(6), 2248&#8211;2253 (2012).</mixed-citation></citation-alternatives></ref><ref id="CR28"><label>28.</label><citation-alternatives><element-citation id="ec-CR28" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Kaplan</surname><given-names>M</given-names></name><name name-style="western"><surname>Bekir</surname><given-names>A</given-names></name><name name-style="western"><surname>Akbulut</surname><given-names>A</given-names></name></person-group><article-title>A generalized Kudryashov method to some nonlinear evolution equations in mathematical physics</article-title><source>Nonlinear Dyn.</source><year>2016</year><volume>85</volume><fpage>2843</fpage><lpage>2850</lpage><pub-id pub-id-type="doi">10.1007/s11071-016-2867-1</pub-id></element-citation><mixed-citation id="mc-CR28" publication-type="journal">Kaplan, M., Bekir, A. &amp; Akbulut, A. A generalized Kudryashov method to some nonlinear evolution equations in mathematical physics. <italic toggle="yes">Nonlinear Dyn.</italic><bold>85</bold>, 2843&#8211;2850 (2016).</mixed-citation></citation-alternatives></ref><ref id="CR29"><label>29.</label><citation-alternatives><element-citation id="ec-CR29" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Bekir</surname><given-names>A</given-names></name><name name-style="western"><surname>Kaplan</surname><given-names>M</given-names></name></person-group><article-title>Exponential rational function method for solving nonlinear equations arising in various physical models</article-title><source>Chin. J. Phys.</source><year>2016</year><volume>54</volume><issue>3</issue><fpage>365</fpage><lpage>370</lpage><pub-id pub-id-type="doi">10.1016/j.cjph.2016.04.020</pub-id></element-citation><mixed-citation id="mc-CR29" publication-type="journal">Bekir, A. &amp; Kaplan, M. Exponential rational function method for solving nonlinear equations arising in various physical models. <italic toggle="yes">Chin. J. Phys.</italic><bold>54</bold>(3), 365&#8211;370 (2016).</mixed-citation></citation-alternatives></ref><ref id="CR30"><label>30.</label><citation-alternatives><element-citation id="ec-CR30" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Khater</surname><given-names>D</given-names></name><name name-style="western"><surname>Mostafa</surname><given-names>MA</given-names></name><name name-style="western"><surname>Seadawy</surname><given-names>Aly R</given-names></name><name name-style="western"><surname>Lu</surname></name></person-group><article-title>Elliptic and solitary wave solutions for Bogoyavlenskii equations system, couple Boiti-Leon-Pempinelli equations system and Time fractional Cahn-Allen equation</article-title><source>Results Phys.</source><year>2017</year><volume>7</volume><fpage>2325</fpage><lpage>2333</lpage><pub-id pub-id-type="doi">10.1016/j.rinp.2017.06.049</pub-id></element-citation><mixed-citation id="mc-CR30" publication-type="journal">Khater, D., Mostafa, M. A., Seadawy, Aly R. &amp; Lu,. Elliptic and solitary wave solutions for Bogoyavlenskii equations system, couple Boiti-Leon-Pempinelli equations system and Time fractional Cahn-Allen equation. <italic toggle="yes">Results Phys.</italic><bold>7</bold>, 2325&#8211;2333 (2017).</mixed-citation></citation-alternatives></ref><ref id="CR31"><label>31.</label><citation-alternatives><element-citation id="ec-CR31" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Irshad</surname><given-names>S</given-names></name><name name-style="western"><surname>Shakeel</surname><given-names>M</given-names></name><name name-style="western"><surname>Bibi</surname><given-names>A</given-names></name><name name-style="western"><surname>Sajjad</surname><given-names>M</given-names></name><name name-style="western"><surname>Nisar</surname><given-names>KS</given-names></name></person-group><article-title>A comparative study of nonlinear fractional Schr<inline-formula id="IEq155"><alternatives><tex-math id="d33e2866">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation in optics</article-title><source>Modern Phys. Lett. B</source><year>2023</year><volume>37</volume><issue>5</issue><fpage>2250219</fpage><pub-id pub-id-type="doi">10.1142/S0217984922502190</pub-id></element-citation><mixed-citation id="mc-CR31" publication-type="journal">Irshad, S., Shakeel, M., Bibi, A., Sajjad, M. &amp; Nisar, K. S. A comparative study of nonlinear fractional Schr<inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/>dinger equation in optics. <italic toggle="yes">Modern Phys. Lett. B</italic><bold>37</bold>(5), 2250219 (2023).</mixed-citation></citation-alternatives></ref><ref id="CR32"><label>32.</label><mixed-citation publication-type="other">Sirendaoreji,. Auxiliary equation method and new solutions of Klein-Gordon equations. <italic toggle="yes">Chaos, Solitons &amp; Fractals</italic><bold>31</bold>(4), 943&#8211;950 (2007).</mixed-citation></ref><ref id="CR33"><label>33.</label><citation-alternatives><element-citation id="ec-CR33" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Behera</surname><given-names>S</given-names></name></person-group><article-title>Dynamical solutions and quadratic resonance of nonlinear perturbed Schr<inline-formula id="IEq157"><alternatives><tex-math id="d33e2915">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation</article-title><source>Front. Appl. Math. Stat.</source><year>2023</year><volume>8</volume><fpage>1086766</fpage><pub-id pub-id-type="doi">10.3389/fams.2022.1086766</pub-id></element-citation><mixed-citation id="mc-CR33" publication-type="journal">Behera, S. Dynamical solutions and quadratic resonance of nonlinear perturbed Schr<inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/>dinger equation. <italic toggle="yes">Front. Appl. Math. Stat.</italic><bold>8</bold>, 1086766 (2023).</mixed-citation></citation-alternatives></ref><ref id="CR34"><label>34.</label><citation-alternatives><element-citation id="ec-CR34" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Behera</surname><given-names>S</given-names></name></person-group><article-title>Analysis of traveling wave solutions of two space-time nonlinear fractional differential equations by the first-integral method</article-title><source>Mod. Phys. Lett. B</source><year>2024</year><volume>38</volume><issue>04</issue><fpage>2350247</fpage><pub-id pub-id-type="doi">10.1142/S0217984923502470</pub-id></element-citation><mixed-citation id="mc-CR34" publication-type="journal">Behera, S. Analysis of traveling wave solutions of two space-time nonlinear fractional differential equations by the first-integral method. <italic toggle="yes">Mod. Phys. Lett. B</italic><bold>38</bold>(04), 2350247 (2024).</mixed-citation></citation-alternatives></ref><ref id="CR35"><label>35.</label><citation-alternatives><element-citation id="ec-CR35" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Behera</surname><given-names>S</given-names></name><name name-style="western"><surname>Aljahdaly</surname><given-names>NH</given-names></name></person-group><article-title>Nonlinear evolution equations and their traveling wave solutions in fluid media by modified analytical method</article-title><source>Pramana</source><year>2023</year><volume>97</volume><issue>3</issue><fpage>130</fpage><pub-id pub-id-type="doi">10.1007/s12043-023-02602-4</pub-id></element-citation><mixed-citation id="mc-CR35" publication-type="journal">Behera, S. &amp; Aljahdaly, N. H. Nonlinear evolution equations and their traveling wave solutions in fluid media by modified analytical method. <italic toggle="yes">Pramana</italic><bold>97</bold>(3), 130 (2023).</mixed-citation></citation-alternatives></ref><ref id="CR36"><label>36.</label><citation-alternatives><element-citation id="ec-CR36" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Behera</surname><given-names>S</given-names></name><name name-style="western"><surname>Mohanty</surname><given-names>S</given-names></name><name name-style="western"><surname>Virdi</surname><given-names>JPS</given-names></name></person-group><article-title>Analytical solutions and mathematical simulation of traveling wave solutions to fractional order nonlinear equations</article-title><source>Partial Diff. Equ. Appl. Math.</source><year>2023</year><volume>8</volume><fpage>100535</fpage></element-citation><mixed-citation id="mc-CR36" publication-type="journal">Behera, S., Mohanty, S. &amp; Virdi, J. P. S. Analytical solutions and mathematical simulation of traveling wave solutions to fractional order nonlinear equations. <italic toggle="yes">Partial Diff. Equ. Appl. Math.</italic><bold>8</bold>, 100535 (2023).</mixed-citation></citation-alternatives></ref><ref id="CR37"><label>37.</label><citation-alternatives><element-citation id="ec-CR37" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Behera</surname><given-names>S</given-names></name><name name-style="western"><surname>Aljahdaly</surname><given-names>NH</given-names></name></person-group><article-title>Soliton solutions of nonlinear geophysical KdV equation via two analytical methods</article-title><source>Int. J. Theor. Phys.</source><year>2024</year><volume>63</volume><issue>5</issue><fpage>107</fpage><pub-id pub-id-type="doi">10.1007/s10773-024-05647-2</pub-id></element-citation><mixed-citation id="mc-CR37" publication-type="journal">Behera, S. &amp; Aljahdaly, N. H. Soliton solutions of nonlinear geophysical KdV equation via two analytical methods. <italic toggle="yes">Int. J. Theor. Phys.</italic><bold>63</bold>(5), 107 (2024).</mixed-citation></citation-alternatives></ref><ref id="CR38"><label>38.</label><citation-alternatives><element-citation id="ec-CR38" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Behera</surname><given-names>S</given-names></name></person-group><article-title>Optical solitons for the Hirota-Ramani equation via improved <inline-formula id="IEq159"><alternatives><tex-math id="d33e3057">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\frac{\acute{G}}{G}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq159.gif"/></alternatives></inline-formula>-expansion method</article-title><source>Mod. Phys. Lett. B</source><year>2025</year><volume>39</volume><issue>01</issue><fpage>2450403</fpage><pub-id pub-id-type="doi">10.1142/S0217984924504037</pub-id></element-citation><mixed-citation id="mc-CR38" publication-type="journal">Behera, S. Optical solitons for the Hirota-Ramani equation via improved <inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq159.gif"/>-expansion method. <italic toggle="yes">Mod. Phys. Lett. B</italic><bold>39</bold>(01), 2450403 (2025).</mixed-citation></citation-alternatives></ref><ref id="CR39"><label>39.</label><citation-alternatives><element-citation id="ec-CR39" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Behera</surname><given-names>S</given-names></name></person-group><article-title>Multiple soliton solutions of some conformable fractional nonlinear models using Sine-Cosine method</article-title><source>Opt. Quant. Electron.</source><year>2024</year><volume>56</volume><issue>7</issue><fpage>1235</fpage><pub-id pub-id-type="doi">10.1007/s11082-024-06403-w</pub-id></element-citation><mixed-citation id="mc-CR39" publication-type="journal">Behera, S. Multiple soliton solutions of some conformable fractional nonlinear models using Sine-Cosine method. <italic toggle="yes">Opt. Quant. Electron.</italic><bold>56</bold>(7), 1235 (2024).</mixed-citation></citation-alternatives></ref><ref id="CR40"><label>40.</label><citation-alternatives><element-citation id="ec-CR40" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Ali</surname><given-names>K</given-names></name><name name-style="western"><surname>Rizvi</surname><given-names>STR</given-names></name><name name-style="western"><surname>Nawaz</surname><given-names>B</given-names></name><name name-style="western"><surname>Younis</surname><given-names>M</given-names></name></person-group><article-title>Optical solitons for paraxial wave equation in Kerr media</article-title><source>Mod. Phys. Lett. B</source><year>2019</year><volume>33</volume><issue>03</issue><fpage>1950020</fpage><pub-id pub-id-type="doi">10.1142/S0217984919500209</pub-id></element-citation><mixed-citation id="mc-CR40" publication-type="journal">Ali, K., Rizvi, S. T. R., Nawaz, B. &amp; Younis, M. Optical solitons for paraxial wave equation in Kerr media. <italic toggle="yes">Mod. Phys. Lett. B</italic><bold>33</bold>(03), 1950020 (2019).</mixed-citation></citation-alternatives></ref><ref id="CR41"><label>41.</label><citation-alternatives><element-citation id="ec-CR41" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Gao</surname><given-names>W</given-names></name><name name-style="western"><surname>Ismael</surname><given-names>HF</given-names></name><name name-style="western"><surname>Bulut</surname><given-names>H</given-names></name><name name-style="western"><surname>Baskonus</surname><given-names>HM</given-names></name></person-group><article-title>Instability modulation for the (2+ 1)-dimension paraxial wave equation and its new optical soliton solutions in Kerr media</article-title><source>Phys. Scr.</source><year>2020</year><volume>95</volume><issue>3</issue><fpage>035207</fpage><pub-id pub-id-type="doi">10.1088/1402-4896/ab4a50</pub-id></element-citation><mixed-citation id="mc-CR41" publication-type="journal">Gao, W., Ismael, H. F., Bulut, H. &amp; Baskonus, H. M. Instability modulation for the (2+ 1)-dimension paraxial wave equation and its new optical soliton solutions in Kerr media. <italic toggle="yes">Phys. Scr.</italic><bold>95</bold>(3), 035207 (2020).</mixed-citation></citation-alternatives></ref><ref id="CR42"><label>42.</label><citation-alternatives><element-citation id="ec-CR42" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Arshad</surname><given-names>M</given-names></name><name name-style="western"><surname>Seadawy</surname><given-names>AR</given-names></name><name name-style="western"><surname>Lu</surname><given-names>D</given-names></name><name name-style="western"><surname>Saleem</surname><given-names>MS</given-names></name></person-group><article-title>Elliptic function solutions, modulation instability and optical solitons analysis of the paraxial wave dynamical model with Kerr media</article-title><source>Opt. Quant. Electron.</source><year>2021</year><volume>53</volume><fpage>1</fpage><lpage>20</lpage><pub-id pub-id-type="doi">10.1007/s11082-020-02637-6</pub-id></element-citation><mixed-citation id="mc-CR42" publication-type="journal">Arshad, M., Seadawy, A. R., Lu, D. &amp; Saleem, M. S. Elliptic function solutions, modulation instability and optical solitons analysis of the paraxial wave dynamical model with Kerr media. <italic toggle="yes">Opt. Quant. Electron.</italic><bold>53</bold>, 1&#8211;20 (2021).</mixed-citation></citation-alternatives></ref><ref id="CR43"><label>43.</label><citation-alternatives><element-citation id="ec-CR43" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Arshad</surname><given-names>M</given-names></name><name name-style="western"><surname>Seadawy</surname><given-names>AR</given-names></name><name name-style="western"><surname>Lu</surname><given-names>D</given-names></name><name name-style="western"><surname>Khan</surname><given-names>FU</given-names></name></person-group><article-title>Optical solitons of the paraxial wave dynamical model in kerr media and its applications in nonlinear optics</article-title><source>Int. J. Mod. Phys. B</source><year>2020</year><volume>34</volume><issue>09</issue><fpage>2050078</fpage><pub-id pub-id-type="doi">10.1142/S0217979220500782</pub-id></element-citation><mixed-citation id="mc-CR43" publication-type="journal">Arshad, M., Seadawy, A. R., Lu, D. &amp; Khan, F. U. Optical solitons of the paraxial wave dynamical model in kerr media and its applications in nonlinear optics. <italic toggle="yes">Int. J. Mod. Phys. B</italic><bold>34</bold>(09), 2050078 (2020).</mixed-citation></citation-alternatives></ref><ref id="CR44"><label>44.</label><citation-alternatives><element-citation id="ec-CR44" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Arshad</surname><given-names>M</given-names></name><name name-style="western"><surname>Seadawy</surname><given-names>AR</given-names></name><name name-style="western"><surname>Lu</surname><given-names>D</given-names></name><name name-style="western"><surname>Khan</surname><given-names>FU</given-names></name></person-group><article-title>Optical solitons of the paraxial wave dynamical model in kerr media and its applications in nonlinear optics</article-title><source>Int. J. Mod. Phys. B</source><year>2020</year><volume>34</volume><issue>09</issue><fpage>2050078</fpage><pub-id pub-id-type="doi">10.1142/S0217979220500782</pub-id></element-citation><mixed-citation id="mc-CR44" publication-type="journal">Arshad, M., Seadawy, A. R., Lu, D. &amp; Khan, F. U. Optical solitons of the paraxial wave dynamical model in kerr media and its applications in nonlinear optics. <italic toggle="yes">Int. J. Mod. Phys. B</italic><bold>34</bold>(09), 2050078 (2020).</mixed-citation></citation-alternatives></ref><ref id="CR45"><label>45.</label><citation-alternatives><element-citation id="ec-CR45" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Islam</surname><given-names>SR</given-names></name><name name-style="western"><surname>Arafat</surname><given-names>SY</given-names></name><name name-style="western"><surname>Alotaibi</surname><given-names>H</given-names></name><name name-style="western"><surname>Inc</surname><given-names>M</given-names></name></person-group><article-title>Some optical soliton solutions with bifurcation analysis of the paraxial nonlinear Schr<inline-formula id="IEq161"><alternatives><tex-math id="d33e3311">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation</article-title><source>Opt. Quant. Electron.</source><year>2024</year><volume>56</volume><issue>3</issue><fpage>379</fpage><pub-id pub-id-type="doi">10.1007/s11082-023-05783-9</pub-id></element-citation><mixed-citation id="mc-CR45" publication-type="journal">Islam, S. R., Arafat, S. Y., Alotaibi, H. &amp; Inc, M. Some optical soliton solutions with bifurcation analysis of the paraxial nonlinear Schr<inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/>dinger equation. <italic toggle="yes">Opt. Quant. Electron.</italic><bold>56</bold>(3), 379 (2024).</mixed-citation></citation-alternatives></ref><ref id="CR46"><label>46.</label><citation-alternatives><element-citation id="ec-CR46" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Baronio</surname><given-names>F</given-names></name><name name-style="western"><surname>Onorato</surname><given-names>M</given-names></name><name name-style="western"><surname>Chen</surname><given-names>S</given-names></name><name name-style="western"><surname>Trillo</surname><given-names>S</given-names></name><name name-style="western"><surname>Kodama</surname><given-names>Y</given-names></name><name name-style="western"><surname>Wabnitz</surname><given-names>S</given-names></name></person-group><article-title>Optical-fluid dark line and X solitary waves in Kerr media</article-title><source>Opt. Data Process. Storage</source><year>2017</year><volume>3</volume><issue>1</issue><fpage>1</fpage><lpage>7</lpage><pub-id pub-id-type="doi">10.1515/odps-2017-0001</pub-id></element-citation><mixed-citation id="mc-CR46" publication-type="journal">Baronio, F. et al. Optical-fluid dark line and X solitary waves in Kerr media. <italic toggle="yes">Opt. Data Process. Storage</italic><bold>3</bold>(1), 1&#8211;7 (2017).</mixed-citation></citation-alternatives></ref><ref id="CR47"><label>47.</label><citation-alternatives><element-citation id="ec-CR47" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Conti</surname><given-names>C</given-names></name><name name-style="western"><surname>Trillo</surname><given-names>S</given-names></name><name name-style="western"><surname>Di Trapani</surname><given-names>P</given-names></name><name name-style="western"><surname>Valiulis</surname><given-names>G</given-names></name><name name-style="western"><surname>Piskarskas</surname><given-names>A</given-names></name><name name-style="western"><surname>Jedrkiewicz</surname><given-names>O</given-names></name><name name-style="western"><surname>Trull</surname><given-names>J</given-names></name></person-group><article-title>Nonlinear electromagnetic X waves</article-title><source>Phys. Rev. Lett.</source><year>2003</year><volume>90</volume><issue>17</issue><fpage>170406</fpage><pub-id pub-id-type="doi">10.1103/PhysRevLett.90.170406</pub-id><pub-id pub-id-type="pmid">12786060</pub-id></element-citation><mixed-citation id="mc-CR47" publication-type="journal">Conti, C. et al. Nonlinear electromagnetic X waves. <italic toggle="yes">Phys. Rev. Lett.</italic><bold>90</bold>(17), 170406 (2003).<pub-id pub-id-type="pmid">12786060</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1103/PhysRevLett.90.170406</pub-id></mixed-citation></citation-alternatives></ref><ref id="CR48"><label>48.</label><citation-alternatives><element-citation id="ec-CR48" publication-type="journal"><person-group person-group-type="author"><name name-style="western"><surname>Seadawy</surname><given-names>AR</given-names></name><name name-style="western"><surname>Cheemaa</surname><given-names>N</given-names></name></person-group><article-title>Applications of extended modified auxiliary equation mapping method for high-order dispersive extended nonlinear Schr<inline-formula id="IEq163"><alternatives><tex-math id="d33e3438">\documentclass[12pt]{minimal}
+				\usepackage{amsmath}
+				\usepackage{wasysym} 
+				\usepackage{amsfonts} 
+				\usepackage{amssymb} 
+				\usepackage{amsbsy}
+				\usepackage{mathrsfs}
+				\usepackage{upgreek}
+				\setlength{\oddsidemargin}{-69pt}
+				\begin{document}$$\ddot{o}$$\end{document}</tex-math><inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/></alternatives></inline-formula>dinger equation in nonlinear optics</article-title><source>Mod. Phys. Lett. B</source><year>2019</year><volume>33</volume><issue>18</issue><fpage>1950203</fpage><pub-id pub-id-type="doi">10.1142/S0217984919502038</pub-id></element-citation><mixed-citation id="mc-CR48" publication-type="journal">Seadawy, A. R. &amp; Cheemaa, N. Applications of extended modified auxiliary equation mapping method for high-order dispersive extended nonlinear Schr<inline-graphic xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="41598_2025_7884_Article_IEq1.gif"/>dinger equation in nonlinear optics. <italic toggle="yes">Mod. Phys. Lett. B</italic><bold>33</bold>(18), 1950203 (2019).</mixed-citation></citation-alternatives></ref></ref-list></back></article></pmc-articleset>

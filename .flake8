@@ -1,0 +1,23 @@
+[flake8]
+max-line-length = 88
+extend-ignore =
+    E203,
+    W503
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    build,
+    dist,
+    outputs,
+    logs,
+    nodejs,
+    data,
+    comprehensive_ragas_results,
+    benchmarks,
+    test_results,
+    test-results,
+    coverage_html,
+    lint-results
+per-file-ignores =
+    analysis/*:E501

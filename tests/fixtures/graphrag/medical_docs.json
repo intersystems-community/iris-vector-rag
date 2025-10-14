@@ -1,0 +1,73 @@
+{
+  "documents": [
+    {
+      "doc_id": "med-diabetes-001",
+      "title": "Diabetes Mellitus Treatment Guidelines",
+      "content": "Diabetes mellitus is a chronic metabolic disorder characterized by elevated blood glucose levels resulting from defects in insulin secretion, insulin action, or both. Type 1 diabetes results from autoimmune destruction of pancreatic beta cells, leading to absolute insulin deficiency. Type 2 diabetes, the most common form, involves insulin resistance and relative insulin deficiency. Treatment for Type 1 diabetes requires exogenous insulin therapy administered via injection or insulin pump. Metformin is the first-line pharmacological treatment for Type 2 diabetes, working by decreasing hepatic glucose production. Regular monitoring of HbA1c levels is essential for assessing long-term glycemic control. Lifestyle modifications including diet and exercise remain cornerstone interventions.",
+      "expected_entities": [
+        {"entity_id": "e1", "name": "Diabetes mellitus", "type": "Disease"},
+        {"entity_id": "e2", "name": "Type 1 diabetes", "type": "Disease"},
+        {"entity_id": "e3", "name": "Type 2 diabetes", "type": "Disease"},
+        {"entity_id": "e4", "name": "insulin therapy", "type": "Treatment"},
+        {"entity_id": "e5", "name": "Metformin", "type": "Medication"},
+        {"entity_id": "e6", "name": "HbA1c", "type": "Test"},
+        {"entity_id": "e7", "name": "pancreatic beta cells", "type": "Anatomy"}
+      ],
+      "expected_relationships": [
+        {"source": "e1", "target": "e2", "type": "has_subtype"},
+        {"source": "e1", "target": "e3", "type": "has_subtype"},
+        {"source": "e2", "target": "e4", "type": "treated_with"},
+        {"source": "e3", "target": "e5", "type": "treated_with"},
+        {"source": "e1", "target": "e6", "type": "monitored_by"}
+      ],
+      "category": "medical",
+      "complexity": "medium"
+    },
+    {
+      "doc_id": "med-covid-001",
+      "title": "COVID-19 Transmission and Prevention",
+      "content": "COVID-19, caused by the SARS-CoV-2 virus, spreads primarily through respiratory droplets and aerosols expelled when an infected person coughs, sneezes, or talks. The virus can remain viable on surfaces for varying periods, making fomite transmission possible. Vaccination has proven to be the most effective prevention strategy, with the Pfizer-BioNTech and Moderna mRNA vaccines demonstrating high efficacy rates. Additional preventive measures include mask-wearing, particularly N95 respirators in high-risk settings, maintaining physical distancing of at least 6 feet, and proper hand hygiene. Early antiviral treatment with drugs like Paxlovid can reduce severe outcomes. Public health interventions such as contact tracing and isolation protocols remain critical for outbreak control.",
+      "expected_entities": [
+        {"entity_id": "e1", "name": "COVID-19", "type": "Disease"},
+        {"entity_id": "e2", "name": "SARS-CoV-2", "type": "Pathogen"},
+        {"entity_id": "e3", "name": "respiratory droplets", "type": "Transmission"},
+        {"entity_id": "e4", "name": "Pfizer-BioNTech", "type": "Vaccine"},
+        {"entity_id": "e5", "name": "Moderna", "type": "Vaccine"},
+        {"entity_id": "e6", "name": "N95 respirators", "type": "PPE"},
+        {"entity_id": "e7", "name": "Paxlovid", "type": "Medication"}
+      ],
+      "expected_relationships": [
+        {"source": "e1", "target": "e2", "type": "caused_by"},
+        {"source": "e1", "target": "e3", "type": "spreads_via"},
+        {"source": "e1", "target": "e4", "type": "prevented_by"},
+        {"source": "e1", "target": "e5", "type": "prevented_by"},
+        {"source": "e1", "target": "e7", "type": "treated_with"}
+      ],
+      "category": "medical",
+      "complexity": "medium"
+    },
+    {
+      "doc_id": "med-hypertension-001",
+      "title": "Hypertension Management and Cardiovascular Risk",
+      "content": "Hypertension, or high blood pressure, is a major risk factor for cardiovascular disease, stroke, and chronic kidney disease. Blood pressure readings above 130/80 mmHg are considered hypertensive according to current ACC/AHA guidelines. First-line antihypertensive medications include ACE inhibitors like lisinopril, angiotensin receptor blockers such as losartan, calcium channel blockers including amlodipine, and thiazide diuretics. Lifestyle modifications are critical and include sodium restriction, regular aerobic exercise, weight loss in overweight patients, and limiting alcohol consumption. The DASH diet has shown particular efficacy in lowering blood pressure. Untreated hypertension can lead to left ventricular hypertrophy, atherosclerosis, and eventual heart failure.",
+      "expected_entities": [
+        {"entity_id": "e1", "name": "Hypertension", "type": "Disease"},
+        {"entity_id": "e2", "name": "cardiovascular disease", "type": "Disease"},
+        {"entity_id": "e3", "name": "stroke", "type": "Disease"},
+        {"entity_id": "e4", "name": "ACE inhibitors", "type": "Medication"},
+        {"entity_id": "e5", "name": "lisinopril", "type": "Medication"},
+        {"entity_id": "e6", "name": "DASH diet", "type": "Treatment"},
+        {"entity_id": "e7", "name": "heart failure", "type": "Disease"}
+      ],
+      "expected_relationships": [
+        {"source": "e1", "target": "e2", "type": "risk_factor_for"},
+        {"source": "e1", "target": "e3", "type": "risk_factor_for"},
+        {"source": "e1", "target": "e4", "type": "treated_with"},
+        {"source": "e4", "target": "e5", "type": "includes"},
+        {"source": "e1", "target": "e7", "type": "can_cause"}
+      ],
+      "category": "medical",
+      "complexity": "medium"
+    }
+  ]
+}
