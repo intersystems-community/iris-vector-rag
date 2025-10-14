@@ -356,7 +356,7 @@ jobs:
 
       - name: Comment on PR with example test results
         if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
