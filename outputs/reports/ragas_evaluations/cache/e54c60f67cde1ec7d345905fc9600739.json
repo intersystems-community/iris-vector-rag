@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "CRAG",
-  "query": "How do immunotherapy treatments work in cancer patients?",
-  "answer": null,
-  "contexts": [],
-  "execution_time": 0.16844916343688965,
-  "success": true,
-  "error": null
-}

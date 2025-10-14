@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "CRAG",
-  "query": "How does inflammation contribute to autoimmune disease progression?",
-  "answer": null,
-  "contexts": [],
-  "execution_time": 0.12276411056518555,
-  "success": true,
-  "error": null
-}

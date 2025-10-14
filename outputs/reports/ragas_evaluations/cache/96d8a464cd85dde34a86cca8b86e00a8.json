@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRerank",
-  "query": "How do vaccines stimulate immune system responses?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.620384693145752,
-  "success": true,
-  "error": null
-}

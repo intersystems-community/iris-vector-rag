@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "CRAG",
-  "query": "What are the latest developments in Alzheimer's disease research?",
-  "answer": null,
-  "contexts": [],
-  "execution_time": 0.16682910919189453,
-  "success": true,
-  "error": null
-}

@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRAG",
-  "query": "How effective are different pain management strategies for chronic conditions?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.6736180782318115,
-  "success": true,
-  "error": null
-}
