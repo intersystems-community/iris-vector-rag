@@ -294,7 +294,7 @@ jobs:
           axe http://localhost:8000 --exit
           
       - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v10
+        uses: treosh/lighthouse-ci-action@v12
         with:
           configPath: './lighthouse-ci.json'
           uploadArtifacts: true
