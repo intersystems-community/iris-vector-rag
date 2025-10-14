@@ -134,7 +134,7 @@ load-data: ## Load sample data into IRIS database
 	@echo -e "  $(GREEN)✓$(NC) Sample data loaded"
 
 .PHONY: validate-iris-rag
-validate-iris-rag: ## Validate iris_rag package installation
+validate-iris-rag: setup-db ## Validate iris_rag package installation
 	$(call print_message,$(BLUE),Validating iris_rag package)
 	@if [ ! -d ".venv" ]; then \
 		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
@@ -288,7 +288,7 @@ docker-shell-%: ## Open shell in specific container (e.g., make docker-shell-iri
 	$(DOCKER_COMPOSE) exec $* /bin/bash
 
 .PHONY: docker-iris-shell
-docker-iris-shell: ## Open IRIS database shell
+docker-iris-shell: setup-db ## Open IRIS database shell
 	$(DOCKER_COMPOSE) exec iris_db iris session iris
 
 .PHONY: docker-redis-shell
@@ -312,7 +312,7 @@ docker-init-data-force: ## Force reload sample data
 	$(call print_message,$(GREEN),Sample data force reloaded)
 
 .PHONY: docker-backup
-docker-backup: ## Backup database and volumes
+docker-backup: setup-db ## Backup database and volumes
 	$(call print_message,$(BLUE),Creating backup)
 	@mkdir -p backups
 	@backup_name="backup_$$(date +%Y%m%d_%H%M%S)"; \
@@ -355,7 +355,7 @@ test-enterprise-10k: ## Run enterprise 10K scale testing for GraphRAG
 	$(call print_message,$(GREEN),Enterprise 10K testing completed)
 
 .PHONY: test-enterprise-10k-real
-test-enterprise-10k-real: docker-up docker-wait ## Run enterprise 10K testing with real database
+test-enterprise-10k-real: setup-db docker-up docker-wait ## Run enterprise 10K testing with real database
 	$(call print_message,$(BLUE),Running Enterprise 10K Testing with Real Database)
 	@python tests/test_enterprise_10k_comprehensive.py --documents 10000
 	$(call print_message,$(GREEN),Enterprise 10K real testing completed)
@@ -367,7 +367,7 @@ test-graphrag-scale: ## Run GraphRAG scale testing
 	$(call print_message,$(GREEN),GraphRAG scale testing completed)
 
 .PHONY: test-graphrag-scale-real
-test-graphrag-scale-real: docker-up docker-wait ## Run GraphRAG scale testing with real database
+test-graphrag-scale-real: setup-db docker-up docker-wait ## Run GraphRAG scale testing with real database
 	$(call print_message,$(BLUE),Running GraphRAG Scale Testing with Real Database)
 	@python scripts/test_graphrag_scale_10k.py --documents 10000
 	$(call print_message,$(GREEN),GraphRAG scale real testing completed)
@@ -383,28 +383,28 @@ test-pytest-enterprise: ## Run enterprise tests via pytest
 # =============================================================================
 
 .PHONY: test-examples
-test-examples: docker-up docker-wait ## Run all example tests with live IRIS database
+test-examples: setup-db docker-up docker-wait ## Run all example tests with live IRIS database
 	$(call print_message,$(BLUE),Running Example Tests with Live IRIS Database)
 	@chmod +x scripts/ci/run-example-tests.sh
 	@scripts/ci/run-example-tests.sh --mode real --verbose
 	$(call print_message,$(GREEN),Example testing completed)
 
 .PHONY: test-examples-basic
-test-examples-basic: docker-up docker-wait ## Run basic RAG example tests with live IRIS
+test-examples-basic: setup-db docker-up docker-wait ## Run basic RAG example tests with live IRIS
 	$(call print_message,$(BLUE),Running Basic RAG Example Tests with Live IRIS)
 	@chmod +x scripts/ci/run-example-tests.sh
 	@scripts/ci/run-example-tests.sh --category basic --mode real --verbose
 	$(call print_message,$(GREEN),Basic example testing completed)
 
 .PHONY: test-examples-advanced
-test-examples-advanced: docker-up docker-wait ## Run advanced RAG example tests with live IRIS
+test-examples-advanced: setup-db docker-up docker-wait ## Run advanced RAG example tests with live IRIS
 	$(call print_message,$(BLUE),Running Advanced RAG Example Tests with Live IRIS)
 	@chmod +x scripts/ci/run-example-tests.sh
 	@scripts/ci/run-example-tests.sh --category advanced --mode real --verbose
 	$(call print_message,$(GREEN),Advanced example testing completed)
 
 .PHONY: test-examples-mock
-test-examples-mock: ## Run example tests with mock LLMs (development only - NOT constitutional)
+test-examples-mock: setup-db ## Run example tests with mock LLMs (development only - NOT constitutional)
 	$(call print_message,$(YELLOW),WARNING: Running with Mock LLMs - Constitutional Violation!)
 	$(call print_message,$(YELLOW),This violates Section III: Tests MUST execute against live IRIS database)
 	$(call print_message,$(YELLOW),Mock mode should only be used for development debugging)
@@ -415,14 +415,14 @@ test-examples-mock: ## Run example tests with mock LLMs (development only - NOT 
 	$(call print_message,$(YELLOW),Mock testing completed - Remember this violates constitution!)
 
 .PHONY: test-examples-pattern
-test-examples-pattern: docker-up docker-wait ## Run example tests matching pattern with live IRIS (usage: make test-examples-pattern PATTERN=basic)
+test-examples-pattern: setup-db docker-up docker-wait ## Run example tests matching pattern with live IRIS (usage: make test-examples-pattern PATTERN=basic)
 	$(call print_message,$(BLUE),Running Example Tests for Pattern: $(PATTERN) with Live IRIS)
 	@chmod +x scripts/ci/run-example-tests.sh
 	@scripts/ci/run-example-tests.sh --pattern "$(PATTERN)" --mode real --verbose
 	$(call print_message,$(GREEN),Pattern example testing completed)
 
 .PHONY: test-examples-ci
-test-examples-ci: docker-up docker-wait ## Run example tests in CI mode with live IRIS (continue on failure, generate reports)
+test-examples-ci: setup-db docker-up docker-wait ## Run example tests in CI mode with live IRIS (continue on failure, generate reports)
 	$(call print_message,$(BLUE),Running Example Tests in CI Mode with Live IRIS)
 	@chmod +x scripts/ci/run-example-tests.sh
 	@scripts/ci/run-example-tests.sh --mode real --continue-on-failure --verbose
@@ -437,58 +437,57 @@ test-all-enterprise: test-enterprise-10k test-graphrag-scale test-pytest-enterpr
 # =============================================================================
 
 .PHONY: test-db-basic
-test-db-basic: ## Switch to basic RAG test database
+test-db-basic: setup-db ## Switch to basic RAG test database
 	$(call print_message,$(BLUE),Switching to Basic RAG Test Database)
 	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
-	@export TEST_DATABASE_VOLUME=./docker/test-databases/basic-rag-testdb && \
+	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/basic-rag-testdb} && \
 	docker-compose -f docker-compose.test.yml up -d iris-test
 	@sleep 15
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),Basic RAG test database ready)
 
 .PHONY: test-db-graphrag
-test-db-graphrag: ## Switch to GraphRAG test database
+test-db-graphrag: setup-db ## Switch to GraphRAG test database
 	$(call print_message,$(BLUE),Switching to GraphRAG Test Database)
 	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
-	@export TEST_DATABASE_VOLUME=./docker/test-databases/graphrag-testdb && \
+	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/graphrag-testdb} && \
 	docker-compose -f docker-compose.test.yml up -d iris-test
 	@sleep 15
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),GraphRAG test database ready)
 
 .PHONY: test-db-crag
-test-db-crag: ## Switch to CRAG test database
+test-db-crag: setup-db ## Switch to CRAG test database
 	$(call print_message,$(BLUE),Switching to CRAG Test Database)
 	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
-	@export TEST_DATABASE_VOLUME=./docker/test-databases/crag-testdb && \
+	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/crag-testdb} && \
 	docker-compose -f docker-compose.test.yml up -d iris-test
 	@sleep 15
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),CRAG test database ready)
 
 .PHONY: test-db-enterprise
-test-db-enterprise: ## Switch to enterprise scale test database
+test-db-enterprise: setup-db ## Switch to enterprise scale test database
 	$(call print_message,$(BLUE),Switching to Enterprise Scale Test Database)
 	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
-	@export TEST_DATABASE_VOLUME=./docker/test-databases/enterprise-testdb && \
+	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/enterprise-testdb} && \
 	docker-compose -f docker-compose.test.yml up -d iris-test
 	@sleep 30
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),Enterprise test database ready)
 
 .PHONY: test-db-clean
-test-db-clean: ## Create fresh empty test database
+test-db-clean: setup-db ## Create fresh empty test database
 	$(call print_message,$(BLUE),Creating Fresh Empty Test Database)
 	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
 	@docker volume rm rag-templates_test-iris-data 2>/dev/null || true
 	@docker-compose -f docker-compose.test.yml up -d iris-test
 	@sleep 15
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
-	@python scripts/test-db/initialize_clean_schema.py
-	$(call print_message,$(GREEN),Clean test database ready)
+	$(call print_message,$(GREEN),Clean test database ready - framework auto-setup will handle schema)
 
 .PHONY: test-db-status
-test-db-status: ## Show current test database status
+test-db-status: setup-db ## Show current test database status
 	$(call print_message,$(BLUE),Test Database Status)
 	@docker-compose -f docker-compose.test.yml ps iris-test 2>/dev/null || echo "No test database running"
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 && \
@@ -500,40 +499,40 @@ test-db-status: ## Show current test database status
 # =============================================================================
 
 .PHONY: test-examples-clean
-test-examples-clean: test-db-clean ## Run all examples starting from clean IRIS (tests full setup)
+test-examples-clean: setup-db test-db-clean ## Run all examples starting from clean IRIS (tests full setup)
 	$(call print_message,$(BLUE),Running Examples with Clean IRIS - Full Setup Validation)
 	@chmod +x scripts/ci/run-example-tests.sh
 	@scripts/ci/run-example-tests.sh --mode real --verbose --continue-on-failure
 	$(call print_message,$(GREEN),Clean IRIS example testing completed)
 
 .PHONY: test-examples-basic-clean
-test-examples-basic-clean: test-db-clean ## Run basic examples from clean IRIS
+test-examples-basic-clean: setup-db test-db-clean ## Run basic examples from clean IRIS
 	$(call print_message,$(BLUE),Running Basic Examples with Clean IRIS)
 	@chmod +x scripts/ci/run-example-tests.sh
 	@scripts/ci/run-example-tests.sh --category basic --mode real --verbose --continue-on-failure
 	$(call print_message,$(GREEN),Clean basic example testing completed)
 
 .PHONY: test-examples-advanced-clean
-test-examples-advanced-clean: test-db-clean ## Run advanced examples from clean IRIS
+test-examples-advanced-clean: setup-db test-db-clean ## Run advanced examples from clean IRIS
 	$(call print_message,$(BLUE),Running Advanced Examples with Clean IRIS)
 	@chmod +x scripts/ci/run-example-tests.sh
 	@scripts/ci/run-example-tests.sh --category advanced --mode real --verbose --continue-on-failure
 	$(call print_message,$(GREEN),Clean advanced example testing completed)
 
 .PHONY: test-pipeline-initialization
-test-pipeline-initialization: test-db-clean ## Test pipeline initialization from scratch
+test-pipeline-initialization: setup-db test-db-clean ## Test pipeline initialization from scratch
 	$(call print_message,$(BLUE),Testing Pipeline Initialization from Clean IRIS)
 	@python scripts/test-initialization/test_pipeline_setup.py --verbose
 	$(call print_message,$(GREEN),Pipeline initialization testing completed)
 
 .PHONY: test-schema-creation
-test-schema-creation: test-db-clean ## Test schema creation and validation
+test-schema-creation: setup-db test-db-clean ## Test schema creation and validation
 	$(call print_message,$(BLUE),Testing Schema Creation from Clean IRIS)
 	@python scripts/test-initialization/test_schema_creation.py --verbose
 	$(call print_message,$(GREEN),Schema creation testing completed)
 
 .PHONY: test-data-ingestion-fresh
-test-data-ingestion-fresh: test-db-clean ## Test data ingestion on fresh IRIS
+test-data-ingestion-fresh: setup-db test-db-clean ## Test data ingestion on fresh IRIS
 	$(call print_message,$(BLUE),Testing Data Ingestion on Fresh IRIS)
 	@python scripts/test-initialization/test_data_ingestion.py --verbose
 	$(call print_message,$(GREEN),Fresh data ingestion testing completed)
@@ -545,13 +544,13 @@ test-full-setup-workflow: test-db-clean ## Test complete setup workflow from cle
 	$(call print_message,$(GREEN),Complete setup workflow testing completed)
 
 .PHONY: test-clean-workflow-minimal
-test-clean-workflow-minimal: test-db-clean ## Test minimal workflow from clean IRIS
+test-clean-workflow-minimal: setup-db test-db-clean ## Test minimal workflow from clean IRIS
 	$(call print_message,$(BLUE),Testing Minimal Clean IRIS Workflow)
 	@python scripts/test-initialization/test_clean_workflow_minimal.py
 	$(call print_message,$(GREEN),Minimal clean workflow testing completed)
 
 .PHONY: test-clean-summary
-test-clean-summary: ## Generate comprehensive clean IRIS testing summary report
+test-clean-summary: setup-db ## Generate comprehensive clean IRIS testing summary report
 	$(call print_message,$(BLUE),Generating Clean IRIS Testing Summary Report)
 	@python scripts/test-initialization/test_summary_report.py
 	$(call print_message,$(GREEN),Summary report generation completed)
@@ -580,7 +579,7 @@ docker-clean-all: ## Clean up everything including volumes and images
 # =============================================================================
 
 .PHONY: docker-urls
-docker-urls: ## Show service URLs
+docker-urls: setup-db ## Show service URLs
 	@echo ""
 	$(call print_message,$(GREEN),Service URLs)
 	@echo -e "  $(BLUE)Streamlit App:$(NC)      http://localhost:8501"
@@ -658,10 +657,10 @@ logs:
 # RAGAS E2E EVALUATION
 # =============================================================================
 .PHONY: test-ragas-1000
-test-ragas-1000: ## E2E: Download+load 1000 PMC docs, run RAGAS across all 5 pipelines
+test-ragas-1000: setup-db ## E2E: Download+load 1000 PMC docs, run RAGAS across all 5 pipelines
 	$(call print_message,$(BLUE),E2E RAGAS on 1000 PMC documents)
 	@set -a; [ -f .env ] && . ./.env; set +a; \
-	export IRIS_HOST=localhost; \
+	export IRIS_HOST=$${IRIS_HOST:-localhost}; \
 	export IRIS_PORT=$${IRIS_PORT:-1972}; \
 	export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
 	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-15}; \
@@ -674,10 +673,10 @@ test-ragas-1000: ## E2E: Download+load 1000 PMC docs, run RAGAS across all 5 pip
 # RAGAS QUICK SMOKE TEST
 # =============================================================================
 .PHONY: test-ragas-sample
-test-ragas-sample: load-data ## E2E: Quick RAGAS on sample 10 PMC docs using MCP IRIS
+test-ragas-sample: setup-db load-data ## E2E: Quick RAGAS on sample 10 PMC docs using MCP IRIS
 	$(call print_message,$(BLUE),Quick RAGAS on sample 10 PMC docs)
 	@set -a; [ -f .env ] && . ./.env; set +a; \
-	export IRIS_HOST=localhost; \
+	export IRIS_HOST=$${IRIS_HOST:-localhost}; \
 	export IRIS_PORT=$${IRIS_PORT:-1972}; \
 	export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/sample_10_docs}; \
 	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-8}; \
@@ -745,7 +744,7 @@ test-e2e-integration-quick: docker-up docker-wait ## Run quick E2E integration t
 	$(call print_message,$(GREEN),Quick E2E integration testing completed)
 
 .PHONY: test-e2e-integration-clean
-test-e2e-integration-clean: test-db-clean ## Run E2E integration tests from clean IRIS database
+test-e2e-integration-clean: setup-db test-db-clean ## Run E2E integration tests from clean IRIS database
 	$(call print_message,$(BLUE),Running E2E integration tests from clean IRIS database)
 	$(call print_message,$(BLUE),This validates complete setup workflows from scratch)
 	@python scripts/testing/e2e_integration_suite.py --skip-stress
@@ -758,7 +757,7 @@ test-e2e-pipelines-only: docker-up docker-wait ## Test all RAG pipelines compreh
 	$(call print_message,$(GREEN),Pipeline-only E2E testing completed)
 
 .PHONY: test-production-readiness
-test-production-readiness: ## FULL production readiness validation (all tests, clean IRIS, stress testing)
+test-production-readiness: setup-db ## FULL production readiness validation (all tests, clean IRIS, stress testing)
 	$(call print_message,$(BLUE),🚀 PRODUCTION READINESS VALIDATION)
 	$(call print_message,$(BLUE),Running comprehensive test suite for public release validation)
 	$(call print_message,$(BLUE),This includes: Clean IRIS + All Pipelines + Demos + Stress Tests)
@@ -781,7 +780,7 @@ test-publish-ready: test-production-readiness ## Alias for production readiness 
 # =============================================================================
 
 .PHONY: coverage-analyze
-coverage-analyze: ## Run comprehensive coverage analysis using uv (constitutional requirement)
+coverage-analyze: setup-db ## Run comprehensive coverage analysis using uv (constitutional requirement)
 	$(call print_message,$(BLUE),Running comprehensive coverage analysis with uv)
 	@if [ ! -d ".venv" ]; then \
 		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
@@ -791,33 +790,33 @@ coverage-analyze: ## Run comprehensive coverage analysis using uv (constitutiona
 	$(call print_message,$(GREEN),Coverage analysis completed - check htmlcov/ for detailed report)
 
 .PHONY: coverage-critical
-coverage-critical: ## Validate critical modules meet 80% coverage target
+coverage-critical: setup-db ## Validate critical modules meet 80% coverage target
 	$(call print_message,$(BLUE),Validating critical modules coverage (80% target))
 	@uv run pytest tests/unit/test_configuration_coverage.py tests/unit/test_validation_coverage.py tests/unit/test_pipeline_coverage.py tests/unit/test_services_coverage.py tests/unit/test_storage_coverage.py --cov=iris_rag.config --cov=iris_rag.validation --cov=iris_rag.pipelines --cov=iris_rag.services --cov=iris_rag.storage --cov-report=term --cov-fail-under=80
 	$(call print_message,$(GREEN),Critical modules coverage validation completed)
 
 .PHONY: coverage-overall
-coverage-overall: ## Validate overall 60% coverage target
+coverage-overall: setup-db ## Validate overall 60% coverage target
 	$(call print_message,$(BLUE),Validating overall coverage target (60%))
 	@uv run pytest tests/ --cov=iris_rag --cov=common --cov-report=term --cov-fail-under=60 --quiet
 	$(call print_message,$(GREEN),Overall coverage validation completed)
 
 .PHONY: coverage-performance
-coverage-performance: ## Run coverage with performance validation (5-minute limit)
+coverage-performance: setup-db ## Run coverage with performance validation (5-minute limit)
 	$(call print_message,$(BLUE),Running coverage analysis with performance validation)
 	@echo "Starting coverage analysis with 5-minute timeout..."
 	@timeout 300 uv run pytest tests/ --cov=iris_rag --cov=common --cov-report=term-missing --maxfail=3 || echo "Coverage analysis completed within time limit"
 	$(call print_message,$(GREEN),Coverage performance validation completed)
 
 .PHONY: coverage-reports
-coverage-reports: ## Generate all coverage report formats (terminal, HTML, XML, JSON)
+coverage-reports: setup-db ## Generate all coverage report formats (terminal, HTML, XML, JSON)
 	$(call print_message,$(BLUE),Generating comprehensive coverage reports)
 	@mkdir -p coverage_reports
 	@uv run pytest tests/ --cov=iris_rag --cov=common --cov-report=term-missing --cov-report=html:coverage_reports/html --cov-report=xml:coverage_reports/coverage.xml --cov-report=json:coverage_reports/coverage.json
 	$(call print_message,$(GREEN),Coverage reports generated in coverage_reports/ directory)
 
 .PHONY: coverage-constitutional
-coverage-constitutional: ## Full constitutional compliance validation (IRIS database required)
+coverage-constitutional: setup-db ## Full constitutional compliance validation (IRIS database required)
 	$(call print_message,$(BLUE),Running constitutional compliance coverage validation)
 	$(call print_message,$(BLUE),This requires live IRIS database per constitutional requirements)
 	@make docker-up docker-wait
@@ -825,7 +824,7 @@ coverage-constitutional: ## Full constitutional compliance validation (IRIS data
 	$(call print_message,$(GREEN),Constitutional compliance validation completed)
 
 .PHONY: coverage-trends
-coverage-trends: ## Generate monthly coverage trend report
+coverage-trends: setup-db ## Generate monthly coverage trend report
 	$(call print_message,$(BLUE),Generating coverage trend analysis)
 	@if [ ! -d ".venv" ]; then \
 		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
@@ -862,13 +861,13 @@ coverage-help: ## Show coverage analysis commands help
 # =============================================================================
 
 .PHONY: test-community
-test-community: ## Run tests with Community Edition backend mode
+test-community: setup-db ## Run tests with Community Edition backend mode
 	$(call print_message,$(BLUE),Running tests in Community mode)
 	@IRIS_BACKEND_MODE=community python -m pytest tests/ -v -m "requires_backend_mode or contract" --tb=short
 	$(call print_message,$(GREEN),Community mode tests completed)
 
 .PHONY: test-enterprise
-test-enterprise: ## Run tests with Enterprise Edition backend mode
+test-enterprise: setup-db ## Run tests with Enterprise Edition backend mode
 	$(call print_message,$(BLUE),Running tests in Enterprise mode)
 	@IRIS_BACKEND_MODE=enterprise python -m pytest tests/ -v -m "requires_backend_mode or contract" --tb=short
 	$(call print_message,$(GREEN),Enterprise mode tests completed)
@@ -888,3 +887,214 @@ test-backend-contracts: ## Run all backend mode contract tests
 	@python -m pytest tests/contract/test_execution_strategies.py -v
 	$(call print_message,$(GREEN),Backend mode contract tests completed)
 
+
+# =============================================================================
+# TEST FIXTURE MANAGEMENT (Feature 047)
+# =============================================================================
+
+# Fixture configuration
+FIXTURE_DIR := tests/fixtures
+FIXTURE ?= medical-graphrag-20
+FIXTURE_VERSION ?=
+FIXTURE_TABLES ?=
+FIXTURE_DESC ?=
+EMBEDDINGS ?= 0
+
+.PHONY: fixture-help
+fixture-help: ## Show fixture management commands
+	@echo -e "$(BLUE)Test Fixture Management Commands:$(NC)"
+	@echo -e ""
+	@echo -e "$(GREEN)Listing and Information:$(NC)"
+	@echo -e "  make fixture-list                    - List all available fixtures"
+	@echo -e "  make fixture-info FIXTURE=name       - Show detailed fixture information"
+	@echo -e "  make fixture-validate FIXTURE=name   - Validate fixture integrity"
+	@echo -e ""
+	@echo -e "$(GREEN)Loading Fixtures:$(NC)"
+	@echo -e "  make fixture-load FIXTURE=name       - Load fixture into IRIS database"
+	@echo -e "  make fixture-load-clean FIXTURE=name - Clean DB first, then load fixture"
+	@echo -e "  make fixture-load-fast FIXTURE=name  - Load without checksum validation (faster)"
+	@echo -e ""
+	@echo -e "$(GREEN)Creating Fixtures:$(NC)"
+	@echo -e "  make fixture-workflow                - Interactive fixture creation"
+	@echo -e "  make fixture-create FIXTURE=name ... - Create fixture from current database"
+	@echo -e "  make fixture-snapshot FIXTURE=name   - Quick snapshot of current database"
+	@echo -e ""
+	@echo -e "$(GREEN)Testing:$(NC)"
+	@echo -e "  make fixture-test                    - Run fixture manager contract tests"
+	@echo -e "  make fixture-test-integration        - Run fixture integration tests"
+	@echo -e ""
+	@echo -e "$(YELLOW)Examples:$(NC)"
+	@echo -e "  make fixture-list"
+	@echo -e "  make fixture-load FIXTURE=medical-graphrag-20"
+	@echo -e "  make fixture-create FIXTURE=my-test TABLES=RAG.SourceDocuments,RAG.Entities DESC=\"My test fixture\""
+	@echo -e ""
+
+.PHONY: fixture-list
+fixture-list: ## List all available test fixtures
+	$(call print_message,$(BLUE),Available Test Fixtures)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli list
+
+.PHONY: list-fixtures
+list-fixtures: fixture-list ## Alias for fixture-list (T097)
+
+.PHONY: fixture-info
+fixture-info: ## Show detailed information about a fixture
+	$(call print_message,$(BLUE),Fixture Information: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli info $(FIXTURE)
+
+.PHONY: fixture-validate
+fixture-validate: ## Validate fixture integrity (checksum, metadata)
+	$(call print_message,$(BLUE),Validating fixture: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli validate $(FIXTURE)
+	$(call print_message,$(GREEN),Fixture validation completed)
+
+.PHONY: fixture-load
+fixture-load: ## Load fixture into IRIS database
+	$(call print_message,$(BLUE),Loading fixture: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli load $(FIXTURE) $(if $(FIXTURE_VERSION),--version $(FIXTURE_VERSION))
+	$(call print_message,$(GREEN),Fixture loaded successfully)
+
+.PHONY: fixture-load-clean
+fixture-load-clean: ## Clean database first, then load fixture
+	$(call print_message,$(BLUE),Loading fixture with cleanup: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli load $(FIXTURE) --cleanup-first
+	$(call print_message,$(GREEN),Fixture loaded successfully (with cleanup))
+
+.PHONY: fixture-load-fast
+fixture-load-fast: ## Load fixture without checksum validation (faster)
+	$(call print_message,$(BLUE),Fast loading fixture: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli load $(FIXTURE) --no-validate-checksum
+	$(call print_message,$(GREEN),Fixture loaded successfully (fast mode))
+
+.PHONY: fixture-workflow
+fixture-workflow: ## Interactive fixture creation workflow
+	$(call print_message,$(BLUE),Interactive Fixture Creation)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli workflow
+	$(call print_message,$(GREEN),Fixture creation completed)
+
+.PHONY: fixture-create
+fixture-create: ## Create fixture from current database state
+	$(call print_message,$(BLUE),Creating fixture: $(FIXTURE))
+	@if [ -z "$(FIXTURE_TABLES)" ]; then \
+		echo -e "  $(RED)✗$(NC) FIXTURE_TABLES is required"; \
+		echo -e "  $(YELLOW)Example:$(NC) make fixture-create FIXTURE=my-test TABLES=RAG.SourceDocuments,RAG.Entities DESC=\"My test\""; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli create $(FIXTURE) \
+		--tables $(FIXTURE_TABLES) \
+		$(if $(FIXTURE_DESC),--description "$(FIXTURE_DESC)") \
+		$(if $(FIXTURE_VERSION),--version $(FIXTURE_VERSION)) \
+		$(if $(filter 1,$(EMBEDDINGS)),--generate-embeddings)
+	$(call print_message,$(GREEN),Fixture created successfully)
+
+.PHONY: fixture-snapshot
+fixture-snapshot: ## Quick snapshot of current database state
+	$(call print_message,$(BLUE),Creating database snapshot: $(FIXTURE))
+	@if [ -z "$(FIXTURE)" ]; then \
+		echo -e "  $(RED)✗$(NC) FIXTURE is required"; \
+		echo -e "  $(YELLOW)Example:$(NC) make fixture-snapshot FIXTURE=snapshot-$(shell date +%Y%m%d)"; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli snapshot $(FIXTURE)
+	$(call print_message,$(GREEN),Database snapshot created)
+
+.PHONY: fixture-update
+fixture-update: ## Update existing fixture with incremental changes (T091)
+	$(call print_message,$(BLUE),Updating fixture: $(FIXTURE))
+	@if [ -z "$(FIXTURE)" ]; then \
+		echo -e "  $(RED)✗$(NC) FIXTURE is required"; \
+		echo -e "  $(YELLOW)Example:$(NC) make fixture-update FIXTURE=medical-graphrag-20 VERSION=1.1.0"; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli update $(FIXTURE) \
+		$(if $(FIXTURE_VERSION),--version $(FIXTURE_VERSION)) \
+		$(if $(FIXTURE_CHANGES),--changes "$(FIXTURE_CHANGES)")
+	$(call print_message,$(GREEN),Fixture updated successfully)
+
+.PHONY: fixture-test
+fixture-test: ## Run fixture manager contract tests
+	$(call print_message,$(BLUE),Running fixture manager contract tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/contract/test_fixture_manager_contract.py tests/contract/test_embedding_generator_contract.py -v --tb=short
+	$(call print_message,$(GREEN),Fixture manager contract tests completed)
+
+.PHONY: fixture-test-integration
+fixture-test-integration: ## Run fixture integration tests
+	$(call print_message,$(BLUE),Running fixture integration tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/integration/test_fixture_*.py -v --tb=short
+	$(call print_message,$(GREEN),Fixture integration tests completed)
+
+.PHONY: fixture-bench
+fixture-bench: ## Benchmark fixture loading performance
+	$(call print_message,$(BLUE),Benchmarking fixture loading performance)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli benchmark
+	$(call print_message,$(GREEN),Fixture benchmark completed)
+
+.PHONY: fixture-migrate-json
+fixture-migrate-json: ## Migrate existing JSON fixtures to .DAT format
+	$(call print_message,$(BLUE),Migrating JSON fixtures to .DAT format)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli migrate-json
+	$(call print_message,$(GREEN),JSON fixture migration completed)
+
+.PHONY: fixture-clean
+fixture-clean: ## Clean up fixture temporary files
+	$(call print_message,$(YELLOW),Cleaning up fixture temporary files)
+	@find $(FIXTURE_DIR) -name "*.pyc" -delete
+	@find $(FIXTURE_DIR) -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find $(FIXTURE_DIR) -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+	$(call print_message,$(GREEN),Fixture cleanup completed)
