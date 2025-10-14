@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "CRAG",
+  "query": "What are the symptoms and diagnostic criteria for depression?",
+  "answer": null,
+  "contexts": [],
+  "execution_time": 0.13189291954040527,
+  "success": true,
+  "error": null
+}

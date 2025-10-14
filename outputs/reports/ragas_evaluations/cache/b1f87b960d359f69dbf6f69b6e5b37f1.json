@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "HybridGraphRAG",
+  "query": "What are the current treatment options for type 2 diabetes mellitus?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.265408992767334,
+  "success": true,
+  "error": null
+}

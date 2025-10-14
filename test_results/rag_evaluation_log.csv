@@ -1,0 +1,89 @@
+RunID,Timestamp,PipelineName,Query,Parameters,DocumentsRetrievedCount,RAGAS_Faithfulness,RAGAS_AnswerRelevancy,MainTestPassed,RAGAS_Notes
+e1457397-5879-4bc8-ae04-936ca8163122,2025-07-27T20:46:18.661217+00:00,GraphRAG,What treatments are available for Alzheimer's disease?,"{""top_k"": 5}",5,,,False,
+2ee60ab4-8ffe-4d3d-913b-025f1522e5e2,2025-07-27T20:47:23.848933+00:00,GraphRAG,What treatments are available for Alzheimer's disease?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+ed89f3bb-f3e6-402d-a15a-a8002e4945fc,2025-07-27T20:48:15.977839+00:00,NodeRAG,How does COVID-19 affect the respiratory system?,{},0,,,False,
+0854923d-4bcf-41c5-83b0-2234eb4b7bb6,2025-07-27T20:51:18.594519+00:00,NodeRAG,How does COVID-19 affect the respiratory system?,{},0,,,False,
+e3788cf0-b3aa-4515-8b32-0318c34aa9c5,2025-07-27T20:51:59.874729+00:00,NodeRAG,How does COVID-19 affect the respiratory system?,{},5,,,False,
+4395c373-65c3-454d-893c-05196e987d0c,2025-07-27T20:52:40.435984+00:00,NodeRAG,How does COVID-19 affect the respiratory system?,{},5,,,False,
+d66e3d62-e751-4293-abe0-a56a5da3d003,2025-07-27T20:52:42.423057+00:00,GraphRAG,What treatments are available for Alzheimer's disease?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+1eebae5b-fe7c-4712-92dd-d25fec07b61e,2025-07-27T20:54:53.711952+00:00,BasicRAG,What are common treatments for type 2 diabetes?,"{""llm_func_name"": ""query_llm""}",5,,,False,
+36e84f0a-3e66-4b71-839d-885407abbb89,2025-07-27T20:54:56.107610+00:00,NodeRAG,How does COVID-19 affect the respiratory system?,{},5,,,False,
+440684a3-aad2-4d79-938a-8925d8dd3ae6,2025-07-27T20:54:57.804761+00:00,GraphRAG,What treatments are available for Alzheimer's disease?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+104905d6-22f7-4072-bf27-7a126196c7ce,2025-07-27T20:55:38.638014+00:00,NodeRAG,How does COVID-19 affect the respiratory system?,{},5,,,False,
+c6911c15-8b2d-4967-b0cf-e8baf5c2a236,2025-07-27T20:58:39.940301+00:00,BasicRAG,What are common treatments for type 2 diabetes?,"{""llm_func_name"": ""query_llm""}",5,,,False,
+a6cbd318-26f4-4412-9480-57da8966d4fa,2025-07-27T21:05:34.176597+00:00,BasicRAG,What are common treatments for type 2 diabetes?,"{""llm_func_name"": ""query_llm""}",5,,,False,
+d653984b-870e-44a4-af6f-7a10dbe5b3f1,2025-07-27T21:08:53.431385+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+cb795b6d-451f-4271-a2f3-4b799801b814,2025-07-27T21:09:39.878602+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,False,
+fe6c7890-c2a8-4c8a-be9d-9f9f0c8a7da2,2025-07-27T21:10:29.392310+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,True,No non-empty content for RAGAS evaluation.
+643f8846-57e3-4666-96cf-4b6eaf8d41d4,2025-07-27T21:11:14.299196+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+e95f1b72-3226-4beb-98fd-0d4878390c64,2025-07-27T21:11:20.322342+00:00,HyDE,What factors affect healthy eating?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+7d0a9850-9c16-4d9d-8756-ddeff8bef0cc,2025-07-27T21:11:20.415685+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",0,,,False,
+2c26bda0-78de-4fc3-8f3d-238a020c9f5a,2025-07-27T21:11:21.826769+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,True,No non-empty content for RAGAS evaluation.
+443941c9-0c2d-45ef-bab8-f2017582f99b,2025-07-27T21:11:23.488974+00:00,GraphRAG,What are health promotion strategies?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+0b87008a-697a-412c-b772-3fd5bc501bb3,2025-07-27T21:11:47.058965+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",0,,,False,
+0afaca97-151d-43ae-9187-3832c978f646,2025-07-27T21:12:50.296364+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",0,,,False,
+d7a7b19e-12ea-4c03-9633-dbd185ce9018,2025-07-27T21:14:47.294228+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",2,,,True,No non-empty content for RAGAS evaluation.
+4d1a4e48-4b9a-4f63-97ce-0edc0c31317d,2025-07-27T21:16:33.208471+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",2,,,True,No non-empty content for RAGAS evaluation.
+8a70313a-566b-4fe5-a85c-590f8270c43d,2025-07-27T21:17:38.636482+00:00,ColBERT,What are barriers to physical activity?,{},0,,,False,
+1b7a7dfb-9dc8-41f9-9ce9-bd9a3668e1f8,2025-07-27T21:18:04.574940+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+ea18098a-5938-4ee4-ba40-e3bf1024b461,2025-07-27T21:18:09.641084+00:00,HyDE,What factors affect healthy eating?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+a2f69b96-4957-4ec3-9b4d-0441e233c0a2,2025-07-27T21:18:12.436186+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",2,,,True,No non-empty content for RAGAS evaluation.
+fe1bf75a-9192-4023-952c-ca6f41294fd7,2025-07-27T21:18:12.565121+00:00,ColBERT,What are barriers to physical activity?,{},0,,,False,
+276d601d-ce2b-4c4c-a430-eab875f4794d,2025-07-27T21:18:14.350468+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,True,No non-empty content for RAGAS evaluation.
+bba9f33a-1a38-4b3c-8a68-4115ac3bbffc,2025-07-27T21:18:45.567876+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+fe3b415e-48ce-488d-8729-a87d84d076e7,2025-07-27T21:18:52.952698+00:00,HyDE,What factors affect healthy eating?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+4267526e-b781-4ab6-8fe4-67103d26b9dc,2025-07-27T21:18:55.296291+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",2,,,True,No non-empty content for RAGAS evaluation.
+aafef25c-9ed0-4f4b-bda8-cc8e2a600e86,2025-07-27T21:18:55.431301+00:00,ColBERT,What are barriers to physical activity?,{},0,,,False,
+85de8b98-65ab-4c62-a896-e99ca33262b7,2025-07-27T21:18:56.977462+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,True,No non-empty content for RAGAS evaluation.
+1cfdc161-35e7-461b-9349-750b9064bc19,2025-07-27T21:18:58.473643+00:00,GraphRAG,What are health promotion strategies?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+59bca474-1cde-4455-ad59-afb9c07958ca,2025-07-27T21:20:57.293466+00:00,ColBERT,What are barriers to physical activity?,{},0,,,False,
+b818490d-97ba-418f-bfd6-6f8b7e21cfc9,2025-07-27T21:21:34.797022+00:00,ColBERT,What are barriers to physical activity?,{},0,,,False,
+2410ca64-4731-45c4-939d-795b6ece5c7d,2025-07-27T21:22:42.814455+00:00,ColBERT,What are barriers to physical activity?,{},5,,,True,No non-empty content for RAGAS evaluation.
+dbfcb2b5-7f43-4838-83cb-7fa84c552967,2025-07-27T21:23:08.421837+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+771d4706-cdc1-4c38-bd41-1ee81ee92464,2025-07-27T21:23:16.315826+00:00,HyDE,What factors affect healthy eating?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+74951036-9778-4d85-a03e-2b945a3da98a,2025-07-27T21:23:17.956849+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",2,,,True,No non-empty content for RAGAS evaluation.
+7b5a16c4-44c4-4e0e-8ddc-3b47ebafb0ff,2025-07-27T21:23:18.771896+00:00,ColBERT,What are barriers to physical activity?,{},5,,,True,No non-empty content for RAGAS evaluation.
+e689c2e5-7e43-4527-97b1-ef072c30664b,2025-07-27T21:23:20.223757+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,True,No non-empty content for RAGAS evaluation.
+3cda6bf2-f60d-4fd8-b56f-7b82185d0040,2025-07-27T21:23:22.177946+00:00,GraphRAG,What are health promotion strategies?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+54edb16c-52be-430e-b98f-2cfe33a14114,2025-07-27T21:24:05.915849+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+df3c888c-c141-4930-bbdb-50379b052016,2025-07-27T21:24:09.834503+00:00,HyDE,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm"", ""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+7aa106f8-afdb-482c-a466-325a80eb3c45,2025-07-27T21:24:11.661910+00:00,CRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",2,,,True,No non-empty content for RAGAS evaluation.
+d109a845-66dc-4f8f-8b3a-15692a118324,2025-07-27T21:24:12.806193+00:00,ColBERT,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+aef1518d-16fb-47ab-898c-109d71ce741d,2025-07-27T21:24:13.319653+00:00,NodeRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+70f3a9e1-f191-4d44-9815-26f175a29742,2025-07-27T21:24:14.012082+00:00,GraphRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm"", ""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+e1370f87-ed53-4801-a389-59b3aff8a7be,2025-07-27T21:26:07.626315+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+b2ad3479-efeb-4a52-a4dc-461c6bc34c10,2025-07-27T21:26:12.305854+00:00,HyDE,What factors affect healthy eating?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+35676b1d-cce0-4aa7-ab5c-8a64dc54c34a,2025-07-27T21:26:16.451403+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",2,,,True,No non-empty content for RAGAS evaluation.
+08ae5d1b-df3e-4dc5-b01a-e60a0e200480,2025-07-27T21:26:17.617043+00:00,ColBERT,What are barriers to physical activity?,{},5,,,True,No non-empty content for RAGAS evaluation.
+3273a5ca-3cec-41b9-948e-07d7d0dd06a4,2025-07-27T21:26:19.558423+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,True,No non-empty content for RAGAS evaluation.
+e0a01cfa-54b3-4e85-ab5d-114af49fe5cc,2025-07-27T21:26:21.609344+00:00,GraphRAG,What are health promotion strategies?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+42968353-a2c1-409f-8334-a9508d13cc58,2025-07-27T21:26:27.312208+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+5cc6c6ce-bf75-4046-921d-e80a6097ad0e,2025-07-27T21:26:31.548520+00:00,HyDE,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm"", ""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+6ed610c1-aa98-48c1-9c37-635f454bf1dc,2025-07-27T21:26:32.807232+00:00,CRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",2,,,True,No non-empty content for RAGAS evaluation.
+fdb9cb10-8f47-4405-bce9-b67e7bd0e0f9,2025-07-27T21:26:34.169314+00:00,ColBERT,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+0db56635-310c-4763-b342-2265d48c7cd1,2025-07-27T21:26:34.679904+00:00,NodeRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+7cef3baf-7a27-43af-aeec-a439286e1261,2025-07-27T21:26:35.601496+00:00,GraphRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm"", ""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+fca32f2f-8223-4a13-ab54-5452bba90936,2025-07-27T21:32:25.428052+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+b3ed5b45-1597-446d-8b46-68d12ed28c7d,2025-07-27T21:32:30.120691+00:00,HyDE,What factors affect healthy eating?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+4c2c11af-b95e-4148-8929-62c9cc3dd807,2025-07-27T21:32:32.751666+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",2,,,True,No non-empty content for RAGAS evaluation.
+727d6728-58f4-4040-9735-2a98c16d7127,2025-07-27T21:32:33.784462+00:00,ColBERT,What are barriers to physical activity?,{},5,,,True,No non-empty content for RAGAS evaluation.
+a33e4b8c-79ca-44c4-97f9-287478b34439,2025-07-27T21:32:35.272045+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,True,No non-empty content for RAGAS evaluation.
+9d575b74-f626-4b71-b73e-e52c1f792f9e,2025-07-27T21:32:37.106158+00:00,GraphRAG,What are health promotion strategies?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+8993b0f3-492b-41a4-a933-56b570bd1c83,2025-07-27T21:32:42.494418+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+7860e0fd-6529-4826-b4e6-d08aa1d66a9d,2025-07-27T21:32:47.382755+00:00,HyDE,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm"", ""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+b6c7d022-dab4-4dde-be9f-41bf1dbbe17a,2025-07-27T21:32:50.525412+00:00,CRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",2,,,True,No non-empty content for RAGAS evaluation.
+dc231a11-ebba-49b5-a4d9-22f238f443a1,2025-07-27T21:32:51.215565+00:00,ColBERT,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+f201e84a-c0cc-4412-8e1c-413edcea209d,2025-07-27T21:32:52.012217+00:00,NodeRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+3efde8bf-e7b6-4285-99cc-73a91ef3feda,2025-07-27T21:32:53.805835+00:00,GraphRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm"", ""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+49978263-7434-42c4-a735-8b54f307a998,2025-07-27T21:33:57.091792+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+7a66b5b4-d947-4daf-a88d-174a64d074da,2025-07-27T21:34:03.320048+00:00,HyDE,What factors affect healthy eating?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+2311fb69-cea5-40e6-8ecc-a76284a05d3b,2025-07-27T21:34:05.774996+00:00,CRAG,What are health promotion strategies?,"{""chunk_types"": null}",2,,,True,No non-empty content for RAGAS evaluation.
+cb3fb8b7-9050-41c2-b8d2-0efbb9771eee,2025-07-27T21:34:06.568754+00:00,ColBERT,What are barriers to physical activity?,{},5,,,True,No non-empty content for RAGAS evaluation.
+ae81702d-a96f-4470-bf9e-167ee715088d,2025-07-27T21:34:08.012818+00:00,NodeRAG,What factors affect healthy eating?,{},5,,,True,No non-empty content for RAGAS evaluation.
+5062871b-f2e5-4e92-8983-a6b1b32750f4,2025-07-27T21:34:09.613141+00:00,GraphRAG,What are health promotion strategies?,"{""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+b6e68df6-1536-430d-854f-975b30c2096f,2025-07-27T21:34:13.988644+00:00,BasicRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+72b1c926-b91e-4f20-bd97-356ecf27ab50,2025-07-27T21:34:17.766196+00:00,HyDE,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm"", ""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.
+aff1ed7b-0c7e-43a7-80f6-4119b0ee8daf,2025-07-27T21:34:20.490842+00:00,CRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",2,,,True,No non-empty content for RAGAS evaluation.
+964ad301-630c-49c5-a5bb-d392ac49cced,2025-07-27T21:34:21.475390+00:00,ColBERT,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+07e51a18-15fa-4823-befb-1086f739eff2,2025-07-27T21:34:22.044856+00:00,NodeRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm""}",5,,,True,No non-empty content for RAGAS evaluation.
+f8ef091e-9c66-4ffe-9e2e-5db3895ddaca,2025-07-27T21:34:22.859456+00:00,GraphRAG,What are barriers to physical activity?,"{""llm_func_name"": ""query_llm"", ""top_k"": 5}",5,,,True,No non-empty content for RAGAS evaluation.

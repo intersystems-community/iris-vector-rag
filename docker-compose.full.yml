@@ -1,0 +1,364 @@
+# =============================================================================
+# RAG Templates Framework - Complete Deployment Configuration
+# =============================================================================
+# This file provides a complete one-click deployment solution for the entire
+# RAG templates framework with all demos and services.
+#
+# Usage:
+#   docker-compose -f docker-compose.full.yml up          # Start all services
+#   docker-compose -f docker-compose.full.yml --profile with-data up  # With sample data
+#   docker-compose -f docker-compose.full.yml --profile dev up        # Development mode
+#   docker-compose -f docker-compose.full.yml --profile prod up       # Production mode
+# =============================================================================
+
+version: '3.8'
+
+# =============================================================================
+# NETWORKS - Segmented architecture for security and performance
+# =============================================================================
+networks:
+  frontend:
+    name: rag_frontend
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  backend:
+    name: rag_backend
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+  data:
+    name: rag_data
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+# =============================================================================
+# VOLUMES - Persistent storage for data and configurations
+# =============================================================================
+volumes:
+  iris_data:
+    name: rag_iris_data
+  redis_data:
+    name: rag_redis_data
+  jupyter_data:
+    name: rag_jupyter_data
+  nginx_logs:
+    name: rag_nginx_logs
+  monitoring_data:
+    name: rag_monitoring_data
+
+# =============================================================================
+# SERVICES CONFIGURATION
+# =============================================================================
+services:
+
+  # ===========================================================================
+  # IRIS DATABASE SERVICE - Core vector database
+  # ===========================================================================
+  iris_db:
+    image: ${IRIS_DOCKER_IMAGE:-intersystemsdc/iris-community:latest}
+    container_name: rag_iris_db
+    restart: unless-stopped
+    environment:
+      - IRISNAMESPACE=${IRIS_NAMESPACE:-USER}
+      - ISC_DEFAULT_PASSWORD=${IRIS_PASSWORD:-SYS}
+      - IRIS_DOCKER_IMAGE=${IRIS_DOCKER_IMAGE:-community}
+    ports:
+      - "${IRIS_SUPERSERVER_PORT:-1972}:1972"
+      - "${IRIS_WEBSERVER_PORT:-52773}:52773"
+    volumes:
+      - iris_data:/usr/irissys/mgr
+      - .:/home/irisowner/dev
+      - ./iris.key:/usr/irissys/mgr/iris.key:ro
+    networks:
+      - data
+      - backend
+    healthcheck:
+      test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U%SYS", "##class(%SYSTEM.Process).CurrentDirectory()"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    command: --check-caps false -a "iris session iris -U%SYS '##class(Security.Users).UnExpireUserPasswords(\"*\")'"
+    profiles:
+      - core
+      - dev
+      - prod
+      - with-data
+
+  # ===========================================================================
+  # REDIS CACHE SERVICE - High-performance caching layer
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: rag_redis
+    restart: unless-stopped
+    command: >
+      redis-server 
+      --appendonly yes 
+      --appendfsync everysec 
+      --maxmemory ${REDIS_MAXMEMORY:-512mb}
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD:-rag_redis_pass}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+      - ./docker/config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+    profiles:
+      - core
+      - dev
+      - prod
+      - with-data
+
+  # ===========================================================================
+  # RAG API SERVICE - Core RAG pipeline endpoints
+  # ===========================================================================
+  rag_api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+      target: ${BUILD_TARGET:-production}
+      args:
+        - PYTHON_VERSION=${PYTHON_VERSION:-3.11}
+        - BUILD_ENV=${BUILD_ENV:-production}
+    container_name: rag_api
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - IRIS_HOST=iris_db
+      - IRIS_PORT=1972
+      - IRIS_NAMESPACE=${IRIS_NAMESPACE:-USER}
+      - IRIS_USERNAME=${IRIS_USERNAME:-_SYSTEM}
+      - IRIS_PASSWORD=${IRIS_PASSWORD:-SYS}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-rag_redis_pass}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - COHERE_API_KEY=${COHERE_API_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - API_WORKERS=${API_WORKERS:-4}
+    ports:
+      - "${RAG_API_PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data:ro
+      - ./logs:/app/logs
+      - ./config:/app/config:ro
+    networks:
+      - frontend
+      - backend
+      - data
+    depends_on:
+      iris_db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - core
+      - dev
+      - prod
+      - with-data
+
+  # ===========================================================================
+  # STREAMLIT APP SERVICE - Interactive demo interface
+  # ===========================================================================
+  streamlit_app:
+    build:
+      context: ./examples/streamlit_app
+      dockerfile: Dockerfile
+      target: production
+    container_name: rag_streamlit
+    restart: unless-stopped
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      - RAG_API_URL=http://rag_api:8000
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+    volumes:
+      - ./examples/streamlit_app/cache:/app/cache
+      - ./data:/app/data:ro
+      - ./logs/streamlit:/app/logs
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      rag_api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - core
+      - dev
+      - prod
+      - with-data
+
+  # ===========================================================================
+  # JUPYTER NOTEBOOK SERVICE - Interactive development environment
+  # ===========================================================================
+  jupyter:
+    build:
+      context: .
+      dockerfile: docker/jupyter/Dockerfile
+      args:
+        - JUPYTER_TOKEN=${JUPYTER_TOKEN:-rag_jupyter_token}
+    container_name: rag_jupyter
+    restart: unless-stopped
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN:-rag_jupyter_token}
+      - JUPYTER_ALLOW_ROOT=yes
+      - IRIS_HOST=iris_db
+      - IRIS_PORT=1972
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "${JUPYTER_PORT:-8888}:8888"
+    volumes:
+      - jupyter_data:/home/jovyan/work
+      - ./examples/notebooks:/home/jovyan/work/examples
+      - ./data:/home/jovyan/work/data:ro
+      - ./rag_templates:/home/jovyan/work/rag_templates:ro
+      - ./config:/home/jovyan/work/config:ro
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - iris_db
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - dev
+      - with-data
+
+  # ===========================================================================
+  # NGINX REVERSE PROXY - Load balancing and SSL termination
+  # ===========================================================================
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: rag_nginx
+    restart: unless-stopped
+    environment:
+      - NGINX_WORKER_PROCESSES=${NGINX_WORKERS:-auto}
+      - NGINX_WORKER_CONNECTIONS=${NGINX_CONNECTIONS:-1024}
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./docker/config/nginx:/etc/nginx/conf.d:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - frontend
+    depends_on:
+      - rag_api
+      - streamlit_app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    profiles:
+      - prod
+
+  # ===========================================================================
+  # HEALTH MONITORING SERVICE - System health and metrics
+  # ===========================================================================
+  monitoring:
+    build:
+      context: .
+      dockerfile: docker/monitoring/Dockerfile
+    container_name: rag_monitoring
+    restart: unless-stopped
+    environment:
+      - MONITORING_PORT=9090
+      - CHECK_INTERVAL=${MONITORING_INTERVAL:-30}
+      - ALERT_WEBHOOK=${MONITORING_WEBHOOK:-}
+    ports:
+      - "${MONITORING_PORT:-9090}:9090"
+    volumes:
+      - monitoring_data:/app/data
+      - ./docker/config/monitoring:/app/config:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - rag_api
+      - streamlit_app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    profiles:
+      - prod
+      - monitoring
+
+  # ===========================================================================
+  # DATA INITIALIZATION SERVICE - Load sample data
+  # ===========================================================================
+  data_loader:
+    build:
+      context: .
+      dockerfile: docker/data-loader/Dockerfile
+    container_name: rag_data_loader
+    environment:
+      - IRIS_HOST=iris_db
+      - IRIS_PORT=1972
+      - IRIS_NAMESPACE=${IRIS_NAMESPACE:-USER}
+      - IRIS_USERNAME=${IRIS_USERNAME:-_SYSTEM}
+      - IRIS_PASSWORD=${IRIS_PASSWORD:-SYS}
+      - DATA_SOURCE=${DATA_SOURCE:-pmc_samples}
+      - BATCH_SIZE=${DATA_BATCH_SIZE:-100}
+    volumes:
+      - ./data:/app/data:ro
+      - ./scripts:/app/scripts:ro
+    networks:
+      - data
+    depends_on:
+      iris_db:
+        condition: service_healthy
+    profiles:
+      - with-data
+    restart: "no"

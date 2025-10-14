@@ -1,0 +1,95 @@
+{
+  "validation_timestamp": "2025-09-13T13:41:57.080486",
+  "pipelines_tested": 4,
+  "test_documents": 5,
+  "test_queries": 3,
+  "summary": {
+    "working_pipelines": 0,
+    "partial_pipelines": 0,
+    "broken_pipelines": 4,
+    "working_pipeline_names": [],
+    "partial_pipeline_names": [],
+    "broken_pipeline_names": [
+      "BasicRAG",
+      "CRAG",
+      "BasicRAGReranking",
+      "GraphRAG"
+    ]
+  },
+  "performance_averages": {
+    "initialization_time": 0,
+    "ingestion_time": 0,
+    "query_time": 0,
+    "documents_retrieved": 0
+  },
+  "detailed_results": {
+    "BasicRAG": {
+      "pipeline_name": "BasicRAG",
+      "initialization_success": false,
+      "initialization_time": 0.0,
+      "initialization_error": "Failed to connect to IRIS backend 'iris': IRIS connection utility returned None",
+      "document_ingestion_success": false,
+      "documents_ingested": 0,
+      "ingestion_time": 0.0,
+      "ingestion_error": null,
+      "query_execution_success": false,
+      "query_time": 0.0,
+      "documents_retrieved": 0,
+      "answer_generated": false,
+      "answer_length": 0,
+      "query_error": null,
+      "overall_status": "BROKEN"
+    },
+    "CRAG": {
+      "pipeline_name": "CRAG",
+      "initialization_success": false,
+      "initialization_time": 0.0,
+      "initialization_error": "Failed to connect to IRIS backend 'iris': IRIS connection utility returned None",
+      "document_ingestion_success": false,
+      "documents_ingested": 0,
+      "ingestion_time": 0.0,
+      "ingestion_error": null,
+      "query_execution_success": false,
+      "query_time": 0.0,
+      "documents_retrieved": 0,
+      "answer_generated": false,
+      "answer_length": 0,
+      "query_error": null,
+      "overall_status": "BROKEN"
+    },
+    "BasicRAGReranking": {
+      "pipeline_name": "BasicRAGReranking",
+      "initialization_success": false,
+      "initialization_time": 0.0,
+      "initialization_error": "BasicRAGRerankingPipeline.__init__() missing 2 required positional arguments: 'connection_manager' and 'config_manager'",
+      "document_ingestion_success": false,
+      "documents_ingested": 0,
+      "ingestion_time": 0.0,
+      "ingestion_error": null,
+      "query_execution_success": false,
+      "query_time": 0.0,
+      "documents_retrieved": 0,
+      "answer_generated": false,
+      "answer_length": 0,
+      "query_error": null,
+      "overall_status": "BROKEN"
+    },
+    "GraphRAG": {
+      "pipeline_name": "GraphRAG",
+      "initialization_success": false,
+      "initialization_time": 0.0,
+      "initialization_error": "Failed to connect to IRIS backend 'iris': IRIS connection utility returned None",
+      "document_ingestion_success": false,
+      "documents_ingested": 0,
+      "ingestion_time": 0.0,
+      "ingestion_error": null,
+      "query_execution_success": false,
+      "query_time": 0.0,
+      "documents_retrieved": 0,
+      "answer_generated": false,
+      "answer_length": 0,
+      "query_error": null,
+      "overall_status": "BROKEN"
+    }
+  }
+}
