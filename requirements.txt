@@ -22,7 +22,7 @@ accelerate>=1.7.0
 
 # LLM Integration
 langchain>=0.1.0
-langchain-openai>=0.1.0,<0.2.0
+langchain-openai>=0.1.0,<0.4.0
 
 # Data Processing
 datasets>=2.14.0
