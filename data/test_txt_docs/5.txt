@@ -1,1 +1,0 @@
-Large Language Models like GPT-4 and Claude operate on transformer architectures and are trained on massive internet corpora.

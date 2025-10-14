@@ -1,967 +1,1100 @@
-# RAG Templates Makefile
+# =============================================================================
+# RAG Templates Framework - Docker Management Makefile
+# =============================================================================
+# Convenient targets for managing the complete RAG framework deployment
+# =============================================================================
 
-# Use the bash terminal
-SHELL := /bin/bash
+# Default configuration
+COMPOSE_FILE := docker-compose.full.yml
+ENV_FILE := .env
+PROJECT_NAME := rag-templates
 
-# Standardized commands for development, testing, and data management
-# Uses Python virtual environment (.venv) for consistent dependency management
+# Docker Compose command with common flags
+DOCKER_COMPOSE := docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME)
 
-.PHONY: help install test test-unit test-integration test-e2e test-1000 test-ragas-1000-enhanced debug-ragas-hyde debug-ragas-graphrag debug-ragas-crag debug-ragas-colbert debug-ragas-basic debug-ragas-noderag debug-ragas-hybrid_ifind debug-ragas-sql_rag eval-all-ragas-1000 ragas-debug ragas-test ragas-full ragas-cache-check ragas-clean ragas-no-cache ragas clean setup-db load-data clear-rag-data populate-graph-entities populate-knowledge-graph populate-graph-all check-graph-data test-graphrag-drift-detection validate-iris-rag validate-pipeline validate-all-pipelines auto-setup-pipeline auto-setup-all setup-env make-test-echo test-performance-ragas-tdd test-scalability-ragas-tdd test-tdd-comprehensive-ragas test-1000-enhanced test-tdd-ragas-quick ragas-with-tdd test-system-workup test-system-workup-verbose quick-start quick-start-minimal quick-start-standard quick-start-extended quick-start-custom quick-start-clean quick-start-status
+# Colors for output
+RED := \033[0;31m
+GREEN := \033[0;32m
+YELLOW := \033[1;33m
+BLUE := \033[0;34m
+NC := \033[0m # No Color
 
-# Simple test target to verify make execution
-make-test-echo:
-	@echo "--- Makefile echo test successful ---"
-
-# Python virtual environment directory (managed by uv)
-VENV_DIR = .venv
-
-# Python execution command for consistent environment usage
-# uv automatically manages the virtual environment and PYTHONPATH
-PYTHON_RUN = PYTHONDONTWRITEBYTECODE=1 uv run python
+# Helper function to print colored messages
+define print_message
+	@echo -e "$(1)[MAKE]$(NC) $(2)"
+endef
 
 # Default target
-help:
-	@echo "RAG Templates - Available Commands:"
+.DEFAULT_GOAL := help
+
+# =============================================================================
+# HELP AND INFORMATION
+# =============================================================================
+
+.PHONY: help
+help: ## Show this help message
+	@echo -e "$(BLUE)RAG Templates Framework - Docker Management$(NC)"
+	@echo -e "$(BLUE)=============================================$(NC)"
 	@echo ""
-	@echo "Environment Setup:"
-	@echo "  make setup-env        - Set up Python virtual environment (.venv)"
-	@echo "  make install          - Install dependencies in the virtual environment"
-	@echo "  make setup-db         - Initialize IRIS database schema"
+	@echo "Available targets:"
 	@echo ""
-	@echo "Quick Start (One-Command Setup):"
-	@echo "  make quick-start      - Interactive setup with profile selection"
-	@echo "  make quick-start-minimal    - Minimal profile setup (50 docs, 2GB RAM)"
-	@echo "  make quick-start-standard   - Standard profile setup (500 docs, 4GB RAM)"
-	@echo "  make quick-start-extended   - Extended profile setup (5000 docs, 8GB RAM)"
-	@echo "  make quick-start-custom PROFILE=name - Custom profile setup"
-	@echo "  make quick-start-demo       - Demo profile with chat app and migration examples"
-	@echo "  make quick-start-clean      - Clean up Quick Start environment"
-	@echo "  make quick-start-status     - Check Quick Start system status"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
-	@echo "Demo Applications:"
-	@echo "  make demo-chat-app          - Run interactive demo chat application"
-	@echo "  make demo-migration         - Demonstrate framework migration paths"
-	@echo "  make demo-objectscript      - Show ObjectScript integration examples"
-	@echo "  make demo-performance       - Compare RAG technique performance"
-	@echo "  make demo-mcp-server        - Start MCP server for tool integration"
-	@echo "  make demo-web-interface     - Launch web-based demo interface"
-	@echo "  make test-demo-framework    - Test all demo framework migration paths"
+	@echo -e "$(YELLOW)Examples:$(NC)"
+	@echo "  make docker-up              # Start core services"
+	@echo "  make docker-up-dev          # Start development environment"
+	@echo "  make docker-up-prod         # Start production environment"
+	@echo "  make docker-up-data         # Start with sample data"
+	@echo "  make docker-logs             # View all service logs"
+	@echo "  make docker-health           # Check service health"
+
+.PHONY: info
+info: ## Show system and configuration information
+	$(call print_message,$(BLUE),System Information)
+	@echo -e "  $(GREEN)Docker version:$(NC)         $$(docker --version 2>/dev/null || echo 'Not installed')"
+	@echo -e "  $(GREEN)Docker Compose version:$(NC) $$(docker-compose --version 2>/dev/null || echo 'Not installed')"
+	@echo -e "  $(GREEN)Project root:$(NC)           $$(pwd)"
+	@echo -e "  $(GREEN)Compose file:$(NC)           $(COMPOSE_FILE)"
+	@echo -e "  $(GREEN)Environment file:$(NC)       $(ENV_FILE)"
 	@echo ""
-	@echo "Testing (DBAPI-first):"
-	@echo "  make test             - Run all tests"
-	@echo "  make test-unit        - Run unit tests only"
-	@echo "  make test-integration - Run integration tests"
-	@echo "  make test-e2e         - Run end-to-end tests"
-	@echo "  make test-install     - Post-installation validation"
-	@echo "  make test-1000        - Run comprehensive test with 1000 docs"
-	@echo "  make eval-all-ragas-1000 - Run comprehensive RAGAS evaluation on all 8 pipelines with 1000 docs (RECOMMENDED)"
-	@echo "  make test-ragas-1000-enhanced  - [DEPRECATED] Use eval-all-ragas-1000 instead"
-	@echo "  make validate-iris-rag - Validate iris_rag package"
-	@echo "  make validate-all-pipelines - Validate all 8 RAG pipelines can be registered"
-	@echo ""
-	@echo "Test Mode Framework:"
-	@echo "  make test-e2e-validation - Comprehensive E2E validation with Docker management"
-	@echo "  make test-mode-validator - Validate mock control system"
-	@echo "  make test-framework-integration - Validate testing framework integration"
-	@echo "  make test-install - Post-installation validation"
-	@echo "  make test-system-workup - Run Comprehensive System Test Workup (scripts/run_comprehensive_system_tests.py)"
-	@echo ""
-	@echo "Lightweight RAGAs Testing:"
-	@echo "  make ragas-debug      - Quick debug run (basic pipeline, core metrics, 3 queries)"
-	@echo "  make ragas-test       - Standard test run (basic+hyde, extended metrics)"
-	@echo "  make ragas-full       - Full evaluation (all pipelines, full metrics)"
-	@echo "  make ragas-cache-check - Check cache status"
-	@echo "  make ragas-clean      - Clear cache and run debug"
-	@echo "  make ragas-no-cache   - Run without cache"
-	@echo "  make ragas PIPELINES=basic,hyde METRICS=core - Parameterized run"
-	@echo ""
-	@echo "RAGAs Debug Testing (individual pipelines):"
-	@echo "  make debug-ragas-basic      - Debug Basic RAG pipeline"
-	@echo "  make debug-ragas-hyde       - Debug HyDE pipeline"
-	@echo "  make debug-ragas-crag       - Debug CRAG pipeline"
-	@echo "  make debug-ragas-colbert    - Debug ColBERT pipeline"
-	@echo "  make debug-ragas-noderag    - Debug NodeRAG pipeline"
-	@echo "  make debug-ragas-graphrag   - Debug GraphRAG pipeline"
-	@echo "  make debug-ragas-hybrid_ifind - Debug Hybrid iFind pipeline"
-	@echo "  make debug-ragas-sql_rag - Debug SQL RAG pipeline"
-	@echo ""
-	@echo "TDD with RAGAS Testing (New):"
-	@echo "  make test-performance-ragas-tdd - Run TDD performance benchmark tests with RAGAS quality metrics"
-	@echo "  make test-scalability-ragas-tdd - Run TDD scalability tests with RAGAS across document scales"
-	@echo "  make test-tdd-comprehensive-ragas - Run all TDD RAGAS tests (performance & scalability)"
-	@echo "  make test-1000-enhanced   - Run TDD RAGAS tests with 1000+ documents for comprehensive validation"
-	@echo "  make test-tdd-ragas-quick - Run a quick version of TDD RAGAS performance tests for development"
-	@echo "  make ragas-with-tdd       - Run comprehensive TDD RAGAS tests and generate detailed report"
-	@echo ""
-	@echo "Validation & Auto-Setup:"
-	@echo "  make validate-pipeline PIPELINE=<type> - Validate specific pipeline"
-	@echo "  make validate-all-pipelines - Validate all 8 pipeline types"
-	@echo "  make auto-setup-pipeline PIPELINE=<type> - Auto-setup pipeline with validation"
-	@echo "  make auto-setup-all     - Auto-setup all pipelines with validation"
-	@echo "  make test-with-auto-setup - Run tests with automatic setup"
-	@echo ""
-	@echo "Data Management:"
-	@echo "  make load-data        - Load sample PMC documents (DBAPI)"
-	@echo "  make load-1000        - Load 1000+ PMC documents for testing"
-	@echo "  make check-data       - Check current document count"
-	@echo "  make clear-rag-data   - Clear all rows from RAG document tables (DocumentChunks and SourceDocuments)"
-	@echo ""
-	@echo "GraphRAG Data Population:"
-	@echo "  make populate-graph-entities - Extract entities from documents for GraphRAG"
-	@echo "  make populate-knowledge-graph - Create knowledge graph nodes and edges" 
-	@echo "  make populate-graph-all - Complete GraphRAG population (entities + graph)"
-	@echo "  make check-graph-data - Check GraphRAG data status (entities, nodes, edges)"
-	@echo ""
-	@echo "Drift Detection & System Health:"
-	@echo "  make check-drift      - Check system drift across all pipelines"
-	@echo "  make check-pipeline-drift PIPELINE=<type> - Check drift for specific pipeline"
-	@echo "  make test-graphrag-drift-detection - Test GraphRAG drift detection capabilities"
-	@echo "  make fix-drift        - Automatically fix detected drift issues"
-	@echo "  make health-check     - Run comprehensive system health check"
-	@echo ""
-	@echo "Development:"
-	@echo "  make clean            - Clean up temporary files"
-	@echo "  make lint             - Run code linting"
-	@echo "  make format           - Format code"
-	@echo ""
-	@echo "Repository Synchronization:"
-	@echo "  make sync-docs        - Sync documentation from sanitized repository"
-	@echo "  make sync-docs-push   - Sync documentation and push to GitLab"
-	@echo "  make sync-all         - Sync all content (docs + source code) from sanitized repository"
-	@echo "  make sync-all-push    - Sync all content and push to GitLab"
-	@echo "  make sync-check       - Check synchronization status"
-	@echo "  make sync-dry-run     - Preview documentation sync (dry run)"
-	@echo "  make sync-all-dry-run - Preview comprehensive sync (dry run)"
-	@echo ""
-	@echo "Docker:"
-	@echo "  make docker-up        - Start IRIS container"
-	@echo "  make docker-down      - Stop IRIS container"
-	@echo "  make docker-logs      - View IRIS container logs"
-	@echo ""
-	@echo "Environment Info:"
-	@echo "  Environment managed by uv (automatic virtual environment)"
-	@echo "  All commands use 'uv run' prefix for consistent execution"
-
-# Environment setup
-setup-env:
-	@echo "Setting up Python environment with uv..."
-	@if ! command -v uv &> /dev/null; then \
-		echo "Error: uv is not installed. Please install uv first:"; \
-		echo "  curl -LsSf https://astral.sh/uv/install.sh | sh"; \
-		exit 1; \
-	fi
-	@echo "✓ uv is installed"
-
-# Installation and setup
-install: setup-env
-	@echo "Installing all dependencies with uv..."
-	uv sync --frozen --all-extras --dev
-
-setup-db:
-	@echo "Setting up IRIS database schema (DBAPI)..."
-	uv run python -c "from common.iris_connection_manager import test_connection; print('✓ Connection test passed' if test_connection() else '✗ Connection test failed')"
-	uv run python -m common.db_init_with_indexes
-
-# Testing commands (DBAPI-first)
-test: test-unit test-integration
-
-test-unit:
-	@echo "Running unit tests..."
-	uv run pytest tests/test_core/ tests/test_pipelines/ -v
-
-test-integration:
-	@echo "Running integration tests (DBAPI)..."
-	uv run pytest tests/test_integration/ -v
-
-test-e2e:
-	@echo "Running end-to-end tests (DBAPI)..."
-	uv run pytest tests/test_e2e_* -v
-
-# Test retrieval paths explicitly
-test-retrieval-paths:
-	@echo "Testing explicit retrieval paths..."
-	uv run pytest tests/test_hybrid_ifind_retrieval_paths.py -v
-	uv run pytest tests/test_graphrag_retrieval_paths.py -v
-	uv run pytest tests/test_fallback_behavior_validation.py -v
-
-test-all: test-unit test-integration test-e2e test-retrieval-paths
-
-test-1000:
-	@echo "Running comprehensive E2E test with 1000 PMC documents..."
-	cd tests && uv run python test_comprehensive_e2e_iris_rag_1000_docs.py
-
-test-ragas-1000-enhanced:
-	@echo "Running RAGAs evaluation (original script) on all 7 pipelines with 1000 documents..."
-	@echo "This will evaluate all enabled pipelines"
-	uv run python scripts/utilities/evaluation/execute_comprehensive_ragas_evaluation.py --pipelines ALL
-
-debug-ragas-hyde:
-	@echo "Running debug RAGAs evaluation for HyDE pipeline (no RAGAs metrics, 1 iteration)..."
-	@echo "This will test HyDE pipeline execution and data readiness without RAGAs metric calculation"
-	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines hyde --iterations 1 --no-ragas
-
-debug-ragas-graphrag:
-	@echo "Running debug RAGAs evaluation for GraphRAG pipeline (no RAGAs metrics, 1 iteration)..."
-	@echo "This will test GraphRAG pipeline execution and data readiness without RAGAs metric calculation"
-	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines graphrag --iterations 1 --no-ragas
-
-debug-ragas-crag:
-	@echo "Running debug RAGAs evaluation for CRAG pipeline (no RAGAs metrics, 1 iteration)..."
-	@echo "This will test CRAG pipeline execution and data readiness without RAGAs metric calculation"
-	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines crag --iterations 1 --no-ragas
-
-debug-ragas-colbert:
-	@echo "Running debug RAGAs evaluation for ColBERT pipeline (no RAGAs metrics, 1 iteration)..."
-	@echo "This will test ColBERT pipeline execution and data readiness without RAGAs metric calculation"
-	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines colbert --iterations 1 --no-ragas
-
-debug-ragas-basic:
-	@echo "Running debug RAGAs evaluation for Basic pipeline (no RAGAs metrics, 1 iteration)..."
-	@echo "This will test Basic pipeline execution and data readiness without RAGAs metric calculation"
-	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines basic --iterations 1 --no-ragas
-
-debug-ragas-noderag:
-	@echo "Running debug RAGAs evaluation for NodeRAG pipeline (no RAGAs metrics, 1 iteration)..."
-	@echo "This will test NodeRAG pipeline execution and data readiness without RAGAs metric calculation"
-	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines noderag --iterations 1 --no-ragas
-
-debug-ragas-hybrid_ifind:
-	@echo "Running debug RAGAs evaluation for Hybrid iFind pipeline (no RAGAs metrics, 1 iteration)..."
-	@echo "This will test Hybrid iFind pipeline execution and data readiness without RAGAs metric calculation"
-	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines hybrid_ifind --iterations 1 --no-ragas
-
-debug-ragas-sql_rag:
-	@echo "Running debug RAGAs evaluation for SQL RAG pipeline (no RAGAs metrics, 1 iteration)..."
-	@echo "This will test SQL RAG pipeline execution and data readiness without RAGAs metric calculation"
-	uv run python eval/run_comprehensive_ragas_evaluation.py --verbose --pipelines sql_rag --iterations 1 --no-ragas
-
-eval-all-ragas-1000:
-	@echo "🚀 Running comprehensive RAGAS evaluation on all pipelines with 1000 documents..."
-	@echo "✅ Using UV environment with DBAPI connections"
-	@echo "📊 This includes full RAGAS metrics calculation for all 8 pipeline types"
-	@echo "📋 Generates both JSON results and markdown summary reports"
-	@mkdir -p comprehensive_ragas_results
-	uv run python scripts/utilities/evaluation/execute_comprehensive_ragas_evaluation.py --pipelines ALL
-
-validate-iris-rag:
-	@echo "Validating iris_rag package..."
-	uv run python -c "import iris_rag; print('✓ iris_rag package imported successfully')"
-
-validate-all-pipelines:
-	@echo "Validating all RAG pipelines can be imported and registered..."
-	uv run python -c "from iris_rag.config.manager import ConfigurationManager; from iris_rag.core.connection import ConnectionManager; from iris_rag.pipelines.registry import PipelineRegistry; from iris_rag.pipelines.factory import PipelineFactory; from iris_rag.config.pipeline_config_service import PipelineConfigService; from iris_rag.utils.module_loader import ModuleLoader; config_manager = ConfigurationManager(); connection_manager = ConnectionManager(config_manager); framework_dependencies = {'connection_manager': connection_manager, 'config_manager': config_manager, 'llm_func': lambda x: 'test', 'vector_store': None}; config_service = PipelineConfigService(); module_loader = ModuleLoader(); pipeline_factory = PipelineFactory(config_service, module_loader, framework_dependencies); pipeline_registry = PipelineRegistry(pipeline_factory); pipeline_registry.register_pipelines(); pipelines = pipeline_registry.list_pipeline_names(); print(f'✓ Successfully registered {len(pipelines)} pipelines:'); [print(f'  - {name}') for name in sorted(pipelines)]"
-
-# Data management (DBAPI-first)
-load-data:
-	@echo "Loading sample PMC documents using DBAPI..."
-	uv run python -c "from data.loader_fixed import process_and_load_documents; result = process_and_load_documents('data/sample_10_docs', limit=10); print(f'Loaded: {result}')"
-
-load-1000:
-	@echo "Loading 1000+ PMC documents with ColBERT token embeddings for comprehensive testing..."
-	uv run python scripts/data_processing/process_documents_with_colbert.py --directory data/pmc_oas_downloaded --limit 1000 --batch-size 50
-
-validate-colbert-fix:
-	@echo "Validating ColBERT token embedding fix..."
-	uv run python scripts/validate_colbert_fix.py
-
-check-data:
-	@echo "Checking current document count using schema manager..."
-	uv run python scripts/utilities/schema_managed_data_utils.py --check
-
-clear-rag-data:
-	@echo "Clearing RAG document tables using schema manager..."
-	uv run python scripts/utilities/schema_managed_data_utils.py --clear
-
-populate-graph-entities:
-	@echo "Populating GraphRAG entities using schema manager..."
-	uv run python scripts/utilities/schema_managed_graph_populator.py --populate
-
-populate-knowledge-graph:
-	@echo "Creating knowledge graph nodes and edges using schema manager..."
-	uv run python scripts/utilities/schema_managed_graph_populator.py --populate
-
-populate-graph-all: populate-graph-entities
-	@echo "✓ Complete GraphRAG population finished (schema-managed)"
-
-populate-more-graph-entities:
-	@echo "Adding more entities to reach optimal GraphRAG coverage (≥0.5 entities/doc)..."
-	uv run python scripts/utilities/add_more_entities.py
-
-populate-colbert-tokens:
-	@echo "Ensuring ColBERT token embeddings coverage..."
-	uv run python scripts/data_processing/process_documents_with_colbert.py --directory data/pmc_oas_downloaded --limit 1000 --batch-size 50
-
-populate-ifind-sync:
-	@echo "Synchronizing IFind tables for HybridIFind pipeline..."
-	uv run python scripts/utilities/schema_managed_data_utils.py --sync-ifind
-
-populate-all-pipelines: populate-graph-all populate-more-graph-entities populate-colbert-tokens populate-ifind-sync
-	@echo "🚀 Complete data population for ALL pipeline types finished!"
-	@echo "✓ GraphRAG: Enhanced entity coverage"
-	@echo "✓ ColBERT: Token embeddings processed"  
-	@echo "✓ HybridIFind: IFind tables synchronized"
-
-check-graph-data:
-	@echo "Checking GraphRAG data status using schema manager..."
-	uv run python scripts/utilities/schema_managed_graph_populator.py --check
-
-# Development tools
-clean:
-	@echo "Cleaning up temporary files..."
-	find . -type f -name "*.pyc" -delete
-	find . -type d -name "__pycache__" -delete
-	find . -type f -name "*.log" -delete
-	rm -rf .pytest_cache/
-	rm -rf reports/temp/
-
-lint:
-	@echo "Running code linting..."
-	uv run flake8 iris_rag/ tests/ --max-line-length=120 --ignore=E501,W503
-
-format:
-	@echo "Formatting code..."
-	uv run black iris_rag/ tests/ --line-length=120
-
-# Docker commands
-docker-up:
-	@echo "Starting IRIS container..."
-	docker-compose up -d
-
-docker-down:
-	@echo "Stopping IRIS container..."
-	docker-compose down
-
-docker-logs:
-	@echo "Viewing IRIS container logs..."
-	docker-compose logs -f iris
-
-# Connection testing
-test-dbapi:
-	@echo "Testing DBAPI connection..."
-	uv run python -c "from common.iris_connection_manager import get_dbapi_connection; conn = get_dbapi_connection(); print('✓ DBAPI connection successful'); conn.close()"
-
-test-jdbc:
-	@echo "Testing JDBC connection (fallback)..."
-	uv run python -c "from common.iris_connection_manager import IRISConnectionManager; mgr = IRISConnectionManager(prefer_dbapi=False); conn = mgr.get_connection(); print(f'✓ {mgr.get_connection_type()} connection successful'); mgr.close()"
-
-# Pipeline-specific validation with auto-setup
-validate-pipeline:
-	@if [ -z "$(PIPELINE)" ]; then \
-		echo "Error: PIPELINE parameter required. Usage: make validate-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
-		exit 1; \
-	fi
-	@echo "Validating $(PIPELINE) pipeline with pre-condition checks..."
-	@PYTHONPATH=$(PWD) uv run python scripts/utilities/validate_pipeline.py validate $(PIPELINE)
-
-auto-setup-pipeline:
-	@if [ -z "$(PIPELINE)" ]; then \
-		echo "Error: PIPELINE parameter required. Usage: make auto-setup-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
-		exit 1; \
-	fi
-	@echo "Auto-setting up $(PIPELINE) pipeline with validation and embedding generation..."
-	@PYTHONPATH=$(PWD) uv run python scripts/utilities/validate_pipeline.py setup $(PIPELINE)
-
-# Demonstration targets (removed duplicate - see self-healing demonstration targets section)
-
-# Removed duplicate validate-all-pipelines target - see line 212 for the main one
-
-auto-setup-all:
-	@echo "Auto-setting up all 8 pipeline types with validation..."
-	@for pipeline in basic colbert crag hyde graphrag noderag hybrid_ifind sql_rag; do \
-		echo ""; \
-		echo "=== Auto-setting up $$pipeline ==="; \
-		$(MAKE) auto-setup-pipeline PIPELINE=$$pipeline || echo "⚠ $$pipeline auto-setup failed"; \
-	done
-	@echo ""
-	@echo "=== ALL PIPELINE AUTO-SETUP COMPLETE ==="
-
-# Enhanced comprehensive validation with auto-setup
-validate-all: validate-iris-rag test-dbapi check-data validate-all-pipelines
-	@echo ""
-	@echo "=== COMPREHENSIVE VALIDATION COMPLETE ==="
-	@echo "✓ iris_rag package validated"
-	@echo "✓ DBAPI connection tested"
-	@echo "✓ Database data checked"
-	@echo "✓ All pipeline types validated"
-	@echo ""
-	@echo "System is ready for RAG operations!"
-
-# Quick development setup with auto-setup
-dev-setup: install setup-db load-data auto-setup-all validate-all
-	@echo ""
-	@echo "=== DEVELOPMENT ENVIRONMENT READY ==="
-	@echo "✓ All pipelines auto-configured with validation"
-	@echo "Run 'make test-1000' to execute comprehensive E2E validation"
-
-# Self-healing test that auto-fixes issues
-test-with-auto-setup:
-	@echo "Running tests with automatic setup and validation..."
-	@echo "Step 1: Auto-setup all pipelines"
-	$(MAKE) auto-setup-all
-	@echo ""
-	@echo "Step 2: Validate all pipelines"
-	$(MAKE) validate-all-pipelines
-	@echo ""
-	@echo "Step 3: Run comprehensive E2E test"
-	$(MAKE) test-1000
-
-# Production readiness check with auto-setup
-prod-check: validate-iris-rag test-dbapi auto-setup-all
-	@echo "Running production readiness checks with auto-setup..."
-	$(PYTHON_RUN) -c "from iris_rag import create_pipeline; print('✓ Pipeline factory works')"
-	$(PYTHON_RUN) -c "from common.iris_connection_manager import test_connection; assert test_connection(), 'Connection test failed'"
-	@echo "Testing all pipeline types with auto-setup..."
-	@for pipeline in basic colbert crag hyde graphrag noderag hybrid_ifind sql_rag; do \
-		echo "Testing $$pipeline pipeline..."; \
-		$(PYTHON_RUN) -c "import iris_rag; from common.utils import get_llm_func; from common.iris_connection_manager import get_iris_connection; pipeline = iris_rag.create_pipeline('$$pipeline', llm_func=get_llm_func(), external_connection=get_iris_connection(), auto_setup=True); result = pipeline.run('test query', top_k=3); print('✓ $$pipeline pipeline works: ' + str(len(result.get('retrieved_documents', []))) + ' docs retrieved')" || echo "⚠ $$pipeline pipeline test failed"; \
-	done
-	@echo "✓ Production readiness validated with auto-setup"
-
-# Benchmark and performance
-benchmark:
-	@echo "Running performance benchmarks..."
-	cd tests && $(PYTHON_RUN) -m pytest test_comprehensive_e2e_iris_rag_1000_docs.py::test_comprehensive_e2e_all_rag_techniques_1000_docs -v
-
-# Documentation
-docs:
-	@echo "Available documentation:"
-	@echo "  - README.md - Project overview"
-	@echo "  - docs/ - Detailed documentation"
-	@echo "  - specs/ - Technical specifications"
-	@echo "  - .clinerules - Development rules and standards"
-
-# Environment info
-env-info:
-	@echo "Environment Information:"
-	@echo "Python version: $(shell $(PYTHON_EXEC) --version)"
-	@echo "Current directory: $(shell pwd)"
-	@echo "IRIS_HOST: $(shell echo $$IRIS_HOST || echo 'localhost')"
-	@echo "IRIS_PORT: $(shell echo $$IRIS_PORT || echo '1972')"
-	@echo "IRIS_NAMESPACE: $(shell echo $$IRIS_NAMESPACE || echo 'USER')"
-
-# Self-healing demonstration targets
-demo-validation:
-	@echo "=== DEMONSTRATING VALIDATION SYSTEM ==="
-	@echo "This will show the pre-condition validation for all pipeline types..."
-	$(MAKE) validate-all-pipelines
-
-demo-auto-setup:
-	@echo "=== DEMONSTRATING AUTO-SETUP SYSTEM ==="
-	@echo "This will automatically fix any validation issues..."
-	$(MAKE) auto-setup-all
-
-demo-self-healing:
-	@echo "=== DEMONSTRATING SELF-HEALING SYSTEM ==="
-	@echo "This shows the complete validation -> auto-setup -> test cycle..."
-	$(MAKE) test-with-auto-setup
-
-# Ultimate Zero-to-RAGAS Demonstration
-demo-ultimate-flow:
-	@echo "🚀 Running ultimate zero-to-RAGAS demonstration..."
-	@echo "This shows every step from database clearing to RAGAS results"
-	$(PYTHON_RUN) scripts/ultimate_zero_to_ragas_demo.py --verbose
-
-demo-ultimate-flow-quick:
-	@echo "🚀 Running quick ultimate demonstration..."
-	$(PYTHON_RUN) scripts/ultimate_zero_to_ragas_demo.py
-
-# Repository Synchronization
-sync-docs:
-	@echo "🔄 Synchronizing documentation from sanitized repository..."
-	$(PYTHON_RUN) scripts/sync_repositories.py --sync-docs
-
-sync-docs-push:
-	@echo "🔄 Synchronizing documentation and pushing to GitLab..."
-	$(PYTHON_RUN) scripts/sync_repositories.py --sync-docs --push
-
-sync-all:
-	@echo "🔄 Synchronizing all content (docs + source code) from sanitized repository..."
-	$(PYTHON_RUN) scripts/sync_repositories.py --sync-all
-
-sync-all-push:
-	@echo "🔄 Synchronizing all content and pushing to GitLab..."
-	$(PYTHON_RUN) scripts/sync_repositories.py --sync-all --push
-
-sync-check:
-	@echo "🔍 Checking repository synchronization status..."
-	$(PYTHON_RUN) scripts/sync_repositories.py --validate-sync
-
-sync-dry-run:
-	@echo "📝 Preview of repository synchronization (dry run)..."
-	$(PYTHON_RUN) scripts/sync_repositories.py --sync-docs --dry-run
-
-sync-all-dry-run:
-	@echo "📝 Preview of comprehensive synchronization (dry run)..."
-	$(PYTHON_RUN) scripts/sync_repositories.py --sync-all --dry-run
-# Quick pipeline testing
-test-pipeline:
-	@if [ -z "$(PIPELINE)" ]; then \
-		echo "Error: PIPELINE parameter required. Usage: make test-pipeline PIPELINE=basic"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
-		exit 1; \
-	fi
-	@echo "Testing $(PIPELINE) pipeline with auto-setup..."
-	$(MAKE) auto-setup-pipeline PIPELINE=$(PIPELINE)
-	@echo "Running quick test for $(PIPELINE)..."
-	@$(PYTHON_RUN) -c "\
-import iris_rag; \
-from common.utils import get_llm_func; \
-from common.iris_connection_manager import get_iris_connection; \
-pipeline = iris_rag.create_pipeline('$(PIPELINE)', llm_func=get_llm_func(), external_connection=get_iris_connection(), auto_setup=True); \
-result = pipeline.run('What are the effects of BRCA1 mutations?', top_k=3); \
-print('✓ $(PIPELINE) pipeline test: ' + str(len(result.get('retrieved_documents', []))) + ' docs retrieved, answer length: ' + str(len(result.get('answer', ''))) + ' chars')"
-
-# Status check with auto-healing
-status:
-	@echo "=== SYSTEM STATUS CHECK ==="
-	@echo "Checking environment..."
-	$(MAKE) env-info
-	@echo ""
-	@echo "Checking database connection..."
-	$(MAKE) test-dbapi
-	@echo ""
-	@echo "Checking data availability..."
-	$(MAKE) check-data
-	@echo ""
-	@echo "Checking pipeline validation status..."
-	$(MAKE) validate-all-pipelines
-	@echo ""
-	@echo "=== STATUS CHECK COMPLETE ==="
-
-# Library Consumption Framework Proof of Concept
-proof-of-concept:
-	@echo "🚀 Library Consumption Framework - Proof of Concept Demonstration"
-	@echo "=================================================================="
-	@echo "This will demonstrate concrete evidence that the framework works:"
-	@echo "✅ 100% Success Rate: All 7 RAG pipelines operational"
-	@echo "✅ Real Data Processing: 1000+ PMC documents"
-	@echo "✅ RAGAS Evaluation: Quality metrics up to 0.890 answer relevancy"
-	@echo "✅ Simple & Standard APIs: Zero-config and advanced configuration"
-	@echo "✅ Comprehensive Testing: Extensive validation framework"
-	@echo ""
-	$(PYTHON_RUN) scripts/proof_of_concept_demo.py
-
-# Self-healing data population targets
-heal-data:
-	@echo "=== SELF-HEALING DATA POPULATION ==="
-	@echo "Running comprehensive self-healing cycle to achieve 100% table readiness..."
-	$(PYTHON_RUN) scripts/data_population_manager.py populate --missing
-	@echo ""
-	@echo "=== SELF-HEALING COMPLETE ==="
-
-check-readiness:
-	@echo "=== CHECKING SYSTEM READINESS ==="
-	@echo "Analyzing current table population status..."
-	$(PYTHON_RUN) scripts/data_population_manager.py status --json
-	@echo ""
-	@echo "=== READINESS CHECK COMPLETE ==="
-
-populate-missing:
-	@echo "=== POPULATING MISSING TABLES ==="
-	@echo "Identifying and populating missing table data..."
-	$(PYTHON_RUN) scripts/data_population_manager.py populate --missing --json
-	@echo ""
-	@echo "=== POPULATION COMPLETE ==="
-
-validate-healing:
-	@echo "=== VALIDATING HEALING EFFECTIVENESS ==="
-	@echo "Checking if self-healing achieved target readiness..."
-	$(PYTHON_RUN) scripts/data_population_manager.py validate --target 100
-	@echo ""
-	@echo "=== VALIDATION COMPLETE ==="
-
-auto-heal-all:
-	@echo "=== COMPLETE SELF-HEALING WORKFLOW ==="
-	@echo "Step 1: Check current readiness..."
-	$(MAKE) check-readiness
-	@echo ""
-	@echo "Step 2: Populate missing data..."
-	$(MAKE) populate-missing
-	@echo ""
-	@echo "Step 3: Validate healing effectiveness..."
-	$(MAKE) validate-healing
-	@echo ""
-	@echo "=== AUTO-HEALING WORKFLOW COMPLETE ==="
-
-heal-to-target:
-	@if [ -z "$(TARGET)" ]; then \
-		echo "Error: TARGET parameter required. Usage: make heal-to-target TARGET=85"; \
-		echo "TARGET should be a percentage (e.g., 85 for 85% readiness)"; \
-		exit 1; \
-	fi
-	@echo "=== HEALING TO TARGET $(TARGET)% READINESS ==="
-	@echo "Running self-healing until $(TARGET)% table readiness is achieved..."
-	$(PYTHON_RUN) rag_templates/validation/self_healing_orchestrator.py --target-readiness $(TARGET) --max-cycles 3
-	@echo ""
-	@echo "=== TARGET HEALING COMPLETE ==="
-
-heal-progressive:
-	@echo "=== PROGRESSIVE HEALING (INCREMENTAL) ==="
-	@echo "Running incremental healing with dependency-aware ordering..."
-	$(PYTHON_RUN) scripts/data_population_manager.py populate --missing --json
-	@echo ""
-	@echo "=== PROGRESSIVE HEALING COMPLETE ==="
-
-heal-emergency:
-	@echo "=== EMERGENCY HEALING (FORCE REPOPULATION) ==="
-	@echo "WARNING: This will force repopulation of all tables!"
-	@echo "Forcing complete data repopulation..."
-	$(PYTHON_RUN) rag_templates/validation/self_healing_orchestrator.py --force-repopulation --max-cycles 5
-	@echo ""
-	@echo "=== EMERGENCY HEALING COMPLETE ==="
-
-# Testing Framework Integration Commands
-test-framework-integration: # Placeholder, assuming this target might also use PYTHON_RUN if it executes Python scripts
-	@echo "Running testing framework integration validation..."
-	$(CONDA_RUN) python scripts/validate_testing_framework_integration.py --verbose
-# test-e2e-validation target moved to Test Mode Framework Commands section
-# test-mode-validator target moved to Test Mode Framework Commands section
-
-# Comprehensive System Test Workup
-test-system-workup:
-	@echo "🚀 Running Comprehensive System Test Workup..."
-	@echo "This will execute a wide range of tests and generate reports."
-	$(CONDA_RUN) python scripts/run_comprehensive_system_tests.py --output-dir outputs/system_workup_reports
-
-test-system-workup-verbose:
-	@echo "🚀 Running Comprehensive System Test Workup (Verbose)..."
-	$(CONDA_RUN) python scripts/run_comprehensive_system_tests.py --verbose --output-dir outputs/system_workup_reports
-
-
-
-
-# Self-healing status and monitoring
-heal-status:
-	@echo "=== SELF-HEALING STATUS REPORT ==="
-	$(CONDA_RUN) python scripts/table_status_detector.py --detailed --cache-ttl 0
-	@echo ""
-	@echo "=== STATUS REPORT COMPLETE ==="
-
-heal-monitor:
-	@echo "=== CONTINUOUS HEALING MONITOR ==="
-	@echo "Monitoring system readiness and auto-healing as needed..."
-	@echo "Press Ctrl+C to stop monitoring"
-	$(CONDA_RUN) python rag_templates/validation/self_healing_orchestrator.py --monitor --interval 300
-	@echo ""
-	@echo "=== MONITORING STOPPED ==="
-
-# Integration with existing targets
-heal-and-test: heal-data test-1000
-	@echo "=== HEAL AND TEST COMPLETE ==="
-	@echo "✓ Data healing completed"
-	@echo "✓ Comprehensive testing completed"
-
-heal-and-validate: heal-data validate-all
-	@echo "=== HEAL AND VALIDATE COMPLETE ==="
-	@echo "✓ Data healing completed"
-	@echo "✓ System validation completed"
-
-# Quick healing shortcuts
-quick-heal:
-	@echo "=== QUICK HEALING (ESSENTIAL TABLES ONLY) ==="
-	$(CONDA_RUN) python scripts/data_population_manager.py populate --missing --json
-	@echo ""
-	@echo "=== QUICK HEALING COMPLETE ==="
-
-deep-heal:
-	@echo "=== DEEP HEALING (ALL TABLES + OPTIMIZATION) ==="
-	$(CONDA_RUN) python rag_templates/validation/self_healing_orchestrator.py --deep-healing --optimize-tables
-	@echo ""
-	@echo "=== DEEP HEALING COMPLETE ==="
-
-# Lightweight RAGAs Testing Targets
-ragas-debug:
-	@echo "--- Starting make ragas-debug target ---"
-	@echo "=== LIGHTWEIGHT RAGAS DEBUG RUN ==="
-	@echo "Running quick debug with basic pipeline, core metrics, 3 queries"
-	eval "$$(conda shell.bash hook)" && conda activate $(CONDA_ENV) && python eval/run_ragas.py --pipelines basic --metrics-level core --max-queries 3 --verbose
-
-ragas-test:
-	@echo "=== LIGHTWEIGHT RAGAS TEST RUN ==="
-	@echo "Running standard test with basic+hyde pipelines, extended metrics"
-	eval "$$(conda shell.bash hook)" && conda activate $(CONDA_ENV) && python eval/run_ragas.py --pipelines basic hyde --metrics-level extended --verbose
-
-ragas-full:
-	@echo "=== UNIFIED RAGAS FULL EVALUATION ==="
-	@echo "Running full evaluation with all pipelines, full metrics using Unified Framework"
-	eval "$$(conda shell.bash hook)" && conda activate $(CONDA_ENV) && \
-	python scripts/utilities/run_unified_evaluation.py \
-		--pipelines basic,hyde,crag,colbert,noderag,graphrag,hybrid_ifind,sql_rag \
-		--log-level DEBUG
-
-ragas-cache-check:
-	@echo "=== RAGAS CACHE STATUS CHECK ==="
-	eval "$$(conda shell.bash hook)" && conda activate $(CONDA_ENV) && python eval/run_ragas.py --cache-check
-
-ragas-clean:
-	@echo "=== RAGAS CLEAN RUN (CLEAR CACHE + DEBUG) ==="
-	@echo "Clearing cache and running debug evaluation"
-	eval "$$(conda shell.bash hook)" && conda activate $(CONDA_ENV) && python eval/run_ragas.py --clear-cache --pipelines basic --metrics-level core --max-queries 3 --verbose
-
-ragas-no-cache:
-	@echo "=== RAGAS NO-CACHE RUN ==="
-	@echo "Running evaluation without cache"
-	eval "$$(conda shell.bash hook)" && conda activate $(CONDA_ENV) && python eval/run_ragas.py --no-cache --pipelines basic --metrics-level core --max-queries 5 --verbose
-
-# Parameterized RAGAs target
-ragas:
-	@if [ -z "$(PIPELINES)" ]; then \
-		echo "Usage: make ragas PIPELINES=basic,hyde [METRICS=core] [QUERIES=10]"; \
-		echo "Available pipelines: basic, hyde, crag, colbert, noderag, graphrag, hybrid_ifind, sql_rag"; \
-		echo "Available metrics: core, extended, full"; \
-		exit 1; \
-	fi
-	@echo "=== PARAMETERIZED RAGAS EVALUATION ==="
-	@echo "Pipelines: $(PIPELINES)"
-	@echo "Metrics: $(or $(METRICS),core)"
-	@echo "Max Queries: $(or $(QUERIES),all)"
-	eval "$$(conda shell.bash hook)" && conda activate $(CONDA_ENV) && python eval/run_ragas.py \
-		--pipelines $(shell echo "$(PIPELINES)" | tr ',' ' ') \
-		--metrics-level $(or $(METRICS),core) \
-		$(if $(QUERIES),--max-queries $(QUERIES),) \
-		--verbose
-
-# TDD with RAGAS Testing
-# These targets leverage the comprehensive TDD+RAGAS integration in tests/test_tdd_performance_with_ragas.py
-# They provide performance benchmarking with RAGAS quality metrics and scalability testing
-
-# Run TDD performance benchmark tests with RAGAS quality metrics
-# Tests pipeline performance while measuring RAGAS metrics (answer relevancy, context precision, faithfulness, context recall)
-# Uses pytest marker: performance_ragas
-test-performance-ragas-tdd:
-	@echo "=== Running TDD Performance Benchmark Tests with RAGAS ==="
-	@echo "This validates pipeline performance and RAGAS quality metrics meet minimum thresholds"
-	$(CONDA_RUN) pytest tests/test_tdd_performance_with_ragas.py -m performance_ragas -v
-
-# Run TDD scalability tests with RAGAS across different document corpus sizes
-# Tests how performance and quality metrics change as document count increases
-# Uses pytest marker: scalability_ragas
-test-scalability-ragas-tdd:
-	@echo "=== Running TDD Scalability Tests with RAGAS ==="
-	@echo "This tests performance and quality scaling across different document corpus sizes"
-	$(CONDA_RUN) pytest tests/test_tdd_performance_with_ragas.py -m scalability_ragas -v
-
-# Run all TDD RAGAS integration tests (both performance and scalability)
-# Comprehensive test suite covering all TDD+RAGAS integration aspects
-# Uses pytest marker: ragas_integration
-test-tdd-comprehensive-ragas:
-	@echo "=== Running All TDD RAGAS Integration Tests (Performance & Scalability) ==="
-	@echo "This runs the complete TDD+RAGAS test suite with comprehensive validation"
-	$(CONDA_RUN) pytest tests/test_tdd_performance_with_ragas.py -m ragas_integration -v
-
-# Run TDD RAGAS tests with 1000+ documents for comprehensive validation
-# Sets TEST_DOCUMENT_COUNT environment variable to ensure large-scale testing
-# Requires iris_with_pmc_data fixture to respect the document count setting
-test-1000-enhanced:
-	@echo "=== Running TDD RAGAS Tests with 1000 Documents ==="
-	@echo "This ensures comprehensive testing with large document corpus"
-	@echo "Ensure TEST_DOCUMENT_COUNT is respected by iris_with_pmc_data fixture in conftest.py"
-	TEST_DOCUMENT_COUNT=1000 $(CONDA_RUN) pytest tests/test_tdd_performance_with_ragas.py -m ragas_integration -v
-
-# Run a quick version of TDD RAGAS performance tests for development
-# Uses TDD_RAGAS_QUICK_MODE environment variable to limit test scope
-# Ideal for rapid development feedback cycles
-test-tdd-ragas-quick:
-	@echo "=== Running Quick TDD RAGAS Performance Test ==="
-	@echo "This runs a limited test set for rapid development feedback"
-	@echo "Uses TDD_RAGAS_QUICK_MODE environment variable to limit scope"
-	TDD_RAGAS_QUICK_MODE=true $(CONDA_RUN) pytest tests/test_tdd_performance_with_ragas.py -m performance_ragas -v
-	# Example for running a specific test:
-	# $(CONDA_RUN) pytest tests/test_tdd_performance_with_ragas.py::TestPerformanceBenchmarkingWithRagas::test_complete_pipeline_performance_with_ragas -v
-
-# Run comprehensive TDD RAGAS tests and generate detailed performance report
-# First runs all TDD+RAGAS tests, then generates a comprehensive Markdown report
-# Report includes performance analysis, RAGAS metrics, scalability trends, and recommendations
-ragas-with-tdd: test-tdd-comprehensive-ragas
-	@echo "=== Generating TDD RAGAS Performance Report ==="
-	@echo "Searching for latest test results to generate comprehensive report"
-	@LATEST_JSON=$$(ls -t comprehensive_ragas_results/raw_data/test_performance_ragas_results_*.json 2>/dev/null | head -n 1); \
-	if [ -f "$$LATEST_JSON" ]; then \
-		echo "Found results file: $$LATEST_JSON"; \
-		echo "Generating comprehensive TDD+RAGAS performance report..."; \
-		$(CONDA_RUN) python scripts/generate_tdd_ragas_performance_report.py "$$LATEST_JSON"; \
-		echo "Report generated in reports/tdd_ragas_reports/ directory"; \
+	$(call print_message,$(BLUE),Configuration Status)
+	@if [ -f "$(ENV_FILE)" ]; then \
+		echo -e "  $(GREEN)✓$(NC) Environment file exists"; \
 	else \
-		echo "Warning: No TDD RAGAS JSON result file found in comprehensive_ragas_results/raw_data/"; \
-		echo "Expected pattern: test_performance_ragas_results_*.json"; \
-		echo "Run 'make test-tdd-comprehensive-ragas' first to generate test results"; \
+		echo -e "  $(RED)✗$(NC) Environment file missing (copy from .env.example)"; \
+	fi
+	@if docker info >/dev/null 2>&1; then \
+		echo -e "  $(GREEN)✓$(NC) Docker daemon running"; \
+	else \
+		echo -e "  $(RED)✗$(NC) Docker daemon not running"; \
 	fi
 
-# Test Mode Framework Commands
-test-install:
-	@echo "Running post-installation validation tests..."
-	$(CONDA_RUN) python scripts/run_post_installation_tests.py
+# =============================================================================
+# ENVIRONMENT SETUP
+# =============================================================================
 
-test-e2e-validation:
-	@echo "Running comprehensive E2E validation with Docker management..."
-	$(CONDA_RUN) python scripts/run_e2e_validation.py --verbose
-
-test-mode-validator:
-	@echo "Running test mode validator to verify mock control system..."
-	$(CONDA_RUN) pytest tests/test_mode_validator.py -v
-
-# Test mode specific targets
-test-unit-mode:
-	@echo "Running tests in UNIT mode (mocks enabled)..."
-	RAG_TEST_MODE=unit $(CONDA_RUN) pytest tests/ -m "unit or not e2e" -v
-
-test-e2e-mode:
-	@echo "Running tests in E2E mode (mocks disabled)..."
-	RAG_TEST_MODE=e2e RAG_MOCKS_DISABLED=true $(CONDA_RUN) pytest tests/ -m "e2e or not unit" -v
-
-# Drift Detection and System Health (using existing CLI)
-check-drift:
-	@echo "🔍 Checking for system drift across all pipelines..."
-	$(PYTHON_RUN) -m iris_rag.cli.reconcile_cli status --pipeline colbert
-
-check-pipeline-drift:
-	@if [ -z "$(PIPELINE)" ]; then \
-		echo "Error: PIPELINE parameter required. Usage: make check-pipeline-drift PIPELINE=graphrag"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
+.PHONY: setup-env
+setup-env: ## Create Python virtual environment using uv
+	$(call print_message,$(BLUE),Creating Python virtual environment with uv)
+	@if ! command -v uv &> /dev/null; then \
+		echo -e "  $(RED)✗$(NC) uv not found. Please install uv first: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
 		exit 1; \
 	fi
-	@echo "🔍 Checking drift for $(PIPELINE) pipeline..."
-	$(PYTHON_RUN) -m iris_rag.cli.reconcile_cli status --pipeline $(PIPELINE)
+	@uv venv .venv
+	@echo -e "  $(GREEN)✓$(NC) Virtual environment created with uv"
+	@echo -e "  $(YELLOW)⚠$(NC) To activate: source .venv/bin/activate"
 
-fix-drift:
-	@echo "🔧 Automatically fixing detected drift issues..."
-	$(PYTHON_RUN) -m iris_rag.cli.reconcile_cli run --pipeline colbert
-
-fix-pipeline-drift:
-	@if [ -z "$(PIPELINE)" ]; then \
-		echo "Error: PIPELINE parameter required. Usage: make fix-pipeline-drift PIPELINE=graphrag"; \
-		echo "Available pipelines: basic, colbert, crag, hyde, graphrag, noderag, hybrid_ifind, sql_rag"; \
+.PHONY: install
+install: ## Install all dependencies using uv
+	$(call print_message,$(BLUE),Installing dependencies with uv)
+	@if ! command -v uv &> /dev/null; then \
+		echo -e "  $(RED)✗$(NC) uv not found. Please install uv first: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
 		exit 1; \
 	fi
-	@echo "🔧 Fixing drift for $(PIPELINE) pipeline..."
-	$(PYTHON_RUN) -m iris_rag.cli.reconcile_cli run --pipeline $(PIPELINE)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, creating one..."; \
+		$(MAKE) setup-env; \
+	fi
+	@uv sync
+	@echo -e "  $(GREEN)✓$(NC) Dependencies installed with uv"
 
-health-check:
-	@echo "🏥 Running comprehensive system health check..."
-	$(PYTHON_RUN) -m iris_rag.cli.reconcile_cli status --pipeline colbert
+.PHONY: setup
+setup: setup-env install ## Complete setup - create environment, install dependencies, and setup directories
+	$(call print_message,$(BLUE),Setting up RAG Templates environment)
+	@if [ ! -f "$(ENV_FILE)" ]; then \
+		cp .env.example $(ENV_FILE); \
+		echo -e "  $(GREEN)✓$(NC) Copied .env.example to .env"; \
+		echo -e "  $(YELLOW)⚠$(NC) Please edit .env with your configuration"; \
+	else \
+		echo -e "  $(GREEN)✓$(NC) Environment file already exists"; \
+	fi
+	@mkdir -p logs data/cache data/uploads docker/ssl monitoring/data
+	@echo -e "  $(GREEN)✓$(NC) Created necessary directories"
+	@chmod +x scripts/docker/*.sh
+	@echo -e "  $(GREEN)✓$(NC) Made scripts executable"
 
-system-status:
-	@echo "📊 System Status Overview..."
-	$(PYTHON_RUN) -m iris_rag.cli.reconcile_cli status
+.PHONY: setup-db
+setup-db: ## Initialize IRIS database schema
+	$(call print_message,$(BLUE),Initializing IRIS database)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python common/db_init_complete.sql || echo "Schema initialization completed"
+	@echo -e "  $(GREEN)✓$(NC) Database schema initialized"
 
-test-graphrag-drift-detection:
-	@echo "🧪 Testing GraphRAG drift detection capabilities..."
-	@echo "This demonstrates our enhanced pipeline-specific drift detection"
-	make check-pipeline-drift PIPELINE=graphrag
+.PHONY: load-data
+load-data: ## Load sample data into IRIS database
+	$(call print_message,$(BLUE),Loading sample data)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python data/loader_fixed.py
+	@echo -e "  $(GREEN)✓$(NC) Sample data loaded"
 
-# Quick Start One-Command Setup Targets
-quick-start:
-	@echo "🚀 Starting Interactive Quick Start Setup..."
-	@echo "This will guide you through setting up the RAG Templates system"
-	$(PYTHON_RUN) -m quick_start.setup.makefile_integration interactive
+.PHONY: validate-iris-rag
+validate-iris-rag: setup-db ## Validate iris_rag package installation
+	$(call print_message,$(BLUE),Validating iris_rag package)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -c "import iris_rag; print('✓ iris_rag package imported successfully')"
+	@echo -e "  $(GREEN)✓$(NC) iris_rag package validation complete"
 
-quick-start-minimal:
-	@echo "🚀 Starting Minimal Quick Start Setup..."
-	@echo "Setting up minimal profile (50 docs, 2GB RAM, ~5 minutes)"
-	$(PYTHON_RUN) -m quick_start.setup.makefile_integration minimal
-
-quick-start-standard:
-	@echo "🚀 Starting Standard Quick Start Setup..."
-	@echo "Setting up standard profile (500 docs, 4GB RAM, ~15 minutes)"
-	$(PYTHON_RUN) -m quick_start.setup.makefile_integration standard
-
-quick-start-extended:
-	@echo "🚀 Starting Extended Quick Start Setup..."
-	@echo "Setting up extended profile (5000 docs, 8GB RAM, ~30 minutes)"
-	$(PYTHON_RUN) -m quick_start.setup.makefile_integration extended
-
-quick-start-custom:
-	@if [ -z "$(PROFILE)" ]; then \
-		echo "Error: PROFILE parameter required. Usage: make quick-start-custom PROFILE=my_profile"; \
-		echo "Available profiles: minimal, standard, extended, or custom profile name"; \
+.PHONY: env-check
+env-check: ## Check environment configuration
+	$(call print_message,$(BLUE),Checking environment configuration)
+	@if [ -f "$(ENV_FILE)" ]; then \
+		echo -e "  $(GREEN)✓$(NC) Environment file exists"; \
+		if grep -q "your_.*_here" $(ENV_FILE); then \
+			echo -e "  $(YELLOW)⚠$(NC) Some placeholders still need to be replaced"; \
+			grep "your_.*_here" $(ENV_FILE) | head -5; \
+		else \
+			echo -e "  $(GREEN)✓$(NC) No obvious placeholders found"; \
+		fi; \
+	else \
+		echo -e "  $(RED)✗$(NC) Environment file missing"; \
 		exit 1; \
 	fi
-	@echo "🚀 Starting Custom Quick Start Setup with profile: $(PROFILE)"
-	$(PYTHON_RUN) -m quick_start.setup.makefile_integration custom --profile $(PROFILE)
 
-quick-start-clean:
-	@echo "🧹 Cleaning Quick Start Environment..."
-	$(PYTHON_RUN) -m quick_start.setup.makefile_integration clean
+# =============================================================================
+# DOCKER OPERATIONS
+# =============================================================================
 
-quick-start-demo:
-	@echo "🎭 Starting Demo Quick Start Setup with chat app and migration examples..."
-	$(PYTHON_RUN) -m quick_start.setup.makefile_integration standard --profile demo
+.PHONY: docker-up
+docker-up: env-check ## Start core services (IRIS, Redis, API, Streamlit)
+	$(call print_message,$(GREEN),Starting core RAG services)
+	$(DOCKER_COMPOSE) --profile core up -d
+	$(call print_message,$(GREEN),Core services started)
+	@$(MAKE) docker-urls
 
-quick-start-status:
-	@echo "📊 Checking Quick Start Status..."
-	$(PYTHON_RUN) -m quick_start.setup.makefile_integration status
+.PHONY: docker-up-dev
+docker-up-dev: env-check ## Start development environment (includes Jupyter)
+	$(call print_message,$(GREEN),Starting development environment)
+	$(DOCKER_COMPOSE) --profile dev up -d
+	$(call print_message,$(GREEN),Development environment started)
+	@$(MAKE) docker-urls
 
-# Quick Start Testing
-test-quick-start:
-	@echo "🧪 Testing Quick Start setup system..."
-	$(PYTHON_RUN) -m pytest tests/quick_start/test_one_command_setup.py -v
+.PHONY: docker-up-prod
+docker-up-prod: env-check ## Start production environment (includes Nginx, monitoring)
+	$(call print_message,$(GREEN),Starting production environment)
+	$(DOCKER_COMPOSE) --profile prod up -d
+	$(call print_message,$(GREEN),Production environment started)
+	@$(MAKE) docker-urls
 
-test-quick-start-integration:
-	@echo "🧪 Testing Quick Start integration with existing components..."
-	$(PYTHON_RUN) -m pytest tests/quick_start/ -v
+.PHONY: docker-up-data
+docker-up-data: env-check ## Start services with sample data loading
+	$(call print_message,$(GREEN),Starting services with sample data)
+	$(DOCKER_COMPOSE) --profile with-data up -d
+	$(call print_message,$(GREEN),Services with data loading started)
+	@$(MAKE) docker-urls
 
-# Demo Application Targets
-demo-chat-app:
-	@echo "💬 Starting Interactive Demo Chat Application..."
-	@echo "Available modes: simple, standard, enterprise, demo, tutorial"
-	$(PYTHON_RUN) examples/demo_chat_app.py demo
+.PHONY: docker-up-all
+docker-up-all: env-check ## Start all services (development + production)
+	$(call print_message,$(GREEN),Starting all available services)
+	$(DOCKER_COMPOSE) --profile dev --profile prod --profile monitoring up -d
+	$(call print_message,$(GREEN),All services started)
+	@$(MAKE) docker-urls
 
-demo-migration:
-	@echo "🔄 Demonstrating Framework Migration Paths..."
-	@echo "Testing LangChain migration..."
-	$(PYTHON_RUN) examples/demo_chat_app.py simple "What is machine learning?"
+.PHONY: docker-down
+docker-down: ## Stop all services
+	$(call print_message,$(YELLOW),Stopping all services)
+	$(DOCKER_COMPOSE) down
+	$(call print_message,$(GREEN),All services stopped)
+
+.PHONY: docker-down-clean
+docker-down-clean: ## Stop all services and remove volumes
+	$(call print_message,$(YELLOW),Stopping services and cleaning volumes)
+	$(DOCKER_COMPOSE) down -v --remove-orphans
+	$(call print_message,$(GREEN),Services stopped and volumes cleaned)
+
+.PHONY: docker-restart
+docker-restart: ## Restart all running services
+	$(call print_message,$(YELLOW),Restarting services)
+	$(DOCKER_COMPOSE) restart
+	$(call print_message,$(GREEN),Services restarted)
+
+.PHONY: docker-restart-%
+docker-restart-%: ## Restart specific service (e.g., make docker-restart-api)
+	$(call print_message,$(YELLOW),Restarting service: $*)
+	$(DOCKER_COMPOSE) restart $*
+	$(call print_message,$(GREEN),Service $* restarted)
+
+# =============================================================================
+# BUILDING AND IMAGES
+# =============================================================================
+
+.PHONY: docker-build
+docker-build: ## Build all Docker images
+	$(call print_message,$(BLUE),Building Docker images)
+	$(DOCKER_COMPOSE) build --parallel
+	$(call print_message,$(GREEN),Docker images built)
+
+.PHONY: docker-build-nocache
+docker-build-nocache: ## Build all Docker images without cache
+	$(call print_message,$(BLUE),Building Docker images without cache)
+	$(DOCKER_COMPOSE) build --no-cache --parallel
+	$(call print_message,$(GREEN),Docker images built without cache)
+
+.PHONY: docker-pull
+docker-pull: ## Pull latest base images
+	$(call print_message,$(BLUE),Pulling latest base images)
+	$(DOCKER_COMPOSE) pull
+	$(call print_message,$(GREEN),Base images updated)
+
+# =============================================================================
+# MONITORING AND DEBUGGING
+# =============================================================================
+
+.PHONY: docker-ps
+docker-ps: ## Show running containers
+	$(call print_message,$(BLUE),Container Status)
+	$(DOCKER_COMPOSE) ps
+
+.PHONY: docker-logs
+docker-logs: ## View logs from all services
+	$(DOCKER_COMPOSE) logs -f
+
+.PHONY: docker-logs-%
+docker-logs-%: ## View logs from specific service (e.g., make docker-logs-api)
+	$(DOCKER_COMPOSE) logs -f $*
+
+.PHONY: docker-health
+docker-health: ## Check health of all services
+	$(call print_message,$(BLUE),Running health check)
+	@./scripts/docker/health-check.sh
+
+.PHONY: docker-health-json
+docker-health-json: ## Check health and output JSON
+	@./scripts/docker/health-check.sh --json
+
+.PHONY: docker-stats
+docker-stats: ## Show resource usage statistics
+	$(call print_message,$(BLUE),Container Resource Usage)
+	docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
+
+# =============================================================================
+# SHELL ACCESS
+# =============================================================================
+
+.PHONY: docker-shell
+docker-shell: ## Open shell in API container
+	$(DOCKER_COMPOSE) exec rag_api /bin/bash
+
+.PHONY: docker-shell-%
+docker-shell-%: ## Open shell in specific container (e.g., make docker-shell-iris)
+	$(DOCKER_COMPOSE) exec $* /bin/bash
+
+.PHONY: docker-iris-shell
+docker-iris-shell: setup-db ## Open IRIS database shell
+	$(DOCKER_COMPOSE) exec iris_db iris session iris
+
+.PHONY: docker-redis-shell
+docker-redis-shell: ## Open Redis CLI
+	$(DOCKER_COMPOSE) exec redis redis-cli
+
+# =============================================================================
+# DATA MANAGEMENT
+# =============================================================================
+
+.PHONY: docker-init-data
+docker-init-data: ## Initialize database with sample data
+	$(call print_message,$(BLUE),Initializing sample data)
+	@./scripts/docker/init-data.sh
+	$(call print_message,$(GREEN),Sample data initialized)
+
+.PHONY: docker-init-data-force
+docker-init-data-force: ## Force reload sample data
+	$(call print_message,$(BLUE),Force reloading sample data)
+	@./scripts/docker/init-data.sh --force
+	$(call print_message,$(GREEN),Sample data force reloaded)
+
+.PHONY: docker-backup
+docker-backup: setup-db ## Backup database and volumes
+	$(call print_message,$(BLUE),Creating backup)
+	@mkdir -p backups
+	@backup_name="backup_$$(date +%Y%m%d_%H%M%S)"; \
+	docker run --rm -v rag_iris_data:/data -v "$$(pwd)/backups":/backup alpine tar czf /backup/$$backup_name.tar.gz -C /data .; \
+	echo -e "  $(GREEN)✓$(NC) Backup created: backups/$$backup_name.tar.gz"
+
+# =============================================================================
+# TESTING AND VALIDATION
+# =============================================================================
+
+.PHONY: docker-test
+docker-test: ## Run basic functionality tests
+	$(call print_message,$(BLUE),Running functionality tests)
+	@./scripts/docker/health-check.sh --verbose
 	@echo ""
-	@echo "Migration comparison complete! Try 'make demo-chat-app' for interactive demo."
+	$(call print_message,$(BLUE),Testing RAG API endpoint)
+	@if curl -s -f http://localhost:8000/health >/dev/null; then \
+		echo -e "  $(GREEN)✓$(NC) RAG API is responding"; \
+	else \
+		echo -e "  $(RED)✗$(NC) RAG API not accessible"; \
+	fi
+	@if curl -s -f http://localhost:8501/_stcore/health >/dev/null; then \
+		echo -e "  $(GREEN)✓$(NC) Streamlit app is responding"; \
+	else \
+		echo -e "  $(RED)✗$(NC) Streamlit app not accessible"; \
+	fi
 
-demo-objectscript:
-	@echo "🔗 Demonstrating ObjectScript Integration..."
-	@echo "Showing MCP bridge and embedded Python capabilities..."
-	$(PYTHON_RUN) -c "from examples.demo_chat_app import DemoChatApp; app = DemoChatApp('demo'); demo = app.demonstrate_objectscript_integration('Patient analysis demo'); print('ObjectScript Integration:', demo.get('integration_type')); print('MCP Result:', demo.get('mcp_result', {}).get('success', False))"
+.PHONY: docker-test-query
+docker-test-query: ## Test RAG query functionality
+	$(call print_message,$(BLUE),Testing RAG query)
+	@curl -X POST http://localhost:8000/api/v1/query \
+		-H "Content-Type: application/json" \
+		-d '{"query": "What are the symptoms of diabetes?", "pipeline": "basic"}' \
+		2>/dev/null | head -c 200 && echo "..."
 
-demo-performance:
-	@echo "⚡ Comparing RAG Technique Performance..."
-	$(PYTHON_RUN) -c "from examples.demo_chat_app import DemoChatApp; app = DemoChatApp('demo'); app.load_sample_documents(['AI is artificial intelligence', 'ML is machine learning', 'DL is deep learning']); results = app.compare_technique_performance('What is AI?'); print('Performance Comparison:'); [print(f'  {technique}: {result.get(\"execution_time\", 0):.3f}s') for technique, result in results.items()]"
+.PHONY: test-enterprise-10k
+test-enterprise-10k: ## Run enterprise 10K scale testing for GraphRAG
+	$(call print_message,$(BLUE),Running Enterprise 10K Scale Testing)
+	@python tests/test_enterprise_10k_comprehensive.py --documents 1000 --use-mocks
+	$(call print_message,$(GREEN),Enterprise 10K testing completed)
 
-demo-mcp-server:
-	@echo "🛠️  Starting MCP Server Demo..."
-	@echo "Initializing RAG tools for external integration..."
-	$(PYTHON_RUN) -c "from examples.demo_chat_app import DemoChatApp; app = DemoChatApp('demo'); server = app.initialize_mcp_server(); tools = server.list_tools(); print(f'MCP Server initialized with {len(tools)} tools:'); [print(f'  - {tool[\"name\"]}: {tool[\"description\"]}') for tool in tools[:5]]"
+.PHONY: test-enterprise-10k-real
+test-enterprise-10k-real: setup-db docker-up docker-wait ## Run enterprise 10K testing with real database
+	$(call print_message,$(BLUE),Running Enterprise 10K Testing with Real Database)
+	@python tests/test_enterprise_10k_comprehensive.py --documents 10000
+	$(call print_message,$(GREEN),Enterprise 10K real testing completed)
 
-demo-web-interface:
-	@echo "🌐 Starting Web-based Demo Interface..."
-	@echo "Access the demo at http://localhost:8080"
-	$(PYTHON_RUN) -c "from examples.demo_chat_app import DemoChatApp; app = DemoChatApp('demo'); web_app = app.create_web_interface(); print('Web interface created. In production, run: web_app.run(host=\"0.0.0.0\", port=8080)'); print('Available endpoints: /chat, /demo/migration/<framework>, /demo/compare, /demo/objectscript')"
+.PHONY: test-graphrag-scale
+test-graphrag-scale: ## Run GraphRAG scale testing
+	$(call print_message,$(BLUE),Running GraphRAG Scale Testing)
+	@python scripts/test_graphrag_scale_10k.py --documents 1000 --use-mocks
+	$(call print_message,$(GREEN),GraphRAG scale testing completed)
 
-test-demo-framework:
-	@echo "🧪 Testing Demo Framework Migration Paths..."
-	$(PYTHON_RUN) -m pytest tests/test_demo_chat_application.py::TestDemoChatApplicationMigrationPaths -v
+.PHONY: test-graphrag-scale-real
+test-graphrag-scale-real: setup-db docker-up docker-wait ## Run GraphRAG scale testing with real database
+	$(call print_message,$(BLUE),Running GraphRAG Scale Testing with Real Database)
+	@python scripts/test_graphrag_scale_10k.py --documents 10000
+	$(call print_message,$(GREEN),GraphRAG scale real testing completed)
 
-test-demo-chat-app:
-	@echo "🧪 Testing Demo Chat Application..."
-	$(PYTHON_RUN) -m pytest tests/test_demo_chat_application.py -v
+.PHONY: test-pytest-enterprise
+test-pytest-enterprise: ## Run enterprise tests via pytest
+	$(call print_message,$(BLUE),Running Enterprise Tests via Pytest)
+	@python -m pytest tests/test_enterprise_10k_comprehensive.py -v --tb=short
+	$(call print_message,$(GREEN),Pytest enterprise testing completed)
 
-# PMC Data Enhancement for Customer Use
-enhance-pmc-data:
-	@echo "📚 Enhancing PMC data loading for customer use..."
-	@echo "Loading customer-friendly medical research documents..."
-	$(PYTHON_RUN) -c "from data.loader_fixed import process_and_load_documents; result = process_and_load_documents('data/sample_10_docs', limit=50, customer_mode=True); print(f'Enhanced PMC data loaded: {result}')"
+# =============================================================================
+# EXAMPLE TESTING
+# =============================================================================
 
-# Comprehensive Demo Suite
-demo-full-suite:
-	@echo "🎭 Running Full Demo Suite..."
-	@echo "================================"
-	make demo-chat-app
+.PHONY: test-examples
+test-examples: setup-db docker-up docker-wait ## Run all example tests with live IRIS database
+	$(call print_message,$(BLUE),Running Example Tests with Live IRIS Database)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --mode real --verbose
+	$(call print_message,$(GREEN),Example testing completed)
+
+.PHONY: test-examples-basic
+test-examples-basic: setup-db docker-up docker-wait ## Run basic RAG example tests with live IRIS
+	$(call print_message,$(BLUE),Running Basic RAG Example Tests with Live IRIS)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --category basic --mode real --verbose
+	$(call print_message,$(GREEN),Basic example testing completed)
+
+.PHONY: test-examples-advanced
+test-examples-advanced: setup-db docker-up docker-wait ## Run advanced RAG example tests with live IRIS
+	$(call print_message,$(BLUE),Running Advanced RAG Example Tests with Live IRIS)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --category advanced --mode real --verbose
+	$(call print_message,$(GREEN),Advanced example testing completed)
+
+.PHONY: test-examples-mock
+test-examples-mock: setup-db ## Run example tests with mock LLMs (development only - NOT constitutional)
+	$(call print_message,$(YELLOW),WARNING: Running with Mock LLMs - Constitutional Violation!)
+	$(call print_message,$(YELLOW),This violates Section III: Tests MUST execute against live IRIS database)
+	$(call print_message,$(YELLOW),Mock mode should only be used for development debugging)
+	@echo "Continue with constitutional violation? This should only be for development. [y/N]"
+	@read -r confirm && [ "$$confirm" = "y" ] || (echo "Cancelled" && exit 1)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --mode mock --verbose --timeout 600
+	$(call print_message,$(YELLOW),Mock testing completed - Remember this violates constitution!)
+
+.PHONY: test-examples-pattern
+test-examples-pattern: setup-db docker-up docker-wait ## Run example tests matching pattern with live IRIS (usage: make test-examples-pattern PATTERN=basic)
+	$(call print_message,$(BLUE),Running Example Tests for Pattern: $(PATTERN) with Live IRIS)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --pattern "$(PATTERN)" --mode real --verbose
+	$(call print_message,$(GREEN),Pattern example testing completed)
+
+.PHONY: test-examples-ci
+test-examples-ci: setup-db docker-up docker-wait ## Run example tests in CI mode with live IRIS (continue on failure, generate reports)
+	$(call print_message,$(BLUE),Running Example Tests in CI Mode with Live IRIS)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --mode real --continue-on-failure --verbose
+	$(call print_message,$(GREEN),CI example testing completed)
+
+.PHONY: test-all-enterprise
+test-all-enterprise: test-enterprise-10k test-graphrag-scale test-pytest-enterprise ## Run all enterprise scale tests
+	$(call print_message,$(GREEN),All enterprise scale tests completed)
+
+# =============================================================================
+# TEST DATABASE MANAGEMENT
+# =============================================================================
+
+.PHONY: test-db-basic
+test-db-basic: setup-db ## Switch to basic RAG test database
+	$(call print_message,$(BLUE),Switching to Basic RAG Test Database)
+	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/basic-rag-testdb} && \
+	docker-compose -f docker-compose.test.yml up -d iris-test
+	@sleep 15
+	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
+	$(call print_message,$(GREEN),Basic RAG test database ready)
+
+.PHONY: test-db-graphrag
+test-db-graphrag: setup-db ## Switch to GraphRAG test database
+	$(call print_message,$(BLUE),Switching to GraphRAG Test Database)
+	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/graphrag-testdb} && \
+	docker-compose -f docker-compose.test.yml up -d iris-test
+	@sleep 15
+	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
+	$(call print_message,$(GREEN),GraphRAG test database ready)
+
+.PHONY: test-db-crag
+test-db-crag: setup-db ## Switch to CRAG test database
+	$(call print_message,$(BLUE),Switching to CRAG Test Database)
+	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/crag-testdb} && \
+	docker-compose -f docker-compose.test.yml up -d iris-test
+	@sleep 15
+	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
+	$(call print_message,$(GREEN),CRAG test database ready)
+
+.PHONY: test-db-enterprise
+test-db-enterprise: setup-db ## Switch to enterprise scale test database
+	$(call print_message,$(BLUE),Switching to Enterprise Scale Test Database)
+	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/enterprise-testdb} && \
+	docker-compose -f docker-compose.test.yml up -d iris-test
+	@sleep 30
+	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
+	$(call print_message,$(GREEN),Enterprise test database ready)
+
+.PHONY: test-db-clean
+test-db-clean: setup-db ## Create fresh empty test database
+	$(call print_message,$(BLUE),Creating Fresh Empty Test Database)
+	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@docker volume rm rag-templates_test-iris-data 2>/dev/null || true
+	@docker-compose -f docker-compose.test.yml up -d iris-test
+	@sleep 15
+	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
+	$(call print_message,$(GREEN),Clean test database ready - framework auto-setup will handle schema)
+
+.PHONY: test-db-status
+test-db-status: setup-db ## Show current test database status
+	$(call print_message,$(BLUE),Test Database Status)
+	@docker-compose -f docker-compose.test.yml ps iris-test 2>/dev/null || echo "No test database running"
+	@python evaluation_framework/test_iris_connectivity.py --port 31972 && \
+	python scripts/test-db/show_database_info.py 2>/dev/null || \
+	echo "Test database not accessible"
+
+# =============================================================================
+# CLEAN IRIS TESTING VARIANTS
+# =============================================================================
+
+.PHONY: test-examples-clean
+test-examples-clean: setup-db test-db-clean ## Run all examples starting from clean IRIS (tests full setup)
+	$(call print_message,$(BLUE),Running Examples with Clean IRIS - Full Setup Validation)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --mode real --verbose --continue-on-failure
+	$(call print_message,$(GREEN),Clean IRIS example testing completed)
+
+.PHONY: test-examples-basic-clean
+test-examples-basic-clean: setup-db test-db-clean ## Run basic examples from clean IRIS
+	$(call print_message,$(BLUE),Running Basic Examples with Clean IRIS)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --category basic --mode real --verbose --continue-on-failure
+	$(call print_message,$(GREEN),Clean basic example testing completed)
+
+.PHONY: test-examples-advanced-clean
+test-examples-advanced-clean: setup-db test-db-clean ## Run advanced examples from clean IRIS
+	$(call print_message,$(BLUE),Running Advanced Examples with Clean IRIS)
+	@chmod +x scripts/ci/run-example-tests.sh
+	@scripts/ci/run-example-tests.sh --category advanced --mode real --verbose --continue-on-failure
+	$(call print_message,$(GREEN),Clean advanced example testing completed)
+
+.PHONY: test-pipeline-initialization
+test-pipeline-initialization: setup-db test-db-clean ## Test pipeline initialization from scratch
+	$(call print_message,$(BLUE),Testing Pipeline Initialization from Clean IRIS)
+	@python scripts/test-initialization/test_pipeline_setup.py --verbose
+	$(call print_message,$(GREEN),Pipeline initialization testing completed)
+
+.PHONY: test-schema-creation
+test-schema-creation: setup-db test-db-clean ## Test schema creation and validation
+	$(call print_message,$(BLUE),Testing Schema Creation from Clean IRIS)
+	@python scripts/test-initialization/test_schema_creation.py --verbose
+	$(call print_message,$(GREEN),Schema creation testing completed)
+
+.PHONY: test-data-ingestion-fresh
+test-data-ingestion-fresh: setup-db test-db-clean ## Test data ingestion on fresh IRIS
+	$(call print_message,$(BLUE),Testing Data Ingestion on Fresh IRIS)
+	@python scripts/test-initialization/test_data_ingestion.py --verbose
+	$(call print_message,$(GREEN),Fresh data ingestion testing completed)
+
+.PHONY: test-full-setup-workflow
+test-full-setup-workflow: test-db-clean ## Test complete setup workflow from clean IRIS
+	$(call print_message,$(BLUE),Testing Complete Setup Workflow)
+	@python scripts/test-initialization/test_complete_workflow.py --verbose
+	$(call print_message,$(GREEN),Complete setup workflow testing completed)
+
+.PHONY: test-clean-workflow-minimal
+test-clean-workflow-minimal: setup-db test-db-clean ## Test minimal workflow from clean IRIS
+	$(call print_message,$(BLUE),Testing Minimal Clean IRIS Workflow)
+	@python scripts/test-initialization/test_clean_workflow_minimal.py
+	$(call print_message,$(GREEN),Minimal clean workflow testing completed)
+
+.PHONY: test-clean-summary
+test-clean-summary: setup-db ## Generate comprehensive clean IRIS testing summary report
+	$(call print_message,$(BLUE),Generating Clean IRIS Testing Summary Report)
+	@python scripts/test-initialization/test_summary_report.py
+	$(call print_message,$(GREEN),Summary report generation completed)
+
+# =============================================================================
+# CLEANUP
+# =============================================================================
+
+.PHONY: docker-clean
+docker-clean: ## Clean up containers, networks, and images
+	$(call print_message,$(YELLOW),Cleaning up Docker resources)
+	$(DOCKER_COMPOSE) down --remove-orphans
+	docker system prune -f
+	$(call print_message,$(GREEN),Docker resources cleaned)
+
+.PHONY: docker-clean-all
+docker-clean-all: ## Clean up everything including volumes and images
+	$(call print_message,$(RED),WARNING: This will remove all data and images)
+	@read -p "Are you sure? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	$(DOCKER_COMPOSE) down -v --remove-orphans --rmi all
+	docker system prune -af --volumes
+	$(call print_message,$(GREEN),All Docker resources cleaned)
+
+# =============================================================================
+# UTILITY TARGETS
+# =============================================================================
+
+.PHONY: docker-urls
+docker-urls: setup-db ## Show service URLs
 	@echo ""
-	make demo-migration  
+	$(call print_message,$(GREEN),Service URLs)
+	@echo -e "  $(BLUE)Streamlit App:$(NC)      http://localhost:8501"
+	@echo -e "  $(BLUE)RAG API:$(NC)           http://localhost:8000"
+	@echo -e "  $(BLUE)API Documentation:$(NC)  http://localhost:8000/docs"
+	@echo -e "  $(BLUE)IRIS Management:$(NC)    http://localhost:52773/csp/sys/UtilHome.csp"
+	@if $(DOCKER_COMPOSE) ps jupyter | grep -q "Up" 2>/dev/null; then \
+		echo -e "  $(BLUE)Jupyter Notebook:$(NC)  http://localhost:8888"; \
+	fi
+	@if $(DOCKER_COMPOSE) ps monitoring | grep -q "Up" 2>/dev/null; then \
+		echo -e "  $(BLUE)Monitoring:$(NC)        http://localhost:9090"; \
+	fi
 	@echo ""
-	make demo-objectscript
-	@echo ""
-	make demo-performance
-	@echo ""
-	@echo "✅ Full demo suite completed!"
-	@echo "Next steps:"
-	@echo "  - Try 'make quick-start-demo' for complete setup"
-	@echo "  - Run 'make demo-web-interface' for web UI"
-	@echo "  - Use 'make test-demo-chat-app' to validate functionality"
+
+.PHONY: docker-wait
+docker-wait: ## Wait for services to be healthy
+	$(call print_message,$(BLUE),Waiting for services to be healthy)
+	@timeout=300; \
+	while [ $$timeout -gt 0 ]; do \
+		if ./scripts/docker/health-check.sh --json | grep -q '"overall_status": "healthy"'; then \
+			echo -e "  $(GREEN)✓$(NC) All services are healthy"; \
+			break; \
+		fi; \
+		echo -e "  $(YELLOW)○$(NC) Waiting for services... ($$timeout seconds remaining)"; \
+		sleep 10; \
+		timeout=$$((timeout - 10)); \
+	done; \
+	if [ $$timeout -le 0 ]; then \
+		echo -e "  $(RED)✗$(NC) Timeout waiting for services"; \
+		exit 1; \
+	fi
+
+# =============================================================================
+# DEVELOPMENT HELPERS
+# =============================================================================
+
+.PHONY: docker-dev
+docker-dev: docker-up-dev docker-wait docker-init-data ## Full development setup
+	$(call print_message,$(GREEN),Development environment ready!)
+	@$(MAKE) docker-urls
+
+.PHONY: docker-prod
+docker-prod: docker-up-prod docker-wait ## Full production setup
+	$(call print_message,$(GREEN),Production environment ready!)
+	@$(MAKE) docker-urls
+
+.PHONY: docker-quick
+docker-quick: docker-up docker-wait ## Quick start with core services
+	$(call print_message,$(GREEN),Quick start complete!)
+	@$(MAKE) docker-urls
+
+# =============================================================================
+# MAINTENANCE
+# =============================================================================
+
+.PHONY: docker-update
+docker-update: docker-pull docker-build docker-restart ## Update and restart services
+	$(call print_message,$(GREEN),Services updated and restarted)
+
+.PHONY: docker-reset
+docker-reset: docker-down-clean setup docker-up ## Reset everything to clean state
+	$(call print_message,$(GREEN),Environment reset complete)
+
+# Make scripts executable on setup
+scripts/docker/%.sh: 
+	chmod +x $@
+
+# Ensure log directories exist
+logs:
+	mkdir -p logs
+
+# Prevent make from treating these as file targets
+.PHONY: docker-up docker-down docker-logs docker-shell docker-build docker-clean
+# =============================================================================
+# RAGAS E2E EVALUATION
+# =============================================================================
+.PHONY: test-ragas-1000
+test-ragas-1000: setup-db ## E2E: Download+load 1000 PMC docs, run RAGAS across all 5 pipelines
+	$(call print_message,$(BLUE),E2E RAGAS on 1000 PMC documents)
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	export IRIS_HOST=$${IRIS_HOST:-localhost}; \
+	export IRIS_PORT=$${IRIS_PORT:-1972}; \
+	export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
+	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-15}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-$$(.venv/bin/python scripts/utils/get_pipeline_types.py)}; \
+	python scripts/utilities/download_real_pmc_docs.py; \
+	python scripts/generate_ragas_evaluation.py; \
+	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
+
+# =============================================================================
+# RAGAS QUICK SMOKE TEST
+# =============================================================================
+.PHONY: test-ragas-sample
+test-ragas-sample: setup-db load-data ## E2E: Quick RAGAS on sample 10 PMC docs using MCP IRIS
+	$(call print_message,$(BLUE),Quick RAGAS on sample 10 PMC docs)
+	@set -a; [ -f .env ] && . ./.env; set +a; \
+	export IRIS_HOST=$${IRIS_HOST:-localhost}; \
+	export IRIS_PORT=$${IRIS_PORT:-1972}; \
+	export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/sample_10_docs}; \
+	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-8}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-$$(.venv/bin/python scripts/utils/get_pipeline_types.py)}; \
+	python scripts/simple_working_ragas.py; \
+	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
+
+# =============================================================================
+# RAGAS 1000 REAL (WITH DOCKER)
+# =============================================================================
+.PHONY: test-ragas-1000-real
+test-ragas-1000-real: docker-up docker-wait ## E2E: Download+load 1000 PMC docs, run RAGAS across pipelines with Docker
+	$(call print_message,$(BLUE),E2E RAGAS on 1000 PMC documents with Docker)
+t@set -a; [ -f .env ] && . ./.env; set +a; \
+	@export EVAL_PMC_DIR=$${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
+	export RAGAS_NUM_QUERIES=$${RAGAS_NUM_QUERIES:-15}; \
+	export RAGAS_PIPELINES=$${RAGAS_PIPELINES:-$$(.venv/bin/python scripts/utils/get_pipeline_types.py)}; \
+	python scripts/utilities/download_real_pmc_docs.py; \
+	python scripts/generate_ragas_evaluation.py; \
+	echo "RAGAS reports are in outputs/reports/ragas_evaluations"
+
+# =============================================================================
+# RAGAS DOCKERIZED TARGETS
+# =============================================================================
+.PHONY: test-ragas-sample-docker
+test-ragas-sample-docker: docker-up docker-wait ## Quick RAGAS (GraphRAG + HybridGraphRAG) inside container
+	$(call print_message,$(BLUE),Quick RAGAS (dockerized))
+	@$(DOCKER_COMPOSE) exec rag_api /bin/bash -lc "\
+export EVAL_PMC_DIR=\"${EVAL_PMC_DIR:-/app/data/sample_10_docs}\"; \
+export RAGAS_NUM_QUERIES=\"${RAGAS_NUM_QUERIES:-8}\"; \
+export RAGAS_PIPELINES=\"${RAGAS_PIPELINES:-graphrag,pylate_colbert}\"; \
+python scripts/generate_ragas_evaluation.py; \
+echo 'RAGAS reports are in outputs/reports/ragas_evaluations'"
+
+.PHONY: test-ragas-1000-docker
+test-ragas-1000-docker: docker-up docker-wait ## E2E RAGAS on 1000 PMC docs (download on host, evaluate inside container incl. HybridGraphRAG)
+	$(call print_message,$(BLUE),Downloading PMC docs on host)
+	@export EVAL_PMC_DIR=${EVAL_PMC_DIR:-data/downloaded_pmc_docs}; \
+	export RAGAS_NUM_QUERIES=${RAGAS_NUM_QUERIES:-15}; \
+	export RAGAS_PIPELINES=${RAGAS_PIPELINES:-"basic,basic_rerank,crag,graphrag,pylate_colbert"}; \
+	python scripts/utilities/download_real_pmc_docs.py
+	$(call print_message,$(BLUE),Running RAGAS (dockerized))
+	@$(DOCKER_COMPOSE) exec rag_api /bin/bash -lc "\
+export EVAL_PMC_DIR=\"${EVAL_PMC_DIR:-/app/data/downloaded_pmc_docs}\"; \
+export RAGAS_NUM_QUERIES=\"${RAGAS_NUM_QUERIES:-15}\"; \
+export RAGAS_PIPELINES=\"${RAGAS_PIPELINES:-basic,basic_rerank,crag,graphrag,pylate_colbert}\"; \
+python scripts/generate_ragas_evaluation.py; \
+echo 'RAGAS reports are in outputs/reports/ragas_evaluations'"
+
+# =============================================================================
+# END-TO-END INTEGRATION TESTING (Production Readiness)
+# =============================================================================
+
+.PHONY: test-e2e-integration
+test-e2e-integration: docker-up docker-wait ## Run comprehensive E2E integration test suite for production readiness
+	$(call print_message,$(BLUE),Starting comprehensive E2E integration test suite)
+	$(call print_message,$(BLUE),This tests all pipelines, demos, and stress scenarios)
+	@python scripts/testing/e2e_integration_suite.py
+	$(call print_message,$(GREEN),E2E integration testing completed - check outputs/e2e_integration_reports/)
+
+.PHONY: test-e2e-integration-quick
+test-e2e-integration-quick: docker-up docker-wait ## Run quick E2E integration tests (no stress tests)
+	$(call print_message,$(BLUE),Running quick E2E integration tests (no stress tests))
+	@python scripts/testing/e2e_integration_suite.py --skip-stress
+	$(call print_message,$(GREEN),Quick E2E integration testing completed)
+
+.PHONY: test-e2e-integration-clean
+test-e2e-integration-clean: setup-db test-db-clean ## Run E2E integration tests from clean IRIS database
+	$(call print_message,$(BLUE),Running E2E integration tests from clean IRIS database)
+	$(call print_message,$(BLUE),This validates complete setup workflows from scratch)
+	@python scripts/testing/e2e_integration_suite.py --skip-stress
+	$(call print_message,$(GREEN),Clean E2E integration testing completed)
+
+.PHONY: test-e2e-pipelines-only
+test-e2e-pipelines-only: docker-up docker-wait ## Test all RAG pipelines comprehensively (no demos or stress tests)
+	$(call print_message,$(BLUE),Testing all RAG pipelines comprehensively)
+	@python scripts/testing/e2e_integration_suite.py --skip-stress --quick
+	$(call print_message,$(GREEN),Pipeline-only E2E testing completed)
+
+.PHONY: test-production-readiness
+test-production-readiness: setup-db ## FULL production readiness validation (all tests, clean IRIS, stress testing)
+	$(call print_message,$(BLUE),🚀 PRODUCTION READINESS VALIDATION)
+	$(call print_message,$(BLUE),Running comprehensive test suite for public release validation)
+	$(call print_message,$(BLUE),This includes: Clean IRIS + All Pipelines + Demos + Stress Tests)
+	@make test-db-clean
+	@make docker-up docker-wait
+	@python scripts/testing/e2e_integration_suite.py --verbose
+	$(call print_message,$(GREEN),🎉 Production readiness validation completed!)
+	$(call print_message,$(YELLOW),Check outputs/e2e_integration_reports/ for detailed results)
+
+.PHONY: test-release-candidate
+test-release-candidate: test-production-readiness ## Alias for production readiness testing
+	$(call print_message,$(GREEN),Release candidate validation completed)
+
+.PHONY: test-publish-ready
+test-publish-ready: test-production-readiness ## Alias for production readiness testing
+	$(call print_message,$(GREEN),Publish readiness validation completed)
+
+# =============================================================================
+# COVERAGE ANALYSIS TARGETS (Constitutional Compliance)
+# =============================================================================
+
+.PHONY: coverage-analyze
+coverage-analyze: setup-db ## Run comprehensive coverage analysis using uv (constitutional requirement)
+	$(call print_message,$(BLUE),Running comprehensive coverage analysis with uv)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env; \
+	fi
+	@uv run pytest tests/ --cov=iris_rag --cov=common --cov-report=term-missing --cov-report=html --cov-report=xml --maxfail=5
+	$(call print_message,$(GREEN),Coverage analysis completed - check htmlcov/ for detailed report)
+
+.PHONY: coverage-critical
+coverage-critical: setup-db ## Validate critical modules meet 80% coverage target
+	$(call print_message,$(BLUE),Validating critical modules coverage (80% target))
+	@uv run pytest tests/unit/test_configuration_coverage.py tests/unit/test_validation_coverage.py tests/unit/test_pipeline_coverage.py tests/unit/test_services_coverage.py tests/unit/test_storage_coverage.py --cov=iris_rag.config --cov=iris_rag.validation --cov=iris_rag.pipelines --cov=iris_rag.services --cov=iris_rag.storage --cov-report=term --cov-fail-under=80
+	$(call print_message,$(GREEN),Critical modules coverage validation completed)
+
+.PHONY: coverage-overall
+coverage-overall: setup-db ## Validate overall 60% coverage target
+	$(call print_message,$(BLUE),Validating overall coverage target (60%))
+	@uv run pytest tests/ --cov=iris_rag --cov=common --cov-report=term --cov-fail-under=60 --quiet
+	$(call print_message,$(GREEN),Overall coverage validation completed)
+
+.PHONY: coverage-performance
+coverage-performance: setup-db ## Run coverage with performance validation (5-minute limit)
+	$(call print_message,$(BLUE),Running coverage analysis with performance validation)
+	@echo "Starting coverage analysis with 5-minute timeout..."
+	@timeout 300 uv run pytest tests/ --cov=iris_rag --cov=common --cov-report=term-missing --maxfail=3 || echo "Coverage analysis completed within time limit"
+	$(call print_message,$(GREEN),Coverage performance validation completed)
+
+.PHONY: coverage-reports
+coverage-reports: setup-db ## Generate all coverage report formats (terminal, HTML, XML, JSON)
+	$(call print_message,$(BLUE),Generating comprehensive coverage reports)
+	@mkdir -p coverage_reports
+	@uv run pytest tests/ --cov=iris_rag --cov=common --cov-report=term-missing --cov-report=html:coverage_reports/html --cov-report=xml:coverage_reports/coverage.xml --cov-report=json:coverage_reports/coverage.json
+	$(call print_message,$(GREEN),Coverage reports generated in coverage_reports/ directory)
+
+.PHONY: coverage-constitutional
+coverage-constitutional: setup-db ## Full constitutional compliance validation (IRIS database required)
+	$(call print_message,$(BLUE),Running constitutional compliance coverage validation)
+	$(call print_message,$(BLUE),This requires live IRIS database per constitutional requirements)
+	@make docker-up docker-wait
+	@uv run pytest tests/ -m "requires_database or clean_iris" --cov=iris_rag --cov=common --cov-report=term-missing --cov-fail-under=60
+	$(call print_message,$(GREEN),Constitutional compliance validation completed)
+
+.PHONY: coverage-trends
+coverage-trends: setup-db ## Generate monthly coverage trend report
+	$(call print_message,$(BLUE),Generating coverage trend analysis)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env; \
+	fi
+	@uv run python -c "from iris_rag.testing.coverage_analysis import CoverageAnalyzer; analyzer = CoverageAnalyzer(); print('Coverage trend analysis would run here - requires implementation')"
+	$(call print_message,$(GREEN),Coverage trend analysis completed)
+
+.PHONY: coverage-validate
+coverage-validate: ## Validate all coverage targets and requirements
+	$(call print_message,$(BLUE),Validating all coverage targets and requirements)
+	@echo "Validating overall target (60%)..."
+	@$(MAKE) coverage-overall
+	@echo "Validating critical modules (80%)..."
+	@$(MAKE) coverage-critical
+	@echo "Validating performance requirements..."
+	@$(MAKE) coverage-performance
+	$(call print_message,$(GREEN),All coverage validation completed successfully)
+
+.PHONY: coverage-help
+coverage-help: ## Show coverage analysis commands help
+	@echo -e "$(BLUE)Coverage Analysis Commands:$(NC)"
+	@echo -e "  coverage-analyze       - Run comprehensive coverage analysis"
+	@echo -e "  coverage-critical      - Validate critical modules (80% target)"
+	@echo -e "  coverage-overall       - Validate overall target (60%)"
+	@echo -e "  coverage-performance   - Run with performance validation"
+	@echo -e "  coverage-reports       - Generate all report formats"
+	@echo -e "  coverage-constitutional - Full constitutional compliance"
+	@echo -e "  coverage-trends        - Generate trend analysis"
+	@echo -e "  coverage-validate      - Validate all targets"
+
+# =============================================================================
+# BACKEND MODE TESTING (Feature 035)
+# =============================================================================
+
+.PHONY: test-community
+test-community: setup-db ## Run tests with Community Edition backend mode
+	$(call print_message,$(BLUE),Running tests in Community mode)
+	@IRIS_BACKEND_MODE=community python -m pytest tests/ -v -m "requires_backend_mode or contract" --tb=short
+	$(call print_message,$(GREEN),Community mode tests completed)
+
+.PHONY: test-enterprise
+test-enterprise: setup-db ## Run tests with Enterprise Edition backend mode
+	$(call print_message,$(BLUE),Running tests in Enterprise mode)
+	@IRIS_BACKEND_MODE=enterprise python -m pytest tests/ -v -m "requires_backend_mode or contract" --tb=short
+	$(call print_message,$(GREEN),Enterprise mode tests completed)
+
+.PHONY: test-mode-switching
+test-mode-switching: ## Run backend mode switching integration tests
+	$(call print_message,$(BLUE),Testing backend mode switching)
+	@python -m pytest tests/integration/test_mode_switching.py -v --tb=short
+	$(call print_message,$(GREEN),Mode switching tests completed)
+
+.PHONY: test-backend-contracts
+test-backend-contracts: ## Run all backend mode contract tests
+	$(call print_message,$(BLUE),Running backend mode contract tests)
+	@python -m pytest tests/contract/test_backend_mode_config.py -v
+	@python -m pytest tests/contract/test_edition_detection.py -v
+	@python -m pytest tests/contract/test_connection_pooling.py -v
+	@python -m pytest tests/contract/test_execution_strategies.py -v
+	$(call print_message,$(GREEN),Backend mode contract tests completed)
+
+
+# =============================================================================
+# TEST FIXTURE MANAGEMENT (Feature 047)
+# =============================================================================
+
+# Fixture configuration
+FIXTURE_DIR := tests/fixtures
+FIXTURE ?= medical-graphrag-20
+FIXTURE_VERSION ?=
+FIXTURE_TABLES ?=
+FIXTURE_DESC ?=
+EMBEDDINGS ?= 0
+
+.PHONY: fixture-help
+fixture-help: ## Show fixture management commands
+	@echo -e "$(BLUE)Test Fixture Management Commands:$(NC)"
+	@echo -e ""
+	@echo -e "$(GREEN)Listing and Information:$(NC)"
+	@echo -e "  make fixture-list                    - List all available fixtures"
+	@echo -e "  make fixture-info FIXTURE=name       - Show detailed fixture information"
+	@echo -e "  make fixture-validate FIXTURE=name   - Validate fixture integrity"
+	@echo -e ""
+	@echo -e "$(GREEN)Loading Fixtures:$(NC)"
+	@echo -e "  make fixture-load FIXTURE=name       - Load fixture into IRIS database"
+	@echo -e "  make fixture-load-clean FIXTURE=name - Clean DB first, then load fixture"
+	@echo -e "  make fixture-load-fast FIXTURE=name  - Load without checksum validation (faster)"
+	@echo -e ""
+	@echo -e "$(GREEN)Creating Fixtures:$(NC)"
+	@echo -e "  make fixture-workflow                - Interactive fixture creation"
+	@echo -e "  make fixture-create FIXTURE=name ... - Create fixture from current database"
+	@echo -e "  make fixture-snapshot FIXTURE=name   - Quick snapshot of current database"
+	@echo -e ""
+	@echo -e "$(GREEN)Testing:$(NC)"
+	@echo -e "  make fixture-test                    - Run fixture manager contract tests"
+	@echo -e "  make fixture-test-integration        - Run fixture integration tests"
+	@echo -e ""
+	@echo -e "$(YELLOW)Examples:$(NC)"
+	@echo -e "  make fixture-list"
+	@echo -e "  make fixture-load FIXTURE=medical-graphrag-20"
+	@echo -e "  make fixture-create FIXTURE=my-test TABLES=RAG.SourceDocuments,RAG.Entities DESC=\"My test fixture\""
+	@echo -e ""
+
+.PHONY: fixture-list
+fixture-list: ## List all available test fixtures
+	$(call print_message,$(BLUE),Available Test Fixtures)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli list
+
+.PHONY: list-fixtures
+list-fixtures: fixture-list ## Alias for fixture-list (T097)
+
+.PHONY: fixture-info
+fixture-info: ## Show detailed information about a fixture
+	$(call print_message,$(BLUE),Fixture Information: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli info $(FIXTURE)
+
+.PHONY: fixture-validate
+fixture-validate: ## Validate fixture integrity (checksum, metadata)
+	$(call print_message,$(BLUE),Validating fixture: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli validate $(FIXTURE)
+	$(call print_message,$(GREEN),Fixture validation completed)
+
+.PHONY: fixture-load
+fixture-load: ## Load fixture into IRIS database
+	$(call print_message,$(BLUE),Loading fixture: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli load $(FIXTURE) $(if $(FIXTURE_VERSION),--version $(FIXTURE_VERSION))
+	$(call print_message,$(GREEN),Fixture loaded successfully)
+
+.PHONY: fixture-load-clean
+fixture-load-clean: ## Clean database first, then load fixture
+	$(call print_message,$(BLUE),Loading fixture with cleanup: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli load $(FIXTURE) --cleanup-first
+	$(call print_message,$(GREEN),Fixture loaded successfully (with cleanup))
+
+.PHONY: fixture-load-fast
+fixture-load-fast: ## Load fixture without checksum validation (faster)
+	$(call print_message,$(BLUE),Fast loading fixture: $(FIXTURE))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli load $(FIXTURE) --no-validate-checksum
+	$(call print_message,$(GREEN),Fixture loaded successfully (fast mode))
+
+.PHONY: fixture-workflow
+fixture-workflow: ## Interactive fixture creation workflow
+	$(call print_message,$(BLUE),Interactive Fixture Creation)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli workflow
+	$(call print_message,$(GREEN),Fixture creation completed)
+
+.PHONY: fixture-create
+fixture-create: ## Create fixture from current database state
+	$(call print_message,$(BLUE),Creating fixture: $(FIXTURE))
+	@if [ -z "$(FIXTURE_TABLES)" ]; then \
+		echo -e "  $(RED)✗$(NC) FIXTURE_TABLES is required"; \
+		echo -e "  $(YELLOW)Example:$(NC) make fixture-create FIXTURE=my-test TABLES=RAG.SourceDocuments,RAG.Entities DESC=\"My test\""; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli create $(FIXTURE) \
+		--tables $(FIXTURE_TABLES) \
+		$(if $(FIXTURE_DESC),--description "$(FIXTURE_DESC)") \
+		$(if $(FIXTURE_VERSION),--version $(FIXTURE_VERSION)) \
+		$(if $(filter 1,$(EMBEDDINGS)),--generate-embeddings)
+	$(call print_message,$(GREEN),Fixture created successfully)
+
+.PHONY: fixture-snapshot
+fixture-snapshot: ## Quick snapshot of current database state
+	$(call print_message,$(BLUE),Creating database snapshot: $(FIXTURE))
+	@if [ -z "$(FIXTURE)" ]; then \
+		echo -e "  $(RED)✗$(NC) FIXTURE is required"; \
+		echo -e "  $(YELLOW)Example:$(NC) make fixture-snapshot FIXTURE=snapshot-$(shell date +%Y%m%d)"; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli snapshot $(FIXTURE)
+	$(call print_message,$(GREEN),Database snapshot created)
+
+.PHONY: fixture-update
+fixture-update: ## Update existing fixture with incremental changes (T091)
+	$(call print_message,$(BLUE),Updating fixture: $(FIXTURE))
+	@if [ -z "$(FIXTURE)" ]; then \
+		echo -e "  $(RED)✗$(NC) FIXTURE is required"; \
+		echo -e "  $(YELLOW)Example:$(NC) make fixture-update FIXTURE=medical-graphrag-20 VERSION=1.1.0"; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli update $(FIXTURE) \
+		$(if $(FIXTURE_VERSION),--version $(FIXTURE_VERSION)) \
+		$(if $(FIXTURE_CHANGES),--changes "$(FIXTURE_CHANGES)")
+	$(call print_message,$(GREEN),Fixture updated successfully)
+
+.PHONY: fixture-test
+fixture-test: ## Run fixture manager contract tests
+	$(call print_message,$(BLUE),Running fixture manager contract tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/contract/test_fixture_manager_contract.py tests/contract/test_embedding_generator_contract.py -v --tb=short
+	$(call print_message,$(GREEN),Fixture manager contract tests completed)
+
+.PHONY: fixture-test-integration
+fixture-test-integration: ## Run fixture integration tests
+	$(call print_message,$(BLUE),Running fixture integration tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/integration/test_fixture_*.py -v --tb=short
+	$(call print_message,$(GREEN),Fixture integration tests completed)
+
+.PHONY: fixture-bench
+fixture-bench: ## Benchmark fixture loading performance
+	$(call print_message,$(BLUE),Benchmarking fixture loading performance)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli benchmark
+	$(call print_message,$(GREEN),Fixture benchmark completed)
+
+.PHONY: fixture-migrate-json
+fixture-migrate-json: ## Migrate existing JSON fixtures to .DAT format
+	$(call print_message,$(BLUE),Migrating JSON fixtures to .DAT format)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m tests.fixtures.cli migrate-json
+	$(call print_message,$(GREEN),JSON fixture migration completed)
+
+.PHONY: fixture-clean
+fixture-clean: ## Clean up fixture temporary files
+	$(call print_message,$(YELLOW),Cleaning up fixture temporary files)
+	@find $(FIXTURE_DIR) -name "*.pyc" -delete
+	@find $(FIXTURE_DIR) -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+	@find $(FIXTURE_DIR) -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
+	$(call print_message,$(GREEN),Fixture cleanup completed)

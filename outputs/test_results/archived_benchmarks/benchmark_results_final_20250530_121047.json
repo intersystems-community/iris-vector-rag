@@ -1,0 +1,530 @@
+{
+  "BasicRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.10460130373636882,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 60.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.22252511978149414,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.04539179801940918,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 0.045886993408203125,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      }
+    ]
+  },
+  "HyDE": {
+    "success_rate": 1.0,
+    "avg_response_time": 10.510716517766317,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 60.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 11.014203786849976,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 10.588830947875977,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 9.929114818572998,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 60,
+        "answer": "I could not find enough information to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      }
+    ]
+  },
+  "CRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 0.024814844131469727,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 91.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 0.03682875633239746,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 91,
+        "answer": "I could not find enough information to answer your question based on the available context.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 0.01851487159729004,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 91,
+        "answer": "I could not find enough information to answer your question based on the available context.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 0.01910090446472168,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 91,
+        "answer": "I could not find enough information to answer your question based on the available context.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      }
+    ]
+  },
+  "NodeRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 14.73707095781962,
+    "avg_documents_retrieved": 0.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 85.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 14.656272888183594,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 14.763086080551147,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 14.791853904724121,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 85,
+        "answer": "I could not find enough information from the knowledge graph to answer your question.",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?"
+      }
+    ]
+  },
+  "GraphRAG": {
+    "success_rate": 0,
+    "avg_response_time": 0,
+    "avg_documents_retrieved": 0,
+    "avg_similarity_score": 0,
+    "avg_answer_length": 0,
+    "individual_results": [
+      {
+        "success": false,
+        "response_time": 0.5222642421722412,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "answer": "",
+        "documents": [],
+        "query": "What are the main treatments for diabetes?",
+        "error": "'com.intersystems.jdbc.IRISInputStream' object is not subscriptable"
+      },
+      {
+        "success": false,
+        "response_time": 0.42217016220092773,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "answer": "",
+        "documents": [],
+        "query": "How does cancer affect the immune system?",
+        "error": "'com.intersystems.jdbc.IRISInputStream' object is not subscriptable"
+      },
+      {
+        "success": false,
+        "response_time": 0.41416406631469727,
+        "documents_retrieved": 0,
+        "avg_similarity_score": 0.0,
+        "answer_length": 0,
+        "answer": "",
+        "documents": [],
+        "query": "What are the side effects of chemotherapy?",
+        "error": "'com.intersystems.jdbc.IRISInputStream' object is not subscriptable"
+      }
+    ]
+  },
+  "HybridiFindRAG": {
+    "success_rate": 1.0,
+    "avg_response_time": 7.715233087539673,
+    "avg_documents_retrieved": 6.0,
+    "avg_similarity_score": 0.0,
+    "avg_answer_length": 94.0,
+    "individual_results": [
+      {
+        "success": true,
+        "response_time": 7.6675801277160645,
+        "documents_retrieved": 7,
+        "avg_similarity_score": 0.0,
+        "answer_length": 94,
+        "answer": "Error generating response: 'com.intersystems.jdbc.IRISInputStream' object is not subscriptable",
+        "documents": [
+          {
+            "document_id": "PMC1863422",
+            "title": "PMC1863422",
+            "content": "com.intersystems.jdbc.IRISInputStream@797badd3",
+            "metadata": "",
+            "rrf_score": 0.005409836065573771,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 1,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 1.0
+          },
+          {
+            "document_id": "PMC1044832",
+            "title": "PMC1044832",
+            "content": "com.intersystems.jdbc.IRISInputStream@77be656f",
+            "metadata": "",
+            "rrf_score": 0.00532258064516129,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 2,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.9
+          },
+          {
+            "document_id": "PMC1054882",
+            "title": "PMC1054882",
+            "content": "com.intersystems.jdbc.IRISInputStream@19dc67c2",
+            "metadata": "",
+            "rrf_score": 0.005238095238095239,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 3,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.8
+          },
+          {
+            "document_id": "PMC1059451",
+            "title": "PMC1059451",
+            "content": "com.intersystems.jdbc.IRISInputStream@221af3c0",
+            "metadata": "",
+            "rrf_score": 0.00515625,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 4,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.7
+          },
+          {
+            "document_id": "PMC1064077",
+            "title": "PMC1064077",
+            "content": "com.intersystems.jdbc.IRISInputStream@62bd765",
+            "metadata": "",
+            "rrf_score": 0.005076923076923077,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 5,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.6
+          },
+          {
+            "document_id": "PMC1064082",
+            "title": "PMC1064082",
+            "content": "com.intersystems.jdbc.IRISInputStream@23a5fd2",
+            "metadata": "",
+            "rrf_score": 0.005,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 6,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.5
+          },
+          {
+            "document_id": "PMC1064099",
+            "title": "PMC1064099",
+            "content": "com.intersystems.jdbc.IRISInputStream@78a2da20",
+            "metadata": "",
+            "rrf_score": 0.004925373134328359,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 7,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.3999999999999999
+          }
+        ],
+        "query": "What are the main treatments for diabetes?"
+      },
+      {
+        "success": true,
+        "response_time": 7.855503082275391,
+        "documents_retrieved": 4,
+        "avg_similarity_score": 0.0,
+        "answer_length": 94,
+        "answer": "Error generating response: 'com.intersystems.jdbc.IRISInputStream' object is not subscriptable",
+        "documents": [
+          {
+            "document_id": "PMC1968205",
+            "title": "PMC1968205",
+            "content": "com.intersystems.jdbc.IRISInputStream@dd3b207",
+            "metadata": "",
+            "rrf_score": 0.005409836065573771,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 1,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 1.0
+          },
+          {
+            "document_id": "PMC1064074",
+            "title": "PMC1064074",
+            "content": "com.intersystems.jdbc.IRISInputStream@551bdc27",
+            "metadata": "",
+            "rrf_score": 0.00532258064516129,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 2,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.9
+          },
+          {
+            "document_id": "PMC1064075",
+            "title": "PMC1064075",
+            "content": "com.intersystems.jdbc.IRISInputStream@58fdd99",
+            "metadata": "",
+            "rrf_score": 0.005238095238095239,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 3,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.8
+          },
+          {
+            "document_id": "PMC1064076",
+            "title": "PMC1064076",
+            "content": "com.intersystems.jdbc.IRISInputStream@6b1274d2",
+            "metadata": "",
+            "rrf_score": 0.00515625,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 4,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.7
+          }
+        ],
+        "query": "How does cancer affect the immune system?"
+      },
+      {
+        "success": true,
+        "response_time": 7.6226160526275635,
+        "documents_retrieved": 7,
+        "avg_similarity_score": 0.0,
+        "answer_length": 94,
+        "answer": "Error generating response: 'com.intersystems.jdbc.IRISInputStream' object is not subscriptable",
+        "documents": [
+          {
+            "document_id": "PMC1863422",
+            "title": "PMC1863422",
+            "content": "com.intersystems.jdbc.IRISInputStream@7bc1a03d",
+            "metadata": "",
+            "rrf_score": 0.005409836065573771,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 1,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 1.0
+          },
+          {
+            "document_id": "PMC1044832",
+            "title": "PMC1044832",
+            "content": "com.intersystems.jdbc.IRISInputStream@70b0b186",
+            "metadata": "",
+            "rrf_score": 0.00532258064516129,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 2,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.9
+          },
+          {
+            "document_id": "PMC1054882",
+            "title": "PMC1054882",
+            "content": "com.intersystems.jdbc.IRISInputStream@ba8d91c",
+            "metadata": "",
+            "rrf_score": 0.005238095238095239,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 3,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.8
+          },
+          {
+            "document_id": "PMC1059451",
+            "title": "PMC1059451",
+            "content": "com.intersystems.jdbc.IRISInputStream@7364985f",
+            "metadata": "",
+            "rrf_score": 0.00515625,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 4,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.7
+          },
+          {
+            "document_id": "PMC1064077",
+            "title": "PMC1064077",
+            "content": "com.intersystems.jdbc.IRISInputStream@5d20e46",
+            "metadata": "",
+            "rrf_score": 0.005076923076923077,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 5,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.6
+          },
+          {
+            "document_id": "PMC1064082",
+            "title": "PMC1064082",
+            "content": "com.intersystems.jdbc.IRISInputStream@709ba3fb",
+            "metadata": "",
+            "rrf_score": 0.005,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 6,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.5
+          },
+          {
+            "document_id": "PMC1064099",
+            "title": "PMC1064099",
+            "content": "com.intersystems.jdbc.IRISInputStream@3d36e4cd",
+            "metadata": "",
+            "rrf_score": 0.004925373134328359,
+            "methods_used": [
+              "graph"
+            ],
+            "method_count": 1,
+            "ifind_rank": null,
+            "graph_rank": 7,
+            "vector_rank": null,
+            "similarity_score": null,
+            "relationship_strength": 0.3999999999999999
+          }
+        ],
+        "query": "What are the side effects of chemotherapy?"
+      }
+    ]
+  }
+}

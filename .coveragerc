@@ -1,0 +1,33 @@
+# Coverage configuration for RAG-Templates testing framework
+[coverage:run]
+source = iris_rag,common
+omit =
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */site-packages/*
+    setup.py
+
+[coverage:report]
+precision = 1
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+
+[coverage:html]
+directory = htmlcov
+
+[coverage:critical_modules]
+# Modules requiring 80% coverage threshold (default is 60%)
+patterns =
+    iris_rag/pipelines/
+    iris_rag/storage/
+    iris_rag/validation/

@@ -1,0 +1,104 @@
+{
+  "run_id": "eval_20250913_201957",
+  "total_documents_processed": 10000,
+  "total_questions_evaluated": 2000,
+  "execution_time_seconds": 0.009062051773071289,
+  "final_results": {
+    "BasicRAGPipeline": {
+      "mean_score": 0.7899999999999998,
+      "std_score": 2.220446049250313e-16,
+      "min_score": 0.79,
+      "max_score": 0.79,
+      "confidence_interval": [
+        0.79,
+        0.79
+      ]
+    },
+    "CRAGPipeline": {
+      "mean_score": 0.8100000000000002,
+      "std_score": 1.1102230246251565e-16,
+      "min_score": 0.81,
+      "max_score": 0.81,
+      "confidence_interval": [
+        0.81,
+        0.81
+      ]
+    },
+    "GraphRAGPipeline": {
+      "mean_score": 0.8133333333333332,
+      "std_score": 1.1102230246251565e-16,
+      "min_score": 0.8133333333333334,
+      "max_score": 0.8133333333333334,
+      "confidence_interval": [
+        0.8133333333333334,
+        0.8133333333333334
+      ]
+    },
+    "BasicRAGRerankingPipeline": {
+      "mean_score": 0.7750000000000001,
+      "std_score": 1.1102230246251565e-16,
+      "min_score": 0.775,
+      "max_score": 0.775,
+      "confidence_interval": [
+        0.775,
+        0.775
+      ]
+    }
+  },
+  "statistical_analysis": [
+    {
+      "comparison": "GraphRAGPipeline vs CRAGPipeline",
+      "mean_difference": 0.0033333333333330772,
+      "cohens_d": 30023997515801.0,
+      "significant": "True"
+    },
+    {
+      "comparison": "GraphRAGPipeline vs BasicRAGPipeline",
+      "mean_difference": 0.023333333333333428,
+      "cohens_d": 132921903258446.53,
+      "significant": "True"
+    },
+    {
+      "comparison": "GraphRAGPipeline vs BasicRAGRerankingPipeline",
+      "mean_difference": 0.03833333333333311,
+      "cohens_d": 345275971431736.0,
+      "significant": "True"
+    },
+    {
+      "comparison": "CRAGPipeline vs BasicRAGPipeline",
+      "mean_difference": 0.02000000000000035,
+      "cohens_d": 113933059935812.84,
+      "significant": "True"
+    },
+    {
+      "comparison": "CRAGPipeline vs BasicRAGRerankingPipeline",
+      "mean_difference": 0.03500000000000003,
+      "cohens_d": 315251973915935.0,
+      "significant": "True"
+    },
+    {
+      "comparison": "BasicRAGPipeline vs BasicRAGRerankingPipeline",
+      "mean_difference": 0.01499999999999968,
+      "cohens_d": 85449794951856.31,
+      "significant": "True"
+    }
+  ],
+  "pipeline_rankings": [
+    [
+      "GraphRAGPipeline",
+      0.8133333333333332
+    ],
+    [
+      "CRAGPipeline",
+      0.8100000000000002
+    ],
+    [
+      "BasicRAGPipeline",
+      0.7899999999999998
+    ],
+    [
+      "BasicRAGRerankingPipeline",
+      0.7750000000000001
+    ]
+  ]
+}

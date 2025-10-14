@@ -1,15 +1,23 @@
 """
 IRIS index creation utilities with proper error handling.
 """
+
 import logging
 from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
-def create_index_if_not_exists(cursor, index_name: str, table_name: str, columns: str, index_type: Optional[str] = None):
+
+def create_index_if_not_exists(
+    cursor,
+    index_name: str,
+    table_name: str,
+    columns: str,
+    index_type: Optional[str] = None,
+):
     """
     Create an index if it doesn't already exist.
-    
+
     Args:
         cursor: Database cursor
         index_name: Name of the index
@@ -23,162 +31,165 @@ def create_index_if_not_exists(cursor, index_name: str, table_name: str, columns
         SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES 
         WHERE INDEX_NAME = ? AND TABLE_NAME = ?
         """
-        cursor.execute(check_sql, (index_name, table_name.split('.')[-1]))  # Remove schema prefix for check
+        cursor.execute(
+            check_sql, (index_name, table_name.split(".")[-1])
+        )  # Remove schema prefix for check
         result = cursor.fetchone()
-        
+
         if result and result[0] > 0:
             logger.debug(f"Index {index_name} already exists on {table_name}")
             return True
-            
+
         # Create the index
         if index_type:
-            create_sql = f"CREATE INDEX {index_name} ON {table_name} ({columns}) {index_type}"
+            create_sql = (
+                f"CREATE INDEX {index_name} ON {table_name} ({columns}) {index_type}"
+            )
         else:
             create_sql = f"CREATE INDEX {index_name} ON {table_name} ({columns})"
-            
+
         logger.info(f"Creating index: {create_sql}")
         cursor.execute(create_sql)
         logger.info(f"Successfully created index {index_name}")
         return True
-        
+
     except Exception as e:
         error_str = str(e).lower()
-        
+
         # Check if error is due to index already existing
-        if any(indicator in error_str for indicator in [
-            'already exists', 'duplicate', 'index exists', 'name already used'
-        ]):
+        if any(
+            indicator in error_str
+            for indicator in [
+                "already exists",
+                "duplicate",
+                "index exists",
+                "name already used",
+            ]
+        ):
             logger.debug(f"Index {index_name} already exists (caught exception): {e}")
             return True
         else:
             logger.error(f"Failed to create index {index_name}: {e}")
             return False
 
+
 def create_indexes_from_sql_file(cursor, sql_file_path: str) -> List[str]:
     """
     Create indexes from SQL file with proper error handling.
-    
+
     Args:
         cursor: Database cursor
         sql_file_path: Path to SQL file containing index creation statements
-        
+
     Returns:
         List of failed index creation statements
     """
     failed_statements = []
-    
+
     try:
-        with open(sql_file_path, 'r') as f:
+        with open(sql_file_path, "r") as f:
             sql_content = f.read()
-            
+
         # Split into individual statements
-        statements = [stmt.strip() for stmt in sql_content.split(';') if stmt.strip()]
-        
+        statements = [stmt.strip() for stmt in sql_content.split(";") if stmt.strip()]
+
         for statement in statements:
-            if statement.upper().startswith('CREATE INDEX'):
+            if statement.upper().startswith("CREATE INDEX"):
                 try:
                     # Replace "CREATE INDEX IF NOT EXISTS" with "CREATE INDEX"
-                    statement = statement.replace('IF NOT EXISTS', '').replace('if not exists', '')
-                    
+                    statement = statement.replace("IF NOT EXISTS", "").replace(
+                        "if not exists", ""
+                    )
+
                     logger.debug(f"Executing: {statement}")
                     cursor.execute(statement)
                     logger.debug(f"Successfully executed: {statement[:50]}...")
-                    
+
                 except Exception as e:
                     error_str = str(e).lower()
-                    
+
                     # Check if error is due to index already existing
-                    if any(indicator in error_str for indicator in [
-                        'already exists', 'duplicate', 'index exists', 'name already used'
-                    ]):
-                        logger.debug(f"Index already exists (ignored): {statement[:50]}...")
+                    if any(
+                        indicator in error_str
+                        for indicator in [
+                            "already exists",
+                            "duplicate",
+                            "index exists",
+                            "name already used",
+                        ]
+                    ):
+                        logger.debug(
+                            f"Index already exists (ignored): {statement[:50]}..."
+                        )
                     else:
-                        logger.warning(f"Failed to execute statement: {statement[:50]}... Error: {e}")
+                        logger.warning(
+                            f"Failed to execute statement: {statement[:50]}... Error: {e}"
+                        )
                         failed_statements.append(statement)
             else:
                 # Execute non-index statements normally
-                if statement and not statement.startswith('--'):
+                if statement and not statement.startswith("--"):
                     try:
                         cursor.execute(statement)
                     except Exception as e:
-                        logger.warning(f"Failed to execute statement: {statement[:50]}... Error: {e}")
+                        logger.warning(
+                            f"Failed to execute statement: {statement[:50]}... Error: {e}"
+                        )
                         failed_statements.append(statement)
-                        
+
     except Exception as e:
         logger.error(f"Failed to read SQL file {sql_file_path}: {e}")
         failed_statements.append(f"Failed to read file: {sql_file_path}")
-        
+
     return failed_statements
+
 
 def ensure_schema_indexes(cursor, schema_name: str = "RAG") -> bool:
     """
     Ensure all required indexes exist for the RAG schema.
-    
+
     Args:
         cursor: Database cursor
         schema_name: Name of the schema
-        
+
     Returns:
         True if all indexes were created successfully, False otherwise
     """
     indexes = [
         # SourceDocuments indexes
         ("idx_source_docs_id", f"{schema_name}.SourceDocuments", "doc_id"),
-        ("idx_hnsw_source_embedding", f"{schema_name}.SourceDocuments", "embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
+        (
+            "idx_hnsw_source_embedding",
+            f"{schema_name}.SourceDocuments",
+            "embedding",
+            "AS HNSW(M=16, efConstruction=200, Distance='COSINE')",
+        ),
         ("idx_source_docs_created", f"{schema_name}.SourceDocuments", "created_at"),
-        
         # DocumentChunks indexes
         ("idx_chunks_doc_id", f"{schema_name}.DocumentChunks", "doc_id"),
         ("idx_chunks_type", f"{schema_name}.DocumentChunks", "chunk_type"),
-        ("idx_hnsw_chunk_embedding", f"{schema_name}.DocumentChunks", "chunk_embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
-        
-        # Entities indexes
-        ("idx_entities_id", f"{schema_name}.Entities", "entity_id"),
-        ("idx_entities_name", f"{schema_name}.Entities", "entity_name"),
-        ("idx_entities_type", f"{schema_name}.Entities", "entity_type"),
-        ("idx_entities_source_doc", f"{schema_name}.Entities", "source_doc_id"),
-        ("idx_hnsw_entity_embedding", f"{schema_name}.Entities", "embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
-        ("idx_entities_created", f"{schema_name}.Entities", "created_at"),
-        ("idx_entities_type_name", f"{schema_name}.Entities", "entity_type, entity_name"),
-        
-        # Relationships indexes
-        ("idx_relationships_id", f"{schema_name}.Relationships", "relationship_id"),
-        ("idx_relationships_source", f"{schema_name}.Relationships", "source_entity_id"),
-        ("idx_relationships_target", f"{schema_name}.Relationships", "target_entity_id"),
-        ("idx_relationships_type", f"{schema_name}.Relationships", "relationship_type"),
-        ("idx_relationships_entities", f"{schema_name}.Relationships", "source_entity_id, target_entity_id"),
-        ("idx_relationships_created", f"{schema_name}.Relationships", "created_at"),
-        ("idx_relationships_type_strength", f"{schema_name}.Relationships", "relationship_type, strength"),
-        
-        # KnowledgeGraphNodes indexes
-        ("idx_kg_nodes_id", f"{schema_name}.KnowledgeGraphNodes", "node_id"),
-        ("idx_kg_nodes_type", f"{schema_name}.KnowledgeGraphNodes", "node_type"),
-        ("idx_hnsw_kg_node_embedding", f"{schema_name}.KnowledgeGraphNodes", "embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
-        
-        # KnowledgeGraphEdges indexes
-        ("idx_kg_edges_id", f"{schema_name}.KnowledgeGraphEdges", "edge_id"),
-        ("idx_kg_edges_source", f"{schema_name}.KnowledgeGraphEdges", "source_node_id"),
-        ("idx_kg_edges_target", f"{schema_name}.KnowledgeGraphEdges", "target_node_id"),
-        ("idx_kg_edges_type", f"{schema_name}.KnowledgeGraphEdges", "edge_type"),
-        
-        # DocumentTokenEmbeddings indexes
-        ("idx_token_embeddings_doc", f"{schema_name}.DocumentTokenEmbeddings", "doc_id"),
-        ("idx_token_embeddings_token", f"{schema_name}.DocumentTokenEmbeddings", "token_index"),
-        ("idx_hnsw_token_embedding", f"{schema_name}.DocumentTokenEmbeddings", "token_embedding", "AS HNSW(M=16, efConstruction=200, Distance='COSINE')"),
+        (
+            "idx_hnsw_chunk_embedding",
+            f"{schema_name}.DocumentChunks",
+            "chunk_embedding",
+            "AS HNSW(M=16, efConstruction=200, Distance='COSINE')",
+        ),
     ]
-    
+
     success_count = 0
     total_count = len(indexes)
-    
+
     for index_spec in indexes:
         if len(index_spec) == 3:
             index_name, table_name, columns = index_spec
             index_type = None
         else:
             index_name, table_name, columns, index_type = index_spec
-            
-        if create_index_if_not_exists(cursor, index_name, table_name, columns, index_type):
+
+        if create_index_if_not_exists(
+            cursor, index_name, table_name, columns, index_type
+        ):
             success_count += 1
-    
+
     logger.info(f"Successfully created/verified {success_count}/{total_count} indexes")
     return success_count == total_count

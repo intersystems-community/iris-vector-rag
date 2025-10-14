@@ -1,0 +1,560 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  PYTHON_DEFAULT_VERSION: "3.10"
+  POETRY_VERSION: "1.6.1"
+
+jobs:
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+          
+      - name: Cache Poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-${{ runner.os }}-${{ env.POETRY_VERSION }}
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          
+      - name: Install dependencies
+        run: |
+          poetry install --with dev
+          
+      - name: Run black formatting check
+        run: poetry run black --check --diff .
+        
+      - name: Run isort import sorting check
+        run: poetry run isort --check-only --diff .
+        
+      - name: Run flake8 linting
+        run: poetry run flake8 .
+        
+      - name: Run mypy type checking
+        run: poetry run mypy .
+        
+      - name: Run bandit security linting
+        run: poetry run bandit -r . -x tests/
+        
+      - name: Run safety vulnerability check
+        run: poetry run safety check
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          
+      - name: Cache Poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-${{ runner.os }}-${{ env.POETRY_VERSION }}
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,test
+          
+      - name: Run unit tests
+        run: |
+          poetry run pytest tests/unit/ \
+            --cov=src \
+            --cov=iris_rag \
+            --cov=mem0_integration \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junit-xml=test-results-unit.xml \
+            -v
+            
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        if: matrix.python-version == env.PYTHON_DEFAULT_VERSION
+        with:
+          file: ./coverage.xml
+          flags: unit-tests
+          name: codecov-umbrella
+          
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-unit-${{ matrix.python-version }}
+          path: test-results-unit.xml
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: unit-tests
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+          
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+          
+      - name: Cache Poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-${{ runner.os }}-${{ env.POETRY_VERSION }}
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,test
+          
+      - name: Set up test environment
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+        run: |
+          poetry run python scripts/ci/setup-test-db.py
+          
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+        run: |
+          poetry run pytest tests/integration/ \
+            --cov=src \
+            --cov=iris_rag \
+            --cov=mem0_integration \
+            --cov-append \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --junit-xml=test-results-integration.xml \
+            -v
+            
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: integration-tests
+          name: codecov-umbrella
+          
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-integration
+          path: test-results-integration.xml
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: integration-tests
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+          
+      - name: Cache Poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-${{ runner.os }}-${{ env.POETRY_VERSION }}
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,test
+          
+      - name: Start test services
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          sleep 30
+          
+      - name: Run E2E tests
+        run: |
+          poetry run pytest tests/e2e/ \
+            --junit-xml=test-results-e2e.xml \
+            -v
+            
+      - name: Stop test services
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down
+          
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-e2e
+          path: test-results-e2e.xml
+
+  example-tests:
+    name: Example Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: unit-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+
+      - name: Cache Poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-${{ runner.os }}-${{ env.POETRY_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,test
+
+      - name: Start IRIS database for example tests
+        run: |
+          docker-compose -f docker-compose.licensed.yml up -d iris
+          sleep 30
+          python evaluation_framework/test_iris_connectivity.py
+
+      - name: Run example tests (live database)
+        run: |
+          chmod +x scripts/ci/run-example-tests.sh
+          poetry run scripts/ci/run-example-tests.sh --mode real --verbose --continue-on-failure
+        env:
+          IRIS_HOST: localhost
+          IRIS_PORT: 21972
+          IRIS_USERNAME: _SYSTEM
+          IRIS_PASSWORD: SYS
+
+      - name: Upload example test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: example-test-results
+          path: test-results/examples/
+
+      - name: Comment on PR with example test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = 'test-results/examples/ci_summary.txt';
+
+            if (fs.existsSync(path)) {
+              const summary = fs.readFileSync(path, 'utf8');
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🧪 Example Test Results\n\n\`\`\`\n${summary}\n\`\`\``
+              });
+            }
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: unit-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+          
+      - name: Cache Poetry
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-${{ runner.os }}-${{ env.POETRY_VERSION }}
+          
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          
+      - name: Install dependencies
+        run: |
+          poetry install --with dev,test,benchmark
+          
+      - name: Run performance benchmarks
+        run: |
+          poetry run python scripts/ci/run-benchmarks.py
+          
+      - name: Compare with baseline
+        run: |
+          poetry run python scripts/ci/compare-performance.py
+          
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: benchmarks/results/
+
+  build-and-test-docker:
+    name: Build and Test Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build Docker image
+        run: |
+          docker build -t rag-templates:test .
+          
+      - name: Test Docker image
+        run: |
+          docker run --rm rag-templates:test python -c "import iris_rag; print('Import successful')"
+          
+      - name: Run container tests
+        run: |
+          docker-compose -f docker-compose.test.yml run --rm app pytest tests/unit/ -v
+
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+          
+      - name: Install coverage tools
+        run: |
+          pip install coverage codecov
+          
+      - name: Combine coverage reports
+        run: |
+          coverage combine
+          coverage report --fail-under=80
+          coverage html
+          
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [unit-tests, integration-tests, example-tests, build-and-test-docker, security-scan]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment"
+          # Add actual deployment steps here
+          
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging"
+          # Add smoke test commands here
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [unit-tests, integration-tests, e2e-tests, example-tests, build-and-test-docker, security-scan, performance-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment"
+          # Add actual deployment steps here
+          
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against production"
+          # Add smoke test commands here
+          
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "Production deployment successful"
+          # Add notification logic here

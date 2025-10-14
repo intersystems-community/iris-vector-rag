@@ -1,741 +1,1059 @@
-# tests/conftest.py
-# Common test fixtures for RAG template tests.
-# Integrated with the new test mode framework for seamless mock control.
+"""Global pytest configuration and fixtures for the RAG templates framework.
 
-import pytest
-import numpy as np
-from typing import Dict, List, Any, Callable, Optional
+This module contains shared pytest fixtures and configuration that are used
+across all test modules. It provides common setup and teardown functionality,
+test data, and mock objects.
+
+Note: pytest-randomly has been disabled due to incompatibility with thinc/numpy
+random seeding (ValueError: Seed must be between 0 and 2**32 - 1).
+"""
+
+import asyncio
 import os
 import sys
-import json
-import logging
-from dotenv import load_dotenv
+import tempfile
+from pathlib import Path
+from typing import Any, AsyncGenerator, Dict, Generator
+from unittest.mock import AsyncMock, Mock
 
+import pytest
+import pytest_asyncio
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+# Load environment variables from .env file
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG, # Changed from INFO to DEBUG
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Add repository root to Python path for imports
+repo_root = Path(__file__).parent.parent
+if str(repo_root) not in sys.path:
+    sys.path.insert(0, str(repo_root))
 
-# Make sure the project root is in the path
-sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+# Import framework modules
+from iris_rag.config.manager import ConfigurationManager
 
-# Import test mode framework for integration
-try:
-    from tests.test_modes import MockController, TestMode
-    from tests.conftest_test_modes import configure_test_mode
-    TEST_MODE_FRAMEWORK_AVAILABLE = True
-    logger.info("✅ Test mode framework integration enabled")
-except ImportError as e:
-    TEST_MODE_FRAMEWORK_AVAILABLE = False
-    logger.warning(f"⚠️ Test mode framework not available: {e}")
+# Import pytest plugin for .DAT fixture loading (Feature 047: T083)
+from tests.fixtures import pytest_plugin
+from tests.fixtures.pytest_plugin import dat_fixture_loader, fixture_metadata
 
-from common.utils import Document
-from common.utils import get_iris_connector, get_embedding_func, get_llm_func
-from common.iris_connector import get_iris_connection
+# Coverage testing imports
+import coverage
+from datetime import datetime
+import subprocess
+import sys
 
-# Import mock classes
-from tests.mocks.db import MockIRISConnector, MockIRISCursor
-from tests.mocks.models import (
-    mock_embedding_func,
-    mock_llm_func,
-    mock_colbert_doc_encoder,
-    mock_colbert_query_encoder
-)
 
-# Import real data fixtures
-from tests.fixtures.real_data import (
-    real_iris_available,
-    real_data_available,
-    use_real_data,
-    iris_connection
-)
+# Removed custom event_loop fixture to avoid deprecation warning
+# pytest-asyncio will handle event loop management automatically
 
-# --- Test Mode Integration ---
 
-@pytest.fixture(scope="session", autouse=True)
-def test_mode_integration():
-    """
-    Auto-configure test mode integration.
-    This fixture runs automatically and sets up the test mode framework.
-    Only auto-detects mode if not explicitly set by tests.
-    """
-    if TEST_MODE_FRAMEWORK_AVAILABLE:
-        # Check if mode is already explicitly set by environment or tests
-        explicit_mode = os.environ.get("RAG_TEST_MODE")
-        if not explicit_mode:
-            # Only auto-detect if not explicitly set
-            current_mode = MockController.get_test_mode()
-        else:
-            # Use explicitly set mode
-            try:
-                current_mode = TestMode(explicit_mode)
-                MockController.set_test_mode(current_mode)
-            except ValueError:
-                current_mode = MockController.get_test_mode()
-        
-        logger.info(f"🧪 Test Mode: {current_mode.value.upper()}")
-        logger.info(f"🎭 Mocks Disabled: {MockController.are_mocks_disabled()}")
-        logger.info(f"🗄️  Real Database Required: {MockController.require_real_database()}")
-        logger.info(f"📊 Real Data Required: {MockController.require_real_data()}")
-        
-        # Set environment variables for other modules
-        os.environ["RAG_TEST_MODE"] = current_mode.value
-        os.environ["RAG_MOCKS_DISABLED"] = str(MockController.are_mocks_disabled())
-    else:
-        logger.info("🧪 Test Mode: LEGACY (test mode framework not available)")
-    
-    yield
-
-# --- Fixtures for Real Dependencies (for e2e metrics tests) ---
-
-# --- Updated Real Connection Fixture ---
-
+# Coverage Testing Fixtures
 @pytest.fixture(scope="session")
-def iris_connection_real():
-    """
-    Provides a real connection to the running IRIS Docker container.
-    Attempts connection using environment variables.
-    Manages connection setup and teardown.
-    
-    Note: This fixture exists for backward compatibility. New tests should
-    use the iris_connection fixture with the use_real_data flag.
-    """
-    print("\nFixture: Attempting to establish real IRIS connection...")
-    
-    # Use our new connection function
-    conn = get_iris_connection()
-    
-    if conn:
-        print("Fixture: Real IRIS connection established.")
-        yield conn
+def coverage_instance():
+    """Create a coverage instance for test coverage measurement."""
+    cov = coverage.Coverage(
+        source=["iris_rag", "common"],
+        omit=[
+            "*/tests/*",
+            "*/test_*",
+            "*/__pycache__/*",
+            "*/venv/*",
+            "*/.venv/*",
+        ],
+        config_file=True
+    )
+    cov.start()
+    yield cov
+    cov.stop()
+    cov.save()
+
+
+@pytest.fixture
+def coverage_context():
+    """Provide context for coverage measurement in individual tests."""
+    return {
+        "start_time": datetime.now(),
+        "module_name": None,
+        "test_name": None,
+    }
+
+
+@pytest.fixture
+def iris_database_config():
+    """IRIS database configuration for coverage testing per constitutional requirements."""
+    # Use port discovery to find available IRIS instance
+    iris_ports = [11972, 21972, 1972]  # Default, Licensed, System
+
+    for port in iris_ports:
         try:
-            print("\nFixture: Closing real IRIS connection.")
-            conn.close()
-        except Exception as e:
-            print(f"Fixture: Error closing IRIS connection - {e}")
-    else:
-        print("Fixture: Failed to establish real IRIS connection. Yielding None.")
-        # Yield None to allow tests to proceed and potentially be skipped
-        yield None
+            # Test connection using subprocess to avoid import issues
+            result = subprocess.run([
+                sys.executable, "-c",
+                f"""
+import sqlalchemy_iris
+from sqlalchemy import create_engine, text
+try:
+    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
+    with engine.connect() as conn:
+        conn.execute(text('SELECT 1'))
+    print('SUCCESS')
+except Exception:
+    print('FAILED')
+"""
+            ], capture_output=True, text=True, timeout=5)
+
+            if "SUCCESS" in result.stdout:
+                return {
+                    "host": "localhost",
+                    "port": port,
+                    "username": "_SYSTEM",
+                    "password": "SYS",
+                    "namespace": "USER",
+                    "connection_string": f"iris://_SYSTEM:SYS@localhost:{port}/USER"
+                }
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            continue
+
+    # No IRIS instance found, return mock config for unit tests
+    return {
+        "host": "localhost",
+        "port": 1972,
+        "username": "_SYSTEM",
+        "password": "SYS",
+        "namespace": "USER",
+        "connection_string": "iris://_SYSTEM:SYS@localhost:1972/USER",
+        "mock": True
+    }
 
 
-@pytest.fixture(scope="session")
-def embedding_model_fixture():
-    """
-    Loads and provides the actual embedding function.
-    """
-    print("\nFixture: Loading real embedding model function...")
-    embed_func = get_embedding_func()
-    # The get_embedding_func itself handles model loading and returns a callable.
-    # It also prints success/failure messages.
-    yield embed_func
-
-@pytest.fixture(scope="session")
-def llm_client_fixture():
-    """
-    Initializes and provides the actual LLM function.
-    """
-    print("\nFixture: Initializing real LLM client function...")
-    llm_func = get_llm_func()
-    # The get_llm_func itself handles client initialization and returns a callable.
-    # It also prints success/failure messages.
-    yield llm_func
-
-@pytest.fixture(scope="session")
-def colbert_query_encoder(): # Renamed from colbert_query_encoder_fixture
-    """
-    Provides a function that generates token-level embeddings for ColBERT queries,
-    using the configured ColBERT document encoder model.
-    """
-    print("\nFixture: Initializing ColBERT query encoder function...")
-    
-    from transformers import AutoTokenizer, AutoModel
-    import torch
-    from common.utils import get_config_value # Assuming get_config_value is accessible
-
-    model_name = get_config_value("colbert.document_encoder_model", "fjmgAI/reason-colBERT-150M-GTE-ModernColBERT")
-    print(f"ColBERT Query Encoder Fixture: Loading model {model_name}")
-    
-    # Cache model and tokenizer at fixture scope
-    try:
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModel.from_pretrained(model_name, trust_remote_code=True)
-        model.eval()
-        print(f"ColBERT Query Encoder Fixture: Model {model_name} loaded successfully.")
-    except Exception as e:
-        print(f"FATAL: Could not load ColBERT model {model_name} in fixture: {e}")
-        # Fallback to a dummy encoder if model loading fails, so tests can still run and report errors
-        def dummy_encoder(text):
-            print(f"ERROR: Using dummy ColBERT query encoder due to model load failure for {model_name}.")
-            tokens = text.split()[:5] # simple split
-            return [[0.0] * 768 for _ in tokens] # Return 768-dim zero vectors
-        yield dummy_encoder
+@pytest.fixture
+def iris_test_session(iris_database_config):
+    """Create IRIS database session for testing with constitutional compliance."""
+    if iris_database_config.get("mock", False):
+        # Return mock session for unit tests when IRIS not available
+        yield Mock()
         return
 
-    max_length = 512 # Default max length, can be configured if needed
-
-    def colbert_query_encoder(text: str) -> list[list[float]]:
-        if not text or not isinstance(text, str):
-            print(f"Warning: ColBERT query encoder received invalid text: {text}")
-            return []
-
-        inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=max_length, padding=True)
-        
-        with torch.no_grad():
-            outputs = model(**inputs)
-        
-        token_embeddings_tensor = None
-        if hasattr(outputs, 'last_hidden_state'): # ColBERT models typically use this when loaded with AutoModel
-            token_embeddings_tensor = outputs.last_hidden_state.squeeze(0)
-        else:
-            print(f"Error: 'last_hidden_state' not found in outputs for ColBERT query model {model_name}.")
-            return [] # Or raise an error
-
-        input_ids_list = inputs["input_ids"].squeeze(0).tolist()
-        tokens_from_tokenizer = tokenizer.convert_ids_to_tokens(input_ids_list)
-        
-        valid_tokens = []
-        valid_embeddings = []
-        attention_mask = inputs.get("attention_mask", torch.ones_like(inputs["input_ids"])).squeeze(0)
-
-        for i, token_str in enumerate(tokens_from_tokenizer):
-            if attention_mask[i].item() == 1: # Only include non-padded tokens
-                if token_str not in [tokenizer.cls_token, tokenizer.sep_token, tokenizer.pad_token]: # Exclude special tokens
-                    valid_tokens.append(token_str)
-                    valid_embeddings.append(token_embeddings_tensor[i].cpu().numpy().tolist())
-        
-        # print(f"Generated {len(valid_embeddings)} token embeddings for ColBERT query (dim: {len(valid_embeddings[0]) if valid_embeddings else 'N/A'}) for tokens: {valid_tokens}")
-        return valid_tokens, valid_embeddings
-    
-    yield colbert_query_encoder
-
-# --- Fixture for Evaluation Dataset ---
-
-@pytest.fixture(scope="session")
-def evaluation_dataset() -> List[Dict[str, Any]]:
-    """
-    Loads the shared evaluation dataset from sample_queries.json.
-    """
-    print("\nFixture: Loading evaluation dataset from eval/sample_queries.json")
-    # Construct the full path to the JSON file relative to the project root (where pytest runs)
-    # Assuming conftest.py is in tests/ and sample_queries.json is in eval/
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    json_file_path = os.path.join(project_root, "eval", "sample_queries.json")
-    
     try:
-        with open(json_file_path, 'r') as f:
-            dataset = json.load(f)
-        print(f"Successfully loaded {len(dataset)} queries from {json_file_path}")
-        return dataset
-    except FileNotFoundError:
-        print(f"Error: Evaluation dataset file not found at {json_file_path}")
-        return [] # Return empty list or raise error
-    except json.JSONDecodeError:
-        print(f"Error: Could not decode JSON from {json_file_path}")
-        return []
+        import sqlalchemy_iris
+        from sqlalchemy import create_engine
 
-# --- Fixtures for Mocks (for unit tests) ---
+        engine = create_engine(iris_database_config["connection_string"])
 
-@pytest.fixture
-def mock_iris_connector():
-    """Provides a standardized mock IRIS connector."""
-    print("\nFixture: Providing standardized mock IRIS connector")
-    return MockIRISConnector()
+        # Test connection
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
 
-@pytest.fixture
-def mock_embedding_func(mocker):
-    """Provides a mock embedding function."""
-    print("\nFixture: Providing mock embedding function")
-    # Create a mock that wraps our standardized mock function
-    mock_embed = mocker.Mock(side_effect=mock_embedding_func)
-    return mock_embed
+        yield engine
+
+        # Cleanup: Drop any test tables created during testing
+        with engine.connect() as conn:
+            try:
+                conn.execute("DROP TABLE IF EXISTS test_coverage_data")
+                conn.execute("DROP TABLE IF EXISTS test_module_coverage")
+                conn.commit()
+            except Exception:
+                pass  # Ignore cleanup errors
+
+    except Exception as e:
+        # Fall back to mock for unit tests
+        yield Mock()
+
 
 @pytest.fixture
-def mock_llm_func(mocker):
-    """Provides a mock LLM function."""
-    print("\nFixture: Providing mock LLM function")
-    # Create a mock that wraps our standardized mock function
-    mock_llm = mocker.Mock(side_effect=mock_llm_func)
+def temp_dir() -> Generator[Path, None, None]:
+    """Create a temporary directory for tests."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        yield Path(tmp_dir)
+
+
+@pytest.fixture
+def mock_config() -> Dict[str, Any]:
+    """Provide mock configuration data for tests."""
+    return {
+        "database": {
+            "url": "sqlite:///:memory:",
+            "echo": False,
+        },
+        "redis": {
+            "url": "redis://localhost:6379/0",
+        },
+        "llm": {
+            "provider": "openai",
+            "model": "gpt-4",
+            "api_key": "test-api-key",
+        },
+        "vector_store": {
+            "provider": "iris",
+            "connection_string": "localhost:1972/USER",
+        },
+        "memory": {
+            "provider": "mem0",
+            "config": {
+                "vector_store": {
+                    "provider": "iris",
+                },
+                "llm": {
+                    "provider": "openai",
+                    "config": {
+                        "model": "gpt-4",
+                    },
+                },
+            },
+        },
+    }
+
+
+@pytest.fixture
+def config_manager(temp_dir: Path, mock_config: Dict[str, Any]) -> ConfigurationManager:
+    """Create a ConfigurationManager instance for testing."""
+    config_file = temp_dir / "test_config.yaml"
+
+    # Write config to temporary file
+    import yaml
+
+    with open(config_file, "w") as f:
+        yaml.dump(mock_config, f)
+
+    # Set environment variable to point to test config
+    os.environ["RAG_TEMPLATES_CONFIG"] = str(config_file)
+
+    try:
+        manager = ConfigurationManager()
+        yield manager
+    finally:
+        # Clean up environment variable
+        if "RAG_TEMPLATES_CONFIG" in os.environ:
+            del os.environ["RAG_TEMPLATES_CONFIG"]
+
+
+@pytest.fixture
+def iris_config_manager(
+    temp_dir: Path, mock_config: Dict[str, Any]
+) -> ConfigurationManager:
+    """Create an IRIS ConfigManager instance for testing."""
+    config_file = temp_dir / "iris_config.yaml"
+
+    import yaml
+
+    with open(config_file, "w") as f:
+        yaml.dump(mock_config, f)
+
+    manager = ConfigurationManager(config_path=str(config_file))
+    return manager
+
+
+@pytest.fixture
+def mock_database_session():
+    """Create a mock database session for testing."""
+    engine = create_engine("sqlite:///:memory:")
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+@pytest.fixture
+def mock_redis_client():
+    """Create a mock Redis client for testing."""
+    mock_redis = Mock()
+    mock_redis.get = Mock(return_value=None)
+    mock_redis.set = Mock(return_value=True)
+    mock_redis.delete = Mock(return_value=1)
+    mock_redis.exists = Mock(return_value=False)
+    mock_redis.expire = Mock(return_value=True)
+    return mock_redis
+
+
+@pytest.fixture
+def mock_llm_client():
+    """Create a mock LLM client for testing."""
+    mock_llm = AsyncMock()
+    mock_llm.generate = AsyncMock(return_value="Generated response")
+    mock_llm.embed = AsyncMock(return_value=[0.1, 0.2, 0.3])
     return mock_llm
 
+
 @pytest.fixture
-def mock_colbert_doc_encoder(mocker):
-    """Provides a mock ColBERT document encoder function."""
-    print("\nFixture: Providing mock ColBERT document encoder function")
-    # Create a mock that wraps our standardized mock function
-    mock_encoder = mocker.Mock(side_effect=mock_colbert_doc_encoder)
-    return mock_encoder
+def mock_vector_store():
+    """Create a mock vector store for testing."""
+    mock_store = Mock()
+    mock_store.add_documents = Mock(return_value=["doc1", "doc2"])
+    mock_store.similarity_search = Mock(return_value=[])
+    mock_store.similarity_search_with_score = Mock(return_value=[])
+    return mock_store
 
 
-# Add a specific mock for ColBERT that handles multiple fetchall calls
 @pytest.fixture
-def mock_iris_connector_for_colbert(mocker):
-    """
-    Provides a simplified mock IRIS connector for ColBERT tests.
-    The connector's cursor() method returns a MagicMock cursor with iterable side_effects.
-    """
-    print("\\nFixture: Providing simplified MagicMock-based connector for ColBERT")
+def mock_mem0_client():
+    """Create a mock Mem0 client for testing."""
+    mock_mem0 = AsyncMock()
+    mock_mem0.add = AsyncMock(return_value={"id": "memory-123"})
+    mock_mem0.search = AsyncMock(return_value=[])
+    mock_mem0.get = AsyncMock(return_value=None)
+    mock_mem0.delete = AsyncMock(return_value=True)
+    return mock_mem0
 
-    # Data sequences
-    mock_doc_ids_data = [("doc_c1",), ("doc_c2",), ("doc_c3",), ("doc_c4",), ("doc_c5",)]
-    token_embeddings_for_docs = [
-        [(json.dumps([0.11]*10),), (json.dumps([0.12]*10),)], # doc_c1
-        [(json.dumps([0.21]*10),), (json.dumps([0.22]*10),)], # doc_c2
-        [(json.dumps([0.31]*10),), (json.dumps([0.32]*10),)], # doc_c3
-        [(json.dumps([0.41]*10),), (json.dumps([0.42]*10),)], # doc_c4
-        [(json.dumps([0.51]*10),), (json.dumps([0.52]*10),)], # doc_c5
+
+@pytest.fixture
+def sample_documents():
+    """Provide sample documents for testing."""
+    return [
+        {
+            "id": "doc1",
+            "content": "This is a sample document about artificial intelligence.",
+            "metadata": {"source": "test", "type": "article"},
+        },
+        {
+            "id": "doc2",
+            "content": "This document discusses machine learning algorithms.",
+            "metadata": {"source": "test", "type": "research"},
+        },
+        {
+            "id": "doc3",
+            "content": "A comprehensive guide to retrieval-augmented generation.",
+            "metadata": {"source": "test", "type": "guide"},
+        },
     ]
-    content_for_docs = [
-        ("Content for doc_c1.",), ("Content for doc_c2.",), ("Content for doc_c3.",),
-        ("Content for doc_c4.",), ("Content for doc_c5.",),
+
+
+@pytest.fixture
+def sample_queries():
+    """Provide sample queries for testing."""
+    return [
+        "What is artificial intelligence?",
+        "How do machine learning algorithms work?",
+        "Explain retrieval-augmented generation",
+        "What are the benefits of RAG systems?",
     ]
-    
-    # Combined sequence for fetchall calls:
-    # 1st call: all doc_ids
-    # 2nd-6th calls: token embeddings for each of the 5 docs
-    combined_fetchall_data = [mock_doc_ids_data] + token_embeddings_for_docs
-    
-    # Sequence for fetchone calls (content for each of the 5 docs)
-    combined_fetchone_data = content_for_docs
 
-    # Create a mock for the cursor
-    mock_cursor = mocker.MagicMock(spec=MockIRISCursor)
-    mock_cursor.execute = mocker.MagicMock()
-    
-    # Manually manage side_effect with a function and closure
-    _fetchall_call_idx_holder = [0]  # Use a list to hold the index
-    def fetchall_effect(*args, **kwargs):
-        idx = _fetchall_call_idx_holder[0]
-        if idx < len(combined_fetchall_data):
-            result = combined_fetchall_data[idx]
-            _fetchall_call_idx_holder[0] += 1
-            # print(f"Mock fetchall call #{_fetchall_call_idx_holder[0]}, returning: {str(result)[:50]}")
-            return result
-        # print(f"Mock fetchall StopIteration at call #{_fetchall_call_idx_holder[0] + 1}")
-        raise StopIteration("Mock fetchall sequence exhausted by fetchall_effect")
-
-    _fetchone_call_idx_holder = [0]  # Use a list to hold the index
-    def fetchone_effect(*args, **kwargs):
-        idx = _fetchone_call_idx_holder[0]
-        if idx < len(combined_fetchone_data):
-            result = combined_fetchone_data[idx]
-            _fetchone_call_idx_holder[0] += 1
-            # print(f"Mock fetchone call #{_fetchone_call_idx_holder[0]}, returning: {str(result)[:50]}")
-            return result
-        # print(f"Mock fetchone StopIteration at call #{_fetchone_call_idx_holder[0] + 1}")
-        raise StopIteration("Mock fetchone sequence exhausted by fetchone_effect")
-
-    mock_cursor.fetchall.side_effect = fetchall_effect
-    mock_cursor.fetchone.side_effect = fetchone_effect
-    
-    mock_cursor.close = mocker.MagicMock()
-
-    # Create a mock for the connector
-    mock_connector = mocker.MagicMock(spec=MockIRISConnector) # Use spec
-    mock_connector.cursor.return_value = mock_cursor # cursor() returns the pre-configured mock_cursor
-    
-    mock_connector.close = mocker.MagicMock()
-    mock_connector.commit = mocker.MagicMock()
-    mock_connector.rollback = mocker.MagicMock()
-        
-    return mock_connector
 
 @pytest.fixture
-def mock_colbert_query_encoder(mocker): # Keep the original mock_colbert_query_encoder
-    """Provides a mock ColBERT query encoder function."""
-    print("\\nFixture: Providing mock ColBERT query encoder function")
-    # Create a mock that wraps our standardized mock function
-    mock_encoder = mocker.Mock(side_effect=mock_colbert_query_encoder) # Uses the one from tests.mocks.models
-    return mock_encoder
+def mock_pipeline():
+    """Create a mock RAG pipeline for testing."""
+    mock_pipeline = Mock()
+    mock_pipeline.process = Mock(
+        return_value={"query": "test query", "response": "test response", "sources": []}
+    )
+    return mock_pipeline
+
+
+@pytest.fixture(autouse=True)
+def cleanup_environment():
+    """Cleanup environment variables after each test."""
+    original_env = os.environ.copy()
+    yield
+
+    # Restore original environment
+    os.environ.clear()
+    os.environ.update(original_env)
+
 
 @pytest.fixture
-def mock_web_search_func(mocker):
-    """Provides a mock web search function (for CRAG)."""
-    print("\nFixture: Providing mock web search function")
-    mock_search = mocker.Mock()
-    mock_search.return_value = ["Mock web result 1", "Mock web result 2"]
-    return mock_search
+def docker_services():
+    """Wait for Docker services to be ready."""
+    # This fixture can be used with pytest-docker to wait for services
+    # Implementation would depend on the specific services needed
+    pass
 
-@pytest.fixture
-def mock_graph_lib(mocker):
-    """Provides a mock graph library (for NodeRAG/GraphRAG)."""
-    print("\nFixture: Providing mock graph library")
-    mock_lib = mocker.Mock()
-    # Mock specific graph functions as needed (e.g., mock_lib.Graph.return_value = mocker.Mock())
-    return mock_lib
 
-@pytest.fixture
-def mock_config_manager():
-    """Provides a mock configuration manager for tests."""
-    print("\nFixture: Providing mock configuration manager")
-    
-    class MockConfigManager:
-        def __init__(self):
-            self._config = {
-                'vector_store.table_name': 'RAG.SourceDocuments',
-                'vector_store.schema': 'RAG',
-                'vector_store.embedding_column': 'embedding',
-                'vector_store.content_column': 'text_content',
-                'vector_store.id_column': 'doc_id',
-                'colbert.document_encoder_model': 'fjmgAI/reason-colBERT-150M-GTE-ModernColBERT',
-                'colbert.query_encoder_model': 'fjmgAI/reason-colBERT-150M-GTE-ModernColBERT',
-                'colbert.max_length': 512,
-                'colbert.embedding_dim': 384,
-                # Storage configuration
-                'storage:iris': {
-                    'host': 'localhost',
-                    'port': 1972,
-                    'namespace': 'USER',
-                    'username': 'test',
-                    'password': 'test'
-                }
-            }
-        
-        def get_config(self, key, default=None):
-            """Get configuration value with proper nested key handling."""
-            return self._config.get(key, default)
-        
-        def get(self, key, default=None):
-            """Alternative get method for compatibility."""
-            return self._config.get(key, default)
-        
-        def set_config(self, key, value):
-            """Set configuration value for testing."""
-            self._config[key] = value
-        
-        def set(self, key, value):
-            """Alternative set method for compatibility."""
-            self._config[key] = value
-    
-    return MockConfigManager()
+# Async fixtures for testing async code
+@pytest_asyncio.fixture
+async def async_mock_llm_client():
+    """Create an async mock LLM client for testing."""
+    mock_llm = AsyncMock()
+    mock_llm.generate = AsyncMock(return_value="Async generated response")
+    mock_llm.embed = AsyncMock(return_value=[0.1, 0.2, 0.3])
+    return mock_llm
 
-# --- Testcontainer Fixtures (for isolated testing with real data) ---
 
-# Register custom pytest markers
+@pytest_asyncio.fixture
+async def async_mock_mem0_client():
+    """Create an async mock Mem0 client for testing."""
+    mock_mem0 = AsyncMock()
+    mock_mem0.add = AsyncMock(return_value={"id": "async-memory-123"})
+    mock_mem0.search = AsyncMock(return_value=[])
+    mock_mem0.get = AsyncMock(return_value=None)
+    mock_mem0.delete = AsyncMock(return_value=True)
+    return mock_mem0
+
+
+# Markers for different test categories
+pytest_plugins = ["pytest_asyncio"]
+
+
+# Configure test markers
 def pytest_configure(config):
-    """Register custom pytest markers"""
-    config.addinivalue_line("markers", "force_testcontainer: mark test to force use of testcontainer")
-    config.addinivalue_line("markers", "force_mock: mark test to force use of mock connection")
-    config.addinivalue_line("markers", "force_real: mark test to force use of real connection")
+    """Configure pytest markers."""
+    # Register .DAT fixture marker (Feature 047: T078)
+    pytest_plugin.pytest_configure(config)
+
+    # Register other markers
+    config.addinivalue_line("markers", "unit: mark test as a unit test")
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "e2e: mark test as an end-to-end test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "requires_docker: mark test as requiring Docker")
+    config.addinivalue_line(
+        "markers", "requires_internet: mark test as requiring internet connection"
+    )
+    # Constitutional compliance markers for coverage testing
+    config.addinivalue_line("markers", "requires_database: mark test as requiring live IRIS database per constitution")
+    config.addinivalue_line("markers", "clean_iris: mark test as requiring fresh/clean IRIS instance per constitution")
+    config.addinivalue_line("markers", "coverage_critical: mark test as critical for coverage measurement")
+    config.addinivalue_line("markers", "performance: mark test as performance validation")
+    config.addinivalue_line("markers", "contract: mark test as API contract test")
+
+
+def pytest_sessionstart(session):
+    """Verify IRIS database is available before running tests."""
+    # Skip health check if only running unit tests
+    if session.config.getoption("markexpr") == "unit":
+        return
+
+    # Skip if running specific unit test files
+    test_paths = [str(item.fspath) for item in session.items]
+    if all("unit" in path for path in test_paths):
+        return
+
+    # Try to find IRIS on common ports
+    iris_ports = [11972, 21972, 1972]
+    iris_available = False
+
+    for port in iris_ports:
+        try:
+            result = subprocess.run([
+                sys.executable, "-c",
+                f"""
+import sqlalchemy_iris
+from sqlalchemy import create_engine, text
+try:
+    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
+    with engine.connect() as conn:
+        conn.execute(text('SELECT 1'))
+    print('SUCCESS')
+except Exception:
+    print('FAILED')
+"""
+            ], capture_output=True, text=True, timeout=5)
+
+            if "SUCCESS" in result.stdout:
+                iris_available = True
+                break
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+            continue
+
+    if not iris_available and any("e2e" in path or "integration" in path for path in test_paths):
+        pytest.exit(
+            "IRIS database not running. E2E and integration tests require IRIS.\n"
+            "Start IRIS with: docker-compose up -d\n"
+            "Verify with: docker logs iris-pgwire-db --tail 50",
+            returncode=1
+        )
+
+
+# ============================================================================
+# Feature 035: Backend Mode Fixtures
+# ============================================================================
 
 @pytest.fixture(scope="session")
-def iris_testcontainer():
+def backend_configuration():
     """
-    Session-scoped IRIS testcontainer fixture.
-    
-    Creates an ephemeral IRIS container for testing and handles cleanup.
-    Should be used with tests requiring a real database but isolated from
-    the production environment.
+    Session-scoped backend configuration fixture.
+
+    Loads backend mode configuration from environment/config file.
+    Logs configuration at session start per FR-012.
+
+    Returns:
+        BackendConfiguration instance
     """
-    logger.info("Starting IRIS testcontainer...")
-    
-    # Check if testcontainers module is available
-    try:
-        from testcontainers.iris import IRISContainer
-        import sqlalchemy
-    except ImportError:
-        logger.error("testcontainers-iris package not installed. Install with: pip install testcontainers-iris")
-        pytest.skip("testcontainers-iris not installed")
-        return None
-    
-    # Use latest iris-community image by default or from environment variable
-    is_arm64 = os.uname().machine == 'arm64'
-    default_image = "intersystemsdc/iris-community:latest"
-    image = os.environ.get("IRIS_DOCKER_IMAGE", default_image)
-    
-    logger.info(f"Creating IRIS testcontainer with image: {image} on {'ARM64' if is_arm64 else 'x86_64'}")
-    
-    # Use the new testcontainer utilities for better error handling
-    from common.iris_testcontainer_utils import create_iris_testcontainer_with_retry, wait_for_iris_ready
-    
-    container = create_iris_testcontainer_with_retry(IRISContainer, image)
-    
-    if not container:
-        logger.error("Failed to create IRIS testcontainer")
-        pytest.skip("Failed to create IRIS testcontainer")
-        return None
-    
-    try:
-        # Wait for IRIS to be ready
-        if not wait_for_iris_ready(container, timeout=120):
-            logger.error("IRIS testcontainer not ready within timeout")
-            pytest.skip("IRIS testcontainer not ready")
-            return None
-        
-        logger.info(f"IRIS testcontainer started successfully")
-        
-        yield container
-        
-    finally:
-        # Stop container when tests are done
-        logger.info("Stopping IRIS testcontainer...")
-        try:
-            container.stop()
-            logger.info("IRIS testcontainer stopped")
-        except Exception as e:
-            logger.warning(f"Error stopping container: {e}")
+    from iris_rag.testing.backend_manager import (
+        load_configuration,
+        log_session_start,
+    )
+
+    config = load_configuration()
+    log_session_start(config)
+    return config
+
 
 @pytest.fixture(scope="session")
-def iris_testcontainer_connection(iris_testcontainer):
+def backend_mode(backend_configuration):
     """
-    Session-scoped connection to IRIS testcontainer.
-    
-    Creates a SQLAlchemy connection to the testcontainer and initializes the database schema.
+    Session-scoped backend mode fixture.
+
+    Returns:
+        BackendMode enum value (COMMUNITY or ENTERPRISE)
     """
-    if iris_testcontainer is None:
-        pytest.skip("IRIS testcontainer not available")
-        return None
-        
-    try:
-        from common.iris_testcontainer_utils import get_iris_connection_with_password_handling
-        from common.db_init import initialize_database
-        
-        # Use the new connection utility with password handling
-        connection = get_iris_connection_with_password_handling(iris_testcontainer)
-        
-        if not connection:
-            logger.error("Failed to create connection to IRIS testcontainer")
-            pytest.skip("Failed to create connection to IRIS testcontainer")
-            return None
-        
-        # Initialize database schema
-        logger.info("Initializing database schema in testcontainer")
-        initialize_database(connection, force_recreate=True)
-        
-        yield connection
-        
-        # Close connection with better error handling
-        try:
-            connection.close()
-            logger.info("Closed connection to IRIS testcontainer")
-        except Exception as e:
-            logger.warning(f"Note: Exception during connection close (can be ignored): {e}")
-            
-    except Exception as e:
-        logger.error(f"Failed to create connection to IRIS testcontainer: {e}")
-        pytest.skip(f"Failed to create connection to IRIS testcontainer: {e}")
-        yield None
+    return backend_configuration.mode
+
 
 @pytest.fixture(scope="session")
-def iris_with_pmc_data(iris_testcontainer_connection):
+def connection_pool(backend_configuration):
     """
-    Session-scoped fixture with preloaded PMC data.
-    
-    Loads a sample of PMC documents into the testcontainer database.
+    Session-scoped connection pool fixture.
+
+    Creates connection pool with mode-appropriate limits:
+    - Community: 1 connection
+    - Enterprise: 999 connections
+
+    Returns:
+        ConnectionPool instance
     """
-    if iris_testcontainer_connection is None:
-        pytest.skip("IRIS testcontainer connection not available")
-        return None
-    
-    # Import the load_pmc_documents function
-    from tests.utils import load_pmc_documents
-    import os
-    import sys
-    
-    # Ensure database schema is initialized before loading documents
-    logger.info("Ensuring database schema is initialized before loading documents")
-    with iris_testcontainer_connection.cursor() as cursor:
-        # Check if tables exist
-        try:
-            cursor.execute("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SOURCEDOCUMENTS'")
-            table_exists = cursor.fetchone()[0] > 0
-            
-            if not table_exists:
-                logger.info("SourceDocuments table not found, initializing schema")
-                # Import and run schema initialization
-                from common.db_init import initialize_database
-                initialize_database(iris_testcontainer_connection)
-                logger.info("Schema initialization completed")
-            else:
-                logger.info("Database schema already initialized")
-        except Exception as e:
-            logger.warning(f"Error checking schema, will attempt to initialize: {e}")
-            # Import and run schema initialization
-            from common.db_init import initialize_database
-            initialize_database(iris_testcontainer_connection)
-            logger.info("Schema initialization completed")
-    
-    # Process a configurable set of PMC documents
-    logger.info("Loading PMC documents into testcontainer")
-    
-    # Check for document count first (takes priority), then fall back to PMC limit
-    if os.environ.get('TEST_DOCUMENT_COUNT'):
-        limit = int(os.environ.get('TEST_DOCUMENT_COUNT'))
-        logger.info(f"Using TEST_DOCUMENT_COUNT={limit}")
-        
-        # When using a large document count, log warning and collect performance metrics
-        if limit >= 1000:
-            logger.info(f"Large-scale test with {limit} documents - collecting performance metrics")
-            os.environ["COLLECT_PERFORMANCE_METRICS"] = "true"
-    else:
-        limit = int(os.environ.get('TEST_PMC_LIMIT', '30'))
-        logger.info(f"Using TEST_PMC_LIMIT={limit}")
-    
-    # Log warning for large document counts
-    if limit > 500:
-        logger.warning(f"Processing {limit} documents may take a significant amount of time")
-    
+    from iris_rag.testing.connection_pool import ConnectionPool
+
+    return ConnectionPool(mode=backend_configuration.mode)
+
+
+@pytest.fixture(scope="session")
+def iris_devtools_bridge(backend_configuration):
+    """
+    Session-scoped iris-devtools bridge fixture.
+
+    Provides access to iris-devtools container lifecycle and
+    database state management operations.
+
+    Returns:
+        IrisDevToolsBridge instance
+
+    Raises:
+        IrisDevtoolsMissingError: If iris-devtools not available
+    """
+    from iris_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
+
+    return IrisDevToolsBridge(
+        iris_devtools_path=backend_configuration.iris_devtools_path
+    )
+
+
+@pytest.fixture
+def iris_connection(connection_pool):
+    """
+    Function-scoped IRIS connection fixture.
+
+    Acquires connection from pool, yields to test, then releases.
+    Enforces mode-specific connection limits.
+
+    Yields:
+        Active IRIS database connection
+
+    Raises:
+        ConnectionPoolTimeout: If pool limit exceeded
+    """
+    with connection_pool.acquire(timeout=30.0) as conn:
+        yield conn
+
+
+def pytest_collection_modifyitems(config, items):
+    """Modify test collection to add markers based on location and process @pytest.mark.dat_fixture."""
+    # Process .DAT fixture markers (Feature 047: T079)
+    pytest_plugin.pytest_collection_modifyitems(config, items)
+
+    # Add markers based on test file location
+    for item in items:
+        if "unit" in str(item.fspath):
+            item.add_marker(pytest.mark.unit)
+        elif "integration" in str(item.fspath):
+            item.add_marker(pytest.mark.integration)
+        elif "e2e" in str(item.fspath):
+            item.add_marker(pytest.mark.e2e)
+
+
+# Performance monitoring for T015
+_test_start_times = {}
+_slow_tests = []
+_suite_start_time = None
+
+
+def pytest_runtest_setup(item):
+    """Capture test start time."""
+    global _test_start_times
+    _test_start_times[item.nodeid] = datetime.now()
+
+
+def pytest_runtest_teardown(item):
+    """Calculate test duration and warn if slow."""
+    global _test_start_times, _slow_tests
+
+    if item.nodeid not in _test_start_times:
+        return
+
+    start_time = _test_start_times[item.nodeid]
+    duration = (datetime.now() - start_time).total_seconds()
+
+    # Warn if individual test exceeds 5 seconds
+    if duration > 5.0:
+        _slow_tests.append((item.nodeid, duration))
+        print(f"\n⚠️  SLOW TEST: {item.nodeid} took {duration:.2f}s (>5s threshold)")
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Report slowest tests and check total suite time."""
+    global _slow_tests, _suite_start_time
+
+    # Report slowest 10 tests
+    if _slow_tests:
+        print(f"\n{'=' * 60}")
+        print(f"Slowest {min(10, len(_slow_tests))} Tests:")
+        print(f"{'=' * 60}")
+
+        sorted_slow = sorted(_slow_tests, key=lambda x: x[1], reverse=True)[:10]
+        for test_name, duration in sorted_slow:
+            print(f"  {duration:.2f}s - {test_name}")
+        print()
+
+
+# Feature 028: Test Infrastructure Resilience Fixtures
+
+@pytest.fixture(scope="class")
+def database_with_clean_schema(request):
+    """
+    Provide clean IRIS database with valid schema for test class.
+
+    Validates schema before tests run, resets if needed.
+    Registers cleanup handler to remove test data after class.
+
+    Implements FR-001, FR-004 from Feature 028.
+    """
+    from tests.fixtures.database_state import TestDatabaseState, TestStateRegistry
+    from tests.fixtures.database_cleanup import DatabaseCleanupHandler
+    from tests.utils.schema_validator import SchemaValidator
+    from tests.fixtures.schema_reset import SchemaResetter
+    from common.iris_connection_manager import get_iris_connection
+
+    # Validate schema
+    validator = SchemaValidator()
+    validation_result = validator.validate_schema()
+
+    if not validation_result.is_valid:
+        # Schema invalid - reset
+        resetter = SchemaResetter()
+        resetter.reset_schema()
+
+    # Create test state
+    test_class = request.cls.__name__ if request.cls else "unknown"
+    test_state = TestDatabaseState.create_for_test(test_class)
+
+    # Register state
+    registry = TestStateRegistry()
+    registry.register_state(test_state)
+
+    # Get database connection
+    conn = get_iris_connection()
+
+    # Register cleanup handler - ALWAYS runs
+    def cleanup():
+        handler = DatabaseCleanupHandler(conn, test_state.test_run_id)
+        handler.cleanup()
+        registry.remove_state(test_state.test_run_id)
+
+    request.addfinalizer(cleanup)
+
+    yield conn
+
+    # Cleanup runs here automatically via addfinalizer
+
+
+@pytest.fixture(scope="session")
+def validate_schema_once():
+    """
+    Validate database schema once at session start.
+
+    Implements FR-015 from Feature 028 (pre-flight checks).
+    """
+    from tests.utils.preflight_checks import PreflightChecker
+
+    checker = PreflightChecker()
+    results = checker.run_all_checks()
+
+    # Exit if critical checks fail
+    if not all(r.passed for r in results):
+        pytest.exit(
+            "Pre-flight checks failed. Cannot proceed with tests.\n"
+            "Run preflight checks manually: python tests/utils/preflight_checks.py",
+            returncode=1
+        )
+
+    return results
+
+
+# ============================================================================
+# Feature 034: HybridGraphRAG Query Path Testing Fixtures
+# ============================================================================
+
+
+@pytest.fixture
+def mock_iris_graph_core_unavailable(mocker):
+    """
+    Mock iris_graph_core as unavailable for testing graceful degradation.
+
+    This fixture simulates the scenario where iris_graph_core is not installed
+    or cannot be imported, allowing tests to validate fallback behavior.
+
+    Usage:
+        def test_fallback(graphrag_pipeline, mock_iris_graph_core_unavailable):
+            # iris_graph_core methods will raise AttributeError
+            result = graphrag_pipeline.query("test", method="hybrid")
+            assert result.metadata['retrieval_method'] == 'vector_fallback'
+    """
+    # Mock the IRIS_GRAPH_CORE_AVAILABLE flag if it exists
     try:
-        # Attempt to use the optimized loading function for large-scale tests
-        large_scale_loader_used = False
-        if limit >= 500:
-            try:
-                from tests.utils_large_scale import load_pmc_documents_large_scale
-                logger.info("Attempting to use load_pmc_documents_large_scale.")
-                # Construct absolute path for pmc_dir relative to project root
-                project_root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                abs_pmc_dir = os.path.join(project_root_path, "data/pmc_oas_downloaded")
-                logger.info(f"Using absolute PMC directory: {abs_pmc_dir}")
+        mocker.patch('iris_rag.pipelines.hybrid_graphrag.IRIS_GRAPH_CORE_AVAILABLE', False)
+    except AttributeError:
+        pass  # Flag doesn't exist, no need to mock
 
-                # Get the real embedding function
-                # This uses the existing fixture 'embedding_model_fixture' which provides the real one.
-                # However, fixtures cannot be called directly. We need to get it from common.utils.
-                real_embed_func = get_embedding_func(mock=False) # Ensure we get the real one
+    return mocker
 
-                metrics = load_pmc_documents_large_scale(
-                    connection=iris_testcontainer_connection,
-                    embedding_func=real_embed_func, # Pass the real embedding function
-                    limit=limit,
-                    pmc_dir=abs_pmc_dir, # Pass absolute path
-                    batch_size=50 # Consider making this configurable
-                )
-                doc_count = metrics.get("document_count", 0) # Use .get for safety
-                logger.info(f"Loaded {doc_count} PMC documents into testcontainer using optimized loader.")
-                if "docs_per_second" in metrics and "peak_memory_mb" in metrics:
-                    logger.info(f"Performance: {metrics.get('docs_per_second', 0):.2f} docs/sec, peak memory: {metrics.get('peak_memory_mb', 0):.1f} MB")
-                large_scale_loader_used = True
-            except ImportError:
-                logger.warning("tests.utils_large_scale or load_pmc_documents_large_scale not found. Falling back to standard loader.")
-            except Exception as e_large_scale:
-                logger.error(f"Error using large-scale loader: {e_large_scale}. Falling back to standard loader.")
-        
-        if not large_scale_loader_used:
-            logger.info("Using standard load_pmc_documents from tests.utils.")
-            # Use the standard loader
-            def mock_embedding_func(text):
-                if isinstance(text, list):
-                    return [[0.1] * 768 for _ in text]
-                return [0.1] * 768
 
-            # Construct absolute path for pmc_dir relative to project root
-            project_root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            abs_pmc_dir = os.path.join(project_root_path, "data/pmc_oas_downloaded")
-            logger.info(f"Using absolute PMC directory for standard loader: {abs_pmc_dir}")
+@pytest.fixture
+def mock_zero_results_retrieval(mocker):
+    """
+    Mock retrieval methods to return 0 results for testing fallback.
 
-            doc_count = load_pmc_documents(
-                connection=iris_testcontainer_connection,
-                embedding_func=mock_embedding_func,
-                limit=limit,
-                pmc_dir=abs_pmc_dir # Pass absolute path
+    Returns a callable that mocks a specific retrieval method to return empty results.
+
+    Usage:
+        def test_fallback(graphrag_pipeline, mock_zero_results_retrieval):
+            mock_zero_results_retrieval(graphrag_pipeline, 'retrieve_via_hybrid_fusion')
+            result = graphrag_pipeline.query("test", method="hybrid")
+            assert result.metadata['retrieval_method'] == 'vector_fallback'
+    """
+    def mock_retrieval_method(pipeline, method_name):
+        """Mock a specific retrieval method to return 0 results."""
+        if hasattr(pipeline, 'retrieval_methods'):
+            mocker.patch.object(
+                pipeline.retrieval_methods,
+                method_name,
+                return_value=([], method_name.replace('retrieve_via_', ''))
             )
-            logger.info(f"Loaded {doc_count} PMC documents into testcontainer using standard loader.")
-        
-        # NEVER skip the test, even if no documents were loaded
-        # Let the test decide how to handle this case
-        if doc_count == 0:
-            logger.warning("No PMC documents were loaded - tests will run with empty database")
-            
-        # Return the connection with data loaded
-        yield iris_testcontainer_connection
-        
-    except Exception as e:
-        logger.error(f"Failed to load PMC data into testcontainer: {e}")
-        pytest.skip(f"Failed to load PMC data: {e}")
-        yield None
+        else:
+            # Fallback to mocking the private method directly
+            mocker.patch.object(
+                pipeline,
+                f'_{method_name}',
+                return_value=([], method_name.replace('retrieve_via_', ''))
+            )
+
+    return mock_retrieval_method
+
 
 @pytest.fixture
-def real_embedding_model():
+def mock_connection_failure(mocker):
     """
-    Get a real embedding model for working with real data.
-    
-    This fixture returns a real embedding model by default to ensure
-    that tests run with realistic embeddings. A mock model is only used
-    if explicitly requested or in CI environments.
-    
+    Mock iris_graph_core connection failure for error handling tests.
+
+    Returns a callable that mocks a specific retrieval method to raise ConnectionError.
+
+    Usage:
+        def test_error(graphrag_pipeline, mock_connection_failure):
+            mock_connection_failure(graphrag_pipeline, 'retrieve_via_rrf')
+            result = graphrag_pipeline.query("test", method="rrf")
+            assert result.metadata['retrieval_method'] == 'vector_fallback'
+    """
+    def mock_retrieval_error(pipeline, method_name, error_msg="Connection failed"):
+        """Mock a specific retrieval method to raise connection error."""
+        if hasattr(pipeline, 'retrieval_methods'):
+            mocker.patch.object(
+                pipeline.retrieval_methods,
+                method_name,
+                side_effect=ConnectionError(error_msg)
+            )
+        else:
+            mocker.patch.object(
+                pipeline,
+                f'_{method_name}',
+                side_effect=ConnectionError(error_msg)
+            )
+
+    return mock_retrieval_error
+
+
+# ============================================================================
+# Feature 036: Pipeline Testing Fixtures
+# ============================================================================
+
+@pytest.fixture(scope="session")
+def basic_rag_pipeline(request):
+    """
+    Session-scoped fixture for BasicRAG pipeline.
+
+    Creates BasicRAG pipeline with validation enabled for integration tests,
+    disabled for contract tests. Tests API contracts, error handling, and dimension validation.
+
     Returns:
-        A real embedding model unless mock is explicitly requested
+        BasicRAGPipeline instance
+
+    Requirements: FR-001, FR-007
     """
-    from common.embedding_utils import get_embedding_model
-    
-    # Default to real embeddings
-    use_mock = False
-    
-    # Only use mock embeddings if explicitly requested or in CI
-    if os.environ.get('USE_MOCK_EMBEDDINGS', '').lower() in ('true', '1', 'yes'):
-        logger.info("Using mock embeddings as requested via USE_MOCK_EMBEDDINGS")
-        use_mock = True
-    elif os.environ.get('CI', '').lower() in ('true', '1', 'yes'):
-        logger.info("Using mock embeddings for CI environment")
-        use_mock = True
-    
-    logger.info(f"Using {'mock' if use_mock else 'real'} embedding model")
-    model = get_embedding_model(mock=use_mock)
-    return model
+    from iris_rag import create_pipeline
+    import os
+
+    # Update port from environment if needed
+    if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
+        os.environ['IRIS_PORT'] = '1972'
+
+    # Integration tests need validation, contract tests don't
+    validate = 'integration' in str(request.node.fspath)
+
+    return create_pipeline("basic", validate_requirements=validate)
+
+
+@pytest.fixture(scope="session")
+def crag_pipeline(request):
+    """
+    Session-scoped fixture for CRAG pipeline.
+
+    Creates CRAG pipeline with validation for integration tests.
+    Tests API contracts, error handling, fallback mechanisms, and dimension validation.
+
+    Returns:
+        CRAGPipeline instance
+
+    Requirements: FR-001, FR-007, FR-015
+    """
+    from iris_rag import create_pipeline
+    import os
+
+    if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
+        os.environ['IRIS_PORT'] = '1972'
+
+    validate = 'integration' in str(request.node.fspath)
+    return create_pipeline("crag", validate_requirements=validate)
+
+
+@pytest.fixture(scope="session")
+def basic_rerank_pipeline(request):
+    """
+    Session-scoped fixture for BasicRerankRAG pipeline.
+
+    Creates BasicRerankRAG pipeline with validation for integration tests.
+    Tests API contracts, error handling, fallback mechanisms, and dimension validation.
+
+    Returns:
+        BasicRerankRAGPipeline instance
+
+    Requirements: FR-001, FR-007, FR-016
+    """
+    from iris_rag import create_pipeline
+    import os
+
+    if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
+        os.environ['IRIS_PORT'] = '1972'
+
+    validate = 'integration' in str(request.node.fspath)
+    return create_pipeline("basic_rerank", validate_requirements=validate)
+
+
+@pytest.fixture(scope="session")
+def pylate_colbert_pipeline(request):
+    """
+    Session-scoped fixture for PyLateColBERT pipeline.
+
+    Creates PyLateColBERT pipeline with validation for integration tests.
+    Tests API contracts, error handling, fallback mechanisms, and dimension validation.
+
+    Returns:
+        PyLateColBERTPipeline instance
+
+    Requirements: FR-001, FR-007, FR-015
+    """
+    from iris_rag import create_pipeline
+    import os
+
+    if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
+        os.environ['IRIS_PORT'] = '1972'
+
+    validate = 'integration' in str(request.node.fspath)
+    return create_pipeline("pylate_colbert", validate_requirements=validate)
+
 
 @pytest.fixture
-def use_testcontainer(request):
+def sample_query():
     """
-    Flag to indicate whether to use a testcontainer.
-    
-    Checks for appropriate markers to determine if a testcontainer should be used.
+    Function-scoped fixture providing a sample test query.
+
+    Returns:
+        str: Sample query about diabetes symptoms
+
+    Usage:
+        def test_query(basic_rag_pipeline, sample_query):
+            result = basic_rag_pipeline.query(sample_query)
+            assert len(result['contexts']) > 0
     """
-    # Force using testcontainer if the marker is present
-    if request.node.get_closest_marker("force_testcontainer"):
-        return True
-    
-    # Don't use testcontainer if force_mock is present
-    if request.node.get_closest_marker("force_mock"):
-        return False
-    
-    # Default: Use testcontainer if TEST_IRIS environment variable is set
-    return os.environ.get('TEST_IRIS', '').lower() in ('true', '1', 'yes')
+    return "What are the symptoms of diabetes?"
+
 
 @pytest.fixture
-def iris_connection_auto(use_testcontainer, iris_testcontainer_connection, request):
+def sample_documents():
     """
-    Flexible IRIS connection fixture that automatically chooses the best connection.
-    
-    This fixture provides the appropriate connection based on the test's requirements:
-    - If force_testcontainer marker is present, uses testcontainer
-    - If force_mock marker is present, uses mock
-    - If use_real_data marker is present, uses real or testcontainer
-    - Otherwise falls back based on availability
-    
+    Function-scoped fixture providing sample documents for testing.
+
+    Returns:
+        list: List of document dictionaries with doc_id, title, content, metadata
+
+    Usage:
+        def test_load(basic_rag_pipeline, sample_documents):
+            result = basic_rag_pipeline.load_documents(sample_documents)
+            assert result['documents_loaded'] > 0
+    """
+    import json
+    import os
+
+    # Load from sample data file
+    data_path = os.path.join(os.path.dirname(__file__), 'data', 'sample_pmc_docs_basic.json')
+
+    with open(data_path, 'r') as f:
+        data = json.load(f)
+
+    return data['documents']
+
+
+# ============================================================================
+# Feature 044: Test Environment Validation Utilities
+# ============================================================================
+
+def get_iris_port() -> str:
+    """
+    Get IRIS database port from environment variable.
+
+    Returns:
+        Port number as string (default: '1972')
+
+    Usage:
+        port = get_iris_port()
+        connection_string = f"iris://_SYSTEM:SYS@localhost:{port}/USER"
+    """
+    return os.getenv('IRIS_PORT', '1972')
+
+
+def skip_if_no_database():
+    """
+    Decorator to skip test if IRIS database is not available.
+
+    Checks for database connectivity and skips test with clear message if unavailable.
+
+    Usage:
+        @skip_if_no_database()
+        def test_requires_db(iris_connection):
+            # Test code that needs database
+            pass
+    """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            port = get_iris_port()
+            try:
+                result = subprocess.run([
+                    sys.executable, "-c",
+                    f"""
+import sqlalchemy_iris
+from sqlalchemy import create_engine, text
+try:
+    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
+    with engine.connect() as conn:
+        conn.execute(text('SELECT 1'))
+    print('SUCCESS')
+except Exception:
+    print('FAILED')
+"""
+                ], capture_output=True, text=True, timeout=5)
+
+                if "SUCCESS" not in result.stdout:
+                    pytest.skip(
+                        f"IRIS database not available on port {port}. "
+                        f"Set IRIS_PORT environment variable or start IRIS with 'make docker-up'"
+                    )
+            except (subprocess.TimeoutExpired, subprocess.SubprocessError):
+                pytest.skip(
+                    f"Cannot connect to IRIS database on port {port}. "
+                    f"Verify IRIS is running with 'docker ps'"
+                )
+
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def skip_if_no_embeddings(connection):
+    """
+    Check if database has valid VECTOR embeddings and skip if unavailable.
+
+    Verifies both presence and proper VECTOR type format. Embeddings stored as
+    VARCHAR strings will cause vector operations to fail, so tests are skipped
+    with instructions to reload data.
+
     Args:
-        use_testcontainer: Boolean indicating whether to use testcontainer
-        iris_testcontainer_connection: Testcontainer connection from fixture
-        request: Pytest request object
-        
-    Returns:
-        An IRIS connection (testcontainer, real, or mock)
+        connection: IRIS database connection (raw connection or ConnectionManager instance)
+
+    Raises:
+        pytest.skip: If no embeddings found or embeddings in wrong format
+
+    Usage:
+        def test_vector_search(iris_connection):
+            skip_if_no_embeddings(iris_connection)
+            # Test code that requires embeddings
+            pass
     """
-    from common.iris_connector import get_iris_connection
-    
-    # Check for markers
-    force_mock = request.node.get_closest_marker("force_mock")
-    force_real = request.node.get_closest_marker("force_real")
-    
-    # If force_mock, always use mock
-    if force_mock:
-        logger.info("Using mock connection due to force_mock marker")
-        return get_iris_connection()
-    
-    # If force_real, try real connection or skip
-    if force_real:
-        conn = get_iris_connection(use_mock=False, use_testcontainer=False)
-        if not conn:
-            pytest.skip("Test requires real connection but none is available")
-        return conn
-    
-    # If testcontainer should be used and is available
-    if use_testcontainer and iris_testcontainer_connection:
-        logger.info("Using testcontainer connection")
-        return iris_testcontainer_connection
-    
-    # Otherwise try in order: real > testcontainer > mock
-    logger.info("Attempting to get the best available connection")
-    return get_iris_connection()
+    # Get actual IRIS connection (bypass mock for real database operations)
+    # The iris_connection fixture returns a MockConnection from ConnectionPool,
+    # but for embedding validation we need the real IRIS connection
+    from common.iris_connection_manager import get_iris_connection
+
+    try:
+        real_conn = get_iris_connection()
+        cursor = real_conn.cursor()
+    except Exception as conn_error:
+        pytest.skip(f"Cannot get IRIS connection: {conn_error}")
+    try:
+        # Check if embeddings exist
+        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+        count = cursor.fetchone()[0]
+
+        if count == 0:
+            pytest.skip(
+                "No embeddings found in database. "
+                "Run 'make load-data' to load sample documents with embeddings."
+            )
+
+        # Test if embeddings are in proper VECTOR format by attempting a vector operation
+        # If embeddings are stored as VARCHAR strings, this will fail
+        # IMPORTANT: Use vector_sql_utils per Constitution Principle VII
+        from common.vector_sql_utils import build_safe_vector_dot_sql
+        import json
+
+        try:
+            # Build safe vector test query
+            # Use 384-dimensional test vector to match actual embedding dimension
+            test_vector = json.dumps([0.1] * 384)
+            test_sql = build_safe_vector_dot_sql(
+                table="RAG.SourceDocuments",
+                vector_column="embedding",
+                vector_string=test_vector,
+                vector_dimension=384,
+                id_column="doc_id",
+                top_k=1
+            )
+            cursor.execute(test_sql)
+            cursor.fetchone()
+        except Exception as vector_error:
+            error_msg = str(vector_error)
+            if "different lengths" in error_msg or "different datatypes" in error_msg:
+                pytest.skip(
+                    f"Embeddings exist but are in incorrect format (VARCHAR strings instead of VECTOR type). "
+                    f"Database needs schema migration and data reload. "
+                    f"Run: make clean-db && make load-data"
+                )
+            else:
+                # Some other vector operation error, re-raise for investigation
+                raise
+
+    except Exception as e:
+        if "pytest" in str(type(e).__module__):
+            # Re-raise pytest.skip exceptions
+            raise
+        pytest.skip(f"Cannot validate embeddings: {str(e)}")
+    finally:
+        cursor.close()

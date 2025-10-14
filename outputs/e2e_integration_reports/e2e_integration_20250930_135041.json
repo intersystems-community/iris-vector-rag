@@ -1,0 +1,235 @@
+{
+  "session_id": "20250930_135041",
+  "start_time": "2025-09-30T13:50:41.970460",
+  "pipeline_tests": {
+    "BasicRAG": {
+      "success": false,
+      "query_results": [
+        {
+          "query": "What is diabetes and how is it treated?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "How do cancer treatments work?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "What are the symptoms of heart disease?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "How do vaccines provide immunity?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        }
+      ],
+      "total_execution_time": 0.0,
+      "average_memory_usage": 0.0,
+      "errors": [
+        "Query 1 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
+        "Query 2 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
+        "Query 3 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
+        "Query 4 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline"
+      ]
+    },
+    "HybridGraphRAG": {
+      "success": false,
+      "query_results": [
+        {
+          "query": "What is diabetes and how is it treated?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "How do cancer treatments work?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "What are the symptoms of heart disease?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "How do vaccines provide immunity?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        }
+      ],
+      "total_execution_time": 0.0,
+      "average_memory_usage": 0.0,
+      "errors": [
+        "Query 1 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
+        "Query 2 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
+        "Query 3 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
+        "Query 4 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline"
+      ]
+    },
+    "CRAG": {
+      "success": false,
+      "query_results": [
+        {
+          "query": "What is diabetes and how is it treated?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "How do cancer treatments work?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "What are the symptoms of heart disease?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "How do vaccines provide immunity?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        }
+      ],
+      "total_execution_time": 0.0,
+      "average_memory_usage": 0.0,
+      "errors": [
+        "Query 1 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
+        "Query 2 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
+        "Query 3 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
+        "Query 4 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline"
+      ]
+    },
+    "Reranking": {
+      "success": false,
+      "query_results": [
+        {
+          "query": "What is diabetes and how is it treated?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "How do cancer treatments work?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "What are the symptoms of heart disease?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        },
+        {
+          "query": "How do vaccines provide immunity?",
+          "success": false,
+          "execution_time": 0.0,
+          "memory_usage": 0.0,
+          "validation": null
+        }
+      ],
+      "total_execution_time": 0.0,
+      "average_memory_usage": 0.0,
+      "errors": [
+        "Query 1 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
+        "Query 2 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
+        "Query 3 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
+        "Query 4 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank"
+      ]
+    }
+  },
+  "integration_tests": {
+    "Graph Visualization": {
+      "success": false,
+      "execution_time": 0.0,
+      "memory_usage": 0.0,
+      "error": "Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.demo_graph_visualization",
+      "output_length": 0
+    },
+    "Ontology Support": {
+      "success": false,
+      "execution_time": 0.0,
+      "memory_usage": 0.0,
+      "error": "Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.demo_ontology_support",
+      "output_length": 0
+    }
+  },
+  "performance_tests": {},
+  "stress_tests": {
+    "concurrent_queries": {
+      "success": false,
+      "total_queries": 5,
+      "successful_queries": 0,
+      "total_time": 2.3126602172851562e-05,
+      "average_time_per_query": 4.625320434570312e-06
+    },
+    "large_document_processing": {
+      "success": false,
+      "execution_time": 0.0,
+      "memory_usage": 0.0,
+      "query_length": 1800,
+      "error": "Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline"
+    },
+    "memory_pressure": {
+      "success": false,
+      "memory_samples": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "max_memory": 0.0,
+      "avg_memory": 0.0
+    },
+    "connection_resilience": {
+      "success": false,
+      "error": "<COMMUNICATION LINK ERROR> Failed to send message; Details: Connection closed."
+    }
+  },
+  "summary": {},
+  "database_connectivity": {
+    "name": "Database Connectivity",
+    "success": true,
+    "details": {
+      "connection": "\u2705 Connected",
+      "schema_tables": {
+        "RAG.SourceDocuments": "\u2705 1 records",
+        "RAG.DocumentChunks": "\u2705 0 records",
+        "RAG.VectorEmbeddings": "\u2705 0 records",
+        "RAG.Entities": "\u274c <SQL ERROR>; Details: [SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.ENTITIES' not found>]",
+        "RAG.EntityRelationships": "\u274c <SQL ERROR>; Details: [SQLCODE: <-30>:<Table or view not found>]\r\n[Location: <Prepare>]\r\n[%msg: < Table 'RAG.ENTITYRELATIONSHIPS' not found>]"
+      }
+    },
+    "errors": []
+  }
+}

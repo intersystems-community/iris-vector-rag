@@ -23,6 +23,15 @@ These limitations force developers to use string interpolation instead of parame
 queries, which introduces potential security risks. This module provides functions to
 validate inputs and safely construct SQL queries using string interpolation.
 
+SAFE VECTOR UTILITIES:
+- build_safe_vector_dot_sql(): Safe single-parameter query builder
+- execute_safe_vector_search(): Safe execution with single vector parameter
+
+QUARANTINED UTILITIES (pending IRIS fix):
+- format_vector_search_sql(): Deprecated - see docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md
+- format_vector_search_sql_with_params(): Deprecated - see docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md
+- execute_vector_search_with_params(): Deprecated - see docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md
+
 For more details on these limitations, see docs/IRIS_SQL_VECTOR_OPERATIONS.md
 """
 
@@ -37,10 +46,10 @@ def validate_vector_string(vector_string: str) -> bool:
     """
     Validates that a vector string contains a valid vector format.
     Allows negative numbers and scientific notation while preventing SQL injection.
-    
+
     Args:
         vector_string: The vector string to validate, typically in format "[0.1,-0.2,...]"
-        
+
     Returns:
         bool: True if valid vector format, False otherwise
 
@@ -52,26 +61,28 @@ def validate_vector_string(vector_string: str) -> bool:
     """
     # Check basic structure
     stripped = vector_string.strip()
-    if not (stripped.startswith('[') and stripped.endswith(']')):
+    if not (stripped.startswith("[") and stripped.endswith("]")):
         return False
-    
+
     # Extract content between brackets
     content = stripped[1:-1]
     if not content.strip():
         return False
-    
+
     # Validate each number
-    parts = content.split(',')
+    parts = content.split(",")
     for part in parts:
         try:
             float(part.strip())
         except ValueError:
             return False
-    
+
     # Check for SQL injection patterns
-    if re.search(r'(DROP|DELETE|INSERT|UPDATE|SELECT|;|--)', vector_string, re.IGNORECASE):
+    if re.search(
+        r"(DROP|DELETE|INSERT|UPDATE|SELECT|;|--)", vector_string, re.IGNORECASE
+    ):
         return False
-    
+
     return True
 
 
@@ -107,11 +118,19 @@ def format_vector_search_sql(
     top_k: int,
     id_column: str = "doc_id",
     content_column: str = "text_content",
-    additional_where: str = None
+    additional_where: str = None,
 ) -> str:
     """
-    Constructs a SQL query for vector search using string interpolation.
-    Validates inputs to prevent SQL injection.
+    @deprecated - Quarantined pending IRIS fix
+    See docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md
+
+    Constructs a SQL query for vector search using careful string concatenation
+    to avoid IRIS driver auto-parameterization issues.
+
+    IRIS-specific workaround: The IRIS driver converts embedded literals to :%qpar(n)
+    parameter markers automatically, but TO_VECTOR() and TOP clauses cannot accept
+    parameter markers. This function constructs SQL to avoid triggering the
+    auto-parameterization.
 
     Args:
         table_name: The name of the table to search
@@ -141,21 +160,21 @@ def format_vector_search_sql(
         ...     "text_content"
         ... )
         'SELECT TOP 10 doc_id, text_content,
-            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', 'FLOAT', 768)) AS score
+            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', FLOAT, 768)) AS score
          FROM SourceDocuments
          WHERE embedding IS NOT NULL
          ORDER BY score DESC'
     """
     # Validate table_name to prevent SQL injection (allow schema.table format)
-    if not re.match(r'^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$', table_name):
+    if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$", table_name):
         raise ValueError(f"Invalid table name: {table_name}")
 
     # Validate column names to prevent SQL injection
     for col in [vector_column, id_column]:
-        if not re.match(r'^[a-zA-Z0-9_]+$', col):
+        if not re.match(r"^[a-zA-Z0-9_]+$", col):
             raise ValueError(f"Invalid column name: {col}")
 
-    if content_column and not re.match(r'^[a-zA-Z0-9_]+$', content_column):
+    if content_column and not re.match(r"^[a-zA-Z0-9_]+$", content_column):
         raise ValueError(f"Invalid content column name: {content_column}")
 
     # Validate vector_string
@@ -170,26 +189,46 @@ def format_vector_search_sql(
     if not validate_top_k(top_k):
         raise ValueError(f"Invalid top_k value: {top_k}")
 
-    # Construct the SELECT clause
-    select_clause = f"SELECT TOP {top_k} {id_column}"
+    # Convert values to strings to avoid auto-parameterization
+    top_k_str = str(top_k)
+    embedding_dim_str = str(embedding_dim)
+
+    # Construct SQL using string concatenation to avoid f-string literal detection
+    select_parts = ["SELECT TOP ", top_k_str, " ", id_column]
     if content_column:
-        select_clause += f", {content_column}"
-    select_clause += f", VECTOR_COSINE({vector_column}, TO_VECTOR('{vector_string}', 'FLOAT', {embedding_dim})) AS score"
+        select_parts.extend([", ", content_column])
+
+    # Construct TO_VECTOR call carefully to avoid parameter detection
+    # Use FLOAT for cheaper storage and compute (per best practices)
+    vector_func_parts = [
+        ", VECTOR_COSINE(",
+        vector_column,
+        ", TO_VECTOR('",
+        vector_string,
+        "', FLOAT, ",
+        embedding_dim_str,
+        ")) AS score",
+    ]
+    select_parts.extend(vector_func_parts)
+    select_clause = "".join(select_parts)
 
     # Construct the WHERE clause
-    where_clause = f"WHERE {vector_column} IS NOT NULL"
+    where_parts = ["WHERE ", vector_column, " IS NOT NULL"]
     if additional_where:
-        where_clause += f" AND ({additional_where})"
+        where_parts.extend([" AND (", additional_where, ")"])
+    where_clause = "".join(where_parts)
 
-    # Construct the full SQL query
-    sql = f"""
-        {select_clause}
-        FROM {table_name}
-        {where_clause}
-        ORDER BY score DESC
-    """
+    # Construct the full SQL query using string concatenation
+    sql_parts = [
+        select_clause,
+        " FROM ",
+        table_name,
+        " ",
+        where_clause,
+        " ORDER BY score DESC",
+    ]
 
-    return sql
+    return "".join(sql_parts)
 
 
 def format_vector_search_sql_with_params(
@@ -199,12 +238,19 @@ def format_vector_search_sql_with_params(
     top_k: int,
     id_column: str = "doc_id",
     content_column: str = "text_content",
-    additional_where: str = None
+    additional_where: str = None,
 ) -> str:
     """
+    @deprecated - Quarantined pending IRIS fix
+    See docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md
+
     Constructs a SQL query for vector search using parameter placeholders.
-    This version works with both DBAPI and JDBC by using TO_VECTOR(?, FLOAT).
-    
+    Uses string concatenation to avoid IRIS driver auto-parameterization issues.
+
+    IRIS-specific workaround: Even when using ? placeholders, the IRIS driver
+    can still auto-parameterize literals in f-strings. This function uses
+    string concatenation to avoid triggering the auto-parameterization.
+
     Args:
         table_name: The name of the table to search
         vector_column: The name of the column containing vector embeddings
@@ -213,61 +259,79 @@ def format_vector_search_sql_with_params(
         id_column: The name of the ID column (default: "doc_id")
         content_column: The name of the content column (default: "text_content")
         additional_where: Additional WHERE clause conditions (default: None)
-        
+
     Returns:
         str: The formatted SQL query string with ? placeholder
     """
     # Validate inputs (reuse existing validation)
-    if not re.match(r'^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$', table_name):
+    if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$", table_name):
         raise ValueError(f"Invalid table name: {table_name}")
-    
+
     for col in [vector_column, id_column]:
-        if not re.match(r'^[a-zA-Z0-9_]+$', col):
+        if not re.match(r"^[a-zA-Z0-9_]+$", col):
             raise ValueError(f"Invalid column name: {col}")
-    
-    if content_column and not re.match(r'^[a-zA-Z0-9_]+$', content_column):
+
+    if content_column and not re.match(r"^[a-zA-Z0-9_]+$", content_column):
         raise ValueError(f"Invalid content column name: {content_column}")
-    
+
     if not validate_top_k(top_k):
         raise ValueError(f"Invalid top_k value: {top_k}")
-    
-    # Construct the SELECT clause
-    select_clause = f"SELECT TOP {top_k} {id_column}"
+
+    # Convert values to strings to avoid auto-parameterization
+    top_k_str = str(top_k)
+    embedding_dim_str = str(embedding_dim)
+
+    # Construct SQL using string concatenation to avoid f-string literal detection
+    select_parts = ["SELECT TOP ", top_k_str, " ", id_column]
     if content_column:
-        select_clause += f", {content_column}"
-    select_clause += f", VECTOR_COSINE({vector_column}, TO_VECTOR(?, FLOAT, {embedding_dim})) AS score"
-    
+        select_parts.extend([", ", content_column])
+
+    # Construct TO_VECTOR call with ? placeholder but avoid embedding dimension parameterization
+    # Use FLOAT for cheaper storage and compute (per best practices)
+    vector_func_parts = [
+        ", VECTOR_COSINE(",
+        vector_column,
+        ", TO_VECTOR(?, FLOAT, ",
+        embedding_dim_str,
+        ")) AS score",
+    ]
+    select_parts.extend(vector_func_parts)
+    select_clause = "".join(select_parts)
+
     # Construct the WHERE clause
-    where_clause = f"WHERE {vector_column} IS NOT NULL"
+    where_parts = ["WHERE ", vector_column, " IS NOT NULL"]
     if additional_where:
-        where_clause += f" AND ({additional_where})"
-    
-    # Construct the full SQL query
-    sql = f"""
-        {select_clause}
-        FROM {table_name}
-        {where_clause}
-        ORDER BY score DESC
-    """
-    
-    return sql.strip()
+        where_parts.extend([" AND (", additional_where, ")"])
+    where_clause = "".join(where_parts)
+
+    # Construct the full SQL query using string concatenation
+    sql_parts = [
+        select_clause,
+        " FROM ",
+        table_name,
+        " ",
+        where_clause,
+        " ORDER BY score DESC",
+    ]
+
+    return "".join(sql_parts)
 
 
 def execute_vector_search_with_params(
-    cursor: Any,
-    sql: str,
-    vector_string: str,
-    table_name: str = "RAG.SourceDocuments"
+    cursor: Any, sql: str, vector_string: str, table_name: str = "RAG.SourceDocuments"
 ) -> List[Tuple]:
     """
+    @deprecated - Quarantined pending IRIS fix
+    See docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md
+
     Executes a vector search SQL query using parameters.
-    
+
     Args:
         cursor: A database cursor object
         sql: The SQL query with ? placeholder
         vector_string: The vector string to use as parameter
         table_name: The table name for diagnostic queries (optional, defaults to RAG.SourceDocuments)
-        
+
     Returns:
         List[Tuple]: The query results
     """
@@ -275,7 +339,7 @@ def execute_vector_search_with_params(
     try:
         # Use the provided table name directly instead of parsing from SQL
         logger.debug(f"Using table name: {table_name}")
-            
+
         count_sql = f"SELECT COUNT(*) FROM {table_name} WHERE embedding IS NOT NULL"
         logger.debug(f"Executing count SQL: {count_sql}")
         try:
@@ -284,19 +348,25 @@ def execute_vector_search_with_params(
             # Handle both real results and mock objects
             if embedding_result:
                 try:
-                    embedding_count = embedding_result[0] if hasattr(embedding_result, '__getitem__') else 0
+                    embedding_count = (
+                        embedding_result[0]
+                        if hasattr(embedding_result, "__getitem__")
+                        else 0
+                    )
                 except (TypeError, IndexError):
                     # Handle Mock objects or other non-subscriptable results
                     embedding_count = 0
             else:
                 embedding_count = 0
-            logger.debug(f"Table {table_name} has {embedding_count} rows with embeddings")
+            logger.debug(
+                f"Table {table_name} has {embedding_count} rows with embeddings"
+            )
         except Exception as count_error:
             logger.error(f"Error executing count SQL: {count_error}")
             logger.error(f"Count SQL was: {count_sql}")
             # Skip count check and proceed with vector search
             embedding_count = 0
-        
+
         # Also check total rows
         total_sql = f"SELECT COUNT(*) FROM {table_name}"
         logger.debug(f"Executing total SQL: {total_sql}")
@@ -306,7 +376,9 @@ def execute_vector_search_with_params(
             # Handle both real results and mock objects
             if total_result:
                 try:
-                    total_count = total_result[0] if hasattr(total_result, '__getitem__') else 0
+                    total_count = (
+                        total_result[0] if hasattr(total_result, "__getitem__") else 0
+                    )
                 except (TypeError, IndexError):
                     # Handle Mock objects or other non-subscriptable results
                     total_count = 0
@@ -318,13 +390,13 @@ def execute_vector_search_with_params(
             logger.error(f"Total SQL was: {total_sql}")
             # Skip total count check and proceed with vector search
             total_count = 0
-        
+
         logger.debug(f"Executing vector search SQL: {sql}")
         logger.debug(f"Vector string parameter: {vector_string[:100]}...")
-        
+
         # Execute the SQL with parameter binding
         cursor.execute(sql, [vector_string])
-        
+
         # Try to fetch results with better error handling
         try:
             fetched_rows = cursor.fetchall()
@@ -341,7 +413,9 @@ def execute_vector_search_with_params(
                 logger.debug("No results returned from vector search")
         except StopIteration as e:
             logger.error(f"StopIteration error during fetchall(): {e}")
-            logger.error("This usually indicates the cursor is empty or in an invalid state")
+            logger.error(
+                "This usually indicates the cursor is empty or in an invalid state"
+            )
             # Return empty results instead of raising
             results = []
         except Exception as fetch_error:
@@ -355,11 +429,128 @@ def execute_vector_search_with_params(
     return results
 
 
-def execute_vector_search(
-    cursor: Any,
-    sql: str
-) -> List[Tuple]:
+# =============================================================================
+# SAFE VECTOR UTILITIES (PROVEN PATTERN)
+# =============================================================================
+
+
+def build_safe_vector_dot_sql(
+    table: str,
+    vector_column: str,
+    vector_string: str,
+    vector_dimension: int,
+    id_column: str = "doc_id",
+    extra_columns: list[str] | None = None,
+    top_k: int = 5,
+    additional_where: str | None = None,
+) -> str:
     """
+    Build safe vector search SQL with embedded vector string.
+
+    CRITICAL: TO_VECTOR() does NOT accept parameter markers (?, :param, etc.)
+    Vector string MUST be embedded directly in SQL with data type and dimension.
+
+    Args:
+        table: Table name (e.g., "RAG.SourceDocuments")
+        vector_column: Vector column name (e.g., "embedding")
+        vector_string: Vector as bracketed comma-separated string (e.g., "[0.1,0.2,0.3]")
+        vector_dimension: Dimension of the vector (e.g., 384)
+        id_column: ID column name (default: "doc_id")
+        extra_columns: Additional columns to select (optional)
+        top_k: Number of results to return (default: 5)
+        additional_where: Additional WHERE conditions (optional)
+
+    Returns:
+        str: Safe SQL query with embedded vector string
+
+    Example:
+        sql = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", "[0.1,0.2,0.3]", 384, "doc_id", ["title"], 5)
+        cursor.execute(sql)  # No parameters needed - vector embedded in SQL
+    """
+    # Validate identifiers to prevent SQL injection
+    import re
+
+    # Validate table name (allow schema.table format)
+    if not re.match(r"^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?$", table):
+        raise ValueError(f"Invalid table name: {table}")
+
+    # Validate column names
+    for col in [vector_column, id_column]:
+        if not re.match(r"^[a-zA-Z0-9_]+$", col):
+            raise ValueError(f"Invalid column name: {col}")
+
+    if extra_columns:
+        for col in extra_columns:
+            if not re.match(r"^[a-zA-Z0-9_]+$", col):
+                raise ValueError(f"Invalid extra column name: {col}")
+
+    # Validate top_k
+    if not isinstance(top_k, int) or top_k <= 0:
+        raise ValueError(f"Invalid top_k value: {top_k}")
+
+    # Validate vector_dimension
+    if not isinstance(vector_dimension, int) or vector_dimension <= 0:
+        raise ValueError(f"Invalid vector_dimension: {vector_dimension}")
+
+    # Validate vector string (security check)
+    if not validate_vector_string(vector_string):
+        raise ValueError(f"Invalid vector string: {vector_string}")
+
+    # Build SELECT clause
+    select_parts = [f"SELECT TOP {top_k} {id_column}"]
+    if extra_columns:
+        select_parts.extend([f", {col}" for col in extra_columns])
+    # IMPORTANT: Embed vector string directly with FLOAT type and dimension
+    # TO_VECTOR does NOT accept ? parameters
+    # Use FLOAT for cheaper storage and compute (per best practices)
+    select_parts.append(f", VECTOR_DOT_PRODUCT({vector_column}, TO_VECTOR('{vector_string}', FLOAT, {vector_dimension})) AS score")
+
+    # Build FROM clause
+    from_clause = f" FROM {table}"
+
+    # Build WHERE clause
+    where_parts = [f" WHERE {vector_column} IS NOT NULL"]
+    if additional_where:
+        where_parts.append(f" AND ({additional_where})")
+
+    # Build ORDER BY clause
+    order_clause = " ORDER BY score DESC"
+
+    # Combine all parts
+    sql = "".join(select_parts) + from_clause + "".join(where_parts) + order_clause
+    return sql
+
+
+def execute_safe_vector_search(
+    cursor, sql: str
+) -> list[tuple]:
+    """
+    Execute safe vector search with embedded vector string.
+
+    IMPORTANT: The vector string is already embedded in the SQL
+    (from build_safe_vector_dot_sql), so NO parameters are passed.
+
+    Args:
+        cursor: Database cursor
+        sql: SQL query from build_safe_vector_dot_sql() with embedded vector
+
+    Returns:
+        list[tuple]: Query results
+
+    Example:
+        sql = build_safe_vector_dot_sql("RAG.SourceDocuments", "embedding", "[0.1,0.2,0.3]")
+        results = execute_safe_vector_search(cursor, sql)
+    """
+    # Execute with NO parameters - vector is embedded in SQL
+    cursor.execute(sql)
+    return cursor.fetchall()
+
+
+def execute_vector_search(cursor: Any, sql: str) -> List[Tuple]:
+    """
+    @deprecated - Quarantined pending IRIS fix
+    See docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md
+
     Executes a vector search SQL query using the provided cursor.
     Handles common errors and returns the results.
 

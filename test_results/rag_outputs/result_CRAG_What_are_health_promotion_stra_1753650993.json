@@ -1,0 +1,24 @@
+{
+  "query": "What are health promotion strategies?",
+  "answer": "Health promotion strategies are approaches or actions aimed at encouraging and enabling individuals to take control of their health and make positive choices to improve their overall well-being. Based on the provided documents, it can be inferred that health promotion strategies for young women often focus on addressing barriers to physical activity and healthy eating, particularly in relation to weight maintenance.\n\nDocument 1 suggests that common barriers to physical activity and healthy eating among young women include lack of motivation, time constraints, cost considerations, and a lack of social support. These barriers can significantly impact the ability of young women to engage in behaviors that promote health and weight maintenance. Health promotion strategies in this context may involve interventions that address these specific barriers, such as providing motivation through education and support, offering affordable options for healthy food and physical activity, and creating social networks that encourage and facilitate healthy behaviors.\n\nDocument 2 further emphasizes the importance of considering personal, social, and environmental factors when designing health promotion strategies for young women. It highlights that young women, especially those at a high risk of weight gain, may face specific challenges related to weight maintenance that vary based on socioeconomic status. Health promotion initiatives tailored to these individuals may need to take into account their unique barriers and challenges, such as access to healthy food options, opportunities for physical activity, and social support networks.\n\nIn conclusion, health promotion strategies for young women should address barriers to physical activity and healthy eating, taking into consideration individual, social, and environmental factors. By addressing these barriers and providing tailored support, interventions can help empower young women to make positive choices for their health and well-being.",
+  "retrieved_documents": [
+    {
+      "page_content": "obtained. Statistical analyses were conducted mid-2003. The most common perceived barriers to physical activity and healthy eating encountered by young women were related to motivation, time and cost. Women with children were particularly likely to report a lack of social support as an important barrier to physical activity, and lack of social support and time as important barriers to healthy eating. Perceived barriers did not differ by SES or overweight status. Health promotion strategies aimed at preventing weight gain should take into account the specific perceived barriers to physical activity and healthy eating faced by women in this age group, particularly lack of motivation, lack of time, and cost. Strategies targeting perceived lack of time and lack of social support are particularly required for young women with children.",
+      "metadata": {
+        "similarity_score": 0.45334693789482117,
+        "retrieval_method": "initial_vector_similarity"
+      },
+      "id": "58f52f35-a965-492b-bb5a-06ba910e3230",
+      "score": 0.0
+    },
+    {
+      "page_content": "Perceived personal, social and environmental barriers to weight maintenance among young women: A community survey\n\nYoung women are a group at high risk of weight gain. This study examined a range of perceived personal, social and environmental barriers to physical activity and healthy eating for weight maintenance among young women, and how these varied by socioeconomic status (SES), overweight status and domestic situation. In October-December 2001, a total of 445 women aged 18–32 years, selected randomly from the Australian electoral roll, completed a mailed self-report survey that included questions on 11 barriers to physical activity and 11 barriers to healthy eating (relating to personal, social and environmental factors). Height, weight and socio-demographic details were also obtained. Statistical analyses were conducted mid-2003. The most common perceived barriers to physical activity and healthy eating encountered by young women were related to motivation, time and cost.",
+      "metadata": {
+        "similarity_score": 0.32401368021965027,
+        "retrieval_method": "initial_vector_similarity"
+      },
+      "id": "3f6123ad-cb4d-41fc-9162-c5e914ebe2e3",
+      "score": 0.0
+    }
+  ]
+}

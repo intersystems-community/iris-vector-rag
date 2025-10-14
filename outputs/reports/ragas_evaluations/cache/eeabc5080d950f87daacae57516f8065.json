@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "BasicRerank",
+  "query": "How effective are different pain management strategies for chronic conditions?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.541499137878418,
+  "success": true,
+  "error": null
+}

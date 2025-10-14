@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "BasicRerank",
+  "query": "What are the risk factors and prevention strategies for cardiovascular disease?",
+  "answer": "No relevant documents found to answer the query.",
+  "contexts": [],
+  "execution_time": 0.6131870746612549,
+  "success": true,
+  "error": null
+}

@@ -1,1183 +1,550 @@
-# API Reference - Library Consumption Framework
+# RAG-Templates API Reference
 
-Complete API documentation for both Python and JavaScript implementations of the rag-templates Library Consumption Framework.
+**Version**: 0.1.0
+**Last Updated**: 2025-10-08
 
-## Table of Contents
+## Overview
 
-1. [Python API](#python-api)
-2. [JavaScript API](#javascript-api)
-3. [Configuration Reference](#configuration-reference)
-4. [Error Handling](#error-handling)
-5. [Type Definitions](#type-definitions)
-6. [Environment Variables](#environment-variables)
+RAG-Templates provides a unified, standardized API across all 6 production RAG pipelines. All pipelines implement the same core methods with consistent signatures and response formats, ensuring 100% compatibility with LangChain and RAGAS evaluation frameworks.
 
-## Python API
-
-### Simple API
-
-#### `RAG` Class
-
-Zero-configuration Simple API for immediate RAG functionality.
+## Quick Start
 
 ```python
-from rag_templates import RAG
+from iris_rag import create_pipeline
 
-rag = RAG()
+# Create any pipeline with validation
+pipeline = create_pipeline("basic", validate_requirements=True)
+
+# Load documents
+result = pipeline.load_documents(documents=[...])
+
+# Query
+result = pipeline.query("What is machine learning?", top_k=5)
 ```
 
-##### Constructor
+## Core API Functions
 
+### `create_pipeline()`
+
+Factory function to create RAG pipeline instances with automatic validation.
+
+**Signature:**
 ```python
-RAG(config_path: Optional[str] = None, **kwargs)
+def create_pipeline(
+    pipeline_type: str,
+    config_path: Optional[str] = None,
+    llm_func: Optional[Callable[[str], str]] = None,
+    embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
+    external_connection = None,
+    validate_requirements: bool = True,
+    auto_setup: bool = False,
+    **kwargs
+) -> RAGPipeline
 ```
 
 **Parameters:**
-- `config_path` (Optional[str]): Path to configuration file
-- `**kwargs`: Configuration overrides
+- `pipeline_type` (str): Pipeline type to create
+  - `"basic"` - BasicRAG with vector similarity
+  - `"basic_rerank"` - BasicRAG + cross-encoder reranking
+  - `"crag"` - Corrective RAG with self-evaluation
+  - `"graphrag"` - HybridGraphRAG (vector + text + graph)
+  - `"pylate_colbert"` - ColBERT late interaction
+- `config_path` (str, optional): Path to configuration file
+- `llm_func` (callable, optional): LLM function for answer generation
+- `embedding_func` (callable, optional): Embedding function for vectors
+- `external_connection` (optional): Existing database connection
+- `validate_requirements` (bool): Validate pipeline requirements (default: True)
+- `auto_setup` (bool): Auto-fix validation issues (default: False)
+- `**kwargs`: Additional pipeline-specific parameters
+
+**Returns:** RAGPipeline instance
+
+**Raises:**
+- `ValueError`: If pipeline_type is unknown
+- `PipelineValidationError`: If validation fails and auto_setup is False
 
 **Example:**
 ```python
-# Zero configuration
-rag = RAG()
+from iris_rag import create_pipeline
 
-# With configuration file
-rag = RAG("config.yaml")
+# With validation
+pipeline = create_pipeline("basic", validate_requirements=True)
 
-# With inline configuration
-rag = RAG(technique="colbert", max_results=10)
+# Without validation (faster, for testing)
+pipeline = create_pipeline("basic", validate_requirements=False)
+
+# With auto-setup (fixes missing tables, etc.)
+pipeline = create_pipeline("crag", validate_requirements=True, auto_setup=True)
 ```
 
-##### Methods
+### `validate_pipeline()`
 
-###### `add_documents(documents, **kwargs)`
+Validate pipeline requirements without creating an instance.
 
-Add documents to the knowledge base.
+**Signature:**
+```python
+def validate_pipeline(
+    pipeline_type: str,
+    config_path: Optional[str] = None,
+    external_connection = None
+) -> Dict[str, Any]
+```
 
-**Parameters:**
-- `documents` (List[Union[str, Dict]]): Documents to add
-- `**kwargs`: Additional processing options
-
-**Returns:** `None`
+**Returns:** Validation results dictionary with detailed status
 
 **Example:**
 ```python
-# String documents
-rag.add_documents([
-    "Document 1 content",
-    "Document 2 content"
-])
+from iris_rag import validate_pipeline
 
-# Document objects
-rag.add_documents([
-    {
-        "content": "Document content",
-        "title": "Document Title",
-        "source": "file.pdf",
-        "metadata": {"author": "John Doe"}
-    }
-])
+status = validate_pipeline("graphrag")
+print(f"Valid: {status['is_valid']}")
+print(f"Issues: {status['issues']}")
 ```
 
-###### `query(query_text, **kwargs)`
+### `setup_pipeline()`
 
-Query the RAG system and return a simple answer.
+Set up all requirements for a pipeline type.
 
-**Parameters:**
-- `query_text` (str): The question or query
-- `**kwargs`: Query options
+**Signature:**
+```python
+def setup_pipeline(
+    pipeline_type: str,
+    config_path: Optional[str] = None,
+    external_connection = None
+) -> Dict[str, Any]
+```
 
-**Returns:** `str` - Answer to the query
+**Returns:** Setup results dictionary
 
 **Example:**
 ```python
-answer = rag.query("What is machine learning?")
-print(answer)  # "Machine learning is a subset of artificial intelligence..."
+from iris_rag import setup_pipeline
 
-# With options
-answer = rag.query("Explain neural networks", 
-                  max_results=10, 
-                  min_similarity=0.8)
+result = setup_pipeline("basic")
+print(f"Setup complete: {result['success']}")
 ```
 
-###### `get_document_count()`
+## Pipeline Methods
 
-Get the number of documents in the knowledge base.
+All pipeline classes implement these core methods with identical signatures.
 
-**Returns:** `int` - Number of documents
+### `load_documents()`
 
-**Example:**
+Load documents into the pipeline for retrieval.
+
+**Signature:**
 ```python
-count = rag.get_document_count()
-print(f"Knowledge base contains {count} documents")
-```
-
-###### `get_config(key, default=None)`
-
-Get a configuration value.
-
-**Parameters:**
-- `key` (str): Configuration key in dot notation
-- `default` (Any): Default value if key not found
-
-**Returns:** Configuration value or default
-
-**Example:**
-```python
-host = rag.get_config("database.iris.host", "localhost")
-model = rag.get_config("embeddings.model")
-```
-
-###### `set_config(key, value)`
-
-Set a configuration value.
-
-**Parameters:**
-- `key` (str): Configuration key in dot notation
-- `value` (Any): Value to set
-
-**Example:**
-```python
-rag.set_config("temperature", 0.1)
-rag.set_config("database.iris.host", "production-server")
-```
-
-###### `validate_config()`
-
-Validate the current configuration.
-
-**Returns:** `bool` - True if valid
-
-**Raises:** `ConfigurationError` if validation fails
-
-**Example:**
-```python
-try:
-    is_valid = rag.validate_config()
-    print(f"Configuration valid: {is_valid}")
-except ConfigurationError as e:
-    print(f"Configuration error: {e}")
-```
-
-### Standard API
-
-#### `ConfigurableRAG` Class
-
-Advanced Standard API for configurable RAG operations with technique selection and complex configuration.
-
-```python
-from rag_templates import ConfigurableRAG
-
-rag = ConfigurableRAG({"technique": "colbert"})
-```
-
-##### Constructor
-
-```python
-ConfigurableRAG(config: Union[Dict, str, ConfigManager])
+def load_documents(
+    self,
+    documents: Optional[List[Document]] = None,
+    documents_path: Optional[str] = None,
+    **kwargs
+) -> Dict[str, Any]
 ```
 
 **Parameters:**
-- `config` (Union[Dict, str, ConfigManager]): Configuration object, file path, or ConfigManager instance
+- `documents` (List[Document], optional): List of Document objects to load
+- `documents_path` (str, optional): Path to documents file (JSON)
+- `**kwargs`: Pipeline-specific parameters
 
-**Example:**
+**Returns:**
 ```python
-# Dictionary configuration
-rag = ConfigurableRAG({
-    "technique": "colbert",
-    "llm_provider": "openai",
-    "llm_config": {
-        "model": "gpt-4o-mini",
-        "temperature": 0.1
-    }
-})
-
-# From configuration file
-rag = ConfigurableRAG("advanced-config.yaml")
-
-# From ConfigManager
-from rag_templates.config import ConfigManager
-config = ConfigManager.from_file("config.yaml")
-rag = ConfigurableRAG(config)
-```
-
-##### Methods
-
-###### `query(query_text, options=None)`
-
-Advanced query with rich result object.
-
-**Parameters:**
-- `query_text` (str): The question or query
-- `options` (Optional[Dict]): Query options
-
-**Returns:** `QueryResult` - Rich result object
-
-**Example:**
-```python
-result = rag.query("What is machine learning?", {
-    "max_results": 10,
-    "include_sources": True,
-    "min_similarity": 0.8,
-    "source_filter": "academic_papers"
-})
-
-print(f"Answer: {result.answer}")
-print(f"Confidence: {result.confidence}")
-print(f"Sources: {len(result.sources)}")
-for source in result.sources:
-    print(f"  - {source.title} (similarity: {source.similarity:.2f})")
-```
-
-###### `get_available_techniques()`
-
-List available RAG techniques.
-
-**Returns:** `List[str]` - Available technique names
-
-**Example:**
-```python
-techniques = rag.get_available_techniques()
-print(f"Available techniques: {techniques}")
-# Output: ['basic', 'colbert', 'crag', 'hyde', 'graphrag', 'hybrid_ifind', 'noderag', 'sql_rag']
-```
-
-###### `get_technique_info(technique_name)`
-
-Get information about a specific technique.
-
-**Parameters:**
-- `technique_name` (str): Name of the technique
-
-**Returns:** `Dict` - Technique information
-
-**Example:**
-```python
-info = rag.get_technique_info("colbert")
-print(f"Description: {info['description']}")
-print(f"Best for: {info['best_for']}")
-print(f"Parameters: {info['parameters']}")
-```
-
-###### `switch_technique(technique_name, config=None)`
-
-Switch to a different RAG technique.
-
-**Parameters:**
-- `technique_name` (str): Name of the technique to switch to
-- `config` (Optional[Dict]): Technique-specific configuration
-
-**Example:**
-```python
-# Switch to ColBERT
-rag.switch_technique("colbert", {
-    "max_query_length": 512,
-    "top_k": 15
-})
-
-# Switch to HyDE
-rag.switch_technique("hyde")
-```
-
-### Configuration Management
-
-#### `ConfigManager` Class
-
-Manages configuration loading from files and environment variables.
-
-```python
-from rag_templates.config import ConfigManager
-
-config = ConfigManager.from_file("config.yaml")
-```
-
-##### Class Methods
-
-###### `ConfigManager.from_file(path)`
-
-Load configuration from a YAML file.
-
-**Parameters:**
-- `path` (str): Path to YAML configuration file
-
-**Returns:** `ConfigManager` instance
-
-**Example:**
-```python
-config = ConfigManager.from_file("production-config.yaml")
-rag = ConfigurableRAG(config)
-```
-
-##### Methods
-
-###### `get(key, default=None)`
-
-Get configuration value with dot notation support.
-
-**Parameters:**
-- `key` (str): Configuration key (e.g., "database.iris.host")
-- `default` (Any): Default value if key not found
-
-**Returns:** Configuration value or default
-
-**Example:**
-```python
-host = config.get("database.iris.host", "localhost")
-model = config.get("llm_config.model", "gpt-4o-mini")
-```
-
-###### `set(key, value)`
-
-Set configuration value with dot notation support.
-
-**Parameters:**
-- `key` (str): Configuration key
-- `value` (Any): Value to set
-
-**Example:**
-```python
-config.set("temperature", 0.1)
-config.set("database.iris.port", 52773)
-```
-
-## JavaScript API
-
-### Simple API
-
-#### `RAG` Class
-
-Zero-configuration Simple API for immediate RAG functionality.
-
-```javascript
-import { RAG } from '@rag-templates/core';
-
-const rag = new RAG();
-```
-
-##### Constructor
-
-```javascript
-new RAG(configPath = null, options = {})
-```
-
-**Parameters:**
-- `configPath` (string|null): Path to configuration file
-- `options` (Object): Configuration overrides
-
-**Example:**
-```javascript
-// Zero configuration
-const rag = new RAG();
-
-// With configuration file
-const rag = new RAG("config.yaml");
-
-// With inline configuration
-const rag = new RAG(null, {technique: "colbert", maxResults: 10});
-```
-
-##### Methods
-
-###### `addDocuments(documents, options = {})`
-
-Add documents to the knowledge base.
-
-**Parameters:**
-- `documents` (Array<string|Object>): Documents to add
-- `options` (Object): Additional processing options
-
-**Returns:** `Promise<void>`
-
-**Example:**
-```javascript
-// String documents
-await rag.addDocuments([
-    "Document 1 content",
-    "Document 2 content"
-]);
-
-// Document objects
-await rag.addDocuments([
-    {
-        content: "Document content",
-        title: "Document Title",
-        source: "file.pdf",
-        metadata: {author: "John Doe"}
-    }
-]);
-```
-
-###### `query(queryText, options = {})`
-
-Query the RAG system and return a simple answer.
-
-**Parameters:**
-- `queryText` (string): The question or query
-- `options` (Object): Query options
-
-**Returns:** `Promise<string>` - Answer to the query
-
-**Example:**
-```javascript
-const answer = await rag.query("What is machine learning?");
-console.log(answer);  // "Machine learning is a subset of artificial intelligence..."
-
-// With options
-const answer = await rag.query("Explain neural networks", {
-    maxResults: 10,
-    minSimilarity: 0.8
-});
-```
-
-###### `getDocumentCount()`
-
-Get the number of documents in the knowledge base.
-
-**Returns:** `Promise<number>` - Number of documents
-
-**Example:**
-```javascript
-const count = await rag.getDocumentCount();
-console.log(`Knowledge base contains ${count} documents`);
-```
-
-###### `getConfig(key, defaultValue = null)`
-
-Get a configuration value.
-
-**Parameters:**
-- `key` (string): Configuration key in dot notation
-- `defaultValue` (any): Default value if key not found
-
-**Returns:** Configuration value or default
-
-**Example:**
-```javascript
-const host = rag.getConfig("database.iris.host", "localhost");
-const model = rag.getConfig("embeddings.model");
-```
-
-###### `setConfig(key, value)`
-
-Set a configuration value.
-
-**Parameters:**
-- `key` (string): Configuration key in dot notation
-- `value` (any): Value to set
-
-**Example:**
-```javascript
-rag.setConfig("temperature", 0.1);
-rag.setConfig("database.iris.host", "production-server");
-```
-
-###### `validateConfig()`
-
-Validate the current configuration.
-
-**Returns:** `Promise<boolean>` - True if valid
-
-**Throws:** `ConfigurationError` if validation fails
-
-**Example:**
-```javascript
-try {
-    const isValid = await rag.validateConfig();
-    console.log(`Configuration valid: ${isValid}`);
-} catch (error) {
-    console.error(`Configuration error: ${error.message}`);
+{
+    "documents_loaded": int,       # Number successfully loaded
+    "embeddings_generated": int,   # Number of embeddings created
+    "documents_failed": int        # Number that failed to load
 }
 ```
 
-### Standard API
-
-#### `ConfigurableRAG` Class
-
-Advanced Standard API for configurable RAG operations.
-
-```javascript
-import { ConfigurableRAG } from '@rag-templates/core';
-
-const rag = new ConfigurableRAG({technique: "colbert"});
-```
-
-##### Constructor
-
-```javascript
-new ConfigurableRAG(config)
-```
-
-**Parameters:**
-- `config` (Object|string|ConfigManager): Configuration object, file path, or ConfigManager instance
+**Validation:**
+- Requires either `documents` or `documents_path` (not both None)
+- Rejects empty document lists with actionable error message
+- Validates Document objects have required fields
 
 **Example:**
-```javascript
-// Object configuration
-const rag = new ConfigurableRAG({
-    technique: "colbert",
-    llmProvider: "openai",
-    llmConfig: {
-        model: "gpt-4o-mini",
-        temperature: 0.1
-    }
-});
-
-// From configuration file
-const rag = await ConfigurableRAG.fromConfigFile("advanced-config.yaml");
-
-// From ConfigManager
-import { ConfigManager } from '@rag-templates/core';
-const config = await ConfigManager.fromFile("config.yaml");
-const rag = new ConfigurableRAG(config);
-```
-
-##### Methods
-
-###### `query(queryText, options = {})`
-
-Advanced query with rich result object.
-
-**Parameters:**
-- `queryText` (string): The question or query
-- `options` (Object): Query options
-
-**Returns:** `Promise<QueryResult>` - Rich result object
-
-**Example:**
-```javascript
-const result = await rag.query("What is machine learning?", {
-    maxResults: 10,
-    includeSources: true,
-    minSimilarity: 0.8,
-    sourceFilter: "academic_papers"
-});
-
-console.log(`Answer: ${result.answer}`);
-console.log(`Confidence: ${result.confidence}`);
-console.log(`Sources: ${result.sources.length}`);
-result.sources.forEach(source => {
-    console.log(`  - ${source.title} (similarity: ${source.similarity.toFixed(2)})`);
-});
-```
-
-###### `getAvailableTechniques()`
-
-List available RAG techniques.
-
-**Returns:** `Array<string>` - Available technique names
-
-**Example:**
-```javascript
-const techniques = rag.getAvailableTechniques();
-console.log(`Available techniques: ${techniques}`);
-// Output: ['basic', 'colbert', 'crag', 'hyde', 'graphrag', 'hybrid_ifind', 'noderag', 'sql_rag']
-```
-
-###### `getTechniqueInfo(techniqueName)`
-
-Get information about a specific technique.
-
-**Parameters:**
-- `techniqueName` (string): Name of the technique
-
-**Returns:** `Object` - Technique information
-
-**Example:**
-```javascript
-const info = rag.getTechniqueInfo("colbert");
-console.log(`Description: ${info.description}`);
-console.log(`Best for: ${info.bestFor}`);
-console.log(`Parameters: ${JSON.stringify(info.parameters)}`);
-```
-
-###### `switchTechnique(techniqueName, config = {})`
-
-Switch to a different RAG technique.
-
-**Parameters:**
-- `techniqueName` (string): Name of the technique to switch to
-- `config` (Object): Technique-specific configuration
-
-**Returns:** `Promise<void>`
-
-**Example:**
-```javascript
-// Switch to ColBERT
-await rag.switchTechnique("colbert", {
-    maxQueryLength: 512,
-    topK: 15
-});
-
-// Switch to HyDE
-await rag.switchTechnique("hyde");
-```
-
-### Configuration Management
-
-#### `ConfigManager` Class
-
-Manages configuration loading from files and environment variables.
-
-```javascript
-import { ConfigManager } from '@rag-templates/core';
-
-const config = await ConfigManager.fromFile("config.yaml");
-```
-
-##### Static Methods
-
-###### `ConfigManager.fromFile(path)`
-
-Load configuration from a YAML file.
-
-**Parameters:**
-- `path` (string): Path to YAML configuration file
-
-**Returns:** `Promise<ConfigManager>` instance
-
-**Example:**
-```javascript
-const config = await ConfigManager.fromFile("production-config.yaml");
-const rag = new ConfigurableRAG(config);
-```
-
-##### Methods
-
-###### `get(key, defaultValue = null)`
-
-Get configuration value with dot notation support.
-
-**Parameters:**
-- `key` (string): Configuration key (e.g., "database.iris.host")
-- `defaultValue` (any): Default value if key not found
-
-**Returns:** Configuration value or default
-
-**Example:**
-```javascript
-const host = config.get("database.iris.host", "localhost");
-const model = config.get("llmConfig.model", "gpt-4o-mini");
-```
-
-###### `set(key, value)`
-
-Set configuration value with dot notation support.
-
-**Parameters:**
-- `key` (string): Configuration key
-- `value` (any): Value to set
-
-**Example:**
-```javascript
-config.set("temperature", 0.1);
-config.set("database.iris.port", 52773);
-```
-
-### MCP Integration
-
-#### `createMCPServer(config)`
-
-Create an MCP server with RAG capabilities.
-
-```javascript
-import { createMCPServer } from '@rag-templates/mcp';
-
-const server = createMCPServer({
-    name: "my-rag-server",
-    description: "RAG-powered MCP server"
-});
-```
-
-**Parameters:**
-- `config` (Object): Server configuration
-
-**Configuration Options:**
-- `name` (string): Server name
-- `description` (string): Server description
-- `version` (string): Server version (default: "1.0.0")
-- `ragConfig` (Object): RAG configuration (optional)
-- `enabledTools` (Array<string>): List of enabled tools (optional)
-- `tools` (Array<Object>): Custom tool definitions (optional)
-
-**Returns:** MCP server instance
-
-**Example:**
-```javascript
-// Simple server
-const server = createMCPServer({
-    name: "knowledge-assistant",
-    description: "Company knowledge base"
-});
-
-// Advanced server
-const server = createMCPServer({
-    name: "advanced-rag-server",
-    description: "Advanced RAG with custom tools",
-    ragConfig: {
-        technique: 'colbert',
-        llmProvider: 'openai'
-    },
-    tools: [
-        {
-            name: "custom_search",
-            description: "Custom search tool",
-            inputSchema: {
-                type: 'object',
-                properties: {
-                    query: { type: 'string' }
-                },
-                required: ['query']
-            },
-            handler: async (args, rag) => {
-                return await rag.query(args.query);
-            }
-        }
-    ]
-});
-
-await server.start();
-```
-
-## Storage Layer API
-
-The storage layer provides two classes for different use cases:
-
-### IRISVectorStore (Standard API)
-
-LangChain-compatible vector store for standard RAG applications.
-
 ```python
-from iris_rag.storage.vector_store_iris import IRISVectorStore
-from iris_rag.core.connection import ConnectionManager  
-from iris_rag.config.manager import ConfigurationManager
+from iris_rag.core.models import Document
 
-config = ConfigurationManager()
-connection = ConnectionManager(config)
-vector_store = IRISVectorStore(connection, config)
+# Option 1: From Document objects
+docs = [
+    Document(
+        page_content="Python is a programming language...",
+        metadata={"source": "intro.txt", "author": "John"}
+    ),
+    Document(
+        page_content="Machine learning uses algorithms...",
+        metadata={"source": "ml.txt", "topic": "AI"}
+    )
+]
+result = pipeline.load_documents(documents=docs)
+print(f"Loaded {result['documents_loaded']} documents")
+
+# Option 2: From file
+result = pipeline.load_documents(documents_path="data/docs.json")
 ```
 
-#### Key Features:
-- **LangChain compatibility**: Drop-in replacement for LangChain vector stores
-- **Automatic schema management**: Creates tables and indexes automatically  
-- **Security validation**: Validates table names and query parameters
-- **Custom table support**: Configure custom table names via config
+### `query()`
 
-#### Methods:
+Execute a RAG query with document retrieval and optional answer generation.
 
+**Signature:**
 ```python
-# Add documents
-vector_store.add_documents(documents)
-
-# Similarity search
-results = vector_store.similarity_search("query", k=5)
-
-# Similarity search with scores
-results = vector_store.similarity_search_with_score("query", k=5)
-
-# Use as LangChain retriever
-retriever = vector_store.as_retriever(search_kwargs={"k": 5})
+def query(
+    self,
+    query: str,
+    top_k: int = 5,
+    generate_answer: bool = True,
+    include_sources: bool = True,
+    **kwargs
+) -> Dict[str, Any]
 ```
 
-#### Custom Table Configuration:
-```yaml
-# config.yaml
-storage:
-  iris:
-    table_name: "MyCompany.Documents"  # Custom table name
-```
+**Parameters:**
+- `query` (str): The query text (required, cannot be empty)
+- `top_k` (int): Number of documents to return, range [1-100] (default: 5)
+- `generate_answer` (bool): Generate LLM answer (default: True)
+- `include_sources` (bool): Include source metadata (default: True)
+- `**kwargs`: Pipeline-specific parameters
 
-### IRISStorage (Enterprise API)
-
-Enterprise-grade storage with full manual control for complex scenarios.
-
+**Returns:**
 ```python
-from iris_rag.storage.enterprise_storage import IRISStorage
-
-storage = IRISStorage(connection, config)
-```
-
-#### Key Features:
-- **Manual schema control**: Full control over database schema creation
-- **Legacy integration**: Works with existing database schemas
-- **Schema migration**: Add missing columns to existing tables
-- **Enterprise flexibility**: Complete customization of storage behavior
-
-#### Methods:
-
-```python
-# Initialize or update schema
-storage.initialize_schema()  # Adds missing columns like doc_id, metadata
-
-# Store documents directly
-storage.store_documents(documents)
-
-# Vector search with manual control
-results = storage.vector_search(query_vector, top_k=5)
-
-# Get document by ID
-document = storage.get_document(doc_id)
-```
-
-### When to Use Which Storage Class
-
-#### Use IRISVectorStore (Standard) When:
-- Building standard RAG applications
-- Using LangChain ecosystem 
-- Want automatic schema management
-- Need LangChain compatibility
-
-#### Use IRISStorage (Enterprise) When:
-- Integrating with existing databases
-- Need custom schema modifications
-- Require manual control over database operations
-- Migrating from legacy systems
-
-### Custom Table Names
-
-Both storage classes support custom table names:
-
-```python
-# Via configuration
-config_data = {
-    "storage": {
-        "iris": {
-            "table_name": "Sales.CustomerDocuments"
-        }
+{
+    "query": str,                            # Original query
+    "answer": str | None,                    # LLM-generated answer
+    "retrieved_documents": List[Document],   # LangChain Document objects
+    "contexts": List[str],                   # RAGAS-compatible contexts
+    "sources": List[Dict],                   # Source references
+    "execution_time": float,                 # Query execution time
+    "metadata": {
+        "num_retrieved": int,                # Documents retrieved
+        "processing_time": float,
+        "pipeline_type": str,                # Pipeline identifier
+        "retrieval_method": str,             # Retrieval strategy used
+        "context_count": int,                # Number of contexts
+        "sources": List[Dict],               # Also in metadata
+        # Pipeline-specific fields...
     }
 }
-
-# Both classes will use the custom table name
-vector_store = IRISVectorStore(connection, config)  # Uses Sales.CustomerDocuments
-storage = IRISStorage(connection, config)           # Uses Sales.CustomerDocuments
 ```
 
-### Security Considerations
+**Validation:**
+- Query cannot be empty or whitespace-only
+- top_k must be between 1 and 100 (inclusive)
+- Raises `ValueError` with 5-part error message on validation failure
 
-- **Table name validation**: Both classes validate table names to prevent SQL injection
-- **Parameterized queries**: All queries use parameterized statements
-- **Field validation**: Input validation for all user-provided data
-- **Schema security**: Custom tables must follow `Schema.TableName` format
-
-## Configuration Reference
-
-### Configuration File Format
-
-#### YAML Configuration
-```yaml
-# Basic configuration
-technique: "colbert"
-llm_provider: "openai"
-embedding_model: "text-embedding-3-small"
-
-# Advanced configuration
-llm_config:
-  model: "gpt-4o-mini"
-  temperature: 0.1
-  max_tokens: 1000
-
-embedding_config:
-  model: "text-embedding-3-small"
-  dimension: 1536
-  batch_size: 100
-
-database:
-  iris:
-    host: "${IRIS_HOST}"
-    port: "${IRIS_PORT}"
-    username: "${IRIS_USERNAME}"
-    password: "${IRIS_PASSWORD}"
-    namespace: "RAG_PRODUCTION"
-
-technique_config:
-  colbert:
-    max_query_length: 512
-    doc_maxlen: 180
-    top_k: 15
-  hyde:
-    num_hypotheses: 3
-    hypothesis_length: 100
-
-vector_index:
-  type: "HNSW"
-  M: 16
-  efConstruction: 200
-
-caching:
-  enabled: true
-  ttl: 3600
-  max_size: 1000
-
-monitoring:
-  enabled: true
-  log_level: "INFO"
+**Error Message Format:**
+```
+Error: <what went wrong>
+Context: <where it happened>
+Expected: <what was expected>
+Actual: <what was received>
+Fix: <how to fix it>
 ```
 
-### Configuration Options
+**Example:**
+```python
+# Basic query
+result = pipeline.query("What is diabetes?", top_k=5)
+print(result["answer"])
 
-#### Core Configuration
+# Without answer generation (retrieval only)
+result = pipeline.query(
+    "diabetes symptoms",
+    top_k=10,
+    generate_answer=False
+)
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `technique` | string | "basic" | RAG technique to use |
-| `llm_provider` | string | "openai" | LLM provider |
-| `embedding_model` | string | "text-embedding-3-small" | Embedding model |
-| `max_results` | integer | 5 | Default number of results |
-| `temperature` | number | 0.7 | LLM temperature |
+# Access retrieved documents (LangChain compatible)
+for doc in result["retrieved_documents"]:
+    print(f"Source: {doc.metadata.get('source')}")
+    print(f"Content: {doc.page_content[:100]}...")
 
-#### Database Configuration
+# Access contexts (RAGAS compatible)
+from ragas import evaluate
+from ragas.metrics import faithfulness, answer_relevancy
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `database.iris.host` | string | "localhost" | IRIS database host |
-| `database.iris.port` | integer | 52773 | IRIS database port |
-| `database.iris.username` | string | "demo" | Database username |
-| `database.iris.password` | string | "demo" | Database password |
-| `database.iris.namespace` | string | "RAG" | Database namespace |
+evaluation = evaluate(
+    dataset={"contexts": result["contexts"], "answer": result["answer"]},
+    metrics=[faithfulness, answer_relevancy]
+)
+```
 
-#### LLM Configuration
+### `get_pipeline_info()`
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `llm_config.model` | string | "gpt-4o-mini" | LLM model name |
-| `llm_config.temperature` | number | 0.7 | Response randomness |
-| `llm_config.max_tokens` | integer | 1000 | Maximum response length |
-| `llm_config.api_key` | string | - | API key (use environment variable) |
+Get information about the pipeline's configuration.
 
-#### Embedding Configuration
+**Signature:**
+```python
+def get_pipeline_info(self) -> Dict[str, Any]
+```
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `embedding_config.model` | string | "text-embedding-3-small" | Embedding model |
-| `embedding_config.dimension` | integer | 1536 | Embedding dimension |
-| `embedding_config.batch_size` | integer | 100 | Batch size for processing |
+**Returns:** Dictionary with pipeline configuration details
+
+**Example:**
+```python
+info = pipeline.get_pipeline_info()
+print(f"Type: {info['pipeline_type']}")
+print(f"Config: {info}")
+```
+
+## Pipeline-Specific Features
+
+### BasicRAGReranking
+
+Additional metadata fields:
+```python
+result["metadata"]["reranked"]            # bool: Whether reranking was applied
+result["metadata"]["initial_candidates"]  # int: Initial retrieval count
+result["metadata"]["rerank_factor"]       # int: Reranking multiplier
+```
+
+Configuration:
+```python
+pipeline = create_pipeline("basic_rerank")
+# Retrieves rerank_factor * top_k documents, reranks, returns top_k
+```
+
+### CRAG (Corrective RAG)
+
+Additional metadata fields:
+```python
+result["metadata"]["evaluation_score"]    # float: Relevance evaluation
+result["metadata"]["corrected"]           # bool: Whether correction applied
+```
+
+### HybridGraphRAG
+
+Pipeline-specific query parameters:
+```python
+result = pipeline.query(
+    query_text="cancer targets",
+    method="rrf",           # "rrf", "hybrid", "vector", "text", "graph"
+    vector_k=30,            # Documents from vector search
+    text_k=30,              # Documents from text search
+    graph_k=20,             # Documents from graph traversal
+    top_k=15                # Final result count after fusion
+)
+```
+
+Additional metadata fields:
+```python
+result["metadata"]["fusion_method"]       # str: Fusion strategy used
+result["metadata"]["vector_score"]        # float: Vector search contribution
+result["metadata"]["text_score"]          # float: Text search contribution
+result["metadata"]["graph_score"]         # float: Graph traversal contribution
+```
+
+### PyLateColBERT
+
+Additional metadata fields:
+```python
+result["metadata"]["native_reranking"]    # bool: PyLate reranking used
+result["metadata"]["model_name"]          # str: ColBERT model identifier
+```
+
+## Data Models
+
+### Document
+
+Standard document object used across all pipelines.
+
+```python
+from iris_rag.core.models import Document
+
+doc = Document(
+    page_content="The text content of the document...",
+    metadata={
+        "source": "filename.txt",
+        "author": "John Doe",
+        "date": "2024-01-01",
+        # Any custom fields...
+    }
+)
+```
+
+**Fields:**
+- `page_content` (str): The main text content
+- `metadata` (dict): Dictionary of metadata fields
+
+**LangChain Compatibility:**
+This is the standard LangChain Document class, ensuring 100% compatibility.
 
 ## Error Handling
 
-### Python Exceptions
+### Validation Errors
 
-#### `RAGFrameworkError`
-Base exception for all RAG framework errors.
+All pipelines use consistent validation with actionable error messages:
 
 ```python
-from rag_templates.core.errors import RAGFrameworkError
-
 try:
-    rag = RAG()
-    answer = rag.query("test")
-except RAGFrameworkError as e:
-    print(f"RAG error: {e}")
+    result = pipeline.query("", top_k=5)
+except ValueError as e:
+    print(str(e))
+    # Output:
+    # Error: Query parameter is required and cannot be empty
+    # Context: BasicRAG pipeline query operation
+    # Expected: Non-empty query string
+    # Actual: Empty or whitespace-only string
+    # Fix: Provide a valid query string, e.g., query='What is diabetes?'
 ```
 
-#### `ConfigurationError`
-Configuration-related errors.
+### Common Errors
 
+**Empty Query:**
 ```python
-from rag_templates.core.errors import ConfigurationError
-
-try:
-    rag = RAG("invalid-config.yaml")
-except ConfigurationError as e:
-    print(f"Configuration error: {e}")
+pipeline.query("")  # Raises ValueError
 ```
 
-#### `InitializationError`
-Initialization and setup errors.
-
+**Invalid top_k:**
 ```python
-from rag_templates.core.errors import InitializationError
-
-try:
-    rag = RAG()
-    rag.add_documents(documents)
-except InitializationError as e:
-    print(f"Initialization error: {e}")
+pipeline.query("test", top_k=0)    # Raises ValueError (< 1)
+pipeline.query("test", top_k=101)  # Raises ValueError (> 100)
 ```
 
-### JavaScript Errors
-
-#### `RAGError`
-Base error for all RAG framework errors.
-
-```javascript
-import { RAGError } from '@rag-templates/core';
-
-try {
-    const rag = new RAG();
-    const answer = await rag.query("test");
-} catch (error) {
-    if (error instanceof RAGError) {
-        console.error(`RAG error: ${error.message}`);
-    }
-}
-```
-
-#### `ConfigurationError`
-Configuration-related errors.
-
-```javascript
-import { ConfigurationError } from '@rag-templates/core';
-
-try {
-    const rag = new RAG("invalid-config.yaml");
-} catch (error) {
-    if (error instanceof ConfigurationError) {
-        console.error(`Configuration error: ${error.message}`);
-    }
-}
-```
-
-#### `InitializationError`
-Initialization and setup errors.
-
-```javascript
-import { InitializationError } from '@rag-templates/core';
-
-try {
-    const rag = new RAG();
-    await rag.addDocuments(documents);
-} catch (error) {
-    if (error instanceof InitializationError) {
-        console.error(`Initialization error: ${error.message}`);
-    }
-}
-```
-
-## Type Definitions
-
-### Python Types
-
-#### `QueryResult`
+**Empty Document List:**
 ```python
-from typing import List, Optional, Dict, Any
-from dataclasses import dataclass
-
-@dataclass
-class QueryResult:
-    answer: str
-    confidence: float
-    sources: Optional[List[DocumentSource]]
-    metadata: Optional[Dict[str, Any]]
-    processing_time_ms: Optional[int]
+pipeline.load_documents(documents=[])  # Raises ValueError
 ```
 
-#### `DocumentSource`
+**Missing Required Parameter:**
 ```python
-@dataclass
-class DocumentSource:
-    title: str
-    content: str
-    source: str
-    similarity: float
-    metadata: Optional[Dict[str, Any]]
+pipeline.load_documents()  # Raises ValueError (need documents or documents_path)
 ```
 
-#### `Document`
-```python
-@dataclass
-class Document:
-    content: str
-    title: Optional[str] = None
-    source: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+## Configuration
+
+### Default Configuration
+
+Located at `iris_rag/config/default_config.yaml`:
+
+```yaml
+database:
+  db_host: localhost
+  db_port: 1972
+  db_namespace: USER
+
+embedding_model:
+  name: sentence-transformers/all-MiniLM-L6-v2
+  dimension: 384
+
+pipelines:
+  basic:
+    chunk_size: 1000
+    chunk_overlap: 200
+
+  basic_reranking:
+    rerank_factor: 2
+    reranker_model: cross-encoder/ms-marco-MiniLM-L-6-v2
+
+  crag:
+    relevance_threshold: 0.5
 ```
 
-### JavaScript Types
+### Environment Variables
 
-#### `QueryResult`
-```typescript
-interface QueryResult {
-    answer: string;
-    confidence: number;
-    sources?: DocumentSource[];
-    metadata?: Record<string, any>;
-    processingTimeMs?: number;
-}
-```
+Override configuration with environment variables:
 
-#### `DocumentSource`
-```typescript
-interface DocumentSource {
-    title: string;
-    content: string;
-    source: string;
-    similarity: number;
-    metadata?: Record<string, any>;
-}
-```
-
-#### `Document`
-```typescript
-interface Document {
-    content: string;
-    title?: string;
-    source?: string;
-    metadata?: Record<string, any>;
-}
-```
-
-## Environment Variables
-
-### Database Configuration
 ```bash
-# IRIS Database
-IRIS_HOST=localhost
-IRIS_PORT=52773
-IRIS_USERNAME=demo
-IRIS_PASSWORD=demo
-IRIS_NAMESPACE=RAG_PRODUCTION
-
-# Connection settings
-IRIS_CONNECTION_TIMEOUT=30
-IRIS_POOL_SIZE=10
+export IRIS_HOST=localhost
+export IRIS_PORT=1972
+export IRIS_USERNAME=SuperUser
+export IRIS_PASSWORD=SYS
+export OPENAI_API_KEY=your-key-here
 ```
 
-### LLM Configuration
+## Testing
+
+### Contract Tests
+
+Validate API contracts without database:
+
 ```bash
-# OpenAI
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o-mini
-OPENAI_TEMPERATURE=0.7
-
-# Anthropic
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-3-sonnet
-
-# Azure OpenAI
-AZURE_OPENAI_API_KEY=...
-AZURE_OPENAI_ENDPOINT=https://...
-AZURE_OPENAI_API_VERSION=2024-02-01
+pytest tests/contract/ -v
 ```
 
-### Framework Configuration
+### Integration Tests
+
+Full end-to-end with live database:
+
 ```bash
-# RAG Configuration
-RAG_TECHNIQUE=colbert
-RAG_MAX_RESULTS=5
-RAG_CACHE_TTL=3600
-
-# Embedding Configuration
-EMBEDDING_MODEL=text-embedding-3-small
-EMBEDDING_BATCH_SIZE=100
-
-# Logging
-LOG_LEVEL=INFO
-DEBUG_MODE=false
+pytest tests/e2e/ -v
 ```
 
-### MCP Configuration
-```bash
-# MCP Server
-MCP_SERVER_NAME=rag-assistant
-MCP_SERVER_DESCRIPTION=RAG-powered assistant
-MCP_SERVER_VERSION=1.0.0
+### Example Test
 
-# MCP Tools
-MCP_ENABLED_TOOLS=rag_search,rag_add_documents,rag_get_stats
+```python
+from iris_rag import create_pipeline
+from iris_rag.core.models import Document
+
+def test_basic_workflow():
+    # Create pipeline
+    pipeline = create_pipeline("basic", validate_requirements=False)
+
+    # Load documents
+    docs = [Document(page_content="Test content", metadata={"source": "test"})]
+    result = pipeline.load_documents(documents=docs)
+    assert result["documents_loaded"] == 1
+
+    # Query
+    result = pipeline.query("test", top_k=1)
+    assert "answer" in result
+    assert len(result["retrieved_documents"]) <= 1
 ```
 
----
+## Migration from Old API
 
-**Next Steps:**
-- [Library Consumption Guide](LIBRARY_CONSUMPTION_GUIDE.md) - Complete usage guide
-- [MCP Integration Guide](MCP_INTEGRATION_GUIDE.md) - MCP server creation
-- [Migration Guide](MIGRATION_GUIDE.md) - Migrate from complex setup
-- [Examples](EXAMPLES.md) - Comprehensive examples
+### Old API (Pre-Standardization)
+
+```python
+# OLD - Inconsistent signatures
+pipeline.query(query_text="test", k=5)  # CRAG used query_text
+pipeline.load_documents("path/to/docs")  # Only file paths
+result["num_retrieved"]  # Inconsistent metadata
+```
+
+### New API (Standardized)
+
+```python
+# NEW - Consistent across all pipelines
+pipeline.query(query="test", top_k=5)  # Unified signature
+pipeline.load_documents(documents=[...])  # Supports both lists and paths
+result["metadata"]["num_retrieved"]  # Standardized structure
+```
+
+## Best Practices
+
+1. **Always use validation in production:**
+   ```python
+   pipeline = create_pipeline("basic", validate_requirements=True)
+   ```
+
+2. **Handle errors with specific exceptions:**
+   ```python
+   try:
+       result = pipeline.query(user_input, top_k=5)
+   except ValueError as e:
+       logger.error(f"Query validation failed: {e}")
+   ```
+
+3. **Use Document objects for metadata preservation:**
+   ```python
+   docs = [Document(page_content=text, metadata={"source": file})]
+   pipeline.load_documents(documents=docs)
+   ```
+
+4. **Access results with framework-specific interfaces:**
+   ```python
+   # For LangChain
+   documents = result["retrieved_documents"]
+
+   # For RAGAS
+   contexts = result["contexts"]
+   answer = result["answer"]
+   ```
+
+## Support
+
+- **Documentation**: [docs/](../docs/)
+- **Examples**: [scripts/](../scripts/)
+- **Issues**: GitHub Issues
+- **Testing**: [TEST_VALIDATION_SUMMARY.md](../TEST_VALIDATION_SUMMARY.md)

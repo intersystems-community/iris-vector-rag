@@ -3,27 +3,34 @@
 Setup configuration for rag-templates Library Consumption Framework.
 """
 
-from setuptools import setup, find_packages
 import os
+
+from setuptools import find_packages, setup
+
 
 # Read README for long description
 def read_readme():
     with open("README.md", "r", encoding="utf-8") as fh:
         return fh.read()
 
+
 # Read requirements
 def read_requirements():
     with open("requirements.txt", "r", encoding="utf-8") as fh:
-        return [line.strip() for line in fh if line.strip() and not line.startswith("#")]
+        return [
+            line.strip() for line in fh if line.strip() and not line.startswith("#")
+        ]
+
 
 # Read version
 def read_version():
-    version_file = os.path.join("rag_templates", "__init__.py")
+    version_file = os.path.join("iris_rag", "__init__.py")
     with open(version_file, "r", encoding="utf-8") as fh:
         for line in fh:
             if line.startswith("__version__"):
                 return line.split("=")[1].strip().strip('"').strip("'")
     return "0.1.0"
+
 
 setup(
     name="rag-templates",
@@ -74,6 +81,9 @@ setup(
             "fastapi>=0.100.0",
             "uvicorn>=0.23.0",
         ],
+        "hybrid-graphrag": [
+            # Dependencies moved to core - iris-vector-graph is now required
+        ],
         "all": [
             "pytest>=7.0.0",
             "pytest-asyncio>=0.21.0",
@@ -90,12 +100,12 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "rag-templates=rag_templates.cli:main",
+            "rag-templates=iris_rag.cli:main",
         ],
     },
     include_package_data=True,
     package_data={
-        "rag_templates": [
+        "iris_rag": [
             "config/*.yaml",
             "config/*.json",
             "templates/*.yaml",

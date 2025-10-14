@@ -1,7 +1,9 @@
-import yaml
 import os
 
+import yaml
+
 CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "config.yaml")
+
 
 def get_config():
     """
@@ -24,6 +26,7 @@ def get_config():
     except Exception as e:
         print(f"An unexpected error occurred while loading {CONFIG_FILE_PATH}: {e}")
         return None
+
 
 if __name__ == "__main__":
     # Example usage:

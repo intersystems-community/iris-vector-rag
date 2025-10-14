@@ -1,0 +1,520 @@
+<?xml version="1.0"  ?><!DOCTYPE pmc-articleset PUBLIC "-//NLM//DTD ARTICLE SET 2.0//EN" "https://dtd.nlm.nih.gov/ncbi/pmc/articleset/nlm-articleset-2.0.dtd"><pmc-articleset><article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:ali="http://www.niso.org/schemas/ali/1.0/" xml:lang="en" article-type="research-article" dtd-version="1.4"><processing-meta base-tagset="archiving" mathml-version="3.0" table-model="xhtml" tagset-family="jats"><restricted-by>pmc</restricted-by></processing-meta><front><journal-meta><journal-id journal-id-type="nlm-ta">Cureus</journal-id><journal-id journal-id-type="iso-abbrev">Cureus</journal-id><journal-id journal-id-type="pmc-domain-id">2757</journal-id><journal-id journal-id-type="pmc-domain">cureus</journal-id><journal-title-group><journal-title>Cureus</journal-title></journal-title-group><issn pub-type="epub">2168-8184</issn><publisher><publisher-name>Cureus Inc.</publisher-name></publisher></journal-meta><article-meta><article-id pub-id-type="pmcid">PMC12430470</article-id><article-id pub-id-type="pmcid-ver">PMC12430470.1</article-id><article-id pub-id-type="pmcaid">12430470</article-id><article-id pub-id-type="pmcaiid">12430470</article-id><article-id pub-id-type="doi">10.7759/cureus.90001</article-id><article-version article-version-type="pmc-version">1</article-version><article-categories><subj-group subj-group-type="heading"><subject>Pathology</subject></subj-group><subj-group><subject>Cardiac/Thoracic/Vascular Surgery</subject></subj-group></article-categories><title-group><article-title>Severity of Ascending Aortic Degeneration in Patients With Chronic Obstructive Pulmonary Disease</article-title></title-group><contrib-group><contrib contrib-type="editor"><name name-style="western"><surname>Muacevic</surname><given-names initials="A">Alexander</given-names></name></contrib><contrib contrib-type="editor"><name name-style="western"><surname>Adler</surname><given-names initials="JR">John R</given-names></name></contrib></contrib-group><contrib-group><contrib contrib-type="author"><name name-style="western"><surname>Pirskanen</surname><given-names initials="E">Essi</given-names></name><xref rid="aff-1" ref-type="aff">1</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Laaksonen</surname><given-names initials="M">Mona</given-names></name><xref rid="aff-1" ref-type="aff">1</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Chen</surname><given-names initials="T">Trina</given-names></name><xref rid="aff-1" ref-type="aff">1</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Kholova</surname><given-names initials="I">Ivana</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Arponen</surname><given-names initials="O">Otso</given-names></name><xref rid="aff-3" ref-type="aff">3</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Kauhanen</surname><given-names initials="P">Petteri</given-names></name><xref rid="aff-4" ref-type="aff">4</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Lattu</surname><given-names initials="A">Aada</given-names></name><xref rid="aff-3" ref-type="aff">3</xref></contrib><contrib contrib-type="author"><name name-style="western"><surname>Paavonen</surname><given-names initials="T">Timo</given-names></name><xref rid="aff-2" ref-type="aff">2</xref></contrib><contrib contrib-type="author" corresp="yes"><name name-style="western"><surname>Mennander</surname><given-names initials="A">Ari</given-names></name><xref rid="aff-1" ref-type="aff">1</xref><xref rid="aff-5" ref-type="aff">5</xref></contrib></contrib-group><aff id="aff-1">
+<label>1</label>
+Department of Cardiothoracic Surgery, Tampere University, Tampere, FIN </aff><aff id="aff-2">
+<label>2</label>
+Department of Pathology, Fimlab Laboratories, Tampere University Hospital and Tampere University, Tampere, FIN </aff><aff id="aff-3">
+<label>3</label>
+Department of Radiology, Tampere University Hospital and Tampere University, Tampere, FIN </aff><aff id="aff-4">
+<label>4</label>
+Department of Clinical Radiology, Kuopio University Hospital, Clinical Imaging Center, Kuopio, FIN </aff><aff id="aff-5">
+<label>5</label>
+Department of Cardiothoracic Surgery, Tampere University Hospital, Heart Hospital, Tampere, FIN </aff><author-notes><corresp id="cor1">
+Ari Mennander <email>ari.mennander@hotmail.com</email></corresp></author-notes><pub-date date-type="pub" publication-format="electronic"><day>13</day><month>8</month><year>2025</year></pub-date><pub-date date-type="collection" publication-format="electronic"><month>8</month><year>2025</year></pub-date><volume>17</volume><issue>8</issue><issue-id pub-id-type="pmc-issue-id">494304</issue-id><elocation-id>e90001</elocation-id><history><date date-type="accepted"><day>13</day><month>8</month><year>2025</year></date></history><pub-history><event event-type="pmc-release"><date><day>13</day><month>08</month><year>2025</year></date></event><event event-type="pmc-live"><date><day>13</day><month>09</month><year>2025</year></date></event><event event-type="pmc-last-change"><date iso-8601-date="2025-09-13 16:25:51.440"><day>13</day><month>09</month><year>2025</year></date></event></pub-history><permissions><copyright-statement>Copyright &#169; 2025, Pirskanen et al.</copyright-statement><copyright-year>2025</copyright-year><copyright-holder>Pirskanen et al.</copyright-holder><license><ali:license_ref specific-use="textmining" content-type="ccbylicense">https://creativecommons.org/licenses/by/4.0/</ali:license_ref><license-p>This is an open access article distributed under the terms of the Creative Commons Attribution License CC-BY 4.0., which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are credited.</license-p></license></permissions><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" content-type="pmc-pdf" xlink:href="cureus-0017-00000090001.pdf"/><self-uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://cureus.com/articles/399448-severity-of-ascending-aortic-degeneration-in-patients-with-chronic-obstructive-pulmonary-disease">This article is available from https://cureus.com/articles/399448-severity-of-ascending-aortic-degeneration-in-patients-with-chronic-obstructive-pulmonary-disease</self-uri><abstract><p>Background</p><p>Ascending aortic dilatation is associated with increased susceptibility to aortic events. Chronic obstructive pulmonary disease (COPD) may add to tissue degeneration and inflammation associated with the risk of increased aortic dilatation. We studied the characteristics and aortic wall degeneration of patients with COPD during ascending aortic dilatation.</p><p>Methodology</p><p>We enrolled 35 consecutive patients who underwent elective surgery for ascending aortic dilatation between February 2016 and November 2016. The patients were grouped according to the presence of COPD. The aortic diameters were measured for the aortic valve annulus, aortic root, sinotubular junction, ascending aorta, aortic arch, and descending aorta. An extensive analysis of ascending aortic wall histopathology was performed.&#160;</p><p>Results</p><p>The patients with chronic obstructive pulmonary disease (COPD) (n=7) all had aortic valve regurgitation, while the aortic wall had more mucoid extracellular matrix accumulation, medial degeneration, elastic fiber fragmentation and loss, and adventitial fibrosis than those without COPD (5.7&#177;1.1 vs. 4.3&#177;1.0 point score units (PSU),&#160;<italic toggle="yes">p</italic>=0.006; 2.7&#177;0.5 vs. 1.7&#177;0.8 PSU,&#160;<italic toggle="yes">p</italic>=0.006; 4.5&#177;1.2 vs. 3.3&#177;1.2 PSU,&#160;<italic toggle="yes">p</italic>=0.034; and 0.5&#177;0.5 vs. 0.1&#177;0.3 PSU,&#160;p=0.023, respectively). Only the distal ascending aortic diameter slightly differed in patients with COPD vs. those without (36.5&#177;3.3 vs. 32.2&#177;3.8 mm,&#160;p=0.011), although increased aortic dilatation was otherwise present in both groups.</p><p>Conclusions</p><p>We identified a subgroup of patients with COPD who had increased aortic wall degeneration during ascending aortic dilatation. Risk stratification of aortic events in patients with COPD warrants further clarification.&#160;</p></abstract><kwd-group kwd-group-type="author"><kwd>aortic dilatation</kwd><kwd>aortic surgery</kwd><kwd>ascending aortic degeneration</kwd><kwd>chronic obstructive pulmonary disease</kwd><kwd>histology</kwd></kwd-group><custom-meta-group><custom-meta><meta-name>pmc-status-qastatus</meta-name><meta-value>0</meta-value></custom-meta><custom-meta><meta-name>pmc-status-live</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-status-embargo</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-status-released</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-open-access</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-olf</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-manuscript</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-legally-suppressed</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-pdf</meta-name><meta-value>yes</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-has-supplement</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-pdf-only</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-suppress-copyright</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-real-version</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-is-scanned-article</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-preprint</meta-name><meta-value>no</meta-value></custom-meta><custom-meta><meta-name>pmc-prop-in-epmc</meta-name><meta-value>yes</meta-value></custom-meta></custom-meta-group></article-meta></front><body><sec sec-type="intro"><title>Introduction</title><p>Ascending aortic dilatation is associated with increased susceptibility to acute aortic events&#160;[<xref rid="REF1" ref-type="bibr">1</xref>]. Though several risk factors are identified during increased ascending aortic dilatation, the pathogenesis of aortic dilatation remains unclear&#160;[<xref rid="REF2" ref-type="bibr">2</xref>]. Increased ascending aortic dilatation is often associated with the presence of a bicuspid aortic valve&#160;[<xref rid="REF3" ref-type="bibr">3</xref>,<xref rid="REF4" ref-type="bibr">4</xref>], and the presence of increased aortic root dilatation during aortic valve regurgitation has been described as the root phenotype&#160;[<xref rid="REF5" ref-type="bibr">5</xref>]. Genetic background, including several connective tissue disorders such as Marfan syndrome and Loeys-Dietz syndrome, adds to the risk profile&#160;[<xref rid="REF6" ref-type="bibr">6</xref>]. Many traditional cardiovascular risk factors, e.g., high blood pressure, male sex, and smoking, are associated with aortopathy leading to ascending aortic dilatation&#160;[<xref rid="REF5" ref-type="bibr">5</xref>].</p><p>Many of these traditional patient characteristics are also present in patients with chronic obstructive pulmonary disease (COPD)&#160;[<xref rid="REF7" ref-type="bibr">7</xref>,<xref rid="REF8" ref-type="bibr">8</xref>]. Patients with COPD and emphysema often have enlargement of the ascending aorta&#160;[<xref rid="REF9" ref-type="bibr">9</xref>]. COPD has been reported to increase the risk of ascending aortic dilatation and rupture&#160;[<xref rid="REF8" ref-type="bibr">8</xref>]. COPD may also indirectly affect the aorta via increased tissue degeneration and inflammation&#160;[<xref rid="REF10" ref-type="bibr">10</xref>]. Similar histopathological changes destroying both the lung parenchyma and causing aortic wall degeneration in patients with COPD may lead to increased weakening of the aortic wall and ascending aortic dilatation&#160;[<xref rid="REF9" ref-type="bibr">9</xref>].&#160;Understanding whether COPD contributes distinctly to aortic degeneration could significantly influence clinical strategies for monitoring and intervention, potentially reducing acute aortic complications.</p><p>We hypothesized that patients with COPD and ascending aortic dilatation exhibit distinctive histopathological changes in the aortic wall compared to those without COPD. Histological comparison of ascending aortic wall changes during aortic dilatation in patients with COPD versus those without has not yet been investigated. The aim of this study was to investigate the association of aortic wall degeneration in patients with or without COPD undergoing surgery for ascending aortic dilatation.</p><p>This article was previously presented as a meeting abstract at the 2024 Annual Meeting of the Scandinavian Association for Thoracic Surgery on September 12, 2024.</p></sec><sec sec-type="materials|methods"><title>Materials and methods</title><p>Study design and ethics&#160;</p><p>The local institutional review board&#160;(Ethical Committee of the Tampere University Hospital, Tampere, Finland, <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="pmc:entrez-nucleotide" xlink:href="R23028">R23028</ext-link>) and&#160;the Finnish Medicines Agency (Fimea&#160;FIMEA/2023/002785) approved this study, and the need for informed consent was waived&#160;due to the retrospective nature of the study. The study was conducted under the Declaration of Helsinki (as revised in 2013). All authors are accountable for all aspects of the work and ensure questions related to the accuracy and/or integrity of any part of the work.&#160;</p><p>Patient selection and exclusion criteria</p><p>We thus enrolled 35 patients who underwent first-time elective surgery for asymptomatic aortic dilatation between February 2016 and November 2016. Patients with genetic aorta disease and dissection were excluded.&#160;</p><p>COPD definition</p><p>COPD was defined as the presence of chronic bronchitis or emphysema and confirmed by the&#160;combination of the following&#160;&#64257;ndings: a history of heavy smoking, wheezing on auscultation, and patient self-reported experience of wheezing together with postbronchodilator lung function values of decreased&#160;ratio of forced expiratory volume in the first second to forced vital capacity on spirometry&#160;less than 0.70&#160;[<xref rid="REF11" ref-type="bibr">11</xref>].</p><p>Diagnostic criteria</p><p>Ascending aortic dilatation was preoperatively confirmed and evaluated with echocardiography. The severity of aortic valve regurgitation included moderate to severe regurgitation graded as 2 or 3 out of 3. Computer tomography (CT)&#160;imaging was performed prior to surgery according to routine clinical practice using one of the three CT scanners (Philips Brilliance Big Bore (Philips Healthcare, the Netherlands), Siemens SOMATOM Confidence 64 (Siemens Healthineers, Germany), or&#160;Toshiba Aquilion LB (Toshiba Medical System, Japan). The slice thickness was 3 mm.&#160;The scanning area encompassed the whole of the aorta.</p><p>Radiological assessments</p><p>The thoracic aortic diameters were re-measured on the hospital&#8217;s Picture Archiving and Communication Systems (PACS; Sectra vs. 24.2) in every patient from the following&#160;segments: the aortic annulus, the sinus of Valsalva, the sinotubular junction (STJ), the mid-ascending aorta, the distal ascending aorta, and the mid-descending thoracic aorta. Multiplanar reconstruction of the images allowed for three-dimensional presentation of the structures. We measured two perpendicular measurements from the segments, and the maximum aortic diameter was selected for comparison. Measurements were obtained by drawing lines from outer-to-outer vascular wall, vertical to the centerlines of the vessel.&#160;The thoracic aorta was considered dilated if its greatest dimension was &gt;40 mm in any of the measured locations.</p><p>Surgical procedures</p><p>Surgery for dilatation of the thoracic aorta was considered if the maximum diameter of the aorta reached more than 55 mm or if an imminent aorta diameter growth of more than 0.3 mm per year was observed. The operating surgeon decided for the extension of the resection and surgical technique. When the aortic wall, including the sinotubular junction (STJ), was estimated as the reason for aortic regurgitation, STJ was prepared for a suitable graft in an aortic root-sparing fashion with/without aortic valve surgery (root-sparing surgery). A radical resection of the dilated ascending aorta, including the root and the aortic valve, was performed whenever needed. The aortic arch was resected completely or in a hemiarch fashion, depending on the involvement of aortic wall disease. The size of the graft was estimated at surgery.&#160;Since the surgical procedure was performed upon surgical decision, the sample was procured from the middle of the resected area of the ascending aorta in the vicinity of STJ.&#160;</p><p>Histological and immunohistochemical evaluation</p><p>A minimum of six pieces of&#160;resected ascending aorta, including all three aortic wall layers, i.e., the intima, the media, and the adventitia,&#160;were embedded in paraffin, cut to 4&#160;mm thick sections, and stained with hematoxylin and eosin, elastic Verhoeff-van Gieson, and periodic acid-Schiff-Alcian Blue.&#160;At least 18 sections (six stained with hematoxylin-eosin, six stained with&#160;Verhoeff-van Gieson stain, and six with periodic acid-Schiff-Alcian Blue) were evaluated in each case&#160;[<xref rid="REF4" ref-type="bibr">4</xref>].</p><p>Immunohistochemistry&#160;was performed&#160;using the Ventana Lifesciences Benchmark XT&#169; (Roche Diagnostics, Rotkreuz, Switzerland) staining module&#160;for T and B lymphocytes, plasma cells, macrophages, and smooth muscle cells.&#160;Ventana Lifesciences Antibody Dilution Buffer&#169; (Roche Diagnostics, Rotkreuz, Switzerland) was utilized for dilution media.&#160;Immunohistochemistry was used to characterize the inflammatory infiltrate (CD3 as a marker for T-lymphocytes&#160;[clone 2GV6, RTU, Roche Oy, Espoo, Finland], CD68 as a macrophage marker&#160;[clone KP1, RTU, Roche Oy, Espoo, Finland], CD38 for plasma cells&#160;[clone SP149, RTU, Roche Oy, Espoo, Finland], alpha-smooth muscle actin for smooth muscle cells&#160;[clone 1A4, Sigma Biosciences, St. Louis, Missouri],&#160;and CD20 as a B-lymphocyte marker&#160;[B-lymphocytes (clone L26, RTU, Roche Oy, Espoo, Finland]).&#160;</p><p>Hematoxylin-eosin was used for overall evaluation, inflammation assessment, and evaluation of smooth muscle cell nuclei. Verhoeff-van Gieson was applied in the assessment of elastic fibers, including laminal medial collapse. Periodic acid-Schiff-Alcian Blue was used for mucoid extracellular matrix accumulation assessment and fibrosis evaluation.&#160;</p><p>Quantification of medial degeneration</p><p>The aortic specimens were assessed as a part of routine surgical pathology evaluation according to guidelines of The Society for Cardiovascular Pathology and The Association for European Cardiovascular Pathology [<xref rid="REF12" ref-type="bibr">12</xref>] by two experienced cardiovascular pathologists (IK, TP). The assessed features&#160;included overall medial degeneration, mucoid extracellular matrix accumulation, elastic fiber loss/fragmentation, elastic fiber thinning, elastic fiber disorganization, smooth muscle cell nuclei loss, laminal medial collapse, smooth muscle cell disorganization, medial fibrosis, vasa vasorum medial thickening, and adventitial fibrosis.&#160;All features were graded for severity (absent, mild, moderate, and severe) and distribution (focal, multifocal, and extensive). The worst present grade/distribution was reported and semi-quantified on a scale of 0-3 [<xref rid="REF12" ref-type="bibr">12</xref>]. The grade and distribution of the features were added to obtain a total semiquantitative and representative value expressed as point score units (PSU) [<xref rid="REF4" ref-type="bibr">4</xref>].&#160;</p><p>Statistical analysis</p><p>Continuous variables were expressed as means with standard deviation (SD) and compared using the Mann-Whitney U test. Categorical variables were presented as numbers and percentages and were compared using the Chi-square (&#967;2) or Fisher&#8217;s exact tests, when n &lt; 5. The patients were divided into those with or without COPD. The predictive value of the extent of mucoid extracellular matrix accumulation alone, representing the severity of aortic wall degeneration using a receiver operating characteristic (ROC) curve, was analyzed for the association in patients with vs. without COPD. All analyses were performed with IBM Corp. Released 2022. IBM SPSS Statistics for Windows, Version 28. Armonk, NY: IBM Corp., with p &lt; 0.05 as the significance criterion.</p></sec><sec sec-type="results"><title>Results</title><p>Patient characteristics</p><p>A total of 35 patients were included in this retrospective study, of which seven (20.0%) had COPD. None of the patients had systemic immunosuppressive treatment. Mean age was 65 (10) years. Patients with COPD often had asthma (3 [42.9%] vs. 0, respectively, p &lt; 0.001), had aortic valve regurgitation (7 [100.0%] vs. 16 [57.1%], respectively, p &lt; 0.033), and none had bicuspid aortic valves (0 vs. 16 [57.1%], respectively, p &lt; 0.007) as compared with those without. None of the patients had connective tissue disorder, vasculitis, or previous cardiac surgery (Table <xref rid="TAB1" ref-type="table">1</xref>).</p><table-wrap position="float" id="TAB1" orientation="portrait"><label>Table 1</label><caption><title>Patient characteristics </title><p>COPD: chronic obstructive pulmonary disease; n: number; SD: standard deviation; Continuous variables were expressed as means with SD and compared using the Mann-Whitney U test. Categorical variables were presented as numbers and percentages and were compared using the Chi-square (&#967;2)&#160;or Fisher&#8217;s exact tests, when n &lt; 5. p &lt; 0.05 was considered significant. *Test statistic values include z-values for the Mann-Whitney test.</p></caption><table frame="hsides" rules="groups"><tbody><tr style="background-color:#ccc"><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">
+All patients
+</td><td rowspan="1" colspan="1">
+With COPD
+</td><td rowspan="1" colspan="1">
+Without COPD
+</td><td rowspan="1" colspan="1">
+Test statistic value
+</td><td rowspan="1" colspan="1">
+p-value
+</td></tr><tr><td rowspan="1" colspan="1">
+Number of patients (%)
+</td><td rowspan="1" colspan="1">
+35 (100.0)
+</td><td rowspan="1" colspan="1">
+7 (100.0)
+</td><td rowspan="1" colspan="1">
+28 (100.0)
+</td><td rowspan="1" colspan="1">
+&#160;
+</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Age, years, mean (SD)
+</td><td rowspan="1" colspan="1">
+65 (10.2)
+</td><td rowspan="1" colspan="1">
+68 (8.6)
+</td><td rowspan="1" colspan="1">
+65 (10.6)
+</td><td rowspan="1" colspan="1">
+-0.66*
+</td><td rowspan="1" colspan="1">
+0.508
+</td></tr><tr><td rowspan="1" colspan="1">
+Sex
+</td><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">
+2.86
+</td><td rowspan="1" colspan="1">
+0.091
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Female, n (%)
+</td><td rowspan="1" colspan="1">
+7 (20.0)
+</td><td rowspan="1" colspan="1">
+3 (42.9)
+</td><td rowspan="1" colspan="1">
+4 (14.3)
+</td><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">&#160;</td></tr><tr><td rowspan="1" colspan="1">
+Male, n (%)
+</td><td rowspan="1" colspan="1">
+28 (80.0)
+</td><td rowspan="1" colspan="1">
+4 (57.1)
+</td><td rowspan="1" colspan="1">
+24 (85.7)
+</td><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Hypertension, n (%)
+</td><td rowspan="1" colspan="1">
+25 (71.4)
+</td><td rowspan="1" colspan="1">
+5 (71.4)
+</td><td rowspan="1" colspan="1">
+20 (71.4)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+&gt;0.999
+</td></tr><tr><td rowspan="1" colspan="1">
+Asthma, n (%)
+</td><td rowspan="1" colspan="1">
+3 (8.6)
+</td><td rowspan="1" colspan="1">
+3 (42.9)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+13.12
+</td><td rowspan="1" colspan="1">
+&lt;0.001
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Diabetes, n (%)
+</td><td rowspan="1" colspan="1">
+4 (11.4)
+</td><td rowspan="1" colspan="1">
+1 (14.3)
+</td><td rowspan="1" colspan="1">
+3 (10.7)
+</td><td rowspan="1" colspan="1">
+0.07
+</td><td rowspan="1" colspan="1">
+0.791
+</td></tr><tr><td rowspan="1" colspan="1">
+Arthritis, n (%)
+</td><td rowspan="1" colspan="1">
+1 (2.9)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+1 (3.6)
+</td><td rowspan="1" colspan="1">
+0.26
+</td><td rowspan="1" colspan="1">
+0.612
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Hypercholesterolemia, n (%)
+</td><td rowspan="1" colspan="1">
+11 (31.4)
+</td><td rowspan="1" colspan="1">
+2 (28.6)
+</td><td rowspan="1" colspan="1">
+9 (32.1)
+</td><td rowspan="1" colspan="1">
+0.03
+</td><td rowspan="1" colspan="1">
+0.856
+</td></tr><tr><td rowspan="1" colspan="1">
+Coronary artery disease, n (%)
+</td><td rowspan="1" colspan="1">
+8 (22.9)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+8 (28.6)
+</td><td rowspan="1" colspan="1">
+2.59
+</td><td rowspan="1" colspan="1">
+0.107
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Strokes, n (%)
+</td><td rowspan="1" colspan="1">
+4 (11.4)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+4 (14.3)
+</td><td rowspan="1" colspan="1">
+1.13
+</td><td rowspan="1" colspan="1">
+0.288
+</td></tr><tr><td rowspan="1" colspan="1">
+Aortic valve insufficiency, n (%)
+</td><td rowspan="1" colspan="1">
+23 (65.7)
+</td><td rowspan="1" colspan="1">
+7 (100.0)
+</td><td rowspan="1" colspan="1">
+16 (57.1)
+</td><td rowspan="1" colspan="1">
+4.56
+</td><td rowspan="1" colspan="1">
+0.033
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Bicuspid aortic valve, n (%)
+</td><td rowspan="1" colspan="1">
+16 (45.7)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+16 (57.1)
+</td><td rowspan="1" colspan="1">
+7.37
+</td><td rowspan="1" colspan="1">
+0.007
+</td></tr><tr><td rowspan="1" colspan="1">
+Maximal aortic diameter, mm, mean (SD)
+</td><td rowspan="1" colspan="1">
+55.7 (6.8)
+</td><td rowspan="1" colspan="1">
+55.6 (5.8)
+</td><td rowspan="1" colspan="1">
+55.7 (7.2)
+</td><td rowspan="1" colspan="1">
+-0.41*
+</td><td rowspan="1" colspan="1">
+0.679
+</td></tr></tbody></table></table-wrap><p>Surgical details</p><p>All patients with COPD underwent surgery using a conduit prosthesis replacing both the aortic valve and the ascending aorta, including the aortic root (7 [100.0%]), whereas 19 patients without COPD (67.9%) had a conduit prosthesis; aortic root-sparing surgery was offered to nine patients (32.1%) without COPD, including replacement of the ascending aorta with an aortic valve prosthesis, and only ascending aorta replacement in three patients (10.7%) (Table&#160;<xref rid="TAB2" ref-type="table">2</xref>).&#160;</p><table-wrap position="float" id="TAB2" orientation="portrait"><label>Table 2</label><caption><title>Surgical details, number (%)</title><p>COPD: chronic obstructive pulmonary disease; AVR: aortic valve replacement; Categorical variables were presented as numbers and percentages n (%) and were compared using the Chi-square (&#967;2)&#160;or Fisher&#8217;s exact tests, when n &lt; 5. p &lt; 0.05 was considered significant.</p></caption><table frame="hsides" rules="groups"><tbody><tr style="background-color:#ccc"><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">
+All patients
+</td><td rowspan="1" colspan="1">
+With COPD
+</td><td rowspan="1" colspan="1">
+Without COPD
+</td><td rowspan="1" colspan="1">
+Test statistic value
+</td><td rowspan="1" colspan="1">
+p-value
+</td></tr><tr><td rowspan="1" colspan="1">
+Conduit
+</td><td rowspan="1" colspan="1">
+26 (74.3)
+</td><td rowspan="1" colspan="1">
+7 (100.0)
+</td><td rowspan="1" colspan="1">
+19 (67.9)
+</td><td rowspan="1" colspan="1">
+3.03
+</td><td rowspan="1" colspan="1">
+0.082
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Mechanical conduit
+</td><td rowspan="1" colspan="1">
+6 (17.1)
+</td><td rowspan="1" colspan="1">
+1 (14.3)
+</td><td rowspan="1" colspan="1">
+5 (17.9)
+</td><td rowspan="1" colspan="1">
+0.05
+</td><td rowspan="1" colspan="1">
+0.823
+</td></tr><tr><td rowspan="1" colspan="1">
+Biological conduit
+</td><td rowspan="1" colspan="1">
+20 (57.1)
+</td><td rowspan="1" colspan="1">
+6 (85.7)
+</td><td rowspan="1" colspan="1">
+14 (50.0)
+</td><td rowspan="1" colspan="1">
+2.92
+</td><td rowspan="1" colspan="1">
+0.088
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Aorta prosthesis
+</td><td rowspan="1" colspan="1">
+3 (8.6)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+3 (10.7)
+</td><td rowspan="1" colspan="1">
+0.82
+</td><td rowspan="1" colspan="1">
+0.365
+</td></tr><tr><td rowspan="1" colspan="1">
+AVR and aorta prosthesis
+</td><td rowspan="1" colspan="1">
+6 (17.1)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+6 (21.4)
+</td><td rowspan="1" colspan="1">
+1.81
+</td><td rowspan="1" colspan="1">
+0.178
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Mechanical AVR and aortic prosthesis
+</td><td rowspan="1" colspan="1">
+3 (8.6)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+3 (10.7)
+</td><td rowspan="1" colspan="1">
+0.82
+</td><td rowspan="1" colspan="1">
+0.365
+</td></tr><tr><td rowspan="1" colspan="1">
+Biological AVR and aortic prosthesis
+</td><td rowspan="1" colspan="1">
+3 (8.6)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+3 (10.7)
+</td><td rowspan="1" colspan="1">
+0.82
+</td><td rowspan="1" colspan="1">
+0.365
+</td></tr></tbody></table></table-wrap><p>Cross-sectional measures of the thoracic aorta</p><p>As the cut-off measure of 40 mm for the aortic diameter was set for aortic dilatation, there were no significant differences in the cross-sectional measures of the thoracic aorta between patients with or without COPD. However, the diameter of the distal ascending aorta at the level of the truncus was slightly increased in patients with COPD as compared with those without COPD (36.5 [3.3] vs. 32.2 [3.8] mm,&#160;p&#160;= 0.011, respectively, Table&#160;<xref rid="TAB3" ref-type="table">3</xref>).</p><table-wrap position="float" id="TAB3" orientation="portrait"><label>Table 3</label><caption><title>Diameters of the thoracic aorta, mean (standard deviation)</title><p>COPD: chronic obstructive pulmonary disease; Continuous variables were expressed as means with standard deviation and compared using the Mann-Whitney U test. p &lt; 0.05 was considered significant. *Test statistic values include z-values.</p></caption><table frame="hsides" rules="groups"><tbody><tr style="background-color:#ccc"><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">
+All patients
+</td><td rowspan="1" colspan="1">
+With COPD
+</td><td rowspan="1" colspan="1">
+Without COPD
+</td><td rowspan="1" colspan="1">
+Test statistic value*
+</td><td rowspan="1" colspan="1">
+p-value
+</td></tr><tr><td rowspan="1" colspan="1">
+Number of patients n (%)
+</td><td rowspan="1" colspan="1">
+35 (100.0)
+</td><td rowspan="1" colspan="1">
+7 (100.0%)
+</td><td rowspan="1" colspan="1">
+28 (100.0)
+</td><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Aortic annulus
+</td><td rowspan="1" colspan="1">
+45.5 (6.1)
+</td><td rowspan="1" colspan="1">
+45.6 (3.8)
+</td><td rowspan="1" colspan="1">
+45.5 (6.6)
+</td><td rowspan="1" colspan="1">
+-0.29
+</td><td rowspan="1" colspan="1">
+0.773
+</td></tr><tr><td rowspan="1" colspan="1">
+Sinus of Valsalva
+</td><td rowspan="1" colspan="1">
+50.4 (9.9)
+</td><td rowspan="1" colspan="1">
+53.4 (8.6)
+</td><td rowspan="1" colspan="1">
+49.6 (10.2)
+</td><td rowspan="1" colspan="1">
+-1.32
+</td><td rowspan="1" colspan="1">
+0.187
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Sinotubular junction
+</td><td rowspan="1" colspan="1">
+49.2 (12.2)
+</td><td rowspan="1" colspan="1">
+52.9 (10.2)
+</td><td rowspan="1" colspan="1">
+48.3 (12.7)
+</td><td rowspan="1" colspan="1">
+-1.36
+</td><td rowspan="1" colspan="1">
+0.173
+</td></tr><tr><td rowspan="1" colspan="1">
+Ascending aorta
+</td><td rowspan="1" colspan="1">
+51.7 (5.9)
+</td><td rowspan="1" colspan="1">
+53.6 (5.9)
+</td><td rowspan="1" colspan="1">
+51.2 (6.1)
+</td><td rowspan="1" colspan="1">
+-0.85
+</td><td rowspan="1" colspan="1">
+0.398
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Distal ascending aorta
+</td><td rowspan="1" colspan="1">
+33.0 (4.0)
+</td><td rowspan="1" colspan="1">
+36.5 (3.3)
+</td><td rowspan="1" colspan="1">
+32.2 (3.8)
+</td><td rowspan="1" colspan="1">
+-2.54
+</td><td rowspan="1" colspan="1">
+0.011
+</td></tr><tr><td rowspan="1" colspan="1">
+Descending aorta
+</td><td rowspan="1" colspan="1">
+28.2 (3.6)
+</td><td rowspan="1" colspan="1">
+30.8 (4.5)
+</td><td rowspan="1" colspan="1">
+27.6 (3.1)
+</td><td rowspan="1" colspan="1">
+-1.75
+</td><td rowspan="1" colspan="1">
+0.080
+</td></tr></tbody></table></table-wrap><p>Histological changes of the ascending aorta</p><p>As shown in Table&#160;<xref rid="TAB4" ref-type="table">4</xref>, patients with COPD had more adventitial fibrosis, elastic fiber fragmentation and/or loss, and a higher degree of medial degeneration (0.43 [0.54] vs. 0.08 [0.27],&#160;p&#160;= 0.023; 4.43 [1.13] vs. 3.29 [1.24],&#160;p&#160;= 0.034; 2.67 [0.52] vs. 1.67 [0.73],&#160;p&#160;= 0.006, respectively) as compared with patients without COPD (Figure&#160;<xref rid="FIG1" ref-type="fig">1</xref>).&#160;</p><table-wrap position="float" id="TAB4" orientation="portrait"><label>Table 4</label><caption><title>Ascending aortic wall degeneration, mean point score units (standard deviation)</title><p>COPD: chronic obstructive pulmonary disease; Continuous variables were expressed as means with standard deviation and compared using the Mann-Whitney U test. p &lt; 0.05 was considered significant. *Test statistic values include z-values.</p></caption><table frame="hsides" rules="groups"><tbody><tr style="background-color:#ccc"><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">
+All patients
+</td><td rowspan="1" colspan="1">
+With COPD
+</td><td rowspan="1" colspan="1">
+Without COPD
+</td><td rowspan="1" colspan="1">
+Test statistic value
+</td><td rowspan="1" colspan="1">
+p-value
+</td></tr><tr><td rowspan="1" colspan="1">
+Number of patients
+</td><td rowspan="1" colspan="1">
+35
+</td><td rowspan="1" colspan="1">
+7
+</td><td rowspan="1" colspan="1">
+28
+</td><td rowspan="1" colspan="1">&#160;</td><td rowspan="1" colspan="1">&#160;</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Adventitial fibrosis
+</td><td rowspan="1" colspan="1">
+0.15 (0.36)
+</td><td rowspan="1" colspan="1">
+0.43 (0.54)
+</td><td rowspan="1" colspan="1">
+0.08 (0.27)
+</td><td rowspan="1" colspan="1">
+-2.27
+</td><td rowspan="1" colspan="1">
+0.023
+</td></tr><tr><td rowspan="1" colspan="1">
+Collagen Alteration, Medial fibrosis
+</td><td rowspan="1" colspan="1">
+0.17 (0.62)
+</td><td rowspan="1" colspan="1">
+0
+</td><td rowspan="1" colspan="1">
+0.21 (0.69)
+</td><td rowspan="1" colspan="1">
+-0.89
+</td><td rowspan="1" colspan="1">
+0.373
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Elastic Fiber disorganization
+</td><td rowspan="1" colspan="1">
+0.89 (0.93)
+</td><td rowspan="1" colspan="1">
+1.43 (0.79)
+</td><td rowspan="1" colspan="1">
+0.75 (0.93)
+</td><td rowspan="1" colspan="1">
+-1.83
+</td><td rowspan="1" colspan="1">
+0.067
+</td></tr><tr><td rowspan="1" colspan="1">
+Elastic fiber fragmentation and/or loss
+</td><td rowspan="1" colspan="1">
+3.51 (1.29)
+</td><td rowspan="1" colspan="1">
+4.43 (1.13)
+</td><td rowspan="1" colspan="1">
+3.29 (1.24)
+</td><td rowspan="1" colspan="1">
+-2.12
+</td><td rowspan="1" colspan="1">
+0.034
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Elastic fiber thinning
+</td><td rowspan="1" colspan="1">
+0.83 (1.72)
+</td><td rowspan="1" colspan="1">
+1.71 (2.14)
+</td><td rowspan="1" colspan="1">
+0.61 (1.57)
+</td><td rowspan="1" colspan="1">
+-1.66
+</td><td rowspan="1" colspan="1">
+0.097
+</td></tr><tr><td rowspan="1" colspan="1">
+Laminar medial collapse
+</td><td rowspan="1" colspan="1">
+0.37 (1.11)
+</td><td rowspan="1" colspan="1">
+0.43 (1.13)
+</td><td rowspan="1" colspan="1">
+0.36 (1.13)
+</td><td rowspan="1" colspan="1">
+-0.26
+</td><td rowspan="1" colspan="1">
+0.794
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Medial degeneration classification
+</td><td rowspan="1" colspan="1">
+1.85 (0.80)
+</td><td rowspan="1" colspan="1">
+2.67 (0.52)
+</td><td rowspan="1" colspan="1">
+1.67 (0.73)
+</td><td rowspan="1" colspan="1">
+-2.74
+</td><td rowspan="1" colspan="1">
+0.006
+</td></tr><tr><td rowspan="1" colspan="1">
+Mucoid extracellular matrix accumulation
+</td><td rowspan="1" colspan="1">
+4.57 (1.15)
+</td><td rowspan="1" colspan="1">
+5.71 (1.11)
+</td><td rowspan="1" colspan="1">
+4.29 (0.98)
+</td><td rowspan="1" colspan="1">
+-2.76
+</td><td rowspan="1" colspan="1">
+0.006
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Smooth muscle cell disorganization
+</td><td rowspan="1" colspan="1">
+0.49 (0.74)
+</td><td rowspan="1" colspan="1">
+0.29 (0.49)
+</td><td rowspan="1" colspan="1">
+0.54 (0.79)
+</td><td rowspan="1" colspan="1">
+-0.65
+</td><td rowspan="1" colspan="1">
+0.514
+</td></tr><tr><td rowspan="1" colspan="1">
+Smooth muscle cell nuclei loss
+</td><td rowspan="1" colspan="1">
+2.71 (1.62)
+</td><td rowspan="1" colspan="1">
+3.57 (1.13)
+</td><td rowspan="1" colspan="1">
+2.50 (1.67)
+</td><td rowspan="1" colspan="1">
+-1.54
+</td><td rowspan="1" colspan="1">
+0.123
+</td></tr><tr style="background-color:#ccc"><td rowspan="1" colspan="1">
+Vasa vasorum medial thickening
+</td><td rowspan="1" colspan="1">
+0.23 (4.23)
+</td><td rowspan="1" colspan="1">
+0.43 (0.54)
+</td><td rowspan="1" colspan="1">
+0.18 (0.39)
+</td><td rowspan="1" colspan="1">
+-1.39
+</td><td rowspan="1" colspan="1">
+0.165
+</td></tr></tbody></table></table-wrap><fig position="anchor" fig-type="figure" id="FIG1" orientation="portrait"><label>Figure 1</label><caption><title>Ascending aortic histology</title><p>Panel of representative ascending aorta histology showing horizontally the severe extent of A. adventitial fibrosis (arrow, Masson Trichrome, blue color 100 x magnification), B. elastic fiber loss and disorganization (arrow,&#160;Verhoeff-van Gieson, 100 x magnification), C. mucoid extracellular matrix accumulation (arrow,&#160;periodic acid-Schiff-Alcian Blue, 100 x magnification), in patients with COPD as compared to those without COPD (1 and 2, respectively).</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="cureus-0017-00000090001-i01.jpg"/></fig><p>Moreover, patients with COPD had more mucoid extracellular matrix accumulation than patients without COPD (5.71 [1.11] vs. 4.29 [0.98],&#160;p&#160;= 0.006, respectively). The increased severity of medial degeneration and extracellular matrix disruption in COPD patients suggests potentially higher susceptibility to adverse aortic outcomes&#160;(area under the curve [AUC], 0.827; standard error [SE], 0.091;&#160;p&#160;&lt;&#160;.001; 95% confidence interval [CI], 0.649-1.004, Figure&#160;<xref rid="FIG2" ref-type="fig">2</xref>).</p><fig position="anchor" fig-type="figure" id="FIG2" orientation="portrait"><label>Figure 2</label><caption><title>Receiver operating characteristics (ROC) curve</title><p>According to ROC analysis, mucoid extracellular matrix accumulation is significantly associated with patients with COPD and ascending aortic dilatation (blue line, area under the curve [AUC], 0.827; standard error [SE], 0.091;&#160;p&#160;&lt;&#160;.001; 95% confidence interval [CI], 0.649-1.004). Reference line (red line).</p></caption><graphic xmlns:xlink="http://www.w3.org/1999/xlink" position="float" orientation="portrait" xlink:href="cureus-0017-00000090001-i02.jpg"/></fig></sec><sec sec-type="discussion"><title>Discussion</title><p>The severity of aortic wall degeneration in patients with COPD during ascending aortic dilatation was increased compared to those without COPD. Surgical decision-making to replace the ascending aorta is based on clinical awareness of possible subsequent aortic events. The subgroup of patients with ascending aortic dilatation and COPD may benefit from close surveillance.&#160;</p><p>COPD is a clinical entity representing various combinations of coexisting comorbidities and cardiovascular risk factors&#160;[<xref rid="REF13" ref-type="bibr">13</xref>]. Smoking is frequently associated with COPD,&#160;and over 80% of COPD patients suffer from several symptoms&#160;[<xref rid="REF7" ref-type="bibr">7</xref>].&#160;COPD exhibits high rates of mortality, ranking as the third leading cause of death worldwide&#160;[<xref rid="REF14" ref-type="bibr">14</xref>]. While patients with COPD share many traditional risk factors associated with ascending aortic dilatation, such as smoking and high blood pressure&#160;[<xref rid="REF5" ref-type="bibr">5</xref>], the common pathogenetic risk denominator may still include distinctive features of aortic wall degeneration.&#160;</p><p>According to histopathology evaluation, several variables of the media layer and smooth muscle cell degeneration were observed in the ascending aortic wall of patients with COPD as compared with those without COPD. Histological findings, including increased adventitial fibrosis, elastic fiber fragmentation and loss, medial degeneration, collagen alteration with medial fibrosis, and mucoid extracellular matrix accumulation, are all pertinent findings describing aortic wall degeneration [<xref rid="REF12" ref-type="bibr">12</xref>,<xref rid="REF15" ref-type="bibr">15</xref>]. Histopathology was obtained from the ascending aorta, and histology differed even though dilatation was statistically similar at this site statistically similar among the patient groups. It is tempting to speculate that COPD is associated with a risk of connective tissue frailty that is also reflected in increased degeneration of the medial layer of the aortic wall [<xref rid="REF9" ref-type="bibr">9</xref>,<xref rid="REF10" ref-type="bibr">10</xref>].</p><p>Surgery for our patients was performed according to the principle of preventing further ascending aortic dilatation. Ascending aortic dilatation and associated severity of aortic wall degeneration may increase the risk for aortic events&#160;[<xref rid="REF16" ref-type="bibr">16</xref>]. Even though patients with COPD had increased aortic wall degeneration as compared with the rest of the patients, it is beyond the scope of this study to estimate the degree of risk of aortic events.&#160;</p><p>Interestingly, all patients with COPD had severe aortic valve regurgitation, though aortic root dilatation did not differ among the patients. None of the patients with COPD had bicuspid aortic valves, which were present in 16 patients without COPD. We and others have previously shown that the presence of a bicuspid aortic valve&#160;per se&#160;is not associated with increased ascending aortic wall degeneration as compared with patients with tricuspid aortic valves&#160;[<xref rid="REF4" ref-type="bibr">4</xref>,<xref rid="REF17" ref-type="bibr">17</xref>].&#160;Patients with COPD had very similar measures of aortic diameters, excluding a slightly larger diameter of the distal ascending aorta, as compared with patients without COPD.&#160;Aortic valve regurgitation&#160;may not solely be regarded as a cause of aortic root dilatation in our study, and a competent aortic valve may not prevent aortic dilatation&#160;[<xref rid="REF18" ref-type="bibr">18</xref>]; there were four patients in our study with a previous aortic valve replacement.&#160;</p><p>Limitations</p><p>This pilot retrospective cross-sectional analysis included a small number of patients; histology was obviously available only from patients undergoing surgery for ascending aortic dilatation, and longitudinal follow-up is lacking. However, the systematic measurements of the aortic diameters together with the extensive histopathologic analysis of the ascending aortic wall provide a baseline platform for identifying specific patients susceptible to ascending aortopathy.&#160;</p></sec><sec sec-type="conclusions"><title>Conclusions</title><p>We identified a subgroup of patients with COPD and aortic valve regurgitation who have increased ascending aortic wall degeneration as compared with patients without COPD. Patients with aortic dilatation and COPD may be associated with aortic root involvement and aortic valvular insufficiency. To attribute aortic dilatation directly to COPD, a focused study is required to determine what percentage of COPD patients who develop aortic dilatation. These findings suggest that COPD is an important risk factor for severe ascending aortic degeneration and may warrant enhanced clinical surveillance and individualized management strategies to prevent potential adverse aortic events.</p></sec></body><back><fn-group content-type="conflict"><title>Disclosures</title><fn fn-type="COI-statement"><p><bold>Human subjects:</bold> Informed consent for treatment and open access publication was obtained or waived by all participants in this study. Institutional review board, Ethical Committee of the Tampere University Hospital, Tampere, Finland issued approval <ext-link xmlns:xlink="http://www.w3.org/1999/xlink" ext-link-type="pmc:entrez-nucleotide" xlink:href="R23028">R23028</ext-link> and FIMEA/2023/002785.</p><p><bold>Animal subjects:</bold> All authors have confirmed that this study did not involve animal subjects or tissue.</p><p><bold>Conflicts of interest:</bold> In compliance with the ICMJE uniform disclosure form, all authors declare the following:</p><p><bold>Payment/services info:</bold> All authors have declared that no financial support was received from any organization for the submitted work.</p><p><bold>Financial relationships:</bold> All authors have declared that they have no financial relationships at present or within the previous three years with any organizations that might have an interest in the submitted work.</p><p><bold>Other relationships:</bold> All authors have declared that there are no other relationships or activities that could appear to have influenced the submitted work.</p></fn></fn-group><fn-group content-type="other"><title>Author Contributions</title><fn fn-type="other"><p><bold>Concept and design:</bold>&#160; Ari Mennander</p><p><bold>Acquisition, analysis, or interpretation of data:</bold>&#160; Ari Mennander, Essi Pirskanen, Trina Chen, Mona Laaksonen, Ivana Kholova, Timo Paavonen, Otso Arponen, Petteri Kauhanen, Aada Lattu</p><p><bold>Drafting of the manuscript:</bold>&#160; Ari Mennander, Essi Pirskanen, Ivana Kholova, Otso Arponen, Petteri Kauhanen</p><p><bold>Critical review of the manuscript for important intellectual content:</bold>&#160; Ari Mennander, Essi Pirskanen, Trina Chen, Mona Laaksonen, Ivana Kholova, Timo Paavonen, Otso Arponen, Petteri Kauhanen, Aada Lattu</p><p><bold>Supervision:</bold>&#160; Ari Mennander</p></fn></fn-group><ref-list><title>References</title><ref id="REF1"><label>1</label><element-citation publication-type="journal"><article-title>Risk of aortic dissection in the moderately dilated ascending aorta</article-title><source>J Am Coll Cardiol</source><person-group><name name-style="western"><surname>Kim</surname><given-names>JB</given-names></name><name name-style="western"><surname>Spotnitz</surname><given-names>M</given-names></name><name name-style="western"><surname>Lindsay</surname><given-names>ME</given-names></name><etal/></person-group><fpage>1209</fpage><lpage>1219</lpage><volume>68</volume><year>2016</year><pub-id pub-id-type="pmid">27609684</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.jacc.2016.06.025</pub-id></element-citation></ref><ref id="REF2"><label>2</label><element-citation publication-type="journal"><article-title>Population-based risk factors for ascending, arch, descending, and abdominal aortic dilations for 60-74-year-old individuals</article-title><source>J Am Coll Cardiol</source><person-group><name name-style="western"><surname>Obel</surname><given-names>LM</given-names></name><name name-style="western"><surname>Diederichsen</surname><given-names>AC</given-names></name><name name-style="western"><surname>Steffensen</surname><given-names>FH</given-names></name><etal/></person-group><fpage>201</fpage><lpage>211</lpage><volume>78</volume><year>2021</year><pub-id pub-id-type="pmid">34266574</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.jacc.2021.04.094</pub-id></element-citation></ref><ref id="REF3"><label>3</label><element-citation publication-type="journal"><article-title>Effect of aortic valve phenotype and sex on aorta dilation in patients with aortic stenosis</article-title><source>Open Heart</source><person-group><name name-style="western"><surname>Fleury</surname><given-names>MA</given-names></name><name name-style="western"><surname>Tastet</surname><given-names>L</given-names></name><name name-style="western"><surname>Bernard</surname><given-names>J</given-names></name><etal/></person-group><volume>11</volume><year>2024</year><pub-id pub-id-type="doi" assigning-authority="pmc">10.1136/openhrt-2024-002912</pub-id><pub-id pub-id-type="pmcid">PMC11487820</pub-id><pub-id pub-id-type="pmid">39424304</pub-id></element-citation></ref><ref id="REF4"><label>4</label><element-citation publication-type="journal"><article-title>Ascending aortic wall degeneration in patients with bicuspid versus tricuspid aortic valve</article-title><source>J Cardiothorac Surg</source><person-group><name name-style="western"><surname>Mennander</surname><given-names>A</given-names></name><name name-style="western"><surname>Kholova</surname><given-names>I</given-names></name><name name-style="western"><surname>Pelttari</surname><given-names>S</given-names></name><name name-style="western"><surname>Paavonen</surname><given-names>T</given-names></name></person-group><fpage>109</fpage><volume>17</volume><year>2022</year><pub-id pub-id-type="pmid">35526008</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1186/s13019-022-01864-0</pub-id><pub-id pub-id-type="pmcid">PMC9077810</pub-id></element-citation></ref><ref id="REF5"><label>5</label><element-citation publication-type="journal"><article-title>Sex-specific hemodynamic and non-hemodynamic determinants of aortic root size in hypertensive subjects with left ventricular hypertrophy</article-title><source>Hypertens Res</source><person-group><name name-style="western"><surname>Cipolli</surname><given-names>JA</given-names></name><name name-style="western"><surname>Souza</surname><given-names>FA</given-names></name><name name-style="western"><surname>Ferreira-Sae</surname><given-names>MC</given-names></name><etal/></person-group><fpage>956</fpage><lpage>961</lpage><volume>32</volume><year>2009</year><pub-id pub-id-type="pmid">19713970</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1038/hr.2009.134</pub-id></element-citation></ref><ref id="REF6"><label>6</label><element-citation publication-type="journal"><article-title>Optimising the mutation screening strategy in Marfan syndrome and identifying genotypes with more severe aortic involvement</article-title><source>Orphanet J Rare Dis</source><person-group><name name-style="western"><surname>Stengl</surname><given-names>R</given-names></name><name name-style="western"><surname>Bors</surname><given-names>A</given-names></name><name name-style="western"><surname>&#193;gg</surname><given-names>B</given-names></name><etal/></person-group><fpage>290</fpage><volume>15</volume><year>2020</year><pub-id pub-id-type="pmid">33059708</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1186/s13023-020-01569-4</pub-id><pub-id pub-id-type="pmcid">PMC7558671</pub-id></element-citation></ref><ref id="REF7"><label>7</label><element-citation publication-type="journal"><article-title>Comorbidities and chronic obstructive pulmonary disease: prevalence, influence on outcomes, and management</article-title><source>Semin Respir Crit Care Med</source><person-group><name name-style="western"><surname>Putcha</surname><given-names>N</given-names></name><name name-style="western"><surname>Drummond</surname><given-names>MB</given-names></name><name name-style="western"><surname>Wise</surname><given-names>RA</given-names></name><name name-style="western"><surname>Hansel</surname><given-names>NN</given-names></name></person-group><fpage>575</fpage><lpage>591</lpage><volume>36</volume><year>2015</year><pub-id pub-id-type="pmid">26238643</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1055/s-0035-1556063</pub-id><pub-id pub-id-type="pmcid">PMC5004772</pub-id></element-citation></ref><ref id="REF8"><label>8</label><element-citation publication-type="journal"><article-title>Prospective study of the natural history of thoracic aortic aneurysms</article-title><source>Ann Thorac Surg</source><person-group><name name-style="western"><surname>Juvonen</surname><given-names>T</given-names></name><name name-style="western"><surname>Ergin</surname><given-names>MA</given-names></name><name name-style="western"><surname>Galla</surname><given-names>JD</given-names></name><etal/></person-group><fpage>1533</fpage><lpage>1545</lpage><volume>63</volume><year>1997</year><pub-id pub-id-type="pmid">9205145</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/s0003-4975(97)00414-1</pub-id></element-citation></ref><ref id="REF9"><label>9</label><element-citation publication-type="journal"><article-title>Aortic enlargement in chronic obstructive pulmonary disease (COPD) and emphysema: The Multi-Ethnic Study of Atherosclerosis (MESA) COPD study</article-title><source>Int J Cardiol</source><person-group><name name-style="western"><surname>Fujikura</surname><given-names>K</given-names></name><name name-style="western"><surname>Albini</surname><given-names>A</given-names></name><name name-style="western"><surname>Barr</surname><given-names>RG</given-names></name><etal/></person-group><fpage>214</fpage><lpage>220</lpage><volume>331</volume><year>2021</year><pub-id pub-id-type="pmid">33587941</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.ijcard.2021.02.017</pub-id><pub-id pub-id-type="pmcid">PMC8026709</pub-id></element-citation></ref><ref id="REF10"><label>10</label><element-citation publication-type="journal"><article-title>The predictive value of C-reactive protein to alb&#252;min ratio for ascending aort progression in patients with ascending aortic diameter of 40-50&#160;mm</article-title><source>J Cardiothorac Surg</source><person-group><name name-style="western"><surname>Dolapoglu</surname><given-names>A</given-names></name><name name-style="western"><surname>Avci</surname><given-names>E</given-names></name><name name-style="western"><surname>Kiris</surname><given-names>T</given-names></name></person-group><fpage>254</fpage><volume>17</volume><year>2022</year><pub-id pub-id-type="pmid">36195877</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1186/s13019-022-02003-5</pub-id><pub-id pub-id-type="pmcid">PMC9533617</pub-id></element-citation></ref><ref id="REF11"><label>11</label><element-citation publication-type="journal"><article-title>Diagnosis and management of stable chronic obstructive pulmonary disease: a clinical practice guideline update from the American College of Physicians, American College of Chest Physicians, American Thoracic Society, and European Respiratory Society</article-title><source>Ann Intern Med</source><person-group><name name-style="western"><surname>Qaseem</surname><given-names>A</given-names></name><name name-style="western"><surname>Wilt</surname><given-names>TJ</given-names></name><name name-style="western"><surname>Weinberger</surname><given-names>SE</given-names></name><etal/></person-group><fpage>179</fpage><lpage>191</lpage><volume>155</volume><year>2011</year><pub-id pub-id-type="pmid">21810710</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.7326/0003-4819-155-3-201108020-00008</pub-id></element-citation></ref><ref id="REF12"><label>12</label><element-citation publication-type="journal"><article-title>Consensus statement on surgical pathology of the aorta from the Society for Cardiovascular Pathology and the Association For European Cardiovascular Pathology: II. Noninflammatory degenerative diseases - nomenclature and diagnostic criteria</article-title><source>Cardiovasc Pathol</source><person-group><name name-style="western"><surname>Halushka</surname><given-names>MK</given-names></name><name name-style="western"><surname>Angelini</surname><given-names>A</given-names></name><name name-style="western"><surname>Bartoloni</surname><given-names>G</given-names></name><etal/></person-group><fpage>247</fpage><lpage>257</lpage><volume>25</volume><year>2016</year><pub-id pub-id-type="pmid">27031798</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1016/j.carpath.2016.03.002</pub-id></element-citation></ref><ref id="REF13"><label>13</label><element-citation publication-type="journal"><article-title>Cardiovascular disease and risk in COPD: a state of the art review</article-title><source>Expert Rev Cardiovasc Ther</source><person-group><name name-style="western"><surname>Polman</surname><given-names>R</given-names></name><name name-style="western"><surname>Hurst</surname><given-names>JR</given-names></name><name name-style="western"><surname>Uysal</surname><given-names>OF</given-names></name><etal/></person-group><fpage>177</fpage><lpage>191</lpage><volume>22</volume><year>2024</year><pub-id pub-id-type="pmid">38529639</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1080/14779072.2024.2333786</pub-id></element-citation></ref><ref id="REF14"><label>14</label><element-citation publication-type="journal"><article-title>Long-term exposure to nitrogen dioxide and ozone and mortality: update of the WHO air quality guidelines systemic review and meta-analysis</article-title><source>Int J Public Health</source><person-group><name name-style="western"><surname>Kasdagli</surname><given-names>MI</given-names></name><name name-style="western"><surname>Orellano</surname><given-names>P</given-names></name><name name-style="western"><surname>P&#233;rez Velasco</surname><given-names>R</given-names></name><name name-style="western"><surname>Samoli</surname><given-names>E</given-names></name></person-group><fpage>1607676</fpage><volume>69</volume><year>2024</year><pub-id pub-id-type="pmid">39494092</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.3389/ijph.2024.1607676</pub-id><pub-id pub-id-type="pmcid">PMC11527649</pub-id></element-citation></ref><ref id="REF15"><label>15</label><element-citation publication-type="journal"><article-title>The proximal extension of acute type A aortic dissection is associated with ascending aortic wall degeneration</article-title><source>J Thorac Dis</source><person-group><name name-style="western"><surname>Chen</surname><given-names>T</given-names></name><name name-style="western"><surname>Kholova</surname><given-names>I</given-names></name><name name-style="western"><surname>Paavonen</surname><given-names>T</given-names></name><name name-style="western"><surname>Mennander</surname><given-names>A</given-names></name></person-group><fpage>4155</fpage><lpage>4164</lpage><volume>16</volume><year>2024</year><pub-id pub-id-type="pmid">39144334</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.21037/jtd-24-206</pub-id><pub-id pub-id-type="pmcid">PMC11320277</pub-id></element-citation></ref><ref id="REF16"><label>16</label><element-citation publication-type="journal"><article-title>Aortic dilatation in complex congenital heart disease</article-title><source>Cardiovasc Diagn Ther</source><person-group><name name-style="western"><surname>Niwa</surname><given-names>K</given-names></name></person-group><fpage>725</fpage><lpage>738</lpage><volume>8</volume><year>2018</year><pub-id pub-id-type="pmid">30740320</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.21037/cdt.2018.12.05</pub-id><pub-id pub-id-type="pmcid">PMC6331370</pub-id></element-citation></ref><ref id="REF17"><label>17</label><element-citation publication-type="journal"><article-title>Insights from the histopathologic analysis of acquired and genetic thoracic aortic aneurysms and dissections</article-title><source>Tex Heart Inst J</source><person-group><name name-style="western"><surname>Buja</surname><given-names>LM</given-names></name><name name-style="western"><surname>Zhao</surname><given-names>B</given-names></name><name name-style="western"><surname>Sadaf</surname><given-names>H</given-names></name><etal/></person-group><volume>51</volume><year>2024</year><pub-id pub-id-type="doi" assigning-authority="pmc">10.14503/THIJ-23-8253</pub-id><pub-id pub-id-type="pmcid">PMC11075520</pub-id><pub-id pub-id-type="pmid">38345902</pub-id></element-citation></ref><ref id="REF18"><label>18</label><element-citation publication-type="journal"><article-title>Aortic regurgitation is associated with ascending aortic remodeling in the nondilated aorta</article-title><source>Arterioscler Thromb Vasc Biol</source><person-group><name name-style="western"><surname>Balint</surname><given-names>B</given-names></name><name name-style="western"><surname>Federspiel</surname><given-names>JM</given-names></name><name name-style="western"><surname>Schwab</surname><given-names>T</given-names></name><etal/></person-group><fpage>1179</fpage><lpage>1190</lpage><volume>41</volume><year>2021</year><pub-id pub-id-type="pmid">33441026</pub-id><pub-id pub-id-type="doi" assigning-authority="pmc">10.1161/ATVBAHA.120.315739</pub-id></element-citation></ref></ref-list></back></article></pmc-articleset>

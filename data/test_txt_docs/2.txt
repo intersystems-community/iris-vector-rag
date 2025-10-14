@@ -1,1 +1,0 @@
-Vector databases enable efficient similarity search across high-dimensional embeddings. They are commonly used in AI applications.
