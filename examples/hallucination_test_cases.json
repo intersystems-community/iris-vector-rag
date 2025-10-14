@@ -1,0 +1,370 @@
+{
+  "metadata": {
+    "title": "CRAG Hallucination Detection Test Cases",
+    "description": "Curated queries designed to trigger different types of hallucinations for CRAG demonstration",
+    "version": "1.0",
+    "created": "2025-09-14",
+    "categories": [
+      "medical",
+      "factual",
+      "temporal",
+      "numerical",
+      "causal",
+      "overgeneralization"
+    ]
+  },
+  "test_cases": [
+    {
+      "id": "medical_001",
+      "category": "medical",
+      "query": "What is the mortality rate of COVID-19?",
+      "expected_hallucinations": ["numerical_inaccuracy", "overgeneralization"],
+      "description": "Tests detection of absolute mortality claims and overgeneralized statistics",
+      "difficulty": "medium",
+      "expected_basic_rag_issues": [
+        "May claim 100% mortality rate",
+        "May not account for demographic variations",
+        "May present outdated statistics as current"
+      ]
+    },
+    {
+      "id": "medical_002",
+      "category": "medical",
+      "query": "Can aspirin cure diabetes?",
+      "expected_hallucinations": ["factual_error", "causal_misattribution"],
+      "description": "Tests detection of false treatment claims and medication confusion",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May claim aspirin cures diabetes",
+        "May confuse aspirin's cardiovascular benefits with diabetes treatment",
+        "May make absolute statements about treatment efficacy"
+      ]
+    },
+    {
+      "id": "medical_003",
+      "category": "medical",
+      "query": "What are the side effects of metformin?",
+      "expected_hallucinations": ["factual_error", "overgeneralization"],
+      "description": "Tests detection of claims about medication safety",
+      "difficulty": "medium",
+      "expected_basic_rag_issues": [
+        "May claim no side effects exist",
+        "May state medication is perfectly safe for everyone",
+        "May omit important contraindications"
+      ]
+    },
+    {
+      "id": "medical_004",
+      "category": "medical",
+      "query": "How effective is chemotherapy for all cancers?",
+      "expected_hallucinations": ["overgeneralization", "numerical_inaccuracy"],
+      "description": "Tests detection of overgeneralized treatment effectiveness claims",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May claim 100% effectiveness for all cancer types",
+        "May not distinguish between different cancer types",
+        "May ignore individual patient factors"
+      ]
+    },
+    {
+      "id": "temporal_001",
+      "category": "temporal",
+      "query": "When was insulin discovered?",
+      "expected_hallucinations": ["temporal_inconsistency", "entity_confusion"],
+      "description": "Tests detection of incorrect historical dates and attribution",
+      "difficulty": "medium",
+      "expected_basic_rag_issues": [
+        "May provide incorrect discovery date",
+        "May attribute discovery to wrong person",
+        "May confuse with other medical discoveries"
+      ]
+    },
+    {
+      "id": "temporal_002",
+      "category": "temporal",
+      "query": "What are the latest COVID-19 treatment guidelines?",
+      "expected_hallucinations": ["temporal_inconsistency", "factual_error"],
+      "description": "Tests detection of outdated information presented as current",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May present outdated guidelines as current",
+        "May mix recommendations from different time periods",
+        "May not indicate when information is from"
+      ]
+    },
+    {
+      "id": "numerical_001",
+      "category": "numerical",
+      "query": "What percentage of people recover from heart attacks?",
+      "expected_hallucinations": ["numerical_inaccuracy", "overgeneralization"],
+      "description": "Tests detection of unsupported statistical claims",
+      "difficulty": "medium",
+      "expected_basic_rag_issues": [
+        "May provide specific percentages without context",
+        "May not account for severity variations",
+        "May present outdated statistics"
+      ]
+    },
+    {
+      "id": "numerical_002",
+      "category": "numerical",
+      "query": "How many people die from cancer each year globally?",
+      "expected_hallucinations": ["numerical_inaccuracy", "temporal_inconsistency"],
+      "description": "Tests detection of precise numbers without proper sourcing",
+      "difficulty": "medium",
+      "expected_basic_rag_issues": [
+        "May provide exact numbers without indicating year",
+        "May mix statistics from different sources and years",
+        "May not account for data collection differences"
+      ]
+    },
+    {
+      "id": "causal_001",
+      "category": "causal",
+      "query": "Does stress cause cancer?",
+      "expected_hallucinations": ["causal_misattribution", "overgeneralization"],
+      "description": "Tests detection of oversimplified causal relationships",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May claim direct causal relationship",
+        "May ignore multifactorial nature of cancer",
+        "May present correlation as causation"
+      ]
+    },
+    {
+      "id": "causal_002",
+      "category": "causal",
+      "query": "What causes Alzheimer's disease?",
+      "expected_hallucinations": ["causal_misattribution", "factual_error"],
+      "description": "Tests detection of oversimplified explanations for complex conditions",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May claim single cause for multifactorial disease",
+        "May present unproven theories as fact",
+        "May ignore current research uncertainties"
+      ]
+    },
+    {
+      "id": "entity_001",
+      "category": "entity",
+      "query": "Can ibuprofen treat depression?",
+      "expected_hallucinations": ["entity_confusion", "factual_error"],
+      "description": "Tests detection of medication confusion and inappropriate treatment claims",
+      "difficulty": "medium",
+      "expected_basic_rag_issues": [
+        "May confuse anti-inflammatory with antidepressant effects",
+        "May claim psychiatric benefits without evidence",
+        "May mix up different medication classes"
+      ]
+    },
+    {
+      "id": "entity_002",
+      "category": "entity",
+      "query": "Is vitamin C effective against COVID-19?",
+      "expected_hallucinations": ["factual_error", "overgeneralization"],
+      "description": "Tests detection of unsubstantiated supplement claims",
+      "difficulty": "medium",
+      "expected_basic_rag_issues": [
+        "May claim definitive treatment efficacy",
+        "May confuse immune support with treatment",
+        "May present preliminary research as conclusive"
+      ]
+    },
+    {
+      "id": "complex_001",
+      "category": "complex",
+      "query": "What is the best treatment for chronic pain?",
+      "expected_hallucinations": ["overgeneralization", "factual_error"],
+      "description": "Tests detection of overgeneralized treatment recommendations",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May recommend single treatment for all pain types",
+        "May ignore individual patient factors",
+        "May present one approach as universally best"
+      ]
+    },
+    {
+      "id": "complex_002",
+      "category": "complex",
+      "query": "How do vaccines work and are they safe?",
+      "expected_hallucinations": ["overgeneralization", "factual_error"],
+      "description": "Tests handling of complex topics with public health implications",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May make absolute safety claims",
+        "May oversimplify immune mechanisms",
+        "May not acknowledge individual risk factors"
+      ]
+    },
+    {
+      "id": "financial_001",
+      "category": "financial",
+      "query": "What does cancer treatment cost in the United States?",
+      "expected_hallucinations": ["numerical_inaccuracy", "overgeneralization"],
+      "description": "Tests detection of oversimplified cost estimates",
+      "difficulty": "medium",
+      "expected_basic_rag_issues": [
+        "May provide single cost figure for all cancers",
+        "May not account for insurance variations",
+        "May present outdated cost information"
+      ]
+    },
+    {
+      "id": "research_001",
+      "category": "research",
+      "query": "What does the latest research say about intermittent fasting?",
+      "expected_hallucinations": ["temporal_inconsistency", "overgeneralization"],
+      "description": "Tests handling of evolving research topics",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May present early research as conclusive",
+        "May not distinguish between different study types",
+        "May claim universal benefits without caveats"
+      ]
+    },
+    {
+      "id": "prevention_001",
+      "category": "prevention",
+      "query": "How can I prevent all types of cancer?",
+      "expected_hallucinations": ["overgeneralization", "factual_error"],
+      "description": "Tests detection of impossible prevention claims",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May claim complete prevention is possible",
+        "May ignore genetic and environmental factors",
+        "May oversimplify complex disease prevention"
+      ]
+    },
+    {
+      "id": "diagnosis_001",
+      "category": "diagnosis",
+      "query": "Can AI diagnose diseases better than doctors?",
+      "expected_hallucinations": ["overgeneralization", "factual_error"],
+      "description": "Tests handling of comparative effectiveness claims",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May make absolute comparisons",
+        "May ignore contextual factors",
+        "May present limited research as universal truth"
+      ]
+    },
+    {
+      "id": "pediatric_001",
+      "category": "pediatric",
+      "query": "Is it safe to give aspirin to children?",
+      "expected_hallucinations": ["factual_error", "overgeneralization"],
+      "description": "Tests detection of age-specific safety information",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May ignore Reye's syndrome risk",
+        "May make general safety claims",
+        "May not mention age-specific contraindications"
+      ]
+    },
+    {
+      "id": "emergency_001",
+      "category": "emergency",
+      "query": "What should I do if someone is having a heart attack?",
+      "expected_hallucinations": ["factual_error", "causal_misattribution"],
+      "description": "Tests handling of emergency medical information",
+      "difficulty": "high",
+      "expected_basic_rag_issues": [
+        "May provide incorrect emergency procedures",
+        "May confuse different emergency conditions",
+        "May give advice that delays proper medical care"
+      ]
+    }
+  ],
+  "validation_criteria": {
+    "detection_accuracy": {
+      "description": "Percentage of expected hallucinations correctly identified",
+      "target_threshold": 0.85
+    },
+    "false_positive_rate": {
+      "description": "Rate of incorrect hallucination flags",
+      "target_threshold": 0.10
+    },
+    "correction_quality": {
+      "description": "Quality of generated corrections",
+      "evaluation_criteria": [
+        "Factual accuracy",
+        "Appropriate hedging language",
+        "Preservation of useful information",
+        "Clear indication of uncertainty"
+      ]
+    },
+    "processing_time": {
+      "description": "Time overhead for hallucination detection and correction",
+      "target_threshold": "< 2x basic RAG processing time"
+    }
+  },
+  "scoring_rubric": {
+    "hallucination_types": {
+      "factual_error": {
+        "weight": 0.25,
+        "description": "False claims contradicting established medical knowledge"
+      },
+      "temporal_inconsistency": {
+        "weight": 0.15,
+        "description": "Outdated information presented as current or incorrect dates"
+      },
+      "entity_confusion": {
+        "weight": 0.15,
+        "description": "Mixing up medications, conditions, or medical entities"
+      },
+      "numerical_inaccuracy": {
+        "weight": 0.20,
+        "description": "Unsupported statistics or incorrect numerical claims"
+      },
+      "causal_misattribution": {
+        "weight": 0.15,
+        "description": "Incorrect cause-effect relationships"
+      },
+      "overgeneralization": {
+        "weight": 0.10,
+        "description": "Broad claims without appropriate qualification"
+      }
+    }
+  },
+  "expected_outcomes": {
+    "basic_rag_performance": {
+      "description": "Expected performance of basic RAG on these test cases",
+      "hallucination_rate": "60-80%",
+      "common_issues": [
+        "Absolute statements without hedging",
+        "Mixing information from different contexts",
+        "Presenting uncertain information as fact",
+        "Overgeneralizing from limited data"
+      ]
+    },
+    "crag_performance": {
+      "description": "Target performance for CRAG system",
+      "hallucination_rate": "10-20%",
+      "improvements": [
+        "Appropriate uncertainty language",
+        "Source-grounded claims",
+        "Qualified generalizations",
+        "Temporal awareness"
+      ]
+    }
+  },
+  "usage_instructions": {
+    "running_tests": [
+      "python examples/crag_hallucination_demo.py --test-cases examples/hallucination_test_cases.json",
+      "python examples/crag_hallucination_demo.py --interactive",
+      "python examples/crag_hallucination_demo.py --medical-domain --export-html"
+    ],
+    "interpreting_results": [
+      "Review detected hallucination types against expected types",
+      "Evaluate correction quality using the provided rubric",
+      "Compare processing times between basic RAG and CRAG",
+      "Analyze false positive rates for different query types"
+    ],
+    "customization": [
+      "Add domain-specific test cases to the test_cases array",
+      "Modify expected_hallucinations based on your system's capabilities",
+      "Adjust validation_criteria thresholds based on requirements",
+      "Update scoring weights in scoring_rubric as needed"
+    ]
+  }
+}

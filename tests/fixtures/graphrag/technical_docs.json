@@ -1,0 +1,50 @@
+{
+  "documents": [
+    {
+      "doc_id": "tech-ml-001",
+      "title": "Transformer Architecture in Modern NLP",
+      "content": "The Transformer architecture, introduced in the seminal paper 'Attention is All You Need', revolutionized natural language processing by replacing recurrent neural networks with self-attention mechanisms. The architecture consists of an encoder-decoder structure where multi-head attention allows the model to attend to different representation subspaces. BERT (Bidirectional Encoder Representations from Transformers) adapted this architecture for pre-training bidirectional representations using masked language modeling. GPT (Generative Pre-trained Transformer) focuses on autoregressive language modeling for text generation. Both models utilize WordPiece tokenization and positional encodings to preserve sequence order. Fine-tuning these pre-trained models on downstream tasks like question answering, sentiment analysis, and named entity recognition has become standard practice in NLP.",
+      "expected_entities": [
+        {"entity_id": "e1", "name": "Transformer", "type": "Architecture"},
+        {"entity_id": "e2", "name": "self-attention", "type": "Mechanism"},
+        {"entity_id": "e3", "name": "BERT", "type": "Model"},
+        {"entity_id": "e4", "name": "GPT", "type": "Model"},
+        {"entity_id": "e5", "name": "masked language modeling", "type": "Technique"},
+        {"entity_id": "e6", "name": "WordPiece tokenization", "type": "Technique"},
+        {"entity_id": "e7", "name": "named entity recognition", "type": "Task"}
+      ],
+      "expected_relationships": [
+        {"source": "e1", "target": "e2", "type": "uses"},
+        {"source": "e3", "target": "e1", "type": "based_on"},
+        {"source": "e4", "target": "e1", "type": "based_on"},
+        {"source": "e3", "target": "e5", "type": "trained_with"},
+        {"source": "e3", "target": "e6", "type": "uses"}
+      ],
+      "category": "technical",
+      "complexity": "high"
+    },
+    {
+      "doc_id": "tech-graphrag-001",
+      "title": "Graph-based Retrieval Augmented Generation",
+      "content": "GraphRAG enhances traditional RAG systems by incorporating knowledge graph structures alongside vector embeddings for more context-aware retrieval. The system performs entity extraction using named entity recognition models to identify key concepts from documents. These entities are stored in a graph database where relationships are established through co-occurrence analysis and semantic similarity. Query processing involves hybrid retrieval combining vector search via HNSW indexing with graph traversal algorithms like breadth-first search. The retrieved context undergoes reranking using cross-encoder models before being fed to large language models for generation. Community detection algorithms can identify related entity clusters, enabling hierarchical summarization. This approach significantly improves answer quality for multi-hop reasoning questions compared to pure vector-based RAG.",
+      "expected_entities": [
+        {"entity_id": "e1", "name": "GraphRAG", "type": "System"},
+        {"entity_id": "e2", "name": "knowledge graph", "type": "DataStructure"},
+        {"entity_id": "e3", "name": "entity extraction", "type": "Process"},
+        {"entity_id": "e4", "name": "HNSW indexing", "type": "Algorithm"},
+        {"entity_id": "e5", "name": "cross-encoder", "type": "Model"},
+        {"entity_id": "e6", "name": "community detection", "type": "Algorithm"},
+        {"entity_id": "e7", "name": "multi-hop reasoning", "type": "Task"}
+      ],
+      "expected_relationships": [
+        {"source": "e1", "target": "e2", "type": "uses"},
+        {"source": "e1", "target": "e3", "type": "performs"},
+        {"source": "e1", "target": "e4", "type": "uses"},
+        {"source": "e1", "target": "e5", "type": "uses"},
+        {"source": "e1", "target": "e7", "type": "improves"}
+      ],
+      "category": "technical",
+      "complexity": "high"
+    }
+  ]
+}

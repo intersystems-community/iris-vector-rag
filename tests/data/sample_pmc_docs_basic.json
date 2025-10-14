@@ -1,0 +1,54 @@
+{
+  "documents": [
+    {
+      "doc_id": "PMC001",
+      "title": "Diabetes Risk Factors",
+      "content": "Type 2 diabetes risk factors include obesity, physical inactivity, family history, and age over 45. Obesity, especially excess weight around the abdomen, makes cells more resistant to insulin. Regular physical activity helps control weight and uses glucose as energy, making cells more sensitive to insulin. A family history of diabetes increases risk, as does belonging to certain racial or ethnic groups.",
+      "metadata": {
+        "source": "PMC",
+        "category": "diabetes",
+        "year": 2023
+      }
+    },
+    {
+      "doc_id": "PMC002",
+      "title": "Diabetes Symptoms and Early Detection",
+      "content": "Common symptoms of diabetes include increased thirst, frequent urination, extreme hunger, unexplained weight loss, fatigue, blurred vision, slow-healing sores, and frequent infections. Type 1 diabetes symptoms often develop quickly over weeks. Type 2 diabetes symptoms develop slowly over years and may be so mild they go unnoticed. Early detection through screening is crucial for preventing complications.",
+      "metadata": {
+        "source": "PMC",
+        "category": "diabetes",
+        "year": 2023
+      }
+    },
+    {
+      "doc_id": "PMC003",
+      "title": "Diabetes Treatment and Management",
+      "content": "Diabetes treatment involves maintaining healthy blood sugar levels through diet, exercise, and medication. Type 1 diabetes requires insulin therapy. Type 2 diabetes may be managed initially through lifestyle changes, with medications or insulin added as needed. Regular blood glucose monitoring helps track treatment effectiveness. Self-management education empowers patients to make informed decisions about their care.",
+      "metadata": {
+        "source": "PMC",
+        "category": "diabetes",
+        "year": 2023
+      }
+    },
+    {
+      "doc_id": "PMC004",
+      "title": "Preventing Diabetes Complications",
+      "content": "Diabetes complications include heart disease, stroke, kidney disease, eye damage, nerve damage, foot problems, and skin conditions. Prevention requires maintaining target blood glucose, blood pressure, and cholesterol levels. Regular medical checkups, including eye exams and foot inspections, help detect problems early. Healthy lifestyle choices, including not smoking, eating well, and staying active, reduce complication risk significantly.",
+      "metadata": {
+        "source": "PMC",
+        "category": "diabetes",
+        "year": 2023
+      }
+    },
+    {
+      "doc_id": "PMC005",
+      "title": "Diabetes Diagnosis and Screening",
+      "content": "Diabetes diagnosis uses blood tests to measure glucose levels. The A1C test shows average blood glucose over three months. Fasting plasma glucose test checks blood sugar after eight hours without food. Oral glucose tolerance test measures blood sugar before and two hours after drinking a glucose solution. Adults over 45 should be screened every three years. Those with risk factors should be screened earlier and more frequently.",
+      "metadata": {
+        "source": "PMC",
+        "category": "diabetes",
+        "year": 2023
+      }
+    }
+  ]
+}

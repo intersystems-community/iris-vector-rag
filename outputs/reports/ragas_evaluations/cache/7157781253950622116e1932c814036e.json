@@ -1,0 +1,9 @@
+{
+  "pipeline_name": "CRAG",
+  "query": "How effective are different pain management strategies for chronic conditions?",
+  "answer": null,
+  "contexts": [],
+  "execution_time": 0.16682195663452148,
+  "success": true,
+  "error": null
+}

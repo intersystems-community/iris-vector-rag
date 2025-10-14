@@ -1,0 +1,204 @@
+{
+  "basic": {
+    "pipeline_type": "basic",
+    "results": [
+      {
+        "query": "What are the symptoms of diabetes?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Diabetes symptoms include increased thirst, frequent urination, fatigue, blurred vision, and slow wound healing.",
+        "success": true
+      },
+      {
+        "query": "How is COVID-19 transmitted?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "COVID-19 is transmitted through respiratory droplets, aerosols, and contact with contaminated surfaces.",
+        "success": true
+      },
+      {
+        "query": "What are the side effects of chemotherapy?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Chemotherapy side effects include nausea, fatigue, hair loss, increased infection risk, and organ toxicity.",
+        "success": true
+      },
+      {
+        "query": "What are the risk factors for heart disease?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Heart disease risk factors include high blood pressure, diabetes, smoking, obesity, and family history.",
+        "success": true
+      },
+      {
+        "query": "How do vaccines work in the immune system?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Vaccines work by stimulating the immune system to produce antibodies and memory cells against specific pathogens.",
+        "success": true
+      }
+    ],
+    "success_rate": 1.0,
+    "scores": {
+      "answer_correctness": 0.05,
+      "faithfulness": 0.5,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevancy": 0.16785714285714287,
+      "overall_score": 0.1435714285714286
+    }
+  },
+  "basic_rerank": {
+    "pipeline_type": "basic_rerank",
+    "results": [
+      {
+        "query": "What are the symptoms of diabetes?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Diabetes symptoms include increased thirst, frequent urination, fatigue, blurred vision, and slow wound healing.",
+        "success": true
+      },
+      {
+        "query": "How is COVID-19 transmitted?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "COVID-19 is transmitted through respiratory droplets, aerosols, and contact with contaminated surfaces.",
+        "success": true
+      },
+      {
+        "query": "What are the side effects of chemotherapy?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Chemotherapy side effects include nausea, fatigue, hair loss, increased infection risk, and organ toxicity.",
+        "success": true
+      },
+      {
+        "query": "What are the risk factors for heart disease?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Heart disease risk factors include high blood pressure, diabetes, smoking, obesity, and family history.",
+        "success": true
+      },
+      {
+        "query": "How do vaccines work in the immune system?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Vaccines work by stimulating the immune system to produce antibodies and memory cells against specific pathogens.",
+        "success": true
+      }
+    ],
+    "success_rate": 1.0,
+    "scores": {
+      "answer_correctness": 0.05,
+      "faithfulness": 0.5,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevancy": 0.16785714285714287,
+      "overall_score": 0.1435714285714286
+    }
+  },
+  "crag": {
+    "pipeline_type": "crag",
+    "results": [
+      {
+        "query": "What are the symptoms of diabetes?",
+        "answer": "Error: Pipeline execution failed. Please check configuration and database connection.",
+        "contexts": [],
+        "ground_truth": "Diabetes symptoms include increased thirst, frequent urination, fatigue, blurred vision, and slow wound healing.",
+        "success": true
+      },
+      {
+        "query": "How is COVID-19 transmitted?",
+        "answer": "Error: Pipeline execution failed. Please check configuration and database connection.",
+        "contexts": [],
+        "ground_truth": "COVID-19 is transmitted through respiratory droplets, aerosols, and contact with contaminated surfaces.",
+        "success": true
+      },
+      {
+        "query": "What are the side effects of chemotherapy?",
+        "answer": "Error: Pipeline execution failed. Please check configuration and database connection.",
+        "contexts": [],
+        "ground_truth": "Chemotherapy side effects include nausea, fatigue, hair loss, increased infection risk, and organ toxicity.",
+        "success": true
+      },
+      {
+        "query": "What are the risk factors for heart disease?",
+        "answer": "Error: Pipeline execution failed. Please check configuration and database connection.",
+        "contexts": [],
+        "ground_truth": "Heart disease risk factors include high blood pressure, diabetes, smoking, obesity, and family history.",
+        "success": true
+      },
+      {
+        "query": "How do vaccines work in the immune system?",
+        "answer": "Error: Pipeline execution failed. Please check configuration and database connection.",
+        "contexts": [],
+        "ground_truth": "Vaccines work by stimulating the immune system to produce antibodies and memory cells against specific pathogens.",
+        "success": true
+      }
+    ],
+    "success_rate": 1.0,
+    "scores": {
+      "answer_correctness": 0.14404761904761904,
+      "faithfulness": 0.8,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevancy": 0.0,
+      "overall_score": 0.18880952380952382
+    }
+  },
+  "graphrag": {
+    "pipeline_type": "graphrag",
+    "results": [],
+    "success_rate": 0.0,
+    "error": "HybridGraphRAG requires iris-vector-graph package. Install with: pip install rag-templates[hybrid-graphrag]"
+  },
+  "pylate_colbert": {
+    "pipeline_type": "pylate_colbert",
+    "results": [
+      {
+        "query": "What are the symptoms of diabetes?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Diabetes symptoms include increased thirst, frequent urination, fatigue, blurred vision, and slow wound healing.",
+        "success": true
+      },
+      {
+        "query": "How is COVID-19 transmitted?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "COVID-19 is transmitted through respiratory droplets, aerosols, and contact with contaminated surfaces.",
+        "success": true
+      },
+      {
+        "query": "What are the side effects of chemotherapy?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Chemotherapy side effects include nausea, fatigue, hair loss, increased infection risk, and organ toxicity.",
+        "success": true
+      },
+      {
+        "query": "What are the risk factors for heart disease?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Heart disease risk factors include high blood pressure, diabetes, smoking, obesity, and family history.",
+        "success": true
+      },
+      {
+        "query": "How do vaccines work in the immune system?",
+        "answer": "No relevant documents found to answer the query.",
+        "contexts": [],
+        "ground_truth": "Vaccines work by stimulating the immune system to produce antibodies and memory cells against specific pathogens.",
+        "success": true
+      }
+    ],
+    "success_rate": 1.0,
+    "scores": {
+      "answer_correctness": 0.05,
+      "faithfulness": 0.5,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevancy": 0.16785714285714287,
+      "overall_score": 0.1435714285714286
+    }
+  }
+}

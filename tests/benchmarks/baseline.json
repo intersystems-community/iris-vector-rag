@@ -1,0 +1,75 @@
+{
+  "benchmark_version": "1.0.0",
+  "created_at": "2025-10-02T19:42:00Z",
+  "description": "Baseline performance metrics for RAG-Templates test suite",
+  "test_execution_times": {
+    "unit_tests": {
+      "total_seconds": 50.46,
+      "average_per_test": 0.145,
+      "max_test_seconds": 5.0,
+      "tests_count": 349
+    },
+    "integration_tests": {
+      "total_seconds": 120.0,
+      "average_per_test": 2.0,
+      "max_test_seconds": 30.0,
+      "tests_count": 60
+    },
+    "e2e_tests": {
+      "total_seconds": 300.0,
+      "average_per_test": 30.0,
+      "max_test_seconds": 120.0,
+      "tests_count": 10
+    },
+    "full_suite": {
+      "total_seconds": 470.46,
+      "tests_count": 419,
+      "pass_rate": 0.67
+    }
+  },
+  "coverage_metrics": {
+    "overall_coverage_percentage": 9.0,
+    "total_lines": 12775,
+    "covered_lines": 1149,
+    "critical_modules": {
+      "iris_rag.config": 9.4,
+      "iris_rag.validation": 12.0,
+      "iris_rag.pipelines": 11.0,
+      "iris_rag.services": 10.1,
+      "iris_rag.storage": 8.0
+    }
+  },
+  "resource_usage": {
+    "max_memory_mb": 500,
+    "avg_memory_mb": 250,
+    "cpu_cores_used": 1
+  },
+  "performance_targets": {
+    "max_execution_time_multiplier": 2.0,
+    "description": "Tests should complete within 2x baseline time",
+    "unit_tests_max_seconds": 100.92,
+    "integration_tests_max_seconds": 240.0,
+    "e2e_tests_max_seconds": 600.0,
+    "full_suite_max_seconds": 940.92
+  },
+  "quality_gates": {
+    "overall_coverage_min": 60.0,
+    "critical_module_coverage_min": 80.0,
+    "test_pass_rate_min": 1.0,
+    "max_test_failures": 0
+  },
+  "test_environment": {
+    "python_version": "3.12",
+    "pytest_version": "8.4.1",
+    "iris_version": "2025.1.0.223.0com",
+    "platform": "darwin",
+    "architecture": "arm64"
+  },
+  "notes": [
+    "Baseline captured with 105 failing tests (30% failure rate)",
+    "Coverage is at 9% - significant improvement needed",
+    "Critical modules all below 80% target",
+    "Performance targets set at 2x current execution time",
+    "Quality gates enforce 100% pass rate and 60% coverage minimum"
+  ]
+}

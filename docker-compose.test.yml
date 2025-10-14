@@ -1,0 +1,71 @@
+# Removed version field as it's obsolete in modern Docker Compose
+
+# Test Database Management for RAG-Templates
+#
+# Provides mountable database volumes for different testing scenarios
+# while maintaining constitutional compliance with live IRIS database requirements.
+
+services:
+  iris-test:
+    image: intersystemsdc/iris-community:latest
+    container_name: rag_iris_test
+    restart: unless-stopped
+
+    ports:
+      - "31972:1972"    # SuperServer port for test database
+      - "35273:52773"   # Management Portal port for test database
+
+    environment:
+      - IRIS_USERNAME=_SYSTEM
+      - IRIS_PASSWORD=SYS
+      - IRIS_NAMESPACE=USER
+
+    healthcheck:
+      test: ["CMD", "/usr/irissys/bin/iris", "session", "iris", "-U", "USER", "##class(SYS.System).WriteToConsoleLog(\"Health check\")"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    networks:
+      - rag-test-network
+
+  # Test utilities for database management
+  test-utils:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag_test_utils
+    profiles: ["utils"]
+
+    environment:
+      - IRIS_HOST=iris-test
+      - IRIS_PORT=1972
+      - IRIS_USERNAME=_SYSTEM
+      - IRIS_PASSWORD=SYS
+      - IRIS_NAMESPACE=USER
+
+    volumes:
+      - .:/app:ro
+      - ./test-results:/app/test-results:rw
+      - ./docker/test-databases:/app/test-databases:rw
+
+    working_dir: /app
+
+    depends_on:
+      iris-test:
+        condition: service_healthy
+
+    networks:
+      - rag-test-network
+
+volumes:
+  test-iris-data:
+    driver: local
+
+networks:
+  rag-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16

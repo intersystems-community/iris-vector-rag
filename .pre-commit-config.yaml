@@ -1,0 +1,66 @@
+# Pre-commit hooks for RAG-Templates
+# Install with: pre-commit install
+
+repos:
+  # Standard hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+
+  # Python formatting
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3.12
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+
+  # Custom local hooks for compliance
+  - repo: local
+    hooks:
+      # TDD compliance check for contract tests
+      - id: tdd-compliance
+        name: TDD Compliance Check
+        entry: python scripts/validate_tdd_compliance.py
+        language: python
+        files: 'tests/contract/.*\.py$|tests/.*_contract\.py$'
+        pass_filenames: false
+        additional_dependencies: [GitPython]
+        verbose: true
+        # This is a warning only - won't block commits
+        always_run: false
+
+      # Task mapping validation
+      - id: task-mapping
+        name: Requirement-Task Mapping Check
+        entry: python scripts/validate_task_mapping.py
+        language: python
+        files: '(spec|tasks)\.md$'
+        pass_filenames: false
+        verbose: true
+        # This is a warning only - won't block commits
+        always_run: false
+
+      # Check for good error messages in new tests
+      - id: error-message-quality
+        name: Error Message Quality Reminder
+        entry: echo "Remember to use three-part error messages (what/why/action) in test assertions!"
+        language: system
+        files: 'tests/.*\.py$'
+        pass_filenames: false
+        always_run: false
+
+# Configuration
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [commit]
