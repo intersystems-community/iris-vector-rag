@@ -33,10 +33,31 @@ rag_memory_config:
   # Knowledge extraction configuration
   knowledge_extraction:
     entity_extraction:
-      method: "spacy"  # Options: spacy, regex, nltk, custom
-      confidence_threshold: 0.8
-      max_entities_per_document: 50
-      model_name: "en_core_web_sm"  # For spacy
+      method: "llm_basic"  # Options: llm_basic, pattern_only, hybrid, ontology_hybrid
+      confidence_threshold: 0.7
+      max_entities_per_document: 100
+      entity_types:  # TrakCare-specific entity types
+        - "PRODUCT"
+        - "USER"
+        - "MODULE"
+        - "ERROR"
+        - "ACTION"
+        - "ORGANIZATION"
+        - "VERSION"
+      llm:
+        use_dspy: true  # Enable DSPy for better entity extraction
+        model: "qwen2.5:7b"  # Fast Ollama model
+        temperature: 0.1  # Low temperature for deterministic extraction
+        max_tokens: 2000
+
+      # Batch processing configuration (FR-001 through FR-007)
+      batch_processing:
+        enabled: true                  # Enable batch processing for 3x speedup
+        token_budget: 8192             # Max tokens per batch (FR-006)
+        max_retries: 3                 # Exponential backoff retry attempts (FR-005)
+        retry_delays: [2, 4, 8]        # Exponential backoff delays in seconds (FR-005)
+        target_speedup: 3.0            # Target performance improvement (FR-002)
+        quality_threshold: 4.86        # Minimum entities per document (FR-003)
     
     relationship_extraction:
       method: "dependency_parsing"  # Options: dependency_parsing, pattern_based
