@@ -1,6 +1,15 @@
 # RAG Memory Component Configuration
 # Generic configuration for memory-enabled RAG applications
 
+# Database Configuration (required by ConfigurationManager)
+database:
+  iris:
+    host: "localhost"
+    port: 21972
+    namespace: "USER"
+    username: "_SYSTEM"
+    password: "SYS"
+
 rag_memory_config:
   # Temporal window configurations
   temporal_windows:

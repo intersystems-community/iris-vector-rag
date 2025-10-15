@@ -26,6 +26,10 @@ class SchemaManager:
     - Provides simple dimension API for all components
     """
 
+    # CLASS-LEVEL CACHING (shared across all instances for performance)
+    _schema_validation_cache = {}  # Cache for needs_migration() results
+    _config_loaded = False  # Flag to prevent redundant config loading
+
     def __init__(self, connection_manager, config_manager):
         self.connection_manager = connection_manager
         self.config_manager = config_manager
@@ -34,8 +38,22 @@ class SchemaManager:
         # Cache for dimension lookups
         self._dimension_cache = {}
 
-        # Load and validate configuration on initialization
-        self._load_and_validate_config()
+        # Load and validate configuration on initialization (only if not already loaded)
+        if not SchemaManager._config_loaded:
+            self._load_and_validate_config()
+            SchemaManager._config_loaded = True
+        else:
+            # Config already loaded by another instance - set instance attributes from config
+            self.base_embedding_model = self.config_manager.get(
+                "embedding_model.name", "sentence-transformers/all-MiniLM-L6-v2"
+            )
+            self.base_embedding_dimension = self.config_manager.get(
+                "embedding_model.dimension", 384
+            )
+            # Now build mappings (these methods reference the attributes we just set)
+            self._build_model_dimension_mapping()
+            self._build_table_configurations()
+            logger.debug("Schema Manager: Using cached configuration from previous instance")
 
         # Ensure schema metadata table exists
         self.ensure_schema_metadata_table()
@@ -534,12 +552,26 @@ class SchemaManager:
         return {"text_content_type": "LONGVARCHAR", "supports_vector_search": True}
 
     def needs_migration(self, table_name: str, pipeline_type: str = None) -> bool:
-        """Check if table needs migration based on configuration and physical structure."""
+        """Check if table needs migration based on configuration and physical structure.
+
+        Uses class-level caching to avoid repeated expensive validation checks.
+        """
+        # Check class-level cache first (shared across all instances)
+        cache_key = f"{table_name}:{pipeline_type or 'default'}"
+        if cache_key in SchemaManager._schema_validation_cache:
+            cached_result = SchemaManager._schema_validation_cache[cache_key]
+            logger.debug(f"Schema validation cache HIT for {table_name} (cached: {cached_result})")
+            return cached_result
+
+        # Cache MISS - perform full validation
+        logger.debug(f"Schema validation cache MISS for {table_name} - performing full validation")
+
         current_config = self.get_current_schema_config(table_name)
         expected_config = self._get_expected_schema_config(table_name, pipeline_type)
 
         if not current_config:
             logger.info(f"Table {table_name} has no schema metadata - migration needed")
+            SchemaManager._schema_validation_cache[cache_key] = True
             return True
 
         # Compare top-level schema config fields
@@ -555,6 +587,7 @@ class SchemaManager:
                     f"Migration required for {table_name} due to {key} mismatch: "
                     f"expected={expected_config.get(key)}, actual={current_config.get(key)}"
                 )
+                SchemaManager._schema_validation_cache[cache_key] = True
                 return True
 
         # Compare nested configuration keys
@@ -571,6 +604,7 @@ class SchemaManager:
                     f"Migration required for {table_name} due to config.{key} mismatch: "
                     f"expected={exp_val}, actual={cur_val}"
                 )
+                SchemaManager._schema_validation_cache[cache_key] = True
                 return True
 
         # ✅ NEW: Check that all expected columns exist in physical table
@@ -587,13 +621,18 @@ class SchemaManager:
                         logger.info(
                             f"Migration required for {table_name}: missing column '{col}' in physical schema."
                         )
+                        SchemaManager._schema_validation_cache[cache_key] = True
                         return True
             except Exception as e:
                 logger.warning(
                     f"Could not verify physical structure of {table_name}: {e}"
                 )
+                SchemaManager._schema_validation_cache[cache_key] = True
                 return True  # Be conservative and migrate if in doubt
 
+        # Schema is valid - cache the result
+        logger.info(f"✅ Schema validation PASSED for {table_name} - caching result")
+        SchemaManager._schema_validation_cache[cache_key] = False
         return False
 
     def migrate_table(
@@ -1243,7 +1282,7 @@ class SchemaManager:
                         description TEXT NULL,
                         embedding VECTOR({vector_data_type}, {vector_dim}) NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(id) ON DELETE CASCADE
+                        FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(doc_id) ON DELETE CASCADE
                     )
                     """
                     cursor.execute(create_sql)
