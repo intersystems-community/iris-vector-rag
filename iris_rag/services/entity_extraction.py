@@ -650,13 +650,20 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
     def _extract_llm(
         self, text: str, document: Optional[Document] = None
     ) -> List[Entity]:
-        """Extract entities using LLM with simple prompt."""
-        # This is a simplified LLM extraction - in production would use actual LLM
+        """Extract entities using LLM with DSPy-enhanced extraction."""
         entities = []
         try:
-            prompt = self._build_prompt(text)
-            response = self._call_llm(prompt)
-            entities = self._parse_llm_response(response, document)
+            # Check if DSPy extraction is configured
+            use_dspy = self.config.get("llm", {}).get("use_dspy", False)
+
+            if use_dspy:
+                # Use DSPy-powered entity extraction
+                entities = self._extract_with_dspy(text, document)
+            else:
+                # Use traditional prompt-based extraction
+                prompt = self._build_prompt(text)
+                response = self._call_llm(prompt)
+                entities = self._parse_llm_response(response, document)
 
             # Filter by confidence and enabled types
             filtered = [
@@ -669,6 +676,93 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
 
         except Exception as e:
             logger.error(f"LLM extraction failed: {e}")
+            return []
+
+    def _extract_with_dspy(
+        self, text: str, document: Optional[Document] = None
+    ) -> List[Entity]:
+        """Extract entities using DSPy with TrakCare-specific ontology."""
+        try:
+            # Lazy import DSPy module
+            from ..dspy_modules.entity_extraction_module import (
+                TrakCareEntityExtractionModule,
+                configure_dspy_for_ollama
+            )
+
+            # Configure DSPy if not already configured
+            if not hasattr(self, '_dspy_module'):
+                llm_config = self.config.get("llm", {})
+                model = llm_config.get("model", "qwen2.5:7b")
+
+                # Only configure DSPy if not already configured globally
+                # This prevents threading issues when workers have already configured DSPy
+                import dspy as dspy_module
+                try:
+                    # Check if DSPy is already configured (by checking if lm is set)
+                    if dspy_module.settings.lm is None:
+                        # Configure DSPy with Ollama (use model_name parameter)
+                        configure_dspy_for_ollama(model_name=model)
+                        logger.info(f"DSPy configured with model: {model}")
+                    else:
+                        logger.info(f"DSPy already configured, reusing existing configuration")
+                except Exception as e:
+                    # If checking settings fails, try to configure anyway
+                    logger.warning(f"Could not check DSPy configuration: {e}, attempting to configure...")
+                    try:
+                        configure_dspy_for_ollama(model_name=model)
+                    except Exception as config_error:
+                        logger.error(f"Failed to configure DSPy: {config_error}")
+                        # Fall back to traditional extraction
+                        raise ImportError("DSPy configuration failed")
+
+                # Initialize DSPy module
+                self._dspy_module = TrakCareEntityExtractionModule()
+                logger.info(f"DSPy entity extraction module initialized with model: {model}")
+
+            # Perform DSPy extraction
+            prediction = self._dspy_module.forward(
+                ticket_text=text,
+                entity_types=list(self.enabled_types) if self.enabled_types else None
+            )
+
+            # Parse entities from DSPy output
+            entities = []
+            try:
+                import json
+                entities_data = json.loads(prediction.entities)
+
+                for entity_data in entities_data:
+                    entity = Entity(
+                        text=entity_data.get("text", ""),
+                        entity_type=entity_data.get("type", "UNKNOWN"),
+                        confidence=entity_data.get("confidence", 0.7),
+                        start_offset=0,  # DSPy doesn't provide offsets by default
+                        end_offset=len(entity_data.get("text", "")),
+                        source_document_id=document.id if document else None,
+                        metadata={
+                            "method": "dspy",
+                            "model": self.config.get("llm", {}).get("model", "qwen2.5:7b")
+                        }
+                    )
+                    entities.append(entity)
+
+                logger.info(f"DSPy extracted {len(entities)} entities (target: 4+)")
+
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse DSPy entity output: {e}")
+                return []
+
+            return entities
+
+        except ImportError as e:
+            logger.error(f"DSPy modules not available: {e}")
+            logger.info("Falling back to traditional LLM extraction")
+            # Fallback to traditional extraction
+            prompt = self._build_prompt(text)
+            response = self._call_llm(prompt)
+            return self._parse_llm_response(response, document)
+        except Exception as e:
+            logger.error(f"DSPy extraction failed: {e}")
             return []
 
     def _extract_patterns(
@@ -777,7 +871,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
 
             # Get LLM config from entity_extraction config
             llm_config = self.config.get("llm", {})
-            model = llm_config.get("model", "qwen3:14b")
+            model = llm_config.get("model", "qwen2.5:7b")  # Changed from qwen3:14b - faster and works better
             temperature = llm_config.get("temperature", 0.1)
             max_tokens = llm_config.get("max_tokens", 2000)
 

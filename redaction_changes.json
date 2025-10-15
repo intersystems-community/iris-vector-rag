@@ -13,10 +13,31 @@
     ]
   },
   {
+    "file": "OPTIMIZATION_APPLIED.md",
+    "replacements": 2,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
+    ]
+  },
+  {
     "file": "docker-compose.licensed.yml",
     "replacements": 1,
     "changes": [
       "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)"
+    ]
+  },
+  {
+    "file": "DSPY_INTEGRATION_COMPLETE.md",
+    "replacements": 3,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
+    ]
+  },
+  {
+    "file": "DSPY_INDEXING_STATUS.md",
+    "replacements": 1,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
@@ -86,6 +107,13 @@
     "replacements": 1,
     "changes": [
       "merge request \u2192 pull request (1 occurrences)"
+    ]
+  },
+  {
+    "file": "scripts/monitor_indexing_live.py",
+    "replacements": 1,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
