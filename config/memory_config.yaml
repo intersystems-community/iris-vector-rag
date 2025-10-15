@@ -1,6 +1,15 @@
 # RAG Memory Component Configuration
 # Generic configuration for memory-enabled RAG applications
 
+# Database Configuration (required by ConfigurationManager)
+database:
+  iris:
+    host: "localhost"
+    port: 21972
+    namespace: "USER"
+    username: "_SYSTEM"
+    password: "SYS"
+
 rag_memory_config:
   # Temporal window configurations
   temporal_windows:
@@ -24,9 +33,9 @@ rag_memory_config:
   # Knowledge extraction configuration
   knowledge_extraction:
     entity_extraction:
-      method: "llm_basic"  # Options: llm_basic, pattern_only, hybrid (changed from spacy to llm_basic for TrakCare ticket extraction)
-      confidence_threshold: 0.7  # Lowered from 0.8 to allow more entities
-      max_entities_per_document: 100  # Increased from 50 to capture more TrakCare entities
+      method: "spacy"  # Options: spacy, regex, nltk, custom
+      confidence_threshold: 0.8
+      max_entities_per_document: 50
       model_name: "en_core_web_sm"  # For spacy
     
     relationship_extraction:
@@ -131,26 +140,6 @@ rag_memory_config:
       enable_advanced_clustering: false
       enable_semantic_similarity: true
       enable_cross_domain_learning: false
-
-# Database configuration (required by ConfigurationManager)
-database:
-  iris:
-    host: "localhost"
-    port: 21972
-    namespace: "USER"
-    username: "_SYSTEM"
-    password: "SYS"
-
-# Root-level entity extraction configuration (for EntityExtractionService)
-entity_extraction:
-  method: "llm_basic"  # Options: llm_basic, pattern_only, hybrid
-  confidence_threshold: 0.7
-  entity_types: ["PRODUCT", "VERSION", "ISSUE", "CUSTOMER", "MODULE", "ERROR", "FEATURE"]
-  max_entities: 100
-  llm:
-    model: "qwen2.5:7b"  # More capable model (7.6B) for reliable JSON generation
-    temperature: 0.1
-    max_tokens: 800  # Reduced for faster responses
 
 # Environment-specific overrides
 # These would be handled by environment-specific configuration files

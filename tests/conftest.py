@@ -33,10 +33,6 @@ if str(repo_root) not in sys.path:
 # Import framework modules
 from iris_rag.config.manager import ConfigurationManager
 
-# Import pytest plugin for .DAT fixture loading (Feature 047: T083)
-from tests.fixtures import pytest_plugin
-from tests.fixtures.pytest_plugin import dat_fixture_loader, fixture_metadata
-
 # Coverage testing imports
 import coverage
 from datetime import datetime
@@ -389,10 +385,6 @@ pytest_plugins = ["pytest_asyncio"]
 # Configure test markers
 def pytest_configure(config):
     """Configure pytest markers."""
-    # Register .DAT fixture marker (Feature 047: T078)
-    pytest_plugin.pytest_configure(config)
-
-    # Register other markers
     config.addinivalue_line("markers", "unit: mark test as a unit test")
     config.addinivalue_line("markers", "integration: mark test as an integration test")
     config.addinivalue_line("markers", "e2e: mark test as an end-to-end test")
@@ -406,7 +398,6 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "clean_iris: mark test as requiring fresh/clean IRIS instance per constitution")
     config.addinivalue_line("markers", "coverage_critical: mark test as critical for coverage measurement")
     config.addinivalue_line("markers", "performance: mark test as performance validation")
-    config.addinivalue_line("markers", "contract: mark test as API contract test")
 
 
 def pytest_sessionstart(session):
@@ -549,12 +540,9 @@ def iris_connection(connection_pool):
 
 
 def pytest_collection_modifyitems(config, items):
-    """Modify test collection to add markers based on location and process @pytest.mark.dat_fixture."""
-    # Process .DAT fixture markers (Feature 047: T079)
-    pytest_plugin.pytest_collection_modifyitems(config, items)
-
-    # Add markers based on test file location
+    """Modify test collection to add markers based on location."""
     for item in items:
+        # Add markers based on test file location
         if "unit" in str(item.fspath):
             item.add_marker(pytest.mark.unit)
         elif "integration" in str(item.fspath):
@@ -910,150 +898,3 @@ def sample_documents():
         data = json.load(f)
 
     return data['documents']
-
-
-# ============================================================================
-# Feature 044: Test Environment Validation Utilities
-# ============================================================================
-
-def get_iris_port() -> str:
-    """
-    Get IRIS database port from environment variable.
-
-    Returns:
-        Port number as string (default: '1972')
-
-    Usage:
-        port = get_iris_port()
-        connection_string = f"iris://_SYSTEM:SYS@localhost:{port}/USER"
-    """
-    return os.getenv('IRIS_PORT', '1972')
-
-
-def skip_if_no_database():
-    """
-    Decorator to skip test if IRIS database is not available.
-
-    Checks for database connectivity and skips test with clear message if unavailable.
-
-    Usage:
-        @skip_if_no_database()
-        def test_requires_db(iris_connection):
-            # Test code that needs database
-            pass
-    """
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            port = get_iris_port()
-            try:
-                result = subprocess.run([
-                    sys.executable, "-c",
-                    f"""
-import sqlalchemy_iris
-from sqlalchemy import create_engine, text
-try:
-    engine = create_engine(f'iris://_SYSTEM:SYS@localhost:{port}/USER')
-    with engine.connect() as conn:
-        conn.execute(text('SELECT 1'))
-    print('SUCCESS')
-except Exception:
-    print('FAILED')
-"""
-                ], capture_output=True, text=True, timeout=5)
-
-                if "SUCCESS" not in result.stdout:
-                    pytest.skip(
-                        f"IRIS database not available on port {port}. "
-                        f"Set IRIS_PORT environment variable or start IRIS with 'make docker-up'"
-                    )
-            except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-                pytest.skip(
-                    f"Cannot connect to IRIS database on port {port}. "
-                    f"Verify IRIS is running with 'docker ps'"
-                )
-
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
-
-
-def skip_if_no_embeddings(connection):
-    """
-    Check if database has valid VECTOR embeddings and skip if unavailable.
-
-    Verifies both presence and proper VECTOR type format. Embeddings stored as
-    VARCHAR strings will cause vector operations to fail, so tests are skipped
-    with instructions to reload data.
-
-    Args:
-        connection: IRIS database connection (raw connection or ConnectionManager instance)
-
-    Raises:
-        pytest.skip: If no embeddings found or embeddings in wrong format
-
-    Usage:
-        def test_vector_search(iris_connection):
-            skip_if_no_embeddings(iris_connection)
-            # Test code that requires embeddings
-            pass
-    """
-    # Get actual IRIS connection (bypass mock for real database operations)
-    # The iris_connection fixture returns a MockConnection from ConnectionPool,
-    # but for embedding validation we need the real IRIS connection
-    from common.iris_connection_manager import get_iris_connection
-
-    try:
-        real_conn = get_iris_connection()
-        cursor = real_conn.cursor()
-    except Exception as conn_error:
-        pytest.skip(f"Cannot get IRIS connection: {conn_error}")
-    try:
-        # Check if embeddings exist
-        cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
-        count = cursor.fetchone()[0]
-
-        if count == 0:
-            pytest.skip(
-                "No embeddings found in database. "
-                "Run 'make load-data' to load sample documents with embeddings."
-            )
-
-        # Test if embeddings are in proper VECTOR format by attempting a vector operation
-        # If embeddings are stored as VARCHAR strings, this will fail
-        # IMPORTANT: Use vector_sql_utils per Constitution Principle VII
-        from common.vector_sql_utils import build_safe_vector_dot_sql
-        import json
-
-        try:
-            # Build safe vector test query
-            # Use 384-dimensional test vector to match actual embedding dimension
-            test_vector = json.dumps([0.1] * 384)
-            test_sql = build_safe_vector_dot_sql(
-                table="RAG.SourceDocuments",
-                vector_column="embedding",
-                vector_string=test_vector,
-                vector_dimension=384,
-                id_column="doc_id",
-                top_k=1
-            )
-            cursor.execute(test_sql)
-            cursor.fetchone()
-        except Exception as vector_error:
-            error_msg = str(vector_error)
-            if "different lengths" in error_msg or "different datatypes" in error_msg:
-                pytest.skip(
-                    f"Embeddings exist but are in incorrect format (VARCHAR strings instead of VECTOR type). "
-                    f"Database needs schema migration and data reload. "
-                    f"Run: make clean-db && make load-data"
-                )
-            else:
-                # Some other vector operation error, re-raise for investigation
-                raise
-
-    except Exception as e:
-        if "pytest" in str(type(e).__module__):
-            # Re-raise pytest.skip exceptions
-            raise
-        pytest.skip(f"Cannot validate embeddings: {str(e)}")
-    finally:
-        cursor.close()

@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "timestamp": "20250920_112421",
+    "dataset": "PMC 10K documents",
+    "num_queries": 10,
+    "pipelines_evaluated": [],
+    "execution_time_minutes": 4.172325134277344e-07,
+    "target_accuracy": 0.75,
+    "configuration": {
+      "num_queries": 10,
+      "pipelines": [
+        "GraphRAG"
+      ],
+      "output_dir": "outputs/graphrag_hybrid_comparison",
+      "use_cache": true,
+      "parallel_execution": false,
+      "confidence_level": 0.95,
+      "target_accuracy": 0.75
+    }
+  },
+  "pipeline_metrics": {},
+  "comparative_analysis": {
+    "best_overall": "None",
+    "best_per_metric": {}
+  },
+  "detailed_results": {}
+}

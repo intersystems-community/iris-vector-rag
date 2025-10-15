@@ -35,7 +35,6 @@ class DatabaseCleanupHandler:
         Remove all test data associated with this test run.
 
         Deletes from all RAG tables where test_run_id matches.
-        Falls back to doc_id prefix pattern if test_run_id column doesn't exist.
         Idempotent - safe to call multiple times.
 
         Raises:
@@ -45,56 +44,21 @@ class DatabaseCleanupHandler:
 
         try:
             # Delete in order to respect foreign key constraints
-            # EntityRelationships reference Entities
+            # Relationships reference Entities
             # DocumentChunks reference SourceDocuments
             # Entities are standalone
             # SourceDocuments are standalone
 
             cleanup_tables = [
-                'RAG.EntityRelationships',
+                'RAG.Relationships',
                 'RAG.DocumentChunks',
                 'RAG.Entities',
                 'RAG.SourceDocuments'
             ]
 
             for table in cleanup_tables:
-                # Try test_run_id column first, fall back to doc_id prefix pattern
-                try:
-                    delete_sql = f"DELETE FROM {table} WHERE test_run_id = ?"
-                    cursor.execute(delete_sql, [self.test_run_id])
-                    # If we got here, column exists - no fallback needed
-                except Exception as column_error:
-                    error_str = str(column_error)
-
-                    # Skip if table doesn't exist (check for "Table 'X' not found" specifically)
-                    if 'Table' in error_str and 'not found' in error_str:
-                        continue
-
-                    # If test_run_id column doesn't exist, use doc_id prefix pattern
-                    if 'test_run_id' in error_str or 'Field' in error_str:
-                        try:
-                            # Fallback strategy: use doc_id LIKE pattern for SourceDocuments/DocumentChunks
-                            # entity_id LIKE pattern for Entities
-                            # relationship_id LIKE pattern for EntityRelationships
-                            if table == 'RAG.SourceDocuments':
-                                delete_sql = f"DELETE FROM {table} WHERE doc_id LIKE ?"
-                                cursor.execute(delete_sql, [f"{self.test_run_id}%"])
-                            elif table == 'RAG.DocumentChunks':
-                                delete_sql = f"DELETE FROM {table} WHERE chunk_id LIKE ?"
-                                cursor.execute(delete_sql, [f"{self.test_run_id}%"])
-                            elif table == 'RAG.Entities':
-                                delete_sql = f"DELETE FROM {table} WHERE entity_id LIKE ?"
-                                cursor.execute(delete_sql, [f"{self.test_run_id}%"])
-                            elif table == 'RAG.EntityRelationships':
-                                delete_sql = f"DELETE FROM {table} WHERE relationship_id LIKE ?"
-                                cursor.execute(delete_sql, [f"{self.test_run_id}%"])
-                        except Exception as fallback_error:
-                            # Skip if table doesn't exist in fallback
-                            if 'Table' in str(fallback_error) and 'not found' in str(fallback_error):
-                                continue
-                            raise
-                    else:
-                        raise
+                delete_sql = f"DELETE FROM {table} WHERE test_run_id = ?"
+                cursor.execute(delete_sql, [self.test_run_id])
 
             self.connection.commit()
 
@@ -136,39 +100,12 @@ class DatabaseCleanupHandler:
             'RAG.SourceDocuments',
             'RAG.DocumentChunks',
             'RAG.Entities',
-            'RAG.EntityRelationships'
+            'RAG.Relationships'
         ]
 
         for table in tables_to_check:
-            try:
-                cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE test_run_id = ?", [self.test_run_id])
-                count = cursor.fetchone()[0]
-            except Exception as column_error:
-                error_str = str(column_error)
-
-                # Skip if table doesn't exist (check for "Table 'X' not found" specifically)
-                if 'Table' in error_str and 'not found' in error_str:
-                    continue
-
-                # Fallback to ID prefix pattern if test_run_id column doesn't exist
-                if 'test_run_id' in error_str or 'Field' in error_str:
-                    try:
-                        if table == 'RAG.SourceDocuments':
-                            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE doc_id LIKE ?", [f"{self.test_run_id}%"])
-                        elif table == 'RAG.DocumentChunks':
-                            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE chunk_id LIKE ?", [f"{self.test_run_id}%"])
-                        elif table == 'RAG.Entities':
-                            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE entity_id LIKE ?", [f"{self.test_run_id}%"])
-                        elif table == 'RAG.EntityRelationships':
-                            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE relationship_id LIKE ?", [f"{self.test_run_id}%"])
-                        count = cursor.fetchone()[0]
-                    except Exception as fallback_error:
-                        # Skip if table doesn't exist in fallback
-                        if 'Table' in str(fallback_error) and 'not found' in str(fallback_error):
-                            continue
-                        raise
-                else:
-                    raise
+            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE test_run_id = ?", [self.test_run_id])
+            count = cursor.fetchone()[0]
 
             if count > 0:
                 return False
@@ -189,39 +126,12 @@ class DatabaseCleanupHandler:
             'RAG.SourceDocuments',
             'RAG.DocumentChunks',
             'RAG.Entities',
-            'RAG.EntityRelationships'
+            'RAG.Relationships'
         ]
 
         for table in tables_to_check:
-            try:
-                cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE test_run_id = ?", [self.test_run_id])
-                total += cursor.fetchone()[0]
-            except Exception as column_error:
-                error_str = str(column_error)
-
-                # Skip if table doesn't exist (check for "Table 'X' not found" specifically)
-                if 'Table' in error_str and 'not found' in error_str:
-                    continue
-
-                # Fallback to ID prefix pattern if test_run_id column doesn't exist
-                if 'test_run_id' in error_str or 'Field' in error_str:
-                    try:
-                        if table == 'RAG.SourceDocuments':
-                            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE doc_id LIKE ?", [f"{self.test_run_id}%"])
-                        elif table == 'RAG.DocumentChunks':
-                            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE chunk_id LIKE ?", [f"{self.test_run_id}%"])
-                        elif table == 'RAG.Entities':
-                            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE entity_id LIKE ?", [f"{self.test_run_id}%"])
-                        elif table == 'RAG.EntityRelationships':
-                            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE relationship_id LIKE ?", [f"{self.test_run_id}%"])
-                        total += cursor.fetchone()[0]
-                    except Exception as fallback_error:
-                        # Skip if table doesn't exist in fallback
-                        if 'Table' in str(fallback_error) and 'not found' in str(fallback_error):
-                            continue
-                        raise
-                else:
-                    raise
+            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE test_run_id = ?", [self.test_run_id])
+            total += cursor.fetchone()[0]
 
         return total
 

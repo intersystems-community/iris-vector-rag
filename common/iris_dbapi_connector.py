@@ -103,33 +103,40 @@ def _get_iris_dbapi_module():
     Returns:
         The IRIS DBAPI module if successfully imported, None otherwise.
     """
-    # Try irisnative first - it's more reliable
     try:
-        import irisnative
-        logger.info("Successfully imported 'irisnative' module")
-        return irisnative
-    except ImportError as e:
-        logger.warning(f"Failed to import 'irisnative' module: {e}")
+        import iris as iris_dbapi
 
-    # Try the iris dbapi module as fallback
-    try:
-        import sys
-        # Try to import iris.dbapi module directly to bypass problematic __init__.py
-        sys.path.insert(0, '/opt/homebrew/Caskroom/miniconda/base/lib/python3.12/site-packages')
-        from iris import dbapi
-        logger.info("Successfully imported 'iris.dbapi' module")
-        return dbapi
-    except ImportError as e:
-        logger.warning(f"Failed to import 'iris.dbapi' module: {e}")
+        # Check if iris_dbapi module has _DBAPI submodule with connect method
+        if hasattr(iris_dbapi, "_DBAPI") and hasattr(iris_dbapi._DBAPI, "connect"):
+            # The _DBAPI submodule provides the DBAPI interface
+            logger.info("Successfully imported 'iris' module with DBAPI interface")
+            return iris_dbapi._DBAPI
+        elif hasattr(iris_dbapi, "connect"):
+            # The iris_dbapi module itself provides the DBAPI interface
+            logger.info("Successfully imported 'iris' module with DBAPI interface")
+            return iris_dbapi
+        else:
+            logger.warning(
+                "'iris' module imported but doesn't appear to have DBAPI interface (no 'connect' method)"
+            )
+    except (ImportError, AttributeError) as e:
+        logger.error(f"Failed to import 'iris' module (circular import issue): {e}")
 
-    # Last resort - try direct iris import
-    try:
-        import iris
-        if hasattr(iris, "connect"):
-            logger.info("Successfully imported 'iris' module with connect method")
-            return iris
-    except ImportError as e:
-        logger.warning(f"Failed to import 'iris' module: {e}")
+        # Fallback to direct iris import for older installations
+        try:
+            import iris
+
+            if hasattr(iris, "connect"):
+                logger.info(
+                    "Successfully imported 'iris' module with DBAPI interface (fallback)"
+                )
+                return iris
+            else:
+                logger.warning(
+                    "'iris' module imported but doesn't appear to have DBAPI interface (no 'connect' method)"
+                )
+        except ImportError as e2:
+            logger.warning(f"Failed to import 'iris' module as fallback: {e2}")
 
     # All import attempts failed
     logger.error(
@@ -158,11 +165,11 @@ def get_iris_dbapi_connection():
     Returns:
         A direct IRIS connection object or None if connection fails.
     """
-    # Use irisnative instead of iris to avoid embedded Python issues
+    # Use direct iris import instead of DBAPI
     try:
-        import irisnative
+        import iris
     except ImportError as e:
-        logger.error(f"Cannot import irisnative module: {e}")
+        logger.error(f"Cannot import iris module: {e}")
         return None
 
     # Get connection parameters from environment with auto-detection fallback
@@ -199,8 +206,8 @@ def get_iris_dbapi_connection():
                 f"Attempting IRIS connection to {host}:{port}/{namespace} as user {user}"
             )
 
-            # Use irisnative.createConnection() - this avoids embedded Python issues
-            conn = irisnative.createConnection(host, port, namespace, user, password)
+            # Use direct iris.connect() - this avoids SSL issues
+            conn = iris.connect(host, port, namespace, user, password)
 
             # Validate the connection
             if conn is None:

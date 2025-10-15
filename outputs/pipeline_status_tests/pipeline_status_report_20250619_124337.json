@@ -1,0 +1,81 @@
+{
+  "timestamp": "2025-06-19T12:43:37.261072",
+  "summary": {
+    "total": 7,
+    "working": 3,
+    "initialized_only": 4,
+    "broken": 0
+  },
+  "pipelines": {
+    "basic": {
+      "status": "initialized_only",
+      "available_methods": [
+        "execute",
+        "query",
+        "load_documents"
+      ],
+      "initialization_error": null,
+      "execute_error": "'MockConnection' object has no attribute 'cursor'"
+    },
+    "hyde": {
+      "status": "working",
+      "available_methods": [
+        "execute",
+        "query",
+        "load_documents"
+      ],
+      "initialization_error": null,
+      "execute_error": null
+    },
+    "crag": {
+      "status": "initialized_only",
+      "available_methods": [
+        "execute",
+        "query",
+        "load_documents"
+      ],
+      "initialization_error": null,
+      "execute_error": "'MockConnection' object has no attribute 'cursor'"
+    },
+    "colbert": {
+      "status": "initialized_only",
+      "available_methods": [
+        "execute",
+        "query",
+        "load_documents"
+      ],
+      "initialization_error": null,
+      "execute_error": "'MockConnection' object has no attribute 'cursor'"
+    },
+    "noderag": {
+      "status": "initialized_only",
+      "available_methods": [
+        "execute",
+        "query",
+        "load_documents"
+      ],
+      "initialization_error": null,
+      "execute_error": "'MockConnection' object has no attribute 'cursor'"
+    },
+    "graphrag": {
+      "status": "working",
+      "available_methods": [
+        "execute",
+        "query",
+        "load_documents"
+      ],
+      "initialization_error": null,
+      "execute_error": null
+    },
+    "hybrid_ifind": {
+      "status": "working",
+      "available_methods": [
+        "execute",
+        "query",
+        "load_documents"
+      ],
+      "initialization_error": null,
+      "execute_error": null
+    }
+  }
+}

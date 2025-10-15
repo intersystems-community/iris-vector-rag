@@ -1,0 +1,79 @@
+{
+  "test_suite": "GraphRAG Enterprise Scale Testing",
+  "timestamp": "2025-09-15T22:19:11.277057",
+  "results": {
+    "current_graphrag": {
+      "test_id": "scale_test_current_graphrag_1757989126",
+      "pipeline_name": "Current GraphRAG Implementation",
+      "timestamp": "2025-09-15T22:18:46.193944",
+      "total_documents": 95,
+      "documents_loaded": 95,
+      "loading_time_seconds": 1.2874603271484375e-05,
+      "loading_success_rate": 1.0,
+      "peak_memory_mb": 180.5625,
+      "avg_memory_mb": 180.55416666666667,
+      "cpu_usage_percent": 9.806666666666667,
+      "entities_extracted": 100,
+      "relationships_created": 478,
+      "graph_nodes": 416,
+      "graph_edges": 448,
+      "extraction_time_seconds": 9.059906005859375e-06,
+      "queries_executed": 12,
+      "avg_query_time_ms": 1054.2727708816528,
+      "max_query_time_ms": 1733.2522869110107,
+      "min_query_time_ms": 326.2820243835449,
+      "query_success_rate": 1.0,
+      "avg_documents_retrieved": 5.5,
+      "avg_answer_length": 92,
+      "retrieval_method_stats": {
+        "vector_fallback": 8,
+        "knowledge_graph_traversal": 4
+      },
+      "errors_encountered": [],
+      "warnings": [],
+      "meets_memory_target": true,
+      "meets_query_time_target": true,
+      "meets_success_rate_target": true,
+      "overall_status": "PASS"
+    },
+    "merged_graphrag": {
+      "test_id": "scale_test_merged_graphrag_1757989138",
+      "pipeline_name": "Merged GraphRAG Implementation",
+      "timestamp": "2025-09-15T22:18:58.880990",
+      "total_documents": 95,
+      "documents_loaded": 95,
+      "loading_time_seconds": 2.6226043701171875e-05,
+      "loading_success_rate": 1.0,
+      "peak_memory_mb": 180.5625,
+      "avg_memory_mb": 180.55260416666667,
+      "cpu_usage_percent": 14.74,
+      "entities_extracted": 335,
+      "relationships_created": 260,
+      "graph_nodes": 497,
+      "graph_edges": 190,
+      "extraction_time_seconds": 1.0013580322265625e-05,
+      "queries_executed": 12,
+      "avg_query_time_ms": 1031.2745769818623,
+      "max_query_time_ms": 1987.4958992004395,
+      "min_query_time_ms": 206.0678005218506,
+      "query_success_rate": 1.0,
+      "avg_documents_retrieved": 4.916666666666667,
+      "avg_answer_length": 91,
+      "retrieval_method_stats": {
+        "knowledge_graph_traversal": 6,
+        "vector_fallback": 6
+      },
+      "errors_encountered": [],
+      "warnings": [],
+      "meets_memory_target": true,
+      "meets_query_time_target": true,
+      "meets_success_rate_target": true,
+      "overall_status": "PASS"
+    }
+  },
+  "success_criteria": {
+    "memory_target_gb": 8.0,
+    "query_time_target_seconds": 30.0,
+    "success_rate_target": 0.95
+  }
+}

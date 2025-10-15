@@ -17,7 +17,7 @@ import pytest
 class TestBasicRerankRAGIntegration:
     """End-to-end integration tests for BasicRerankRAG pipeline."""
 
-    def test_full_query_path_with_real_db(self, basic_rerank_pipeline, iris_connection):
+    def test_full_query_path_with_real_db(self, basic_rerank_pipeline):
         """
         FR-025: Full BasicRerankRAG pipeline workflow MUST complete successfully.
 
@@ -25,8 +25,6 @@ class TestBasicRerankRAGIntegration:
         When: Documents loaded and query executed
         Then: Complete workflow succeeds with reranking
         """
-        from tests.conftest import skip_if_no_embeddings
-
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
         with open(sample_docs_path, 'r') as f:
@@ -39,9 +37,6 @@ class TestBasicRerankRAGIntegration:
 
         assert load_result["documents_loaded"] > 0, \
             "Should successfully load documents"
-
-        # Check if embeddings are in proper VECTOR format before querying
-        skip_if_no_embeddings(iris_connection)
 
         # Execute query
         query = "What are the symptoms of diabetes?"
@@ -74,7 +69,7 @@ class TestBasicRerankRAGIntegration:
         assert result["embeddings_generated"] == expected_count
         assert result["documents_failed"] == 0
 
-    def test_response_quality_metrics(self, basic_rerank_pipeline, iris_connection):
+    def test_response_quality_metrics(self, basic_rerank_pipeline):
         """
         FR-027: BasicRerankRAG query response MUST include quality metrics.
 
@@ -82,16 +77,11 @@ class TestBasicRerankRAGIntegration:
         When: Query executed
         Then: Response includes quality metrics
         """
-        from tests.conftest import skip_if_no_embeddings
-
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
         with open(sample_docs_path, 'r') as f:
             docs_data = json.load(f)
 
         basic_rerank_pipeline.load_documents(docs_data["documents"])
-
-        # Check if embeddings are in proper VECTOR format before querying
-        skip_if_no_embeddings(iris_connection)
 
         query = "How is diabetes treated?"
         result = basic_rerank_pipeline.query(query)

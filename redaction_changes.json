@@ -1,22 +1,15 @@
 [
   {
     "file": "redaction_changes.json",
-    "replacements": 135,
+    "replacements": 86,
     "changes": [
       "gitlab.iscinternal.com \u2192 github.com/intersystems-community (11 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (11 occurrences)",
-      "merge request \u2192 pull request (10 occurrences)",
-      "Merge Request \u2192 Pull Request (7 occurrences)",
-      "MR # \u2192 PR # (4 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (5 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (87 occurrences)"
-    ]
-  },
-  {
-    "file": "BUG_REPORT_SCHEMA_MIGRATION_LOOP.md",
-    "replacements": 5,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
+      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (9 occurrences)",
+      "merge request \u2192 pull request (11 occurrences)",
+      "Merge Request \u2192 Pull Request (8 occurrences)",
+      "MR # \u2192 PR # (5 occurrences)",
+      "tdyar@intersystems.com \u2192 maintainer@example.com (6 occurrences)",
+      "/tdyar/ \u2192 /intersystems-community/ (36 occurrences)"
     ]
   },
   {
@@ -207,6 +200,13 @@
     "replacements": 3,
     "changes": [
       "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
+    ]
+  },
+  {
+    "file": "docs/development/BUG_REPORT_SCHEMA_MIGRATION_LOOP.md",
+    "replacements": 5,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
     ]
   },
   {

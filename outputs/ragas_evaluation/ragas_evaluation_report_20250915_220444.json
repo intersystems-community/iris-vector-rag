@@ -1,0 +1,761 @@
+{
+  "timestamp": "2025-09-15T22:04:44.116111",
+  "total_test_cases": 8,
+  "pipelines_evaluated": [
+    "current_graphrag",
+    "merged_graphrag",
+    "basic_rag"
+  ],
+  "pipeline_scores": {
+    "current_graphrag": {
+      "answer_correctness": 0.8234555031597566,
+      "faithfulness": 0.8169439337719057,
+      "context_precision": 0.8436053816348205,
+      "context_recall": 0.8305506320358399,
+      "answer_relevance": 0.834280867155916,
+      "overall_score": 0.8297672635516476,
+      "success_rate": 0.75
+    },
+    "merged_graphrag": {
+      "answer_correctness": 0.8541010820704763,
+      "faithfulness": 0.8529928596725205,
+      "context_precision": 0.8444422194662115,
+      "context_recall": 0.8396307840747596,
+      "answer_relevance": 0.821851925602602,
+      "overall_score": 0.842603774177314,
+      "success_rate": 0.125
+    },
+    "basic_rag": {
+      "answer_correctness": 0.7776935268243574,
+      "faithfulness": 0.7652793086049736,
+      "context_precision": 0.7855355112427242,
+      "context_recall": 0.7849662131935972,
+      "answer_relevance": 0.7815297998772428,
+      "overall_score": 0.779000871948579,
+      "success_rate": 1.0
+    }
+  },
+  "pipeline_performance": {
+    "current_graphrag": {
+      "average_execution_time_ms": 113.79788905226935,
+      "median_execution_time_ms": 108.0877500353381,
+      "total_test_cases": 8,
+      "successful_cases": 6
+    },
+    "merged_graphrag": {
+      "average_execution_time_ms": 6.749416934326291,
+      "median_execution_time_ms": 6.749416934326291,
+      "total_test_cases": 8,
+      "successful_cases": 1
+    },
+    "basic_rag": {
+      "average_execution_time_ms": 737.97098963405,
+      "median_execution_time_ms": 719.276332994923,
+      "total_test_cases": 8,
+      "successful_cases": 8
+    }
+  },
+  "detailed_results": [
+    {
+      "pipeline_name": "current_graphrag",
+      "test_case_id": "test_001",
+      "question": "What are the primary mechanisms of insulin resistance in type 2 diabetes?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Cardiovascular disease is the leading cause of morbidity and mortality in diabetes \n                mellitus. The pathogenesis involves accelerated atherosclerosis, endothelial \n                dysfunction, and increased thrombotic risk. Hyperglycemia promotes oxidative stress \n                and advanced glycation end product (AGE) formation.\n                \n                Key mechanisms include: endothelial nitric oxide synthase dysfunction, increased \n                inflammatory markers (CRP, IL-6, TNF-\u03b1), altered platelet function, and dyslipidemia. \n                The combination creates a pro-atherogenic and pro-thrombotic environment.\n                \n                Management strategies include intensive glycemic control (HbA1c <7%), blood pressure \n                targets <130/80 mmHg, and lipid management with statins targeting LDL <70 mg/dL. \n                Antiplatelet therapy with aspirin may be considered for primary prevention in \n                high-risk patients.\n                ",
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Cardiovascular disease is the leading cause of mortality in diabetic patients.\n                Statins like atorvastatin are recommended for cholesterol management.\n                Blood pressure control is crucial, with targets below 130/80 mmHg.\n                Aspirin therapy may be considered for primary prevention in high-risk patients.\n                "
+      ],
+      "ground_truth": "Insulin resistance in type 2 diabetes involves post-receptor defects in insulin signaling, \n                particularly affecting insulin receptor substrate (IRS) proteins and the PI3K pathway. This leads to \n                reduced GLUT4 translocation and decreased glucose uptake in peripheral tissues, especially muscle and \n                adipose tissue. Additionally, there is increased hepatic glucose production and impaired insulin signaling.",
+      "answer_correctness": 0.8343882155655508,
+      "faithfulness": 0.818526613978272,
+      "context_precision": 0.8781938606346315,
+      "context_recall": 0.8008274617128242,
+      "answer_relevance": 0.8498483272882289,
+      "execution_time_ms": 94.59804208017886,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 4,
+        "processing_time": 0.09452414512634277,
+        "processing_time_ms": 94.52416701242328,
+        "pipeline_type": "graphrag",
+        "retrieval_method": "knowledge_graph_traversal",
+        "generated_answer": true,
+        "db_exec_count": 4,
+        "step_timings_ms": {
+          "find_seed_entities_ms": 1.972708967514336,
+          "traverse_graph_ms": 3.0600420432165265,
+          "get_documents_ms": 88.11712497845292
+        }
+      }
+    },
+    {
+      "pipeline_name": "current_graphrag",
+      "test_case_id": "test_002",
+      "question": "How does metformin work to control blood glucose levels?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Type 2 diabetes mellitus is characterized by insulin resistance and progressive \n                beta-cell dysfunction. The pathophysiology involves multiple mechanisms: impaired \n                insulin signaling in peripheral tissues, increased hepatic glucose production, \n                and decreased glucose uptake by muscle and adipose tissue.\n                \n                Insulin resistance begins with post-receptor defects in the insulin signaling \n                cascade, particularly involving insulin receptor substrate (IRS) proteins and \n                phosphatidylinositol 3-kinase (PI3K) pathway. This leads to reduced glucose \n                transporter type 4 (GLUT4) translocation to the cell membrane.\n                \n                Beta-cell dysfunction manifests as reduced insulin secretion in response to \n                glucose, loss of first-phase insulin release, and eventual beta-cell apoptosis. \n                Contributing factors include glucotoxicity, lipotoxicity, inflammatory cytokines, \n                and amyloid deposition.\n                ",
+        "\n                Metformin is a biguanide antidiabetic medication that works primarily by activating \n                AMP-activated protein kinase (AMPK). The drug inhibits mitochondrial respiratory \n                chain complex I, leading to increased AMP/ATP ratio and subsequent AMPK activation.\n                \n                The primary therapeutic effects include: reduced hepatic gluconeogenesis through \n                inhibition of gluconeogenic enzymes, increased peripheral glucose uptake in skeletal \n                muscle, and improved insulin sensitivity. Metformin also decreases intestinal glucose \n                absorption and may have beneficial effects on lipid metabolism.\n                \n                Clinical efficacy shows HbA1c reduction of 1.0-1.5% when used as monotherapy. \n                The drug has a favorable safety profile with gastrointestinal side effects being \n                most common. Contraindications include severe renal impairment (eGFR <30 mL/min/1.73m\u00b2) \n                due to increased risk of lactic acidosis.\n                ",
+        "\n                Sodium-glucose cotransporter-2 (SGLT-2) inhibitors represent a novel class of \n                antidiabetic medications that work by blocking glucose reabsorption in the proximal \n                tubule of the kidney. Major drugs include empagliflozin, canagliflozin, and \n                dapagliflozin.\n                \n                Beyond glycemic benefits, SGLT-2 inhibitors demonstrate cardiovascular and renal \n                protective effects. Cardiovascular benefits include reduced risk of heart failure \n                hospitalization and cardiovascular death. Renal benefits include slowing progression \n                of diabetic nephropathy and reducing albuminuria.\n                \n                Common side effects include genital mycotic infections and urinary tract infections. \n                Rare but serious adverse effects include diabetic ketoacidosis (even with normal \n                glucose levels) and Fournier's gangrene. These medications are contraindicated \n                in severe renal impairment.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                "
+      ],
+      "ground_truth": "Metformin works by activating AMP-activated protein kinase (AMPK) through inhibition of \n                mitochondrial respiratory chain complex I. This leads to reduced hepatic gluconeogenesis, increased \n                peripheral glucose uptake in skeletal muscle, and improved insulin sensitivity. The drug also decreases \n                intestinal glucose absorption.",
+      "answer_correctness": 0.8048223411625925,
+      "faithfulness": 0.8316678851794037,
+      "context_precision": 0.8361780282013525,
+      "context_recall": 0.7954339760173506,
+      "answer_relevance": 0.8378117623924143,
+      "execution_time_ms": 209.52025009319186,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.20949101448059082,
+        "processing_time_ms": 209.49291693978012,
+        "pipeline_type": "graphrag",
+        "retrieval_method": "knowledge_graph_traversal",
+        "generated_answer": true,
+        "db_exec_count": 4,
+        "step_timings_ms": {
+          "find_seed_entities_ms": 0.5942909047007561,
+          "traverse_graph_ms": 111.27183400094509,
+          "get_documents_ms": 96.90645907539874
+        }
+      }
+    },
+    {
+      "pipeline_name": "current_graphrag",
+      "test_case_id": "test_003",
+      "question": "What cardiovascular complications are associated with diabetes and how are they managed?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "Cardiovascular disease is the leading cause of mortality in diabetes. Complications include \n                accelerated atherosclerosis, endothelial dysfunction, and increased thrombotic risk. Management involves \n                intensive glycemic control (HbA1c <7%), blood pressure control (<130/80 mmHg), lipid management with \n                statins (LDL <70 mg/dL), and consideration of antiplatelet therapy.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 0.6239579524844885,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "No seed entities found for query 'What cardiovascular complications are associated with diabetes and how are they managed?'. Knowledge graph may not contain relevant entities for this query.",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "current_graphrag",
+      "test_case_id": "test_004",
+      "question": "How does COVID-19 affect patients with diabetes?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "COVID-19 significantly impacts diabetic patients, causing increased hospitalization rates and \n                mortality. This occurs due to compromised immune function, higher ACE2 receptor expression, chronic \n                inflammation, and increased thrombotic risk. COVID-19 can also cause new-onset diabetes by directly \n                damaging pancreatic beta cells through ACE2 receptor binding.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 0.5619169678539038,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "No seed entities found for query 'How does COVID-19 affect patients with diabetes?'. Knowledge graph may not contain relevant entities for this query.",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "current_graphrag",
+      "test_case_id": "test_005",
+      "question": "What are the benefits and side effects of SGLT-2 inhibitors?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Cardiovascular disease is the leading cause of morbidity and mortality in diabetes \n                mellitus. The pathogenesis involves accelerated atherosclerosis, endothelial \n                dysfunction, and increased thrombotic risk. Hyperglycemia promotes oxidative stress \n                and advanced glycation end product (AGE) formation.\n                \n                Key mechanisms include: endothelial nitric oxide synthase dysfunction, increased \n                inflammatory markers (CRP, IL-6, TNF-\u03b1), altered platelet function, and dyslipidemia. \n                The combination creates a pro-atherogenic and pro-thrombotic environment.\n                \n                Management strategies include intensive glycemic control (HbA1c <7%), blood pressure \n                targets <130/80 mmHg, and lipid management with statins targeting LDL <70 mg/dL. \n                Antiplatelet therapy with aspirin may be considered for primary prevention in \n                high-risk patients.\n                ",
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Cardiovascular disease is the leading cause of mortality in diabetic patients.\n                Statins like atorvastatin are recommended for cholesterol management.\n                Blood pressure control is crucial, with targets below 130/80 mmHg.\n                Aspirin therapy may be considered for primary prevention in high-risk patients.\n                "
+      ],
+      "ground_truth": "SGLT-2 inhibitors provide glycemic control by blocking glucose reabsorption in the kidney. \n                Beyond glucose lowering, they offer cardiovascular benefits (reduced heart failure risk) and renal \n                protection (slower diabetic nephropathy progression). Side effects include genital infections and UTIs. \n                Rare serious effects include diabetic ketoacidosis and Fournier's gangrene.",
+      "answer_correctness": 0.8087946696166829,
+      "faithfulness": 0.8097381405061066,
+      "context_precision": 0.8181623658947446,
+      "context_recall": 0.8385561308175206,
+      "answer_relevance": 0.8174037607005182,
+      "execution_time_ms": 3.251583082601428,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 4,
+        "processing_time": 0.003229856491088867,
+        "processing_time_ms": 3.2302080653607845,
+        "pipeline_type": "graphrag",
+        "retrieval_method": "knowledge_graph_traversal",
+        "generated_answer": true,
+        "db_exec_count": 4,
+        "step_timings_ms": {
+          "find_seed_entities_ms": 0.32154202926903963,
+          "traverse_graph_ms": 0.6914170226082206,
+          "get_documents_ms": 1.960374996997416
+        }
+      }
+    },
+    {
+      "pipeline_name": "current_graphrag",
+      "test_case_id": "test_006",
+      "question": "What causes beta-cell dysfunction in type 2 diabetes?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Vaccines work by training the immune system to recognize and fight specific pathogens.\n                They contain antigens that stimulate the production of antibodies without causing disease.\n                Common vaccine types include live attenuated, inactivated, subunit, and mRNA vaccines.\n                Vaccination has been crucial in preventing infectious diseases like polio, measles, and COVID-19.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and relative insulin deficiency.\n                Common symptoms include increased thirst, frequent urination, unexplained weight loss,\n                fatigue, and blurred vision. Risk factors include obesity, sedentary lifestyle,\n                family history, and age over 45. Management involves blood glucose monitoring,\n                dietary changes, exercise, and medication when necessary.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Metformin works by reducing hepatic glucose production and improving insulin sensitivity.\n                It is the first-line treatment for type 2 diabetes with few contraindications.\n                Side effects include gastrointestinal upset and rare lactic acidosis risk.\n                Often combined with sulfonylureas, SGLT-2 inhibitors, or insulin for better control.\n                ",
+        "Cardiovascular disease is a major complication of diabetes. Statins like atorvastatin are used for lipid management, while ACE inhibitors provide cardiovascular protection."
+      ],
+      "ground_truth": "Beta-cell dysfunction in type 2 diabetes results from multiple factors including glucotoxicity, \n                lipotoxicity, inflammatory cytokines, and amyloid deposition. This leads to reduced insulin secretion in \n                response to glucose, loss of first-phase insulin release, and eventual beta-cell apoptosis.",
+      "answer_correctness": 0.8535554327614917,
+      "faithfulness": 0.8271901361757702,
+      "context_precision": 0.8433302591257712,
+      "context_recall": 0.8753312721138261,
+      "answer_relevance": 0.8635583760766962,
+      "execution_time_ms": 110.49591703340411,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.1104118824005127,
+        "processing_time_ms": 110.4129160521552,
+        "pipeline_type": "graphrag",
+        "retrieval_method": "knowledge_graph_traversal",
+        "generated_answer": true,
+        "db_exec_count": 4,
+        "step_timings_ms": {
+          "find_seed_entities_ms": 0.29991590417921543,
+          "traverse_graph_ms": 106.08191695064306,
+          "get_documents_ms": 3.7848750362172723
+        }
+      }
+    },
+    {
+      "pipeline_name": "current_graphrag",
+      "test_case_id": "test_007",
+      "question": "What are the contraindications for metformin use?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Cardiovascular disease is the leading cause of morbidity and mortality in diabetes \n                mellitus. The pathogenesis involves accelerated atherosclerosis, endothelial \n                dysfunction, and increased thrombotic risk. Hyperglycemia promotes oxidative stress \n                and advanced glycation end product (AGE) formation.\n                \n                Key mechanisms include: endothelial nitric oxide synthase dysfunction, increased \n                inflammatory markers (CRP, IL-6, TNF-\u03b1), altered platelet function, and dyslipidemia. \n                The combination creates a pro-atherogenic and pro-thrombotic environment.\n                \n                Management strategies include intensive glycemic control (HbA1c <7%), blood pressure \n                targets <130/80 mmHg, and lipid management with statins targeting LDL <70 mg/dL. \n                Antiplatelet therapy with aspirin may be considered for primary prevention in \n                high-risk patients.\n                ",
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Metformin is a biguanide antidiabetic medication that works primarily by activating \n                AMP-activated protein kinase (AMPK). The drug inhibits mitochondrial respiratory \n                chain complex I, leading to increased AMP/ATP ratio and subsequent AMPK activation.\n                \n                The primary therapeutic effects include: reduced hepatic gluconeogenesis through \n                inhibition of gluconeogenic enzymes, increased peripheral glucose uptake in skeletal \n                muscle, and improved insulin sensitivity. Metformin also decreases intestinal glucose \n                absorption and may have beneficial effects on lipid metabolism.\n                \n                Clinical efficacy shows HbA1c reduction of 1.0-1.5% when used as monotherapy. \n                The drug has a favorable safety profile with gastrointestinal side effects being \n                most common. Contraindications include severe renal impairment (eGFR <30 mL/min/1.73m\u00b2) \n                due to increased risk of lactic acidosis.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Metformin works by reducing hepatic glucose production and improving insulin sensitivity.\n                It is the first-line treatment for type 2 diabetes with few contraindications.\n                Side effects include gastrointestinal upset and rare lactic acidosis risk.\n                Often combined with sulfonylureas, SGLT-2 inhibitors, or insulin for better control.\n                "
+      ],
+      "ground_truth": "Metformin is contraindicated in severe renal impairment (eGFR <30 mL/min/1.73m\u00b2) due to \n                increased risk of lactic acidosis. It should also be temporarily discontinued during acute illness, \n                dehydration, or conditions that may predispose to lactic acidosis.",
+      "answer_correctness": 0.8538321051216187,
+      "faithfulness": 0.8657688749544319,
+      "context_precision": 0.9165790307605605,
+      "context_recall": 0.9021243442932054,
+      "answer_relevance": 0.8737544723994222,
+      "execution_time_ms": 105.6795830372721,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.10558199882507324,
+        "processing_time_ms": 105.58362491428852,
+        "pipeline_type": "graphrag",
+        "retrieval_method": "knowledge_graph_traversal",
+        "generated_answer": true,
+        "db_exec_count": 4,
+        "step_timings_ms": {
+          "find_seed_entities_ms": 0.49208407290279865,
+          "traverse_graph_ms": 100.39316699840128,
+          "get_documents_ms": 4.281457979232073
+        }
+      }
+    },
+    {
+      "pipeline_name": "current_graphrag",
+      "test_case_id": "test_008",
+      "question": "What specific management changes are needed for diabetic patients with COVID-19?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Mental health disorders affect millions worldwide, including depression, anxiety,\n                bipolar disorder, and schizophrenia. Treatment approaches include psychotherapy,\n                medication, lifestyle changes, and social support. Early intervention and \n                reducing stigma are crucial for improving outcomes. Access to mental health\n                services remains a significant challenge in many regions.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                "
+      ],
+      "ground_truth": "Diabetic patients with COVID-19 require more frequent glucose monitoring, potential temporary \n                insulin therapy even for non-insulin dependent patients, telemedicine for care continuity, and prioritization \n                for vaccination. Metformin should be temporarily discontinued during acute illness due to lactic acidosis risk.",
+      "answer_correctness": 0.7853402547306026,
+      "faithfulness": 0.7487719518374495,
+      "context_precision": 0.7691887451918628,
+      "context_recall": 0.7710306072603124,
+      "answer_relevance": 0.7633085040782163,
+      "execution_time_ms": 159.2419589869678,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 2,
+        "processing_time": 0.15914487838745117,
+        "processing_time_ms": 159.14666699245572,
+        "pipeline_type": "graphrag",
+        "retrieval_method": "knowledge_graph_traversal",
+        "generated_answer": true,
+        "db_exec_count": 4,
+        "step_timings_ms": {
+          "find_seed_entities_ms": 0.5239169113337994,
+          "traverse_graph_ms": 86.53670793864876,
+          "get_documents_ms": 71.65412500035018
+        }
+      }
+    },
+    {
+      "pipeline_name": "merged_graphrag",
+      "test_case_id": "test_001",
+      "question": "What are the primary mechanisms of insulin resistance in type 2 diabetes?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "Insulin resistance in type 2 diabetes involves post-receptor defects in insulin signaling, \n                particularly affecting insulin receptor substrate (IRS) proteins and the PI3K pathway. This leads to \n                reduced GLUT4 translocation and decreased glucose uptake in peripheral tissues, especially muscle and \n                adipose tissue. Additionally, there is increased hepatic glucose production and impaired insulin signaling.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 2.0281668985262513,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "Graph traversal found no additional entities",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "merged_graphrag",
+      "test_case_id": "test_002",
+      "question": "How does metformin work to control blood glucose levels?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "Metformin works by activating AMP-activated protein kinase (AMPK) through inhibition of \n                mitochondrial respiratory chain complex I. This leads to reduced hepatic gluconeogenesis, increased \n                peripheral glucose uptake in skeletal muscle, and improved insulin sensitivity. The drug also decreases \n                intestinal glucose absorption.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 1.2385000009089708,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "Graph traversal found no additional entities",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "merged_graphrag",
+      "test_case_id": "test_003",
+      "question": "What cardiovascular complications are associated with diabetes and how are they managed?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "Cardiovascular disease is the leading cause of mortality in diabetes. Complications include \n                accelerated atherosclerosis, endothelial dysfunction, and increased thrombotic risk. Management involves \n                intensive glycemic control (HbA1c <7%), blood pressure control (<130/80 mmHg), lipid management with \n                statins (LDL <70 mg/dL), and consideration of antiplatelet therapy.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 0.824208022095263,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "Graph traversal found no additional entities",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "merged_graphrag",
+      "test_case_id": "test_004",
+      "question": "How does COVID-19 affect patients with diabetes?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "COVID-19 significantly impacts diabetic patients, causing increased hospitalization rates and \n                mortality. This occurs due to compromised immune function, higher ACE2 receptor expression, chronic \n                inflammation, and increased thrombotic risk. COVID-19 can also cause new-onset diabetes by directly \n                damaging pancreatic beta cells through ACE2 receptor binding.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 0.9937499416992068,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "Graph traversal found no additional entities",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "merged_graphrag",
+      "test_case_id": "test_005",
+      "question": "What are the benefits and side effects of SGLT-2 inhibitors?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Cardiovascular disease is the leading cause of morbidity and mortality in diabetes \n                mellitus. The pathogenesis involves accelerated atherosclerosis, endothelial \n                dysfunction, and increased thrombotic risk. Hyperglycemia promotes oxidative stress \n                and advanced glycation end product (AGE) formation.\n                \n                Key mechanisms include: endothelial nitric oxide synthase dysfunction, increased \n                inflammatory markers (CRP, IL-6, TNF-\u03b1), altered platelet function, and dyslipidemia. \n                The combination creates a pro-atherogenic and pro-thrombotic environment.\n                \n                Management strategies include intensive glycemic control (HbA1c <7%), blood pressure \n                targets <130/80 mmHg, and lipid management with statins targeting LDL <70 mg/dL. \n                Antiplatelet therapy with aspirin may be considered for primary prevention in \n                high-risk patients.\n                ",
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Cardiovascular disease is the leading cause of mortality in diabetic patients.\n                Statins like atorvastatin are recommended for cholesterol management.\n                Blood pressure control is crucial, with targets below 130/80 mmHg.\n                Aspirin therapy may be considered for primary prevention in high-risk patients.\n                "
+      ],
+      "ground_truth": "SGLT-2 inhibitors provide glycemic control by blocking glucose reabsorption in the kidney. \n                Beyond glucose lowering, they offer cardiovascular benefits (reduced heart failure risk) and renal \n                protection (slower diabetic nephropathy progression). Side effects include genital infections and UTIs. \n                Rare serious effects include diabetic ketoacidosis and Fournier's gangrene.",
+      "answer_correctness": 0.8541010820704763,
+      "faithfulness": 0.8529928596725205,
+      "context_precision": 0.8444422194662115,
+      "context_recall": 0.8396307840747596,
+      "answer_relevance": 0.821851925602602,
+      "execution_time_ms": 6.749416934326291,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 4,
+        "processing_time": 0.0066072940826416016,
+        "processing_time_ms": 6.607083021663129,
+        "pipeline_type": "graphrag_merged",
+        "retrieval_method": "knowledge_graph_traversal",
+        "generated_answer": true,
+        "db_exec_count": 5,
+        "step_timings_ms": {
+          "query_entity_extraction_ms": 0.4388750530779362,
+          "find_seed_entities_ms": 1.0247499449178576,
+          "traverse_graph_ms": 1.9620000384747982,
+          "get_documents_ms": 2.869167015887797
+        }
+      }
+    },
+    {
+      "pipeline_name": "merged_graphrag",
+      "test_case_id": "test_006",
+      "question": "What causes beta-cell dysfunction in type 2 diabetes?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "Beta-cell dysfunction in type 2 diabetes results from multiple factors including glucotoxicity, \n                lipotoxicity, inflammatory cytokines, and amyloid deposition. This leads to reduced insulin secretion in \n                response to glucose, loss of first-phase insulin release, and eventual beta-cell apoptosis.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 1.0602090042084455,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "Graph traversal found no additional entities",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "merged_graphrag",
+      "test_case_id": "test_007",
+      "question": "What are the contraindications for metformin use?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "Metformin is contraindicated in severe renal impairment (eGFR <30 mL/min/1.73m\u00b2) due to \n                increased risk of lactic acidosis. It should also be temporarily discontinued during acute illness, \n                dehydration, or conditions that may predispose to lactic acidosis.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 0.9224580135196447,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "Graph traversal found no additional entities",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "merged_graphrag",
+      "test_case_id": "test_008",
+      "question": "What specific management changes are needed for diabetic patients with COVID-19?",
+      "answer": "",
+      "contexts": [],
+      "ground_truth": "Diabetic patients with COVID-19 require more frequent glucose monitoring, potential temporary \n                insulin therapy even for non-insulin dependent patients, telemedicine for care continuity, and prioritization \n                for vaccination. Metformin should be temporarily discontinued during acute illness due to lactic acidosis risk.",
+      "answer_correctness": 0.0,
+      "faithfulness": 0.0,
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "execution_time_ms": 0.9680420625954866,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": false,
+      "error_message": "Graph traversal found no additional entities",
+      "metadata": {}
+    },
+    {
+      "pipeline_name": "basic_rag",
+      "test_case_id": "test_001",
+      "question": "What are the primary mechanisms of insulin resistance in type 2 diabetes?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and relative insulin deficiency.\n                Common symptoms include increased thirst, frequent urination, unexplained weight loss,\n                fatigue, and blurred vision. Risk factors include obesity, sedentary lifestyle,\n                family history, and age over 45. Management involves blood glucose monitoring,\n                dietary changes, exercise, and medication when necessary.\n                ",
+        "\n                Type 2 diabetes mellitus is characterized by insulin resistance and progressive \n                beta-cell dysfunction. The pathophysiology involves multiple mechanisms: impaired \n                insulin signaling in peripheral tissues, increased hepatic glucose production, \n                and decreased glucose uptake by muscle and adipose tissue.\n                \n                Insulin resistance begins with post-receptor defects in the insulin signaling \n                cascade, particularly involving insulin receptor substrate (IRS) proteins and \n                phosphatidylinositol 3-kinase (PI3K) pathway. This leads to reduced glucose \n                transporter type 4 (GLUT4) translocation to the cell membrane.\n                \n                Beta-cell dysfunction manifests as reduced insulin secretion in response to \n                glucose, loss of first-phase insulin release, and eventual beta-cell apoptosis. \n                Contributing factors include glucotoxicity, lipotoxicity, inflammatory cytokines, \n                and amyloid deposition.\n                ",
+        "\n                Metformin works by reducing hepatic glucose production and improving insulin sensitivity.\n                It is the first-line treatment for type 2 diabetes with few contraindications.\n                Side effects include gastrointestinal upset and rare lactic acidosis risk.\n                Often combined with sulfonylureas, SGLT-2 inhibitors, or insulin for better control.\n                ",
+        "\n                Sodium-glucose cotransporter-2 (SGLT-2) inhibitors represent a novel class of \n                antidiabetic medications that work by blocking glucose reabsorption in the proximal \n                tubule of the kidney. Major drugs include empagliflozin, canagliflozin, and \n                dapagliflozin.\n                \n                Beyond glycemic benefits, SGLT-2 inhibitors demonstrate cardiovascular and renal \n                protective effects. Cardiovascular benefits include reduced risk of heart failure \n                hospitalization and cardiovascular death. Renal benefits include slowing progression \n                of diabetic nephropathy and reducing albuminuria.\n                \n                Common side effects include genital mycotic infections and urinary tract infections. \n                Rare but serious adverse effects include diabetic ketoacidosis (even with normal \n                glucose levels) and Fournier's gangrene. These medications are contraindicated \n                in severe renal impairment.\n                "
+      ],
+      "ground_truth": "Insulin resistance in type 2 diabetes involves post-receptor defects in insulin signaling, \n                particularly affecting insulin receptor substrate (IRS) proteins and the PI3K pathway. This leads to \n                reduced GLUT4 translocation and decreased glucose uptake in peripheral tissues, especially muscle and \n                adipose tissue. Additionally, there is increased hepatic glucose production and impaired insulin signaling.",
+      "answer_correctness": 0.8139037630960179,
+      "faithfulness": 0.7730971139846075,
+      "context_precision": 0.7790898031950972,
+      "context_recall": 0.8354015255003897,
+      "answer_relevance": 0.8105706798089227,
+      "execution_time_ms": 741.2442089989781,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.7411768436431885,
+        "pipeline_type": "basic_rag",
+        "generated_answer": true
+      }
+    },
+    {
+      "pipeline_name": "basic_rag",
+      "test_case_id": "test_002",
+      "question": "How does metformin work to control blood glucose levels?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Metformin works by reducing hepatic glucose production and improving insulin sensitivity.\n                It is the first-line treatment for type 2 diabetes with few contraindications.\n                Side effects include gastrointestinal upset and rare lactic acidosis risk.\n                Often combined with sulfonylureas, SGLT-2 inhibitors, or insulin for better control.\n                ",
+        "\n                Metformin is a biguanide antidiabetic medication that works primarily by activating \n                AMP-activated protein kinase (AMPK). The drug inhibits mitochondrial respiratory \n                chain complex I, leading to increased AMP/ATP ratio and subsequent AMPK activation.\n                \n                The primary therapeutic effects include: reduced hepatic gluconeogenesis through \n                inhibition of gluconeogenic enzymes, increased peripheral glucose uptake in skeletal \n                muscle, and improved insulin sensitivity. Metformin also decreases intestinal glucose \n                absorption and may have beneficial effects on lipid metabolism.\n                \n                Clinical efficacy shows HbA1c reduction of 1.0-1.5% when used as monotherapy. \n                The drug has a favorable safety profile with gastrointestinal side effects being \n                most common. Contraindications include severe renal impairment (eGFR <30 mL/min/1.73m\u00b2) \n                due to increased risk of lactic acidosis.\n                ",
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Cardiovascular disease is the leading cause of morbidity and mortality in diabetes \n                mellitus. The pathogenesis involves accelerated atherosclerosis, endothelial \n                dysfunction, and increased thrombotic risk. Hyperglycemia promotes oxidative stress \n                and advanced glycation end product (AGE) formation.\n                \n                Key mechanisms include: endothelial nitric oxide synthase dysfunction, increased \n                inflammatory markers (CRP, IL-6, TNF-\u03b1), altered platelet function, and dyslipidemia. \n                The combination creates a pro-atherogenic and pro-thrombotic environment.\n                \n                Management strategies include intensive glycemic control (HbA1c <7%), blood pressure \n                targets <130/80 mmHg, and lipid management with statins targeting LDL <70 mg/dL. \n                Antiplatelet therapy with aspirin may be considered for primary prevention in \n                high-risk patients.\n                "
+      ],
+      "ground_truth": "Metformin works by activating AMP-activated protein kinase (AMPK) through inhibition of \n                mitochondrial respiratory chain complex I. This leads to reduced hepatic gluconeogenesis, increased \n                peripheral glucose uptake in skeletal muscle, and improved insulin sensitivity. The drug also decreases \n                intestinal glucose absorption.",
+      "answer_correctness": 0.7875624978719978,
+      "faithfulness": 0.7648006801017656,
+      "context_precision": 0.8108924237191761,
+      "context_recall": 0.7762455171927211,
+      "answer_relevance": 0.8104033573227633,
+      "execution_time_ms": 715.7270410098135,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.7156579494476318,
+        "pipeline_type": "basic_rag",
+        "generated_answer": true
+      }
+    },
+    {
+      "pipeline_name": "basic_rag",
+      "test_case_id": "test_003",
+      "question": "What cardiovascular complications are associated with diabetes and how are they managed?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and relative insulin deficiency.\n                Common symptoms include increased thirst, frequent urination, unexplained weight loss,\n                fatigue, and blurred vision. Risk factors include obesity, sedentary lifestyle,\n                family history, and age over 45. Management involves blood glucose monitoring,\n                dietary changes, exercise, and medication when necessary.\n                ",
+        "\n                Cardiovascular disease is the leading cause of mortality in diabetic patients.\n                Statins like atorvastatin are recommended for cholesterol management.\n                Blood pressure control is crucial, with targets below 130/80 mmHg.\n                Aspirin therapy may be considered for primary prevention in high-risk patients.\n                ",
+        "\n                Cardiovascular disease is the leading cause of morbidity and mortality in diabetes \n                mellitus. The pathogenesis involves accelerated atherosclerosis, endothelial \n                dysfunction, and increased thrombotic risk. Hyperglycemia promotes oxidative stress \n                and advanced glycation end product (AGE) formation.\n                \n                Key mechanisms include: endothelial nitric oxide synthase dysfunction, increased \n                inflammatory markers (CRP, IL-6, TNF-\u03b1), altered platelet function, and dyslipidemia. \n                The combination creates a pro-atherogenic and pro-thrombotic environment.\n                \n                Management strategies include intensive glycemic control (HbA1c <7%), blood pressure \n                targets <130/80 mmHg, and lipid management with statins targeting LDL <70 mg/dL. \n                Antiplatelet therapy with aspirin may be considered for primary prevention in \n                high-risk patients.\n                ",
+        "\n                Cardiovascular disease (CVD) remains one of the leading causes of death worldwide. \n                The primary risk factors include high blood pressure, high cholesterol, smoking, \n                diabetes, obesity, and lack of physical activity. Prevention strategies focus on \n                lifestyle modifications including regular exercise, healthy diet, and smoking cessation.\n                "
+      ],
+      "ground_truth": "Cardiovascular disease is the leading cause of mortality in diabetes. Complications include \n                accelerated atherosclerosis, endothelial dysfunction, and increased thrombotic risk. Management involves \n                intensive glycemic control (HbA1c <7%), blood pressure control (<130/80 mmHg), lipid management with \n                statins (LDL <70 mg/dL), and consideration of antiplatelet therapy.",
+      "answer_correctness": 0.7440637262689972,
+      "faithfulness": 0.7218936101839576,
+      "context_precision": 0.7012555771639819,
+      "context_recall": 0.742390346369062,
+      "answer_relevance": 0.7506438969338425,
+      "execution_time_ms": 907.1955420076847,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.9071328639984131,
+        "pipeline_type": "basic_rag",
+        "generated_answer": true
+      }
+    },
+    {
+      "pipeline_name": "basic_rag",
+      "test_case_id": "test_004",
+      "question": "How does COVID-19 affect patients with diabetes?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                COVID-19 poses increased risks for diabetic patients due to immune dysfunction.\n                Blood glucose control becomes more challenging during acute illness.\n                Vaccination is strongly recommended for all patients with diabetes.\n                Long COVID may contribute to new-onset diabetes in some individuals.\n                ",
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and relative insulin deficiency.\n                Common symptoms include increased thirst, frequent urination, unexplained weight loss,\n                fatigue, and blurred vision. Risk factors include obesity, sedentary lifestyle,\n                family history, and age over 45. Management involves blood glucose monitoring,\n                dietary changes, exercise, and medication when necessary.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Diabetic nephropathy affects 30-40% of diabetic patients over time.\n                Early detection involves microalbumin screening and creatinine monitoring.\n                ACE inhibitors and ARBs provide kidney protection beyond blood pressure control.\n                SGLT-2 inhibitors like empagliflozin show additional renal benefits.\n                "
+      ],
+      "ground_truth": "COVID-19 significantly impacts diabetic patients, causing increased hospitalization rates and \n                mortality. This occurs due to compromised immune function, higher ACE2 receptor expression, chronic \n                inflammation, and increased thrombotic risk. COVID-19 can also cause new-onset diabetes by directly \n                damaging pancreatic beta cells through ACE2 receptor binding.",
+      "answer_correctness": 0.7174869881828411,
+      "faithfulness": 0.7442109344980546,
+      "context_precision": 0.7778631813009454,
+      "context_recall": 0.6949488556230463,
+      "answer_relevance": 0.7409953088160385,
+      "execution_time_ms": 874.1177499759942,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.8740527629852295,
+        "pipeline_type": "basic_rag",
+        "generated_answer": true
+      }
+    },
+    {
+      "pipeline_name": "basic_rag",
+      "test_case_id": "test_005",
+      "question": "What are the benefits and side effects of SGLT-2 inhibitors?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Sodium-glucose cotransporter-2 (SGLT-2) inhibitors represent a novel class of \n                antidiabetic medications that work by blocking glucose reabsorption in the proximal \n                tubule of the kidney. Major drugs include empagliflozin, canagliflozin, and \n                dapagliflozin.\n                \n                Beyond glycemic benefits, SGLT-2 inhibitors demonstrate cardiovascular and renal \n                protective effects. Cardiovascular benefits include reduced risk of heart failure \n                hospitalization and cardiovascular death. Renal benefits include slowing progression \n                of diabetic nephropathy and reducing albuminuria.\n                \n                Common side effects include genital mycotic infections and urinary tract infections. \n                Rare but serious adverse effects include diabetic ketoacidosis (even with normal \n                glucose levels) and Fournier's gangrene. These medications are contraindicated \n                in severe renal impairment.\n                ",
+        "\n                Metformin works by reducing hepatic glucose production and improving insulin sensitivity.\n                It is the first-line treatment for type 2 diabetes with few contraindications.\n                Side effects include gastrointestinal upset and rare lactic acidosis risk.\n                Often combined with sulfonylureas, SGLT-2 inhibitors, or insulin for better control.\n                ",
+        "\n                Metformin is a biguanide antidiabetic medication that works primarily by activating \n                AMP-activated protein kinase (AMPK). The drug inhibits mitochondrial respiratory \n                chain complex I, leading to increased AMP/ATP ratio and subsequent AMPK activation.\n                \n                The primary therapeutic effects include: reduced hepatic gluconeogenesis through \n                inhibition of gluconeogenic enzymes, increased peripheral glucose uptake in skeletal \n                muscle, and improved insulin sensitivity. Metformin also decreases intestinal glucose \n                absorption and may have beneficial effects on lipid metabolism.\n                \n                Clinical efficacy shows HbA1c reduction of 1.0-1.5% when used as monotherapy. \n                The drug has a favorable safety profile with gastrointestinal side effects being \n                most common. Contraindications include severe renal impairment (eGFR <30 mL/min/1.73m\u00b2) \n                due to increased risk of lactic acidosis.\n                ",
+        "\n                Diabetic nephropathy affects 30-40% of diabetic patients over time.\n                Early detection involves microalbumin screening and creatinine monitoring.\n                ACE inhibitors and ARBs provide kidney protection beyond blood pressure control.\n                SGLT-2 inhibitors like empagliflozin show additional renal benefits.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                "
+      ],
+      "ground_truth": "SGLT-2 inhibitors provide glycemic control by blocking glucose reabsorption in the kidney. \n                Beyond glucose lowering, they offer cardiovascular benefits (reduced heart failure risk) and renal \n                protection (slower diabetic nephropathy progression). Side effects include genital infections and UTIs. \n                Rare serious effects include diabetic ketoacidosis and Fournier's gangrene.",
+      "answer_correctness": 0.7204588952628419,
+      "faithfulness": 0.7197123162229755,
+      "context_precision": 0.7644702749469152,
+      "context_recall": 0.7880090156558828,
+      "answer_relevance": 0.7473405599612102,
+      "execution_time_ms": 668.3050829451531,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.6682360172271729,
+        "pipeline_type": "basic_rag",
+        "generated_answer": true
+      }
+    },
+    {
+      "pipeline_name": "basic_rag",
+      "test_case_id": "test_006",
+      "question": "What causes beta-cell dysfunction in type 2 diabetes?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Type 2 diabetes mellitus is characterized by insulin resistance and progressive \n                beta-cell dysfunction. The pathophysiology involves multiple mechanisms: impaired \n                insulin signaling in peripheral tissues, increased hepatic glucose production, \n                and decreased glucose uptake by muscle and adipose tissue.\n                \n                Insulin resistance begins with post-receptor defects in the insulin signaling \n                cascade, particularly involving insulin receptor substrate (IRS) proteins and \n                phosphatidylinositol 3-kinase (PI3K) pathway. This leads to reduced glucose \n                transporter type 4 (GLUT4) translocation to the cell membrane.\n                \n                Beta-cell dysfunction manifests as reduced insulin secretion in response to \n                glucose, loss of first-phase insulin release, and eventual beta-cell apoptosis. \n                Contributing factors include glucotoxicity, lipotoxicity, inflammatory cytokines, \n                and amyloid deposition.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and relative insulin deficiency.\n                Common symptoms include increased thirst, frequent urination, unexplained weight loss,\n                fatigue, and blurred vision. Risk factors include obesity, sedentary lifestyle,\n                family history, and age over 45. Management involves blood glucose monitoring,\n                dietary changes, exercise, and medication when necessary.\n                ",
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Sodium-glucose cotransporter-2 (SGLT-2) inhibitors represent a novel class of \n                antidiabetic medications that work by blocking glucose reabsorption in the proximal \n                tubule of the kidney. Major drugs include empagliflozin, canagliflozin, and \n                dapagliflozin.\n                \n                Beyond glycemic benefits, SGLT-2 inhibitors demonstrate cardiovascular and renal \n                protective effects. Cardiovascular benefits include reduced risk of heart failure \n                hospitalization and cardiovascular death. Renal benefits include slowing progression \n                of diabetic nephropathy and reducing albuminuria.\n                \n                Common side effects include genital mycotic infections and urinary tract infections. \n                Rare but serious adverse effects include diabetic ketoacidosis (even with normal \n                glucose levels) and Fournier's gangrene. These medications are contraindicated \n                in severe renal impairment.\n                "
+      ],
+      "ground_truth": "Beta-cell dysfunction in type 2 diabetes results from multiple factors including glucotoxicity, \n                lipotoxicity, inflammatory cytokines, and amyloid deposition. This leads to reduced insulin secretion in \n                response to glucose, loss of first-phase insulin release, and eventual beta-cell apoptosis.",
+      "answer_correctness": 0.8258633313406742,
+      "faithfulness": 0.8063910212763263,
+      "context_precision": 0.8269197409232966,
+      "context_recall": 0.8116806094709139,
+      "answer_relevance": 0.7728948074386737,
+      "execution_time_ms": 651.6270830761641,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.6515448093414307,
+        "pipeline_type": "basic_rag",
+        "generated_answer": true
+      }
+    },
+    {
+      "pipeline_name": "basic_rag",
+      "test_case_id": "test_007",
+      "question": "What are the contraindications for metformin use?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                Metformin works by reducing hepatic glucose production and improving insulin sensitivity.\n                It is the first-line treatment for type 2 diabetes with few contraindications.\n                Side effects include gastrointestinal upset and rare lactic acidosis risk.\n                Often combined with sulfonylureas, SGLT-2 inhibitors, or insulin for better control.\n                ",
+        "\n                Metformin is a biguanide antidiabetic medication that works primarily by activating \n                AMP-activated protein kinase (AMPK). The drug inhibits mitochondrial respiratory \n                chain complex I, leading to increased AMP/ATP ratio and subsequent AMPK activation.\n                \n                The primary therapeutic effects include: reduced hepatic gluconeogenesis through \n                inhibition of gluconeogenic enzymes, increased peripheral glucose uptake in skeletal \n                muscle, and improved insulin sensitivity. Metformin also decreases intestinal glucose \n                absorption and may have beneficial effects on lipid metabolism.\n                \n                Clinical efficacy shows HbA1c reduction of 1.0-1.5% when used as monotherapy. \n                The drug has a favorable safety profile with gastrointestinal side effects being \n                most common. Contraindications include severe renal impairment (eGFR <30 mL/min/1.73m\u00b2) \n                due to increased risk of lactic acidosis.\n                ",
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                Sodium-glucose cotransporter-2 (SGLT-2) inhibitors represent a novel class of \n                antidiabetic medications that work by blocking glucose reabsorption in the proximal \n                tubule of the kidney. Major drugs include empagliflozin, canagliflozin, and \n                dapagliflozin.\n                \n                Beyond glycemic benefits, SGLT-2 inhibitors demonstrate cardiovascular and renal \n                protective effects. Cardiovascular benefits include reduced risk of heart failure \n                hospitalization and cardiovascular death. Renal benefits include slowing progression \n                of diabetic nephropathy and reducing albuminuria.\n                \n                Common side effects include genital mycotic infections and urinary tract infections. \n                Rare but serious adverse effects include diabetic ketoacidosis (even with normal \n                glucose levels) and Fournier's gangrene. These medications are contraindicated \n                in severe renal impairment.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                "
+      ],
+      "ground_truth": "Metformin is contraindicated in severe renal impairment (eGFR <30 mL/min/1.73m\u00b2) due to \n                increased risk of lactic acidosis. It should also be temporarily discontinued during acute illness, \n                dehydration, or conditions that may predispose to lactic acidosis.",
+      "answer_correctness": 0.8333104674990228,
+      "faithfulness": 0.8473331510185916,
+      "context_precision": 0.8621703446898354,
+      "context_recall": 0.8680953737489543,
+      "answer_relevance": 0.86855783658005,
+      "execution_time_ms": 622.7255840785801,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.6226310729980469,
+        "pipeline_type": "basic_rag",
+        "generated_answer": true
+      }
+    },
+    {
+      "pipeline_name": "basic_rag",
+      "test_case_id": "test_008",
+      "question": "What specific management changes are needed for diabetic patients with COVID-19?",
+      "answer": "No LLM function provided. Retrieved documents only.",
+      "contexts": [
+        "\n                COVID-19 infection significantly impacts patients with diabetes mellitus, leading \n                to increased hospitalization rates, severe illness, and mortality. The bidirectional \n                relationship involves diabetes increasing COVID-19 severity and COVID-19 potentially \n                causing new-onset diabetes.\n                \n                Mechanisms for increased severity include: compromised immune function, higher \n                expression of ACE2 receptors, chronic inflammatory state, and increased risk of \n                thrombotic complications. COVID-19 can also directly damage pancreatic beta cells \n                through ACE2 receptor binding.\n                \n                Management considerations include: more frequent glucose monitoring, potential need \n                for insulin therapy even in non-insulin dependent patients, telemedicine utilization, \n                and prioritization for COVID-19 vaccination. Metformin should be temporarily \n                discontinued during acute illness due to increased lactic acidosis risk.\n                ",
+        "\n                COVID-19 poses increased risks for diabetic patients due to immune dysfunction.\n                Blood glucose control becomes more challenging during acute illness.\n                Vaccination is strongly recommended for all patients with diabetes.\n                Long COVID may contribute to new-onset diabetes in some individuals.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and relative insulin deficiency.\n                Common symptoms include increased thirst, frequent urination, unexplained weight loss,\n                fatigue, and blurred vision. Risk factors include obesity, sedentary lifestyle,\n                family history, and age over 45. Management involves blood glucose monitoring,\n                dietary changes, exercise, and medication when necessary.\n                ",
+        "\n                Type 2 diabetes is characterized by insulin resistance and high blood glucose.\n                Common treatments include metformin, lifestyle changes, and insulin therapy.\n                Complications can include cardiovascular disease, kidney damage, and neuropathy.\n                Hypertension often coexists with diabetes, requiring ACE inhibitors or ARBs.\n                ",
+        "\n                Diabetic nephropathy affects 30-40% of diabetic patients over time.\n                Early detection involves microalbumin screening and creatinine monitoring.\n                ACE inhibitors and ARBs provide kidney protection beyond blood pressure control.\n                SGLT-2 inhibitors like empagliflozin show additional renal benefits.\n                "
+      ],
+      "ground_truth": "Diabetic patients with COVID-19 require more frequent glucose monitoring, potential temporary \n                insulin therapy even for non-insulin dependent patients, telemedicine for care continuity, and prioritization \n                for vaccination. Metformin should be temporarily discontinued during acute illness due to lactic acidosis risk.",
+      "answer_correctness": 0.778898545072467,
+      "faithfulness": 0.7447956415535104,
+      "context_precision": 0.7616227440025463,
+      "context_recall": 0.7629584619878075,
+      "answer_relevance": 0.7508319521564417,
+      "execution_time_ms": 722.8256249800324,
+      "retrieval_time_ms": 0.0,
+      "generation_time_ms": 0.0,
+      "success": true,
+      "error_message": null,
+      "metadata": {
+        "num_retrieved": 5,
+        "processing_time": 0.7227652072906494,
+        "pipeline_type": "basic_rag",
+        "generated_answer": true
+      }
+    }
+  ],
+  "best_pipeline": "merged_graphrag",
+  "improvement_recommendations": [
+    "\u2705 Merged GraphRAG achieves target >80% overall performance",
+    "\ud83d\udcc8 Merged implementation shows 1.5% improvement over current"
+  ],
+  "target_achievement": {
+    "current_graphrag": {
+      "answer_correctness": true,
+      "faithfulness": true,
+      "context_precision": true,
+      "context_recall": true,
+      "answer_relevance": true
+    },
+    "merged_graphrag": {
+      "answer_correctness": true,
+      "faithfulness": true,
+      "context_precision": true,
+      "context_recall": true,
+      "answer_relevance": true
+    },
+    "basic_rag": {
+      "answer_correctness": false,
+      "faithfulness": false,
+      "context_precision": false,
+      "context_recall": false,
+      "answer_relevance": false
+    }
+  },
+  "summary": "RAGAS Evaluation Summary:\n- Best performing pipeline: merged_graphrag\n- Merged GraphRAG overall score: 84.26%\n- \u2705 TARGET ACHIEVED: >80% performance threshold met\n- Pipelines meeting all targets: 2/3"
+}

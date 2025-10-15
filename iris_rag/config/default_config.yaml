@@ -12,12 +12,6 @@ storage:
   iris:
     table_name: "RAG.SourceDocuments"
     vector_dimension: 384
-  chunking:
-    enabled: true                        # Enable automatic document chunking
-    threshold: 1000                      # Documents larger than this will be chunked
-    strategy: "fixed_size"               # Chunking strategy: fixed_size, semantic, sentence
-    chunk_size: 1000                     # Size of each chunk in characters
-    chunk_overlap: 200                   # Overlap between chunks
 
 # Vector index configuration for optimal HNSW performance
 vector_index:
@@ -46,7 +40,7 @@ embeddings:
 # Entity extraction configuration
 entity_extraction:
   enabled: true
-  method: "pattern_only"                 # ontology_hybrid, llm_basic, pattern_only, hybrid
+  method: "llm_basic"                    # ontology_hybrid, llm_basic, pattern_only, hybrid
   confidence_threshold: 0.7              # Minimum confidence score for entities
   entity_types:                         # Enabled entity types (matches pattern definitions)
     - "DRUG"

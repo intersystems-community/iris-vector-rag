@@ -1,0 +1,51 @@
+{
+  "validation_timestamp": 1757852214,
+  "validation_results": {
+    "System Component Initialization": {
+      "success": false,
+      "execution_time": 0.03519487380981445,
+      "error": null
+    },
+    "GraphRAG Schema Deployment": {
+      "success": false,
+      "execution_time": 3.504753112792969e-05,
+      "error": null
+    },
+    "Schema Deployment Validation": {
+      "success": true,
+      "execution_time": 0.04768204689025879,
+      "error": null
+    },
+    "Document Loading with Entity Extraction": {
+      "success": true,
+      "execution_time": 7.350454807281494,
+      "error": null
+    },
+    "Knowledge Graph Population Verification": {
+      "success": true,
+      "execution_time": 0.03537583351135254,
+      "error": null
+    },
+    "Knowledge Graph Traversal Testing": {
+      "success": true,
+      "execution_time": 0.6803979873657227,
+      "error": null
+    },
+    "Fail-Hard Validation Testing": {
+      "success": true,
+      "execution_time": 0.7222862243652344,
+      "error": null
+    },
+    "GraphRAG vs BasicRAG Comparison": {
+      "success": false,
+      "execution_time": 4.095982074737549,
+      "error": null
+    }
+  },
+  "summary": {
+    "total_tests": 8,
+    "passed_tests": 5,
+    "failed_tests": 3,
+    "success_rate": 62.5
+  }
+}
