@@ -29,6 +29,7 @@ class SchemaManager:
     # CLASS-LEVEL CACHING (shared across all instances for performance)
     _schema_validation_cache = {}  # Cache for needs_migration() results
     _config_loaded = False  # Flag to prevent redundant config loading
+    _tables_validated = set()  # Cache for ensure_table_exists() to prevent spam
 
     def __init__(self, connection_manager, config_manager):
         self.connection_manager = connection_manager
@@ -1884,6 +1885,11 @@ class SchemaManager:
     def _ensure_standard_table(self, table_name: str) -> bool:
         """Ensure standard RAG tables exist."""
         try:
+            # Check class-level cache first to avoid repeated validation spam
+            if table_name in SchemaManager._tables_validated:
+                logger.debug(f"Table RAG.{table_name} already validated (cached) - skipping check")
+                return True
+
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
@@ -1899,7 +1905,8 @@ class SchemaManager:
             exists = cursor.fetchone()[0] > 0
 
             if exists:
-                logger.warning(f"Table RAG.{table_name} already exists - NOT checking schema!")
+                logger.debug(f"Table RAG.{table_name} exists - caching validation result")
+                SchemaManager._tables_validated.add(table_name)  # Cache the result
                 cursor.close()
                 return True
 
