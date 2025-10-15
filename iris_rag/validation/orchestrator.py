@@ -250,26 +250,7 @@ class SetupOrchestrator:
             else:
                 table = table_name
 
-            # Check if this is an iris-vector-graph table or standard RAG table that SchemaManager should handle
-            iris_graph_tables = ["rdf_labels", "rdf_props", "rdf_edges", "kg_NodeEmbeddings_optimized"]
-            standard_rag_tables = ["SourceDocuments", "Entities", "EntityRelationships", "DocumentChunks"]
-
-            if table.lower() in [t.lower() for t in iris_graph_tables] or table in standard_rag_tables:
-                # Use SchemaManager for iris-vector-graph tables and standard RAG tables
-                from ..storage.schema_manager import SchemaManager
-                schema_manager = SchemaManager(self.connection_manager, self.config_manager)
-
-                self.logger.info(f"Using SchemaManager to create table: {table}")
-                success = schema_manager.ensure_table_schema(table, pipeline_type="graphrag")
-
-                if success:
-                    self.logger.info(f"✅ Successfully created table: {table}")
-                else:
-                    self.logger.error(f"❌ Failed to create table: {table}")
-
-                return success
-
-            # Get the table creation SQL for standard RAG tables
+            # Get the table creation SQL
             create_sql = self._get_table_create_sql(table)
 
             if not create_sql:
@@ -442,10 +423,7 @@ class SetupOrchestrator:
         if optional_req.name == "DocumentChunks":
             self._setup_optional_chunking_for_requirement(optional_req)
         else:
-            # For all other optional tables (including iris-vector-graph tables),
-            # treat them like required tables and try to create them
-            self.logger.info(f"Fulfilling optional table requirement: {optional_req.name}")
-            self._fulfill_table_requirement(optional_req)
+            self.logger.debug(f"Optional requirement noted: {optional_req.name}")
 
     def _setup_optional_chunking_for_requirement(self, chunk_req):
         """Set up chunking for a specific requirement."""
@@ -648,26 +626,27 @@ class SetupOrchestrator:
 
                             # Use consistent vector format that validator expects
                             vector_str = f"[{','.join(map(str, embedding))}]"
-                            vector_dimension = len(embedding)
 
                             # Use appropriate schema for embedding storage
-                            # IMPORTANT: TO_VECTOR() does NOT accept ? parameters (Constitution Principle VII)
-                            # Must embed vector string directly in SQL like insert_vector() utility does
                             if has_embedding_field:
-                                # Legacy schema approach - UPDATE with embedded TO_VECTOR()
-                                update_sql = f"""
+                                # Legacy schema approach
+                                cursor.execute(
+                                    """
                                     UPDATE RAG.SourceDocuments
-                                    SET embedding = TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension})
+                                    SET embedding = TO_VECTOR(?)
                                     WHERE doc_id = ?
-                                """
-                                cursor.execute(update_sql, [doc_id])
+                                """,
+                                    [vector_str, doc_id],
+                                )
                             else:
-                                # Clean schema approach - INSERT with embedded TO_VECTOR()
-                                insert_sql = f"""
+                                # Clean schema approach - insert into VectorEmbeddings table
+                                cursor.execute(
+                                    """
                                     INSERT INTO RAG.VectorEmbeddings (chunk_id, embedding_model, embedding)
-                                    VALUES (?, 'validation-generated', TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension}))
-                                """
-                                cursor.execute(insert_sql, [doc_id])
+                                    VALUES (?, 'validation-generated', TO_VECTOR(?))
+                                """,
+                                    [doc_id, vector_str],
+                                )
                             total_processed += 1
 
                         except Exception as doc_error:
@@ -1215,16 +1194,15 @@ class SetupOrchestrator:
 
                     # Use consistent vector format that validator expects
                     vector_str = f"[{','.join(map(str, token_embedding))}]"
-                    vector_dimension = len(token_embedding)
 
-                    # IMPORTANT: TO_VECTOR() does NOT accept ? parameters (Constitution Principle VII)
-                    # Must embed vector string directly in SQL like insert_vector() utility does
-                    insert_sql = f"""
+                    cursor.execute(
+                        """
                         INSERT INTO RAG.DocumentTokenEmbeddings
                         (doc_id, token_index, token_text, token_embedding)
-                        VALUES (?, ?, ?, TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension}))
-                    """
-                    cursor.execute(insert_sql, [doc_id, token_index, token_text])
+                        VALUES (?, ?, ?, TO_VECTOR(?))
+                    """,
+                        [doc_id, token_index, token_text, vector_str],
+                    )
 
                     tokens_processed += 1
 
@@ -1266,14 +1244,14 @@ class SetupOrchestrator:
                     CREATE TABLE RAG.DocumentChunks (
                         id VARCHAR(255) PRIMARY KEY,
                         chunk_id VARCHAR(255),
-                        source_document_id VARCHAR(255),
-                        content TEXT,
-                        embedding VECTOR(FLOAT, 384),
+                        doc_id VARCHAR(255),
+                        chunk_text TEXT,
+                        chunk_embedding VECTOR(FLOAT, 384),
                         chunk_index INTEGER,
                         chunk_type VARCHAR(100),
                         metadata TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (source_document_id) REFERENCES RAG.SourceDocuments(id)
+                        FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(id)
                     )
                 """
                 )
@@ -1357,25 +1335,21 @@ class SetupOrchestrator:
 
                                 # Use consistent vector format that validator expects
                                 vector_str = f"[{','.join(map(str, embedding))}]"
-                                vector_dimension = len(embedding)
 
                                 chunk_id = f"{doc_id}_chunk_{chunk_index}"
-
-                                # IMPORTANT: TO_VECTOR() does NOT accept ? parameters (Constitution Principle VII)
-                                # Must embed vector string directly in SQL like insert_vector() utility does
-                                insert_sql = f"""
-                                    INSERT INTO RAG.DocumentChunks
-                                    (id, chunk_id, source_document_id, chunk_index, content, embedding, metadata)
-                                    VALUES (?, ?, ?, ?, ?, TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension}), ?)
-                                """
                                 cursor.execute(
-                                    insert_sql,
+                                    """
+                                    INSERT INTO RAG.DocumentChunks
+                                    (id, chunk_id, doc_id, chunk_index, chunk_text, chunk_embedding, metadata)
+                                    VALUES (?, ?, ?, ?, ?, TO_VECTOR(?), ?)
+                                """,
                                     [
                                         chunk_id,
                                         chunk_id,
                                         doc_id,
                                         chunk_index,
                                         chunk_text,
+                                        vector_str,
                                         f'{{"chunk_size": {len(chunk_text)}, "parent_doc": "{doc_id}"}}',
                                     ],
                                 )
@@ -1615,9 +1589,8 @@ class SetupOrchestrator:
                 self.connection_manager, config_manager
             )
             entity_service = EntityExtractionService(
-                config_manager=config_manager,
-                connection_manager=self.connection_manager,
-                embedding_manager=None
+                storage_adapter=storage_adapter,
+                extraction_method="pattern_only",  # Use basic pattern-based extraction
             )
 
             # Get documents from SourceDocuments table
@@ -1710,7 +1683,7 @@ class SetupOrchestrator:
                 # Insert a test entity
                 cursor.execute(
                     """
-                    INSERT INTO RAG.Entities (entity_id, entity_name, entity_type, description, confidence, source_doc_id)
+                    INSERT INTO RAG.Entities (entity_id, entity_name, entity_type, description, confidence, source_document)
                     VALUES ('test_entity_1', 'Test Entity', 'concept', 'Minimal test entity for GraphRAG validation', 1.0, 'system_generated')
                 """
                 )

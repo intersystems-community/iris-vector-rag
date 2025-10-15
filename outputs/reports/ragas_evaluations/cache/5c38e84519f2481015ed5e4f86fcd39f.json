@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRAG",
-  "query": "How does COVID-19 affect respiratory function and lung capacity?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 1.2694473266601562,
-  "success": true,
-  "error": null
-}

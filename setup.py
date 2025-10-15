@@ -82,7 +82,8 @@ setup(
             "uvicorn>=0.23.0",
         ],
         "hybrid-graphrag": [
-            # Dependencies moved to core - iris-vector-graph is now required
+            "iris-vector-graph>=2.0.0",
+            "scipy>=1.7.0",
         ],
         "all": [
             "pytest>=7.0.0",
@@ -96,6 +97,8 @@ setup(
             "mcp>=0.1.0",
             "fastapi>=0.100.0",
             "uvicorn>=0.23.0",
+            "iris-vector-graph>=2.0.0",
+            "scipy>=1.7.0",
         ],
     },
     entry_points={

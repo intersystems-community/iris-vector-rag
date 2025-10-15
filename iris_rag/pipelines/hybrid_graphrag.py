@@ -69,59 +69,72 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         self._initialize_graph_core()
 
     def _initialize_graph_core(self):
-        """Initialize iris_graph_core components - required for HybridGraphRAG."""
-        # Import modules - will raise ImportError if not available
-        modules = self.discovery.import_graph_core_modules()
+        """Initialize iris_graph_core components with secure configuration."""
+        success, modules = self.discovery.import_graph_core_modules()
 
-        # Get connection configuration
-        connection_config = self.discovery.get_connection_config()
+        if not success:
+            logger.warning(
+                "iris_graph_core not available - using standard GraphRAG only"
+            )
+            return
 
-        # Create IRIS connection using irisnative to avoid embedded Python issues
         try:
-            import irisnative
+            # Get secure connection configuration
+            connection_config = self.discovery.get_connection_config()
+            is_valid, missing_params = self.discovery.validate_connection_config(
+                connection_config
+            )
+
+            if not is_valid:
+                logger.warning(
+                    f"IRIS connection parameters missing: {missing_params}. "
+                    "Disabling iris_graph_core integration."
+                )
+                return
+
+            # Create IRIS connection using validated config
+            import iris
 
             logger.info(
                 f"Connecting to IRIS at {connection_config['host']}:{connection_config['port']}"
                 f"/{connection_config['namespace']} for iris_graph_core"
             )
 
-            iris_connection = irisnative.createConnection(
+            iris_connection = iris.connect(
                 connection_config["host"],
                 connection_config["port"],
                 connection_config["namespace"],
                 connection_config["username"],
                 connection_config["password"],
             )
-        except ImportError as e:
-            raise ImportError(
-                "Unable to import irisnative module. "
-                "Please ensure intersystems-irispython is installed: "
-                "pip install intersystems-irispython"
-            ) from e
+
+            # Initialize graph core components
+            self.iris_engine = modules["IRISGraphEngine"](iris_connection)
+            self.fusion_engine = modules["HybridSearchFusion"](self.iris_engine)
+            self.text_engine = modules["TextSearchEngine"](iris_connection)
+            self.vector_optimizer = modules["VectorOptimizer"](iris_connection)
+
+            # Initialize retrieval methods
+            self.retrieval_methods = HybridRetrievalMethods(
+                self.iris_engine,
+                self.fusion_engine,
+                self.text_engine,
+                self.vector_optimizer,
+                self.embedding_manager,
+            )
+
+            # Check for optimized vector table availability
+            self.retrieval_methods.check_hnsw_optimization()
+
+            logger.info(
+                f"✅ Hybrid GraphRAG pipeline initialized with {modules['package_name']} integration"
+            )
+
         except Exception as e:
-            raise ConnectionError(
-                f"Failed to connect to IRIS at {connection_config['host']}:{connection_config['port']}: {e}"
-            ) from e
-
-        # Initialize graph core components
-        self.iris_engine = modules["IRISGraphEngine"](iris_connection)
-        self.fusion_engine = modules["HybridSearchFusion"](self.iris_engine)
-        self.text_engine = modules["TextSearchEngine"](iris_connection)
-        self.vector_optimizer = modules["VectorOptimizer"](iris_connection)
-
-        # Initialize retrieval methods
-        self.retrieval_methods = HybridRetrievalMethods(
-            self.iris_engine,
-            self.fusion_engine,
-            self.text_engine,
-            self.vector_optimizer,
-            self.embedding_manager,
-        )
-
-        # Check for optimized vector table availability
-        self.retrieval_methods.check_hnsw_optimization()
-
-        logger.info("✅ Hybrid GraphRAG pipeline initialized with iris-vector-graph integration")
+            logger.error(f"Failed to initialize iris_graph_core components: {e}")
+            logger.warning("Falling back to standard GraphRAG implementation")
+            self.iris_engine = None
+            self.retrieval_methods = None
 
     def query(
         self,
@@ -157,51 +170,28 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         # Validate knowledge graph
         self._validate_knowledge_graph()
 
-        # Route to appropriate retrieval method - iris-vector-graph is required
-        if method == "hybrid":
+        # Route to appropriate retrieval method
+        if method == "hybrid" and self.retrieval_methods:
             retrieved_documents, retrieval_method = self._retrieve_via_hybrid_fusion(
                 query_text, top_k, **kwargs
             )
-        elif method == "rrf":
+        elif method == "rrf" and self.retrieval_methods:
             retrieved_documents, retrieval_method = self._retrieve_via_rrf(
                 query_text, top_k, **kwargs
             )
-        elif method == "text":
+        elif method == "text" and self.retrieval_methods:
             retrieved_documents, retrieval_method = self._retrieve_via_enhanced_text(
                 query_text, top_k, **kwargs
             )
-        elif method == "vector":
+        elif method == "vector" and self.retrieval_methods:
             retrieved_documents, retrieval_method = self._retrieve_via_hnsw_vector(
                 query_text, top_k, **kwargs
             )
-        elif method == "kg":
-            # Use parent class knowledge graph traversal with fallback
-            try:
-                retrieved_documents, retrieval_method = self._retrieve_via_kg(
-                    query_text, top_k
-                )
-            except GraphRAGException as e:
-                logger.warning(f"GraphRAG fallback: {e}")
-                # Fall back to vector search when entities/graph traversal fails
-                fallback_messages = [
-                    "No seed entities found",
-                    "No documents found",
-                    "Graph traversal found no additional entities",
-                    "Knowledge graph may lack relationships"
-                ]
-                if any(msg in str(e) for msg in fallback_messages):
-                    logger.info(
-                        f"GraphRAG: Falling back to vector search for query: '{query_text}'"
-                    )
-                    retrieved_documents = self._fallback_to_vector_search(query_text, top_k)
-                    retrieval_method = "vector_fallback"
-                else:
-                    # Re-raise other GraphRAG exceptions (validation failures, etc.)
-                    raise
         else:
-            raise ValueError(
-                f"Invalid retrieval method: {method}. "
-                f"Supported methods: hybrid, rrf, text, vector, kg"
+            # Enhanced fallback with intelligent hybrid search strategies
+            logger.info(f"Using enhanced fallback hybrid search for method: {method}")
+            retrieved_documents, retrieval_method = self._enhanced_hybrid_fallback(
+                query_text, top_k, method, **kwargs
             )
 
         # Generate answer if requested
@@ -237,7 +227,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 "pipeline_type": "hybrid_graphrag",
                 "retrieval_method": retrieval_method,
                 "generated_answer": generate_answer and answer is not None,
-                "iris_graph_core_enabled": True,
+                "iris_graph_core_enabled": self.iris_engine is not None,
             },
         }
 
@@ -254,46 +244,306 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         self, query_text: str, top_k: int, **kwargs
     ) -> tuple[List[Document], str]:
         """Retrieve documents using multi-modal hybrid search fusion."""
-        documents, method = self.retrieval_methods.retrieve_via_hybrid_fusion(
-            query_text, top_k, self._get_document_content_for_entity, **kwargs
-        )
-        if not documents:
-            logger.warning("Hybrid fusion returned 0 results")
-        return documents, method
+        try:
+            documents, method = self.retrieval_methods.retrieve_via_hybrid_fusion(
+                query_text, top_k, self._get_document_content_for_entity, **kwargs
+            )
+            # If iris_graph_core returns 0 results, fall back to vector search
+            if not documents:
+                logger.warning(
+                    "Hybrid fusion returned 0 results. Falling back to vector search."
+                )
+                fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+                return fallback_docs, "vector_fallback"
+            return documents, method
+        except Exception as e:
+            logger.error(f"Hybrid fusion retrieval failed: {e}")
+            # Fallback to vector search instead of KG traversal
+            logger.info("Falling back to IRISVectorStore vector search")
+            fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+            return fallback_docs, "vector_fallback"
 
     def _retrieve_via_rrf(
         self, query_text: str, top_k: int, **kwargs
     ) -> tuple[List[Document], str]:
         """Retrieve documents using RRF (Reciprocal Rank Fusion)."""
-        documents, method = self.retrieval_methods.retrieve_via_rrf(
-            query_text, top_k, self._get_document_content_for_entity, **kwargs
-        )
-        if not documents:
-            logger.warning("RRF returned 0 results")
-        return documents, method
+        try:
+            documents, method = self.retrieval_methods.retrieve_via_rrf(
+                query_text, top_k, self._get_document_content_for_entity, **kwargs
+            )
+            # If RRF returns 0 results, fall back to vector search
+            if not documents:
+                logger.warning("RRF returned 0 results. Falling back to vector search.")
+                fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+                return fallback_docs, "vector_fallback"
+            return documents, method
+        except Exception as e:
+            logger.error(f"RRF retrieval failed: {e}")
+            logger.info("Falling back to IRISVectorStore vector search")
+            fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+            return fallback_docs, "vector_fallback"
 
     def _retrieve_via_enhanced_text(
         self, query_text: str, top_k: int, **kwargs
     ) -> tuple[List[Document], str]:
         """Retrieve documents using enhanced IRIS iFind text search."""
-        documents, method = self.retrieval_methods.retrieve_via_enhanced_text(
-            query_text, top_k, self._get_document_content_for_entity, **kwargs
-        )
-        if not documents:
-            logger.warning("Text search returned 0 results")
-        return documents, method
+        try:
+            documents, method = self.retrieval_methods.retrieve_via_enhanced_text(
+                query_text, top_k, self._get_document_content_for_entity, **kwargs
+            )
+            # If text search returns 0 results, fall back to vector search
+            if not documents:
+                logger.warning("Text search returned 0 results. Falling back to vector search.")
+                fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+                return fallback_docs, "vector_fallback"
+            return documents, method
+        except Exception as e:
+            logger.error(f"Enhanced text retrieval failed: {e}")
+            logger.info("Falling back to IRISVectorStore vector search")
+            fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+            return fallback_docs, "vector_fallback"
 
     def _retrieve_via_hnsw_vector(
         self, query_text: str, top_k: int, **kwargs
     ) -> tuple[List[Document], str]:
         """Retrieve documents using HNSW-optimized vector search."""
-        documents, method = self.retrieval_methods.retrieve_via_hnsw_vector(
-            query_text, top_k, self._get_document_content_for_entity, **kwargs
-        )
-        if not documents:
-            logger.warning("HNSW vector search returned 0 results")
-        return documents, method
+        try:
+            documents, method = self.retrieval_methods.retrieve_via_hnsw_vector(
+                query_text, top_k, self._get_document_content_for_entity, **kwargs
+            )
+            # If HNSW returns 0 results, fall back to IRISVectorStore
+            if not documents:
+                logger.warning("HNSW vector search returned 0 results. Falling back to IRISVectorStore.")
+                fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+                return fallback_docs, "vector_fallback"
+            return documents, method
+        except Exception as e:
+            logger.error(f"HNSW vector retrieval failed: {e}")
+            logger.info("Falling back to IRISVectorStore vector search")
+            fallback_docs = self._fallback_to_vector_search(query_text, top_k)
+            return fallback_docs, "vector_fallback"
 
+    def _enhanced_hybrid_fallback(
+        self, query_text: str, top_k: int, method: str, **kwargs
+    ) -> tuple[List[Document], str]:
+        """
+        Enhanced hybrid search fallback when iris_graph_core is not available.
+
+        Implements intelligent search strategies combining knowledge graph traversal
+        with vector search to provide hybrid capabilities.
+        """
+        try:
+            # Analyze query to determine best hybrid strategy
+            query_analysis = self._analyze_query_for_hybrid_strategy(query_text)
+
+            if method == "hybrid" or method == "rrf":
+                # Intelligent hybrid: try KG first, then combine with vector search
+                return self._intelligent_hybrid_search(
+                    query_text, top_k, query_analysis, **kwargs
+                )
+
+            elif method == "text":
+                # Enhanced text search using entity matching + vector fallback
+                return self._enhanced_text_search_fallback(query_text, top_k, **kwargs)
+
+            elif method == "vector":
+                # Enhanced vector search with entity context
+                return self._enhanced_vector_search_fallback(
+                    query_text, top_k, **kwargs
+                )
+
+            else:
+                # Default to enhanced knowledge graph traversal
+                return self._retrieve_via_kg(query_text, top_k)
+
+        except Exception as e:
+            logger.error(f"Enhanced hybrid fallback failed: {e}")
+            # Final fallback to standard GraphRAG
+            return super()._retrieve_via_kg(query_text, top_k)
+
+    def _analyze_query_for_hybrid_strategy(self, query_text: str) -> Dict[str, Any]:
+        """Analyze query to determine the best hybrid search strategy."""
+        analysis = {
+            "has_medical_entities": False,
+            "entity_density": 0,
+            "query_type": "general",
+            "recommended_strategy": "kg_first",
+        }
+
+        # Check for medical entities in query
+        medical_keywords = [
+            "symptom",
+            "disease",
+            "treatment",
+            "drug",
+            "medication",
+            "therapy",
+            "covid",
+            "diabetes",
+            "cancer",
+            "heart",
+            "blood",
+            "pain",
+            "fever",
+        ]
+
+        query_lower = query_text.lower()
+        medical_matches = sum(
+            1 for keyword in medical_keywords if keyword in query_lower
+        )
+
+        analysis["has_medical_entities"] = medical_matches > 0
+        analysis["entity_density"] = medical_matches / len(query_text.split())
+
+        # Determine query type
+        if any(word in query_lower for word in ["what", "how", "why", "when", "where"]):
+            analysis["query_type"] = "factual"
+        elif any(
+            word in query_lower for word in ["treat", "cure", "prevent", "manage"]
+        ):
+            analysis["query_type"] = "treatment"
+        elif any(word in query_lower for word in ["symptom", "sign", "cause"]):
+            analysis["query_type"] = "diagnostic"
+
+        # Recommend strategy based on analysis
+        if analysis["entity_density"] > 0.3:
+            analysis["recommended_strategy"] = "kg_primary"
+        elif analysis["has_medical_entities"]:
+            analysis["recommended_strategy"] = "kg_vector_hybrid"
+        else:
+            analysis["recommended_strategy"] = "vector_primary"
+
+        return analysis
+
+    def _intelligent_hybrid_search(
+        self, query_text: str, top_k: int, analysis: Dict[str, Any], **kwargs
+    ) -> tuple[List[Document], str]:
+        """Intelligent hybrid search combining KG and vector strategies."""
+        strategy = analysis["recommended_strategy"]
+
+        if strategy == "kg_primary":
+            # Try KG first, supplement with vector if needed
+            try:
+                kg_docs, kg_method = self._retrieve_via_kg(query_text, top_k)
+                if len(kg_docs) >= top_k * 0.7:  # Good KG coverage
+                    return kg_docs, f"{kg_method}_primary"
+                else:
+                    # Supplement with vector search
+                    vector_docs = self._fallback_to_vector_search(
+                        query_text, top_k - len(kg_docs)
+                    )
+                    combined_docs = kg_docs + vector_docs[: top_k - len(kg_docs)]
+                    return combined_docs, "kg_vector_hybrid"
+            except Exception:
+                return (
+                    self._fallback_to_vector_search(query_text, top_k),
+                    "vector_fallback",
+                )
+
+        elif strategy == "kg_vector_hybrid":
+            # Balance between KG and vector
+            try:
+                kg_docs, _ = self._retrieve_via_kg(query_text, max(2, top_k // 2))
+                vector_docs = self._fallback_to_vector_search(query_text, top_k)
+
+                # Merge and deduplicate
+                combined_docs = self._merge_and_rank_results(
+                    kg_docs, vector_docs, top_k
+                )
+                return combined_docs, "balanced_hybrid"
+            except Exception:
+                return (
+                    self._fallback_to_vector_search(query_text, top_k),
+                    "vector_fallback",
+                )
+
+        else:  # vector_primary
+            # Vector first with KG enhancement
+            vector_docs = self._fallback_to_vector_search(query_text, top_k)
+            return vector_docs, "vector_primary"
+
+    def _enhanced_text_search_fallback(
+        self, query_text: str, top_k: int, **kwargs
+    ) -> tuple[List[Document], str]:
+        """Enhanced text search using entity matching and content filtering."""
+        try:
+            # First try to find relevant entities
+            seed_entities = self._find_seed_entities(query_text)
+
+            if seed_entities:
+                # Use entity-guided document retrieval
+                entity_docs, _ = self._get_documents_from_entities(
+                    {e[0] for e in seed_entities}, top_k
+                )
+                return entity_docs, "entity_guided_text"
+            else:
+                # Fallback to vector search
+                return (
+                    self._fallback_to_vector_search(query_text, top_k),
+                    "text_vector_fallback",
+                )
+
+        except Exception as e:
+            logger.warning(f"Enhanced text search fallback failed: {e}")
+            vector_docs = self._fallback_to_vector_search(query_text, top_k)
+            return vector_docs, "vector_fallback"
+
+    def _enhanced_vector_search_fallback(
+        self, query_text: str, top_k: int, **kwargs
+    ) -> tuple[List[Document], str]:
+        """Enhanced vector search with knowledge graph context."""
+        try:
+            # Get base vector results
+            vector_docs = self._fallback_to_vector_search(query_text, top_k * 2)
+
+            # Try to enhance with entity context
+            try:
+                seed_entities = self._find_seed_entities(query_text)
+                if seed_entities:
+                    entity_docs, _ = self._get_documents_from_entities(
+                        {e[0] for e in seed_entities}, top_k
+                    )
+                    # Merge entity context with vector results
+                    enhanced_docs = self._merge_and_rank_results(
+                        entity_docs, vector_docs, top_k
+                    )
+                    return enhanced_docs, "vector_entity_enhanced"
+            except Exception:
+                pass
+
+            return vector_docs[:top_k], "vector_only"
+
+        except Exception as e:
+            logger.error(f"Enhanced vector search failed: {e}")
+            return [], "vector_search_failed"
+
+    def _merge_and_rank_results(
+        self, primary_docs: List[Document], secondary_docs: List[Document], top_k: int
+    ) -> List[Document]:
+        """Merge and rank results from different search methods."""
+        # Simple deduplication by content hash
+        seen_content = set()
+        merged_docs = []
+
+        # Add primary docs first (higher priority)
+        for doc in primary_docs:
+            content_hash = hash(doc.page_content[:200])  # Hash first 200 chars
+            if content_hash not in seen_content:
+                seen_content.add(content_hash)
+                merged_docs.append(doc)
+                if len(merged_docs) >= top_k:
+                    break
+
+        # Add secondary docs if we need more
+        for doc in secondary_docs:
+            if len(merged_docs) >= top_k:
+                break
+            content_hash = hash(doc.page_content[:200])
+            if content_hash not in seen_content:
+                seen_content.add(content_hash)
+                merged_docs.append(doc)
+
+        return merged_docs[:top_k]
 
     def _get_document_content_for_entity(self, entity_id: str) -> Optional[str]:
         """
@@ -312,7 +562,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 """
                 SELECT s.text_content
                 FROM RAG.SourceDocuments s
-                JOIN RAG.Entities e ON e.source_doc_id = s.doc_id
+                JOIN RAG.Entities e ON e.source_doc_id = s.id
                 WHERE e.entity_id = ?
                 LIMIT 1
             """,
@@ -337,27 +587,40 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
 
     def get_performance_statistics(self) -> Dict[str, Any]:
         """Get performance statistics for hybrid search components"""
-        return self.retrieval_methods.get_performance_statistics(self.connection_manager)
+        if self.retrieval_methods:
+            return self.retrieval_methods.get_performance_statistics(
+                self.connection_manager
+            )
+        else:
+            return {"iris_graph_core_enabled": False}
 
     def benchmark_search_methods(
         self, query_text: str, iterations: int = 5
     ) -> Dict[str, Any]:
         """Benchmark different search methods for performance comparison"""
-        return self.retrieval_methods.benchmark_search_methods(
-            query_text, self.query, iterations
-        )
+        if self.retrieval_methods:
+            return self.retrieval_methods.benchmark_search_methods(
+                query_text, self.query, iterations
+            )
+        else:
+            logger.warning("iris_graph_core not available for benchmarking")
+            return {}
 
     def is_hybrid_enabled(self) -> bool:
-        """Check if hybrid capabilities are enabled - always True for HybridGraphRAG."""
-        return True
+        """Check if hybrid capabilities are enabled."""
+        return self.iris_engine is not None and self.retrieval_methods is not None
 
     def get_hybrid_status(self) -> Dict[str, Any]:
         """Get detailed status of hybrid capabilities."""
         return {
-            "hybrid_enabled": True,
-            "iris_engine_available": True,
-            "fusion_engine_available": True,
-            "text_engine_available": True,
-            "vector_optimizer_available": True,
-            "iris_vector_graph_installed": True,
+            "hybrid_enabled": self.is_hybrid_enabled(),
+            "iris_engine_available": self.iris_engine is not None,
+            "fusion_engine_available": self.fusion_engine is not None,
+            "text_engine_available": self.text_engine is not None,
+            "vector_optimizer_available": self.vector_optimizer is not None,
+            "graph_core_path": (
+                str(self.discovery.discover_graph_core_path())
+                if self.discovery.discover_graph_core_path()
+                else None
+            ),
         }

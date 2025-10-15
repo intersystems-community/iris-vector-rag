@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "CRAG",
-  "query": "What are the mechanisms of antibiotic resistance in bacterial infections?",
-  "answer": null,
-  "contexts": [],
-  "execution_time": 0.13104486465454102,
-  "success": true,
-  "error": null
-}

@@ -17,7 +17,7 @@ import pytest
 class TestBasicRAGIntegration:
     """End-to-end integration tests for BasicRAG pipeline."""
 
-    def test_full_query_path_with_real_db(self, basic_rag_pipeline, tmp_path, iris_connection):
+    def test_full_query_path_with_real_db(self, basic_rag_pipeline, tmp_path):
         """
         FR-025: Full pipeline workflow MUST complete successfully.
 
@@ -25,8 +25,6 @@ class TestBasicRAGIntegration:
         When: Documents loaded and query executed
         Then: Complete workflow succeeds (load → embed → store → retrieve → generate)
         """
-        from tests.conftest import skip_if_no_embeddings
-
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
         with open(sample_docs_path, 'r') as f:
@@ -42,9 +40,6 @@ class TestBasicRAGIntegration:
             "Should successfully load documents"
         assert load_result["embeddings_generated"] > 0, \
             "Should generate embeddings"
-
-        # Check if embeddings are in proper VECTOR format before querying
-        skip_if_no_embeddings(iris_connection)
 
         # Execute query
         query = "What are the symptoms of diabetes?"
@@ -93,7 +88,7 @@ class TestBasicRAGIntegration:
         assert result["documents_failed"] == 0, \
             "Should have no failed documents"
 
-    def test_response_quality_metrics(self, basic_rag_pipeline, iris_connection):
+    def test_response_quality_metrics(self, basic_rag_pipeline):
         """
         FR-027: Query response MUST include quality metrics.
 
@@ -101,17 +96,12 @@ class TestBasicRAGIntegration:
         When: Query executed
         Then: Response includes quality metrics (execution time, sources, etc.)
         """
-        from tests.conftest import skip_if_no_embeddings
-
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
         with open(sample_docs_path, 'r') as f:
             docs_data = json.load(f)
 
         basic_rag_pipeline.load_documents(docs_data["documents"])
-
-        # Check if embeddings are in proper VECTOR format before querying
-        skip_if_no_embeddings(iris_connection)
 
         # Execute query
         query = "How is diabetes treated?"
@@ -161,7 +151,7 @@ class TestBasicRAGIntegration:
             assert "document" in error_msg or "context" in error_msg or "no" in error_msg, \
                 "Error should mention missing documents/contexts"
 
-    def test_multiple_queries_maintain_consistency(self, basic_rag_pipeline, iris_connection):
+    def test_multiple_queries_maintain_consistency(self, basic_rag_pipeline):
         """
         FR-027: Multiple queries MUST maintain consistent behavior.
 
@@ -169,17 +159,12 @@ class TestBasicRAGIntegration:
         When: Multiple queries executed
         Then: All queries succeed with consistent response structure
         """
-        from tests.conftest import skip_if_no_embeddings
-
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
         with open(sample_docs_path, 'r') as f:
             docs_data = json.load(f)
 
         basic_rag_pipeline.load_documents(docs_data["documents"])
-
-        # Check if embeddings are in proper VECTOR format before querying
-        skip_if_no_embeddings(iris_connection)
 
         # Execute multiple queries
         queries = [

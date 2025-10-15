@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "HybridGraphRAG",
-  "query": "What are the latest developments in Alzheimer's disease research?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.3066408634185791,
-  "success": true,
-  "error": null
-}

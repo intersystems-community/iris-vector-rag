@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRAG",
-  "query": "What are the most effective interventions for managing hypertension?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 1.2516751289367676,
-  "success": true,
-  "error": null
-}

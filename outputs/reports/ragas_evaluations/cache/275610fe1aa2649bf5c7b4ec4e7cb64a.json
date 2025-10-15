@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRAG",
-  "query": "How does inflammation contribute to autoimmune disease progression?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.8504672050476074,
-  "success": true,
-  "error": null
-}
