@@ -1,0 +1,146 @@
+# =============================================================================
+# Docker Compose for RAG API Standalone Deployment
+# =============================================================================
+# Production-ready deployment with all dependencies
+# Includes: API Server, IRIS Database, Redis Cache
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # InterSystems IRIS Database
+  # ===========================================================================
+  iris:
+    image: intersystemsdc/iris-community:latest
+    container_name: rag-api-iris
+    hostname: iris
+    ports:
+      - "1972:1972"   # SuperServer port
+      - "52773:52773" # Management Portal
+    volumes:
+      - iris-data:/usr/irissys/mgr
+    environment:
+      - IRIS_USERNAME=demo
+      - IRIS_PASSWORD=demo
+      - IRIS_NAMESPACE=USER
+    healthcheck:
+      test: ["CMD", "iris", "session", "iris", "-U", "USER", "##class(%SYSTEM.SQL).Test()"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - rag-api-network
+
+  # ===========================================================================
+  # Redis Cache (for rate limiting)
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: rag-api-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rag-api-network
+
+  # ===========================================================================
+  # RAG API Server
+  # ===========================================================================
+  api:
+    build:
+      context: .
+      dockerfile: iris_rag/api/Dockerfile
+    container_name: rag-api-server
+    hostname: api
+    ports:
+      - "8000:8000"
+    environment:
+      # Database connection
+      - IRIS_HOST=iris
+      - IRIS_PORT=1972
+      - IRIS_NAMESPACE=USER
+      - IRIS_USERNAME=demo
+      - IRIS_PASSWORD=demo
+
+      # Redis connection
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+      # API configuration
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_WORKERS=4
+      - LOG_LEVEL=INFO
+
+      # LLM API keys (override via .env file)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - api-logs:/app/logs
+      - api-outputs:/app/outputs
+    depends_on:
+      iris:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - rag-api-network
+
+  # ===========================================================================
+  # Database Initialization (runs once)
+  # ===========================================================================
+  init-db:
+    build:
+      context: .
+      dockerfile: iris_rag/api/Dockerfile
+    container_name: rag-api-init
+    environment:
+      - IRIS_HOST=iris
+      - IRIS_PORT=1972
+      - IRIS_NAMESPACE=USER
+      - IRIS_USERNAME=demo
+      - IRIS_PASSWORD=demo
+    command: python -m iris_rag.api.cli setup-db
+    depends_on:
+      iris:
+        condition: service_healthy
+    networks:
+      - rag-api-network
+    restart: "no"
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  iris-data:
+    driver: local
+  redis-data:
+    driver: local
+  api-logs:
+    driver: local
+  api-outputs:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  rag-api-network:
+    driver: bridge

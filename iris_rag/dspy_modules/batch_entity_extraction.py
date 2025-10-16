@@ -1,4 +1,4 @@
-"""
+r"""
 OPTIMIZED: Batch Entity Extraction with DSPy.
 
 Process multiple tickets in a single LLM call for 3-5x speedup.
@@ -85,7 +85,7 @@ class BatchEntityExtractionModule(dspy.Module):
 
             except json.JSONDecodeError as e:
                 if attempt < max_attempts - 1:
-                    # Try to repair common LLM escape sequence errors
+                    # Try to repair common LLM JSON errors
                     logger.warning(
                         f"{context}: JSON parse failed on attempt {attempt + 1}/{max_attempts}: {e}"
                     )
@@ -94,7 +94,10 @@ class BatchEntityExtractionModule(dspy.Module):
                     # Apply repair strategies
                     original_str = json_str
 
-                    # Strategy 1: Fix invalid escape sequences
+                    # Strategy 1: Fix trailing commas (common LLM error)
+                    json_str = json_str.replace(',]', ']').replace(',}', '}')
+
+                    # Strategy 2: Fix invalid escape sequences
                     # Replace \N with \\N, \i with \\i, etc.
                     # But preserve valid escapes: \n, \t, \r, \", \\, \/, \b, \f
                     valid_escapes = {'n', 't', 'r', '"', '\\', '/', 'b', 'f', 'u'}
@@ -121,7 +124,7 @@ class BatchEntityExtractionModule(dspy.Module):
                     json_str = ''.join(repaired)
 
                     if json_str != original_str:
-                        logger.debug(f"Applied escape sequence repair (attempt {attempt + 1})")
+                        logger.debug(f"Applied JSON repair (attempt {attempt + 1})")
                     else:
                         logger.debug(f"No repair pattern matched (attempt {attempt + 1})")
 

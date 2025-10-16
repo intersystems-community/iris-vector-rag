@@ -326,3 +326,172 @@ pytest tests/integration/test_hybridgraphrag_e2e.py  # All skipped with clear re
 4. **Query Processing**: Multi-modal retrieval (vector, text, graph) depending on pipeline
 5. **Generation**: LLM synthesis with retrieved context
 6. **Response**: Standardized response format with sources and metadata
+
+### REST API (Production-Grade)
+
+**Location**: `iris_rag/api/`
+
+The REST API provides production-ready HTTP endpoints for all RAG pipelines with enterprise features:
+
+**Features**:
+- API key authentication (bcrypt-hashed)
+- Three-tier rate limiting (60/100/1000 requests/min)
+- Request/response logging with audit trail
+- WebSocket streaming for real-time progress
+- Async document upload with validation
+- Health monitoring for all components
+- Elasticsearch-inspired error responses
+- 100% LangChain & RAGAS compatible
+
+**Quick Start**:
+```bash
+# Setup database tables
+make api-setup-db
+
+# Create API key
+make api-create-key NAME="My Key" EMAIL=user@example.com
+
+# Start server (development mode)
+make api-run
+
+# Start server (production mode, 4 workers)
+make api-run-prod
+
+# Open API documentation
+make api-docs  # http://localhost:8000/docs
+```
+
+**CLI Commands**:
+```bash
+# Server operations
+python -m iris_rag.api.cli run [--host HOST] [--port PORT] [--workers N] [--reload]
+python -m iris_rag.api.cli health
+
+# API key management
+python -m iris_rag.api.cli create-key --name NAME --owner-email EMAIL [--tier TIER]
+python -m iris_rag.api.cli list-keys [--owner-email EMAIL]
+python -m iris_rag.api.cli revoke-key --key-id KEY_ID
+
+# Database operations
+python -m iris_rag.api.cli setup-db
+
+# Cleanup job (run daily via cron)
+python -m iris_rag.api.cleanup_job
+```
+
+**API Endpoints**:
+- `POST /{pipeline}/_search` - Execute query (requires auth)
+- `GET /api/v1/pipelines` - List available pipelines (public)
+- `GET /api/v1/pipelines/{name}` - Get pipeline details (public)
+- `POST /api/v1/documents/upload` - Upload documents (requires write permission)
+- `GET /api/v1/documents/operations/{id}` - Track upload progress
+- `GET /api/v1/health` - System health check (public)
+- `WS /ws` - WebSocket streaming (requires auth)
+
+**Authentication**:
+```bash
+# All requests (except /health and /pipelines) require API key
+Authorization: ApiKey <base64(key_id:key_secret)>
+
+# Example
+Authorization: ApiKey N2M5ZTY2NzktNzQyNS00MGRlLTk0NGItZTA3ZmMxZjkwYWU3Om15X3NlY3JldF9rZXk=
+```
+
+**Query Example**:
+```bash
+curl -X POST http://localhost:8000/api/v1/basic/_search \
+  -H "Authorization: ApiKey <your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "What are the symptoms of diabetes?",
+    "top_k": 5
+  }'
+```
+
+**Response Format** (RAGAS compatible):
+```json
+{
+  "response_id": "uuid",
+  "request_id": "uuid",
+  "answer": "Generated answer text...",
+  "retrieved_documents": [
+    {
+      "doc_id": "uuid",
+      "content": "Document text...",
+      "score": 0.95,
+      "metadata": {"source": "file.pdf", "page_number": 127}
+    }
+  ],
+  "sources": ["file.pdf"],
+  "contexts": ["Document text..."],
+  "pipeline_name": "basic",
+  "execution_time_ms": 1456,
+  "retrieval_time_ms": 345,
+  "generation_time_ms": 1089,
+  "tokens_used": 2345
+}
+```
+
+**Rate Limiting**:
+| Tier | Requests/Minute | Requests/Hour | Max Concurrent |
+|------|----------------|---------------|----------------|
+| Basic | 60 | 1,000 | 5 |
+| Premium | 100 | 5,000 | 10 |
+| Enterprise | 1,000 | 50,000 | 20 |
+
+**Error Handling** (Elasticsearch-inspired):
+```json
+{
+  "error": {
+    "type": "validation_exception",
+    "reason": "Invalid parameter value",
+    "details": {
+      "field": "top_k",
+      "rejected_value": -5,
+      "message": "Must be positive integer between 1 and 100",
+      "min_value": 1,
+      "max_value": 100
+    }
+  }
+}
+```
+
+**Database Cleanup**:
+```bash
+# Run cleanup job manually
+python -m iris_rag.api.cleanup_job
+
+# Schedule with cron (daily at 2 AM)
+0 2 * * * cd /path/to/rag-templates && .venv/bin/python -m iris_rag.api.cleanup_job >> logs/cleanup.log 2>&1
+```
+
+**Testing**:
+```bash
+make api-test                 # Run all API tests
+make api-test-contracts       # Run contract tests (TDD)
+make api-test-integration     # Run integration tests
+```
+
+**Configuration**: `config/api_config.yaml`
+```yaml
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+
+database:
+  pool_size: 20
+  max_overflow: 10
+
+pipelines:
+  enabled: [basic, basic_rerank, crag, graphrag, pylate_colbert]
+
+rate_limiting:
+  max_concurrent_per_key: 10
+
+logging:
+  retention_days: 30
+```
+
+**Complete Documentation**: `iris_rag/api/README.md`
+

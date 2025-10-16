@@ -89,10 +89,19 @@ mcp = [
     "uvicorn>=0.23.0",
     "websockets>=11.0.0"
 ]
+api = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
+    "websockets>=12.0",
+    "redis>=5.0.0",
+    "bcrypt>=4.0.0",
+    "python-jose[cryptography]>=3.3.0"
+]
 all = [
     "uv>=0.1.0",
     "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0", 
+    "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "isort>=5.12.0",
@@ -102,9 +111,13 @@ all = [
     "build>=0.10.0",
     "twine>=4.0.0",
     "mcp>=0.1.0",
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "websockets>=11.0.0"
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "websockets>=12.0",
+    "python-multipart>=0.0.6",
+    "redis>=5.0.0",
+    "bcrypt>=4.0.0",
+    "python-jose[cryptography]>=3.3.0"
 ]
 
 [dependency-groups]
