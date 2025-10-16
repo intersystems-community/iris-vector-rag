@@ -85,10 +85,7 @@ class IRISVectorStore(VectorStore):
             try:
                 from tools.chunking.chunking_service import DocumentChunkingService
 
-                # The DocumentChunkingService expects an embedding_func, not a config dict
-                # We'll pass None here and let it use its mock embedding function
-                # The actual embeddings are generated later in _generate_embeddings
-                self.chunking_service = DocumentChunkingService(embedding_func=None)
+                self.chunking_service = DocumentChunkingService(self.chunking_config)
             except ImportError:
                 logger.warning(
                     "DocumentChunkingService not available, disabling auto chunking"

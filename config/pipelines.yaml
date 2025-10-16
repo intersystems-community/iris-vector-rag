@@ -33,7 +33,7 @@ pipelines:
     module: "iris_rag.pipelines.hybrid_graphrag"
     class: "HybridGraphRAGPipeline"
     enabled: true
-    description: "Production GraphRAG with hybrid retrieval - requires iris-vector-graph"
+    description: "Production GraphRAG with hybrid retrieval and graceful fallback"
     schema_requirements:
       tables:
         - "SourceDocuments"
@@ -53,18 +53,17 @@ pipelines:
       - "iris_graph_core"
       - "vector_embeddings"
       - "knowledge_graph"
-      - "iris-vector-graph"
     retrieval_methods:
       - "kg"
       - "vector"
       - "text"
       - "hybrid"
-      - "rrf"
     params:
       top_k: 10
       max_depth: 2
       max_entities: 50
       fusion_weights: [0.4, 0.3, 0.3]
+      fallback_to_graphrag: true
 
   - name: "ColBERT"
     module: "iris_rag.pipelines.colbert_pylate.pylate_pipeline"

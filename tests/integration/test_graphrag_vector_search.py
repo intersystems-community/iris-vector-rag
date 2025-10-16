@@ -30,33 +30,8 @@ class TestGraphRAGVectorSearchIntegration:
 
     @pytest.fixture
     def graphrag_pipeline(self):
-        """Create GraphRAG pipeline and load test data if needed."""
-        pipeline = create_pipeline("graphrag", validate_requirements=False)
-
-        # Try to load minimal test data for vector search tests
-        try:
-            from iris_rag.core.models import Document
-            test_docs = [
-                Document(
-                    page_content="Diabetes is a chronic disease characterized by high blood sugar levels. Common symptoms include increased thirst, frequent urination, and fatigue.",
-                    metadata={"topic": "diabetes", "type": "medical"}
-                ),
-                Document(
-                    page_content="Type 2 diabetes is diagnosed through blood tests including fasting glucose test and A1C test. Treatment includes lifestyle changes and medication.",
-                    metadata={"topic": "diabetes", "type": "medical"}
-                ),
-                Document(
-                    page_content="Machine learning algorithms can predict diabetes risk factors based on patient data and medical history.",
-                    metadata={"topic": "AI", "type": "technology"}
-                )
-            ]
-            # Load documents - this will create embeddings
-            pipeline.load_documents(documents=test_docs)
-        except Exception as e:
-            # If loading fails, tests will skip appropriately
-            pytest.skip(f"Could not load test data for GraphRAG tests: {e}")
-
-        return pipeline
+        """Create GraphRAG pipeline with validation."""
+        return create_pipeline("graphrag", validate_requirements=True)
 
     def test_graphrag_vector_search_retrieval(self, graphrag_pipeline):
         """
@@ -90,47 +65,20 @@ class TestGraphRAGVectorSearchIntegration:
         Then: Returned documents <= top_k
         """
         # Test default K=10
-        pipeline_default = create_pipeline("graphrag", validate_requirements=False)
-
-        # Load test data for this pipeline
-        try:
-            from iris_rag.core.models import Document
-            test_docs = [
-                Document(
-                    page_content=f"Document {i} about diabetes symptoms and treatment.",
-                    metadata={"doc_id": i, "topic": "diabetes"}
-                )
-                for i in range(15)  # Load more than top_k to test limit
-            ]
-            pipeline_default.load_documents(documents=test_docs)
-        except Exception as e:
-            pytest.skip(f"Could not load test data: {e}")
-
+        pipeline_default = create_pipeline("graphrag")
         query = "What are the symptoms of diabetes?"
+        result_default = pipeline_default.query(query)
 
-        try:
-            result_default = pipeline_default.query(query)
-            assert len(result_default.contexts) <= 10, \
-                f"Default top_k=10 violated: {len(result_default.contexts)} documents returned"
-        except Exception as e:
-            # If query fails due to knowledge graph requirements, skip
-            if "Knowledge graph" in str(e) or "entity" in str(e).lower():
-                pytest.skip(f"GraphRAG requires entity extraction: {e}")
-            raise
+        assert len(result_default.contexts) <= 10, \
+            f"Default top_k=10 violated: {len(result_default.contexts)} documents returned"
 
         # Test custom K=5
-        try:
-            config_manager.update_config({"retrieval": {"top_k": 5}})
-            pipeline_custom = create_pipeline("graphrag", config_manager=config_manager, validate_requirements=False)
-            pipeline_custom.load_documents(documents=test_docs)
-            result_custom = pipeline_custom.query(query)
+        config_manager.update_config({"retrieval": {"top_k": 5}})
+        pipeline_custom = create_pipeline("graphrag", config_manager=config_manager)
+        result_custom = pipeline_custom.query(query)
 
-            assert len(result_custom.contexts) <= 5, \
-                f"Custom top_k=5 violated: {len(result_custom.contexts)} documents returned"
-        except Exception as e:
-            if "Knowledge graph" in str(e) or "entity" in str(e).lower():
-                pytest.skip(f"GraphRAG requires entity extraction: {e}")
-            raise
+        assert len(result_custom.contexts) <= 5, \
+            f"Custom top_k=5 violated: {len(result_custom.contexts)} documents returned"
 
     def test_graphrag_dimension_validation(self, graphrag_pipeline, embedding_manager):
         """

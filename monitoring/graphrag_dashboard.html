@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphRAG Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-change {
+            font-size: 0.9em;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .stat-change.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .stat-change.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .performance-table {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .table-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background: #28a745; }
+        .status-warning { background: #ffc107; }
+        .status-error { background: #dc3545; }
+        
+        .refresh-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: background 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .last-updated {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        
+        .alert.error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>📊 GraphRAG Performance Dashboard</h1>
+            <p>Real-time monitoring of knowledge graph operations and performance metrics</p>
+        </div>
+        
+        <div class="refresh-controls">
+            <button class="refresh-btn" onclick="refreshData()">🔄 Refresh</button>
+            <button class="refresh-btn" onclick="toggleAutoRefresh()">⏰ Auto-refresh</button>
+            <div class="last-updated" id="lastUpdated">Last updated: --</div>
+        </div>
+        
+        <div id="alerts"></div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalEntities">--</div>
+                <div class="stat-label">Total Entities</div>
+                <div class="stat-change" id="entitiesChange">--</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-value" id="totalRelationships">--</div>
+                <div class="stat-label">Total Relationships</div>
+                <div class="stat-change" id="relationshipsChange">--</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-value" id="avgQueryTime">--</div>
+                <div class="stat-label">Avg Query Time (ms)</div>
+                <div class="stat-change" id="queryTimeChange">--</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-value" id="cacheHitRate">--%</div>
+                <div class="stat-label">Cache Hit Rate</div>
+                <div class="stat-change" id="cacheChange">--</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">Entity Distribution by Type</div>
+                <canvas id="entityDistributionChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Query Performance Over Time</div>
+                <canvas id="performanceChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Relationship Types Breakdown</div>
+                <canvas id="relationshipChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Daily Query Volume</div>
+                <canvas id="volumeChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="performance-table">
+            <div class="table-title">Recent Query Performance</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Query</th>
+                        <th>Execution Time</th>
+                        <th>Entities Found</th>
+                        <th>Documents Retrieved</th>
+                        <th>Method</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="performanceTableBody">
+                    <!-- Performance data will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let autoRefreshInterval = null;
+        let charts = {};
+        
+        // Sample data - In a real implementation, this would come from your GraphRAG system
+        const sampleData = {
+            stats: {
+                totalEntities: 15847,
+                totalRelationships: 23456,
+                avgQueryTime: 127,
+                cacheHitRate: 78
+            },
+            entityDistribution: {
+                DISEASE: 3542,
+                DRUG: 2847,
+                PERSON: 1823,
+                TREATMENT: 1654,
+                SYMPTOM: 1432,
+                GENE: 1201,
+                PROTEIN: 987,
+                ANATOMY: 765,
+                PROCEDURE: 654,
+                DEVICE: 432,
+                OTHER: 510
+            },
+            recentQueries: [
+                {
+                    status: 'healthy',
+                    query: 'What are the side effects of metformin?',
+                    executionTime: 95,
+                    entitiesFound: 12,
+                    documentsRetrieved: 8,
+                    method: 'Knowledge Graph',
+                    timestamp: '2024-01-15 14:23:45'
+                },
+                {
+                    status: 'healthy',
+                    query: 'Treatment options for diabetes',
+                    executionTime: 143,
+                    entitiesFound: 18,
+                    documentsRetrieved: 15,
+                    method: 'Knowledge Graph',
+                    timestamp: '2024-01-15 14:22:31'
+                },
+                {
+                    status: 'warning',
+                    query: 'Protein interactions in cancer pathways',
+                    executionTime: 287,
+                    entitiesFound: 45,
+                    documentsRetrieved: 32,
+                    method: 'Vector Fallback',
+                    timestamp: '2024-01-15 14:21:18'
+                }
+            ]
+        };
+        
+        // Initialize dashboard
+        function initDashboard() {
+            updateStats();
+            createCharts();
+            updatePerformanceTable();
+            updateLastUpdated();
+        }
+        
+        // Update statistics cards
+        function updateStats() {
+            document.getElementById('totalEntities').textContent = sampleData.stats.totalEntities.toLocaleString();
+            document.getElementById('totalRelationships').textContent = sampleData.stats.totalRelationships.toLocaleString();
+            document.getElementById('avgQueryTime').textContent = sampleData.stats.avgQueryTime;
+            document.getElementById('cacheHitRate').textContent = sampleData.stats.cacheHitRate;
+            
+            // Add some sample changes
+            updateChangeIndicator('entitiesChange', '+2.3%', 'positive');
+            updateChangeIndicator('relationshipsChange', '+5.7%', 'positive');
+            updateChangeIndicator('queryTimeChange', '-8.2%', 'positive');
+            updateChangeIndicator('cacheChange', '+1.4%', 'positive');
+        }
+        
+        function updateChangeIndicator(id, value, type) {
+            const element = document.getElementById(id);
+            element.textContent = value;
+            element.className = `stat-change ${type}`;
+        }
+        
+        // Create charts
+        function createCharts() {
+            createEntityDistributionChart();
+            createPerformanceChart();
+            createRelationshipChart();
+            createVolumeChart();
+        }
+        
+        function createEntityDistributionChart() {
+            const ctx = document.getElementById('entityDistributionChart').getContext('2d');
+            
+            charts.entityDistribution = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(sampleData.entityDistribution),
+                    datasets: [{
+                        data: Object.values(sampleData.entityDistribution),
+                        backgroundColor: [
+                            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57',
+                            '#FF9FF3', '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43',
+                            '#778CA3'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createPerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Generate sample performance data
+            const times = [];
+            const queryTimes = [];
+            for (let i = 23; i >= 0; i--) {
+                times.push(`${i}:00`);
+                queryTimes.push(Math.floor(Math.random() * 100) + 80);
+            }
+            
+            charts.performance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: times,
+                    datasets: [{
+                        label: 'Query Time (ms)',
+                        data: queryTimes,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createRelationshipChart() {
+            const ctx = document.getElementById('relationshipChart').getContext('2d');
+            
+            charts.relationships = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['treats', 'causes', 'interacts_with', 'located_in', 'part_of', 'associated_with'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [4521, 3847, 3245, 2834, 2567, 6442],
+                        backgroundColor: [
+                            '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createVolumeChart() {
+            const ctx = document.getElementById('volumeChart').getContext('2d');
+            
+            // Generate sample volume data for the last 7 days
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const volumes = [245, 312, 287, 398, 445, 167, 134];
+            
+            charts.volume = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'Queries',
+                        data: volumes,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: '#667eea',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update performance table
+        function updatePerformanceTable() {
+            const tbody = document.getElementById('performanceTableBody');
+            tbody.innerHTML = '';
+            
+            sampleData.recentQueries.forEach(query => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="status-indicator status-${query.status}"></span>${query.status}</td>
+                    <td>${query.query}</td>
+                    <td>${query.executionTime}ms</td>
+                    <td>${query.entitiesFound}</td>
+                    <td>${query.documentsRetrieved}</td>
+                    <td>${query.method}</td>
+                    <td>${query.timestamp}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Utility functions
+        function updateLastUpdated() {
+            document.getElementById('lastUpdated').textContent = 
+                `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+        
+        function refreshData() {
+            // Show loading state
+            const refreshBtn = document.querySelector('.refresh-btn');
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '<span class="loading"></span> Refreshing...';
+            refreshBtn.disabled = true;
+            
+            // Simulate data refresh
+            setTimeout(() => {
+                // In a real implementation, you would fetch fresh data from your API
+                updateStats();
+                updatePerformanceTable();
+                updateLastUpdated();
+                
+                // Restore button
+                refreshBtn.innerHTML = originalText;
+                refreshBtn.disabled = false;
+            }, 1000);
+        }
+        
+        function toggleAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                document.querySelector('.refresh-btn:last-child').style.background = '#667eea';
+            } else {
+                autoRefreshInterval = setInterval(() => {
+                    refreshData();
+                }, 30000); // Refresh every 30 seconds
+                document.querySelector('.refresh-btn:last-child').style.background = '#28a745';
+            }
+        }
+        
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

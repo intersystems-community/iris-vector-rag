@@ -308,24 +308,12 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
         authors = metadata.get("authors", "")
         combined = f"{title} {abstract}"
 
-        # Format embedding for IRIS VECTOR type
-        if isinstance(embedding, list):
-            embedding_list = embedding
-        elif hasattr(embedding, 'tolist'):
-            embedding_list = embedding.tolist()
-        else:
-            embedding_list = list(embedding)
-
-        vector_str = f"[{','.join(map(str, embedding_list))}]"
-        vector_dimension = len(embedding_list)
-
-        # IMPORTANT: TO_VECTOR() does NOT accept ? parameters (Constitution Principle VII)
-        # Must embed vector string directly in SQL like insert_vector() utility does
+        # Insert into paper_content table
         sql = text(
-            f"""
+            """
             INSERT INTO paper_content
             (docid, title, abstract, url, published, authors, combined, paper_vector)
-            VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension}))
+            VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR(?))
         """
         )
 
@@ -341,6 +329,7 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
                         published,
                         authors,
                         combined,
+                        str(embedding),
                     ],
                 )
 

@@ -266,25 +266,12 @@ class IRISStorage:
                 if exists:
                     # Update existing document with all available fields
                     if embeddings:
-                        # Format embedding for IRIS VECTOR type
-                        embedding = embeddings[i]
-                        if isinstance(embedding, list):
-                            embedding_list = embedding
-                        elif hasattr(embedding, 'tolist'):
-                            embedding_list = embedding.tolist()
-                        else:
-                            embedding_list = list(embedding)
-
-                        vector_str = f"[{','.join(map(str, embedding_list))}]"
-                        vector_dimension = len(embedding_list)
-
-                        # IMPORTANT: TO_VECTOR() does NOT accept ? parameters (Constitution Principle VII)
-                        # Must embed vector string directly in SQL like insert_vector() utility does
                         update_sql = f"""
                         UPDATE {self.table_name}
-                        SET title = ?, text_content = ?, metadata = ?, embedding = TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension})
+                        SET title = ?, text_content = ?, metadata = ?, embedding = TO_VECTOR(?, DOUBLE, 384)
                         WHERE doc_id = ?
                         """
+                        embedding_str = json.dumps(embeddings[i])
                         title = doc.metadata.get("title", "")
                         cursor.execute(
                             update_sql,
@@ -292,6 +279,7 @@ class IRISStorage:
                                 title,
                                 doc.page_content,
                                 metadata_json,
+                                embedding_str,
                                 doc.id,
                             ],
                         )
@@ -314,24 +302,11 @@ class IRISStorage:
                     keywords = doc.metadata.get("keywords", "")
 
                     if embeddings:
-                        # Format embedding for IRIS VECTOR type
-                        embedding = embeddings[i]
-                        if isinstance(embedding, list):
-                            embedding_list = embedding
-                        elif hasattr(embedding, 'tolist'):
-                            embedding_list = embedding.tolist()
-                        else:
-                            embedding_list = list(embedding)
-
-                        vector_str = f"[{','.join(map(str, embedding_list))}]"
-                        vector_dimension = len(embedding_list)
-
-                        # IMPORTANT: TO_VECTOR() does NOT accept ? parameters (Constitution Principle VII)
-                        # Must embed vector string directly in SQL like insert_vector() utility does
                         insert_sql = f"""
                         INSERT INTO {self.table_name} (doc_id, title, text_content, abstract, authors, keywords, metadata, embedding)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension}))
+                        VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR(?, DOUBLE, 384))
                         """
+                        embedding_str = json.dumps(embeddings[i])
                         cursor.execute(
                             insert_sql,
                             [
@@ -342,6 +317,7 @@ class IRISStorage:
                                 authors,
                                 keywords,
                                 metadata_json,
+                                embedding_str,
                             ],
                         )
                     else:
@@ -470,33 +446,16 @@ class IRISStorage:
         cursor = connection.cursor()
 
         try:
-            # IMPORTANT: Use vector_sql_utils per Constitution Principle VII
-            # TO_VECTOR() does NOT accept ? parameters - must use safe utilities
-            from common.vector_sql_utils import build_safe_vector_dot_sql
+            # Build base query
+            # Ensure selecting 'text_content'
+            base_sql = f"""
+            SELECT TOP {top_k} id, text_content, metadata,
+                   VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?, DOUBLE, 384)) as similarity_score
+            FROM {self.table_name}
+            WHERE embedding IS NOT NULL
+            """
 
-            # Format vector for safe SQL building
-            if isinstance(query_embedding, list):
-                embedding_list = query_embedding
-            elif hasattr(query_embedding, 'tolist'):
-                embedding_list = query_embedding.tolist()
-            else:
-                embedding_list = list(query_embedding)
-
-            vector_str = f"[{','.join(map(str, embedding_list))}]"
-            vector_dimension = len(embedding_list)
-
-            # Build safe vector search query
-            base_sql = build_safe_vector_dot_sql(
-                table=self.table_name,
-                vector_column="embedding",
-                vector_string=vector_str,
-                vector_dimension=vector_dimension,
-                id_column="id",
-                top_k=top_k,
-                additional_columns=["text_content", "metadata"]
-            )
-
-            params = []
+            params = [json.dumps(query_embedding)]
 
             # Add metadata filters if provided
             if metadata_filter:

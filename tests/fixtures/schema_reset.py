@@ -39,41 +39,15 @@ class SchemaResetter:
         cursor = conn.cursor()
 
         try:
-            # Drop existing tables in correct order to handle foreign key constraints
-            # EntityRelationships must be dropped before Entities
-            table_drop_order = [
-                "EntityRelationships",  # Has FK to Entities
-                "DocumentChunks",       # Independent
-                "Entities",             # Referenced by EntityRelationships
-                "SourceDocuments",      # Independent
-            ]
+            # Drop existing tables (in reverse order to handle foreign keys)
+            for schema_def in reversed(self.expected_schemas):
+                drop_sql = f"DROP TABLE IF EXISTS {schema_def.schema_name}.{schema_def.table_name}"
+                cursor.execute(drop_sql)
 
-            for table_name in table_drop_order:
-                drop_sql = f"DROP TABLE IF EXISTS RAG.{table_name}"
-                try:
-                    cursor.execute(drop_sql)
-                except Exception as drop_error:
-                    # Ignore errors for tables that don't exist
-                    if "does not exist" in str(drop_error).lower() or "not found" in str(drop_error).lower():
-                        pass
-                    else:
-                        # Log but continue - we'll try to create tables anyway
-                        print(f"Warning: Could not drop table {table_name}: {drop_error}")
-
-            # Create tables in dependency order
-            # Entities before EntityRelationships (FK dependency)
-            table_create_order = [
-                "SourceDocuments",
-                "DocumentChunks",
-                "Entities",
-                "EntityRelationships",  # Depends on Entities
-            ]
-
-            for table_name in table_create_order:
-                schema_def = next((s for s in self.expected_schemas if s.table_name == table_name), None)
-                if schema_def:
-                    create_sql = self._build_create_table_sql(schema_def)
-                    cursor.execute(create_sql)
+            # Create tables
+            for schema_def in self.expected_schemas:
+                create_sql = self._build_create_table_sql(schema_def)
+                cursor.execute(create_sql)
 
             conn.commit()
 

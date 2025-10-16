@@ -160,7 +160,7 @@ def format_vector_search_sql(
         ...     "text_content"
         ... )
         'SELECT TOP 10 doc_id, text_content,
-            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', FLOAT, 768)) AS score
+            VECTOR_COSINE(embedding, TO_VECTOR('[0.1,0.2,0.3]', DOUBLE, 768)) AS score
          FROM SourceDocuments
          WHERE embedding IS NOT NULL
          ORDER BY score DESC'
@@ -199,13 +199,13 @@ def format_vector_search_sql(
         select_parts.extend([", ", content_column])
 
     # Construct TO_VECTOR call carefully to avoid parameter detection
-    # Use FLOAT for cheaper storage and compute (per best practices)
+    # Use DOUBLE datatype to match VECTOR(DOUBLE, dimension) schema
     vector_func_parts = [
         ", VECTOR_COSINE(",
         vector_column,
         ", TO_VECTOR('",
         vector_string,
-        "', FLOAT, ",
+        "', DOUBLE, ",
         embedding_dim_str,
         ")) AS score",
     ]
@@ -287,11 +287,11 @@ def format_vector_search_sql_with_params(
         select_parts.extend([", ", content_column])
 
     # Construct TO_VECTOR call with ? placeholder but avoid embedding dimension parameterization
-    # Use FLOAT for cheaper storage and compute (per best practices)
+    # Use DOUBLE datatype to match VECTOR(DOUBLE, dimension) schema
     vector_func_parts = [
         ", VECTOR_COSINE(",
         vector_column,
-        ", TO_VECTOR(?, FLOAT, ",
+        ", TO_VECTOR(?, DOUBLE, ",
         embedding_dim_str,
         ")) AS score",
     ]
@@ -500,10 +500,10 @@ def build_safe_vector_dot_sql(
     select_parts = [f"SELECT TOP {top_k} {id_column}"]
     if extra_columns:
         select_parts.extend([f", {col}" for col in extra_columns])
-    # IMPORTANT: Embed vector string directly with FLOAT type and dimension
+    # IMPORTANT: Embed vector string directly with DOUBLE type and dimension
     # TO_VECTOR does NOT accept ? parameters
-    # Use FLOAT for cheaper storage and compute (per best practices)
-    select_parts.append(f", VECTOR_DOT_PRODUCT({vector_column}, TO_VECTOR('{vector_string}', FLOAT, {vector_dimension})) AS score")
+    # Use DOUBLE to match the VECTOR(DOUBLE, dimension) column definition
+    select_parts.append(f", VECTOR_DOT_PRODUCT({vector_column}, TO_VECTOR('{vector_string}', DOUBLE, {vector_dimension})) AS score")
 
     # Build FROM clause
     from_clause = f" FROM {table}"

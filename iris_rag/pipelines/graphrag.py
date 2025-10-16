@@ -75,7 +75,6 @@ class GraphRAGPipeline(RAGPipeline):
         self.default_top_k = self.pipeline_config.get("default_top_k", 10)
         self.max_depth = self.pipeline_config.get("max_depth", 2)
         self.max_entities = self.pipeline_config.get("max_entities", 50)
-        self.entity_extraction_enabled = True
 
         logger.info(
             "Production-hardened GraphRAG pipeline initialized with entity extraction"
@@ -122,48 +121,41 @@ class GraphRAGPipeline(RAGPipeline):
         total_relationships = 0
         failed_documents = []
 
-        if self.entity_extraction_enabled:
-            total_entities = 0
-            total_relationships = 0
-            failed_documents = []
-            
-            for doc in documents:
-                try:
-                    logger.info(f"Processing document {doc.id} for entity extraction")
-                    result = self.entity_extraction_service.process_document(doc)
+        for doc in documents:
+            try:
+                logger.info(f"Processing document {doc.id} for entity extraction")
+                result = self.entity_extraction_service.process_document(doc)
 
-                    # Log warning if no entities stored, but don't fail
-                    # (tickets without technical content may have zero extractable entities)
-                    if not result.get("stored", False):
-                        logger.warning(
-                            f"No entities stored for document {doc.id} - may lack extractable technical content"
-                        )
-                    else:
-                        total_entities += result.get(
-                            "entities_count", result.get("entities_extracted", 0)
-                        )
-                        total_relationships += result.get(
-                            "relationships_count", result.get("relationships_extracted", 0)
-                        )
+                # Log warning if no entities stored, but don't fail
+                # (tickets without technical content may have zero extractable entities)
+                if not result.get("stored", False):
+                    logger.warning(
+                        f"No entities stored for document {doc.id} - may lack extractable technical content"
+                    )
+                else:
+                    total_entities += result.get(
+                        "entities_count", result.get("entities_extracted", 0)
+                    )
+                    total_relationships += result.get(
+                        "relationships_count", result.get("relationships_extracted", 0)
+                    )
 
-                        logger.debug(
-                            f"Document {doc.id}: {result.get('entities_extracted', 0)} entities, {result.get('relationships_extracted', 0)} relationships"
-                        )
+                    logger.debug(
+                        f"Document {doc.id}: {result.get('entities_extracted', 0)} entities, {result.get('relationships_extracted', 0)} relationships"
+                    )
 
-                except Exception as e:
-                    # Log error but continue processing other documents
-                    logger.warning(f"Entity extraction error for document {doc.id}: {e}")
-            # Only validate if extraction was enabled
-            if total_entities == 0:
-                raise KnowledgeGraphNotPopulatedException(
-                    "No entities were extracted from documents. Knowledge graph is empty."
-                )
-        else:
-            logger.info(f"GraphRAG: Entity extraction disabled - loaded {len(documents)} documents without entity extraction")
+            except Exception as e:
+                # Log error but continue processing other documents
+                logger.warning(f"Entity extraction error for document {doc.id}: {e}")
 
         # Only fail if we got zero entities across ALL documents
         # (suggests a systematic failure rather than content issues)
-        # duplicate code removed here
+
+        # Validate that we have entities in the knowledge graph
+        if total_entities == 0:
+            raise KnowledgeGraphNotPopulatedException(
+                "No entities were extracted from documents. Knowledge graph is empty."
+            )
 
         processing_time = time.time() - start_time
         logger.info(
@@ -198,25 +190,6 @@ class GraphRAGPipeline(RAGPipeline):
             "file_size": os.path.getsize(file_path),
         }
         return Document(page_content=content, metadata=metadata)
-
-    def _store_documents(self, documents: List[Document]) -> None:
-        """
-        Store documents without generating embeddings.
-
-        This method is used when generate_embeddings=False is passed to load_documents.
-        It stores the documents in the database without creating vector embeddings.
-        """
-        # Use the vector store's add_documents method with auto_chunk=True
-        # This ensures large documents are properly chunked before storage
-        try:
-            # The vector store will handle chunking and storage properly
-            # Pass None for embeddings so the vector store knows to generate empty embeddings
-            # after chunking (this ensures proper chunking happens)
-            self.vector_store.add_documents(documents, embeddings=None, auto_chunk=True)
-            logger.info(f"Stored {len(documents)} documents without embeddings using vector store")
-        except Exception as e:
-            logger.error(f"Failed to store documents: {e}")
-            raise GraphRAGException(f"Failed to store documents: Database operation failed during document storage: {type(e).__name__}")
 
     def query(self, query_text: str, top_k: int = 10, **kwargs) -> Dict[str, Any]:
         """
@@ -587,11 +560,11 @@ class GraphRAGPipeline(RAGPipeline):
             placeholders = ",".join(["?" for _ in entity_list])
 
             query = f"""
-                SELECT DISTINCT sd.doc_id, sd.text_content, sd.title
+                SELECT DISTINCT sd.id, sd.text_content, sd.title
                 FROM RAG.SourceDocuments sd
-                JOIN RAG.Entities e ON sd.doc_id = e.source_doc_id
+                JOIN RAG.Entities e ON sd.id = e.source_doc_id
                 WHERE e.entity_id IN ({placeholders})
-                ORDER BY sd.doc_id
+                ORDER BY sd.id
             """
 
             logger.debug(

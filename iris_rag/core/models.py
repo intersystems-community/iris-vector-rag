@@ -1,6 +1,8 @@
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+from enum import Enum
 
 
 def default_id_factory():
@@ -372,10 +374,292 @@ class RelationshipTypes:
         }
 
 
+# Batch Processing Models (Feature 041: Batch LLM Entity Extraction)
+
+
+class BatchStatus(str, Enum):
+    """Status enumeration for batch processing lifecycle."""
+
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    SPLIT = "SPLIT"
+
+
+@dataclass
+class DocumentBatch:
+    """
+    Represents a batch of documents grouped for batch entity extraction.
+
+    This model supports FR-001 (batch 5-10 documents), FR-006 (token budget enforcement),
+    and FR-005 (retry tracking).
+
+    Attributes:
+        batch_id: Unique identifier for the batch
+        document_ids: List of document IDs in this batch
+        batch_size: Number of documents in the batch
+        total_token_count: Total token count across all documents
+        creation_timestamp: When the batch was created
+        processing_status: Current status (PENDING, PROCESSING, COMPLETED, FAILED, SPLIT)
+        retry_count: Number of retry attempts (for FR-005 exponential backoff)
+    """
+
+    batch_id: str = field(default_factory=default_id_factory)
+    document_ids: List[str] = field(default_factory=list)
+    batch_size: int = 0
+    total_token_count: int = 0
+    creation_timestamp: datetime = field(default_factory=datetime.now)
+    processing_status: BatchStatus = BatchStatus.PENDING
+    retry_count: int = 0
+
+    def add_document(self, document_id: str, token_count: int) -> None:
+        """
+        Add a document to the batch.
+
+        Args:
+            document_id: ID of the document to add
+            token_count: Token count of the document
+
+        Raises:
+            ValueError: If document ID is invalid or token count is negative
+        """
+        if not document_id or not isinstance(document_id, str):
+            raise ValueError("Document ID must be a non-empty string")
+        if token_count < 0:
+            raise ValueError("Token count must be non-negative")
+
+        # Prevent duplicates
+        if document_id in self.document_ids:
+            raise ValueError(f"Document {document_id} already in batch")
+
+        self.document_ids.append(document_id)
+        self.batch_size += 1
+        self.total_token_count += token_count
+
+    def is_within_budget(self, token_budget: int = 8192) -> bool:
+        """
+        Check if batch is within token budget (FR-006).
+
+        Args:
+            token_budget: Maximum allowed tokens (default: 8192)
+
+        Returns:
+            True if batch is within budget, False otherwise
+        """
+        return self.total_token_count <= token_budget
+
+    def __post_init__(self):
+        """Post-initialization validation."""
+        if self.batch_size < 0:
+            raise ValueError("Batch size must be non-negative")
+        if self.total_token_count < 0:
+            raise ValueError("Token count must be non-negative")
+        if self.retry_count < 0:
+            raise ValueError("Retry count must be non-negative")
+        if len(self.document_ids) != self.batch_size:
+            raise ValueError("Document IDs length must match batch size")
+
+
+@dataclass
+class BatchExtractionResult:
+    """
+    Represents the result of batch entity extraction.
+
+    This model supports FR-003 (entity traceability), FR-004 (document ID preservation),
+    and FR-005 (retry tracking).
+
+    Attributes:
+        batch_id: ID of the batch that was processed
+        per_document_entities: Mapping of document_id -> list of extracted entities
+        per_document_relationships: Mapping of document_id -> list of extracted relationships
+        processing_time: Time taken to process the batch (seconds)
+        success_status: Whether extraction succeeded
+        retry_count: Number of retry attempts (for FR-005)
+        error_message: Error message if extraction failed
+    """
+
+    batch_id: str
+    per_document_entities: Dict[str, List[Entity]] = field(default_factory=dict)
+    per_document_relationships: Dict[str, List[Relationship]] = field(
+        default_factory=dict
+    )
+    processing_time: float = 0.0
+    success_status: bool = True
+    retry_count: int = 0
+    error_message: Optional[str] = None
+
+    def get_all_entities(self) -> List[Entity]:
+        """
+        Get all entities across all documents in the batch.
+
+        Returns:
+            Flattened list of all entities
+        """
+        all_entities = []
+        for entities in self.per_document_entities.values():
+            all_entities.extend(entities)
+        return all_entities
+
+    def get_all_relationships(self) -> List[Relationship]:
+        """
+        Get all relationships across all documents in the batch.
+
+        Returns:
+            Flattened list of all relationships
+        """
+        all_relationships = []
+        for relationships in self.per_document_relationships.values():
+            all_relationships.extend(relationships)
+        return all_relationships
+
+    def get_entity_count_by_document(self) -> Dict[str, int]:
+        """
+        Get entity counts grouped by document (for FR-003 quality validation).
+
+        Returns:
+            Mapping of document_id -> entity count
+        """
+        return {
+            doc_id: len(entities)
+            for doc_id, entities in self.per_document_entities.items()
+        }
+
+    def __post_init__(self):
+        """Post-initialization validation."""
+        if not self.batch_id:
+            raise ValueError("Batch ID cannot be empty")
+        if self.processing_time < 0:
+            raise ValueError("Processing time must be non-negative")
+        if self.retry_count < 0:
+            raise ValueError("Retry count must be non-negative")
+
+
+@dataclass
+class ProcessingMetrics:
+    """
+    Represents processing metrics for batch entity extraction (FR-007).
+
+    This model tracks statistics required by FR-007: total batches, average processing time,
+    entity extraction rate, zero-entity documents, and failure tracking.
+
+    Attributes:
+        total_batches_processed: Total number of batches processed
+        total_documents_processed: Total number of documents processed
+        average_batch_processing_time: Average time per batch (seconds)
+        speedup_factor: Actual speedup achieved vs single-document baseline
+        entity_extraction_rate_per_batch: Average entities extracted per batch
+        zero_entity_documents_count: Count of documents with zero entities (quality signal)
+        failed_batches_count: Number of batches that failed
+        retry_attempts_total: Total retry attempts across all batches
+    """
+
+    total_batches_processed: int = 0
+    total_documents_processed: int = 0
+    average_batch_processing_time: float = 0.0
+    speedup_factor: float = 1.0
+    entity_extraction_rate_per_batch: float = 0.0
+    zero_entity_documents_count: int = 0
+    failed_batches_count: int = 0
+    retry_attempts_total: int = 0
+
+    def update_with_batch(
+        self,
+        batch_result: BatchExtractionResult,
+        batch_size: int,
+        single_doc_baseline_time: float = 7.2,
+    ) -> None:
+        """
+        Update metrics with a new batch result.
+
+        Args:
+            batch_result: Result from batch processing
+            batch_size: Number of documents in the batch
+            single_doc_baseline_time: Baseline time per document (default: 7.2s from spec)
+        """
+        # Update counts
+        self.total_batches_processed += 1
+        self.total_documents_processed += batch_size
+        self.retry_attempts_total += batch_result.retry_count
+
+        if not batch_result.success_status:
+            self.failed_batches_count += 1
+            return  # Don't update other metrics for failed batches
+
+        # Update average processing time (running average)
+        total_time = (
+            self.average_batch_processing_time * (self.total_batches_processed - 1)
+        )
+        total_time += batch_result.processing_time
+        self.average_batch_processing_time = total_time / self.total_batches_processed
+
+        # Update entity extraction rate (running average)
+        entity_counts = batch_result.get_entity_count_by_document()
+        total_entities = sum(entity_counts.values())
+
+        total_entity_rate = (
+            self.entity_extraction_rate_per_batch * (self.total_batches_processed - 1)
+        )
+        total_entity_rate += total_entities
+        self.entity_extraction_rate_per_batch = (
+            total_entity_rate / self.total_batches_processed
+        )
+
+        # Update zero-entity document count
+        for count in entity_counts.values():
+            if count == 0:
+                self.zero_entity_documents_count += 1
+
+        # Calculate speedup factor
+        self.speedup_factor = self.calculate_speedup(single_doc_baseline_time)
+
+    def calculate_speedup(self, single_doc_baseline_time: float = 7.2) -> float:
+        """
+        Calculate speedup factor vs single-document baseline (FR-002).
+
+        Args:
+            single_doc_baseline_time: Baseline time per document (default: 7.2s from spec)
+
+        Returns:
+            Speedup factor (e.g., 3.0 for 3x speedup)
+        """
+        if self.average_batch_processing_time <= 0:
+            return 1.0
+
+        # Calculate average documents per batch
+        if self.total_batches_processed == 0:
+            return 1.0
+
+        avg_docs_per_batch = (
+            self.total_documents_processed / self.total_batches_processed
+        )
+
+        # Speedup = (baseline_time * docs_per_batch) / actual_batch_time
+        baseline_batch_time = single_doc_baseline_time * avg_docs_per_batch
+        return baseline_batch_time / self.average_batch_processing_time
+
+    def __post_init__(self):
+        """Post-initialization validation."""
+        if self.total_batches_processed < 0:
+            raise ValueError("Total batches must be non-negative")
+        if self.total_documents_processed < 0:
+            raise ValueError("Total documents must be non-negative")
+        if self.average_batch_processing_time < 0:
+            raise ValueError("Average batch processing time must be non-negative")
+        if self.speedup_factor < 0:
+            raise ValueError("Speedup factor must be non-negative")
+        if self.entity_extraction_rate_per_batch < 0:
+            raise ValueError("Entity extraction rate must be non-negative")
+        if self.zero_entity_documents_count < 0:
+            raise ValueError("Zero entity documents count must be non-negative")
+        if self.failed_batches_count < 0:
+            raise ValueError("Failed batches count must be non-negative")
+        if self.retry_attempts_total < 0:
+            raise ValueError("Retry attempts total must be non-negative")
+
+
 # Coverage Analysis Models
 
-from datetime import datetime
-from typing import List
 import re
 
 
