@@ -494,7 +494,7 @@ PIPELINE_REQUIREMENTS_REGISTRY = {
     "basic_rerank": BasicRAGRerankingRequirements,
     "pylate_colbert": PyLateColBERTRequirements,
     "crag": CRAGRequirements,
-    "graphrag": HybridGraphRAGRequirements,  # Map to HybridGraphRAGRequirements since factory creates HybridGraphRAGPipeline
+    "graphrag": GraphRAGRequirements,
     "hybrid_graphrag": HybridGraphRAGRequirements,
 }
 

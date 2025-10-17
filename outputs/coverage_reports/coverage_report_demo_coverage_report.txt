@@ -1,0 +1,40 @@
+================================================================================
+COVERAGE REPORT
+================================================================================
+Report ID: demo_coverage_report
+Timestamp: 2025-10-02 17:39:44.156800
+Git Commit: demo123abc
+
+OVERALL COVERAGE
+----------------------------------------
+Total Lines: 2500
+Covered Lines: 1812
+Coverage: 72.5%
+Target (60%): ✓ PASS
+
+Branch Coverage: 68.5%
+Function Coverage: 85.2%
+
+PERFORMANCE
+----------------------------------------
+Analysis Time: 45.20s
+Test Execution: 120.80s
+Analysis Target (≤300s): ✓
+
+MODULE COVERAGE
+--------------------------------------------------------------------------------
+Module                                   Coverage   Lines      Status    
+--------------------------------------------------------------------------------
+iris_rag.validation.requirements [CRITICAL]   90.2% 110/122 ✓ PASS    
+    Missing: 64, 87, 102
+iris_rag.config.manager [CRITICAL]         60.1% 140/233 ✗ FAIL    
+    Missing: 50, 75, 100, 150, 200
+--------------------------------------------------------------------------------
+
+CRITICAL MODULES SUMMARY
+----------------------------------------
+Critical Modules at Target: 1/2
+Critical Target (80%): ✗ FAIL
+
+Report generated in 0.000s
+================================================================================

@@ -1,0 +1,80 @@
+{
+  "start_time": "2025-06-01T22:37:27.795292",
+  "schema_checks": {
+    "RAG.SourceDocuments.embedding": {
+      "type_correct": false,
+      "expected_type": "VECTOR(FLOAT)"
+    },
+    "RAG.DocumentChunks.chunk_embedding": {
+      "type_correct": false,
+      "expected_type": "VECTOR(FLOAT)"
+    },
+    "RAG.Entities.embedding": {
+      "type_correct": false,
+      "expected_type": "VECTOR(FLOAT)"
+    },
+    "RAG.KnowledgeGraphNodes.embedding": {
+      "type_correct": false,
+      "expected_type": "VECTOR(FLOAT)"
+    },
+    "RAG.DocumentTokenEmbeddings.token_embedding": {
+      "type_correct": false,
+      "expected_type": "VECTOR(FLOAT)"
+    }
+  },
+  "data_integrity_checks": {
+    "RAG.SourceDocuments.embedding": {
+      "total_rows": 1050,
+      "vector_rows": 1050,
+      "null_rows": 0,
+      "sample_available": true,
+      "dimension_verified": true,
+      "actual_dimension": 384
+    },
+    "RAG.DocumentChunks.chunk_embedding": {
+      "total_rows": 0,
+      "vector_rows": 0,
+      "null_rows": 0,
+      "sample_available": false,
+      "dimension_verified": false,
+      "actual_dimension": null
+    },
+    "RAG.Entities.embedding": {
+      "total_rows": 0,
+      "vector_rows": 0,
+      "null_rows": 0,
+      "sample_available": false,
+      "dimension_verified": false,
+      "actual_dimension": null
+    },
+    "RAG.KnowledgeGraphNodes.embedding": {
+      "total_rows": 0,
+      "vector_rows": 0,
+      "null_rows": 0,
+      "sample_available": false,
+      "dimension_verified": false,
+      "actual_dimension": null
+    },
+    "RAG.DocumentTokenEmbeddings.token_embedding": {
+      "total_rows": 317203,
+      "vector_rows": 317203,
+      "null_rows": 0,
+      "sample_available": true,
+      "dimension_verified": false,
+      "actual_dimension": 768
+    }
+  },
+  "functionality_tests": {
+    "to_vector_float": false,
+    "RAG.SourceDocuments.embedding": false,
+    "RAG.DocumentChunks.chunk_embedding": false,
+    "RAG.Entities.embedding": false,
+    "RAG.KnowledgeGraphNodes.embedding": false,
+    "RAG.DocumentTokenEmbeddings.token_embedding": false
+  },
+  "performance_tests": {},
+  "errors": [],
+  "warnings": [],
+  "end_time": "2025-06-01T22:37:30.788186",
+  "overall_success": false
+}
