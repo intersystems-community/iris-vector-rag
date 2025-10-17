@@ -76,7 +76,7 @@ Entities and relationships **increment** but documents **never progress beyond 1
 
 ## Root Cause Analysis
 
-The schema manager in `/Users/tdyar/ws/rag-templates/iris_rag/services/schema_manager.py` is detecting a column mismatch:
+The schema manager in `/Users/intersystems-community/ws/rag-templates/iris_rag/services/schema_manager.py` is detecting a column mismatch:
 
 ```
 Migration required for SourceDocuments: missing column 'id' in physical schema.
@@ -180,9 +180,9 @@ Currently, **entity extraction is unusable** for batch processing. Temporary wor
 This bug completely blocks the ability to index large datasets with entity extraction enabled. The initial test with 5 documents worked perfectly (16x speedup!), but any multi-batch processing fails.
 
 ## Files Involved
-- `/Users/tdyar/ws/rag-templates/iris_rag/services/schema_manager.py` - Schema validation logic
-- `/Users/tdyar/ws/rag-templates/iris_rag/services/storage.py` - Entity storage adapter
-- `/Users/tdyar/ws/rag-templates/iris_rag/pipelines/graphrag.py` - Pipeline orchestration
+- `/Users/intersystems-community/ws/rag-templates/iris_rag/services/schema_manager.py` - Schema validation logic
+- `/Users/intersystems-community/ws/rag-templates/iris_rag/services/storage.py` - Entity storage adapter
+- `/Users/intersystems-community/ws/rag-templates/iris_rag/pipelines/graphrag.py` - Pipeline orchestration
 
 ## ✅ FIX IMPLEMENTED
 
@@ -191,7 +191,7 @@ This bug completely blocks the ability to index large datasets with entity extra
 Added caching to `SchemaManager.needs_migration()` to prevent repeated validation checks.
 
 **Files Modified:**
-- `/Users/tdyar/ws/rag-templates/iris_rag/storage/schema_manager.py`
+- `/Users/intersystems-community/ws/rag-templates/iris_rag/storage/schema_manager.py`
 
 **Changes Made:**
 1. Added `_schema_validation_cache` dict to store validation results

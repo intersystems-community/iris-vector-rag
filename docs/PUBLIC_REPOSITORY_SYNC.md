@@ -23,7 +23,7 @@ The RAG-Templates project is developed internally at InterSystems with reference
 - **Internal GitLab URLs** → Public GitHub URLs
 - **Internal Docker Registry** → Public Docker Hub
 - **Internal Email Addresses** → Generic maintainer emails
-- **Internal Merge Request References** → Pull Request references
+- **Internal Pull Request References** → Pull Request references
 - **Internal User Paths** → Community organization paths
 
 ## Quick Start
@@ -80,14 +80,14 @@ The following redaction rules are automatically applied:
 
 | Internal Reference | Public Replacement | Count |
 |-------------------|-------------------|-------|
-| `gitlab.iscinternal.com` | `github.com/intersystems-community` | ~30 |
-| `https://gitlab.iscinternal.com/tdyar/rag-templates` | `https://github.com/intersystems-community/iris-rag-templates` | ~15 |
-| `git@gitlab.iscinternal.com:tdyar/rag-templates.git` | `git@github.com:intersystems-community/iris-rag-templates.git` | ~5 |
-| `docker.iscinternal.com/intersystems/iris` | `intersystemsdc/iris-community` | ~10 |
-| `merge request` / `Merge Request` | `pull request` / `Pull Request` | ~20 |
-| `MR #` | `PR #` | ~5 |
-| `tdyar@intersystems.com` | `maintainer@example.com` | ~3 |
-| `/tdyar/` | `/intersystems-community/` | ~500 |
+| `github.com/intersystems-community` | `github.com/intersystems-community` | ~30 |
+| `https://github.com/intersystems-community/intersystems-community/rag-templates` | `https://github.com/intersystems-community/iris-rag-templates` | ~15 |
+| `git@github.com/intersystems-community:tdyar/rag-templates.git` | `git@github.com:intersystems-community/iris-rag-templates.git` | ~5 |
+| `intersystemsdc/iris-community` | `intersystemsdc/iris-community` | ~10 |
+| `pull request` / `Pull Request` | `pull request` / `Pull Request` | ~20 |
+| `PR #` | `PR #` | ~5 |
+| `maintainer@example.com` | `maintainer@example.com` | ~3 |
+| `/intersystems-community/` | `/intersystems-community/` | ~500 |
 
 **Total**: ~614 replacements across ~92 files
 
@@ -160,7 +160,7 @@ python scripts/redact_for_public.py --log-file redaction-$(date +%Y%m%d).json
 
 2. **Merge to Main (Internal)**:
    ```bash
-   # Create merge request on GitLab
+   # Create pull request on GitLab
    # Review and merge
    ```
 
@@ -238,7 +238,7 @@ grep -r "docker.iscinternal" . --exclude-dir=.git || echo "✅ No internal regis
 grep -r "@intersystems.com" . --exclude-dir=.git || echo "✅ No internal emails"
 
 # Check for internal paths
-grep -r "/tdyar/" . --exclude-dir=.git || echo "✅ No internal paths"
+grep -r "/intersystems-community/" . --exclude-dir=.git || echo "✅ No internal paths"
 
 # 3. Test build and basic functionality
 make install
@@ -267,7 +267,7 @@ if grep -r "iscinternal" "$REPO_PATH" --exclude-dir=.git; then
     ((ISSUES++))
 fi
 
-if grep -r "tdyar@intersystems.com" "$REPO_PATH" --exclude-dir=.git; then
+if grep -r "maintainer@example.com" "$REPO_PATH" --exclude-dir=.git; then
     echo "❌ Found internal emails"
     ((ISSUES++))
 fi

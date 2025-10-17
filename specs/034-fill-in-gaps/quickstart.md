@@ -170,7 +170,7 @@ After successful test execution:
 
 ## Related Documentation
 
-- Feature 033: `/Users/tdyar/ws/rag-templates/specs/033-fix-graphrag-vector/spec.md`
+- Feature 033: `/Users/intersystems-community/ws/rag-templates/specs/033-fix-graphrag-vector/spec.md`
 - HybridGraphRAG Implementation: `iris_rag/pipelines/hybrid_graphrag.py`
 - Existing Tests: `tests/contract/`, `tests/integration/`
 - Constitution: `.specify/memory/constitution.md`

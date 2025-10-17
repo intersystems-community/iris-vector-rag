@@ -42,8 +42,8 @@ Tests MUST be written before implementation. All contract tests MUST fail initia
 2. **External IRIS instance**: When configured via environment variables
 
 **IRIS Docker Management Procedures**:
-- **Required IRIS Image**: ALL Docker Compose files MUST use `docker.iscinternal.com/intersystems/iris:2025.3.0EHAT.127.0-linux-arm64v8` (note: NOT iris-lockeddown)
-- **Licensed IRIS Priority**: Use `docker.iscinternal.com/intersystems/iris:2025.3.0EHAT.127.0-linux-arm64v8` or similar licensed images when available
+- **Required IRIS Image**: ALL Docker Compose files MUST use `intersystemsdc/iris-community:2025.3.0EHAT.127.0-linux-arm64v8` (note: NOT iris-lockeddown)
+- **Licensed IRIS Priority**: Use `intersystemsdc/iris-community:2025.3.0EHAT.127.0-linux-arm64v8` or similar licensed images when available
 - **Standardized Port Mapping**: ALL Docker Compose files MUST follow the framework's port mapping strategy:
   * **Container ports**: Always use IRIS standard ports (1972 SuperServer, 52773 Management Portal)
   * **Host port ranges**:

@@ -11,7 +11,7 @@
 **Question**: How can we safely extract the list of available pipeline types from the iris_rag factory without triggering pipeline initialization or database connections?
 
 **Investigation**:
-Examined `/Users/tdyar/ws/rag-templates/iris_rag/__init__.py` (lines 104-161):
+Examined `/Users/intersystems-community/ws/rag-templates/iris_rag/__init__.py` (lines 104-161):
 ```python
 def _create_pipeline_legacy(...):
     if pipeline_type == "basic":

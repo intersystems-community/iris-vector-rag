@@ -2,7 +2,7 @@
 # Implementation Plan: Production-Grade REST API for RAG Pipelines
 
 **Branch**: `042-full-rest-api` | **Date**: 2025-10-16 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/Users/tdyar/ws/rag-templates/specs/042-full-rest-api/spec.md`
+**Input**: Feature specification from `/Users/intersystems-community/ws/rag-templates/specs/042-full-rest-api/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```

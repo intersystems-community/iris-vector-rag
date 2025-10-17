@@ -1,7 +1,7 @@
 # Tasks: Configurable Test Backend Modes (Enterprise & Community)
 
 **Feature**: 035-make-2-modes
-**Input**: Design documents from `/Users/tdyar/ws/rag-templates/specs/035-make-2-modes/`
+**Input**: Design documents from `/Users/intersystems-community/ws/rag-templates/specs/035-make-2-modes/`
 **Prerequisites**: plan.md, research.md, data-model.md, contracts/, quickstart.md
 
 ## Execution Flow (main)
@@ -21,7 +21,7 @@
 
 ## Format: `[ID] [P?] Description`
 - **[P]**: Can run in parallel (different files, no dependencies)
-- Paths relative to repository root: `/Users/tdyar/ws/rag-templates/`
+- Paths relative to repository root: `/Users/intersystems-community/ws/rag-templates/`
 
 ## Phase 3.1: Setup & Prerequisites
 

@@ -6,7 +6,7 @@
 ## Execution Flow (/plan command scope)
 ```
 1. Load feature spec from Input path ✅
-   → Spec found at /Users/tdyar/ws/rag-templates/specs/026-fix-critical-issues/spec.md
+   → Spec found at /Users/intersystems-community/ws/rag-templates/specs/026-fix-critical-issues/spec.md
 2. Fill Technical Context (scan for NEEDS CLARIFICATION) ✅
    → Detect Project Type: Python testing framework (pytest-based)
    → Structure Decision: Single project (tests/ directory structure)

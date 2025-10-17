@@ -14,7 +14,7 @@ docker-compose up -d
 make setup-db
 
 # Baseline coverage measurement
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ --cov=iris_rag --cov=common --cov-report=term
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest tests/ --cov=iris_rag --cov=common --cov-report=term
 ```
 
 ## Test Scenario 1: Overall Coverage Validation
@@ -23,7 +23,7 @@ PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ --cov=iris_rag 
 
 ```bash
 # Run comprehensive test suite with coverage
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ \
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest tests/ \
   --cov=iris_rag \
   --cov=common \
   --cov-report=term-missing \
@@ -46,7 +46,7 @@ PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ \
 
 ```bash
 # Test critical modules specifically
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest \
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest \
   tests/unit/test_configuration_coverage.py \
   tests/unit/test_validation_coverage.py \
   tests/unit/test_pipeline_coverage.py \
@@ -79,7 +79,7 @@ PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest \
 echo "# test change" >> iris_rag/config/manager.py
 
 # 2. Run targeted coverage test
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest \
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest \
   tests/unit/test_configuration_coverage.py \
   --cov=iris_rag.config \
   --cov-report=term-missing
@@ -99,7 +99,7 @@ git checkout -- iris_rag/config/manager.py
 
 ```bash
 # Simulate CI/CD coverage enforcement
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ \
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest tests/ \
   --cov=iris_rag \
   --cov=common \
   --cov-report=xml \
@@ -120,13 +120,13 @@ echo "Exit code: $?"
 
 ```bash
 # Measure coverage analysis timing
-time PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ \
+time PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest tests/ \
   --cov=iris_rag \
   --cov=common \
   --cov-report=term
 
 # Compare with baseline test execution
-time PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/
+time PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest tests/
 ```
 
 **Acceptance Criteria**:
@@ -140,7 +140,7 @@ time PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/
 
 ```bash
 # Test legacy module exemptions
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest \
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest \
   tests/unit/test_legacy_modules.py \
   --cov=iris_rag \
   --cov-report=term
@@ -159,7 +159,7 @@ PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest \
 
 ```bash
 # Generate coverage trend data
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -c "
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -c "
 from iris_rag.testing.coverage_tracker import CoverageTrend
 trend = CoverageTrend()
 print(trend.generate_monthly_report())
@@ -223,7 +223,7 @@ print(trend.generate_monthly_report())
 **Coverage below 60%**:
 ```bash
 # Identify gaps
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ \
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest tests/ \
   --cov=iris_rag --cov-report=html
 # Open htmlcov/index.html to identify uncovered code
 ```
@@ -231,7 +231,7 @@ PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ \
 **Tests timing out**:
 ```bash
 # Run with timeout and reduced parallelism
-PYTHONPATH=/Users/tdyar/ws/rag-templates python -m pytest tests/ \
+PYTHONPATH=/Users/intersystems-community/ws/rag-templates python -m pytest tests/ \
   --timeout=300 --cov=iris_rag
 ```
 

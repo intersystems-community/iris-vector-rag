@@ -28,7 +28,7 @@
 
 ### Run All Tests
 ```bash
-export PYTHONPATH=/Users/tdyar/ws/rag-templates
+export PYTHONPATH=/Users/intersystems-community/ws/rag-templates
 pytest tests/unit/ tests/e2e/ -p no:randomly -q
 ```
 
@@ -69,9 +69,9 @@ docker ps | grep iris
 **Symptom**: `ModuleNotFoundError: No module named 'iris_rag'`
 **Fix**:
 ```bash
-export PYTHONPATH=/Users/tdyar/ws/rag-templates
+export PYTHONPATH=/Users/intersystems-community/ws/rag-templates
 # Or add to your shell profile
-echo 'export PYTHONPATH=/Users/tdyar/ws/rag-templates' >> ~/.zshrc
+echo 'export PYTHONPATH=/Users/intersystems-community/ws/rag-templates' >> ~/.zshrc
 ```
 
 ### Issue 3: pytest-randomly Errors

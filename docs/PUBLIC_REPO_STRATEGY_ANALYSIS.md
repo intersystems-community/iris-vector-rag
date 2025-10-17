@@ -40,7 +40,7 @@ Abandon internal GitLab → Use GitHub for everything → Public by default
    - Easy to test redaction without affecting public repo
 
 4. **Different Remotes**
-   - Internal: GitLab (git@gitlab.iscinternal.com)
+   - Internal: GitLab (git@github.com/intersystems-community)
    - Public: GitHub (git@github.com:intersystems-community)
    - No risk of push confusion
 

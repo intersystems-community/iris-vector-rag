@@ -1,7 +1,7 @@
 # Tasks: Fix GraphRAG Vector Retrieval Logic
 
 **Feature Branch**: `033-fix-graphrag-vector`
-**Input**: Design documents from `/Users/tdyar/ws/rag-templates/specs/033-fix-graphrag-vector/`
+**Input**: Design documents from `/Users/intersystems-community/ws/rag-templates/specs/033-fix-graphrag-vector/`
 **Prerequisites**: plan.md, research.md, data-model.md, quickstart.md, contracts/ (all ✅ available)
 
 ## Execution Flow

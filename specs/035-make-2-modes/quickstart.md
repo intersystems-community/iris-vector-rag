@@ -27,7 +27,7 @@ This guide shows how to configure and use the configurable test backend modes fe
 
 3. **IRIS database image**:
    - Community: `docker pull intersystemsdc/iris-community:latest`
-   - Enterprise: Available as `docker.iscinternal.com/intersystems/iris:2025.3.0EHAT.127.0-linux-arm64v8`
+   - Enterprise: Available as `intersystemsdc/iris-community:2025.3.0EHAT.127.0-linux-arm64v8`
 
 ## Configuration
 
