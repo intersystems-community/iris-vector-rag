@@ -64,10 +64,10 @@
 
 ```bash
 # Check progress
-tail -f /Users/intersystems-community/ws/rag-templates/indexing_OPTIMIZED_6_WORKERS.log | grep "Progress:"
+tail -f /Users/tdyar/ws/rag-templates/indexing_OPTIMIZED_6_WORKERS.log | grep "Progress:"
 
 # Count successful extractions
-grep "DSPy extracted" /Users/intersystems-community/ws/rag-templates/indexing_OPTIMIZED_6_WORKERS.log | wc -l
+grep "DSPy extracted" /Users/tdyar/ws/rag-templates/indexing_OPTIMIZED_6_WORKERS.log | wc -l
 
 # Check process
 ps aux | grep "index_all_429k" | grep -v grep

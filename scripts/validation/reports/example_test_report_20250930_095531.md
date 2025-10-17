@@ -15,27 +15,27 @@
 **Memory Usage**: 39.3MB
 
 **Error**: Script failed with exit code 1: Traceback (most recent call last):
-  File "/Users/intersystems-community/ws/rag-templates/scripts/basic/try_basic_rag_pipeline.py", line 85, in <module>
+  File "/Users/tdyar/ws/rag-templates/scripts/basic/try_basic_rag_pipeline.py", line 85, in <module>
     main()
-  File "/Users/intersystems-community/ws/rag-templates/scripts/basic/try_basic_rag_pipeline.py", line 64, in main
+  File "/Users/tdyar/ws/rag-templates/scripts/basic/try_basic_rag_pipeline.py", line 64, in main
     basic_rag_pipeline = iris_rag.create_pipeline(
                          ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/__init__.py", line 69, in create_pipeline
+  File "/Users/tdyar/ws/rag-templates/iris_rag/__init__.py", line 69, in create_pipeline
     return factory.create_pipeline(
            ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/factory.py", line 91, in create_pipeline
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/factory.py", line 91, in create_pipeline
     validation_report = self._validate_and_setup(pipeline_type, auto_setup)
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/factory.py", line 117, in _validate_and_setup
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/factory.py", line 117, in _validate_and_setup
     validation_report = self.orchestrator.setup_pipeline(
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/orchestrator.py", line 111, in setup_pipeline
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py", line 111, in setup_pipeline
     self._fulfill_requirements(requirements)
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/orchestrator.py", line 163, in _fulfill_requirements
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py", line 163, in _fulfill_requirements
     self._fulfill_embedding_requirement(embedding_req)
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/orchestrator.py", line 187, in _fulfill_embedding_requirement
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py", line 187, in _fulfill_embedding_requirement
     self._ensure_document_embeddings()
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/orchestrator.py", line 269, in _ensure_document_embeddings
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py", line 269, in _ensure_document_embeddings
     cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
 iris.dbapi.ProgrammingError: <SQL ERROR>; Details: [SQLCODE: <-30>:<Table or view not found>]
 [Location: <Prepare>]
@@ -59,27 +59,27 @@ iris.dbapi.ProgrammingError: <SQL ERROR>; Details: [SQLCODE: <-30>:<Table or vie
 **Memory Usage**: 39.4MB
 
 **Error**: Script failed with exit code 1: Traceback (most recent call last):
-  File "/Users/intersystems-community/ws/rag-templates/scripts/reranking/try_basic_rerank.py", line 88, in <module>
+  File "/Users/tdyar/ws/rag-templates/scripts/reranking/try_basic_rerank.py", line 88, in <module>
     main()
-  File "/Users/intersystems-community/ws/rag-templates/scripts/reranking/try_basic_rerank.py", line 67, in main
+  File "/Users/tdyar/ws/rag-templates/scripts/reranking/try_basic_rerank.py", line 67, in main
     reranking_rag_pipeline = iris_rag.create_pipeline(
                              ^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/__init__.py", line 69, in create_pipeline
+  File "/Users/tdyar/ws/rag-templates/iris_rag/__init__.py", line 69, in create_pipeline
     return factory.create_pipeline(
            ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/factory.py", line 91, in create_pipeline
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/factory.py", line 91, in create_pipeline
     validation_report = self._validate_and_setup(pipeline_type, auto_setup)
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/factory.py", line 117, in _validate_and_setup
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/factory.py", line 117, in _validate_and_setup
     validation_report = self.orchestrator.setup_pipeline(
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/orchestrator.py", line 111, in setup_pipeline
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py", line 111, in setup_pipeline
     self._fulfill_requirements(requirements)
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/orchestrator.py", line 163, in _fulfill_requirements
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py", line 163, in _fulfill_requirements
     self._fulfill_embedding_requirement(embedding_req)
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/orchestrator.py", line 187, in _fulfill_embedding_requirement
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py", line 187, in _fulfill_embedding_requirement
     self._ensure_document_embeddings()
-  File "/Users/intersystems-community/ws/rag-templates/iris_rag/validation/orchestrator.py", line 269, in _ensure_document_embeddings
+  File "/Users/tdyar/ws/rag-templates/iris_rag/validation/orchestrator.py", line 269, in _ensure_document_embeddings
     cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments")
 iris.dbapi.ProgrammingError: <SQL ERROR>; Details: [SQLCODE: <-30>:<Table or view not found>]
 [Location: <Prepare>]

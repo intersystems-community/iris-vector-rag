@@ -9,7 +9,7 @@ import sys
 import time
 from pathlib import Path
 
-LOG_FILE = Path("/Users/intersystems-community/ws/rag-templates/indexing_OPTIMIZED_6_WORKERS.log")
+LOG_FILE = Path("/Users/tdyar/ws/rag-templates/indexing_OPTIMIZED_6_WORKERS.log")
 
 def get_latest_stats():
     """Extract latest stats from log file."""

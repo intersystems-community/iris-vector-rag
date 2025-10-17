@@ -7,7 +7,7 @@
 
 services:
   iris_db:
-    image: intersystemsdc/iris-community:2025.3.0EHAT.127.0-linux-arm64v8  # Licensed IRIS with ML features and ACORN=1
+    image: docker.iscinternal.com/intersystems/iris:2025.3.0EHAT.127.0-linux-arm64v8  # Licensed IRIS with ML features and ACORN=1
     container_name: iris_db_rag_licensed
     ports:
       - "1972:1972"   # IRIS SuperServer port: container 1972 → host 1972

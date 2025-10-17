@@ -3,7 +3,7 @@
 **Date**: 2025-10-15 11:14 AM
 **Status**: ✅ Running Successfully
 **Process ID**: 71442
-**Log File**: `/Users/intersystems-community/ws/rag-templates/indexing_CLEAN_RUN.log`
+**Log File**: `/Users/tdyar/ws/rag-templates/indexing_CLEAN_RUN.log`
 
 ---
 

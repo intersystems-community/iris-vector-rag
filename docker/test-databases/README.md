@@ -91,7 +91,7 @@ make test-db-clean
 # docker-compose.test.yml
 services:
   iris-test:
-    image: intersystemsdc/iris-community:2025.3.0EHAT.127.0-linux-arm64v8
+    image: docker.iscinternal.com/intersystems/iris:2025.3.0EHAT.127.0-linux-arm64v8
     volumes:
       - ./docker/test-databases/basic-rag-testdb:/opt/irisapp/mgr/user:rw
     ports:
