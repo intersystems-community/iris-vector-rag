@@ -27,7 +27,7 @@ class TestIrisDevtoolsNamespaceFix:
         from pathlib import Path
 
         # Add iris-devtools to path
-        iris_devtools_path = Path("/Users/intersystems-community/ws/iris-devtools")
+        iris_devtools_path = Path("/Users/tdyar/ws/iris-devtools")
         if str(iris_devtools_path) not in sys.path:
             sys.path.insert(0, str(iris_devtools_path))
 

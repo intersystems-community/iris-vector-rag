@@ -164,8 +164,8 @@ config_manager._config["entity_extraction"] = entity_config
 ```
 
 **Scripts to Update**:
-- `/Users/intersystems-community/ws/kg-ticket-resolver/scripts/index_all_429k_tickets.py`
-- `/Users/intersystems-community/ws/kg-ticket-resolver/scripts/index_all_429k_tickets_optimized.py`
+- `/Users/tdyar/ws/kg-ticket-resolver/scripts/index_all_429k_tickets.py`
+- `/Users/tdyar/ws/kg-ticket-resolver/scripts/index_all_429k_tickets_optimized.py`
 - Any other indexing scripts you use
 
 **OR** use the provided `start_indexing_with_dspy.py` as a template.
@@ -173,7 +173,7 @@ config_manager._config["entity_extraction"] = entity_config
 ### 2. Restart Indexing Pipeline
 
 ```bash
-cd /Users/intersystems-community/ws/rag-templates
+cd /Users/tdyar/ws/rag-templates
 python start_indexing_with_dspy.py
 ```
 
