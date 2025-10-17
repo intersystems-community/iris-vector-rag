@@ -1,7 +1,7 @@
 # Implementation Plan: GraphRAG Data/Setup Investigation
 
 **Branch**: `032-investigate-graphrag-data` | **Date**: 2025-10-06 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/spec.md`
+**Input**: Feature specification from `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -399,4 +399,4 @@ Run the agent context update script to add this investigation context to CLAUDE.
 - ✅ **Hypothesis formed**: Entity extraction not invoked during load_data workflow
 
 ---
-*Based on Constitution v1.6.0 - See `/Users/tdyar/ws/rag-templates/.specify/memory/constitution.md`*
+*Based on Constitution v1.6.0 - See `/Users/intersystems-community/ws/rag-templates/.specify/memory/constitution.md`*

@@ -178,7 +178,7 @@ def mock_zero_results_retrieval(mocker):
 
 ## References
 
-- Feature 033 implementation: `/Users/tdyar/ws/rag-templates/iris_rag/pipelines/hybrid_graphrag.py`
-- Existing contract tests: `/Users/tdyar/ws/rag-templates/tests/contract/test_*_contract.py`
-- Pytest fixtures: `/Users/tdyar/ws/rag-templates/tests/conftest.py`
-- Constitution: `/Users/tdyar/ws/rag-templates/.specify/memory/constitution.md`
+- Feature 033 implementation: `/Users/intersystems-community/ws/rag-templates/iris_rag/pipelines/hybrid_graphrag.py`
+- Existing contract tests: `/Users/intersystems-community/ws/rag-templates/tests/contract/test_*_contract.py`
+- Pytest fixtures: `/Users/intersystems-community/ws/rag-templates/tests/conftest.py`
+- Constitution: `/Users/intersystems-community/ws/rag-templates/.specify/memory/constitution.md`

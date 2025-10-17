@@ -246,7 +246,7 @@ Changes:
 - Redacted internal GitLab URLs → Public GitHub URLs
 - Redacted internal Docker registry → Public Docker Hub
 - Redacted internal email addresses
-- Updated merge request references → pull request references
+- Updated pull request references → pull request references
 "
 
             git commit -m "$COMMIT_MSG"

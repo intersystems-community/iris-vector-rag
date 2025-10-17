@@ -1,6 +1,6 @@
 # Tasks: Test Infrastructure Resilience and Database Schema Management
 
-**Input**: Design documents from `/Users/tdyar/ws/rag-templates/specs/028-obviously-these-failures/`
+**Input**: Design documents from `/Users/intersystems-community/ws/rag-templates/specs/028-obviously-these-failures/`
 **Prerequisites**: plan.md ✓, research.md ✓, data-model.md ✓, contracts/ ✓
 
 ## Execution Flow (main)
@@ -38,17 +38,17 @@
 - [ ] **T001** Create test infrastructure directory structure
   ```
   Create directories:
-  - /Users/tdyar/ws/rag-templates/tests/fixtures/
-  - /Users/tdyar/ws/rag-templates/tests/utils/
-  - /Users/tdyar/ws/rag-templates/tests/fixtures/__init__.py
-  - /Users/tdyar/ws/rag-templates/tests/utils/__init__.py
+  - /Users/intersystems-community/ws/rag-templates/tests/fixtures/
+  - /Users/intersystems-community/ws/rag-templates/tests/utils/
+  - /Users/intersystems-community/ws/rag-templates/tests/fixtures/__init__.py
+  - /Users/intersystems-community/ws/rag-templates/tests/utils/__init__.py
 
   Validate: Directory structure matches plan.md Section "Project Structure"
   ```
 
 - [ ] **T002** Verify pytest plugins are loadable in pytest.ini
   ```
-  Update /Users/tdyar/ws/rag-templates/pytest.ini:
+  Update /Users/intersystems-community/ws/rag-templates/pytest.ini:
   - Add contract marker to markers section
   - Verify plugins list includes all 3 Feature 026 plugins
   - Add placeholder for contract_test_marker plugin
@@ -60,7 +60,7 @@
 - [ ] **T003** Validate IRIS database connectivity and schema
   ```
   Create pre-flight validation script:
-  /Users/tdyar/ws/rag-templates/tests/utils/preflight_checks.py
+  /Users/intersystems-community/ws/rag-templates/tests/utils/preflight_checks.py
 
   Implement PreflightChecker with methods:
   - check_iris_connectivity() → connects to localhost:11972
@@ -79,7 +79,7 @@
 - [ ] **T004** [P] Contract test for schema validation in tests/contract/test_schema_manager_contract.py
   ```
   Copy contract from specs/028-obviously-these-failures/contracts/schema_manager_contract.py
-  to /Users/tdyar/ws/rag-templates/tests/contract/test_schema_manager_contract.py
+  to /Users/intersystems-community/ws/rag-templates/tests/contract/test_schema_manager_contract.py
 
   Expected: 3 tests FAIL (SchemaValidator not implemented)
   - test_schema_validator_detects_missing_table
@@ -94,14 +94,14 @@
   - test_schema_reset_completes_under_5_seconds
   - test_schema_reset_handles_nonexistent_tables
 
-  File: /Users/tdyar/ws/rag-templates/tests/contract/test_schema_reset_contract.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/contract/test_schema_reset_contract.py
   Expected: 3 tests FAIL (SchemaResetter not implemented)
   ```
 
 - [ ] **T006** [P] Contract test for test fixtures in tests/contract/test_fixtures_contract.py
   ```
   Copy from specs/028-obviously-these-failures/contracts/test_fixtures_contract.py
-  to /Users/tdyar/ws/rag-templates/tests/contract/test_fixtures_contract.py
+  to /Users/intersystems-community/ws/rag-templates/tests/contract/test_fixtures_contract.py
 
   Expected: Tests FAIL (fixtures not implemented)
   - test_clean_schema_fixture_provides_valid_connection
@@ -111,7 +111,7 @@
 - [ ] **T007** [P] Contract test for contract test plugin in tests/contract/test_contract_plugin_contract.py
   ```
   Copy from specs/028-obviously-these-failures/contracts/contract_tests_contract.py
-  to /Users/tdyar/ws/rag-templates/tests/contract/test_contract_plugin_contract.py
+  to /Users/intersystems-community/ws/rag-templates/tests/contract/test_contract_plugin_contract.py
 
   Expected: Tests FAIL (plugin not implemented)
   - test_contract_test_marked_as_xfail_when_failing
@@ -122,7 +122,7 @@
 
 - [ ] **T008** [P] Integration test for fresh database scenario
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/integration/test_schema_reset_integration.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/integration/test_schema_reset_integration.py
 
   Test: test_fresh_database_schema_creation()
   Given: IRIS running, no RAG tables exist
@@ -134,7 +134,7 @@
 
 - [ ] **T009** [P] Integration test for stale schema auto-reset
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/integration/test_schema_validation_integration.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/integration/test_schema_validation_integration.py
 
   Test: test_stale_schema_detected_and_reset()
   Given: Table exists with wrong schema (missing column)
@@ -146,7 +146,7 @@
 
 - [ ] **T010** [P] Integration test for test isolation and cleanup
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/integration/test_cleanup_integration.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/integration/test_cleanup_integration.py
 
   Test: test_cleanup_after_test_failure()
   Given: Test inserts data then fails
@@ -162,7 +162,7 @@
 
 - [ ] **T011** [P] SchemaDefinition and ColumnDefinition models
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/utils/schema_models.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/utils/schema_models.py
 
   Implement dataclasses:
   - SchemaDefinition (table_name, schema_name, columns, indexes, version)
@@ -179,7 +179,7 @@
 
 - [ ] **T012** [P] SchemaValidationResult and SchemaMismatch models
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/utils/schema_models.py (extend)
+  File: /Users/intersystems-community/ws/rag-templates/tests/utils/schema_models.py (extend)
 
   Implement:
   - SchemaValidationResult (is_valid, table_name, mismatches, missing_tables)
@@ -196,7 +196,7 @@
 
 - [ ] **T013** [P] TestDatabaseState model
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/fixtures/database_state.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/fixtures/database_state.py
 
   Implement:
   - TestDatabaseState class
@@ -211,7 +211,7 @@
 
 - [ ] **T014** SchemaValidator implementation
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/utils/schema_validator.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/utils/schema_validator.py
 
   Implement SchemaValidator class:
   - validate_schema(table_name) → SchemaValidationResult
@@ -230,7 +230,7 @@
 
 - [ ] **T015** SchemaResetter implementation
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/fixtures/schema_reset.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/fixtures/schema_reset.py
 
   Implement SchemaResetter class:
   - reset_schema() → drops and recreates 4 RAG tables
@@ -254,7 +254,7 @@
 
 - [ ] **T016** Database cleanup handlers
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/fixtures/database_cleanup.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/fixtures/database_cleanup.py
 
   Implement:
   - CleanupHandler class
@@ -279,7 +279,7 @@
 
 - [ ] **T017** Pytest fixtures in conftest.py
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/conftest.py (modify existing)
+  File: /Users/intersystems-community/ws/rag-templates/tests/conftest.py (modify existing)
 
   Add fixtures:
 
@@ -327,7 +327,7 @@
 
 - [ ] **T018** Contract test marker plugin
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/plugins/contract_test_marker.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/plugins/contract_test_marker.py
 
   Implement pytest plugin:
   - Hook: pytest_runtest_makereport(item, call)
@@ -350,7 +350,7 @@
 
 - [ ] **T019** Update pytest.ini configuration
   ```
-  File: /Users/tdyar/ws/rag-templates/pytest.ini (modify existing)
+  File: /Users/intersystems-community/ws/rag-templates/pytest.ini (modify existing)
 
   Changes:
   1. Add to plugins section:
@@ -369,7 +369,7 @@
 
 - [ ] **T020** [P] End-to-end validation test
   ```
-  File: /Users/tdyar/ws/rag-templates/tests/e2e/test_infrastructure_e2e.py
+  File: /Users/intersystems-community/ws/rag-templates/tests/e2e/test_infrastructure_e2e.py
 
   Test: test_full_test_suite_medical_grade_quality()
   1. Run pre-flight checks
@@ -393,7 +393,7 @@
 
 - [ ] **T021** Update common/database_schema_manager.py with reusable patterns
   ```
-  File: /Users/tdyar/ws/rag-templates/common/database_schema_manager.py (modify)
+  File: /Users/intersystems-community/ws/rag-templates/common/database_schema_manager.py (modify)
 
   Add methods that can be reused beyond tests:
   - validate_table_schema(table_name, expected_schema) → ValidationResult
@@ -409,14 +409,14 @@
 - [ ] **T022** Documentation and cleanup
   ```
   Files to update:
-  1. /Users/tdyar/ws/rag-templates/README.md
+  1. /Users/intersystems-community/ws/rag-templates/README.md
      - Add section on test infrastructure
      - Document pytest fixtures and markers
 
-  2. /Users/tdyar/ws/rag-templates/CLAUDE.md
+  2. /Users/intersystems-community/ws/rag-templates/CLAUDE.md
      - Already updated by /plan command ✓
 
-  3. /Users/tdyar/ws/rag-templates/Makefile
+  3. /Users/intersystems-community/ws/rag-templates/Makefile
      - Add target: make test-reset-schema
      - Add target: make test-preflight-check
 

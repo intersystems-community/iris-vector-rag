@@ -181,7 +181,7 @@ The following investigation tasks will validate these research findings:
 
 ## References
 
-- **Feature 032 Investigation**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/investigation/FINDINGS.md`
+- **Feature 032 Investigation**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/investigation/FINDINGS.md`
 - **RAGAS Evaluation Results**: `outputs/reports/ragas_evaluations/simple_ragas_report_20251006_215810.json`
 - **GraphRAG Pipeline**: `iris_rag/pipelines/graphrag.py`
 - **BasicRAG Pipeline**: `iris_rag/pipelines/basic.py`

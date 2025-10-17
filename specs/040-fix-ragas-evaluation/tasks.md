@@ -1,6 +1,6 @@
 # Tasks: Fix RAGAS GraphRAG Evaluation Workflow
 
-**Input**: Design documents from `/Users/tdyar/ws/rag-templates/specs/040-fix-ragas-evaluation/`
+**Input**: Design documents from `/Users/intersystems-community/ws/rag-templates/specs/040-fix-ragas-evaluation/`
 **Prerequisites**: plan.md (complete), data-model.md (complete), quickstart.md (complete)
 
 ## Execution Flow (main)
@@ -35,11 +35,11 @@
 - Each task is self-contained and can be validated independently
 
 ## Path Conventions
-- **Target file**: `/Users/tdyar/ws/rag-templates/scripts/simple_working_ragas.py` (single file to modify)
+- **Target file**: `/Users/intersystems-community/ws/rag-templates/scripts/simple_working_ragas.py` (single file to modify)
 - **Reference files** (read-only):
-  - `/Users/tdyar/ws/rag-templates/iris_rag/pipelines/graphrag.py` (GraphRAG.load_documents method)
-  - `/Users/tdyar/ws/rag-templates/data/sample_10_docs/` (test documents)
-- **Validation**: `/Users/tdyar/ws/rag-templates/specs/040-fix-ragas-evaluation/quickstart.md`
+  - `/Users/intersystems-community/ws/rag-templates/iris_rag/pipelines/graphrag.py` (GraphRAG.load_documents method)
+  - `/Users/intersystems-community/ws/rag-templates/data/sample_10_docs/` (test documents)
+- **Validation**: `/Users/intersystems-community/ws/rag-templates/specs/040-fix-ragas-evaluation/quickstart.md`
 
 ---
 
@@ -61,7 +61,7 @@
 ## Phase 3.2: Core Implementation (Entity Check & Auto-Load)
 
 - [ ] **T002** Add entity data check function to scripts/simple_working_ragas.py
-  - **File**: `/Users/tdyar/ws/rag-templates/scripts/simple_working_ragas.py`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/scripts/simple_working_ragas.py`
   - **Action**: Add new function `check_graphrag_prerequisites()` after imports, before main()
   - **Function signature**:
     ```python
@@ -85,7 +85,7 @@
   - **Verification**: Function returns correct entity counts from database
 
 - [ ] **T003** Add auto-load function to scripts/simple_working_ragas.py
-  - **File**: `/Users/tdyar/ws/rag-templates/scripts/simple_working_ragas.py`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/scripts/simple_working_ragas.py`
   - **Action**: Add new function `load_documents_with_entities()` after check_graphrag_prerequisites()
   - **Function signature**:
     ```python
@@ -120,7 +120,7 @@
   - **Verification**: Function successfully calls GraphRAG.load_documents() and returns entity counts
 
 - [ ] **T004** Add skip logic logging to scripts/simple_working_ragas.py
-  - **File**: `/Users/tdyar/ws/rag-templates/scripts/simple_working_ragas.py`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/scripts/simple_working_ragas.py`
   - **Action**: Add helper function `log_graphrag_skip()` for consistent skip messages
   - **Function signature**:
     ```python
@@ -149,7 +149,7 @@
 ## Phase 3.3: Integration (Modify Evaluation Loop)
 
 - [ ] **T005** Integrate entity check into main evaluation loop in scripts/simple_working_ragas.py
-  - **File**: `/Users/tdyar/ws/rag-templates/scripts/simple_working_ragas.py`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/scripts/simple_working_ragas.py`
   - **Action**: Modify the pipeline evaluation loop (find where pipelines are tested sequentially)
   - **Integration point**: Before creating/evaluating GraphRAG pipeline, add conditional check
   - **Logic to implement**:

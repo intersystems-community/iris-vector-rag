@@ -23,7 +23,7 @@
 
 ### Executive Summary
 
-This roadmap defines the integration strategy for incorporating `/Users/tdyar/ws/rag-templates` GraphRAG and Hybrid iFind RAG pipelines into the Knowledge Graph Ticket Resolver system. The integration leverages LightRAG incremental indexing patterns to build a unified agentic memory subsystem supporting Project and Ticket Memory constructs.
+This roadmap defines the integration strategy for incorporating `/Users/intersystems-community/ws/rag-templates` GraphRAG and Hybrid iFind RAG pipelines into the Knowledge Graph Ticket Resolver system. The integration leverages LightRAG incremental indexing patterns to build a unified agentic memory subsystem supporting Project and Ticket Memory constructs.
 
 **Target Timeline**: 0-2 weeks (Phase 3.3-3.5 alignment)
 

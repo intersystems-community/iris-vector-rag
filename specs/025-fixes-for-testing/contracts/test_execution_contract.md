@@ -24,13 +24,13 @@ grep -- "-p no:randomly" pytest.ini
 
 ### REQ-2: PYTHONPATH Configuration
 
-**MUST**: Tests run with `PYTHONPATH=/Users/tdyar/ws/rag-templates` to enable imports
+**MUST**: Tests run with `PYTHONPATH=/Users/intersystems-community/ws/rag-templates` to enable imports
 
 **Rationale**: Tests need to import iris_rag and common modules from repository root.
 
 **Validation**:
 ```bash
-export PYTHONPATH=/Users/tdyar/ws/rag-templates
+export PYTHONPATH=/Users/intersystems-community/ws/rag-templates
 pytest tests/unit/ --collect-only
 # Expected: No ModuleNotFoundError
 ```
@@ -170,7 +170,7 @@ def test_pytest_ini_has_no_randomly_flag():
 def test_pythonpath_allows_imports():
     """REQ-2: PYTHONPATH enables module imports."""
     import sys
-    sys.path.insert(0, "/Users/tdyar/ws/rag-templates")
+    sys.path.insert(0, "/Users/intersystems-community/ws/rag-templates")
 
     # Should not raise ModuleNotFoundError
     import iris_rag

@@ -2,7 +2,7 @@
 # Implementation Plan: Retrofit GraphRAG Testing Improvements to Other Pipelines
 
 **Branch**: `036-retrofit-graphrag-s` | **Date**: 2025-10-08 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/Users/tdyar/ws/rag-templates/specs/036-retrofit-graphrag-s/spec.md`
+**Input**: Feature specification from `/Users/intersystems-community/ws/rag-templates/specs/036-retrofit-graphrag-s/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```

@@ -1,7 +1,7 @@
 # Implementation Plan: Test Infrastructure Resilience and Database Schema Management
 
 **Branch**: `028-obviously-these-failures` | **Date**: 2025-10-05 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/Users/tdyar/ws/rag-templates/specs/028-obviously-these-failures/spec.md`
+**Input**: Feature specification from `/Users/intersystems-community/ws/rag-templates/specs/028-obviously-these-failures/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
