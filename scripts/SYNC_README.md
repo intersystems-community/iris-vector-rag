@@ -71,11 +71,11 @@ git push origin feature/my-feature
 
 | Internal Reference | Public Replacement |
 |-------------------|--------------------|
-| `github.com/intersystems-community` | `github.com/intersystems-community` |
-| `intersystemsdc/iris-community` | `intersystemsdc/iris-community` |
-| `maintainer@example.com` | `maintainer@example.com` |
-| `pull request` / `MR` | `pull request` / `PR` |
-| `/intersystems-community/` | `/intersystems-community/` |
+| `gitlab.iscinternal.com` | `github.com/intersystems-community` |
+| `docker.iscinternal.com/intersystems/iris` | `intersystemsdc/iris-community` |
+| `tdyar@intersystems.com` | `maintainer@example.com` |
+| `merge request` / `MR` | `pull request` / `PR` |
+| `/tdyar/` | `/intersystems-community/` |
 
 ## Files Excluded from Sync
 

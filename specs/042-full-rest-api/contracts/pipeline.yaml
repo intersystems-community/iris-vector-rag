@@ -1,0 +1,141 @@
+# Pipeline Management Contracts
+# FR-005 to FR-008: Pipeline lifecycle management
+
+paths:
+  /pipelines:
+    get:
+      summary: List all available pipelines
+      description: |
+        Returns list of all available RAG pipelines with their capabilities and current status.
+
+        FR-008: System MUST provide endpoints to list available pipelines with capabilities and status
+      operationId: listPipelines
+      tags:
+        - Pipeline
+      responses:
+        '200':
+          description: List of pipelines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pipelines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PipelineInfo'
+              example:
+                pipelines:
+                  - pipeline_type: graphrag
+                    name: graphrag-production
+                    status: healthy
+                    capabilities: [vector_search, graph_traversal, entity_extraction]
+                  - pipeline_type: basic
+                    name: basic-production
+                    status: healthy
+                    capabilities: [vector_search]
+        '401':
+          $ref: '../auth.yaml#/components/responses/Unauthorized'
+
+  /pipelines/{pipeline_type}:
+    get:
+      summary: Get specific pipeline status
+      description: |
+        Returns detailed status and metrics for a specific pipeline.
+
+        FR-006: System MUST report pipeline health status (healthy, degraded, unavailable)
+      operationId: getPipelineStatus
+      tags:
+        - Pipeline
+      parameters:
+        - name: pipeline_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [basic, basic_rerank, crag, graphrag, pylate_colbert]
+      responses:
+        '200':
+          description: Pipeline details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PipelineInfo'
+        '401':
+          $ref: '../auth.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Pipeline not found
+          content:
+            application/json:
+              schema:
+                $ref: '../openapi.yaml#/components/schemas/Error'
+
+components:
+  schemas:
+    PipelineInfo:
+      type: object
+      required:
+        - pipeline_id
+        - pipeline_type
+        - name
+        - status
+        - initialized_at
+        - capabilities
+      properties:
+        pipeline_id:
+          type: string
+          format: uuid
+        pipeline_type:
+          type: string
+          enum: [basic, basic_rerank, crag, graphrag, pylate_colbert]
+        name:
+          type: string
+        status:
+          type: string
+          enum: [healthy, degraded, unavailable]
+          description: |
+            Current pipeline health status
+
+            FR-006: System MUST report pipeline health status
+        initialized_at:
+          type: string
+          format: date-time
+        last_health_check:
+          type: string
+          format: date-time
+        total_queries:
+          type: integer
+          minimum: 0
+        avg_latency_ms:
+          type: number
+          minimum: 0
+        error_count:
+          type: integer
+          minimum: 0
+        error_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: Supported features (e.g., vector_search, graph_traversal)
+        config:
+          type: object
+          additionalProperties: true
+      example:
+        pipeline_id: a3c4e5f6-7890-4b2d-9e1f-234567890abc
+        pipeline_type: graphrag
+        name: graphrag-production
+        status: healthy
+        initialized_at: '2025-10-16T10:00:00.000Z'
+        last_health_check: '2025-10-16T12:34:50.000Z'
+        total_queries: 15234
+        avg_latency_ms: 1234.5
+        error_count: 23
+        error_rate: 0.0015
+        capabilities: [vector_search, graph_traversal, entity_extraction]
+        config:
+          llm_model: gpt-4
+          embedding_model: text-embedding-3-small

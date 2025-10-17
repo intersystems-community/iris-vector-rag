@@ -242,15 +242,15 @@ After running the sync, verify:
 
 | Pattern | Replacement | Occurrences |
 |---------|-------------|-------------|
-| `github.com/intersystems-community` | `github.com/intersystems-community` | ~30 |
-| `https://github.com/intersystems-community/intersystems-community/rag-templates` | `https://github.com/intersystems-community/iris-rag-templates` | ~15 |
-| `git@github.com/intersystems-community:tdyar/rag-templates.git` | `git@github.com:intersystems-community/iris-rag-templates.git` | ~5 |
-| `intersystemsdc/iris-community` | `intersystemsdc/iris-community` | ~10 |
-| `pull request` | `pull request` | ~10 |
-| `Pull Request` | `Pull Request` | ~10 |
-| `PR #` | `PR #` | ~5 |
-| `maintainer@example.com` | `maintainer@example.com` | ~3 |
-| `/intersystems-community/` | `/intersystems-community/` | ~500 |
+| `gitlab.iscinternal.com` | `github.com/intersystems-community` | ~30 |
+| `https://gitlab.iscinternal.com/tdyar/rag-templates` | `https://github.com/intersystems-community/iris-rag-templates` | ~15 |
+| `git@gitlab.iscinternal.com:tdyar/rag-templates.git` | `git@github.com:intersystems-community/iris-rag-templates.git` | ~5 |
+| `docker.iscinternal.com/intersystems/iris` | `intersystemsdc/iris-community` | ~10 |
+| `merge request` | `pull request` | ~10 |
+| `Merge Request` | `Pull Request` | ~10 |
+| `MR #` | `PR #` | ~5 |
+| `tdyar@intersystems.com` | `maintainer@example.com` | ~3 |
+| `/tdyar/` | `/intersystems-community/` | ~500 |
 
 **Total**: 614 replacements across 92 files
 

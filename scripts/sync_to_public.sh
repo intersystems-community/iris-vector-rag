@@ -91,18 +91,18 @@ echo "🔍 Scanning for internal references..."
 # Redaction patterns
 declare -A REDACTIONS=(
     # Internal GitLab URLs
-    ["github.com/intersystems-community"]="github.com/intersystems-community"
-    ["https://github.com/intersystems-community/intersystems-community/rag-templates"]="https://github.com/intersystems-community/iris-rag-templates"
-    ["git@github.com/intersystems-community:tdyar/rag-templates.git"]="git@github.com:intersystems-community/iris-rag-templates.git"
+    ["gitlab.iscinternal.com"]="github.com/intersystems-community"
+    ["https://gitlab.iscinternal.com/tdyar/rag-templates"]="https://github.com/intersystems-community/iris-rag-templates"
+    ["git@gitlab.iscinternal.com:tdyar/rag-templates.git"]="git@github.com:intersystems-community/iris-rag-templates.git"
 
     # Internal Docker registry
-    ["intersystemsdc/iris-community"]="intersystemsdc/iris-community"
+    ["docker.iscinternal.com/intersystems/iris"]="intersystemsdc/iris-community"
 
-    # Internal pull request references
-    ["https://github.com/intersystems-community/intersystems-community/rag-templates/-/merge_requests"]="https://github.com/intersystems-community/iris-rag-templates/pulls"
+    # Internal merge request references
+    ["https://gitlab.iscinternal.com/tdyar/rag-templates/-/merge_requests"]="https://github.com/intersystems-community/iris-rag-templates/pulls"
 
     # Internal email/username references (if any)
-    ["maintainer@example.com"]="maintainer@example.com"
+    ["tdyar@intersystems.com"]="maintainer@example.com"
 )
 
 # Step 5: Apply redactions to all files
