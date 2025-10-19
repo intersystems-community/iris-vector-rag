@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "CRAG",
-  "query": "What surgical techniques are most effective for treating heart valve disorders?",
-  "answer": null,
-  "contexts": [],
-  "execution_time": 0.11947917938232422,
-  "success": true,
-  "error": null
-}

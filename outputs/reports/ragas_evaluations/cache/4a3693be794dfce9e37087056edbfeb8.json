@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRAG",
-  "query": "What are the latest developments in Alzheimer's disease research?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.48004794120788574,
-  "success": true,
-  "error": null
-}

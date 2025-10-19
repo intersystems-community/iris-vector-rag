@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRAG",
-  "query": "What surgical techniques are most effective for treating heart valve disorders?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.428926944732666,
-  "success": true,
-  "error": null
-}

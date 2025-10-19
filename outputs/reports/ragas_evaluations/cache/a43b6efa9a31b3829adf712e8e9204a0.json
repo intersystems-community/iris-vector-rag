@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRAG",
-  "query": "What nutritional interventions are recommended for metabolic syndrome?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.45459794998168945,
-  "success": true,
-  "error": null
-}

@@ -1098,3 +1098,173 @@ fixture-clean: ## Clean up fixture temporary files
 	@find $(FIXTURE_DIR) -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 	@find $(FIXTURE_DIR) -name ".pytest_cache" -type d -exec rm -rf {} + 2>/dev/null || true
 	$(call print_message,$(GREEN),Fixture cleanup completed)
+
+# =============================================================================
+# REST API MANAGEMENT (Feature 042)
+# =============================================================================
+
+.PHONY: api-help
+api-help: ## Show REST API management commands
+	@echo -e "$(BLUE)REST API Management Commands:$(NC)"
+	@echo -e ""
+	@echo -e "$(GREEN)Server Operations:$(NC)"
+	@echo -e "  make api-run                         - Run API server (development mode)"
+	@echo -e "  make api-run-prod                    - Run API server (production mode, 4 workers)"
+	@echo -e "  make api-health                      - Check API health status"
+	@echo -e ""
+	@echo -e "$(GREEN)Database Setup:$(NC)"
+	@echo -e "  make api-setup-db                    - Setup API database tables"
+	@echo -e "  make api-schema                      - Show current database schema"
+	@echo -e ""
+	@echo -e "$(GREEN)API Key Management:$(NC)"
+	@echo -e "  make api-create-key NAME=... EMAIL=... - Create new API key"
+	@echo -e "  make api-list-keys                   - List all API keys"
+	@echo-e "  make api-revoke-key KEY_ID=...      - Revoke API key"
+	@echo -e ""
+	@echo -e "$(GREEN)Testing:$(NC)"
+	@echo -e "  make api-test                        - Run API tests"
+	@echo -e "  make api-test-contracts              - Run contract tests"
+	@echo -e "  make api-test-integration            - Run integration tests"
+	@echo -e ""
+	@echo -e "$(YELLOW)Examples:$(NC)"
+	@echo -e "  make api-run"
+	@echo -e "  make api-create-key NAME=\"My Key\" EMAIL=user@example.com"
+	@echo -e "  make api-create-key NAME=\"Enterprise Key\" EMAIL=admin@example.com TIER=enterprise PERMISSIONS=\"read write admin\""
+	@echo -e ""
+
+.PHONY: api-run
+api-run: setup-env install ## Run API server in development mode
+	$(call print_message,$(BLUE),Starting RAG API server (development mode))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m iris_rag.api.cli run --reload
+
+.PHONY: api-run-prod
+api-run-prod: setup-env install ## Run API server in production mode
+	$(call print_message,$(BLUE),Starting RAG API server (production mode))
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m iris_rag.api.cli run --workers 4
+
+.PHONY: api-health
+api-health: ## Check API health status
+	$(call print_message,$(BLUE),Checking API health)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m iris_rag.api.cli health
+
+.PHONY: api-setup-db
+api-setup-db: setup-env install ## Setup API database tables
+	$(call print_message,$(BLUE),Setting up API database tables)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m iris_rag.api.cli setup-db
+	$(call print_message,$(GREEN),API database tables created successfully)
+
+.PHONY: api-create-key
+api-create-key: setup-env install ## Create new API key (usage: make api-create-key NAME="My Key" EMAIL=user@example.com)
+	$(call print_message,$(BLUE),Creating API key)
+	@if [ -z "$(NAME)" ] || [ -z "$(EMAIL)" ]; then \
+		echo -e "  $(RED)✗$(NC) NAME and EMAIL are required"; \
+		echo -e "  $(YELLOW)Example:$(NC) make api-create-key NAME=\"My Key\" EMAIL=user@example.com"; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m iris_rag.api.cli create-key \
+		--name "$(NAME)" \
+		--owner-email "$(EMAIL)" \
+		$(if $(TIER),--tier $(TIER)) \
+		$(if $(PERMISSIONS),--permissions $(PERMISSIONS)) \
+		$(if $(DESCRIPTION),--description "$(DESCRIPTION)") \
+		$(if $(EXPIRES_IN_DAYS),--expires-in-days $(EXPIRES_IN_DAYS))
+
+.PHONY: api-list-keys
+api-list-keys: setup-env install ## List all API keys
+	$(call print_message,$(BLUE),Listing API keys)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m iris_rag.api.cli list-keys $(if $(EMAIL),--owner-email "$(EMAIL)")
+
+.PHONY: api-revoke-key
+api-revoke-key: setup-env install ## Revoke API key (usage: make api-revoke-key KEY_ID=...)
+	$(call print_message,$(BLUE),Revoking API key)
+	@if [ -z "$(KEY_ID)" ]; then \
+		echo -e "  $(RED)✗$(NC) KEY_ID is required"; \
+		echo -e "  $(YELLOW)Example:$(NC) make api-revoke-key KEY_ID=7c9e6679-7425-40de-944b-e07fc1f90ae7"; \
+		exit 1; \
+	fi
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m iris_rag.api.cli revoke-key --key-id "$(KEY_ID)"
+
+.PHONY: api-test
+api-test: setup-env install ## Run all API tests
+	$(call print_message,$(BLUE),Running API tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/contract/test_*_contracts.py tests/integration/api/ -v --tb=short
+	$(call print_message,$(GREEN),API tests completed)
+
+.PHONY: api-test-contracts
+api-test-contracts: setup-env install ## Run API contract tests
+	$(call print_message,$(BLUE),Running API contract tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/contract/test_*_contracts.py -v --tb=short
+	$(call print_message,$(GREEN),API contract tests completed)
+
+.PHONY: api-test-integration
+api-test-integration: setup-env install ## Run API integration tests
+	$(call print_message,$(BLUE),Running API integration tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/integration/api/ -v --tb=short
+	$(call print_message,$(GREEN),API integration tests completed)
+
+.PHONY: api-logs
+api-logs: ## View API server logs
+	$(call print_message,$(BLUE),Viewing API logs)
+	@tail -f logs/api.log 2>/dev/null || echo "No API logs found (logs/api.log)"
+
+.PHONY: api-docs
+api-docs: ## Open API documentation in browser
+	$(call print_message,$(BLUE),Opening API documentation)
+	@if command -v open &> /dev/null; then \
+		open http://localhost:8000/docs; \
+	elif command -v xdg-open &> /dev/null; then \
+		xdg-open http://localhost:8000/docs; \
+	else \
+		echo "API docs available at: http://localhost:8000/docs"; \
+	fi
+
+.PHONY: api-code-quality
+api-code-quality: setup-env install ## Run code quality checks on API code
+	$(call print_message,$(BLUE),Running code quality checks on API code)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@chmod +x iris_rag/api/scripts/check_code_quality.sh
+	@./iris_rag/api/scripts/check_code_quality.sh
+	$(call print_message,$(GREEN),Code quality checks completed)

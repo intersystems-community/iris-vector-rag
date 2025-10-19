@@ -1,9 +1,0 @@
-{
-  "pipeline_name": "BasicRAG",
-  "query": "What are the mechanisms of antibiotic resistance in bacterial infections?",
-  "answer": "No relevant documents found to answer the query.",
-  "contexts": [],
-  "execution_time": 0.47838735580444336,
-  "success": true,
-  "error": null
-}

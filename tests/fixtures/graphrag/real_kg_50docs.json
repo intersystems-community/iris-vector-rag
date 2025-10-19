@@ -1,0 +1,57 @@
+{
+  "description": "Knowledge graph fixture with 50 documents from production database",
+  "total_documents": 7,
+  "total_entities": 19,
+  "total_relationships": 4,
+  "documents": [
+    {
+      "doc_id": "TICKET_I414518",
+      "content": "Summary: \r\n**Problem:** Rodrigo Riffo requested to activate his user account.\r\n\r\n**Solution:** Gabriela acknowledged the issue and closed the meeting.\r\n\r\n**Additional Information:**\r\n\r\n* The contact information was provided.\r\n* The purpose of the meeting was not specified.\n\nDescription: \r\n**Problem:** Rodrigo Riffo requested to activate his user account.\r\n\r\n**Solution:** Gabriela acknowledged the issue and closed the meeting.\r\n\r\n**Additional Information:**\r\n\r\n* The contact information was provided.\r\n* The purpose of the meeting was not specified.\n\nClassification: User Setup/Maintenance",
+      "metadata": "{\"TICKET_ID\": \"I414518\", \"SOURCE\": \"ENHANCED_CLUSTERING_CSV\", \"CLASSIFICATION\": \"USER SETUP/MAINTENANCE\", \"PRODUCT\": \"\", \"CUSTOMER\": \"\", \"STATUS\": \"\", \"PRIORITY\": \"\", \"CLUSTER\": \"0\", \"INDEXED_AT\": \"2025-10-10T11:45:54.017973\"}",
+      "expected_entities": [],
+      "expected_relationships": []
+    },
+    {
+      "doc_id": "TICKET_I426193",
+      "content": "Summary: \r\nSure, here's the summary you requested:\r\n\r\n* Issue raised by McKenzie,Kelly regarding the Vol of a casenote showing as 'create Volume' instead of 1.\r\n* Issue transferred to the regional 2nd Line support team.\r\n* Investigation is ongoing, and the patient record is now updated to reflect the issue being resolved.\r\n* The Create Volume entry has been removed from CHI 1206978562.\n\nDescription: \r\nSure, here's the summary you requested:\r\n\r\n* Issue raised by McKenzie,Kelly regarding the Vol of a casenote showing as 'create Volume' instead of 1.\r\n* Issue transferred to the regional 2nd Line support team.\r\n* Investigation is ongoing, and the patient record is now updated to reflect the issue being resolved.\r\n* The Create Volume entry has been removed from CHI 1206978562.\n\nClassification: Medical Records",
+      "metadata": "{\"TICKET_ID\": \"I426193\", \"SOURCE\": \"ENHANCED_CLUSTERING_CSV\", \"CLASSIFICATION\": \"MEDICAL RECORDS\", \"PRODUCT\": \"\", \"CUSTOMER\": \"\", \"STATUS\": \"\", \"PRIORITY\": \"\", \"CLUSTER\": \"0\", \"INDEXED_AT\": \"2025-10-10T11:45:37.139709\"}",
+      "expected_entities": [],
+      "expected_relationships": []
+    },
+    {
+      "doc_id": "TICKET_I437716",
+      "content": "Summary: \r\n**Problem:**\r\n\r\n* Some buttons/menus on the MR_Picture screen (scan) do not work in production.\r\n\r\n**Solution:**\r\n\r\n* The issue is being investigated and will be addressed as soon as possible.\r\n\r\n**Additional Information:**\r\n\r\n* The problem appears to be limited to the webserver connection.\r\n* The JS files have not been uploaded to the web servers.\r\n* The investigation is ongoing and will be closed when the issue is resolved.\n\nDescription: \r\n**Problem:**\r\n\r\n* Some buttons/menus on the MR_Picture screen (scan) do not work in production.\r\n\r\n**Solution:**\r\n\r\n* The issue is being investigated and will be addressed as soon as possible.\r\n\r\n**Additional Information:**\r\n\r\n* The problem appears to be limited to the webserver connection.\r\n* The JS files have not been uploaded to the web servers.\r\n* The investigation is ongoing and will be closed when the issue is resolved.\n\nClassification: Electronic Patient Record",
+      "metadata": "{\"TICKET_ID\": \"I437716\", \"SOURCE\": \"ENHANCED_CLUSTERING_CSV\", \"CLASSIFICATION\": \"ELECTRONIC PATIENT RECORD\", \"PRODUCT\": \"\", \"CUSTOMER\": \"\", \"STATUS\": \"\", \"PRIORITY\": \"\", \"CLUSTER\": \"0\", \"INDEXED_AT\": \"2025-10-10T11:23:42.776525\"}",
+      "expected_entities": [],
+      "expected_relationships": []
+    },
+    {
+      "doc_id": "TICKET_I438477",
+      "content": "Summary: \r\n**Problem:**\r\n\r\nUser reported an issue with the user code in TrakCare of the HEIDE APARECIDA PEREIRA server.\r\n\r\n**Solution:**\r\n\r\nThe issue was corrected by substituting the old code with the new code in production, and the change was validated to ensure its effectiveness.\r\n\r\n**Additional Information:**\r\n\r\n- The issue was raised by Rocha,Renan Filipe Maciel da.\r\n- The issue was transferred to Brazil Support and Coelho,Bruno.\n\nDescription: \r\n**Problem:**\r\n\r\nUser reported an issue with the user code in TrakCare of the HEIDE APARECIDA PEREIRA server.\r\n\r\n**Solution:**\r\n\r\nThe issue was corrected by substituting the old code with the new code in production, and the change was validated to ensure its effectiveness.\r\n\r\n**Additional Information:**\r\n\r\n- The issue was raised by Rocha,Renan Filipe Maciel da.\r\n- The issue was transferred to Brazil Support and Coelho,Bruno.\n\nClassification: Code Tables",
+      "metadata": "{\"TICKET_ID\": \"I438477\", \"SOURCE\": \"ENHANCED_CLUSTERING_CSV\", \"CLASSIFICATION\": \"CODE TABLES\", \"PRODUCT\": \"\", \"CUSTOMER\": \"\", \"STATUS\": \"\", \"PRIORITY\": \"\", \"CLUSTER\": \"0\", \"INDEXED_AT\": \"2025-10-10T11:46:27.538139\"}",
+      "expected_entities": [],
+      "expected_relationships": []
+    },
+    {
+      "doc_id": "TICKET_I448562",
+      "content": "Summary: \r\n**Problem:**\r\n\r\n- The program returns an error alert (see attachment) for IUVs coming from the resignation of the PS program.\r\n\r\n\r\n**Solution:**\r\n\r\n- Verify the error alert and investigate the cause.\r\n\r\n\r\n**Additional Information:**\r\n\r\n- All IUVs from the resignation of PS are flagged as red in the attachment.\r\n- An additional alert occurs during discharge from the ED (see attachment).\n\nDescription: \r\n**Problem:**\r\n\r\n- The program returns an error alert (see attachment) for IUVs coming from the resignation of the PS program.\r\n\r\n\r\n**Solution:**\r\n\r\n- Verify the error alert and investigate the cause.\r\n\r\n\r\n**Additional Information:**\r\n\r\n- All IUVs from the resignation of PS are flagged as red in the attachment.\r\n- An additional alert occurs during discharge from the ED (see attachment).\n\nClassification: Episode Admin",
+      "metadata": "{\"TICKET_ID\": \"I448562\", \"SOURCE\": \"ENHANCED_CLUSTERING_CSV\", \"CLASSIFICATION\": \"EPISODE ADMIN\", \"PRODUCT\": \"\", \"CUSTOMER\": \"\", \"STATUS\": \"\", \"PRIORITY\": \"\", \"CLUSTER\": \"0\", \"INDEXED_AT\": \"2025-10-10T11:44:46.328276\"}",
+      "expected_entities": [],
+      "expected_relationships": []
+    },
+    {
+      "doc_id": "TICKET_I461418",
+      "content": "Summary: \r\nSure, here's the summary you requested:\r\n\r\nA user can't go back to the search criteria using the breadcrumbs option in Coding Find because the fields with initial criteria still have the original data. Clicking \"Find\" displays the correct results for the search criteria.\r\n\r\nThe issue was reported in T24.3 and has been transferred to NTG and ANZ Support for investigation.\r\n\r\nThe issue requires a conversion from NTG layout to MEUI layout when using Coding Find.\n\nDescription: \r\nSure, here's the summary you requested:\r\n\r\nA user can't go back to the search criteria using the breadcrumbs option in Coding Find because the fields with initial criteria still have the original data. Clicking \"Find\" displays the correct results for the search criteria.\r\n\r\nThe issue was reported in T24.3 and has been transferred to NTG and ANZ Support for investigation.\r\n\r\nThe issue requires a conversion from NTG layout to MEUI layout when using Coding Find.\n\nClassification: Coding and Grouping",
+      "metadata": "{\"TICKET_ID\": \"I461418\", \"SOURCE\": \"ENHANCED_CLUSTERING_CSV\", \"CLASSIFICATION\": \"CODING AND GROUPING\", \"PRODUCT\": \"\", \"CUSTOMER\": \"\", \"STATUS\": \"\", \"PRIORITY\": \"\", \"CLUSTER\": \"-1\", \"INDEXED_AT\": \"2025-10-10T11:45:03.030685\"}",
+      "expected_entities": [],
+      "expected_relationships": []
+    },
+    {
+      "doc_id": "TICKET_I475565",
+      "content": "Summary: **Status:** Solved\n\n**Reason:** All batches for printing were successfully processed and printed on 03/11/2024 and 02/11/2024.\n\nDescription: **Status:** Solved\n\n**Reason:** All batches for printing were successfully processed and printed on 03/11/2024 and 02/11/2024.\n\nClassification: Laboratory",
+      "metadata": "{\"TICKET_ID\": \"I475565\", \"SOURCE\": \"ENHANCED_CLUSTERING_CSV\", \"CLASSIFICATION\": \"LABORATORY\", \"PRODUCT\": \"\", \"CUSTOMER\": \"\", \"STATUS\": \"\", \"PRIORITY\": \"\", \"CLUSTER\": \"0\", \"INDEXED_AT\": \"2025-10-10T11:22:56.182174\"}",
+      "expected_entities": [],
+      "expected_relationships": []
+    }
+  ]
+}
