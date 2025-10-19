@@ -138,7 +138,8 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
 
     def query(
         self,
-        query_text: str,
+        query: str = None,
+        query_text: str = None,
         top_k: int = None,
         method: str = "hybrid",
         generate_answer: bool = True,
@@ -150,7 +151,8 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         Enhanced query method with hybrid search capabilities.
 
         Args:
-            query_text: The query string
+            query: The query string (standard parameter name)
+            query_text: Alias for query (deprecated, for backward compatibility)
             top_k: Number of documents to retrieve
             method: Retrieval method - "hybrid", "rrf", "kg", "vector", "text"
             generate_answer: Whether to generate an answer
@@ -161,6 +163,11 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         Returns:
             Dictionary with query results and metadata
         """
+        # Support both 'query' (standard) and 'query_text' (backward compatibility)
+        if query is None and query_text is None:
+            raise ValueError("Either 'query' or 'query_text' parameter is required")
+        query_text = query if query is not None else query_text
+
         start_time = time.time()
         start_perf = time.perf_counter()
 

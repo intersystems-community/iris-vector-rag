@@ -750,6 +750,14 @@ class IRISVectorStore(VectorStore):
                 additional_where=additional_where,
             )
 
+            # DEBUG: Check if SQL contains DOUBLE or FLOAT
+            if 'DOUBLE' in sql:
+                logger.error(f"FOUND DOUBLE IN SQL! SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}")
+            elif 'FLOAT' in sql:
+                logger.info(f"SQL correctly uses FLOAT. SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}")
+            else:
+                logger.warning("No FLOAT or DOUBLE found in SQL!")
+
             # Execute using the safe helper (vector already embedded in SQL)
             logger.debug(
                 f"Executing safe vector search with {len(query_embedding)}D vector"
@@ -1132,11 +1140,22 @@ class IRISVectorStore(VectorStore):
             else:
                 query_embedding = embedding_func.embed_query(query)
 
-            # Call our implementation and return just documents for LangChain
+            # Call our implementation and add scores to document metadata
             results = self.similarity_search_by_embedding(
                 query_embedding, k, filter_param
             )
-            return [doc for doc, score in results]
+            # Add score to each document's metadata for MCP/API compatibility
+            documents_with_scores = []
+            for doc, score in results:
+                # Create new document with score in metadata
+                enriched_metadata = {**doc.metadata, 'score': score, 'similarity': score}
+                enriched_doc = Document(
+                    id=doc.id,
+                    page_content=doc.page_content,
+                    metadata=enriched_metadata
+                )
+                documents_with_scores.append(enriched_doc)
+            return documents_with_scores
 
         else:
             # Base class interface: similarity_search(query_embedding, top_k, filter)

@@ -1,0 +1,119 @@
+# Docker Compose for MCP Server
+#
+# Provides two service configurations:
+# 1. mcp-standalone: Python bridge + Node.js MCP server (stdio/HTTP)
+# 2. api-with-mcp: REST API with embedded MCP bridge
+#
+# Feature: Complete MCP Tools Implementation
+# Branch: 043-complete-mcp-tools
+
+version: '3.8'
+
+services:
+  # IRIS Database (shared by all services)
+  iris:
+    image: intersystemsdc/iris-community:latest
+    container_name: iris-rag-db
+    environment:
+      - ISC_DATA_DIRECTORY=/durable/iris
+    ports:
+      - "1972:1972"  # SuperServer port
+      - "52773:52773"  # Management Portal
+    volumes:
+      - iris-data:/durable/iris
+    healthcheck:
+      test: ["CMD", "iris", "session", "iris", "-U", "USER", "##class(%SYSTEM.Process).CurrentDirectory()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - mcp-network
+
+  # Redis (for rate limiting and caching)
+  redis:
+    image: redis:7-alpine
+    container_name: redis-mcp
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - mcp-network
+
+  # MCP Server (Standalone Mode)
+  # Runs Python bridge + Node.js MCP server as separate processes
+  mcp-standalone:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    container_name: mcp-standalone
+    environment:
+      - MODE=standalone
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-both}  # stdio, http, or both
+      - MCP_HTTP_PORT=3000
+      - PYTHON_BRIDGE_PORT=8001
+      - IRIS_HOST=iris
+      - IRIS_PORT=1972
+      - IRIS_NAMESPACE=USER
+      - IRIS_USERNAME=_SYSTEM
+      - IRIS_PASSWORD=SYS
+      - MAX_CONNECTIONS=5
+      - AUTH_MODE=${AUTH_MODE:-none}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    ports:
+      - "3000:3000"  # MCP HTTP/SSE
+      - "8001:8001"  # Python bridge (for debugging)
+    depends_on:
+      iris:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    profiles:
+      - standalone
+
+  # REST API with MCP Integration (Integrated Mode)
+  # Runs REST API with MCP bridge embedded
+  api-with-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    container_name: api-with-mcp
+    environment:
+      - MODE=integrated
+      - IRIS_HOST=iris
+      - IRIS_PORT=1972
+      - IRIS_NAMESPACE=USER
+      - IRIS_USERNAME=_SYSTEM
+      - IRIS_PASSWORD=SYS
+      - MAX_CONNECTIONS=5
+      - AUTH_MODE=${AUTH_MODE:-api_key}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "8000:8000"  # REST API + MCP health endpoints
+    depends_on:
+      iris:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mcp-network
+    profiles:
+      - integrated
+
+volumes:
+  iris-data:
+    driver: local
+
+networks:
+  mcp-network:
+    driver: bridge

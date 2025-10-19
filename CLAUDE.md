@@ -129,6 +129,109 @@ result = pipeline.query(query="What is diabetes?", top_k=5)
 # - result["metadata"]: Pipeline-specific metadata fields
 ```
 
+### Pipeline Contract Validation (Feature 047)
+
+All pipelines in the iris_rag framework must conform to a standardized API contract to ensure:
+- Consistent user experience across all pipeline types
+- 100% LangChain & RAGAS compatibility
+- Automated testing and validation
+- Clear error messages for contract violations
+
+**Contract Requirements:**
+
+1. **Required Methods:**
+   - `query(query: str, top_k: int = 20, **kwargs) -> Dict[str, Any]`
+   - `load_documents(documents_path: str = "", documents: List[Document] = None, **kwargs) -> None`
+
+2. **Query Response Format (Required Fields):**
+   ```python
+   {
+       "answer": str,                          # LLM-generated answer
+       "retrieved_documents": List[Document],  # Retrieved context with metadata
+       "contexts": List[str],                  # Text content for RAGAS evaluation
+       "sources": List[str],                   # Source references
+       "execution_time": float,                # Total time in seconds
+       "metadata": Dict[str, Any]              # Pipeline-specific metadata
+   }
+   ```
+
+3. **Required Metadata Fields:**
+   ```python
+   {
+       "num_retrieved": int,        # Number of documents retrieved
+       "pipeline_type": str,         # Pipeline identifier
+       "generated_answer": bool,     # Whether LLM answer was generated
+       "processing_time": float,     # Same as execution_time
+       "retrieval_method": str,      # How retrieval was performed
+       "context_count": int          # Number of contexts returned
+   }
+   ```
+
+4. **Backward Compatibility:**
+   - Support deprecated `query_text` parameter (aliased to `query`)
+   - Handle via `**kwargs` in query method
+
+**Using the Validator:**
+
+```python
+from iris_rag.core.validators import PipelineValidator
+
+# Validate pipeline class
+validator = PipelineValidator(strict_mode=False)
+violations = validator.validate_pipeline_class(MyPipeline)
+
+if violations:
+    for violation in violations:
+        print(f"{violation.severity}: {violation.message}")
+
+# Validate response
+response = pipeline.query("test query")
+violations = validator.validate_response(response, "my_pipeline")
+
+# Get contract summary
+print(validator.get_contract_summary())
+```
+
+**Registry Validation:**
+
+The TechniqueHandlerRegistry supports automatic validation when registering pipelines:
+
+```python
+from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+
+# Enable validation with strict mode
+registry = TechniqueHandlerRegistry(
+    strict_mode=False,         # If True, treats warnings as errors
+    validate_on_register=True  # Validate pipelines when registering
+)
+
+# Register with validation
+registry.register_handler('my_pipeline', handler, MyPipelineClass)
+
+# Validate all registered handlers
+results = registry.validate_all_handlers()
+```
+
+**Configuration:**
+
+Validation settings are in `iris_rag/config/default_config.yaml`:
+
+```yaml
+validation:
+  enabled: true                    # Enable pipeline contract validation
+  strict_mode: false               # If true, treat warnings as errors
+  validate_on_register: true       # Validate pipelines when registering
+  validate_on_query: false         # Validate responses (performance impact)
+  log_violations: true             # Log contract violations
+  raise_on_error: true             # Raise exceptions for errors
+```
+
+**Testing:**
+
+- Unit tests: `tests/unit/test_pipeline_validator.py` (19 tests)
+- Integration tests: `tests/integration/test_contract_validation.py` (15 tests)
+- All default pipelines are validated automatically
+
 ### Testing Architecture
 - **Unit Tests**: `tests/unit/` - Component-level testing
 - **Integration Tests**: `tests/integration/` - Cross-component functionality

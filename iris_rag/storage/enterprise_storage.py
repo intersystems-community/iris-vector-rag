@@ -268,7 +268,7 @@ class IRISStorage:
                     if embeddings:
                         update_sql = f"""
                         UPDATE {self.table_name}
-                        SET title = ?, text_content = ?, metadata = ?, embedding = TO_VECTOR(?, DOUBLE, 384)
+                        SET title = ?, text_content = ?, metadata = ?, embedding = TO_VECTOR(?, FLOAT, 384)
                         WHERE doc_id = ?
                         """
                         embedding_str = json.dumps(embeddings[i])
@@ -304,7 +304,7 @@ class IRISStorage:
                     if embeddings:
                         insert_sql = f"""
                         INSERT INTO {self.table_name} (doc_id, title, text_content, abstract, authors, keywords, metadata, embedding)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR(?, DOUBLE, 384))
+                        VALUES (?, ?, ?, ?, ?, ?, ?, TO_VECTOR(?, FLOAT, 384))
                         """
                         embedding_str = json.dumps(embeddings[i])
                         cursor.execute(
@@ -450,7 +450,7 @@ class IRISStorage:
             # Ensure selecting 'text_content'
             base_sql = f"""
             SELECT TOP {top_k} id, text_content, metadata,
-                   VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?, DOUBLE, 384)) as similarity_score
+                   VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?, FLOAT, 384)) as similarity_score
             FROM {self.table_name}
             WHERE embedding IS NOT NULL
             """
