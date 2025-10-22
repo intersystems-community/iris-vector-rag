@@ -80,9 +80,16 @@ entity_extraction:
     - "PERSON"
     - "ORGANIZATION"
   llm:
-    model: "qwen2.5:7b"                  # LLM model for extraction (Ollama) - 7B for speed
+    model: "openai/gpt-oss-120b"         # LLM model: GPT-OSS 120B (OpenAI-compatible)
+    api_base: "http://apps-llm-4.iscinternal.com:8000/v1"  # GPT-OSS endpoint
+    api_key: "dummy"                     # API key (not required for internal endpoints)
+    api_type: "openai"                   # OpenAI-compatible API
     temperature: 0.1                     # Low temperature for consistent extraction
-    max_tokens: 1000                     # Max tokens for LLM response (reduced for speed)
+    max_tokens: 2000                     # Max tokens for LLM response
+    supports_response_format: false      # GPT-OSS doesn't support JSON mode
+    use_json_mode: false                 # Disable JSON mode
+  batch_processing:
+    enabled: false                       # DISABLED: GPT-OSS doesn't support JSON mode
   storage:
     entities_table: "RAG.Entities"      # Database table for entities
     relationships_table: "RAG.EntityRelationships"  # Table for relationships

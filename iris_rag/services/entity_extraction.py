@@ -999,11 +999,31 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
             temperature = llm_config.get("temperature", 0.1)
             max_tokens = llm_config.get("max_tokens", 2000)
 
-            # Check if model is Ollama (localhost:11434) or OpenAI
-            if "gpt" in model.lower():
-                # Use OpenAI API - fallback to stub
-                logger.warning(f"OpenAI model {model} configured but no API key - using pattern extraction")
-                return '[]'
+            # Check if model is Ollama (localhost:11434) or OpenAI-compatible
+            if "gpt" in model.lower() or llm_config.get("api_type") == "openai":
+                # Use DSPy for OpenAI-compatible endpoints (GPT-OSS, etc.)
+                try:
+                    from iris_rag.dspy_modules.entity_extraction_module import configure_dspy
+                    import dspy
+
+                    # Configure DSPy with LLM config
+                    configure_dspy(llm_config)
+
+                    # Create simple prediction module
+                    class EntityExtractor(dspy.Signature):
+                        """Extract entities from text."""
+                        text = dspy.InputField()
+                        entities = dspy.OutputField(desc="JSON array of entities")
+
+                    predictor = dspy.ChainOfThought(EntityExtractor)
+                    result = predictor(text=prompt)
+
+                    # Return the entities as string
+                    return str(result.entities) if hasattr(result, 'entities') else '[]'
+
+                except Exception as e:
+                    logger.error(f"DSPy extraction failed: {e}, falling back to pattern extraction")
+                    return '[]'
 
             # Use Ollama
             ollama_url = "http://localhost:11434/api/generate"
