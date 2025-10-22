@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 
-# Load schemas from contract file
-_SCHEMA_PATH = Path(__file__).parent.parent.parent / 'specs' / '043-complete-mcp-tools' / 'contracts' / 'mcp_tool_schema.json'
+# Load schemas from package data
+_SCHEMA_PATH = Path(__file__).parent / 'mcp_tool_schema.json'
 
 with open(_SCHEMA_PATH, 'r') as f:
     _SCHEMA_DATA = json.load(f)

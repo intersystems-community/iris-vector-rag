@@ -76,8 +76,11 @@ class GraphRAGPipeline(RAGPipeline):
         self.max_depth = self.pipeline_config.get("max_depth", 2)
         self.max_entities = self.pipeline_config.get("max_entities", 50)
 
+        # Entity extraction can be disabled for fast document-only indexing
+        self.entity_extraction_enabled = self.pipeline_config.get("entity_extraction_enabled", True)
+
         logger.info(
-            "Production-hardened GraphRAG pipeline initialized with entity extraction"
+            f"Production-hardened GraphRAG pipeline initialized (entity extraction: {self.entity_extraction_enabled})"
         )
 
     def load_documents(self, documents_path: str, **kwargs) -> None:
@@ -105,6 +108,11 @@ class GraphRAGPipeline(RAGPipeline):
             self.vector_store.add_documents(documents, auto_chunk=True)
         else:
             self._store_documents(documents)
+
+        # Check if entity extraction is enabled
+        if not self.entity_extraction_enabled:
+            logger.info(f"Entity extraction disabled - loaded {len(documents)} documents (embeddings only)")
+            return
 
         # Ensure knowledge graph tables exist BEFORE extraction/storage
         try:
@@ -158,8 +166,8 @@ class GraphRAGPipeline(RAGPipeline):
                                 for entity2 in entities[i+1:]:
                                     # Simple relationship: co-occurrence in same document
                                     rel = Relationship(
-                                        source_entity=entity1.text,
-                                        target_entity=entity2.text,
+                                        source_entity_id=entity1.text,  # Fixed: was source_entity
+                                        target_entity_id=entity2.text,  # Fixed: was target_entity
                                         relationship_type="co_occurs_with",
                                         confidence=0.8,
                                         source_document_id=doc.id

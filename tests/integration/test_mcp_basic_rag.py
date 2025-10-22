@@ -19,7 +19,7 @@ class TestMCPBasicRAG:
     """Integration test for rag_basic tool execution."""
 
     @pytest.mark.asyncio
-    async def test_basic_rag_query_execution(self):
+    async def test_basic_rag_query_execution(self, loaded_test_documents):
         """Verify rag_basic tool executes query and returns complete response."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -65,7 +65,7 @@ class TestMCPBasicRAG:
         assert isinstance(response['metadata'], dict)
 
     @pytest.mark.asyncio
-    async def test_basic_rag_performance_metrics(self):
+    async def test_basic_rag_performance_metrics(self, loaded_test_documents):
         """Verify response includes performance metrics."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -98,7 +98,7 @@ class TestMCPBasicRAG:
         assert metrics['tokens_used'] >= 0
 
     @pytest.mark.asyncio
-    async def test_basic_rag_query_latency_p95(self):
+    async def test_basic_rag_query_latency_p95(self, loaded_test_documents):
         """Verify query execution time meets p95 latency requirement (<10s)."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -121,7 +121,7 @@ class TestMCPBasicRAG:
             f"Query took {elapsed_ms:.1f}ms (p95 requirement: <10000ms)"
 
     @pytest.mark.asyncio
-    async def test_basic_rag_with_minimal_parameters(self):
+    async def test_basic_rag_with_minimal_parameters(self, loaded_test_documents):
         """Verify rag_basic works with only required parameters."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -142,7 +142,7 @@ class TestMCPBasicRAG:
         assert len(response['retrieved_documents']) == 5
 
     @pytest.mark.asyncio
-    async def test_basic_rag_with_custom_top_k(self):
+    async def test_basic_rag_with_custom_top_k(self, loaded_test_documents):
         """Verify rag_basic respects custom top_k parameter."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -159,7 +159,7 @@ class TestMCPBasicRAG:
         response = result['result']
         assert len(response['retrieved_documents']) == 3
 
-        # Test with top_k=10
+        # Test with top_k=10 (but only 5 docs exist, so returns 5)
         result = await bridge.invoke_technique(
             technique='basic',
             query='What is diabetes?',
@@ -168,10 +168,10 @@ class TestMCPBasicRAG:
 
         assert result['success'] is True
         response = result['result']
-        assert len(response['retrieved_documents']) == 10
+        assert len(response['retrieved_documents']) == 5  # Only 5 docs in fixture
 
     @pytest.mark.asyncio
-    async def test_basic_rag_with_include_sources(self):
+    async def test_basic_rag_with_include_sources(self, loaded_test_documents):
         """Verify include_sources parameter controls source inclusion."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -198,7 +198,7 @@ class TestMCPBasicRAG:
         # May still have sources (implementation choice), or empty list
 
     @pytest.mark.asyncio
-    async def test_basic_rag_with_include_metadata(self):
+    async def test_basic_rag_with_include_metadata(self, loaded_test_documents):
         """Verify include_metadata parameter controls metadata inclusion."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -225,7 +225,7 @@ class TestMCPBasicRAG:
         # metadata field may still exist but be minimal
 
     @pytest.mark.asyncio
-    async def test_basic_rag_invalid_top_k_out_of_range(self):
+    async def test_basic_rag_invalid_top_k_out_of_range(self, loaded_test_documents):
         """Verify rag_basic rejects top_k values outside valid range."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -253,7 +253,7 @@ class TestMCPBasicRAG:
         assert 'error' in result
 
     @pytest.mark.asyncio
-    async def test_basic_rag_empty_query_handling(self):
+    async def test_basic_rag_empty_query_handling(self, loaded_test_documents):
         """Verify rag_basic handles empty query appropriately."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -271,7 +271,7 @@ class TestMCPBasicRAG:
         assert 'success' in result
 
     @pytest.mark.asyncio
-    async def test_basic_rag_response_format_consistency(self):
+    async def test_basic_rag_response_format_consistency(self, loaded_test_documents):
         """Verify response format matches REST API response format (FR-025)."""
         from iris_rag.mcp.bridge import MCPBridge
 
@@ -296,7 +296,7 @@ class TestMCPBasicRAG:
                'technique' in response['metadata']
 
     @pytest.mark.asyncio
-    async def test_basic_rag_multiple_queries_sequential(self):
+    async def test_basic_rag_multiple_queries_sequential(self, loaded_test_documents):
         """Verify multiple sequential queries work correctly."""
         from iris_rag.mcp.bridge import MCPBridge
 

@@ -686,13 +686,12 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
             # Lazy import DSPy module
             from ..dspy_modules.entity_extraction_module import (
                 TrakCareEntityExtractionModule,
-                configure_dspy_for_ollama
+                configure_dspy
             )
 
             # Configure DSPy if not already configured
             if not hasattr(self, '_dspy_module'):
                 llm_config = self.config.get("llm", {})
-                model = llm_config.get("model", "qwen2.5:7b")
 
                 # Only configure DSPy if not already configured globally
                 # This prevents threading issues when workers have already configured DSPy
@@ -700,16 +699,16 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                 try:
                     # Check if DSPy is already configured (by checking if lm is set)
                     if dspy_module.settings.lm is None:
-                        # Configure DSPy with Ollama (use model_name parameter)
-                        configure_dspy_for_ollama(model_name=model)
-                        logger.info(f"DSPy configured with model: {model}")
+                        # Configure DSPy with the full llm_config (respects supports_response_format, etc.)
+                        configure_dspy(llm_config)
+                        logger.info(f"DSPy configured with model: {llm_config.get('model')}")
                     else:
                         logger.info(f"DSPy already configured, reusing existing configuration")
                 except Exception as e:
                     # If checking settings fails, try to configure anyway
                     logger.warning(f"Could not check DSPy configuration: {e}, attempting to configure...")
                     try:
-                        configure_dspy_for_ollama(model_name=model)
+                        configure_dspy(llm_config)
                     except Exception as config_error:
                         logger.error(f"Failed to configure DSPy: {config_error}")
                         # Fall back to traditional extraction
@@ -717,7 +716,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
 
                 # Initialize DSPy module
                 self._dspy_module = TrakCareEntityExtractionModule()
-                logger.info(f"DSPy entity extraction module initialized with model: {model}")
+                logger.info(f"DSPy entity extraction module initialized with model: {llm_config.get('model')}")
 
             # Perform DSPy extraction
             prediction = self._dspy_module.forward(
@@ -785,6 +784,22 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         Returns:
             Dict mapping document IDs to their extracted entities
         """
+        # Check if batch processing is enabled
+        batch_config = self.config.get("batch_processing", {})
+        batch_enabled = batch_config.get("enabled", True)
+
+        if not batch_enabled:
+            logger.info("Batch processing disabled - falling back to individual extraction")
+            # Process documents individually
+            result_map = {}
+            for doc in documents:
+                result = self.process_document(doc)
+                if result.get("stored", False):
+                    # Extract entities from the result
+                    entities = result.get("entities", [])
+                    result_map[doc.id] = entities
+            return result_map
+
         try:
             # Lazy import batch DSPy module
             from ..dspy_modules.batch_entity_extraction import (
@@ -794,16 +809,15 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
             # Initialize batch module if not already done
             if not hasattr(self, '_batch_dspy_module'):
                 # Import configuration helper
-                from ..dspy_modules.entity_extraction_module import configure_dspy_for_ollama
+                from ..dspy_modules.entity_extraction_module import configure_dspy
 
                 llm_config = self.config.get("llm", {})
-                model = llm_config.get("model", "qwen2.5:7b")
 
                 # Configure DSPy if needed
                 import dspy as dspy_module
                 if dspy_module.settings.lm is None:
-                    configure_dspy_for_ollama(model_name=model)
-                    logger.info(f"DSPy configured for batch extraction with model: {model}")
+                    configure_dspy(llm_config)
+                    logger.info(f"DSPy configured for batch extraction with model: {llm_config.get('model')}")
 
                 # Initialize batch module
                 self._batch_dspy_module = BatchEntityExtractionModule()
