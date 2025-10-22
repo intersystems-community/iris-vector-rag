@@ -258,6 +258,7 @@ def configure_dspy(llm_config: dict):
 
         model = llm_config.get("model", "qwen2.5:7b")
         api_base = llm_config.get("api_base", "http://localhost:11434")
+        api_key = llm_config.get("api_key", "dummy")  # Extract API key from config
         api_type = llm_config.get("api_type", "ollama")
         max_tokens = llm_config.get("max_tokens", 2000)
         temperature = llm_config.get("temperature", 0.1)
@@ -272,6 +273,7 @@ def configure_dspy(llm_config: dict):
             lm = dspy.LM(
                 model=model,
                 api_base=api_base,
+                api_key=api_key,  # Pass API key to DSPy
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
@@ -292,6 +294,7 @@ def configure_dspy(llm_config: dict):
                 lm = dspy.LM(
                     model=f"ollama/{model}",
                     api_base=api_base,
+                    api_key=api_key,  # Pass API key (may be unused by Ollama)
                     max_tokens=max_tokens,
                     temperature=temperature
                 )
@@ -305,6 +308,7 @@ def configure_dspy(llm_config: dict):
                     base_url=api_base,
                     max_tokens=max_tokens,
                     temperature=temperature
+                    # Note: OLlama() doesn't accept api_key parameter
                 )
                 logger.info(f"✅ DSPy configured with Ollama model: {model} (fallback)")
 
