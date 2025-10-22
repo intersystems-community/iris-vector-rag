@@ -34,6 +34,7 @@ rag_memory_config:
   knowledge_extraction:
     entity_extraction:
       method: "llm_basic"  # Options: llm_basic, pattern_only, hybrid, ontology_hybrid
+      # llm_basic works now that batch_processing is disabled
       confidence_threshold: 0.7
       max_entities_per_document: 100
       entity_types:  # TrakCare-specific entity types
@@ -51,10 +52,13 @@ rag_memory_config:
         api_type: "openai"  # OpenAI-compatible API
         temperature: 0.1  # Low temperature for deterministic extraction
         max_tokens: 2000
+        # Disable structured output - GPT-OSS doesn't support response_format parameter
+        supports_response_format: false
+        use_json_mode: false
 
       # Batch processing configuration (FR-001 through FR-007)
       batch_processing:
-        enabled: true                  # Enable batch processing for 3x speedup
+        enabled: false                  # DISABLED: GPT-OSS doesn't support JSON mode
         token_budget: 8192             # Max tokens per batch (FR-006)
         max_retries: 5                 # Retry up to 5 times for flaky VPN (increased from 3)
         retry_delays: [2, 5, 10, 20, 30]  # Exponential backoff: 2s, 5s, 10s, 20s, 30s

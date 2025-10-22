@@ -243,43 +243,94 @@ class TrakCareEntityExtractionModule(dspy.Module):
         return entities
 
 
+def configure_dspy(llm_config: dict):
+    """
+    Configure DSPy to use any LLM provider (Ollama, OpenAI-compatible, etc.).
+
+    Respects configuration flags like supports_response_format and use_json_mode
+    to ensure compatibility with various LLM endpoints.
+
+    Args:
+        llm_config: LLM configuration dict containing model, api_base, api_type, etc.
+    """
+    try:
+        import dspy
+
+        model = llm_config.get("model", "qwen2.5:7b")
+        api_base = llm_config.get("api_base", "http://localhost:11434")
+        api_type = llm_config.get("api_type", "ollama")
+        max_tokens = llm_config.get("max_tokens", 2000)
+        temperature = llm_config.get("temperature", 0.1)
+
+        # Check if endpoint supports response_format (for JSON mode)
+        supports_response_format = llm_config.get("supports_response_format", True)
+        use_json_mode = llm_config.get("use_json_mode", True)
+
+        # Configure based on API type
+        if api_type == "openai" or model.startswith("openai/"):
+            # OpenAI-compatible endpoint (like GPT-OSS)
+            lm = dspy.LM(
+                model=model,
+                api_base=api_base,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+
+            # Disable JSON mode if endpoint doesn't support response_format
+            if not supports_response_format or not use_json_mode:
+                logger.warning(
+                    f"Model {model} does not support response_format parameter - "
+                    "DSPy may fall back to text parsing"
+                )
+
+            logger.info(f"✅ DSPy configured with OpenAI-compatible model: {model}")
+
+        else:
+            # Ollama or other provider
+            try:
+                # Modern DSPy 2.5+ API with ollama/ prefix
+                lm = dspy.LM(
+                    model=f"ollama/{model}",
+                    api_base=api_base,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+                logger.info(f"✅ DSPy configured with Ollama model: {model}")
+            except Exception as e:
+                logger.warning(f"dspy.LM failed: {e}, trying fallback...")
+                # Fallback: try direct Ollama integration
+                from dspy import OLlama
+                lm = OLlama(
+                    model=model,
+                    base_url=api_base,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+                logger.info(f"✅ DSPy configured with Ollama model: {model} (fallback)")
+
+        dspy.configure(lm=lm)
+
+    except Exception as e:
+        logger.error(f"Failed to configure DSPy: {e}")
+        raise
+
+
 def configure_dspy_for_ollama(model_name: str = "qwen2.5:7b", base_url: str = "http://localhost:11434"):
     """
-    Configure DSPy to use Ollama for LLM inference.
+    Configure DSPy to use Ollama for LLM inference (legacy function).
+
+    Deprecated: Use configure_dspy() with llm_config dict instead.
 
     Args:
         model_name: Ollama model name (default: qwen2.5:7b - fast and accurate)
         base_url: Ollama API base URL
     """
-    try:
-        import dspy
-
-        # Configure DSPy with Ollama using the correct API for DSPy 2.6.27
-        # Try dspy.LM first (modern API), fallback to older APIs if needed
-        try:
-            # Modern DSPy 2.5+ API with ollama/ prefix
-            ollama_lm = dspy.LM(
-                model=f"ollama/{model_name}",
-                api_base=base_url,
-                max_tokens=2000,
-                temperature=0.1
-            )
-            logger.info(f"Using dspy.LM with ollama/{model_name}")
-        except Exception as e:
-            logger.warning(f"dspy.LM failed: {e}, trying fallback...")
-            # Fallback: try direct Ollama integration
-            from dspy import OLlama  # Note: Capital O, then L
-            ollama_lm = OLlama(
-                model=model_name,
-                base_url=base_url,
-                max_tokens=2000,
-                temperature=0.1
-            )
-            logger.info(f"Using dspy.OLlama with {model_name}")
-
-        dspy.configure(lm=ollama_lm)
-        logger.info(f"✅ DSPy configured with Ollama model: {model_name}")
-
-    except Exception as e:
-        logger.error(f"Failed to configure DSPy with Ollama: {e}")
-        raise
+    # Call the new generic function
+    llm_config = {
+        "model": model_name,
+        "api_base": base_url,
+        "api_type": "ollama",
+        "max_tokens": 2000,
+        "temperature": 0.1
+    }
+    configure_dspy(llm_config)
