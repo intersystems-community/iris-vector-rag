@@ -1,15 +1,15 @@
 [
   {
     "file": "redaction_changes.json",
-    "replacements": 90,
+    "replacements": 7,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (11 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (9 occurrences)",
-      "merge request \u2192 pull request (11 occurrences)",
-      "Merge Request \u2192 Pull Request (8 occurrences)",
-      "MR # \u2192 PR # (5 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (6 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (40 occurrences)"
+      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
+      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
+      "merge request \u2192 pull request (1 occurrences)",
+      "Merge Request \u2192 Pull Request (1 occurrences)",
+      "MR # \u2192 PR # (1 occurrences)",
+      "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
@@ -51,13 +51,6 @@
       "MR # \u2192 PR # (1 occurrences)",
       "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
       "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": ".claude/settings.local.json",
-    "replacements": 5,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
     ]
   },
   {
@@ -224,224 +217,6 @@
     ]
   },
   {
-    "file": "specs/034-fill-in-gaps/quickstart.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/034-fill-in-gaps/tasks.md",
-    "replacements": 11,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (11 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/034-fill-in-gaps/research.md",
-    "replacements": 4,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (4 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/034-fill-in-gaps/plan.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/025-fixes-for-testing/quickstart.md",
-    "replacements": 3,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/025-fixes-for-testing/plan.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/037-clean-up-this/plan.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/042-full-rest-api/plan.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/032-investigate-graphrag-data/tasks.md",
-    "replacements": 18,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (18 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/032-investigate-graphrag-data/plan.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/028-obviously-these-failures/tasks.md",
-    "replacements": 28,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (28 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/028-obviously-these-failures/plan.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/001-configurationmanager-schemamanager-system/tasks.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/040-fix-ragas-evaluation/IMPLEMENTATION_SUMMARY.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/040-fix-ragas-evaluation/tasks.md",
-    "replacements": 9,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (9 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/040-fix-ragas-evaluation/plan.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/035-make-2-modes/quickstart.md",
-    "replacements": 1,
-    "changes": [
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/035-make-2-modes/tasks.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/035-make-2-modes/plan.md",
-    "replacements": 8,
-    "changes": [
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (7 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/036-retrofit-graphrag-s/TEST_EXECUTION_REPORT.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/036-retrofit-graphrag-s/tasks.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/036-retrofit-graphrag-s/plan.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/031-fix-make-target/research.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/024-fixing-these-things/research.md",
-    "replacements": 1,
-    "changes": [
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/023-increase-coverage-to/quickstart.md",
-    "replacements": 11,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (11 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/033-fix-graphrag-vector/tasks.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/033-fix-graphrag-vector/research.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/026-fix-critical-issues/plan.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/025-fixes-for-testing/contracts/test_execution_contract.md",
-    "replacements": 3,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/032-investigate-graphrag-data/investigation/graph_state.json",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "specs/032-investigate-graphrag-data/investigation/FINDINGS.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
     "file": "tests/integration/test_iris_devtools_namespace_fix.py",
     "replacements": 1,
     "changes": [
@@ -467,6 +242,41 @@
     "replacements": 1,
     "changes": [
       "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/demo_pipeline_multi_query.py",
+    "replacements": 1,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/DEMO_README.md",
+    "replacements": 9,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (9 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/demo_simple_multi_query.py",
+    "replacements": 3,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/STATUS.md",
+    "replacements": 5,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/INTEGRATION_STEPS.md",
+    "replacements": 2,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
     ]
   },
   {
@@ -516,13 +326,6 @@
     "replacements": 1,
     "changes": [
       "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)"
-    ]
-  },
-  {
-    "file": ".specify/memory/constitution.md",
-    "replacements": 2,
-    "changes": [
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (2 occurrences)"
     ]
   },
   {

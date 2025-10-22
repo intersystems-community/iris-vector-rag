@@ -494,7 +494,7 @@ class CRAGPipeline(RAGPipeline):
                 SELECT TOP {top_k}
                     doc_id,
                     chunk_text,
-                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?, DOUBLE, 384)) as similarity_score
+                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?, FLOAT, 384)) as similarity_score
                 FROM RAG.DocumentChunks
                 WHERE chunk_embedding IS NOT NULL
                 ORDER BY similarity_score DESC
@@ -606,7 +606,7 @@ class CRAGPipeline(RAGPipeline):
                     SELECT TOP {top_k * 2}
                         doc_id,
                         text_content,
-                        VECTOR_COSINE(embedding, TO_VECTOR(?, DOUBLE, 384)) as similarity_score
+                        VECTOR_COSINE(embedding, TO_VECTOR(?, FLOAT, 384)) as similarity_score
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY similarity_score DESC

@@ -31,6 +31,33 @@ pipelines:
     ensure_on_start: true
     try_acorn: true
 
+# Pipeline validation configuration (Feature 047)
+validation:
+  enabled: true                          # Enable pipeline contract validation
+  strict_mode: false                     # If true, treat warnings as errors
+  validate_on_register: true             # Validate pipelines when registering handlers
+  validate_on_query: false               # Validate responses after each query (performance impact)
+  log_violations: true                   # Log contract violations
+  raise_on_error: true                   # Raise exceptions for validation errors
+
+  # Contract requirements (should match PipelineValidator)
+  contract:
+    required_methods: ["query", "load_documents"]
+    required_response_fields:
+      - "answer"
+      - "retrieved_documents"
+      - "contexts"
+      - "sources"
+      - "execution_time"
+      - "metadata"
+    required_metadata_fields:
+      - "num_retrieved"
+      - "pipeline_type"
+      - "generated_answer"
+      - "processing_time"
+      - "retrieval_method"
+      - "context_count"
+
 embeddings:
   default_provider: "sentence_transformers"
   sentence_transformers:

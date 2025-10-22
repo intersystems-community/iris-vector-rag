@@ -72,9 +72,9 @@ def insert_vector(
 
     # IMPORTANT: TO_VECTOR() does NOT accept parameter markers (?, :param, etc.)
     # Must embed the vector string directly in SQL
-    # Use DOUBLE to match the VECTOR(DOUBLE, dimension) column definition
+    # Use FLOAT to match how test data was created (see tests/fixtures/embedding_generator.py:247)
     placeholders_list = ["?" for _ in other_column_names] + [
-        f"TO_VECTOR('{embedding_str}', DOUBLE, {target_dimension})"
+        f"TO_VECTOR('{embedding_str}', FLOAT, {target_dimension})"
     ]
     placeholders_sql = ", ".join(placeholders_list)
 
@@ -133,9 +133,9 @@ def insert_vector(
                     update_params.append(all_columns_dict[col])
 
             # Add vector column to SET clause - TO_VECTOR doesn't accept parameters
-            # Use DOUBLE to match the VECTOR(DOUBLE, dimension) column definition
+            # Use FLOAT to match how test data was created (see tests/fixtures/embedding_generator.py:247)
             set_clauses.append(
-                f"{vector_column_name} = TO_VECTOR('{embedding_str}', DOUBLE, {target_dimension})"
+                f"{vector_column_name} = TO_VECTOR('{embedding_str}', FLOAT, {target_dimension})"
             )
             # Don't append embedding_str to params - it's embedded in SQL above
 

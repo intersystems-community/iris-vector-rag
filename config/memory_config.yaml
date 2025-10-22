@@ -46,7 +46,9 @@ rag_memory_config:
         - "VERSION"
       llm:
         use_dspy: true  # Enable DSPy for better entity extraction
-        model: "qwen2.5:7b"  # Fast Ollama model
+        model: "openai/gpt-oss-120b"  # Internal GPT-OSS 120B model
+        api_base: "http://apps-llm-4.iscinternal.com:8000/v1"
+        api_type: "openai"  # OpenAI-compatible API
         temperature: 0.1  # Low temperature for deterministic extraction
         max_tokens: 2000
 
@@ -54,8 +56,10 @@ rag_memory_config:
       batch_processing:
         enabled: true                  # Enable batch processing for 3x speedup
         token_budget: 8192             # Max tokens per batch (FR-006)
-        max_retries: 3                 # Exponential backoff retry attempts (FR-005)
-        retry_delays: [2, 4, 8]        # Exponential backoff delays in seconds (FR-005)
+        max_retries: 5                 # Retry up to 5 times for flaky VPN (increased from 3)
+        retry_delays: [2, 5, 10, 20, 30]  # Exponential backoff: 2s, 5s, 10s, 20s, 30s
+        connection_timeout: 120        # 2 minutes for VPN connections
+        read_timeout: 300              # 5 minutes for LLM response (120B model can be slow)
         target_speedup: 3.0            # Target performance improvement (FR-002)
         quality_threshold: 4.86        # Minimum entities per document (FR-003)
     

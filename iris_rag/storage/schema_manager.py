@@ -1956,7 +1956,7 @@ class SchemaManager:
                 doc_id VARCHAR(255) NOT NULL,
                 text_content LONGVARCHAR,
                 metadata VARCHAR(2000),
-                embedding VECTOR(DOUBLE, {dimension}),
+                embedding VECTOR(FLOAT, {dimension}),
                 created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
                 PRIMARY KEY (doc_id)
@@ -2084,7 +2084,7 @@ class SchemaManager:
                 chunk_id VARCHAR(255),
                 source_document_id VARCHAR(255),
                 chunk_text TEXT,
-                chunk_embedding VECTOR(DOUBLE, {dimension}),
+                chunk_embedding VECTOR(FLOAT, {dimension}),
                 chunk_index INTEGER,
                 chunk_type VARCHAR(100),
                 metadata TEXT,
