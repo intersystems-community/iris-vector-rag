@@ -1,15 +1,15 @@
 [
   {
     "file": "redaction_changes.json",
-    "replacements": 96,
+    "replacements": 7,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (11 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (9 occurrences)",
-      "merge request \u2192 pull request (11 occurrences)",
-      "Merge Request \u2192 Pull Request (8 occurrences)",
-      "MR # \u2192 PR # (5 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (6 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (46 occurrences)"
+      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
+      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
+      "merge request \u2192 pull request (1 occurrences)",
+      "Merge Request \u2192 Pull Request (1 occurrences)",
+      "MR # \u2192 PR # (1 occurrences)",
+      "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
