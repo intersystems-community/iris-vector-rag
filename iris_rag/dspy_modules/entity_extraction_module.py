@@ -14,30 +14,13 @@ logger = logging.getLogger(__name__)
 
 def register_custom_models():
     """
-    Register custom OpenAI-compatible models with LiteLLM.
+    DEPRECATED: No longer needed with DirectOpenAILM approach.
 
-    This prevents LiteLLM from stripping provider prefixes from model names,
-    which is required for endpoints like GPT-OSS that include the prefix in
-    their model identifiers (e.g., "openai/gpt-oss-120b").
+    Previously attempted to register custom models with LiteLLM, but LiteLLM
+    fundamentally strips provider prefixes in OpenAI provider. Now using
+    DirectOpenAILM class which bypasses LiteLLM entirely.
     """
-    try:
-        import litellm
-
-        # Register GPT-OSS 120B model
-        litellm.register_model({
-            "openai/gpt-oss-120b": {
-                "max_tokens": 131072,
-                "supports_function_calling": False,
-                "supports_response_format": False,  # Critical: no JSON mode
-                "supports_vision": False,
-                "litellm_provider": "openai"
-            }
-        })
-        logger.info("✅ Registered custom model: openai/gpt-oss-120b with LiteLLM")
-    except ImportError:
-        logger.warning("LiteLLM not available - custom model registration skipped")
-    except Exception as e:
-        logger.warning(f"Failed to register custom models with LiteLLM: {e}")
+    pass  # No-op for backward compatibility
 
 
 class EntityExtractionSignature(dspy.Signature):
@@ -271,6 +254,111 @@ class TrakCareEntityExtractionModule(dspy.Module):
         return entities
 
 
+class DirectOpenAILM(dspy.BaseLM):
+    """
+    Custom DSPy LM that makes direct HTTP requests to OpenAI-compatible endpoints.
+
+    This bypasses LiteLLM entirely to preserve full model names (e.g., "openai/gpt-oss-120b")
+    which is required for NVIDIA NIM endpoints that include provider prefix in model ID.
+
+    Fixes Bug #6: LiteLLM strips provider prefix from model names.
+    """
+
+    def __init__(self, model: str, api_base: str, api_key: str, max_tokens: int = 2000, temperature: float = 0.1):
+        """Initialize direct OpenAI-compatible LM."""
+        super().__init__(model=model)  # Call BaseLM constructor
+
+        self.model = model  # Full model name preserved (e.g., "openai/gpt-oss-120b")
+        self.api_base = api_base.rstrip('/')  # Remove trailing slash
+        self.api_key = api_key
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+
+        # Set provider to openai for DSPy compatibility
+        self.provider = "openai"
+
+        # DSPy requires kwargs attribute
+        self.kwargs = {
+            "model": model,
+            "api_base": api_base,
+            "api_key": api_key,
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+
+        logger.info(f"DirectOpenAILM initialized: model={model}, api_base={api_base}")
+
+    def __call__(self, prompt=None, messages=None, **kwargs):
+        """
+        Make a direct HTTP request to OpenAI-compatible endpoint.
+
+        This method is called by DSPy when executing predictions.
+        """
+        import requests
+        import json
+
+        # Build messages array
+        if messages is None:
+            if prompt is None:
+                raise ValueError("Either prompt or messages must be provided")
+            messages = [{"role": "user", "content": prompt}]
+
+        # Build request payload
+        payload = {
+            "model": self.model,  # ✅ Full model name preserved!
+            "messages": messages,
+            "max_tokens": kwargs.get("max_tokens", self.max_tokens),
+            "temperature": kwargs.get("temperature", self.temperature),
+        }
+
+        # Add response_format if requested (though NIM doesn't enforce it)
+        if kwargs.get("response_format"):
+            payload["response_format"] = kwargs["response_format"]
+
+        # Make direct HTTP request
+        try:
+            endpoint = f"{self.api_base}/chat/completions"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+
+            logger.debug(f"DirectOpenAILM request: POST {endpoint} with model={self.model}")
+
+            response = requests.post(
+                endpoint,
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+            response.raise_for_status()
+
+            result = response.json()
+
+            # Extract response content
+            if "choices" in result and len(result["choices"]) > 0:
+                choice = result["choices"][0]
+                content = choice.get("message", {}).get("content", "")
+
+                logger.debug(f"DirectOpenAILM response (first 200 chars): {content[:200]}")
+
+                return [content]  # DSPy expects list of responses
+            else:
+                logger.error(f"Unexpected response format: {result}")
+                return [""]
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"DirectOpenAILM request failed: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                logger.error(f"Response status: {e.response.status_code}")
+                logger.error(f"Response body: {e.response.text[:500]}")
+            raise
+
+    def basic_request(self, prompt: str, **kwargs):
+        """Basic request interface for DSPy compatibility."""
+        return self(prompt=prompt, **kwargs)
+
+
 def configure_dspy(llm_config: dict):
     """
     Configure DSPy to use any LLM provider (Ollama, OpenAI-compatible, etc.).
@@ -284,10 +372,6 @@ def configure_dspy(llm_config: dict):
     try:
         import dspy
 
-        # Register custom models with LiteLLM before configuring
-        # This prevents LiteLLM from stripping provider prefixes (Bug #6 fix)
-        register_custom_models()
-
         model = llm_config.get("model", "qwen2.5:7b")
         api_base = llm_config.get("api_base", "http://localhost:11434")
         api_key = llm_config.get("api_key", "dummy")  # Extract API key from config
@@ -295,28 +379,29 @@ def configure_dspy(llm_config: dict):
         max_tokens = llm_config.get("max_tokens", 2000)
         temperature = llm_config.get("temperature", 0.1)
 
-        # Check if endpoint supports response_format (for JSON mode)
-        supports_response_format = llm_config.get("supports_response_format", True)
-        use_json_mode = llm_config.get("use_json_mode", True)
+        # FIX for Bug #6: Use custom DirectOpenAILM for GPT-OSS NIM
+        # This bypasses LiteLLM entirely to preserve full model name "openai/gpt-oss-120b"
+        if model == "openai/gpt-oss-120b" or (api_type == "openai" and "/" in model):
+            logger.info(f"🔧 Using DirectOpenAILM to preserve full model name: {model}")
+            lm = DirectOpenAILM(
+                model=model,  # Full name preserved: "openai/gpt-oss-120b"
+                api_base=api_base,
+                api_key=api_key,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            logger.info(f"✅ DSPy configured with DirectOpenAILM: {model}")
 
         # Configure based on API type
-        if api_type == "openai" or model.startswith("openai/"):
-            # OpenAI-compatible endpoint (like GPT-OSS)
+        elif api_type == "openai":
+            # Standard OpenAI-compatible endpoint (without prefix stripping issue)
             lm = dspy.LM(
                 model=model,
                 api_base=api_base,
-                api_key=api_key,  # Pass API key to DSPy
+                api_key=api_key,
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
-
-            # Disable JSON mode if endpoint doesn't support response_format
-            if not supports_response_format or not use_json_mode:
-                logger.warning(
-                    f"Model {model} does not support response_format parameter - "
-                    "DSPy may fall back to text parsing"
-                )
-
             logger.info(f"✅ DSPy configured with OpenAI-compatible model: {model}")
 
         else:
