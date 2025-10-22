@@ -1,6 +1,33 @@
 # RAG Memory Component Configuration
 # Generic configuration for memory-enabled RAG applications
 
+# TOP-LEVEL Entity Extraction Config (read by EntityExtractionService)
+# This mirrors rag_memory_config.knowledge_extraction.entity_extraction for compatibility
+entity_extraction:
+  enabled: true
+  method: "llm_basic"
+  confidence_threshold: 0.7
+  entity_types:
+    - "PRODUCT"
+    - "USER"
+    - "MODULE"
+    - "ERROR"
+    - "ACTION"
+    - "ORGANIZATION"
+    - "VERSION"
+  llm:
+    model: "openai/gpt-oss-120b"  # GPT-OSS 120B model
+    api_base: "http://apps-llm-4.iscinternal.com:8000/v1"
+    api_type: "openai"
+    temperature: 0.1
+    max_tokens: 2000
+    supports_response_format: false
+    use_json_mode: false
+  batch_processing:
+    enabled: false  # DISABLED: GPT-OSS doesn't support JSON mode
+  storage:
+    enabled: true
+
 # Database Configuration (required by ConfigurationManager)
 database:
   iris:
