@@ -12,6 +12,34 @@ from typing import List, Dict, Optional, Any
 logger = logging.getLogger(__name__)
 
 
+def register_custom_models():
+    """
+    Register custom OpenAI-compatible models with LiteLLM.
+
+    This prevents LiteLLM from stripping provider prefixes from model names,
+    which is required for endpoints like GPT-OSS that include the prefix in
+    their model identifiers (e.g., "openai/gpt-oss-120b").
+    """
+    try:
+        import litellm
+
+        # Register GPT-OSS 120B model
+        litellm.register_model({
+            "openai/gpt-oss-120b": {
+                "max_tokens": 131072,
+                "supports_function_calling": False,
+                "supports_response_format": False,  # Critical: no JSON mode
+                "supports_vision": False,
+                "litellm_provider": "openai"
+            }
+        })
+        logger.info("✅ Registered custom model: openai/gpt-oss-120b with LiteLLM")
+    except ImportError:
+        logger.warning("LiteLLM not available - custom model registration skipped")
+    except Exception as e:
+        logger.warning(f"Failed to register custom models with LiteLLM: {e}")
+
+
 class EntityExtractionSignature(dspy.Signature):
     """
     Extract structured entities and relationships from TrakCare support tickets.
@@ -255,6 +283,10 @@ def configure_dspy(llm_config: dict):
     """
     try:
         import dspy
+
+        # Register custom models with LiteLLM before configuring
+        # This prevents LiteLLM from stripping provider prefixes (Bug #6 fix)
+        register_custom_models()
 
         model = llm_config.get("model", "qwen2.5:7b")
         api_base = llm_config.get("api_base", "http://localhost:11434")
