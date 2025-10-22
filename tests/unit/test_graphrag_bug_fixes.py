@@ -7,7 +7,7 @@ Tests six critical bug fixes:
 3. Generic configure_dspy() supports OpenAI-compatible endpoints
 4. Individual extraction (_call_llm) uses configure_dspy for GPT-OSS
 5. configure_dspy() extracts and passes api_key to dspy.LM()
-6. Custom model registration prevents LiteLLM from stripping model name prefix
+6. DirectOpenAILM class bypasses LiteLLM to preserve model name prefix
 
 Reference: GRAPHRAG_BUGS_FIXED.md, GRAPHRAG_BUGS_REPORT.md, GRAPHRAG_BUG_5_API_KEY.md, GRAPHRAG_BUG_6_MODEL_NAME.md
 """
@@ -169,48 +169,55 @@ class TestBug5ApiKeyPassedToDspy:
 
 
 class TestBug6LiteLLMModelNameStripping:
-    """Test Bug #6 Fix: LiteLLM model name prefix preservation via custom model registration."""
+    """Test Bug #6 Fix: DirectOpenAILM bypasses LiteLLM to preserve model name prefix."""
 
-    def test_register_custom_models_function_exists(self):
-        """Verify register_custom_models() function exists."""
+    def test_direct_openai_lm_class_exists(self):
+        """Verify DirectOpenAILM class exists and inherits from dspy.BaseLM."""
         from iris_rag.dspy_modules import entity_extraction_module
+        import dspy
 
-        assert hasattr(entity_extraction_module, 'register_custom_models'), \
-            "Bug #6 fix: Should have register_custom_models function"
+        assert hasattr(entity_extraction_module, 'DirectOpenAILM'), \
+            "Bug #6 fix: Should have DirectOpenAILM class"
 
-    def test_configure_dspy_calls_register_custom_models(self):
-        """Verify configure_dspy() calls register_custom_models() before configuration."""
+        # Verify it inherits from dspy.BaseLM
+        DirectOpenAILM = entity_extraction_module.DirectOpenAILM
+        assert issubclass(DirectOpenAILM, dspy.BaseLM), \
+            "Bug #6 fix: DirectOpenAILM should inherit from dspy.BaseLM"
+
+    def test_direct_openai_lm_preserves_model_name(self):
+        """Verify DirectOpenAILM preserves full model name in __init__."""
+        from iris_rag.dspy_modules import entity_extraction_module
+        import inspect
+
+        source = inspect.getsource(entity_extraction_module.DirectOpenAILM.__init__)
+
+        # Should preserve full model name
+        assert "self.model = model" in source, \
+            "Bug #6 fix: DirectOpenAILM should preserve full model name"
+
+        # Should have comment about preserving model name
+        source_all = inspect.getsource(entity_extraction_module.DirectOpenAILM)
+        assert "openai/gpt-oss-120b" in source_all, \
+            "Bug #6 fix: DirectOpenAILM should reference preserving openai/gpt-oss-120b"
+
+    def test_configure_dspy_uses_direct_openai_lm_for_gpt_oss(self):
+        """Verify configure_dspy() uses DirectOpenAILM for GPT-OSS models."""
         from iris_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.configure_dspy)
 
-        # Should call register_custom_models before configuring DSPy
-        assert "register_custom_models" in source, \
-            "Bug #6 fix: configure_dspy should call register_custom_models()"
-
-        # Should mention preventing prefix stripping or Bug #6
-        assert "Bug #6" in source or "prefix" in source.lower(), \
-            "Bug #6 fix: Should document why register_custom_models is called"
-
-    def test_register_custom_models_registers_gpt_oss(self):
-        """Verify register_custom_models() registers openai/gpt-oss-120b model."""
-        from iris_rag.dspy_modules import entity_extraction_module
-        import inspect
-
-        source = inspect.getsource(entity_extraction_module.register_custom_models)
-
-        # Should register the GPT-OSS model
+        # Should check for GPT-OSS model
         assert "openai/gpt-oss-120b" in source, \
-            "Bug #6 fix: Should register openai/gpt-oss-120b model"
+            "Bug #6 fix: configure_dspy should check for openai/gpt-oss-120b model"
 
-        # Should use litellm.register_model
-        assert "litellm.register_model" in source or "register_model" in source, \
-            "Bug #6 fix: Should call litellm.register_model()"
+        # Should create DirectOpenAILM instance
+        assert "DirectOpenAILM" in source, \
+            "Bug #6 fix: configure_dspy should use DirectOpenAILM class"
 
-        # Should set supports_response_format to False
-        assert "supports_response_format" in source, \
-            "Bug #6 fix: Should configure supports_response_format"
+        # Should mention Bug #6 fix
+        assert "Bug #6" in source or ("prefix" in source.lower() and "preserve" in source.lower()), \
+            "Bug #6 fix: Should document why DirectOpenAILM is used"
 
 
 class TestCodeVerification:
@@ -309,32 +316,35 @@ class TestCodeVerification:
         assert api_key_count >= 3, \
             f"Bug #5 API key fix: Should extract api_key AND pass to dspy.LM() (found {api_key_count} occurrences, need >= 3)"
 
-    def test_register_custom_models_called_in_configure_dspy(self):
-        """Verify configure_dspy() calls register_custom_models() to prevent prefix stripping."""
+    def test_configure_dspy_uses_direct_openai_lm_for_prefix_preservation(self):
+        """Verify configure_dspy() uses DirectOpenAILM to prevent prefix stripping."""
         from iris_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.configure_dspy)
 
-        # Bug #6 fix: Should call register_custom_models
-        assert "register_custom_models()" in source, \
-            "Bug #6 fix: configure_dspy should call register_custom_models()"
+        # Bug #6 fix: Should use DirectOpenAILM for GPT-OSS
+        assert "DirectOpenAILM" in source, \
+            "Bug #6 fix: configure_dspy should use DirectOpenAILM class"
 
-        # Should be called before model configuration
+        # Should check for GPT-OSS model specifically
+        assert "openai/gpt-oss-120b" in source, \
+            "Bug #6 fix: configure_dspy should check for openai/gpt-oss-120b model"
+
+        # Should create DirectOpenAILM instance with full model name preserved
         lines = source.split('\n')
-        register_line = None
-        model_line = None
+        found_direct_openai_creation = False
         for i, line in enumerate(lines):
-            if 'register_custom_models()' in line:
-                register_line = i
-            if 'llm_config.get("model"' in line:
-                model_line = i
+            if 'DirectOpenAILM(' in line:
+                found_direct_openai_creation = True
+                # Check next few lines for model parameter
+                next_lines = '\n'.join(lines[i:i+5])
+                assert "model=model" in next_lines, \
+                    "Bug #6 fix: DirectOpenAILM should be initialized with full model name"
+                break
 
-        assert register_line is not None and model_line is not None, \
-            "Bug #6 fix: Should have both register_custom_models call and model config"
-
-        assert register_line < model_line, \
-            "Bug #6 fix: register_custom_models() should be called BEFORE model configuration"
+        assert found_direct_openai_creation, \
+            "Bug #6 fix: configure_dspy should create DirectOpenAILM instance"
 
 
 if __name__ == "__main__":
