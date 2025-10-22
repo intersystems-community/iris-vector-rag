@@ -1,14 +1,15 @@
 """
 Unit tests for GraphRAG bug fixes (2025-10-22).
 
-Tests five critical bug fixes:
+Tests six critical bug fixes:
 1. entity_extraction_enabled flag properly disables entity extraction
 2. batch_processing.enabled config controls batch DSPy module
 3. Generic configure_dspy() supports OpenAI-compatible endpoints
 4. Individual extraction (_call_llm) uses configure_dspy for GPT-OSS
 5. configure_dspy() extracts and passes api_key to dspy.LM()
+6. Custom model registration prevents LiteLLM from stripping model name prefix
 
-Reference: GRAPHRAG_BUGS_FIXED.md, GRAPHRAG_BUGS_REPORT.md, GRAPHRAG_BUG_5_API_KEY.md
+Reference: GRAPHRAG_BUGS_FIXED.md, GRAPHRAG_BUGS_REPORT.md, GRAPHRAG_BUG_5_API_KEY.md, GRAPHRAG_BUG_6_MODEL_NAME.md
 """
 
 import pytest
@@ -167,6 +168,51 @@ class TestBug5ApiKeyPassedToDspy:
             f"Bug #5 API key fix: Should extract AND pass api_key (found {api_key_count} occurrences, need >= 2)"
 
 
+class TestBug6LiteLLMModelNameStripping:
+    """Test Bug #6 Fix: LiteLLM model name prefix preservation via custom model registration."""
+
+    def test_register_custom_models_function_exists(self):
+        """Verify register_custom_models() function exists."""
+        from iris_rag.dspy_modules import entity_extraction_module
+
+        assert hasattr(entity_extraction_module, 'register_custom_models'), \
+            "Bug #6 fix: Should have register_custom_models function"
+
+    def test_configure_dspy_calls_register_custom_models(self):
+        """Verify configure_dspy() calls register_custom_models() before configuration."""
+        from iris_rag.dspy_modules import entity_extraction_module
+        import inspect
+
+        source = inspect.getsource(entity_extraction_module.configure_dspy)
+
+        # Should call register_custom_models before configuring DSPy
+        assert "register_custom_models" in source, \
+            "Bug #6 fix: configure_dspy should call register_custom_models()"
+
+        # Should mention preventing prefix stripping or Bug #6
+        assert "Bug #6" in source or "prefix" in source.lower(), \
+            "Bug #6 fix: Should document why register_custom_models is called"
+
+    def test_register_custom_models_registers_gpt_oss(self):
+        """Verify register_custom_models() registers openai/gpt-oss-120b model."""
+        from iris_rag.dspy_modules import entity_extraction_module
+        import inspect
+
+        source = inspect.getsource(entity_extraction_module.register_custom_models)
+
+        # Should register the GPT-OSS model
+        assert "openai/gpt-oss-120b" in source, \
+            "Bug #6 fix: Should register openai/gpt-oss-120b model"
+
+        # Should use litellm.register_model
+        assert "litellm.register_model" in source or "register_model" in source, \
+            "Bug #6 fix: Should call litellm.register_model()"
+
+        # Should set supports_response_format to False
+        assert "supports_response_format" in source, \
+            "Bug #6 fix: Should configure supports_response_format"
+
+
 class TestCodeVerification:
     """Verify the bug fixes are actually present in the code."""
 
@@ -262,6 +308,33 @@ class TestCodeVerification:
         api_key_count = source.count("api_key")
         assert api_key_count >= 3, \
             f"Bug #5 API key fix: Should extract api_key AND pass to dspy.LM() (found {api_key_count} occurrences, need >= 3)"
+
+    def test_register_custom_models_called_in_configure_dspy(self):
+        """Verify configure_dspy() calls register_custom_models() to prevent prefix stripping."""
+        from iris_rag.dspy_modules import entity_extraction_module
+        import inspect
+
+        source = inspect.getsource(entity_extraction_module.configure_dspy)
+
+        # Bug #6 fix: Should call register_custom_models
+        assert "register_custom_models()" in source, \
+            "Bug #6 fix: configure_dspy should call register_custom_models()"
+
+        # Should be called before model configuration
+        lines = source.split('\n')
+        register_line = None
+        model_line = None
+        for i, line in enumerate(lines):
+            if 'register_custom_models()' in line:
+                register_line = i
+            if 'llm_config.get("model"' in line:
+                model_line = i
+
+        assert register_line is not None and model_line is not None, \
+            "Bug #6 fix: Should have both register_custom_models call and model config"
+
+        assert register_line < model_line, \
+            "Bug #6 fix: register_custom_models() should be called BEFORE model configuration"
 
 
 if __name__ == "__main__":
