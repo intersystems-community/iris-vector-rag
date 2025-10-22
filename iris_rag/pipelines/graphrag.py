@@ -158,8 +158,8 @@ class GraphRAGPipeline(RAGPipeline):
                                 for entity2 in entities[i+1:]:
                                     # Simple relationship: co-occurrence in same document
                                     rel = Relationship(
-                                        source_entity=entity1.text,
-                                        target_entity=entity2.text,
+                                        source_entity_id=entity1.text,  # Fixed: was source_entity
+                                        target_entity_id=entity2.text,  # Fixed: was target_entity
                                         relationship_type="co_occurs_with",
                                         confidence=0.8,
                                         source_document_id=doc.id

@@ -1,0 +1,45 @@
+{
+  "name": "iris-rag-mcp-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) server for IRIS RAG pipelines",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/mcp/cli.js",
+    "dev": "ts-node src/mcp/cli.ts",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "rag",
+    "iris",
+    "ai",
+    "llm"
+  ],
+  "author": "InterSystems",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "express": "^4.21.2",
+    "axios": "^1.7.10",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/parser": "^8.21.0",
+    "eslint": "^9.19.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1268,3 +1268,165 @@ api-code-quality: setup-env install ## Run code quality checks on API code
 	@chmod +x iris_rag/api/scripts/check_code_quality.sh
 	@./iris_rag/api/scripts/check_code_quality.sh
 	$(call print_message,$(GREEN),Code quality checks completed)
+
+# ==============================================================================
+# MCP Server Targets
+# ==============================================================================
+# MCP (Model Context Protocol) server for Claude Code integration
+# Supports two deployment modes:
+# - Standalone: Python bridge + Node.js MCP server
+# - Integrated: MCP embedded in REST API
+# Feature: Complete MCP Tools Implementation (043-complete-mcp-tools)
+
+.PHONY: mcp-build
+mcp-build: ## Build MCP Docker image
+	$(call print_message,$(BLUE),Building MCP Docker image)
+	@docker build -f Dockerfile.mcp -t iris-rag-mcp:latest .
+	$(call print_message,$(GREEN),MCP Docker image built successfully)
+
+.PHONY: mcp-run-standalone
+mcp-run-standalone: env-check ## Start MCP server in standalone mode (stdio + HTTP/SSE)
+	$(call print_message,$(BLUE),Starting MCP server in standalone mode)
+	@docker-compose -f docker-compose.mcp.yml --profile standalone up -d
+	@echo -e "  $(GREEN)✓$(NC) MCP Server (standalone) is starting..."
+	@echo -e "  $(BLUE)ℹ$(NC) Python Bridge: http://localhost:8001"
+	@echo -e "  $(BLUE)ℹ$(NC) MCP HTTP/SSE: http://localhost:3000"
+	@echo -e "  $(BLUE)ℹ$(NC) MCP stdio: Connect via Claude Code config"
+	@echo -e "  $(BLUE)ℹ$(NC) Health check: make mcp-health"
+	$(call print_message,$(GREEN),MCP server started)
+
+.PHONY: mcp-run-integrated
+mcp-run-integrated: env-check ## Start MCP server in integrated mode (embedded in REST API)
+	$(call print_message,$(BLUE),Starting MCP server in integrated mode)
+	@docker-compose -f docker-compose.mcp.yml --profile integrated up -d
+	@echo -e "  $(GREEN)✓$(NC) REST API with MCP integration is starting..."
+	@echo -e "  $(BLUE)ℹ$(NC) REST API: http://localhost:8000"
+	@echo -e "  $(BLUE)ℹ$(NC) API Docs: http://localhost:8000/docs"
+	@echo -e "  $(BLUE)ℹ$(NC) MCP Health: http://localhost:8000/api/v1/mcp/health"
+	$(call print_message,$(GREEN),Integrated API+MCP started)
+
+.PHONY: mcp-run
+mcp-run: mcp-run-standalone ## Alias for mcp-run-standalone (default mode)
+
+.PHONY: mcp-stop
+mcp-stop: ## Stop MCP server (all profiles)
+	$(call print_message,$(BLUE),Stopping MCP server)
+	@docker-compose -f docker-compose.mcp.yml --profile standalone --profile integrated down
+	$(call print_message,$(GREEN),MCP server stopped)
+
+.PHONY: mcp-restart
+mcp-restart: mcp-stop mcp-run ## Restart MCP server in standalone mode
+
+.PHONY: mcp-health
+mcp-health: ## Check MCP server health
+	$(call print_message,$(BLUE),Checking MCP server health)
+	@echo -e "  $(BLUE)Mode detection:$(NC)"
+	@if docker ps --filter "name=mcp-standalone" --format "{{.Names}}" | grep -q "mcp-standalone"; then \
+		echo -e "  $(GREEN)✓$(NC) Standalone mode detected"; \
+		echo -e "\n  $(BLUE)Python Bridge Health:$(NC)"; \
+		curl -s http://localhost:8001/mcp/health_check | python3 -m json.tool || echo "  $(RED)✗$(NC) Python bridge not responding"; \
+		echo -e "\n  $(BLUE)Available Techniques:$(NC)"; \
+		curl -s http://localhost:8001/mcp/list_techniques | python3 -m json.tool || echo "  $(RED)✗$(NC) Cannot list techniques"; \
+	elif docker ps --filter "name=api-with-mcp" --format "{{.Names}}" | grep -q "api-with-mcp"; then \
+		echo -e "  $(GREEN)✓$(NC) Integrated mode detected"; \
+		echo -e "\n  $(BLUE)REST API Health:$(NC)"; \
+		curl -s http://localhost:8000/api/v1/health | python3 -m json.tool || echo "  $(RED)✗$(NC) API not responding"; \
+		echo -e "\n  $(BLUE)MCP Health:$(NC)"; \
+		curl -s http://localhost:8000/api/v1/mcp/health | python3 -m json.tool || echo "  $(RED)✗$(NC) MCP not responding"; \
+	else \
+		echo -e "  $(RED)✗$(NC) No MCP server running"; \
+		echo -e "  $(YELLOW)ℹ$(NC) Start with: make mcp-run-standalone or make mcp-run-integrated"; \
+	fi
+
+.PHONY: mcp-logs
+mcp-logs: ## View MCP server logs
+	$(call print_message,$(BLUE),Viewing MCP server logs)
+	@if docker ps --filter "name=mcp-standalone" --format "{{.Names}}" | grep -q "mcp-standalone"; then \
+		docker-compose -f docker-compose.mcp.yml --profile standalone logs -f mcp-standalone; \
+	elif docker ps --filter "name=api-with-mcp" --format "{{.Names}}" | grep -q "api-with-mcp"; then \
+		docker-compose -f docker-compose.mcp.yml --profile integrated logs -f api-with-mcp; \
+	else \
+		echo -e "  $(RED)✗$(NC) No MCP server running"; \
+	fi
+
+.PHONY: mcp-test
+mcp-test: setup-env install ## Run all MCP tests (contract + integration)
+	$(call print_message,$(BLUE),Running MCP tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/contract/test_mcp_*.py tests/integration/test_mcp_*.py -v --tb=short
+	$(call print_message,$(GREEN),MCP tests completed)
+
+.PHONY: mcp-test-contracts
+mcp-test-contracts: setup-env install ## Run MCP contract tests only
+	$(call print_message,$(BLUE),Running MCP contract tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/contract/test_mcp_*.py -v --tb=short
+	$(call print_message,$(GREEN),MCP contract tests completed)
+
+.PHONY: mcp-test-integration
+mcp-test-integration: setup-env install ## Run MCP integration tests only
+	$(call print_message,$(BLUE),Running MCP integration tests)
+	@if [ ! -d ".venv" ]; then \
+		echo -e "  $(YELLOW)⚠$(NC) Virtual environment not found, setting up..."; \
+		$(MAKE) setup-env install; \
+	fi
+	@.venv/bin/python -m pytest tests/integration/test_mcp_*.py -v --tb=short
+	$(call print_message,$(GREEN),MCP integration tests completed)
+
+.PHONY: mcp-shell
+mcp-shell: ## Open shell in MCP container
+	$(call print_message,$(BLUE),Opening shell in MCP container)
+	@if docker ps --filter "name=mcp-standalone" --format "{{.Names}}" | grep -q "mcp-standalone"; then \
+		docker exec -it mcp-standalone /bin/bash; \
+	elif docker ps --filter "name=api-with-mcp" --format "{{.Names}}" | grep -q "api-with-mcp"; then \
+		docker exec -it api-with-mcp /bin/bash; \
+	else \
+		echo -e "  $(RED)✗$(NC) No MCP server running"; \
+	fi
+
+.PHONY: mcp-list-tools
+mcp-list-tools: ## List available MCP tools (via Python bridge)
+	$(call print_message,$(BLUE),Listing MCP tools)
+	@if docker ps --filter "name=mcp-standalone" --format "{{.Names}}" | grep -q "mcp-standalone"; then \
+		echo -e "  $(GREEN)Available RAG Techniques:$(NC)"; \
+		curl -s http://localhost:8001/mcp/list_techniques | python3 -m json.tool; \
+	elif docker ps --filter "name=api-with-mcp" --format "{{.Names}}" | grep -q "api-with-mcp"; then \
+		echo -e "  $(GREEN)Available MCP Tools:$(NC)"; \
+		curl -s http://localhost:8000/api/v1/mcp/tools | python3 -m json.tool; \
+	else \
+		echo -e "  $(RED)✗$(NC) No MCP server running"; \
+	fi
+
+.PHONY: mcp-claude-config
+mcp-claude-config: ## Generate Claude Code MCP configuration
+	$(call print_message,$(BLUE),Generating Claude Code MCP configuration)
+	@echo -e "  $(GREEN)Add this to your Claude Code config:$(NC)"
+	@echo ""
+	@echo "{\"mcpServers\": {"
+	@echo "  \"iris-rag\": {"
+	@echo "    \"command\": \"docker\","
+	@echo "    \"args\": [\"exec\", \"-i\", \"mcp-standalone\", \"node\", \"/app/nodejs/dist/mcp/cli.js\"],"
+	@echo "    \"env\": {"
+	@echo "      \"MCP_TRANSPORT\": \"stdio\""
+	@echo "    }"
+	@echo "  }"
+	@echo "}}"
+	@echo ""
+	@echo -e "  $(BLUE)ℹ$(NC) Ensure MCP server is running: make mcp-run-standalone"
+
+.PHONY: mcp-dev
+mcp-dev: env-check mcp-build mcp-run-standalone ## Full MCP development setup (build + run)
+
+.PHONY: mcp-clean
+mcp-clean: mcp-stop ## Clean MCP Docker resources
+	$(call print_message,$(BLUE),Cleaning MCP Docker resources)
+	@docker-compose -f docker-compose.mcp.yml down -v
+	@docker rmi iris-rag-mcp:latest 2>/dev/null || true
+	$(call print_message,$(GREEN),MCP resources cleaned)
+
