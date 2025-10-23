@@ -85,7 +85,12 @@ class EmbeddingManager:
             model_name = self.embedding_config.get("sentence_transformers", {}).get(
                 "model_name", "all-MiniLM-L6-v2"
             )
-            model = SentenceTransformer(model_name)
+            # Get device from config (default to 'cpu' to avoid GPU contention)
+            device = self.embedding_config.get("sentence_transformers", {}).get(
+                "device", "cpu"
+            )
+            model = SentenceTransformer(model_name, device=device)
+            logger.info(f"✅ SentenceTransformer initialized on device: {device}")
 
             def embed_texts(texts: List[str]) -> List[List[float]]:
                 embeddings = model.encode(texts, convert_to_tensor=False)
