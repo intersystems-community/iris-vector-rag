@@ -51,7 +51,7 @@ jobs:
           pip-audit --format=cyclone-json --output=pip-audit-cyclone.json || true
           
       - name: Upload dependency scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: dependency-scan-results
@@ -99,7 +99,7 @@ jobs:
           generateSarif: "1"
           
       - name: Upload code security results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: code-security-results
@@ -188,7 +188,7 @@ jobs:
             docker/docker-bench-security > docker-bench-results.txt || true
             
       - name: Upload Docker security results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: docker-security-results
@@ -264,7 +264,7 @@ jobs:
           run-tests: true
           
       - name: Upload compliance results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: compliance-results
@@ -358,7 +358,7 @@ jobs:
             --format markdown
             
       - name: Upload security report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: security-report
           path: security-report.md
@@ -437,7 +437,7 @@ jobs:
             zap-full-scan.py -t http://localhost:8000 -J zap-full-report.json || true
             
       - name: Upload penetration test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: penetration-test-results

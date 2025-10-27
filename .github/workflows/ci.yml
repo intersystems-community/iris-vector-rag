@@ -128,7 +128,7 @@ jobs:
           name: codecov-umbrella
           
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: test-results-unit-${{ matrix.python-version }}
@@ -226,7 +226,7 @@ jobs:
           name: codecov-umbrella
           
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: test-results-integration
@@ -287,7 +287,7 @@ jobs:
           docker-compose -f docker-compose.test.yml down
           
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: test-results-e2e
@@ -348,7 +348,7 @@ jobs:
           IRIS_PASSWORD: SYS
 
       - name: Upload example test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: example-test-results
@@ -421,7 +421,7 @@ jobs:
           poetry run python scripts/ci/compare-performance.py
           
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: benchmark-results
           path: benchmarks/results/
@@ -480,7 +480,7 @@ jobs:
           coverage html
           
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: coverage-report
           path: htmlcov/
