@@ -106,7 +106,7 @@ jobs:
           python scripts/ci/test-docs-site.py
           
       - name: Upload documentation artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: documentation
           path: site/
@@ -263,7 +263,7 @@ jobs:
           poetry run pytest tests/docs/ -v
           
       - name: Upload example test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: example-test-results
@@ -350,7 +350,7 @@ jobs:
           lighthouse http://localhost:8000 --output=json --output-path=lighthouse-report.json
           
       - name: Upload performance report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: performance-report
           path: lighthouse-report.json

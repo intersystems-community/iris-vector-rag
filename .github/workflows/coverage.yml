@@ -117,7 +117,7 @@ jobs:
         fail_ci_if_error: false
 
     - name: Archive coverage reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: coverage-reports
         path: |
@@ -220,7 +220,7 @@ jobs:
         echo "Coverage data stored for trend analysis"
 
     - name: Upload trend data
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: coverage-history
         path: coverage_history/
@@ -240,7 +240,7 @@ jobs:
         bandit -r iris_rag/ -f json -o bandit_report.json || true
 
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: security-report
         path: bandit_report.json
