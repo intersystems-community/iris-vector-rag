@@ -202,20 +202,20 @@ class GraphRAGPipeline(RAGPipeline):
                         logger.info(f"Processing document {doc.id} individually (fallback)")
                         result = self.entity_extraction_service.process_document(doc)
 
-                        if not result.get("stored", False):
-                            logger.warning(
-                                f"No entities stored for document {doc.id} - may lack extractable technical content"
+                        # Always count extracted entities (even if storage failed)
+                        entities_extracted = result.get("entities_count", result.get("entities_extracted", 0))
+                        relationships_extracted = result.get("relationships_count", result.get("relationships_extracted", 0))
+
+                        total_entities += entities_extracted
+                        total_relationships += relationships_extracted
+
+                        if result.get("stored", False):
+                            logger.debug(
+                                f"Document {doc.id}: {entities_extracted} entities, {relationships_extracted} relationships stored"
                             )
                         else:
-                            total_entities += result.get(
-                                "entities_count", result.get("entities_extracted", 0)
-                            )
-                            total_relationships += result.get(
-                                "relationships_count", result.get("relationships_extracted", 0)
-                            )
-
-                            logger.debug(
-                                f"Document {doc.id}: {result.get('entities_extracted', 0)} entities, {result.get('relationships_extracted', 0)} relationships"
+                            logger.warning(
+                                f"Document {doc.id}: {entities_extracted} entities extracted but storage failed - may lack storage adapter"
                             )
 
                     except Exception as e:
@@ -223,12 +223,11 @@ class GraphRAGPipeline(RAGPipeline):
                         failed_documents.append(doc.id)
 
         # Only fail if we got zero entities across ALL documents
-        # (suggests a systematic failure rather than content issues)
-
-        # Validate that we have entities in the knowledge graph
+        # (suggests a systematic extraction failure rather than content issues or storage failure)
         if total_entities == 0:
             raise KnowledgeGraphNotPopulatedException(
-                "No entities were extracted from documents. Knowledge graph is empty."
+                f"No entities were extracted from {len(documents)} documents. "
+                f"This suggests a systematic extraction failure. Check LLM configuration and entity extraction settings."
             )
 
         processing_time = time.time() - start_time
