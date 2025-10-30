@@ -162,5 +162,48 @@ class TestGraphRAGEntityExtractionValidationBug:
         assert pipeline.entity_extraction_service.process_document.called
 
 
+    def test_batch_path_falls_back_to_individual_when_no_entities_in_batch_results(self, mock_graphrag_pipeline):
+        """
+        Verify that when batch extraction returns no entities for a document,
+        it falls back to individual processing and counts those entities.
+
+        This is the ACTUAL bug the user reported - batch_results.get(doc.id, [])
+        returns empty but individual processing extracts entities successfully.
+        """
+        pipeline = mock_graphrag_pipeline
+
+        # Mock batch extraction to return empty dict (no entities for any document)
+        pipeline.entity_extraction_service = Mock()
+        pipeline.entity_extraction_service.extract_batch_with_dspy = Mock(return_value={})
+
+        # Mock individual processing to return successful extraction
+        mock_result = {
+            "document_id": "test_doc_1",
+            "entities_extracted": 15,
+            "relationships_extracted": 105,
+            "entities_count": 15,
+            "relationships_count": 105,
+            "stored": True,
+            "errors": []
+        }
+        pipeline.entity_extraction_service.process_document = Mock(return_value=mock_result)
+
+        doc = Document(id="test_doc_1", page_content="Test ticket", metadata={"ticket_id": "I279220"})
+
+        # Should NOT raise exception (individual processing should work)
+        try:
+            pipeline.load_documents(documents_path="", documents=[doc], generate_embeddings=True)
+            success = True
+        except Exception as e:
+            success = False
+            error_msg = str(e)
+
+        # Assert: Should succeed (entities extracted via fallback)
+        assert success, f"Should not throw exception when batch returns empty but individual extraction succeeds. Got: {error_msg if not success else 'N/A'}"
+
+        # Verify process_document was called as fallback
+        assert pipeline.entity_extraction_service.process_document.called
+
+
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    pytest.main([__file__, "-v", "-p", "no:randomly"])
