@@ -185,9 +185,25 @@ class GraphRAGPipeline(RAGPipeline):
                                 f"Document {doc.id}: {stored_count} entities, {relationships_stored} relationships"
                             )
                         else:
-                            logger.warning(
-                                f"No entities extracted for document {doc.id} - may lack extractable technical content"
-                            )
+                            # Batch extraction returned no entities for this document
+                            # Fall back to individual processing for this specific document
+                            logger.info(f"Batch extraction returned no entities for {doc.id}, trying individual processing")
+                            try:
+                                result = self.entity_extraction_service.process_document(doc)
+
+                                # Count extracted entities (even if storage failed)
+                                entities_extracted = result.get("entities_count", result.get("entities_extracted", 0))
+                                relationships_extracted = result.get("relationships_count", result.get("relationships_extracted", 0))
+
+                                total_entities += entities_extracted
+                                total_relationships += relationships_extracted
+
+                                if entities_extracted > 0:
+                                    logger.info(f"Individual processing extracted {entities_extracted} entities for {doc.id}")
+                                else:
+                                    logger.warning(f"No entities extracted for document {doc.id} - may lack extractable technical content")
+                            except Exception as fallback_error:
+                                logger.warning(f"Individual processing also failed for {doc.id}: {fallback_error}")
 
                     except Exception as e:
                         logger.warning(f"Failed to store entities for document {doc.id}: {e}")
