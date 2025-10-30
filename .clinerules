@@ -1,0 +1,53 @@
+# CRITICAL EVALUATION REQUIREMENTS
+
+## Database Interaction Rules
+- NO MOCKS, NO FALLBACKS, ONLY REAL DATABASE INTERACTION
+- FAIL IF NO DATABASE CONNECTION AVAILABLE
+- All pipeline evaluations MUST use actual IRIS database
+- All evaluations MUST execute real pipelines with real data
+- Mock modes are STRICTLY FORBIDDEN for production evaluations
+
+## IRIS Database is FOUNDATIONAL - NO DEV/PROD DISTINCTION
+- RAG systems are fundamentally database-dependent - RAG CANNOT WORK WITHOUT A DATABASE
+- IRIS database availability is REQUIRED in ALL environments (dev, test, prod)
+- There is NO distinction between development and production regarding database availability
+- A RAG system without database access is a non-functional system
+- Database unavailability = SYSTEM FAILURE, not "expected in development"
+- Any code suggesting database absence is "normal" in development is ARCHITECTURALLY INCORRECT
+
+## DOCKER INFRASTRUCTURE - EXTENSIVE STARTUP/TEARDOWN AUTOMATION
+- Project has COMPLETE Docker infrastructure for IRIS database management
+- Use `make docker-up` or `docker-compose up -d` to START IRIS container
+- Use `make docker-down` or `docker-compose down` to STOP IRIS container
+- Use `make docker-logs` to view container logs for debugging
+- Files: docker-compose.yml (community), docker-compose.licensed.yml (enterprise)
+- Container management utilities in tests/utils/ for automated lifecycle
+- Makefile provides standardized commands for all Docker operations
+- ALWAYS check if IRIS container is running before executing evaluations
+- Connection failure means container is NOT STARTED, not missing infrastructure
+
+## Pipeline Execution Rules
+- Execute TRUE 10K+ document evaluations
+- Use actual PMC biomedical documents
+- Run complete RAGAS evaluation metrics
+- Generate empirical statistical results
+- All pipelines must be fully operational or evaluation fails
+
+## PMC Document Requirements
+- ONLY REAL PMC DOCUMENTS from PubMed Central
+- NO synthetic or generated documents
+- Minimum 1000+ real PMC documents for full evaluation
+- Use PMC XML format with proper metadata
+- Download from official PMC sources only
+
+## Development Rules
+- MUST perform codebase_search before creating any non-trivial new code file
+- Search for existing implementations before writing new code
+- Reuse and extend existing infrastructure when available
+- Follow clean architecture and modular design principles
+
+## No Compromises
+- If database is not available, evaluation MUST FAIL
+- If pipelines cannot connect, evaluation MUST FAIL
+- No simulation, no approximation, no shortcuts
+- Only real, production-quality evaluation results

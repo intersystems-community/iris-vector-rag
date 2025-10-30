@@ -1,0 +1,146 @@
+# Backend Configuration API Contract
+# Feature: 035-make-2-modes
+# Date: 2025-10-08
+
+name: BackendConfigurationAPI
+version: 1.0.0
+description: >
+  API contract for backend mode configuration management. Defines how backend
+  mode is loaded, validated, and accessed during test execution.
+
+operations:
+  - name: load_configuration
+    description: >
+      Load backend configuration with precedence: env var > config file > default.
+      Returns immutable BackendConfiguration object.
+    inputs: []
+    outputs:
+      type: BackendConfiguration
+      description: Loaded and validated backend configuration
+      fields:
+        - name: mode
+          type: BackendMode
+          description: Selected backend mode (COMMUNITY or ENTERPRISE)
+        - name: source
+          type: ConfigSource
+          description: Where config was loaded from (environment|config_file|default)
+        - name: max_connections
+          type: int
+          description: Maximum concurrent connections (1 for COMMUNITY, 999 for ENTERPRISE)
+        - name: execution_strategy
+          type: ExecutionStrategy
+          description: Test execution strategy (SEQUENTIAL or PARALLEL)
+        - name: iris_devtools_path
+          type: Path
+          description: Path to iris-devtools installation
+    errors:
+      - code: CONFIGURATION_ERROR
+        message: "Invalid backend mode: {value}. Valid values: community, enterprise"
+        resolution: "Set IRIS_BACKEND_MODE to 'community' or 'enterprise'"
+      - code: CONFIG_FILE_ERROR
+        message: "Failed to parse config file: {error}"
+        resolution: "Check .specify/config/backend_modes.yaml syntax"
+
+  - name: validate_configuration
+    description: >
+      Validate backend configuration against detected IRIS edition. Ensures
+      configured mode matches actual database edition.
+    inputs:
+      - name: config
+        type: BackendConfiguration
+        required: true
+        description: Configuration to validate
+      - name: detected_edition
+        type: IRISEdition
+        required: true
+        description: Edition detected from IRIS connection
+    outputs:
+      type: void
+      description: Raises error if validation fails, otherwise returns normally
+    errors:
+      - code: EDITION_MISMATCH_ERROR
+        message: >
+          Backend mode '{mode}' does not match detected IRIS edition '{edition}'.
+          Fix: Set IRIS_BACKEND_MODE={edition} or update config file
+        resolution: "Update IRIS_BACKEND_MODE environment variable or config file to match detected edition"
+      - code: IRIS_DEVTOOLS_MISSING_ERROR
+        message: "iris-devtools not found at {path}"
+        resolution: "Clone iris-devtools to ../iris-devtools directory"
+
+  - name: get_current_mode
+    description: Return currently active backend mode
+    inputs: []
+    outputs:
+      type: BackendMode
+      description: Current backend mode (COMMUNITY or ENTERPRISE)
+    errors: []
+
+  - name: log_session_start
+    description: >
+      Log backend mode configuration at test session start. Required by FR-012.
+    inputs:
+      - name: config
+        type: BackendConfiguration
+        required: true
+        description: Active configuration to log
+    outputs:
+      type: void
+      description: Logs configuration details
+    errors: []
+
+test_scenarios:
+  - name: load_from_environment_variable
+    description: Environment variable takes precedence over config file
+    given: IRIS_BACKEND_MODE=enterprise AND config file has backend_mode=community
+    when: load_configuration() called
+    then: Returns BackendConfiguration with mode=ENTERPRISE and source=ENVIRONMENT
+    requirement: FR-002
+
+  - name: load_from_config_file
+    description: Config file used when no environment variable set
+    given: No IRIS_BACKEND_MODE env var AND config file has backend_mode=community
+    when: load_configuration() called
+    then: Returns BackendConfiguration with mode=COMMUNITY and source=CONFIG_FILE
+    requirement: FR-002
+
+  - name: load_default
+    description: Default to COMMUNITY when no config provided
+    given: No IRIS_BACKEND_MODE env var AND no config file
+    when: load_configuration() called
+    then: Returns BackendConfiguration with mode=COMMUNITY and source=DEFAULT
+    requirement: FR-002
+
+  - name: validate_matching_edition
+    description: Validation passes when mode matches detected edition
+    given: BackendConfiguration with mode=COMMUNITY AND IRISEdition.COMMUNITY detected
+    when: validate_configuration(config, edition) called
+    then: Returns normally without error
+    requirement: FR-008
+
+  - name: validate_mismatched_edition
+    description: Validation fails when mode doesn't match detected edition
+    given: BackendConfiguration with mode=ENTERPRISE AND IRISEdition.COMMUNITY detected
+    when: validate_configuration(config, edition) called
+    then: Raises EditionMismatchError with actionable message
+    requirement: FR-008
+
+  - name: validate_missing_iris_devtools
+    description: Validation fails when iris-devtools not found
+    given: BackendConfiguration with iris_devtools_path=/nonexistent
+    when: validate_configuration(config, edition) called
+    then: Raises IrisDevtoolsMissingError with installation instructions
+    requirement: FR-007
+
+  - name: invalid_mode_value
+    description: Invalid mode string raises clear error
+    given: IRIS_BACKEND_MODE=invalid_value
+    when: load_configuration() called
+    then: Raises ConfigurationError with valid values listed
+    requirement: FR-009
+
+  - name: log_mode_at_session_start
+    description: Backend mode logged at test session start
+    given: BackendConfiguration with mode=COMMUNITY
+    when: log_session_start(config) called
+    then: Logs "Backend mode: community (source: environment)" at INFO level
+    requirement: FR-012

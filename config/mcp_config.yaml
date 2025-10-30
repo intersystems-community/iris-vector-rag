@@ -1,0 +1,207 @@
+# MCP Server Configuration
+#
+# This file defines configuration for the MCP (Model Context Protocol) server
+# that provides Claude Code integration with IRIS RAG pipelines.
+#
+# Feature: Complete MCP Tools Implementation
+# Branch: 043-complete-mcp-tools
+
+# Server Identification
+server:
+  name: "iris-rag-mcp-server"
+  version: "1.0.0"
+  description: "MCP server providing access to 6 RAG pipelines via Claude Code"
+
+# Deployment Mode
+# - standalone: Python bridge (port 8001) + Node.js MCP server (stdio/HTTP)
+# - integrated: MCP embedded in REST API (port 8000)
+deployment:
+  mode: standalone  # standalone | integrated
+
+# Transport Configuration
+# Defines how clients connect to the MCP server
+transport:
+  # Primary transport mode: stdio | http | both
+  mode: stdio
+
+  # HTTP/SSE transport settings (used when mode=http or mode=both)
+  http:
+    enabled: true
+    port: 3000
+    host: "0.0.0.0"
+    cors:
+      enabled: true
+      allowed_origins:
+        - "http://localhost:*"
+        - "http://127.0.0.1:*"
+
+  # Stdio transport settings (used when mode=stdio or mode=both)
+  stdio:
+    enabled: true
+    # Stdio uses stdin/stdout, no additional configuration needed
+
+# Python Bridge Configuration
+# Python FastAPI server that bridges Node.js MCP server to RAG pipelines
+python_bridge:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8001
+  url: "http://localhost:8001"  # URL for Node.js to call Python bridge
+
+  # API endpoints
+  endpoints:
+    invoke_technique: "/mcp/invoke_technique"
+    list_techniques: "/mcp/list_techniques"
+    health_check: "/mcp/health_check"
+    get_metrics: "/mcp/metrics"
+
+# Authentication Configuration
+authentication:
+  # Auth mode: none | api_key
+  mode: none
+
+  # API key settings (used when mode=api_key)
+  api_key:
+    enabled: false
+    header_name: "X-API-Key"
+    # API keys stored in database (see REST API auth system)
+
+# Connection Management
+connection:
+  # Maximum concurrent MCP client connections
+  max_connections: 5
+
+  # Connection timeout (seconds)
+  timeout: 300
+
+  # Connection keep-alive (seconds)
+  keep_alive: 60
+
+# RAG Pipeline Configuration
+# Defines which pipelines are exposed as MCP tools
+pipelines:
+  # Enabled pipelines (6 total)
+  enabled:
+    - basic              # BasicRAG - vector similarity search
+    - basic_rerank       # BasicRAG with cross-encoder reranking
+    - crag               # Corrective RAG with self-evaluation
+    - graphrag           # HybridGraphRAG - vector + text + graph + RRF
+    - pylate_colbert     # PyLateColBERT - late interaction retrieval
+    - iris_global_graphrag  # IRIS-Global-GraphRAG for academic papers
+
+  # Pipeline instance reuse (FR-006)
+  # When true, MCP uses same pipeline instances as REST API
+  reuse_instances: true
+
+  # Default parameters for all pipelines
+  defaults:
+    top_k: 5
+    include_sources: true
+    include_metadata: true
+
+# Database Configuration
+# IRIS database connection settings
+database:
+  host: ${IRIS_HOST:localhost}
+  port: ${IRIS_PORT:1972}
+  namespace: ${IRIS_NAMESPACE:USER}
+  username: ${IRIS_USERNAME:_SYSTEM}
+  password: ${IRIS_PASSWORD:SYS}
+
+  # Connection pool settings
+  pool:
+    min_size: 1
+    max_size: 10
+    timeout: 30
+
+# Logging Configuration
+logging:
+  # Log level: DEBUG | INFO | WARNING | ERROR | CRITICAL
+  level: INFO
+
+  # Log format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # Log destinations
+  destinations:
+    console: true
+    file:
+      enabled: true
+      path: "logs/mcp.log"
+      max_size_mb: 100
+      backup_count: 5
+
+  # Log MCP tool invocations (FR-012)
+  log_invocations: true
+  invocation_log_fields:
+    - query
+    - pipeline
+    - response_time_ms
+    - success
+    - error
+
+# Performance Configuration
+performance:
+  # Query timeout (milliseconds)
+  query_timeout_ms: 30000
+
+  # Enable performance metrics collection
+  collect_metrics: true
+
+  # Metrics collection interval (seconds)
+  metrics_interval: 60
+
+# Error Handling Configuration
+error_handling:
+  # Include stack traces in error responses (development only)
+  include_stack_traces: false
+
+  # Structured error responses (FR-011, FR-014, FR-015)
+  structured_errors: true
+
+  # Error message templates
+  templates:
+    invalid_params: "Invalid parameter '{field}': {message}"
+    missing_required: "Required parameter '{field}' is missing"
+    out_of_range: "Parameter '{field}' must be between {min} and {max}"
+    invalid_enum: "Parameter '{field}' must be one of: {valid_values}"
+    database_error: "Database operation failed: {message}"
+    pipeline_error: "Pipeline '{pipeline}' failed: {message}"
+    connection_limit: "Connection limit reached (max: {max_connections}). Please try again later."
+
+# Health Check Configuration
+health_check:
+  # Health check interval (seconds)
+  interval: 30
+
+  # Components to check
+  components:
+    - database
+    - pipelines
+    - python_bridge  # Only checked in standalone mode
+
+  # Include performance metrics in health checks
+  include_performance_metrics: true
+
+# Development Settings
+development:
+  # Enable debug mode
+  debug: false
+
+  # Auto-reload on code changes
+  auto_reload: false
+
+  # Enable CORS for all origins (development only)
+  allow_all_origins: false
+
+# Production Settings
+production:
+  # Use production-grade server (uvicorn with workers)
+  workers: 4
+
+  # Enable access logging
+  access_log: true
+
+  # Enable Prometheus metrics endpoint
+  prometheus_metrics: true
+  prometheus_port: 9090

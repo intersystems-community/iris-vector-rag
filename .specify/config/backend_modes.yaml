@@ -1,0 +1,14 @@
+# Backend mode configuration for IRIS test execution
+# Feature: 035-make-2-modes
+# Options: community | enterprise
+
+# Default backend mode (used when IRIS_BACKEND_MODE env var not set)
+backend_mode: community
+
+# Optional: Custom iris-devtools path (default: ../iris-devtools)
+# iris_devtools_path: /custom/path/to/iris-devtools
+
+# Optional: Override connection limits (for testing)
+# max_connections:
+#   community: 1
+#   enterprise: null  # unlimited (999)

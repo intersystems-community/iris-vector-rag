@@ -410,8 +410,8 @@ class RAGTemplatesBridge:
             ]
 
             # Use pipeline's load_documents method
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, lambda: pipeline.load_documents(documents=doc_objects)
+            await asyncio.get_event_loop().run_in_executor(
+                None, pipeline.load_documents, "", documents=doc_objects
             )
 
             processing_time = (time.time() - start_time) * 1000

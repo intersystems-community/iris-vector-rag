@@ -142,7 +142,7 @@ class RAGPipeline(abc.ABC):
             documents: List of Document objects to ingest
             **kwargs: Additional arguments passed to load_documents()
         """
-        self.load_documents(documents=documents, **kwargs)
+        self.load_documents("", documents=documents, **kwargs)
 
     def clear(self) -> None:
         """

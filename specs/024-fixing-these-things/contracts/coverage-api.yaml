@@ -1,0 +1,180 @@
+openapi: 3.0.0
+info:
+  title: Coverage Analysis API
+  version: 1.0.0
+  description: API for running coverage analysis and retrieving reports
+
+paths:
+  /coverage/analyze:
+    post:
+      summary: Run coverage analysis
+      operationId: runCoverageAnalysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_modules
+              properties:
+                target_modules:
+                  type: array
+                  items:
+                    type: string
+                  example: ["iris_rag.config", "iris_rag.validation"]
+                include_integration:
+                  type: boolean
+                  default: true
+                timeout_seconds:
+                  type: number
+                  default: 300
+                  maximum: 600
+      responses:
+        '200':
+          description: Coverage analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverageReport'
+        '408':
+          description: Analysis timeout exceeded
+        '500':
+          description: Analysis failed
+
+  /coverage/report/{session_id}:
+    get:
+      summary: Get coverage report by session ID
+      operationId: getCoverageReport
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, html, xml, junit]
+            default: json
+      responses:
+        '200':
+          description: Coverage report retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoverageReport'
+            text/html:
+              schema:
+                type: string
+            application/xml:
+              schema:
+                type: string
+        '404':
+          description: Report not found
+
+  /coverage/validate:
+    post:
+      summary: Validate coverage against requirements
+      operationId: validateCoverage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoverageReport'
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+
+components:
+  schemas:
+    CoverageReport:
+      type: object
+      required:
+        - session_id
+        - timestamp
+        - overall_coverage_percentage
+        - total_lines
+        - covered_lines
+        - module_coverage
+      properties:
+        session_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        overall_coverage_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        total_lines:
+          type: integer
+          minimum: 0
+        covered_lines:
+          type: integer
+          minimum: 0
+        module_coverage:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleCoverage'
+        analysis_duration_seconds:
+          type: number
+
+    ModuleCoverage:
+      type: object
+      required:
+        - module_name
+        - coverage_percentage
+        - is_critical
+      properties:
+        module_name:
+          type: string
+        coverage_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        total_lines:
+          type: integer
+        covered_lines:
+          type: integer
+        is_critical:
+          type: boolean
+        target_coverage:
+          type: number
+
+    ValidationResult:
+      type: object
+      required:
+        - is_valid
+        - overall_target_met
+        - critical_modules_target_met
+        - issues
+      properties:
+        is_valid:
+          type: boolean
+        overall_target_met:
+          type: boolean
+        critical_modules_target_met:
+          type: boolean
+        issues:
+          type: array
+          items:
+            type: object
+            properties:
+              severity:
+                type: string
+                enum: [critical, warning, info]
+              module:
+                type: string
+              message:
+                type: string
+              actual_coverage:
+                type: number
+              required_coverage:
+                type: number

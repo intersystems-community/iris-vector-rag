@@ -43,6 +43,7 @@ def create_pipeline(
             - "crag": Corrective RAG with retrieval evaluation
             - "graphrag": Graph-based RAG with entity relationships
             - "pylate_colbert": ColBERT-based dense retrieval
+            - "multi_query_rrf": Multi-query retrieval with RRF fusion
         config_path: Optional path to configuration file.
         llm_func: Optional LLM function for answer generation.
         embedding_func: Optional embedding function for vector generation.
@@ -148,6 +149,16 @@ def _create_pipeline_legacy(
             config_manager=config_manager,
             llm_func=llm_func,
         )
+    elif pipeline_type == "multi_query_rrf":
+        from .pipelines.multi_query_rrf import MultiQueryRRFPipeline
+
+        return MultiQueryRRFPipeline(
+            num_queries=kwargs.get("num_queries", 4),
+            retrieved_k=kwargs.get("retrieved_k", 20),
+            rrf_k=kwargs.get("rrf_k", 60),
+            use_llm_expansion=kwargs.get("use_llm_expansion", False),
+            llm_model=kwargs.get("llm_model", "gpt-4o-mini"),
+        )
     else:
         available_types = [
             "basic",
@@ -155,6 +166,7 @@ def _create_pipeline_legacy(
             "crag",
             "graphrag",
             "pylate_colbert",
+            "multi_query_rrf",
         ]
         raise ValueError(
             f"Unknown pipeline type: {pipeline_type}. Available: {available_types}"

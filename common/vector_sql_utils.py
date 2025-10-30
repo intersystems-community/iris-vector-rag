@@ -199,7 +199,7 @@ def format_vector_search_sql(
         select_parts.extend([", ", content_column])
 
     # Construct TO_VECTOR call carefully to avoid parameter detection
-    # Use FLOAT for cheaper storage and compute (per best practices)
+    # Use FLOAT datatype to match how test data was created (see tests/fixtures/embedding_generator.py:247)
     vector_func_parts = [
         ", VECTOR_COSINE(",
         vector_column,
@@ -287,7 +287,7 @@ def format_vector_search_sql_with_params(
         select_parts.extend([", ", content_column])
 
     # Construct TO_VECTOR call with ? placeholder but avoid embedding dimension parameterization
-    # Use FLOAT for cheaper storage and compute (per best practices)
+    # Use FLOAT datatype to match how test data was created (see tests/fixtures/embedding_generator.py:247)
     vector_func_parts = [
         ", VECTOR_COSINE(",
         vector_column,
@@ -502,7 +502,7 @@ def build_safe_vector_dot_sql(
         select_parts.extend([f", {col}" for col in extra_columns])
     # IMPORTANT: Embed vector string directly with FLOAT type and dimension
     # TO_VECTOR does NOT accept ? parameters
-    # Use FLOAT for cheaper storage and compute (per best practices)
+    # Use FLOAT to match how test data was created (see tests/fixtures/embedding_generator.py:247)
     select_parts.append(f", VECTOR_DOT_PRODUCT({vector_column}, TO_VECTOR('{vector_string}', FLOAT, {vector_dimension})) AS score")
 
     # Build FROM clause

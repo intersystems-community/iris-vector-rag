@@ -1,0 +1,119 @@
+# Multi-stage Dockerfile for MCP Server
+#
+# Supports both deployment modes:
+# - MODE=standalone: Python bridge (port 8001) + Node.js MCP server (stdio/HTTP on port 3000)
+# - MODE=integrated: REST API (port 8000) with embedded MCP bridge
+#
+# Feature: Complete MCP Tools Implementation
+# Branch: 043-complete-mcp-tools
+
+# Stage 1: Python dependencies
+FROM python:3.11-slim AS python-builder
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv for fast dependency resolution
+RUN pip install --no-cache-dir uv
+
+# Copy Python dependency files
+COPY pyproject.toml setup.py README.md ./
+COPY requirements.txt ./
+
+# Install Python dependencies
+RUN uv pip install --system -r requirements.txt
+
+# Copy Python source code
+COPY iris_rag/ ./iris_rag/
+COPY common/ ./common/
+COPY config/ ./config/
+
+# Install package in editable mode
+RUN pip install --no-cache-dir -e .
+
+# Stage 2: Node.js dependencies
+FROM node:18-slim AS nodejs-builder
+
+WORKDIR /app/nodejs
+
+# Copy Node.js dependency files
+COPY nodejs/package.json nodejs/package-lock.json* ./
+
+# Install Node.js dependencies
+RUN npm ci --production
+
+# Copy Node.js source code
+COPY nodejs/src ./src
+COPY nodejs/tsconfig.json ./
+
+# Build TypeScript
+RUN npm run build
+
+# Stage 3: Final runtime image
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install Node.js runtime
+RUN apt-get update && apt-get install -y \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python environment from builder
+COPY --from=python-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=python-builder /app/iris_rag ./iris_rag
+COPY --from=python-builder /app/common ./common
+COPY --from=python-builder /app/config ./config
+
+# Copy Node.js application from builder
+COPY --from=nodejs-builder /app/nodejs/dist ./nodejs/dist
+COPY --from=nodejs-builder /app/nodejs/node_modules ./nodejs/node_modules
+COPY --from=nodejs-builder /app/nodejs/package.json ./nodejs/
+
+# Copy MCP configuration
+COPY config/mcp_config.yaml ./config/
+
+# Environment variables with defaults
+ENV PYTHONUNBUFFERED=1
+ENV MODE=standalone
+ENV MCP_TRANSPORT=stdio
+ENV MCP_HTTP_PORT=3000
+ENV PYTHON_BRIDGE_PORT=8001
+ENV IRIS_HOST=localhost
+ENV IRIS_PORT=1972
+ENV IRIS_NAMESPACE=USER
+ENV IRIS_USERNAME=_SYSTEM
+ENV IRIS_PASSWORD=SYS
+ENV MAX_CONNECTIONS=5
+ENV AUTH_MODE=none
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD if [ "$MODE" = "standalone" ]; then \
+        curl -f http://localhost:${PYTHON_BRIDGE_PORT}/mcp/health_check || exit 1; \
+    else \
+        curl -f http://localhost:8000/api/v1/health || exit 1; \
+    fi
+
+# Expose ports
+# 3000: MCP HTTP/SSE (standalone mode)
+# 8000: REST API + MCP (integrated mode)
+# 8001: Python bridge (standalone mode, internal)
+EXPOSE 3000 8000 8001
+
+# Entry point script
+COPY docker-entrypoint-mcp.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint-mcp.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint-mcp.sh"]
+
+# Default command (can be overridden)
+CMD []

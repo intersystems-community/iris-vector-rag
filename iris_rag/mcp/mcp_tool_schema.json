@@ -1,0 +1,381 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP RAG Tools Schema",
+  "description": "MCP tool definitions for 6 RAG pipelines (BasicRAG, BasicRAGReranking, CRAG, HybridGraphRAG, PyLateColBERT, IRIS-Global-GraphRAG)",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "rag_basic",
+      "description": "Basic RAG with vector similarity search. Best for general Q&A when you need fast, straightforward answers from a knowledge base.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User's question or search query",
+            "minLength": 1,
+            "maxLength": 8000
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "Number of most relevant documents to retrieve",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "include_sources": {
+            "type": "boolean",
+            "description": "Include source file names in response",
+            "default": true
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "description": "Include document metadata (page numbers, etc.)",
+            "default": true
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "rag_basic_rerank",
+      "description": "Vector search with cross-encoder reranking. Use when you need higher precision than basic RAG by applying a second-stage reranking model.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User's question or search query",
+            "minLength": 1,
+            "maxLength": 8000
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "Number of most relevant documents to retrieve (before reranking)",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "rerank_top_k": {
+            "type": "integer",
+            "description": "Number of documents to return after reranking",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "reranker_model": {
+            "type": "string",
+            "description": "Cross-encoder model for reranking",
+            "default": "cross-encoder/ms-marco-MiniLM-L-6-v2"
+          },
+          "include_sources": {
+            "type": "boolean",
+            "description": "Include source file names in response",
+            "default": true
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "description": "Include document metadata (page numbers, etc.)",
+            "default": true
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "rag_crag",
+      "description": "Corrective RAG with self-evaluation. Use when you need the system to automatically detect and correct low-quality retrievals using web search or query rewriting.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User's question or search query",
+            "minLength": 1,
+            "maxLength": 8000
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "Number of most relevant documents to retrieve",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "confidence_threshold": {
+            "type": "number",
+            "description": "Minimum confidence score to accept retrieved documents (0.0-1.0). Lower scores trigger correction.",
+            "default": 0.8,
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "correction_strategy": {
+            "type": "string",
+            "description": "Strategy to use when correction is needed",
+            "enum": [
+              "rewrite",
+              "web_search",
+              "both"
+            ],
+            "default": "rewrite"
+          },
+          "enable_web_search": {
+            "type": "boolean",
+            "description": "Allow fallback to web search if local knowledge is insufficient",
+            "default": false
+          },
+          "include_sources": {
+            "type": "boolean",
+            "description": "Include source file names in response",
+            "default": true
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "description": "Include document metadata (page numbers, etc.)",
+            "default": true
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "rag_graphrag",
+      "description": "Hybrid search combining vector similarity, text search, knowledge graph traversal, and reciprocal rank fusion (RRF). Best for complex queries requiring relationship understanding.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User's question or search query",
+            "minLength": 1,
+            "maxLength": 8000
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "Number of most relevant documents to retrieve from each method (vector, text, graph)",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "search_method": {
+            "type": "string",
+            "description": "Which search methods to use",
+            "enum": [
+              "hybrid",
+              "vector",
+              "text",
+              "graph",
+              "rrf"
+            ],
+            "default": "hybrid"
+          },
+          "graph_traversal_depth": {
+            "type": "integer",
+            "description": "Maximum depth for knowledge graph traversal",
+            "default": 2,
+            "minimum": 1,
+            "maximum": 5
+          },
+          "rrf_k": {
+            "type": "integer",
+            "description": "K parameter for Reciprocal Rank Fusion algorithm",
+            "default": 60,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "include_sources": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include source file names in response"
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include document metadata (page numbers, etc.)"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "rag_pylate_colbert",
+      "description": "ColBERT late interaction retrieval using PyLate. Best for fine-grained semantic matching with token-level interactions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "User's question or search query",
+            "minLength": 1,
+            "maxLength": 8000
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "Number of most relevant documents to retrieve",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50
+          },
+          "max_query_length": {
+            "type": "integer",
+            "description": "Maximum query length in tokens",
+            "default": 256,
+            "minimum": 32,
+            "maximum": 512
+          },
+          "interaction_threshold": {
+            "type": "number",
+            "description": "Minimum interaction score threshold (0.0-1.0)",
+            "default": 0.5,
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "compression_ratio": {
+            "type": "number",
+            "description": "Compression ratio for document embeddings (0.0-1.0)",
+            "default": 0.8,
+            "minimum": 0.1,
+            "maximum": 1.0
+          },
+          "include_sources": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include source file names in response"
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include document metadata (page numbers, etc.)"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "rag_iris_global_graphrag",
+      "description": "IRIS Global GraphRAG for academic papers with 3D visualization and global communities. Best for research papers and citation networks.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Research question or topic",
+            "minLength": 1,
+            "maxLength": 8000
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "Number of most relevant papers to retrieve",
+            "default": 10,
+            "minimum": 1,
+            "maximum": 100
+          },
+          "community_level": {
+            "type": "integer",
+            "description": "Community detection level (0=fine-grained, higher=broader)",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 5
+          },
+          "include_citations": {
+            "type": "boolean",
+            "description": "Include citation network in response",
+            "default": false
+          },
+          "include_sources": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include source file names in response"
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include document metadata (page numbers, etc.)"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "rag_health_check",
+      "description": "Check health status of all RAG pipelines, database connectivity, and performance metrics. No query parameter required.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "include_details": {
+            "type": "boolean",
+            "description": "Include detailed metrics for each pipeline",
+            "default": false
+          },
+          "include_performance_metrics": {
+            "type": "boolean",
+            "description": "Include recent performance statistics (latency, throughput, error rates)",
+            "default": true
+          }
+        }
+      }
+    },
+    {
+      "name": "rag_metrics",
+      "description": "Retrieve performance metrics and usage statistics for RAG pipelines over a specified time range.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "time_range": {
+            "type": "string",
+            "description": "Time range for metrics",
+            "enum": [
+              "5m",
+              "15m",
+              "1h",
+              "6h",
+              "24h",
+              "7d"
+            ],
+            "default": "1h"
+          },
+          "technique_filter": {
+            "type": "array",
+            "description": "Filter metrics by specific techniques (empty = all techniques)",
+            "items": {
+              "type": "string",
+              "enum": [
+                "rag_basic",
+                "rag_basic_rerank",
+                "rag_crag",
+                "rag_graphrag",
+                "rag_pylate_colbert",
+                "rag_iris_global_graphrag"
+              ]
+            },
+            "default": []
+          },
+          "include_error_details": {
+            "type": "boolean",
+            "description": "Include detailed error information",
+            "default": false
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "mcp_version": "1.0",
+    "server_name": "iris-rag-server",
+    "server_version": "1.0.0",
+    "total_tools": 8,
+    "rag_pipelines": 6,
+    "utility_tools": 2
+  }
+}

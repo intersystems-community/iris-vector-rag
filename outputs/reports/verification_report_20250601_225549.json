@@ -1,0 +1,89 @@
+{
+  "verification_summary": {
+    "start_time": "2025-06-01T22:55:29.387061",
+    "end_time": "2025-06-01T22:55:49.809406",
+    "duration_seconds": 20.422345,
+    "migration_successful": false,
+    "all_tests_passed": false,
+    "vector_double_references_found": 1,
+    "files_checked": 427,
+    "critical_issues_count": 4,
+    "warnings_count": 0
+  },
+  "detailed_results": {
+    "migration_verification": {
+      "vector_double_references": [
+        {
+          "file_path": "/Users/intersystems-community/ws/rag-templates/scripts/vector_schema_limitation_explanation.py",
+          "line_number": 332,
+          "content": "self.logger.info(\"The VECTOR(DOUBLE) to VECTOR(FLOAT) migration is\")",
+          "timestamp": "2025-06-01T22:55:29.565376"
+        }
+      ],
+      "files_checked": 427,
+      "remaining_references_found": true
+    },
+    "database_tests": {
+      "connection_test": {
+        "passed": true,
+        "error": null,
+        "timestamp": "2025-06-01T22:55:44.904811"
+      },
+      "vector_float_table_creation": {
+        "passed": false,
+        "error": "java.sql.SQLException: [SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^INSERT INTO RAG . VectorFloatTest ( id , test_vector , description ) VALUES ( :%qpar(1) , TO_VECTOR ( :%qpar(2) , :%qpar>]",
+        "timestamp": "2025-06-01T22:55:45.101073"
+      },
+      "vector_operations": {
+        "passed": false,
+        "error": "java.sql.SQLException: [SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^INSERT INTO RAG . VectorOpsTest ( id , vector1 , vector2 ) VALUES ( :%qpar(1) , TO_VECTOR ( :%qpar(2) , :%qpar>]",
+        "timestamp": "2025-06-01T22:55:45.341644"
+      },
+      "hnsw_indexing": {
+        "passed": true,
+        "error": null,
+        "timestamp": "2025-06-01T22:55:45.345154"
+      }
+    },
+    "rag_pipeline_tests": {
+      "basic_rag_test": {
+        "passed": true,
+        "error": null,
+        "timestamp": "2025-06-01T22:55:48.826287"
+      },
+      "vector_similarity_search": {
+        "passed": true,
+        "error": null,
+        "timestamp": "2025-06-01T22:55:49.806299"
+      },
+      "end_to_end_query": {
+        "passed": false,
+        "error": "'BasicRAGPipeline' object has no attribute 'query'",
+        "timestamp": "2025-06-01T22:55:49.809269"
+      }
+    },
+    "overall_status": {
+      "migration_successful": false,
+      "all_tests_passed": false,
+      "critical_issues": [
+        {
+          "issue": "VECTOR(FLOAT) references still found in codebase",
+          "timestamp": "2025-06-01T22:55:44.493544"
+        },
+        {
+          "issue": "VECTOR(FLOAT) table creation failed: java.sql.SQLException: [SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^INSERT INTO RAG . VectorFloatTest ( id , test_vector , description ) VALUES ( :%qpar(1) , TO_VECTOR ( :%qpar(2) , :%qpar>]",
+          "timestamp": "2025-06-01T22:55:45.101083"
+        },
+        {
+          "issue": "Vector operations failed: java.sql.SQLException: [SQLCODE: <-1>:<Invalid SQL statement>]\r\n[Location: <Prepare>]\r\n[%msg: < ) expected, : found ^INSERT INTO RAG . VectorOpsTest ( id , vector1 , vector2 ) VALUES ( :%qpar(1) , TO_VECTOR ( :%qpar(2) , :%qpar>]",
+          "timestamp": "2025-06-01T22:55:45.341651"
+        },
+        {
+          "issue": "End-to-end RAG query failed: 'BasicRAGPipeline' object has no attribute 'query'",
+          "timestamp": "2025-06-01T22:55:49.809273"
+        }
+      ],
+      "warnings": []
+    }
+  }
+}

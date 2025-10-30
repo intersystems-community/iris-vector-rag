@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coverage Report demo_coverage_report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #f5f5f5; padding: 20px; border-radius: 5px; }
+        .summary { display: flex; gap: 20px; margin: 20px 0; }
+        .metric { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+        .pass { color: #28a745; }
+        .fail { color: #dc3545; }
+        .critical { background: #fff3cd; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+        .coverage-bar { background: #e9ecef; height: 20px; border-radius: 10px; overflow: hidden; }
+        .coverage-fill { background: #28a745; height: 100%; transition: width 0.3s; }
+        .low-coverage .coverage-fill { background: #dc3545; }
+        .medium-coverage .coverage-fill { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Coverage Report</h1>
+        <p><strong>Report ID:</strong> demo_coverage_report</p>
+        <p><strong>Generated:</strong> 2025-10-02 17:39:44.161792</p>
+        <p><strong>Git Commit:</strong> demo123abc</p>
+    </div>
+
+    <div class="summary">
+        <div class="metric">
+            <h3>Overall Coverage</h3>
+            <div class="coverage-bar">
+                <div class="coverage-fill" style="width: 72.5%"></div>
+            </div>
+            <p><strong>72.5%</strong></p>
+            <p class="pass">
+                Target: ✓ PASS (≥60%)
+            </p>
+        </div>
+
+        <div class="metric">
+            <h3>Lines</h3>
+            <p><strong>Total:</strong> 2500</p>
+            <p><strong>Covered:</strong> 1812</p>
+            <p><strong>Missing:</strong> 688</p>
+        </div>
+
+        <div class="metric">
+            <h3>Performance</h3>
+            <p><strong>Analysis:</strong> 45.20s</p>
+            <p><strong>Tests:</strong> 120.80s</p>
+            <p class="pass">
+                Target: ✓ PASS (≤300s)
+            </p>
+        </div>
+    </div>
+
+    
+    <h2>Critical Modules (80% Target)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Module</th>
+                <th>Coverage</th>
+                <th>Lines</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            <tr class="critical">
+                <td>iris_rag.config.manager</td>
+                <td>
+                    <div class="coverage-bar">
+                        <div class="coverage-fill" style="width: 60.1%"></div>
+                    </div>
+                    60.1%
+                </td>
+                <td>140/233</td>
+                <td class="fail">
+                    ✗ FAIL
+                </td>
+            </tr>
+            
+            <tr class="critical">
+                <td>iris_rag.validation.requirements</td>
+                <td>
+                    <div class="coverage-bar">
+                        <div class="coverage-fill" style="width: 90.2%"></div>
+                    </div>
+                    90.2%
+                </td>
+                <td>110/122</td>
+                <td class="pass">
+                    ✓ PASS
+                </td>
+            </tr>
+            
+        </tbody>
+    </table>
+    
+
+    <h2>All Modules</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Module</th>
+                <th>Coverage</th>
+                <th>Lines</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+            <tr class="critical">
+                <td>
+                    iris_rag.config.manager
+                    <span style="color: #dc3545;">[CRITICAL]</span>
+                </td>
+                <td>
+                    <div class="coverage-bar">
+                        <div class="coverage-fill" style="width: 60.1%"></div>
+                    </div>
+                    60.1%
+                </td>
+                <td>140/233</td>
+                <td class="fail">
+                    ✗ FAIL
+                </td>
+            </tr>
+            
+            <tr class="critical">
+                <td>
+                    iris_rag.validation.requirements
+                    <span style="color: #dc3545;">[CRITICAL]</span>
+                </td>
+                <td>
+                    <div class="coverage-bar">
+                        <div class="coverage-fill" style="width: 90.2%"></div>
+                    </div>
+                    90.2%
+                </td>
+                <td>110/122</td>
+                <td class="pass">
+                    ✓ PASS
+                </td>
+            </tr>
+            
+        </tbody>
+    </table>
+
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666;">
+        <p>Generated by iris_rag.testing.coverage_reporter in 0.005s</p>
+    </footer>
+</body>
+</html>
+        

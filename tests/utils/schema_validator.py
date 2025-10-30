@@ -161,7 +161,7 @@ class SchemaValidator:
             actual_type = self._normalize_type(actual_col['data_type'])
             expected_type = expected_col.column_type.value
 
-            if not self._types_compatible(expected_type, actual_type):
+            if actual_type != expected_type:
                 mismatches.append(SchemaMismatch(
                     table_name=schema_def.table_name,
                     mismatch_type=MismatchType.TYPE_MISMATCH,
@@ -203,29 +203,6 @@ class SchemaValidator:
             return 'JSON'
 
         return type_mapping.get(upper_type, upper_type)
-
-    def _types_compatible(self, expected_type: str, actual_type: str) -> bool:
-        """
-        Check if two column types are compatible.
-
-        JSON columns may be stored as CLOB/LONGVARCHAR in IRIS.
-
-        Args:
-            expected_type: Expected column type
-            actual_type: Actual column type from database
-
-        Returns:
-            True if types are compatible, False otherwise
-        """
-        # Exact match
-        if expected_type == actual_type:
-            return True
-
-        # JSON stored as CLOB is acceptable
-        if expected_type == 'JSON' and actual_type in ('CLOB', 'LONGVARCHAR'):
-            return True
-
-        return False
 
     def get_schema_summary(self) -> dict:
         """

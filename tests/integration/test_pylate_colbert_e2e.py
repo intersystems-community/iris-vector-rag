@@ -17,7 +17,7 @@ import pytest
 class TestPyLateColBERTIntegration:
     """End-to-end integration tests for PyLateColBERT pipeline."""
 
-    def test_full_query_path_with_real_db(self, pylate_colbert_pipeline, iris_connection):
+    def test_full_query_path_with_real_db(self, pylate_colbert_pipeline):
         """
         FR-025: Full PyLateColBERT pipeline workflow MUST complete successfully.
 
@@ -25,8 +25,6 @@ class TestPyLateColBERTIntegration:
         When: Documents loaded and query executed
         Then: Complete workflow succeeds with ColBERT late interaction
         """
-        from tests.conftest import skip_if_no_embeddings
-
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
         with open(sample_docs_path, 'r') as f:
@@ -39,9 +37,6 @@ class TestPyLateColBERTIntegration:
 
         assert load_result["documents_loaded"] > 0, \
             "Should successfully load documents"
-
-        # Check if embeddings are in proper VECTOR format before querying
-        skip_if_no_embeddings(iris_connection)
 
         # Execute query
         query = "What are the symptoms of diabetes?"
@@ -74,7 +69,7 @@ class TestPyLateColBERTIntegration:
         assert result["embeddings_generated"] == expected_count
         assert result["documents_failed"] == 0
 
-    def test_response_quality_metrics(self, pylate_colbert_pipeline, iris_connection):
+    def test_response_quality_metrics(self, pylate_colbert_pipeline):
         """
         FR-027: PyLateColBERT query response MUST include quality metrics.
 
@@ -82,16 +77,11 @@ class TestPyLateColBERTIntegration:
         When: Query executed
         Then: Response includes quality metrics
         """
-        from tests.conftest import skip_if_no_embeddings
-
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
         with open(sample_docs_path, 'r') as f:
             docs_data = json.load(f)
 
         pylate_colbert_pipeline.load_documents(docs_data["documents"])
-
-        # Check if embeddings are in proper VECTOR format before querying
-        skip_if_no_embeddings(iris_connection)
 
         query = "How is diabetes treated?"
         result = pylate_colbert_pipeline.query(query)

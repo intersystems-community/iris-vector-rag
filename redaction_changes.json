@@ -1,22 +1,29 @@
 [
   {
     "file": "redaction_changes.json",
-    "replacements": 135,
+    "replacements": 7,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (11 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (11 occurrences)",
-      "merge request \u2192 pull request (10 occurrences)",
-      "Merge Request \u2192 Pull Request (7 occurrences)",
-      "MR # \u2192 PR # (4 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (5 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (87 occurrences)"
+      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
+      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
+      "merge request \u2192 pull request (1 occurrences)",
+      "Merge Request \u2192 Pull Request (1 occurrences)",
+      "MR # \u2192 PR # (1 occurrences)",
+      "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
-    "file": "BUG_REPORT_SCHEMA_MIGRATION_LOOP.md",
-    "replacements": 5,
+    "file": "OPTIMIZATION_APPLIED.md",
+    "replacements": 2,
     "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
+      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
+    ]
+  },
+  {
+    "file": "GRAPHRAG_BUGS_FIXED.md",
+    "replacements": 1,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
@@ -24,6 +31,20 @@
     "replacements": 1,
     "changes": [
       "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)"
+    ]
+  },
+  {
+    "file": "DSPY_INTEGRATION_COMPLETE.md",
+    "replacements": 3,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
+    ]
+  },
+  {
+    "file": "DSPY_INDEXING_STATUS.md",
+    "replacements": 1,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
@@ -93,6 +114,13 @@
     "replacements": 1,
     "changes": [
       "merge request \u2192 pull request (1 occurrences)"
+    ]
+  },
+  {
+    "file": "scripts/monitor_indexing_live.py",
+    "replacements": 1,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
@@ -210,10 +238,52 @@
     ]
   },
   {
+    "file": "docs/development/BUG_REPORT_SCHEMA_MIGRATION_LOOP.md",
+    "replacements": 5,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
+    ]
+  },
+  {
     "file": "docs/archived/GRAPH_RAG_TEMPLATES_ROADMAP_ARCHIVED_20250914.md",
     "replacements": 1,
     "changes": [
       "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/demo_pipeline_multi_query.py",
+    "replacements": 1,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/DEMO_README.md",
+    "replacements": 9,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (9 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/demo_simple_multi_query.py",
+    "replacements": 3,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/STATUS.md",
+    "replacements": 5,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
+    ]
+  },
+  {
+    "file": "contrib/retrieve-dspy/INTEGRATION_STEPS.md",
+    "replacements": 2,
+    "changes": [
+      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
     ]
   },
   {

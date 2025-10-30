@@ -142,7 +142,7 @@ class HybridGraphRAGSchemaManager(SchemaManager):
             create_sql = f"""
             CREATE TABLE RAG.KG_NODEEMBEDDINGS_OPTIMIZED (
                 node_id VARCHAR(255) NOT NULL,
-                embedding VECTOR(DOUBLE, {dimension}) NOT NULL,
+                embedding VECTOR(FLOAT, {dimension}) NOT NULL,
                 node_type VARCHAR(100),
                 last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 confidence DOUBLE DEFAULT 1.0,
