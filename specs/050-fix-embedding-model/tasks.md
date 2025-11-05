@@ -180,7 +180,7 @@
 
 ## Phase 3.5: Manual Validation (Quickstart Scenarios)
 
-- [ ] **T011** [P] Run Step 1: Basic cache validation from `quickstart.md`
+- [x] **T011** [P] Run Step 1: Basic cache validation from `quickstart.md`
   - **Script**: Create `test_cache_basic.py` with code from quickstart Step 1
   - **Location**: Repository root or `scripts/` directory
   - **Expected Output**:
@@ -192,7 +192,7 @@
   - **Dependency**: T010 (integration tests passing)
   - **Parallel**: Can run with T012, T013, T014 (different validation scripts)
 
-- [ ] **T012** [P] Run Step 2: Thread safety validation from `quickstart.md`
+- [x] **T012** [P] Run Step 2: Thread safety validation from `quickstart.md`
   - **Script**: Create `test_cache_threaded.py` with code from quickstart Step 2
   - **Expected Output**:
     - 10 threads, all get 384-dimensional embeddings
@@ -201,7 +201,7 @@
   - **Dependency**: T010
   - **Parallel**: Can run with T011, T013, T014 (different validation scripts)
 
-- [ ] **T013** [P] Run Step 3: Different configurations validation from `quickstart.md`
+- [x] **T013** [P] Run Step 3: Different configurations validation from `quickstart.md`
   - **Script**: Create `test_cache_configs.py` with code from quickstart Step 3
   - **Expected Output**:
     - Model 1: 384 dimensions (all-MiniLM-L6-v2)
@@ -211,7 +211,7 @@
   - **Dependency**: T010
   - **Parallel**: Can run with T011, T012, T014 (different validation scripts)
 
-- [ ] **T014** [P] Run Step 4: Production-like scenario from `quickstart.md`
+- [x] **T014** [P] Run Step 4: Production-like scenario from `quickstart.md`
   - **Script**: Create `test_cache_production.py` with code from quickstart Step 4
   - **Expected Output**:
     - 20 EmbeddingManager instances created sequentially
@@ -223,14 +223,14 @@
 
 ## Phase 3.6: Documentation & Finalization
 
-- [ ] **T015** [P] Run full test suite to ensure no regressions
+- [x] **T015** [P] Run full test suite to ensure no regressions
   - **Command**: `pytest tests/ -v` (all existing tests)
   - **Expected**: All existing tests still pass (backward compatibility verified)
   - **Check**: No tests break due to caching changes
   - **Dependency**: T010 (new tests passing)
   - **Parallel**: Can run with T016 (different activities)
 
-- [ ] **T016** [P] Update CLAUDE.md with performance optimization notes
+- [x] **T016** [P] Update CLAUDE.md with performance optimization notes
   - **File**: `/Users/tdyar/ws/rag-templates/CLAUDE.md`
   - **Section**: Recent Changes (already updated by update script, verify correctness)
   - **Content**: Confirm "Feature 050: Added module-level cache for SentenceTransformer models (7x performance improvement)" is present
@@ -238,7 +238,7 @@
   - **Dependency**: T010 (implementation verified)
   - **Parallel**: Can run with T015 (different files)
 
-- [ ] **T017** Commit changes with descriptive message
+- [x] **T017** Commit changes with descriptive message
   - **Files to commit**:
     - `iris_rag/embeddings/manager.py` (cache implementation)
     - `tests/unit/test_embedding_cache.py` (contract tests)
