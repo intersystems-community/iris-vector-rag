@@ -1,422 +1,102 @@
 [
   {
-    "file": "redaction_changes.json",
-    "replacements": 7,
-    "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
-      "merge request \u2192 pull request (1 occurrences)",
-      "Merge Request \u2192 Pull Request (1 occurrences)",
-      "MR # \u2192 PR # (1 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "OPTIMIZATION_APPLIED.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "GRAPHRAG_BUGS_FIXED.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "docker-compose.licensed.yml",
-    "replacements": 1,
-    "changes": [
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)"
-    ]
-  },
-  {
-    "file": "DSPY_INTEGRATION_COMPLETE.md",
-    "replacements": 3,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
-    ]
-  },
-  {
-    "file": "DSPY_INDEXING_STATUS.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
     "file": "PUBLIC_SYNC_SETUP_COMPLETE.md",
-    "replacements": 10,
+    "replacements": 23,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (3 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
-      "merge request \u2192 pull request (1 occurrences)",
-      "Merge Request \u2192 Pull Request (1 occurrences)",
-      "MR # \u2192 PR # (1 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "docs/IRIS_GLOBAL_GRAPHRAG_INTEGRATION.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "docs/PUBLIC_REPO_STRATEGY_ANALYSIS.md",
-    "replacements": 1,
-    "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)"
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (6 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (1 occurrences)",
+      "git@github.com/intersystems-community:tdyar/rag-templates.git \u2192 git@github.com:intersystems-community/iris-rag-templates.git (1 occurrences)",
+      "intersystemsdc/iris-community \u2192 intersystemsdc/iris-community (2 occurrences)",
+      "pull request \u2192 pull request (2 occurrences)",
+      "Pull Request \u2192 Pull Request (2 occurrences)",
+      "PR # \u2192 PR # (2 occurrences)",
+      "maintainer@example.com \u2192 maintainer@example.com (2 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (5 occurrences)"
     ]
   },
   {
     "file": "docs/PUBLIC_REPOSITORY_SYNC.md",
-    "replacements": 14,
+    "replacements": 29,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (3 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
-      "merge request \u2192 pull request (2 occurrences)",
-      "Merge Request \u2192 Pull Request (2 occurrences)",
-      "MR # \u2192 PR # (1 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (2 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/SYNC_README.md",
-    "replacements": 5,
-    "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
-      "merge request \u2192 pull request (1 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (6 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (1 occurrences)",
+      "git@github.com/intersystems-community:tdyar/rag-templates.git \u2192 git@github.com:intersystems-community/iris-rag-templates.git (1 occurrences)",
+      "intersystemsdc/iris-community \u2192 intersystemsdc/iris-community (2 occurrences)",
+      "pull request \u2192 pull request (4 occurrences)",
+      "Pull Request \u2192 Pull Request (4 occurrences)",
+      "PR # \u2192 PR # (2 occurrences)",
+      "maintainer@example.com \u2192 maintainer@example.com (3 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (6 occurrences)"
     ]
   },
   {
     "file": "scripts/sync_to_public.sh",
-    "replacements": 9,
+    "replacements": 20,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (4 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
-      "merge request \u2192 pull request (1 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/sync_to_sanitized.sh",
-    "replacements": 1,
-    "changes": [
-      "merge request \u2192 pull request (1 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/monitor_indexing_live.py",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (7 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (2 occurrences)",
+      "git@github.com/intersystems-community:tdyar/rag-templates.git \u2192 git@github.com:intersystems-community/iris-rag-templates.git (1 occurrences)",
+      "intersystemsdc/iris-community \u2192 intersystemsdc/iris-community (2 occurrences)",
+      "pull request \u2192 pull request (2 occurrences)",
+      "maintainer@example.com \u2192 maintainer@example.com (2 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (4 occurrences)"
     ]
   },
   {
     "file": "scripts/redact_for_public.py",
-    "replacements": 13,
+    "replacements": 27,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (4 occurrences)",
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)",
-      "merge request \u2192 pull request (2 occurrences)",
-      "Merge Request \u2192 Pull Request (1 occurrences)",
-      "MR # \u2192 PR # (1 occurrences)",
-      "tdyar@intersystems.com \u2192 maintainer@example.com (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
-    ]
-  },
-  {
-    "file": "docker/test-databases/README.md",
-    "replacements": 1,
-    "changes": [
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)"
-    ]
-  },
-  {
-    "file": "analysis/analysis/outputs/graphrag_effectiveness_report.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (7 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (2 occurrences)",
+      "git@github.com/intersystems-community:tdyar/rag-templates.git \u2192 git@github.com:intersystems-community/iris-rag-templates.git (1 occurrences)",
+      "intersystemsdc/iris-community \u2192 intersystemsdc/iris-community (2 occurrences)",
+      "pull request \u2192 pull request (3 occurrences)",
+      "Pull Request \u2192 Pull Request (2 occurrences)",
+      "PR # \u2192 PR # (2 occurrences)",
+      "maintainer@example.com \u2192 maintainer@example.com (2 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (6 occurrences)"
     ]
   },
   {
     "file": "archive/completion_reports/MERGE_PREPARATION_COMPLETION_NOTE_2025-06-11.md",
-    "replacements": 4,
+    "replacements": 5,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
-      "Merge Request \u2192 Pull Request (1 occurrences)",
-      "MR # \u2192 PR # (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "archive/completion_reports/MERGE_REFACTOR_BRANCH_TO_MAIN_SPEC.md",
-    "replacements": 1,
-    "changes": [
-      "Merge Request \u2192 Pull Request (1 occurrences)"
-    ]
-  },
-  {
-    "file": "archive/archived_documentation/fixes/DOCKER_RESTART_2TB_SOLUTION.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (1 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (1 occurrences)",
+      "Pull Request \u2192 Pull Request (1 occurrences)",
+      "PR # \u2192 PR # (1 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
     "file": "archive/archived_documentation/superseded/GITLAB_MERGE_REQUEST_TEMPLATE.md",
-    "replacements": 5,
+    "replacements": 6,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
-      "merge request \u2192 pull request (2 occurrences)",
-      "Merge Request \u2192 Pull Request (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "archive/archived_documentation/validation_reports/REAL_DATA_TEST_RESULTS.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "archive/archived_documentation/status_reports/FINAL_PROJECT_STATUS_UPDATE.md",
-    "replacements": 1,
-    "changes": [
-      "merge request \u2192 pull request (1 occurrences)"
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (1 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (1 occurrences)",
+      "pull request \u2192 pull request (2 occurrences)",
+      "Pull Request \u2192 Pull Request (1 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
     "file": "archive/archived_documentation/status_reports/CLEANUP_SUMMARY.md",
-    "replacements": 4,
+    "replacements": 5,
     "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
-      "merge request \u2192 pull request (1 occurrences)",
-      "Merge Request \u2192 Pull Request (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "archive/archived_documentation/status_reports/REPOSITORY_CLEANUP_AND_LIST_ERROR_FIX_COMPLETE.md",
-    "replacements": 1,
-    "changes": [
-      "merge request \u2192 pull request (1 occurrences)"
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (1 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (1 occurrences)",
+      "pull request \u2192 pull request (1 occurrences)",
+      "Pull Request \u2192 Pull Request (1 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   },
   {
     "file": "archive/archived_documentation/project_evolution/PRACTICAL_VECTOR_MIGRATION_PLAN.md",
-    "replacements": 2,
-    "changes": [
-      "gitlab.iscinternal.com \u2192 github.com/intersystems-community (1 occurrences)",
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "tests/integration/test_iris_devtools_namespace_fix.py",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "tests/fixtures/README.md",
     "replacements": 3,
     "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
-    ]
-  },
-  {
-    "file": "docs/development/BUG_REPORT_SCHEMA_MIGRATION_LOOP.md",
-    "replacements": 5,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
-    ]
-  },
-  {
-    "file": "docs/archived/GRAPH_RAG_TEMPLATES_ROADMAP_ARCHIVED_20250914.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "contrib/retrieve-dspy/demo_pipeline_multi_query.py",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "contrib/retrieve-dspy/DEMO_README.md",
-    "replacements": 9,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (9 occurrences)"
-    ]
-  },
-  {
-    "file": "contrib/retrieve-dspy/demo_simple_multi_query.py",
-    "replacements": 3,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
-    ]
-  },
-  {
-    "file": "contrib/retrieve-dspy/STATUS.md",
-    "replacements": 5,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (5 occurrences)"
-    ]
-  },
-  {
-    "file": "contrib/retrieve-dspy/INTEGRATION_STEPS.md",
-    "replacements": 2,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (2 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/validation/reports/example_test_report_20250930_095531.md",
-    "replacements": 18,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (18 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/validation/reports/example_test_report_20250930_095531.json",
-    "replacements": 18,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (18 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/validation/reports/example_test_report_20250930_095318.json",
-    "replacements": 9,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (9 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/validation/reports/example_test_report_20250930_095318.md",
-    "replacements": 9,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (9 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/validation/reports/example_test_report_20250930_135115.md",
-    "replacements": 34,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (34 occurrences)"
-    ]
-  },
-  {
-    "file": "scripts/validation/reports/example_test_report_20250930_135115.json",
-    "replacements": 34,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (34 occurrences)"
-    ]
-  },
-  {
-    "file": ".github/workflows/coverage.yml",
-    "replacements": 1,
-    "changes": [
-      "docker.iscinternal.com/intersystems/iris \u2192 intersystemsdc/iris-community (1 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/pipeline_status_tests/pipeline_test_detailed_20250914_104908.json",
-    "replacements": 15,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (15 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/pipeline_status_tests/pipeline_test_detailed_20250914_090434.json",
-    "replacements": 15,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (15 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/e2e_integration_reports/e2e_integration_20250930_133904.md",
-    "replacements": 14,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (14 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/e2e_integration_reports/e2e_integration_20250930_135041.json",
-    "replacements": 19,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (19 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/e2e_integration_reports/e2e_integration_20250930_133904.json",
-    "replacements": 18,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (18 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/e2e_integration_reports/e2e_integration_20250930_135041.md",
-    "replacements": 15,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (15 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/e2e_integration_reports/e2e_integration_20250930_133959.md",
-    "replacements": 14,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (14 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/e2e_integration_reports/e2e_integration_20250930_133959.json",
-    "replacements": 18,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (18 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/reports/migration_report_20250601_223646.md",
-    "replacements": 3,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (3 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/reports/verification_report_20250601_225549.md",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/reports/verification_report_20250601_225549.json",
-    "replacements": 1,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (1 occurrences)"
-    ]
-  },
-  {
-    "file": "outputs/reports/migration_report_20250601_223646.json",
-    "replacements": 6,
-    "changes": [
-      "/tdyar/ \u2192 /intersystems-community/ (6 occurrences)"
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (1 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (1 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (1 occurrences)"
     ]
   }
 ]

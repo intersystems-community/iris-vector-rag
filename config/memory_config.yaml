@@ -1,6 +1,15 @@
 # RAG Memory Component Configuration
 # Generic configuration for memory-enabled RAG applications
 
+# Embeddings Configuration
+embeddings:
+  primary_backend: "sentence_transformers"
+  fallback_backends: ["openai"]
+  sentence_transformers:
+    model_name: "all-MiniLM-L6-v2"
+    device: "cpu"  # Force CPU to avoid GPU contention (set to "cuda" or "cuda:0" for GPU)
+  dimension: 384
+
 # TOP-LEVEL Entity Extraction Config (read by EntityExtractionService)
 # This mirrors rag_memory_config.knowledge_extraction.entity_extraction for compatibility
 entity_extraction:

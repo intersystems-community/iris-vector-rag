@@ -1,7 +1,7 @@
 """
 Unit test for GraphRAG entity extraction validation bug.
 
-Bug Report: /Users/tdyar/ws/kg-ticket-resolver/RAG_TEMPLATES_BUG_ENTITY_EXTRACTION.md
+Bug Report: /Users/intersystems-community/ws/kg-ticket-resolver/RAG_TEMPLATES_BUG_ENTITY_EXTRACTION.md
 
 The bug: GraphRAGPipeline.load_documents() incorrectly throws exception claiming
 no entities were extracted, even when entities ARE successfully extracted and stored.

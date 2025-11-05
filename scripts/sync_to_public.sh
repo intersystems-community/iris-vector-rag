@@ -92,14 +92,14 @@ echo "🔍 Scanning for internal references..."
 declare -A REDACTIONS=(
     # Internal GitLab URLs
     ["github.com/intersystems-community"]="github.com/intersystems-community"
-    ["https://github.com/intersystems-community/intersystems-community/rag-templates"]="https://github.com/intersystems-community/iris-rag-templates"
-    ["git@github.com/intersystems-community:tdyar/rag-templates.git"]="git@github.com:intersystems-community/iris-rag-templates.git"
+    ["https://github.com/intersystems-community/iris-rag-templates"]="https://github.com/intersystems-community/iris-rag-templates"
+    ["git@github.com:intersystems-community/iris-rag-templates.git"]="git@github.com:intersystems-community/iris-rag-templates.git"
 
     # Internal Docker registry
     ["intersystemsdc/iris-community"]="intersystemsdc/iris-community"
 
     # Internal pull request references
-    ["https://github.com/intersystems-community/intersystems-community/rag-templates/-/merge_requests"]="https://github.com/intersystems-community/iris-rag-templates/pulls"
+    ["https://github.com/intersystems-community/iris-rag-templates/-/merge_requests"]="https://github.com/intersystems-community/iris-rag-templates/pulls"
 
     # Internal email/username references (if any)
     ["maintainer@example.com"]="maintainer@example.com"
