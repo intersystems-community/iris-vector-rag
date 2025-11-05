@@ -81,8 +81,8 @@ The following redaction rules are automatically applied:
 | Internal Reference | Public Replacement | Count |
 |-------------------|-------------------|-------|
 | `github.com/intersystems-community` | `github.com/intersystems-community` | ~30 |
-| `https://github.com/intersystems-community/intersystems-community/rag-templates` | `https://github.com/intersystems-community/iris-rag-templates` | ~15 |
-| `git@github.com/intersystems-community:tdyar/rag-templates.git` | `git@github.com:intersystems-community/iris-rag-templates.git` | ~5 |
+| `https://github.com/intersystems-community/iris-rag-templates` | `https://github.com/intersystems-community/iris-rag-templates` | ~15 |
+| `git@github.com:intersystems-community/iris-rag-templates.git` | `git@github.com:intersystems-community/iris-rag-templates.git` | ~5 |
 | `intersystemsdc/iris-community` | `intersystemsdc/iris-community` | ~10 |
 | `pull request` / `Pull Request` | `pull request` / `Pull Request` | ~20 |
 | `PR #` | `PR #` | ~5 |

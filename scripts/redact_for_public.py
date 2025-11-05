@@ -44,14 +44,14 @@ class RepositoryRedactor:
         self.redaction_rules = {
             # Internal GitLab → Public GitHub
             'github.com/intersystems-community': 'github.com/intersystems-community',
-            'https://github.com/intersystems-community/intersystems-community/rag-templates': 'https://github.com/intersystems-community/iris-rag-templates',
-            'git@github.com/intersystems-community:tdyar/rag-templates.git': 'git@github.com:intersystems-community/iris-rag-templates.git',
+            'https://github.com/intersystems-community/iris-rag-templates': 'https://github.com/intersystems-community/iris-rag-templates',
+            'git@github.com:intersystems-community/iris-rag-templates.git': 'git@github.com:intersystems-community/iris-rag-templates.git',
 
             # Internal Docker registry → Public Docker Hub
             'intersystemsdc/iris-community': 'intersystemsdc/iris-community',
 
             # Internal pull requests → Pull requests
-            'https://github.com/intersystems-community/intersystems-community/rag-templates/-/merge_requests': 'https://github.com/intersystems-community/iris-rag-templates/pulls',
+            'https://github.com/intersystems-community/iris-rag-templates/-/merge_requests': 'https://github.com/intersystems-community/iris-rag-templates/pulls',
             'pull request': 'pull request',
             'Pull Request': 'Pull Request',
             'PR #': 'PR #',
