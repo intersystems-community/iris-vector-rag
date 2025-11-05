@@ -85,7 +85,7 @@ specs/037-clean-up-this/
 
 ### Repository Structure (Current State Analysis)
 ```
-/Users/tdyar/ws/rag-templates/
+/Users/intersystems-community/ws/rag-templates/
 ├── README.md                    # Essential - keep
 ├── USER_GUIDE.md                # Essential - keep
 ├── CLAUDE.md                    # Essential - keep

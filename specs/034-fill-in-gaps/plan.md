@@ -2,7 +2,7 @@
 # Implementation Plan: Fill in Testing Gaps for HybridGraphRAG Query Paths
 
 **Branch**: `034-fill-in-gaps` | **Date**: 2025-10-07 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/Users/tdyar/ws/rag-templates/specs/034-fill-in-gaps/spec.md`
+**Input**: Feature specification from `/Users/intersystems-community/ws/rag-templates/specs/034-fill-in-gaps/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -76,7 +76,7 @@ specs/[###-feature]/
 
 ### Source Code (repository root)
 ```
-/Users/tdyar/ws/rag-templates/
+/Users/intersystems-community/ws/rag-templates/
 ├── iris_rag/                           # Framework package (testing target)
 │   ├── pipelines/
 │   │   ├── hybrid_graphrag.py          # HybridGraphRAG implementation (Feature 033)

@@ -1,0 +1,49 @@
+# Entity Extraction Service Contract
+# API: EntityExtractionService.extract_entities()
+# Spec Reference: FR-002, FR-002a (retry logic), FR-019 (LLM support)
+
+contract_version: "1.0.0"
+service_name: "EntityExtractionService"
+
+---
+
+## Method: extract_entities()
+
+### Signature
+```python
+def extract_entities(
+    self,
+    text: str,
+    retry_attempts: int = 3,
+    retry_backoff_base: float = 2.0
+) -> Tuple[List[Entity], List[Relationship]]
+```
+
+### Parameters
+| Name | Type | Required | Default | Description | Validation |
+|------|------|----------|---------|-------------|------------|
+| `text` | str | Yes | N/A | Document text for extraction | Non-empty, ≤10000 chars |
+| `retry_attempts` | int | No | 3 | Max retries on LLM failure | 1 ≤ attempts ≤ 5 (spec FR-002a) |
+| `retry_backoff_base` | float | No | 2.0 | Exponential backoff base | backoff_base ≥ 1.0 |
+
+### Return Value
+```python
+(
+    [Entity(entity_id=UUID, entity_text="Erik Hort", entity_type=PERSON, confidence=0.95, ...)],
+    [Relationship(subject="Erik Hort", predicate="birthplace_of", object="Montebello", confidence=0.92, ...)]
+)
+```
+
+### Retry Behavior (spec FR-002a)
+- Attempt 1: Immediate call
+- Attempt 2: Wait 2^1 = 2 seconds, retry
+- Attempt 3: Wait 2^2 = 4 seconds, retry
+- After 3 failures: Log warning, return empty lists, continue processing
+
+### Error Handling
+- LLM API failures: Retry with exponential backoff
+- Parsing failures: Log warning, return partial results
+- Network timeouts: Retry as normal LLM failure
+
+### Performance Target
+- 1-2 seconds per document (single LLM call for both NER + relationships)

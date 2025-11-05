@@ -50,7 +50,7 @@
 
 ## 📂 Files Ready for Copy
 
-All files are in `/Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/`:
+All files are in `/Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/`:
 
 ```
 contrib/retrieve-dspy/
@@ -157,10 +157,10 @@ pip install -e ".[dev]"
 
 ```bash
 # From retrieve-dspy directory
-cp /Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/iris_database.py retrieve_dspy/database/
-cp /Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/test_iris_database.py tests/database/
+cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/iris_database.py retrieve_dspy/database/
+cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/test_iris_database.py tests/database/
 mkdir -p examples/iris
-cp /Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/basic_example.py examples/iris/
+cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/basic_example.py examples/iris/
 ```
 
 ### 3. Install Dependencies (1 minute)
@@ -332,7 +332,7 @@ git push origin feature/iris-adapter
 
 **Estimated time from here to submitted PR**: ~25 minutes
 
-**Files are located at**: `/Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/`
+**Files are located at**: `/Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/`
 
 **Your forked repo**: https://github.com/isc-tdyar/retrieve-dspy
 

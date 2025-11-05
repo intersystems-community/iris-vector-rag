@@ -28,8 +28,8 @@ pytest tests/ -v
 
 ```bash
 # From the retrieve-dspy directory, copy files from rag-templates
-cp /Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/iris_database.py retrieve_dspy/database/
-cp /Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/test_iris_database.py tests/database/
+cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/iris_database.py retrieve_dspy/database/
+cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/test_iris_database.py tests/database/
 ```
 
 ## Step 3: Install IRIS Python Driver

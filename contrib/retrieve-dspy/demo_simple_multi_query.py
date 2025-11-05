@@ -21,7 +21,7 @@ Setup:
     export IRIS_PASSWORD="SYS"
 
 Usage:
-    cd /Users/tdyar/ws/rag-templates
+    cd /Users/intersystems-community/ws/rag-templates
     python contrib/retrieve-dspy/demo_simple_multi_query.py
 """
 
@@ -32,7 +32,7 @@ from collections import defaultdict
 from typing import List, Dict
 
 # Add rag-templates to path
-sys.path.insert(0, '/Users/tdyar/ws/rag-templates')
+sys.path.insert(0, '/Users/intersystems-community/ws/rag-templates')
 
 
 def check_environment():
@@ -60,7 +60,7 @@ def check_environment():
         print(f"  ✓ iris_rag installed")
     except ImportError:
         print(f"  ❌ iris_rag not found")
-        print(f"     Run: pip install -e /Users/tdyar/ws/rag-templates")
+        print(f"     Run: pip install -e /Users/intersystems-community/ws/rag-templates")
         return False
 
     print()

@@ -1,6 +1,6 @@
 # Tasks: Fill in Testing Gaps for HybridGraphRAG Query Paths
 
-**Input**: Design documents from `/Users/tdyar/ws/rag-templates/specs/034-fill-in-gaps/`
+**Input**: Design documents from `/Users/intersystems-community/ws/rag-templates/specs/034-fill-in-gaps/`
 **Prerequisites**: plan.md ✓, research.md ✓, contracts/ ✓, quickstart.md ✓
 
 ## Execution Flow (main)
@@ -56,7 +56,7 @@
   - **Estimated Time**: 2 minutes
 
 - [x] **T003** Review existing test fixtures in conftest.py ✅
-  - **Path**: Read `/Users/tdyar/ws/rag-templates/tests/conftest.py`
+  - **Path**: Read `/Users/intersystems-community/ws/rag-templates/tests/conftest.py`
   - **Review**: Available fixtures (graphrag_pipeline, config_manager, embedding_manager) ✅
   - **Review**: Pytest markers (@pytest.mark.requires_database) ✅
   - **Review**: Fixture scopes and lifecycle ✅
@@ -68,7 +68,7 @@
 **CRITICAL: These tests validate existing HybridGraphRAG implementation from Feature 033**
 
 - [ ] **T004 [P]** Contract test: Hybrid Fusion Query Path
-  - **Path**: Create `/Users/tdyar/ws/rag-templates/tests/contract/test_hybrid_fusion_contract.py`
+  - **Path**: Create `/Users/intersystems-community/ws/rag-templates/tests/contract/test_hybrid_fusion_contract.py`
   - **Contract**: `contracts/hybrid_fusion_contract.md`
   - **Requirements**: FR-001, FR-002, FR-003
   - **Test Cases**:
@@ -82,7 +82,7 @@
   - **Estimated Time**: 20 minutes
 
 - [ ] **T005 [P]** Contract test: RRF (Reciprocal Rank Fusion) Path
-  - **Path**: Create `/Users/tdyar/ws/rag-templates/tests/contract/test_rrf_contract.py`
+  - **Path**: Create `/Users/intersystems-community/ws/rag-templates/tests/contract/test_rrf_contract.py`
   - **Contract**: `contracts/rrf_contract.md`
   - **Requirements**: FR-004, FR-005, FR-006
   - **Test Cases**:
@@ -96,7 +96,7 @@
   - **Estimated Time**: 20 minutes
 
 - [ ] **T006 [P]** Contract test: Enhanced Text Search Path
-  - **Path**: Create `/Users/tdyar/ws/rag-templates/tests/contract/test_text_search_contract.py`
+  - **Path**: Create `/Users/intersystems-community/ws/rag-templates/tests/contract/test_text_search_contract.py`
   - **Contract**: `contracts/text_search_contract.md`
   - **Requirements**: FR-007, FR-008, FR-009
   - **Test Cases**:
@@ -110,7 +110,7 @@
   - **Estimated Time**: 20 minutes
 
 - [ ] **T007 [P]** Contract test: HNSW Vector Search Path
-  - **Path**: Create `/Users/tdyar/ws/rag-templates/tests/contract/test_hnsw_vector_contract.py`
+  - **Path**: Create `/Users/intersystems-community/ws/rag-templates/tests/contract/test_hnsw_vector_contract.py`
   - **Contract**: `contracts/hnsw_vector_contract.md`
   - **Requirements**: FR-010, FR-011, FR-012
   - **Test Cases**:
@@ -124,7 +124,7 @@
   - **Estimated Time**: 20 minutes
 
 - [ ] **T008 [P]** Contract test: Knowledge Graph Traversal Path
-  - **Path**: Create `/Users/tdyar/ws/rag-templates/tests/contract/test_kg_traversal_contract.py`
+  - **Path**: Create `/Users/intersystems-community/ws/rag-templates/tests/contract/test_kg_traversal_contract.py`
   - **Contract**: `contracts/kg_traversal_contract.md`
   - **Requirements**: FR-013, FR-014, FR-015
   - **Test Cases**:
@@ -138,7 +138,7 @@
   - **Estimated Time**: 25 minutes
 
 - [ ] **T009 [P]** Contract test: Fallback Mechanism Validation
-  - **Path**: Create `/Users/tdyar/ws/rag-templates/tests/contract/test_fallback_mechanism_contract.py`
+  - **Path**: Create `/Users/intersystems-community/ws/rag-templates/tests/contract/test_fallback_mechanism_contract.py`
   - **Contract**: `contracts/fallback_mechanism_contract.md`
   - **Requirements**: FR-016, FR-017, FR-018, FR-019
   - **Test Cases**:
@@ -153,7 +153,7 @@
   - **Estimated Time**: 25 minutes
 
 - [ ] **T010 [P]** Contract test: Error Handling and Edge Cases
-  - **Path**: Create `/Users/tdyar/ws/rag-templates/tests/contract/test_error_handling_contract.py`
+  - **Path**: Create `/Users/intersystems-community/ws/rag-templates/tests/contract/test_error_handling_contract.py`
   - **Contract**: `contracts/error_handling_contract.md`
   - **Requirements**: FR-023, FR-024, FR-025
   - **Test Cases**:
@@ -167,7 +167,7 @@
   - **Estimated Time**: 20 minutes
 
 - [ ] **T011** Integration test: End-to-End HybridGraphRAG Workflows
-  - **Path**: Create `/Users/tdyar/ws/rag-templates/tests/integration/test_hybridgraphrag_e2e.py`
+  - **Path**: Create `/Users/intersystems-community/ws/rag-templates/tests/integration/test_hybridgraphrag_e2e.py`
   - **Contract**: `contracts/e2e_integration_contract.md`
   - **Requirements**: FR-026, FR-027, FR-028
   - **Test Cases**:
@@ -183,7 +183,7 @@
 ## Phase 3.3: Fixture Enhancements
 
 - [ ] **T012** Add mocking fixtures to conftest.py
-  - **Path**: Edit `/Users/tdyar/ws/rag-templates/tests/conftest.py`
+  - **Path**: Edit `/Users/intersystems-community/ws/rag-templates/tests/conftest.py`
   - **Add Fixtures**:
     - `mock_iris_graph_core_unavailable`: Mock IRIS_GRAPH_CORE_AVAILABLE = False
     - `mock_zero_results_retrieval`: Mock retrieval methods returning ([], method_name)

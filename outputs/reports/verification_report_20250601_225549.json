@@ -14,7 +14,7 @@
     "migration_verification": {
       "vector_double_references": [
         {
-          "file_path": "/Users/tdyar/ws/rag-templates/scripts/vector_schema_limitation_explanation.py",
+          "file_path": "/Users/intersystems-community/ws/rag-templates/scripts/vector_schema_limitation_explanation.py",
           "line_number": 332,
           "content": "self.logger.info(\"The VECTOR(DOUBLE) to VECTOR(FLOAT) migration is\")",
           "timestamp": "2025-06-01T22:55:29.565376"

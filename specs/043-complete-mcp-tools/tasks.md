@@ -1,6 +1,6 @@
 # Tasks: Complete MCP Tools Implementation
 
-**Input**: Design documents from `/Users/tdyar/ws/rag-templates/specs/043-complete-mcp-tools/`
+**Input**: Design documents from `/Users/intersystems-community/ws/rag-templates/specs/043-complete-mcp-tools/`
 **Prerequisites**: plan.md ✓, research.md ✓, data-model.md ✓, contracts/ ✓, quickstart.md ✓
 **Feature Branch**: `043-complete-mcp-tools`
 
@@ -43,12 +43,12 @@
 ### Project Structure & Dependencies
 
 - [ ] **T001** [P] Create Python MCP bridge directory structure
-  - Create `/Users/tdyar/ws/rag-templates/iris_rag/mcp/__init__.py`
+  - Create `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/__init__.py`
   - Verify directory accessible from REST API code
   - Add to Python package structure
 
 - [ ] **T002** [P] Create Node.js MCP server directory structure
-  - Create `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/` directories
+  - Create `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/` directories
   - Create subdirectories: `transport/`, `config/`
   - Initialize TypeScript project if needed
 
@@ -58,7 +58,7 @@
   - Verify imports work
 
 - [ ] **T004** [P] Install Node.js dependencies for MCP server
-  - Add to `/Users/tdyar/ws/rag-templates/nodejs/package.json`: `@modelcontextprotocol/sdk`, `express`, `websockets`
+  - Add to `/Users/intersystems-community/ws/rag-templates/nodejs/package.json`: `@modelcontextprotocol/sdk`, `express`, `websockets`
   - Run `npm install` in nodejs/ directory
   - Verify TypeScript compilation works
 
@@ -76,21 +76,21 @@
 ### Contract Tests (T006-T008) - Can run in parallel [P]
 
 - [ ] **T006** [P] Contract test for Python MCP Bridge interface
-  - File: `/Users/tdyar/ws/rag-templates/tests/contract/test_mcp_bridge_contract.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/contract/test_mcp_bridge_contract.py`
   - Test `IMCPBridge` interface implementation
   - Test methods: `invoke_technique()`, `get_available_techniques()`, `health_check()`, `get_metrics()`
   - Assert interface compliance (TDD - should FAIL initially)
   - Based on: `contracts/python_bridge_interface.py`
 
 - [ ] **T007** [P] Contract test for Python Technique Handlers
-  - File: `/Users/tdyar/ws/rag-templates/tests/contract/test_technique_handlers_contract.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/contract/test_technique_handlers_contract.py`
   - Test `ITechniqueHandler` interface for each of 6 pipelines
   - Test methods: `execute()`, `validate_params()`, `health_check()`
   - Assert handler registry works correctly
   - Based on: `contracts/python_bridge_interface.py`
 
 - [ ] **T008** [P] Contract test for MCP tool schemas
-  - File: `/Users/tdyar/ws/rag-templates/tests/contract/test_mcp_tool_schemas.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/contract/test_mcp_tool_schemas.py`
   - Validate all 6 RAG tool schemas (basic, basic_rerank, crag, graphrag, pylate_colbert, iris_global_graphrag)
   - Validate 2 utility tool schemas (health_check, metrics)
   - Test parameter validation against schemas
@@ -99,14 +99,14 @@
 ### Integration Tests (T009-T015) - From quickstart.md scenarios [P]
 
 - [ ] **T009** [P] Integration test: List available tools (Scenario 1)
-  - File: `/Users/tdyar/ws/rag-templates/tests/integration/test_mcp_list_tools.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/integration/test_mcp_list_tools.py`
   - Test MCP server `tools/list` endpoint
   - Assert 8 tools returned (6 RAG + 2 utility)
   - Assert schemas include parameter descriptions
   - Based on: `quickstart.md` Scenario 1
 
 - [ ] **T010** [P] Integration test: Execute BasicRAG query (Scenario 2)
-  - File: `/Users/tdyar/ws/rag-templates/tests/integration/test_mcp_basic_rag.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/integration/test_mcp_basic_rag.py`
   - Test `rag_basic` tool execution
   - Query: "What are the symptoms of diabetes?"
   - Assert response has answer, documents, sources, performance metrics
@@ -114,14 +114,14 @@
   - Based on: `quickstart.md` Scenario 2
 
 - [ ] **T011** [P] Integration test: CRAG with corrective measures (Scenario 3)
-  - File: `/Users/tdyar/ws/rag-templates/tests/integration/test_mcp_crag_correction.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/integration/test_mcp_crag_correction.py`
   - Test `rag_crag` tool with low-confidence query
   - Assert `correction_applied` in metadata
   - Assert `confidence_score` and `rewritten_query` present
   - Based on: `quickstart.md` Scenario 3
 
 - [ ] **T012** [P] Integration test: Health check tool (Scenario 4)
-  - File: `/Users/tdyar/ws/rag-templates/tests/integration/test_mcp_health_check.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/integration/test_mcp_health_check.py`
   - Test `rag_health_check` tool
   - Assert status for all 6 pipelines
   - Assert database connectivity reported
@@ -129,7 +129,7 @@
   - Based on: `quickstart.md` Scenario 4
 
 - [ ] **T013** [P] Integration test: Concurrent queries (Scenario 5)
-  - File: `/Users/tdyar/ws/rag-templates/tests/integration/test_mcp_concurrent_queries.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/integration/test_mcp_concurrent_queries.py`
   - Test 3 concurrent requests (BasicRAG, CRAG, HybridGraphRAG)
   - Assert all complete successfully
   - Assert no resource conflicts
@@ -137,14 +137,14 @@
   - Based on: `quickstart.md` Scenario 5
 
 - [ ] **T014** [P] Integration test: HybridGraphRAG with graph traversal (Scenario 6)
-  - File: `/Users/tdyar/ws/rag-templates/tests/integration/test_mcp_hybrid_graphrag.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/integration/test_mcp_hybrid_graphrag.py`
   - Test `rag_graphrag` tool with `search_method="hybrid"`
   - Assert response includes vector, text, and graph results
   - Assert `graph_traversal_depth` and `rrf_score` in metadata
   - Based on: `quickstart.md` Scenario 6
 
 - [ ] **T015** [P] Integration test: MCP-REST API consistency (Scenario 7)
-  - File: `/Users/tdyar/ws/rag-templates/tests/integration/test_mcp_rest_consistency.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/integration/test_mcp_rest_consistency.py`
   - Execute same query via MCP and REST API
   - Assert responses are identical (excluding timestamps/IDs)
   - Validates FR-006 (pipeline instance reuse) and FR-025 (response format consistency)
@@ -159,35 +159,35 @@
 ### Python Bridge Core (T016-T021) - Can run in parallel [P]
 
 - [ ] **T016** [P] Implement MCP tool schema definitions
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/tool_schemas.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/tool_schemas.py`
   - Load schemas from `contracts/mcp_tool_schema.json`
   - Provide schema access for all 8 tools
   - Implement schema validation helper functions
   - Based on: `data-model.md` (MCP Tool entity), `contracts/mcp_tool_schema.json`
 
 - [ ] **T017** [P] Implement parameter validation module
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/validation.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/validation.py`
   - Implement `ValidationError` exception class
   - Implement parameter validators for all 6 RAG tools
   - Implement common validators (query length, top_k range, etc.)
   - Based on: `contracts/python_bridge_interface.py`, `research.md` (Error Handling)
 
 - [ ] **T018** [P] Implement MCP bridge configuration
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/config.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/config.py`
   - Load configuration from YAML/env vars
   - Support both auth modes (api_key, none)
   - Support both deployment modes (standalone, integrated)
   - Based on: `research.md` (Authentication Strategy, Deployment Modes)
 
 - [ ] **T019** [P] Implement Technique Handler Registry
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/technique_handlers.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/technique_handlers.py`
   - Implement `ITechniqueHandler` interface for each of 6 RAG pipelines
   - Implement `TechniqueHandlerRegistry` to manage handlers
   - Implement `register_handlers()`, `get_handler()`, `list_techniques()`
   - Based on: `data-model.md` (MCP Tool entity), `contracts/python_bridge_interface.py`
 
 - [ ] **T020** [P] Implement MCP Server Manager
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/server_manager.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/server_manager.py`
   - Implement `IMCPServerManager` interface
   - Implement `start_server()`, `stop_server()`, `handle_tool_call()`
   - Implement `list_tools()`, `health_check()`
@@ -195,7 +195,7 @@
   - Based on: `contracts/python_bridge_interface.py`, `research.md` (Deployment Modes)
 
 - [ ] **T021** [P] Implement main MCPBridge class
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/bridge.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/bridge.py`
   - Implement `IMCPBridge` interface
   - Implement `invoke_technique()` with authentication
   - Implement `get_available_techniques()`, `health_check()`, `get_metrics()`
@@ -205,21 +205,21 @@
 ### REST API Integration (T022-T024) - Sequential (same files)
 
 - [ ] **T022** Integrate MCP bridge with REST API PipelineManager
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/bridge.py` (modify T021)
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/bridge.py` (modify T021)
   - Import `iris_rag.api.services.PipelineManager`
   - Use `PipelineManager.get_instance()` to access shared pipelines
   - Ensure same configuration and pipeline instances used by both MCP and REST API
   - Based on: `research.md` (Pipeline Instance Reuse)
 
 - [ ] **T023** Add MCP health endpoints to REST API
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/api/mcp_routes.py` (new)
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/api/mcp_routes.py` (new)
   - Create FastAPI router with MCP health endpoints
   - Endpoints: `GET /api/v1/mcp/health`, `GET /api/v1/mcp/status`
   - Include in REST API's `main.py`
   - Based on: `plan.md` Project Structure
 
 - [ ] **T024** Update REST API main.py for integrated MCP mode
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/api/main.py` (modify)
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/api/main.py` (modify)
   - Add conditional MCP bridge startup based on environment variable
   - Start MCP bridge as background asyncio task
   - Ensure graceful shutdown when REST API stops
@@ -228,20 +228,20 @@
 ### Python Bridge FastAPI Endpoints (T025-T027) - Can run in parallel [P]
 
 - [ ] **T025** [P] Implement FastAPI endpoint: POST /mcp/invoke_technique
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/bridge.py` (extend T021)
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/bridge.py` (extend T021)
   - FastAPI route for technique invocation
   - Body: `{"technique": str, "query": str, "params": dict, "api_key": Optional[str]}`
   - Response: `{"success": bool, "result": dict, "error": Optional[str]}`
   - Based on: `research.md` (Python Bridge API)
 
 - [ ] **T026** [P] Implement FastAPI endpoint: GET /mcp/list_techniques
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/bridge.py` (extend T021)
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/bridge.py` (extend T021)
   - FastAPI route to list available techniques
   - Response: `["basic", "basic_rerank", "crag", "graphrag", "pylate_colbert", "iris_global_graphrag"]`
   - Based on: `research.md` (Python Bridge API)
 
 - [ ] **T027** [P] Implement FastAPI endpoint: GET /mcp/health_check
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/bridge.py` (extend T021)
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/bridge.py` (extend T021)
   - FastAPI route for health check
   - Response: `{"status": str, "pipelines": dict, "database": dict, "performance_metrics": dict}`
   - Based on: `data-model.md` (Health Status entity), `research.md` (Python Bridge API)
@@ -255,14 +255,14 @@
 ### Node.js Transport Layer (T028-T029) - Can run in parallel [P]
 
 - [ ] **T028** [P] Implement stdio transport
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/transport/stdio_transport.ts`
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/transport/stdio_transport.ts`
   - Implement `ITransport` interface for stdio (JSON-RPC over stdin/stdout)
   - Use `StdioServerTransport` from @modelcontextprotocol/sdk
   - Handle message parsing and sending
   - Based on: `contracts/nodejs_server_interface.ts`, `research.md` (stdio Transport)
 
 - [ ] **T029** [P] Implement HTTP/SSE transport
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/transport/http_sse_transport.ts`
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/transport/http_sse_transport.ts`
   - Implement `ITransport` interface for HTTP/SSE
   - Use Express.js with Server-Sent Events
   - Handle WebSocket upgrade if needed
@@ -271,21 +271,21 @@
 ### Node.js Core Components (T030-T034) - Mixed parallelism
 
 - [ ] **T030** [P] Implement Python bridge client
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/python_bridge_client.ts`
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/python_bridge_client.ts`
   - Implement `IPythonBridgeClient` interface
   - HTTP client to call Python bridge endpoints
   - Methods: `invokeTechnique()`, `listTechniques()`, `healthCheck()`, `getMetrics()`
   - Based on: `contracts/nodejs_server_interface.ts`, `research.md` (Node.js Client Code)
 
 - [ ] **T031** [P] Implement RAG tools manager
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/rag_tools.ts`
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/rag_tools.ts`
   - Implement `IRAGToolsManager` interface
   - Load tool definitions from Python bridge
   - Methods: `createTools()`, `getTool()`, `validateParams()`, `getToolSchemas()`
   - Based on: `contracts/nodejs_server_interface.ts`, `contracts/mcp_tool_schema.json`
 
 - [ ] **T032** [P] Implement connection manager
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/connection_manager.ts`
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/connection_manager.ts`
   - Implement `IConnectionManager` interface
   - Enforce max 5 concurrent connections (FR-032)
   - Methods: `registerConnection()`, `unregisterConnection()`, `getActiveConnectionCount()`, `isAtMaxConnections()`
@@ -293,14 +293,14 @@
   - Based on: `contracts/nodejs_server_interface.ts`, `research.md` (Connection Limit)
 
 - [ ] **T033** [P] Implement MCP server configuration
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/config/mcp_config.ts`
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/config/mcp_config.ts`
   - Load configuration from environment variables or config file
   - Support `MCPServerConfig` interface
   - Handle both transport modes, both auth modes, both deployment modes
   - Based on: `contracts/nodejs_server_interface.ts`, `research.md` (Configuration)
 
 - [ ] **T034** Implement main MCP server
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/server.ts`
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/server.ts`
   - Implement `IMCPServer` interface
   - Orchestrate all components (transports, tools manager, connection manager, Python bridge client)
   - Methods: `start()`, `stop()`, `handleToolCall()`, `listTools()`, `healthCheck()`
@@ -310,7 +310,7 @@
 ### MCP Protocol Integration (T035-T036) - Sequential
 
 - [ ] **T035** Implement MCP tool execution via Python bridge
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/server.ts` (extend T034)
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/server.ts` (extend T034)
   - Handle `tools/call` MCP messages
   - Validate parameters using tool schemas
   - Call Python bridge via `PythonBridgeClient.invokeTechnique()`
@@ -318,7 +318,7 @@
   - Based on: `research.md` (Architecture Flow)
 
 - [ ] **T036** Implement MCP error handling and responses
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/server.ts` (extend T034)
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/server.ts` (extend T034)
   - Map Python exceptions to MCP error codes
   - Implement structured error responses (invalid_params, internal_error, etc.)
   - Return actionable error messages
@@ -327,14 +327,14 @@
 ### Server Entry Points (T037-T038) - Can run in parallel [P]
 
 - [ ] **T037** [P] Implement standalone server CLI
-  - File: `/Users/tdyar/ws/rag-templates/nodejs/src/mcp/cli.ts` (new)
+  - File: `/Users/intersystems-community/ws/rag-templates/nodejs/src/mcp/cli.ts` (new)
   - Parse command-line arguments (--transport, --port, --config)
   - Start MCP server in standalone mode
   - Handle graceful shutdown (SIGINT, SIGTERM)
   - Based on: `research.md` (Mode 1: Standalone Deployment)
 
 - [ ] **T038** [P] Implement Python entry point for standalone mode
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/__main__.py` (new)
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/__main__.py` (new)
   - Start Python FastAPI bridge on port 8001
   - Spawn Node.js MCP server as subprocess
   - Handle graceful shutdown
@@ -347,20 +347,20 @@
 ### Run Existing TDD Tests (T039-T041) - Sequential
 
 - [ ] **T039** Run existing MCP TDD tests (30+ tests)
-  - File: `/Users/tdyar/ws/rag-templates/tests/test_mcp/test_mcp_server_integration.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/test_mcp/test_mcp_server_integration.py`
   - Run pytest on existing test suite
   - Assert all 30+ tests now PASS (were failing before implementation)
   - Fix any failures
   - Based on: spec.md FR-021
 
 - [ ] **T040** Run MCP integration tests
-  - File: `/Users/tdyar/ws/rag-templates/tests/test_mcp_integration.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/test_mcp_integration.py`
   - Run pytest on existing integration tests
   - Assert tests pass with real IRIS database
   - Based on: spec.md FR-022
 
 - [ ] **T041** Run MCP real data integration tests
-  - File: `/Users/tdyar/ws/rag-templates/tests/test_mcp/test_mcp_real_data_integration.py`
+  - File: `/Users/intersystems-community/ws/rag-templates/tests/test_mcp/test_mcp_real_data_integration.py`
   - Run pytest with production-like data
   - Assert realistic queries work correctly
   - Based on: spec.md FR-022
@@ -421,21 +421,21 @@
 ### Docker & Deployment (T049-T051) - Can run in parallel [P]
 
 - [ ] **T049** [P] Create Dockerfile for MCP server
-  - File: `/Users/tdyar/ws/rag-templates/Dockerfile.mcp` (new, or extend existing Dockerfile)
+  - File: `/Users/intersystems-community/ws/rag-templates/Dockerfile.mcp` (new, or extend existing Dockerfile)
   - Multi-stage build: Python dependencies + Node.js dependencies
   - Support both deployment modes via MODE environment variable
   - Entrypoint: `if MODE=standalone then python -m iris_rag.mcp else uvicorn iris_rag.api.main:app`
   - Based on: research.md (Docker Configuration)
 
 - [ ] **T050** [P] Update docker-compose.yml for MCP server
-  - File: `/Users/tdyar/ws/rag-templates/docker-compose.yml` (modify)
+  - File: `/Users/intersystems-community/ws/rag-templates/docker-compose.yml` (modify)
   - Add `mcp-standalone` service (MODE=standalone, port 3000 for HTTP/SSE)
   - Add `api-with-mcp` service (MODE=integrated, port 8000 for REST API + MCP)
   - Include IRIS database, Redis cache
   - Based on: research.md (Docker Configuration)
 
 - [ ] **T051** [P] Create Makefile targets for MCP server
-  - File: `/Users/tdyar/ws/rag-templates/Makefile` (extend)
+  - File: `/Users/intersystems-community/ws/rag-templates/Makefile` (extend)
   - Targets: `mcp-run` (standalone), `mcp-run-integrated`, `mcp-stop`, `mcp-health`, `mcp-logs`
   - Target: `mcp-test` (run all MCP tests)
   - Based on: plan.md Phase 2 Task Generation Strategy
@@ -443,7 +443,7 @@
 ### CLI Commands (T052) - Sequential
 
 - [ ] **T052** Implement CLI commands for MCP server management
-  - File: `/Users/tdyar/ws/rag-templates/iris_rag/mcp/cli.py` (new)
+  - File: `/Users/intersystems-community/ws/rag-templates/iris_rag/mcp/cli.py` (new)
   - Commands: `python -m iris_rag.mcp.cli start`, `stop`, `status`, `health`
   - Support both deployment modes
   - Based on: plan.md Phase 2 Task Generation Strategy
@@ -451,7 +451,7 @@
 ### Configuration Files (T053) - Sequential
 
 - [ ] **T053** Create MCP server configuration file
-  - File: `/Users/tdyar/ws/rag-templates/config/mcp_config.yaml` (new)
+  - File: `/Users/intersystems-community/ws/rag-templates/config/mcp_config.yaml` (new)
   - Configuration for both deployment modes, both transports, both auth modes
   - Document all options
   - Based on: research.md (Configuration)
@@ -463,21 +463,21 @@
 ### Documentation Updates (T054-T058) - Can run in parallel [P]
 
 - [ ] **T054** [P] Update README.md with MCP server capability (FR-016)
-  - File: `/Users/tdyar/ws/rag-templates/README.md` (modify)
+  - File: `/Users/intersystems-community/ws/rag-templates/README.md` (modify)
   - Add MCP server to features list
   - Add quickstart: connecting Claude Code to MCP server
   - Link to MCP quickstart guide
   - Based on: spec.md FR-016
 
 - [ ] **T055** [P] Update CLAUDE.md with MCP development workflow (FR-017)
-  - File: `/Users/tdyar/ws/rag-templates/CLAUDE.md` (modify - already partially updated)
+  - File: `/Users/intersystems-community/ws/rag-templates/CLAUDE.md` (modify - already partially updated)
   - Add MCP testing instructions
   - Add MCP debugging guide
   - Document MCP-specific make targets
   - Based on: spec.md FR-017
 
 - [ ] **T056** [P] Create MCP quickstart guide (FR-018)
-  - File: `/Users/tdyar/ws/rag-templates/docs/MCP_QUICKSTART.md` (new)
+  - File: `/Users/intersystems-community/ws/rag-templates/docs/MCP_QUICKSTART.md` (new)
   - Setup instructions for both deployment modes
   - Example: connecting Claude Code via stdio
   - Example: connecting remote client via HTTP/SSE
@@ -485,14 +485,14 @@
   - Based on: spec.md FR-018
 
 - [ ] **T057** [P] Document all 6 RAG tool schemas with examples (FR-019)
-  - File: `/Users/tdyar/ws/rag-templates/docs/MCP_TOOL_REFERENCE.md` (new)
+  - File: `/Users/intersystems-community/ws/rag-templates/docs/MCP_TOOL_REFERENCE.md` (new)
   - Document each tool: name, description, parameters, examples
   - Include example queries for each pipeline
   - Include example responses with all metadata fields
   - Based on: spec.md FR-019, contracts/mcp_tool_schema.json
 
 - [ ] **T058** [P] Update architecture docs with MCP-REST API relationship (FR-020)
-  - File: `/Users/tdyar/ws/rag-templates/docs/architecture/COMPREHENSIVE_ARCHITECTURE_OVERVIEW.md` (modify)
+  - File: `/Users/intersystems-community/ws/rag-templates/docs/architecture/COMPREHENSIVE_ARCHITECTURE_OVERVIEW.md` (modify)
   - Clarify MCP server as protocol adapter over RAG framework
   - Document pipeline instance sharing between MCP and REST API
   - Include architecture diagrams

@@ -16,7 +16,7 @@
 
 ### ❌ VECTOR(FLOAT) References Still Found
 
-- **/Users/tdyar/ws/rag-templates/scripts/vector_schema_limitation_explanation.py** (line 332): `self.logger.info("The VECTOR(DOUBLE) to VECTOR(FLOAT) migration is")`
+- **/Users/intersystems-community/ws/rag-templates/scripts/vector_schema_limitation_explanation.py** (line 332): `self.logger.info("The VECTOR(DOUBLE) to VECTOR(FLOAT) migration is")`
 
 ## Database Test Results
 

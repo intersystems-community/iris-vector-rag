@@ -1,7 +1,7 @@
 # Implementation Plan: Complete MCP Tools Implementation
 
 **Branch**: `043-complete-mcp-tools` | **Date**: 2025-10-18 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/Users/tdyar/ws/rag-templates/specs/043-complete-mcp-tools/spec.md`
+**Input**: Feature specification from `/Users/intersystems-community/ws/rag-templates/specs/043-complete-mcp-tools/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```

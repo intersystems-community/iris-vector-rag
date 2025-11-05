@@ -156,7 +156,7 @@ $ pytest tests/contract/ tests/integration/ --collect-only -q | grep "test_basic
 ### Syntax Validation
 ```python
 import sys
-sys.path.insert(0, '/Users/tdyar/ws/rag-templates')
+sys.path.insert(0, '/Users/intersystems-community/ws/rag-templates')
 
 modules = [
     'tests.contract.test_basic_rag_contract',

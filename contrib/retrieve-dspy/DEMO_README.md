@@ -17,7 +17,7 @@ This directory contains end-to-end demonstrations of advanced retrieval techniqu
 **Prerequisites**:
 ```bash
 # Just need iris_rag (already in rag-templates)
-cd /Users/tdyar/ws/rag-templates
+cd /Users/intersystems-community/ws/rag-templates
 pip install -e .
 
 # Set environment variables
@@ -102,8 +102,8 @@ git checkout main  # or feature/iris-adapter
 pip install -e ".[dev]"
 
 # Copy IRIS adapter files
-cp /Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/iris_database.py retrieve_dspy/database/
-cp /Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/test_iris_database.py tests/database/
+cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/iris_database.py retrieve_dspy/database/
+cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/test_iris_database.py tests/database/
 
 # Install additional dependencies
 pip install sentence-transformers iris-native-api
@@ -119,7 +119,7 @@ export OPENAI_API_KEY="sk-..."
 
 **Run**:
 ```bash
-cd /Users/tdyar/ws/rag-templates
+cd /Users/intersystems-community/ws/rag-templates
 python contrib/retrieve-dspy/demo_quipler_iris.py
 ```
 
@@ -227,7 +227,7 @@ export IRIS_PORT="21972"
 export IRIS_PASSWORD="SYS"
 
 # 2. Run demo
-cd /Users/tdyar/ws/rag-templates
+cd /Users/intersystems-community/ws/rag-templates
 python contrib/retrieve-dspy/demo_simple_multi_query.py
 ```
 
@@ -242,7 +242,7 @@ pytest tests/database/test_iris_database.py -v  # Verify IRIS adapter works
 export OPENAI_API_KEY="sk-..."
 
 # 3. Run demo
-cd /Users/tdyar/ws/rag-templates
+cd /Users/intersystems-community/ws/rag-templates
 python contrib/retrieve-dspy/demo_quipler_iris.py
 ```
 
@@ -255,7 +255,7 @@ python contrib/retrieve-dspy/demo_quipler_iris.py
 **Error**: `ModuleNotFoundError: No module named 'iris_rag'`
 ```bash
 # Solution: Install rag-templates
-cd /Users/tdyar/ws/rag-templates
+cd /Users/intersystems-community/ws/rag-templates
 pip install -e .
 ```
 
@@ -272,7 +272,7 @@ echo $IRIS_PORT
 **Error**: `Table RAG.Documents does not exist`
 ```bash
 # Solution: Load sample data
-cd /Users/tdyar/ws/rag-templates
+cd /Users/intersystems-community/ws/rag-templates
 make load-data  # or your data loading command
 ```
 
@@ -291,7 +291,7 @@ pip install -e .
 ```bash
 # Solution: Copy IRIS adapter files
 cd ~/ws/retrieve-dspy
-cp /Users/tdyar/ws/rag-templates/contrib/retrieve-dspy/iris_database.py \
+cp /Users/intersystems-community/ws/rag-templates/contrib/retrieve-dspy/iris_database.py \
    retrieve_dspy/database/
 ```
 

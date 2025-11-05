@@ -14,7 +14,7 @@ Modified `scripts/simple_working_ragas.py` to detect when GraphRAG is being test
 
 ### Code Changes
 
-**File Modified**: `/Users/tdyar/ws/rag-templates/scripts/simple_working_ragas.py`
+**File Modified**: `/Users/intersystems-community/ws/rag-templates/scripts/simple_working_ragas.py`
 
 **Functions Added** (3 new functions):
 

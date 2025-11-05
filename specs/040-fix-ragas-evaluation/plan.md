@@ -2,7 +2,7 @@
 # Implementation Plan: Fix RAGAS GraphRAG Evaluation Workflow
 
 **Branch**: `040-fix-ragas-evaluation` | **Date**: 2025-10-09 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/Users/tdyar/ws/rag-templates/specs/040-fix-ragas-evaluation/spec.md`
+**Input**: Feature specification from `/Users/intersystems-community/ws/rag-templates/specs/040-fix-ragas-evaluation/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```

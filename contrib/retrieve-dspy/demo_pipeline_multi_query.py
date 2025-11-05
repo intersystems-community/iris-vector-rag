@@ -28,7 +28,7 @@ import sys
 import argparse
 
 # Add rag-templates to path
-sys.path.insert(0, '/Users/tdyar/ws/rag-templates')
+sys.path.insert(0, '/Users/intersystems-community/ws/rag-templates')
 
 
 def check_environment():

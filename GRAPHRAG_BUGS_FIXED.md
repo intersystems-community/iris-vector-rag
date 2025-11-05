@@ -303,7 +303,7 @@ pipeline.load_documents(documents=docs)
 
 ## Related Issues
 
-- Original bug report: `/Users/tdyar/ws/kg-ticket-resolver/GRAPHRAG_BUGS_REPORT.md`
+- Original bug report: `/Users/intersystems-community/ws/kg-ticket-resolver/GRAPHRAG_BUGS_REPORT.md`
 - Blocks: 429K ticket production indexing
 - Enables: GPT-OSS 120B usage for entity extraction
 

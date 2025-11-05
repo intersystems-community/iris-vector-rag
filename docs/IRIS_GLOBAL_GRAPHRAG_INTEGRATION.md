@@ -61,7 +61,7 @@ The IRIS Global GraphRAG pipeline integrates the core functionality from the ext
 
 1. **Clone IRIS-Global-GraphRAG** (if not already available):
    ```bash
-   cd /Users/tdyar/ws/
+   cd /Users/intersystems-community/ws/
    git clone https://github.com/your-colleague/IRIS-Global-GraphRAG.git
    ```
 
@@ -72,7 +72,7 @@ The IRIS Global GraphRAG pipeline integrates the core functionality from the ext
      class: "IRISGlobalGraphRAGPipeline"
      enabled: true
      params:
-       project_path: "/Users/tdyar/ws/IRIS-Global-GraphRAG"  # Optional: auto-discovery
+       project_path: "/Users/intersystems-community/ws/IRIS-Global-GraphRAG"  # Optional: auto-discovery
        embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
        enable_visualization: true
        enable_comparison_ui: true

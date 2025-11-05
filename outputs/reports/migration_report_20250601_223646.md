@@ -15,7 +15,7 @@
 
 ## PYTHON File Changes
 
-- **/Users/tdyar/ws/rag-templates/scripts/migrate_vector_data_double_to_float.py**: 4 changes
-- **/Users/tdyar/ws/rag-templates/scripts/verify_vector_data_migration.py**: 1 changes
-- **/Users/tdyar/ws/rag-templates/scripts/complete_vector_float_migration.py**: 2 changes
+- **/Users/intersystems-community/ws/rag-templates/scripts/migrate_vector_data_double_to_float.py**: 4 changes
+- **/Users/intersystems-community/ws/rag-templates/scripts/verify_vector_data_migration.py**: 1 changes
+- **/Users/intersystems-community/ws/rag-templates/scripts/complete_vector_float_migration.py**: 2 changes
 

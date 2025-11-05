@@ -37,10 +37,10 @@
       "total_execution_time": 0.0,
       "average_memory_usage": 0.0,
       "errors": [
-        "Query 1 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
-        "Query 2 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
-        "Query 3 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
-        "Query 4 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline"
+        "Query 1 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
+        "Query 2 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
+        "Query 3 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline",
+        "Query 4 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_basic_rag_pipeline"
       ]
     },
     "HybridGraphRAG": {
@@ -78,10 +78,10 @@
       "total_execution_time": 0.0,
       "average_memory_usage": 0.0,
       "errors": [
-        "Query 1 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
-        "Query 2 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
-        "Query 3 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
-        "Query 4 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline"
+        "Query 1 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
+        "Query 2 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
+        "Query 3 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline",
+        "Query 4 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.basic.try_hybrid_graphrag_pipeline"
       ]
     },
     "CRAG": {
@@ -119,10 +119,10 @@
       "total_execution_time": 0.0,
       "average_memory_usage": 0.0,
       "errors": [
-        "Query 1 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
-        "Query 2 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
-        "Query 3 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
-        "Query 4 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline"
+        "Query 1 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
+        "Query 2 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
+        "Query 3 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline",
+        "Query 4 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.crag.try_crag_pipeline"
       ]
     },
     "Reranking": {
@@ -160,10 +160,10 @@
       "total_execution_time": 0.0,
       "average_memory_usage": 0.0,
       "errors": [
-        "Query 1 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
-        "Query 2 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
-        "Query 3 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
-        "Query 4 failed: Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank"
+        "Query 1 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
+        "Query 2 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
+        "Query 3 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank",
+        "Query 4 failed: Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.reranking.try_basic_rerank"
       ]
     }
   },
@@ -172,14 +172,14 @@
       "success": false,
       "execution_time": 0.0,
       "memory_usage": 0.0,
-      "error": "Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.demo_graph_visualization",
+      "error": "Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.demo_graph_visualization",
       "output_length": 0
     },
     "Ontology Support": {
       "success": false,
       "execution_time": 0.0,
       "memory_usage": 0.0,
-      "error": "Script not found: /Users/tdyar/ws/rag-templates/scripts/scripts.demo_ontology_support",
+      "error": "Script not found: /Users/intersystems-community/ws/rag-templates/scripts/scripts.demo_ontology_support",
       "output_length": 0
     }
   },

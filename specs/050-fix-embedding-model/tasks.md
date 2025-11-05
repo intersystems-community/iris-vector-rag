@@ -95,7 +95,7 @@
 ## Phase 3.3: Core Implementation (ONLY after tests T002-T005 are failing)
 
 - [x] **T006** Add module-level cache variables to `iris_rag/embeddings/manager.py`
-  - **File**: `/Users/tdyar/ws/rag-templates/iris_rag/embeddings/manager.py`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/iris_rag/embeddings/manager.py`
   - **Location**: After imports (after line 10), before EmbeddingManager class
   - **Add**:
     ```python
@@ -112,7 +112,7 @@
   - **Parallel**: No (modifies manager.py)
 
 - [x] **T007** Implement `_get_cached_sentence_transformer()` helper function in `iris_rag/embeddings/manager.py`
-  - **File**: `/Users/tdyar/ws/rag-templates/iris_rag/embeddings/manager.py`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/iris_rag/embeddings/manager.py`
   - **Location**: After module-level cache variables, before EmbeddingManager class
   - **Function Signature**:
     ```python
@@ -145,7 +145,7 @@
   - **Parallel**: No (modifies manager.py, depends on T006)
 
 - [x] **T008** Update `_create_sentence_transformers_function()` to use cached model in `iris_rag/embeddings/manager.py`
-  - **File**: `/Users/tdyar/ws/rag-templates/iris_rag/embeddings/manager.py`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/iris_rag/embeddings/manager.py`
   - **Location**: Line 92 (inside `_create_sentence_transformers_function()` method)
   - **Change**:
     - **BEFORE**: `model = SentenceTransformer(model_name, device=device)`
@@ -231,7 +231,7 @@
   - **Parallel**: Can run with T016 (different activities)
 
 - [x] **T016** [P] Update CLAUDE.md with performance optimization notes
-  - **File**: `/Users/tdyar/ws/rag-templates/CLAUDE.md`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/CLAUDE.md`
   - **Section**: Recent Changes (already updated by update script, verify correctness)
   - **Content**: Confirm "Feature 050: Added module-level cache for SentenceTransformer models (7x performance improvement)" is present
   - **Additional**: Add to "Key Files" section: `iris_rag/embeddings/manager.py` (caching implementation)

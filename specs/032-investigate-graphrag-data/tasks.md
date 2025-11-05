@@ -1,7 +1,7 @@
 # Tasks: GraphRAG Data/Setup Investigation
 
 **Feature**: 032-investigate-graphrag-data | **Branch**: `032-investigate-graphrag-data`
-**Input**: Design documents from `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/`
+**Input**: Design documents from `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/`
 **Prerequisites**: plan.md ✅, research.md ✅, data-model.md ✅, contracts/ ✅, quickstart.md ✅
 
 ## Execution Flow (main)
@@ -36,9 +36,9 @@
 
 ## Path Conventions
 Single Python framework project:
-- Scripts: `/Users/tdyar/ws/rag-templates/scripts/`
-- Tests: `/Users/tdyar/ws/rag-templates/tests/contract/`
-- Specs: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/`
+- Scripts: `/Users/intersystems-community/ws/rag-templates/scripts/`
+- Tests: `/Users/intersystems-community/ws/rag-templates/tests/contract/`
+- Specs: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/`
 
 ---
 
@@ -54,8 +54,8 @@ Single Python framework project:
 
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY diagnostic script implementation**
 
-- [ ] **T002** [P] Write contract test for graph inspector in `/Users/tdyar/ws/rag-templates/tests/contract/test_graph_inspector_contract.py`
-  - **Contract**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/contracts/graph_inspector_contract.md`
+- [ ] **T002** [P] Write contract test for graph inspector in `/Users/intersystems-community/ws/rag-templates/tests/contract/test_graph_inspector_contract.py`
+  - **Contract**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/contracts/graph_inspector_contract.md`
   - **Tests to implement**:
     - `test_graph_inspector_exists()` - Verify script file exists
     - `test_graph_inspector_executable()` - Verify script can be executed
@@ -71,8 +71,8 @@ Single Python framework project:
   - **Dependencies**: None
   - **Parallel**: Can run with T003
 
-- [ ] **T003** [P] Write contract test for entity extraction verifier in `/Users/tdyar/ws/rag-templates/tests/contract/test_entity_extraction_contract.py`
-  - **Contract**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/contracts/entity_extraction_verification_contract.md`
+- [ ] **T003** [P] Write contract test for entity extraction verifier in `/Users/intersystems-community/ws/rag-templates/tests/contract/test_entity_extraction_contract.py`
+  - **Contract**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/contracts/entity_extraction_verification_contract.md`
   - **Tests to implement**:
     - `test_entity_extraction_verifier_exists()` - Verify script file exists
     - `test_entity_extraction_verifier_executable()` - Verify script can be executed
@@ -94,8 +94,8 @@ Single Python framework project:
 
 **Sequential execution required - scripts share common imports and patterns**
 
-- [ ] **T004** Implement graph inspector diagnostic script in `/Users/tdyar/ws/rag-templates/scripts/inspect_knowledge_graph.py`
-  - **Contract**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/contracts/graph_inspector_contract.md`
+- [ ] **T004** Implement graph inspector diagnostic script in `/Users/intersystems-community/ws/rag-templates/scripts/inspect_knowledge_graph.py`
+  - **Contract**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/contracts/graph_inspector_contract.md`
   - **Implementation requirements**:
     - Import `iris_rag.core.connection.ConnectionManager`, `iris_rag.config.manager.ConfigurationManager`
     - Check table existence: `RAG.Entities`, `RAG.Relationships`, `RAG.Communities`
@@ -110,8 +110,8 @@ Single Python framework project:
   - **Dependencies**: T002 (tests must fail first)
   - **No [P]**: Shares imports with other diagnostic scripts
 
-- [ ] **T005** Implement entity extraction verifier script in `/Users/tdyar/ws/rag-templates/scripts/verify_entity_extraction.py`
-  - **Contract**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/contracts/entity_extraction_verification_contract.md`
+- [ ] **T005** Implement entity extraction verifier script in `/Users/intersystems-community/ws/rag-templates/scripts/verify_entity_extraction.py`
+  - **Contract**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/contracts/entity_extraction_verification_contract.md`
   - **Implementation requirements**:
     - Try importing `iris_rag.services.entity_extraction.OntologyAwareEntityExtractor`
     - Check LLM configuration (provider, model, API key set)
@@ -126,8 +126,8 @@ Single Python framework project:
   - **Dependencies**: T003 (tests must fail first), T004 (shared patterns)
   - **No [P]**: Sequential with T004 to establish diagnostic patterns
 
-- [ ] **T006** Implement pipeline data comparison script in `/Users/tdyar/ws/rag-templates/scripts/compare_pipeline_data.py`
-  - **Reference**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/data-model.md` (PipelineDataComparison entity)
+- [ ] **T006** Implement pipeline data comparison script in `/Users/intersystems-community/ws/rag-templates/scripts/compare_pipeline_data.py`
+  - **Reference**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/data-model.md` (PipelineDataComparison entity)
   - **Implementation requirements**:
     - Query vector table counts for each pipeline type (basic, basic_rerank, crag, graphrag, pylate_colbert)
     - Query metadata table counts
@@ -149,7 +149,7 @@ Single Python framework project:
   - **Command**: `python scripts/inspect_knowledge_graph.py > investigation/graph_state.json`
   - **Expected result**: Exit code 1 (empty graph) or 2 (tables missing)
   - **Analysis**: Document table existence and entity counts
-  - **Output**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/investigation/graph_state.json`
+  - **Output**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/investigation/graph_state.json`
   - **Success**: Graph state documented, empty graph or missing tables confirmed
   - **Dependencies**: T004 (script must exist)
 
@@ -157,7 +157,7 @@ Single Python framework project:
   - **Command**: `python scripts/verify_entity_extraction.py > investigation/extraction_status.json`
   - **Expected result**: Exit code 1 (service exists but not invoked)
   - **Analysis**: Document service availability, LLM config, ontology status, invocation status
-  - **Output**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrad-data/investigation/extraction_status.json`
+  - **Output**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrad-data/investigation/extraction_status.json`
   - **Success**: Extraction service status documented, not-invoked status confirmed
   - **Dependencies**: T005 (script must exist), T007 (graph state provides context)
 
@@ -165,7 +165,7 @@ Single Python framework project:
   - **Command**: `python scripts/compare_pipeline_data.py > investigation/pipeline_comparison.json`
   - **Expected result**: GraphRAG shows incomplete data vs basic/crag
   - **Analysis**: Confirm other pipelines have data, GraphRAG missing knowledge graph data
-  - **Output**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/investigation/pipeline_comparison.json`
+  - **Output**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/investigation/pipeline_comparison.json`
   - **Success**: Root cause identified: Entity extraction not invoked during load_data
   - **Dependencies**: T006 (script must exist), T007-T008 (provide context)
 
@@ -186,7 +186,7 @@ Single Python framework project:
   - **Parallel**: Can run with T011
 
 - [ ] **T011** [P] Document investigation findings and fix recommendations
-  - **File**: `/Users/tdyar/ws/rag-templates/specs/032-investigate-graphrag-data/investigation/FINDINGS.md`
+  - **File**: `/Users/intersystems-community/ws/rag-templates/specs/032-investigate-graphrag-data/investigation/FINDINGS.md`
   - **Content**:
     - Summary of diagnostic results (graph state, extraction status, pipeline comparison)
     - Root cause: Entity extraction not invoked during `GraphRAGPipeline.load_documents()`

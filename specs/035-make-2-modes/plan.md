@@ -1,7 +1,7 @@
 # Implementation Plan: Configurable Test Backend Modes (Enterprise & Community)
 
 **Branch**: `035-make-2-modes` | **Date**: 2025-10-08 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/Users/tdyar/ws/rag-templates/specs/035-make-2-modes/spec.md`
+**Input**: Feature specification from `/Users/intersystems-community/ws/rag-templates/specs/035-make-2-modes/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -29,7 +29,7 @@ Add configurable test backend modes (enterprise and community) to handle differe
 - pytest (existing test framework)
 - iris-devtools from ../iris-devtools (required dev dependency - NEW)
 - intersystemsdc/iris-community:latest (for community testing)
-- docker.iscinternal.com/intersystems/iris:2025.3.0EHAT.127.0-linux-arm64v8 (for enterprise testing)
+- intersystemsdc/iris-community:2025.3.0EHAT.127.0-linux-arm64v8 (for enterprise testing)
 
 **Storage**: InterSystems IRIS database (existing)
 **Testing**: pytest with database-dependent markers (@pytest.mark.requires_database)
@@ -349,27 +349,27 @@ Execute: `.specify/scripts/bash/update-agent-context.sh claude`
 ## Artifacts Generated
 
 **Phase 0 (Research)**:
-- ✅ `/Users/tdyar/ws/rag-templates/specs/035-make-2-modes/research.md`
+- ✅ `/Users/intersystems-community/ws/rag-templates/specs/035-make-2-modes/research.md`
   * iris-devtools API integration patterns
   * IRIS edition detection via SQL query
   * pytest connection pooling with Semaphore
   * Configuration precedence: env var > config > default
 
 **Phase 1 (Design)**:
-- ✅ `/Users/tdyar/ws/rag-templates/specs/035-make-2-modes/data-model.md`
+- ✅ `/Users/intersystems-community/ws/rag-templates/specs/035-make-2-modes/data-model.md`
   * 5 entity definitions with validation rules
   * State transition diagrams
   * Error hierarchy
   * Relationship diagrams
-- ✅ `/Users/tdyar/ws/rag-templates/specs/035-make-2-modes/contracts/`
+- ✅ `/Users/intersystems-community/ws/rag-templates/specs/035-make-2-modes/contracts/`
   * backend_config_contract.yaml (8 test scenarios)
   * README.md (contract format specification)
-- ✅ `/Users/tdyar/ws/rag-templates/specs/035-make-2-modes/quickstart.md`
+- ✅ `/Users/intersystems-community/ws/rag-templates/specs/035-make-2-modes/quickstart.md`
   * Prerequisites and setup instructions
   * Configuration examples (file + env var)
   * Running tests in both modes
   * Troubleshooting guide
-- ✅ `/Users/tdyar/ws/rag-templates/CLAUDE.md`
+- ✅ `/Users/intersystems-community/ws/rag-templates/CLAUDE.md`
   * Updated with Python 3.12 context
   * Added IRIS database references
 
@@ -377,7 +377,7 @@ Execute: `.specify/scripts/bash/update-agent-context.sh claude`
 
 ## ✅ Tasks Generated
 
-**Generated**: `/Users/tdyar/ws/rag-templates/specs/035-make-2-modes/tasks.md`
+**Generated**: `/Users/intersystems-community/ws/rag-templates/specs/035-make-2-modes/tasks.md`
 
 **Task Summary**:
 - **30 tasks total** in TDD order

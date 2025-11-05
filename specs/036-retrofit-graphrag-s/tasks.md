@@ -2,7 +2,7 @@
 
 **Feature**: 036-retrofit-graphrag-s
 **Branch**: `036-retrofit-graphrag-s`
-**Input**: Design documents from `/Users/tdyar/ws/rag-templates/specs/036-retrofit-graphrag-s/`
+**Input**: Design documents from `/Users/intersystems-community/ws/rag-templates/specs/036-retrofit-graphrag-s/`
 
 ## Execution Flow (main)
 ```
@@ -26,7 +26,7 @@
 
 ## Format: `[ID] [P?] Description`
 - **[P]**: Can run in parallel (different files, no dependencies)
-- All paths relative to repository root: `/Users/tdyar/ws/rag-templates/`
+- All paths relative to repository root: `/Users/intersystems-community/ws/rag-templates/`
 
 ---
 

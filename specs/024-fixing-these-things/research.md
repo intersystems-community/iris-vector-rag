@@ -70,7 +70,7 @@ This research document consolidates findings on test repair strategies, coverage
 ```yaml
 services:
   iris-test:
-    image: docker.iscinternal.com/intersystems/iris:latest
+    image: intersystemsdc/iris-community:latest
     ports:
       - "11972:1972"
       - "152773:52773"
