@@ -1,20 +1,17 @@
 <!--
 Sync Impact Report:
-- Version change: 1.5.0 → 1.6.0
-- List of modified principles:
-  * Development Standards (enhanced with uv package management requirement)
-- Amendment details:
-  * Added mandatory uv usage for Python package management
-  * Deprecates traditional pip/virtualenv workflows
-  * Emphasizes uv's superior performance and reliability
-  * Ensures framework-wide consistency in dependency management
-- Added sections: Package Management requirement within existing Development Standards
+- Version change: 1.6.0 → 1.7.0 (MINOR)
+- Version bump rationale: New principle added (Git & Release Workflow)
+- List of modified principles: None (existing principles unchanged)
+- Added sections:
+  * Principle VIII: Git & Release Workflow (NON-NEGOTIABLE)
+  * Defines exact commit and push sequence for dual-repository setup
+  * Covers internal GitLab → sanitized directory → public GitHub workflow
+  * Includes PyPI publishing procedures
 - Removed sections: N/A
 - Templates requiring updates:
-  ⏳ Makefile (update to use uv commands)
-  ⏳ README.md (update setup instructions to use uv)
-  ⏳ requirements files (consider pyproject.toml migration)
-- Follow-up TODOs: Migrate existing projects to use uv for package management
+  ✅ No template updates needed (workflow-specific, not template-affecting)
+- Follow-up TODOs: None
 -->
 
 # RAG-Templates Constitution
@@ -104,6 +101,64 @@ All database interactions MUST use proven, standardized utilities from the frame
 
 **Rationale**: IRIS database interactions have complex edge cases and performance considerations. Hard-won fixes and optimizations must be systematized to prevent teams from rediscovering the same issues.
 
+### VIII. Git & Release Workflow (NON-NEGOTIABLE)
+
+All code changes MUST follow the exact dual-repository workflow to maintain separation between internal development and public releases:
+
+**Step 1: Internal Repository (rag-templates)**
+```bash
+cd /Users/tdyar/ws/rag-templates
+git add <changed-files>
+git commit -m "<commit-message>"
+git push git@gitlab.iscinternal.com:tdyar/rag-templates.git main
+```
+
+**Step 2: Sanitization Sync**
+```bash
+# From rag-templates directory
+./scripts/sync_to_sanitized.sh
+```
+
+This script:
+- Copies code to `../rag-templates-sanitized/`
+- Applies redaction (replaces internal GitLab URLs → GitHub URLs, internal paths → community paths, internal emails → maintainer emails)
+- Preserves git history for sanitized repository
+
+**Step 3: Public Repository (iris-vector-rag)**
+```bash
+cd /Users/tdyar/ws/rag-templates-sanitized
+git add <changed-files>
+git commit -m "<commit-message>"
+git push origin main  # iris-rag-templates repo
+git push github main  # iris-vector-rag repo
+```
+
+**Step 4: PyPI Publishing (when applicable)**
+```bash
+# From sanitized directory
+cd /Users/tdyar/ws/rag-templates-sanitized
+
+# Bump version in pyproject.toml and iris_rag/__init__.py
+# Build package
+python -m build
+
+# Validate
+python -m twine check dist/*
+
+# Upload
+./upload_to_pypi.sh  # Prompts for PyPI token
+```
+
+**Critical Rules**:
+- NEVER push internal repository code directly to public GitHub
+- NEVER skip the sanitization step
+- ALWAYS verify redaction worked (`grep -r "gitlab.iscinternal" ../rag-templates-sanitized/` should return nothing)
+- ALWAYS test package installation before PyPI upload (`pip install dist/*.whl`)
+- Public commits MUST NOT contain: internal URLs, internal email addresses, internal paths, proprietary information
+- PyPI package name is `iris-vector-rag`, Python module name remains `iris_rag`
+
+**Rationale**: The dual-repository workflow protects proprietary information while enabling open-source distribution. The sanitization step is non-negotiable to prevent accidental exposure of internal infrastructure details, employee information, or confidential development practices.
+
 ## Enterprise Requirements
 
 Production deployments MUST include:
@@ -134,4 +189,4 @@ Development with AI tools MUST follow constraint-based architecture, not "vibeco
 
 Amendment procedure: Proposed changes require documentation of impact, team approval, and migration plan for affected components. Version increments follow semantic versioning based on change scope.
 
-**Version**: 1.6.0 | **Ratified**: 2025-01-27 | **Last Amended**: 2025-09-28
+**Version**: 1.7.0 | **Ratified**: 2025-01-27 | **Last Amended**: 2025-11-06
