@@ -1,13 +1,15 @@
 <!--
 Sync Impact Report:
-- Version change: 1.6.0 → 1.7.0 (MINOR)
-- Version bump rationale: New principle added (Git & Release Workflow)
-- List of modified principles: None (existing principles unchanged)
-- Added sections:
-  * Principle VIII: Git & Release Workflow (NON-NEGOTIABLE)
-  * Defines exact commit and push sequence for dual-repository setup
-  * Covers internal GitLab → sanitized directory → public GitHub workflow
-  * Includes PyPI publishing procedures
+- Version change: 1.7.0 → 1.7.1 (PATCH)
+- Version bump rationale: Enhanced Step 4 (PyPI Publishing) with detailed procedures
+- List of modified principles: Principle VIII (Git & Release Workflow)
+- Modified sections:
+  * Step 4: PyPI Publishing - Added comprehensive publishing procedures
+  * When to publish (semantic versioning guidance)
+  * Version bumping procedure (files to update)
+  * Build and validation steps (clean, build, test locally)
+  * Upload procedure (secure token, verification)
+  * Post-upload verification (install from PyPI, test imports)
 - Removed sections: N/A
 - Templates requiring updates:
   ✅ No template updates needed (workflow-specific, not template-affecting)
@@ -134,19 +136,56 @@ git push github main  # iris-vector-rag repo
 ```
 
 **Step 4: PyPI Publishing (when applicable)**
+
+**When to Publish:**
+- New features added (MINOR version bump: 0.2.3 → 0.3.0)
+- Bug fixes or patches (PATCH version bump: 0.2.3 → 0.2.4)
+- Breaking changes (MAJOR version bump: 0.2.3 → 1.0.0)
+- Skip if only documentation, tests, or internal changes
+
+**Version Bumping:**
 ```bash
-# From sanitized directory
+# Update version in BOTH files:
+# 1. pyproject.toml (line 7): version = "0.2.4"
+# 2. iris_rag/__init__.py (line 21): __version__ = "0.2.4"
+```
+
+**Build and Validate:**
+```bash
 cd /Users/tdyar/ws/rag-templates-sanitized
 
-# Bump version in pyproject.toml and iris_rag/__init__.py
-# Build package
+# Clean previous builds
+rm -rf dist/ build/ *.egg-info
+
+# Build source distribution and wheel
 python -m build
 
-# Validate
+# Validate distributions
 python -m twine check dist/*
 
-# Upload
-./upload_to_pypi.sh  # Prompts for PyPI token
+# Test installation locally
+pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
+
+# Verify imports work
+python -c "import iris_rag; print(f'iris_rag version: {iris_rag.__version__}'); from iris_rag import create_pipeline; print('✅ Package imports successfully')"
+```
+
+**Upload to PyPI:**
+```bash
+# Upload using secure token prompt
+./upload_to_pypi.sh
+
+# Verify upload succeeded
+curl -s https://pypi.org/pypi/iris-vector-rag/json | python -c "import sys, json; data=json.load(sys.stdin); print(f\"Latest version: {data['info']['version']}\"); print(f\"Upload date: {list(data['releases'][data['info']['version']])[0]['upload_time']}\")"
+```
+
+**Post-Upload Verification:**
+```bash
+# Install from PyPI in fresh environment
+pip install --upgrade iris-vector-rag
+
+# Verify installation
+python -c "import iris_rag; print(f'Installed version: {iris_rag.__version__}')"
 ```
 
 **Critical Rules**:
@@ -189,4 +228,4 @@ Development with AI tools MUST follow constraint-based architecture, not "vibeco
 
 Amendment procedure: Proposed changes require documentation of impact, team approval, and migration plan for affected components. Version increments follow semantic versioning based on change scope.
 
-**Version**: 1.7.0 | **Ratified**: 2025-01-27 | **Last Amended**: 2025-11-06
+**Version**: 1.7.1 | **Ratified**: 2025-01-27 | **Last Amended**: 2025-11-06
