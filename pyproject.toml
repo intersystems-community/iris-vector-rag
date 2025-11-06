@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "uv-dynamic-versioning>=0.7.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rag-templates"
-dynamic = ["version"]
+name = "iris-vector-rag"
+version = "0.2.1"
 description = "Dead-simple library for building RAG applications with InterSystems IRIS"
 readme = "README.md"
 license = {text = "MIT"}
@@ -12,7 +12,7 @@ authors = [
     {name = "InterSystems", email = "support@intersystems.com"}
 ]
 maintainers = [
-    {name = "InterSystems", email = "support@intersystems.com"}
+    {name = "Thomas Dyar", email = "thomas.dyar@intersystems.com"}
 ]
 keywords = [
     "rag",
@@ -155,9 +155,6 @@ rag-templates = "iris_rag.cli:main"
 [tool.setuptools]
 packages = ["iris_rag", "common", "adapters", "evaluation_framework"]
 
-[tool.setuptools.dynamic]
-version = {attr = "iris_rag.__version__"}
-
 [tool.setuptools.package-data]
 iris_rag = [
     "config/*.yaml",
@@ -244,9 +241,3 @@ exclude_lines = [
     "if 0:",
     "if __name__ == .__main__.:"
 ]
-
-[tool.uv-dynamic-versioning]
-vcs = "git"
-style = "pep440"
-bump = true
-fallback-version = "0.0.0"
