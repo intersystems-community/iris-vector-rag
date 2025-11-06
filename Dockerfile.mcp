@@ -38,7 +38,7 @@ COPY config/ ./config/
 RUN pip install --no-cache-dir -e .
 
 # Stage 2: Node.js dependencies
-FROM node:18-slim AS nodejs-builder
+FROM node:25-slim AS nodejs-builder
 
 WORKDIR /app/nodejs
 
