@@ -129,10 +129,16 @@ This script:
 **Step 3: Public Repository (iris-vector-rag)**
 ```bash
 cd /Users/tdyar/ws/rag-templates-sanitized
-git add <changed-files>
-git commit -m "<commit-message>"
-git push origin main  # iris-rag-templates repo
-git push github main  # iris-vector-rag repo
+
+# Pull and rebase any remote changes first
+git pull github main --rebase
+
+# Stage and commit sanitized changes
+git add pyproject.toml redaction_changes.json
+git commit -m "chore: sync redaction changes from internal repository"
+
+# Push to iris-vector-rag (PyPI package repo)
+git push github main
 ```
 
 **Step 4: PyPI Publishing (when applicable)**
@@ -188,9 +194,27 @@ pip install --upgrade iris-vector-rag
 python -c "import iris_rag; print(f'Installed version: {iris_rag.__version__}')"
 ```
 
+**Repository Configuration:**
+- Internal repo remotes: `origin` and `ssh-origin` → `git@gitlab.iscinternal.com:tdyar/rag-templates.git`
+- Sanitized repo remote: `github` → `https://github.com/intersystems-community/iris-vector-rag.git`
+- Deleted deprecated remote: `iris-rag-templates` (no longer used)
+- **Default branch**: `main` (both local and GitHub remote must use `main` as default branch)
+
+**One-Time GitHub Setup (if not already configured):**
+
+If the GitHub repository default branch is `master` instead of `main`:
+1. Go to: https://github.com/intersystems-community/iris-vector-rag/settings/branches
+2. Under "Default branch", click the switch icon next to `master`
+3. Select `main` from the dropdown
+4. Click "Update" and confirm the change
+5. (Optional) Delete the old `master` branch protection rules if they exist
+
+This ensures pushes to `main` are immediately visible on GitHub.
+
 **Critical Rules**:
 - NEVER push internal repository code directly to public GitHub
 - NEVER skip the sanitization step
+- ALWAYS pull and rebase before pushing to avoid diverged history issues
 - ALWAYS verify redaction worked (`grep -r "gitlab.iscinternal" ../rag-templates-sanitized/` should return nothing)
 - ALWAYS test package installation before PyPI upload (`pip install dist/*.whl`)
 - Public commits MUST NOT contain: internal URLs, internal email addresses, internal paths, proprietary information
