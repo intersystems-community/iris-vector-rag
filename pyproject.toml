@@ -1,18 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "uv-dynamic-versioning>=0.7.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rag-templates"
-dynamic = ["version"]
-description = "Dead-simple library for building RAG applications with InterSystems IRIS"
+name = "iris-vector-rag"
+version = "0.2.3"
+description = "Production-ready, extensible RAG framework with native IRIS vector search - unified API for basic, CRAG, GraphRAG, and ColBERT pipelines with RAGAS and DSPy integration"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "InterSystems", email = "support@intersystems.com"}
 ]
 maintainers = [
-    {name = "InterSystems", email = "support@intersystems.com"}
+    {name = "Thomas Dyar", email = "thomas.dyar@intersystems.com"}
 ]
 keywords = [
     "rag",
@@ -152,11 +152,8 @@ Changelog = "https://github.com/intersystems/rag-templates/blob/main/CHANGELOG.m
 [project.scripts]
 rag-templates = "iris_rag.cli:main"
 
-[tool.setuptools]
-packages = ["iris_rag", "common", "adapters", "evaluation_framework"]
-
-[tool.setuptools.dynamic]
-version = {attr = "iris_rag.__version__"}
+[tool.setuptools.packages.find]
+include = ["iris_rag*", "common*", "adapters*", "evaluation_framework*"]
 
 [tool.setuptools.package-data]
 iris_rag = [
