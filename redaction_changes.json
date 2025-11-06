@@ -1,5 +1,20 @@
 [
   {
+    "file": "redaction_changes.json",
+    "replacements": 128,
+    "changes": [
+      "github.com/intersystems-community \u2192 github.com/intersystems-community (36 occurrences)",
+      "https://github.com/intersystems-community/intersystems-community/rag-templates \u2192 https://github.com/intersystems-community/iris-rag-templates (8 occurrences)",
+      "git@github.com/intersystems-community:tdyar/rag-templates.git \u2192 git@github.com:intersystems-community/iris-rag-templates.git (4 occurrences)",
+      "intersystemsdc/iris-community \u2192 intersystemsdc/iris-community (8 occurrences)",
+      "pull request \u2192 pull request (12 occurrences)",
+      "Pull Request \u2192 Pull Request (12 occurrences)",
+      "PR # \u2192 PR # (8 occurrences)",
+      "maintainer@example.com \u2192 maintainer@example.com (8 occurrences)",
+      "/intersystems-community/ \u2192 /intersystems-community/ (32 occurrences)"
+    ]
+  },
+  {
     "file": "PUBLIC_SYNC_SETUP_COMPLETE.md",
     "replacements": 23,
     "changes": [
