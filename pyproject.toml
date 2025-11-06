@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iris-vector-rag"
-version = "0.2.1"
-description = "Dead-simple library for building RAG applications with InterSystems IRIS"
+version = "0.2.2"
+description = "Production-ready, extensible RAG framework with native IRIS vector search - unified API for basic, CRAG, GraphRAG, and ColBERT pipelines with RAGAS and DSPy integration"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
