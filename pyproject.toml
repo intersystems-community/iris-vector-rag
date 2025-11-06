@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iris-vector-rag"
-version = "0.2.2"
+version = "0.2.3"
 description = "Production-ready, extensible RAG framework with native IRIS vector search - unified API for basic, CRAG, GraphRAG, and ColBERT pipelines with RAGAS and DSPy integration"
 readme = "README.md"
 license = {text = "MIT"}
@@ -152,8 +152,8 @@ Changelog = "https://github.com/intersystems/rag-templates/blob/main/CHANGELOG.m
 [project.scripts]
 rag-templates = "iris_rag.cli:main"
 
-[tool.setuptools]
-packages = ["iris_rag", "common", "adapters", "evaluation_framework"]
+[tool.setuptools.packages.find]
+include = ["iris_rag*", "common*", "adapters*", "evaluation_framework*"]
 
 [tool.setuptools.package-data]
 iris_rag = [
