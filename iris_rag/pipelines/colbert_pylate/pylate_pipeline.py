@@ -27,11 +27,19 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         self,
         connection_manager,
         config_manager,
+        embedding_config: Optional[str] = None,
         **kwargs,
     ):
-        """Initialize PyLate ColBERT pipeline with consistent configuration."""
-        # Initialize parent pipeline
-        super().__init__(connection_manager, config_manager, **kwargs)
+        """Initialize PyLate ColBERT pipeline with consistent configuration.
+
+        Args:
+            connection_manager: Database connection manager
+            config_manager: Configuration manager
+            embedding_config: Optional IRIS EMBEDDING config name for auto-vectorization (Feature 051)
+            **kwargs: Additional arguments passed to BasicRAGPipeline
+        """
+        # Initialize parent pipeline (which handles embedding_config)
+        super().__init__(connection_manager, config_manager, embedding_config=embedding_config, **kwargs)
 
         # Use same config pattern as BasicRAGReranking for consistency
         self.colbert_config = self.config_manager.get(

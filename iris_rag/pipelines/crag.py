@@ -38,6 +38,7 @@ class CRAGPipeline(RAGPipeline):
         embedding_func=None,
         llm_func=None,
         web_search_func=None,
+        embedding_config: Optional[str] = None,
     ):
         """
         Initialize CRAG pipeline with new architecture as primary.
@@ -50,6 +51,7 @@ class CRAGPipeline(RAGPipeline):
             embedding_func: Function to generate embeddings
             llm_func: Function for answer generation
             web_search_func: Function for web search (optional)
+            embedding_config: Optional IRIS EMBEDDING config name for auto-vectorization (Feature 051)
         """
         # Handle new architecture first, then backward compatibility
         if connection_manager is None and iris_connector is not None:
@@ -88,6 +90,16 @@ class CRAGPipeline(RAGPipeline):
         self.embedding_func = embedding_func
         self.llm_func = llm_func
         self.web_search_func = web_search_func
+
+        # IRIS EMBEDDING configuration (Feature 051)
+        self.embedding_config = embedding_config
+        self.use_iris_embedding = embedding_config is not None
+
+        if self.use_iris_embedding:
+            logger.info(
+                f"CRAGPipeline initialized with IRIS EMBEDDING auto-vectorization "
+                f"(config: {self.embedding_config})"
+            )
 
         # Get functions from config if not provided
         if not self.embedding_func:

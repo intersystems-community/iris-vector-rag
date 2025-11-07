@@ -64,6 +64,67 @@ embeddings:
     model_name: "all-MiniLM-L6-v2"
     device: "cpu"
 
+# IRIS EMBEDDING Configuration (Feature 051)
+iris_embedding:
+  enabled: false                             # Enable IRIS EMBEDDING auto-vectorization
+
+  # Default configurations (can be overridden per-table)
+  default_config:
+    model_name: "sentence-transformers/all-MiniLM-L6-v2"
+    hf_cache_path: "/var/lib/huggingface"   # HuggingFace model cache directory
+    python_path: "/usr/bin/python3"          # Python interpreter path
+    batch_size: 32                           # Batch size for vectorization
+    device_preference: "auto"                # Device: auto, cuda, mps, cpu
+    enable_entity_extraction: false          # Extract entities during vectorization
+    entity_types: []                         # Entity types to extract (if enabled)
+
+  # Model cache configuration
+  cache:
+    enabled: true                            # Enable in-memory model caching
+    max_models: 5                            # Maximum number of cached models
+    eviction_policy: "lru"                   # Cache eviction: lru, lfu, ttl
+    ttl_seconds: 3600                        # Time-to-live for cached models (1 hour)
+    warmup_on_start: false                   # Preload models at startup
+
+  # Performance targets (Feature 050 pattern)
+  performance:
+    cache_hit_target_ms: 50                  # Target: <50ms for cache hits
+    cache_miss_target_ms: 5000               # Target: <5000ms for cache misses (includes model load)
+    min_cache_hit_rate: 0.95                 # Target: >=95% cache hit rate after warmup
+    gpu_oom_fallback: true                   # Fallback to CPU on GPU OOM
+
+  # Table-specific configurations (example)
+  # configurations:
+  #   medical_embeddings_v1:
+  #     model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  #     enable_entity_extraction: true
+  #     entity_types: ["Disease", "Symptom", "Medication"]
+  #
+  #   paper_embeddings:
+  #     model_name: "sentence-transformers/allenai-specter"
+  #     device_preference: "cuda"
+  #     batch_size: 64
+
+  # Multi-field vectorization examples
+  # multi_field_configs:
+  #   research_papers:
+  #     table_name: "RAG.ResearchPapers"
+  #     embedding_column: "metadata_vector"
+  #     source_columns:                      # Concatenate multiple fields
+  #       - "title"
+  #       - "abstract"
+  #       - "conclusions"
+  #     config_name: "paper_embeddings"
+  #
+  #   medical_records:
+  #     table_name: "RAG.MedicalRecords"
+  #     embedding_column: "clinical_vector"
+  #     source_columns:
+  #       - "chief_complaint"
+  #       - "history_of_present_illness"
+  #       - "assessment"
+  #     config_name: "medical_embeddings_v1"
+
 # Entity extraction configuration
 entity_extraction:
   enabled: true

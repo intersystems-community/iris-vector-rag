@@ -1,0 +1,336 @@
+# Contract: IRIS EMBEDDING Integration
+# Feature: 051-add-native-iris
+# Purpose: Define interface between IRIS %Embedding.Config and iris_rag embedding manager
+
+contract_name: iris_embedding_integration
+version: 1.0.0
+status: TDD (test before implement)
+
+# ============================================================================
+# Configuration Loading Contract
+# ============================================================================
+
+read_embedding_config:
+  description: "Read EMBEDDING configuration from IRIS %Embedding.Config table"
+  endpoint: "iris_rag.embeddings.iris_embedding.get_config(config_name: str)"
+
+  request:
+    parameters:
+      config_name:
+        type: string
+        required: true
+        example: "medical_embeddings_v1"
+        constraints:
+          - "Must exist in %Embedding.Config table"
+
+  response:
+    success:
+      type: EmbeddingConfig
+      fields:
+        name: string
+        model_name: string
+        hf_cache_path: string
+        python_path: string
+        embedding_class: string
+        description: string
+        enable_entity_extraction: boolean
+        entity_types: list[string]
+        batch_size: integer
+        device_preference: string
+      example:
+        name: "medical_embeddings_v1"
+        model_name: "sentence-transformers/all-MiniLM-L6-v2"
+        hf_cache_path: "/var/lib/huggingface"
+        python_path: "/usr/bin/python3"
+        embedding_class: "%Embedding.SentenceTransformers"
+        description: "Medical domain embeddings"
+        enable_entity_extraction: true
+        entity_types: ["Disease", "Symptom", "Medication"]
+        batch_size: 32
+        device_preference: "auto"
+
+    errors:
+      - code: CONFIG_NOT_FOUND
+        message: "Embedding configuration '{config_name}' not found in %Embedding.Config"
+        http_status: 404
+
+      - code: INVALID_CONFIG_FORMAT
+        message: "Configuration JSON is malformed: {details}"
+        http_status: 400
+
+# ============================================================================
+# Validation Contract
+# ============================================================================
+
+validate_embedding_config:
+  description: "Validate EMBEDDING configuration before table creation (FR-010)"
+  endpoint: "iris_rag.config.embedding_config.validate(config: EmbeddingConfig)"
+
+  request:
+    parameters:
+      config:
+        type: EmbeddingConfig
+        required: true
+
+  response:
+    success:
+      type: ValidationResult
+      fields:
+        valid: boolean
+        errors: list[string]
+        warnings: list[string]
+      example:
+        valid: true
+        errors: []
+        warnings: []
+
+    errors:
+      - code: MODEL_NOT_FOUND
+        message: "Model '{model_name}' not found at {hf_cache_path}"
+        http_status: 400
+        context:
+          fix: "Run: huggingface-cli download {model_name}"
+
+      - code: INVALID_PYTHON_PATH
+        message: "Python executable not found at {python_path}"
+        http_status: 400
+        context:
+          fix: "Verify python_path in configuration"
+
+      - code: MISSING_DEPENDENCIES
+        message: "Required Python packages missing: {packages}"
+        http_status: 400
+        context:
+          fix: "Run: pip install {packages}"
+
+# ============================================================================
+# Embedding Generation Contract
+# ============================================================================
+
+generate_embeddings:
+  description: "Generate embeddings for text using cached model (FR-001, FR-002)"
+  endpoint: "iris_rag.embeddings.iris_embedding.embed_texts(config_name: str, texts: list[str])"
+
+  request:
+    parameters:
+      config_name:
+        type: string
+        required: true
+        example: "medical_embeddings_v1"
+
+      texts:
+        type: list[string]
+        required: true
+        constraints:
+          - "1 <= len(texts) <= 1000"
+          - "Each text must not be empty"
+        example:
+          - "Patient presents with type 2 diabetes and elevated blood glucose."
+          - "Insulin therapy recommended for glucose control."
+
+  response:
+    success:
+      type: EmbeddingResult
+      fields:
+        embeddings: list[list[float]]
+        cache_hit: boolean
+        embedding_time_ms: float
+        model_load_time_ms: float
+        device_used: string
+      example:
+        embeddings: [[0.123, -0.456, ...], [0.789, -0.234, ...]]
+        cache_hit: true
+        embedding_time_ms: 12.5
+        model_load_time_ms: 0.0
+        device_used: "cuda:0"
+
+      performance_requirements:
+        cache_hit_embedding_time: "<50ms for batch of 32"
+        cache_miss_embedding_time: "<5000ms (includes model load)"
+        cache_hit_rate: ">=95% after warmup"
+
+    errors:
+      - code: EMPTY_TEXT
+        message: "Text at index {index} is empty"
+        http_status: 400
+
+      - code: GPU_OOM
+        message: "GPU out of memory, falling back to CPU"
+        http_status: 500
+        recovery: "Automatic CPU fallback"
+
+      - code: MODEL_LOAD_FAILED
+        message: "Failed to load model: {error}"
+        http_status: 500
+
+# ============================================================================
+# Cache Management Contract
+# ============================================================================
+
+get_cache_stats:
+  description: "Retrieve model cache statistics (FR-022)"
+  endpoint: "iris_rag.embeddings.manager.get_cache_stats(config_name: str = None)"
+
+  request:
+    parameters:
+      config_name:
+        type: string
+        required: false
+        description: "If None, returns stats for all cached models"
+
+  response:
+    success:
+      type: CacheStatistics
+      fields:
+        config_name: string
+        cache_hits: integer
+        cache_misses: integer
+        hit_rate: float
+        avg_embedding_time_ms: float
+        model_load_count: integer
+        memory_usage_mb: float
+        device: string
+        total_embeddings: integer
+      example:
+        config_name: "medical_embeddings_v1"
+        cache_hits: 9500
+        cache_misses: 500
+        hit_rate: 0.95
+        avg_embedding_time_ms: 8.3
+        model_load_count: 5
+        memory_usage_mb: 384.2
+        device: "cuda:0"
+        total_embeddings: 10000
+
+      performance_requirements:
+        hit_rate: ">=0.95"
+        avg_embedding_time_ms: "<10ms when cached"
+
+clear_cache:
+  description: "Clear model cache (for testing or memory management)"
+  endpoint: "iris_rag.embeddings.manager.clear_cache(config_name: str = None)"
+
+  request:
+    parameters:
+      config_name:
+        type: string
+        required: false
+        description: "If None, clears all cached models"
+
+  response:
+    success:
+      type: ClearCacheResult
+      fields:
+        models_cleared: integer
+        memory_freed_mb: float
+      example:
+        models_cleared: 2
+        memory_freed_mb: 768.5
+
+# ============================================================================
+# Test Scenarios (TDD - write tests first)
+# ============================================================================
+
+test_scenarios:
+  - name: "test_load_valid_config"
+    description: "Load valid EMBEDDING configuration from IRIS"
+    given: "%Embedding.Config contains valid entry"
+    when: "get_config('medical_embeddings_v1') is called"
+    then: "Returns EmbeddingConfig with all fields populated"
+    assertions:
+      - "config.name == 'medical_embeddings_v1'"
+      - "config.model_name is not None"
+      - "config.batch_size > 0"
+
+  - name: "test_config_not_found"
+    description: "Handle missing configuration gracefully"
+    given: "Configuration 'nonexistent' does not exist"
+    when: "get_config('nonexistent') is called"
+    then: "Raises CONFIG_NOT_FOUND error with clear message"
+
+  - name: "test_validate_valid_config"
+    description: "Validate correct configuration"
+    given: "Valid EmbeddingConfig with existing model"
+    when: "validate(config) is called"
+    then: "Returns ValidationResult with valid=True"
+
+  - name: "test_validate_missing_model"
+    description: "Detect missing model file"
+    given: "Config with model_name that doesn't exist locally"
+    when: "validate(config) is called"
+    then: "Returns ValidationResult with valid=False and MODEL_NOT_FOUND error"
+
+  - name: "test_embed_texts_cache_hit"
+    description: "Generate embeddings with cached model (FR-001, FR-003)"
+    given: "Model already cached from previous call"
+    when: "embed_texts('config', ['text1', 'text2']) is called"
+    then:
+      - "Returns embeddings list with 2 vectors"
+      - "cache_hit == True"
+      - "embedding_time_ms < 50"
+      - "model_load_time_ms == 0"
+
+  - name: "test_embed_texts_cache_miss"
+    description: "Generate embeddings with model load"
+    given: "Model not in cache"
+    when: "embed_texts('config', ['text']) is called first time"
+    then:
+      - "Returns embedding vector"
+      - "cache_hit == False"
+      - "model_load_time_ms < 5000"
+
+  - name: "test_embed_texts_empty_text"
+    description: "Handle empty text input"
+    given: "texts list contains empty string"
+    when: "embed_texts('config', ['']) is called"
+    then: "Raises EMPTY_TEXT error"
+
+  - name: "test_cache_hit_rate_target"
+    description: "Verify 95% cache hit rate after warmup (FR-003)"
+    given: "1000 embedding calls made"
+    when: "get_cache_stats() is called"
+    then: "hit_rate >= 0.95"
+
+  - name: "test_gpu_fallback"
+    description: "Gracefully fall back to CPU on GPU OOM"
+    given: "GPU memory exhausted"
+    when: "embed_texts() triggers OOM"
+    then:
+      - "System falls back to CPU device"
+      - "Embedding generation succeeds"
+      - "Warning logged with GPU_OOM code"
+
+# ============================================================================
+# Performance Benchmarks
+# ============================================================================
+
+performance_benchmarks:
+  - name: "benchmark_cache_hit_performance"
+    description: "Measure cached embedding time (FR-002)"
+    setup: "Load model into cache"
+    test: "Generate embeddings for 1,746 texts"
+    target: "<30 seconds (vs 20 minutes baseline)"
+    acceptance_criteria: "50x improvement minimum"
+
+  - name: "benchmark_model_load_time"
+    description: "Measure cold start time"
+    setup: "Clear cache"
+    test: "First call to embed_texts()"
+    target: "<5 seconds model load time"
+
+  - name: "benchmark_gpu_utilization"
+    description: "Verify GPU usage when available"
+    setup: "GPU available, model in cache"
+    test: "Generate 10,000 embeddings"
+    target: ">=80% average GPU utilization"
+
+  - name: "benchmark_10k_documents"
+    description: "Enterprise scale test (FR-002)"
+    setup: "Clear cache, prepare 10,000 texts"
+    test: "Bulk embedding generation"
+    target: "<10 minutes total (model loads once)"
+    acceptance_criteria: "Model loads exactly once, cache hit rate >95%"
+
+---
+# Contract Status: TDD - Tests must be written before implementation
+# Next: Write contract tests in tests/contract/test_iris_embedding_contract.py

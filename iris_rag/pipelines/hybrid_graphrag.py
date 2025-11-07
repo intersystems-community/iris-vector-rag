@@ -49,11 +49,22 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         llm_func: Optional[Callable[[str], str]] = None,
         vector_store=None,
         schema_manager=None,
+        embedding_config: Optional[str] = None,
     ):
         super().__init__(connection_manager, config_manager, llm_func, vector_store)
 
         # Store schema manager for iris_graph_core table management
         self.schema_manager = schema_manager
+
+        # IRIS EMBEDDING configuration (Feature 051)
+        self.embedding_config = embedding_config
+        self.use_iris_embedding = embedding_config is not None
+
+        if self.use_iris_embedding:
+            logger.info(
+                f"HybridGraphRAGPipeline initialized with IRIS EMBEDDING auto-vectorization "
+                f"and entity extraction (config: {self.embedding_config})"
+            )
 
         # Initialize graph core discovery
         self.discovery = GraphCoreDiscovery(config_manager)
