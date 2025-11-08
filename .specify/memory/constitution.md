@@ -238,7 +238,38 @@ Documentation MUST include quickstart guides, API references, and integration ex
 
 ## VIII. Git & Release Workflow (NON-NEGOTIABLE)
 
-All feature development MUST follow standardized git workflows to prevent diverged branches, rejected pushes, and deployment conflicts. The dual-repository strategy (internal GitLab + public GitHub) requires discipline and clear procedures.
+All feature development MUST follow standardized git workflows to prevent diverged branches, rejected pushes, and deployment conflicts. The fork-based strategy (private development repo + public fork) requires discipline and clear procedures.
+
+### Repository Structure (MANDATORY)
+
+**Three-Remote Configuration**:
+```bash
+origin   → https://github.com/isc-tdyar/iris-vector-rag-private.git  (PRIVATE - main development)
+fork     → https://github.com/isc-tdyar/iris-vector-rag.git          (PUBLIC - for PRs only)
+upstream → https://github.com/intersystems-community/iris-vector-rag.git  (PUBLIC - community repo)
+```
+
+**Directory Structure**:
+- Working directory: `/Users/tdyar/ws/iris-vector-rag-private/`
+- Private repo contains ALL files: code + `.claude/` + `.specify/` + `specs/` + tracking files
+- Public fork NEVER receives private files (removed before push)
+
+**Rationale**: GitHub does not allow private forks of public repositories. This three-remote strategy enables private development with full version control while maintaining clean public contributions.
+
+### Private Files (NEVER Push to Public Fork)
+
+The following files/directories are private development artifacts and MUST NEVER appear in PRs to public repo:
+- `.claude/` - Claude Code commands and personal AI assistant setup
+- `.specify/` - Feature specification system, constitution, scripts, templates
+- `specs/` - Feature planning documents and specifications
+- `STATUS.md`, `PROGRESS.md`, `TODO.md` - Development tracking files
+- `FORK_WORKFLOW.md` - Workflow documentation
+
+**These files live ONLY in**:
+- ✅ Private repo (`origin`) - tracked with full version control
+- ✅ Local development machine
+- ❌ NEVER in public fork (`fork`)
+- ❌ NEVER in community repo (`upstream`)
 
 ### Environment Management
 
@@ -259,19 +290,23 @@ which python  # MUST show /path/to/project/.venv/bin/python
 
 Before starting ANY feature work, MUST execute:
 ```bash
-# 1. Sync local repository with remotes
-git fetch origin  # Internal GitLab
-git fetch github  # Public GitHub (if configured)
+# 1. Verify you're in private repo directory
+pwd  # MUST show /Users/tdyar/ws/iris-vector-rag-private
 
-# 2. Verify branch status
+# 2. Sync with all remotes
+git fetch origin    # Private development repo
+git fetch fork      # Public fork (for PRs)
+git fetch upstream  # Community repo
+
+# 3. Verify branch status
 git status
 git branch -vv  # Check tracking relationships
 
-# 3. Ensure working on latest main
-git checkout main
-git pull origin main --ff-only  # Fast-forward only, no merge commits
+# 4. Ensure working on latest master
+git checkout master
+git pull origin master --ff-only  # Fast-forward only from private repo
 
-# 4. Activate local environment
+# 5. Activate local environment
 source .venv/bin/activate
 which python  # Verify local venv path
 ```
@@ -329,41 +364,86 @@ git commit -m "feat: <description>"  # Conventional commits
 git branch  # Verify you're on feature branch, NOT main
 ```
 
-### Deployment Workflow
+### Daily Development Workflow
 
-**Phase 1: Merge to Main**
+**Phase 1: Daily Commits to Private Repo**
 ```bash
 # 1. Verify feature complete
 pytest specs/<feature>/contracts/ -v  # All tests pass
 git status  # Working directory clean
 
-# 2. Switch to main and merge
-git checkout main
+# 2. Switch to master and merge feature branch
+git checkout master
 git merge <feature-branch> --no-edit  # Fast-forward preferred
 
-# 3. Verify merge
+# 3. Push to private repo (includes ALL files)
+git push origin master  # Goes to private repo automatically
+
+# 4. Verify push
 git log --oneline -5  # Check commit history
 ```
 
-**Phase 2: Push to GitHub**
+### Creating Pull Requests to Public Repo
+
+**Phase 1: Create Clean PR Branch (Remove Private Files)**
 ```bash
-# 1. Verify GitHub remote configured
-git remote -v  # Should show 'github' remote
+# 1. Create PR branch from your completed feature
+git checkout -b pr/<feature-name> master
 
-# 2. Check GitHub status
-git fetch github
-git log github/main..main  # Commits to push
+# 2. Remove private files from THIS branch only
+git rm -r --cached .claude/
+git rm -r --cached .specify/
+git rm -r --cached specs/
+git rm --cached STATUS.md PROGRESS.md TODO.md FORK_WORKFLOW.md
 
-# 3. Push to GitHub
-git push github main
+# 3. Commit the removal
+git commit -m "chore: remove private development files for public PR"
 
-# If rejected (non-fast-forward):
-git fetch github
-git pull github main --rebase  # Rebase your commits
-git push github main
+# 4. Verify private files removed
+git ls-files | grep -E "(\.claude|\.specify|specs/|STATUS\.md)" || echo "Clean ✅"
 ```
 
-**Rationale**: Simple, direct workflow ensures all changes are immediately visible on GitHub.
+**Phase 2: Push to Public Fork**
+```bash
+# 1. Push PR branch to public fork
+git push fork pr/<feature-name>
+
+# 2. Verify on GitHub
+# Visit: https://github.com/isc-tdyar/iris-vector-rag
+# Should see new branch without private files
+```
+
+**Phase 3: Create Pull Request**
+```bash
+# On GitHub:
+# 1. Go to https://github.com/intersystems-community/iris-vector-rag
+# 2. Click "New Pull Request"
+# 3. Click "compare across forks"
+# 4. Set:
+#    Base repository: intersystems-community/iris-vector-rag (base: main)
+#    Head repository: isc-tdyar/iris-vector-rag (compare: pr/<feature-name>)
+# 5. Create PR with descriptive title and summary
+# 6. Verify PR does NOT contain .claude/, .specify/, specs/, or tracking files
+```
+
+**Phase 4: After PR Merged (Sync Back)**
+```bash
+# 1. Fetch updates from community repo
+git fetch upstream
+
+# 2. Merge into your private master
+git checkout master
+git merge upstream/main
+
+# 3. Push updates to private repo
+git push origin master
+
+# 4. Delete PR branch (local and remote)
+git branch -d pr/<feature-name>
+git push fork --delete pr/<feature-name>
+```
+
+**Rationale**: Three-remote fork workflow keeps private development artifacts safe while enabling clean public contributions. Private repo is source of truth, public fork is only for PRs.
 
 ### Version Bump & PyPI Publishing
 
