@@ -8,6 +8,10 @@ with real FK constraints and realistic data.
 These unit tests focus on specific edge cases and documentation of expected behavior.
 """
 import pytest
+from unittest.mock import Mock, patch, MagicMock
+from iris_rag.services.storage import EntityStorageAdapter
+from iris_rag.core.connection import ConnectionManager
+from iris_rag.storage.schema_manager import SchemaManager
 
 
 class TestEntityStorageDocumentation:
@@ -78,3 +82,135 @@ class TestEntityStorageDocumentation:
         - Skip complex E2E mocking in favor of manual testing
         """
         assert True, "See documentation for testing strategy"
+
+
+class TestTableEnsureCaching:
+    """
+    Unit tests for table ensure caching performance optimization.
+
+    BUG FIX: Redundant table existence checks in EntityStorageAdapter
+    - Before: 59,564 table checks in 11 minutes (~5,400/min)
+    - After: 22 table checks (99.96% reduction)
+    - Performance: 83% faster batch processing (66s → 11s)
+    """
+
+    @patch("iris_rag.services.storage.SchemaManager")
+    def test_table_ensure_only_executes_once_per_instance(self, mock_schema_manager_class):
+        """
+        Verify _ensure_kg_tables() only executes schema operations once per adapter instance.
+
+        This test validates the performance fix for redundant table checks.
+        Each adapter instance should check table existence only once, then cache the result.
+        """
+        # Setup mock
+        mock_schema_manager = MagicMock()
+        mock_schema_manager.ensure_table_schema.return_value = True
+        mock_schema_manager_class.return_value = mock_schema_manager
+
+        mock_connection_manager = Mock(spec=ConnectionManager)
+        config = {
+            "entity_extraction": {
+                "storage": {
+                    "entities_table": "RAG.Entities",
+                    "relationships_table": "RAG.EntityRelationships",
+                }
+            }
+        }
+
+        # Create adapter instance
+        adapter = EntityStorageAdapter(mock_connection_manager, config)
+
+        # First call should execute schema checks
+        adapter._ensure_kg_tables()
+        assert mock_schema_manager.ensure_table_schema.call_count == 2  # Entities + EntityRelationships
+
+        # Reset call count to verify subsequent calls are cached
+        mock_schema_manager.ensure_table_schema.reset_mock()
+
+        # Subsequent calls should be cached (no schema operations)
+        adapter._ensure_kg_tables()
+        adapter._ensure_kg_tables()
+        adapter._ensure_kg_tables()
+
+        # Verify NO additional schema operations occurred
+        assert mock_schema_manager.ensure_table_schema.call_count == 0, (
+            "Table ensure should be cached after first call, but schema operations were executed"
+        )
+
+    @patch("iris_rag.services.storage.SchemaManager")
+    def test_table_ensure_caching_flag_lifecycle(self, mock_schema_manager_class):
+        """
+        Verify the _tables_ensured flag lifecycle.
+
+        1. Initially False
+        2. Set to True after first successful table creation
+        3. Remains True for instance lifetime
+        """
+        mock_schema_manager = MagicMock()
+        mock_schema_manager.ensure_table_schema.return_value = True
+        mock_schema_manager_class.return_value = mock_schema_manager
+
+        mock_connection_manager = Mock(spec=ConnectionManager)
+        config = {
+            "entity_extraction": {
+                "storage": {
+                    "entities_table": "RAG.Entities",
+                    "relationships_table": "RAG.EntityRelationships",
+                }
+            }
+        }
+
+        adapter = EntityStorageAdapter(mock_connection_manager, config)
+
+        # Initially should be False
+        assert adapter._tables_ensured is False, "Cache flag should start as False"
+
+        # After first call, should be True
+        adapter._ensure_kg_tables()
+        assert adapter._tables_ensured is True, "Cache flag should be True after first call"
+
+        # Should remain True
+        adapter._ensure_kg_tables()
+        assert adapter._tables_ensured is True, "Cache flag should remain True"
+
+    @patch("iris_rag.services.storage.SchemaManager")
+    def test_table_ensure_exception_handling(self, mock_schema_manager_class):
+        """
+        Verify that if table creation fails, the cache flag is NOT set.
+
+        This ensures that failed table creation attempts will be retried on subsequent calls.
+        """
+        # Setup mock to raise exception
+        mock_schema_manager = MagicMock()
+        mock_schema_manager.ensure_table_schema.side_effect = Exception("Database connection failed")
+        mock_schema_manager_class.return_value = mock_schema_manager
+
+        mock_connection_manager = Mock(spec=ConnectionManager)
+        config = {
+            "entity_extraction": {
+                "storage": {
+                    "entities_table": "RAG.Entities",
+                    "relationships_table": "RAG.EntityRelationships",
+                }
+            }
+        }
+
+        adapter = EntityStorageAdapter(mock_connection_manager, config)
+
+        # Call should raise exception
+        with pytest.raises(Exception, match="Database connection failed"):
+            adapter._ensure_kg_tables()
+
+        # Cache flag should still be False (not set on failure)
+        assert adapter._tables_ensured is False, (
+            "Cache flag should remain False after failed table creation"
+        )
+
+        # Subsequent call should retry (not use cache)
+        with pytest.raises(Exception):
+            adapter._ensure_kg_tables()
+
+        # Verify retry occurred (schema operations were attempted again)
+        assert mock_schema_manager.ensure_table_schema.call_count > 1, (
+            "Failed table creation should be retried, not cached"
+        )
