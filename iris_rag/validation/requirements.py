@@ -329,7 +329,7 @@ class HybridGraphRAGRequirements(PipelineRequirements):
     """
     Requirements for HybridGraphRAG pipeline.
 
-    Inherits GraphRAG requirements but with enhanced capabilities when iris_graph_core
+    Inherits GraphRAG requirements but with enhanced capabilities when iris_vector_graph
     is available. Provides graceful fallback to GraphRAG behavior when enhanced
     features are unavailable.
     """
@@ -379,33 +379,33 @@ class HybridGraphRAGRequirements(PipelineRequirements):
 
     @property
     def optional_tables(self) -> List[TableRequirement]:
-        """Optional iris_graph_core enhancement tables."""
+        """Optional iris_vector_graph enhancement tables."""
         return [
             TableRequirement(
                 name="kg_NodeEmbeddings_optimized",
                 schema="SQLUSER",
-                description="Optimized HNSW vector indexes (iris_graph_core)",
+                description="Optimized HNSW vector indexes (iris_vector_graph)",
                 required=False,
                 supports_vector_search=True,
             ),
             TableRequirement(
                 name="rdf_labels",
                 schema="SQLUSER",
-                description="RDF label mappings (iris_graph_core)",
+                description="RDF label mappings (iris_vector_graph)",
                 required=False,
                 supports_vector_search=False,
             ),
             TableRequirement(
                 name="rdf_props",
                 schema="SQLUSER",
-                description="RDF property mappings (iris_graph_core)",
+                description="RDF property mappings (iris_vector_graph)",
                 required=False,
                 supports_vector_search=False,
             ),
             TableRequirement(
                 name="rdf_edges",
                 schema="SQLUSER",
-                description="RDF edge mappings (iris_graph_core)",
+                description="RDF edge mappings (iris_vector_graph)",
                 required=False,
                 supports_vector_search=False,
             ),
@@ -426,7 +426,7 @@ class HybridGraphRAGRequirements(PipelineRequirements):
                 name="hnsw_optimized_embeddings",
                 table="SQLUSER.kg_NodeEmbeddings_optimized",
                 column="embedding",
-                description="HNSW-optimized embeddings (iris_graph_core enhancement)",
+                description="HNSW-optimized embeddings (iris_vector_graph enhancement)",
                 required=False,
             ),
         ]

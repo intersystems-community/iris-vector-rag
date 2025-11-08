@@ -2,7 +2,7 @@
 Hybrid GraphRAG Pipeline with IRIS Graph Core Integration
 
 Enhances the existing GraphRAG pipeline with advanced hybrid search capabilities
-from the iris_graph_core module, including RRF fusion and iFind text search.
+from the iris_vector_graph module, including RRF fusion and iFind text search.
 
 SECURITY-HARDENED VERSION: No hard-coded credentials, config-driven discovery,
 robust error handling, and modular architecture.
@@ -30,7 +30,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
     """
     Enhanced GraphRAG pipeline with hybrid search capabilities.
 
-    Integrates iris_graph_core for:
+    Integrates iris_vector_graph for:
     - RRF (Reciprocal Rank Fusion) combining vector + text + graph signals
     - HNSW-optimized vector search (50ms performance)
     - Native IRIS iFind text search with stemming/stopwords
@@ -49,11 +49,22 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         llm_func: Optional[Callable[[str], str]] = None,
         vector_store=None,
         schema_manager=None,
+        embedding_config: Optional[str] = None,
     ):
         super().__init__(connection_manager, config_manager, llm_func, vector_store)
 
-        # Store schema manager for iris_graph_core table management
+        # Store schema manager for iris_vector_graph table management
         self.schema_manager = schema_manager
+
+        # IRIS EMBEDDING configuration (Feature 051)
+        self.embedding_config = embedding_config
+        self.use_iris_embedding = embedding_config is not None
+
+        if self.use_iris_embedding:
+            logger.info(
+                f"HybridGraphRAGPipeline initialized with IRIS EMBEDDING auto-vectorization "
+                f"and entity extraction (config: {self.embedding_config})"
+            )
 
         # Initialize graph core discovery
         self.discovery = GraphCoreDiscovery(config_manager)
@@ -69,12 +80,12 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         self._initialize_graph_core()
 
     def _initialize_graph_core(self):
-        """Initialize iris_graph_core components with secure configuration."""
+        """Initialize iris_vector_graph components with secure configuration."""
         success, modules = self.discovery.import_graph_core_modules()
 
         if not success:
             logger.warning(
-                "iris_graph_core not available - using standard GraphRAG only"
+                "iris_vector_graph not available - using standard GraphRAG only"
             )
             return
 
@@ -88,7 +99,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             if not is_valid:
                 logger.warning(
                     f"IRIS connection parameters missing: {missing_params}. "
-                    "Disabling iris_graph_core integration."
+                    "Disabling iris_vector_graph integration."
                 )
                 return
 
@@ -97,7 +108,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
 
             logger.info(
                 f"Connecting to IRIS at {connection_config['host']}:{connection_config['port']}"
-                f"/{connection_config['namespace']} for iris_graph_core"
+                f"/{connection_config['namespace']} for iris_vector_graph"
             )
 
             iris_connection = iris.connect(
@@ -131,7 +142,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             )
 
         except Exception as e:
-            logger.error(f"Failed to initialize iris_graph_core components: {e}")
+            logger.error(f"Failed to initialize iris_vector_graph components: {e}")
             logger.warning("Falling back to standard GraphRAG implementation")
             self.iris_engine = None
             self.retrieval_methods = None
@@ -234,7 +245,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 "pipeline_type": "hybrid_graphrag",
                 "retrieval_method": retrieval_method,
                 "generated_answer": generate_answer and answer is not None,
-                "iris_graph_core_enabled": self.iris_engine is not None,
+                "iris_vector_graph_enabled": self.iris_engine is not None,
             },
         }
 
@@ -255,7 +266,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             documents, method = self.retrieval_methods.retrieve_via_hybrid_fusion(
                 query_text, top_k, self._get_document_content_for_entity, **kwargs
             )
-            # If iris_graph_core returns 0 results, fall back to vector search
+            # If iris_vector_graph returns 0 results, fall back to vector search
             if not documents:
                 logger.warning(
                     "Hybrid fusion returned 0 results. Falling back to vector search."
@@ -334,7 +345,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         self, query_text: str, top_k: int, method: str, **kwargs
     ) -> tuple[List[Document], str]:
         """
-        Enhanced hybrid search fallback when iris_graph_core is not available.
+        Enhanced hybrid search fallback when iris_vector_graph is not available.
 
         Implements intelligent search strategies combining knowledge graph traversal
         with vector search to provide hybrid capabilities.
@@ -599,7 +610,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 self.connection_manager
             )
         else:
-            return {"iris_graph_core_enabled": False}
+            return {"iris_vector_graph_enabled": False}
 
     def benchmark_search_methods(
         self, query_text: str, iterations: int = 5
@@ -610,7 +621,7 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 query_text, self.query, iterations
             )
         else:
-            logger.warning("iris_graph_core not available for benchmarking")
+            logger.warning("iris_vector_graph not available for benchmarking")
             return {}
 
     def is_hybrid_enabled(self) -> bool:

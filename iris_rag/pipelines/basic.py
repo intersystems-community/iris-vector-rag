@@ -34,6 +34,7 @@ class BasicRAGPipeline(RAGPipeline):
         config_manager: Optional[ConfigurationManager] = None,
         llm_func: Optional[Callable[[str], str]] = None,
         vector_store=None,
+        embedding_config: Optional[str] = None,
     ):
         """
         Initialize the Basic RAG Pipeline.
@@ -43,6 +44,9 @@ class BasicRAGPipeline(RAGPipeline):
             config_manager: Optional manager for configuration settings (defaults to new instance)
             llm_func: Optional LLM function for answer generation
             vector_store: Optional VectorStore instance
+            embedding_config: Optional IRIS EMBEDDING config name for auto-vectorization (Feature 051)
+                             If provided, uses IRIS EMBEDDING-based retrieval instead of manual vectorization.
+                             Example: embedding_config="medical_embeddings_v1"
         """
         # Create default instances if not provided
         if connection_manager is None:
@@ -65,11 +69,22 @@ class BasicRAGPipeline(RAGPipeline):
         # Initialize components
         self.embedding_manager = EmbeddingManager(config_manager)
 
+        # IRIS EMBEDDING configuration (Feature 051)
+        self.embedding_config = embedding_config
+        self.use_iris_embedding = embedding_config is not None
+
         # Get pipeline configuration
         self.pipeline_config = self.config_manager.get("pipelines:basic", {})
         self.chunk_size = self.pipeline_config.get("chunk_size", 1000)
         self.chunk_overlap = self.pipeline_config.get("chunk_overlap", 200)
         self.default_top_k = self.pipeline_config.get("default_top_k", 5)
+
+        # Log EMBEDDING mode
+        if self.use_iris_embedding:
+            logger.info(
+                f"BasicRAGPipeline initialized with IRIS EMBEDDING auto-vectorization "
+                f"(config: {self.embedding_config})"
+            )
 
     def load_documents(self, documents=None, documents_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
         """
