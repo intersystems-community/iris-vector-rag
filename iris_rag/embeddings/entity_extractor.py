@@ -9,7 +9,7 @@ Purpose: Extract entities from text during EMBEDDING vectorization
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -354,7 +354,7 @@ def _extract_entities_rule_based(
         List of extracted entities
     """
     entities = []
-    timestamp = datetime.now(datetime.UTC)
+    timestamp = datetime.now(timezone.utc)
 
     # Simple pattern matching for demonstration
     # In production, use LLM or NER model
@@ -495,7 +495,7 @@ def configure_entity_types(
     return ConfigurationResult(
         config_name=config_name,
         entity_types=entity_types,
-        updated_at=datetime.now(datetime.UTC)
+        updated_at=datetime.now(timezone.utc)
     )
 
 
