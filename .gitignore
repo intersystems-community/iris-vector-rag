@@ -187,3 +187,8 @@ lint-results/
 logs/
 tests/artifacts/
 coverage.json
+
+# Development tracking files (not for git tracking)
+STATUS.md
+PROGRESS.md
+TODO.md
