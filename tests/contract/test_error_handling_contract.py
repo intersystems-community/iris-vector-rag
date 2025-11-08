@@ -26,9 +26,9 @@ class TestErrorHandlingContract:
         """
         FR-023: System MUST handle missing required tables gracefully.
 
-        Given: iris_graph_core expects tables (RDF_EDGES, kg_NodeEmbeddings_optimized)
+        Given: iris_vector_graph expects tables (RDF_EDGES, kg_NodeEmbeddings_optimized)
         And: Tables do not exist in database
-        When: Query executed via iris_graph_core methods
+        When: Query executed via iris_vector_graph methods
         Then: System detects missing tables and falls back
         """
         caplog.set_level(logging.ERROR)
@@ -68,12 +68,12 @@ class TestErrorHandlingContract:
         assert result is not None, "Query should complete without raising exception"
 
     @pytest.mark.requires_database
-    def test_iris_graph_core_connection_failure_handled(self, graphrag_pipeline, mocker, caplog):
+    def test_iris_vector_graph_connection_failure_handled(self, graphrag_pipeline, mocker, caplog):
         """
-        FR-024: System MUST handle iris_graph_core connection failures.
+        FR-024: System MUST handle iris_vector_graph connection failures.
 
         Given: HybridGraphRAG pipeline initialized
-        And: iris_graph_core connection fails (mocked exception)
+        And: iris_vector_graph connection fails (mocked exception)
         When: Query executed
         Then: Connection exception caught, logged, and fallback succeeds
         """
@@ -86,13 +86,13 @@ class TestErrorHandlingContract:
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
                 'retrieve_via_hybrid_fusion',
-                side_effect=ConnectionError("Failed to connect to iris_graph_core")
+                side_effect=ConnectionError("Failed to connect to iris_vector_graph")
             )
         else:
             mocker.patch.object(
                 graphrag_pipeline,
                 '_retrieve_via_hybrid_fusion',
-                side_effect=ConnectionError("Failed to connect to iris_graph_core")
+                side_effect=ConnectionError("Failed to connect to iris_vector_graph")
             )
 
         # Execute query - should not raise
@@ -120,7 +120,7 @@ class TestErrorHandlingContract:
 
         Given: HybridGraphRAG pipeline initialized
         And: Multiple queries executed
-        When: First query triggers fallback (iris_graph_core fails)
+        When: First query triggers fallback (iris_vector_graph fails)
         And: Second query executed on same pipeline instance
         Then: Both queries succeed, pipeline state remains consistent
         """

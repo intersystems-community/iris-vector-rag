@@ -154,11 +154,11 @@ class TestFallbackMechanismContract:
             "Metadata should include document count or contexts should have documents"
 
     @pytest.mark.requires_database
-    def test_graceful_degradation_without_iris_graph_core(self, graphrag_pipeline, mocker, caplog):
+    def test_graceful_degradation_without_iris_vector_graph(self, graphrag_pipeline, mocker, caplog):
         """
-        FR-019: System MUST gracefully degrade when iris_graph_core unavailable.
+        FR-019: System MUST gracefully degrade when iris_vector_graph unavailable.
 
-        Given: iris_graph_core not installed/available (mocked)
+        Given: iris_vector_graph not installed/available (mocked)
         When: HybridGraphRAG pipeline initializes
         Then: Initialization succeeds and all methods work via fallback
         """
@@ -166,25 +166,25 @@ class TestFallbackMechanismContract:
 
         query = "What are the risk factors for diabetes?"
 
-        # Mock all iris_graph_core methods to simulate unavailability
+        # Mock all iris_vector_graph methods to simulate unavailability
         if hasattr(graphrag_pipeline, 'retrieval_methods'):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
                 'retrieve_via_hybrid_fusion',
-                side_effect=AttributeError("iris_graph_core not available")
+                side_effect=AttributeError("iris_vector_graph not available")
             )
 
         # Execute query - should still work via fallback
         result = graphrag_pipeline.query(query, method="hybrid")
 
         # Verify query succeeded
-        assert result is not None, "Query should succeed despite iris_graph_core unavailable"
+        assert result is not None, "Query should succeed despite iris_vector_graph unavailable"
         assert len(result['contexts']) > 0, \
             "Should retrieve documents via fallback"
 
         # Verify fallback was used
         assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            "Should use vector_fallback when iris_graph_core unavailable"
+            "Should use vector_fallback when iris_vector_graph unavailable"
 
         # System should remain functional
         # Try another query to verify state consistency

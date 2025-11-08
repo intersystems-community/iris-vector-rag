@@ -17,8 +17,8 @@ class TestImportRequirements:
         """When iris-vector-graph is not installed, ImportError must be raised."""
         # Simulate missing package
         def import_mock(name, *args, **kwargs):
-            if 'iris_vector_graph_core' in name:
-                raise ImportError("No module named 'iris_vector_graph_core'")
+            if 'iris_vector_graph' in name:
+                raise ImportError("No module named 'iris_vector_graph'")
             return MagicMock()
 
         mock_import.side_effect = import_mock

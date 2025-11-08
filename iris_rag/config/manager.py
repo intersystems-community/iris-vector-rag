@@ -674,7 +674,7 @@ class ConfigurationManager:
             "enabled": True,
             "schema_auto_setup": True,
             "fallback_to_graphrag": True,
-            "iris_graph_core": {
+            "iris_vector_graph": {
                 "enabled": True,
                 "auto_create_tables": True,
                 "community_edition_compatible": True,

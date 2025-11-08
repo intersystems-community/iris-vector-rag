@@ -47,7 +47,7 @@ class TestHybridGraphRAGImportBehavior:
         """Import error should provide clear installation instructions."""
         with patch('builtins.__import__') as mock_import:
             def import_mock(name, *args, **kwargs):
-                if 'iris_vector_graph_core' in name:
+                if 'iris_vector_graph' in name:
                     raise ImportError(f"No module named '{name}'")
                 # Return real module for other imports
                 return __import__(name, *args, **kwargs)

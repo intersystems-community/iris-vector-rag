@@ -675,16 +675,16 @@ def validate_schema_once():
 
 
 @pytest.fixture
-def mock_iris_graph_core_unavailable(mocker):
+def mock_iris_vector_graph_unavailable(mocker):
     """
-    Mock iris_graph_core as unavailable for testing graceful degradation.
+    Mock iris_vector_graph as unavailable for testing graceful degradation.
 
-    This fixture simulates the scenario where iris_graph_core is not installed
+    This fixture simulates the scenario where iris_vector_graph is not installed
     or cannot be imported, allowing tests to validate fallback behavior.
 
     Usage:
-        def test_fallback(graphrag_pipeline, mock_iris_graph_core_unavailable):
-            # iris_graph_core methods will raise AttributeError
+        def test_fallback(graphrag_pipeline, mock_iris_vector_graph_unavailable):
+            # iris_vector_graph methods will raise AttributeError
             result = graphrag_pipeline.query("test", method="hybrid")
             assert result.metadata['retrieval_method'] == 'vector_fallback'
     """
@@ -732,7 +732,7 @@ def mock_zero_results_retrieval(mocker):
 @pytest.fixture
 def mock_connection_failure(mocker):
     """
-    Mock iris_graph_core connection failure for error handling tests.
+    Mock iris_vector_graph connection failure for error handling tests.
 
     Returns a callable that mocks a specific retrieval method to raise ConnectionError.
 

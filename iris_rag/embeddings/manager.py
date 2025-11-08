@@ -3,10 +3,14 @@ Embedding manager with fallback support for RAG templates.
 
 This module provides a unified interface for embedding generation with support
 for multiple backends and graceful fallback mechanisms.
+
+Extended for Feature 051: IRIS EMBEDDING support with cache statistics tracking.
 """
 
 import logging
 import threading
+import time
+from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager
@@ -19,6 +23,47 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 _SENTENCE_TRANSFORMER_CACHE: Dict[str, Any] = {}
 _CACHE_LOCK = threading.Lock()
+
+# ============================================================================
+# Cache statistics tracking (Feature 051)
+# ============================================================================
+@dataclass
+class CachedModelInstance:
+    """
+    Represents in-memory embedding model with device allocation, reference count,
+    and performance metrics.
+
+    Extended from Feature 050's basic cache to track detailed statistics.
+    """
+    config_name: str
+    model: Any  # SentenceTransformer instance
+    device: str  # "cuda:0", "mps", "cpu"
+    load_time_ms: float
+    reference_count: int = 0
+    last_access_time: float = field(default_factory=time.time)
+    memory_usage_mb: float = 0.0
+    cache_hits: int = 0
+    cache_misses: int = 0
+    total_embeddings_generated: int = 0
+
+
+@dataclass
+class CacheStatistics:
+    """Aggregate performance metrics for cache monitoring."""
+    config_name: str
+    cache_hits: int
+    cache_misses: int
+    hit_rate: float
+    avg_embedding_time_ms: float
+    model_load_count: int
+    memory_usage_mb: float
+    device: str
+    total_embeddings: int
+
+
+# Statistics storage
+_CACHE_STATS: Dict[str, CachedModelInstance] = {}
+_STATS_LOCK = threading.Lock()
 
 
 def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
@@ -417,3 +462,169 @@ class EmbeddingManager:
         self.primary_backend = backend_name
         logger.info(f"Switched to primary backend: {backend_name}")
         return True
+
+
+# ============================================================================
+# Cache Statistics API (Feature 051)
+# ============================================================================
+
+def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
+    """
+    Retrieve model cache statistics (FR-022).
+
+    Args:
+        config_name: Optional specific configuration to get stats for.
+                    If None, returns aggregate stats for all cached models.
+
+    Returns:
+        CacheStatistics with performance metrics
+
+    Example:
+        >>> stats = get_cache_stats("medical_embeddings_v1")
+        >>> print(f"Cache hit rate: {stats.hit_rate:.2%}")
+        Cache hit rate: 99.50%
+    """
+    with _STATS_LOCK:
+        if config_name:
+            if config_name not in _CACHE_STATS:
+                # Return empty stats if not found
+                return CacheStatistics(
+                    config_name=config_name,
+                    cache_hits=0,
+                    cache_misses=0,
+                    hit_rate=0.0,
+                    avg_embedding_time_ms=0.0,
+                    model_load_count=0,
+                    memory_usage_mb=0.0,
+                    device="unknown",
+                    total_embeddings=0
+                )
+
+            instance = _CACHE_STATS[config_name]
+            total_calls = instance.cache_hits + instance.cache_misses
+            hit_rate = instance.cache_hits / total_calls if total_calls > 0 else 0.0
+
+            return CacheStatistics(
+                config_name=instance.config_name,
+                cache_hits=instance.cache_hits,
+                cache_misses=instance.cache_misses,
+                hit_rate=hit_rate,
+                avg_embedding_time_ms=0.0,  # TODO: Track embedding times
+                model_load_count=instance.cache_misses,  # Approximation
+                memory_usage_mb=instance.memory_usage_mb,
+                device=instance.device,
+                total_embeddings=instance.total_embeddings_generated
+            )
+        else:
+            # Aggregate stats for all configs
+            total_hits = sum(inst.cache_hits for inst in _CACHE_STATS.values())
+            total_misses = sum(inst.cache_misses for inst in _CACHE_STATS.values())
+            total_embeddings = sum(inst.total_embeddings_generated for inst in _CACHE_STATS.values())
+            total_memory = sum(inst.memory_usage_mb for inst in _CACHE_STATS.values())
+            total_calls = total_hits + total_misses
+            hit_rate = total_hits / total_calls if total_calls > 0 else 0.0
+
+            return CacheStatistics(
+                config_name="<all>",
+                cache_hits=total_hits,
+                cache_misses=total_misses,
+                hit_rate=hit_rate,
+                avg_embedding_time_ms=0.0,
+                model_load_count=total_misses,
+                memory_usage_mb=total_memory,
+                device="mixed",
+                total_embeddings=total_embeddings
+            )
+
+
+def clear_cache(config_name: Optional[str] = None):
+    """
+    Clear model cache (for testing or memory management).
+
+    Args:
+        config_name: Optional specific configuration to clear.
+                    If None, clears all cached models.
+
+    Returns:
+        ClearCacheResult with models cleared and memory freed
+
+    Example:
+        >>> result = clear_cache("medical_embeddings_v1")
+        >>> print(f"Freed {result.memory_freed_mb}MB")
+        Freed 384.2MB
+    """
+    from ..config.embedding_config import ClearCacheResult
+
+    with _CACHE_LOCK:
+        if config_name:
+            # Clear specific model
+            cache_key_to_remove = None
+            for cache_key in list(_SENTENCE_TRANSFORMER_CACHE.keys()):
+                if cache_key.startswith(config_name):
+                    cache_key_to_remove = cache_key
+                    break
+
+            models_cleared = 0
+            memory_freed = 0.0
+
+            if cache_key_to_remove:
+                del _SENTENCE_TRANSFORMER_CACHE[cache_key_to_remove]
+                models_cleared = 1
+                logger.info(f"Cleared cache for: {cache_key_to_remove}")
+
+            with _STATS_LOCK:
+                if config_name in _CACHE_STATS:
+                    memory_freed = _CACHE_STATS[config_name].memory_usage_mb
+                    del _CACHE_STATS[config_name]
+
+            return ClearCacheResult(
+                models_cleared=models_cleared,
+                memory_freed_mb=memory_freed
+            )
+        else:
+            # Clear all models
+            models_cleared = len(_SENTENCE_TRANSFORMER_CACHE)
+            _SENTENCE_TRANSFORMER_CACHE.clear()
+            logger.info(f"Cleared all cached models ({models_cleared} total)")
+
+            with _STATS_LOCK:
+                memory_freed = sum(inst.memory_usage_mb for inst in _CACHE_STATS.values())
+                _CACHE_STATS.clear()
+
+            return ClearCacheResult(
+                models_cleared=models_cleared,
+                memory_freed_mb=memory_freed
+            )
+
+
+def _record_cache_hit(config_name: str):
+    """Record a cache hit for statistics tracking."""
+    with _STATS_LOCK:
+        if config_name in _CACHE_STATS:
+            _CACHE_STATS[config_name].cache_hits += 1
+            _CACHE_STATS[config_name].last_access_time = time.time()
+
+
+def _record_cache_miss(config_name: str, device: str, load_time_ms: float):
+    """Record a cache miss (model load) for statistics tracking."""
+    with _STATS_LOCK:
+        if config_name not in _CACHE_STATS:
+            # Create new stats entry
+            _CACHE_STATS[config_name] = CachedModelInstance(
+                config_name=config_name,
+                model=None,  # We don't store the model here, just stats
+                device=device,
+                load_time_ms=load_time_ms,
+                cache_misses=1,
+                memory_usage_mb=400.0  # Approximate model size
+            )
+        else:
+            _CACHE_STATS[config_name].cache_misses += 1
+            _CACHE_STATS[config_name].last_access_time = time.time()
+
+
+def _record_embeddings_generated(config_name: str, count: int):
+    """Record number of embeddings generated."""
+    with _STATS_LOCK:
+        if config_name in _CACHE_STATS:
+            _CACHE_STATS[config_name].total_embeddings_generated += count

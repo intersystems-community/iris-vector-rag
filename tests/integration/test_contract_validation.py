@@ -276,7 +276,7 @@ class TestRealPipelineValidation:
         errors = [v for v in violations if v.severity == ViolationSeverity.ERROR]
         assert len(errors) == 0, f"MultiQueryRRFPipeline should be compliant: {errors}"
 
-    @pytest.mark.skip(reason="HybridGraphRAG requires iris_graph_core and IRIS connection")
+    @pytest.mark.skip(reason="HybridGraphRAG requires iris_vector_graph and IRIS connection")
     def test_hybrid_graphrag_pipeline_compliance(self):
         """Test HybridGraphRAGPipeline contract compliance."""
         from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline

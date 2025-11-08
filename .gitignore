@@ -182,3 +182,8 @@ evaluation_framework/**/*.log
 test-results/
 coverage_html/
 lint-results/
+
+# Additional cleanup entries (Feature 052)
+logs/
+tests/artifacts/
+coverage.json

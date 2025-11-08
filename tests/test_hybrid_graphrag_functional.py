@@ -6,7 +6,7 @@ Tests the core functionality of HybridGraphRAG including:
 - Configuration: Config-driven discovery
 - Modularity: Proper fallbacks and error handling
 - Query methods: Different retrieval strategies
-- Integration: iris_graph_core optional dependency
+- Integration: iris_vector_graph optional dependency
 """
 
 import logging
@@ -113,7 +113,7 @@ class TestGraphCoreDiscovery:
             # Create mock graph core structure
             mock_graph_core = temp_path / "test-graph-core"
             mock_graph_core.mkdir()
-            (mock_graph_core / "iris_graph_core").mkdir()
+            (mock_graph_core / "iris_vector_graph").mkdir()
 
             # Mock config manager that returns the test path
             mock_config = Mock()
@@ -130,7 +130,7 @@ class TestGraphCoreDiscovery:
             temp_path = Path(temp_dir).resolve()
             mock_graph_core = temp_path / "env-graph-core"
             mock_graph_core.mkdir()
-            (mock_graph_core / "iris_graph_core").mkdir()
+            (mock_graph_core / "iris_vector_graph").mkdir()
 
             with patch.dict(os.environ, {"GRAPH_CORE_PATH": str(mock_graph_core)}):
                 discovery = GraphCoreDiscovery(None)
@@ -183,7 +183,7 @@ class TestHybridGraphRAGPipeline:
         }
 
     def test_pipeline_initialization_without_graph_core(self):
-        """Test pipeline initializes gracefully without iris_graph_core."""
+        """Test pipeline initializes gracefully without iris_vector_graph."""
         with patch(
             "iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery"
         ) as mock_discovery_class:
@@ -198,13 +198,13 @@ class TestHybridGraphRAGPipeline:
             assert pipeline.retrieval_methods is None
 
     def test_pipeline_initialization_with_graph_core(self):
-        """Test pipeline initializes with iris_graph_core when available."""
+        """Test pipeline initializes with iris_vector_graph when available."""
         mock_modules = {
             "IRISGraphEngine": Mock,
             "HybridSearchFusion": Mock,
             "TextSearchEngine": Mock,
             "VectorOptimizer": Mock,
-            "package_name": "iris_graph_core",
+            "package_name": "iris_vector_graph",
         }
 
         with patch(

@@ -524,6 +524,81 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                 f"EntityExtractionService initialized with basic method: {self.method}"
             )
 
+        # Validate LLM configuration (Bug fix: silent fallback to Ollama)
+        self._validate_llm_config()
+
+    def _validate_llm_config(self):
+        """
+        Validate LLM configuration and warn about silent fallbacks.
+
+        Bug fix: https://github.com/tdyar/hipporag2-pipeline/BUG_REPORT_RAG_TEMPLATES.md
+        Prevents silent fallback to Ollama when OpenAI is configured.
+        """
+        llm_config = self.config_manager.get("llm", {})
+
+        if not llm_config:
+            logger.warning(
+                "⚠️  No LLM configuration found! "
+                "Falling back to default model: qwen2.5:7b (Ollama). "
+                "This may cause slow performance (100x slower than cloud LLMs). "
+                "Please configure llm.model or llm.provider in your config."
+            )
+            return
+
+        model = llm_config.get("model")
+        model_name = llm_config.get("model_name")  # Alternative naming convention
+        provider = llm_config.get("provider")
+
+        # Check if neither model key exists
+        if not model and not model_name:
+            logger.warning(
+                f"⚠️  LLM configuration missing 'model' key! "
+                f"Found provider='{provider}' but no model specified. "
+                f"Falling back to default: qwen2.5:7b (Ollama). "
+                f"Expected config structure: llm.model = 'gpt-4o-mini' "
+                f"(Note: Use 'model' not just 'model_name'). "
+                f"Performance impact: ~100x slower than cloud LLMs!"
+            )
+
+        # Detect provider/model mismatch (indicates silent fallback)
+        effective_model = self._get_model_name()
+        if provider == "openai" and "qwen" in effective_model.lower():
+            logger.error(
+                "❌ MISCONFIGURATION DETECTED! "
+                f"Provider is 'openai' but model is '{effective_model}' (Ollama model). "
+                f"This indicates 'llm.model' was not found in config. "
+                f"Check your configuration file! "
+                f"Expected: llm.model = 'gpt-4o-mini' or similar OpenAI model."
+            )
+
+    def _get_model_name(self) -> str:
+        """
+        Get model name with support for both naming conventions.
+
+        Supports both 'model' and 'model_name' keys for backward compatibility.
+        Bug fix: Support common naming convention 'model_name' in addition to 'model'.
+
+        Returns:
+            Model name string, defaults to "qwen2.5:7b" if not configured
+        """
+        llm_config = self.config_manager.get("llm", {})
+
+        # Try both naming conventions (model takes precedence)
+        model = (
+            llm_config.get("model") or
+            llm_config.get("model_name") or
+            "qwen2.5:7b"
+        )
+
+        # Warn if using fallback default
+        if model == "qwen2.5:7b" and llm_config.get("provider") != "ollama":
+            logger.warning(
+                "No model configured, using default: qwen2.5:7b (Ollama). "
+                "This may cause 100x slower performance vs cloud LLMs!"
+            )
+
+        return model
+
     def extract_entities(self, document: Document) -> List[Entity]:
         """Extract entities with automatic ontology enhancement if enabled."""
         if hasattr(self, "ontology_enabled") and self.ontology_enabled:
@@ -747,7 +822,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                     source_document_id=document.id if document else None,
                     metadata={
                         "method": "dspy",
-                        "model": self.config.get("llm", {}).get("model", "qwen2.5:7b")
+                        "model": self._get_model_name()
                     }
                 )
                 entities.append(entity)
@@ -856,7 +931,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                         source_document_id=ticket_id,
                         metadata={
                             "method": "dspy_batch",
-                            "model": self.config.get("llm", {}).get("model", "qwen2.5:7b"),
+                            "model": self._get_model_name(),
                             "batch_size": len(tickets)
                         }
                     )

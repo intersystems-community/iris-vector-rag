@@ -171,7 +171,7 @@ class SchemaManager:
                 "supports_vector_search": False,
                 "supports_graph_traversal": True,
                 "table_type": "graph_metadata",
-                "created_by": "iris_graph_core",
+                "created_by": "iris_vector_graph",
             },
             "rdf_props": {
                 "embedding_column": None,
@@ -181,7 +181,7 @@ class SchemaManager:
                 "supports_vector_search": False,
                 "supports_graph_traversal": True,
                 "table_type": "graph_properties",
-                "created_by": "iris_graph_core",
+                "created_by": "iris_vector_graph",
             },
             "rdf_edges": {
                 "embedding_column": None,
@@ -191,7 +191,7 @@ class SchemaManager:
                 "supports_vector_search": False,
                 "supports_graph_traversal": True,
                 "table_type": "graph_relationships",
-                "created_by": "iris_graph_core",
+                "created_by": "iris_vector_graph",
             },
             "kg_NodeEmbeddings_optimized": {
                 "embedding_column": "emb",
@@ -201,7 +201,7 @@ class SchemaManager:
                 "supports_vector_search": True,
                 "supports_graph_traversal": False,
                 "table_type": "optimized_vectors",
-                "created_by": "iris_graph_core",
+                "created_by": "iris_vector_graph",
                 "requires_hnsw_index": True,
             },
         }
@@ -457,7 +457,7 @@ class SchemaManager:
             config["configuration"].update(
                 {
                     "table_type": "graph_metadata",
-                    "created_by": "iris_graph_core",
+                    "created_by": "iris_vector_graph",
                     "expected_columns": [
                         "s",  # subject
                         "label",  # entity type/label
@@ -472,7 +472,7 @@ class SchemaManager:
             config["configuration"].update(
                 {
                     "table_type": "graph_properties",
-                    "created_by": "iris_graph_core",
+                    "created_by": "iris_vector_graph",
                     "expected_columns": [
                         "s",  # subject
                         "key",  # property key
@@ -488,7 +488,7 @@ class SchemaManager:
             config["configuration"].update(
                 {
                     "table_type": "graph_relationships",
-                    "created_by": "iris_graph_core",
+                    "created_by": "iris_vector_graph",
                     "expected_columns": [
                         "edge_id",  # primary key
                         "s",  # subject
@@ -507,7 +507,7 @@ class SchemaManager:
             config["configuration"].update(
                 {
                     "table_type": "optimized_vectors",
-                    "created_by": "iris_graph_core",
+                    "created_by": "iris_vector_graph",
                     "expected_columns": [
                         "id",  # entity identifier
                         "emb",  # vector embedding (optimized VECTOR type)

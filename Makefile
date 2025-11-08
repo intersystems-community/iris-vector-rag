@@ -5,7 +5,7 @@
 # =============================================================================
 
 # Default configuration
-COMPOSE_FILE := docker-compose.full.yml
+COMPOSE_FILE := config/docker/docker-compose.full.yml
 ENV_FILE := .env
 PROJECT_NAME := rag-templates
 
@@ -439,9 +439,9 @@ test-all-enterprise: test-enterprise-10k test-graphrag-scale test-pytest-enterpr
 .PHONY: test-db-basic
 test-db-basic: setup-db ## Switch to basic RAG test database
 	$(call print_message,$(BLUE),Switching to Basic RAG Test Database)
-	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@docker-compose -f config/docker/docker-compose.test.yml down iris-test 2>/dev/null || true
 	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/basic-rag-testdb} && \
-	docker-compose -f docker-compose.test.yml up -d iris-test
+	docker-compose -f config/docker/docker-compose.test.yml up -d iris-test
 	@sleep 15
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),Basic RAG test database ready)
@@ -449,9 +449,9 @@ test-db-basic: setup-db ## Switch to basic RAG test database
 .PHONY: test-db-graphrag
 test-db-graphrag: setup-db ## Switch to GraphRAG test database
 	$(call print_message,$(BLUE),Switching to GraphRAG Test Database)
-	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@docker-compose -f config/docker/docker-compose.test.yml down iris-test 2>/dev/null || true
 	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/graphrag-testdb} && \
-	docker-compose -f docker-compose.test.yml up -d iris-test
+	docker-compose -f config/docker/docker-compose.test.yml up -d iris-test
 	@sleep 15
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),GraphRAG test database ready)
@@ -459,9 +459,9 @@ test-db-graphrag: setup-db ## Switch to GraphRAG test database
 .PHONY: test-db-crag
 test-db-crag: setup-db ## Switch to CRAG test database
 	$(call print_message,$(BLUE),Switching to CRAG Test Database)
-	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@docker-compose -f config/docker/docker-compose.test.yml down iris-test 2>/dev/null || true
 	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/crag-testdb} && \
-	docker-compose -f docker-compose.test.yml up -d iris-test
+	docker-compose -f config/docker/docker-compose.test.yml up -d iris-test
 	@sleep 15
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),CRAG test database ready)
@@ -469,9 +469,9 @@ test-db-crag: setup-db ## Switch to CRAG test database
 .PHONY: test-db-enterprise
 test-db-enterprise: setup-db ## Switch to enterprise scale test database
 	$(call print_message,$(BLUE),Switching to Enterprise Scale Test Database)
-	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@docker-compose -f config/docker/docker-compose.test.yml down iris-test 2>/dev/null || true
 	@export TEST_DATABASE_VOLUME=$${TEST_DATABASE_VOLUME:-./docker/test-databases/enterprise-testdb} && \
-	docker-compose -f docker-compose.test.yml up -d iris-test
+	docker-compose -f config/docker/docker-compose.test.yml up -d iris-test
 	@sleep 30
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),Enterprise test database ready)
@@ -479,9 +479,9 @@ test-db-enterprise: setup-db ## Switch to enterprise scale test database
 .PHONY: test-db-clean
 test-db-clean: setup-db ## Create fresh empty test database
 	$(call print_message,$(BLUE),Creating Fresh Empty Test Database)
-	@docker-compose -f docker-compose.test.yml down iris-test 2>/dev/null || true
+	@docker-compose -f config/docker/docker-compose.test.yml down iris-test 2>/dev/null || true
 	@docker volume rm rag-templates_test-iris-data 2>/dev/null || true
-	@docker-compose -f docker-compose.test.yml up -d iris-test
+	@docker-compose -f config/docker/docker-compose.test.yml up -d iris-test
 	@sleep 15
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 || true
 	$(call print_message,$(GREEN),Clean test database ready - framework auto-setup will handle schema)
@@ -489,7 +489,7 @@ test-db-clean: setup-db ## Create fresh empty test database
 .PHONY: test-db-status
 test-db-status: setup-db ## Show current test database status
 	$(call print_message,$(BLUE),Test Database Status)
-	@docker-compose -f docker-compose.test.yml ps iris-test 2>/dev/null || echo "No test database running"
+	@docker-compose -f config/docker/docker-compose.test.yml ps iris-test 2>/dev/null || echo "No test database running"
 	@python evaluation_framework/test_iris_connectivity.py --port 31972 && \
 	python scripts/test-db/show_database_info.py 2>/dev/null || \
 	echo "Test database not accessible"
@@ -1287,7 +1287,7 @@ mcp-build: ## Build MCP Docker image
 .PHONY: mcp-run-standalone
 mcp-run-standalone: env-check ## Start MCP server in standalone mode (stdio + HTTP/SSE)
 	$(call print_message,$(BLUE),Starting MCP server in standalone mode)
-	@docker-compose -f docker-compose.mcp.yml --profile standalone up -d
+	@docker-compose -f config/docker/docker-compose.mcp.yml --profile standalone up -d
 	@echo -e "  $(GREEN)✓$(NC) MCP Server (standalone) is starting..."
 	@echo -e "  $(BLUE)ℹ$(NC) Python Bridge: http://localhost:8001"
 	@echo -e "  $(BLUE)ℹ$(NC) MCP HTTP/SSE: http://localhost:3000"
@@ -1298,7 +1298,7 @@ mcp-run-standalone: env-check ## Start MCP server in standalone mode (stdio + HT
 .PHONY: mcp-run-integrated
 mcp-run-integrated: env-check ## Start MCP server in integrated mode (embedded in REST API)
 	$(call print_message,$(BLUE),Starting MCP server in integrated mode)
-	@docker-compose -f docker-compose.mcp.yml --profile integrated up -d
+	@docker-compose -f config/docker/docker-compose.mcp.yml --profile integrated up -d
 	@echo -e "  $(GREEN)✓$(NC) REST API with MCP integration is starting..."
 	@echo -e "  $(BLUE)ℹ$(NC) REST API: http://localhost:8000"
 	@echo -e "  $(BLUE)ℹ$(NC) API Docs: http://localhost:8000/docs"
@@ -1311,7 +1311,7 @@ mcp-run: mcp-run-standalone ## Alias for mcp-run-standalone (default mode)
 .PHONY: mcp-stop
 mcp-stop: ## Stop MCP server (all profiles)
 	$(call print_message,$(BLUE),Stopping MCP server)
-	@docker-compose -f docker-compose.mcp.yml --profile standalone --profile integrated down
+	@docker-compose -f config/docker/docker-compose.mcp.yml --profile standalone --profile integrated down
 	$(call print_message,$(GREEN),MCP server stopped)
 
 .PHONY: mcp-restart
@@ -1342,9 +1342,9 @@ mcp-health: ## Check MCP server health
 mcp-logs: ## View MCP server logs
 	$(call print_message,$(BLUE),Viewing MCP server logs)
 	@if docker ps --filter "name=mcp-standalone" --format "{{.Names}}" | grep -q "mcp-standalone"; then \
-		docker-compose -f docker-compose.mcp.yml --profile standalone logs -f mcp-standalone; \
+		docker-compose -f config/docker/docker-compose.mcp.yml --profile standalone logs -f mcp-standalone; \
 	elif docker ps --filter "name=api-with-mcp" --format "{{.Names}}" | grep -q "api-with-mcp"; then \
-		docker-compose -f docker-compose.mcp.yml --profile integrated logs -f api-with-mcp; \
+		docker-compose -f config/docker/docker-compose.mcp.yml --profile integrated logs -f api-with-mcp; \
 	else \
 		echo -e "  $(RED)✗$(NC) No MCP server running"; \
 	fi
@@ -1426,7 +1426,7 @@ mcp-dev: env-check mcp-build mcp-run-standalone ## Full MCP development setup (b
 .PHONY: mcp-clean
 mcp-clean: mcp-stop ## Clean MCP Docker resources
 	$(call print_message,$(BLUE),Cleaning MCP Docker resources)
-	@docker-compose -f docker-compose.mcp.yml down -v
+	@docker-compose -f config/docker/docker-compose.mcp.yml down -v
 	@docker rmi iris-rag-mcp:latest 2>/dev/null || true
 	$(call print_message,$(GREEN),MCP resources cleaned)
 

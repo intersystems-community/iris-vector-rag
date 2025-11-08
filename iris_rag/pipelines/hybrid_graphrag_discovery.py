@@ -1,7 +1,7 @@
 """
 Graph Core Discovery Module
 
-Provides secure, config-driven discovery of iris_graph_core modules without
+Provides secure, config-driven discovery of iris_vector_graph modules without
 hard-coded paths or unsafe sys.path modifications.
 """
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class GraphCoreDiscovery:
-    """Handles discovery and import of iris_graph_core modules safely."""
+    """Handles discovery and import of iris_vector_graph modules safely."""
 
     def __init__(self, config_manager=None):
         self.config_manager = config_manager
@@ -24,7 +24,7 @@ class GraphCoreDiscovery:
 
     def discover_graph_core_path(self) -> Optional[Path]:
         """
-        Discover iris_graph_core path using config-first approach.
+        Discover iris_vector_graph path using config-first approach.
 
         Priority order:
         1. Configuration manager setting
@@ -74,17 +74,13 @@ class GraphCoreDiscovery:
         return None
 
     def _validate_graph_core_path(self, path: Path) -> bool:
-        """Validate that a path contains iris_graph_core modules."""
+        """Validate that a path contains iris_vector_graph package."""
         if not path.exists() or not path.is_dir():
             return False
 
-        # Check for either new or legacy package structure
-        new_package = path / "iris_vector_graph_core"
-        legacy_package = path / "iris_graph_core"
-
-        return (new_package.exists() and new_package.is_dir()) or (
-            legacy_package.exists() and legacy_package.is_dir()
-        )
+        # Check for iris_vector_graph package directory (top-level module)
+        package_dir = path / "iris_vector_graph"
+        return package_dir.exists() and package_dir.is_dir()
 
     def _search_sibling_directories(self) -> Optional[Path]:
         """Search sibling directories for graph core (secure patterns only)."""
@@ -124,10 +120,10 @@ class GraphCoreDiscovery:
 
         # First, try to import from iris-vector-graph package (preferred)
         try:
-            from iris_vector_graph_core.engine import IRISGraphEngine
-            from iris_vector_graph_core.fusion import HybridSearchFusion
-            from iris_vector_graph_core.text_search import TextSearchEngine
-            from iris_vector_graph_core.vector_utils import VectorOptimizer
+            from iris_vector_graph import IRISGraphEngine
+            from iris_vector_graph import HybridSearchFusion
+            from iris_vector_graph import TextSearchEngine
+            from iris_vector_graph import VectorOptimizer
 
             modules = {
                 "IRISGraphEngine": IRISGraphEngine,
@@ -137,7 +133,7 @@ class GraphCoreDiscovery:
             }
 
             logger.info(
-                "Successfully imported iris_graph_core from iris-vector-graph package"
+                "Successfully imported iris_vector_graph from iris-vector-graph package"
             )
             self._import_cache = {"success": True, "modules": modules}
             return True, modules
@@ -161,53 +157,32 @@ class GraphCoreDiscovery:
             if str(graph_core_path) not in sys.path:
                 sys.path.insert(0, str(graph_core_path))
 
-            # Try new package name first
+            # Try iris_vector_graph package from local path
             try:
-                from iris_vector_graph_core.engine import IRISGraphEngine
-                from iris_vector_graph_core.fusion import HybridSearchFusion
-                from iris_vector_graph_core.text_search import TextSearchEngine
-                from iris_vector_graph_core.vector_utils import VectorOptimizer
+                from iris_vector_graph import IRISGraphEngine
+                from iris_vector_graph import HybridSearchFusion
+                from iris_vector_graph import TextSearchEngine
+                from iris_vector_graph import VectorOptimizer
 
                 modules = {
                     "IRISGraphEngine": IRISGraphEngine,
                     "HybridSearchFusion": HybridSearchFusion,
                     "TextSearchEngine": TextSearchEngine,
                     "VectorOptimizer": VectorOptimizer,
-                    "package_name": "iris_vector_graph_core",
+                    "package_name": "iris_vector_graph",
                 }
                 logger.info(
-                    "Successfully imported iris_vector_graph_core from local path"
+                    "Successfully imported iris_vector_graph from local path"
                 )
                 self._import_cache = {"success": True, "modules": modules}
                 return True, modules
 
-            except ImportError as e_new:
-                # Fallback to legacy package name
-                try:
-                    from iris_graph_core.engine import IRISGraphEngine
-                    from iris_graph_core.fusion import HybridSearchFusion
-                    from iris_graph_core.text_search import TextSearchEngine
-                    from iris_graph_core.vector_utils import VectorOptimizer
-
-                    modules = {
-                        "IRISGraphEngine": IRISGraphEngine,
-                        "HybridSearchFusion": HybridSearchFusion,
-                        "TextSearchEngine": TextSearchEngine,
-                        "VectorOptimizer": VectorOptimizer,
-                        "package_name": "iris_graph_core",
-                    }
-                    logger.info(
-                        "Successfully imported iris_graph_core (legacy) from local path"
-                    )
-                    self._import_cache = {"success": True, "modules": modules}
-                    return True, modules
-
-                except ImportError as e_legacy:
-                    logger.warning(
-                        f"Failed to import from local path: new={e_new}, legacy={e_legacy}"
-                    )
-                    self._import_cache = {"success": False, "modules": {}}
-                    return False, {}
+            except ImportError as e:
+                logger.warning(
+                    f"Failed to import from local path: {e}"
+                )
+                self._import_cache = {"success": False, "modules": {}}
+                return False, {}
 
         finally:
             sys.path[:] = original_path
