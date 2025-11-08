@@ -20,6 +20,7 @@ from .manager import (
     _record_cache_hit,
     _record_cache_miss,
     _record_embeddings_generated,
+    _record_embedding_time,
 )
 
 logger = logging.getLogger(__name__)
@@ -333,11 +334,15 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
 
     # Generate embeddings
     try:
+        # Time the embedding generation
+        embed_start = time.time()
         embeddings = model.encode(texts, convert_to_tensor=False)
         embeddings_list = embeddings.tolist()
+        embed_time_ms = (time.time() - embed_start) * 1000
 
-        # Record embeddings generated
+        # Record embeddings generated and timing
         _record_embeddings_generated(config_name, len(texts))
+        _record_embedding_time(config_name, embed_time_ms)
 
         logger.debug(
             "EMBEDDING_GENERATION_SUCCESS",
@@ -366,9 +371,17 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
             # Try CPU fallback
             try:
                 model_cpu = _get_cached_sentence_transformer(config.model_name, "cpu")
+
+                # Time CPU fallback embedding generation
+                embed_start = time.time()
                 embeddings = model_cpu.encode(texts, convert_to_tensor=False)
                 embeddings_list = embeddings.tolist()
+                embed_time_ms = (time.time() - embed_start) * 1000
                 device = "cpu"
+
+                # Record embeddings and timing for CPU fallback
+                _record_embeddings_generated(config_name, len(texts))
+                _record_embedding_time(config_name, embed_time_ms)
 
                 logger.info(
                     "EMBEDDING_CPU_FALLBACK_SUCCESS",
@@ -377,6 +390,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
                         "num_texts": len(texts),
                         "original_device": "gpu",
                         "fallback_device": "cpu",
+                        "embedding_time_ms": embed_time_ms,
                     }
                 )
 

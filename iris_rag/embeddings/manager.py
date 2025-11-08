@@ -45,6 +45,7 @@ class CachedModelInstance:
     cache_hits: int = 0
     cache_misses: int = 0
     total_embeddings_generated: int = 0
+    total_embedding_time_ms: float = 0.0  # Cumulative embedding time for averaging
 
 
 @dataclass
@@ -503,13 +504,18 @@ def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
             instance = _CACHE_STATS[config_name]
             total_calls = instance.cache_hits + instance.cache_misses
             hit_rate = instance.cache_hits / total_calls if total_calls > 0 else 0.0
+            avg_time = (
+                instance.total_embedding_time_ms / total_calls
+                if total_calls > 0
+                else 0.0
+            )
 
             return CacheStatistics(
                 config_name=instance.config_name,
                 cache_hits=instance.cache_hits,
                 cache_misses=instance.cache_misses,
                 hit_rate=hit_rate,
-                avg_embedding_time_ms=0.0,  # TODO: Track embedding times
+                avg_embedding_time_ms=avg_time,
                 model_load_count=instance.cache_misses,  # Approximation
                 memory_usage_mb=instance.memory_usage_mb,
                 device=instance.device,
@@ -557,20 +563,33 @@ def clear_cache(config_name: Optional[str] = None):
 
     with _CACHE_LOCK:
         if config_name:
-            # Clear specific model
-            cache_key_to_remove = None
-            for cache_key in list(_SENTENCE_TRANSFORMER_CACHE.keys()):
-                if cache_key.startswith(config_name):
-                    cache_key_to_remove = cache_key
-                    break
+            # Clear specific model by config_name
+            # Need to get config to find model_name, then build cache keys
+            from ..embeddings.iris_embedding import get_config
 
-            models_cleared = 0
+            try:
+                config = get_config(config_name)
+                model_name = config.model_name
+            except ValueError:
+                # Config not found, return empty result
+                logger.warning(f"Config '{config_name}' not found, nothing to clear")
+                return ClearCacheResult(models_cleared=0, memory_freed_mb=0.0)
+
+            # Cache keys are "model_name:device", check all possible devices
+            possible_devices = ["cuda:0", "mps", "cpu"]
+            cache_keys_to_remove = []
+
+            for device in possible_devices:
+                cache_key = f"{model_name}:{device}"
+                if cache_key in _SENTENCE_TRANSFORMER_CACHE:
+                    cache_keys_to_remove.append(cache_key)
+
+            models_cleared = len(cache_keys_to_remove)
             memory_freed = 0.0
 
-            if cache_key_to_remove:
-                del _SENTENCE_TRANSFORMER_CACHE[cache_key_to_remove]
-                models_cleared = 1
-                logger.info(f"Cleared cache for: {cache_key_to_remove}")
+            for cache_key in cache_keys_to_remove:
+                del _SENTENCE_TRANSFORMER_CACHE[cache_key]
+                logger.info(f"Cleared cache for: {cache_key}")
 
             with _STATS_LOCK:
                 if config_name in _CACHE_STATS:
@@ -628,3 +647,10 @@ def _record_embeddings_generated(config_name: str, count: int):
     with _STATS_LOCK:
         if config_name in _CACHE_STATS:
             _CACHE_STATS[config_name].total_embeddings_generated += count
+
+
+def _record_embedding_time(config_name: str, time_ms: float):
+    """Record embedding generation time for averaging."""
+    with _STATS_LOCK:
+        if config_name in _CACHE_STATS:
+            _CACHE_STATS[config_name].total_embedding_time_ms += time_ms
