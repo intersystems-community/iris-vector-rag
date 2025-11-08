@@ -1,20 +1,19 @@
 <!--
 Sync Impact Report:
-- Version change: 1.5.0 → 1.6.0
-- List of modified principles:
-  * Development Standards (enhanced with uv package management requirement)
-- Amendment details:
-  * Added mandatory uv usage for Python package management
-  * Deprecates traditional pip/virtualenv workflows
-  * Emphasizes uv's superior performance and reliability
-  * Ensures framework-wide consistency in dependency management
-- Added sections: Package Management requirement within existing Development Standards
+- Version change: 1.7.0 → 1.7.1 (PATCH)
+- Version bump rationale: Enhanced Step 4 (PyPI Publishing) with detailed procedures
+- List of modified principles: Principle VIII (Git & Release Workflow)
+- Modified sections:
+  * Step 4: PyPI Publishing - Added comprehensive publishing procedures
+  * When to publish (semantic versioning guidance)
+  * Version bumping procedure (files to update)
+  * Build and validation steps (clean, build, test locally)
+  * Upload procedure (secure token, verification)
+  * Post-upload verification (install from PyPI, test imports)
 - Removed sections: N/A
 - Templates requiring updates:
-  ⏳ Makefile (update to use uv commands)
-  ⏳ README.md (update setup instructions to use uv)
-  ⏳ requirements files (consider pyproject.toml migration)
-- Follow-up TODOs: Migrate existing projects to use uv for package management
+  ✅ No template updates needed (workflow-specific, not template-affecting)
+- Follow-up TODOs: None
 -->
 
 # RAG-Templates Constitution
@@ -104,6 +103,104 @@ All database interactions MUST use proven, standardized utilities from the frame
 
 **Rationale**: IRIS database interactions have complex edge cases and performance considerations. Hard-won fixes and optimizations must be systematized to prevent teams from rediscovering the same issues.
 
+### VIII. Git & Release Workflow (NON-NEGOTIABLE)
+
+All code changes MUST follow the standard git workflow for the public iris-vector-rag repository:
+
+**Step 1: Standard Git Workflow**
+```bash
+# Stage changes
+git add <changed-files>
+
+# Commit with conventional commit message
+git commit -m "<type>: <description>"
+
+# Push to GitHub
+git push github main
+```
+
+**Step 2: PyPI Publishing (when applicable)**
+
+**When to Publish:**
+- New features added (MINOR version bump: 0.2.3 → 0.3.0)
+- Bug fixes or patches (PATCH version bump: 0.2.3 → 0.2.4)
+- Breaking changes (MAJOR version bump: 0.2.3 → 1.0.0)
+- Skip if only documentation, tests, or internal changes
+
+**Complete Version Bump Workflow:**
+
+```bash
+# 1. Update version in BOTH files (Example: 0.2.3 → 0.2.4)
+# Edit these files:
+# - pyproject.toml (line 7): version = "0.2.4"
+# - iris_rag/__init__.py (line 21): __version__ = "0.2.4"
+
+# 2. Clean previous builds
+rm -rf dist/ build/ *.egg-info
+
+# 3. Build source distribution and wheel
+python -m build
+
+# 4. Validate distributions
+python -m twine check dist/*
+
+# 5. Test local installation
+pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
+python -c "import iris_rag; print(f'iris_rag version: {iris_rag.__version__}'); from iris_rag import create_pipeline; print('✅ Package imports successfully')"
+
+# 6. Commit version bump
+git add pyproject.toml iris_rag/__init__.py
+git commit -m "chore: bump version to 0.2.4 for [brief description]
+
+[Detailed changelog entry describing what changed in this version]"
+
+# 7. Upload to PyPI (requires ~/.pypirc with token)
+python -m twine upload dist/*
+
+# 8. Verify PyPI upload
+curl -s https://pypi.org/pypi/iris-vector-rag/json | python3 -c "import sys, json; data=json.load(sys.stdin); print(f\"✅ Latest PyPI version: {data['info']['version']}\"); print(f\"📅 Upload date: {list(data['releases'][data['info']['version']])[0]['upload_time']}\"); print(f\"🔗 URL: https://pypi.org/project/iris-vector-rag/{data['info']['version']}/\")"
+
+# 9. Push version bump commit
+git push github main
+```
+
+**PyPI Authentication Setup (one-time):**
+
+Create `~/.pypirc` with your PyPI API token:
+```ini
+[pypi]
+username = __token__
+password = pypi-AgEIcHlwaS5vcmc...  # Your PyPI API token
+```
+
+**Important Notes:**
+- Always test package installation before uploading to PyPI
+- Version bumps should include comprehensive changelog in commit message
+- Verify PyPI upload succeeded before announcing new version
+
+**Repository Configuration:**
+- Primary remote: `github` → `https://github.com/intersystems-community/iris-vector-rag.git`
+- **Default branch**: `main`
+
+**One-Time GitHub Setup (if not already configured):**
+
+If the GitHub repository default branch is `master` instead of `main`:
+1. Go to: https://github.com/intersystems-community/iris-vector-rag/settings/branches
+2. Under "Default branch", click the switch icon next to `master`
+3. Select `main` from the dropdown
+4. Click "Update" and confirm the change
+5. (Optional) Delete the old `master` branch protection rules if they exist
+
+This ensures pushes to `main` are immediately visible on GitHub.
+
+**Critical Rules**:
+- ALWAYS pull and rebase before pushing to avoid diverged history issues
+- ALWAYS test package installation before PyPI upload (`pip install dist/*.whl`)
+- PyPI package name is `iris-vector-rag`, Python module name remains `iris_rag`
+- Follow conventional commit message format (e.g., `feat:`, `fix:`, `chore:`)
+
+**Rationale**: Proper git workflow and thorough testing before PyPI publication ensures stable releases and prevents breaking changes for users.
+
 ## Enterprise Requirements
 
 Production deployments MUST include:
@@ -122,6 +219,269 @@ Code MUST pass linting (black, isort, flake8, mypy) before commits. All public A
 
 Documentation MUST include quickstart guides, API references, and integration examples. Agent-specific guidance files (CLAUDE.md) MUST be maintained for AI development assistance.
 
+## VIII. Git & Release Workflow (NON-NEGOTIABLE)
+
+All feature development MUST follow standardized git workflows to prevent diverged branches, rejected pushes, and deployment conflicts. The dual-repository strategy (internal GitLab + public GitHub) requires discipline and clear procedures.
+
+### Environment Management
+
+**Local Virtual Environment REQUIRED**: ALL development and testing MUST use the local `.venv` environment created by `uv`. Global Python environments (system Python, miniconda, pyenv) MUST NOT be used for package installation or testing.
+
+**Enforcement**:
+```bash
+# ALWAYS activate local venv before any development work
+source .venv/bin/activate
+
+# Verify you're using local environment
+which python  # MUST show /path/to/project/.venv/bin/python
+```
+
+**Rationale**: Global environments cause version conflicts, test failures with stale packages, and unpredictable behavior. The local `.venv` ensures reproducible builds and consistent test results.
+
+### Pre-Development Checklist
+
+Before starting ANY feature work, MUST execute:
+```bash
+# 1. Sync local repository with remotes
+git fetch origin  # Internal GitLab
+git fetch github  # Public GitHub (if configured)
+
+# 2. Verify branch status
+git status
+git branch -vv  # Check tracking relationships
+
+# 3. Ensure working on latest main
+git checkout main
+git pull origin main --ff-only  # Fast-forward only, no merge commits
+
+# 4. Activate local environment
+source .venv/bin/activate
+which python  # Verify local venv path
+```
+
+**Rationale**: Starting with stale branches or wrong environments leads to diverged histories, rejected pushes, and wasted time resolving conflicts later.
+
+### Feature Development Workflow
+
+**Branch Creation via /specify**:
+
+The `/specify` command creates feature branches using `.specify/scripts/bash/create-new-feature.sh`. This script:
+1. Determines next feature number (e.g., 053)
+2. Creates branch name from description (e.g., `053-update-to-iris`)
+3. Executes `git checkout -b <branch-name>`
+4. Creates `specs/<branch-name>/` directory with templates
+
+**CRITICAL**: The `/specify` script creates the branch but does NOT sync with remotes. You MUST verify branch creation succeeded:
+
+```bash
+# After /specify completes, verify branch
+git branch  # Should show new feature branch with *
+git status  # Should show "On branch 053-feature-name"
+
+# If branch creation failed (no-git mode):
+git checkout -b 053-feature-name  # Create manually
+```
+
+**Common /specify Issues**:
+- Branch exists but spec files incomplete → Re-run `/specify` or manually create files
+- Working directory dirty → Commit/stash changes before `/specify`
+- Git not detected → Verify `.git/` directory exists
+
+**Standard Feature Development**:
+```bash
+# 1. Start with /specify command (creates branch + spec directory)
+# 2. Verify branch creation
+git status
+
+# 3. Complete planning phase
+# - /plan generates plan.md, research.md, data-model.md
+# - /tasks generates tasks.md
+# - Review and refine planning documents
+
+# 4. Implementation phase
+# - /implement executes tasks (or manual development)
+# - Write contract tests FIRST (TDD principle)
+# - Implement features to pass tests
+# - Run tests frequently: pytest specs/<feature>/contracts/
+
+# 5. Commit early and often
+git add <modified-files>
+git commit -m "feat: <description>"  # Conventional commits
+
+# 6. Never commit to wrong branch
+git branch  # Verify you're on feature branch, NOT main
+```
+
+### Deployment Workflow
+
+**Phase 1: Merge to Main**
+```bash
+# 1. Verify feature complete
+pytest specs/<feature>/contracts/ -v  # All tests pass
+git status  # Working directory clean
+
+# 2. Switch to main and merge
+git checkout main
+git merge <feature-branch> --no-edit  # Fast-forward preferred
+
+# 3. Verify merge
+git log --oneline -5  # Check commit history
+```
+
+**Phase 2: Push to GitHub**
+```bash
+# 1. Verify GitHub remote configured
+git remote -v  # Should show 'github' remote
+
+# 2. Check GitHub status
+git fetch github
+git log github/main..main  # Commits to push
+
+# 3. Push to GitHub
+git push github main
+
+# If rejected (non-fast-forward):
+git fetch github
+git pull github main --rebase  # Rebase your commits
+git push github main
+```
+
+**Rationale**: Simple, direct workflow ensures all changes are immediately visible on GitHub.
+
+### Version Bump & PyPI Publishing
+
+**When to Bump Version**: After feature complete and merged to main, before PyPI publish.
+
+**Procedure**:
+```bash
+# 1. Determine version increment (semantic versioning)
+# MAJOR.MINOR.PATCH (e.g., 0.2.5)
+# - MAJOR: Breaking changes
+# - MINOR: New features (backward compatible)
+# - PATCH: Bug fixes
+
+# 2. Update version in TWO files (BOTH required!)
+# File 1: pyproject.toml
+vim pyproject.toml  # Update version = "X.Y.Z"
+
+# File 2: iris_rag/__init__.py
+vim iris_rag/__init__.py  # Update __version__ = "X.Y.Z"
+
+# 3. Commit version bump
+git add pyproject.toml iris_rag/__init__.py
+git commit -m "chore: bump version to X.Y.Z for <feature-name>
+
+<One-line summary of what changed>
+
+<Optional: detailed changelog if multiple features>"
+
+# 4. Build and test package
+python -m build  # Creates dist/ with .whl and .tar.gz
+python -m twine check dist/*  # Validate package
+
+# 5. Test local install
+pip install --force-reinstall --no-deps dist/iris_vector_rag-X.Y.Z-*.whl
+python -c "import iris_rag; print(iris_rag.__version__)"  # Verify version
+
+# 6. Upload to PyPI (requires ~/.pypirc with credentials)
+./scripts/upload/upload_to_pypi.sh
+# OR manually:
+python -m twine upload dist/*
+
+# 7. Verify PyPI publication
+curl -s https://pypi.org/pypi/iris-vector-rag/json | \
+  python -c "import sys, json; data=json.load(sys.stdin); print(f\"Version: {data['info']['version']}\")"
+```
+
+**Complete PyPI Publishing Workflow Documentation**: See `.specify/memory/constitution.md` sections on version management and release procedures.
+
+### Troubleshooting Common Git Issues
+
+**Issue 1: Rejected Push (non-fast-forward)**
+```
+! [rejected]        main -> main (non-fast-forward)
+```
+**Cause**: Remote has commits you don't have locally.
+**Fix**:
+```bash
+git fetch origin  # Get remote state
+git log origin/main..main  # Your commits
+git log main..origin/main  # Their commits
+git pull origin main --rebase  # Rebase your commits on top
+git push origin main  # Now should succeed
+```
+
+**Issue 2: Diverged Branches (Different Commit Hashes)**
+```
+Your branch and 'origin/main' have diverged
+```
+**Cause**: Same changes with different commit hashes (common with cherry-picks).
+**Fix**:
+```bash
+# Verify you have the correct version locally
+git log --oneline -10
+# If local is correct source of truth:
+git push origin main --force-with-lease
+```
+
+**Issue 3: Working on Wrong Branch**
+```bash
+# Accidentally committed to main instead of feature branch
+git status  # Shows "On branch main"
+```
+**Fix**:
+```bash
+# Move commits to correct branch
+git checkout -b <feature-branch>  # Creates branch with current commits
+git checkout main
+git reset --hard origin/main  # Reset main to match remote
+git checkout <feature-branch>  # Continue work on feature
+```
+
+**Issue 4: Merge Conflicts During Cherry-pick**
+```
+CONFLICT (content): Merge conflict in pyproject.toml
+```
+**Fix**:
+```bash
+git status  # Review conflicted files
+vim <conflicted-file>  # Resolve conflicts manually
+git add <resolved-file>
+git cherry-pick --continue  # Or --abort if unresolvable
+```
+
+**Issue 5: Stale Remote Tracking Information**
+```bash
+# Local thinks remote is at old commit
+```
+**Fix**:
+```bash
+git remote update --prune  # Refresh all remotes
+git fetch --all --prune  # Alternative command
+```
+
+### Constitutional Compliance
+
+**Pre-commit Checklist**:
+- [ ] Using local `.venv` environment (verify with `which python`)
+- [ ] On correct branch (verify with `git branch`)
+- [ ] All tests passing (run `pytest`)
+- [ ] Working directory clean or changes staged (verify with `git status`)
+- [ ] Conventional commit message (e.g., `feat:`, `fix:`, `chore:`)
+
+**Pre-push Checklist**:
+- [ ] Synced with remote (`git fetch origin`)
+- [ ] Fast-forward merge preferred (avoid `--no-ff`)
+- [ ] Use `--force-with-lease` instead of `--force` if required
+- [ ] Pushed to internal GitLab BEFORE public GitHub
+
+**Pre-release Checklist**:
+- [ ] Version bumped in BOTH `pyproject.toml` AND `iris_rag/__init__.py`
+- [ ] Package builds successfully (`python -m build`)
+- [ ] Local install test passes
+- [ ] All contract tests passing (`pytest specs/*/contracts/`)
+- [ ] Sanitized branch updated and pushed to GitHub
+
 ## Governance
 
 This constitution supersedes all other development practices. All pull requests MUST verify constitutional compliance. Complexity that violates simplicity principles MUST be justified in writing with alternatives considered.
@@ -134,4 +494,4 @@ Development with AI tools MUST follow constraint-based architecture, not "vibeco
 
 Amendment procedure: Proposed changes require documentation of impact, team approval, and migration plan for affected components. Version increments follow semantic versioning based on change scope.
 
-**Version**: 1.6.0 | **Ratified**: 2025-01-27 | **Last Amended**: 2025-09-28
+**Version**: 1.8.0 | **Ratified**: 2025-01-27 | **Last Amended**: 2025-11-08

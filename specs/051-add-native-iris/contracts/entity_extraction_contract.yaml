@@ -1,0 +1,406 @@
+# Contract: Entity Extraction for GraphRAG
+# Feature: 051-add-native-iris
+# Purpose: Define interface for extracting entities during EMBEDDING vectorization
+
+contract_name: entity_extraction_for_graphrag
+version: 1.0.0
+status: TDD (test before implement)
+
+# ============================================================================
+# Entity Extraction Contract
+# ============================================================================
+
+extract_entities_batch:
+  description: "Extract entities from multiple documents in single LLM call (FR-018)"
+  endpoint: "iris_rag.embeddings.entity_extractor.extract_entities_batch(texts: list[str], config: EmbeddingConfig)"
+
+  request:
+    parameters:
+      texts:
+        type: list[string]
+        required: true
+        constraints:
+          - "1 <= len(texts) <= 10"
+          - "Each text must not be empty"
+        example:
+          - "Patient presents with type 2 diabetes and elevated blood glucose."
+          - "Insulin therapy recommended for glucose control."
+          - "Metformin prescribed for diabetes management."
+
+      config:
+        type: EmbeddingConfig
+        required: true
+        fields:
+          entity_types: list[string]
+          enable_entity_extraction: boolean
+        example:
+          entity_types: ["Disease", "Symptom", "Medication"]
+          enable_entity_extraction: true
+
+  response:
+    success:
+      type: BatchEntityExtractionResult
+      fields:
+        documents: list[DocumentEntityResult]
+        total_entities_extracted: integer
+        extraction_time_ms: float
+        llm_calls_made: integer
+        batch_size: integer
+      example:
+        documents:
+          - doc_index: 0
+            entities:
+              - entity_type: "Disease"
+                entity_text: "type 2 diabetes"
+                text_span_start: 21
+                text_span_end: 37
+                confidence_score: 0.95
+                relationships: []
+              - entity_type: "Symptom"
+                entity_text: "elevated blood glucose"
+                text_span_start: 42
+                text_span_end: 64
+                confidence_score: 0.88
+                relationships:
+                  - relation_type: "symptom_of"
+                    target_entity: "type 2 diabetes"
+          - doc_index: 1
+            entities:
+              - entity_type: "Medication"
+                entity_text: "Insulin"
+                text_span_start: 0
+                text_span_end: 7
+                confidence_score: 0.92
+                relationships:
+                  - relation_type: "treats"
+                    target_entity: "type 2 diabetes"
+        total_entities_extracted: 3
+        extraction_time_ms: 1245.6
+        llm_calls_made: 1
+        batch_size: 3
+
+      performance_requirements:
+        batch_extraction_time: "<2000ms for 10 documents"
+        llm_calls_per_batch: "1 (exactly one LLM call per batch)"
+        entity_accuracy: ">=85% for medical domain"
+
+    errors:
+      - code: EMPTY_TEXT
+        message: "Text at index {index} is empty"
+        http_status: 400
+
+      - code: ENTITY_EXTRACTION_DISABLED
+        message: "Entity extraction not enabled in configuration"
+        http_status: 400
+        context:
+          fix: "Set enable_entity_extraction=true in %Embedding.Config"
+
+      - code: NO_ENTITY_TYPES
+        message: "No entity types configured for extraction"
+        http_status: 400
+        context:
+          fix: "Add entity_types list to configuration"
+
+      - code: LLM_API_ERROR
+        message: "LLM API call failed: {error}"
+        http_status: 500
+        recovery: "Retry with exponential backoff (3 attempts)"
+
+# ============================================================================
+# Entity Storage Contract
+# ============================================================================
+
+store_entities:
+  description: "Store extracted entities in GraphRAG knowledge graph (FR-017)"
+  endpoint: "iris_rag.embeddings.entity_extractor.store_entities(doc_id: UUID, entities: list[EntityExtractionResult])"
+
+  request:
+    parameters:
+      doc_id:
+        type: UUID
+        required: true
+        description: "Document identifier from vectorization"
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+      entities:
+        type: list[EntityExtractionResult]
+        required: true
+        constraints:
+          - "entities must not be empty"
+          - "entity_text must match text_span in source document"
+        example:
+          - entity_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+            entity_type: "Disease"
+            entity_text: "diabetes"
+            text_span_start: 28
+            text_span_end: 36
+            confidence_score: 0.95
+            relationships:
+              - relation_type: "treated_by"
+                target_entity_id: "8d1f7890-8536-51ef-a55c-f18gd2ga1bf8"
+            extraction_method: "llm_batch"
+
+  response:
+    success:
+      type: EntityStorageResult
+      fields:
+        entities_stored: integer
+        relationships_created: integer
+        storage_time_ms: float
+        graph_tables_updated: list[string]
+      example:
+        entities_stored: 5
+        relationships_created: 8
+        storage_time_ms: 123.4
+        graph_tables_updated: ["graph.entities", "graph.relationships"]
+
+    errors:
+      - code: DUPLICATE_ENTITY
+        message: "Entity {entity_id} already exists"
+        http_status: 409
+        recovery: "Skip duplicate, continue with remaining entities"
+
+      - code: INVALID_RELATIONSHIP
+        message: "Target entity {target_entity_id} not found"
+        http_status: 404
+        context:
+          fix: "Ensure target entity exists before creating relationship"
+
+      - code: GRAPH_STORAGE_ERROR
+        message: "Failed to store entity in knowledge graph: {error}"
+        http_status: 500
+
+# ============================================================================
+# Configuration Contract
+# ============================================================================
+
+configure_entity_types:
+  description: "Configure entity types for domain-specific extraction (FR-016)"
+  endpoint: "iris_rag.embeddings.entity_extractor.configure_entity_types(config_name: str, entity_types: list[str])"
+
+  request:
+    parameters:
+      config_name:
+        type: string
+        required: true
+        example: "medical_embeddings_v1"
+
+      entity_types:
+        type: list[string]
+        required: true
+        constraints:
+          - "1 <= len(entity_types) <= 20"
+          - "Each entity type must be non-empty string"
+        examples:
+          medical_domain:
+            - "Disease"
+            - "Symptom"
+            - "Medication"
+            - "Treatment"
+            - "Diagnostic_Test"
+          general_domain:
+            - "Person"
+            - "Organization"
+            - "Location"
+            - "Date"
+            - "Product"
+
+  response:
+    success:
+      type: ConfigurationResult
+      fields:
+        config_name: string
+        entity_types: list[string]
+        updated_at: timestamp
+      example:
+        config_name: "medical_embeddings_v1"
+        entity_types: ["Disease", "Symptom", "Medication"]
+        updated_at: "2025-01-06T12:34:56.789Z"
+
+    errors:
+      - code: INVALID_ENTITY_TYPE
+        message: "Entity type '{entity_type}' contains invalid characters"
+        http_status: 400
+        context:
+          valid_pattern: "^[A-Za-z_][A-Za-z0-9_]*$"
+
+      - code: TOO_MANY_ENTITY_TYPES
+        message: "Maximum 20 entity types allowed, got {count}"
+        http_status: 400
+
+# ============================================================================
+# Entity Retrieval Contract
+# ============================================================================
+
+get_entities_for_document:
+  description: "Retrieve extracted entities for a vectorized document"
+  endpoint: "iris_rag.embeddings.entity_extractor.get_entities(doc_id: UUID)"
+
+  request:
+    parameters:
+      doc_id:
+        type: UUID
+        required: true
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+  response:
+    success:
+      type: DocumentEntities
+      fields:
+        doc_id: UUID
+        entities: list[EntityExtractionResult]
+        entity_count: integer
+        extraction_timestamp: timestamp
+      example:
+        doc_id: "550e8400-e29b-41d4-a716-446655440000"
+        entities:
+          - entity_type: "Disease"
+            entity_text: "diabetes"
+            confidence_score: 0.95
+        entity_count: 1
+        extraction_timestamp: "2025-01-06T12:34:56.789Z"
+
+    errors:
+      - code: DOCUMENT_NOT_FOUND
+        message: "Document {doc_id} not found"
+        http_status: 404
+
+      - code: NO_ENTITIES_EXTRACTED
+        message: "No entities extracted for document {doc_id}"
+        http_status: 200
+        context:
+          entities: []
+          entity_count: 0
+
+# ============================================================================
+# Test Scenarios (TDD - write tests first)
+# ============================================================================
+
+test_scenarios:
+  - name: "test_extract_entities_batch_medical_domain"
+    description: "Extract medical entities from batch of 3 documents"
+    given: "3 clinical texts with Disease, Symptom, Medication entities"
+    when: "extract_entities_batch(texts, medical_config) is called"
+    then:
+      - "Returns BatchEntityExtractionResult with 3 DocumentEntityResult entries"
+      - "total_entities_extracted >= 5"
+      - "llm_calls_made == 1"
+      - "extraction_time_ms < 2000"
+      - "All entity_text matches text_span in source"
+
+  - name: "test_entity_accuracy_medical_domain"
+    description: "Verify 85%+ extraction accuracy for medical entities (FR-017)"
+    given: "100 documents with known ground-truth entities"
+    when: "extract_entities_batch() is called for all documents"
+    then:
+      - "Precision >= 0.85"
+      - "Recall >= 0.85"
+      - "F1 score >= 0.85"
+
+  - name: "test_batch_vs_single_extraction_performance"
+    description: "Verify batch extraction is 10x more efficient"
+    given: "10 documents to extract entities from"
+    when: "Compare batch (1 LLM call) vs single (10 LLM calls)"
+    then:
+      - "Batch extraction time < single extraction time / 5"
+      - "Batch uses exactly 1 LLM call"
+      - "Single uses exactly 10 LLM calls"
+
+  - name: "test_entity_relationship_extraction"
+    description: "Extract entity relationships during vectorization"
+    given: "Text: 'Insulin treats type 2 diabetes'"
+    when: "extract_entities_batch([text], config) is called"
+    then:
+      - "Extracts Medication entity: 'Insulin'"
+      - "Extracts Disease entity: 'type 2 diabetes'"
+      - "Creates relationship: Insulin -[treats]-> type 2 diabetes"
+
+  - name: "test_store_entities_in_knowledge_graph"
+    description: "Store entities in GraphRAG tables"
+    given: "Extracted entities from vectorization"
+    when: "store_entities(doc_id, entities) is called"
+    then:
+      - "entities_stored == len(entities)"
+      - "graph.entities table contains new rows"
+      - "graph.relationships table contains relationships"
+      - "storage_time_ms < 500"
+
+  - name: "test_extraction_disabled"
+    description: "Handle extraction disabled gracefully"
+    given: "Config with enable_entity_extraction=false"
+    when: "extract_entities_batch() is called"
+    then: "Raises ENTITY_EXTRACTION_DISABLED error with clear message"
+
+  - name: "test_empty_entity_types"
+    description: "Handle missing entity types configuration"
+    given: "Config with empty entity_types list"
+    when: "extract_entities_batch() is called"
+    then: "Raises NO_ENTITY_TYPES error"
+
+  - name: "test_llm_api_retry"
+    description: "Retry LLM API failures with exponential backoff"
+    given: "LLM API returns 500 error on first call"
+    when: "extract_entities_batch() encounters error"
+    then:
+      - "Retries up to 3 times with exponential backoff"
+      - "Succeeds on retry if API recovers"
+      - "Raises LLM_API_ERROR if all retries fail"
+
+  - name: "test_configure_custom_entity_types"
+    description: "Configure domain-specific entity types"
+    given: "New configuration for legal domain"
+    when: "configure_entity_types('legal_config', ['Contract', 'Party', 'Obligation'])"
+    then:
+      - "Returns ConfigurationResult with updated entity_types"
+      - "Subsequent extractions use legal entity types"
+
+  - name: "test_get_entities_for_document"
+    description: "Retrieve entities for vectorized document"
+    given: "Document with 5 extracted entities"
+    when: "get_entities(doc_id) is called"
+    then:
+      - "Returns DocumentEntities with 5 entities"
+      - "entity_count == 5"
+      - "All entities have valid text_spans"
+
+# ============================================================================
+# Performance Benchmarks
+# ============================================================================
+
+performance_benchmarks:
+  - name: "benchmark_batch_extraction_efficiency"
+    description: "Measure batch vs single extraction performance (FR-018)"
+    setup: "Prepare 100 medical documents"
+    test:
+      batch: "Extract in 10 batches of 10 documents (10 LLM calls)"
+      single: "Extract 100 documents individually (100 LLM calls)"
+    target: "Batch extraction <10 seconds, single extraction >50 seconds"
+    acceptance_criteria: "Batch is >5x faster than single"
+
+  - name: "benchmark_entity_extraction_accuracy"
+    description: "Verify 85% accuracy target for medical domain"
+    setup: "100 documents with ground-truth annotations"
+    test: "Extract entities and compare with ground truth"
+    metrics:
+      - "Precision: TP / (TP + FP)"
+      - "Recall: TP / (TP + FN)"
+      - "F1 Score: 2 * (Precision * Recall) / (Precision + Recall)"
+    target: "Precision >= 0.85, Recall >= 0.85, F1 >= 0.85"
+
+  - name: "benchmark_graph_storage_performance"
+    description: "Measure entity storage time in knowledge graph"
+    setup: "Extract 1000 entities from 100 documents"
+    test: "Store all entities in GraphRAG tables"
+    target: "<5 seconds total (average <5ms per entity)"
+    acceptance_criteria: "No storage failures, all relationships created"
+
+  - name: "benchmark_concurrent_extraction"
+    description: "Verify concurrent entity extraction doesn't degrade performance"
+    setup: "10 concurrent extraction requests"
+    test: "Each request extracts entities from 10 documents"
+    target: "Average time per request < 3 seconds"
+    acceptance_criteria: "No LLM API rate limit errors, no cache thrashing"
+
+---
+# Contract Status: TDD - Tests must be written before implementation
+# Next: Write contract tests in tests/contract/test_entity_extraction_contract.py
