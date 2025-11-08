@@ -149,50 +149,63 @@ git push github main
 - Breaking changes (MAJOR version bump: 0.2.3 → 1.0.0)
 - Skip if only documentation, tests, or internal changes
 
-**Version Bumping:**
-```bash
-# Update version in BOTH files:
-# 1. pyproject.toml (line 7): version = "0.2.4"
-# 2. iris_rag/__init__.py (line 21): __version__ = "0.2.4"
-```
+**Complete Version Bump Workflow:**
 
-**Build and Validate:**
 ```bash
-cd /Users/tdyar/ws/rag-templates-sanitized
+# 1. Update version in BOTH files (Example: 0.2.3 → 0.2.4)
+# Edit these files:
+# - pyproject.toml (line 7): version = "0.2.4"
+# - iris_rag/__init__.py (line 21): __version__ = "0.2.4"
 
-# Clean previous builds
+# 2. Clean previous builds
 rm -rf dist/ build/ *.egg-info
 
-# Build source distribution and wheel
+# 3. Build source distribution and wheel
 python -m build
 
-# Validate distributions
+# 4. Validate distributions
 python -m twine check dist/*
 
-# Test installation locally
+# 5. Test local installation
 pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
-
-# Verify imports work
 python -c "import iris_rag; print(f'iris_rag version: {iris_rag.__version__}'); from iris_rag import create_pipeline; print('✅ Package imports successfully')"
+
+# 6. Commit version bump
+git add pyproject.toml iris_rag/__init__.py
+git commit -m "chore: bump version to 0.2.4 for [brief description]
+
+[Detailed changelog entry describing what changed in this version]"
+
+# 7. Upload to PyPI (requires ~/.pypirc with token)
+python -m twine upload dist/*
+
+# 8. Verify PyPI upload
+curl -s https://pypi.org/pypi/iris-vector-rag/json | python3 -c "import sys, json; data=json.load(sys.stdin); print(f\"✅ Latest PyPI version: {data['info']['version']}\"); print(f\"📅 Upload date: {list(data['releases'][data['info']['version']])[0]['upload_time']}\"); print(f\"🔗 URL: https://pypi.org/project/iris-vector-rag/{data['info']['version']}/\")"
+
+# 9. Push version bump commit
+git push origin main
+
+# 10. Sync to public GitHub repository
+git checkout 051-add-native-iris-sanitized
+git pull github main --ff-only
+git cherry-pick <version-bump-commit-hash>
+git push github 051-add-native-iris-sanitized:main
 ```
 
-**Upload to PyPI:**
-```bash
-# Upload using secure token prompt
-./upload_to_pypi.sh
+**PyPI Authentication Setup (one-time):**
 
-# Verify upload succeeded
-curl -s https://pypi.org/pypi/iris-vector-rag/json | python -c "import sys, json; data=json.load(sys.stdin); print(f\"Latest version: {data['info']['version']}\"); print(f\"Upload date: {list(data['releases'][data['info']['version']])[0]['upload_time']}\")"
+Create `~/.pypirc` with your PyPI API token:
+```ini
+[pypi]
+username = __token__
+password = pypi-AgEIcHlwaS5vcmc...  # Your PyPI API token
 ```
 
-**Post-Upload Verification:**
-```bash
-# Install from PyPI in fresh environment
-pip install --upgrade iris-vector-rag
-
-# Verify installation
-python -c "import iris_rag; print(f'Installed version: {iris_rag.__version__}')"
-```
+**Important Notes:**
+- Always test package installation before uploading to PyPI
+- Version bumps should include comprehensive changelog in commit message
+- Push to internal repository (origin) before syncing to public GitHub
+- Verify PyPI upload succeeded before announcing new version
 
 **Repository Configuration:**
 - Internal repo remotes: `origin` and `ssh-origin` → `git@gitlab.iscinternal.com:tdyar/rag-templates.git`
