@@ -64,6 +64,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         reranker_func: Optional[
             Callable[[str, List[Document]], List[Tuple[Document, float]]]
         ] = None,
+        embedding_config: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -73,10 +74,11 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
             connection_manager: Optional manager for database connections (defaults to new instance)
             config_manager: Optional manager for configuration settings (defaults to new instance)
             reranker_func: Optional custom reranker function. If None, uses default HuggingFace reranker.
+            embedding_config: Optional IRIS EMBEDDING config name for auto-vectorization (Feature 051)
             **kwargs: Additional arguments passed to parent BasicRAGPipeline
         """
-        # Initialize parent pipeline with all standard functionality
-        super().__init__(connection_manager, config_manager, **kwargs)
+        # Initialize parent pipeline with all standard functionality (including embedding_config)
+        super().__init__(connection_manager, config_manager, embedding_config=embedding_config, **kwargs)
 
         # Set up reranking-specific configuration
         # Use dedicated reranking config section with fallback to basic config

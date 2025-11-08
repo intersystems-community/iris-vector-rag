@@ -1,18 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel", "uv-dynamic-versioning>=0.7.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rag-templates"
-dynamic = ["version"]
-description = "Dead-simple library for building RAG applications with InterSystems IRIS"
+name = "iris-vector-rag"
+version = "0.2.6"
+description = "Production-ready, extensible RAG framework with native IRIS vector search - unified API for basic, CRAG, GraphRAG, and ColBERT pipelines with RAGAS and DSPy integration"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "InterSystems", email = "support@intersystems.com"}
 ]
 maintainers = [
-    {name = "InterSystems", email = "support@intersystems.com"}
+    {name = "Thomas Dyar", email = "thomas.dyar@intersystems.com"}
 ]
 keywords = [
     "rag",
@@ -65,11 +65,19 @@ dependencies = [
     "plotly>=6.1.2",
     "jaydebeapi>=1.2.3",
     "docker>=6.1.3",
-    "iris-vector-graph>=2.0.0",
-    "scipy>=1.7.0",
+    "tiktoken>=0.5.0",
+    "torch>=2.0.0",
 ]
 
 [project.optional-dependencies]
+embedding = [
+    "torch>=2.0.0",
+    "sentence-transformers>=2.2.0",
+    "iris-vector-graph>=1.1.1"
+]
+hybrid-graphrag = [
+    "iris-vector-graph>=1.1.1"
+]
 dev = [
     "uv>=0.1.0",
     "pytest>=7.0.0",
@@ -90,8 +98,14 @@ mcp = [
     "uvicorn>=0.23.0",
     "websockets>=11.0.0"
 ]
-hybrid-graphrag = [
-    # Dependencies moved to core - iris-vector-graph is now required
+api = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
+    "websockets>=12.0",
+    "redis>=5.0.0",
+    "bcrypt>=4.0.0",
+    "python-jose[cryptography]>=3.3.0"
 ]
 all = [
     "uv>=0.1.0",
@@ -106,9 +120,13 @@ all = [
     "build>=0.10.0",
     "twine>=4.0.0",
     "mcp>=0.1.0",
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "websockets>=11.0.0"
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "websockets>=12.0",
+    "python-multipart>=0.0.6",
+    "redis>=5.0.0",
+    "bcrypt>=4.0.0",
+    "python-jose[cryptography]>=3.3.0"
 ]
 
 [dependency-groups]
@@ -143,11 +161,8 @@ Changelog = "https://github.com/intersystems/rag-templates/blob/main/CHANGELOG.m
 [project.scripts]
 rag-templates = "iris_rag.cli:main"
 
-[tool.setuptools]
-packages = ["iris_rag", "common", "adapters", "evaluation_framework"]
-
-[tool.setuptools.dynamic]
-version = {attr = "iris_rag.__version__"}
+[tool.setuptools.packages.find]
+include = ["iris_rag*", "common*", "adapters*", "evaluation_framework*"]
 
 [tool.setuptools.package-data]
 iris_rag = [

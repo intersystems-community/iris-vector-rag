@@ -27,11 +27,19 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         self,
         connection_manager,
         config_manager,
+        embedding_config: Optional[str] = None,
         **kwargs,
     ):
-        """Initialize PyLate ColBERT pipeline with consistent configuration."""
-        # Initialize parent pipeline
-        super().__init__(connection_manager, config_manager, **kwargs)
+        """Initialize PyLate ColBERT pipeline with consistent configuration.
+
+        Args:
+            connection_manager: Database connection manager
+            config_manager: Configuration manager
+            embedding_config: Optional IRIS EMBEDDING config name for auto-vectorization (Feature 051)
+            **kwargs: Additional arguments passed to BasicRAGPipeline
+        """
+        # Initialize parent pipeline (which handles embedding_config)
+        super().__init__(connection_manager, config_manager, embedding_config=embedding_config, **kwargs)
 
         # Use same config pattern as BasicRAGReranking for consistency
         self.colbert_config = self.config_manager.get(
@@ -146,55 +154,27 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
         # Handle both file paths and Document objects
         if documents_path is not None:
-            # File path - load documents first
-            from pathlib import Path
-            import json
-
-            path = Path(documents_path)
-            if path.is_file() and path.suffix == '.json':
-                # Load JSON file
-                with open(path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        docs = [Document(**item) if isinstance(item, dict) else item for item in data]
-                    else:
-                        docs = [Document(**data) if isinstance(data, dict) else data]
-            else:
-                # Delegate to parent for other file types
-                docs = []
-
-            # Store documents for PyLate reranking BEFORE calling parent
-            for i, doc in enumerate(docs):
-                self._document_store[str(i)] = doc
-
-            # Now call parent to handle vector store indexing
+            # File path - delegate to parent
             result = super().load_documents(documents_path=documents_path, **kwargs)
-            self.stats["documents_indexed"] = result.get("documents_loaded", len(docs))
+            if result and "documents" in result:
+                docs = result["documents"]
+                # Store documents for PyLate reranking
+                for i, doc in enumerate(docs):
+                    self._document_store[str(i)] = doc
+                self.stats["documents_indexed"] = len(docs)
             return result
         else:
-            # List of Document objects or dicts
-            # Convert to Document objects if needed and store for PyLate reranking
-            doc_objects = []
+            # List of Document objects
+            # Store documents for PyLate reranking with metadata
             for i, doc in enumerate(documents):
-                # Convert dict to Document if necessary
-                if isinstance(doc, dict):
-                    doc_obj = Document(
-                        page_content=doc.get("page_content", doc.get("content", "")),
-                        metadata=doc.get("metadata", {})
-                    )
-                else:
-                    doc_obj = doc
-
-                self._document_store[str(i)] = doc_obj
-                doc_objects.append(doc_obj)
-
+                self._document_store[str(i)] = doc
                 # Validate metadata exists
-                if not hasattr(doc_obj, "metadata") or not doc_obj.metadata:
+                if not hasattr(doc, "metadata") or not doc.metadata:
                     logger.warning(f"Document {i} has no metadata")
 
-            # Call parent to handle vector store indexing with Document objects
-            result = super().load_documents(documents=doc_objects, **kwargs)
-            self.stats["documents_indexed"] = result.get("documents_loaded", len(doc_objects))
+            # Call parent to handle vector store indexing
+            result = super().load_documents(documents=documents, **kwargs)
+            self.stats["documents_indexed"] = result.get("documents_loaded", len(documents))
 
             logger.info(
                 f"Loaded {self.stats['documents_indexed']} documents for PyLate ColBERT"

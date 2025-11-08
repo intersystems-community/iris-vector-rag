@@ -1,6 +1,51 @@
 # RAG Memory Component Configuration
 # Generic configuration for memory-enabled RAG applications
 
+# Embeddings Configuration
+embeddings:
+  primary_backend: "sentence_transformers"
+  fallback_backends: ["openai"]
+  sentence_transformers:
+    model_name: "all-MiniLM-L6-v2"
+    device: "cpu"  # Force CPU to avoid GPU contention (set to "cuda" or "cuda:0" for GPU)
+  dimension: 384
+
+# TOP-LEVEL Entity Extraction Config (read by EntityExtractionService)
+# This mirrors rag_memory_config.knowledge_extraction.entity_extraction for compatibility
+entity_extraction:
+  enabled: true
+  method: "llm_basic"
+  confidence_threshold: 0.7
+  entity_types:
+    - "PRODUCT"
+    - "USER"
+    - "MODULE"
+    - "ERROR"
+    - "ACTION"
+    - "ORGANIZATION"
+    - "VERSION"
+  llm:
+    model: "openai/gpt-oss-120b"  # GPT-OSS 120B model
+    api_base: "http://apps-llm-4.iscinternal.com:8000/v1"
+    api_type: "openai"
+    temperature: 0.1
+    max_tokens: 2000
+    supports_response_format: false
+    use_json_mode: false
+  batch_processing:
+    enabled: false  # DISABLED: GPT-OSS doesn't support JSON mode
+  storage:
+    enabled: true
+
+# Database Configuration (required by ConfigurationManager)
+database:
+  iris:
+    host: "localhost"
+    port: 21972
+    namespace: "USER"
+    username: "_SYSTEM"
+    password: "SYS"
+
 rag_memory_config:
   # Temporal window configurations
   temporal_windows:
@@ -24,10 +69,39 @@ rag_memory_config:
   # Knowledge extraction configuration
   knowledge_extraction:
     entity_extraction:
-      method: "llm_basic"  # Options: llm_basic, pattern_only, hybrid (changed from spacy to llm_basic for TrakCare ticket extraction)
-      confidence_threshold: 0.7  # Lowered from 0.8 to allow more entities
-      max_entities_per_document: 100  # Increased from 50 to capture more TrakCare entities
-      model_name: "en_core_web_sm"  # For spacy
+      method: "llm_basic"  # Options: llm_basic, pattern_only, hybrid, ontology_hybrid
+      # llm_basic works now that batch_processing is disabled
+      confidence_threshold: 0.7
+      max_entities_per_document: 100
+      entity_types:  # TrakCare-specific entity types
+        - "PRODUCT"
+        - "USER"
+        - "MODULE"
+        - "ERROR"
+        - "ACTION"
+        - "ORGANIZATION"
+        - "VERSION"
+      llm:
+        use_dspy: true  # Enable DSPy for better entity extraction
+        model: "openai/gpt-oss-120b"  # Internal GPT-OSS 120B model
+        api_base: "http://apps-llm-4.iscinternal.com:8000/v1"
+        api_type: "openai"  # OpenAI-compatible API
+        temperature: 0.1  # Low temperature for deterministic extraction
+        max_tokens: 2000
+        # Disable structured output - GPT-OSS doesn't support response_format parameter
+        supports_response_format: false
+        use_json_mode: false
+
+      # Batch processing configuration (FR-001 through FR-007)
+      batch_processing:
+        enabled: false                  # DISABLED: GPT-OSS doesn't support JSON mode
+        token_budget: 8192             # Max tokens per batch (FR-006)
+        max_retries: 5                 # Retry up to 5 times for flaky VPN (increased from 3)
+        retry_delays: [2, 5, 10, 20, 30]  # Exponential backoff: 2s, 5s, 10s, 20s, 30s
+        connection_timeout: 120        # 2 minutes for VPN connections
+        read_timeout: 300              # 5 minutes for LLM response (120B model can be slow)
+        target_speedup: 3.0            # Target performance improvement (FR-002)
+        quality_threshold: 4.86        # Minimum entities per document (FR-003)
     
     relationship_extraction:
       method: "dependency_parsing"  # Options: dependency_parsing, pattern_based
@@ -131,26 +205,6 @@ rag_memory_config:
       enable_advanced_clustering: false
       enable_semantic_similarity: true
       enable_cross_domain_learning: false
-
-# Database configuration (required by ConfigurationManager)
-database:
-  iris:
-    host: "localhost"
-    port: 21972
-    namespace: "USER"
-    username: "_SYSTEM"
-    password: "SYS"
-
-# Root-level entity extraction configuration (for EntityExtractionService)
-entity_extraction:
-  method: "llm_basic"  # Options: llm_basic, pattern_only, hybrid
-  confidence_threshold: 0.7
-  entity_types: ["PRODUCT", "VERSION", "ISSUE", "CUSTOMER", "MODULE", "ERROR", "FEATURE"]
-  max_entities: 100
-  llm:
-    model: "qwen2.5:7b"  # More capable model (7.6B) for reliable JSON generation
-    temperature: 0.1
-    max_tokens: 800  # Reduced for faster responses
 
 # Environment-specific overrides
 # These would be handled by environment-specific configuration files

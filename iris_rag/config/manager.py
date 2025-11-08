@@ -170,6 +170,37 @@ class ConfigurationManager:
                 return default  # Key path not found, return default
         return value
 
+    def get_nested(self, path: str, default: Optional[Any] = None) -> Any:
+        """
+        Get configuration value using dot notation for nested paths.
+
+        This method provides an alternative to the colon-delimited get() method,
+        using more conventional dot notation for nested config access.
+
+        Examples:
+            config.get_nested("rag_memory_config.knowledge_extraction.entity_extraction")
+            config.get_nested("database.iris.host")
+            config.get_nested("embedding_model.dimension", default=384)
+
+        Args:
+            path: Dot-delimited path to config value (e.g., "a.b.c")
+            default: Default value to return if path not found
+
+        Returns:
+            The configuration value at the path, or default if not found
+        """
+        # Split on dots and navigate the nested dict
+        keys = path.split('.')
+        value = self._config
+
+        for key in keys:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            else:
+                return default  # Path not found, return default
+
+        return value
+
     def get_config(self, key: str, default: Any = None) -> Any:
         """
         Get a configuration value by key (alias for get method for backward compatibility).
@@ -643,7 +674,7 @@ class ConfigurationManager:
             "enabled": True,
             "schema_auto_setup": True,
             "fallback_to_graphrag": True,
-            "iris_graph_core": {
+            "iris_vector_graph": {
                 "enabled": True,
                 "auto_create_tables": True,
                 "community_edition_compatible": True,

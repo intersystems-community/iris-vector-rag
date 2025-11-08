@@ -182,3 +182,13 @@ evaluation_framework/**/*.log
 test-results/
 coverage_html/
 lint-results/
+
+# Additional cleanup entries (Feature 052)
+logs/
+tests/artifacts/
+coverage.json
+
+# Development tracking files (not for git tracking)
+STATUS.md
+PROGRESS.md
+TODO.md

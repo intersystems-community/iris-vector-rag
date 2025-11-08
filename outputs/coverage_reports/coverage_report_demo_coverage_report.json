@@ -1,0 +1,54 @@
+{
+  "report_id": "demo_coverage_report",
+  "timestamp": "2025-10-02T17:39:44.156800",
+  "overall_coverage_percentage": 72.5,
+  "total_lines": 2500,
+  "covered_lines": 1812,
+  "analysis_duration_seconds": 45.2,
+  "test_execution_duration_seconds": 120.8,
+  "module_coverage": [
+    {
+      "module_name": "iris_rag.config.manager",
+      "file_path": "iris_rag/config/manager.py",
+      "total_lines": 233,
+      "covered_lines": 140,
+      "coverage_percentage": 60.1,
+      "uncovered_lines": [
+        50,
+        75,
+        100,
+        150,
+        200
+      ],
+      "branch_coverage": null,
+      "function_coverage": null,
+      "is_critical_module": true,
+      "target_coverage": 80.0
+    },
+    {
+      "module_name": "iris_rag.validation.requirements",
+      "file_path": "iris_rag/validation/requirements.py",
+      "total_lines": 122,
+      "covered_lines": 110,
+      "coverage_percentage": 90.2,
+      "uncovered_lines": [
+        64,
+        87,
+        102
+      ],
+      "branch_coverage": null,
+      "function_coverage": null,
+      "is_critical_module": true,
+      "target_coverage": 80.0
+    }
+  ],
+  "git_commit_hash": "demo123abc",
+  "ci_build_id": null,
+  "branch_coverage_percentage": 68.5,
+  "function_coverage_percentage": 85.2,
+  "metadata": {
+    "generator": "iris_rag.testing.coverage_reporter",
+    "version": "1.0",
+    "format_version": "1.0"
+  }
+}

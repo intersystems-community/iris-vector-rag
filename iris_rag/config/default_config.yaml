@@ -12,12 +12,6 @@ storage:
   iris:
     table_name: "RAG.SourceDocuments"
     vector_dimension: 384
-  chunking:
-    enabled: true                        # Enable automatic document chunking
-    threshold: 1000                      # Documents larger than this will be chunked
-    strategy: "fixed_size"               # Chunking strategy: fixed_size, semantic, sentence
-    chunk_size: 1000                     # Size of each chunk in characters
-    chunk_overlap: 200                   # Overlap between chunks
 
 # Vector index configuration for optimal HNSW performance
 vector_index:
@@ -37,16 +31,104 @@ pipelines:
     ensure_on_start: true
     try_acorn: true
 
+# Pipeline validation configuration (Feature 047)
+validation:
+  enabled: true                          # Enable pipeline contract validation
+  strict_mode: false                     # If true, treat warnings as errors
+  validate_on_register: true             # Validate pipelines when registering handlers
+  validate_on_query: false               # Validate responses after each query (performance impact)
+  log_violations: true                   # Log contract violations
+  raise_on_error: true                   # Raise exceptions for validation errors
+
+  # Contract requirements (should match PipelineValidator)
+  contract:
+    required_methods: ["query", "load_documents"]
+    required_response_fields:
+      - "answer"
+      - "retrieved_documents"
+      - "contexts"
+      - "sources"
+      - "execution_time"
+      - "metadata"
+    required_metadata_fields:
+      - "num_retrieved"
+      - "pipeline_type"
+      - "generated_answer"
+      - "processing_time"
+      - "retrieval_method"
+      - "context_count"
+
 embeddings:
   default_provider: "sentence_transformers"
   sentence_transformers:
     model_name: "all-MiniLM-L6-v2"
     device: "cpu"
 
+# IRIS EMBEDDING Configuration (Feature 051)
+iris_embedding:
+  enabled: false                             # Enable IRIS EMBEDDING auto-vectorization
+
+  # Default configurations (can be overridden per-table)
+  default_config:
+    model_name: "sentence-transformers/all-MiniLM-L6-v2"
+    hf_cache_path: "/var/lib/huggingface"   # HuggingFace model cache directory
+    python_path: "/usr/bin/python3"          # Python interpreter path
+    batch_size: 32                           # Batch size for vectorization
+    device_preference: "auto"                # Device: auto, cuda, mps, cpu
+    enable_entity_extraction: false          # Extract entities during vectorization
+    entity_types: []                         # Entity types to extract (if enabled)
+
+  # Model cache configuration
+  cache:
+    enabled: true                            # Enable in-memory model caching
+    max_models: 5                            # Maximum number of cached models
+    eviction_policy: "lru"                   # Cache eviction: lru, lfu, ttl
+    ttl_seconds: 3600                        # Time-to-live for cached models (1 hour)
+    warmup_on_start: false                   # Preload models at startup
+
+  # Performance targets (Feature 050 pattern)
+  performance:
+    cache_hit_target_ms: 50                  # Target: <50ms for cache hits
+    cache_miss_target_ms: 5000               # Target: <5000ms for cache misses (includes model load)
+    min_cache_hit_rate: 0.95                 # Target: >=95% cache hit rate after warmup
+    gpu_oom_fallback: true                   # Fallback to CPU on GPU OOM
+
+  # Table-specific configurations (example)
+  # configurations:
+  #   medical_embeddings_v1:
+  #     model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  #     enable_entity_extraction: true
+  #     entity_types: ["Disease", "Symptom", "Medication"]
+  #
+  #   paper_embeddings:
+  #     model_name: "sentence-transformers/allenai-specter"
+  #     device_preference: "cuda"
+  #     batch_size: 64
+
+  # Multi-field vectorization examples
+  # multi_field_configs:
+  #   research_papers:
+  #     table_name: "RAG.ResearchPapers"
+  #     embedding_column: "metadata_vector"
+  #     source_columns:                      # Concatenate multiple fields
+  #       - "title"
+  #       - "abstract"
+  #       - "conclusions"
+  #     config_name: "paper_embeddings"
+  #
+  #   medical_records:
+  #     table_name: "RAG.MedicalRecords"
+  #     embedding_column: "clinical_vector"
+  #     source_columns:
+  #       - "chief_complaint"
+  #       - "history_of_present_illness"
+  #       - "assessment"
+  #     config_name: "medical_embeddings_v1"
+
 # Entity extraction configuration
 entity_extraction:
   enabled: true
-  method: "pattern_only"                 # ontology_hybrid, llm_basic, pattern_only, hybrid
+  method: "llm_basic"                    # ontology_hybrid, llm_basic, pattern_only, hybrid
   confidence_threshold: 0.7              # Minimum confidence score for entities
   entity_types:                         # Enabled entity types (matches pattern definitions)
     - "DRUG"
@@ -59,9 +141,16 @@ entity_extraction:
     - "PERSON"
     - "ORGANIZATION"
   llm:
-    model: "qwen2.5:7b"                  # LLM model for extraction (Ollama) - 7B for speed
+    model: "openai/gpt-oss-120b"         # LLM model: GPT-OSS 120B (OpenAI-compatible)
+    api_base: "http://apps-llm-4.iscinternal.com:8000/v1"  # GPT-OSS endpoint
+    api_key: "dummy"                     # API key (not required for internal endpoints)
+    api_type: "openai"                   # OpenAI-compatible API
     temperature: 0.1                     # Low temperature for consistent extraction
-    max_tokens: 1000                     # Max tokens for LLM response (reduced for speed)
+    max_tokens: 2000                     # Max tokens for LLM response
+    supports_response_format: false      # GPT-OSS doesn't support JSON mode
+    use_json_mode: false                 # Disable JSON mode
+  batch_processing:
+    enabled: false                       # DISABLED: GPT-OSS doesn't support JSON mode
   storage:
     entities_table: "RAG.Entities"      # Database table for entities
     relationships_table: "RAG.EntityRelationships"  # Table for relationships

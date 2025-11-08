@@ -1,0 +1,364 @@
+# API Contract: Embedding Model Caching
+# Feature: 050-fix-embedding-model
+# Date: 2025-11-05
+
+contract_version: "1.0"
+feature: "Fix Embedding Model Performance"
+
+# ============================================================================
+# PUBLIC API (No Changes - Backward Compatible)
+# ============================================================================
+
+public_api:
+  class: EmbeddingManager
+  location: iris_rag/embeddings/manager.py
+  
+  unchanged_methods:
+    - name: __init__
+      signature: (self, config_manager: ConfigurationManager)
+      behavior: "Initialization unchanged - caching is transparent"
+      
+    - name: embed_text
+      signature: (self, text: str) -> List[float]
+      behavior: "Returns embeddings - unchanged behavior"
+      
+    - name: embed_texts
+      signature: (self, texts: List[str]) -> List[List[float]]
+      behavior: "Returns batch embeddings - unchanged behavior"
+      
+  backward_compatibility: "100% - All existing code continues to work without changes"
+
+# ============================================================================
+# INTERNAL API (New - Not Exposed to External Callers)
+# ============================================================================
+
+internal_api:
+  function: _get_cached_sentence_transformer
+  location: iris_rag/embeddings/manager.py
+  visibility: module-private
+  
+  signature: |
+    def _get_cached_sentence_transformer(
+        model_name: str,
+        device: str = "cpu"
+    ) -> SentenceTransformer
+  
+  description: "Get or create cached SentenceTransformer model instance"
+  
+  parameters:
+    model_name:
+      type: str
+      description: "Name of sentence-transformers model"
+      examples:
+        - "all-MiniLM-L6-v2"
+        - "all-mpnet-base-v2"
+        - "sentence-transformers/all-MiniLM-L6-v2"
+      
+    device:
+      type: str
+      default: "cpu"
+      description: "Device to load model on"
+      values:
+        - "cpu"
+        - "cuda"
+        - "cuda:0"
+        - "cuda:1"
+        - "mps"
+  
+  returns:
+    type: SentenceTransformer
+    description: "Cached model instance (shared across all callers)"
+    characteristics:
+      - "Thread-safe singleton per (model_name, device) combination"
+      - "Same instance returned on repeated calls with same parameters"
+      - "Different instance for different model_name or device"
+  
+  raises:
+    ImportError:
+      condition: "sentence-transformers not installed"
+      message: "sentence-transformers not available. Install with: pip install sentence-transformers"
+      
+    RuntimeError:
+      condition: "Model fails to load from disk"
+      message: "Failed to load SentenceTransformer model: {model_name}"
+  
+  performance:
+    first_call:
+      time: "~400ms"
+      operations:
+        - "Load model from disk (sentence-transformers cache or download)"
+        - "Initialize model on specified device"
+        - "Insert into module-level cache"
+      
+    subsequent_calls:
+      time: "<1ms"
+      operations:
+        - "Cache key lookup (dict access)"
+        - "Return cached model instance"
+  
+  thread_safety:
+    pattern: "Double-checked locking"
+    description: |
+      - Fast path: Check cache without lock (99.99% of calls after first load)
+      - Slow path: Acquire lock, double-check, load model if still missing
+      - Multiple threads with same key: First thread loads, others wait
+      - Multiple threads with different keys: Parallel loading (no contention)
+
+  implementation:
+    cache_key_format: "{model_name}:{device}"
+    cache_storage: "_SENTENCE_TRANSFORMER_CACHE module-level dict"
+    thread_lock: "_CACHE_LOCK threading.Lock"
+
+# ============================================================================
+# MODIFIED METHODS
+# ============================================================================
+
+modified_methods:
+  - name: _create_sentence_transformers_function
+    location: iris_rag/embeddings/manager.py
+    line_changed: 92
+    
+    before: |
+      model = SentenceTransformer(model_name, device=device)
+    
+    after: |
+      model = _get_cached_sentence_transformer(model_name, device)
+    
+    contract_preservation:
+      return_type: "Callable[[List[str]], List[List[float]]]"
+      behavior: "Unchanged - still returns embedding function"
+      performance: "Improved - initialization ~400ms -> <1ms on cache hits"
+
+# ============================================================================
+# CONTRACT TESTS
+# ============================================================================
+
+contract_tests:
+  location: tests/unit/test_embedding_cache.py
+  
+  test_cache_reuse_single_threaded:
+    description: "Verify cache reuses model for multiple EmbeddingManagers"
+    scenario:
+      given: "Clean process (no cached models)"
+      when: "Create two EmbeddingManagers with same model configuration"
+      then: "Model loaded once, second instantiation uses cache"
+    
+    assertions:
+      - log_contains: "Loading SentenceTransformer model (one-time initialization)"
+        count: 1
+      - log_contains: "SentenceTransformer initialized on device"
+        count: 2
+    
+    code: |
+      config1 = ConfigurationManager()
+      manager1 = EmbeddingManager(config1)  # Loads model
+      
+      config2 = ConfigurationManager()
+      manager2 = EmbeddingManager(config2)  # Uses cache
+      
+      assert log_count("one-time initialization") == 1
+  
+  test_cache_thread_safety:
+    description: "Verify thread-safe initialization prevents race conditions"
+    scenario:
+      given: "Clean process, multiple threads"
+      when: "10 threads create EmbeddingManagers concurrently"
+      then: "Model loaded exactly once, no race conditions, all embeddings valid"
+    
+    assertions:
+      - all_threads_get_valid_embeddings: true
+      - log_contains: "one-time initialization"
+        count: 1
+      - no_exceptions_raised: true
+    
+    code: |
+      def create_manager():
+          config = ConfigurationManager()
+          manager = EmbeddingManager(config)
+          return manager.embed_text("test")
+      
+      with ThreadPoolExecutor(max_workers=10) as executor:
+          results = list(executor.map(lambda _: create_manager(), range(10)))
+      
+      assert all(len(r) == 384 for r in results)  # All valid embeddings
+      assert log_count("one-time initialization") == 1  # Only one load
+  
+  test_different_configurations:
+    description: "Verify different model+device combos get separate cache entries"
+    scenario:
+      given: "Clean process"
+      when: "Create managers with different model names or devices"
+      then: "Each unique configuration loads model once"
+    
+    assertions:
+      - separate_cache_entries: 2
+      - log_contains: "one-time initialization"
+        count: 2
+    
+    code: |
+      # Config 1: all-MiniLM-L6-v2 on CPU
+      config1 = ConfigurationManager()
+      manager1 = EmbeddingManager(config1)
+      
+      # Config 2: all-mpnet-base-v2 on CPU (different model)
+      config2 = ConfigurationManager()
+      config2.set("embeddings.sentence_transformers.model_name", "all-mpnet-base-v2")
+      manager2 = EmbeddingManager(config2)
+      
+      assert log_count("one-time initialization") == 2
+
+# ============================================================================
+# INTEGRATION TESTS
+# ============================================================================
+
+integration_tests:
+  location: tests/integration/test_embedding_cache_reuse.py
+  
+  test_actual_model_caching:
+    description: "Verify actual SentenceTransformer models are cached and reused"
+    requirements:
+      - sentence-transformers installed
+      - Real model loading (not mocked)
+    
+    scenario:
+      given: "Real sentence-transformers models"
+      when: "Create multiple managers with same model configuration"
+      then: "Embeddings identical, second initialization much faster"
+    
+    assertions:
+      - embeddings_match: true
+      - second_init_time: "< first_init_time / 10"
+      - memory_not_duplicated: true
+    
+    code: |
+      import time
+      
+      config1 = ConfigurationManager()
+      start1 = time.time()
+      manager1 = EmbeddingManager(config1)
+      emb1 = manager1.embed_text("hello world")
+      time1 = time.time() - start1
+      
+      config2 = ConfigurationManager()
+      start2 = time.time()
+      manager2 = EmbeddingManager(config2)
+      emb2 = manager2.embed_text("hello world")
+      time2 = time.time() - start2
+      
+      assert emb1 == emb2  # Same model instance = same embeddings
+      assert time2 < time1 / 10  # At least 10x faster
+
+# ============================================================================
+# PERFORMANCE CONTRACT
+# ============================================================================
+
+performance_contract:
+  metric: initialization_time
+  
+  before_caching:
+    first_manager: "~400ms"
+    second_manager: "~400ms"
+    third_manager: "~400ms"
+    total: "~1200ms"
+  
+  after_caching:
+    first_manager: "~400ms (cache miss)"
+    second_manager: "<1ms (cache hit)"
+    third_manager: "<1ms (cache hit)"
+    total: "~400ms"
+  
+  improvement:
+    speedup: "3x for 3 managers, 10x+ for 10+ managers"
+    disk_io_reduction: "67% for 3 managers, 90%+ for 10+ managers"
+  
+  production_targets:
+    before: "84 model loads in 2-minute window"
+    after: "≤12 model loads in 90-minute window"
+    improvement: "7x reduction in model loading operations"
+
+# ============================================================================
+# LOGGING CONTRACT
+# ============================================================================
+
+logging_contract:
+  first_load:
+    level: INFO
+    messages:
+      - "Loading SentenceTransformer model (one-time initialization): {model_name} on {device}"
+      - "✅ SentenceTransformer model '{model_name}' loaded and cached"
+      - "✅ SentenceTransformer initialized on device: {device}"
+  
+  cache_hit:
+    level: INFO
+    messages:
+      - "✅ SentenceTransformer initialized on device: {device}"
+  
+  observability:
+    grep_patterns:
+      first_loads: 'grep "one-time initialization" logs/* | wc -l'
+      cache_hits: 'grep "initialized on device" logs/* | wc -l'
+    
+    expected_production:
+      first_loads: "≤12 per 90 minutes (unique model+device combinations)"
+      cache_hits: "1000s per 90 minutes (repeated EmbeddingManager creations)"
+
+# ============================================================================
+# MEMORY CONTRACT
+# ============================================================================
+
+memory_contract:
+  cache_growth:
+    pattern: "Monotonic (never shrinks)"
+    limit: "Bounded by number of unique model+device combinations"
+    expected_size: "1-3 entries in production"
+  
+  memory_per_entry: "~400MB (SentenceTransformer model)"
+  
+  total_memory:
+    minimum: "400MB (1 model)"
+    typical: "400MB - 1.2GB (1-3 models)"
+    maximum: "Unbounded (but unlikely >5 models in practice)"
+  
+  lifecycle:
+    creation: "First call to _get_cached_sentence_transformer with new cache key"
+    storage: "Persists in module-level dict for process lifetime"
+    cleanup: "Only on process exit (no explicit eviction)"
+
+# ============================================================================
+# VALIDATION SCRIPT
+# ============================================================================
+
+validation_script:
+  description: "Manual validation from user instructions"
+  location: "Run in Python REPL or script"
+  
+  code: |
+    from iris_rag.embeddings.manager import EmbeddingManager
+    from iris_rag.config.manager import ConfigurationManager
+    
+    # Create multiple managers - should only load model once
+    config = ConfigurationManager()
+    manager1 = EmbeddingManager(config)
+    manager2 = EmbeddingManager(config)  # Should use cached model
+    manager3 = EmbeddingManager(config)  # Should use cached model
+    
+    # Check logs - should see "one-time initialization" only ONCE
+  
+  expected_output: |
+    INFO: Loading SentenceTransformer model (one-time initialization): all-MiniLM-L6-v2 on cpu
+    INFO: ✅ SentenceTransformer model 'all-MiniLM-L6-v2' loaded and cached
+    INFO: ✅ SentenceTransformer initialized on device: cpu
+    INFO: ✅ SentenceTransformer initialized on device: cpu  # Reuses cache
+    INFO: ✅ SentenceTransformer initialized on device: cpu  # Reuses cache
+
+# ============================================================================
+# BREAKING CHANGES
+# ============================================================================
+
+breaking_changes: []  # None - 100% backward compatible
+
+# ============================================================================
+# DEPRECATIONS
+# ============================================================================
+
+deprecations: []  # None - no APIs deprecated

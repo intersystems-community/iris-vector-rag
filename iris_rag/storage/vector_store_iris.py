@@ -85,10 +85,7 @@ class IRISVectorStore(VectorStore):
             try:
                 from tools.chunking.chunking_service import DocumentChunkingService
 
-                # The DocumentChunkingService expects an embedding_func, not a config dict
-                # We'll pass None here and let it use its mock embedding function
-                # The actual embeddings are generated later in _generate_embeddings
-                self.chunking_service = DocumentChunkingService(embedding_func=None)
+                self.chunking_service = DocumentChunkingService(self.chunking_config)
             except ImportError:
                 logger.warning(
                     "DocumentChunkingService not available, disabling auto chunking"
@@ -133,6 +130,16 @@ class IRISVectorStore(VectorStore):
             "abstract_type",
         }
 
+        # IRIS EMBEDDING support (Feature 051)
+        self.embedding_config_name = kwargs.get('embedding_config')
+        self.use_iris_embedding = self.embedding_config_name is not None
+
+        if self.use_iris_embedding:
+            logger.info(
+                f"IRISVectorStore initialized with IRIS EMBEDDING support "
+                f"(config: {self.embedding_config_name})"
+            )
+
         # Test connection on initialization (skip in test mode)
         try:
             # Only test connection if not in test mode or if explicitly requested
@@ -153,6 +160,183 @@ class IRISVectorStore(VectorStore):
             except Exception as e:
                 raise VectorStoreConnectionError(f"Failed to get IRIS connection: {e}")
         return self._connection
+
+    # ========================================================================
+    # IRIS EMBEDDING Support Methods (Feature 051)
+    # ========================================================================
+
+    def query_embedding_config(self, config_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Query %Embedding.Config table for configuration details.
+
+        Args:
+            config_name: Name of the embedding configuration
+
+        Returns:
+            Dictionary with configuration details or None if not found
+
+        Raises:
+            VectorStoreConnectionError: If database query fails
+        """
+        if not self.use_iris_embedding:
+            logger.warning("IRIS EMBEDDING support not enabled for this vector store")
+            return None
+
+        connection = self._get_connection()
+        cursor = connection.cursor()
+
+        try:
+            # Query %Embedding.Config table
+            sql = """
+                SELECT Name, Configuration
+                FROM %Embedding.Config
+                WHERE Name = ?
+            """
+            cursor.execute(sql, [config_name])
+            row = cursor.fetchone()
+
+            if not row:
+                logger.warning(f"EMBEDDING config '{config_name}' not found in %Embedding.Config")
+                return None
+
+            # Parse configuration JSON
+            config_json = json.loads(row[1]) if row[1] else {}
+
+            return {
+                "name": row[0],
+                "model_name": config_json.get("modelName", "unknown"),
+                "hf_cache_path": config_json.get("hfCachePath", ""),
+                "python_path": config_json.get("pythonPath", ""),
+                "batch_size": config_json.get("batchSize", 32),
+                "device_preference": config_json.get("devicePreference", "auto"),
+                "enable_entity_extraction": config_json.get("enableEntityExtraction", False),
+                "entity_types": config_json.get("entityTypes", []),
+                "configuration_json": config_json,
+            }
+
+        except Exception as e:
+            sanitized_error = self._sanitize_error_message(e, "query_embedding_config")
+            logger.error(sanitized_error)
+            raise VectorStoreConnectionError(
+                f"Failed to query EMBEDDING config: {sanitized_error}"
+            )
+        finally:
+            cursor.close()
+
+    def get_embedding_column_metadata(self, table_name: str) -> List[Dict[str, Any]]:
+        """
+        Get metadata about EMBEDDING columns in a table.
+
+        Args:
+            table_name: Name of the table to query (e.g., "RAG.SourceDocuments")
+
+        Returns:
+            List of dictionaries with EMBEDDING column metadata
+
+        Raises:
+            VectorStoreConnectionError: If database query fails
+        """
+        if not self.use_iris_embedding:
+            logger.warning("IRIS EMBEDDING support not enabled for this vector store")
+            return []
+
+        connection = self._get_connection()
+        cursor = connection.cursor()
+
+        try:
+            # Query INFORMATION_SCHEMA for EMBEDDING columns
+            # Note: IRIS may require different system tables for this query
+            # This is a placeholder implementation
+            sql = """
+                SELECT
+                    COLUMN_NAME,
+                    DATA_TYPE,
+                    IS_NULLABLE
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = ?
+                AND DATA_TYPE = 'EMBEDDING'
+            """
+
+            # Extract short table name if fully qualified
+            short_table_name = table_name.split(".")[-1]
+            cursor.execute(sql, [short_table_name])
+            rows = cursor.fetchall()
+
+            columns = []
+            for row in rows:
+                columns.append({
+                    "column_name": row[0],
+                    "data_type": row[1],
+                    "is_nullable": row[2] == "YES",
+                })
+
+            logger.debug(f"Found {len(columns)} EMBEDDING columns in {table_name}")
+            return columns
+
+        except Exception as e:
+            # If INFORMATION_SCHEMA query fails, return empty list (table may not support EMBEDDING)
+            logger.debug(f"Could not query EMBEDDING column metadata for {table_name}: {e}")
+            return []
+        finally:
+            cursor.close()
+
+    def search_with_embedding(
+        self,
+        query: str,
+        top_k: int = 5,
+        filter: Optional[Dict[str, Any]] = None,
+    ) -> List[Tuple[Document, float]]:
+        """
+        Search using IRIS EMBEDDING auto-vectorization instead of manual embedding.
+
+        This method leverages IRIS EMBEDDING columns to auto-generate query vectors,
+        avoiding the need to manually call embedding functions.
+
+        Args:
+            query: The query text (will be auto-vectorized by IRIS)
+            top_k: Maximum number of results to return
+            filter: Optional metadata filters to apply
+
+        Returns:
+            List of tuples containing (Document, similarity_score)
+
+        Raises:
+            VectorStoreConnectionError: If EMBEDDING support not enabled or query fails
+        """
+        if not self.use_iris_embedding:
+            raise VectorStoreConnectionError(
+                "IRIS EMBEDDING support not enabled. Initialize with embedding_config parameter."
+            )
+
+        # Get embedding config details
+        config = self.query_embedding_config(self.embedding_config_name)
+        if not config:
+            raise VectorStoreConnectionError(
+                f"EMBEDDING config '{self.embedding_config_name}' not found in database"
+            )
+
+        # Use the embedding cache to generate query vector
+        from ..embeddings.iris_embedding import embed_texts
+
+        try:
+            embedding_result = embed_texts(self.embedding_config_name, [query])
+            query_embedding = embedding_result.embeddings[0]
+
+            logger.debug(
+                f"Generated query embedding via IRIS EMBEDDING cache "
+                f"(cache_hit={embedding_result.cache_hit}, time={embedding_result.embedding_time_ms:.1f}ms)"
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to generate query embedding: {e}")
+            raise VectorStoreConnectionError(f"Query vectorization failed: {e}")
+
+        # Use existing similarity_search_by_embedding method
+        return self.similarity_search_by_embedding(query_embedding, top_k, filter)
+
+    # ========================================================================
+    # End IRIS EMBEDDING Support Methods
+    # ========================================================================
 
     def _ensure_table_exists(self, cursor):
         """Ensure the target table exists, creating it if necessary."""
@@ -753,6 +937,14 @@ class IRISVectorStore(VectorStore):
                 additional_where=additional_where,
             )
 
+            # DEBUG: Check if SQL contains DOUBLE or FLOAT
+            if 'DOUBLE' in sql:
+                logger.error(f"FOUND DOUBLE IN SQL! SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}")
+            elif 'FLOAT' in sql:
+                logger.info(f"SQL correctly uses FLOAT. SQL snippet: {sql[sql.find('TO_VECTOR'):sql.find('TO_VECTOR')+100]}")
+            else:
+                logger.warning("No FLOAT or DOUBLE found in SQL!")
+
             # Execute using the safe helper (vector already embedded in SQL)
             logger.debug(
                 f"Executing safe vector search with {len(query_embedding)}D vector"
@@ -1135,11 +1327,22 @@ class IRISVectorStore(VectorStore):
             else:
                 query_embedding = embedding_func.embed_query(query)
 
-            # Call our implementation and return just documents for LangChain
+            # Call our implementation and add scores to document metadata
             results = self.similarity_search_by_embedding(
                 query_embedding, k, filter_param
             )
-            return [doc for doc, score in results]
+            # Add score to each document's metadata for MCP/API compatibility
+            documents_with_scores = []
+            for doc, score in results:
+                # Create new document with score in metadata
+                enriched_metadata = {**doc.metadata, 'score': score, 'similarity': score}
+                enriched_doc = Document(
+                    id=doc.id,
+                    page_content=doc.page_content,
+                    metadata=enriched_metadata
+                )
+                documents_with_scores.append(enriched_doc)
+            return documents_with_scores
 
         else:
             # Base class interface: similarity_search(query_embedding, top_k, filter)

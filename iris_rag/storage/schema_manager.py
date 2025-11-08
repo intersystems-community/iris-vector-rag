@@ -26,6 +26,11 @@ class SchemaManager:
     - Provides simple dimension API for all components
     """
 
+    # CLASS-LEVEL CACHING (shared across all instances for performance)
+    _schema_validation_cache = {}  # Cache for needs_migration() results
+    _config_loaded = False  # Flag to prevent redundant config loading
+    _tables_validated = set()  # Cache for ensure_table_exists() to prevent spam
+
     def __init__(self, connection_manager, config_manager):
         self.connection_manager = connection_manager
         self.config_manager = config_manager
@@ -34,12 +39,22 @@ class SchemaManager:
         # Cache for dimension lookups
         self._dimension_cache = {}
 
-        # OPTIMIZATION: Cache schema validation results to prevent migration loops
-        # Key: table_name -> (needs_migration, last_check_timestamp)
-        self._schema_validation_cache = {}
-
-        # Load and validate configuration on initialization
-        self._load_and_validate_config()
+        # Load and validate configuration on initialization (only if not already loaded)
+        if not SchemaManager._config_loaded:
+            self._load_and_validate_config()
+            SchemaManager._config_loaded = True
+        else:
+            # Config already loaded by another instance - set instance attributes from config
+            self.base_embedding_model = self.config_manager.get(
+                "embedding_model.name", "sentence-transformers/all-MiniLM-L6-v2"
+            )
+            self.base_embedding_dimension = self.config_manager.get(
+                "embedding_model.dimension", 384
+            )
+            # Now build mappings (these methods reference the attributes we just set)
+            self._build_model_dimension_mapping()
+            self._build_table_configurations()
+            logger.debug("Schema Manager: Using cached configuration from previous instance")
 
         # Ensure schema metadata table exists
         self.ensure_schema_metadata_table()
@@ -156,7 +171,7 @@ class SchemaManager:
                 "supports_vector_search": False,
                 "supports_graph_traversal": True,
                 "table_type": "graph_metadata",
-                "created_by": "iris_graph_core",
+                "created_by": "iris_vector_graph",
             },
             "rdf_props": {
                 "embedding_column": None,
@@ -166,7 +181,7 @@ class SchemaManager:
                 "supports_vector_search": False,
                 "supports_graph_traversal": True,
                 "table_type": "graph_properties",
-                "created_by": "iris_graph_core",
+                "created_by": "iris_vector_graph",
             },
             "rdf_edges": {
                 "embedding_column": None,
@@ -176,7 +191,7 @@ class SchemaManager:
                 "supports_vector_search": False,
                 "supports_graph_traversal": True,
                 "table_type": "graph_relationships",
-                "created_by": "iris_graph_core",
+                "created_by": "iris_vector_graph",
             },
             "kg_NodeEmbeddings_optimized": {
                 "embedding_column": "emb",
@@ -186,7 +201,7 @@ class SchemaManager:
                 "supports_vector_search": True,
                 "supports_graph_traversal": False,
                 "table_type": "optimized_vectors",
-                "created_by": "iris_graph_core",
+                "created_by": "iris_vector_graph",
                 "requires_hnsw_index": True,
             },
         }
@@ -350,7 +365,8 @@ class SchemaManager:
                     "table_type": "document_storage",
                     "created_by": "BasicRAG",
                     "expected_columns": [
-                        "doc_id",  # Primary key (removed duplicate "id")
+                        "id",
+                        "doc_id",
                         "title",
                         "abstract",
                         "text_content",
@@ -441,7 +457,7 @@ class SchemaManager:
             config["configuration"].update(
                 {
                     "table_type": "graph_metadata",
-                    "created_by": "iris_graph_core",
+                    "created_by": "iris_vector_graph",
                     "expected_columns": [
                         "s",  # subject
                         "label",  # entity type/label
@@ -456,7 +472,7 @@ class SchemaManager:
             config["configuration"].update(
                 {
                     "table_type": "graph_properties",
-                    "created_by": "iris_graph_core",
+                    "created_by": "iris_vector_graph",
                     "expected_columns": [
                         "s",  # subject
                         "key",  # property key
@@ -472,7 +488,7 @@ class SchemaManager:
             config["configuration"].update(
                 {
                     "table_type": "graph_relationships",
-                    "created_by": "iris_graph_core",
+                    "created_by": "iris_vector_graph",
                     "expected_columns": [
                         "edge_id",  # primary key
                         "s",  # subject
@@ -491,7 +507,7 @@ class SchemaManager:
             config["configuration"].update(
                 {
                     "table_type": "optimized_vectors",
-                    "created_by": "iris_graph_core",
+                    "created_by": "iris_vector_graph",
                     "expected_columns": [
                         "id",  # entity identifier
                         "emb",  # vector embedding (optimized VECTOR type)
@@ -537,24 +553,26 @@ class SchemaManager:
         return {"text_content_type": "LONGVARCHAR", "supports_vector_search": True}
 
     def needs_migration(self, table_name: str, pipeline_type: str = None) -> bool:
-        """Check if table needs migration based on configuration and physical structure."""
+        """Check if table needs migration based on configuration and physical structure.
 
-        # OPTIMIZATION: Check cache first to prevent repeated validation
-        import time
-        cache_key = table_name
-        if cache_key in self._schema_validation_cache:
-            cached_result, cached_time = self._schema_validation_cache[cache_key]
-            # Cache valid for current session (no timeout - assume schema doesn't change during run)
-            logger.debug(f"Schema validation cache HIT for {table_name}: {cached_result}")
+        Uses class-level caching to avoid repeated expensive validation checks.
+        """
+        # Check class-level cache first (shared across all instances)
+        cache_key = f"{table_name}:{pipeline_type or 'default'}"
+        if cache_key in SchemaManager._schema_validation_cache:
+            cached_result = SchemaManager._schema_validation_cache[cache_key]
+            logger.debug(f"Schema validation cache HIT for {table_name} (cached: {cached_result})")
             return cached_result
+
+        # Cache MISS - perform full validation
+        logger.debug(f"Schema validation cache MISS for {table_name} - performing full validation")
 
         current_config = self.get_current_schema_config(table_name)
         expected_config = self._get_expected_schema_config(table_name, pipeline_type)
 
         if not current_config:
             logger.info(f"Table {table_name} has no schema metadata - migration needed")
-            # Cache the result
-            self._schema_validation_cache[cache_key] = (True, time.time())
+            SchemaManager._schema_validation_cache[cache_key] = True
             return True
 
         # Compare top-level schema config fields
@@ -570,8 +588,7 @@ class SchemaManager:
                     f"Migration required for {table_name} due to {key} mismatch: "
                     f"expected={expected_config.get(key)}, actual={current_config.get(key)}"
                 )
-                # Cache the result
-                self._schema_validation_cache[cache_key] = (True, time.time())
+                SchemaManager._schema_validation_cache[cache_key] = True
                 return True
 
         # Compare nested configuration keys
@@ -588,8 +605,7 @@ class SchemaManager:
                     f"Migration required for {table_name} due to config.{key} mismatch: "
                     f"expected={exp_val}, actual={cur_val}"
                 )
-                # Cache the result
-                self._schema_validation_cache[cache_key] = (True, time.time())
+                SchemaManager._schema_validation_cache[cache_key] = True
                 return True
 
         # ✅ NEW: Check that all expected columns exist in physical table
@@ -606,20 +622,18 @@ class SchemaManager:
                         logger.info(
                             f"Migration required for {table_name}: missing column '{col}' in physical schema."
                         )
-                        # Cache the result
-                        self._schema_validation_cache[cache_key] = (True, time.time())
+                        SchemaManager._schema_validation_cache[cache_key] = True
                         return True
             except Exception as e:
                 logger.warning(
                     f"Could not verify physical structure of {table_name}: {e}"
                 )
-                # Cache the result
-                self._schema_validation_cache[cache_key] = (True, time.time())
+                SchemaManager._schema_validation_cache[cache_key] = True
                 return True  # Be conservative and migrate if in doubt
 
-        # No migration needed - cache the result
-        logger.info(f"Schema validation complete for {table_name}: no migration needed")
-        self._schema_validation_cache[cache_key] = (False, time.time())
+        # Schema is valid - cache the result
+        logger.info(f"✅ Schema validation PASSED for {table_name} - caching result")
+        SchemaManager._schema_validation_cache[cache_key] = False
         return False
 
     def migrate_table(
@@ -765,22 +779,16 @@ class SchemaManager:
                     logger.info(
                         "Checking for foreign key constraints on SourceDocuments..."
                     )
-
-                    # Drop all tables that might reference SourceDocuments
-                    # This is more robust than trying to drop individual constraints
-                    potential_referencing_tables = [
-                        "VectorEmbeddings",
-                        "DocumentChunks",
-                        "Entities",
-                        "EntityRelationships"
+                    known_constraints = [
+                        ("DOCUMENTCHUNKSFKEY2", "DocumentChunks"),
                     ]
 
-                    for referencing_table in potential_referencing_tables:
+                    for constraint_name, referencing_table in known_constraints:
                         # Check if referencing table exists first
                         cursor.execute(
                             """
-                            SELECT COUNT(*)
-                            FROM INFORMATION_SCHEMA.TABLES
+                            SELECT COUNT(*) 
+                            FROM INFORMATION_SCHEMA.TABLES 
                             WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = ?
                         """,
                             [referencing_table.upper()],
@@ -788,33 +796,45 @@ class SchemaManager:
                         table_exists = cursor.fetchone()[0] > 0
 
                         if not table_exists:
-                            logger.debug(
-                                f"Referencing table RAG.{referencing_table} does not exist — skipping"
+                            logger.info(
+                                f"Referencing table RAG.{referencing_table} does not exist — skipping constraint drop"
                             )
                             continue
 
-                        # Simply drop the table - this cascades to all constraints
                         try:
                             logger.info(
-                                f"Dropping table RAG.{referencing_table} (may reference SourceDocuments)"
+                                f"Dropping foreign key constraint {constraint_name} from RAG.{referencing_table}"
                             )
                             cursor.execute(
-                                f"DROP TABLE IF EXISTS RAG.{referencing_table}"
+                                f"ALTER TABLE RAG.{referencing_table} DROP CONSTRAINT {constraint_name}"
                             )
                             logger.info(
-                                f"✓ Dropped table RAG.{referencing_table}"
+                                f"✓ Successfully dropped constraint {constraint_name}"
                             )
-                        except Exception as table_error:
+                        except Exception as fk_error:
                             logger.warning(
-                                f"Could not drop table {referencing_table}: {table_error}"
+                                f"Could not drop foreign key {constraint_name}: {fk_error}"
                             )
+                            try:
+                                logger.info(
+                                    f"Attempting to drop referencing table RAG.{referencing_table}"
+                                )
+                                cursor.execute(
+                                    f"DROP TABLE IF EXISTS RAG.{referencing_table}"
+                                )
+                                logger.info(
+                                    f"✓ Dropped referencing table RAG.{referencing_table}"
+                                )
+                            except Exception as table_error:
+                                logger.warning(
+                                    f"Could not drop referencing table {referencing_table}: {table_error}"
+                                )
 
                     # Drop existing table
                     cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
                     logger.info(f"Dropped existing {table_name} table")
 
                     # Recreate with correct schema
-                    # Use FLOAT for VECTOR type (cheaper storage/compute than DOUBLE)
                     create_sql = f"""
                     CREATE TABLE {table_name} (
                         doc_id VARCHAR(255) PRIMARY KEY,
@@ -823,7 +843,7 @@ class SchemaManager:
                         text_content {text_content_type},
                         authors VARCHAR(MAX),
                         keywords VARCHAR(MAX),
-                        embedding VECTOR(FLOAT, {vector_dim}),
+                        embedding VECTOR({vector_data_type}, {vector_dim}),
                         metadata VARCHAR(MAX),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
@@ -1338,9 +1358,6 @@ class SchemaManager:
                         source_entity_id VARCHAR(255) NOT NULL,
                         target_entity_id VARCHAR(255) NOT NULL,
                         relationship_type VARCHAR(255) NOT NULL,
-                        weight DOUBLE DEFAULT 1.0,
-                        confidence DOUBLE DEFAULT 1.0,
-                        source_document VARCHAR(255),
                         metadata TEXT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (source_entity_id) REFERENCES RAG.Entities(entity_id) ON DELETE CASCADE,
@@ -1868,6 +1885,11 @@ class SchemaManager:
     def _ensure_standard_table(self, table_name: str) -> bool:
         """Ensure standard RAG tables exist."""
         try:
+            # Check class-level cache first to avoid repeated validation spam
+            if table_name in SchemaManager._tables_validated:
+                logger.debug(f"Table RAG.{table_name} already validated (cached) - skipping check")
+                return True
+
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
@@ -1883,19 +1905,10 @@ class SchemaManager:
             exists = cursor.fetchone()[0] > 0
 
             if exists:
-                # Table exists - check if schema matches expected schema
-                logger.info(f"Table RAG.{table_name} already exists - checking schema compatibility")
-
-                # Check if migration is needed based on physical schema
-                if self.needs_migration(table_name):
-                    logger.info(f"Schema migration needed for RAG.{table_name}")
-                    cursor.close()
-                    # Migrate table to correct schema
-                    return self.migrate_table(table_name)
-                else:
-                    logger.info(f"Schema for RAG.{table_name} is up to date")
-                    cursor.close()
-                    return True
+                logger.debug(f"Table RAG.{table_name} exists - caching validation result")
+                SchemaManager._tables_validated.add(table_name)  # Cache the result
+                cursor.close()
+                return True
 
             # Create table based on type
             if table_name == "SourceDocuments":
@@ -1938,15 +1951,10 @@ class SchemaManager:
             embedding_config = self.config_manager.get_embedding_config()
             dimension = embedding_config.get("dimension", 384)
 
-            # Use FLOAT for VECTOR type (cheaper storage/compute than DOUBLE)
             create_sql = f"""
             CREATE TABLE RAG.SourceDocuments (
                 doc_id VARCHAR(255) NOT NULL,
-                title VARCHAR(1000),
-                abstract VARCHAR(MAX),
                 text_content LONGVARCHAR,
-                authors VARCHAR(MAX),
-                keywords VARCHAR(MAX),
                 metadata VARCHAR(2000),
                 embedding VECTOR(FLOAT, {dimension}),
                 created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -2070,7 +2078,6 @@ class SchemaManager:
         try:
             dimension = self.config_manager.get("embedding:dimension", 384)
 
-            # Use FLOAT for VECTOR type (cheaper storage/compute than DOUBLE)
             create_sql = f"""
             CREATE TABLE RAG.DocumentChunks (
                 id VARCHAR(255) PRIMARY KEY,

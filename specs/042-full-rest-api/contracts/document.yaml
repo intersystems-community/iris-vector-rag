@@ -1,0 +1,165 @@
+# Document Upload Contracts
+# FR-021 to FR-024: Asynchronous document loading
+
+paths:
+  /documents:
+    post:
+      summary: Upload documents for indexing
+      description: |
+        Asynchronously upload and index documents into a RAG pipeline.
+
+        FR-021: System MUST support asynchronous document upload and indexing
+        FR-022: System MUST validate document format and size (max 100MB per file)
+        FR-024: Document loading MUST not block query processing
+      operationId: uploadDocuments
+      tags:
+        - Document
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUploadRequest'
+      responses:
+        '202':
+          description: Upload accepted and processing started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentUploadResponse'
+        '400':
+          description: Invalid file format or size
+          content:
+            application/json:
+              schema:
+                $ref: '../openapi.yaml#/components/schemas/Error'
+              example:
+                error:
+                  type: validation_exception
+                  reason: File size exceeds maximum
+                  details:
+                    field: file
+                    max_size_bytes: 104857600
+                    actual_size_bytes: 150000000
+        '401':
+          $ref: '../auth.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../auth.yaml#/components/responses/Forbidden'
+
+  /documents/{operation_id}:
+    get:
+      summary: Get document upload operation status
+      description: |
+        Check status of an asynchronous document upload operation.
+
+        FR-023: System MUST return operation status (pending, processing, completed, failed)
+      operationId: getUploadStatus
+      tags:
+        - Document
+      parameters:
+        - name: operation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Operation status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentUploadResponse'
+        '401':
+          $ref: '../auth.yaml#/components/responses/Unauthorized'
+        '404':
+          description: Operation not found
+          content:
+            application/json:
+              schema:
+                $ref: '../openapi.yaml#/components/schemas/Error'
+
+components:
+  schemas:
+    DocumentUploadRequest:
+      type: object
+      required:
+        - file
+        - pipeline
+      properties:
+        file:
+          type: string
+          format: binary
+          description: |
+            Document file to upload (max 100MB)
+
+            FR-022: Maximum 100MB per document
+        pipeline:
+          type: string
+          enum: [basic, basic_rerank, crag, graphrag, pylate_colbert]
+          description: Pipeline to use for indexing
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Optional metadata to associate with documents
+
+    DocumentUploadResponse:
+      type: object
+      required:
+        - operation_id
+        - status
+        - created_at
+        - total_documents
+        - processed_documents
+        - progress_percentage
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+          description: Unique operation identifier
+        status:
+          type: string
+          enum: [pending, validating, processing, completed, failed]
+          description: |
+            Current operation status
+
+            FR-023: System MUST return operation status
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        total_documents:
+          type: integer
+          minimum: 0
+        processed_documents:
+          type: integer
+          minimum: 0
+        failed_documents:
+          type: integer
+          minimum: 0
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        validation_errors:
+          type: array
+          items:
+            type: string
+        error_message:
+          type: string
+      example:
+        operation_id: b1c2d3e4-5678-90ab-cdef-fedcba987654
+        status: processing
+        created_at: '2025-10-16T12:30:00.000Z'
+        started_at: '2025-10-16T12:30:05.000Z'
+        total_documents: 100
+        processed_documents: 47
+        failed_documents: 2
+        progress_percentage: 47.0
+        validation_errors:
+          - 'Document 23: Invalid UTF-8 encoding'

@@ -21,133 +21,107 @@ from adapters.rag_templates_bridge import (
 )
 
 
-# Module-level fixtures accessible by all test classes
-@pytest.fixture
-def mock_config_manager():
-    """Mock configuration manager with test settings."""
-    config_manager = Mock()
+class TestRAGTemplatesBridge:
+    """Test suite for RAG Templates Bridge adapter."""
 
-    # Make .get() context-aware based on the key requested
-    def mock_get(key, default=None):
-        config_map = {
-            "embedding_model.name": "sentence-transformers/all-MiniLM-L6-v2",
-            "embedding_model.dimension": 384,
-            "storage:iris:vector_data_type": "FLOAT",
-            "embedding:dimension": 384,
+    @pytest.fixture
+    def mock_config_manager(self):
+        """Mock configuration manager with test settings."""
+        config_manager = Mock()
+        config_manager.get.return_value = {
             "default_technique": "basic",
             "fallback_technique": "basic",
             "query_timeout": 5,
+            "circuit_breaker": {
+                "failure_threshold": 3,
+                "recovery_timeout": 10,
+                "half_open_max_calls": 2,
+            },
+            "performance": {
+                "target_latency_p95_ms": 500,
+                "target_memory_api_latency_ms": 200,
+            },
         }
-        return config_map.get(key, default)
+        return config_manager
 
-    config_manager.get.side_effect = mock_get
-    config_manager.get_embedding_config.return_value = {
-        "model": "all-MiniLM-L6-v2",
-        "dimension": 384,
-    }
-    return config_manager
+    @pytest.fixture
+    def mock_connection_manager(self):
+        """Mock connection manager."""
+        conn_manager = Mock()
+        conn_manager.get_connection.return_value = Mock()
+        return conn_manager
 
+    @pytest.fixture
+    def mock_pipeline(self):
+        """Mock RAG pipeline with configurable responses."""
+        pipeline = Mock()
+        pipeline.config_manager = Mock()
 
-@pytest.fixture
-def mock_connection_manager():
-    """Mock connection manager."""
-    conn_manager = Mock()
-    conn_manager.get_connection.return_value = Mock()
-    return conn_manager
-
-
-@pytest.fixture
-def mock_pipeline():
-    """Mock RAG pipeline with configurable responses."""
-    pipeline = Mock()
-    pipeline.config_manager = Mock()
-
-    # Default successful response
-    pipeline.query.return_value = {
-        "answer": "Test answer from pipeline",
-        "sources": [{"id": "doc1", "content": "test content", "score": 0.85}],
-        "confidence_score": 0.8,
-        "metadata": {"tokens_used": 150},
-    }
-
-    pipeline.load_documents = Mock()
-    return pipeline
-
-
-@pytest_asyncio.fixture
-async def bridge(mock_config_manager, mock_connection_manager):
-    """Create bridge instance with mocked dependencies."""
-    with patch(
-        "adapters.rag_templates_bridge.ConfigurationManager",
-        return_value=mock_config_manager,
-    ), patch(
-        "adapters.rag_templates_bridge.ConnectionManager",
-        return_value=mock_connection_manager,
-    ):
-
-        bridge = RAGTemplatesBridge()
-
-        # Mock all pipelines for testing
-        mock_basic = Mock()
-        mock_basic.config_manager = Mock()
-        mock_basic.query.return_value = {
-            "answer": "Basic response",
-            "sources": [],
-            "confidence_score": 0.7,
-        }
-        mock_basic.load_documents.return_value = {
-            "documents_loaded": 2,
-            "status": "success",
-        }
-
-        mock_crag = Mock()
-        mock_crag.config_manager = Mock()
-        mock_crag.query.return_value = {
-            "answer": "CRAG response",
-            "sources": [],
+        # Default successful response
+        pipeline.query.return_value = {
+            "answer": "Test answer from pipeline",
+            "sources": [{"id": "doc1", "content": "test content", "score": 0.85}],
             "confidence_score": 0.8,
-        }
-        mock_crag.load_documents.return_value = {
-            "documents_loaded": 2,
-            "status": "success",
+            "metadata": {"tokens_used": 150},
         }
 
-        mock_graph = Mock()
-        mock_graph.config_manager = Mock()
-        mock_graph.query.return_value = {
-            "answer": "Graph response",
-            "sources": [],
-            "confidence_score": 0.9,
-        }
-        mock_graph.load_documents.return_value = {
-            "documents_loaded": 2,
-            "status": "success",
-        }
+        pipeline.load_documents = Mock()
+        return pipeline
 
-        mock_rerank = Mock()
-        mock_rerank.config_manager = Mock()
-        mock_rerank.query.return_value = {
-            "answer": "Reranked response",
-            "sources": [],
-            "confidence_score": 0.85,
-        }
-        mock_rerank.load_documents.return_value = {
-            "documents_loaded": 2,
-            "status": "success",
-        }
+    @pytest_asyncio.fixture
+    async def bridge(self, mock_config_manager, mock_connection_manager):
+        """Create bridge instance with mocked dependencies."""
+        with patch(
+            "adapters.rag_templates_bridge.ConfigurationManager",
+            return_value=mock_config_manager,
+        ), patch(
+            "adapters.rag_templates_bridge.ConnectionManager",
+            return_value=mock_connection_manager,
+        ):
 
-        bridge._pipelines = {
-            RAGTechnique.BASIC: mock_basic,
-            RAGTechnique.CRAG: mock_crag,
-            RAGTechnique.GRAPH: mock_graph,
-            RAGTechnique.RERANKING: mock_rerank,
-        }
+            bridge = RAGTemplatesBridge()
 
-        return bridge
+            # Mock all pipelines for testing
+            mock_basic = Mock()
+            mock_basic.config_manager = Mock()
+            mock_basic.query.return_value = {
+                "answer": "Basic response",
+                "sources": [],
+                "confidence_score": 0.7,
+            }
 
+            mock_crag = Mock()
+            mock_crag.config_manager = Mock()
+            mock_crag.query.return_value = {
+                "answer": "CRAG response",
+                "sources": [],
+                "confidence_score": 0.8,
+            }
 
-class TestRAGTemplatesBridge:
-    """Test suite for RAG Templates Bridge adapter."""
+            mock_graph = Mock()
+            mock_graph.config_manager = Mock()
+            mock_graph.query.return_value = {
+                "answer": "Graph response",
+                "sources": [],
+                "confidence_score": 0.9,
+            }
+
+            mock_rerank = Mock()
+            mock_rerank.config_manager = Mock()
+            mock_rerank.query.return_value = {
+                "answer": "Reranked response",
+                "sources": [],
+                "confidence_score": 0.85,
+            }
+
+            bridge._pipelines = {
+                RAGTechnique.BASIC: mock_basic,
+                RAGTechnique.CRAG: mock_crag,
+                RAGTechnique.GRAPH: mock_graph,
+                RAGTechnique.RERANKING: mock_rerank,
+            }
+
+            return bridge
 
     @pytest.mark.asyncio
     async def test_all_rag_techniques_accessible(self, bridge):
@@ -207,7 +181,7 @@ class TestRAGTemplatesBridge:
         )
 
         # Execute queries to trigger circuit breaker
-        for _ in range(5):  # threshold is 5 (default), so 5th should trigger open state
+        for _ in range(4):  # threshold is 3, so 4th should trigger fallback
             response = await bridge.query(test_query, technique="crag")
             if response.error:
                 continue  # Expected failures
@@ -411,9 +385,6 @@ class TestRAGTemplatesBridge:
         for _ in range(bridge.cb_config.half_open_max_calls):
             bridge._record_success(technique)
 
-        # Check circuit breaker to trigger state transition
-        bridge._check_circuit_breaker(technique)
-
         assert (
             bridge._circuit_breakers[technique]["state"] == CircuitBreakerState.CLOSED
         )
@@ -425,18 +396,9 @@ class TestPerformanceBenchmarks:
     @pytest.mark.asyncio
     async def test_cold_start_performance(self):
         """Test bridge initialization performance (<50ms)."""
-        # Create proper mocks
-        mock_config = Mock()
-        mock_config.get.return_value = {}  # Empty config for performance test
-
-        mock_conn = Mock()
-
-        with patch("adapters.rag_templates_bridge.ConfigurationManager", return_value=mock_config), \
-             patch("adapters.rag_templates_bridge.ConnectionManager", return_value=mock_conn), \
-             patch("adapters.rag_templates_bridge.BasicRAGPipeline"), \
-             patch("adapters.rag_templates_bridge.CRAGPipeline"), \
-             patch("adapters.rag_templates_bridge.GraphRAGPipeline"), \
-             patch("adapters.rag_templates_bridge.BasicRAGRerankingPipeline"):
+        with patch("adapters.rag_templates_bridge.ConfigurationManager"), patch(
+            "adapters.rag_templates_bridge.ConnectionManager"
+        ):
 
             start_time = time.time()
             RAGTemplatesBridge()
@@ -450,12 +412,11 @@ class TestPerformanceBenchmarks:
         # Simulate failure and measure recovery time
         start_time = time.time()
 
-        # Force circuit breaker trigger (threshold = 5)
+        # Force circuit breaker trigger
         bridge._record_failure(RAGTechnique.BASIC)
         bridge._record_failure(RAGTechnique.BASIC)
         bridge._record_failure(RAGTechnique.BASIC)
-        bridge._record_failure(RAGTechnique.BASIC)
-        bridge._record_failure(RAGTechnique.BASIC)  # 5th failure triggers circuit breaker
+        bridge._record_failure(RAGTechnique.BASIC)  # Should trigger circuit breaker
 
         # Attempt query (should fallback)
         response = await bridge.query("Recovery test")
@@ -478,17 +439,9 @@ class TestRAGBridgeIntegration:
         # This would integrate with actual pipelines in a full test environment
         # For now, validates the interface contract
 
-        mock_config = Mock()
-        mock_config.get.return_value = {}
-
-        mock_conn = Mock()
-
-        with patch("adapters.rag_templates_bridge.ConfigurationManager", return_value=mock_config), \
-             patch("adapters.rag_templates_bridge.ConnectionManager", return_value=mock_conn), \
-             patch("adapters.rag_templates_bridge.BasicRAGPipeline"), \
-             patch("adapters.rag_templates_bridge.CRAGPipeline"), \
-             patch("adapters.rag_templates_bridge.GraphRAGPipeline"), \
-             patch("adapters.rag_templates_bridge.BasicRAGRerankingPipeline"):
+        with patch("adapters.rag_templates_bridge.ConfigurationManager"), patch(
+            "adapters.rag_templates_bridge.ConnectionManager"
+        ):
 
             bridge = RAGTemplatesBridge()
 

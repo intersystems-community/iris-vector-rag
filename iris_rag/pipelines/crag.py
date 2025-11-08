@@ -38,6 +38,7 @@ class CRAGPipeline(RAGPipeline):
         embedding_func=None,
         llm_func=None,
         web_search_func=None,
+        embedding_config: Optional[str] = None,
     ):
         """
         Initialize CRAG pipeline with new architecture as primary.
@@ -50,6 +51,7 @@ class CRAGPipeline(RAGPipeline):
             embedding_func: Function to generate embeddings
             llm_func: Function for answer generation
             web_search_func: Function for web search (optional)
+            embedding_config: Optional IRIS EMBEDDING config name for auto-vectorization (Feature 051)
         """
         # Handle new architecture first, then backward compatibility
         if connection_manager is None and iris_connector is not None:
@@ -88,6 +90,16 @@ class CRAGPipeline(RAGPipeline):
         self.embedding_func = embedding_func
         self.llm_func = llm_func
         self.web_search_func = web_search_func
+
+        # IRIS EMBEDDING configuration (Feature 051)
+        self.embedding_config = embedding_config
+        self.use_iris_embedding = embedding_config is not None
+
+        if self.use_iris_embedding:
+            logger.info(
+                f"CRAGPipeline initialized with IRIS EMBEDDING auto-vectorization "
+                f"(config: {self.embedding_config})"
+            )
 
         # Get functions from config if not provided
         if not self.embedding_func:
@@ -486,32 +498,22 @@ class CRAGPipeline(RAGPipeline):
         try:
             # Generate query embedding
             query_embedding = self.embedding_func([query])[0]
+            # Format embedding for IRIS SQL - must embed directly in SQL with brackets
+            query_embedding_str = "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
 
-            # Format embedding for IRIS VECTOR type
-            if isinstance(query_embedding, list):
-                embedding_list = query_embedding
-            elif hasattr(query_embedding, 'tolist'):
-                embedding_list = query_embedding.tolist()
-            else:
-                embedding_list = list(query_embedding)
-
-            vector_str = f"[{','.join(map(str, embedding_list))}]"
-            vector_dimension = len(embedding_list)
-
-            # IMPORTANT: TO_VECTOR() does NOT accept ? parameters (Constitution Principle VII)
-            # Must embed vector string directly in SQL like insert_vector() utility does
+            # Try chunk-based retrieval with parameterized query
             chunk_sql = f"""
                 SELECT TOP {top_k}
                     doc_id,
                     chunk_text,
-                    VECTOR_COSINE(chunk_embedding, TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension})) as similarity_score
+                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?, FLOAT, 384)) as similarity_score
                 FROM RAG.DocumentChunks
                 WHERE chunk_embedding IS NOT NULL
                 ORDER BY similarity_score DESC
             """
 
-            # Execute without embedding parameter (it's embedded in SQL)
-            cursor.execute(chunk_sql)
+            # Execute with embedding as parameter
+            cursor.execute(chunk_sql, [query_embedding_str])
             chunk_results = cursor.fetchall()
             logger.debug(
                 f"CRAG _enhance_retrieval() chunk-based query returned {len(chunk_results)} chunks"
@@ -605,35 +607,24 @@ class CRAGPipeline(RAGPipeline):
                 if isinstance(query_embedding, list) and len(query_embedding) > 0:
                     if isinstance(query_embedding[0], list):
                         query_embedding = query_embedding[0]
-
-                # Format embedding for IRIS VECTOR type
-                if isinstance(query_embedding, list):
-                    embedding_list = query_embedding
-                elif hasattr(query_embedding, 'tolist'):
-                    embedding_list = query_embedding.tolist()
-                else:
-                    embedding_list = list(query_embedding)
-
-                vector_str = f"[{','.join(map(str, embedding_list))}]"
-                vector_dimension = len(embedding_list)
-
+                # Use working pattern from archived CRAG V2 (lines 50-59) - add brackets for TO_VECTOR
+                query_embedding_str = "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
                 logger.debug(
                     f"CRAG _knowledge_base_expansion() generated embedding for semantic search: length={len(query_embedding)}"
                 )
 
-                # IMPORTANT: TO_VECTOR() does NOT accept ? parameters (Constitution Principle VII)
-                # Must embed vector string directly in SQL like insert_vector() utility does
+                # Use semantic search with parameterized query
                 sql = f"""
                     SELECT TOP {top_k * 2}
                         doc_id,
                         text_content,
-                        VECTOR_COSINE(embedding, TO_VECTOR('{vector_str}', DOUBLE, {vector_dimension})) as similarity_score
+                        VECTOR_COSINE(embedding, TO_VECTOR(?, FLOAT, 384)) as similarity_score
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY similarity_score DESC
                 """
 
-                like_params = []
+                like_params = [query_embedding_str]
 
             except Exception as e:
                 logger.warning(
