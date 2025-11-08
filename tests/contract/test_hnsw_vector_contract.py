@@ -24,7 +24,7 @@ class TestHNSWVectorContract:
     @pytest.mark.requires_database
     def test_hnsw_vector_executes_successfully(self, graphrag_pipeline):
         """
-        FR-010: HNSW vector search MUST execute via iris_graph_core.
+        FR-010: HNSW vector search MUST execute via iris_vector_graph.
 
         Given: HybridGraphRAG pipeline initialized
         When: Query executed with method="vector"

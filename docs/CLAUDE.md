@@ -365,10 +365,11 @@ The HybridGraphRAG pipeline requires iris-vector-graph for operation:
 ```bash
 pip install rag-templates[hybrid-graphrag]
 ```
-This installs the `iris-vector-graph` package providing iris_graph_core integration for 50x performance improvements.
+This installs the `iris-vector-graph` package providing iris_vector_graph integration for 50x performance improvements.
 
 **Requirements:**
-- iris-vector-graph>=2.0.0 is now a mandatory dependency
+- iris-vector-graph>=1.1.1 is now a mandatory dependency (updated in Feature 053 from 2.0.0)
+- iris-vector-graph 1.1.1+ uses top-level `from iris_vector_graph import ...` imports (not `iris_vector_graph_core`)
 - No fallback mechanisms - the pipeline will fail fast with clear error messages if the package is missing
 - All retrieval methods (hybrid, rrf, text, vector, kg) require iris-vector-graph
 

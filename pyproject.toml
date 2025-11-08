@@ -73,10 +73,10 @@ dependencies = [
 embedding = [
     "torch>=2.0.0",
     "sentence-transformers>=2.2.0",
-    "iris-vector-graph>=2.0.0"
+    "iris-vector-graph>=1.1.1"
 ]
 hybrid-graphrag = [
-    "iris-vector-graph>=2.0.0"
+    "iris-vector-graph>=1.1.1"
 ]
 dev = [
     "uv>=0.1.0",

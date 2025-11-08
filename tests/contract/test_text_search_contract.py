@@ -24,7 +24,7 @@ class TestTextSearchContract:
     @pytest.mark.requires_database
     def test_text_search_executes_successfully(self, graphrag_pipeline):
         """
-        FR-007: Text search MUST execute iFind text search via iris_graph_core.
+        FR-007: Text search MUST execute iFind text search via iris_vector_graph.
 
         Given: HybridGraphRAG pipeline initialized
         When: Query executed with method="text"

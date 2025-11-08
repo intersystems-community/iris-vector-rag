@@ -1,8 +1,8 @@
 """
-HybridGraphRAG Schema Manager - iris_graph_core Table Management
+HybridGraphRAG Schema Manager - iris_vector_graph Table Management
 
 This module manages the database schema for HybridGraphRAG pipelines,
-including the creation and maintenance of iris_graph_core tables required
+including the creation and maintenance of iris_vector_graph tables required
 for advanced hybrid search capabilities.
 """
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class HybridGraphRAGSchemaManager(SchemaManager):
     """
-    Schema manager for HybridGraphRAG pipelines with iris_graph_core support.
+    Schema manager for HybridGraphRAG pipelines with iris_vector_graph support.
 
     Extends the base SchemaManager to include creation and management of
     specialized tables required for hybrid search, graph traversal, and
@@ -26,7 +26,7 @@ class HybridGraphRAGSchemaManager(SchemaManager):
     def __init__(self, connection_manager, config_manager):
         """Initialize HybridGraphRAG schema manager."""
         super().__init__(connection_manager, config_manager)
-        self.iris_graph_core_tables = {
+        self.iris_vector_graph_tables = {
             "KG_NODEEMBEDDINGS_OPTIMIZED": self._create_kg_nodeembeddings_optimized_table,
             "RDF_EDGES": self._create_rdf_edges_table,
             "RDF_LABELS": self._create_rdf_labels_table,
@@ -41,7 +41,7 @@ class HybridGraphRAGSchemaManager(SchemaManager):
             True if all tables were created/validated successfully
         """
         try:
-            logger.info("🔧 Ensuring HybridGraphRAG schema (iris_graph_core tables)...")
+            logger.info("🔧 Ensuring HybridGraphRAG schema (iris_vector_graph tables)...")
 
             # First ensure base RAG tables (entities, etc)
             base_tables = ["SourceDocuments", "Entities", "EntityRelationships"]
@@ -50,11 +50,11 @@ class HybridGraphRAGSchemaManager(SchemaManager):
                     logger.error(f"Failed to ensure base table: {table}")
                     return False
 
-            # Create iris_graph_core tables
+            # Create iris_vector_graph tables
             success_count = 0
-            for table_name, create_func in self.iris_graph_core_tables.items():
+            for table_name, create_func in self.iris_vector_graph_tables.items():
                 try:
-                    if self._ensure_iris_graph_core_table(table_name, create_func):
+                    if self._ensure_iris_vector_graph_table(table_name, create_func):
                         success_count += 1
                         logger.info(f"✅ Table {table_name} ensured successfully")
                     else:
@@ -62,10 +62,10 @@ class HybridGraphRAGSchemaManager(SchemaManager):
                 except Exception as e:
                     logger.error(f"❌ Error ensuring table {table_name}: {e}")
 
-            total_tables = len(self.iris_graph_core_tables)
+            total_tables = len(self.iris_vector_graph_tables)
             if success_count == total_tables:
                 logger.info(
-                    f"🎉 All {total_tables} iris_graph_core tables ensured successfully"
+                    f"🎉 All {total_tables} iris_vector_graph tables ensured successfully"
                 )
                 return True
             else:
@@ -78,9 +78,9 @@ class HybridGraphRAGSchemaManager(SchemaManager):
             logger.error(f"Failed to ensure HybridGraphRAG schema: {e}")
             return False
 
-    def _ensure_iris_graph_core_table(self, table_name: str, create_func) -> bool:
+    def _ensure_iris_vector_graph_table(self, table_name: str, create_func) -> bool:
         """
-        Ensure a specific iris_graph_core table exists.
+        Ensure a specific iris_vector_graph table exists.
 
         Args:
             table_name: Name of the table to ensure
@@ -110,7 +110,7 @@ class HybridGraphRAGSchemaManager(SchemaManager):
                 return True
 
             # Create the table
-            logger.info(f"Creating iris_graph_core table: RAG.{table_name}")
+            logger.info(f"Creating iris_vector_graph table: RAG.{table_name}")
             create_success = create_func(cursor)
 
             if create_success:
@@ -313,7 +313,7 @@ class HybridGraphRAGSchemaManager(SchemaManager):
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
-            for table_name in self.iris_graph_core_tables.keys():
+            for table_name in self.iris_vector_graph_tables.keys():
                 try:
                     # Check table exists
                     cursor.execute(
@@ -340,7 +340,7 @@ class HybridGraphRAGSchemaManager(SchemaManager):
 
         except Exception as e:
             logger.error(f"Error during schema validation: {e}")
-            for table_name in self.iris_graph_core_tables.keys():
+            for table_name in self.iris_vector_graph_tables.keys():
                 validation_results[table_name] = False
 
         return validation_results
@@ -349,9 +349,9 @@ class HybridGraphRAGSchemaManager(SchemaManager):
         """Get comprehensive schema information for HybridGraphRAG."""
         info = {}
 
-        # Add iris_graph_core specific information
+        # Add iris_vector_graph specific information
         validation = self.validate_hybrid_schema()
-        info["iris_graph_core_tables"] = validation
+        info["iris_vector_graph_tables"] = validation
         info["hybrid_ready"] = all(validation.values())
 
         return info

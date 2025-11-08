@@ -2,7 +2,7 @@
 Hybrid GraphRAG Retrieval Methods
 
 Contains the core retrieval methods for HybridGraphRAG pipeline using
-iris_graph_core integration.
+iris_vector_graph integration.
 """
 
 import logging
@@ -240,7 +240,7 @@ class HybridRetrievalMethods:
     ) -> Dict[str, Any]:
         """Benchmark different search methods for performance comparison"""
         if not self.iris_engine:
-            logger.warning("iris_graph_core not available for benchmarking")
+            logger.warning("iris_vector_graph not available for benchmarking")
             return {}
 
         methods = ["hybrid", "rrf", "text", "vector", "kg"]
