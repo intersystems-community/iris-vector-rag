@@ -36,8 +36,25 @@ All pipelines MUST implement automated requirement validation and setup orchestr
 
 Tests MUST be written before implementation. All contract tests MUST fail initially, then pass after implementation. Unit, integration, and end-to-end tests are mandatory for all pipeline implementations.
 
+**Integration Testing Absolute Requirement (CRITICAL)**:
+
+When developing ANY feature that integrates with an external system (IRIS database, APIs, vector stores, etc.), integration tests with the ACTUAL system are MANDATORY and CANNOT be skipped. This principle is non-negotiable:
+
+1. **NO MOCKING OF INTEGRATION POINTS FOR INTEGRATION TESTS**: Integration tests MUST use the real system
+2. **IRIS-Specific Rule**: For ANY feature involving IRIS (embeddings, vector operations, storage, schema), you MUST create and run integration tests against a real IRIS instance BEFORE claiming completion
+3. **Test Container Requirement**: Use `iris-devtester` package with `IRISContainer` for repeatable, isolated IRIS testing
+4. **Test Coverage**: Integration tests MUST verify the complete integration path, not just Python code in isolation
+
+**Example Violation**: Creating "Feature 051: IRIS EMBEDDING Support" without actual IRIS integration tests is UNACCEPTABLE. Contract tests alone DO NOT prove the feature works.
+
+**Correct Approach**:
+- Use `from iris_devtester import IRISContainer`
+- Create fixtures: `@pytest.fixture def iris_container(): with IRISContainer.community() as container: yield container`
+- Test actual IRIS operations: SQL DDL, data insertion, vector queries, Python callbacks from IRIS
+- Verify performance claims with real workloads
+
 **IRIS Database Requirement**: All RAG framework tests that involve data storage, vector operations, schema management, or pipeline operations MUST execute against a running IRIS database instance. Tests MUST use either:
-1. **Framework-managed Docker IRIS** (preferred): Use available licensed IRIS images with dynamic port allocation
+1. **Framework-managed Docker IRIS** (preferred): Use `iris-devtester` with `IRISContainer.community()` for automatic container management
 2. **External IRIS instance**: When configured via environment variables
 
 **IRIS Docker Management Procedures**:
