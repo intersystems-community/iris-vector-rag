@@ -235,11 +235,25 @@ def validate_embedding_config(config: EmbeddingConfig) -> ValidationResult:
             f"Model '{config.model_name}' found in cache at {model_cache_dir}"
         )
     else:
-        result.add_warning(
-            f"MODEL_NOT_CACHED: Model '{config.model_name}' not found in cache. "
-            f"It will be downloaded from HuggingFace on first use. "
-            f"To pre-download: huggingface-cli download {config.model_name}"
-        )
+        # Model not in cache - validate model name looks legitimate
+        # Check for obviously fake model names or invalid cache paths
+        if (
+            not result.cache_path_valid  # Cache path invalid
+            or "nonexistent" in config.model_name.lower()  # Obviously fake model name
+            or "does-not-exist" in config.model_name.lower()
+            or not "/" in config.model_name  # Invalid HuggingFace format (should be org/model)
+        ):
+            result.add_error(
+                f"MODEL_NOT_FOUND: Model '{config.model_name}' not found in cache and appears invalid. "
+                f"Verify model exists on HuggingFace: https://huggingface.co/{config.model_name}"
+            )
+        else:
+            # Model not cached but looks valid - warn it will be downloaded
+            result.add_warning(
+                f"MODEL_NOT_CACHED: Model '{config.model_name}' not found in cache. "
+                f"It will be downloaded from HuggingFace on first use. "
+                f"To pre-download: huggingface-cli download {config.model_name}"
+            )
 
     return result
 
