@@ -1,19 +1,26 @@
 <!--
 Sync Impact Report:
-- Version change: 1.7.0 → 1.7.1 (PATCH)
-- Version bump rationale: Enhanced Step 4 (PyPI Publishing) with detailed procedures
+- Version change: 1.7.1 → 1.8.0 (MINOR - CRITICAL process changes)
+- Version bump rationale: CRITICAL PyPI publishing procedures based on 0.5.0 packaging failure
+- Incident: iris-vector-rag 0.5.0 published with incorrect package structure (common/ at top-level instead of iris_vector_rag/common/)
 - List of modified principles: Principle VIII (Git & Release Workflow)
 - Modified sections:
-  * Step 4: PyPI Publishing - Added comprehensive publishing procedures
-  * When to publish (semantic versioning guidance)
-  * Version bumping procedure (files to update)
-  * Build and validation steps (clean, build, test locally)
-  * Upload procedure (secure token, verification)
-  * Post-upload verification (install from PyPI, test imports)
+  * Step 2: Complete Version Bump Workflow - CRITICAL ENHANCEMENTS:
+    1. Added MANDATORY "commit code changes FIRST" step
+    2. Added CRITICAL wheel structure verification BEFORE PyPI upload
+    3. Added uv pip install testing for uv-managed environments
+    4. Added comprehensive import validation tests
+    5. Added PyPI installation verification step
+    6. Enhanced clean build procedures with warnings
+    7. Total steps increased from 9 to 14 for safety
+- Root cause: Package built from uncommitted/staged state led to incorrect directory structure in wheel
+- Prevention: New procedures ensure wheel is verified BEFORE publishing, and built from committed code
 - Removed sections: N/A
 - Templates requiring updates:
   ✅ No template updates needed (workflow-specific, not template-affecting)
-- Follow-up TODOs: None
+- Follow-up TODOs:
+  * Yank iris-vector-rag 0.5.0 from PyPI
+  * Publish corrected 0.5.1
 -->
 
 # RAG-Templates Constitution
@@ -147,37 +154,85 @@ git push github main
 **Complete Version Bump Workflow:**
 
 ```bash
-# 1. Update version in BOTH files (Example: 0.2.3 → 0.2.4)
+# 1. Commit ALL code changes FIRST (NON-NEGOTIABLE)
+git add -A
+git commit -m "fix/feat: [description of actual changes]"
+# ⚠️ CRITICAL: Package must be built from COMMITTED code, not uncommitted working directory!
+
+# 2. Update version in BOTH files (Example: 0.2.3 → 0.2.4)
 # Edit these files:
 # - pyproject.toml (line 7): version = "0.2.4"
-# - iris_rag/__init__.py (line 21): __version__ = "0.2.4"
+# - iris_vector_rag/__init__.py (line 21): __version__ = "0.2.4"
 
-# 2. Clean previous builds
+# 3. Update CHANGELOG.md with version entry
+# Add comprehensive changelog describing all changes
+
+# 4. CRITICAL: Clean ALL previous builds (prevents stale file contamination)
 rm -rf dist/ build/ *.egg-info
+# ⚠️ Skipping this step will package OLD/CACHED files!
 
-# 3. Build source distribution and wheel
+# 5. Build source distribution and wheel FROM CLEAN STATE
 python -m build
 
-# 4. Validate distributions
+# 6. CRITICAL: Verify wheel structure BEFORE uploading
+python -c "
+import zipfile, sys
+z = zipfile.ZipFile('dist/iris_vector_rag-0.2.4-py3-none-any.whl')
+files = z.namelist()
+
+# Check for top-level modules that should be namespaced
+top_level = [f for f in files if not f.startswith('iris_vector_rag/') and not f.startswith('iris_vector_rag-') and f.endswith('.py')]
+if top_level:
+    print(f'❌ ERROR: Found top-level Python files: {top_level}')
+    sys.exit(1)
+
+# Verify critical module is in correct location (example: common/)
+if 'iris_vector_rag/common/__init__.py' not in files:
+    print('❌ ERROR: iris_vector_rag/common/__init__.py not found in wheel!')
+    sys.exit(1)
+
+print('✅ Wheel structure verified - no top-level modules, all files properly namespaced')
+"
+
+# 7. Validate distributions with twine
 python -m twine check dist/*
 
-# 5. Test local installation
-pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
-python -c "import iris_rag; print(f'iris_rag version: {iris_rag.__version__}'); from iris_rag import create_pipeline; print('✅ Package imports successfully')"
+# 8. Test local installation with CLEAN environment
+# For uv-managed environments (PREFERRED):
+uv pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
+# For standard pip environments:
+# pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
 
-# 6. Commit version bump
-git add pyproject.toml iris_rag/__init__.py
-git commit -m "chore: bump version to 0.2.4 for [brief description]
+# 9. CRITICAL: Test imports work correctly
+python -c "
+import iris_vector_rag
+print(f'✅ Version: {iris_vector_rag.__version__}')
+
+# Test critical imports
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+from iris_vector_rag import create_pipeline
+
+print('✅ All critical imports successful')
+"
+
+# 10. Commit version bump and changelog
+git add pyproject.toml iris_vector_rag/__init__.py CHANGELOG.md
+git commit -m "chore: bump version to 0.2.4
 
 [Detailed changelog entry describing what changed in this version]"
 
-# 7. Upload to PyPI (requires ~/.pypirc with token)
+# 11. Upload to PyPI (requires ~/.pypirc with token)
 python -m twine upload dist/*
 
-# 8. Verify PyPI upload
+# 12. Verify PyPI upload and test installation FROM PyPI
 curl -s https://pypi.org/pypi/iris-vector-rag/json | python3 -c "import sys, json; data=json.load(sys.stdin); print(f\"✅ Latest PyPI version: {data['info']['version']}\"); print(f\"📅 Upload date: {list(data['releases'][data['info']['version']])[0]['upload_time']}\"); print(f\"🔗 URL: https://pypi.org/project/iris-vector-rag/{data['info']['version']}/\")"
 
-# 9. Push version bump commit
+# 13. Test installation from PyPI (in clean venv/directory)
+pip install --no-cache-dir iris-vector-rag==0.2.4
+python -c "from iris_vector_rag import create_pipeline; print('✅ PyPI package works')"
+
+# 14. Push ALL commits to remote
 git push github main
 ```
 
