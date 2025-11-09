@@ -20,7 +20,7 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_list_tools_returns_8_tools(self):
         """Verify MCP server returns all 8 tools."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         tools = await bridge.list_tools()
@@ -49,7 +49,7 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_list_tools_includes_schemas(self):
         """Verify each tool includes complete schema with parameter descriptions."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         tools = await bridge.list_tools()
@@ -77,7 +77,7 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_list_tools_parameter_descriptions(self):
         """Verify all parameters include descriptions."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         tools = await bridge.list_tools()
@@ -95,7 +95,7 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_rag_tools_require_query_parameter(self):
         """Verify all RAG tools (not utility tools) require 'query' parameter."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         tools = await bridge.list_tools()
@@ -119,7 +119,7 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_utility_tools_no_required_parameters(self):
         """Verify utility tools (health_check, metrics) have no required parameters."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         tools = await bridge.list_tools()
@@ -139,7 +139,7 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_tool_schemas_include_defaults(self):
         """Verify tool parameters include default values where applicable."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         tools = await bridge.list_tools()
@@ -160,7 +160,7 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_tool_schemas_include_validation_constraints(self):
         """Verify tool parameters include validation constraints (min, max, enum)."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         tools = await bridge.list_tools()
@@ -186,7 +186,7 @@ class TestMCPListTools:
     async def test_list_tools_performance(self):
         """Verify list_tools completes within reasonable time."""
         import time
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -201,7 +201,7 @@ class TestMCPListTools:
     @pytest.mark.asyncio
     async def test_list_tools_idempotent(self):
         """Verify list_tools returns consistent results on multiple calls."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 

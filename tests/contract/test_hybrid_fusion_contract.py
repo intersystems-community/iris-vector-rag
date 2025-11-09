@@ -10,7 +10,7 @@ Requirements: FR-001, FR-002, FR-003
 
 import logging
 import pytest
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 class TestHybridFusionContract:

@@ -27,10 +27,10 @@ load_dotenv()
 from common.utils import get_embedding_func, get_llm_func
 
 # Import real framework components (NO MOCKS)
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import Document
-from iris_rag.storage.vector_store_iris import IRISVectorStore
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 logger = logging.getLogger(__name__)
 

@@ -33,11 +33,11 @@ from production_evaluation_config import (
 )
 
 # Pipeline imports - using correct class names
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 
 def setup_production_logging(run_id: str) -> logging.Logger:

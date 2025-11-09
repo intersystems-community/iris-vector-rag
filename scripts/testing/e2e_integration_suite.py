@@ -24,8 +24,8 @@ from typing import Any, Dict, List, Optional, Tuple
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 from scripts.testing.example_runner import ExampleTestResult, ExampleTestRunner
 from scripts.testing.mock_providers import MockLLMProvider
 from scripts.testing.validation_suite import ValidationSuite

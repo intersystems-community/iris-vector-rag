@@ -11,9 +11,9 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from iris_rag.api.models.auth import ApiKey, Permission, RateLimitTier
-from iris_rag.api.models.request import QueryRequest
-from iris_rag.api.models.response import QueryResponse
+from iris_vector_rag.api.models.auth import ApiKey, Permission, RateLimitTier
+from iris_vector_rag.api.models.request import QueryRequest
+from iris_vector_rag.api.models.response import QueryResponse
 
 
 class TestQueryRoutes:
@@ -63,7 +63,7 @@ class TestQueryRoutes:
 
     def test_query_basic_pipeline_success(self, mock_pipeline_manager, test_api_key):
         """Test successful query to basic pipeline."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         request = QueryRequest(
             query="What is diabetes?",
@@ -84,7 +84,7 @@ class TestQueryRoutes:
 
     def test_query_with_filters(self, mock_pipeline_manager, test_api_key):
         """Test query with metadata filters."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         request = QueryRequest(
             query="What is diabetes?",
@@ -104,7 +104,7 @@ class TestQueryRoutes:
 
     def test_query_invalid_top_k(self, test_api_key):
         """Test query with invalid top_k value."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         request = QueryRequest(
             query="What is diabetes?",
@@ -130,7 +130,7 @@ class TestQueryRoutes:
 
     def test_query_graphrag_pipeline(self, mock_pipeline_manager, test_api_key):
         """Test query to GraphRAG pipeline."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         request = QueryRequest(
             query="What is diabetes?",
@@ -149,7 +149,7 @@ class TestQueryRoutes:
 
     def test_query_pipeline_unavailable(self, mock_pipeline_manager, test_api_key):
         """Test query when pipeline is unavailable."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         mock_pipeline_manager.get_pipeline.side_effect = HTTPException(
             status_code=503, detail="Pipeline unavailable"
@@ -172,7 +172,7 @@ class TestQueryRoutes:
 
     def test_query_pipeline_execution_error(self, mock_pipeline_manager, test_api_key):
         """Test query when pipeline execution fails."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         mock_pipeline = mock_pipeline_manager.get_pipeline.return_value
         mock_pipeline.query.side_effect = Exception("Pipeline execution failed")
@@ -194,7 +194,7 @@ class TestQueryRoutes:
 
     def test_query_response_format_ragas_compatible(self, mock_pipeline_manager, test_api_key):
         """Test that query response is RAGAS compatible."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         request = QueryRequest(
             query="What is diabetes?",
@@ -216,7 +216,7 @@ class TestQueryRoutes:
 
     def test_query_includes_timing_metadata(self, mock_pipeline_manager, test_api_key):
         """Test query response includes timing metadata."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         request = QueryRequest(
             query="What is diabetes?",
@@ -236,7 +236,7 @@ class TestQueryRoutes:
 
     def test_query_without_permission(self, mock_pipeline_manager):
         """Test query without read permission."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         api_key = ApiKey(
             key_id="test-key-id",
@@ -272,7 +272,7 @@ class TestQueryRoutes:
 
     def test_query_include_sources_flag(self, mock_pipeline_manager, test_api_key):
         """Test query with include_sources flag."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         request = QueryRequest(
             query="What is diabetes?",
@@ -292,7 +292,7 @@ class TestQueryRoutes:
 
     def test_query_include_metadata_flag(self, mock_pipeline_manager, test_api_key):
         """Test query with include_metadata flag."""
-        from iris_rag.api.routes.query import execute_query
+        from iris_vector_rag.api.routes.query import execute_query
 
         request = QueryRequest(
             query="What is diabetes?",

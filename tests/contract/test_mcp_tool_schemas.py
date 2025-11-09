@@ -49,26 +49,26 @@ class TestMCPToolSchemaModule:
     def test_tool_schemas_module_exists(self):
         """Verify iris_rag.mcp.tool_schemas module can be imported."""
         try:
-            import iris_rag.mcp.tool_schemas
+            import iris_vector_rag.mcp.tool_schemas
             assert True
         except ImportError as e:
             pytest.fail(f"tool_schemas module not found: {e}")
 
     def test_tool_schemas_module_has_get_schema_function(self):
         """Verify module provides get_schema function."""
-        from iris_rag.mcp import tool_schemas
+        from iris_vector_rag.mcp import tool_schemas
         assert hasattr(tool_schemas, 'get_schema'), \
             "tool_schemas module missing get_schema function"
 
     def test_tool_schemas_module_has_get_all_schemas_function(self):
         """Verify module provides get_all_schemas function."""
-        from iris_rag.mcp import tool_schemas
+        from iris_vector_rag.mcp import tool_schemas
         assert hasattr(tool_schemas, 'get_all_schemas'), \
             "tool_schemas module missing get_all_schemas function"
 
     def test_tool_schemas_module_has_validate_params_function(self):
         """Verify module provides validate_params function."""
-        from iris_rag.mcp import tool_schemas
+        from iris_vector_rag.mcp import tool_schemas
         assert hasattr(tool_schemas, 'validate_params'), \
             "tool_schemas module missing validate_params function"
 
@@ -86,7 +86,7 @@ class TestRAGToolSchemas:
     ])
     def test_rag_tool_schema_exists(self, tool_name, expected_description_keywords):
         """Verify RAG tool schema exists with correct structure."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema(tool_name)
         assert schema is not None, f"Schema for {tool_name} not found"
@@ -113,7 +113,7 @@ class TestRAGToolSchemas:
     ])
     def test_rag_tool_requires_query_parameter(self, tool_name):
         """Verify all RAG tools require 'query' parameter."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema(tool_name)
         input_schema = schema['inputSchema']
@@ -140,7 +140,7 @@ class TestRAGToolSchemas:
     ])
     def test_rag_tool_has_top_k_parameter(self, tool_name):
         """Verify all RAG tools have 'top_k' parameter with defaults."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema(tool_name)
         input_schema = schema['inputSchema']
@@ -162,7 +162,7 @@ class TestBasicRAGSchema:
 
     def test_basic_rag_schema_parameters(self):
         """Verify BasicRAG schema has correct parameters."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema('rag_basic')
         props = schema['inputSchema']['properties']
@@ -187,7 +187,7 @@ class TestCRAGSchema:
 
     def test_crag_schema_has_confidence_threshold(self):
         """Verify CRAG schema has confidence_threshold parameter."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema('rag_crag')
         props = schema['inputSchema']['properties']
@@ -205,7 +205,7 @@ class TestCRAGSchema:
 
     def test_crag_schema_has_correction_strategy(self):
         """Verify CRAG schema has correction_strategy parameter."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema('rag_crag')
         props = schema['inputSchema']['properties']
@@ -224,7 +224,7 @@ class TestGraphRAGSchema:
 
     def test_graphrag_schema_has_search_method(self):
         """Verify GraphRAG schema has search_method parameter."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema('rag_graphrag')
         props = schema['inputSchema']['properties']
@@ -240,7 +240,7 @@ class TestGraphRAGSchema:
 
     def test_graphrag_schema_has_graph_traversal_depth(self):
         """Verify GraphRAG schema has graph_traversal_depth parameter."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema('rag_graphrag')
         props = schema['inputSchema']['properties']
@@ -261,7 +261,7 @@ class TestUtilityToolSchemas:
 
     def test_health_check_tool_schema(self):
         """Verify rag_health_check tool schema."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema('rag_health_check')
         assert schema is not None
@@ -281,7 +281,7 @@ class TestUtilityToolSchemas:
 
     def test_metrics_tool_schema(self):
         """Verify rag_metrics tool schema."""
-        from iris_rag.mcp.tool_schemas import get_schema
+        from iris_vector_rag.mcp.tool_schemas import get_schema
 
         schema = get_schema('rag_metrics')
         assert schema is not None
@@ -309,7 +309,7 @@ class TestSchemaValidation:
 
     def test_validate_params_accepts_valid_parameters(self):
         """Verify validate_params accepts valid parameters."""
-        from iris_rag.mcp.tool_schemas import validate_params
+        from iris_vector_rag.mcp.tool_schemas import validate_params
 
         # Valid parameters for basic RAG
         validated = validate_params('rag_basic', {
@@ -323,7 +323,7 @@ class TestSchemaValidation:
 
     def test_validate_params_applies_defaults(self):
         """Verify validate_params applies default values."""
-        from iris_rag.mcp.tool_schemas import validate_params
+        from iris_vector_rag.mcp.tool_schemas import validate_params
 
         # Minimal parameters (only required fields)
         validated = validate_params('rag_basic', {
@@ -338,8 +338,8 @@ class TestSchemaValidation:
 
     def test_validate_params_rejects_invalid_range(self):
         """Verify validate_params rejects out-of-range values."""
-        from iris_rag.mcp.tool_schemas import validate_params
-        from iris_rag.mcp.validation import ValidationError
+        from iris_vector_rag.mcp.tool_schemas import validate_params
+        from iris_vector_rag.mcp.validation import ValidationError
 
         # top_k exceeds maximum
         with pytest.raises(ValidationError):
@@ -350,8 +350,8 @@ class TestSchemaValidation:
 
     def test_validate_params_rejects_invalid_enum(self):
         """Verify validate_params rejects invalid enum values."""
-        from iris_rag.mcp.tool_schemas import validate_params
-        from iris_rag.mcp.validation import ValidationError
+        from iris_vector_rag.mcp.tool_schemas import validate_params
+        from iris_vector_rag.mcp.validation import ValidationError
 
         # Invalid search_method
         with pytest.raises(ValidationError):
@@ -362,8 +362,8 @@ class TestSchemaValidation:
 
     def test_validate_params_rejects_missing_required(self):
         """Verify validate_params rejects missing required parameters."""
-        from iris_rag.mcp.tool_schemas import validate_params
-        from iris_rag.mcp.validation import ValidationError
+        from iris_vector_rag.mcp.tool_schemas import validate_params
+        from iris_vector_rag.mcp.validation import ValidationError
 
         # Missing required 'query' parameter
         with pytest.raises(ValidationError):
@@ -377,7 +377,7 @@ class TestGetAllSchemas:
 
     def test_get_all_schemas_returns_8_tools(self):
         """Verify get_all_schemas returns all 8 tool schemas."""
-        from iris_rag.mcp.tool_schemas import get_all_schemas
+        from iris_vector_rag.mcp.tool_schemas import get_all_schemas
 
         all_schemas = get_all_schemas()
         assert isinstance(all_schemas, dict)
@@ -400,7 +400,7 @@ class TestGetAllSchemas:
 
     def test_get_all_schemas_returns_complete_schemas(self):
         """Verify get_all_schemas returns complete schema objects."""
-        from iris_rag.mcp.tool_schemas import get_all_schemas
+        from iris_vector_rag.mcp.tool_schemas import get_all_schemas
 
         all_schemas = get_all_schemas()
 

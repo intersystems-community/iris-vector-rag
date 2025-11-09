@@ -10,7 +10,7 @@ Requirements: FR-023, FR-024, FR-025
 
 import logging
 import pytest
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 class TestErrorHandlingContract:

@@ -9,9 +9,9 @@ These unit tests focus on specific edge cases and documentation of expected beha
 """
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from iris_rag.services.storage import EntityStorageAdapter
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.services.storage import EntityStorageAdapter
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
 class TestEntityStorageDocumentation:

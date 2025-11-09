@@ -96,8 +96,8 @@ def test_no_test_data_pollution():
     # If previous tests polluted state, this would fail
 
     # Simple validation: we can import modules without conflicts
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.core.connection import ConnectionManager
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
 
     # Should not raise errors or have unexpected state
     config = ConfigurationManager()

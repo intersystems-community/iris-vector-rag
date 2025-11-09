@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 
 # These imports will fail until implementation exists (expected for TDD)
 try:
-    from iris_rag.api.main import create_app
+    from iris_vector_rag.api.main import create_app
 except ImportError:
     create_app = None  # type: ignore
 

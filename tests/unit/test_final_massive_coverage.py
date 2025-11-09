@@ -13,7 +13,7 @@ import yaml
 import json
 from pathlib import Path
 
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 
 class TestCoreModelsMassive(unittest.TestCase):
@@ -73,7 +73,7 @@ class TestCoreModelsMassive(unittest.TestCase):
     def test_entity_and_relationship_models(self):
         """Test Entity and Relationship models if available."""
         try:
-            from iris_rag.core.models import Entity, Relationship
+            from iris_vector_rag.core.models import Entity, Relationship
 
             # Test Entity creation using correct constructor parameters
             entity1 = Entity(
@@ -134,7 +134,7 @@ class TestConfigManagerMassiveExtended(unittest.TestCase):
 
     def test_configuration_manager_all_methods(self):
         """Test all configuration manager methods comprehensively."""
-        from iris_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.config.manager import ConfigurationManager
 
         # Create instance without loading file
         config_manager = ConfigurationManager.__new__(ConfigurationManager)
@@ -254,7 +254,7 @@ class TestConfigManagerMassiveExtended(unittest.TestCase):
 
     def test_specialized_configuration_getters(self):
         """Test all specialized configuration getter methods."""
-        from iris_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.config.manager import ConfigurationManager
 
         config_manager = ConfigurationManager.__new__(ConfigurationManager)
         config_manager._config = {
@@ -294,7 +294,7 @@ class TestConfigManagerMassiveExtended(unittest.TestCase):
 
     def test_environment_variable_patterns(self):
         """Test environment variable loading patterns."""
-        from iris_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.config.manager import ConfigurationManager
         import os
 
         config_manager = ConfigurationManager.__new__(ConfigurationManager)
@@ -354,7 +354,7 @@ class TestValidationMassive(unittest.TestCase):
     def test_validation_requirements_comprehensive(self):
         """Test validation requirements comprehensively."""
         try:
-            from iris_rag.validation.requirements import get_pipeline_requirements
+            from iris_vector_rag.validation.requirements import get_pipeline_requirements
 
             # Test all known pipeline types
             pipeline_types = [
@@ -401,7 +401,7 @@ class TestValidationMassive(unittest.TestCase):
     def test_validation_factory_comprehensive(self):
         """Test validation factory comprehensively."""
         try:
-            from iris_rag.validation.factory import create_validator
+            from iris_vector_rag.validation.factory import create_validator
 
             # Test validator creation for different types
             validator_types = [
@@ -439,7 +439,7 @@ class TestPipelineInitMassive(unittest.TestCase):
 
     def test_pipeline_factory_comprehensive(self):
         """Test pipeline factory functionality comprehensively."""
-        from iris_rag import create_pipeline
+        from iris_vector_rag import create_pipeline
 
         # Test pipeline creation with different configurations
         pipeline_configs = [
@@ -483,7 +483,7 @@ class TestPipelineInitMassive(unittest.TestCase):
     def test_pipeline_availability_check(self):
         """Test pipeline availability checking."""
         try:
-            from iris_rag.pipelines import get_available_pipelines
+            from iris_vector_rag.pipelines import get_available_pipelines
 
             available = get_available_pipelines()
             self.assertIsInstance(available, (list, dict, type(None)))

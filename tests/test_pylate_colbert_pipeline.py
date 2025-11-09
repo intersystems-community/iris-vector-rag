@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from iris_rag.core.models import Document
-from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
 
 logger = logging.getLogger(__name__)
 

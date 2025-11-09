@@ -13,8 +13,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from iris_rag.core.connection import IRISConnectionManager
-from iris_rag.embeddings.manager import EmbeddingManager
+from iris_vector_rag.core.connection import IRISConnectionManager
+from iris_vector_rag.embeddings.manager import EmbeddingManager
 
 logger = logging.getLogger(__name__)
 

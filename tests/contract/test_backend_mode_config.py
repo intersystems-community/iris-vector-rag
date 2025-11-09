@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
-from iris_rag.testing.backend_manager import (
+from iris_vector_rag.testing.backend_manager import (
     BackendConfiguration,
     ConfigurationError,
     EditionMismatchError,
@@ -27,7 +27,7 @@ from iris_rag.testing.backend_manager import (
     log_session_start,
     validate_configuration,
 )
-from iris_rag.testing.validators import IRISEdition
+from iris_vector_rag.testing.validators import IRISEdition
 
 
 @pytest.mark.contract
@@ -232,4 +232,4 @@ class TestBackendModeLogging:
 
 
 # Missing enum imports - will be added when implementation exists
-from iris_rag.testing.backend_manager import BackendMode, ConfigSource
+from iris_vector_rag.testing.backend_manager import BackendMode, ConfigSource

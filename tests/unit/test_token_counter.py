@@ -5,7 +5,7 @@ Tests token estimation logic in isolation without dependencies.
 """
 
 import pytest
-from iris_rag.utils.token_counter import estimate_tokens
+from iris_vector_rag.utils.token_counter import estimate_tokens
 
 
 class TestTokenCounter:

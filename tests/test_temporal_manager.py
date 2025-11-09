@@ -12,11 +12,11 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.memory.models import MemoryItem, TemporalWindow, TemporalWindowConfig
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.memory.models import MemoryItem, TemporalWindow, TemporalWindowConfig
 
 # Standard imports
-from iris_rag.memory.temporal_manager import (
+from iris_vector_rag.memory.temporal_manager import (
     TemporalContext,
     TemporalMemoryManager,
     TemporalQuery,

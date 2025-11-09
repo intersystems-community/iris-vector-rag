@@ -10,7 +10,7 @@ from unittest.mock import Mock, call, patch
 
 import pytest
 
-from iris_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
 class TestEnsureHNSWIndex:

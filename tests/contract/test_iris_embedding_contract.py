@@ -17,17 +17,17 @@ import time
 
 # These imports will fail initially - that's expected for TDD
 try:
-    from iris_rag.embeddings.iris_embedding import (
+    from iris_vector_rag.embeddings.iris_embedding import (
         get_config,
         embed_texts,
         configure_embedding,
     )
-    from iris_rag.config.embedding_config import (
+    from iris_vector_rag.config.embedding_config import (
         EmbeddingConfig,
         ValidationResult,
         validate_embedding_config,
     )
-    from iris_rag.embeddings.manager import (
+    from iris_vector_rag.embeddings.manager import (
         get_cache_stats,
         clear_cache,
     )

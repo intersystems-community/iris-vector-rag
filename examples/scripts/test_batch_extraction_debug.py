@@ -10,8 +10,8 @@ from pathlib import Path
 # Add rag-templates to path
 sys.path.insert(0, str(Path(__file__).parent / "iris_rag"))
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.dspy_modules.batch_entity_extraction import BatchEntityExtractionModule
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.dspy_modules.batch_entity_extraction import BatchEntityExtractionModule
 
 # Configure logging to show everything
 logging.basicConfig(
@@ -58,7 +58,7 @@ def setup_dspy():
     config_manager._config["entity_extraction"]["llm"]["model"] = "qwen2.5:7b"
 
     # Configure DSPy
-    from iris_rag.dspy_modules.entity_extraction_module import configure_dspy_for_ollama
+    from iris_vector_rag.dspy_modules.entity_extraction_module import configure_dspy_for_ollama
     configure_dspy_for_ollama(model_name="qwen2.5:7b")
 
     return config_manager
@@ -80,7 +80,7 @@ def main():
 
     try:
         # Call batch extraction
-        from iris_rag.dspy_modules.entity_extraction_module import configure_dspy_for_ollama
+        from iris_vector_rag.dspy_modules.entity_extraction_module import configure_dspy_for_ollama
         import dspy as dspy_module
 
         # Ensure DSPy is configured

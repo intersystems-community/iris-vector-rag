@@ -22,8 +22,8 @@ from typing import Any, Dict, List, Optional
 
 # Try importing iris_rag components
 try:
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.core.connection import ConnectionManager
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
 except ImportError as e:
     # Critical error - cannot import framework
     output = {
@@ -37,7 +37,7 @@ except ImportError as e:
         "data_quality": {"entities_with_embeddings": 0, "completeness_score": 0.0},
         "diagnosis": {
             "severity": "critical",
-            "message": f"Cannot import iris_rag framework: {e}",
+            "message": f"Cannot import iris_vector_rag framework: {e}",
             "suggestions": [
                 "Verify iris_rag package installed: pip install -e .",
                 "Activate virtual environment: source .venv/bin/activate",

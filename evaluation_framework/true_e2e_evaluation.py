@@ -27,10 +27,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 # Real infrastructure imports
 from common.utils import get_embedding_func, get_llm_func
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.storage.vector_store_iris import IRISVectorStore
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 # Configure logging
 logging.basicConfig(
@@ -167,7 +167,7 @@ class TrueE2EEvaluator:
         # Use vector store utilities to properly ingest documents
         try:
             # Import the standardized Document class
-            from iris_rag.core.models import Document
+            from iris_vector_rag.core.models import Document
 
             # Prepare documents as proper Document objects per codebase standards
             documents_to_add = []

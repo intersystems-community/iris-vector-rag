@@ -15,7 +15,7 @@ from typing import List, Optional, Callable
 import time
 import logging
 
-from iris_rag.core.models import (
+from iris_vector_rag.core.models import (
     Document,
     BatchExtractionResult,
     ProcessingMetrics,

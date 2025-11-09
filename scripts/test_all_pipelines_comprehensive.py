@@ -20,17 +20,17 @@ from common.utils import (
     get_embedding_func,
     get_llm_func,
 )
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.models import Document
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.models import Document
 
 # Pipeline imports
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
-from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
-from iris_rag.pipelines.hyde import HyDERAGPipeline
-from iris_rag.pipelines.noderag import NodeRAGPipeline
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
+from iris_vector_rag.pipelines.hyde import HyDERAGPipeline
+from iris_vector_rag.pipelines.noderag import NodeRAGPipeline
 
 PIPELINE_INFO = {
     "basic": {

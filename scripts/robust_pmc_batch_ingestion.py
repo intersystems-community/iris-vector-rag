@@ -21,8 +21,8 @@ sys.path.insert(0, str(project_root))
 
 from common.config import get_config
 from common.iris_client import IRISClient
-from iris_rag.config.manager import ConfigManager
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.config.manager import ConfigManager
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 
 class RobustPMCBatchProcessor:

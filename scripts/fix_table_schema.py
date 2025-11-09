@@ -11,8 +11,8 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from common.iris_connection_manager import IRISConnectionManager
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
 def main():

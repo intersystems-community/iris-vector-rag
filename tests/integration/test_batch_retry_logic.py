@@ -8,9 +8,9 @@ Tests FR-005: Retry with 2s, 4s, 8s delays, then split batch.
 import pytest
 import time
 from unittest.mock import Mock, patch
-from iris_rag.core.models import Document
-from iris_rag.services.entity_extraction import EntityExtractionService
-from iris_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.services.entity_extraction import EntityExtractionService
+from iris_vector_rag.config.manager import ConfigurationManager
 from common.iris_connection_manager import IRISConnectionManager
 
 
@@ -50,7 +50,7 @@ class TestBatchRetryLogic:
             if attempt_count['count'] < 3:
                 raise Exception("Simulated LLM timeout")
             # Third attempt succeeds
-            from iris_rag.core.models import BatchExtractionResult
+            from iris_vector_rag.core.models import BatchExtractionResult
             return BatchExtractionResult(
                 batch_id="test-batch",
                 per_document_entities={doc.id: [] for doc in test_documents},
@@ -100,7 +100,7 @@ class TestBatchRetryLogic:
                 raise Exception("Simulated batch LLM failure")
             else:  # Individual document
                 individual_calls['count'] += 1
-                from iris_rag.core.models import BatchExtractionResult
+                from iris_vector_rag.core.models import BatchExtractionResult
                 doc = args[0][0]
                 return BatchExtractionResult(
                     batch_id=f"individual-{doc.id}",
@@ -176,7 +176,7 @@ class TestBatchRetryLogic:
             if attempt_count['count'] == 1:
                 raise Exception("First attempt fails")
             # Second attempt succeeds
-            from iris_rag.core.models import BatchExtractionResult
+            from iris_vector_rag.core.models import BatchExtractionResult
             return BatchExtractionResult(
                 batch_id="test-batch",
                 per_document_entities={doc.id: [] for doc in test_documents},

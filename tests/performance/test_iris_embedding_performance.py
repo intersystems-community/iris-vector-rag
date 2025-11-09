@@ -14,14 +14,14 @@ import time
 from typing import List
 from unittest.mock import Mock, patch
 
-from iris_rag.config.embedding_config import create_embedding_config
-from iris_rag.embeddings.iris_embedding import (
+from iris_vector_rag.config.embedding_config import create_embedding_config
+from iris_vector_rag.embeddings.iris_embedding import (
     configure_embedding,
     embed_texts,
     get_config,
     _CONFIG_STORE,
 )
-from iris_rag.embeddings.manager import (
+from iris_vector_rag.embeddings.manager import (
     clear_cache,
     get_cache_stats,
     _SENTENCE_TRANSFORMER_CACHE,
@@ -337,7 +337,7 @@ class TestGPUFallback:
 
     def test_device_detection_priority(self, test_config):
         """Verify device detection follows CUDA > MPS > CPU priority."""
-        from iris_rag.embeddings.iris_embedding import _detect_device
+        from iris_vector_rag.embeddings.iris_embedding import _detect_device
         
         # Test auto-detection
         test_config.device_preference = "auto"
@@ -368,7 +368,7 @@ class TestEntityExtractionPerformance:
         Baseline: 10 single calls @ 2sec each = 20 seconds
         Expected: 1 batch call @ 3-4 seconds
         """
-        from iris_rag.embeddings.entity_extractor import extract_entities_batch
+        from iris_vector_rag.embeddings.entity_extractor import extract_entities_batch
         
         # This test requires real LLM, so it's skipped
         # Contract test validates the API works correctly

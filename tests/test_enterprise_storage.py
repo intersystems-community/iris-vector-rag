@@ -10,10 +10,10 @@ import unittest
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, Mock, patch
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import Document
-from iris_rag.storage.enterprise_storage import (
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.storage.enterprise_storage import (
     IRISStorage,
     _convert_clob_to_string,
     _process_db_row_for_document,

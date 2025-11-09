@@ -230,7 +230,7 @@ class SimpleIFindSetup:
             "- Run: python scripts/utilities/validate_pipeline.py validate hybrid_ifind"
         )
         logger.info(
-            "- Test query: python -c \"from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline; p = HybridIFindRAGPipeline(...); print(p.query('medical research'))\""
+            "- Test query: python -c \"from iris_vector_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline; p = HybridIFindRAGPipeline(...); print(p.query('medical research'))\""
         )
 
         return True

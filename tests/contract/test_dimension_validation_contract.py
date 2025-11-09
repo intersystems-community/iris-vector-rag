@@ -6,9 +6,9 @@ Requirements: FR-005
 """
 
 import pytest
-from iris_rag import create_pipeline
-from iris_rag.embeddings.manager import EmbeddingManager
-from iris_rag.config.manager import ConfigurationManager
+from iris_vector_rag import create_pipeline
+from iris_vector_rag.embeddings.manager import EmbeddingManager
+from iris_vector_rag.config.manager import ConfigurationManager
 
 
 class DimensionMismatchError(Exception):
@@ -131,7 +131,7 @@ class TestDimensionValidationContract:
         Then: Document embeddings are validated to be 384D
         """
         # Sample a document embedding from database
-        from iris_rag.core.connection import ConnectionManager
+        from iris_vector_rag.core.connection import ConnectionManager
 
         conn = ConnectionManager(graphrag_pipeline.config).get_connection()
         cursor = conn.cursor()
