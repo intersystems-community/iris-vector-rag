@@ -1,6 +1,13 @@
 # Changelog
 
-## [0.5.0] - 2025-11-09
+## [0.5.1] - 2025-11-09
+
+### Fixed
+- **CRITICAL**: Fixed packaging error in 0.5.0 where `common` module was installed at top-level of site-packages instead of inside `iris_vector_rag`
+- Rebuilt package from clean git state to ensure correct directory structure
+- Note: 0.5.0 should not be used - please upgrade to 0.5.1
+
+## [0.5.0] - 2025-11-09 [YANKED - DO NOT USE]
 
 ### Changed - BREAKING
 - **BREAKING**: Moved `common` module inside `iris_vector_rag` package to resolve namespace conflicts
