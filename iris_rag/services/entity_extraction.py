@@ -534,6 +534,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         Bug fix: https://github.com/tdyar/hipporag2-pipeline/BUG_REPORT_RAG_TEMPLATES.md
         Prevents silent fallback to Ollama when OpenAI is configured.
         """
+        # FIX: Use root-level LLM config
         llm_config = self.config_manager.get("llm", {})
 
         if not llm_config:
@@ -581,6 +582,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         Returns:
             Model name string, defaults to "qwen2.5:7b" if not configured
         """
+        # FIX: Use root-level LLM config
         llm_config = self.config_manager.get("llm", {})
 
         # Try both naming conventions (model takes precedence)
@@ -729,7 +731,8 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         entities = []
         try:
             # Check if DSPy extraction is configured
-            use_dspy = self.config.get("llm", {}).get("use_dspy", False)
+            # FIX: Use root-level LLM config
+            use_dspy = self.config_manager.get("llm", {}).get("use_dspy", False)
 
             if use_dspy:
                 # Use DSPy-powered entity extraction
@@ -766,7 +769,8 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
 
             # Configure DSPy if not already configured
             if not hasattr(self, '_dspy_module'):
-                llm_config = self.config.get("llm", {})
+                # FIX: Use root-level LLM config, fall back to entity_extraction.llm
+                llm_config = self.config_manager.get("llm", {}) or self.config.get("llm", {})
 
                 # Only configure DSPy if not already configured globally
                 # This prevents threading issues when workers have already configured DSPy
@@ -886,7 +890,8 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                 # Import configuration helper
                 from ..dspy_modules.entity_extraction_module import configure_dspy
 
-                llm_config = self.config.get("llm", {})
+                # FIX: Use root-level LLM config
+                llm_config = self.config_manager.get("llm", {})
 
                 # Configure DSPy if needed
                 import dspy as dspy_module
@@ -1068,9 +1073,9 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
             import requests
             import json
 
-            # Get LLM config from entity_extraction config
-            llm_config = self.config.get("llm", {})
-            model = llm_config.get("model", "qwen2.5:7b")  # Changed from qwen3:14b - faster and works better
+            # FIX: Use root-level LLM config
+            llm_config = self.config_manager.get("llm", {})
+            model = llm_config.get("model") or llm_config.get("model_name") or "qwen2.5:7b"
             temperature = llm_config.get("temperature", 0.1)
             max_tokens = llm_config.get("max_tokens", 2000)
 
