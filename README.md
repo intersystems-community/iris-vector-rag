@@ -201,6 +201,31 @@ print(f"Relationships: {result['metadata']['relationships']}")
 print(f"Graph depth: {result['metadata']['graph_depth']}")
 ```
 
+**⚠️ IMPORTANT:** To enable entity extraction during document ingestion, you MUST set `entity_extraction_enabled: True` in your pipeline configuration:
+
+```python
+from iris_rag.config import ConfigurationManager
+
+config = ConfigurationManager({
+    "pipelines": {
+        "graphrag": {
+            "entity_extraction_enabled": True,  # REQUIRED for entity extraction!
+        }
+    },
+    "llm": {
+        "provider": "openai",
+        "api_type": "openai",
+        "model": "gpt-4o-mini",
+        "api_key": "your-api-key",
+        "temperature": 0.0
+    }
+})
+
+pipeline = create_pipeline('graphrag', config_manager=config)
+```
+
+**Without this setting**, entity extraction will not run during `load_documents()` and no knowledge graph will be built, making graph-based retrieval unavailable.
+
 ### MultiQueryRRF: Multi-Perspective Retrieval
 
 Expands queries into multiple perspectives and fuses results:

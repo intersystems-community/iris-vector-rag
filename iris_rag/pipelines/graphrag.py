@@ -131,11 +131,26 @@ class GraphRAGPipeline(RAGPipeline):
 
         # Process documents in batches of 5 for 3x speedup
         batch_size = 5
+        total_batches = (len(documents) + batch_size - 1) // batch_size  # Ceiling division
+
+        logger.info("=" * 70)
+        logger.info(f"🚀 Starting Entity Extraction")
+        logger.info("=" * 70)
+        logger.info(f"  Total documents: {len(documents)}")
+        logger.info(f"  Batch size:      {batch_size}")
+        logger.info(f"  Total batches:   {total_batches}")
+        logger.info("=" * 70)
+
+        import time
+        extraction_start_time = time.time()
+
         for i in range(0, len(documents), batch_size):
             batch_docs = documents[i:i + batch_size]
+            batch_num = i//batch_size + 1
 
             try:
-                logger.info(f"🚀 Processing batch {i//batch_size + 1} ({len(batch_docs)} documents) for entity extraction")
+                batch_start_time = time.time()
+                logger.info(f"📦 Processing batch {batch_num}/{total_batches} ({len(batch_docs)} documents)...")
 
                 # Batch extract entities (single LLM call for all documents in batch!)
                 batch_results = self.entity_extraction_service.extract_batch_with_dspy(
@@ -209,6 +224,28 @@ class GraphRAGPipeline(RAGPipeline):
                         logger.warning(f"Failed to store entities for document {doc.id}: {e}")
                         failed_documents.append(doc.id)
 
+                # Log batch completion with timing and statistics
+                batch_elapsed = time.time() - batch_start_time
+                batch_entity_count = sum(len(batch_results.get(doc.id, [])) for doc in batch_docs)
+                logger.info(
+                    f"✅ Batch {batch_num}/{total_batches} complete: "
+                    f"{batch_entity_count} entities extracted in {batch_elapsed:.1f}s "
+                    f"(avg: {batch_entity_count/len(batch_docs):.1f} per doc)"
+                )
+
+                # Show overall progress every 10 batches
+                if batch_num % 10 == 0 or batch_num == total_batches:
+                    elapsed_so_far = time.time() - extraction_start_time
+                    docs_processed = min(batch_num * batch_size, len(documents))
+                    avg_time_per_doc = elapsed_so_far / docs_processed if docs_processed > 0 else 0
+                    remaining_docs = len(documents) - docs_processed
+                    eta_seconds = remaining_docs * avg_time_per_doc
+                    logger.info(
+                        f"📊 Progress: {docs_processed}/{len(documents)} documents processed "
+                        f"({total_entities} entities, {total_relationships} relationships) | "
+                        f"ETA: {eta_seconds/60:.1f} min"
+                    )
+
             except Exception as e:
                 # Batch extraction failed - fall back to individual processing for this batch
                 logger.warning(f"Batch entity extraction failed: {e}, falling back to individual processing")
@@ -237,6 +274,20 @@ class GraphRAGPipeline(RAGPipeline):
                     except Exception as e:
                         logger.warning(f"Entity extraction error for document {doc.id}: {e}")
                         failed_documents.append(doc.id)
+
+        # Log final extraction summary
+        extraction_elapsed = time.time() - extraction_start_time
+        logger.info("=" * 70)
+        logger.info("✅ Entity Extraction Complete")
+        logger.info("=" * 70)
+        logger.info(f"  Documents processed:     {len(documents)}")
+        logger.info(f"  Total entities:          {total_entities}")
+        logger.info(f"  Total relationships:     {total_relationships}")
+        logger.info(f"  Failed documents:        {len(failed_documents)}")
+        logger.info(f"  Extraction time:         {extraction_elapsed:.1f}s ({extraction_elapsed/60:.2f} min)")
+        logger.info(f"  Throughput:              {len(documents)/extraction_elapsed:.2f} docs/sec")
+        logger.info(f"  Avg entities per doc:    {total_entities/len(documents):.1f}")
+        logger.info("=" * 70)
 
         # Only fail if we got zero entities across ALL documents
         # (suggests a systematic extraction failure rather than content issues or storage failure)
