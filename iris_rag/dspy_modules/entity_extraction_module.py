@@ -379,6 +379,17 @@ def configure_dspy(llm_config: dict):
         max_tokens = llm_config.get("max_tokens", 2000)
         temperature = llm_config.get("temperature", 0.1)
 
+        # Log configuration details before attempting to configure
+        logger.info("=" * 60)
+        logger.info("🔧 Configuring DSPy for Entity Extraction")
+        logger.info("=" * 60)
+        logger.info(f"  API Type:    {api_type}")
+        logger.info(f"  Model:       {model}")
+        logger.info(f"  API Base:    {api_base}")
+        logger.info(f"  Max Tokens:  {max_tokens}")
+        logger.info(f"  Temperature: {temperature}")
+        logger.info("=" * 60)
+
         # FIX for Bug #6: Use custom DirectOpenAILM for GPT-OSS NIM
         # This bypasses LiteLLM entirely to preserve full model name "openai/gpt-oss-120b"
         if model == "openai/gpt-oss-120b" or (api_type == "openai" and "/" in model):
