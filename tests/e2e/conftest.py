@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 # Load environment variables for E2E tests
 load_dotenv()
 
-from common.utils import get_embedding_func, get_llm_func
+from iris_vector_rag.common.utils import get_embedding_func, get_llm_func
 
 # Import real framework components (NO MOCKS)
 from iris_vector_rag.config.manager import ConfigurationManager

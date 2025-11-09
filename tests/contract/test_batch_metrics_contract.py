@@ -72,13 +72,13 @@ class TestBatchMetricsContract:
 
     def test_batch_metrics_tracker_class_exists(self):
         """Validate BatchMetricsTracker class exists."""
-        from common.batch_utils import BatchMetricsTracker
+        from iris_vector_rag.common.batch_utils import BatchMetricsTracker
 
         assert BatchMetricsTracker is not None, "BatchMetricsTracker class must exist"
 
     def test_batch_metrics_tracker_get_statistics_method(self):
         """Validate get_statistics() method exists."""
-        from common.batch_utils import BatchMetricsTracker
+        from iris_vector_rag.common.batch_utils import BatchMetricsTracker
 
         tracker = BatchMetricsTracker()
         assert hasattr(tracker, 'get_statistics'), \
@@ -86,7 +86,7 @@ class TestBatchMetricsContract:
 
     def test_get_statistics_returns_processing_metrics(self):
         """Validate get_statistics() returns ProcessingMetrics instance."""
-        from common.batch_utils import BatchMetricsTracker
+        from iris_vector_rag.common.batch_utils import BatchMetricsTracker
         from iris_vector_rag.core.models import ProcessingMetrics
 
         tracker = BatchMetricsTracker()
@@ -166,7 +166,7 @@ class TestBatchMetricsContract:
         """Validate get_batch_metrics() returns ProcessingMetrics."""
         from iris_vector_rag.services.entity_extraction import EntityExtractionService
         from iris_vector_rag.config.manager import ConfigurationManager
-        from common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
         from iris_vector_rag.core.models import ProcessingMetrics
 
         config_manager = ConfigurationManager()

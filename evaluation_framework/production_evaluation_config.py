@@ -132,7 +132,7 @@ class ProductionEvaluationConfig:
             if parent_dir not in sys.path:
                 sys.path.insert(0, parent_dir)
 
-            from common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
             conn = get_iris_dbapi_connection()
             if conn is None:

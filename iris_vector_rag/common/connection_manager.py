@@ -37,7 +37,7 @@ class ConnectionManager:
 
         if self.connection_type == "jdbc":
             try:
-                from common.iris_connection_manager import get_iris_jdbc_connection
+                from iris_vector_rag.common.iris_connection_manager import get_iris_jdbc_connection
 
                 self._connection = get_iris_jdbc_connection()
                 logger.info("Established JDBC connection")
@@ -48,7 +48,7 @@ class ConnectionManager:
 
         elif self.connection_type == "dbapi":
             try:
-                from common.iris_dbapi_connector import get_iris_dbapi_connection
+                from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
                 self._connection = get_iris_dbapi_connection()
                 if not self._connection:  # If get_iris_dbapi_connection returns None
@@ -69,7 +69,7 @@ class ConnectionManager:
                 return self.connect()  # Retry with ODBC
 
         else:  # odbc (or fallback from dbapi/jdbc)
-            from common.iris_connector import get_iris_connection
+            from iris_vector_rag.common.iris_connector import get_iris_connection
 
             self._connection = get_iris_connection()
             logger.info("Established ODBC connection")

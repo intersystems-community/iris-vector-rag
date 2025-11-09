@@ -167,7 +167,7 @@ class IRISStorage:
                 vector_config = self.config_manager.get_vector_index_config()
 
                 # Use IRISSQLUtils for proper HNSW index creation
-                from common.iris_sql_utils import IRISSQLUtils
+                from iris_vector_rag.common.iris_sql_utils import IRISSQLUtils
 
                 utils = IRISSQLUtils()
 

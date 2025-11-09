@@ -14,13 +14,13 @@ class TestBatchQueueContract:
 
     def test_batch_queue_class_exists(self):
         """Validate BatchQueue class exists."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
 
         assert BatchQueue is not None, "BatchQueue class must exist"
 
     def test_batch_queue_init_signature(self):
         """Validate BatchQueue.__init__() has correct signature."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
         import inspect
 
         sig = inspect.signature(BatchQueue.__init__)
@@ -32,7 +32,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_add_document_method_exists(self):
         """Validate add_document() method exists."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue()
         assert hasattr(queue, 'add_document'), \
@@ -40,7 +40,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_get_next_batch_method_exists(self):
         """Validate get_next_batch() method exists."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue()
         assert hasattr(queue, 'get_next_batch'), \
@@ -48,7 +48,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_respects_token_budget(self):
         """Validate get_next_batch() respects token budget (FR-006)."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue(token_budget=8000)
 
@@ -72,7 +72,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_empty_returns_none(self):
         """Validate empty queue returns None or empty list."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue()
 
@@ -84,7 +84,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_add_document_signature(self):
         """Validate add_document() has correct signature."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
         import inspect
 
         sig = inspect.signature(BatchQueue.add_document)
@@ -97,7 +97,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_get_next_batch_signature(self):
         """Validate get_next_batch() has correct signature."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
         import inspect
 
         sig = inspect.signature(BatchQueue.get_next_batch)
@@ -109,7 +109,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_fifo_ordering(self):
         """Validate queue maintains FIFO ordering."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue(token_budget=10000)
 
@@ -133,7 +133,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_handles_single_large_document(self):
         """Validate queue handles single document exceeding budget."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue(token_budget=5000)
 
@@ -150,7 +150,7 @@ class TestBatchQueueContract:
 
     def test_batch_queue_multiple_batches(self):
         """Validate queue can produce multiple batches."""
-        from common.batch_utils import BatchQueue
+        from iris_vector_rag.common.batch_utils import BatchQueue
 
         queue = BatchQueue()
 

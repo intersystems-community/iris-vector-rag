@@ -611,7 +611,7 @@ def database_with_clean_schema(request):
     from tests.fixtures.database_cleanup import DatabaseCleanupHandler
     from tests.utils.schema_validator import SchemaValidator
     from tests.fixtures.schema_reset import SchemaResetter
-    from common.iris_connection_manager import get_iris_connection
+    from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
     # Validate schema
     validator = SchemaValidator()

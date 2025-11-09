@@ -1654,7 +1654,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         """
         from iris_vector_rag.core.models import BatchExtractionResult
         from iris_vector_rag.utils.token_counter import estimate_tokens
-        from common.batch_utils import BatchQueue, BatchMetricsTracker
+        from iris_vector_rag.common.batch_utils import BatchQueue, BatchMetricsTracker
         import time
         import uuid
 
@@ -1751,7 +1751,7 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
             >>> print(f"Speedup: {metrics.speedup_factor:.1f}x")
             >>> print(f"Avg entities/batch: {metrics.entity_extraction_rate_per_batch:.1f}")
         """
-        from common.batch_utils import BatchMetricsTracker
+        from iris_vector_rag.common.batch_utils import BatchMetricsTracker
 
         tracker = BatchMetricsTracker.get_instance()
         return tracker.get_statistics()

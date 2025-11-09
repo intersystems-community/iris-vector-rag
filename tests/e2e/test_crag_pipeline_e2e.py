@@ -11,8 +11,8 @@ from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.crag import CRAGPipeline
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
-from common.utils import get_llm_func, get_embedding_func
-from common.iris_connection_manager import get_iris_connection
+from iris_vector_rag.common.utils import get_llm_func, get_embedding_func
+from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
 
 @pytest.fixture(scope="session", autouse=True)

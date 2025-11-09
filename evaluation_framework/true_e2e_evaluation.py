@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 # Real infrastructure imports
-from common.utils import get_embedding_func, get_llm_func
+from iris_vector_rag.common.utils import get_embedding_func, get_llm_func
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline

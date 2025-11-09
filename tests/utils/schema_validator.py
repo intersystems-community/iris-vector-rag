@@ -47,7 +47,7 @@ class SchemaValidator:
         mismatches: List[SchemaMismatch] = []
 
         try:
-            from common.iris_connection_manager import get_iris_connection
+            from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
             conn = get_iris_connection()
             cursor = conn.cursor()
