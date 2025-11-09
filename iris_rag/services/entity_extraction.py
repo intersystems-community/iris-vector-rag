@@ -527,6 +527,9 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         # Validate LLM configuration (Bug fix: silent fallback to Ollama)
         self._validate_llm_config()
 
+        # Log LLM configuration on startup for visibility
+        self._log_llm_configuration()
+
     def _validate_llm_config(self):
         """
         Validate LLM configuration and warn about silent fallbacks.
@@ -600,6 +603,34 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
             )
 
         return model
+
+    def _log_llm_configuration(self):
+        """
+        Log LLM configuration at service startup for visibility.
+
+        Helps users diagnose configuration issues and understand what model
+        is being used for entity extraction.
+        """
+        llm_config = self.config_manager.get("llm", {})
+
+        if not llm_config:
+            logger.warning("⚠️  No LLM configuration found - entity extraction may fail")
+            return
+
+        model = llm_config.get("model") or llm_config.get("model_name") or "qwen2.5:7b"
+        provider = llm_config.get("provider", "unknown")
+        api_type = llm_config.get("api_type", "unknown")
+        api_base = llm_config.get("api_base", "http://localhost:11434")
+
+        logger.info("=" * 70)
+        logger.info("🤖 Entity Extraction Service - LLM Configuration")
+        logger.info("=" * 70)
+        logger.info(f"  Provider:    {provider}")
+        logger.info(f"  API Type:    {api_type}")
+        logger.info(f"  Model:       {model}")
+        logger.info(f"  API Base:    {api_base}")
+        logger.info(f"  Method:      {self.method}")
+        logger.info("=" * 70)
 
     def extract_entities(self, document: Document) -> List[Entity]:
         """Extract entities with automatic ontology enhancement if enabled."""
@@ -863,20 +894,40 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         Returns:
             Dict mapping document IDs to their extracted entities
         """
+        import time
+
+        # Start timing
+        batch_start_time = time.time()
+
+        # Log batch start
+        logger.info(f"📦 Processing batch of {len(documents)} documents...")
+
         # Check if batch processing is enabled
         batch_config = self.config.get("batch_processing", {})
         batch_enabled = batch_config.get("enabled", True)
 
         if not batch_enabled:
-            logger.info("Batch processing disabled - falling back to individual extraction")
+            logger.info("⚠️  Batch processing disabled - falling back to individual extraction")
+            logger.info(f"Processing {len(documents)} documents individually...")
+
             # Process documents individually
             result_map = {}
-            for doc in documents:
+            for i, doc in enumerate(documents, 1):
+                logger.debug(f"  Processing document {i}/{len(documents)}...")
                 result = self.process_document(doc)
                 if result.get("stored", False):
                     # Extract entities from the result
                     entities = result.get("entities", [])
                     result_map[doc.id] = entities
+                    logger.debug(f"    Extracted {len(entities)} entities")
+
+            batch_elapsed = time.time() - batch_start_time
+            total_entities = sum(len(ents) for ents in result_map.values())
+            logger.info(
+                f"✅ Individual processing complete: {len(documents)} documents → {total_entities} entities "
+                f"in {batch_elapsed:.1f}s"
+            )
+
             return result_map
 
         try:
@@ -946,9 +997,12 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                 logger.debug(f"  Ticket {ticket_id}: {len(entities)} entities extracted")
 
             total_entities = sum(len(ents) for ents in result_map.values())
+            batch_elapsed = time.time() - batch_start_time
+
             logger.info(
-                f"✅ Batch complete: {len(tickets)} tickets → {total_entities} entities "
-                f"(avg: {total_entities/len(tickets):.1f} per ticket)"
+                f"✅ Batch complete: {len(tickets)} documents → {total_entities} entities "
+                f"in {batch_elapsed:.1f}s (avg: {total_entities/len(tickets):.1f} entities/doc, "
+                f"{batch_elapsed/len(tickets):.1f}s/doc)"
             )
 
             return result_map
