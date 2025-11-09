@@ -19,13 +19,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from unittest.mock import Mock
 
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 # Use the ACTUAL pipeline implementations we verified
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ class ComprehensivePipelineValidator:
     def _check_infrastructure_availability(self) -> bool:
         """Check if database infrastructure is available."""
         try:
-            from iris_rag.core.connection import ConnectionManager
+            from iris_vector_rag.core.connection import ConnectionManager
 
             conn_mgr = ConnectionManager()
             connection = conn_mgr.get_connection()
@@ -355,8 +355,8 @@ class ComprehensivePipelineValidator:
             start_time = time.time()
             if pipeline_name == "BasicRAGReranking":
                 # This pipeline requires explicit parameters
-                from iris_rag.config.manager import ConfigurationManager
-                from iris_rag.core.connection import ConnectionManager
+                from iris_vector_rag.config.manager import ConfigurationManager
+                from iris_vector_rag.core.connection import ConnectionManager
 
                 pipeline = pipeline_class(
                     connection_manager=ConnectionManager(),

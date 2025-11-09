@@ -6,7 +6,7 @@ Tests MUST fail initially, then pass after implementation (TDD).
 """
 
 import pytest
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 
 class TestBatchQueueContract:

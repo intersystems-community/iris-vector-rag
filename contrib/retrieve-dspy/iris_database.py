@@ -222,8 +222,8 @@ def _get_query_embedding(query: str) -> List[float]:
     """
     # Try iris_rag first (if available)
     try:
-        from iris_rag.embeddings.manager import EmbeddingManager
-        from iris_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.embeddings.manager import EmbeddingManager
+        from iris_vector_rag.config.manager import ConfigurationManager
 
         config_manager = ConfigurationManager()
         embedding_manager = EmbeddingManager(config_manager)

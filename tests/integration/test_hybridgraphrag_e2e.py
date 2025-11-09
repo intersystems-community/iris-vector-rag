@@ -10,7 +10,7 @@ Requirements: FR-026, FR-027, FR-028
 
 import pytest
 import time
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 class TestHybridGraphRAGE2E:

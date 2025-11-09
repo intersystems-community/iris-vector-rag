@@ -17,8 +17,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
-from iris_rag.testing.backend_manager import BackendMode
-from iris_rag.testing.connection_pool import (
+from iris_vector_rag.testing.backend_manager import BackendMode
+from iris_vector_rag.testing.connection_pool import (
     ConnectionPool,
     ConnectionPoolTimeout,
 )

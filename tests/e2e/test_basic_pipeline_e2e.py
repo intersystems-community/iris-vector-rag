@@ -6,11 +6,11 @@ These tests exercise the full BasicRAG workflow from document loading to query g
 """
 
 import pytest
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import Document
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.storage.vector_store_iris import IRISVectorStore
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from common.utils import get_llm_func
 
 

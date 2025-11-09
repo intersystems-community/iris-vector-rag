@@ -20,7 +20,7 @@ from common.utils import (
     get_embedding_func,
     get_llm_func,
 )
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 # List of all pipeline types to test
 PIPELINE_TYPES = [
@@ -145,7 +145,7 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
         # Step 1: Import and setup mocks
         print(f"1. Setting up mocks and importing pipeline...")
         
-        from iris_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.config.manager import ConfigurationManager
 
         # Create mock config manager
         mock_config = ConfigurationManager()
@@ -157,27 +157,27 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
         
         # Import the specific pipeline class
         if pipeline_type == "basic":
-            from iris_rag.pipelines.basic import BasicRAGPipeline
+            from iris_vector_rag.pipelines.basic import BasicRAGPipeline
             pipeline_class = BasicRAGPipeline
         elif pipeline_type == "hyde":
-            from iris_rag.pipelines.hyde import HyDERAGPipeline
+            from iris_vector_rag.pipelines.hyde import HyDERAGPipeline
             pipeline_class = HyDERAGPipeline
         elif pipeline_type == "crag":
-            from iris_rag.pipelines.crag import CRAGPipeline
+            from iris_vector_rag.pipelines.crag import CRAGPipeline
             pipeline_class = CRAGPipeline
         elif pipeline_type == "colbert":
-            from iris_rag.pipelines.colbert_pylate.pylate_pipeline import (
+            from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
                 PyLateColBERTPipeline,
             )
             pipeline_class = PyLateColBERTPipeline
         elif pipeline_type == "noderag":
-            from iris_rag.pipelines.noderag import NodeRAGPipeline
+            from iris_vector_rag.pipelines.noderag import NodeRAGPipeline
             pipeline_class = NodeRAGPipeline
         elif pipeline_type == "graphrag":
-            from iris_rag.pipelines.graphrag import GraphRAGPipeline
+            from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
             pipeline_class = GraphRAGPipeline
         elif pipeline_type == "hybrid_ifind":
-            from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
+            from iris_vector_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
             pipeline_class = HybridIFindRAGPipeline
         else:
             raise ValueError(f"Unknown pipeline type: {pipeline_type}")

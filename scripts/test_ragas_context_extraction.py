@@ -11,7 +11,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 
 def mock_pipeline_response():

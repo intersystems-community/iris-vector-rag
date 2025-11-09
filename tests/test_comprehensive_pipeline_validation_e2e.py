@@ -17,13 +17,13 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 # Use the ACTUAL pipeline implementations we verified
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 logger = logging.getLogger(__name__)
 

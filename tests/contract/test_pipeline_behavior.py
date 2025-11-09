@@ -18,7 +18,7 @@ class TestPipelineBehavior:
         with patch('iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules') as mock_import:
             mock_import.side_effect = ImportError("HybridGraphRAG requires iris-vector-graph package")
 
-            from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+            from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
             with pytest.raises(ImportError):
                 HybridGraphRAGPipeline()
@@ -26,7 +26,7 @@ class TestPipelineBehavior:
     def test_no_conditional_checks_in_pipeline(self):
         """Pipeline should not have conditional availability checks."""
         # This test should FAIL until implementation is complete
-        from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
         # Mock successful import
         with patch('iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules') as mock_import:
@@ -54,7 +54,7 @@ class TestPipelineBehavior:
     def test_all_retrieval_methods_available(self):
         """All retrieval methods should be available without conditionals."""
         # This test should FAIL until implementation is complete
-        from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
         with patch('iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules') as mock_import:
             mock_import.return_value = {
@@ -76,7 +76,7 @@ class TestPipelineBehavior:
     def test_no_fallback_methods_exist(self):
         """Fallback methods should not exist in the simplified implementation."""
         # This test should FAIL until implementation is complete
-        from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
         # These fallback methods should not exist
         assert not hasattr(HybridGraphRAGPipeline, '_enhanced_hybrid_fallback')

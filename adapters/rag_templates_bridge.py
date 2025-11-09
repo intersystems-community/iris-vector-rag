@@ -21,13 +21,13 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.base import RAGPipeline
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.base import RAGPipeline
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -399,7 +399,7 @@ class RAGTemplatesBridge:
 
         try:
             # Convert documents to required format
-            from iris_rag.core.models import Document
+            from iris_vector_rag.core.models import Document
 
             doc_objects = [
                 Document(

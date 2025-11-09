@@ -6,9 +6,9 @@ Requires IRIS database per Constitution principle III.
 """
 
 import pytest
-from iris_rag.core.models import Document
-from iris_rag.services.entity_extraction import EntityExtractionService
-from iris_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.services.entity_extraction import EntityExtractionService
+from iris_vector_rag.config.manager import ConfigurationManager
 from common.iris_connection_manager import IRISConnectionManager
 
 

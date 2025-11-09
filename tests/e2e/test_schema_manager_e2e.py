@@ -6,9 +6,9 @@ Tests table creation, schema validation, index creation (HNSW, standard), and mi
 """
 
 import pytest
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
 @pytest.fixture(scope="module")

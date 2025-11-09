@@ -16,7 +16,7 @@ import base64
 from fastapi.testclient import TestClient
 
 try:
-    from iris_rag.api.main import create_app
+    from iris_vector_rag.api.main import create_app
 except ImportError:
     create_app = None
 
@@ -46,7 +46,7 @@ def valid_api_key(client):
     pytest.skip("Requires API key creation fixture")
 
     # Expected usage:
-    # from iris_rag.api.services.auth_service import AuthService
+    # from iris_vector_rag.api.services.auth_service import AuthService
     # auth_service = AuthService()
     # key = auth_service.create_key(
     #     name="test-key",

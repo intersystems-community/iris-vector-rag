@@ -10,9 +10,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from iris_rag.api.models.auth import ApiKey, Permission, RateLimitTier
-from iris_rag.api.models.websocket import WebSocketEvent, WebSocketSession
-from iris_rag.api.websocket.connection import ConnectionManager
+from iris_vector_rag.api.models.auth import ApiKey, Permission, RateLimitTier
+from iris_vector_rag.api.models.websocket import WebSocketEvent, WebSocketSession
+from iris_vector_rag.api.websocket.connection import ConnectionManager
 
 
 class TestConnectionManager:

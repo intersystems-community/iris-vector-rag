@@ -16,7 +16,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
 from common.utils import get_embedding_func, get_llm_func
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 # List of all pipeline types to test
 PIPELINE_TYPES = [

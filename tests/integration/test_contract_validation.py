@@ -5,11 +5,11 @@ Tests validation integration with TechniqueHandlerRegistry and real pipelines.
 """
 
 import pytest
-from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry, TechniqueHandler
-from iris_rag.mcp.validation import ValidationError
-from iris_rag.core.base import RAGPipeline
-from iris_rag.core.models import Document
-from iris_rag.core.validators import ViolationSeverity
+from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry, TechniqueHandler
+from iris_vector_rag.mcp.validation import ValidationError
+from iris_vector_rag.core.base import RAGPipeline
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.core.validators import ViolationSeverity
 from typing import Dict, Any, List
 
 
@@ -20,8 +20,8 @@ class InvalidTestPipeline(RAGPipeline):
 
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         if connection_manager is None or config_manager is None:
-            from iris_rag.core.connection import ConnectionManager
-            from iris_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
+            from iris_vector_rag.config.manager import ConfigurationManager
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -44,8 +44,8 @@ class ValidTestPipeline(RAGPipeline):
 
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         if connection_manager is None or config_manager is None:
-            from iris_rag.core.connection import ConnectionManager
-            from iris_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
+            from iris_vector_rag.config.manager import ConfigurationManager
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -139,8 +139,8 @@ class TestRegistryValidation:
         class WarningPipeline(RAGPipeline):
             def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
                 if connection_manager is None or config_manager is None:
-                    from iris_rag.core.connection import ConnectionManager
-                    from iris_rag.config.manager import ConfigurationManager
+                    from iris_vector_rag.core.connection import ConnectionManager
+                    from iris_vector_rag.config.manager import ConfigurationManager
                     if config_manager is None:
                         config_manager = ConfigurationManager()
                     if connection_manager is None:
@@ -245,8 +245,8 @@ class TestRealPipelineValidation:
 
     def test_basic_pipeline_compliance(self):
         """Test BasicRAGPipeline contract compliance."""
-        from iris_rag.pipelines.basic import BasicRAGPipeline
-        from iris_rag.core.validators import PipelineValidator
+        from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+        from iris_vector_rag.core.validators import PipelineValidator
 
         validator = PipelineValidator()
         violations = validator.validate_pipeline_class(BasicRAGPipeline)
@@ -256,8 +256,8 @@ class TestRealPipelineValidation:
 
     def test_crag_pipeline_compliance(self):
         """Test CRAGPipeline contract compliance."""
-        from iris_rag.pipelines.crag import CRAGPipeline
-        from iris_rag.core.validators import PipelineValidator
+        from iris_vector_rag.pipelines.crag import CRAGPipeline
+        from iris_vector_rag.core.validators import PipelineValidator
 
         validator = PipelineValidator()
         violations = validator.validate_pipeline_class(CRAGPipeline)
@@ -267,8 +267,8 @@ class TestRealPipelineValidation:
 
     def test_multi_query_rrf_pipeline_compliance(self):
         """Test MultiQueryRRFPipeline contract compliance."""
-        from iris_rag.pipelines.multi_query_rrf import MultiQueryRRFPipeline
-        from iris_rag.core.validators import PipelineValidator
+        from iris_vector_rag.pipelines.multi_query_rrf import MultiQueryRRFPipeline
+        from iris_vector_rag.core.validators import PipelineValidator
 
         validator = PipelineValidator()
         violations = validator.validate_pipeline_class(MultiQueryRRFPipeline)
@@ -279,8 +279,8 @@ class TestRealPipelineValidation:
     @pytest.mark.skip(reason="HybridGraphRAG requires iris_vector_graph and IRIS connection")
     def test_hybrid_graphrag_pipeline_compliance(self):
         """Test HybridGraphRAGPipeline contract compliance."""
-        from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
-        from iris_rag.core.validators import PipelineValidator
+        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+        from iris_vector_rag.core.validators import PipelineValidator
 
         validator = PipelineValidator()
         violations = validator.validate_pipeline_class(HybridGraphRAGPipeline)
@@ -294,7 +294,7 @@ class TestValidationConfiguration:
 
     def test_validation_config_exists(self):
         """Test that validation configuration is in default_config.yaml."""
-        from iris_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.config.manager import ConfigurationManager
 
         config_manager = ConfigurationManager()
 
@@ -310,7 +310,7 @@ class TestValidationConfiguration:
 
     def test_validation_contract_structure(self):
         """Test validation contract structure in config."""
-        from iris_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.config.manager import ConfigurationManager
 
         config_manager = ConfigurationManager()
 
@@ -328,14 +328,14 @@ class TestValidationConfiguration:
         assert isinstance(required_metadata_fields, list), "required_metadata_fields should be list"
 
         # Check values match validator
-        from iris_rag.core.validators import PipelineValidator
+        from iris_vector_rag.core.validators import PipelineValidator
 
         validator = PipelineValidator()
         assert set(required_methods) == set(validator.REQUIRED_METHODS)
 
     def test_registry_uses_config(self):
         """Test that registry can use configuration settings."""
-        from iris_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.config.manager import ConfigurationManager
 
         config_manager = ConfigurationManager()
 

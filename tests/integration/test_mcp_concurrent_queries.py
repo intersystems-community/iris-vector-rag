@@ -20,7 +20,7 @@ class TestMCPConcurrentQueries:
     @pytest.mark.asyncio
     async def test_three_concurrent_queries_different_pipelines(self):
         """Verify 3 concurrent queries to different pipelines complete successfully."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -42,7 +42,7 @@ class TestMCPConcurrentQueries:
     @pytest.mark.asyncio
     async def test_five_concurrent_queries_max_connections(self):
         """Verify 5 concurrent queries work (at connection limit)."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -62,7 +62,7 @@ class TestMCPConcurrentQueries:
     @pytest.mark.asyncio
     async def test_no_resource_conflicts_concurrent(self):
         """Verify concurrent queries don't have resource conflicts."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -84,7 +84,7 @@ class TestMCPConcurrentQueries:
     async def test_concurrent_queries_performance(self):
         """Verify concurrent queries don't significantly degrade performance."""
         import time
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 

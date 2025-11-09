@@ -9,7 +9,7 @@ Requirements: FR-013, FR-014, FR-015
 """
 
 import pytest
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 class TestKGTraversalContract:

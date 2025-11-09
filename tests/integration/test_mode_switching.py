@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
-from iris_rag.testing.backend_manager import (
+from iris_vector_rag.testing.backend_manager import (
     BackendConfiguration,
     BackendMode,
     ConfigSource,
@@ -90,7 +90,7 @@ class TestBackendModeSwitching:
         monkeypatch.setenv("IRIS_BACKEND_MODE", "enterprise")
 
         # Mock config file path
-        from iris_rag.testing import backend_manager
+        from iris_vector_rag.testing import backend_manager
         with monkeypatch.context() as m:
             m.setattr(backend_manager, "DEFAULT_CONFIG_PATH", config_file)
             config = load_configuration()
@@ -117,7 +117,7 @@ class TestBackendModeSwitching:
         monkeypatch.delenv("IRIS_BACKEND_MODE", raising=False)
 
         # Mock config file path
-        from iris_rag.testing import backend_manager
+        from iris_vector_rag.testing import backend_manager
         with monkeypatch.context() as m:
             m.setattr(backend_manager, "DEFAULT_CONFIG_PATH", config_file)
             config = load_configuration()
@@ -148,7 +148,7 @@ class TestConfigurationPrecedence:
         # Point to nonexistent config file
         nonexistent_config = tmp_path / "nonexistent.yaml"
 
-        from iris_rag.testing import backend_manager
+        from iris_vector_rag.testing import backend_manager
         with monkeypatch.context() as m:
             m.setattr(backend_manager, "DEFAULT_CONFIG_PATH", nonexistent_config)
             config = load_configuration()
@@ -187,7 +187,7 @@ class TestConfigurationPrecedence:
 
         monkeypatch.delenv("IRIS_BACKEND_MODE", raising=False)
 
-        from iris_rag.testing import backend_manager
+        from iris_vector_rag.testing import backend_manager
         with monkeypatch.context() as m:
             m.setattr(backend_manager, "DEFAULT_CONFIG_PATH", config_file)
             config = load_configuration()

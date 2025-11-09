@@ -193,7 +193,7 @@ class TestHybridGraphRAGDiscoveryImports:
         Validates that GraphCoreDiscovery.import_graph_core_modules() succeeds
         and returns the correct module classes.
         """
-        from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
         discovery = GraphCoreDiscovery()
         success, modules = discovery.import_graph_core_modules()
@@ -223,7 +223,7 @@ class TestHybridGraphRAGDiscoveryImports:
 
         This is not a functional requirement but validates expected behavior.
         """
-        from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
         discovery = GraphCoreDiscovery()
 
@@ -254,7 +254,7 @@ class TestBackwardCompatibilityGuarantees:
         This is a smoke test ensuring the main user-facing API still works.
         """
         try:
-            from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+            from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
             assert HybridGraphRAGPipeline is not None
         except ImportError as e:
             pytest.fail(
@@ -271,7 +271,7 @@ class TestBackwardCompatibilityGuarantees:
         # validate that the import doesn't raise an error.
         # Full integration test is in test_hybridgraphrag_e2e.py
         try:
-            from iris_rag import create_pipeline
+            from iris_vector_rag import create_pipeline
             # Don't actually create the pipeline (requires DB), just validate import
             assert create_pipeline is not None
         except ImportError as e:
@@ -298,7 +298,7 @@ class TestErrorMessages:
         This test validates that GraphCoreDiscovery logs helpful messages
         when the package is not installed.
         """
-        from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
         # We can't actually uninstall the package during tests, so we test
         # the error message logging logic by checking the _log_dependency_help method

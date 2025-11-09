@@ -61,8 +61,8 @@ from dotenv import load_dotenv
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import iris_rag
-from iris_rag.core.models import Document
+import iris_vector_rag
+from iris_vector_rag.core.models import Document
 
 # Load environment variables
 load_dotenv()

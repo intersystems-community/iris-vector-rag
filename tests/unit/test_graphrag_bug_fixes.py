@@ -14,7 +14,7 @@ Reference: GRAPHRAG_BUGS_FIXED.md, GRAPHRAG_BUGS_REPORT.md, GRAPHRAG_BUG_5_API_K
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from iris_rag.core.models import Document, Entity
+from iris_vector_rag.core.models import Document, Entity
 
 
 class TestBug1EntityExtractionEnabledFlag:
@@ -22,7 +22,7 @@ class TestBug1EntityExtractionEnabledFlag:
 
     def test_graphrag_has_entity_extraction_enabled_attribute(self):
         """Verify GraphRAGPipeline has entity_extraction_enabled attribute."""
-        from iris_rag.pipelines.graphrag import GraphRAGPipeline
+        from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
         # Check that the class or instance should have this attribute
         # We'll check the source code was modified correctly
@@ -34,7 +34,7 @@ class TestBug1EntityExtractionEnabledFlag:
 
     def test_graphrag_load_documents_checks_entity_extraction_flag(self):
         """Verify load_documents() checks entity_extraction_enabled flag."""
-        from iris_rag.pipelines.graphrag import GraphRAGPipeline
+        from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
         import inspect
         source = inspect.getsource(GraphRAGPipeline.load_documents)
@@ -51,7 +51,7 @@ class TestBug2BatchProcessingConfig:
 
     def test_extract_batch_checks_batch_processing_enabled(self):
         """Verify extract_batch_with_dspy() checks batch_processing.enabled config."""
-        from iris_rag.services.entity_extraction import EntityExtractionService
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         import inspect
         source = inspect.getsource(EntityExtractionService.extract_batch_with_dspy)
@@ -69,14 +69,14 @@ class TestBug3ConfigureDspy:
 
     def test_configure_dspy_function_exists(self):
         """Verify configure_dspy() function exists."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
 
         assert hasattr(entity_extraction_module, 'configure_dspy'), \
             "Should have configure_dspy function"
 
     def test_configure_dspy_accepts_llm_config_dict(self):
         """Verify configure_dspy() accepts llm_config dict parameter."""
-        from iris_rag.dspy_modules.entity_extraction_module import configure_dspy
+        from iris_vector_rag.dspy_modules.entity_extraction_module import configure_dspy
 
         import inspect
         sig = inspect.signature(configure_dspy)
@@ -91,7 +91,7 @@ class TestBug5CallLlmUsesConfigureDspy:
 
     def test_call_llm_uses_configure_dspy_for_openai(self):
         """Verify _call_llm() calls configure_dspy for OpenAI-compatible endpoints."""
-        from iris_rag.services import entity_extraction
+        from iris_vector_rag.services import entity_extraction
         import inspect
 
         source = inspect.getsource(entity_extraction.EntityExtractionService._call_llm)
@@ -112,7 +112,7 @@ class TestBug5CallLlmUsesConfigureDspy:
 
     def test_call_llm_not_hardcoded_empty_return(self):
         """Verify _call_llm() doesn't have hardcoded empty return for GPT models."""
-        from iris_rag.services import entity_extraction
+        from iris_vector_rag.services import entity_extraction
         import inspect
 
         source = inspect.getsource(entity_extraction.EntityExtractionService._call_llm)
@@ -137,7 +137,7 @@ class TestBug5ApiKeyPassedToDspy:
 
     def test_configure_dspy_extracts_api_key_from_config(self):
         """Verify configure_dspy() extracts api_key from llm_config."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.configure_dspy)
@@ -151,7 +151,7 @@ class TestBug5ApiKeyPassedToDspy:
 
     def test_configure_dspy_passes_api_key_to_dspy_lm(self):
         """Verify configure_dspy() passes api_key parameter to dspy.LM()."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.configure_dspy)
@@ -173,7 +173,7 @@ class TestBug6LiteLLMModelNameStripping:
 
     def test_direct_openai_lm_class_exists(self):
         """Verify DirectOpenAILM class exists and inherits from dspy.BaseLM."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
         import dspy
 
         assert hasattr(entity_extraction_module, 'DirectOpenAILM'), \
@@ -186,7 +186,7 @@ class TestBug6LiteLLMModelNameStripping:
 
     def test_direct_openai_lm_preserves_model_name(self):
         """Verify DirectOpenAILM preserves full model name in __init__."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.DirectOpenAILM.__init__)
@@ -202,7 +202,7 @@ class TestBug6LiteLLMModelNameStripping:
 
     def test_configure_dspy_uses_direct_openai_lm_for_gpt_oss(self):
         """Verify configure_dspy() uses DirectOpenAILM for GPT-OSS models."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.configure_dspy)
@@ -225,7 +225,7 @@ class TestCodeVerification:
 
     def test_graphrag_pipeline_has_entity_extraction_enabled_property(self):
         """Verify GraphRAGPipeline.__init__ sets entity_extraction_enabled."""
-        from iris_rag.pipelines import graphrag
+        from iris_vector_rag.pipelines import graphrag
         import inspect
 
         source = inspect.getsource(graphrag.GraphRAGPipeline.__init__)
@@ -238,7 +238,7 @@ class TestCodeVerification:
 
     def test_graphrag_load_documents_has_early_return(self):
         """Verify load_documents has early return when entity_extraction_enabled=False."""
-        from iris_rag.pipelines import graphrag
+        from iris_vector_rag.pipelines import graphrag
         import inspect
 
         source = inspect.getsource(graphrag.GraphRAGPipeline.load_documents)
@@ -251,7 +251,7 @@ class TestCodeVerification:
 
     def test_entity_extraction_service_checks_batch_config(self):
         """Verify extract_batch_with_dspy checks batch_processing.enabled."""
-        from iris_rag.services import entity_extraction
+        from iris_vector_rag.services import entity_extraction
         import inspect
 
         source = inspect.getsource(entity_extraction.EntityExtractionService.extract_batch_with_dspy)
@@ -267,7 +267,7 @@ class TestCodeVerification:
 
     def test_configure_dspy_supports_api_type_parameter(self):
         """Verify configure_dspy checks api_type for OpenAI-compatible endpoints."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.configure_dspy)
@@ -283,7 +283,7 @@ class TestCodeVerification:
 
     def test_call_llm_uses_dspy_for_gpt_models(self):
         """Verify _call_llm() uses DSPy/configure_dspy for GPT models instead of stub."""
-        from iris_rag.services import entity_extraction
+        from iris_vector_rag.services import entity_extraction
         import inspect
 
         source = inspect.getsource(entity_extraction.EntityExtractionService._call_llm)
@@ -301,7 +301,7 @@ class TestCodeVerification:
 
     def test_configure_dspy_extracts_and_passes_api_key(self):
         """Verify configure_dspy() extracts api_key from config and passes to dspy.LM()."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.configure_dspy)
@@ -318,7 +318,7 @@ class TestCodeVerification:
 
     def test_configure_dspy_uses_direct_openai_lm_for_prefix_preservation(self):
         """Verify configure_dspy() uses DirectOpenAILM to prevent prefix stripping."""
-        from iris_rag.dspy_modules import entity_extraction_module
+        from iris_vector_rag.dspy_modules import entity_extraction_module
         import inspect
 
         source = inspect.getsource(entity_extraction_module.configure_dspy)

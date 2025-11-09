@@ -19,20 +19,20 @@ class TestTechniqueHandlerInterface:
     def test_technique_handlers_module_exists(self):
         """Verify iris_rag.mcp.technique_handlers module can be imported."""
         try:
-            import iris_rag.mcp.technique_handlers
+            import iris_vector_rag.mcp.technique_handlers
             assert True
         except ImportError as e:
             pytest.fail(f"TechniqueHandlers module not found: {e}")
 
     def test_technique_handler_registry_exists(self):
         """Verify TechniqueHandlerRegistry class exists."""
-        from iris_rag.mcp import technique_handlers
+        from iris_vector_rag.mcp import technique_handlers
         assert hasattr(technique_handlers, 'TechniqueHandlerRegistry'), \
             "TechniqueHandlerRegistry class not found"
 
     def test_registry_implements_required_methods(self):
         """Verify TechniqueHandlerRegistry implements required methods."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         required_methods = [
             'register_handler',
@@ -51,14 +51,14 @@ class TestTechniqueHandlerRegistry:
 
     def test_registry_initialization(self):
         """Verify TechniqueHandlerRegistry can be initialized."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         assert registry is not None
 
     def test_registry_list_techniques_returns_6_pipelines(self):
         """Verify registry lists all 6 RAG pipelines."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         techniques = registry.list_techniques()
@@ -81,7 +81,7 @@ class TestTechniqueHandlerRegistry:
 
     def test_registry_get_handler_returns_handler_object(self):
         """Verify get_handler returns handler objects."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
 
@@ -96,7 +96,7 @@ class TestTechniqueHandlerRegistry:
 
     def test_registry_get_handler_invalid_technique_raises(self):
         """Verify get_handler raises KeyError for invalid technique."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
 
@@ -110,7 +110,7 @@ class TestBasicRAGHandler:
     @pytest.mark.asyncio
     async def test_basic_handler_execute(self):
         """Verify BasicRAG handler execute method."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('basic')
@@ -136,7 +136,7 @@ class TestBasicRAGHandler:
 
     def test_basic_handler_validate_params(self):
         """Verify BasicRAG handler parameter validation."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('basic')
@@ -151,14 +151,14 @@ class TestBasicRAGHandler:
         assert validated_default['top_k'] == 5  # default value
 
         # Invalid parameters (top_k out of range)
-        from iris_rag.mcp.validation import ValidationError
+        from iris_vector_rag.mcp.validation import ValidationError
         with pytest.raises(ValidationError):
             handler.validate_params({'top_k': 100})  # max is 50
 
     @pytest.mark.asyncio
     async def test_basic_handler_health_check(self):
         """Verify BasicRAG handler health check."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('basic')
@@ -178,7 +178,7 @@ class TestCRAGHandler:
     @pytest.mark.asyncio
     async def test_crag_handler_execute_with_correction(self):
         """Verify CRAG handler execute method with correction strategy."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('crag')
@@ -204,7 +204,7 @@ class TestCRAGHandler:
 
     def test_crag_handler_validate_params_confidence_threshold(self):
         """Verify CRAG handler validates confidence_threshold parameter."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('crag')
@@ -214,7 +214,7 @@ class TestCRAGHandler:
         assert validated['confidence_threshold'] == 0.8
 
         # Invalid confidence threshold (out of range)
-        from iris_rag.mcp.validation import ValidationError
+        from iris_vector_rag.mcp.validation import ValidationError
         with pytest.raises(ValidationError):
             handler.validate_params({'confidence_threshold': 1.5})  # max is 1.0
 
@@ -225,7 +225,7 @@ class TestGraphRAGHandler:
     @pytest.mark.asyncio
     async def test_graphrag_handler_execute_hybrid_search(self):
         """Verify GraphRAG handler execute method with hybrid search."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('graphrag')
@@ -252,7 +252,7 @@ class TestGraphRAGHandler:
 
     def test_graphrag_handler_validate_params_search_method(self):
         """Verify GraphRAG handler validates search_method parameter."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('graphrag')
@@ -263,7 +263,7 @@ class TestGraphRAGHandler:
             assert validated['search_method'] == method
 
         # Invalid search method
-        from iris_rag.mcp.validation import ValidationError
+        from iris_vector_rag.mcp.validation import ValidationError
         with pytest.raises(ValidationError):
             handler.validate_params({'search_method': 'invalid_method'})
 
@@ -274,7 +274,7 @@ class TestPyLateColBERTHandler:
     @pytest.mark.asyncio
     async def test_pylate_colbert_handler_execute(self):
         """Verify PyLateColBERT handler execute method."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('pylate_colbert')
@@ -293,7 +293,7 @@ class TestPyLateColBERTHandler:
 
     def test_pylate_colbert_handler_validate_params(self):
         """Verify PyLateColBERT handler validates interaction_threshold."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler('pylate_colbert')
@@ -303,7 +303,7 @@ class TestPyLateColBERTHandler:
         assert validated['interaction_threshold'] == 0.5
 
         # Invalid interaction threshold
-        from iris_rag.mcp.validation import ValidationError
+        from iris_vector_rag.mcp.validation import ValidationError
         with pytest.raises(ValidationError):
             handler.validate_params({'interaction_threshold': 1.5})
 
@@ -321,7 +321,7 @@ class TestAllHandlersCommon:
     ])
     def test_handler_has_required_interface_methods(self, technique):
         """Verify all handlers implement ITechniqueHandler interface."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler(technique)
@@ -349,7 +349,7 @@ class TestAllHandlersCommon:
     ])
     def test_handler_validate_params_returns_dict(self, technique):
         """Verify all handlers' validate_params returns dict."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler(technique)
@@ -369,7 +369,7 @@ class TestAllHandlersCommon:
     @pytest.mark.asyncio
     async def test_handler_health_check_returns_status(self, technique):
         """Verify all handlers' health_check returns status."""
-        from iris_rag.mcp.technique_handlers import TechniqueHandlerRegistry
+        from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 
         registry = TechniqueHandlerRegistry()
         handler = registry.get_handler(technique)

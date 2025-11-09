@@ -23,8 +23,8 @@ import pytest
 import yaml
 
 # Real framework imports (NO MOCKS)
-from iris_rag.config.manager import ConfigurationManager, ConfigValidationError
-from iris_rag.core.connection import ConnectionManager
+from iris_vector_rag.config.manager import ConfigurationManager, ConfigValidationError
+from iris_vector_rag.core.connection import ConnectionManager
 
 logger = logging.getLogger(__name__)
 

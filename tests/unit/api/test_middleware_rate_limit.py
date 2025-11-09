@@ -10,9 +10,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from iris_rag.api.middleware.rate_limit import RateLimitMiddleware
-from iris_rag.api.models.auth import ApiKey, Permission, RateLimitTier
-from iris_rag.api.models.quota import RateLimitQuota
+from iris_vector_rag.api.middleware.rate_limit import RateLimitMiddleware
+from iris_vector_rag.api.models.auth import ApiKey, Permission, RateLimitTier
+from iris_vector_rag.api.models.quota import RateLimitQuota
 
 
 class TestRateLimitMiddleware:

@@ -14,7 +14,7 @@ from typing import Any, Dict
 import pytest
 
 # Import the actual implementation to test against
-from iris_rag.config.manager import ConfigurationManager, ConfigValidationError
+from iris_vector_rag.config.manager import ConfigurationManager, ConfigValidationError
 
 
 class TestConfigurationManagerContract:

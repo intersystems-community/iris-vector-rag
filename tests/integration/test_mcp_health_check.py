@@ -19,7 +19,7 @@ class TestMCPHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_basic_execution(self):
         """Verify rag_health_check executes successfully."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -32,7 +32,7 @@ class TestMCPHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_all_6_pipelines(self):
         """Verify health check returns status for all 6 RAG pipelines."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -61,7 +61,7 @@ class TestMCPHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_database_connectivity(self):
         """Verify health check reports database connectivity."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -82,7 +82,7 @@ class TestMCPHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_performance_metrics(self):
         """Verify health check includes performance metrics when requested."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -98,7 +98,7 @@ class TestMCPHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_without_details(self):
         """Verify health check without details returns minimal response."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -111,7 +111,7 @@ class TestMCPHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_timestamp(self):
         """Verify health check includes timestamp."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -124,7 +124,7 @@ class TestMCPHealthCheck:
     async def test_health_check_performance(self):
         """Verify health check completes quickly."""
         import time
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 

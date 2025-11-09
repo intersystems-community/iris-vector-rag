@@ -13,8 +13,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
 
 logger = logging.getLogger(__name__)
 

@@ -16,12 +16,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
-from iris_rag.testing.backend_manager import (
+from iris_vector_rag.testing.backend_manager import (
     BackendConfiguration,
     BackendMode,
     load_configuration,
 )
-from iris_rag.testing.connection_pool import ConnectionPool
+from iris_vector_rag.testing.connection_pool import ConnectionPool
 
 
 @pytest.mark.integration

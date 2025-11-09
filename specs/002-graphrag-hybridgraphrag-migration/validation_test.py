@@ -19,7 +19,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from common.utils import get_llm_func
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 @dataclass

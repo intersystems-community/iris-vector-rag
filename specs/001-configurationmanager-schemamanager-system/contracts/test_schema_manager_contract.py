@@ -13,8 +13,8 @@ import pytest
 # These imports will fail initially - this is expected for contract tests
 try:
     from common.iris_connection_manager import IRISConnectionManager
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.storage.schema_manager import SchemaManager
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.storage.schema_manager import SchemaManager
 except ImportError:
     # Contract tests are written before implementation
     SchemaManager = None

@@ -10,9 +10,9 @@ Related: https://github.com/tdyar/hipporag2-pipeline/BUG_REPORT_IRIS_VECTOR_RAG.
 import logging
 import pytest
 from unittest.mock import MagicMock, patch
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.models import Document
-from iris_rag.services.entity_extraction import EntityExtractionService
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
 
 @pytest.fixture

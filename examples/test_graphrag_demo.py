@@ -70,9 +70,9 @@ def test_core_imports():
 
     try:
         # Test IRIS RAG imports
-        from iris_rag.config.manager import ConfigurationManager
-        from iris_rag.core.connection import ConnectionManager
-        from iris_rag.core.models import Document, Entity, Relationship
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.core.models import Document, Entity, Relationship
 
         print("✅ IRIS RAG core imports successful")
 

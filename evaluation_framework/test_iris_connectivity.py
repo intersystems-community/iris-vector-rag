@@ -117,7 +117,7 @@ class IRISConnectivityTest:
             pipelines_success = 0
 
             try:
-                from iris_rag.pipelines.basic import BasicRAG
+                from iris_vector_rag.pipelines.basic import BasicRAG
 
                 logger.info("✓ BasicRAG imported successfully")
                 pipelines_success += 1
@@ -126,7 +126,7 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_rag.pipelines.crag import CRAG
+                from iris_vector_rag.pipelines.crag import CRAG
 
                 logger.info("✓ CRAG imported successfully")
                 pipelines_success += 1
@@ -135,7 +135,7 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_rag.pipelines.graphrag import GraphRAG
+                from iris_vector_rag.pipelines.graphrag import GraphRAG
 
                 logger.info("✓ GraphRAG imported successfully")
                 pipelines_success += 1
@@ -144,7 +144,7 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_rag.pipelines.basic_rerank import BasicRAGReranking
+                from iris_vector_rag.pipelines.basic_rerank import BasicRAGReranking
 
                 logger.info("✓ BasicRAGReranking imported successfully")
                 pipelines_success += 1

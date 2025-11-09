@@ -14,9 +14,9 @@ from common.connection_singleton import (
     get_shared_iris_connection,
     reset_shared_connection,
 )
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.storage.schema_manager import SchemaManager
-from iris_rag.storage.vector_store_iris import IRISVectorStore
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

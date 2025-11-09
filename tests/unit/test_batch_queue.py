@@ -6,7 +6,7 @@ Tests BatchQueue logic in isolation without dependencies.
 
 import pytest
 from common.batch_utils import BatchQueue
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 
 class TestBatchQueue:

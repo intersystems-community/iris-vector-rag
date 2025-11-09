@@ -17,11 +17,11 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import Document
-from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
-from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
 logger = logging.getLogger(__name__)
 
@@ -344,17 +344,17 @@ class TestModularArchitecture:
     def test_import_isolation(self):
         """Test that modules can be imported independently."""
         # Test discovery module
-        from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
         assert GraphCoreDiscovery is not None
 
         # Test retrieval module
-        from iris_rag.pipelines.hybrid_graphrag_retrieval import HybridRetrievalMethods
+        from iris_vector_rag.pipelines.hybrid_graphrag_retrieval import HybridRetrievalMethods
 
         assert HybridRetrievalMethods is not None
 
         # Test main pipeline
-        from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
         assert HybridGraphRAGPipeline is not None
 
