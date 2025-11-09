@@ -152,7 +152,7 @@ class ConnectionManager:
             )
 
             # Use the existing database utility instead of direct DBAPI imports
-            from common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
             # Create connection using the proven utility function
             connection = get_iris_dbapi_connection()
@@ -191,7 +191,7 @@ class ConnectionManager:
                 }
 
             # Use our utility connector instead of direct iris.connect
-            from common.iris_connection_manager import get_iris_connection
+            from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
             connection_config = {
                 "hostname": db_config.get("db_host", "localhost"),

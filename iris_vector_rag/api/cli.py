@@ -17,7 +17,7 @@ import yaml
 
 from iris_vector_rag.api.main import load_config, create_app
 from iris_vector_rag.api.models.auth import ApiKeyCreateRequest, Permission, RateLimitTier
-from common.connection_pool import IRISConnectionPool
+from iris_vector_rag.common.connection_pool import IRISConnectionPool
 
 
 logging.basicConfig(

@@ -82,7 +82,7 @@ def validate_production_environment(logger: logging.Logger) -> bool:
 
     # Test IRIS connectivity
     try:
-        from common.iris_dbapi_connector import get_iris_dbapi_connection
+        from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
         conn = get_iris_dbapi_connection()
         if conn:

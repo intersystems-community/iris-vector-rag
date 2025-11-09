@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Import the DBAPI connector for self-managed connections
 try:
-    from common.iris_dbapi_connector import get_iris_dbapi_connection
+    from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 except ImportError:
     logger.warning(
         "Could not import get_iris_dbapi_connection. Self-managed connections will not be available."

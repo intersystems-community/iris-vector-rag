@@ -11,7 +11,7 @@ import logging
 from typing import Any, Dict, Optional
 from datetime import datetime, timedelta
 
-from common.llm_cache_config import CacheConfig
+from iris_vector_rag.common.llm_cache_config import CacheConfig
 
 logger = logging.getLogger(__name__)
 

@@ -92,7 +92,7 @@ def build_hf_embedder(model_name: str):
     import torch
 
     if model_name not in _hf_embedder_cache:
-        from common.huggingface_utils import download_huggingface_model
+        from iris_vector_rag.common.huggingface_utils import download_huggingface_model
 
         print(f"Initializing HF embedder for model: {model_name}")
         tokenizer, model = download_huggingface_model(model_name)
@@ -535,8 +535,8 @@ def _setup_caching_if_needed(enable_cache: Optional[bool] = None) -> bool:
         True if caching is enabled, False otherwise
     """
     try:
-        from common.llm_cache_config import load_cache_config
-        from common.llm_cache_manager import (
+        from iris_vector_rag.common.llm_cache_config import load_cache_config
+        from iris_vector_rag.common.llm_cache_manager import (
             is_langchain_cache_configured,
             setup_langchain_cache,
         )

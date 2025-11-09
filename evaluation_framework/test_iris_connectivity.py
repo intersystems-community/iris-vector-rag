@@ -47,7 +47,7 @@ class IRISConnectivityTest:
         """Test IRIS DBAPI connector from common utilities."""
         try:
             logger.info("Testing IRIS DBAPI connector...")
-            from common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
             logger.info("✓ IRIS DBAPI connector imported successfully")
             return True
@@ -62,7 +62,7 @@ class IRISConnectivityTest:
         """Test IRIS connection manager."""
         try:
             logger.info("Testing IRIS connection manager...")
-            from common.iris_connection_manager import IRISConnectionManager
+            from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
             manager = IRISConnectionManager()
             logger.info("✓ IRIS connection manager initialized successfully")
@@ -78,7 +78,7 @@ class IRISConnectivityTest:
         """Test actual IRIS database connection."""
         try:
             logger.info("Testing actual IRIS database connection...")
-            from common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
             # Attempt connection
             self.connection = get_iris_dbapi_connection()

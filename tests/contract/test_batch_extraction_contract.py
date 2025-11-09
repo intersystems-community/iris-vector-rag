@@ -40,7 +40,7 @@ class TestBatchExtractionContract:
         """Validate extract_batch() returns BatchExtractionResult type."""
         from iris_vector_rag.services.entity_extraction import EntityExtractionService
         from iris_vector_rag.config.manager import ConfigurationManager
-        from common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
         # Initialize service (will need real config in implementation)
         config_manager = ConfigurationManager()
@@ -64,7 +64,7 @@ class TestBatchExtractionContract:
         """Validate extract_batch() raises ValueError on empty documents list."""
         from iris_vector_rag.services.entity_extraction import EntityExtractionService
         from iris_vector_rag.config.manager import ConfigurationManager
-        from common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
         config_manager = ConfigurationManager()
         connection_manager = IRISConnectionManager()
@@ -78,7 +78,7 @@ class TestBatchExtractionContract:
         """Validate extract_batch() respects token_budget parameter."""
         from iris_vector_rag.services.entity_extraction import EntityExtractionService
         from iris_vector_rag.config.manager import ConfigurationManager
-        from common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
         config_manager = ConfigurationManager()
         connection_manager = IRISConnectionManager()

@@ -10,7 +10,7 @@ IMPORTANT: These tests only run if the database has sufficient data.
 
 import pytest
 from iris_vector_rag import create_pipeline
-from common.iris_dbapi_connector import get_iris_dbapi_connection
+from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
 
 def get_entity_count():

@@ -505,7 +505,7 @@ class TestUtilsMassive(unittest.TestCase):
     def test_common_utils_comprehensive(self):
         """Test common utils functionality."""
         try:
-            from common.utils import get_llm_func
+            from iris_vector_rag.common.utils import get_llm_func
 
             # Test LLM function retrieval
             llm_func = get_llm_func(provider='stub')
@@ -535,7 +535,7 @@ class TestUtilsMassive(unittest.TestCase):
     def test_vector_utils_comprehensive(self):
         """Test vector utility functions."""
         try:
-            from common.db_vector_utils import create_vector_index
+            from iris_vector_rag.common.db_vector_utils import create_vector_index
 
             # Test vector index creation (should handle mocked calls gracefully)
             try:

@@ -3,7 +3,7 @@
 
 from typing import Any, Callable, Dict, List, Optional
 
-from common.utils import get_llm_func  # Import get_llm_func
+from iris_vector_rag.common.utils import get_llm_func  # Import get_llm_func
 
 from .config.manager import ConfigurationManager
 from .core.base import RAGPipeline
@@ -18,7 +18,7 @@ from .validation.requirements import get_pipeline_requirements
 from .validation.validator import PreConditionValidator
 
 # Package version
-__version__ = "0.4.1"
+__version__ = "0.5.0"
 __author__ = "InterSystems IRIS RAG Templates Project"
 __description__ = "A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend."
 

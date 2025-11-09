@@ -16,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from common.connection_pool import IRISConnectionPool
+from iris_vector_rag.common.connection_pool import IRISConnectionPool
 from iris_vector_rag.api.middleware import (
     AuthenticationMiddleware,
     RateLimitMiddleware,
