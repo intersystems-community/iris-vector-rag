@@ -11,7 +11,7 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from common.connection_pool import IRISConnectionPool
+from iris_vector_rag.common.connection_pool import IRISConnectionPool
 from iris_vector_rag.api.main import load_config
 
 

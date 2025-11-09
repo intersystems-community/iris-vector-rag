@@ -104,19 +104,19 @@ class CRAGPipeline(RAGPipeline):
         # Get functions from config if not provided
         if not self.embedding_func:
             try:
-                from common.utils import get_embedding_func
+                from iris_vector_rag.common.utils import get_embedding_func
 
                 self.embedding_func = get_embedding_func()
             except ImportError:
-                logger.warning("Could not import get_embedding_func from common.utils")
+                logger.warning("Could not import get_embedding_func from iris_vector_rag.common.utils")
 
         if not self.llm_func:
             try:
-                from common.utils import get_llm_func
+                from iris_vector_rag.common.utils import get_llm_func
 
                 self.llm_func = get_llm_func()
             except ImportError:
-                logger.warning("Could not import get_llm_func from common.utils")
+                logger.warning("Could not import get_llm_func from iris_vector_rag.common.utils")
 
         # Initialize retrieval evaluator
         self.evaluator = RetrievalEvaluator(self.llm_func, self.embedding_func)

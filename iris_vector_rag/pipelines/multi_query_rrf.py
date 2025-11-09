@@ -28,7 +28,7 @@ import logging
 from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
-from common.utils import get_llm_func
+from iris_vector_rag.common.utils import get_llm_func
 
 logger = logging.getLogger(__name__)
 

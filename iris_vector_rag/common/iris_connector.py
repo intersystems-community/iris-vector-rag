@@ -27,7 +27,7 @@ def get_iris_connection(
     """
     # Always try DBAPI first
     try:
-        from common.iris_dbapi_connector import get_iris_dbapi_connection
+        from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
         conn = get_iris_dbapi_connection()
 
@@ -43,7 +43,7 @@ def get_iris_connection(
         if not prefer_dbapi:
             # Only fall back to JDBC if explicitly requested
             try:
-                from common.iris_connection_manager import get_iris_jdbc_connection
+                from iris_vector_rag.common.iris_connection_manager import get_iris_jdbc_connection
 
                 conn = get_iris_jdbc_connection(config)
 

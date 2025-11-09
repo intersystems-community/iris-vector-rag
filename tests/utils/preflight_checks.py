@@ -47,7 +47,7 @@ class PreflightChecker:
         start = time.time()
 
         try:
-            from common.iris_connection_manager import get_iris_connection
+            from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
             conn = get_iris_connection()
             cursor = conn.cursor()
@@ -82,7 +82,7 @@ class PreflightChecker:
 
                     if reset_iris_password_if_needed(e):
                         # Retry connection after password reset
-                        from common.iris_connection_manager import get_iris_connection
+                        from iris_vector_rag.common.iris_connection_manager import get_iris_connection
                         conn = get_iris_connection()
                         cursor = conn.cursor()
                         cursor.execute("SELECT 1")
@@ -155,7 +155,7 @@ class PreflightChecker:
         start = time.time()
 
         try:
-            from common.iris_connection_manager import get_iris_connection
+            from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
             conn = get_iris_connection()
             cursor = conn.cursor()

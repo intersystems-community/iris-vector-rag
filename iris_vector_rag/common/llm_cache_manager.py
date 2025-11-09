@@ -14,8 +14,8 @@ from typing import Any, Dict, Optional, Union, List
 from dataclasses import dataclass
 from langchain_core.outputs import Generation
 
-from common.llm_cache_config import CacheConfig, load_cache_config
-from common.llm_cache_iris import IRISCacheBackend, create_iris_cache_backend
+from iris_vector_rag.common.llm_cache_config import CacheConfig, load_cache_config
+from iris_vector_rag.common.llm_cache_iris import IRISCacheBackend, create_iris_cache_backend
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,7 @@ class LangchainCacheManager:
         """
         # Always use DBAPI for cache to avoid JDBC compatibility issues
         try:
-            from common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
             iris_connector = get_iris_dbapi_connection()
 
@@ -167,7 +167,7 @@ class LangchainCacheManager:
 
         # Fallback to URL-based connection (original behavior)
         try:
-            from common.utils import get_iris_connector
+            from iris_vector_rag.common.utils import get_iris_connector
 
             iris_connector = get_iris_connector()
 

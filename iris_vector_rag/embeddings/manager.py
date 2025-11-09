@@ -229,7 +229,7 @@ class EmbeddingManager:
         try:
             import torch
 
-            from common.huggingface_utils import download_huggingface_model
+            from iris_vector_rag.common.huggingface_utils import download_huggingface_model
 
             hf_config = self.embedding_config.get("huggingface", {})
             model_name = hf_config.get(

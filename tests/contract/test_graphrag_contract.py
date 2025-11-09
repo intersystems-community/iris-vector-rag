@@ -70,7 +70,7 @@ def test_graphrag_pipeline_fixture_error_handling():
 def test_llm_configuration_for_entity_extraction():
     """LLM configuration is available for entity extraction."""
     try:
-        from common.utils import get_llm_func
+        from iris_vector_rag.common.utils import get_llm_func
 
         # Should be able to get LLM function
         llm_func = get_llm_func(provider="openai", model_name="gpt-4o-mini")

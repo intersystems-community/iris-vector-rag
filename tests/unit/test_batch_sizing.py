@@ -5,7 +5,7 @@ Tests batch size calculation and token accumulation without dependencies.
 """
 
 import pytest
-from common.batch_utils import BatchQueue
+from iris_vector_rag.common.batch_utils import BatchQueue
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.utils.token_counter import estimate_tokens
 

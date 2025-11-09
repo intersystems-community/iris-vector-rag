@@ -7,7 +7,7 @@ for InterSystems IRIS, including CLOB handling and vector search capabilities.
 
 import json
 import logging
-from common.db_vector_utils import insert_vector
+from iris_vector_rag.common.db_vector_utils import insert_vector
 from typing import List, Dict, Any, Optional, Tuple
 
 from ..core.vector_store import VectorStore
@@ -884,7 +884,7 @@ class IRISVectorStore(VectorStore):
 
         try:
             # Use the safe vector utilities (proven pattern)
-            from common.vector_sql_utils import (
+            from iris_vector_rag.common.vector_sql_utils import (
                 build_safe_vector_dot_sql,
                 execute_safe_vector_search,
             )

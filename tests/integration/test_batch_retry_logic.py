@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.services.entity_extraction import EntityExtractionService
 from iris_vector_rag.config.manager import ConfigurationManager
-from common.iris_connection_manager import IRISConnectionManager
+from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
 
 @pytest.mark.integration
@@ -130,7 +130,7 @@ class TestBatchRetryLogic:
 
     def test_retry_delays_are_exponential(self, service):
         """Validate retry delays follow exponential pattern (2s, 4s, 8s)."""
-        from common.batch_utils import extract_batch_with_retry
+        from iris_vector_rag.common.batch_utils import extract_batch_with_retry
 
         # Mock function that always fails
         def failing_function(*args, **kwargs):
