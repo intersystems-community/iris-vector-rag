@@ -10,7 +10,7 @@ RAG-Templates provides a unified, standardized API across all 6 production RAG p
 ## Quick Start
 
 ```python
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 # Create any pipeline with validation
 pipeline = create_pipeline("basic", validate_requirements=True)
@@ -65,7 +65,7 @@ def create_pipeline(
 
 **Example:**
 ```python
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 # With validation
 pipeline = create_pipeline("basic", validate_requirements=True)
@@ -94,7 +94,7 @@ def validate_pipeline(
 
 **Example:**
 ```python
-from iris_rag import validate_pipeline
+from iris_vector_rag import validate_pipeline
 
 status = validate_pipeline("graphrag")
 print(f"Valid: {status['is_valid']}")
@@ -118,7 +118,7 @@ def setup_pipeline(
 
 **Example:**
 ```python
-from iris_rag import setup_pipeline
+from iris_vector_rag import setup_pipeline
 
 result = setup_pipeline("basic")
 print(f"Setup complete: {result['success']}")
@@ -473,7 +473,7 @@ pytest tests/e2e/ -v
 ### Example Test
 
 ```python
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 from iris_rag.core.models import Document
 
 def test_basic_workflow():
