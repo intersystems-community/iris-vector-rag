@@ -135,7 +135,7 @@ The system automatically manages database schema changes when you update configu
 ### Using Python
 
 ```python
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 # Create a basic RAG pipeline (auto-validates database setup)
 pipeline = create_pipeline(pipeline_type="basic", validate_requirements=True)
@@ -194,7 +194,7 @@ make clear-rag-data
 ### Simple Queries
 
 ```python
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 # Create a pipeline
 pipeline = create_pipeline("basic")

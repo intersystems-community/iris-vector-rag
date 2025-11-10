@@ -67,7 +67,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 from common.utils import get_llm_func
 
 def main():
@@ -177,7 +177,7 @@ import numpy as np
 import pandas as pd
 
 # Project imports
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 from common.utils import get_llm_func
 ```
 
@@ -503,7 +503,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 from common.utils import get_llm_func
 
 class ExampleRunner:
