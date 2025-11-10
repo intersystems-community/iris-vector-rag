@@ -1,0 +1,79 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.9, pytest-8.4.1, pluggy-1.6.0 -- /opt/homebrew/Caskroom/miniconda/base/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+metadata: {'Python': '3.12.9', 'Platform': 'macOS-15.5-arm64-arm-64bit', 'Packages': {'pytest': '8.4.1', 'pluggy': '1.6.0'}, 'Plugins': {'docker': '3.2.3', 'langsmith': '0.4.41', 'mock': '3.15.1', 'asyncio': '1.2.0', 'hypothesis': '6.139.2', 'anyio': '4.11.0', 'html': '4.1.1', 'env': '1.1.5', 'xdist': '3.8.0', 'timeout': '2.4.0', 'metadata': '3.1.1', 'locust': '2.40.5', 'clarity': '1.0.1', 'order': '1.3.0', 'pytest_httpserver': '1.1.3', 'redis': '3.1.3', 'sugar': '1.1.1', 'benchmark': '5.1.0', 'asyncio-cooperative': '0.40.0', 'Faker': '37.12.0', 'cov': '6.1.1', 'postgresql': '7.0.2'}, 'JAVA_HOME': '/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home'}
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /Users/tdyar/ws/iris-vector-rag-private
+configfile: pytest.ini
+plugins: docker-3.2.3, langsmith-0.4.41, mock-3.15.1, asyncio-1.2.0, hypothesis-6.139.2, anyio-4.11.0, html-4.1.1, env-1.1.5, xdist-3.8.0, timeout-2.4.0, metadata-3.1.1, locust-2.40.5, clarity-1.0.1, order-1.3.0, pytest_httpserver-1.1.3, redis-3.1.3, sugar-1.1.1, benchmark-5.1.0, asyncio-cooperative-0.40.0, Faker-37.12.0, cov-6.1.1, postgresql-7.0.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 5 items
+
+specs/055-perform-top-to/contracts/code_example_contract.py::test_readme_examples_use_correct_module_name FAILED [ 20%]
+specs/055-perform-top-to/contracts/code_example_contract.py::test_readme_examples_have_valid_syntax PASSED [ 40%]
+specs/055-perform-top-to/contracts/code_example_contract.py::test_readme_examples_use_valid_imports PASSED [ 60%]
+specs/055-perform-top-to/contracts/code_example_contract.py::test_all_docs_use_correct_module_name FAILED [ 80%]
+specs/055-perform-top-to/contracts/code_example_contract.py::test_readme_create_pipeline_examples_match_api FAILED [100%]
+
+=================================== FAILURES ===================================
+_________________ test_readme_examples_use_correct_module_name _________________
+specs/055-perform-top-to/contracts/code_example_contract.py:60: in test_readme_examples_use_correct_module_name
+    assert len(violations) == 0, \
+E   AssertionError: Found 4 examples using old module name 'iris_rag' in README.md:
+E       Line ~80: Uses 'from iris_rag import' instead of 'from iris_vector_rag import'
+E       Line ~118: Uses 'from iris_rag import' instead of 'from iris_vector_rag import'
+E       Line ~165: Uses 'from iris_rag import' instead of 'from iris_vector_rag import'
+E       Line ~306: Uses 'from iris_rag import' instead of 'from iris_vector_rag import'
+E   assert 4 == 0
+E    +  where 4 = len([(80, "Uses 'from iris_rag import' instead of 'from iris_vector_rag import'"), (118, "Uses 'from iris_rag import' instead of 'from iris_vector_rag import'"), (165, "Uses 'from iris_rag import' instead of 'from iris_vector_rag import'"), (306, "Uses 'from iris_rag import' instead of 'from iris_vector_rag import'")])
+____________________ test_all_docs_use_correct_module_name _____________________
+specs/055-perform-top-to/contracts/code_example_contract.py:137: in test_all_docs_use_correct_module_name
+    assert len(all_violations) == 0, \
+E   AssertionError: Found 10 examples using old module name across all docs:
+E       USER_GUIDE.md:~137: Uses 'from iris_rag import'
+E       USER_GUIDE.md:~196: Uses 'from iris_rag import'
+E       API_REFERENCE.md:~12: Uses 'from iris_rag import'
+E       API_REFERENCE.md:~67: Uses 'from iris_rag import'
+E       API_REFERENCE.md:~96: Uses 'from iris_rag import'
+E       API_REFERENCE.md:~120: Uses 'from iris_rag import'
+E       API_REFERENCE.md:~475: Uses 'from iris_rag import'
+E       EXAMPLE_ENHANCEMENT_GUIDE.md:~45: Uses 'from iris_rag import'
+E       EXAMPLE_ENHANCEMENT_GUIDE.md:~167: Uses 'from iris_rag import'
+E       EXAMPLE_ENHANCEMENT_GUIDE.md:~489: Uses 'from iris_rag import'
+E   assert 10 == 0
+E    +  where 10 = len([('USER_GUIDE.md', 137, "Uses 'from iris_rag import'"), ('USER_GUIDE.md', 196, "Uses 'from iris_rag import'"), ('API_REFERENCE.md', 12, "Uses 'from iris_rag import'"), ('API_REFERENCE.md', 67, "Uses 'from iris_rag import'"), ('API_REFERENCE.md', 96, "Uses 'from iris_rag import'"), ('API_REFERENCE.md', 120, "Uses 'from iris_rag import'"), ...])
+________________ test_readme_create_pipeline_examples_match_api ________________
+specs/055-perform-top-to/contracts/code_example_contract.py:173: in test_readme_create_pipeline_examples_match_api
+    assert len(api_violations) == 0, \
+E   AssertionError: Found 1 create_pipeline API violations in README.md:
+E       Line ~118: First argument should be pipeline type string
+E   assert 1 == 0
+E    +  where 1 = len([(118, 'First argument should be pipeline type string')])
+=============================== warnings summary ===============================
+specs/055-perform-top-to/contracts/code_example_contract.py:46
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/code_example_contract.py:46: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+specs/055-perform-top-to/contracts/code_example_contract.py:65
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/code_example_contract.py:65: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+specs/055-perform-top-to/contracts/code_example_contract.py:84
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/code_example_contract.py:84: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+specs/055-perform-top-to/contracts/code_example_contract.py:119
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/code_example_contract.py:119: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+specs/055-perform-top-to/contracts/code_example_contract.py:143
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/code_example_contract.py:143: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED specs/055-perform-top-to/contracts/code_example_contract.py::test_readme_examples_use_correct_module_name
+FAILED specs/055-perform-top-to/contracts/code_example_contract.py::test_all_docs_use_correct_module_name
+FAILED specs/055-perform-top-to/contracts/code_example_contract.py::test_readme_create_pipeline_examples_match_api
+=================== 3 failed, 2 passed, 5 warnings in 0.20s ====================

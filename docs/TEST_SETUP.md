@@ -289,7 +289,7 @@ source .venv/bin/activate
 pip install -e .
 
 # Verify Python path
-python -c "import iris_rag; print(iris_rag.__file__)"
+python -c "import iris_vector_rag; print(iris_rag.__file__)"
 ```
 
 ### Mock Configuration Errors
