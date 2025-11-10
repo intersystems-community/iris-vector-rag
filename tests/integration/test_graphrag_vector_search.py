@@ -10,9 +10,9 @@ Tests end-to-end vector search functionality including:
 """
 
 import pytest
-from iris_rag import create_pipeline
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.embeddings.manager import EmbeddingManager
+from iris_vector_rag import create_pipeline
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.embeddings.manager import EmbeddingManager
 
 
 class TestGraphRAGVectorSearchIntegration:

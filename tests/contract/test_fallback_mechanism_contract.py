@@ -10,7 +10,7 @@ Requirements: FR-016, FR-017, FR-018, FR-019
 
 import logging
 import pytest
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 class TestFallbackMechanismContract:

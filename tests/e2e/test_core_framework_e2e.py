@@ -21,13 +21,13 @@ from typing import Any, Dict, List
 
 import pytest
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 
 # Real framework imports (NO MOCKS)
-from iris_rag.core.models import Document, Entity, Relationship
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.storage.vector_store_iris import IRISVectorStore
+from iris_vector_rag.core.models import Document, Entity, Relationship
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 logger = logging.getLogger(__name__)
 

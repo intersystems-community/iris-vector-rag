@@ -17,7 +17,7 @@ import base64
 
 try:
     from fastapi.testclient import TestClient
-    from iris_rag.api.main import create_app
+    from iris_vector_rag.api.main import create_app
 except ImportError:
     create_app = None
 

@@ -15,8 +15,8 @@ from unittest.mock import Mock, patch, MagicMock
 from concurrent.futures import ThreadPoolExecutor
 import logging
 
-from iris_rag.embeddings.manager import EmbeddingManager
-from iris_rag.config.manager import ConfigurationManager
+from iris_vector_rag.embeddings.manager import EmbeddingManager
+from iris_vector_rag.config.manager import ConfigurationManager
 
 
 class TestEmbeddingCache:

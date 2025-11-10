@@ -1,173 +1,191 @@
-# RAG Templates - Vector Search Documentation
+# iris-vector-rag Documentation
 
-This document provides operational notes for the RAG and GraphRAG vector search implementation.
+**Welcome to the complete documentation for iris-vector-rag** - Enterprise-grade RAG framework powered by InterSystems IRIS.
 
-> Status source of truth: E2E coverage, results, and execution are maintained under the testing docs. See [docs/testing/E2E_TEST_COVERAGE_REPORT.md](docs/testing/E2E_TEST_COVERAGE_REPORT.md), [docs/testing/E2E_TEST_RESULTS_SUMMARY.md](docs/testing/E2E_TEST_RESULTS_SUMMARY.md), and [docs/testing/TEST_EXECUTION_GUIDE.md](docs/testing/TEST_EXECUTION_GUIDE.md). The [UNIFIED_PROJECT_ROADMAP.md](UNIFIED_PROJECT_ROADMAP.md) remains the long‑term roadmap.
+This index provides organized access to all documentation by topic and user journey.
 
-## Current E2E Testing Status
+## Getting Started
 
-- True E2E Coverage: ~25% (up from ~5%)
-- Pipelines Passing: 4/5 (BasicRAG, CRAG, BasicRAGReranking, Configuration)
-- Partial: GraphRAG (entity graph population pending)
-- Pipeline Success Rate: 80%
-- Test Execution Time: < 30s per pipeline (sample dataset)
-- Database Stability: Healthy (probes and connection utilities in place)
-- Documentation:
-  - Coverage: [docs/testing/E2E_TEST_COVERAGE_REPORT.md](docs/testing/E2E_TEST_COVERAGE_REPORT.md)
-  - Results: [docs/testing/E2E_TEST_RESULTS_SUMMARY.md](docs/testing/E2E_TEST_RESULTS_SUMMARY.md)
-  - How to run: [docs/testing/TEST_EXECUTION_GUIDE.md](docs/testing/TEST_EXECUTION_GUIDE.md)
+**New to iris-vector-rag?** Start here:
 
-## Vector Search Architecture
+| Document | Description | Audience |
+|----------|-------------|----------|
+| **[User Guide](USER_GUIDE.md)** | Complete installation, configuration, and usage guide | All users |
+| **[API Reference](API_REFERENCE.md)** | Detailed API documentation for all pipelines | Developers |
+| **[Pipeline Guide](PIPELINE_GUIDE.md)** | Pipeline selection guide - which pipeline for your use case | Developers |
 
-### Safe Vector Utilities
+## Advanced Topics
 
-We currently route all vector queries through "safe single-parameter" utilities due to an IRIS cached-query literal parameterization bug. For details, see [IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md](reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md).
+**Deep dives into specific features:**
 
-**Key Components:**
-- [`build_safe_vector_dot_sql()`](../common/vector_sql_utils.py) - Safe SQL builder using single parameter pattern
-- [`execute_safe_vector_search()`](../common/vector_sql_utils.py) - Safe execution with vector list input
+| Document | Description |
+|----------|-------------|
+| **[IRIS EMBEDDING Guide](IRIS_EMBEDDING_GUIDE.md)** | Auto-vectorization with model caching, multi-field embeddings |
+| **[MCP Integration](MCP_INTEGRATION.md)** | Model Context Protocol setup for Claude Desktop |
+| **[IRIS Global GraphRAG](IRIS_GLOBAL_GRAPHRAG_INTEGRATION.md)** | Academic papers with 3D visualization |
+| **[IRIS Graph Core Integration](IRIS_GRAPH_CORE_INTEGRATION.md)** | Graph-based retrieval integration |
 
-**Usage Example:**
-```python
-from common.vector_sql_utils import build_safe_vector_dot_sql, execute_safe_vector_search
+## Development & Contributing
 
-# Build safe SQL
-sql = build_safe_vector_dot_sql(
-    table="RAG.SourceDocuments",
-    vector_column="embedding", 
-    id_column="doc_id",
-    extra_columns=["title"],
-    top_k=5
-)
+**For contributors and developers:**
 
-# Execute with vector list
-results = execute_safe_vector_search(cursor, sql, [0.1, 0.2, 0.3])
-```
+| Document | Description |
+|----------|-------------|
+| **[Contributing Guide](CONTRIBUTING.md)** | Development setup, testing, pull requests |
+| **[Custom Reranker Guide](guides/custom_reranker_guide.md)** | Build custom reranking models |
+| **[Example Enhancement Guide](EXAMPLE_ENHANCEMENT_GUIDE.md)** | Extend examples and demos |
+| **[Test Setup](TEST_SETUP.md)** | Testing environment configuration |
 
-### HNSW Vector Indexes
+## Architecture & Design
 
-We ALWAYS create HNSW (ACORN-1 when available) indexes on vector columns at startup:
+**System design and architecture documentation:**
 
-- **RAG.SourceDocuments(embedding)** - `idx_SourceDocuments_embedding` 
-- **RAG.Entities(embedding)** - `idx_Entities_embedding`
+| Document | Description |
+|----------|-------------|
+| **[Comprehensive Architecture Overview](architecture/COMPREHENSIVE_ARCHITECTURE_OVERVIEW.md)** | Complete system architecture |
+| **[ColBERT Component Interfaces](architecture/colbert_component_interfaces.md)** | ColBERT integration design |
+| **[ColBERT Modular Design](architecture/colbert_modular_design.md)** | Modular ColBERT architecture |
+| **[GraphRAG Entity Extraction](architecture/graphrag_entity_extraction_integration.md)** | Entity extraction system |
+| **[GraphRAG Service Interfaces](architecture/graphrag_service_interfaces.md)** | GraphRAG service layer |
+| **[RAG Memory Architecture](architecture/rag_memory_component_architecture.md)** | Memory component design |
+| **[RAG Templates Adapter](architecture/rag_templates_adapter_architecture.md)** | Adapter pattern implementation |
 
-The system attempts ACORN=1 optimization first, falls back to standard HNSW if not supported.
+## Testing & Quality
 
-**Index Creation:**
-```sql
--- Preferred (with ACORN-1 optimization)
-CREATE INDEX idx_SourceDocuments_embedding ON RAG.SourceDocuments(embedding) AS HNSW WITH (ACORN=1)
+**Test coverage, execution, and quality reports:**
 
--- Fallback (standard HNSW)  
-CREATE INDEX idx_SourceDocuments_embedding ON RAG.SourceDocuments(embedding) AS HNSW
-```
+| Document | Description |
+|----------|-------------|
+| **[E2E Test Coverage Report](testing/E2E_TEST_COVERAGE_REPORT.md)** | End-to-end test coverage |
+| **[E2E Test Results](testing/E2E_TEST_RESULTS_SUMMARY.md)** | Test execution results |
+| **[Test Execution Guide](testing/TEST_EXECUTION_GUIDE.md)** | How to run tests |
+| **[E2E Test Strategy](testing/E2E_TEST_STRATEGY.md)** | Testing approach and methodology |
+| **[TDD Compliance](testing/tdd-compliance.md)** | Test-driven development practices |
+| **[Coverage Warnings](testing/coverage-warnings.md)** | Coverage gaps and improvements |
+| **[Error Messages](testing/error-messages.md)** | Common errors and solutions |
 
-## Configuration
+## Migration & Deployment
 
-Vector search behavior is controlled via [`iris_rag/config/default_config.yaml`](../iris_rag/config/default_config.yaml):
+**Production deployment and migration guides:**
 
-```yaml
-pipelines:
-  vector_query_mode: "safe_single_param"
-  vector_hnsw:
-    ensure_on_start: true
-    try_acorn: true
-```
+| Document | Description |
+|----------|-------------|
+| **[Production Readiness Assessment](PRODUCTION_READINESS_ASSESSMENT.md)** | Production checklist |
+| **[Pipeline Migration Strategy](PIPELINE_MIGRATION_STRATEGY.md)** | Migrating between pipelines |
+| **[Public Repository Sync](PUBLIC_REPOSITORY_SYNC.md)** | Open-source repository management |
 
-## Health Monitoring
+## Project Status & Planning
 
-Use the provided health probe script to validate vector search functionality:
+**Roadmaps, progress tracking, and governance:**
 
-```bash
-python3 scripts/check_vector_search.py
-```
+| Document | Description |
+|----------|-------------|
+| **[Unified Project Roadmap](UNIFIED_PROJECT_ROADMAP.md)** | Long-term project roadmap |
+| **[Implementation Progress](development/IMPLEMENTATION_PROGRESS.md)** | Current implementation status |
+| **[Implementation Status](development/IMPLEMENTATION_STATUS.md)** | Detailed feature status |
+| **[Completion Roadmap](IMPLEMENTATION_COMPLETION_ROADMAP.md)** | Path to completion |
+| **[Project Completion Report](PROJECT_COMPLETION_REPORT_VALIDATED.md)** | Validated completion analysis |
 
-**The script validates:**
-- IRIS database connectivity
-- HNSW index existence and type
-- Safe vector search on SourceDocuments table
-- Safe vector search on Entities table (GraphRAG)
-- Query latency and result counts
+## Bug Reports & Troubleshooting
 
-**Expected Output:**
-```
-🎯 RAG VECTOR SEARCH HEALTH PROBE SUMMARY
-============================================================
-📊 SourceDocuments: 5 results (45.23ms)
-🏷️  Entities:        3 results (28.91ms) 
-🔍 HNSW Indexes:    2 active
-⚡ Total Latency:   74.14ms
-📈 Total Results:   8
-============================================================
-```
+**Known issues and workarounds:**
 
-## Operational Notes
+| Document | Description |
+|----------|-------------|
+| **[IRIS SQL Vector Parameterization Bug](IRIS_SQL_VECTOR_PARAMETERIZATION_BUG_REPORT.md)** | Known IRIS vector query bug |
+| **[IRIS Vector SQL Parameterization Repro](reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md)** | Bug reproduction steps |
+| **[Schema Migration Loop Bug](development/BUG_REPORT_SCHEMA_MIGRATION_LOOP.md)** | Schema migration issue |
+| **[E2E Schema Compatibility Fix](E2E_SCHEMA_COMPATIBILITY_FIX.md)** | Schema compatibility resolution |
 
-### Vector Query Patterns
+## Benchmarking & Evaluation
 
-**✅ Safe Pattern (Current)**
-```python
-# Single parameter binding with vector string conversion
-sql = build_safe_vector_dot_sql(table, vector_column, ...)
-results = execute_safe_vector_search(cursor, sql, vector_list)
-```
+**Performance benchmarks and RAGAS evaluation:**
 
-**❌ Broken Patterns (Quarantined)**
-```python
-# These are deprecated due to IRIS driver issues
-format_vector_search_sql(...)           # Quarantined
-format_vector_search_sql_with_params(...) # Quarantined  
-execute_vector_search_with_params(...)   # Quarantined
-```
+| Document | Description |
+|----------|-------------|
+| **[Benchmarking Consolidation Guide](BENCHMARKING_CONSOLIDATION_GUIDE.md)** | Unified benchmarking approach |
+| **[PyLate RAGAS Evaluation](PYLATE_RAGAS_EVALUATION.md)** | PyLate ColBERT evaluation results |
+| **[PyLate ColBERT Testing](PYLATE_COLBERT_TESTING.md)** | ColBERT testing methodology |
 
-### Index Management
+## Design Documents
 
-Vector indexes are automatically ensured during:
-- Schema manager initialization
-- Table schema updates for SourceDocuments/Entities
-- Manual calls to `ensure_all_vector_indexes()`
+**Feature design and specification documents:**
 
-### Performance Considerations
+| Document | Description |
+|----------|-------------|
+| **[Comprehensive Reconciliation Design](design/COMPREHENSIVE_GENERALIZED_RECONCILIATION_DESIGN.md)** | Reconciliation system design |
+| **[Pseudocode Report Generator](specifications/07_pseudocode_report_generator.md)** | Code generation specifications |
 
-- **HNSW indexes** provide ~10-100x performance improvement over sequential scans
-- **ACORN=1 optimization** can provide additional 2-5x improvement when available
-- **Query latency** should typically be <100ms for HNSW-indexed searches
-- **Index creation** may take several minutes for large datasets
+## Archived Documentation
 
-### Troubleshooting
+**Historical documents (no longer active):**
 
-**No Results Returned:**
-- Check if tables have data: `SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL`
-- Verify vector dimensions match: embedding vectors must be 384D for default model
-- Run health probe: `python3 scripts/check_vector_search.py`
+| Document | Description |
+|----------|-------------|
+| **[Graph RAG Templates Roadmap](archived/GRAPH_RAG_TEMPLATES_ROADMAP_ARCHIVED_20250914.md)** | Archived GraphRAG roadmap |
 
-**High Latency:**
-- Verify HNSW indexes exist: Check health probe output for index count
-- Check for sequential scans in query plans
-- Consider ACORN=1 optimization if using recent IRIS version
+## Quick Navigation
 
-**Connection Issues:**
-- Verify IRIS database is running and accessible
-- Check connection configuration in environment or config files
-- Ensure database user has appropriate permissions for vector operations
+### By User Journey
 
-## Technical References
+**Evaluator** (trying out iris-vector-rag):
+1. [User Guide](USER_GUIDE.md) - Installation
+2. [Pipeline Guide](PIPELINE_GUIDE.md) - Which pipeline to use
+3. [API Reference](API_REFERENCE.md) - API details
 
-- **IRIS Vector SQL Bug Report:** [IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md](reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.md)
-- **Safe Vector Utilities:** [`common/vector_sql_utils.py`](../common/vector_sql_utils.py)
-- **Schema Manager:** [`iris_rag/storage/schema_manager.py`](../iris_rag/storage/schema_manager.py)
-- **Vector Store Implementation:** [`iris_rag/storage/vector_store_iris.py`](../iris_rag/storage/vector_store_iris.py)
+**Developer** (building with iris-vector-rag):
+1. [API Reference](API_REFERENCE.md) - Complete API
+2. [IRIS EMBEDDING Guide](IRIS_EMBEDDING_GUIDE.md) - Auto-vectorization
+3. [MCP Integration](MCP_INTEGRATION.md) - Claude Desktop integration
+4. [Contributing Guide](CONTRIBUTING.md) - Development setup
 
-## Testing
+**Contributor** (improving iris-vector-rag):
+1. [Contributing Guide](CONTRIBUTING.md) - Setup and standards
+2. [Test Execution Guide](testing/TEST_EXECUTION_GUIDE.md) - Run tests
+3. [Architecture Overview](architecture/COMPREHENSIVE_ARCHITECTURE_OVERVIEW.md) - System design
 
-Run the comprehensive test suite:
+**Enterprise Architect** (evaluating for production):
+1. [Production Readiness Assessment](PRODUCTION_READINESS_ASSESSMENT.md) - Deployment checklist
+2. [Architecture Overview](architecture/COMPREHENSIVE_ARCHITECTURE_OVERVIEW.md) - System design
+3. [E2E Test Coverage](testing/E2E_TEST_COVERAGE_REPORT.md) - Quality metrics
 
-```bash
-# Safe vector helper tests
-python3 -m pytest tests/test_vector_safe_helpers.py
+### By Topic
 
-# Index ensure functionality tests  
-python3 -m pytest tests/test_index_ensure.py
+**RAG Pipelines**:
+- [Pipeline Guide](PIPELINE_GUIDE.md) - Selection guide
+- [User Guide](USER_GUIDE.md) - Usage examples
+- [API Reference](API_REFERENCE.md) - API documentation
 
-# Integration health probe
-python3 scripts/check_vector_search.py
+**IRIS Integration**:
+- [IRIS EMBEDDING Guide](IRIS_EMBEDDING_GUIDE.md) - Auto-vectorization
+- [IRIS Graph Core](IRIS_GRAPH_CORE_INTEGRATION.md) - Graph integration
+- [IRIS Global GraphRAG](IRIS_GLOBAL_GRAPHRAG_INTEGRATION.md) - Advanced GraphRAG
+
+**Advanced Features**:
+- [MCP Integration](MCP_INTEGRATION.md) - Model Context Protocol
+- [Custom Reranker Guide](guides/custom_reranker_guide.md) - Custom models
+- [Ontology Integration](ontology_integration_guide.md) - Domain ontologies
+
+**Production & Quality**:
+- [Production Readiness](PRODUCTION_READINESS_ASSESSMENT.md) - Deployment checklist
+- [E2E Test Coverage](testing/E2E_TEST_COVERAGE_REPORT.md) - Test metrics
+- [Benchmarking Guide](BENCHMARKING_CONSOLIDATION_GUIDE.md) - Performance evaluation
+
+## Contributing to Documentation
+
+Found a documentation issue? Want to improve these docs?
+
+1. Check [Contributing Guide](CONTRIBUTING.md) for documentation standards
+2. Submit a pull request with your improvements
+3. Tag documentation changes with `docs:` prefix in commit message
+
+## Support
+
+- **Documentation Issues**: [GitHub Issues](https://github.com/intersystems-community/iris-vector-rag-private/issues)
+- **Questions**: [GitHub Discussions](https://github.com/intersystems-community/iris-vector-rag-private/discussions)
+- **Enterprise Support**: [InterSystems Support](https://www.intersystems.com/support/)
+
+---
+
+**Last Updated**: 2025-11-09
+**Documentation Version**: 1.0

@@ -19,25 +19,25 @@ from typing import Any, Dict, List
 
 import pytest
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.models import Document, Entity
-from iris_rag.ontology.loader import OntologyLoader
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.models import Document, Entity
+from iris_vector_rag.ontology.loader import OntologyLoader
 
 # Import the ontology components
-from iris_rag.ontology.models import (
+from iris_vector_rag.ontology.models import (
     Concept,
     ConceptHierarchy,
     InferenceRule,
     OntologyRelationship,
     SemanticMapping,
 )
-from iris_rag.ontology.plugins import (
+from iris_vector_rag.ontology.plugins import (
     GeneralOntologyPlugin,
     create_plugin_from_config,
     get_ontology_plugin,
 )
-from iris_rag.ontology.reasoner import OntologyReasoner, QueryExpander
-from iris_rag.services.entity_extraction import OntologyAwareEntityExtractor
+from iris_vector_rag.ontology.reasoner import OntologyReasoner, QueryExpander
+from iris_vector_rag.services.entity_extraction import OntologyAwareEntityExtractor
 
 
 class TestOntologyModels:

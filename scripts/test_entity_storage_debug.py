@@ -21,10 +21,10 @@ from datetime import datetime
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import Entity, Relationship
-from iris_rag.services.storage import EntityStorageAdapter
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Entity, Relationship
+from iris_vector_rag.services.storage import EntityStorageAdapter
 
 # Configure logging
 logging.basicConfig(

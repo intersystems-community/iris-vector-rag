@@ -16,7 +16,7 @@ def test_pipeline_imports():
 
     # Test BasicRAGPipeline import
     try:
-        from iris_rag.pipelines.basic import BasicRAGPipeline
+        from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 
         pipeline_results["BasicRAGPipeline"] = "✅ SUCCESS"
         print("✅ BasicRAGPipeline imported successfully")
@@ -26,7 +26,7 @@ def test_pipeline_imports():
 
     # Test CRAGPipeline import
     try:
-        from iris_rag.pipelines.crag import CRAGPipeline
+        from iris_vector_rag.pipelines.crag import CRAGPipeline
 
         pipeline_results["CRAGPipeline"] = "✅ SUCCESS"
         print("✅ CRAGPipeline imported successfully")
@@ -36,7 +36,7 @@ def test_pipeline_imports():
 
     # Test GraphRAGPipeline import
     try:
-        from iris_rag.pipelines.graphrag import GraphRAGPipeline
+        from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
         pipeline_results["GraphRAGPipeline"] = "✅ SUCCESS"
         print("✅ GraphRAGPipeline imported successfully")
@@ -46,7 +46,7 @@ def test_pipeline_imports():
 
     # Test BasicRAGRerankingPipeline import
     try:
-        from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+        from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
 
         pipeline_results["BasicRAGRerankingPipeline"] = "✅ SUCCESS"
         print("✅ BasicRAGRerankingPipeline imported successfully")

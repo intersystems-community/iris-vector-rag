@@ -13,9 +13,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Iterator, List, Optional
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import Document
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
 
 logger = logging.getLogger(__name__)
 

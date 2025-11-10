@@ -13,14 +13,14 @@ from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, Mock, mock_open, patch
 
-from iris_rag.ontology.loader import (
+from iris_vector_rag.ontology.loader import (
     OntologyLoader,
     OntologyLoadError,
     OWLLoader,
     RDFLoader,
     SKOSLoader,
 )
-from iris_rag.ontology.models import (
+from iris_vector_rag.ontology.models import (
     Concept,
     ConceptHierarchy,
     ConceptType,

@@ -19,8 +19,8 @@ class TestMCPRESTConsistency:
     @pytest.mark.asyncio
     async def test_basic_rag_response_consistency(self):
         """Verify BasicRAG returns identical responses via MCP and REST API."""
-        from iris_rag.mcp.bridge import MCPBridge
-        from iris_rag.pipelines.basic import BasicRAGPipeline
+        from iris_vector_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 
         # MCP query
         bridge = MCPBridge()
@@ -59,8 +59,8 @@ class TestMCPRESTConsistency:
     @pytest.mark.asyncio
     async def test_crag_response_consistency(self):
         """Verify CRAG returns consistent responses via MCP and REST API."""
-        from iris_rag.mcp.bridge import MCPBridge
-        from iris_rag.pipelines.crag import CRAGPipeline
+        from iris_vector_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.pipelines.crag import CRAGPipeline
 
         # MCP query
         bridge = MCPBridge()
@@ -87,7 +87,7 @@ class TestMCPRESTConsistency:
     @pytest.mark.asyncio
     async def test_performance_metrics_consistency(self):
         """Verify performance metrics format is consistent."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         result = await bridge.invoke_technique(
@@ -112,7 +112,7 @@ class TestMCPRESTConsistency:
     @pytest.mark.asyncio
     async def test_pipeline_instance_reuse_validation(self):
         """Verify MCP uses same pipeline instances as REST API (FR-006)."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -131,7 +131,7 @@ class TestMCPRESTConsistency:
     @pytest.mark.asyncio
     async def test_metadata_format_consistency(self):
         """Verify metadata format is consistent across MCP and REST API."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         result = await bridge.invoke_technique(
@@ -149,7 +149,7 @@ class TestMCPRESTConsistency:
     @pytest.mark.asyncio
     async def test_error_format_consistency(self):
         """Verify error responses have consistent format."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 

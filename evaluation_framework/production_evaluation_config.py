@@ -132,7 +132,7 @@ class ProductionEvaluationConfig:
             if parent_dir not in sys.path:
                 sys.path.insert(0, parent_dir)
 
-            from common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
             conn = get_iris_dbapi_connection()
             if conn is None:
@@ -206,13 +206,13 @@ class ProductionExecutionOrchestrator:
         try:
             for pipeline_name in self.config.target_pipelines:
                 if pipeline_name == "BasicRAGPipeline":
-                    from iris_rag.pipelines.basic import BasicRAGPipeline
+                    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
                 elif pipeline_name == "CRAGPipeline":
-                    from iris_rag.pipelines.crag import CRAGPipeline
+                    from iris_vector_rag.pipelines.crag import CRAGPipeline
                 elif pipeline_name == "GraphRAGPipeline":
-                    from iris_rag.pipelines.graphrag import GraphRAGPipeline
+                    from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
                 elif pipeline_name == "BasicRAGRerankingPipeline":
-                    from iris_rag.pipelines.basic_rerank import (
+                    from iris_vector_rag.pipelines.basic_rerank import (
                         BasicRAGRerankingPipeline,
                     )
 

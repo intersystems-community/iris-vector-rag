@@ -9,9 +9,9 @@ Feature: Pipeline Contract Validation (047)
 
 import pytest
 from typing import Dict, Any, List
-from iris_rag.core.base import RAGPipeline
-from iris_rag.core.models import Document
-from iris_rag.core.validators import (
+from iris_vector_rag.core.base import RAGPipeline
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.core.validators import (
     PipelineValidator,
     PipelineContractViolation,
     ViolationSeverity
@@ -26,8 +26,8 @@ class ValidPipeline(RAGPipeline):
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         # Create defaults if needed
         if connection_manager is None or config_manager is None:
-            from iris_rag.core.connection import ConnectionManager
-            from iris_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
+            from iris_vector_rag.config.manager import ConfigurationManager
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -69,8 +69,8 @@ class MissingMethodPipeline(RAGPipeline):
 
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         if connection_manager is None or config_manager is None:
-            from iris_rag.core.connection import ConnectionManager
-            from iris_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
+            from iris_vector_rag.config.manager import ConfigurationManager
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -93,8 +93,8 @@ class InvalidSignaturePipeline(RAGPipeline):
 
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         if connection_manager is None or config_manager is None:
-            from iris_rag.core.connection import ConnectionManager
-            from iris_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
+            from iris_vector_rag.config.manager import ConfigurationManager
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -120,8 +120,8 @@ class DeprecatedParamPipeline(RAGPipeline):
 
     def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
         if connection_manager is None or config_manager is None:
-            from iris_rag.core.connection import ConnectionManager
-            from iris_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
+            from iris_vector_rag.config.manager import ConfigurationManager
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -352,8 +352,8 @@ class TestPipelineValidator:
         class NoKwargsPipeline(RAGPipeline):
             def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
                 if connection_manager is None or config_manager is None:
-                    from iris_rag.core.connection import ConnectionManager
-                    from iris_rag.config.manager import ConfigurationManager
+                    from iris_vector_rag.core.connection import ConnectionManager
+                    from iris_vector_rag.config.manager import ConfigurationManager
                     if config_manager is None:
                         config_manager = ConfigurationManager()
                     if connection_manager is None:
@@ -409,8 +409,8 @@ class TestPipelineValidator:
     def test_real_pipeline_validation(self):
         """Test validation against actual pipeline implementations."""
         # Import real pipelines
-        from iris_rag.pipelines.basic import BasicRAGPipeline
-        from iris_rag.pipelines.crag import CRAGPipeline
+        from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+        from iris_vector_rag.pipelines.crag import CRAGPipeline
 
         validator = PipelineValidator()
 

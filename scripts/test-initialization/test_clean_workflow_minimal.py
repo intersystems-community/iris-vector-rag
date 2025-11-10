@@ -16,8 +16,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag import create_pipeline
-from iris_rag.core.models import Document
+from iris_vector_rag import create_pipeline
+from iris_vector_rag.core.models import Document
 from scripts.testing.mock_providers import MockLLMProvider
 
 

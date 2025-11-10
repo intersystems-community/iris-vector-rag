@@ -56,7 +56,7 @@ def check_environment():
 
     # Check iris_rag import
     try:
-        import iris_rag
+        import iris_vector_rag
         print(f"  ✓ iris_rag installed")
     except ImportError:
         print(f"  ❌ iris_rag not found")
@@ -100,8 +100,8 @@ def generate_query_variations(question: str) -> List[str]:
 def search_iris(query: str, top_k: int = 20) -> List[Dict]:
     """Search IRIS using vector similarity."""
     from common.iris_dbapi_connector import get_iris_connection
-    from iris_rag.embeddings.manager import EmbeddingManager
-    from iris_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.embeddings.manager import EmbeddingManager
+    from iris_vector_rag.config.manager import ConfigurationManager
 
     # Get connection and embedding manager
     conn = get_iris_connection()

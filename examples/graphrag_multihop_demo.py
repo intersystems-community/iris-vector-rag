@@ -55,12 +55,12 @@ sys.path.insert(0, str(project_root))
 
 # IRIS RAG imports
 try:
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.core.connection import ConnectionManager
-    from iris_rag.core.models import Document, Entity, Relationship
-    from iris_rag.pipelines.basic import BasicRAGPipeline
-    from iris_rag.pipelines.graphrag import GraphRAGPipeline
-    from iris_rag.services.entity_extraction import EntityExtractionService
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
+    from iris_vector_rag.core.models import Document, Entity, Relationship
+    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+    from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
+    from iris_vector_rag.services.entity_extraction import EntityExtractionService
 except ImportError as e:
     print(f"Failed to import IRIS RAG components: {e}")
     print("Make sure you're running from the project root directory")

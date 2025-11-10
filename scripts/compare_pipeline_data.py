@@ -21,8 +21,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 try:
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.core.connection import ConnectionManager
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
 except ImportError as e:
     output = {
         "check_name": "pipeline_data_comparison",
@@ -31,7 +31,7 @@ except ImportError as e:
         "pipelines": {},
         "diagnosis": {
             "severity": "critical",
-            "message": f"Cannot import iris_rag framework: {e}",
+            "message": f"Cannot import iris_vector_rag framework: {e}",
             "root_cause": str(e),
             "suggestions": [
                 "Verify iris_rag package installed",

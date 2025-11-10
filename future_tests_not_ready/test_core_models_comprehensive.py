@@ -12,8 +12,8 @@ from datetime import datetime
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, Mock, patch
 
-from iris_rag.core.base import RAGPipeline, VectorStore
-from iris_rag.core.exceptions import (
+from iris_vector_rag.core.base import RAGPipeline, VectorStore
+from iris_vector_rag.core.exceptions import (
     ConfigurationError,
     PipelineError,
     RAGError,
@@ -22,7 +22,7 @@ from iris_rag.core.exceptions import (
 )
 
 # Core model imports
-from iris_rag.core.models import (
+from iris_vector_rag.core.models import (
     Document,
     Entity,
     EntityTypes,
@@ -31,7 +31,7 @@ from iris_rag.core.models import (
 )
 
 # Memory model imports
-from iris_rag.memory.models import (
+from iris_vector_rag.memory.models import (
     GenericMemoryItem,
     MemoryItem,
     MemoryType,
@@ -42,7 +42,7 @@ from iris_rag.memory.models import (
 )
 
 # Ontology model imports
-from iris_rag.ontology.models import (
+from iris_vector_rag.ontology.models import (
     Concept,
     ConceptHierarchy,
     ConceptType,
@@ -53,7 +53,7 @@ from iris_rag.ontology.models import (
 )
 
 # Validation imports
-from iris_rag.validation.requirements import (
+from iris_vector_rag.validation.requirements import (
     EnvironmentValidator,
     RequirementCheck,
     ValidationRequirement,

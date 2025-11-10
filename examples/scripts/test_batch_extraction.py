@@ -15,9 +15,9 @@ from pathlib import Path
 # Add rag-templates to path
 sys.path.insert(0, str(Path(__file__).parent / "iris_rag"))
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.services.entity_extraction import EntityExtractionService
-from iris_rag.core.models import Document
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.services.entity_extraction import EntityExtractionService
+from iris_vector_rag.core.models import Document
 
 # Configure logging
 logging.basicConfig(

@@ -13,13 +13,13 @@ class TestBatchMetricsContract:
 
     def test_processing_metrics_class_exists(self):
         """Validate ProcessingMetrics model exists."""
-        from iris_rag.core.models import ProcessingMetrics
+        from iris_vector_rag.core.models import ProcessingMetrics
 
         assert ProcessingMetrics is not None, "ProcessingMetrics class must exist"
 
     def test_processing_metrics_has_required_fields(self):
         """Validate ProcessingMetrics has all FR-007 required fields."""
-        from iris_rag.core.models import ProcessingMetrics
+        from iris_vector_rag.core.models import ProcessingMetrics
         import inspect
 
         sig = inspect.signature(ProcessingMetrics.__init__)
@@ -40,7 +40,7 @@ class TestBatchMetricsContract:
 
     def test_processing_metrics_additional_fields(self):
         """Validate ProcessingMetrics has additional tracking fields."""
-        from iris_rag.core.models import ProcessingMetrics
+        from iris_vector_rag.core.models import ProcessingMetrics
         import inspect
 
         sig = inspect.signature(ProcessingMetrics.__init__)
@@ -59,7 +59,7 @@ class TestBatchMetricsContract:
 
     def test_processing_metrics_helper_methods(self):
         """Validate ProcessingMetrics has required helper methods."""
-        from iris_rag.core.models import ProcessingMetrics
+        from iris_vector_rag.core.models import ProcessingMetrics
 
         required_methods = [
             'update_with_batch',
@@ -72,13 +72,13 @@ class TestBatchMetricsContract:
 
     def test_batch_metrics_tracker_class_exists(self):
         """Validate BatchMetricsTracker class exists."""
-        from common.batch_utils import BatchMetricsTracker
+        from iris_vector_rag.common.batch_utils import BatchMetricsTracker
 
         assert BatchMetricsTracker is not None, "BatchMetricsTracker class must exist"
 
     def test_batch_metrics_tracker_get_statistics_method(self):
         """Validate get_statistics() method exists."""
-        from common.batch_utils import BatchMetricsTracker
+        from iris_vector_rag.common.batch_utils import BatchMetricsTracker
 
         tracker = BatchMetricsTracker()
         assert hasattr(tracker, 'get_statistics'), \
@@ -86,8 +86,8 @@ class TestBatchMetricsContract:
 
     def test_get_statistics_returns_processing_metrics(self):
         """Validate get_statistics() returns ProcessingMetrics instance."""
-        from common.batch_utils import BatchMetricsTracker
-        from iris_rag.core.models import ProcessingMetrics
+        from iris_vector_rag.common.batch_utils import BatchMetricsTracker
+        from iris_vector_rag.core.models import ProcessingMetrics
 
         tracker = BatchMetricsTracker()
         metrics = tracker.get_statistics()
@@ -97,7 +97,7 @@ class TestBatchMetricsContract:
 
     def test_metrics_update_with_batch(self):
         """Validate metrics update incrementally with batch results."""
-        from iris_rag.core.models import ProcessingMetrics, BatchExtractionResult
+        from iris_vector_rag.core.models import ProcessingMetrics, BatchExtractionResult
 
         metrics = ProcessingMetrics(
             total_batches_processed=0,
@@ -132,7 +132,7 @@ class TestBatchMetricsContract:
 
     def test_metrics_calculate_speedup(self):
         """Validate calculate_speedup() computes correct speedup factor."""
-        from iris_rag.core.models import ProcessingMetrics
+        from iris_vector_rag.core.models import ProcessingMetrics
 
         metrics = ProcessingMetrics(
             total_batches_processed=10,
@@ -157,17 +157,17 @@ class TestBatchMetricsContract:
 
     def test_entity_extraction_service_get_batch_metrics_method(self):
         """Validate EntityExtractionService.get_batch_metrics() exists."""
-        from iris_rag.services.entity_extraction import EntityExtractionService
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         assert hasattr(EntityExtractionService, 'get_batch_metrics'), \
             "EntityExtractionService must have get_batch_metrics() method (FR-007)"
 
     def test_get_batch_metrics_returns_metrics(self):
         """Validate get_batch_metrics() returns ProcessingMetrics."""
-        from iris_rag.services.entity_extraction import EntityExtractionService
-        from iris_rag.config.manager import ConfigurationManager
-        from common.iris_connection_manager import IRISConnectionManager
-        from iris_rag.core.models import ProcessingMetrics
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.core.models import ProcessingMetrics
 
         config_manager = ConfigurationManager()
         connection_manager = IRISConnectionManager()
@@ -180,7 +180,7 @@ class TestBatchMetricsContract:
 
     def test_metrics_track_zero_entity_documents(self):
         """Validate metrics correctly track zero-entity documents."""
-        from iris_rag.core.models import ProcessingMetrics, BatchExtractionResult
+        from iris_vector_rag.core.models import ProcessingMetrics, BatchExtractionResult
 
         metrics = ProcessingMetrics(
             total_batches_processed=0,
@@ -211,7 +211,7 @@ class TestBatchMetricsContract:
 
     def test_metrics_track_failed_batches(self):
         """Validate metrics track failed batches and retry attempts."""
-        from iris_rag.core.models import ProcessingMetrics, BatchExtractionResult
+        from iris_vector_rag.core.models import ProcessingMetrics, BatchExtractionResult
 
         metrics = ProcessingMetrics(
             total_batches_processed=0,

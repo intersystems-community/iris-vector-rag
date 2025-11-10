@@ -217,10 +217,10 @@ def loaded_test_documents(iris_connection):
     This fixture ensures MCP and pipeline integration tests have data to query.
     """
     import sys
-    from iris_rag.core.models import Document
-    from iris_rag.pipelines.basic import BasicRAGPipeline
-    from iris_rag.core.connection import ConnectionManager
-    from iris_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.models import Document
+    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+    from iris_vector_rag.core.connection import ConnectionManager
+    from iris_vector_rag.config.manager import ConfigurationManager
 
     print("\n🔧 [FIXTURE] loaded_test_documents starting...", file=sys.stderr)
 
@@ -251,7 +251,7 @@ def loaded_test_documents(iris_connection):
     try:
         # CRITICAL: Drop and recreate table with correct VECTOR schema
         from sqlalchemy import text
-        from iris_rag.storage.schema_manager import SchemaManager
+        from iris_vector_rag.storage.schema_manager import SchemaManager
 
         # Create managers
         conn_manager = ConnectionManager()
@@ -322,7 +322,7 @@ def cleanup_test_data(iris_connection):
 @pytest.fixture
 def iris_schema_manager(iris_connection):
     """Schema manager for integration tests."""
-    from iris_rag.storage.schema_manager import SchemaManager
+    from iris_vector_rag.storage.schema_manager import SchemaManager
     from unittest.mock import Mock
 
     # Create schema manager with real connection

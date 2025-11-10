@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from iris_rag.api.models.pipeline import PipelineInstance, PipelineStatus
-from iris_rag.api.services.pipeline_manager import PipelineManager
+from iris_vector_rag.api.models.pipeline import PipelineInstance, PipelineStatus
+from iris_vector_rag.api.services.pipeline_manager import PipelineManager
 
 
 class TestPipelineManager:

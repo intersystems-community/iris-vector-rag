@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict
 from unittest.mock import MagicMock, Mock, patch
 
-from iris_rag.optimization.performance_monitor import (
+from iris_vector_rag.optimization.performance_monitor import (
     GraphRAGPerformanceMonitor,
     PerformanceAlert,
     PerformanceSnapshot,

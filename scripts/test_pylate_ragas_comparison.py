@@ -29,14 +29,14 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from common.utils import get_llm_func
-from iris_rag.core.models import Document
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.storage.vector_store_iris import IRISVectorStore
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 logger = logging.getLogger(__name__)
 

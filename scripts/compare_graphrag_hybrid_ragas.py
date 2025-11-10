@@ -60,9 +60,9 @@ class GraphRAGHybridComparison:
     def _check_iris_graph_core(self) -> bool:
         """Check if iris_graph_core is available for HybridGraphRAG"""
         try:
-            from iris_rag.config.manager import ConfigurationManager
-            from iris_rag.core.connection import ConnectionManager
-            from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+            from iris_vector_rag.config.manager import ConfigurationManager
+            from iris_vector_rag.core.connection import ConnectionManager
+            from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
             # Try to initialize and check iris_engine availability
             conn_mgr = ConnectionManager()
@@ -102,9 +102,9 @@ class GraphRAGHybridComparison:
         logger.info("🕐 Running performance timing analysis...")
 
         # Import pipelines
-        from iris_rag.config.manager import ConfigurationManager
-        from iris_rag.core.connection import ConnectionManager
-        from iris_rag.pipelines.graphrag import GraphRAGPipeline
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
         conn_mgr = ConnectionManager()
         config_mgr = ConfigurationManager()
@@ -145,7 +145,7 @@ class GraphRAGHybridComparison:
         # Test HybridGraphRAG if available
         if self.iris_core_available:
             try:
-                from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+                from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
                 hybrid_graphrag = HybridGraphRAGPipeline(conn_mgr, config_mgr)
                 timing_results["HybridGraphRAG"]["available"] = True

@@ -19,7 +19,7 @@ class TestMCPHybridGraphRAG:
     @pytest.mark.asyncio
     async def test_graphrag_hybrid_search(self):
         """Verify rag_graphrag executes hybrid search successfully."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -45,7 +45,7 @@ class TestMCPHybridGraphRAG:
     @pytest.mark.asyncio
     async def test_graphrag_metadata_includes_search_info(self):
         """Verify GraphRAG metadata includes search method and graph info."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -67,7 +67,7 @@ class TestMCPHybridGraphRAG:
     @pytest.mark.asyncio
     async def test_graphrag_vector_search_method(self):
         """Verify GraphRAG with vector-only search method."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -82,7 +82,7 @@ class TestMCPHybridGraphRAG:
     @pytest.mark.asyncio
     async def test_graphrag_text_search_method(self):
         """Verify GraphRAG with text-only search method."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -97,7 +97,7 @@ class TestMCPHybridGraphRAG:
     @pytest.mark.asyncio
     async def test_graphrag_graph_search_method(self):
         """Verify GraphRAG with graph-only search method."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -116,7 +116,7 @@ class TestMCPHybridGraphRAG:
     @pytest.mark.asyncio
     async def test_graphrag_rrf_search_method(self):
         """Verify GraphRAG with RRF (Reciprocal Rank Fusion) method."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -134,7 +134,7 @@ class TestMCPHybridGraphRAG:
     @pytest.mark.asyncio
     async def test_graphrag_traversal_depth_validation(self):
         """Verify GraphRAG validates graph_traversal_depth parameter."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -157,7 +157,7 @@ class TestMCPHybridGraphRAG:
     @pytest.mark.asyncio
     async def test_graphrag_search_method_validation(self):
         """Verify GraphRAG validates search_method parameter."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 

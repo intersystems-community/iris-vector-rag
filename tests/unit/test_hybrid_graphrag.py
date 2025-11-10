@@ -20,7 +20,7 @@ class TestHybridGraphRAGImportBehavior:
                 "Install with: pip install rag-templates[hybrid-graphrag]"
             )
 
-            from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+            from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
             with pytest.raises(ImportError) as exc_info:
                 HybridGraphRAGPipeline()
@@ -36,7 +36,7 @@ class TestHybridGraphRAGImportBehavior:
                 "Install with: pip install rag-templates[hybrid-graphrag]"
             )
 
-            from iris_rag import create_pipeline
+            from iris_vector_rag import create_pipeline
 
             with pytest.raises(ImportError) as exc_info:
                 create_pipeline("graphrag")
@@ -54,7 +54,7 @@ class TestHybridGraphRAGImportBehavior:
 
             mock_import.side_effect = import_mock
 
-            from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+            from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
             discovery = GraphCoreDiscovery()
 
@@ -73,7 +73,7 @@ class TestHybridGraphRAGImportBehavior:
                 "Install with: pip install rag-templates[hybrid-graphrag]"
             )
 
-            from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+            from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
             # Should not be able to create pipeline at all
             with pytest.raises(ImportError):
@@ -95,7 +95,7 @@ class TestHybridGraphRAGImportBehavior:
         with patch('iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules') as mock_import:
             mock_import.return_value = mock_modules
 
-            from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+            from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
             # Should create pipeline successfully
             pipeline = HybridGraphRAGPipeline()

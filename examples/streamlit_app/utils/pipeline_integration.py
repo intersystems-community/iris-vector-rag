@@ -19,13 +19,13 @@ sys.path.insert(0, str(project_root))
 
 # Import RAG pipeline classes
 try:
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.core.connection import ConnectionManager
-    from iris_rag.core.models import Document
-    from iris_rag.pipelines.basic import BasicRAGPipeline
-    from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-    from iris_rag.pipelines.crag import CRAGPipeline
-    from iris_rag.pipelines.graphrag import GraphRAGPipeline
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
+    from iris_vector_rag.core.models import Document
+    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+    from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+    from iris_vector_rag.pipelines.crag import CRAGPipeline
+    from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 except ImportError as e:
     logging.warning(f"Failed to import RAG pipelines: {e}")
     # Create mock classes for development/testing

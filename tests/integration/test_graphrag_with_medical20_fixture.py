@@ -154,7 +154,7 @@ class TestGraphRAGWithMedical20Fixture:
 
         Expected: Should find Metformin and insulin therapy.
         """
-        from iris_rag import create_pipeline
+        from iris_vector_rag import create_pipeline
 
         pipeline = create_pipeline("graphrag")
         result = pipeline.query("What medications treat diabetes?", top_k=5)
@@ -172,7 +172,7 @@ class TestGraphRAGWithMedical20Fixture:
 
         Expected: Should find vaccines and PPE.
         """
-        from iris_rag import create_pipeline
+        from iris_vector_rag import create_pipeline
 
         pipeline = create_pipeline("graphrag")
         result = pipeline.query("How can COVID-19 be prevented?", top_k=5)
@@ -188,7 +188,7 @@ class TestGraphRAGWithMedical20Fixture:
 
         Expected: Should find cardiovascular disease, stroke, heart failure.
         """
-        from iris_rag import create_pipeline
+        from iris_vector_rag import create_pipeline
 
         pipeline = create_pipeline("graphrag")
         result = pipeline.query(

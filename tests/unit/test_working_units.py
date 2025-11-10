@@ -9,8 +9,8 @@ from unittest.mock import Mock, patch, mock_open
 import tempfile
 import yaml
 
-from iris_rag.core.models import Document
-from iris_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.config.manager import ConfigurationManager
 
 
 class TestWorkingUnits(unittest.TestCase):

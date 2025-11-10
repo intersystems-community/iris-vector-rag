@@ -12,22 +12,22 @@ from datetime import datetime
 from typing import Any, Dict, List
 from unittest.mock import MagicMock, Mock, patch
 
-from iris_rag.core.base import RAGPipeline, VectorStore
-from iris_rag.core.exceptions import ConfigurationError, RAGError, ValidationError
+from iris_vector_rag.core.base import RAGPipeline, VectorStore
+from iris_vector_rag.core.exceptions import ConfigurationError, RAGError, ValidationError
 
 # Import and test what actually exists
-from iris_rag.core.models import (
+from iris_vector_rag.core.models import (
     Document,
     Entity,
     EntityTypes,
     Relationship,
     RelationshipTypes,
 )
-from iris_rag.memory import models as memory_models
-from iris_rag.ontology import models as ontology_models
+from iris_vector_rag.memory import models as memory_models
+from iris_vector_rag.ontology import models as ontology_models
 
 # High-value modules to boost coverage
-from iris_rag.validation import requirements
+from iris_vector_rag.validation import requirements
 
 
 class TestDocumentModel(unittest.TestCase):
@@ -264,7 +264,7 @@ class TestFrameworkUtilities(unittest.TestCase):
     def test_utils_module_imports(self):
         """Test that utility modules can be imported."""
         try:
-            from iris_rag import utils
+            from iris_vector_rag import utils
 
             self.assertTrue(hasattr(utils, "__path__"))
         except ImportError:
@@ -273,30 +273,30 @@ class TestFrameworkUtilities(unittest.TestCase):
 
     def test_config_module_imports(self):
         """Test config module functionality."""
-        from iris_rag import config
+        from iris_vector_rag import config
 
         self.assertTrue(hasattr(config, "__path__"))
 
         # Test config manager import
-        from iris_rag.config import manager
+        from iris_vector_rag.config import manager
 
         self.assertTrue(hasattr(manager, "__file__"))
 
     def test_pipeline_module_imports(self):
         """Test pipeline module imports."""
-        from iris_rag import pipelines
+        from iris_vector_rag import pipelines
 
         self.assertTrue(hasattr(pipelines, "__path__"))
 
     def test_storage_module_imports(self):
         """Test storage module imports."""
-        from iris_rag import storage
+        from iris_vector_rag import storage
 
         self.assertTrue(hasattr(storage, "__path__"))
 
     def test_services_module_imports(self):
         """Test services module imports."""
-        from iris_rag import services
+        from iris_vector_rag import services
 
         self.assertTrue(hasattr(services, "__path__"))
 
@@ -306,24 +306,24 @@ class TestHighValueModules(unittest.TestCase):
 
     def test_embeddings_module(self):
         """Test embeddings module."""
-        from iris_rag import embeddings
+        from iris_vector_rag import embeddings
 
         self.assertTrue(hasattr(embeddings, "__path__"))
 
     def test_validation_module(self):
         """Test validation module components."""
-        from iris_rag import validation
+        from iris_vector_rag import validation
 
         self.assertTrue(hasattr(validation, "__path__"))
 
         # Test factory module
-        from iris_rag.validation import factory
+        from iris_vector_rag.validation import factory
 
         self.assertTrue(hasattr(factory, "__file__"))
 
     def test_ontology_module(self):
         """Test ontology module components."""
-        from iris_rag import ontology
+        from iris_vector_rag import ontology
 
         self.assertTrue(hasattr(ontology, "__path__"))
 

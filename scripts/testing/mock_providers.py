@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 
 @dataclass

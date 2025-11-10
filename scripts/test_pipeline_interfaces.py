@@ -16,15 +16,15 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
 from common.utils import get_embedding_func, get_llm_func
-from iris_rag.config.manager import ConfigurationManager
+from iris_vector_rag.config.manager import ConfigurationManager
 
 # Pipeline imports
-from iris_rag.pipelines.basic import BasicRAGPipeline
-from iris_rag.pipelines.crag import CRAGPipeline
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
-from iris_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
-from iris_rag.pipelines.hyde import HyDERAGPipeline
-from iris_rag.pipelines.noderag import NodeRAGPipeline
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.pipelines.crag import CRAGPipeline
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
+from iris_vector_rag.pipelines.hyde import HyDERAGPipeline
+from iris_vector_rag.pipelines.noderag import NodeRAGPipeline
 
 PIPELINE_CLASSES = {
     "basic": BasicRAGPipeline,

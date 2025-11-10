@@ -5,8 +5,8 @@ End-to-end tests for the multi-query retrieval with RRF fusion pipeline.
 """
 
 import pytest
-from iris_rag import create_pipeline
-from iris_rag.core.models import Document
+from iris_vector_rag import create_pipeline
+from iris_vector_rag.core.models import Document
 
 
 class TestMultiQueryRRFE2E:

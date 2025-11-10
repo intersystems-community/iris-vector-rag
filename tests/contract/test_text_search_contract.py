@@ -10,7 +10,7 @@ Requirements: FR-007, FR-008, FR-009
 
 import logging
 import pytest
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 class TestTextSearchContract:

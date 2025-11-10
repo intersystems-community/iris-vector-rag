@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 try:
-    from iris_rag.api.main import create_app
+    from iris_vector_rag.api.main import create_app
 except ImportError:
     create_app = None
 

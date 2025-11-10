@@ -15,7 +15,7 @@ import time
 from fastapi.testclient import TestClient
 
 try:
-    from iris_rag.api.main import create_app
+    from iris_vector_rag.api.main import create_app
 except ImportError:
     create_app = None
 
@@ -42,7 +42,7 @@ def limited_api_key():
     pytest.skip("Requires API key creation with rate limit configuration")
 
     # Expected usage:
-    # from iris_rag.api.services.auth_service import AuthService
+    # from iris_vector_rag.api.services.auth_service import AuthService
     # auth = AuthService()
     # key = auth.create_key(
     #     name="rate-limit-test-key",

@@ -27,7 +27,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from common.utils import get_llm_func
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +43,8 @@ def check_graphrag_prerequisites() -> Dict[str, Any]:
             "sufficient_data": bool
         }
     """
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.core.connection import ConnectionManager
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
 
     try:
         config = ConfigurationManager()

@@ -33,7 +33,7 @@ class SchemaResetter:
         Raises:
             Exception: If database connection fails or DDL operations fail
         """
-        from common.iris_connection_manager import get_iris_connection
+        from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
         conn = get_iris_connection()
         cursor = conn.cursor()
@@ -141,7 +141,7 @@ CREATE TABLE {schema_def.schema_name}.{schema_def.table_name} (
         Returns:
             True if all tables exist, False otherwise
         """
-        from common.iris_connection_manager import get_iris_connection
+        from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
         conn = get_iris_connection()
         cursor = conn.cursor()
@@ -164,7 +164,7 @@ CREATE TABLE {schema_def.schema_name}.{schema_def.table_name} (
         Returns:
             Number of tables in RAG schema
         """
-        from common.iris_connection_manager import get_iris_connection
+        from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
         conn = get_iris_connection()
         cursor = conn.cursor()

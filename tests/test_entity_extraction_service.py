@@ -8,17 +8,17 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import (
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import (
     Document,
     Entity,
     EntityTypes,
     Relationship,
     RelationshipTypes,
 )
-from iris_rag.embeddings.manager import EmbeddingManager
-from iris_rag.services.entity_extraction import EntityExtractionService
+from iris_vector_rag.embeddings.manager import EmbeddingManager
+from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
 
 class TestEntityExtractionService:

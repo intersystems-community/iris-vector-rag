@@ -14,9 +14,9 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from common.iris_connection_manager import get_iris_connection
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

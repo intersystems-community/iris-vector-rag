@@ -26,17 +26,17 @@ from typing import Any, Dict, List
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import Document
-from iris_rag.ontology.plugins import (
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.ontology.plugins import (
     GeneralOntologyPlugin,
     create_plugin_from_config,
     get_ontology_plugin,
 )
-from iris_rag.ontology.reasoner import OntologyReasoner, QueryExpander
-from iris_rag.pipelines.graphrag_merged import GraphRAGPipeline
-from iris_rag.services.entity_extraction import OntologyAwareEntityExtractor
+from iris_vector_rag.ontology.reasoner import OntologyReasoner, QueryExpander
+from iris_vector_rag.pipelines.graphrag_merged import GraphRAGPipeline
+from iris_vector_rag.services.entity_extraction import OntologyAwareEntityExtractor
 
 # Configure logging
 logging.basicConfig(

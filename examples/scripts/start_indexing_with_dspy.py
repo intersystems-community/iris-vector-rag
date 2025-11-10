@@ -14,10 +14,10 @@ from pathlib import Path
 # Add rag-templates to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.services.entity_extraction import EntityExtractionService
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.services.entity_extraction import EntityExtractionService
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 # Set up logging
 logging.basicConfig(
@@ -90,7 +90,7 @@ def main():
 
         # TODO: Add your indexing logic here
         # Example:
-        # from iris_rag.core.models import Document
+        # from iris_vector_rag.core.models import Document
         # documents = load_documents_from_somewhere()
         # results = pipeline.index_documents(documents)
 
