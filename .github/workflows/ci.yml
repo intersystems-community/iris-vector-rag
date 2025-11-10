@@ -120,7 +120,7 @@ jobs:
             -v
             
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         if: matrix.python-version == env.PYTHON_DEFAULT_VERSION
         with:
           file: ./coverage.xml
@@ -219,7 +219,7 @@ jobs:
             -v
             
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage.xml
           flags: integration-tests
