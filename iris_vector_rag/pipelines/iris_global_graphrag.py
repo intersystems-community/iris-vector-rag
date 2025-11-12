@@ -213,21 +213,24 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
             )
 
     def _initialize_embedding_model(self):
-        """Initialize the embedding model."""
+        """Initialize the embedding model using cached unified service."""
         try:
             if self.embedding_manager:
-                # Use our framework's embedding manager
+                # Use our framework's embedding manager (preferred)
                 self.emb_model = self.embedding_manager
                 logger.info("✅ Using framework embedding manager")
             else:
-                # Use the IRIS Global GraphRAG embedding model
-                import sentence_transformers
+                # Use unified caching service to prevent redundant model loads
+                from ..embeddings.manager import _get_cached_sentence_transformer
 
                 model_name = self.config.get(
                     "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
                 )
-                self.emb_model = sentence_transformers.SentenceTransformer(model_name)
-                logger.info(f"✅ Initialized embedding model: {model_name}")
+                device = self.config.get("device", "cpu")
+
+                # Use cached model (eliminates 3-5 second load on repeated access)
+                self.emb_model = _get_cached_sentence_transformer(model_name, device)
+                logger.info(f"✅ Using cached embedding model: {model_name} on {device}")
 
         except Exception as e:
             raise IRISGlobalGraphRAGException(

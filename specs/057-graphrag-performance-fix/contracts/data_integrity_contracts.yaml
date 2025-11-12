@@ -1,0 +1,103 @@
+# Data Integrity Contracts: GraphRAG Storage Performance Optimization
+# Feature: 057-graphrag-performance-fix
+# Generated: 2025-11-12
+
+contracts:
+  - id: DIC-001
+    requirement: FR-005
+    description: 100% data integrity maintained
+    test: Process 50 tickets, verify no entity loss
+    assertion: extracted_entity_count == stored_entity_count
+    inputs:
+      - ticket_batch: 50 tickets with known entity counts
+      - extraction_method: "Standard DSPy entity extraction"
+      - storage_method: "Optimized batch storage"
+    expected_output:
+      - entity_preservation_rate: "100% (no entities lost)"
+      - extracted_entity_count: "Variable (8-12 per ticket × 50 = 400-600 total)"
+      - stored_entity_count: "MUST EQUAL extracted_entity_count"
+    test_implementation: tests/contract/test_data_integrity_contract.py::test_dic001_no_entity_loss
+    priority: P0
+    current_status: MUST_PASS
+    expected_result: "MUST PASS initially (no data corruption during optimization), MUST REMAIN PASSING"
+
+  - id: DIC-002
+    requirement: FR-006
+    description: Stored entities match extracted entities
+    test: Compare entity content extracted vs stored
+    assertion: entity_content_hash_extracted == entity_content_hash_stored
+    inputs:
+      - ticket_batch: 50 tickets
+      - validation_method: "SHA256 hash comparison of entity text"
+      - sample_rate: "10% of entities (spot check)"
+    expected_output:
+      - content_match_rate: "100% (exact byte-for-byte match)"
+      - hash_algorithm: "SHA256"
+      - validation_sample: "10% random sample (sufficient for confidence)"
+    test_implementation: tests/contract/test_data_integrity_contract.py::test_dic002_entity_content_match
+    priority: P0
+    current_status: MUST_PASS
+    expected_result: "MUST PASS initially (exact content preservation), MUST REMAIN PASSING"
+
+  - id: DIC-003
+    requirement: FR-007
+    description: All relationships preserved
+    test: Verify relationship integrity after storage
+    assertion: relationship_count_extracted == relationship_count_stored AND all_foreign_keys_valid
+    inputs:
+      - ticket_batch: 50 tickets with known relationships
+      - validation_checks:
+          - relationship_count: "Count validation"
+          - foreign_key_integrity: "All entity IDs exist"
+          - orphaned_relationships: "Zero orphaned relationships"
+    expected_output:
+      - relationship_preservation_rate: "100% (no relationships lost)"
+      - orphaned_relationship_count: "0 (all foreign keys valid)"
+      - foreign_key_validation: "PASS (no invalid entity IDs)"
+    test_implementation: tests/contract/test_data_integrity_contract.py::test_dic003_relationship_integrity
+    priority: P0
+    current_status: MUST_PASS
+    expected_result: "MUST PASS initially (relationship integrity maintained), MUST REMAIN PASSING"
+
+validation_rules:
+  entity_count:
+    description: "Compare extracted entity count vs stored entity count"
+    method: |
+      extracted_count = len(entities_from_extraction)
+      stored_count = execute_sql("SELECT COUNT(*) FROM entities WHERE ticket_id = ?", ticket_id)
+      assert extracted_count == stored_count
+
+  content_hash:
+    description: "Sample-based content verification via SHA256 hash"
+    method: |
+      sample_size = max(1, int(len(entities) * 0.10))  # 10% sample
+      sample_entities = random.sample(entities, sample_size)
+      for entity in sample_entities:
+          original_hash = hashlib.sha256(entity.text.encode()).hexdigest()
+          stored_text = fetch_stored_entity_text(entity.entity_id)
+          stored_hash = hashlib.sha256(stored_text.encode()).hexdigest()
+          assert original_hash == stored_hash
+
+  relationship_integrity:
+    description: "Verify foreign key constraints and relationship counts"
+    method: |
+      # Count validation
+      extracted_rel_count = len(relationships_from_extraction)
+      stored_rel_count = execute_sql("SELECT COUNT(*) FROM relationships WHERE source_ticket_id = ?", ticket_id)
+      assert extracted_rel_count == stored_rel_count
+
+      # Foreign key validation (no orphaned relationships)
+      orphaned_count = execute_sql("""
+          SELECT COUNT(*)
+          FROM relationships r
+          WHERE NOT EXISTS (SELECT 1 FROM entities e WHERE e.entity_id = r.source_entity_id)
+             OR NOT EXISTS (SELECT 1 FROM entities e WHERE e.entity_id = r.target_entity_id)
+      """)
+      assert orphaned_count == 0
+
+metadata:
+  feature_branch: 057-graphrag-performance-fix
+  specification: specs/057-graphrag-performance-fix/spec.md
+  test_directory: tests/contract/
+  integrity_requirement: "Zero data loss or corruption during performance optimization"
+  validation_strategy: "Post-storage validation (non-blocking, does not add to critical path)"

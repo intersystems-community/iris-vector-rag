@@ -1,0 +1,84 @@
+# Performance Contracts: GraphRAG Storage Performance Optimization
+# Feature: 057-graphrag-performance-fix
+# Generated: 2025-11-12
+
+contracts:
+  - id: PC-001
+    requirement: FR-001
+    description: Individual ticket processing ≤15 seconds
+    test: Process single ticket with 8-12 entities
+    assertion: total_time_ms <= 15000
+    inputs:
+      - ticket: Single ticket with 10 entities, 5 relationships
+      - expected_entity_count: 10
+      - expected_relationship_count: 5
+    expected_output:
+      - total_time_ms: "≤15000 milliseconds"
+      - extraction_time_ms: "5000-6000 milliseconds"
+      - storage_time_ms: "≤10000 milliseconds"
+    test_implementation: tests/contract/test_performance_contract.py::test_pc001_single_ticket_15_seconds
+    priority: P0
+    current_status: FAILING
+    expected_result: "MUST FAIL initially (current: 60 seconds), MUST PASS after optimization"
+
+  - id: PC-002
+    requirement: FR-002
+    description: Throughput ≥240 tickets/hour
+    test: Process 100 continuous tickets
+    assertion: tickets_per_hour >= 240
+    inputs:
+      - ticket_batch: 100 tickets with typical entity distribution (8-12 entities each)
+      - measurement_window: "Full 100-ticket batch processing time"
+    expected_output:
+      - tickets_per_hour: "≥240 (target minimum)"
+      - optimal_range: "240-360 tickets/hour"
+      - average_time_per_ticket: "≤15000 milliseconds"
+    test_implementation: tests/contract/test_performance_contract.py::test_pc002_throughput_240_per_hour
+    priority: P0
+    current_status: FAILING
+    expected_result: "MUST FAIL initially (current: 42/hour), MUST PASS after optimization"
+
+  - id: PC-003
+    requirement: FR-003
+    description: Storage operations ≤10 seconds
+    test: Measure storage time post-extraction
+    assertion: storage_time_ms <= 10000
+    inputs:
+      - entities: 10 entities with embeddings (post-extraction)
+      - relationships: 5 relationships
+      - storage_method: "Batch storage (not serial)"
+    expected_output:
+      - storage_time_ms: "≤10000 milliseconds"
+      - breakdown:
+          entity_storage: "≤8000 milliseconds"
+          relationship_storage: "≤2000 milliseconds"
+    test_implementation: tests/contract/test_performance_contract.py::test_pc003_storage_10_seconds
+    priority: P0
+    current_status: FAILING
+    expected_result: "MUST FAIL initially (current: 50-120 sec), MUST PASS after optimization"
+
+  - id: PC-004
+    requirement: FR-004
+    description: Complete dataset ≤17 hours
+    test: Extrapolate from 1000-ticket run
+    assertion: estimated_total_hours <= 17
+    inputs:
+      - sample_size: 1000 tickets
+      - total_dataset_size: 10150 tickets
+      - calculation_method: "Linear extrapolation from sample average"
+    expected_output:
+      - estimated_total_hours: "≤17 hours"
+      - optimal_range: "11-17 hours"
+      - sample_average_time_ms: "≤10000-15000 milliseconds per ticket"
+    test_implementation: tests/contract/test_performance_contract.py::test_pc004_dataset_17_hours
+    priority: P0
+    current_status: FAILING
+    expected_result: "MUST FAIL initially (current: 96 hours), MUST PASS after optimization"
+    note: "Extrapolation test uses 1000-ticket sustained load run to avoid 17-hour actual test duration"
+
+metadata:
+  feature_branch: 057-graphrag-performance-fix
+  specification: specs/057-graphrag-performance-fix/spec.md
+  test_directory: tests/contract/
+  tdd_requirement: "All contracts MUST be written and MUST FAIL before implementation begins"
+  validation_requirement: "All contracts MUST PASS before feature is considered complete"
