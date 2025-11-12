@@ -11,11 +11,11 @@ from typing import Any, Dict, List
 
 import pytest
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 
 # Import the actual implementation to test against
-from iris_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
 @pytest.mark.requires_database

@@ -38,21 +38,21 @@ from evaluation_framework.ragas_metrics_framework import (
     ComprehensiveRAGASResults,
     RAGASResult,
 )
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
 
 # Import existing infrastructure
 from scripts.data_loaders.pmc_loader import SAMPLE_QUERIES
 
 # Pipeline imports with error handling
 try:
-    from iris_rag.pipelines.basic import BasicRAGPipeline
-    from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-    from iris_rag.pipelines.crag import CRAGPipeline
-    from iris_rag.pipelines.graphrag import GraphRAGPipeline
+    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+    from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+    from iris_vector_rag.pipelines.crag import CRAGPipeline
+    from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
     # NEW: Import HybridGraphRAG for performance comparison
-    from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+    from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
     PIPELINES_AVAILABLE = True
     HYBRID_GRAPHRAG_AVAILABLE = True

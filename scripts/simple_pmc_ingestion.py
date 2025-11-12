@@ -51,8 +51,8 @@ def process_pmc_files():
 
     try:
         from data.loader_fixed import process_and_load_documents
-        from iris_rag.config.manager import ConfigurationManager
-        from iris_rag.embeddings.manager import EmbeddingManager
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.embeddings.manager import EmbeddingManager
 
         config_manager = ConfigurationManager()
         embedding_manager = EmbeddingManager(config_manager)

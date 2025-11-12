@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import Request, Response
 
-from iris_rag.api.middleware.logging import LoggingMiddleware
-from iris_rag.api.models.request import APIRequestLog
+from iris_vector_rag.api.middleware.logging import LoggingMiddleware
+from iris_vector_rag.api.models.request import APIRequestLog
 
 
 class TestLoggingMiddleware:

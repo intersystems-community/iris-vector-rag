@@ -1,0 +1,87 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.9, pytest-8.4.1, pluggy-1.6.0 -- /opt/homebrew/Caskroom/miniconda/base/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+metadata: {'Python': '3.12.9', 'Platform': 'macOS-15.5-arm64-arm-64bit', 'Packages': {'pytest': '8.4.1', 'pluggy': '1.6.0'}, 'Plugins': {'docker': '3.2.3', 'langsmith': '0.4.41', 'mock': '3.15.1', 'asyncio': '1.2.0', 'hypothesis': '6.139.2', 'anyio': '4.11.0', 'html': '4.1.1', 'env': '1.1.5', 'xdist': '3.8.0', 'timeout': '2.4.0', 'metadata': '3.1.1', 'locust': '2.40.5', 'clarity': '1.0.1', 'order': '1.3.0', 'pytest_httpserver': '1.1.3', 'redis': '3.1.3', 'sugar': '1.1.1', 'benchmark': '5.1.0', 'asyncio-cooperative': '0.40.0', 'Faker': '37.12.0', 'cov': '6.1.1', 'postgresql': '7.0.2'}, 'JAVA_HOME': '/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home'}
+benchmark: 5.1.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /Users/tdyar/ws/iris-vector-rag-private
+configfile: pytest.ini
+plugins: docker-3.2.3, langsmith-0.4.41, mock-3.15.1, asyncio-1.2.0, hypothesis-6.139.2, anyio-4.11.0, html-4.1.1, env-1.1.5, xdist-3.8.0, timeout-2.4.0, metadata-3.1.1, locust-2.40.5, clarity-1.0.1, order-1.3.0, pytest_httpserver-1.1.3, redis-3.1.3, sugar-1.1.1, benchmark-5.1.0, asyncio-cooperative-0.40.0, Faker-37.12.0, cov-6.1.1, postgresql-7.0.2
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 4 items
+
+specs/055-perform-top-to/contracts/link_validation_contract.py::test_readme_external_links_resolve FAILED [ 25%]
+specs/055-perform-top-to/contracts/link_validation_contract.py::test_readme_internal_links_exist FAILED [ 50%]
+specs/055-perform-top-to/contracts/link_validation_contract.py::test_all_docs_external_links_resolve FAILED [ 75%]
+specs/055-perform-top-to/contracts/link_validation_contract.py::test_all_docs_internal_links_exist FAILED [100%]
+
+=================================== FAILURES ===================================
+______________________ test_readme_external_links_resolve ______________________
+specs/055-perform-top-to/contracts/link_validation_contract.py:70: in test_readme_external_links_resolve
+    assert len(broken_links) == 0, \
+E   AssertionError: Found 2 broken external links in README.md:
+E       Line 504: https://github.com/intersystems-community/iris-rag-templates/discussions (404)
+E       Line 505: https://github.com/intersystems-community/iris-rag-templates/issues (404)
+E   assert 2 == 0
+E    +  where 2 = len([(504, 'https://github.com/intersystems-community/iris-rag-templates/discussions', 404), (505, 'https://github.com/intersystems-community/iris-rag-templates/issues', 404)])
+_______________________ test_readme_internal_links_exist _______________________
+specs/055-perform-top-to/contracts/link_validation_contract.py:95: in test_readme_internal_links_exist
+    assert len(broken_links) == 0, \
+E   AssertionError: Found 6 broken internal links in README.md:
+E       Line 453: docs/PIPELINE_GUIDE.md → /Users/tdyar/ws/iris-vector-rag-private/docs/PIPELINE_GUIDE.md
+E       Line 454: docs/MCP_INTEGRATION.md → /Users/tdyar/ws/iris-vector-rag-private/docs/MCP_INTEGRATION.md
+E       Line 455: docs/PRODUCTION_DEPLOYMENT.md → /Users/tdyar/ws/iris-vector-rag-private/docs/PRODUCTION_DEPLOYMENT.md
+E       Line 456: docs/DEVELOPMENT.md → /Users/tdyar/ws/iris-vector-rag-private/docs/DEVELOPMENT.md
+E       Line 482: docs/DEVELOPMENT.md → /Users/tdyar/ws/iris-vector-rag-private/docs/DEVELOPMENT.md
+E       Line 495: CONTRIBUTING.md → /Users/tdyar/ws/iris-vector-rag-private/CONTRIBUTING.md
+E   assert 6 == 0
+E    +  where 6 = len([(453, 'docs/PIPELINE_GUIDE.md', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/PIPELINE_GUIDE.md')), (454, 'docs/MCP_INTEGRATION.md', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/MCP_INTEGRATION.md')), (455, 'docs/PRODUCTION_DEPLOYMENT.md', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/PRODUCTION_DEPLOYMENT.md')), (456, 'docs/DEVELOPMENT.md', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/DEVELOPMENT.md')), (482, 'docs/DEVELOPMENT.md', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/DEVELOPMENT.md')), (495, 'CONTRIBUTING.md', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/CONTRIBUTING.md'))])
+_____________________ test_all_docs_external_links_resolve _____________________
+specs/055-perform-top-to/contracts/link_validation_contract.py:123: in test_all_docs_external_links_resolve
+    assert len(all_broken_links) == 0, \
+E   AssertionError: Found 3 broken external links across all docs:
+E       CHANGELOG.md:342: https://github.com/your-org/intersystems-iris-rag/issues (404)
+E       CHANGELOG.md:343: https://github.com/your-org/intersystems-iris-rag/discussions (404)
+E       CHANGELOG.md:425: https://github.com/your-org/intersystems-iris-rag (404)
+E   assert 3 == 0
+E    +  where 3 = len([('CHANGELOG.md', 342, 'https://github.com/your-org/intersystems-iris-rag/issues', 404), ('CHANGELOG.md', 343, 'https://github.com/your-org/intersystems-iris-rag/discussions', 404), ('CHANGELOG.md', 425, 'https://github.com/your-org/intersystems-iris-rag', 404)])
+______________________ test_all_docs_internal_links_exist ______________________
+specs/055-perform-top-to/contracts/link_validation_contract.py:154: in test_all_docs_internal_links_exist
+    assert len(all_broken_links) == 0, \
+E   AssertionError: Found 575 broken internal links across all docs:
+E       INTEGRATION_HANDOFF_GUIDE.md:7: adapters/rag_templates_bridge.py:86 → /Users/tdyar/ws/iris-vector-rag-private/docs/adapters/rag_templates_bridge.py:86
+E       INTEGRATION_HANDOFF_GUIDE.md:7: adapters/rag_templates_bridge.py:203 → /Users/tdyar/ws/iris-vector-rag-private/docs/adapters/rag_templates_bridge.py:203
+E       INTEGRATION_HANDOFF_GUIDE.md:8: adapters/rag_templates_bridge.py:36 → /Users/tdyar/ws/iris-vector-rag-private/docs/adapters/rag_templates_bridge.py:36
+E       INTEGRATION_HANDOFF_GUIDE.md:9: adapters/rag_templates_bridge.py:52 → /Users/tdyar/ws/iris-vector-rag-private/docs/adapters/rag_templates_bridge.py:52
+E       INTEGRATION_HANDOFF_GUIDE.md:10: iris_rag/core/base.py:12 → /Users/tdyar/ws/iris-vector-rag-private/docs/iris_rag/core/base.py:12
+E       INTEGRATION_HANDOFF_GUIDE.md:12: iris_rag/pipelines/basic.py:20 → /Users/tdyar/ws/iris-vector-rag-private/docs/iris_rag/pipelines/basic.py:20
+E       INTEGRATION_HANDOFF_GUIDE.md:13: iris_rag/pipelines/crag.py:24 → /Users/tdyar/ws/iris-vector-rag-private/docs/iris_rag/pipelines/crag.py:24
+E       INTEGRATION_HANDOFF_GUIDE.md:14: iris_rag/pipelines/basic_rerank.py:40 → /Users/tdyar/ws/iris-vector-rag-private/docs/iris_rag/pipelines/basic_rerank.py:40
+E       INTEGRATION_HANDOFF_GUIDE.md:15: iris_rag/pipelines/graphrag.py:17 → /Users/tdyar/ws/iris-vector-rag-private/docs/iris_rag/pipelines/graphrag.py:17
+E       INTEGRATION_HANDOFF_GUIDE.md:17: iris_rag/pipelines/colbert → /Users/tdyar/ws/iris-vector-rag-private/docs/iris_rag/pipelines/colbert
+E   assert 575 == 0
+E    +  where 575 = len([('INTEGRATION_HANDOFF_GUIDE.md', 7, 'adapters/rag_templates_bridge.py:86', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/adapters/rag_templates_bridge.py:86')), ('INTEGRATION_HANDOFF_GUIDE.md', 7, 'adapters/rag_templates_bridge.py:203', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/adapters/rag_templates_bridge.py:203')), ('INTEGRATION_HANDOFF_GUIDE.md', 8, 'adapters/rag_templates_bridge.py:36', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/adapters/rag_templates_bridge.py:36')), ('INTEGRATION_HANDOFF_GUIDE.md', 9, 'adapters/rag_templates_bridge.py:52', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/adapters/rag_templates_bridge.py:52')), ('INTEGRATION_HANDOFF_GUIDE.md', 10, 'iris_rag/core/base.py:12', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/iris_rag/core/base.py:12')), ('INTEGRATION_HANDOFF_GUIDE.md', 12, 'iris_rag/pipelines/basic.py:20', PosixPath('/Users/tdyar/ws/iris-vector-rag-private/docs/iris_rag/pipelines/basic.py:20')), ...])
+=============================== warnings summary ===============================
+specs/055-perform-top-to/contracts/link_validation_contract.py:52
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/link_validation_contract.py:52: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+specs/055-perform-top-to/contracts/link_validation_contract.py:75
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/link_validation_contract.py:75: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+specs/055-perform-top-to/contracts/link_validation_contract.py:100
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/link_validation_contract.py:100: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+specs/055-perform-top-to/contracts/link_validation_contract.py:129
+  /Users/tdyar/ws/iris-vector-rag-private/specs/055-perform-top-to/contracts/link_validation_contract.py:129: PytestUnknownMarkWarning: Unknown pytest.mark.contract - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.contract
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED specs/055-perform-top-to/contracts/link_validation_contract.py::test_readme_external_links_resolve
+FAILED specs/055-perform-top-to/contracts/link_validation_contract.py::test_readme_internal_links_exist
+FAILED specs/055-perform-top-to/contracts/link_validation_contract.py::test_all_docs_external_links_resolve
+FAILED specs/055-perform-top-to/contracts/link_validation_contract.py::test_all_docs_internal_links_exist
+======================== 4 failed, 4 warnings in 5.04s =========================

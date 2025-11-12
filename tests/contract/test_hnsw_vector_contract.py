@@ -10,7 +10,7 @@ Requirements: FR-010, FR-011, FR-012
 
 import logging
 import pytest
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 class TestHNSWVectorContract:

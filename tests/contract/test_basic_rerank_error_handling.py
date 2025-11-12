@@ -251,7 +251,7 @@ class TestBasicRerankRAGErrorHandling:
         When: Pipeline initialized
         Then: Initialization fails quickly with clear error
         """
-        from iris_rag import create_pipeline
+        from iris_vector_rag import create_pipeline
 
         # Mock environment to remove critical config
         mocker.patch.dict(os.environ, {}, clear=True)

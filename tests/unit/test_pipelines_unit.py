@@ -10,8 +10,8 @@ from unittest.mock import Mock, patch, MagicMock, call
 import numpy as np
 from typing import List, Dict, Any
 
-from iris_rag.core.models import Document
-from iris_rag.pipelines.basic import BasicRAGPipeline
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 
 
 class TestBasicRAGPipelineUnit(unittest.TestCase):
@@ -324,7 +324,7 @@ class TestGraphRAGPipelineUnit(unittest.TestCase):
 
     def test_graphrag_initialization(self):
         """Test GraphRAG pipeline initialization."""
-        from iris_rag.pipelines.graphrag import GraphRAGPipeline
+        from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
         # GraphRAG requires complex setup - skip for unit tests
         # This should be tested in integration tests with real dependencies

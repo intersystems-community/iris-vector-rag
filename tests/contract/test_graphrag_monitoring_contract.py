@@ -51,7 +51,7 @@ class TestGraphRAGMonitoringContract:
         pytest.skip("EXPECTED TO FAIL: Monitoring not yet implemented (Feature 057 Phase 6)")
 
         # This is what the test will check after implementation:
-        # from iris_rag.common.performance_monitor import PerformanceMonitor
+        # from iris_vector_rag.common.performance_monitor import PerformanceMonitor
         #
         # monitor = PerformanceMonitor()
         #
@@ -96,7 +96,7 @@ class TestGraphRAGMonitoringContract:
         pytest.skip("EXPECTED TO FAIL: Monitoring not yet implemented (Feature 057 Phase 6)")
 
         # This is what the test will check after implementation:
-        # from iris_rag.common.performance_monitor import PerformanceMonitor
+        # from iris_vector_rag.common.performance_monitor import PerformanceMonitor
         #
         # monitor = PerformanceMonitor()
         #
@@ -141,7 +141,7 @@ class TestGraphRAGMonitoringContract:
         pytest.skip("EXPECTED TO FAIL: Monitoring not yet implemented (Feature 057 Phase 6)")
 
         # This is what the test will check after implementation:
-        # from iris_rag.common.performance_monitor import PerformanceMonitor
+        # from iris_vector_rag.common.performance_monitor import PerformanceMonitor
         #
         # monitor = PerformanceMonitor()
         # alerts = []
@@ -179,7 +179,7 @@ class TestGraphRAGMonitoringContract:
         pytest.skip("EXPECTED TO FAIL: Monitoring not yet implemented (Feature 057 Phase 6)")
 
         # This is what the test will check after implementation:
-        # from iris_rag.common.performance_monitor import PerformanceMonitor
+        # from iris_vector_rag.common.performance_monitor import PerformanceMonitor
         # import logging
         # from io import StringIO
         #
@@ -239,7 +239,7 @@ class TestGraphRAGMonitoringContract:
         pytest.skip("EXPECTED TO FAIL: Monitoring not yet implemented (Feature 057 Phase 6)")
 
         # This is what the test will check after implementation:
-        # from iris_rag.common.performance_monitor import PerformanceMonitor
+        # from iris_vector_rag.common.performance_monitor import PerformanceMonitor
         #
         # monitor = PerformanceMonitor()
         #
@@ -278,7 +278,7 @@ class TestGraphRAGMonitoringContract:
         pytest.skip("EXPECTED TO FAIL: Monitoring not yet implemented (Feature 057 Phase 6)")
 
         # This is what the test will check after implementation:
-        # from iris_rag.common.performance_monitor import PerformanceMonitor
+        # from iris_vector_rag.common.performance_monitor import PerformanceMonitor
         # import sys
         #
         # monitor = PerformanceMonitor()

@@ -557,7 +557,7 @@ class FixtureManager:
         # Skip cleanup if no connection available (contract tests)
         if self._connection is None:
             try:
-                from common.iris_dbapi_connector import get_iris_dbapi_connection
+                from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
                 conn = get_iris_dbapi_connection()
             except Exception:
                 # No connection available - skip cleanup (contract tests)
@@ -774,7 +774,7 @@ class FixtureManager:
             return self._connection
 
         # Import connection helper
-        from common.iris_dbapi_connector import get_iris_dbapi_connection
+        from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
         return get_iris_dbapi_connection()
 

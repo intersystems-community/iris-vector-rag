@@ -43,9 +43,9 @@ def main():
             build_safe_vector_dot_sql,
             execute_safe_vector_search,
         )
-        from iris_rag.config.manager import ConfigurationManager
-        from iris_rag.core.connection import ConnectionManager
-        from iris_rag.storage.schema_manager import SchemaManager
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.storage.schema_manager import SchemaManager
 
         logger.info("🔍 Starting RAG vector search health probe...")
 

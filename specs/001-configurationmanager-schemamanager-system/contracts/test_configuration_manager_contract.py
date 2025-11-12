@@ -15,7 +15,7 @@ import yaml
 
 # These imports will fail initially - this is expected for contract tests
 try:
-    from iris_rag.config.manager import ConfigurationManager, ConfigValidationError
+    from iris_vector_rag.config.manager import ConfigurationManager, ConfigValidationError
 except ImportError:
     # Contract tests are written before implementation
     ConfigurationManager = None

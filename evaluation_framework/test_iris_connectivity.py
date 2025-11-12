@@ -47,7 +47,7 @@ class IRISConnectivityTest:
         """Test IRIS DBAPI connector from common utilities."""
         try:
             logger.info("Testing IRIS DBAPI connector...")
-            from common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
             logger.info("✓ IRIS DBAPI connector imported successfully")
             return True
@@ -62,7 +62,7 @@ class IRISConnectivityTest:
         """Test IRIS connection manager."""
         try:
             logger.info("Testing IRIS connection manager...")
-            from common.iris_connection_manager import IRISConnectionManager
+            from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
             manager = IRISConnectionManager()
             logger.info("✓ IRIS connection manager initialized successfully")
@@ -78,7 +78,7 @@ class IRISConnectivityTest:
         """Test actual IRIS database connection."""
         try:
             logger.info("Testing actual IRIS database connection...")
-            from common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
 
             # Attempt connection
             self.connection = get_iris_dbapi_connection()
@@ -117,7 +117,7 @@ class IRISConnectivityTest:
             pipelines_success = 0
 
             try:
-                from iris_rag.pipelines.basic import BasicRAG
+                from iris_vector_rag.pipelines.basic import BasicRAG
 
                 logger.info("✓ BasicRAG imported successfully")
                 pipelines_success += 1
@@ -126,7 +126,7 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_rag.pipelines.crag import CRAG
+                from iris_vector_rag.pipelines.crag import CRAG
 
                 logger.info("✓ CRAG imported successfully")
                 pipelines_success += 1
@@ -135,7 +135,7 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_rag.pipelines.graphrag import GraphRAG
+                from iris_vector_rag.pipelines.graphrag import GraphRAG
 
                 logger.info("✓ GraphRAG imported successfully")
                 pipelines_success += 1
@@ -144,7 +144,7 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_rag.pipelines.basic_rerank import BasicRAGReranking
+                from iris_vector_rag.pipelines.basic_rerank import BasicRAGReranking
 
                 logger.info("✓ BasicRAGReranking imported successfully")
                 pipelines_success += 1

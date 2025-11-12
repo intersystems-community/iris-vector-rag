@@ -15,7 +15,7 @@ import pytest
 
 def test_basic_rag_load_documents_signature():
     """BasicRAG.load_documents signature matches actual production API."""
-    from iris_rag.pipelines.basic import BasicRAGPipeline
+    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 
     sig = inspect.signature(BasicRAGPipeline.load_documents)
     params = list(sig.parameters.keys())
@@ -34,7 +34,7 @@ def test_crag_pipeline_query_response_structure():
     """CRAG pipeline response has expected metadata structure."""
     # This is a placeholder for actual CRAG response validation
     # Will be updated when fixing CRAG tests
-    from iris_rag.pipelines.crag import CRAGPipeline
+    from iris_vector_rag.pipelines.crag import CRAGPipeline
 
     # Verify CRAGPipeline exists and has query method
     assert hasattr(CRAGPipeline, "query"), "CRAGPipeline must have query method"
@@ -43,7 +43,7 @@ def test_crag_pipeline_query_response_structure():
 def test_graphrag_pipeline_entity_extraction_api():
     """GraphRAG entity extraction API matches actual production."""
     try:
-        from iris_rag.pipelines.graphrag import GraphRAGPipeline
+        from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
         # GraphRAG uses entity extraction service, not direct methods
         # Verify pipeline has query method (actual production API)
@@ -60,7 +60,7 @@ def test_graphrag_pipeline_entity_extraction_api():
 def test_pylate_pipeline_api_signature():
     """PyLate pipeline has expected API methods."""
     try:
-        from iris_rag.pipelines.colbert_pylate.pylate_pipeline import (
+        from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
             PyLateColBERTPipeline,
         )
 
@@ -77,7 +77,7 @@ def test_pylate_pipeline_api_signature():
 
 def test_vector_store_similarity_search_signature():
     """IRIS vector store similarity_search matches actual production API."""
-    from iris_rag.storage.vector_store_iris import IRISVectorStore
+    from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
     sig = inspect.signature(IRISVectorStore.similarity_search)
     params = list(sig.parameters.keys())
@@ -91,7 +91,7 @@ def test_vector_store_similarity_search_signature():
 
 def test_vector_store_metadata_filtering_api():
     """IRIS vector store metadata filtering API."""
-    from iris_rag.storage.vector_store_iris import IRISVectorStore
+    from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
     # Check if add_documents accepts metadata
     sig = inspect.signature(IRISVectorStore.add_documents)
@@ -104,7 +104,7 @@ def test_vector_store_metadata_filtering_api():
 
 def test_configuration_manager_api():
     """ConfigurationManager has stable API."""
-    from iris_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.config.manager import ConfigurationManager
 
     # Verify expected methods exist
     assert hasattr(
@@ -114,7 +114,7 @@ def test_configuration_manager_api():
 
 def test_connection_manager_api():
     """ConnectionManager has stable API."""
-    from iris_rag.core.connection import ConnectionManager
+    from iris_vector_rag.core.connection import ConnectionManager
 
     # Verify expected methods exist
     assert hasattr(
@@ -124,7 +124,7 @@ def test_connection_manager_api():
 
 def test_pipeline_base_class_contract():
     """RAGPipeline base class has expected interface."""
-    from iris_rag.core.base import RAGPipeline
+    from iris_vector_rag.core.base import RAGPipeline
 
     # Required abstract methods
     expected_methods = ["load_documents", "query"]

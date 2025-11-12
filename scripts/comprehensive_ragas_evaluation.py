@@ -22,7 +22,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 from scripts.generate_ragas_evaluation import (
     EvaluationConfig,
     RAGASEvaluationOrchestrator,

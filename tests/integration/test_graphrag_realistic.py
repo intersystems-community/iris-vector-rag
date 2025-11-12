@@ -14,7 +14,7 @@ Requirements: Database must have at least 100 entities for tests to run.
 """
 
 import pytest
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 
 @pytest.fixture(scope="function")
@@ -40,7 +40,7 @@ def graphrag_with_existing_data(iris_connection):
         pipeline = create_pipeline("graphrag", validate_requirements=False, auto_setup=False)
 
         # Inject the test's connection manager so pipeline uses same database
-        from iris_rag.core.connection import ConnectionManager
+        from iris_vector_rag.core.connection import ConnectionManager
         from unittest.mock import Mock
 
         # Create a mock connection manager that returns the test's connection

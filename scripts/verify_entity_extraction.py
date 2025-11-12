@@ -79,8 +79,8 @@ def create_output_template(execution_time: float = 0.0) -> Dict[str, Any]:
 
 # Try importing iris_rag components
 try:
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.services.entity_extraction import OntologyAwareEntityExtractor
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.services.entity_extraction import OntologyAwareEntityExtractor
     IRIS_RAG_AVAILABLE = True
     IMPORT_ERROR = None
 except ImportError as e:
@@ -158,7 +158,7 @@ def check_ontology_status(config_manager: Optional['ConfigurationManager']) -> D
 
         # Try to load ontology plugin
         try:
-            from iris_rag.ontology.plugins import get_ontology_plugin
+            from iris_vector_rag.ontology.plugins import get_ontology_plugin
             plugin = get_ontology_plugin()
             if plugin:
                 return {
@@ -251,7 +251,7 @@ def run_test_extraction(config_manager: Optional['ConfigurationManager']) -> Dic
 
         # Try to extract entities using pattern-based method
         # (avoiding LLM calls for quick test)
-        from iris_rag.core.models import Entity, EntityTypes
+        from iris_vector_rag.core.models import Entity, EntityTypes
 
         # Simple pattern matching for test
         entities = []

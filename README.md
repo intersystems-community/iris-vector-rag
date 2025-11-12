@@ -78,7 +78,7 @@ EOF
 ### 4. Run Your First Query
 
 ```python
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 # Create pipeline with automatic validation
 pipeline = create_pipeline('basic', validate_requirements=True)
@@ -116,22 +116,24 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 **Switch RAG strategies with one line** - all pipelines share the same interface:
 
 ```python
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
-# Try different strategies instantly
-for pipeline_type in ['basic', 'basic_rerank', 'crag', 'multi_query_rrf', 'graphrag']:
-    pipeline = create_pipeline(pipeline_type)
+# Start with basic
+pipeline = create_pipeline('basic')
+result = pipeline.query("What are the latest cancer treatment approaches?", top_k=5)
 
-    result = pipeline.query(
-        query="What are the latest cancer treatment approaches?",
-        top_k=5,
-        generate_answer=True
-    )
+# Upgrade to basic_rerank for better accuracy
+pipeline = create_pipeline('basic_rerank')
+result = pipeline.query("What are the latest cancer treatment approaches?", top_k=5)
 
-    print(f"\n{pipeline_type.upper()}:")
-    print(f"  Answer: {result['answer'][:150]}...")
-    print(f"  Retrieved: {len(result['retrieved_documents'])} docs")
-    print(f"  Confidence: {result['metadata'].get('confidence', 'N/A')}")
+# Try graphrag for entity reasoning
+pipeline = create_pipeline('graphrag')
+result = pipeline.query("What are the latest cancer treatment approaches?", top_k=5)
+
+# All pipelines return the same response format
+print(f"Answer: {result['answer']}")
+print(f"Sources: {result['sources']}")
+print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 ```
 
 ### Standardized Response Format
@@ -156,69 +158,18 @@ for pipeline_type in ['basic', 'basic_rerank', 'crag', 'multi_query_rrf', 'graph
 }
 ```
 
-## Pipeline Deep Dives
+## Pipeline Selection
 
-### CRAG: Self-Correcting Retrieval
+**Each pipeline uses the same API** - just change the pipeline type:
 
-Automatically evaluates retrieval quality and falls back to web search when needed:
+- **`basic`** - Fast vector similarity search, great for getting started
+- **`basic_rerank`** - Vector + cross-encoder reranking for higher accuracy
+- **`crag`** - Self-correcting with web search fallback for current events
+- **`graphrag`** - Multi-modal: vector + text + knowledge graph fusion
+- **`multi_query_rrf`** - Query expansion with reciprocal rank fusion
+- **`pylate_colbert`** - ColBERT late interaction for fine-grained matching
 
-```python
-from iris_rag import create_pipeline
-
-pipeline = create_pipeline('crag')
-
-# CRAG evaluates retrieved documents and uses web search if quality is low
-result = pipeline.query(
-    query="What happened in the 2024 Olympics opening ceremony?",
-    top_k=5,
-    generate_answer=True
-)
-
-# Check which retrieval method was used
-print(f"Method: {result['metadata']['retrieval_method']}")  # 'vector' or 'web_search'
-print(f"Confidence: {result['metadata']['confidence']}")     # 0.0 - 1.0
-```
-
-### HybridGraphRAG: Multi-Modal Search
-
-Combines vector search, text search, and knowledge graph traversal:
-
-```python
-pipeline = create_pipeline('graphrag')
-
-result = pipeline.query(
-    query_text="cancer treatment targets",
-    method="rrf",        # Reciprocal Rank Fusion across all methods
-    vector_k=30,         # Top 30 from vector search
-    text_k=30,           # Top 30 from text search
-    graph_k=10,          # Top 10 from knowledge graph
-    generate_answer=True
-)
-
-# Rich metadata includes entities and relationships
-print(f"Entities: {result['metadata']['entities']}")
-print(f"Relationships: {result['metadata']['relationships']}")
-print(f"Graph depth: {result['metadata']['graph_depth']}")
-```
-
-### MultiQueryRRF: Multi-Perspective Retrieval
-
-Expands queries into multiple perspectives and fuses results:
-
-```python
-pipeline = create_pipeline('multi_query_rrf')
-
-# Automatically generates query variations and combines results
-result = pipeline.query(
-    query="How does machine learning work?",
-    top_k=10,
-    generate_answer=True
-)
-
-# See the generated query variations
-print(f"Query variations: {result['metadata']['generated_queries']}")
-print(f"Fusion method: {result['metadata']['fusion_method']}")  # 'rrf'
-```
+📖 **[Complete Pipeline Guide →](docs/PIPELINE_GUIDE.md)** - Decision tree, performance comparison, configuration examples
 
 ## Enterprise Features
 
@@ -274,150 +225,50 @@ make test-ragas-sample
 # - Answer Relevance
 ```
 
-### IRIS EMBEDDING: 346x Faster Auto-Vectorization
+### IRIS EMBEDDING: Auto-Vectorization
 
-**Automatic embedding generation with model caching** - eliminates the 720x slowdown from repeated model loading:
+**Automatic embedding generation with model caching** - eliminates repeated model loading overhead for faster document vectorization.
+
+**Key Features**:
+- ⚡ Intelligent model caching - models stay in memory across operations
+- 🎯 Multi-field vectorization - combine title, abstract, and content fields
+- 💾 Automatic device selection - GPU, Apple Silicon (MPS), or CPU fallback
 
 ```python
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
-# Enable IRIS EMBEDDING support (Feature 051)
+# Enable IRIS EMBEDDING support
 pipeline = create_pipeline(
     'basic',
-    embedding_config='medical_embeddings_v1'  # IRIS EMBEDDING config name
+    embedding_config='medical_embeddings_v1'
 )
 
-# Documents auto-vectorize on INSERT with cached models
+# Documents auto-vectorize on INSERT
 pipeline.load_documents(documents=docs)
-
-# Queries auto-vectorize using same cached model
-result = pipeline.query("What is diabetes?", top_k=5)
 ```
 
-**Performance Achievements:**
-- ⚡ **346x speedup** - 1,746 documents vectorized in 3.5 seconds (vs 20 minutes baseline)
-- 🎯 **95% cache hit rate** - Models stay in memory across requests
-- 🚀 **50ms average latency** - Cache hits complete in <100ms
-- 💾 **Automatic fallback** - GPU OOM? Automatically falls back to CPU
-
-**Configuration Example:**
-
-```python
-from iris_rag.embeddings.iris_embedding import configure_embedding
-
-# Create embedding configuration
-config = configure_embedding(
-    name="medical_embeddings_v1",
-    model_name="sentence-transformers/all-MiniLM-L6-v2",
-    device_preference="auto",     # auto, cuda, mps, cpu
-    batch_size=32,
-    enable_entity_extraction=True,
-    entity_types=["Disease", "Medication", "Symptom"]
-)
-
-# Use with any pipeline
-pipeline = create_pipeline('basic', embedding_config='medical_embeddings_v1')
-```
-
-**Multi-Field Vectorization:**
-
-Combine multiple document fields into a single embedding:
-
-```python
-from iris_rag.core.models import Document
-
-# Document with multiple content fields
-doc = Document(
-    page_content="",  # Will be auto-filled from metadata
-    metadata={
-        "title": "Type 2 Diabetes Treatment",
-        "abstract": "A comprehensive review of treatment approaches...",
-        "conclusions": "Insulin therapy combined with lifestyle changes..."
-    }
-)
-
-# Configure multi-field embedding
-pipeline = create_pipeline(
-    'basic',
-    embedding_config='paper_embeddings',
-    multi_field_source=['title', 'abstract', 'conclusions']  # Concatenate fields
-)
-
-pipeline.load_documents(documents=[doc])
-# → Embedding generated from: "Type 2 Diabetes Treatment. A comprehensive review..."
-```
-
-**When to Use IRIS EMBEDDING:**
-- ✅ Large document collections (>1000 documents)
-- ✅ Frequent re-indexing or incremental updates
-- ✅ Real-time vectorization requirements
-- ✅ Memory-constrained environments (model stays in memory)
-- ✅ Multi-field vectorization needs
-
-**Comparison:**
-
-| Method | 1,746 Docs | Model Loads | Cache Hit Rate |
-|--------|-----------|-------------|----------------|
-| **Manual** (baseline) | 20 minutes | 1,746 (every row) | 0% |
-| **IRIS EMBEDDING** | 3.5 seconds | 1 (cached) | 95% |
-| **Speedup** | **346x faster** | **1,746x fewer** | **95% efficient** |
+📖 **[Complete IRIS EMBEDDING Guide →](docs/IRIS_EMBEDDING_GUIDE.md)** - Configuration, performance tuning, multi-field vectorization, troubleshooting
 
 ## Model Context Protocol (MCP) Support
 
-**Expose RAG pipelines as MCP tools** for use with Claude Desktop and other MCP clients:
+**Expose RAG pipelines as MCP tools** for Claude Desktop and other MCP clients - enables conversational RAG workflows where Claude queries your documents during conversations.
 
 ```bash
 # Start MCP server
-python -m iris_rag.mcp
-
-# Available MCP tools:
-# - rag_basic
-# - rag_basic_rerank
-# - rag_crag
-# - rag_multi_query_rrf
-# - rag_graphrag
-# - rag_hybrid_graphrag
-# - health_check
-# - list_tools
+python -m iris_vector_rag.mcp
 ```
 
-Configure in Claude Desktop:
+All pipelines available as MCP tools: `rag_basic`, `rag_basic_rerank`, `rag_crag`, `rag_graphrag`, `rag_multi_query_rrf`, `rag_pylate_colbert`.
 
-```json
-{
-  "mcpServers": {
-    "iris-rag": {
-      "command": "python",
-      "args": ["-m", "iris_rag.mcp"],
-      "env": {
-        "OPENAI_API_KEY": "your-key"
-      }
-    }
-  }
-}
-```
+📖 **[Complete MCP Integration Guide →](docs/MCP_INTEGRATION.md)** - Claude Desktop setup, configuration, testing, production deployment
 
 ## Architecture Overview
 
-```
-iris_rag/
-├── core/              # Abstract base classes (RAGPipeline, VectorStore)
-├── pipelines/         # Pipeline implementations
-│   ├── basic.py                    # BasicRAG
-│   ├── basic_rerank.py             # Reranking pipeline
-│   ├── crag.py                     # Corrective RAG
-│   ├── multi_query_rrf.py          # Multi-query with RRF
-│   ├── graphrag.py                 # Graph-based RAG
-│   └── hybrid_graphrag.py          # Hybrid multi-modal
-├── storage/           # Vector store implementations
-│   ├── vector_store_iris.py        # IRIS vector store
-│   └── schema_manager.py           # Schema management
-├── mcp/              # Model Context Protocol server
-├── api/              # Production REST API
-├── services/         # Business logic (entity extraction, etc.)
-├── config/           # Configuration management
-└── validation/       # Pipeline contract validation
-```
+**Framework-first design** with abstract base classes (`RAGPipeline`, `VectorStore`) and concrete implementations for 6 production-ready pipelines.
+
+**Key Components**: Core abstractions, pipeline implementations, IRIS vector store, MCP server, REST API, validation framework.
+
+📖 **[Comprehensive Architecture Guide →](docs/architecture/COMPREHENSIVE_ARCHITECTURE_OVERVIEW.md)** - System design, component interactions, extension points
 
 ## Documentation
 
@@ -427,34 +278,15 @@ iris_rag/
 - **[API Reference](docs/API_REFERENCE.md)** - Detailed API documentation
 - **[Pipeline Guide](docs/PIPELINE_GUIDE.md)** - When to use each pipeline
 - **[MCP Integration](docs/MCP_INTEGRATION.md)** - Model Context Protocol setup
-- **[Production Deployment](docs/PRODUCTION_DEPLOYMENT.md)** - Deployment checklist
-- **[Development Guide](docs/DEVELOPMENT.md)** - Contributing and testing
-
-## Performance Benchmarks
-
-**Native IRIS vector search delivers:**
-
-- 🚀 **50-100x faster** than traditional solutions for hybrid search
-- ⚡ **Sub-second queries** on millions of documents
-- 📊 **Linear scaling** with IRIS clustering
-- 💾 **10x less memory** than external vector databases
+- **[Production Readiness](docs/PRODUCTION_READINESS_ASSESSMENT.md)** - Deployment checklist
 
 ## Testing & Quality
 
 ```bash
-# Run comprehensive test suite
-make test
-
-# Test specific categories
-pytest tests/unit/           # Unit tests (fast)
-pytest tests/integration/    # Integration tests (with IRIS)
-pytest tests/contract/       # API contract validation
-
-# Run with coverage
-pytest --cov=iris_rag --cov-report=html
+make test  # Run comprehensive test suite
+pytest tests/unit/           # Unit tests
+pytest tests/integration/    # Integration tests
 ```
-
-**For detailed testing documentation**, see [DEVELOPMENT.md](docs/DEVELOPMENT.md)
 
 ## Research & References
 
@@ -467,26 +299,14 @@ This implementation is based on peer-reviewed research:
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
-
-- Development setup
-- Testing guidelines
-- Code style and standards
-- Pull request process
+We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for development setup, testing guidelines, and pull request process.
 
 ## Community & Support
 
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/intersystems-community/iris-rag-templates/discussions)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/intersystems-community/iris-rag-templates/issues)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/intersystems-community/iris-vector-rag/issues)
 - 📖 **Documentation**: [Full Documentation](docs/)
 - 🏢 **Enterprise Support**: [InterSystems Support](https://www.intersystems.com/support/)
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-**Built with ❤️ by the InterSystems Community**
-
-*Powering intelligent applications with enterprise-grade RAG*

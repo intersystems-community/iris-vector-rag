@@ -23,7 +23,7 @@ def test_pythonpath_allows_imports():
     # PYTHONPATH already set in conftest.py
     # Should not raise ModuleNotFoundError
     import common
-    import iris_rag
+    import iris_vector_rag
 
     assert iris_rag is not None
     assert common is not None
@@ -48,8 +48,8 @@ def test_iris_connection_fixture_available():
 @pytest.mark.requires_database
 def test_iris_health_check_passes():
     """REQ-4: IRIS database is healthy."""
-    from iris_rag.config.manager import ConfigurationManager
-    from iris_rag.core.connection import ConnectionManager
+    from iris_vector_rag.config.manager import ConfigurationManager
+    from iris_vector_rag.core.connection import ConnectionManager
 
     # Try to find IRIS on common ports
     iris_ports = [11972, 21972, 1972]

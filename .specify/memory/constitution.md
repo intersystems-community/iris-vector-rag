@@ -1,19 +1,26 @@
 <!--
 Sync Impact Report:
-- Version change: 1.7.0 → 1.7.1 (PATCH)
-- Version bump rationale: Enhanced Step 4 (PyPI Publishing) with detailed procedures
+- Version change: 1.7.1 → 1.8.0 (MINOR - CRITICAL process changes)
+- Version bump rationale: CRITICAL PyPI publishing procedures based on 0.5.0 packaging failure
+- Incident: iris-vector-rag 0.5.0 published with incorrect package structure (common/ at top-level instead of iris_vector_rag/common/)
 - List of modified principles: Principle VIII (Git & Release Workflow)
 - Modified sections:
-  * Step 4: PyPI Publishing - Added comprehensive publishing procedures
-  * When to publish (semantic versioning guidance)
-  * Version bumping procedure (files to update)
-  * Build and validation steps (clean, build, test locally)
-  * Upload procedure (secure token, verification)
-  * Post-upload verification (install from PyPI, test imports)
+  * Step 2: Complete Version Bump Workflow - CRITICAL ENHANCEMENTS:
+    1. Added MANDATORY "commit code changes FIRST" step
+    2. Added CRITICAL wheel structure verification BEFORE PyPI upload
+    3. Added uv pip install testing for uv-managed environments
+    4. Added comprehensive import validation tests
+    5. Added PyPI installation verification step
+    6. Enhanced clean build procedures with warnings
+    7. Total steps increased from 9 to 14 for safety
+- Root cause: Package built from uncommitted/staged state led to incorrect directory structure in wheel
+- Prevention: New procedures ensure wheel is verified BEFORE publishing, and built from committed code
 - Removed sections: N/A
 - Templates requiring updates:
   ✅ No template updates needed (workflow-specific, not template-affecting)
-- Follow-up TODOs: None
+- Follow-up TODOs:
+  * Yank iris-vector-rag 0.5.0 from PyPI
+  * Publish corrected 0.5.1
 -->
 
 # RAG-Templates Constitution
@@ -36,8 +43,25 @@ All pipelines MUST implement automated requirement validation and setup orchestr
 
 Tests MUST be written before implementation. All contract tests MUST fail initially, then pass after implementation. Unit, integration, and end-to-end tests are mandatory for all pipeline implementations.
 
+**Integration Testing Absolute Requirement (CRITICAL)**:
+
+When developing ANY feature that integrates with an external system (IRIS database, APIs, vector stores, etc.), integration tests with the ACTUAL system are MANDATORY and CANNOT be skipped. This principle is non-negotiable:
+
+1. **NO MOCKING OF INTEGRATION POINTS FOR INTEGRATION TESTS**: Integration tests MUST use the real system
+2. **IRIS-Specific Rule**: For ANY feature involving IRIS (embeddings, vector operations, storage, schema), you MUST create and run integration tests against a real IRIS instance BEFORE claiming completion
+3. **Test Container Requirement**: Use `iris-devtester` package with `IRISContainer` for repeatable, isolated IRIS testing
+4. **Test Coverage**: Integration tests MUST verify the complete integration path, not just Python code in isolation
+
+**Example Violation**: Creating "Feature 051: IRIS EMBEDDING Support" without actual IRIS integration tests is UNACCEPTABLE. Contract tests alone DO NOT prove the feature works.
+
+**Correct Approach**:
+- Use `from iris_devtester import IRISContainer`
+- Create fixtures: `@pytest.fixture def iris_container(): with IRISContainer.community() as container: yield container`
+- Test actual IRIS operations: SQL DDL, data insertion, vector queries, Python callbacks from IRIS
+- Verify performance claims with real workloads
+
 **IRIS Database Requirement**: All RAG framework tests that involve data storage, vector operations, schema management, or pipeline operations MUST execute against a running IRIS database instance. Tests MUST use either:
-1. **Framework-managed Docker IRIS** (preferred): Use available licensed IRIS images with dynamic port allocation
+1. **Framework-managed Docker IRIS** (preferred): Use `iris-devtester` with `IRISContainer.community()` for automatic container management
 2. **External IRIS instance**: When configured via environment variables
 
 **IRIS Docker Management Procedures**:
@@ -130,37 +154,85 @@ git push github main
 **Complete Version Bump Workflow:**
 
 ```bash
-# 1. Update version in BOTH files (Example: 0.2.3 → 0.2.4)
+# 1. Commit ALL code changes FIRST (NON-NEGOTIABLE)
+git add -A
+git commit -m "fix/feat: [description of actual changes]"
+# ⚠️ CRITICAL: Package must be built from COMMITTED code, not uncommitted working directory!
+
+# 2. Update version in BOTH files (Example: 0.2.3 → 0.2.4)
 # Edit these files:
 # - pyproject.toml (line 7): version = "0.2.4"
-# - iris_rag/__init__.py (line 21): __version__ = "0.2.4"
+# - iris_vector_rag/__init__.py (line 21): __version__ = "0.2.4"
 
-# 2. Clean previous builds
+# 3. Update CHANGELOG.md with version entry
+# Add comprehensive changelog describing all changes
+
+# 4. CRITICAL: Clean ALL previous builds (prevents stale file contamination)
 rm -rf dist/ build/ *.egg-info
+# ⚠️ Skipping this step will package OLD/CACHED files!
 
-# 3. Build source distribution and wheel
+# 5. Build source distribution and wheel FROM CLEAN STATE
 python -m build
 
-# 4. Validate distributions
+# 6. CRITICAL: Verify wheel structure BEFORE uploading
+python -c "
+import zipfile, sys
+z = zipfile.ZipFile('dist/iris_vector_rag-0.2.4-py3-none-any.whl')
+files = z.namelist()
+
+# Check for top-level modules that should be namespaced
+top_level = [f for f in files if not f.startswith('iris_vector_rag/') and not f.startswith('iris_vector_rag-') and f.endswith('.py')]
+if top_level:
+    print(f'❌ ERROR: Found top-level Python files: {top_level}')
+    sys.exit(1)
+
+# Verify critical module is in correct location (example: common/)
+if 'iris_vector_rag/common/__init__.py' not in files:
+    print('❌ ERROR: iris_vector_rag/common/__init__.py not found in wheel!')
+    sys.exit(1)
+
+print('✅ Wheel structure verified - no top-level modules, all files properly namespaced')
+"
+
+# 7. Validate distributions with twine
 python -m twine check dist/*
 
-# 5. Test local installation
-pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
-python -c "import iris_rag; print(f'iris_rag version: {iris_rag.__version__}'); from iris_rag import create_pipeline; print('✅ Package imports successfully')"
+# 8. Test local installation with CLEAN environment
+# For uv-managed environments (PREFERRED):
+uv pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
+# For standard pip environments:
+# pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
 
-# 6. Commit version bump
-git add pyproject.toml iris_rag/__init__.py
-git commit -m "chore: bump version to 0.2.4 for [brief description]
+# 9. CRITICAL: Test imports work correctly
+python -c "
+import iris_vector_rag
+print(f'✅ Version: {iris_vector_rag.__version__}')
+
+# Test critical imports
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+from iris_vector_rag import create_pipeline
+
+print('✅ All critical imports successful')
+"
+
+# 10. Commit version bump and changelog
+git add pyproject.toml iris_vector_rag/__init__.py CHANGELOG.md
+git commit -m "chore: bump version to 0.2.4
 
 [Detailed changelog entry describing what changed in this version]"
 
-# 7. Upload to PyPI (requires ~/.pypirc with token)
+# 11. Upload to PyPI (requires ~/.pypirc with token)
 python -m twine upload dist/*
 
-# 8. Verify PyPI upload
+# 12. Verify PyPI upload and test installation FROM PyPI
 curl -s https://pypi.org/pypi/iris-vector-rag/json | python3 -c "import sys, json; data=json.load(sys.stdin); print(f\"✅ Latest PyPI version: {data['info']['version']}\"); print(f\"📅 Upload date: {list(data['releases'][data['info']['version']])[0]['upload_time']}\"); print(f\"🔗 URL: https://pypi.org/project/iris-vector-rag/{data['info']['version']}/\")"
 
-# 9. Push version bump commit
+# 13. Test installation from PyPI (in clean venv/directory)
+pip install --no-cache-dir iris-vector-rag==0.2.4
+python -c "from iris_vector_rag import create_pipeline; print('✅ PyPI package works')"
+
+# 14. Push ALL commits to remote
 git push github main
 ```
 
@@ -221,7 +293,38 @@ Documentation MUST include quickstart guides, API references, and integration ex
 
 ## VIII. Git & Release Workflow (NON-NEGOTIABLE)
 
-All feature development MUST follow standardized git workflows to prevent diverged branches, rejected pushes, and deployment conflicts. The dual-repository strategy (internal GitLab + public GitHub) requires discipline and clear procedures.
+All feature development MUST follow standardized git workflows to prevent diverged branches, rejected pushes, and deployment conflicts. The fork-based strategy (private development repo + public fork) requires discipline and clear procedures.
+
+### Repository Structure (MANDATORY)
+
+**Three-Remote Configuration**:
+```bash
+origin   → https://github.com/isc-tdyar/iris-vector-rag-private.git  (PRIVATE - main development)
+fork     → https://github.com/isc-tdyar/iris-vector-rag.git          (PUBLIC - for PRs only)
+upstream → https://github.com/intersystems-community/iris-vector-rag.git  (PUBLIC - community repo)
+```
+
+**Directory Structure**:
+- Working directory: `/Users/tdyar/ws/iris-vector-rag-private/`
+- Private repo contains ALL files: code + `.claude/` + `.specify/` + `specs/` + tracking files
+- Public fork NEVER receives private files (removed before push)
+
+**Rationale**: GitHub does not allow private forks of public repositories. This three-remote strategy enables private development with full version control while maintaining clean public contributions.
+
+### Private Files (NEVER Push to Public Fork)
+
+The following files/directories are private development artifacts and MUST NEVER appear in PRs to public repo:
+- `.claude/` - Claude Code commands and personal AI assistant setup
+- `.specify/` - Feature specification system, constitution, scripts, templates
+- `specs/` - Feature planning documents and specifications
+- `STATUS.md`, `PROGRESS.md`, `TODO.md` - Development tracking files
+- `FORK_WORKFLOW.md` - Workflow documentation
+
+**These files live ONLY in**:
+- ✅ Private repo (`origin`) - tracked with full version control
+- ✅ Local development machine
+- ❌ NEVER in public fork (`fork`)
+- ❌ NEVER in community repo (`upstream`)
 
 ### Environment Management
 
@@ -242,19 +345,23 @@ which python  # MUST show /path/to/project/.venv/bin/python
 
 Before starting ANY feature work, MUST execute:
 ```bash
-# 1. Sync local repository with remotes
-git fetch origin  # Internal GitLab
-git fetch github  # Public GitHub (if configured)
+# 1. Verify you're in private repo directory
+pwd  # MUST show /Users/tdyar/ws/iris-vector-rag-private
 
-# 2. Verify branch status
+# 2. Sync with all remotes
+git fetch origin    # Private development repo
+git fetch fork      # Public fork (for PRs)
+git fetch upstream  # Community repo
+
+# 3. Verify branch status
 git status
 git branch -vv  # Check tracking relationships
 
-# 3. Ensure working on latest main
-git checkout main
-git pull origin main --ff-only  # Fast-forward only, no merge commits
+# 4. Ensure working on latest master
+git checkout master
+git pull origin master --ff-only  # Fast-forward only from private repo
 
-# 4. Activate local environment
+# 5. Activate local environment
 source .venv/bin/activate
 which python  # Verify local venv path
 ```
@@ -312,41 +419,86 @@ git commit -m "feat: <description>"  # Conventional commits
 git branch  # Verify you're on feature branch, NOT main
 ```
 
-### Deployment Workflow
+### Daily Development Workflow
 
-**Phase 1: Merge to Main**
+**Phase 1: Daily Commits to Private Repo**
 ```bash
 # 1. Verify feature complete
 pytest specs/<feature>/contracts/ -v  # All tests pass
 git status  # Working directory clean
 
-# 2. Switch to main and merge
-git checkout main
+# 2. Switch to master and merge feature branch
+git checkout master
 git merge <feature-branch> --no-edit  # Fast-forward preferred
 
-# 3. Verify merge
+# 3. Push to private repo (includes ALL files)
+git push origin master  # Goes to private repo automatically
+
+# 4. Verify push
 git log --oneline -5  # Check commit history
 ```
 
-**Phase 2: Push to GitHub**
+### Creating Pull Requests to Public Repo
+
+**Phase 1: Create Clean PR Branch (Remove Private Files)**
 ```bash
-# 1. Verify GitHub remote configured
-git remote -v  # Should show 'github' remote
+# 1. Create PR branch from your completed feature
+git checkout -b pr/<feature-name> master
 
-# 2. Check GitHub status
-git fetch github
-git log github/main..main  # Commits to push
+# 2. Remove private files from THIS branch only
+git rm -r --cached .claude/
+git rm -r --cached .specify/
+git rm -r --cached specs/
+git rm --cached STATUS.md PROGRESS.md TODO.md FORK_WORKFLOW.md
 
-# 3. Push to GitHub
-git push github main
+# 3. Commit the removal
+git commit -m "chore: remove private development files for public PR"
 
-# If rejected (non-fast-forward):
-git fetch github
-git pull github main --rebase  # Rebase your commits
-git push github main
+# 4. Verify private files removed
+git ls-files | grep -E "(\.claude|\.specify|specs/|STATUS\.md)" || echo "Clean ✅"
 ```
 
-**Rationale**: Simple, direct workflow ensures all changes are immediately visible on GitHub.
+**Phase 2: Push to Public Fork**
+```bash
+# 1. Push PR branch to public fork
+git push fork pr/<feature-name>
+
+# 2. Verify on GitHub
+# Visit: https://github.com/isc-tdyar/iris-vector-rag
+# Should see new branch without private files
+```
+
+**Phase 3: Create Pull Request**
+```bash
+# On GitHub:
+# 1. Go to https://github.com/intersystems-community/iris-vector-rag
+# 2. Click "New Pull Request"
+# 3. Click "compare across forks"
+# 4. Set:
+#    Base repository: intersystems-community/iris-vector-rag (base: main)
+#    Head repository: isc-tdyar/iris-vector-rag (compare: pr/<feature-name>)
+# 5. Create PR with descriptive title and summary
+# 6. Verify PR does NOT contain .claude/, .specify/, specs/, or tracking files
+```
+
+**Phase 4: After PR Merged (Sync Back)**
+```bash
+# 1. Fetch updates from community repo
+git fetch upstream
+
+# 2. Merge into your private master
+git checkout master
+git merge upstream/main
+
+# 3. Push updates to private repo
+git push origin master
+
+# 4. Delete PR branch (local and remote)
+git branch -d pr/<feature-name>
+git push fork --delete pr/<feature-name>
+```
+
+**Rationale**: Three-remote fork workflow keeps private development artifacts safe while enabling clean public contributions. Private repo is source of truth, public fork is only for PRs.
 
 ### Version Bump & PyPI Publishing
 

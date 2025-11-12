@@ -30,7 +30,7 @@ sys.path.insert(0, str(project_root))
 os.environ["IRIS_PORT"] = "1974"
 
 from common.utils import get_llm_func
-from iris_rag import create_pipeline
+from iris_vector_rag import create_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +47,8 @@ def ensure_documents_loaded():
     logger.info("📊 Checking document count in database...")
 
     try:
-        from iris_rag.config.manager import ConfigurationManager
-        from iris_rag.core.connection import ConnectionManager
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.core.connection import ConnectionManager
 
         # Force configuration to use MCP IRIS port
         config = ConfigurationManager()

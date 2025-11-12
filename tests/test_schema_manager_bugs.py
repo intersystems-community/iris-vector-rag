@@ -17,8 +17,8 @@ import logging
 # Add rag-templates to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from iris_rag.storage.schema_manager import SchemaManager
-from iris_rag.config.manager import ConfigurationManager
+from iris_vector_rag.storage.schema_manager import SchemaManager
+from iris_vector_rag.config.manager import ConfigurationManager
 
 
 class TestSchemaManagerCachingPerformance:

@@ -29,13 +29,13 @@ from typing import Dict, List, Optional, Tuple
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from iris_rag.core.config import ConfigManager
-from iris_rag.core.connection import IRISConnectionManager
-from iris_rag.optimization.cache_manager import GraphRAGCacheManager
-from iris_rag.optimization.connection_pool import OptimizedConnectionPool
-from iris_rag.optimization.parallel_processor import GraphRAGParallelProcessor
-from iris_rag.optimization.performance_monitor import GraphRAGPerformanceMonitor
-from iris_rag.pipelines.graphrag_merged import GraphRAGMergedPipeline
+from iris_vector_rag.core.config import ConfigManager
+from iris_vector_rag.core.connection import IRISConnectionManager
+from iris_vector_rag.optimization.cache_manager import GraphRAGCacheManager
+from iris_vector_rag.optimization.connection_pool import OptimizedConnectionPool
+from iris_vector_rag.optimization.parallel_processor import GraphRAGParallelProcessor
+from iris_vector_rag.optimization.performance_monitor import GraphRAGPerformanceMonitor
+from iris_vector_rag.pipelines.graphrag_merged import GraphRAGMergedPipeline
 
 # Configure logging
 logging.basicConfig(

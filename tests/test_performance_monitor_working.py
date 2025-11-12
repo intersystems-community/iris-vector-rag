@@ -10,7 +10,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-from iris_rag.optimization.performance_monitor import (
+from iris_vector_rag.optimization.performance_monitor import (
     GraphRAGPerformanceMonitor,
     PerformanceAlert,
     PerformanceSnapshot,

@@ -20,9 +20,9 @@ import inspect
 import re
 
 try:
-    from iris_rag import _create_pipeline_legacy
+    from iris_vector_rag import _create_pipeline_legacy
 except ImportError:
-    print("ERROR: Cannot import iris_rag. Is the package installed?", file=sys.stderr)
+    print("ERROR: Cannot import iris_vector_rag. Is the package installed?", file=sys.stderr)
     print("       Ensure you have run: uv sync or pip install -e .", file=sys.stderr)
     sys.exit(1)
 

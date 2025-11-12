@@ -19,19 +19,19 @@ class TestMCPBridgeContract:
     def test_bridge_module_exists(self):
         """Verify iris_rag.mcp.bridge module can be imported."""
         try:
-            import iris_rag.mcp.bridge
+            import iris_vector_rag.mcp.bridge
             assert True
         except ImportError as e:
             pytest.fail(f"MCPBridge module not found: {e}")
 
     def test_bridge_class_exists(self):
         """Verify MCPBridge class exists in module."""
-        from iris_rag.mcp import bridge
+        from iris_vector_rag.mcp import bridge
         assert hasattr(bridge, 'MCPBridge'), "MCPBridge class not found in module"
 
     def test_bridge_implements_interface_methods(self):
         """Verify MCPBridge implements all IMCPBridge interface methods."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         required_methods = [
             'invoke_technique',
@@ -47,7 +47,7 @@ class TestMCPBridgeContract:
     @pytest.mark.asyncio
     async def test_invoke_technique_signature(self):
         """Verify invoke_technique method signature and return type."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -82,7 +82,7 @@ class TestMCPBridgeContract:
     @pytest.mark.asyncio
     async def test_get_available_techniques_signature(self):
         """Verify get_available_techniques method signature and return type."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         techniques = await bridge.get_available_techniques()
@@ -107,7 +107,7 @@ class TestMCPBridgeContract:
     @pytest.mark.asyncio
     async def test_health_check_signature(self):
         """Verify health_check method signature and return type."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         health = await bridge.health_check(
@@ -140,7 +140,7 @@ class TestMCPBridgeContract:
     @pytest.mark.asyncio
     async def test_get_metrics_signature(self):
         """Verify get_metrics method signature and return type."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
         metrics = await bridge.get_metrics(
@@ -167,7 +167,7 @@ class TestMCPBridgeContract:
     @pytest.mark.asyncio
     async def test_invoke_technique_error_handling(self):
         """Verify invoke_technique handles invalid parameters correctly."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -185,7 +185,7 @@ class TestMCPBridgeContract:
     @pytest.mark.asyncio
     async def test_invoke_technique_parameter_validation(self):
         """Verify invoke_technique validates parameters."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         bridge = MCPBridge()
 
@@ -204,7 +204,7 @@ class TestMCPBridgeContract:
     @pytest.mark.asyncio
     async def test_bridge_authentication_mode_configurable(self):
         """Verify MCPBridge supports both authenticated and unauthenticated modes."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         # Test with api_key parameter (authenticated mode)
         bridge_auth = MCPBridge()
@@ -235,7 +235,7 @@ class TestMCPBridgeIntegration:
     def test_bridge_imports_pipeline_manager(self):
         """Verify MCPBridge can import REST API's PipelineManager."""
         try:
-            from iris_rag.api.services import PipelineManager
+            from iris_vector_rag.api.services import PipelineManager
             assert PipelineManager is not None
         except ImportError as e:
             pytest.fail(f"Cannot import PipelineManager: {e}")
@@ -243,7 +243,7 @@ class TestMCPBridgeIntegration:
     @pytest.mark.asyncio
     async def test_bridge_reuses_pipeline_instances(self):
         """Verify MCPBridge reuses PipelineManager's pipeline instances (FR-006)."""
-        from iris_rag.mcp.bridge import MCPBridge
+        from iris_vector_rag.mcp.bridge import MCPBridge
 
         # This test verifies implementation reuses existing pipeline instances
         # Implementation should use PipelineManager.get_instance()

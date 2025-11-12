@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from common.vector_sql_utils import (
+from iris_vector_rag.common.vector_sql_utils import (
     build_safe_vector_dot_sql,
     execute_safe_vector_search,
 )

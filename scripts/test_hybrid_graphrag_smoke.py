@@ -31,9 +31,9 @@ logger = logging.getLogger("hybrid_graphrag_smoke")
 
 def main() -> int:
     try:
-        from iris_rag.config.manager import ConfigurationManager
-        from iris_rag.core.connection import ConnectionManager
-        from iris_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.core.connection import ConnectionManager
+        from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
         logger.info("✅ Import successful: HybridGraphRAGPipeline")
 

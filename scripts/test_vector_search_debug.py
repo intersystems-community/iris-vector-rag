@@ -10,9 +10,9 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Test the vector utilities
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.storage.vector_store_iris import IRISVectorStore
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from common.utils import get_llm_func
 
 try:
@@ -23,7 +23,7 @@ try:
     vector_store = IRISVectorStore(connection_manager, config_manager)
 
     # Load a simple document
-    from iris_rag.core.models import Document
+    from iris_vector_rag.core.models import Document
     docs = [Document(id="test1", page_content="This is a test document about diabetes.")]
 
     logger.info("Loading test document...")

@@ -69,8 +69,8 @@ def process_pmc_files():
     try:
         # Import real loader and embedding manager
         from data.loader_fixed import process_and_load_documents
-        from iris_rag.config.manager import ConfigurationManager
-        from iris_rag.embeddings.manager import EmbeddingManager
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.embeddings.manager import EmbeddingManager
 
         # Initialize embedding backend
         config_manager = ConfigurationManager()

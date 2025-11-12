@@ -6,7 +6,7 @@ Tests MUST fail initially, then pass after implementation (TDD).
 """
 
 import pytest
-from iris_rag.core.models import Document, BatchExtractionResult
+from iris_vector_rag.core.models import Document, BatchExtractionResult
 
 
 class TestBatchExtractionContract:
@@ -14,14 +14,14 @@ class TestBatchExtractionContract:
 
     def test_extract_batch_method_exists(self):
         """Validate extract_batch() method exists on EntityExtractionService."""
-        from iris_rag.services.entity_extraction import EntityExtractionService
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
         assert hasattr(EntityExtractionService, 'extract_batch'), \
             "EntityExtractionService must have extract_batch() method"
 
     def test_extract_batch_signature(self):
         """Validate extract_batch() has correct signature."""
-        from iris_rag.services.entity_extraction import EntityExtractionService
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
         import inspect
 
         sig = inspect.signature(EntityExtractionService.extract_batch)
@@ -38,9 +38,9 @@ class TestBatchExtractionContract:
 
     def test_extract_batch_returns_batch_result(self):
         """Validate extract_batch() returns BatchExtractionResult type."""
-        from iris_rag.services.entity_extraction import EntityExtractionService
-        from iris_rag.config.manager import ConfigurationManager
-        from common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
         # Initialize service (will need real config in implementation)
         config_manager = ConfigurationManager()
@@ -62,9 +62,9 @@ class TestBatchExtractionContract:
 
     def test_extract_batch_empty_documents_raises_error(self):
         """Validate extract_batch() raises ValueError on empty documents list."""
-        from iris_rag.services.entity_extraction import EntityExtractionService
-        from iris_rag.config.manager import ConfigurationManager
-        from common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
         config_manager = ConfigurationManager()
         connection_manager = IRISConnectionManager()
@@ -76,9 +76,9 @@ class TestBatchExtractionContract:
 
     def test_extract_batch_respects_token_budget(self):
         """Validate extract_batch() respects token_budget parameter."""
-        from iris_rag.services.entity_extraction import EntityExtractionService
-        from iris_rag.config.manager import ConfigurationManager
-        from common.iris_connection_manager import IRISConnectionManager
+        from iris_vector_rag.services.entity_extraction import EntityExtractionService
+        from iris_vector_rag.config.manager import ConfigurationManager
+        from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
         config_manager = ConfigurationManager()
         connection_manager = IRISConnectionManager()
@@ -98,7 +98,7 @@ class TestBatchExtractionContract:
 
     def test_batch_extraction_result_has_required_fields(self):
         """Validate BatchExtractionResult has all required fields from data model."""
-        from iris_rag.core.models import BatchExtractionResult
+        from iris_vector_rag.core.models import BatchExtractionResult
         import inspect
 
         # Get BatchExtractionResult attributes
@@ -122,7 +122,7 @@ class TestBatchExtractionContract:
 
     def test_batch_extraction_result_helper_methods(self):
         """Validate BatchExtractionResult has required helper methods."""
-        from iris_rag.core.models import BatchExtractionResult
+        from iris_vector_rag.core.models import BatchExtractionResult
 
         # Required methods from data-model.md
         required_methods = [

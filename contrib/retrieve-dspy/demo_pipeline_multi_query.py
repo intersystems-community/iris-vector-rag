@@ -77,7 +77,7 @@ def test_iris_connection():
 
 def run_demo(use_llm: bool = False, num_queries: int = 4, top_k: int = 20):
     """Run multi-query RRF demo."""
-    from iris_rag import create_pipeline
+    from iris_vector_rag import create_pipeline
 
     print("=" * 80)
     print("Multi-Query RRF Pipeline Demo")
@@ -181,7 +181,7 @@ def run_demo(use_llm: bool = False, num_queries: int = 4, top_k: int = 20):
 
 def compare_with_basic(question: str):
     """Compare multi-query with basic retrieval."""
-    from iris_rag import create_pipeline
+    from iris_vector_rag import create_pipeline
 
     print()
     print("=" * 80)

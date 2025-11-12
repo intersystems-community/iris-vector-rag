@@ -6,12 +6,12 @@ Tests document loading, querying with reranking, and various rerank configuratio
 """
 
 import pytest
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.core.models import Document
-from iris_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_rag.storage.vector_store_iris import IRISVectorStore
-from common.utils import get_llm_func
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
+from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
+from iris_vector_rag.common.utils import get_llm_func
 
 
 @pytest.fixture(scope="module")

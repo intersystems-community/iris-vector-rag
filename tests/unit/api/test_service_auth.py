@@ -11,8 +11,8 @@ import bcrypt
 import pytest
 from fastapi import HTTPException
 
-from iris_rag.api.models.auth import ApiKey, ApiKeyCreateRequest, Permission, RateLimitTier
-from iris_rag.api.services.auth_service import AuthService
+from iris_vector_rag.api.models.auth import ApiKey, ApiKeyCreateRequest, Permission, RateLimitTier
+from iris_vector_rag.api.services.auth_service import AuthService
 
 
 class TestAuthService:

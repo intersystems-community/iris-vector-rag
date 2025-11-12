@@ -124,7 +124,7 @@ def test_graphrag_pipeline_with_fixture(fixture_metadata):
     if not fixture_metadata:
         pytest.skip("Fixture not available")
 
-    from iris_rag import create_pipeline
+    from iris_vector_rag import create_pipeline
 
     # Create pipeline (database already has fixture data)
     pipeline = create_pipeline("graphrag", validate_requirements=False)

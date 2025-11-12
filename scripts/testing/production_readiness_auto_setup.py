@@ -18,7 +18,7 @@ from typing import Any, Dict, List
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import iris_rag
+import iris_vector_rag
 from common.utils import get_llm_func
 
 

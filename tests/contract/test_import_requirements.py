@@ -24,7 +24,7 @@ class TestImportRequirements:
         mock_import.side_effect = import_mock
 
         # This test should FAIL until implementation is complete
-        from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
         discovery = GraphCoreDiscovery()
 
@@ -37,7 +37,7 @@ class TestImportRequirements:
     def test_successful_import_with_package_installed(self):
         """When iris-vector-graph is installed, imports should succeed."""
         # This test should FAIL until implementation is complete
-        from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
         discovery = GraphCoreDiscovery()
         modules = discovery.import_graph_core_modules()
@@ -50,7 +50,7 @@ class TestImportRequirements:
     def test_no_fallback_to_local_paths(self):
         """Discovery should not fall back to local development paths."""
         # This test should FAIL until implementation is complete
-        from iris_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
 
         discovery = GraphCoreDiscovery()
 

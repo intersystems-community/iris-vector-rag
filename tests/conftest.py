@@ -31,7 +31,7 @@ if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
 # Import framework modules
-from iris_rag.config.manager import ConfigurationManager
+from iris_vector_rag.config.manager import ConfigurationManager
 
 # Coverage testing imports
 import coverage
@@ -462,7 +462,7 @@ def backend_configuration():
     Returns:
         BackendConfiguration instance
     """
-    from iris_rag.testing.backend_manager import (
+    from iris_vector_rag.testing.backend_manager import (
         load_configuration,
         log_session_start,
     )
@@ -495,7 +495,7 @@ def connection_pool(backend_configuration):
     Returns:
         ConnectionPool instance
     """
-    from iris_rag.testing.connection_pool import ConnectionPool
+    from iris_vector_rag.testing.connection_pool import ConnectionPool
 
     return ConnectionPool(mode=backend_configuration.mode)
 
@@ -514,7 +514,7 @@ def iris_devtools_bridge(backend_configuration):
     Raises:
         IrisDevtoolsMissingError: If iris-devtools not available
     """
-    from iris_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
+    from iris_vector_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
 
     return IrisDevToolsBridge(
         iris_devtools_path=backend_configuration.iris_devtools_path
@@ -611,7 +611,7 @@ def database_with_clean_schema(request):
     from tests.fixtures.database_cleanup import DatabaseCleanupHandler
     from tests.utils.schema_validator import SchemaValidator
     from tests.fixtures.schema_reset import SchemaResetter
-    from common.iris_connection_manager import get_iris_connection
+    from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 
     # Validate schema
     validator = SchemaValidator()
@@ -777,7 +777,7 @@ def basic_rag_pipeline(request):
 
     Requirements: FR-001, FR-007
     """
-    from iris_rag import create_pipeline
+    from iris_vector_rag import create_pipeline
     import os
 
     # Update port from environment if needed
@@ -803,7 +803,7 @@ def crag_pipeline(request):
 
     Requirements: FR-001, FR-007, FR-015
     """
-    from iris_rag import create_pipeline
+    from iris_vector_rag import create_pipeline
     import os
 
     if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
@@ -826,7 +826,7 @@ def basic_rerank_pipeline(request):
 
     Requirements: FR-001, FR-007, FR-016
     """
-    from iris_rag import create_pipeline
+    from iris_vector_rag import create_pipeline
     import os
 
     if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':
@@ -849,7 +849,7 @@ def pylate_colbert_pipeline(request):
 
     Requirements: FR-001, FR-007, FR-015
     """
-    from iris_rag import create_pipeline
+    from iris_vector_rag import create_pipeline
     import os
 
     if 'IRIS_PORT' in os.environ and os.environ['IRIS_PORT'] != '1972':

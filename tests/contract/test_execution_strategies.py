@@ -13,7 +13,7 @@ Status: Tests MUST FAIL until Phase 3.3 implementation
 import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
-from iris_rag.testing.backend_manager import (
+from iris_vector_rag.testing.backend_manager import (
     BackendConfiguration,
     BackendMode,
     ConfigSource,
@@ -144,7 +144,7 @@ class TestExecutionStrategyConfiguration:
 
         Requirement: FR-002, FR-005
         """
-        from iris_rag.testing.backend_manager import load_configuration
+        from iris_vector_rag.testing.backend_manager import load_configuration
 
         monkeypatch.setenv("IRIS_BACKEND_MODE", "enterprise")
 

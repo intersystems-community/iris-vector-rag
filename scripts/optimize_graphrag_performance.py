@@ -26,15 +26,15 @@ from typing import Any, Dict, List, Optional
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.connection import ConnectionManager
-from iris_rag.optimization.cache_manager import GraphRAGCacheManager
-from iris_rag.optimization.connection_pool import OptimizedConnectionPool
-from iris_rag.optimization.database_optimizer import DatabaseOptimizer
-from iris_rag.optimization.hnsw_tuner import HNSWIndexTuner
-from iris_rag.optimization.parallel_processor import GraphRAGParallelProcessor
-from iris_rag.optimization.performance_monitor import GraphRAGPerformanceMonitor
-from iris_rag.pipelines.graphrag_merged import GraphRAGPipeline
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.connection import ConnectionManager
+from iris_vector_rag.optimization.cache_manager import GraphRAGCacheManager
+from iris_vector_rag.optimization.connection_pool import OptimizedConnectionPool
+from iris_vector_rag.optimization.database_optimizer import DatabaseOptimizer
+from iris_vector_rag.optimization.hnsw_tuner import HNSWIndexTuner
+from iris_vector_rag.optimization.parallel_processor import GraphRAGParallelProcessor
+from iris_vector_rag.optimization.performance_monitor import GraphRAGPerformanceMonitor
+from iris_vector_rag.pipelines.graphrag_merged import GraphRAGPipeline
 
 logger = logging.getLogger(__name__)
 

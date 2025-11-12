@@ -150,8 +150,8 @@ def run_custom_benchmarks(args: argparse.Namespace) -> Dict[str, Any]:
 
     try:
         # Import required modules
-        from iris_rag.config.manager import ConfigManager
-        from iris_rag.pipelines.factory import PipelineFactory
+        from iris_vector_rag.config.manager import ConfigManager
+        from iris_vector_rag.pipelines.factory import PipelineFactory
 
         # Initialize components
         config_manager = ConfigManager()

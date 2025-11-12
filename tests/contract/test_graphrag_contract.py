@@ -13,7 +13,7 @@ import pytest
 def test_graphrag_import_available():
     """GraphRAG pipeline can be imported or skips gracefully."""
     try:
-        from iris_rag.pipelines.graphrag import GraphRAGPipeline
+        from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
         assert GraphRAGPipeline is not None
     except ImportError as e:
@@ -24,7 +24,7 @@ def test_entity_extraction_dependencies():
     """Entity extraction dependencies are available or tests skip."""
     try:
         # Try importing entity extraction service
-        from iris_rag.services.entity_extraction import (
+        from iris_vector_rag.services.entity_extraction import (
             OntologyAwareEntityExtractor,
         )
 
@@ -58,7 +58,7 @@ def test_graphrag_pipeline_fixture_error_handling():
     # when dependencies are not available
 
     try:
-        from iris_rag.pipelines.graphrag import GraphRAGPipeline
+        from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
         # If we get here, GraphRAG is available
         assert hasattr(GraphRAGPipeline, "query")
@@ -70,7 +70,7 @@ def test_graphrag_pipeline_fixture_error_handling():
 def test_llm_configuration_for_entity_extraction():
     """LLM configuration is available for entity extraction."""
     try:
-        from common.utils import get_llm_func
+        from iris_vector_rag.common.utils import get_llm_func
 
         # Should be able to get LLM function
         llm_func = get_llm_func(provider="openai", model_name="gpt-4o-mini")

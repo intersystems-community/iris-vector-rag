@@ -11,12 +11,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
-from iris_rag.api.middleware.auth import (
+from iris_vector_rag.api.middleware.auth import (
     ApiKeyAuthMiddleware,
     extract_api_key,
     validate_api_key_format,
 )
-from iris_rag.api.models.auth import ApiKey, Permission, RateLimitTier
+from iris_vector_rag.api.models.auth import ApiKey, Permission, RateLimitTier
 
 
 class TestExtractApiKey:

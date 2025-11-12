@@ -11,13 +11,13 @@ from uuid import uuid4
 
 # These imports will fail initially - expected for TDD
 try:
-    from iris_rag.embeddings.entity_extractor import (
+    from iris_vector_rag.embeddings.entity_extractor import (
         extract_entities_batch,
         store_entities,
         configure_entity_types,
         get_entities,
     )
-    from iris_rag.config.embedding_config import EmbeddingConfig
+    from iris_vector_rag.config.embedding_config import EmbeddingConfig
     IMPLEMENTATION_EXISTS = True
 except ImportError:
     IMPLEMENTATION_EXISTS = False

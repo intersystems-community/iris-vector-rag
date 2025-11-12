@@ -16,9 +16,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from iris_rag.config.manager import ConfigurationManager
-from iris_rag.core.models import Document
-from iris_rag.pipelines.factory import create_pipeline
+from iris_vector_rag.config.manager import ConfigurationManager
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.pipelines.factory import create_pipeline
 
 # Setup logging
 logging.basicConfig(
@@ -212,7 +212,7 @@ def test_web_interface(pipeline):
     logger.info("Testing web interface...")
 
     try:
-        from iris_rag.visualization.iris_global_graphrag_interface import (
+        from iris_vector_rag.visualization.iris_global_graphrag_interface import (
             IRISGlobalGraphRAGInterface,
         )
 
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--web":
         # Run web interface
         try:
-            from iris_rag.visualization.iris_global_graphrag_interface import (
+            from iris_vector_rag.visualization.iris_global_graphrag_interface import (
                 main as web_main,
             )
 

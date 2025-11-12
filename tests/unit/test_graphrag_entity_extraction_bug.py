@@ -15,8 +15,8 @@ zero entities are EXTRACTED (not zero entities stored).
 
 import pytest
 from unittest.mock import Mock, MagicMock, patch
-from iris_rag.core.models import Document
-from iris_rag.pipelines.graphrag import GraphRAGPipeline
+from iris_vector_rag.core.models import Document
+from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 
 @pytest.fixture
@@ -121,7 +121,7 @@ class TestGraphRAGEntityExtractionValidationBug:
         )
 
         # This SHOULD raise exception (zero entities extracted = systematic failure)
-        from iris_rag.pipelines.graphrag import KnowledgeGraphNotPopulatedException
+        from iris_vector_rag.pipelines.graphrag import KnowledgeGraphNotPopulatedException
 
         with pytest.raises(KnowledgeGraphNotPopulatedException) as exc_info:
             pipeline.load_documents(documents_path="", documents=[doc], generate_embeddings=True)
