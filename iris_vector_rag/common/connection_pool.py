@@ -17,7 +17,6 @@ from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional
 
 import iris.dbapi as iris_dbapi
-from iris.dbapi import Connection
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +75,9 @@ class IRISConnectionPool:
         self.pool_timeout = pool_timeout
 
         # Connection tracking
-        self._available_connections: list[Connection] = []
-        self._in_use_connections: set[Connection] = set()
-        self._connection_timestamps: Dict[Connection, float] = {}
+        self._available_connections: list[Any] = []
+        self._in_use_connections: set[Any] = set()
+        self._connection_timestamps: Dict[Any, float] = {}
 
         # Thread safety
         import threading
@@ -96,7 +95,7 @@ class IRISConnectionPool:
             f"recycle={pool_recycle}s, pre_ping={pool_pre_ping}"
         )
 
-    def _create_connection(self) -> Connection:
+    def _create_connection(self) -> Any:
         """
         Create a new IRIS database connection.
 
@@ -131,7 +130,7 @@ class IRISConnectionPool:
             logger.error(f"Failed to create IRIS connection: {e}")
             raise
 
-    def _validate_connection(self, connection: Connection) -> bool:
+    def _validate_connection(self, connection: Any) -> bool:
         """
         Validate that a connection is still alive.
 
@@ -154,7 +153,7 @@ class IRISConnectionPool:
             logger.warning(f"Connection validation failed: {e}")
             return False
 
-    def _should_recycle_connection(self, connection: Connection) -> bool:
+    def _should_recycle_connection(self, connection: Any) -> bool:
         """
         Check if connection should be recycled based on age.
 
@@ -172,7 +171,7 @@ class IRISConnectionPool:
         age = time.time() - self._connection_timestamps[connection]
         return age >= self.pool_recycle
 
-    def _recycle_connection(self, connection: Connection) -> None:
+    def _recycle_connection(self, connection: Any) -> None:
         """
         Close and remove a connection from the pool.
 
@@ -194,7 +193,7 @@ class IRISConnectionPool:
         except Exception as e:
             logger.warning(f"Error recycling connection: {e}")
 
-    def acquire(self) -> Connection:
+    def acquire(self) -> Any:
         """
         Acquire a connection from the pool.
 
@@ -270,7 +269,7 @@ class IRISConnectionPool:
             f"in_use: {len(self._in_use_connections)})"
         )
 
-    def release(self, connection: Connection) -> None:
+    def release(self, connection: Any) -> None:
         """
         Release a connection back to the pool.
 
@@ -294,7 +293,7 @@ class IRISConnectionPool:
                 )
 
     @contextmanager
-    def get_connection(self) -> Generator[Connection, None, None]:
+    def get_connection(self) -> Generator[Any, None, None]:
         """
         Context manager for acquiring and releasing connections.
 
