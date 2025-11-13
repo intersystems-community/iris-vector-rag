@@ -287,6 +287,18 @@ Production deployments MUST include:
 
 **Package Management**: All Python projects MUST use uv for dependency management, virtual environment creation, and package installation. Traditional pip/virtualenv workflows are deprecated in favor of uv's superior performance and reliability.
 
+**Testing Standards (NON-NEGOTIABLE)**:
+
+All tests MUST be executed using `python -m pytest` instead of standalone `pytest` command. This ensures correct Python module resolution and prevents import failures.
+
+**Critical Lesson Learned**:
+- ❌ `pytest command` → imports failed (wrong Python path)
+- ✅ `python -m pytest` → all tests pass
+
+**Always use:** `python -m pytest` for reliable module imports
+
+**Rationale**: The standalone `pytest` command may use a different Python interpreter or sys.path configuration than the active virtual environment, leading to module import errors even when packages are correctly installed. Using `python -m pytest` guarantees tests run with the same Python interpreter and import paths as the application code.
+
 Code MUST pass linting (black, isort, flake8, mypy) before commits. All public APIs MUST include comprehensive docstrings. Breaking changes MUST follow semantic versioning. Dependencies MUST be pinned and regularly updated for security.
 
 Documentation MUST include quickstart guides, API references, and integration examples. Agent-specific guidance files (CLAUDE.md) MUST be maintained for AI development assistance.
