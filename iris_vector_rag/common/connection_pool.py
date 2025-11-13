@@ -16,8 +16,8 @@ import os
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional
 
-import intersystems_iris.dbapi._DBAPI as iris_dbapi
-from intersystems_iris.dbapi._DBAPI import Connection
+import iris.dbapi as iris_dbapi
+from iris.dbapi import Connection
 
 logger = logging.getLogger(__name__)
 

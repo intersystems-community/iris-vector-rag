@@ -388,7 +388,7 @@ class TestPreflightValidation:
         THEN ValidationResult with FAIL status is returned with actionable message
         """
         # Import required modules
-        import intersystems_iris.dbapi._DBAPI as iris_dbapi
+        import iris.dbapi as iris_dbapi
         from iris_vector_rag.config.validators import VectorDimensionValidator, ValidationStatus
         from iris_vector_rag.config.entities import VectorConfiguration, TableConfiguration, ConfigSource
 
@@ -451,7 +451,7 @@ class TestPreflightValidation:
         THEN ValidationResult with PASS status is returned
         """
         # Import required modules
-        import intersystems_iris.dbapi._DBAPI as iris_dbapi
+        import iris.dbapi as iris_dbapi
         from iris_vector_rag.config.validators import NamespaceValidator, ValidationStatus
         from iris_vector_rag.config.entities import ConnectionConfiguration, TableConfiguration, ConfigSource
 

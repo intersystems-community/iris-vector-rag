@@ -21,7 +21,7 @@ import logging
 # Add rag-templates to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import intersystems_iris.dbapi._DBAPI as dbapi
+import iris.dbapi as dbapi
 
 # Configure logging
 logging.basicConfig(
