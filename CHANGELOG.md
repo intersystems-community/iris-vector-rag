@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.5.3] - 2025-11-12
+
+### Fixed
+- **CRITICAL**: Fixed SchemaManager bug where VECTOR_DIMENSION environment variable was ignored
+  - SchemaManager now correctly reads vector dimension from CloudConfiguration API
+  - Previous behavior: Always returned default 384 dimensions regardless of VECTOR_DIMENSION env var
+  - New behavior: Respects configuration priority (env > config > defaults) via Feature 058 CloudConfiguration
+  - Impact: Fixes FHIR-AI-Hackathon deployment issues where custom embedding dimensions were required
+- Fixed iris.dbapi import issues in connection_pool.py
+  - Replaced invalid `Connection` type hints with `Any` (iris.dbapi doesn't export Connection class)
+  - Removed incorrect `from iris.dbapi import Connection` import
+
+### Added
+- **Integration Test Coverage**: 9 comprehensive integration tests against real IRIS database
+  - `TestConnectionManagerIntegration`: 2 tests validating ConnectionManager with CloudConfiguration
+  - `TestSchemaManagerIntegration`: 3 tests validating SchemaManager dimension configuration
+  - `TestConfigurationPriorityChain`: 3 tests validating env > config > defaults priority
+  - `TestCompleteConfigurationFlow`: 1 test validating end-to-end configuration to database
+  - All tests verify real IRIS database operations (not mocked)
+  - Test Results: 9/9 passing (100%)
+
+### Technical Details
+- Files Modified:
+  - `iris_vector_rag/storage/schema_manager.py` - Lines 49-77: Changed from incorrect `config.get("embedding_model.dimension", 384)` to `cloud_config.vector.vector_dimension`
+  - `iris_vector_rag/common/connection_pool.py` - Replaced 7 Connection type hints with Any
+- Test Coverage: Added `tests/integration/test_cloud_config_integration.py` (400 lines)
+- FHIR-AI-Hackathon Compatibility: SchemaManager now properly reads VECTOR_DIMENSION=1024 and other custom dimensions
+
 ## [0.5.2] - 2025-11-12
 
 ### Added - Cloud Configuration Flexibility (Feature 058)
