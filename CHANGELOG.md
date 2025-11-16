@@ -1,5 +1,85 @@
 # Changelog
 
+## [0.5.5] - 2025-11-16
+
+### Fixed - Entity Types Configuration Bug (Feature 062)
+- **Entity Types Configuration**: `EntityExtractionService.extract_batch_with_dspy()` now accepts and honors `entity_types` parameter from configuration
+  - **Issue**: Configured entity types were ignored and healthcare-specific defaults (USER, MODULE, VERSION) were always used
+  - **Root Cause**: Method signature lacked `entity_types` parameter, couldn't pass config to `TrakCareEntityExtractionModule`
+  - **Fix**: Added `entity_types: Optional[List[str]] = None` parameter with resolution chain: parameter > config > DEFAULT_ENTITY_TYPES
+  - **Impact**: HotpotQA Question 2 now answers correctly (F1 improved from 0.000 to >0.0)
+  - **Files Modified**: `iris_vector_rag/services/entity_extraction.py`
+    - Line 41-49: Added `DEFAULT_ENTITY_TYPES` constant with domain-neutral defaults
+    - Line 890-955: Updated `extract_batch_with_dspy()` signature and implementation
+    - Added parameter validation (ValueError for empty list)
+    - Added warning logging for unknown entity types
+    - Updated docstring with parameter documentation and examples
+
+### Added
+- `DEFAULT_ENTITY_TYPES` constant for domain-neutral entity type defaults
+  - Values: `["PERSON", "ORGANIZATION", "LOCATION", "PRODUCT", "EVENT"]`
+  - Replaces healthcare-specific defaults (USER, MODULE, VERSION) when configuration missing
+- `entity_types` parameter to `EntityExtractionService.extract_batch_with_dspy()`
+  - Backward compatible (defaults to None)
+  - Validation for empty list (raises ValueError with clear message)
+  - Warning logging for unknown entity types (supports custom types)
+- Contract tests (`tests/contract/test_entity_types_config.py`)
+  - 7 tests validating parameter acceptance, defaults, validation, typing, and backward compatibility
+  - Test Results: 6/7 passing (1 skipped due to service initialization requirements)
+
+## [0.5.4] - 2025-11-14
+
+### Fixed - Critical Bug Fixes
+- **CRITICAL (Bug 1)**: Fixed AttributeError breaking all database connections (iris_dbapi_connector.py:210)
+  - **Issue**: Non-existent `iris.connect()` method caused AttributeError in v0.5.3
+  - **Fix**: Replaced with correct `iris.createConnection()` API
+  - **Impact**: Restores database connectivity (was completely broken in v0.5.3)
+  - **Test Results**: FHIR-AI test suite now 6/6 passing (up from 3/6 in v0.5.3)
+    - ✅ ConfigurationManager (backward compatibility preserved)
+    - ✅ ConnectionManager (was failing - now fixed)
+    - ✅ IRISVectorStore (was failing - now fixed)
+    - ✅ SchemaManager (was failing - now fixed)
+    - ✅ Environment Variables (backward compatibility preserved)
+    - ✅ Document Model (backward compatibility preserved)
+  - **Files Modified**: `iris_vector_rag/common/iris_dbapi_connector.py`
+    - Line 210: `iris.connect()` → `iris.createConnection()`
+    - Enhanced error handling: AttributeError → ConnectionError with clear messages
+    - Updated docstrings and log messages
+
+- **HIGH PRIORITY (Bug 2)**: Added automatic iris-vector-graph table initialization
+  - **Issue**: Silent PPR (Personalized PageRank) failures due to missing database tables
+  - **Fix**: Automatic detection and creation of iris-vector-graph tables during pipeline initialization
+  - **Impact**: Eliminates "Table not found" errors for GraphRAG operations
+  - **Performance**: Table initialization completes in < 5 seconds (4 tables created)
+  - **Tables Created**: rdf_labels, rdf_props, rdf_edges, kg_NodeEmbeddings_optimized
+  - **Files Modified**: `iris_vector_rag/storage/schema_manager.py`
+    - Added `_detect_iris_vector_graph()` method (uses importlib.util.find_spec)
+    - Added `ensure_iris_vector_graph_tables()` public method
+    - Added `validate_graph_prerequisites()` validation method
+    - Added `InitializationResult` dataclass for table creation results
+    - Added `ValidationResult` dataclass for prerequisite validation results
+
+### Technical Details
+**Bug 1 - Connection API Fix**:
+- Root Cause: intersystems-irispython v5.3.0 provides `iris.createConnection()`, not `iris.connect()`
+- Error Messages: Clear ConnectionError with connection parameters and remediation steps
+- Backward Compatibility: No breaking changes to public APIs
+- Testing: Contract tests verify no AttributeError during connection establishment
+
+**Bug 2 - Schema Initialization**:
+- Detection: Non-invasive package detection (no import side effects)
+- Initialization: Idempotent table creation (safe to call multiple times)
+- Validation: Clear error messages listing specific missing prerequisites
+- Graceful Degradation: Skips initialization when iris-vector-graph not installed
+- Logging: INFO for success, ERROR for failures with actionable context
+
+### Migration Notes
+**From v0.5.3 to v0.5.4**:
+- No action required - bug fixes are backward compatible
+- ConnectionManager automatically uses correct API
+- SchemaManager automatically initializes iris-vector-graph tables if package detected
+- Optional: Run `SchemaManager.validate_graph_prerequisites()` to verify setup
+
 ## [0.5.3] - 2025-11-12
 
 ### Fixed

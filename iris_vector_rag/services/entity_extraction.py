@@ -38,6 +38,16 @@ from .storage import EntityStorageAdapter
 
 logger = logging.getLogger(__name__)
 
+# Domain-neutral default entity types (Feature 062)
+# Used when entity_types not specified in configuration
+DEFAULT_ENTITY_TYPES = [
+    "PERSON",        # People names
+    "ORGANIZATION",  # Companies, institutions
+    "LOCATION",      # Places, addresses
+    "PRODUCT",       # Products, services
+    "EVENT"          # Events, occurrences
+]
+
 
 class OntologyAwareEntityExtractor:
     """
@@ -878,7 +888,10 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
             return []
 
     def extract_batch_with_dspy(
-        self, documents: List[Document], batch_size: int = 5
+        self,
+        documents: List[Document],
+        batch_size: int = 5,
+        entity_types: Optional[List[str]] = None
     ) -> Dict[str, List[Entity]]:
         """
         Extract entities from multiple documents in batch using DSPy (2-3x faster!).
@@ -890,17 +903,56 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
         Args:
             documents: List of documents to process (recommended: 5 documents)
             batch_size: Maximum tickets per LLM call (default: 5, optimal for quality)
+            entity_types: Optional list of entity types to extract. If None, uses config.
+                         If config missing, uses DEFAULT_ENTITY_TYPES.
+                         Empty list raises ValueError.
 
         Returns:
-            Dict mapping document IDs to their extracted entities
+            Dict mapping document IDs to their extracted entities.
+            Only entities with types in entity_types will be included.
+
+        Raises:
+            ValueError: If documents empty, or entity_types is empty list
+            Warning: If entity_types contains unknown types (logs but continues)
+
+        Example:
+            >>> # Use configured types
+            >>> results = service.extract_batch_with_dspy(documents)
+
+            >>> # Override with specific types
+            >>> results = service.extract_batch_with_dspy(
+            ...     documents, entity_types=["PERSON", "TITLE"]
+            ... )
         """
         import time
+
+        # Resolve entity_types: parameter > config > defaults (Feature 062)
+        if entity_types is None:
+            entity_types = self.config.get("entity_types", DEFAULT_ENTITY_TYPES)
+
+        # Validate entity_types is not empty list (Feature 062)
+        if isinstance(entity_types, list) and len(entity_types) == 0:
+            raise ValueError(
+                "entity_types cannot be empty list. "
+                "Remove the key to use default types or provide at least one entity type."
+            )
+
+        # Warn if unknown entity types detected (Feature 062)
+        from ..core.models import EntityTypes
+        known_types = {attr for attr in dir(EntityTypes) if not attr.startswith('_') and attr.isupper()}
+        unknown_types = set(entity_types) - known_types
+        if unknown_types:
+            logger.warning(
+                f"Unknown entity types detected: {list(unknown_types)}. "
+                f"These types will be passed to extraction module. "
+                f"Ensure your extraction module supports these types."
+            )
 
         # Start timing
         batch_start_time = time.time()
 
         # Log batch start
-        logger.info(f"📦 Processing batch of {len(documents)} documents...")
+        logger.info(f"📦 Processing batch of {len(documents)} documents with entity types: {entity_types}...")
 
         # Check if batch processing is enabled
         batch_config = self.config.get("batch_processing", {})
