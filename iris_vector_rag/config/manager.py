@@ -3,6 +3,14 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+from iris_vector_rag.config.entities import (
+    CloudConfiguration,
+    ConfigSource,
+    ConnectionConfiguration,
+    TableConfiguration,
+    VectorConfiguration,
+)
+
 
 # Define a specific exception for configuration errors
 class ConfigValidationError(ValueError):
@@ -698,3 +706,119 @@ class ConfigurationManager:
                     default_config[key] = value
 
         return default_config
+
+    def get_cloud_config(self) -> CloudConfiguration:
+        """
+        Get cloud deployment configuration with 12-factor app priority.
+
+        Configuration priority (highest to lowest):
+        1. Environment variables (IRIS_HOST, VECTOR_DIMENSION, TABLE_SCHEMA, etc.)
+        2. Configuration file (YAML)
+        3. Defaults (localhost:1972, 384 dimensions, RAG schema)
+
+        Returns:
+            CloudConfiguration instance with connection, vector, and table settings
+
+        Example:
+            >>> config_manager = ConfigurationManager()
+            >>> cloud_config = config_manager.get_cloud_config()
+            >>> print(f"Host: {cloud_config.connection.host}")
+            >>> print(f"Vector dimension: {cloud_config.vector.vector_dimension}")
+        """
+        # Initialize with defaults
+        connection_config = ConnectionConfiguration()
+        vector_config = VectorConfiguration()
+        table_config = TableConfiguration()
+
+        # Apply config file settings (priority 2)
+        db_config = self.get("database:iris", {})
+        if isinstance(db_config, dict):
+            if "host" in db_config:
+                connection_config.host = db_config["host"]
+                connection_config.source["host"] = ConfigSource.CONFIG_FILE
+            if "port" in db_config:
+                connection_config.port = int(db_config["port"])
+                connection_config.source["port"] = ConfigSource.CONFIG_FILE
+            if "username" in db_config:
+                connection_config.username = db_config["username"]
+                connection_config.source["username"] = ConfigSource.CONFIG_FILE
+            if "password" in db_config:
+                connection_config.password = db_config["password"]
+                connection_config.source["password"] = ConfigSource.CONFIG_FILE
+            if "namespace" in db_config:
+                connection_config.namespace = db_config["namespace"]
+                connection_config.source["namespace"] = ConfigSource.CONFIG_FILE
+
+        # Apply vector config from file
+        vector_file_config = self.get("storage", {})
+        if isinstance(vector_file_config, dict):
+            if "vector_dimension" in vector_file_config:
+                vector_config.vector_dimension = int(vector_file_config["vector_dimension"])
+                vector_config.source["vector_dimension"] = ConfigSource.CONFIG_FILE
+            if "distance_metric" in vector_file_config:
+                vector_config.distance_metric = vector_file_config["distance_metric"]
+                vector_config.source["distance_metric"] = ConfigSource.CONFIG_FILE
+            if "index_type" in vector_file_config:
+                vector_config.index_type = vector_file_config["index_type"]
+                vector_config.source["index_type"] = ConfigSource.CONFIG_FILE
+
+        # Apply table config from file
+        table_file_config = self.get("tables", {})
+        if isinstance(table_file_config, dict):
+            if "table_schema" in table_file_config:
+                table_config.table_schema = table_file_config["table_schema"]
+                table_config.source["table_schema"] = ConfigSource.CONFIG_FILE
+            if "entities_table" in table_file_config:
+                table_config.entities_table = table_file_config["entities_table"]
+                table_config.source["entities_table"] = ConfigSource.CONFIG_FILE
+            if "relationships_table" in table_file_config:
+                table_config.relationships_table = table_file_config["relationships_table"]
+                table_config.source["relationships_table"] = ConfigSource.CONFIG_FILE
+
+        # Apply environment variable overrides (priority 1)
+        env_mappings = {
+            "IRIS_HOST": ("connection", "host"),
+            "IRIS_PORT": ("connection", "port"),
+            "IRIS_USERNAME": ("connection", "username"),
+            "IRIS_PASSWORD": ("connection", "password"),
+            "IRIS_NAMESPACE": ("connection", "namespace"),
+            "VECTOR_DIMENSION": ("vector", "vector_dimension"),
+            "TABLE_SCHEMA": ("table", "table_schema"),
+        }
+
+        for env_var, (config_type, attr_name) in env_mappings.items():
+            if env_var in os.environ:
+                value = os.environ[env_var]
+
+                if config_type == "connection":
+                    # Cast port to int
+                    if attr_name == "port":
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            pass  # Keep as string if casting fails
+                    setattr(connection_config, attr_name, value)
+                    connection_config.source[attr_name] = ConfigSource.ENVIRONMENT
+
+                elif config_type == "vector":
+                    # Cast vector_dimension to int
+                    if attr_name == "vector_dimension":
+                        try:
+                            value = int(value)
+                        except ValueError:
+                            pass
+                    setattr(vector_config, attr_name, value)
+                    vector_config.source[attr_name] = ConfigSource.ENVIRONMENT
+
+                elif config_type == "table":
+                    setattr(table_config, attr_name, value)
+                    table_config.source[attr_name] = ConfigSource.ENVIRONMENT
+
+        # Create and return cloud configuration
+        cloud_config = CloudConfiguration(
+            connection=connection_config,
+            vector=vector_config,
+            tables=table_config,
+        )
+
+        return cloud_config

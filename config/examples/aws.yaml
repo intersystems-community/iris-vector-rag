@@ -1,0 +1,77 @@
+# AWS IRIS Cloud Configuration Example
+#
+# This configuration is optimized for AWS-hosted InterSystems IRIS instances.
+# AWS deployments typically require:
+# - %SYS namespace for schema creation privileges
+# - SQLUser schema prefix for table isolation
+# - Custom vector dimensions for NVIDIA NIM or OpenAI embeddings
+#
+# Usage:
+#   python -m iris_vector_rag.cli.init_tables --config config/examples/aws.yaml
+#
+# Or with environment variables:
+#   export IRIS_HOST="aws-iris.your-domain.com"
+#   export IRIS_PORT="1972"
+#   export IRIS_USERNAME="AppUser"
+#   export IRIS_PASSWORD="YourSecurePassword"
+#   export IRIS_NAMESPACE="%SYS"
+#   export VECTOR_DIMENSION="1024"
+#   export TABLE_SCHEMA="SQLUser"
+#   python -m iris_vector_rag.cli.init_tables
+
+database:
+  iris:
+    # AWS IRIS connection parameters
+    # Use environment variables for sensitive values:
+    # ${IRIS_HOST} reads from IRIS_HOST env var
+    # ${IRIS_PASSWORD} reads from IRIS_PASSWORD env var
+    host: ${IRIS_HOST:aws-iris.example.com}
+    port: ${IRIS_PORT:1972}
+    username: ${IRIS_USERNAME:AppUser}
+    password: ${IRIS_PASSWORD}  # ⚠️ Use environment variable, not hardcoded
+    namespace: "%SYS"  # AWS requires %SYS for schema creation
+    connection_timeout: 30
+
+storage:
+  # Vector configuration for NVIDIA NIM embeddings
+  # Common AWS embedding models:
+  # - 384: SentenceTransformers (all-MiniLM-L6-v2)
+  # - 1024: NVIDIA NIM, Cohere embed-english-v3.0
+  # - 1536: OpenAI text-embedding-ada-002
+  # - 3072: OpenAI text-embedding-3-large
+  vector_dimension: 1024  # NVIDIA NIM default
+  distance_metric: "COSINE"
+  index_type: "HNSW"
+
+tables:
+  # AWS standard schema configuration
+  table_schema: "SQLUser"  # Required for AWS IRIS
+  entities_table: "Entities"
+  relationships_table: "EntityRelationships"
+  create_if_not_exists: true
+
+# Vector index configuration (HNSW parameters)
+vector_index:
+  type: "HNSW"
+  M: 16  # Higher = better recall, more memory
+  efConstruction: 200  # Higher = better quality, slower build
+  Distance: "COSINE"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  path: "logs/aws_iris_rag.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# AWS-specific deployment notes:
+#
+# 1. Security: NEVER commit passwords to git. Use environment variables or AWS Secrets Manager
+# 2. Namespace: AWS IRIS requires %SYS namespace for CREATE TABLE permissions
+# 3. Schema: Use SQLUser schema prefix for table isolation
+# 4. Performance: Adjust M and efConstruction based on dataset size
+#    - Small datasets (< 10K docs): M=16, efConstruction=200
+#    - Medium datasets (10K-100K docs): M=32, efConstruction=400
+#    - Large datasets (> 100K docs): M=48, efConstruction=600
+# 5. Vector dimensions: Must match your embedding model
+#    - Changing dimensions after data is loaded requires migration
+#    - See: docs/migration/vector-dimensions.md
