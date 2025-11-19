@@ -1,0 +1,16 @@
+# IRIS test container configuration for Feature 058 integration tests
+edition: community
+image: containers.intersystems.com/intersystems/iris-community-arm64:latest-em
+container_name: iris-feature-058-test
+ports:
+  superserver: 11972
+  management: 15277
+credentials:
+  username: _SYSTEM
+  password: SYS
+  namespace: USER
+healthcheck:
+  enabled: true
+  timeout: 120
+volumes:
+  - /tmp/iris-feature-058-test:/dur

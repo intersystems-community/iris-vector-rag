@@ -1,0 +1,82 @@
+# Azure IRIS Cloud Configuration Example
+#
+# This configuration is optimized for Azure-hosted InterSystems IRIS instances.
+# Azure deployments typically require:
+# - Custom namespace configuration (often USER or custom namespace)
+# - Schema prefix configuration for multi-tenant isolation
+# - Azure AD authentication (via connection string)
+#
+# Usage:
+#   python -m iris_vector_rag.cli.init_tables --config config/examples/azure.yaml
+#
+# Or with environment variables:
+#   export IRIS_HOST="azure-iris.your-domain.cloudapp.azure.com"
+#   export IRIS_PORT="1972"
+#   export IRIS_USERNAME="AzureAppUser"
+#   export IRIS_PASSWORD="YourSecurePassword"
+#   export IRIS_NAMESPACE="USER"
+#   export VECTOR_DIMENSION="1536"
+#   export TABLE_SCHEMA="RAG"
+#   python -m iris_vector_rag.cli.init_tables
+
+database:
+  iris:
+    # Azure IRIS connection parameters
+    # Use Azure Key Vault for sensitive values:
+    # ${IRIS_HOST} reads from IRIS_HOST env var
+    # ${IRIS_PASSWORD} reads from Azure Key Vault secret
+    host: ${IRIS_HOST:azure-iris.cloudapp.azure.com}
+    port: ${IRIS_PORT:1972}
+    username: ${IRIS_USERNAME:AzureAppUser}
+    password: ${IRIS_PASSWORD}  # ⚠️ Use Azure Key Vault, not hardcoded
+    namespace: "USER"  # Azure typically uses USER namespace
+    connection_timeout: 30
+
+storage:
+  # Vector configuration for OpenAI embeddings
+  # Common Azure embedding models:
+  # - 384: SentenceTransformers (all-MiniLM-L6-v2)
+  # - 1536: OpenAI text-embedding-ada-002 (most common on Azure)
+  # - 3072: OpenAI text-embedding-3-large
+  vector_dimension: 1536  # OpenAI ada-002 default
+  distance_metric: "COSINE"
+  index_type: "HNSW"
+
+tables:
+  # Azure schema configuration
+  table_schema: "RAG"  # Standard RAG schema for Azure
+  entities_table: "Entities"
+  relationships_table: "EntityRelationships"
+  create_if_not_exists: true
+
+# Vector index configuration (HNSW parameters)
+vector_index:
+  type: "HNSW"
+  M: 16  # Higher = better recall, more memory
+  efConstruction: 200  # Higher = better quality, slower build
+  Distance: "COSINE"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  path: "logs/azure_iris_rag.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Azure-specific deployment notes:
+#
+# 1. Security: Use Azure Key Vault for password management
+#    - Set password via: export IRIS_PASSWORD=$(az keyvault secret show --name iris-password --vault-name your-vault --query value -o tsv)
+# 2. Namespace: Azure typically uses USER namespace (not %SYS)
+# 3. Schema: Use RAG schema prefix for standard deployments
+# 4. Network: Ensure Azure VNET allows traffic on port 1972
+# 5. Performance: Azure SQL Database has different resource limits
+#    - Adjust M and efConstruction based on Azure SQL tier
+#    - Standard tier: M=16, efConstruction=200
+#    - Premium tier: M=32, efConstruction=400
+# 6. Vector dimensions: Must match your embedding model
+#    - Azure OpenAI Service uses 1536 dimensions for ada-002
+#    - Changing dimensions after data is loaded requires migration
+#    - See: docs/migration/vector-dimensions.md
+# 7. Azure AD Authentication: For Azure AD, use connection string format:
+#    - username: Azure AD app registration client ID
+#    - password: Azure AD app registration client secret

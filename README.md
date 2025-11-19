@@ -4,6 +4,8 @@
 
 Build intelligent applications that combine large language models with your enterprise data using battle-tested RAG patterns and native vector search capabilities.
 
+**Author: Thomas Dyar** (thomas.dyar@intersystems.com)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![InterSystems IRIS](https://img.shields.io/badge/IRIS-2024.1+-purple.svg)](https://www.intersystems.com/products/intersystems-iris/)

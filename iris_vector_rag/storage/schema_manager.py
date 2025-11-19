@@ -45,12 +45,15 @@ class SchemaManager:
             SchemaManager._config_loaded = True
         else:
             # Config already loaded by another instance - set instance attributes from config
+            # Use CloudConfiguration API for environment variable support (Feature 058)
+            cloud_config = self.config_manager.get_cloud_config()
+
             self.base_embedding_model = self.config_manager.get(
                 "embedding_model.name", "sentence-transformers/all-MiniLM-L6-v2"
             )
-            self.base_embedding_dimension = self.config_manager.get(
-                "embedding_model.dimension", 384
-            )
+            # Use cloud_config for vector dimension (supports VECTOR_DIMENSION env var)
+            self.base_embedding_dimension = cloud_config.vector.vector_dimension
+
             # Now build mappings (these methods reference the attributes we just set)
             self._build_model_dimension_mapping()
             self._build_table_configurations()
@@ -63,13 +66,15 @@ class SchemaManager:
         """Load configuration from config manager and validate it makes sense."""
         logger.info("Schema Manager: Loading and validating configuration...")
 
+        # Use CloudConfiguration API for environment variable support (Feature 058)
+        cloud_config = self.config_manager.get_cloud_config()
+
         # Load base embedding model configuration
         self.base_embedding_model = self.config_manager.get(
             "embedding_model.name", "sentence-transformers/all-MiniLM-L6-v2"
         )
-        self.base_embedding_dimension = self.config_manager.get(
-            "embedding_model.dimension", 384
-        )
+        # Use cloud_config for vector dimension (supports VECTOR_DIMENSION env var)
+        self.base_embedding_dimension = cloud_config.vector.vector_dimension
 
         # Validate configuration consistency
         self._validate_configuration()

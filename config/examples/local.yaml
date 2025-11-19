@@ -1,0 +1,90 @@
+# Local Development Configuration Example
+#
+# This configuration is optimized for local development with InterSystems IRIS.
+# Local deployments typically use:
+# - localhost connection
+# - Default port 1972 (or Docker port 1974)
+# - USER namespace for development
+# - Standard RAG schema
+# - Default 384-dimensional embeddings (SentenceTransformers)
+#
+# Usage:
+#   python -m iris_vector_rag.cli.init_tables --config config/examples/local.yaml
+#
+# Or with Docker:
+#   docker-compose up -d  # Start IRIS container
+#   python -m iris_vector_rag.cli.init_tables --config config/examples/local.yaml
+
+database:
+  iris:
+    # Local IRIS connection parameters
+    host: "localhost"
+    port: 1974  # Docker default (or 1972 for native install)
+    username: "_SYSTEM"
+    password: "SYS"
+    namespace: "USER"  # Development namespace
+    connection_timeout: 30
+
+storage:
+  # Vector configuration for local development
+  # Using SentenceTransformers all-MiniLM-L6-v2 (384 dimensions)
+  # This is the default model and provides good performance for development
+  vector_dimension: 384  # SentenceTransformers default
+  distance_metric: "COSINE"
+  index_type: "HNSW"
+
+tables:
+  # Local development schema configuration
+  table_schema: "RAG"  # Standard RAG schema
+  entities_table: "Entities"
+  relationships_table: "EntityRelationships"
+  create_if_not_exists: true
+
+# Vector index configuration (HNSW parameters)
+# Optimized for small-medium datasets (< 10K documents)
+vector_index:
+  type: "HNSW"
+  M: 16  # Good balance for development
+  efConstruction: 200  # Fast build time for development
+  Distance: "COSINE"
+
+# Logging configuration
+logging:
+  level: "DEBUG"  # Verbose logging for development
+  path: "logs/local_iris_rag.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Local development notes:
+#
+# 1. Docker Setup:
+#    docker-compose up -d  # Start IRIS container
+#    make setup-db         # Initialize database
+#    make load-data        # Load sample data
+#
+# 2. Native IRIS Setup:
+#    - Install IRIS Community Edition
+#    - Default port is 1972 (change port to 1972 if using native)
+#    - Default credentials: _SYSTEM / SYS
+#
+# 3. Vector Dimensions:
+#    - 384 dimensions (all-MiniLM-L6-v2) is fast and lightweight
+#    - Good for development and testing
+#    - For production, consider larger models (768, 1024, 1536 dimensions)
+#
+# 4. Performance:
+#    - M=16, efConstruction=200 provides fast indexing for development
+#    - For larger datasets (> 10K docs), increase to M=32, efConstruction=400
+#
+# 5. Testing:
+#    - Run: make test-basic  # Test basic RAG pipeline
+#    - Run: make test-integration  # Integration tests
+#
+# 6. Environment Variables (alternative to config file):
+#    export IRIS_HOST="localhost"
+#    export IRIS_PORT="1974"
+#    export IRIS_USERNAME="_SYSTEM"
+#    export IRIS_PASSWORD="SYS"
+#    export IRIS_NAMESPACE="USER"
+#    export VECTOR_DIMENSION="384"
+#    export TABLE_SCHEMA="RAG"
+#    python -m iris_vector_rag.cli.init_tables

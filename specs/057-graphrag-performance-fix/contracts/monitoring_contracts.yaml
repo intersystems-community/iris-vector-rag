@@ -1,0 +1,130 @@
+# Monitoring Contracts: GraphRAG Storage Performance Optimization
+# Feature: 057-graphrag-performance-fix
+# Generated: 2025-11-12
+
+contracts:
+  - id: MC-001
+    requirement: FR-008
+    description: Track processing time with millisecond precision
+    test: Verify ProcessingMetrics records have ms precision
+    assertion: metrics.timestamp_precision == 'millisecond'
+    inputs:
+      - ticket: Single ticket processed through pipeline
+      - metric_recording: "Automatic during processing"
+    expected_output:
+      - timestamp_format: "ISO 8601 with millisecond precision (three decimal places)"
+      - example: "2025-11-12T14:23:45.123Z"
+      - fields_recorded:
+          - extraction_time_ms: "Millisecond precision integer"
+          - storage_time_ms: "Millisecond precision integer"
+          - total_time_ms: "Millisecond precision integer"
+    test_implementation: tests/contract/test_monitoring_contract.py::test_mc001_millisecond_precision
+    priority: P1
+    current_status: FAILING
+    expected_result: "MUST FAIL initially (not implemented), MUST PASS after monitoring implementation"
+
+  - id: MC-002
+    requirement: FR-009
+    description: Track throughput in real-time
+    test: Query throughput metric during processing
+    assertion: throughput_metric_exists AND throughput_updated_realtime
+    inputs:
+      - processing_batch: 100 tickets
+      - monitoring_window: "Real-time (updated during batch processing)"
+    expected_output:
+      - throughput_metric: "tickets_per_hour (calculated from recent window)"
+      - update_frequency: "Real-time (after each ticket completion)"
+      - calculation_method: "Rolling window average (last 1000 tickets)"
+    test_implementation: tests/contract/test_monitoring_contract.py::test_mc002_realtime_throughput
+    priority: P1
+    current_status: FAILING
+    expected_result: "MUST FAIL initially (not implemented), MUST PASS after monitoring implementation"
+
+  - id: MC-003
+    requirement: FR-010
+    description: Alert when processing >20 seconds per ticket
+    test: Simulate slow ticket, verify alert triggered
+    assertion: alert_triggered_when(total_time_ms > 20000)
+    inputs:
+      - slow_ticket: Ticket that takes 25 seconds to process (simulated delay)
+      - alert_threshold: 20000 milliseconds
+      - alert_mechanism: "Log warning + flag in metrics"
+    expected_output:
+      - alert_triggered: "True (warning logged)"
+      - alert_severity: "warning (not critical, but above target)"
+      - alert_message: "Processing time exceeded threshold: 25000ms > 20000ms"
+    test_implementation: tests/contract/test_monitoring_contract.py::test_mc003_slow_ticket_alert
+    priority: P1
+    current_status: FAILING
+    expected_result: "MUST FAIL initially (not implemented), MUST PASS after monitoring implementation"
+
+  - id: MC-004
+    requirement: FR-011
+    description: Log timing breakdowns
+    test: Verify logs contain extraction_time and storage_time
+    assertion: "'extraction_time' in log_entry AND 'storage_time' in log_entry"
+    inputs:
+      - ticket: Single ticket processed
+      - log_capture: "Structured logging with timing fields"
+    expected_output:
+      - log_format: "JSON structured logs"
+      - required_fields:
+          - extraction_time_ms: "Time spent on entity extraction"
+          - storage_time_ms: "Time spent on IRIS storage"
+          - total_time_ms: "Total processing time"
+          - ticket_id: "Ticket identifier for correlation"
+      - log_level: "INFO (standard processing log)"
+    test_implementation: tests/contract/test_monitoring_contract.py::test_mc004_timing_breakdowns
+    priority: P1
+    current_status: FAILING
+    expected_result: "MUST FAIL initially (not implemented), MUST PASS after monitoring implementation"
+
+monitoring_design:
+  performance_metrics_table:
+    description: "In-memory circular buffer for recent metrics"
+    implementation: "deque with maxlen=1000 (last 1000 tickets)"
+    fields:
+      - metric_id: "UUID"
+      - timestamp: "ISO 8601 with millisecond precision"
+      - ticket_id: "Reference to ticket"
+      - extraction_time_ms: "Integer (milliseconds)"
+      - storage_time_ms: "Integer (milliseconds)"
+      - total_time_ms: "Integer (milliseconds)"
+      - success: "Boolean (true/false)"
+
+  throughput_calculation:
+    description: "Real-time tickets/hour calculation"
+    method: |
+      recent_tickets = performance_history[-100:]  # Last 100 tickets
+      total_time_seconds = sum(t.total_time_ms for t in recent_tickets) / 1000.0
+      tickets_per_hour = (len(recent_tickets) / total_time_seconds) * 3600
+
+  alert_thresholds:
+    slow_ticket_warning: 20000  # 20 seconds (warning level)
+    slow_ticket_critical: 30000  # 30 seconds (critical level)
+    low_throughput_warning: 200  # tickets/hour (below target)
+    low_throughput_critical: 100  # tickets/hour (severe degradation)
+
+  logging_strategy:
+    description: "Structured JSON logs with timing breakdowns"
+    log_level: "INFO"
+    example: |
+      {
+        "timestamp": "2025-11-12T14:23:45.123Z",
+        "level": "INFO",
+        "message": "Ticket processed successfully",
+        "ticket_id": "T-12345",
+        "extraction_time_ms": 5432,
+        "storage_time_ms": 8765,
+        "total_time_ms": 14197,
+        "entity_count": 10,
+        "relationship_count": 5,
+        "throughput_tickets_per_hour": 253
+      }
+
+metadata:
+  feature_branch: 057-graphrag-performance-fix
+  specification: specs/057-graphrag-performance-fix/spec.md
+  test_directory: tests/contract/
+  monitoring_requirement: "Real-time performance visibility without blocking critical path"
+  observability_pattern: "Non-blocking metric collection via background thread"
