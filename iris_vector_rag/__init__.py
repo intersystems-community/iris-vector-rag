@@ -18,7 +18,7 @@ from .validation.requirements import get_pipeline_requirements
 from .validation.validator import PreConditionValidator
 
 # Package version
-__version__ = "0.5.5"
+__version__ = "0.5.6"
 __author__ = "InterSystems IRIS RAG Templates Project"
 __description__ = "A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend."
 
