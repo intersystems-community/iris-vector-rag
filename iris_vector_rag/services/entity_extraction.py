@@ -1018,7 +1018,8 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
             logger.info(f"🚀 Processing {len(tickets)} tickets in ONE LLM call (batch mode)")
 
             # Call batch extraction (single LLM call for all tickets!)
-            batch_results = self._batch_dspy_module.forward(tickets)
+            # Pass entity_types to enable domain-specific extraction
+            batch_results = self._batch_dspy_module.forward(tickets, entity_types=entity_types)
 
             # Convert batch results to Document ID → Entities mapping
             result_map = {}
