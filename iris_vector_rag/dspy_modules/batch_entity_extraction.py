@@ -14,6 +14,16 @@ from typing import List, Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 
+# Domain-specific entity type presets
+DOMAIN_PRESETS = {
+    "it_support": ["PRODUCT", "USER", "MODULE", "ERROR", "ACTION", "ORGANIZATION", "VERSION"],
+    "biomedical": ["GENE", "PROTEIN", "DISEASE", "CHEMICAL", "DRUG", "CELL_TYPE", "ORGANISM"],
+    "legal": ["PARTY", "JUDGE", "COURT", "LAW", "DATE", "MONETARY_AMOUNT", "JURISDICTION"],
+    "general": ["PERSON", "ORGANIZATION", "LOCATION", "DATE", "EVENT", "PRODUCT"],
+    "wikipedia": ["PERSON", "ORGANIZATION", "LOCATION", "TITLE", "ROLE", "POSITION", "EVENT"],
+}
+
+
 class BatchEntityExtractionSignature(dspy.Signature):
     """Extract entities from MULTIPLE tickets in one LLM call."""
 
@@ -21,7 +31,7 @@ class BatchEntityExtractionSignature(dspy.Signature):
         desc="JSON array of tickets. Each has: ticket_id, text. Extract entities for ALL tickets."
     )
     entity_types = dspy.InputField(
-        desc="PRODUCT, USER, MODULE, ERROR, ACTION, ORGANIZATION, VERSION"
+        desc="Comma-separated list of entity types to extract"
     )
 
     batch_results = dspy.OutputField(
@@ -138,16 +148,29 @@ class BatchEntityExtractionModule(dspy.Module):
 
         return None
 
-    def forward(self, tickets: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    def forward(
+        self,
+        tickets: List[Dict[str, str]],
+        entity_types: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
         """
         Extract entities from a batch of tickets with JSON retry logic (T025).
 
         Args:
             tickets: List of dicts with 'id' and 'text' keys
+            entity_types: List of entity types to extract (e.g., ["PERSON", "ORG", "LOCATION"])
+                         If None, defaults to IT support types for backward compatibility
 
         Returns:
             List of extraction results (one per ticket)
         """
+        # Default to IT support types for backward compatibility
+        if entity_types is None:
+            entity_types = ["PRODUCT", "USER", "MODULE", "ERROR", "ACTION", "ORGANIZATION", "VERSION"]
+
+        # Convert list to comma-separated string for DSPy
+        entity_types_str = ", ".join(entity_types)
+
         try:
             # Prepare batch input
             batch_input = json.dumps([
@@ -158,7 +181,7 @@ class BatchEntityExtractionModule(dspy.Module):
             # Single LLM call for entire batch
             prediction = self.extract(
                 tickets_batch=batch_input,
-                entity_types="PRODUCT, USER, MODULE, ERROR, ACTION, ORGANIZATION, VERSION"
+                entity_types=entity_types_str
             )
 
             # Parse batch results with retry logic (T025)

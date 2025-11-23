@@ -5,6 +5,16 @@ All notable changes to the RAG Templates project will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.8] - 2025-01-23
+
+### Fixed
+- **Entity Storage FK Validation**: Resolved critical foreign key validation failures in batch entity storage. Relationships now correctly use `entity.id` (UUID) instead of `entity.text` (entity names) as foreign keys, eliminating "20 missing entity IDs, 30 orphaned relationships" errors
+- **Batch Entity Processing**: Fixed entity ID mismatch in `GraphRAGPipeline` relationship creation that caused systematic FK validation failures during knowledge graph construction
+- **hipporag2 Compatibility**: Enhanced batch storage reliability for downstream pipelines like hipporag2-pipeline
+
+### Changed
+- **iris-vector-graph Dependency**: Updated minimum version to >=1.1.7 to leverage upstream PPR connection type fixes and improved graph traversal reliability
+
 ## [Unreleased] - 2025-06-08
 
 ### 🚀 Major Enhancements

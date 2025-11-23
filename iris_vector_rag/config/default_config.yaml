@@ -12,6 +12,16 @@ storage:
   iris:
     table_name: "RAG.SourceDocuments"
     vector_dimension: 384
+    # Custom metadata filter keys for multi-tenant isolation (User Story 1 - P1)
+    # These fields can be used in metadata_filter parameter for queries
+    # Default filter keys (always enabled): document_id, source, title, author,
+    #   created_at, updated_at, content_type, file_type, page_number, section,
+    #   chunk_id, chunk_index, language, collection_id, metadata_hash,
+    #   parent_document_id, version
+    custom_filter_keys:
+      - "tenant_id"              # Tenant identifier for multi-tenant deployments
+      - "security_level"         # Security clearance level (e.g., public, confidential, secret)
+      - "department"             # Department or organizational unit
 
 # Vector index configuration for optimal HNSW performance
 vector_index:
@@ -354,3 +364,104 @@ iris_graph_core:
 #       path: "ontologies/legal.owl"
 #     - type: "skos"
 #       path: "ontologies/general_terms.skos"
+
+# =============================================================================
+# Enterprise Enhancements (v0.6.0)
+# =============================================================================
+
+# Role-Based Access Control (User Story 3 - P1)
+security:
+  rbac:
+    enabled: false               # Enable RBAC policy enforcement
+    policy_class: null           # Full import path to RBAC policy class (e.g., "myapp.security.MyRBACPolicy")
+    # Example policy classes:
+    # - "iris_vector_rag.security.examples.LDAPRBACPolicy"
+    # - "iris_vector_rag.security.examples.ClearanceLevelPolicy"
+    # - "mycompany.security.CustomRBACPolicy"
+
+# OpenTelemetry Monitoring (User Story 4 - P2)
+telemetry:
+  enabled: false                 # Enable OpenTelemetry instrumentation (zero overhead when disabled)
+  service_name: "iris-vector-rag"
+  endpoint: "http://localhost:4318"  # OTLP HTTP endpoint
+  sampling_ratio: 1.0            # Sampling rate (1.0 = 100%, 0.1 = 10%)
+  export_protocol: "http"        # Export protocol: http or grpc
+  export_timeout_ms: 10000       # Export timeout in milliseconds
+
+  # GenAI semantic conventions (OpenTelemetry)
+  genai_conventions:
+    enabled: true                # Track LLM-specific attributes (gen.ai.*)
+    track_token_usage: true      # Track token counts and costs
+    track_prompts: false         # Include prompts in spans (may contain sensitive data)
+    track_completions: false     # Include completions in spans (may contain sensitive data)
+
+  # Cost tracking
+  cost_tracking:
+    enabled: true                # Calculate LLM API costs
+    pricing_table:               # Model pricing (per 1M tokens)
+      openai:
+        gpt-4o-mini:
+          input: 0.15            # $0.15 per 1M input tokens
+          output: 0.60           # $0.60 per 1M output tokens
+        gpt-4o:
+          input: 2.50            # $2.50 per 1M input tokens
+          output: 10.00          # $10.00 per 1M output tokens
+        gpt-4-turbo:
+          input: 10.00
+          output: 30.00
+      anthropic:
+        claude-3-5-sonnet-20241022:
+          input: 3.00            # $3.00 per 1M input tokens
+          output: 15.00          # $15.00 per 1M output tokens
+        claude-3-opus-20240229:
+          input: 15.00
+          output: 75.00
+
+# Bulk Document Loading (User Story 5 - P2)
+batch_operations:
+  enabled: true                  # Enable batch operations (10x+ speedup)
+  default_batch_size: 1000       # Default batch size for bulk operations
+  max_batch_size: 10000          # Maximum allowed batch size
+  show_progress: true            # Show progress bars for batch operations
+  error_handling: "continue"     # Error handling strategy: continue, stop, rollback
+  max_errors_in_response: 100    # Maximum number of errors to return in response
+
+  # Performance targets
+  performance:
+    target_throughput_docs_per_sec: 1000  # Target: >=1000 docs/sec for 10K documents
+    target_bulk_load_time_ms: 10000       # Target: <10s for 10K documents
+
+# Collection Management (User Story 2 - P1)
+collections:
+  enabled: true                  # Enable collection lifecycle management
+  default_collection_id: "default"
+  max_collection_id_length: 128
+  allowed_collection_id_pattern: "^[a-zA-Z0-9_-]+$"  # Alphanumeric + hyphens/underscores
+
+  # Statistics and metadata
+  track_statistics: true         # Track document counts, sizes, timestamps
+  compute_size_in_bytes: true    # Calculate total size of documents in collections
+
+# Metadata Schema Discovery (User Story 6 - P3)
+schema_discovery:
+  enabled: true                  # Enable metadata schema discovery
+  default_sample_size: 100       # Default number of documents to sample
+  max_sample_size: 200           # Maximum allowed sample size
+  min_sample_size: 10            # Minimum allowed sample size
+
+  # Type inference
+  type_inference:
+    enabled: true                # Enable automatic type inference
+    detect_datetime: true        # Detect ISO 8601 datetime strings
+    detect_numeric: true         # Detect integers and floats
+    detect_boolean: true         # Detect boolean values
+    detect_arrays: true          # Detect array types
+
+  # Statistics
+  compute_statistics:
+    enabled: true                # Compute min/max/avg for numeric fields
+    max_example_values: 5        # Maximum number of example values per field
+
+  # Performance target
+  performance:
+    target_discovery_time_ms: 5000  # Target: <5s for sample_size=200

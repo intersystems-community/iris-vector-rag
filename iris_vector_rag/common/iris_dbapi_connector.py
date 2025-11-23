@@ -165,11 +165,11 @@ def get_iris_dbapi_connection():
     Returns:
         A direct IRIS connection object or None if connection fails.
     """
-    # Use direct iris import instead of DBAPI
+    # Use intersystems_iris DBAPI module
     try:
-        import iris
+        import intersystems_iris.dbapi._DBAPI as iris
     except ImportError as e:
-        logger.error(f"Cannot import iris module: {e}")
+        logger.error(f"Cannot import intersystems_iris.dbapi module: {e}")
         return None
 
     # Get connection parameters from environment with auto-detection fallback

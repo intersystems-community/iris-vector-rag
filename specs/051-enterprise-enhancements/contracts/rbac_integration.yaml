@@ -1,0 +1,537 @@
+# API Contract: RBAC Integration
+# Feature: Enterprise Enhancements for RAG System
+# Branch: 051-enterprise-enhancements
+# Date: 2025-11-22
+
+openapi: 3.0.0
+info:
+  title: RBAC Integration API
+  version: 1.0.0
+  description: |
+    API contract for Role-Based Access Control (RBAC) integration hooks,
+    enabling permission-based access control for collections and documents.
+
+components:
+  schemas:
+    RBACPolicyInterface:
+      type: object
+      description: |
+        Abstract interface that users implement to integrate with their
+        organization's authorization system (LDAP, OAuth, IRIS Security, etc.).
+      properties:
+        check_collection_access:
+          type: string
+          description: |
+            Method signature: check_collection_access(user, collection_id, operation) -> bool
+            Returns True if user can perform operation on collection.
+        filter_documents:
+          type: string
+          description: |
+            Method signature: filter_documents(user, documents) -> List[Document]
+            Returns filtered list containing only documents user can access.
+        get_audit_context:
+          type: string
+          description: |
+            Optional method signature: get_audit_context(user) -> dict
+            Returns additional context for audit logging.
+
+    PermissionCheck:
+      type: object
+      required:
+        - user
+        - resource
+        - operation
+        - decision
+      properties:
+        user:
+          type: string
+          maxLength: 255
+          description: User identifier (email, username, or account ID)
+          example: "john.doe@company.com"
+        resource:
+          type: string
+          maxLength: 128
+          description: Resource being accessed (collection_id or document_id)
+          example: "medical-docs-2024"
+        operation:
+          type: string
+          enum: [read, write, delete, admin]
+          description: Operation being attempted
+        decision:
+          type: boolean
+          description: Whether access is granted
+        reason:
+          type: string
+          maxLength: 255
+          description: Explanation for decision (for audit logs)
+          example: "User has 'reader' role in LDAP group"
+        evaluated_at:
+          type: string
+          format: date-time
+        policy_version:
+          type: string
+          description: Version of policy that made decision
+
+    PermissionDeniedError:
+      type: object
+      required:
+        - error_type
+        - message
+        - user
+        - resource
+        - operation
+      properties:
+        error_type:
+          type: string
+          enum: [permission_denied]
+        message:
+          type: string
+          example: "User 'john.doe@company.com' denied 'write' access to 'medical-docs-2024'"
+        user:
+          type: string
+        resource:
+          type: string
+        operation:
+          type: string
+        contact_info:
+          type: string
+          example: "Contact your administrator if you believe this is an error."
+
+    RBACConfiguration:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: Whether RBAC is enabled (disabled by default for backward compatibility)
+        policy_class:
+          type: string
+          nullable: true
+          description: |
+            Fully-qualified class name of RBACPolicy implementation
+            Example: "myapp.security.LDAPRBACPolicy"
+        policy_config:
+          type: object
+          description: |
+            Configuration passed to policy constructor
+            Example: {"ldap_server": "ldap://...", "bind_dn": "..."}
+
+paths:
+  # Note: RBAC is enforced via policy checks before operations,
+  # not via dedicated API endpoints. These paths document the integration points.
+
+  /api/v1/{pipeline}/_search:
+    post:
+      summary: Execute query with RBAC enforcement
+      description: |
+        Standard RAG pipeline query with automatic RBAC permission checks.
+        If RBAC enabled, policy.check_collection_access() and
+        policy.filter_documents() are called before returning results.
+      operationId: queryWithRBAC
+      parameters:
+        - name: pipeline
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - ApiKey: []
+        - RBACPolicy: [read]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                top_k:
+                  type: integer
+                metadata_filter:
+                  type: object
+                user:
+                  type: string
+                  description: User identifier (if not from auth context)
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    type: string
+                  retrieved_documents:
+                    type: array
+                    items:
+                      type: object
+                    description: Documents filtered by RBAC policy
+                  rbac_audit:
+                    type: object
+                    properties:
+                      user:
+                        type: string
+                      documents_before_filtering:
+                        type: integer
+                      documents_after_filtering:
+                        type: integer
+                      policy_version:
+                        type: string
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedError'
+
+  /api/v1/documents/upload:
+    post:
+      summary: Upload documents with RBAC enforcement
+      description: |
+        Upload documents with write permission check.
+        If RBAC enabled, policy.check_collection_access(user, collection_id, 'write')
+        is called before allowing upload.
+      operationId: uploadDocumentsWithRBAC
+      security:
+        - ApiKey: []
+        - RBACPolicy: [write]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                collection_id:
+                  type: string
+                user:
+                  type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedError'
+
+  /api/v1/collections/{collection_id}:
+    delete:
+      summary: Delete collection with RBAC enforcement
+      description: |
+        Delete collection with admin permission check.
+        If RBAC enabled, policy.check_collection_access(user, collection_id, 'delete')
+        is called before allowing deletion.
+      operationId: deleteCollectionWithRBAC
+      security:
+        - ApiKey: []
+        - RBACPolicy: [delete]
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionDeniedError'
+
+# Contract Tests
+x-contract-tests:
+  - name: test_rbac_disabled_backward_compatibility
+    description: System works without RBAC configured (backward compatibility)
+    precondition: |
+      RBAC configuration: enabled=false or policy_class=null
+      Query: "What is diabetes?"
+    expected:
+      status_code: 200
+      permission_checks_skipped: true
+      all_documents_returned: true
+
+  - name: test_collection_read_permission_granted
+    description: User with read permission can query collection
+    precondition: |
+      RBAC enabled with mock policy
+      User "john.doe@company.com" has read permission for "medical-docs"
+      Query "medical-docs" collection
+    expected:
+      check_collection_access_called: true
+      check_collection_access_args:
+        user: "john.doe@company.com"
+        collection_id: "medical-docs"
+        operation: "read"
+      check_collection_access_return: true
+      status_code: 200
+      documents_returned: > 0
+
+  - name: test_collection_read_permission_denied
+    description: User without read permission cannot query collection
+    precondition: |
+      RBAC enabled with mock policy
+      User "jane.smith@company.com" has NO read permission for "medical-docs"
+      Query "medical-docs" collection
+    expected:
+      check_collection_access_called: true
+      check_collection_access_return: false
+      status_code: 403
+      error_type: permission_denied
+      error_message_contains: "jane.smith@company.com"
+      error_message_contains: "read"
+      error_message_contains: "medical-docs"
+
+  - name: test_document_level_filtering
+    description: Documents filtered based on security clearance
+    precondition: |
+      RBAC enabled with clearance-based policy
+      User "john.doe" has clearance level 3
+      Retrieved documents have security_level: [2, 3, 4, 5]
+    expected:
+      filter_documents_called: true
+      filter_documents_args:
+        user: "john.doe"
+        documents_count: 10
+      filter_documents_return_count: 5
+      returned_documents_security_levels: [2, 3]
+      filtered_out_security_levels: [4, 5]
+
+  - name: test_write_permission_granted
+    description: User with write permission can upload documents
+    precondition: |
+      RBAC enabled
+      User "admin@company.com" has write permission for "new-docs"
+      Upload 10 documents to "new-docs"
+    expected:
+      check_collection_access_called: true
+      check_collection_access_args:
+        operation: "write"
+      status_code: 200
+      documents_uploaded: 10
+
+  - name: test_write_permission_denied
+    description: User without write permission cannot upload documents
+    precondition: |
+      RBAC enabled
+      User "readonly@company.com" has read-only permission
+      Attempt to upload documents
+    expected:
+      check_collection_access_return: false
+      status_code: 403
+      error_type: permission_denied
+      documents_uploaded: 0
+
+  - name: test_delete_permission_granted
+    description: Admin can delete collection
+    precondition: |
+      RBAC enabled
+      User "admin@company.com" has admin role
+      Delete "test-collection"
+    expected:
+      check_collection_access_args:
+        operation: "delete"
+      check_collection_access_return: true
+      status_code: 200
+      deleted_count: > 0
+
+  - name: test_delete_permission_denied
+    description: Non-admin cannot delete collection
+    precondition: |
+      RBAC enabled
+      User "user@company.com" has read-only permission
+      Attempt to delete "important-docs"
+    expected:
+      check_collection_access_return: false
+      status_code: 403
+      error_type: permission_denied
+      collection_still_exists: true
+
+  - name: test_audit_context_enrichment
+    description: Audit logs include RBAC context
+    precondition: |
+      RBAC enabled with audit_context support
+      User "john.doe" queries collection
+      Policy returns audit context: {roles: ["reader"], clearance: 3}
+    expected:
+      get_audit_context_called: true
+      audit_log_contains:
+        user: "john.doe"
+        roles: ["reader"]
+        clearance: 3
+        operation: "read"
+        decision: true
+
+  - name: test_permission_check_error_handling
+    description: Policy errors result in permission denial
+    precondition: |
+      RBAC enabled
+      Policy raises exception during check_collection_access()
+    expected:
+      status_code: 403
+      error_message_contains: "Permission check failed"
+      operation_denied: true
+
+  - name: test_clear_error_messages
+    description: Permission denials provide actionable error messages
+    precondition: |
+      User "user@company.com" denied read access to "confidential-docs"
+    expected:
+      error_message_format: |
+        "User 'user@company.com' denied 'read' access to 'confidential-docs'.
+         Contact your administrator if you believe this is an error."
+      user_identifier_included: true
+      operation_included: true
+      resource_included: true
+      contact_info_included: true
+
+  - name: test_policy_versioning
+    description: Policy version tracked in audit logs
+    precondition: |
+      RBAC policy has version "1.2.0"
+      User queries collection
+    expected:
+      permission_check_includes:
+        policy_version: "1.2.0"
+      audit_log_includes:
+        policy_version: "1.2.0"
+
+# Configuration Schema
+x-configuration-schema:
+  type: object
+  properties:
+    security:
+      type: object
+      properties:
+        rbac:
+          $ref: '#/components/schemas/RBACConfiguration'
+
+# Usage Examples
+x-usage-examples:
+  - name: Implement LDAP RBAC Policy
+    language: python
+    code: |
+      from iris_rag.security import RBACPolicy
+      from typing import List, Optional
+      from langchain.docstore.document import Document
+
+      class LDAPRBACPolicy(RBACPolicy):
+          def __init__(self, ldap_server: str, bind_dn: str):
+              self.ldap = LDAPClient(ldap_server, bind_dn)
+
+          def check_collection_access(
+              self,
+              user: str,
+              collection_id: Optional[str],
+              operation: str
+          ) -> bool:
+              """Check if user has permission for operation."""
+              groups = self.ldap.get_user_groups(user)
+
+              # Admin can do anything
+              if "admin" in groups:
+                  return True
+
+              # Read permission
+              if operation == "read" and "readers" in groups:
+                  return True
+
+              # Write permission
+              if operation == "write" and "writers" in groups:
+                  return True
+
+              return False
+
+          def filter_documents(
+              self,
+              user: str,
+              documents: List[Document]
+          ) -> List[Document]:
+              """Filter documents by security clearance."""
+              clearance = self.ldap.get_clearance_level(user)
+
+              return [
+                  doc for doc in documents
+                  if doc.metadata.get("security_level", 0) <= clearance
+              ]
+
+          def get_audit_context(self, user: str) -> dict:
+              """Provide audit context."""
+              return {
+                  "user": user,
+                  "roles": self.ldap.get_user_groups(user),
+                  "clearance": self.ldap.get_clearance_level(user)
+              }
+
+  - name: Configure RBAC in YAML
+    language: yaml
+    code: |
+      # config/rbac_config.yaml
+      security:
+        rbac:
+          enabled: true
+          policy_class: "myapp.security.LDAPRBACPolicy"
+          policy_config:
+            ldap_server: "ldap://ldap.company.com"
+            bind_dn: "cn=admin,dc=company,dc=com"
+
+  - name: Use RBAC-enabled vector store
+    language: python
+    code: |
+      from iris_rag.storage import IRISVectorStore
+      from iris_rag.config import ConfigurationManager
+      from myapp.security import LDAPRBACPolicy
+
+      # Initialize RBAC policy
+      policy = LDAPRBACPolicy(
+          ldap_server="ldap://ldap.company.com",
+          bind_dn="cn=admin,dc=company,dc=com"
+      )
+
+      # Create vector store with RBAC
+      config_manager = ConfigurationManager()
+      store = IRISVectorStore(
+          config_manager=config_manager,
+          rbac_policy=policy
+      )
+
+      # Query with user context
+      results = store.similarity_search(
+          query="diabetes symptoms",
+          k=5,
+          user="john.doe@company.com"  # User identifier
+      )
+      # Documents automatically filtered by RBAC policy
+
+  - name: Handle permission denied errors
+    language: python
+    code: |
+      from iris_rag.security import PermissionDeniedError
+
+      try:
+          results = pipeline.query(
+              query="confidential data",
+              user="unauthorized@company.com"
+          )
+      except PermissionDeniedError as e:
+          print(f"Access denied: {e.message}")
+          print(f"User: {e.user}")
+          print(f"Resource: {e.resource}")
+          print(f"Operation: {e.operation}")
+          # Log to security audit trail
+          audit_logger.warning(
+              f"Permission denied: {e.user} -> {e.resource} ({e.operation})"
+          )

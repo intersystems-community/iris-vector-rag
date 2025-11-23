@@ -1,0 +1,510 @@
+# API Contract: OpenTelemetry Monitoring
+# Feature: Enterprise Enhancements for RAG System
+# Branch: 051-enterprise-enhancements
+# Date: 2025-11-22
+
+openapi: 3.0.0
+info:
+  title: OpenTelemetry Monitoring API
+  version: 1.0.0
+  description: |
+    API contract for production observability and monitoring using OpenTelemetry,
+    including query latency, embedding generation time, LLM token usage, and cost tracking.
+
+components:
+  schemas:
+    TelemetryConfiguration:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: false
+          description: Whether telemetry is enabled (disabled by default for zero overhead)
+        service_name:
+          type: string
+          default: "iris-rag-api"
+          description: Service name for OpenTelemetry traces
+        otlp:
+          type: object
+          properties:
+            endpoint:
+              type: string
+              default: "http://localhost:4318"
+              description: OpenTelemetry Protocol (OTLP) collector endpoint
+            protocol:
+              type: string
+              enum: [grpc, http]
+              default: "http"
+        sampling:
+          type: object
+          properties:
+            ratio:
+              type: number
+              minimum: 0.0
+              maximum: 1.0
+              default: 0.1
+              description: Sampling ratio (0.1 = 10% of traces)
+
+    MonitoringMetric:
+      type: object
+      required:
+        - metric_id
+        - operation_type
+        - timestamp
+        - duration_ms
+        - status
+      properties:
+        metric_id:
+          type: string
+          format: uuid
+          description: Unique identifier for metric
+        operation_type:
+          type: string
+          enum: [query, indexing, embedding, generation]
+          description: Type of operation
+        timestamp:
+          type: string
+          format: date-time
+          description: When operation occurred
+        duration_ms:
+          type: number
+          format: float
+          minimum: 0
+          description: Operation duration in milliseconds
+        status:
+          type: string
+          enum: [success, error, timeout]
+          description: Operation outcome
+        user:
+          type: string
+          maxLength: 255
+          description: User who initiated operation
+        collection_id:
+          type: string
+          maxLength: 128
+          description: Collection accessed (if applicable)
+        query_text:
+          type: string
+          maxLength: 1024
+          description: Query text (truncated if longer)
+        top_k:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of documents requested
+        documents_retrieved:
+          type: integer
+          minimum: 0
+          description: Actual documents returned
+        embedding_model:
+          type: string
+          maxLength: 64
+          description: Model used for embeddings
+          example: "all-MiniLM-L6-v2"
+        embedding_dimensions:
+          type: integer
+          description: Vector dimension count
+          example: 384
+        llm_model:
+          type: string
+          maxLength: 64
+          description: LLM model used (if generation)
+          example: "gpt-4"
+        prompt_tokens:
+          type: integer
+          minimum: 0
+          description: Input tokens to LLM
+        completion_tokens:
+          type: integer
+          minimum: 0
+          description: Output tokens from LLM
+        estimated_cost_usd:
+          type: number
+          format: float
+          minimum: 0
+          description: Estimated operation cost
+        error_message:
+          type: string
+          maxLength: 512
+          description: Error details (if status=error)
+        span_id:
+          type: string
+          description: OpenTelemetry span ID
+        trace_id:
+          type: string
+          description: OpenTelemetry trace ID
+
+    TelemetrySpan:
+      type: object
+      description: OpenTelemetry span representation
+      properties:
+        span_id:
+          type: string
+        trace_id:
+          type: string
+        parent_span_id:
+          type: string
+          nullable: true
+        name:
+          type: string
+          description: Operation name (e.g., "rag.query", "rag.embedding")
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        attributes:
+          type: object
+          description: Span attributes (key-value pairs)
+        status:
+          type: string
+          enum: [ok, error]
+        events:
+          type: array
+          items:
+            type: object
+
+paths:
+  /api/v1/telemetry/configure:
+    post:
+      summary: Configure telemetry settings
+      description: |
+        Configure OpenTelemetry instrumentation at runtime.
+        Note: Typically configured via YAML, but can be adjusted at runtime.
+      operationId: configureTelemetry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryConfiguration'
+      responses:
+        '200':
+          description: Telemetry configured
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  current_config:
+                    $ref: '#/components/schemas/TelemetryConfiguration'
+
+  /api/v1/telemetry/status:
+    get:
+      summary: Get telemetry status
+      description: |
+        Returns current telemetry configuration and statistics.
+      operationId: getTelemetryStatus
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                  service_name:
+                    type: string
+                  otlp_endpoint:
+                    type: string
+                  total_spans_exported:
+                    type: integer
+                  sampling_ratio:
+                    type: number
+                  overhead_percentage:
+                    type: number
+                    description: Measured overhead when enabled
+
+# Contract Tests
+x-contract-tests:
+  - name: test_telemetry_disabled_zero_overhead
+    description: Telemetry disabled has 0% performance overhead
+    precondition: |
+      Telemetry configuration: enabled=false
+      Benchmark query operation 1000 times
+    expected:
+      overhead_percentage: 0.0
+      performance_difference_vs_baseline: < 1%
+      early_return_guards_working: true
+
+  - name: test_telemetry_enabled_low_overhead
+    description: Telemetry enabled has <5% performance overhead
+    precondition: |
+      Telemetry configuration: enabled=true, endpoint="http://localhost:4318"
+      Benchmark query operation 1000 times
+    expected:
+      overhead_percentage: < 5.0
+      spans_exported: > 0
+      no_crashes: true
+
+  - name: test_query_operation_span_creation
+    description: Query operation creates span with correct attributes
+    precondition: |
+      Telemetry enabled
+      Execute query: "What is diabetes?" with top_k=5
+    expected:
+      span_created: true
+      span_name: "rag.query"
+      span_attributes_include:
+        query_length: 18
+        top_k: 5
+        pipeline: "basic"
+      span_status: "ok"
+      span_duration_ms: > 0
+
+  - name: test_retrieval_operation_span
+    description: Retrieval operation creates nested span
+    precondition: |
+      Telemetry enabled
+      Execute similarity_search with k=5
+    expected:
+      span_created: true
+      span_name: "rag.retrieval"
+      span_is_child_of: "rag.query"
+      span_attributes_include:
+        top_k: 5
+        documents_retrieved: 5
+
+  - name: test_generation_operation_span
+    description: LLM generation creates span with token counts
+    precondition: |
+      Telemetry enabled
+      LLM generates answer from context
+    expected:
+      span_created: true
+      span_name: "rag.generation"
+      span_attributes_include:
+        gen.ai.system: "openai"
+        gen.ai.request.model: "gpt-4"
+        gen.ai.usage.input_tokens: > 0
+        gen.ai.usage.output_tokens: > 0
+        gen.ai.response.finish_reason: "stop"
+
+  - name: test_embedding_generation_span
+    description: Embedding generation creates span with model info
+    precondition: |
+      Telemetry enabled
+      Generate embeddings for 10 documents
+    expected:
+      span_created: true
+      span_name: "rag.embedding"
+      span_attributes_include:
+        embedding_model: "all-MiniLM-L6-v2"
+        embedding_dimensions: 384
+        document_count: 10
+
+  - name: test_cost_tracking
+    description: Token usage tracked and cost estimated
+    precondition: |
+      Telemetry enabled
+      Execute query with GPT-4 (input: 1234 tokens, output: 567 tokens)
+    expected:
+      prompt_tokens: 1234
+      completion_tokens: 567
+      estimated_cost_usd: 0.0804  # (1234 * 0.00003) + (567 * 0.00006)
+      cost_tracked_in_span: true
+
+  - name: test_error_recording
+    description: Errors recorded in spans with exception details
+    precondition: |
+      Telemetry enabled
+      Query operation raises ValueError("Invalid input")
+    expected:
+      span_status: "error"
+      span_exception_recorded: true
+      exception_type: "ValueError"
+      exception_message: "Invalid input"
+      exception_stacktrace_included: true
+
+  - name: test_trace_context_propagation
+    description: Trace ID propagates across nested operations
+    precondition: |
+      Telemetry enabled
+      Execute query → retrieval → generation
+    expected:
+      all_spans_share_trace_id: true
+      parent_child_relationships_correct: true
+      span_hierarchy: |
+        rag.query (parent)
+        ├── rag.retrieval (child)
+        └── rag.generation (child)
+
+  - name: test_sampling_ratio
+    description: Sampling ratio controls which traces are exported
+    precondition: |
+      Telemetry enabled with sampling_ratio=0.1
+      Execute 1000 queries
+    expected:
+      traces_exported: ~100  # 10% of 1000
+      sampling_applied: true
+
+  - name: test_otlp_export
+    description: Spans exported to OTLP collector
+    precondition: |
+      Telemetry enabled with endpoint="http://localhost:4318"
+      Execute query
+    expected:
+      span_exported_to_collector: true
+      export_protocol: "otlp/http"
+      export_success: true
+
+  - name: test_semantic_conventions
+    description: Spans follow OpenTelemetry GenAI semantic conventions
+    precondition: |
+      Telemetry enabled
+      Execute LLM generation
+    expected:
+      span_attributes_follow_conventions: true
+      required_attributes_present:
+        - gen.ai.system
+        - gen.ai.request.model
+        - gen.ai.usage.input_tokens
+        - gen.ai.usage.output_tokens
+      attribute_naming_correct: true
+
+  - name: test_telemetry_configuration_validation
+    description: Invalid configuration rejected
+    precondition: |
+      Attempt to configure with invalid sampling_ratio=1.5
+    expected:
+      configuration_error: true
+      error_message_contains: "sampling_ratio must be between 0.0 and 1.0"
+
+# Performance Requirements
+x-performance-requirements:
+  - metric: overhead_when_disabled
+    requirement: 0%
+    measurement: |
+      Benchmark query operation 1000 times with and without telemetry code.
+      Compare average execution time.
+
+  - metric: overhead_when_enabled
+    requirement: < 5%
+    measurement: |
+      Benchmark query operation 1000 times with telemetry enabled vs disabled.
+      Overhead = ((enabled_time - disabled_time) / disabled_time) * 100
+
+  - metric: span_creation_latency
+    requirement: < 1ms
+    measurement: |
+      Time to create span and set attributes.
+
+  - metric: span_export_latency
+    requirement: < 10ms
+    measurement: |
+      Time to export span to OTLP collector (asynchronous).
+
+# Configuration Schema
+x-configuration-schema:
+  type: object
+  properties:
+    telemetry:
+      $ref: '#/components/schemas/TelemetryConfiguration'
+
+# Usage Examples
+x-usage-examples:
+  - name: Configure telemetry in YAML
+    language: yaml
+    code: |
+      # config/telemetry_config.yaml
+      telemetry:
+        enabled: true
+        service_name: "iris-rag-production"
+        otlp:
+          endpoint: "http://otel-collector:4318"
+          protocol: "http"
+        sampling:
+          ratio: 0.1  # 10% sampling
+
+  - name: Use telemetry in pipeline code
+    language: python
+    code: |
+      from iris_rag.monitoring.telemetry import telemetry
+
+      def query(self, query_text: str, top_k: int = 5):
+          # Automatic span creation (zero overhead if disabled)
+          with telemetry.trace_operation(
+              "rag.query",
+              query_length=len(query_text),
+              top_k=top_k,
+              pipeline="basic"
+          ) as span:
+              # Retrieval
+              with telemetry.trace_operation("rag.retrieval", top_k=top_k):
+                  docs = self.vector_store.similarity_search(query_text, k=top_k)
+
+              # Generation
+              with telemetry.trace_operation(
+                  "rag.generation",
+                  context_length=sum(len(d.page_content) for d in docs)
+              ) as gen_span:
+                  answer = self.llm.generate(query_text, docs)
+
+                  # Add LLM metrics to span
+                  if gen_span:
+                      gen_span.set_attribute("gen.ai.system", "openai")
+                      gen_span.set_attribute("gen.ai.request.model", "gpt-4")
+                      gen_span.set_attribute("gen.ai.usage.input_tokens", answer.prompt_tokens)
+                      gen_span.set_attribute("gen.ai.usage.output_tokens", answer.completion_tokens)
+
+              return answer
+
+  - name: Configure telemetry at runtime
+    language: python
+    code: |
+      from iris_rag.monitoring.telemetry import configure_telemetry
+
+      # Enable telemetry
+      configure_telemetry(
+          enabled=True,
+          service_name="iris-rag-api",
+          endpoint="http://localhost:4318"
+      )
+
+      # Disable telemetry (zero overhead)
+      configure_telemetry(enabled=False)
+
+  - name: Calculate LLM cost
+    language: python
+    code: |
+      from iris_rag.monitoring.cost_tracking import calculate_llm_cost
+
+      cost = calculate_llm_cost(
+          llm_model="gpt-4",
+          prompt_tokens=1234,
+          completion_tokens=567
+      )
+      # Returns: 0.0804 USD
+      # Calculation: (1234 * $0.00003) + (567 * $0.00006)
+
+  - name: Query telemetry status
+    language: python
+    code: |
+      from iris_rag.monitoring.telemetry import telemetry
+
+      status = telemetry.get_status()
+      print(f"Enabled: {status['enabled']}")
+      print(f"Service: {status['service_name']}")
+      print(f"Spans exported: {status['total_spans_exported']}")
+      print(f"Overhead: {status['overhead_percentage']:.2f}%")
+
+  - name: View spans in Jaeger UI
+    language: bash
+    code: |
+      # Start Jaeger all-in-one (dev environment)
+      docker run -d --name jaeger \
+        -p 16686:16686 \
+        -p 4318:4318 \
+        jaegertracing/all-in-one:latest
+
+      # Open Jaeger UI
+      open http://localhost:16686
+
+      # Search for traces with service name "iris-rag-api"

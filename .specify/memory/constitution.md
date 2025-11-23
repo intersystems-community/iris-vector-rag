@@ -1,661 +1,161 @@
-<!--
-Sync Impact Report:
-- Version change: 1.7.1 → 1.8.0 (MINOR - CRITICAL process changes)
-- Version bump rationale: CRITICAL PyPI publishing procedures based on 0.5.0 packaging failure
-- Incident: iris-vector-rag 0.5.0 published with incorrect package structure (common/ at top-level instead of iris_vector_rag/common/)
-- List of modified principles: Principle VIII (Git & Release Workflow)
-- Modified sections:
-  * Step 2: Complete Version Bump Workflow - CRITICAL ENHANCEMENTS:
-    1. Added MANDATORY "commit code changes FIRST" step
-    2. Added CRITICAL wheel structure verification BEFORE PyPI upload
-    3. Added uv pip install testing for uv-managed environments
-    4. Added comprehensive import validation tests
-    5. Added PyPI installation verification step
-    6. Enhanced clean build procedures with warnings
-    7. Total steps increased from 9 to 14 for safety
-- Root cause: Package built from uncommitted/staged state led to incorrect directory structure in wheel
-- Prevention: New procedures ensure wheel is verified BEFORE publishing, and built from committed code
-- Removed sections: N/A
-- Templates requiring updates:
-  ✅ No template updates needed (workflow-specific, not template-affecting)
-- Follow-up TODOs:
-  * Yank iris-vector-rag 0.5.0 from PyPI
-  * Publish corrected 0.5.1
--->
-
-# RAG-Templates Constitution
+# iris-vector-rag Constitution
 
 ## Core Principles
 
-### I. Framework-First Architecture
+### I. Library-First Design
+Every feature starts as a standalone library component with a programmatic API before CLI/web/API exposure. Libraries must be self-contained, independently testable, and documented. Clear purpose required - no organizational-only libraries.
 
-Every component MUST be designed as a reusable framework element. Pipeline implementations MUST extend the abstract RAGPipeline base class. Components MUST be independently testable and documented with clear interfaces. No application-specific logic in framework components. All components MUST expose functionality via CLI interface (Make targets or direct CLI commands).
+**Why**: Enables maximum reusability, testability, and flexibility for users integrating iris-vector-rag into their systems.
 
-**Rationale**: Ensures the framework can be consumed by multiple applications while maintaining clean separation of concerns, reusability, and operational accessibility.
+### II. .DAT Fixture-First Testing (NON-NEGOTIABLE)
+Integration and E2E tests with ≥10 entities MUST use .DAT fixtures loaded via iris-devtools. Performance mandate: 100-200x faster than JSON fixtures (0.5-2s vs 39-75s for 100 entities).
 
-### II. Pipeline Validation & Requirements
-
-All pipelines MUST implement automated requirement validation and setup orchestration. Pipeline creation MUST fail fast with clear error messages when prerequisites are missing. Setup procedures MUST be idempotent and recoverable.
-
-**Rationale**: Enterprise environments require reliable, self-validating components that can detect and resolve configuration issues automatically.
-
-### III. Test-Driven Development with Live Database Validation (NON-NEGOTIABLE)
-
-Tests MUST be written before implementation. All contract tests MUST fail initially, then pass after implementation. Unit, integration, and end-to-end tests are mandatory for all pipeline implementations.
-
-**Integration Testing Absolute Requirement (CRITICAL)**:
-
-When developing ANY feature that integrates with an external system (IRIS database, APIs, vector stores, etc.), integration tests with the ACTUAL system are MANDATORY and CANNOT be skipped. This principle is non-negotiable:
-
-1. **NO MOCKING OF INTEGRATION POINTS FOR INTEGRATION TESTS**: Integration tests MUST use the real system
-2. **IRIS-Specific Rule**: For ANY feature involving IRIS (embeddings, vector operations, storage, schema), you MUST create and run integration tests against a real IRIS instance BEFORE claiming completion
-3. **Test Container Requirement**: Use `iris-devtester` package with `IRISContainer` for repeatable, isolated IRIS testing
-4. **Test Coverage**: Integration tests MUST verify the complete integration path, not just Python code in isolation
-
-**Example Violation**: Creating "Feature 051: IRIS EMBEDDING Support" without actual IRIS integration tests is UNACCEPTABLE. Contract tests alone DO NOT prove the feature works.
-
-**Correct Approach**:
-- Use `from iris_devtester import IRISContainer`
-- Create fixtures: `@pytest.fixture def iris_container(): with IRISContainer.community() as container: yield container`
-- Test actual IRIS operations: SQL DDL, data insertion, vector queries, Python callbacks from IRIS
-- Verify performance claims with real workloads
-
-**IRIS Database Requirement**: All RAG framework tests that involve data storage, vector operations, schema management, or pipeline operations MUST execute against a running IRIS database instance. Tests MUST use either:
-1. **Framework-managed Docker IRIS** (preferred): Use `iris-devtester` with `IRISContainer.community()` for automatic container management
-2. **External IRIS instance**: When configured via environment variables
-
-**IRIS Docker Management Procedures**:
-- **Required IRIS Image**: ALL Docker Compose files MUST use `intersystemsdc/iris-community:2025.3.0EHAT.127.0-linux-arm64v8` (note: NOT iris-lockeddown)
-- **Licensed IRIS Priority**: Use `intersystemsdc/iris-community:2025.3.0EHAT.127.0-linux-arm64v8` or similar licensed images when available
-- **Standardized Port Mapping**: ALL Docker Compose files MUST follow the framework's port mapping strategy:
-  * **Container ports**: Always use IRIS standard ports (1972 SuperServer, 52773 Management Portal)
-  * **Host port ranges**:
-    - Default IRIS: `11972:1972` and `152773:52773` (docker-compose.yml)
-    - Licensed IRIS: `21972:1972` and `252773:52773` (docker-compose.licensed.yml)
-    - Reserved: `1972:1972` and `52773:52773` (for existing IRIS installations)
-  * **Rationale**: Predictable ports avoid conflicts, enable easy configuration, support multiple IRIS instances
-- **Port Discovery**: Use the framework's `common/iris_port_discovery.py` utility to locate running IRIS instances across mapped ports
-- **Connection Management**: Use `common/iris_connection_manager.py` for standardized IRIS connections with automatic fallback patterns
-- **Health Validation**: Always run `python evaluation_framework/test_iris_connectivity.py` before database-dependent testing
-
-**Test Categories with IRIS Requirements**:
-- `@pytest.mark.requires_database`: MUST connect to live IRIS
-- `@pytest.mark.integration`: MUST use IRIS for data operations
-- `@pytest.mark.e2e`: MUST use complete IRIS + vector workflow
-- `@pytest.mark.clean_iris`: MUST start from fresh/empty IRIS instance to validate complete setup workflow
-- Unit tests MAY mock IRIS for isolated component testing
-
-**Clean IRIS Testing Requirement (NON-NEGOTIABLE)**: All RAG pipeline implementations MUST provide test variants that start from a completely clean/fresh IRIS database instance. These tests validate the complete setup orchestration including schema creation, data ingestion, and pipeline initialization. Clean IRIS tests are essential for:
-- Validating auto-setup and orchestration capabilities
-- Testing schema migration and upgrade procedures
-- Ensuring reproducible deployment scenarios
-- Verifying framework self-sufficiency in new environments
-
-**Database Health Validation**: All test suites MUST verify IRIS health before execution using established connectivity tests from `evaluation_framework/test_iris_connectivity.py`.
-
-**Container Management Best Practices**:
-- **Avoid Port Conflicts**: Never force-stop existing IRIS containers; use dynamic port allocation instead
-- **Image Selection**: Check `docker images | grep iris` to identify available licensed IRIS images before attempting pulls
-- **Configuration Updates**: Modify docker-compose files to use available images and dynamic ports rather than creating new containers
-- **Environment Variables**: Set `IRIS_HOST=localhost`, `IRIS_PORT=<discovered_port>`, `IRIS_USERNAME=_SYSTEM`, `IRIS_PASSWORD=SYS` for testing
-
-Performance tests required for enterprise scale scenarios (10K+ documents) MUST execute against IRIS with actual vector operations and RAGAS evaluation.
-
-**Rationale**: RAG systems are fundamentally dependent on IRIS database for document storage, vector embeddings, and search operations. Testing without live database connections provides false validation and cannot detect real-world integration failures, performance issues, or data consistency problems.
-
-### IV. Performance & Enterprise Scale
-
-All pipelines MUST support incremental indexing and concurrent operations. Vector operations MUST be optimized for IRIS database capabilities. Memory usage MUST be monitored and bounded. Performance benchmarks required for 1K, 10K document scenarios with RAGAS evaluation.
-
-**Rationale**: Enterprise RAG applications must handle large document corpora efficiently without degrading user experience.
-
-### V. Production Readiness Standards
-
-All components MUST include structured logging, error handling, and health checks. Configuration MUST be externalized via environment variables and YAML. Docker deployment MUST be supported with comprehensive monitoring capabilities.
-
-**Rationale**: Production RAG systems require operational excellence for reliability, debugging, and maintenance.
-
-### VI. Explicit Error Handling (NON-NEGOTIABLE)
-
-Domain errors only: no silent failures, every bug MUST be explicit. All error conditions MUST surface as clear exceptions with actionable messages. No swallowed exceptions or undefined behavior. Failed operations MUST provide specific context about what failed and why.
-
-**Rationale**: RAG systems process critical knowledge; silent failures can lead to incorrect or missing information being returned to users, which is unacceptable in enterprise environments.
-
-### VII. Standardized Database Interfaces
-
-All database interactions MUST use proven, standardized utilities from the framework's SQL and vector helper modules. No ad-hoc database queries or direct IRIS API calls outside established patterns. New database patterns MUST be contributed back to shared utilities after validation.
-
-**Rationale**: IRIS database interactions have complex edge cases and performance considerations. Hard-won fixes and optimizations must be systematized to prevent teams from rediscovering the same issues.
-
-### VIII. Git & Release Workflow (NON-NEGOTIABLE)
-
-All code changes MUST follow the standard git workflow for the public iris-vector-rag repository:
-
-**Step 1: Standard Git Workflow**
-```bash
-# Stage changes
-git add <changed-files>
-
-# Commit with conventional commit message
-git commit -m "<type>: <description>"
-
-# Push to GitHub
-git push github main
-```
-
-**Step 2: PyPI Publishing (when applicable)**
-
-**When to Publish:**
-- New features added (MINOR version bump: 0.2.3 → 0.3.0)
-- Bug fixes or patches (PATCH version bump: 0.2.3 → 0.2.4)
-- Breaking changes (MAJOR version bump: 0.2.3 → 1.0.0)
-- Skip if only documentation, tests, or internal changes
-
-**Complete Version Bump Workflow:**
-
-```bash
-# 1. Commit ALL code changes FIRST (NON-NEGOTIABLE)
-git add -A
-git commit -m "fix/feat: [description of actual changes]"
-# ⚠️ CRITICAL: Package must be built from COMMITTED code, not uncommitted working directory!
-
-# 2. Update version in BOTH files (Example: 0.2.3 → 0.2.4)
-# Edit these files:
-# - pyproject.toml (line 7): version = "0.2.4"
-# - iris_vector_rag/__init__.py (line 21): __version__ = "0.2.4"
-
-# 3. Update CHANGELOG.md with version entry
-# Add comprehensive changelog describing all changes
-
-# 4. CRITICAL: Clean ALL previous builds (prevents stale file contamination)
-rm -rf dist/ build/ *.egg-info
-# ⚠️ Skipping this step will package OLD/CACHED files!
-
-# 5. Build source distribution and wheel FROM CLEAN STATE
-python -m build
-
-# 6. CRITICAL: Verify wheel structure BEFORE uploading
-python -c "
-import zipfile, sys
-z = zipfile.ZipFile('dist/iris_vector_rag-0.2.4-py3-none-any.whl')
-files = z.namelist()
-
-# Check for top-level modules that should be namespaced
-top_level = [f for f in files if not f.startswith('iris_vector_rag/') and not f.startswith('iris_vector_rag-') and f.endswith('.py')]
-if top_level:
-    print(f'❌ ERROR: Found top-level Python files: {top_level}')
-    sys.exit(1)
-
-# Verify critical module is in correct location (example: common/)
-if 'iris_vector_rag/common/__init__.py' not in files:
-    print('❌ ERROR: iris_vector_rag/common/__init__.py not found in wheel!')
-    sys.exit(1)
-
-print('✅ Wheel structure verified - no top-level modules, all files properly namespaced')
-"
-
-# 7. Validate distributions with twine
-python -m twine check dist/*
-
-# 8. Test local installation with CLEAN environment
-# For uv-managed environments (PREFERRED):
-uv pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
-# For standard pip environments:
-# pip install --force-reinstall --no-deps dist/iris_vector_rag-*.whl
-
-# 9. CRITICAL: Test imports work correctly
-python -c "
-import iris_vector_rag
-print(f'✅ Version: {iris_vector_rag.__version__}')
-
-# Test critical imports
-from iris_vector_rag.core.connection import ConnectionManager
-from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
-from iris_vector_rag import create_pipeline
-
-print('✅ All critical imports successful')
-"
-
-# 10. Commit version bump and changelog
-git add pyproject.toml iris_vector_rag/__init__.py CHANGELOG.md
-git commit -m "chore: bump version to 0.2.4
-
-[Detailed changelog entry describing what changed in this version]"
-
-# 11. Upload to PyPI (requires ~/.pypirc with token)
-python -m twine upload dist/*
-
-# 12. Verify PyPI upload and test installation FROM PyPI
-curl -s https://pypi.org/pypi/iris-vector-rag/json | python3 -c "import sys, json; data=json.load(sys.stdin); print(f\"✅ Latest PyPI version: {data['info']['version']}\"); print(f\"📅 Upload date: {list(data['releases'][data['info']['version']])[0]['upload_time']}\"); print(f\"🔗 URL: https://pypi.org/project/iris-vector-rag/{data['info']['version']}/\")"
-
-# 13. Test installation from PyPI (in clean venv/directory)
-pip install --no-cache-dir iris-vector-rag==0.2.4
-python -c "from iris_vector_rag import create_pipeline; print('✅ PyPI package works')"
-
-# 14. Push ALL commits to remote
-git push github main
-```
-
-**PyPI Authentication Setup (one-time):**
-
-Create `~/.pypirc` with your PyPI API token:
-```ini
-[pypi]
-username = __token__
-password = pypi-AgEIcHlwaS5vcmc...  # Your PyPI API token
-```
-
-**Important Notes:**
-- Always test package installation before uploading to PyPI
-- Version bumps should include comprehensive changelog in commit message
-- Verify PyPI upload succeeded before announcing new version
-
-**Repository Configuration:**
-- Primary remote: `github` → `https://github.com/intersystems-community/iris-vector-rag.git`
-- **Default branch**: `main`
-
-**One-Time GitHub Setup (if not already configured):**
-
-If the GitHub repository default branch is `master` instead of `main`:
-1. Go to: https://github.com/intersystems-community/iris-vector-rag/settings/branches
-2. Under "Default branch", click the switch icon next to `master`
-3. Select `main` from the dropdown
-4. Click "Update" and confirm the change
-5. (Optional) Delete the old `master` branch protection rules if they exist
-
-This ensures pushes to `main` are immediately visible on GitHub.
-
-**Critical Rules**:
-- ALWAYS pull and rebase before pushing to avoid diverged history issues
-- ALWAYS test package installation before PyPI upload (`pip install dist/*.whl`)
-- PyPI package name is `iris-vector-rag`, Python module name remains `iris_rag`
-- Follow conventional commit message format (e.g., `feat:`, `fix:`, `chore:`)
-
-**Rationale**: Proper git workflow and thorough testing before PyPI publication ensures stable releases and prevents breaking changes for users.
-
-## Enterprise Requirements
-
-Production deployments MUST include:
-
-- Vector store persistence and backup procedures
-- API rate limiting and authentication
-- Observability stack (logging, metrics, tracing)
-- Security scanning and vulnerability management
-- Multi-environment configuration management (dev, staging, prod)
-
-## Development Standards
-
-**Package Management**: All Python projects MUST use uv for dependency management, virtual environment creation, and package installation. Traditional pip/virtualenv workflows are deprecated in favor of uv's superior performance and reliability.
-
-**Testing Standards (NON-NEGOTIABLE)**:
-
-All tests MUST be executed using `python -m pytest` instead of standalone `pytest` command. This ensures correct Python module resolution and prevents import failures.
-
-**Critical Lesson Learned**:
-- ❌ `pytest command` → imports failed (wrong Python path)
-- ✅ `python -m pytest` → all tests pass
-
-**Always use:** `python -m pytest` for reliable module imports
-
-**Rationale**: The standalone `pytest` command may use a different Python interpreter or sys.path configuration than the active virtual environment, leading to module import errors even when packages are correctly installed. Using `python -m pytest` guarantees tests run with the same Python interpreter and import paths as the application code.
-
-Code MUST pass linting (black, isort, flake8, mypy) before commits. All public APIs MUST include comprehensive docstrings. Breaking changes MUST follow semantic versioning. Dependencies MUST be pinned and regularly updated for security.
-
-Documentation MUST include quickstart guides, API references, and integration examples. Agent-specific guidance files (CLAUDE.md) MUST be maintained for AI development assistance.
-
-## VIII. Git & Release Workflow (NON-NEGOTIABLE)
-
-All feature development MUST follow standardized git workflows to prevent diverged branches, rejected pushes, and deployment conflicts. The fork-based strategy (private development repo + public fork) requires discipline and clear procedures.
-
-### Repository Structure (MANDATORY)
-
-**Three-Remote Configuration**:
-```bash
-origin   → https://github.com/isc-tdyar/iris-vector-rag-private.git  (PRIVATE - main development)
-fork     → https://github.com/isc-tdyar/iris-vector-rag.git          (PUBLIC - for PRs only)
-upstream → https://github.com/intersystems-community/iris-vector-rag.git  (PUBLIC - community repo)
-```
-
-**Directory Structure**:
-- Working directory: `/Users/tdyar/ws/iris-vector-rag-private/`
-- Private repo contains ALL files: code + `.claude/` + `.specify/` + `specs/` + tracking files
-- Public fork NEVER receives private files (removed before push)
-
-**Rationale**: GitHub does not allow private forks of public repositories. This three-remote strategy enables private development with full version control while maintaining clean public contributions.
-
-### Private Files (NEVER Push to Public Fork)
-
-The following files/directories are private development artifacts and MUST NEVER appear in PRs to public repo:
-- `.claude/` - Claude Code commands and personal AI assistant setup
-- `.specify/` - Feature specification system, constitution, scripts, templates
-- `specs/` - Feature planning documents and specifications
-- `STATUS.md`, `PROGRESS.md`, `TODO.md` - Development tracking files
-- `FORK_WORKFLOW.md` - Workflow documentation
-
-**These files live ONLY in**:
-- ✅ Private repo (`origin`) - tracked with full version control
-- ✅ Local development machine
-- ❌ NEVER in public fork (`fork`)
-- ❌ NEVER in community repo (`upstream`)
-
-### Environment Management
-
-**Local Virtual Environment REQUIRED**: ALL development and testing MUST use the local `.venv` environment created by `uv`. Global Python environments (system Python, miniconda, pyenv) MUST NOT be used for package installation or testing.
+**Why**: InterSystems IRIS binary format provides orders of magnitude faster test execution, enabling comprehensive integration testing without CI timeout issues.
 
 **Enforcement**:
-```bash
-# ALWAYS activate local venv before any development work
-source .venv/bin/activate
+- All integration/E2E tests with ≥10 entities use `.DAT` fixtures
+- Programmatic fixtures allowed for <10 entities or mocked components
+- Use `@pytest.mark.dat_fixture("fixture-name")` decorator
+- See `tests/fixtures/manager.py` for fixture management
 
-# Verify you're using local environment
-which python  # MUST show /path/to/project/.venv/bin/python
-```
+### III. Test-First (TDD) (NON-NEGOTIABLE)
+Contract tests written → User approved → Tests fail → Implement → Tests pass. Red-Green-Refactor cycle strictly enforced.
 
-**Rationale**: Global environments cause version conflicts, test failures with stale packages, and unpredictable behavior. The local `.venv` ensures reproducible builds and consistent test results.
+**Why**: Prevents scope creep, ensures requirements are testable, and validates implementation correctness.
 
-### Pre-Development Checklist
+**Enforcement**:
+- Contract tests created before implementation
+- All contract tests must fail initially (red phase)
+- Implementation proceeds only after tests written and reviewed
+- Integration tests added after contract tests pass
 
-Before starting ANY feature work, MUST execute:
-```bash
-# 1. Verify you're in private repo directory
-pwd  # MUST show /Users/tdyar/ws/iris-vector-rag-private
+### IV. Backward Compatibility (NON-NEGOTIABLE)
+All new features default to disabled. Zero breaking changes to existing public APIs.
 
-# 2. Sync with all remotes
-git fetch origin    # Private development repo
-git fetch fork      # Public fork (for PRs)
-git fetch upstream  # Community repo
+**Why**: iris-vector-rag is a production library used by multiple teams. Breaking changes harm user trust and adoption.
 
-# 3. Verify branch status
-git status
-git branch -vv  # Check tracking relationships
+**Enforcement**:
+- All new features opt-in (disabled by default)
+- Existing test suite must pass unchanged
+- Configuration changes are additive only
+- Deprecation warnings required 2 releases before removal
 
-# 4. Ensure working on latest master
-git checkout master
-git pull origin master --ff-only  # Fast-forward only from private repo
+### V. InterSystems IRIS Integration
+All vector storage uses IRIS native capabilities. No fallback to alternative databases. IRIS-specific features (vector search, SQL optimization, transactions) are first-class citizens.
 
-# 5. Activate local environment
-source .venv/bin/activate
-which python  # Verify local venv path
-```
+**Why**: iris-vector-rag is built specifically for InterSystems IRIS. Supporting multiple backends dilutes focus and testing coverage.
 
-**Rationale**: Starting with stale branches or wrong environments leads to diverged histories, rejected pushes, and wasted time resolving conflicts later.
+**Enforcement**:
+- Vector operations use IRIS native vector search
+- Batch operations use IRIS transactions
+- Test fixtures use IRIS .DAT format
+- No "if iris_available" conditionals for core functionality
 
-### Feature Development Workflow
+### VI. Performance Standards
+- Query operations: <5ms overhead when features disabled
+- Bulk operations: 10x+ speedup vs one-by-one (10K docs <10s)
+- Monitoring: <5% overhead when enabled, 0% when disabled
+- Test execution: Integration tests complete in <30s total
 
-**Branch Creation via /specify**:
+**Why**: Production RAG systems require sub-second query latency and efficient document indexing.
 
-The `/specify` command creates feature branches using `.specify/scripts/bash/create-new-feature.sh`. This script:
-1. Determines next feature number (e.g., 053)
-2. Creates branch name from description (e.g., `053-update-to-iris`)
-3. Executes `git checkout -b <branch-name>`
-4. Creates `specs/<branch-name>/` directory with templates
+**Enforcement**:
+- Performance benchmarks in contract tests
+- CI fails if performance regressions detected
+- pytest-benchmark for automated measurement
 
-**CRITICAL**: The `/specify` script creates the branch but does NOT sync with remotes. You MUST verify branch creation succeeded:
+### VII. Observability
+All operations emit structured logs. Critical paths instrumented with OpenTelemetry spans. Text I/O ensures debuggability.
 
-```bash
-# After /specify completes, verify branch
-git branch  # Should show new feature branch with *
-git status  # Should show "On branch 053-feature-name"
+**Why**: Production systems require visibility into failures, performance bottlenecks, and usage patterns.
 
-# If branch creation failed (no-git mode):
-git checkout -b 053-feature-name  # Create manually
-```
+**Enforcement**:
+- OpenTelemetry integration for query/indexing operations
+- Structured logging (JSON format) for all errors
+- Clear error messages with actionable guidance
 
-**Common /specify Issues**:
-- Branch exists but spec files incomplete → Re-run `/specify` or manually create files
-- Working directory dirty → Commit/stash changes before `/specify`
-- Git not detected → Verify `.git/` directory exists
+### VIII. Security-First
+- SQL injection prevention via parameterized queries
+- RBAC policy interface for access control
+- Audit logging for permission decisions
+- No secrets in logs or error messages
 
-**Standard Feature Development**:
-```bash
-# 1. Start with /specify command (creates branch + spec directory)
-# 2. Verify branch creation
-git status
+**Why**: RAG systems often handle sensitive documents requiring enterprise-grade security controls.
 
-# 3. Complete planning phase
-# - /plan generates plan.md, research.md, data-model.md
-# - /tasks generates tasks.md
-# - Review and refine planning documents
+**Enforcement**:
+- All metadata filters use parameterized SQL
+- Contract tests verify SQL injection prevention
+- RBAC permission checks before data access
 
-# 4. Implementation phase
-# - /implement executes tasks (or manual development)
-# - Write contract tests FIRST (TDD principle)
-# - Implement features to pass tests
-# - Run tests frequently: pytest specs/<feature>/contracts/
+### IX. Simplicity (YAGNI)
+Start simple. Build for current requirements, not hypothetical future needs. Premature abstraction is technical debt.
 
-# 5. Commit early and often
-git add <modified-files>
-git commit -m "feat: <description>"  # Conventional commits
+**Why**: Unnecessary complexity slows development, increases bug surface area, and confuses users.
 
-# 6. Never commit to wrong branch
-git branch  # Verify you're on feature branch, NOT main
-```
+**Enforcement**:
+- New abstractions require justification in design docs
+- "We might need this later" is not justification
+- Delete unused code immediately
 
-### Daily Development Workflow
+## Testing Requirements
 
-**Phase 1: Daily Commits to Private Repo**
-```bash
-# 1. Verify feature complete
-pytest specs/<feature>/contracts/ -v  # All tests pass
-git status  # Working directory clean
+### Contract Tests (TDD)
+- **Purpose**: Define expected behavior before implementation
+- **Coverage**: ~8-12 tests per feature
+- **Location**: `tests/contract/`
+- **Format**: pytest with descriptive names (`test_custom_field_configuration`)
 
-# 2. Switch to master and merge feature branch
-git checkout master
-git merge <feature-branch> --no-edit  # Fast-forward preferred
+### Integration Tests
+- **Purpose**: Validate end-to-end workflows with real IRIS database
+- **Coverage**: ~10-15 tests per feature
+- **Location**: `tests/integration/`
+- **Requirement**: Use .DAT fixtures for ≥10 entities
 
-# 3. Push to private repo (includes ALL files)
-git push origin master  # Goes to private repo automatically
+### Unit Tests
+- **Purpose**: Test individual components in isolation
+- **Coverage**: ~15-20 tests per module
+- **Location**: `tests/unit/`
+- **Scope**: Pure Python logic, mocked external dependencies
 
-# 4. Verify push
-git log --oneline -5  # Check commit history
-```
+### Performance Benchmarks
+- **Purpose**: Validate performance requirements
+- **Tool**: pytest-benchmark
+- **Location**: `tests/benchmarks/`
+- **CI**: Fails on >10% regression
 
-### Creating Pull Requests to Public Repo
+## Configuration Standards
 
-**Phase 1: Create Clean PR Branch (Remove Private Files)**
-```bash
-# 1. Create PR branch from your completed feature
-git checkout -b pr/<feature-name> master
+### YAML Configuration
+- **Format**: YAML with clear hierarchy
+- **Location**: `iris_vector_rag/config/default_config.yaml`
+- **Changes**: Additive only (no removals)
+- **Documentation**: Every new key documented in comments
 
-# 2. Remove private files from THIS branch only
-git rm -r --cached .claude/
-git rm -r --cached .specify/
-git rm -r --cached specs/
-git rm --cached STATUS.md PROGRESS.md TODO.md FORK_WORKFLOW.md
-
-# 3. Commit the removal
-git commit -m "chore: remove private development files for public PR"
-
-# 4. Verify private files removed
-git ls-files | grep -E "(\.claude|\.specify|specs/|STATUS\.md)" || echo "Clean ✅"
-```
-
-**Phase 2: Push to Public Fork**
-```bash
-# 1. Push PR branch to public fork
-git push fork pr/<feature-name>
-
-# 2. Verify on GitHub
-# Visit: https://github.com/isc-tdyar/iris-vector-rag
-# Should see new branch without private files
-```
-
-**Phase 3: Create Pull Request**
-```bash
-# On GitHub:
-# 1. Go to https://github.com/intersystems-community/iris-vector-rag
-# 2. Click "New Pull Request"
-# 3. Click "compare across forks"
-# 4. Set:
-#    Base repository: intersystems-community/iris-vector-rag (base: main)
-#    Head repository: isc-tdyar/iris-vector-rag (compare: pr/<feature-name>)
-# 5. Create PR with descriptive title and summary
-# 6. Verify PR does NOT contain .claude/, .specify/, specs/, or tracking files
-```
-
-**Phase 4: After PR Merged (Sync Back)**
-```bash
-# 1. Fetch updates from community repo
-git fetch upstream
-
-# 2. Merge into your private master
-git checkout master
-git merge upstream/main
-
-# 3. Push updates to private repo
-git push origin master
-
-# 4. Delete PR branch (local and remote)
-git branch -d pr/<feature-name>
-git push fork --delete pr/<feature-name>
-```
-
-**Rationale**: Three-remote fork workflow keeps private development artifacts safe while enabling clean public contributions. Private repo is source of truth, public fork is only for PRs.
-
-### Version Bump & PyPI Publishing
-
-**When to Bump Version**: After feature complete and merged to main, before PyPI publish.
-
-**Procedure**:
-```bash
-# 1. Determine version increment (semantic versioning)
-# MAJOR.MINOR.PATCH (e.g., 0.2.5)
-# - MAJOR: Breaking changes
-# - MINOR: New features (backward compatible)
-# - PATCH: Bug fixes
-
-# 2. Update version in TWO files (BOTH required!)
-# File 1: pyproject.toml
-vim pyproject.toml  # Update version = "X.Y.Z"
-
-# File 2: iris_rag/__init__.py
-vim iris_rag/__init__.py  # Update __version__ = "X.Y.Z"
-
-# 3. Commit version bump
-git add pyproject.toml iris_rag/__init__.py
-git commit -m "chore: bump version to X.Y.Z for <feature-name>
-
-<One-line summary of what changed>
-
-<Optional: detailed changelog if multiple features>"
-
-# 4. Build and test package
-python -m build  # Creates dist/ with .whl and .tar.gz
-python -m twine check dist/*  # Validate package
-
-# 5. Test local install
-pip install --force-reinstall --no-deps dist/iris_vector_rag-X.Y.Z-*.whl
-python -c "import iris_rag; print(iris_rag.__version__)"  # Verify version
-
-# 6. Upload to PyPI (requires ~/.pypirc with credentials)
-./scripts/upload/upload_to_pypi.sh
-# OR manually:
-python -m twine upload dist/*
-
-# 7. Verify PyPI publication
-curl -s https://pypi.org/pypi/iris-vector-rag/json | \
-  python -c "import sys, json; data=json.load(sys.stdin); print(f\"Version: {data['info']['version']}\")"
-```
-
-**Complete PyPI Publishing Workflow Documentation**: See `.specify/memory/constitution.md` sections on version management and release procedures.
-
-### Troubleshooting Common Git Issues
-
-**Issue 1: Rejected Push (non-fast-forward)**
-```
-! [rejected]        main -> main (non-fast-forward)
-```
-**Cause**: Remote has commits you don't have locally.
-**Fix**:
-```bash
-git fetch origin  # Get remote state
-git log origin/main..main  # Your commits
-git log main..origin/main  # Their commits
-git pull origin main --rebase  # Rebase your commits on top
-git push origin main  # Now should succeed
-```
-
-**Issue 2: Diverged Branches (Different Commit Hashes)**
-```
-Your branch and 'origin/main' have diverged
-```
-**Cause**: Same changes with different commit hashes (common with cherry-picks).
-**Fix**:
-```bash
-# Verify you have the correct version locally
-git log --oneline -10
-# If local is correct source of truth:
-git push origin main --force-with-lease
-```
-
-**Issue 3: Working on Wrong Branch**
-```bash
-# Accidentally committed to main instead of feature branch
-git status  # Shows "On branch main"
-```
-**Fix**:
-```bash
-# Move commits to correct branch
-git checkout -b <feature-branch>  # Creates branch with current commits
-git checkout main
-git reset --hard origin/main  # Reset main to match remote
-git checkout <feature-branch>  # Continue work on feature
-```
-
-**Issue 4: Merge Conflicts During Cherry-pick**
-```
-CONFLICT (content): Merge conflict in pyproject.toml
-```
-**Fix**:
-```bash
-git status  # Review conflicted files
-vim <conflicted-file>  # Resolve conflicts manually
-git add <resolved-file>
-git cherry-pick --continue  # Or --abort if unresolvable
-```
-
-**Issue 5: Stale Remote Tracking Information**
-```bash
-# Local thinks remote is at old commit
-```
-**Fix**:
-```bash
-git remote update --prune  # Refresh all remotes
-git fetch --all --prune  # Alternative command
-```
-
-### Constitutional Compliance
-
-**Pre-commit Checklist**:
-- [ ] Using local `.venv` environment (verify with `which python`)
-- [ ] On correct branch (verify with `git branch`)
-- [ ] All tests passing (run `pytest`)
-- [ ] Working directory clean or changes staged (verify with `git status`)
-- [ ] Conventional commit message (e.g., `feat:`, `fix:`, `chore:`)
-
-**Pre-push Checklist**:
-- [ ] Synced with remote (`git fetch origin`)
-- [ ] Fast-forward merge preferred (avoid `--no-ff`)
-- [ ] Use `--force-with-lease` instead of `--force` if required
-- [ ] Pushed to internal GitLab BEFORE public GitHub
-
-**Pre-release Checklist**:
-- [ ] Version bumped in BOTH `pyproject.toml` AND `iris_rag/__init__.py`
-- [ ] Package builds successfully (`python -m build`)
-- [ ] Local install test passes
-- [ ] All contract tests passing (`pytest specs/*/contracts/`)
-- [ ] Sanitized branch updated and pushed to GitHub
+### Environment Variables
+- **Prefix**: `IRIS_` for IRIS-specific settings
+- **Format**: UPPER_SNAKE_CASE
+- **Precedence**: Env vars override YAML config
+- **Secrets**: Use env vars, never commit to version control
 
 ## Governance
 
-This constitution supersedes all other development practices. All pull requests MUST verify constitutional compliance. Complexity that violates simplicity principles MUST be justified in writing with alternatives considered.
+### Constitution Authority
+This constitution supersedes all other development practices. When conflicts arise, constitution principles take precedence.
 
-### AI Architecting Principles
+### Amendments
+- Amendments require documentation in `.specify/memory/constitution.md`
+- Major changes require team discussion and approval
+- Include migration plan for breaking changes
 
-Development with AI tools MUST follow constraint-based architecture, not "vibecoding". Constitutional validation gates serve as constraint checklists that prevent repeating known bugs and design mistakes. Every bug fix MUST be captured as a new validation rule or enhanced guideline. AI development MUST work within established frameworks, patterns, and validation loops.
+### Complexity Justification
+Any addition that violates simplicity (Principle IX) requires explicit justification in design documents explaining why the complexity is necessary.
 
-**Constraint Philosophy**: Less freedom = less chaos. Constraints are superpowers that prevent regression and ensure consistency.
+### Code Review Requirements
+All PRs/reviews must verify:
+- ✅ Tests written before implementation (TDD)
+- ✅ .DAT fixtures used for integration tests ≥10 entities
+- ✅ Backward compatibility maintained
+- ✅ Performance benchmarks pass
+- ✅ Constitution principles followed
 
-Amendment procedure: Proposed changes require documentation of impact, team approval, and migration plan for affected components. Version increments follow semantic versioning based on change scope.
-
-**Version**: 1.8.0 | **Ratified**: 2025-01-27 | **Last Amended**: 2025-11-08
+**Version**: 1.0.0 | **Ratified**: 2025-11-22 | **Last Amended**: 2025-11-22
