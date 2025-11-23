@@ -523,6 +523,96 @@ class EntityStorageAdapter:
             logger.error(f"Failed to retrieve entities by type {entity_type}: {e}")
             return []
 
+    def search_entities(
+        self,
+        query: str,
+        entity_types: Optional[List[str]] = None,
+        min_confidence: float = 0.0,
+        limit: int = 10
+    ) -> List[Entity]:
+        """
+        Search for entities by name with fuzzy matching.
+
+        Supports case-insensitive partial matching using IRIS %CONTAINS operator
+        for finding entity name variations (e.g., "Chief of Protocol" vs "chief protocol").
+
+        Args:
+            query: Search query string
+            entity_types: Optional list of entity types to filter by
+            min_confidence: Minimum confidence threshold (0.0-1.0)
+            limit: Maximum number of results
+
+        Returns:
+            List of matching Entity objects sorted by confidence (descending)
+
+        Example:
+            >>> adapter.search_entities("chief protocol", min_confidence=0.7, limit=5)
+            [Entity(name="Chief of Protocol", type="TITLE", confidence=0.90), ...]
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.connection_manager.get_connection()
+            cursor = conn.cursor()
+
+            # Build query with optional filters
+            sql = f"""
+                SELECT entity_id, entity_name, entity_type, source_doc_id, description, confidence
+                FROM {self.entities_table}
+                WHERE entity_name %CONTAINS ?
+            """
+            params = [query]
+
+            # Add entity type filter if provided
+            if entity_types:
+                placeholders = ", ".join("?" * len(entity_types))
+                sql += f" AND entity_type IN ({placeholders})"
+                params.extend(entity_types)
+
+            # Add confidence filter
+            if min_confidence > 0.0:
+                sql += " AND confidence >= ?"
+                params.append(min_confidence)
+
+            # Order by confidence and limit results
+            sql += " ORDER BY confidence DESC"
+            if limit > 0:
+                sql += f" FETCH FIRST {limit} ROWS ONLY"
+
+            logger.debug(f"Searching entities with query: {query} (types: {entity_types}, min_confidence: {min_confidence})")
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+
+            # Convert rows to Entity objects
+            entities = []
+            for row in rows:
+                entity_id, entity_name, entity_type, source_doc_id, description, confidence = row
+                entity = Entity(
+                    id=entity_id,
+                    text=entity_name,
+                    entity_type=entity_type,
+                    confidence=float(confidence) if confidence else 0.0,
+                    start_offset=0,  # Not stored in current schema
+                    end_offset=len(entity_name),
+                    source_document_id=source_doc_id,
+                    metadata={"description": description} if description else {}
+                )
+                entities.append(entity)
+
+            logger.debug(f"Found {len(entities)} entities matching query: {query}")
+            return entities
+
+        except Exception as e:
+            logger.error(f"Failed to search entities with query '{query}': {e}")
+            return []
+
+        finally:
+            try:
+                if cursor:
+                    cursor.close()
+            except Exception:
+                pass
+
     def create_tables_if_not_exist(self) -> bool:
         """Create entity and relationship tables if they don't exist."""
         try:
