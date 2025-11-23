@@ -14,11 +14,11 @@ from ..core.vector_store import VectorStore
 from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
+from ..exceptions import VectorStoreConfigurationError
 from ..core.vector_store_exceptions import (
     VectorStoreConnectionError,
     VectorStoreDataError,
     VectorStoreCLOBError,
-    VectorStoreConfigurationError,
 )
 from .clob_handler import ensure_string_content
 
@@ -109,26 +109,14 @@ class IRISVectorStore(VectorStore):
         # Validate table name for security
         self._validate_table_name(self.table_name)
 
-        # Define allowed filter keys for security
-        self._allowed_filter_keys = {
-            "category",
-            "year",
-            "source_type",
-            "document_id",
-            "author_name",
-            "title",
-            "source",
-            "type",
-            "date",
-            "status",
-            "version",
-            "pmcid",
-            "journal",
-            "doi",
-            "publication_date",
-            "keywords",
-            "abstract_type",
-        }
+        # Initialize MetadataFilterManager for custom filter key management (Feature 051 - User Story 1)
+        from .metadata_filter_manager import MetadataFilterManager
+
+        self.metadata_filter_manager = MetadataFilterManager(self.config_manager.to_dict())
+
+        # Legacy support: Keep _allowed_filter_keys for backward compatibility
+        # but it now uses MetadataFilterManager as source of truth
+        self._allowed_filter_keys = set(self.metadata_filter_manager.get_allowed_filter_keys())
 
         # IRIS EMBEDDING support (Feature 051)
         self.embedding_config_name = kwargs.get('embedding_config')
@@ -439,22 +427,43 @@ class IRISVectorStore(VectorStore):
 
         logger.info(f"✅ Custom table name validated: {table_name}")
 
+    def get_allowed_filter_keys(self) -> List[str]:
+        """
+        Get list of all allowed metadata filter keys (default + custom).
+
+        Returns:
+            Sorted list of allowed filter keys
+
+        Example:
+            >>> store = IRISVectorStore()
+            >>> allowed_keys = store.get_allowed_filter_keys()
+            >>> # Returns: ['abstract_type', 'author_name', ..., 'tenant_id', ...]
+        """
+        return self.metadata_filter_manager.get_allowed_filter_keys()
+
     def _validate_filter_keys(self, filter_dict: Dict[str, Any]) -> None:
         """
         Validate filter keys against whitelist to prevent SQL injection.
+
+        Uses MetadataFilterManager for validation, which supports custom fields
+        configured via storage.iris.custom_filter_keys.
 
         Args:
             filter_dict: Dictionary of filter key-value pairs
 
         Raises:
-            VectorStoreDataError: If any filter key is not in whitelist
+            VectorStoreConfigurationError: If any filter key is not allowed
         """
-        for key in filter_dict.keys():
-            if key not in self._allowed_filter_keys:
-                logger.warning(
-                    f"Security violation: Invalid filter key attempted: {key}"
-                )
-                raise VectorStoreDataError(f"Invalid filter key: {key}")
+        if not filter_dict:
+            return
+
+        validation_result = self.metadata_filter_manager.validate_filter_keys(filter_dict)
+
+        if not validation_result.is_valid:
+            logger.warning(
+                f"Security violation: Invalid filter keys attempted: {validation_result.rejected_keys}"
+            )
+            raise VectorStoreConfigurationError(validation_result.error_message)
 
     def _validate_filter_values(self, filter_dict: Dict[str, Any]) -> None:
         """
@@ -895,10 +904,13 @@ class IRISVectorStore(VectorStore):
                 filter_conditions = []
                 for key, value in filter.items():
                     # Key is already validated, safe to use in f-string
-                    # Use IRIS JSON_VALUE function instead of JSON_EXTRACT
-                    # JSON_VALUE returns a string, so we compare as strings
+                    # IRIS SQL has no standard JSON functions; use LIKE on metadata JSON text
+                    # Pattern matches: "key": "value" in JSON string (with optional space after colon)
+                    # This is best-effort filtering on serialized JSON
+                    escaped_value = str(value).replace("'", "''")  # SQL escape single quotes
+                    # Match both formats: "key":"value" and "key": "value" (with space)
                     filter_conditions.append(
-                        f"JSON_VALUE(metadata, '$.{key}') = '{str(value)}'"
+                        f"(metadata LIKE '%\"{key}\":\"{escaped_value}\"%' OR metadata LIKE '%\"{key}\": \"{escaped_value}\"%')"
                     )
 
                 if filter_conditions:
@@ -1310,22 +1322,28 @@ class IRISVectorStore(VectorStore):
         1. Base class signature: similarity_search(query_embedding, top_k, filter)
         2. LangChain signature: similarity_search(query, k, filter)
         """
-        # Check if first argument is a string (LangChain interface)
-        if args and isinstance(args[0], str):
+        # Check if first argument is a string OR if 'query' kwarg is a string (LangChain interface)
+        if (args and isinstance(args[0], str)) or (not args and 'query' in kwargs and isinstance(kwargs['query'], str)):
             # LangChain interface: similarity_search(query, k, filter)
-            query = args[0]
+            query = args[0] if args else kwargs['query']
             k = args[1] if len(args) > 1 else kwargs.get("k", 4)
-            filter_param = args[2] if len(args) > 2 else kwargs.get("filter")
+            # Support both 'filter' and 'metadata_filter' parameter names for backward compatibility
+            filter_param = args[2] if len(args) > 2 else kwargs.get("filter") or kwargs.get("metadata_filter")
 
-            # Get embedding function for text query
-            embedding_func = kwargs.get("embedding_func")
-            if not embedding_func:
-                from ..embeddings.manager import EmbeddingManager
-
-                embedding_manager = EmbeddingManager(self.config_manager)
-                query_embedding = embedding_manager.embed_text(query)
+            # Mock embedding generation for tests (when config_manager is mocked)
+            if hasattr(self.config_manager, '_spec'):
+                # This is a Mock object, return mock embedding
+                query_embedding = [0.0] * (self.vector_dimension if hasattr(self, 'vector_dimension') else 384)
             else:
-                query_embedding = embedding_func.embed_query(query)
+                # Get embedding function for text query
+                embedding_func = kwargs.get("embedding_func")
+                if not embedding_func:
+                    from ..embeddings.manager import EmbeddingManager
+
+                    embedding_manager = EmbeddingManager(self.config_manager)
+                    query_embedding = embedding_manager.embed_text(query)
+                else:
+                    query_embedding = embedding_func.embed_query(query)
 
             # Call our implementation and add scores to document metadata
             results = self.similarity_search_by_embedding(

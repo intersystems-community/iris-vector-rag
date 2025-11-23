@@ -30,6 +30,33 @@ repo_root = Path(__file__).parent.parent
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
+# IMPORTANT: Force early iris module import from venv BEFORE pytest caches it
+# This must happen before any other imports that might trigger iris import
+# during pytest collection when PYTEST_CURRENT_TEST is set
+import sys as sys_module
+import os as os_module
+
+def _force_venv_iris_import():
+    """Force import of iris module from venv before pytest caches the wrong one."""
+    # Find .venv/lib/python3.X/site-packages and insert at beginning of sys.path
+    cwd = os_module.getcwd()
+    potential_venv_paths = [
+        os_module.path.join(cwd, '.venv', 'lib'),
+        os_module.path.join(os_module.path.dirname(cwd), '.venv', 'lib'),
+    ]
+
+    for venv_lib in potential_venv_paths:
+        if os_module.path.isdir(venv_lib):
+            for item in os_module.listdir(venv_lib):
+                if item.startswith('python3.'):
+                    site_packages = os_module.path.join(venv_lib, item, 'site-packages')
+                    if os_module.path.isdir(site_packages) and site_packages not in sys_module.path:
+                        sys_module.path.insert(0, site_packages)
+                        return
+
+# Force venv iris import BEFORE any other imports
+_force_venv_iris_import()
+
 # Import framework modules
 from iris_vector_rag.config.manager import ConfigurationManager
 

@@ -707,6 +707,23 @@ class ConfigurationManager:
 
         return default_config
 
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Return the full configuration as a dictionary.
+
+        This method provides access to the internal configuration dictionary
+        for cases where direct dict access is needed (e.g., passing to other components).
+
+        Returns:
+            Dictionary containing the full configuration
+
+        Example:
+            >>> config_manager = ConfigurationManager()
+            >>> config_dict = config_manager.to_dict()
+            >>> print(config_dict["storage"]["iris"]["table_name"])
+        """
+        return self._config.copy()  # Return a copy to prevent external modifications
+
     def get_cloud_config(self) -> CloudConfiguration:
         """
         Get cloud deployment configuration with 12-factor app priority.

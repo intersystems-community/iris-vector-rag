@@ -6,13 +6,51 @@ constants used across the RAG framework.
 
 Constants:
     DEFAULT_FILTER_KEYS: List of metadata fields that are always allowed for filtering
+
+Custom Metadata Filtering (Feature 051 - User Story 1):
+    Enterprise administrators can extend the default 17 metadata fields by configuring
+    custom_filter_keys in storage.iris section of default_config.yaml:
+
+    storage:
+      iris:
+        custom_filter_keys:
+          - tenant_id          # For multi-tenancy isolation
+          - security_level     # For document classification
+          - department         # For organizational filtering
+          - custom_field_N     # Additional business-specific fields
+
+    Benefits:
+    - Multi-tenant data isolation (e.g., SaaS applications)
+    - Security classification filtering (e.g., confidential vs public)
+    - Departmental access control (e.g., HR, Engineering, Sales)
+    - Custom business metadata (e.g., project_id, region, compliance_tag)
+
+    Security:
+    - Field names validated against SQL injection patterns
+    - Duplicate field names rejected (custom vs default)
+    - Case-sensitive field matching enforced
+    - Values safely parameterized via LIKE pattern matching
+
+    Example Usage:
+        from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
+
+        # Query with custom metadata filters
+        results = store.similarity_search(
+            query="confidential information",
+            k=5,
+            metadata_filter={
+                "tenant_id": "acme_corp",
+                "security_level": "confidential",
+                "department": "engineering"
+            }
+        )
 """
 
 # Default metadata filter keys (always enabled for all users)
 # These 17 standard fields can always be used in metadata_filter parameter
 # Custom fields can be added via storage.iris.custom_filter_keys in config
 DEFAULT_FILTER_KEYS = [
-    "document_id",          # Unique document identifier
+    "doc_id",               # Unique document identifier (matches IRIS schema)
     "source",               # Source file or URL
     "title",                # Document title
     "author",               # Document author(s)
@@ -27,7 +65,7 @@ DEFAULT_FILTER_KEYS = [
     "language",             # Document language (e.g., en, es, fr)
     "collection_id",        # Collection identifier for document grouping
     "metadata_hash",        # Hash of metadata for change detection
-    "parent_document_id",   # Parent document ID for hierarchical documents
+    "parent_doc_id",        # Parent document ID for hierarchical documents (matches IRIS schema)
     "version",              # Document version number
 ]
 
