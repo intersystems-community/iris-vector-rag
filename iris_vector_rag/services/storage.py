@@ -526,28 +526,44 @@ class EntityStorageAdapter:
     def search_entities(
         self,
         query: str,
+        fuzzy: bool = True,
+        edit_distance_threshold: int = 2,
+        max_results: int = 10,
         entity_types: Optional[List[str]] = None,
-        min_confidence: float = 0.0,
-        limit: int = 10
-    ) -> List[Entity]:
+        min_confidence: float = 0.0
+    ) -> List[Dict[str, Any]]:
         """
         Search for entities by name with fuzzy matching.
 
-        Supports case-insensitive partial matching using IRIS %CONTAINS operator
-        for finding entity name variations (e.g., "Chief of Protocol" vs "chief protocol").
+        Supports case-insensitive substring matching using SQL LIKE operator
+        for finding entity name variations (e.g., "Scott Derrickson" matches "Scott Derrickson director").
 
         Args:
             query: Search query string
+            fuzzy: Enable fuzzy matching (always True, parameter for API compatibility)
+            edit_distance_threshold: Maximum edit distance for fuzzy matching (not implemented, for API compatibility)
+            max_results: Maximum number of results to return
             entity_types: Optional list of entity types to filter by
             min_confidence: Minimum confidence threshold (0.0-1.0)
-            limit: Maximum number of results
 
         Returns:
-            List of matching Entity objects sorted by confidence (descending)
+            List of entity dictionaries with fields:
+                - entity_id: Entity identifier
+                - entity_name: Entity name text
+                - entity_type: Entity type
+                - source_doc_id: Source document ID
+                - description: Entity description (may be None)
+                - confidence: Confidence score (0.0-1.0)
+                - similarity_score: Fuzzy match similarity (always 1.0 for SQL LIKE)
 
         Example:
-            >>> adapter.search_entities("chief protocol", min_confidence=0.7, limit=5)
-            [Entity(name="Chief of Protocol", type="TITLE", confidence=0.90), ...]
+            >>> results = adapter.search_entities("Scott Derrickson", fuzzy=True, max_results=5)
+            >>> print(results[0]["entity_name"])  # "Scott Derrickson director"
+            >>> print(results[0]["similarity_score"])  # 1.0
+
+        Note:
+            The fuzzy parameter is always True (SQL LIKE with LOWER() provides case-insensitive substring matching).
+            The edit_distance_threshold is not currently implemented.
         """
         conn = None
         cursor = None
@@ -555,13 +571,14 @@ class EntityStorageAdapter:
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
-            # Build query with optional filters
+            # Build query with optional filters (using LIKE for case-insensitive substring matching)
             sql = f"""
                 SELECT entity_id, entity_name, entity_type, source_doc_id, description, confidence
                 FROM {self.entities_table}
-                WHERE entity_name %CONTAINS ?
+                WHERE LOWER(entity_name) LIKE LOWER(?)
             """
-            params = [query]
+            # Add SQL wildcards for substring matching
+            params = [f"%{query}%"]
 
             # Add entity type filter if provided
             if entity_types:
@@ -576,28 +593,27 @@ class EntityStorageAdapter:
 
             # Order by confidence and limit results
             sql += " ORDER BY confidence DESC"
-            if limit > 0:
-                sql += f" FETCH FIRST {limit} ROWS ONLY"
+            if max_results > 0:
+                sql += f" FETCH FIRST {max_results} ROWS ONLY"
 
-            logger.debug(f"Searching entities with query: {query} (types: {entity_types}, min_confidence: {min_confidence})")
+            logger.debug(f"Searching entities with query: {query} (fuzzy={fuzzy}, edit_distance={edit_distance_threshold}, types: {entity_types}, min_confidence: {min_confidence}, max_results: {max_results})")
             cursor.execute(sql, params)
             rows = cursor.fetchall()
 
-            # Convert rows to Entity objects
+            # Convert rows to dictionaries (for hipporag2 compatibility)
             entities = []
             for row in rows:
                 entity_id, entity_name, entity_type, source_doc_id, description, confidence = row
-                entity = Entity(
-                    id=entity_id,
-                    text=entity_name,
-                    entity_type=entity_type,
-                    confidence=float(confidence) if confidence else 0.0,
-                    start_offset=0,  # Not stored in current schema
-                    end_offset=len(entity_name),
-                    source_document_id=source_doc_id,
-                    metadata={"description": description} if description else {}
-                )
-                entities.append(entity)
+                entity_dict = {
+                    "entity_id": entity_id,
+                    "entity_name": entity_name,
+                    "entity_type": entity_type,
+                    "source_doc_id": source_doc_id,
+                    "description": description,
+                    "confidence": float(confidence) if confidence else 0.0,
+                    "similarity_score": 1.0  # IRIS %CONTAINS doesn't provide explicit similarity scores
+                }
+                entities.append(entity_dict)
 
             logger.debug(f"Found {len(entities)} entities matching query: {query}")
             return entities
