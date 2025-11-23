@@ -109,6 +109,13 @@ class BatchEntityProcessor:
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
+            # Log entity IDs being stored for debugging
+            entity_ids_to_store = [str(e.id) for e in entities]
+            logger.debug(
+                f"Preparing to store {len(entities)} entities. "
+                f"First 5 IDs: {entity_ids_to_store[:5]}"
+            )
+
             # Prepare batch data for executemany()
             batch_data = []
 
@@ -308,9 +315,20 @@ class BatchEntityProcessor:
                             or str(r.target_entity_id) in missing_ids
                         ]
                     )
+
+                    # Enhanced logging to diagnose missing entities
+                    missing_ids_list = sorted(list(missing_ids))[:10]  # Show first 10
                     logger.error(
                         f"Foreign key validation failed: {len(missing_ids)} missing entity IDs, "
                         f"{orphaned_count} orphaned relationships"
+                    )
+                    logger.error(
+                        f"Sample missing entity IDs (first 10): {missing_ids_list}"
+                    )
+                    logger.info(
+                        f"Total entity IDs referenced: {len(entity_ids)}, "
+                        f"Found in database: {len(existing_ids)}, "
+                        f"Missing: {len(missing_ids)}"
                     )
 
                     # Filter out relationships with missing entity IDs
