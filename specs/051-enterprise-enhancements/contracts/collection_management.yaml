@@ -1,0 +1,499 @@
+# API Contract: Collection Management
+# Feature: Enterprise Enhancements for RAG System
+# Branch: 051-enterprise-enhancements
+# Date: 2025-11-22
+
+openapi: 3.0.0
+info:
+  title: Collection Management API
+  version: 1.0.0
+  description: |
+    API contract for CRUD operations on document collections, providing
+    operational visibility and lifecycle management capabilities.
+
+components:
+  schemas:
+    Collection:
+      type: object
+      required:
+        - collection_id
+        - document_count
+        - total_size_bytes
+        - created_at
+        - last_updated
+      properties:
+        collection_id:
+          type: string
+          maxLength: 128
+          pattern: '^[a-zA-Z0-9_-]+$'
+          description: Unique identifier for collection
+          example: "medical-docs-2024"
+        document_count:
+          type: integer
+          minimum: 0
+          description: Number of documents in collection
+          example: 15432
+        total_size_bytes:
+          type: integer
+          minimum: 0
+          description: Total size of all documents (content + embeddings)
+          example: 524288000
+        created_at:
+          type: string
+          format: date-time
+          description: When first document was added
+          example: "2024-01-15T09:00:00Z"
+        last_updated:
+          type: string
+          format: date-time
+          description: When collection was last modified
+          example: "2025-11-20T14:30:00Z"
+        metadata:
+          type: object
+          maxProperties: 50
+          description: Custom collection-level metadata
+          example:
+            department: "Clinical Research"
+            owner: "research-team@company.com"
+            retention_years: 7
+
+    CollectionSummary:
+      type: object
+      required:
+        - collection_id
+        - document_count
+        - total_size_bytes
+      properties:
+        collection_id:
+          type: string
+        document_count:
+          type: integer
+        total_size_bytes:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    CollectionList:
+      type: object
+      properties:
+        total_collections:
+          type: integer
+          minimum: 0
+        collections:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionSummary'
+
+    DeleteResult:
+      type: object
+      required:
+        - collection_id
+        - deleted_count
+        - success
+      properties:
+        collection_id:
+          type: string
+        deleted_count:
+          type: integer
+          minimum: 0
+          description: Number of documents deleted
+        success:
+          type: boolean
+        message:
+          type: string
+          example: "Collection 'medical-docs-2024' deleted (15432 documents removed)"
+
+    CollectionError:
+      type: object
+      required:
+        - error_type
+        - message
+      properties:
+        error_type:
+          type: string
+          enum: [not_found, invalid_name, permission_denied, operation_failed]
+        message:
+          type: string
+        collection_id:
+          type: string
+
+paths:
+  /api/v1/collections:
+    get:
+      summary: List all collections
+      description: |
+        Returns summary information for all document collections,
+        including statistics and last updated timestamp.
+      operationId: listCollections
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionList'
+        '500':
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionError'
+
+    post:
+      summary: Create a new collection
+      description: |
+        Explicitly create a new collection with metadata.
+        Note: Collections are also created implicitly when first document is added.
+      operationId: createCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - collection_id
+              properties:
+                collection_id:
+                  type: string
+                  maxLength: 128
+                  pattern: '^[a-zA-Z0-9_-]+$'
+                metadata:
+                  type: object
+                  maxProperties: 50
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collection_id:
+                    type: string
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid collection ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionError'
+        '409':
+          description: Collection already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionError'
+
+  /api/v1/collections/{collection_id}:
+    get:
+      summary: Get collection details
+      description: |
+        Returns detailed information for a specific collection,
+        including document count, size, timestamps, and metadata.
+      operationId: getCollectionInfo
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionError'
+
+    delete:
+      summary: Delete a collection
+      description: |
+        Deletes all documents in the collection and returns the count
+        of deleted documents. This operation is irreversible.
+      operationId: deleteCollection
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResult'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionError'
+        '403':
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionError'
+
+  /api/v1/collections/{collection_id}/exists:
+    get:
+      summary: Check if collection exists
+      description: |
+        Returns whether a collection with the specified ID exists.
+      operationId: collectionExists
+      parameters:
+        - name: collection_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collection_id:
+                    type: string
+                  exists:
+                    type: boolean
+
+# Contract Tests
+x-contract-tests:
+  - name: test_list_collections_success
+    description: List all collections with statistics
+    precondition: |
+      Collections exist: ["medical-docs", "legal-docs", "marketing-docs"]
+      Each with different document counts
+    expected:
+      status_code: 200
+      total_collections: 3
+      each_collection_has: [collection_id, document_count, total_size_bytes, last_updated]
+
+  - name: test_list_collections_empty
+    description: List collections when none exist
+    precondition: |
+      Database has no documents
+    expected:
+      status_code: 200
+      total_collections: 0
+      collections: []
+
+  - name: test_list_collections_performance
+    description: List 1000 collections completes in <2 seconds
+    precondition: |
+      1000 collections exist with varying document counts
+    expected:
+      status_code: 200
+      response_time_ms: < 2000
+      total_collections: 1000
+
+  - name: test_get_collection_info_success
+    description: Get detailed information for specific collection
+    precondition: |
+      Collection "medical-docs-2024" exists with 15432 documents
+    expected:
+      status_code: 200
+      collection_id: "medical-docs-2024"
+      document_count: 15432
+      total_size_bytes: > 0
+      created_at: not null
+      last_updated: not null
+      metadata: not null
+
+  - name: test_get_collection_info_not_found
+    description: Get info for non-existent collection returns 404
+    precondition: |
+      Collection "nonexistent-collection" does not exist
+    expected:
+      status_code: 404
+      error_type: not_found
+      message_contains: "Collection 'nonexistent-collection' not found"
+
+  - name: test_create_collection_success
+    description: Explicitly create new collection
+    precondition: |
+      Collection "test-collection" does not exist
+    request:
+      collection_id: "test-collection"
+      metadata:
+        owner: "test@example.com"
+    expected:
+      status_code: 201
+      success: true
+      message_contains: "Collection 'test-collection' created"
+
+  - name: test_create_collection_duplicate
+    description: Creating duplicate collection returns 409 conflict
+    precondition: |
+      Collection "existing-collection" already exists
+    request:
+      collection_id: "existing-collection"
+    expected:
+      status_code: 409
+      error_type: conflict
+      message_contains: "already exists"
+
+  - name: test_create_collection_invalid_name
+    description: Invalid collection ID is rejected
+    precondition: |
+      Attempt to create collection with invalid names
+    request:
+      collection_id: ["invalid name", "9starts-with-digit", "has@special"]
+    expected:
+      status_code: 400
+      error_type: invalid_name
+      message_contains: "Invalid collection ID"
+
+  - name: test_delete_collection_success
+    description: Delete collection and confirm document count
+    precondition: |
+      Collection "test-collection" exists with 100 documents
+    expected:
+      status_code: 200
+      deleted_count: 100
+      success: true
+      message_contains: "100 documents removed"
+
+  - name: test_delete_collection_not_found
+    description: Deleting non-existent collection returns 404
+    precondition: |
+      Collection "nonexistent" does not exist
+    expected:
+      status_code: 404
+      error_type: not_found
+
+  - name: test_collection_exists_true
+    description: Check existence returns true for existing collection
+    precondition: |
+      Collection "medical-docs" exists
+    expected:
+      status_code: 200
+      exists: true
+
+  - name: test_collection_exists_false
+    description: Check existence returns false for non-existent collection
+    precondition: |
+      Collection "nonexistent" does not exist
+    expected:
+      status_code: 200
+      exists: false
+
+  - name: test_collection_lifecycle_integration
+    description: Full lifecycle: create → add documents → get info → delete
+    steps:
+      - action: Create collection "lifecycle-test"
+        expected: status_code 201
+      - action: Add 50 documents to "lifecycle-test"
+        expected: document_count 50
+      - action: Get collection info
+        expected: document_count 50, total_size_bytes > 0
+      - action: Delete collection
+        expected: deleted_count 50
+      - action: Check existence
+        expected: exists false
+
+  - name: test_collection_metadata_update
+    description: Collection metadata updates when documents modified
+    precondition: |
+      Collection "update-test" created at 2025-11-22T10:00:00Z
+    steps:
+      - action: Add document at 10:05:00Z
+        expected: last_updated "2025-11-22T10:05:00Z"
+      - action: Add another document at 10:10:00Z
+        expected: last_updated "2025-11-22T10:10:00Z"
+
+# Performance Requirements
+x-performance-requirements:
+  - operation: list_collections
+    max_response_time_ms: 2000
+    max_collections: 1000
+    description: |
+      Listing collections with statistics must complete in under 2 seconds
+      even with 1000 collections present.
+
+  - operation: get_collection_info
+    max_response_time_ms: 500
+    description: |
+      Getting single collection details must complete in under 500ms.
+
+  - operation: delete_collection
+    max_response_time_per_1000_docs_ms: 5000
+    description: |
+      Deleting collection should take ~5 seconds per 1000 documents.
+      For 10K documents, expect ~50 seconds.
+
+# Usage Examples
+x-usage-examples:
+  - name: List all collections
+    language: python
+    code: |
+      from iris_rag.storage import IRISVectorStore
+
+      store = IRISVectorStore(config_manager)
+
+      # List all collections
+      collections = store.list_collections()
+
+      for collection in collections:
+          print(f"{collection['collection_id']}: "
+                f"{collection['document_count']} docs, "
+                f"{collection['total_size_bytes'] / 1024 / 1024:.2f} MB")
+
+  - name: Get collection details
+    language: python
+    code: |
+      # Get detailed info for specific collection
+      info = store.get_collection_info("medical-docs-2024")
+
+      print(f"Collection: {info['collection_id']}")
+      print(f"Documents: {info['document_count']}")
+      print(f"Size: {info['total_size_bytes'] / 1024 / 1024:.2f} MB")
+      print(f"Created: {info['created_at']}")
+      print(f"Updated: {info['last_updated']}")
+      print(f"Metadata: {info['metadata']}")
+
+  - name: Create collection
+    language: python
+    code: |
+      # Explicit collection creation
+      success = store.create_collection(
+          collection_id="new-collection",
+          metadata={
+              "department": "Research",
+              "owner": "research@company.com",
+              "retention_years": 5
+          }
+      )
+
+  - name: Delete collection
+    language: python
+    code: |
+      # Delete collection and all documents
+      deleted_count = store.delete_collection("old-test-collection")
+      print(f"Deleted {deleted_count} documents")
+
+  - name: Check collection existence
+    language: python
+    code: |
+      # Check if collection exists before operations
+      if store.collection_exists("medical-docs"):
+          info = store.get_collection_info("medical-docs")
+          # ... process info
+      else:
+          print("Collection not found")

@@ -1,0 +1,362 @@
+# API Contract: Custom Metadata Filtering
+# Feature: Enterprise Enhancements for RAG System
+# Branch: 051-enterprise-enhancements
+# Date: 2025-11-22
+
+openapi: 3.0.0
+info:
+  title: Custom Metadata Filtering API
+  version: 1.0.0
+  description: |
+    API contract for configurable metadata filter keys that enable multi-tenant
+    and domain-specific document filtering beyond default fields.
+
+components:
+  schemas:
+    CustomMetadataField:
+      type: object
+      required:
+        - field_name
+        - is_enabled
+        - added_at
+      properties:
+        field_name:
+          type: string
+          pattern: '^[a-zA-Z_][a-zA-Z0-9_]{0,63}$'
+          maxLength: 64
+          description: Name of the custom metadata field
+          example: "tenant_id"
+        is_enabled:
+          type: boolean
+          default: true
+          description: Whether field is active for filtering
+        added_at:
+          type: string
+          format: date-time
+          description: When field was configured
+        added_by:
+          type: string
+          maxLength: 255
+          description: Administrator who added field
+          example: "admin@company.com"
+        description:
+          type: string
+          maxLength: 255
+          description: Human-readable purpose
+          example: "Tenant identifier for multi-tenant isolation"
+
+    MetadataFilter:
+      type: object
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: integer
+          - type: number
+          - type: boolean
+          - type: array
+            items: {}
+      description: |
+        Key-value pairs for filtering documents. Keys must be in the allowed list
+        (default fields + custom fields from config).
+      example:
+        tenant_id: "tenant_001"
+        security_level: 3
+        category: "research-paper"
+
+    FilterValidationError:
+      type: object
+      required:
+        - error_type
+        - message
+        - rejected_keys
+        - allowed_keys
+      properties:
+        error_type:
+          type: string
+          enum: [validation_error]
+        message:
+          type: string
+          example: "Invalid filter keys detected"
+        rejected_keys:
+          type: array
+          items:
+            type: string
+          description: Keys that are not in the allowed list
+          example: ["department", "project_id"]
+        allowed_keys:
+          type: array
+          items:
+            type: string
+          description: Complete list of allowed filter keys
+          example: ["collection_id", "category", "year", "tenant_id", "security_level"]
+
+paths:
+  # Configuration (YAML-based, no API endpoint)
+  # Users configure custom fields via storage.iris.custom_filter_keys
+
+  /api/v1/metadata/allowed-filter-keys:
+    get:
+      summary: List allowed metadata filter keys
+      description: |
+        Returns the complete list of allowed filter keys, including both default
+        and custom fields merged together.
+      operationId: listAllowedFilterKeys
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  default_keys:
+                    type: array
+                    items:
+                      type: string
+                    example: ["collection_id", "category", "year", "source_type"]
+                  custom_keys:
+                    type: array
+                    items:
+                      type: string
+                    example: ["tenant_id", "security_level", "department"]
+                  all_keys:
+                    type: array
+                    items:
+                      type: string
+                    description: Merged list (default + custom)
+                    example: ["collection_id", "category", "tenant_id", "security_level"]
+
+  /api/v1/{pipeline}/_search:
+    post:
+      summary: Execute query with metadata filters
+      description: |
+        Standard RAG pipeline query with optional metadata_filter parameter.
+        Filter keys are validated against the allowed list before execution.
+      operationId: queryWithFilters
+      parameters:
+        - name: pipeline
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [basic, basic_rerank, crag, graphrag, pylate_colbert]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  description: Search query text
+                  example: "What are the symptoms of diabetes?"
+                top_k:
+                  type: integer
+                  default: 5
+                  minimum: 1
+                  maximum: 100
+                metadata_filter:
+                  $ref: '#/components/schemas/MetadataFilter'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response_id:
+                    type: string
+                    format: uuid
+                  answer:
+                    type: string
+                  retrieved_documents:
+                    type: array
+                    items:
+                      type: object
+                  sources:
+                    type: array
+                    items:
+                      type: string
+                  metadata:
+                    type: object
+                    properties:
+                      applied_filters:
+                        $ref: '#/components/schemas/MetadataFilter'
+        '400':
+          description: Invalid filter keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilterValidationError'
+
+# Contract Tests
+x-contract-tests:
+  - name: test_custom_field_configuration
+    description: Verify custom fields merge with defaults without replacement
+    precondition: |
+      Default fields: [collection_id, category, year]
+      Custom fields configured: [tenant_id, security_level]
+    expected:
+      all_allowed_keys: [collection_id, category, year, tenant_id, security_level]
+      custom_fields_count: 2
+      default_fields_preserved: true
+
+  - name: test_metadata_filter_validation_success
+    description: Query with allowed custom filter key succeeds
+    precondition: |
+      Custom fields: [tenant_id]
+      Query: "What is diabetes?" with filter {"tenant_id": "tenant_001"}
+    expected:
+      status_code: 200
+      documents_filtered: true
+      error: null
+
+  - name: test_metadata_filter_validation_failure
+    description: Query with unconfigured filter key fails with clear error
+    precondition: |
+      Custom fields: [tenant_id]
+      Query: "What is diabetes?" with filter {"department": "research"}
+    expected:
+      status_code: 400
+      error_type: validation_error
+      rejected_keys: ["department"]
+      allowed_keys: ["collection_id", "category", ..., "tenant_id"]
+      error_message_contains: "department"
+
+  - name: test_duplicate_field_name_rejection
+    description: Custom field name that duplicates default field is rejected
+    precondition: |
+      Default fields: [collection_id, category]
+      Attempt to add custom field: "collection_id"
+    expected:
+      configuration_error: true
+      error_message_contains: "conflicts with default field"
+
+  - name: test_invalid_field_name_rejection
+    description: Custom field with invalid characters is rejected
+    precondition: |
+      Attempt to add custom fields: ["tenant-id", "9security", "tenant id"]
+    expected:
+      configuration_error: true
+      error_message_contains: "Invalid field name"
+      validation_rules_explained: true
+
+  - name: test_empty_custom_fields_backward_compatibility
+    description: System works with no custom fields configured (backward compatibility)
+    precondition: |
+      Custom fields: [] (empty or not configured)
+      Query: "What is diabetes?" with filter {"category": "research"}
+    expected:
+      status_code: 200
+      allowed_keys: [default fields only]
+      query_succeeds: true
+
+  - name: test_case_sensitive_field_names
+    description: Field names are case-sensitive
+    precondition: |
+      Custom fields: [tenant_id]
+      Query with filters: {"Tenant_ID": "tenant_001", "tenant_id": "tenant_002"}
+    expected:
+      error_type: validation_error
+      rejected_keys: ["Tenant_ID"]
+      allowed_keys_include: ["tenant_id"]
+
+  - name: test_special_characters_in_field_values
+    description: Filter values with special characters are SQL-safe
+    precondition: |
+      Custom fields: [notes]
+      Query with filter: {"notes": "Patient's condition; DROP TABLE RAG.SourceDocuments;"}
+    expected:
+      status_code: 200
+      sql_injection_prevented: true
+      query_executes_safely: true
+
+# Configuration Schema
+x-configuration-schema:
+  type: object
+  properties:
+    storage:
+      type: object
+      properties:
+        iris:
+          type: object
+          properties:
+            custom_filter_keys:
+              type: array
+              items:
+                type: string
+                pattern: '^[a-zA-Z_][a-zA-Z0-9_]{0,63}$'
+              default: []
+              description: |
+                List of custom metadata field names to allow for filtering.
+                These are merged with default filter keys.
+              example:
+                - tenant_id
+                - security_level
+                - department
+
+# Usage Examples
+x-usage-examples:
+  - name: Configure custom metadata fields
+    language: yaml
+    code: |
+      # config/custom_config.yaml
+      storage:
+        iris:
+          custom_filter_keys:
+            - tenant_id
+            - security_level
+            - department
+
+  - name: Query with custom metadata filter
+    language: python
+    code: |
+      from iris_rag import create_pipeline
+
+      pipeline = create_pipeline("basic")
+
+      # Query with custom filter
+      result = pipeline.query(
+          query="What are the symptoms of diabetes?",
+          top_k=5,
+          metadata_filter={
+              "tenant_id": "tenant_001",
+              "security_level": 3,
+              "category": "research-paper"
+          }
+      )
+
+  - name: Get allowed filter keys
+    language: python
+    code: |
+      from iris_rag.storage import IRISVectorStore
+
+      store = IRISVectorStore(config_manager)
+
+      # Get all allowed keys
+      allowed_keys = store.get_allowed_filter_keys()
+      # Returns: {
+      #   "default_keys": ["collection_id", "category", ...],
+      #   "custom_keys": ["tenant_id", "security_level"],
+      #   "all_keys": ["collection_id", ..., "tenant_id", ...]
+      # }
+
+  - name: Handle validation error
+    language: python
+    code: |
+      try:
+          result = pipeline.query(
+              query="test",
+              metadata_filter={"invalid_field": "value"}
+          )
+      except VectorStoreConfigurationError as e:
+          print(e.rejected_keys)  # ["invalid_field"]
+          print(e.allowed_keys)   # ["collection_id", ...]
+          print(e.message)
+          # "Filter key 'invalid_field' not in allowed list.
+          #  Add to storage:iris:custom_filter_keys in config.
+          #  Allowed keys: [collection_id, category, ...]"

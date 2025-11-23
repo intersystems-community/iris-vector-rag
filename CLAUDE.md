@@ -495,3 +495,10 @@ logging:
 
 **Complete Documentation**: `iris_rag/api/README.md`
 
+
+## Active Technologies
+- Python 3.10+ (existing codebase uses 3.10-3.12) (051-enterprise-enhancements)
+- InterSystems IRIS database (RAG.SourceDocuments table - existing) (051-enterprise-enhancements)
+
+## Recent Changes
+- 051-enterprise-enhancements: Added Python 3.10+ (existing codebase uses 3.10-3.12)
