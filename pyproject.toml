@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iris-vector-rag"
-version = "0.5.8"
+version = "0.5.9"
 description = "Production-ready, extensible RAG framework with native IRIS vector search - unified API for basic, CRAG, GraphRAG, and ColBERT pipelines with RAGAS and DSPy integration"
 readme = "README.md"
 license = {text = "MIT"}

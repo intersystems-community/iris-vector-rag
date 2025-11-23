@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.5.8] - 2025-11-23
+## [0.5.9] - 2025-11-23
 
 ### Added
 - **Custom Metadata Filtering** for multi-tenant RAG deployments (Feature 051 User Story 1)
