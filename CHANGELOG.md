@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.10] - 2025-11-23
+
+### Documentation
+- Updated CHANGELOG to explicitly document UV environment compatibility fix from v0.5.6
+- Clarified that the `intersystems-irispython` UV incompatibility fix (Issue #5) is already included
+
+### Notes
+- No code changes - this release updates documentation only
+- All fixes from v0.5.9 are included
+- UV compatibility fix was already present in v0.5.6 (commit 478d3f1b) and carried forward
+
 ## [0.5.9] - 2025-11-23
 
 ### Added
@@ -12,6 +23,10 @@
   - MetadataFilterManager class for centralized validation
 
 ### Fixed
+- **UV Environment Compatibility** - Fixed intersystems-irispython import failures in UV isolated environments (v0.5.6)
+  - Replaced hardcoded `import intersystems_iris.dbapi._DBAPI as iris` with UV-compatible fallback logic
+  - `get_iris_dbapi_connection()` now uses `_get_iris_dbapi_module()` with robust path resolution
+  - Resolves ImportError in UV's isolated environment even when package is installed
 - **IRIS JSON Filtering** - Implemented LIKE-based pattern matching workaround for IRIS Community Edition
   - Handles both `"key":"value"` and `"key": "value"` JSON formats (with/without space)
   - Works around missing JSON_VALUE() and JSON_EXTRACT() SQL functions in Community Edition
