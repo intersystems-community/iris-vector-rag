@@ -66,20 +66,15 @@ def _get_iris_dbapi_module():
     try:
         import iris as iris_dbapi
 
-        # Check if iris_dbapi module has _DBAPI submodule with connect method
-        if hasattr(iris_dbapi, "_DBAPI") and hasattr(iris_dbapi._DBAPI, "connect"):
-            logger.info(
-                "Successfully imported 'iris' module with DBAPI interface via _DBAPI"
-            )
-            return iris_dbapi._DBAPI
-        elif hasattr(iris_dbapi, "connect"):
+        # Check if iris module has connect method (official API)
+        if hasattr(iris_dbapi, "connect"):
             logger.info(
                 "Successfully imported 'iris' module with DBAPI interface directly"
             )
             return iris_dbapi
         else:
             logger.error(
-                "iris module imported but neither _DBAPI nor connect attribute found!"
+                "iris module imported but connect() method not found!"
             )
 
             # UV compatibility workaround: manually load _init_elsdk.py

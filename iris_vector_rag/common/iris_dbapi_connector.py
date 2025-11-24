@@ -109,22 +109,17 @@ def _get_iris_dbapi_module():
         # DEBUG: Log what we got
         logger.debug(f"Imported iris module: type={type(iris_dbapi)}, has__file__={hasattr(iris_dbapi, '__file__')}")
         logger.debug(f"iris_dbapi.__file__={getattr(iris_dbapi, '__file__', 'NO __file__')}")
-        logger.debug(f"hasattr(iris_dbapi, '_DBAPI')={hasattr(iris_dbapi, '_DBAPI')}")
         logger.debug(f"hasattr(iris_dbapi, 'connect')={hasattr(iris_dbapi, 'connect')}")
         if hasattr(iris_dbapi, 'connect'):
             logger.debug(f"iris_dbapi.connect={iris_dbapi.connect}")
 
-        # Check if iris_dbapi module has _DBAPI submodule with connect method
-        if hasattr(iris_dbapi, "_DBAPI") and hasattr(iris_dbapi._DBAPI, "connect"):
-            # The _DBAPI submodule provides the DBAPI interface
-            logger.info("Successfully imported 'iris' module with DBAPI interface via _DBAPI")
-            return iris_dbapi._DBAPI
-        elif hasattr(iris_dbapi, "connect"):
-            # The iris_dbapi module itself provides the DBAPI interface
+        # Check if iris module has connect method (official API)
+        if hasattr(iris_dbapi, "connect"):
+            # The iris module provides the DBAPI interface
             logger.info("Successfully imported 'iris' module with DBAPI interface directly")
             return iris_dbapi
         else:
-            logger.error("iris module imported but neither _DBAPI nor connect attribute found!")
+            logger.error("iris module imported but connect() method not found!")
             logger.error(f"Available attributes: {[x for x in dir(iris_dbapi) if not x.startswith('_')][:20]}")
 
             # Workaround for pytest module caching issue:
