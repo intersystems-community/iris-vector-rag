@@ -5,9 +5,14 @@ Manages database connections with backend mode-specific limits
 using thread-safe semaphore-based pooling.
 
 Feature: 035-make-2-modes
+
+DEPRECATED: This module is deprecated as of Feature 051 (Simplify IRIS Connection).
+Use iris_vector_rag.common.IRISConnectionPool() for production connection pooling.
+See specs/051-simplify-iris-connection/quickstart.md for migration guide.
 """
 
 import threading
+import warnings
 from contextlib import contextmanager
 from typing import Any, Dict, Generator
 
@@ -21,6 +26,8 @@ class ConnectionPool:
 
     Community mode: Single connection (Semaphore(1))
     Enterprise mode: Many connections (Semaphore(999))
+
+    DEPRECATED: Use IRISConnectionPool from iris_vector_rag.common instead.
     """
 
     def __init__(self, mode: BackendMode):
@@ -29,7 +36,18 @@ class ConnectionPool:
 
         Args:
             mode: Backend mode (COMMUNITY or ENTERPRISE)
+
+        DEPRECATED: Use IRISConnectionPool for production pooling:
+            from iris_vector_rag.common import IRISConnectionPool
+            pool = IRISConnectionPool(max_connections=20)
         """
+        warnings.warn(
+            "ConnectionPool (testing module) is deprecated as of Feature 051. "
+            "Use IRISConnectionPool from iris_vector_rag.common for production pooling. "
+            "See specs/051-simplify-iris-connection/quickstart.md for migration guide.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.mode = mode
         self._max_connections = 1 if mode == BackendMode.COMMUNITY else 999
         self._semaphore = threading.Semaphore(self._max_connections)
