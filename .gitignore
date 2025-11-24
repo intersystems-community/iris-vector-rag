@@ -156,6 +156,9 @@ data/pmc_100k_downloaded/
 
 temp_iris.key
 
+# Configuration files (.gitignored)
+config/
+
 # Output and temporary directories that accumulate files
 outputs/logs/
 outputs/temp/
