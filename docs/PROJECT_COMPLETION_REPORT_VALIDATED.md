@@ -11,7 +11,7 @@ Validated completion report for rag-templates based strictly on test artifacts a
   - [CRAGPipeline](iris_rag/pipelines/crag.py:24)
   - [BasicRAGRerankingPipeline](iris_rag/pipelines/basic_rerank.py:40)
   - [GraphRAGPipeline](iris_rag/pipelines/graphrag.py:17)
-- Unified interface across pipelines via [RAGPipeline](iris_rag/core/base.py:12) and adapter boundary [RAGTemplatesBridge](adapters/rag_templates_bridge.py:86)
+- Unified interface across pipelines via [RAGPipeline](iris_rag/core/base.py:12) and adapter boundary [RAGTemplatesBridge](iris_vector_rag/adapters/rag_templates_bridge.py:86)
 - Infrastructure proven (no mocks) with working DBAPI vector search:
   - [DBAPI Vector Search Validation (report)](outputs/test_results/dbapi_vector_search_validation_20250605_063757.md)
   - [Direct DBAPI Validation (report)](outputs/test_results/direct_dbapi_validation_20250605_063419.md)
@@ -54,9 +54,9 @@ Validated completion report for rag-templates based strictly on test artifacts a
   - [CRAGPipeline](iris_rag/pipelines/crag.py:24) — corrective retrieval with quality evaluation
   - [BasicRAGRerankingPipeline](iris_rag/pipelines/basic_rerank.py:40) — post-retrieval reranking
   - [GraphRAGPipeline](iris_rag/pipelines/graphrag.py:17) — KG traversal + vector fallback
-- Integration boundary for consumers (e.g., kg-ticket-resolver): [RAGTemplatesBridge](adapters/rag_templates_bridge.py:86)
-  - Unified async entrypoint: [RAGTemplatesBridge.query](adapters/rag_templates_bridge.py:203)
-  - Technique routing enum: [RAGTechnique](adapters/rag_templates_bridge.py:36)
+- Integration boundary for consumers (e.g., kg-ticket-resolver): [RAGTemplatesBridge](iris_vector_rag/adapters/rag_templates_bridge.py:86)
+  - Unified async entrypoint: [RAGTemplatesBridge.query](iris_vector_rag/adapters/rag_templates_bridge.py:203)
+  - Technique routing enum: [RAGTechnique](iris_vector_rag/adapters/rag_templates_bridge.py:36)
 - Requirements validation and setup (TDD anchors):
   - Factory: [ValidatedPipelineFactory](iris_rag/validation/factory.py:30)
   - Precondition checks: [PreConditionValidator](iris_rag/validation/validator.py:39)
@@ -67,7 +67,7 @@ Validated completion report for rag-templates based strictly on test artifacts a
 - Works now (validated):
   - Pipeline constructors on real IRIS infrastructure with measured timings (see “What the Validation Shows”)
   - DBAPI vector operations are functional on live backend ([DBAPI Vector Search Validation](outputs/test_results/dbapi_vector_search_validation_20250605_063757.md))
-  - Adapter boundary compiles and initializes the four validated techniques ([RAGTemplatesBridge](adapters/rag_templates_bridge.py:134))
+  - Adapter boundary compiles and initializes the four validated techniques ([RAGTemplatesBridge](iris_vector_rag/adapters/rag_templates_bridge.py:134))
 - Needs work to be production-complete:
   - Data prerequisites: document embeddings and optional chunk embeddings must be generated to enable ingestion + query on real data
     - Generic embedding fulfillment flow: [SetupOrchestrator._ensure_document_embeddings](iris_rag/validation/orchestrator.py:235)
@@ -92,18 +92,18 @@ Note: These are constructor times under full infrastructure. End-to-end query la
 - Provided by rag-templates:
   - Pipeline implementations: [BasicRAGPipeline](iris_rag/pipelines/basic.py:20), [CRAGPipeline](iris_rag/pipelines/crag.py:24), [BasicRAGRerankingPipeline](iris_rag/pipelines/basic_rerank.py:40), [GraphRAGPipeline](iris_rag/pipelines/graphrag.py:17)
   - Validation and setup tooling: [ValidatedPipelineFactory](iris_rag/validation/factory.py:30), [PreConditionValidator](iris_rag/validation/validator.py:39), [SetupOrchestrator](iris_rag/validation/orchestrator.py:48)
-  - Bridge adapter and technique routing: [RAGTemplatesBridge](adapters/rag_templates_bridge.py:86), [RAGTechnique](adapters/rag_templates_bridge.py:36)
+  - Bridge adapter and technique routing: [RAGTemplatesBridge](iris_vector_rag/adapters/rag_templates_bridge.py:86), [RAGTechnique](iris_vector_rag/adapters/rag_templates_bridge.py:36)
 - Expected in consuming app (e.g., kg-ticket-resolver):
-  - Select technique via adapter ([RAGTemplatesBridge.query](adapters/rag_templates_bridge.py:203))
+  - Select technique via adapter ([RAGTemplatesBridge.query](iris_vector_rag/adapters/rag_templates_bridge.py:203))
   - Provide LLM function and application-specific config
-  - Handle responses in standardized [RAGResponse](adapters/rag_templates_bridge.py:52) shape
+  - Handle responses in standardized [RAGResponse](iris_vector_rag/adapters/rag_templates_bridge.py:52) shape
 
 ## 📒 Success Metrics (Validated)
 
 - 4 production RAG pipelines with unified interface: Yes (see pipeline class links and [RAGPipeline](iris_rag/core/base.py:12))
 - Enterprise-grade IRIS backend integration: Yes (DBAPI vector tests and full infra validation report)
 - Modular design: Mixed — two pipelines are < 500 lines ([GraphRAGPipeline](iris_rag/pipelines/graphrag.py:17), [BasicRAGRerankingPipeline](iris_rag/pipelines/basic_rerank.py:40)), while [BasicRAGPipeline](iris_rag/pipelines/basic.py:20) (~518 lines) and [CRAGPipeline](iris_rag/pipelines/crag.py:24) (~617 lines) exceed 500; refactor opportunities identified
-- Configuration management: Yes (usage across pipelines and bridge; e.g., [RAGTemplatesBridge.__init__](adapters/rag_templates_bridge.py:98))
+- Configuration management: Yes (usage across pipelines and bridge; e.g., [RAGTemplatesBridge.__init__](iris_vector_rag/adapters/rag_templates_bridge.py:98))
 - TDD validation framework for ongoing testing: Yes (factory + validator + orchestrator)
 - Proven infrastructure compatibility: Yes (validation JSON shows database_available=true under full test)
 
@@ -116,7 +116,7 @@ Note: These are constructor times under full infrastructure. End-to-end query la
   - [BasicRAGRerankingPipeline](iris_rag/pipelines/basic_rerank.py:40)
   - [GraphRAGPipeline](iris_rag/pipelines/graphrag.py:17)
 - Base interface: [RAGPipeline](iris_rag/core/base.py:12)
-- Adapter boundary: [RAGTemplatesBridge](adapters/rag_templates_bridge.py:86), [RAGTechnique](adapters/rag_templates_bridge.py:36), [RAGResponse](adapters/rag_templates_bridge.py:52)
+- Adapter boundary: [RAGTemplatesBridge](iris_vector_rag/adapters/rag_templates_bridge.py:86), [RAGTechnique](iris_vector_rag/adapters/rag_templates_bridge.py:36), [RAGResponse](iris_vector_rag/adapters/rag_templates_bridge.py:52)
 - Validation runtime (full infra): [validation_results/comprehensive_pipeline_validation_20250913_181921.json](validation_results/comprehensive_pipeline_validation_20250913_181921.json)
 - DBAPI validation:
   - [DBAPI Vector Search Validation](outputs/test_results/dbapi_vector_search_validation_20250605_063757.md)

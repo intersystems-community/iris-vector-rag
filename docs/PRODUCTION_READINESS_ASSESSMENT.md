@@ -11,7 +11,7 @@ Production readiness assessment for rag-templates based strictly on validated te
   - [`CRAGPipeline`](iris_rag/pipelines/crag.py:24)
   - [`BasicRAGRerankingPipeline`](iris_rag/pipelines/basic_rerank.py:40)
   - [`GraphRAGPipeline`](iris_rag/pipelines/graphrag.py:17)
-- Unified interface via [`RAGPipeline`](iris_rag/core/base.py:12) and integration via [`RAGTemplatesBridge`](adapters/rag_templates_bridge.py:86)
+- Unified interface via [`RAGPipeline`](iris_rag/core/base.py:12) and integration via [`RAGTemplatesBridge`](iris_vector_rag/adapters/rag_templates_bridge.py:86)
 - Real constructor performance (seconds) on full infrastructure:
   - BasicRAG 6.97s ([`validation_results/comprehensive_pipeline_validation_20250913_181921.json`](validation_results/comprehensive_pipeline_validation_20250913_181921.json:32))
   - CRAG 3.72s ([`validation_results/comprehensive_pipeline_validation_20250913_181921.json`](validation_results/comprehensive_pipeline_validation_20250913_181921.json:53))
@@ -69,14 +69,14 @@ Not validated yet (defer claims):
 ## Reliability, Fault Tolerance, and Error Handling
 
 - Unified bridge exposes circuit breaker and fallback:
-  - Circuit breaker states: [`CircuitBreakerState`](adapters/rag_templates_bridge.py:44)
-  - Gate and transitions: [`RAGTemplatesBridge._check_circuit_breaker()`](adapters/rag_templates_bridge.py:164)
-  - Fallback path in query orchestration: [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:203)
+  - Circuit breaker states: [`CircuitBreakerState`](iris_vector_rag/adapters/rag_templates_bridge.py:44)
+  - Gate and transitions: [`RAGTemplatesBridge._check_circuit_breaker()`](iris_vector_rag/adapters/rag_templates_bridge.py:164)
+  - Fallback path in query orchestration: [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203)
 - Pipelines return structured results and degrade gracefully:
   - CRAG guarded error return: [`CRAGPipeline.query()`](iris_rag/pipelines/crag.py:217)
 - Health and metrics for operational readiness:
-  - Health: [`RAGTemplatesBridge.get_health_status()`](adapters/rag_templates_bridge.py:332)
-  - Metrics: [`RAGTemplatesBridge.get_metrics()`](adapters/rag_templates_bridge.py:323)
+  - Health: [`RAGTemplatesBridge.get_health_status()`](iris_vector_rag/adapters/rag_templates_bridge.py:332)
+  - Metrics: [`RAGTemplatesBridge.get_metrics()`](iris_vector_rag/adapters/rag_templates_bridge.py:323)
 
 ---
 
@@ -99,12 +99,12 @@ Artifacts to review further:
      - Auto-setup: [`SetupOrchestrator.setup_pipeline()`](iris_rag/validation/orchestrator.py:72) for "basic", "basic_rerank", "crag"
    - For GraphRAG: populate RAG.Entities and RAG.EntityRelationships tables, then validate traversal with targeted queries (see methods linked above)
 3) Application integration
-   - Integrate through unified adapter: [`RAGTemplatesBridge`](adapters/rag_templates_bridge.py:86)
-   - Select technique via enum: [`RAGTechnique`](adapters/rag_templates_bridge.py:36)
-   - Use async entrypoint: [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:203)
+   - Integrate through unified adapter: [`RAGTemplatesBridge`](iris_vector_rag/adapters/rag_templates_bridge.py:86)
+   - Select technique via enum: [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
+   - Use async entrypoint: [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203)
 4) Operationalization
-   - Health checks: [`RAGTemplatesBridge.get_health_status()`](adapters/rag_templates_bridge.py:332)
-   - Metrics export/ingestion from [`RAGTemplatesBridge.get_metrics()`](adapters/rag_templates_bridge.py:323)
+   - Health checks: [`RAGTemplatesBridge.get_health_status()`](iris_vector_rag/adapters/rag_templates_bridge.py:332)
+   - Metrics export/ingestion from [`RAGTemplatesBridge.get_metrics()`](iris_vector_rag/adapters/rag_templates_bridge.py:323)
 5) Performance baselining
    - After embeddings and KG data are populated, measure end-to-end latency and throughput under expected concurrency, and capture P95/99
 
@@ -117,7 +117,7 @@ Artifacts to review further:
 - Vector search DBAPI verified
   - Evidence: [`outputs/test_results/dbapi_vector_search_validation_20250605_063757.md`](outputs/test_results/dbapi_vector_search_validation_20250605_063757.md)
 - Unified interface and integration boundary implemented
-  - Evidence: [`RAGPipeline`](iris_rag/core/base.py:12), [`RAGTemplatesBridge`](adapters/rag_templates_bridge.py:86)
+  - Evidence: [`RAGPipeline`](iris_rag/core/base.py:12), [`RAGTemplatesBridge`](iris_vector_rag/adapters/rag_templates_bridge.py:86)
 - Requirements validation and auto-setup available
   - Evidence: [`ValidatedPipelineFactory`](iris_rag/validation/factory.py:30), [`PreConditionValidator`](iris_rag/validation/validator.py:39), [`SetupOrchestrator`](iris_rag/validation/orchestrator.py:48)
 
@@ -161,10 +161,10 @@ Pending to declare production-grade:
   - [`BasicRAGRerankingPipeline`](iris_rag/pipelines/basic_rerank.py:40)
   - [`GraphRAGPipeline`](iris_rag/pipelines/graphrag.py:17)
 - Integration boundary:
-  - [`RAGTemplatesBridge`](adapters/rag_templates_bridge.py:86)
-  - [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:203)
-  - [`RAGTechnique`](adapters/rag_templates_bridge.py:36)
-  - [`RAGResponse`](adapters/rag_templates_bridge.py:52)
+  - [`RAGTemplatesBridge`](iris_vector_rag/adapters/rag_templates_bridge.py:86)
+  - [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203)
+  - [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
+  - [`RAGResponse`](iris_vector_rag/adapters/rag_templates_bridge.py:52)
 - Validation and setup:
   - [`ValidatedPipelineFactory`](iris_rag/validation/factory.py:30)
   - [`PreConditionValidator`](iris_rag/validation/validator.py:39)
