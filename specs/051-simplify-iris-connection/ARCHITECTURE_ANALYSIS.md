@@ -331,3 +331,24 @@ conn = get_iris_connection()
 - **TODO Item**: `TODO.md` lines 70-109
 - **UV Compatibility Fix**: `iris_dbapi_connector.py:252` (commit `478d3f1b`)
 - **Backend Mode Feature**: Feature 035-make-2-modes
+## Baseline Metrics (Pre-Implementation - 2025-11-23)
+
+### Connection Module Count
+Total connection-related files identified: 6 components
+
+1. iris_dbapi_connector.py (~250 LOC)
+2. connection_manager.py
+3. iris_connection_manager.py  
+4. connection_pool.py (production)
+5. testing/connection_pool.py (backend mode)
+6. testing/backend_manager.py
+
+### File Import Analysis
+Files importing connection modules: 156 files
+Test files using connection fixtures: ~40 files
+
+### Performance Baseline
+- Connection establishment time: Target <50ms (to be measured)
+- Module overhead: <5% target for cached connections
+
+**Status**: Baseline documented for comparison post-implementation

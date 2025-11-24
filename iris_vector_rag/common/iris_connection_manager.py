@@ -13,10 +13,16 @@ Environment Priority:
 1. UV environment (.venv) if available and has IRIS packages
 2. Current environment if it has IRIS packages
 3. System Python as fallback
+
+DEPRECATED: This module is deprecated as of Feature 051 (Simplify IRIS Connection).
+Use iris_vector_rag.common.get_iris_connection() instead for simple connections,
+or iris_vector_rag.common.IRISConnectionPool() for pooling.
+See specs/051-simplify-iris-connection/quickstart.md for migration guide.
 """
 
 import logging
 import os
+import warnings
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -38,6 +44,8 @@ def _detect_best_iris_environment():
 class IRISConnectionManager:
     """
     Unified connection manager for IRIS database with DBAPI-first approach.
+
+    DEPRECATED: Use get_iris_connection() or IRISConnectionPool instead.
     """
 
     def __init__(self, prefer_dbapi: bool = True):
@@ -46,7 +54,18 @@ class IRISConnectionManager:
 
         Args:
             prefer_dbapi: Whether to prefer DBAPI over JDBC (default: True)
+
+        DEPRECATED: This class is deprecated. Use get_iris_connection() instead:
+            from iris_vector_rag.common import get_iris_connection
+            conn = get_iris_connection()
         """
+        warnings.warn(
+            "IRISConnectionManager is deprecated as of Feature 051. "
+            "Use get_iris_connection() for simple connections or IRISConnectionPool for pooling. "
+            "See specs/051-simplify-iris-connection/quickstart.md for migration guide.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.prefer_dbapi = prefer_dbapi
         self._connection = None
         self._connection_type = None
@@ -87,21 +106,34 @@ class IRISConnectionManager:
             return self._connection
         except Exception as e:
             # Check if this is a password change issue
-            if "Password change required" in str(e) or "password change required" in str(e).lower():
-                logger.warning("⚠️  IRIS password change required. Attempting automatic remediation...")
+            if (
+                "Password change required" in str(e)
+                or "password change required" in str(e).lower()
+            ):
+                logger.warning(
+                    "⚠️  IRIS password change required. Attempting automatic remediation..."
+                )
 
                 try:
-                    from tests.utils.iris_password_reset import reset_iris_password_if_needed
+                    from tests.utils.iris_password_reset import (
+                        reset_iris_password_if_needed,
+                    )
 
                     if reset_iris_password_if_needed(e, max_retries=1):
-                        logger.info("✓ Password reset successful. Retrying connection...")
+                        logger.info(
+                            "✓ Password reset successful. Retrying connection..."
+                        )
                         # Retry connection after password reset
                         self._connection = None  # Clear failed connection
                         # NOTE: No recursion here - just let it fall through to raise
                         # The next connection attempt will use updated env vars
-                        logger.info("Password reset complete. Please retry your operation.")
+                        logger.info(
+                            "Password reset complete. Please retry your operation."
+                        )
                 except ImportError:
-                    logger.warning("Password reset utility not available. Manual reset required.")
+                    logger.warning(
+                        "Password reset utility not available. Manual reset required."
+                    )
 
             logger.error(f"All connection methods failed. JDBC error: {e}")
             raise ConnectionError(
@@ -175,16 +207,26 @@ class IRISConnectionManager:
             raise ImportError(f"IRIS DBAPI not properly configured: {e}")
         except Exception as e:
             # Check if this is a password change issue
-            if "Password change required" in str(e) or "password change required" in str(e).lower():
-                logger.warning("⚠️  IRIS password change required. Attempting automatic remediation...")
+            if (
+                "Password change required" in str(e)
+                or "password change required" in str(e).lower()
+            ):
+                logger.warning(
+                    "⚠️  IRIS password change required. Attempting automatic remediation..."
+                )
 
                 try:
-                    from tests.utils.iris_password_reset import reset_iris_password_if_needed
+                    from tests.utils.iris_password_reset import (
+                        reset_iris_password_if_needed,
+                    )
 
                     if reset_iris_password_if_needed(e, max_retries=1):
-                        logger.info("✓ Password reset successful. Retrying DBAPI connection...")
+                        logger.info(
+                            "✓ Password reset successful. Retrying DBAPI connection..."
+                        )
                         # Retry connection after password reset - refetch params to get new password from env
                         import iris
+
                         conn_params_refreshed = self._get_connection_params(config)
                         return iris.connect(
                             hostname=conn_params_refreshed["hostname"],

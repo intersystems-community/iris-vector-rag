@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: Simplify IRIS Connection/Testing/Config Architecture - reduce from 4-5 abstraction layers (ConnectionManager, ConnectionPool, iris_dbapi_connector, Backend Mode config) to 1-2 clear components. Current complexity causes developer onboarding friction and confusing test fixtures (mock pooling vs real connections). Goal: developer can understand connection flow in <5 minutes, integration tests trivially obvious, maintain backward compatibility, zero performance regression.
 
+## Clarifications
+
+### Session 2025-11-23
+
+- Q: How should the system detect Community vs Enterprise edition for automatic connection limiting? → A: Parse IRIS license key file from installation directory (license.key format)
+- Q: How long should the deprecated old connection APIs be supported during migration? → A: 1 major version (fast deprecation cycle, remove in next breaking release)
+- Q: When Community Edition connection limit is reached, what should the system do? → A: Raise ConnectionLimitError exception with message suggesting connection queuing or serial test execution
+- Q: Should `get_iris_connection()` cache connections at the module level to reduce overhead? → A: Module-level singleton with thread-safe lazy initialization
+- Q: When should connection parameters (host, port, namespace) be validated? → A: Validate on first call to get_iris_connection(), raise early with specific errors before attempting connection
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Direct Connection Usage (Priority: P1)
@@ -91,10 +101,12 @@
   - System should fail fast with clear error message indicating database unavailable
 
 - What happens when connection parameters are invalid?
-  - System should validate parameters early and provide specific error (e.g., "invalid port number" vs generic "connection failed")
+  - System validates parameters on first call to get_iris_connection() before attempting database connection
+  - Raises specific ValidationError with actionable message (e.g., "Invalid port number '99999': must be between 1-65535" vs generic "connection failed")
+  - Validation includes: port range (1-65535), namespace format (alphanumeric + underscores), host not empty
 
 - What happens when maximum connections are reached in Community Edition?
-  - System should queue requests or provide clear error about license limits
+  - System raises ConnectionLimitError exception with message: "IRIS Community Edition connection limit (1) reached. Consider: 1) Using connection queuing with IRISConnectionPool, 2) Running tests serially with pytest -n 0, 3) Setting IRIS_BACKEND_MODE=community explicitly."
 
 - What happens when connection is lost mid-operation?
   - System should detect connection loss and raise appropriate exception for retry logic
@@ -104,17 +116,17 @@
 ### Functional Requirements
 
 - **FR-001**: System MUST provide a simple `get_iris_connection()` function that returns a working IRIS database connection
-- **FR-002**: System MUST automatically detect IRIS edition (Community vs Enterprise) and apply appropriate connection limits
-- **FR-003**: System MUST provide connection parameter validation before attempting connection
+- **FR-002**: System MUST automatically detect IRIS edition (Community vs Enterprise) by parsing license key file format from IRIS installation directory and apply appropriate connection limits (1 connection for Community, unlimited for Enterprise)
+- **FR-003**: System MUST provide connection parameter validation before attempting connection. Validate on first call to get_iris_connection() and raise specific errors (e.g., "Invalid port number: must be 1-65535" instead of generic "connection failed").
 - **FR-004**: System MUST allow optional connection pooling via explicit API (e.g., `IRISConnectionPool()`)
 - **FR-005**: System MUST maintain backward compatibility with existing connection usage
-- **FR-006**: System MUST provide clear error messages for common failure scenarios (database down, invalid credentials, license pool exhausted)
+- **FR-006**: System MUST provide clear error messages for common failure scenarios (database down, invalid credentials, license pool exhausted). When Community Edition connection limit reached, raise ConnectionLimitError with actionable suggestions.
 - **FR-007**: System MUST handle UV environment iris module import correctly (preserve existing fix)
 - **FR-008**: System MUST allow manual backend mode override via `IRIS_BACKEND_MODE` environment variable
 
 ### Non-Functional Requirements
 
-- **NFR-001**: Connection establishment time must not increase (zero performance regression)
+- **NFR-001**: Connection establishment time must not increase (zero performance regression). Implement module-level connection caching with thread-safe lazy initialization to reduce overhead for repeated calls.
 - **NFR-002**: Memory usage must not increase compared to current implementation
 - **NFR-003**: New developer onboarding time for understanding connection flow must be under 5 minutes
 - **NFR-004**: Test fixture usage must be obviously "real connection" vs "mock" from code inspection
@@ -198,13 +210,18 @@
    ) -> iris.DBAPI.Connection:
        """Get IRIS database connection with automatic edition detection.
 
+       Returns cached module-level connection (thread-safe singleton).
+
        Parameters from environment variables if not provided:
        - IRIS_HOST, IRIS_PORT, IRIS_NAMESPACE, IRIS_USERNAME, IRIS_PASSWORD
 
        Edition detection:
-       - Automatically detects Community vs Enterprise edition
-       - Applies appropriate connection limits
+       - Automatically detects Community vs Enterprise edition by parsing license file
+       - Applies appropriate connection limits (1 for Community, unlimited for Enterprise)
        - Override with IRIS_BACKEND_MODE env variable
+
+       Raises:
+       - ConnectionLimitError: When Community Edition limit reached
        """
        pass
 
@@ -227,19 +244,16 @@
 
 ### Migration Strategy:
 
-1. **Phase 1**: Create new `iris_connection.py` module with simplified API
-2. **Phase 2**: Update test fixtures to use new API while keeping old API working
-3. **Phase 3**: Gradually migrate existing code to new API
-4. **Phase 4**: Deprecate old API with clear migration warnings
-5. **Phase 5**: Remove old API after full migration
+1. **Phase 1 (Version N)**: Create new `iris_connection.py` module with simplified API
+2. **Phase 2 (Version N)**: Update test fixtures to use new API while keeping old API working with deprecation warnings
+3. **Phase 3 (Version N)**: Gradually migrate existing code to new API
+4. **Phase 4 (Version N+1 - Breaking)**: Remove old connection APIs (ConnectionManager, IRISConnectionManager, testing ConnectionPool) in next major version release
 
 ## Open Questions
 
 1. **ConnectionManager Location**: Where is ConnectionManager currently implemented? (need to find and analyze)
 2. **ConnectionPool Location**: Where is ConnectionPool currently implemented? (need to find and analyze)
 3. **Usage Patterns**: What percentage of code uses pooling vs single connections? (need to analyze)
-4. **Edition Detection**: What's the most reliable way to detect Community vs Enterprise edition? (query system table?)
-5. **Backward Compatibility**: Should we support both APIs indefinitely or plan deprecation timeline?
 
 ## Next Steps
 

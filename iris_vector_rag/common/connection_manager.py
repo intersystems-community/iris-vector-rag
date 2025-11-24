@@ -1,10 +1,16 @@
 """
 Centralized connection manager for RAG pipelines
 Handles JDBC, ODBC, and future dbapi connections with a unified interface
+
+DEPRECATED: This module is deprecated as of Feature 051 (Simplify IRIS Connection).
+Use iris_vector_rag.common.get_iris_connection() instead for simple connections,
+or iris_vector_rag.common.IRISConnectionPool() for pooling.
+See specs/051-simplify-iris-connection/quickstart.md for migration guide.
 """
 
 import logging
 import os
+import warnings
 from contextlib import contextmanager
 from typing import Any, List, Optional
 
@@ -12,7 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:
-    """Manages database connections for RAG pipelines"""
+    """
+    Manages database connections for RAG pipelines
+
+    DEPRECATED: Use get_iris_connection() or IRISConnectionPool instead.
+    """
 
     def __init__(self, connection_type: str = "odbc"):
         """
@@ -20,7 +30,18 @@ class ConnectionManager:
 
         Args:
             connection_type: Either "jdbc", "odbc", or "dbapi" (default: "odbc" for stability)
+
+        DEPRECATED: This class is deprecated. Use get_iris_connection() instead:
+            from iris_vector_rag.common import get_iris_connection
+            conn = get_iris_connection()
         """
+        warnings.warn(
+            "ConnectionManager is deprecated as of Feature 051. "
+            "Use get_iris_connection() for simple connections or IRISConnectionPool for pooling. "
+            "See specs/051-simplify-iris-connection/quickstart.md for migration guide.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.connection_type = connection_type.lower()
         self._connection = None
         self._cursor = None
@@ -37,7 +58,9 @@ class ConnectionManager:
 
         if self.connection_type == "jdbc":
             try:
-                from iris_vector_rag.common.iris_connection_manager import get_iris_jdbc_connection
+                from iris_vector_rag.common.iris_connection_manager import (
+                    get_iris_jdbc_connection,
+                )
 
                 self._connection = get_iris_jdbc_connection()
                 logger.info("Established JDBC connection")
@@ -48,7 +71,9 @@ class ConnectionManager:
 
         elif self.connection_type == "dbapi":
             try:
-                from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+                from iris_vector_rag.common.iris_dbapi_connector import (
+                    get_iris_dbapi_connection,
+                )
 
                 self._connection = get_iris_dbapi_connection()
                 if not self._connection:  # If get_iris_dbapi_connection returns None
