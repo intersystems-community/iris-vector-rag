@@ -191,7 +191,10 @@ logs/
 tests/artifacts/
 coverage.json
 
-# Development tracking files (not for git tracking)
+# Development tracking files (not for git tracking per user's CLAUDE.md)
 STATUS.md
 PROGRESS.md
 TODO.md
+
+# Specification tracking directory (moved to feature-specific location)
+.specify/
