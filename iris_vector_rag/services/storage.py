@@ -523,6 +523,112 @@ class EntityStorageAdapter:
             logger.error(f"Failed to retrieve entities by type {entity_type}: {e}")
             return []
 
+    def search_entities(
+        self,
+        query: str,
+        fuzzy: bool = True,
+        edit_distance_threshold: int = 2,
+        max_results: int = 10,
+        entity_types: Optional[List[str]] = None,
+        min_confidence: float = 0.0
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for entities by name with fuzzy matching.
+
+        Supports case-insensitive substring matching using SQL LIKE operator
+        for finding entity name variations (e.g., "Scott Derrickson" matches "Scott Derrickson director").
+
+        Args:
+            query: Search query string
+            fuzzy: Enable fuzzy matching (always True, parameter for API compatibility)
+            edit_distance_threshold: Maximum edit distance for fuzzy matching (not implemented, for API compatibility)
+            max_results: Maximum number of results to return
+            entity_types: Optional list of entity types to filter by
+            min_confidence: Minimum confidence threshold (0.0-1.0)
+
+        Returns:
+            List of entity dictionaries with fields:
+                - entity_id: Entity identifier
+                - entity_name: Entity name text
+                - entity_type: Entity type
+                - source_doc_id: Source document ID
+                - description: Entity description (may be None)
+                - confidence: Confidence score (0.0-1.0)
+                - similarity_score: Fuzzy match similarity (always 1.0 for SQL LIKE)
+
+        Example:
+            >>> results = adapter.search_entities("Scott Derrickson", fuzzy=True, max_results=5)
+            >>> print(results[0]["entity_name"])  # "Scott Derrickson director"
+            >>> print(results[0]["similarity_score"])  # 1.0
+
+        Note:
+            The fuzzy parameter is always True (SQL LIKE with LOWER() provides case-insensitive substring matching).
+            The edit_distance_threshold is not currently implemented.
+        """
+        conn = None
+        cursor = None
+        try:
+            conn = self.connection_manager.get_connection()
+            cursor = conn.cursor()
+
+            # Build query with optional filters (using LIKE for case-insensitive substring matching)
+            sql = f"""
+                SELECT entity_id, entity_name, entity_type, source_doc_id, description, confidence
+                FROM {self.entities_table}
+                WHERE LOWER(entity_name) LIKE LOWER(?)
+            """
+            # Add SQL wildcards for substring matching
+            params = [f"%{query}%"]
+
+            # Add entity type filter if provided
+            if entity_types:
+                placeholders = ", ".join("?" * len(entity_types))
+                sql += f" AND entity_type IN ({placeholders})"
+                params.extend(entity_types)
+
+            # Add confidence filter
+            if min_confidence > 0.0:
+                sql += " AND confidence >= ?"
+                params.append(min_confidence)
+
+            # Order by confidence and limit results
+            sql += " ORDER BY confidence DESC"
+            if max_results > 0:
+                sql += f" FETCH FIRST {max_results} ROWS ONLY"
+
+            logger.debug(f"Searching entities with query: {query} (fuzzy={fuzzy}, edit_distance={edit_distance_threshold}, types: {entity_types}, min_confidence: {min_confidence}, max_results: {max_results})")
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+
+            # Convert rows to dictionaries (for hipporag2 compatibility)
+            entities = []
+            for row in rows:
+                entity_id, entity_name, entity_type, source_doc_id, description, confidence = row
+                entity_dict = {
+                    "entity_id": entity_id,
+                    "entity_name": entity_name,
+                    "entity_type": entity_type,
+                    "source_doc_id": source_doc_id,
+                    "description": description,
+                    "confidence": float(confidence) if confidence else 0.0,
+                    "similarity_score": 1.0  # IRIS %CONTAINS doesn't provide explicit similarity scores
+                }
+                entities.append(entity_dict)
+
+            logger.debug(f"Found {len(entities)} entities matching query: {query}")
+            return entities
+
+        except Exception as e:
+            logger.error(f"Failed to search entities with query '{query}': {e}")
+            return []
+
+        finally:
+            try:
+                if cursor:
+                    cursor.close()
+            except Exception:
+                pass
+
     def create_tables_if_not_exist(self) -> bool:
         """Create entity and relationship tables if they don't exist."""
         try:

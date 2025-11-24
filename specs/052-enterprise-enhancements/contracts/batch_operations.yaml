@@ -1,0 +1,557 @@
+# API Contract: Batch Operations
+# Feature: Enterprise Enhancements for RAG System
+# Branch: 051-enterprise-enhancements
+# Date: 2025-11-22
+
+openapi: 3.0.0
+info:
+  title: Batch Operations API
+  version: 1.0.0
+  description: |
+    API contract for bulk document loading with progress tracking and
+    configurable error handling strategies.
+
+components:
+  schemas:
+    BulkOperation:
+      type: object
+      required:
+        - operation_id
+        - status
+        - started_at
+        - total_documents
+        - processed_documents
+        - success_count
+        - error_count
+        - progress_percentage
+        - batch_size
+        - error_handling
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+          description: Unique identifier for bulk operation
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, cancelled]
+          description: Current operation status
+        started_at:
+          type: string
+          format: date-time
+          description: When operation started
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When operation finished
+        total_documents:
+          type: integer
+          minimum: 1
+          description: Total documents to process
+        processed_documents:
+          type: integer
+          minimum: 0
+          description: Documents processed so far
+        success_count:
+          type: integer
+          minimum: 0
+          description: Documents successfully added
+        error_count:
+          type: integer
+          minimum: 0
+          description: Documents that failed
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Completion percentage
+        batch_size:
+          type: integer
+          minimum: 1
+          default: 1000
+          description: Documents per batch
+        error_handling:
+          type: string
+          enum: [continue, stop, rollback]
+          default: "continue"
+          description: |
+            Error handling strategy:
+            - continue: Skip failed documents, continue processing
+            - stop: Stop on first error, commit previous batches
+            - rollback: Stop on first error, rollback all batches
+        show_progress:
+          type: boolean
+          default: false
+          description: Whether to display progress bar
+        errors:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/BulkOperationError'
+          description: List of error details (max 100 stored)
+        time_seconds:
+          type: number
+          format: float
+          nullable: true
+          description: Total operation time
+        throughput_docs_per_sec:
+          type: number
+          format: float
+          nullable: true
+          description: Processing throughput
+
+    BulkOperationError:
+      type: object
+      required:
+        - index
+        - error
+      properties:
+        index:
+          type: integer
+          description: Document index in batch
+        doc_id:
+          type: string
+          description: Document identifier (if available)
+        error:
+          type: string
+          maxLength: 512
+          description: Error message
+
+    BatchOperationRequest:
+      type: object
+      required:
+        - documents
+      properties:
+        documents:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DocumentInput'
+          description: List of documents to add
+        embeddings:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+          description: Pre-computed embeddings (optional)
+        batch_size:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 1000
+          description: Documents per batch
+        show_progress:
+          type: boolean
+          default: false
+          description: Show progress bar (CLI usage)
+        error_handling:
+          type: string
+          enum: [continue, stop, rollback]
+          default: "continue"
+
+    DocumentInput:
+      type: object
+      required:
+        - page_content
+        - metadata
+      properties:
+        page_content:
+          type: string
+          description: Document text content
+        metadata:
+          type: object
+          required:
+            - collection_id
+          properties:
+            collection_id:
+              type: string
+              maxLength: 128
+          description: Document metadata including collection_id
+
+paths:
+  /api/v1/documents/batch:
+    post:
+      summary: Bulk load documents
+      description: |
+        Upload multiple documents in batches with progress tracking
+        and configurable error handling.
+      operationId: addDocumentsBatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchOperationRequest'
+      responses:
+        '200':
+          description: Batch operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkOperation'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_type:
+                    type: string
+                    enum: [validation_error]
+                  message:
+                    type: string
+        '500':
+          description: Batch operation failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_type:
+                    type: string
+                    enum: [operation_failed]
+                  message:
+                    type: string
+                  operation:
+                    $ref: '#/components/schemas/BulkOperation'
+
+# Contract Tests
+x-contract-tests:
+  - name: test_bulk_loading_success
+    description: Successfully load 10K documents in batches
+    precondition: |
+      10,000 valid documents prepared
+      Batch size: 1000
+      Error handling: continue
+    expected:
+      status: "completed"
+      total_documents: 10000
+      processed_documents: 10000
+      success_count: 10000
+      error_count: 0
+      progress_percentage: 100.0
+      time_seconds: < 10.0  # Must complete in <10 seconds
+      throughput_docs_per_sec: > 1000
+
+  - name: test_bulk_loading_with_errors_continue
+    description: Continue strategy skips failed documents
+    precondition: |
+      1000 documents, 13 have invalid metadata
+      Batch size: 100
+      Error handling: continue
+    expected:
+      status: "completed"
+      total_documents: 1000
+      success_count: 987
+      error_count: 13
+      errors_length: 13
+      each_error_includes: [index, error]
+      all_batches_processed: true
+
+  - name: test_bulk_loading_stop_on_error
+    description: Stop strategy halts on first error
+    precondition: |
+      1000 documents, error at index 237
+      Batch size: 100
+      Error handling: stop
+    expected:
+      status: "failed"
+      processed_documents: >= 200  # At least 2 batches completed
+      processed_documents: < 300   # Stopped before 3rd batch
+      success_count: >= 200
+      error_count: > 0
+      errors_length: 1
+      error_message_contains: "Stopped processing due to error"
+
+  - name: test_bulk_loading_rollback_on_error
+    description: Rollback strategy reverts all batches on error
+    precondition: |
+      1000 documents, error at index 500
+      Batch size: 100
+      Error handling: rollback
+    expected:
+      status: "failed"
+      success_count: 0  # All rolled back
+      error_count: 1
+      database_documents_added: 0  # Nothing persisted
+      error_type: "RuntimeError"
+
+  - name: test_progress_percentage_updates
+    description: Progress percentage updated after each batch
+    precondition: |
+      500 documents, batch size 100
+      Track progress after each batch
+    expected:
+      progress_updates: [20.0, 40.0, 60.0, 80.0, 100.0]
+      processed_documents_updates: [100, 200, 300, 400, 500]
+
+  - name: test_batch_size_configuration
+    description: Different batch sizes work correctly
+    test_cases:
+      - batch_size: 100
+        total_docs: 1000
+        expected_batches: 10
+      - batch_size: 1000
+        total_docs: 1000
+        expected_batches: 1
+      - batch_size: 500
+        total_docs: 1000
+        expected_batches: 2
+
+  - name: test_throughput_calculation
+    description: Throughput calculated correctly
+    precondition: |
+      10,000 documents loaded in 8.2 seconds
+    expected:
+      throughput_docs_per_sec: 1219.5  # 10000 / 8.2
+      time_seconds: 8.2
+
+  - name: test_error_limit_max_100
+    description: Maximum 100 errors stored in response
+    precondition: |
+      10,000 documents, 500 have errors
+      Error handling: continue
+    expected:
+      status: "completed"
+      success_count: 9500
+      error_count: 500
+      errors_length: 100  # Only first 100 stored
+      response_note: "Additional errors truncated"
+
+  - name: test_pre_computed_embeddings
+    description: Use pre-computed embeddings instead of generating
+    precondition: |
+      1000 documents with pre-computed embeddings provided
+    expected:
+      status: "completed"
+      embeddings_generated: 0  # No embedding generation
+      embeddings_used: 1000    # Pre-computed used
+      faster_than_without_embeddings: true
+
+  - name: test_progress_bar_cli
+    description: Progress bar displayed for CLI usage
+    precondition: |
+      show_progress: true
+      1000 documents, batch size 100
+    expected:
+      progress_bar_displayed: true
+      progress_bar_format: "Loading documents: {percentage}%|{bar}| {n}/{total} [{elapsed}<{remaining}, {rate}batch/s]"
+
+  - name: test_empty_document_list
+    description: Empty document list rejected
+    precondition: |
+      documents: []
+    expected:
+      status_code: 400
+      error_type: "validation_error"
+      message: "documents list cannot be empty"
+
+  - name: test_invalid_batch_size
+    description: Invalid batch size rejected
+    precondition: |
+      batch_size: 0
+    expected:
+      status_code: 400
+      error_type: "validation_error"
+      message_contains: "batch_size must be at least 1"
+
+  - name: test_missing_collection_id
+    description: Documents without collection_id rejected
+    precondition: |
+      Document metadata missing collection_id field
+    expected:
+      error_recorded: true
+      error_message: "Missing required field 'collection_id'"
+      document_skipped: true
+
+  - name: test_performance_vs_one_by_one
+    description: Bulk loading 10x+ faster than one-by-one
+    precondition: |
+      Benchmark 10,000 documents:
+      - One-by-one: ~167 minutes (1.5 docs/sec)
+      - Bulk: <10 seconds
+    expected:
+      speedup_factor: > 10
+      bulk_time_seconds: < 10
+      one_by_one_time_seconds: > 1000
+
+  - name: test_concurrent_bulk_operations
+    description: Multiple bulk operations can run concurrently
+    precondition: |
+      Start 3 bulk operations simultaneously:
+      - Op1: 1000 docs to collection-A
+      - Op2: 1000 docs to collection-B
+      - Op3: 1000 docs to collection-C
+    expected:
+      all_operations_succeed: true
+      no_interference: true
+      all_operation_ids_unique: true
+
+# Performance Requirements
+x-performance-requirements:
+  - operation: bulk_loading_10k_docs
+    requirement: < 10 seconds
+    batch_size: 1000
+    description: |
+      Loading 10,000 documents must complete in under 10 seconds,
+      achieving at least 10x speedup vs one-by-one loading.
+
+  - operation: throughput
+    requirement: > 1000 docs/sec
+    description: |
+      Bulk loading should achieve throughput of at least 1000 documents
+      per second with optimal batch size.
+
+  - operation: memory_usage
+    requirement: < 500 MB
+    batch_size: 1000
+    description: |
+      Memory usage should not exceed 500 MB for 1000-document batches,
+      enabling streaming strategy.
+
+# Configuration Schema
+x-configuration-schema:
+  type: object
+  properties:
+    batch_operations:
+      type: object
+      properties:
+        default_batch_size:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          default: 1000
+          description: Default batch size for bulk operations
+        show_progress:
+          type: boolean
+          default: false
+          description: Enable progress bar for CLI
+        error_handling:
+          type: string
+          enum: [continue, stop, rollback]
+          default: "continue"
+          description: Default error handling strategy
+
+# Usage Examples
+x-usage-examples:
+  - name: Bulk load documents (Python library)
+    language: python
+    code: |
+      from iris_rag.storage import IRISVectorStore
+      from langchain.docstore.document import Document
+
+      store = IRISVectorStore(config_manager)
+
+      # Prepare documents
+      documents = [
+          Document(
+              page_content="Document text...",
+              metadata={"collection_id": "medical-docs", "category": "research"}
+          )
+          for _ in range(10000)
+      ]
+
+      # Bulk load with default settings
+      result = store.add_documents_batch(
+          documents=documents,
+          batch_size=1000,
+          error_handling="continue"
+      )
+
+      print(f"Total: {result['total']}")
+      print(f"Success: {result['success_count']}")
+      print(f"Errors: {result['error_count']}")
+      print(f"Time: {result['time_seconds']:.2f} seconds")
+      print(f"Throughput: {result['throughput_docs_per_sec']:.0f} docs/sec")
+
+  - name: Bulk load with progress bar (CLI)
+    language: python
+    code: |
+      # CLI usage with progress tracking
+      result = store.add_documents_batch(
+          documents=documents,
+          batch_size=1000,
+          show_progress=True,
+          error_handling="continue"
+      )
+      # Output:
+      # Loading documents: 100%|██████████| 10/10 [00:08<00:00,  1.22batch/s]
+
+  - name: Bulk load with stop-on-error
+    language: python
+    code: |
+      # Production loading: fail fast on errors
+      try:
+          result = store.add_documents_batch(
+              documents=documents,
+              batch_size=1000,
+              error_handling="stop"
+          )
+      except Exception as e:
+          print(f"Bulk loading failed: {e}")
+          # Check result['errors'] for details
+
+  - name: Bulk load with rollback
+    language: python
+    code: |
+      # Critical operation: all-or-nothing semantics
+      try:
+          result = store.add_documents_batch(
+              documents=critical_documents,
+              batch_size=500,
+              error_handling="rollback"
+          )
+      except RuntimeError as e:
+          print(f"Rollback triggered: {e}")
+          # No partial data committed
+
+  - name: Bulk load with pre-computed embeddings
+    language: python
+    code: |
+      # Pre-compute embeddings for faster loading
+      from sentence_transformers import SentenceTransformer
+
+      model = SentenceTransformer("all-MiniLM-L6-v2")
+      embeddings = model.encode([doc.page_content for doc in documents])
+
+      # Bulk load with pre-computed embeddings
+      result = store.add_documents_batch(
+          documents=documents,
+          embeddings=embeddings.tolist(),
+          batch_size=1000
+      )
+      # Significantly faster (no embedding generation)
+
+  - name: Configure batch operations in YAML
+    language: yaml
+    code: |
+      # config/batch_config.yaml
+      batch_operations:
+        default_batch_size: 1000
+        show_progress: true  # Enable for CLI
+        error_handling: "continue"
+
+  - name: Monitor bulk operation progress
+    language: python
+    code: |
+      import time
+
+      # Start bulk operation in background
+      # (not currently implemented, but shows desired API)
+      operation_id = store.add_documents_batch_async(documents)
+
+      # Poll for progress
+      while True:
+          status = store.get_bulk_operation_status(operation_id)
+          print(f"Progress: {status['progress_percentage']:.1f}%")
+
+          if status['status'] in ['completed', 'failed']:
+              break
+
+          time.sleep(1)
+
+      # Get final result
+      result = store.get_bulk_operation_result(operation_id)

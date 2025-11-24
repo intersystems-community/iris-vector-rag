@@ -54,7 +54,7 @@ Deliverables:
 
 ### Priority 3: Service Integration (Weeks 21–29)
 - Entity Extraction E2E (remove heavy mocks): [iris_rag/services/entity_extraction.py](../../iris_rag/services/entity_extraction.py)
-- RAG Bridge Adapter E2E: [adapters/rag_templates_bridge.py](../../adapters/rag_templates_bridge.py)
+- RAG Bridge Adapter E2E: [iris_vector_rag/adapters/rag_templates_bridge.py](../../iris_vector_rag/adapters/rag_templates_bridge.py)
 - Performance benchmarking suite with real IRIS and PMC data
 
 ---
@@ -150,4 +150,4 @@ Reports:
 - Vector store: [iris_rag/storage/vector_store_iris.py](../../iris_rag/storage/vector_store_iris.py)
 - Config manager: [iris_rag/config/manager.py](../../iris_rag/config/manager.py)
 - Entity extraction: [iris_rag/services/entity_extraction.py](../../iris_rag/services/entity_extraction.py)
-- Bridge adapter: [adapters/rag_templates_bridge.py](../../adapters/rag_templates_bridge.py)
+- Bridge adapter: [iris_vector_rag/adapters/rag_templates_bridge.py](../../iris_vector_rag/adapters/rag_templates_bridge.py)

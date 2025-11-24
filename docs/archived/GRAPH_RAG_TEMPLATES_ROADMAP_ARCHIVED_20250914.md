@@ -108,7 +108,7 @@ graph TB
 **Objective**: Create interface compatibility between rag-templates and kg-ticket-resolver
 
 **Deliverables:**
-- `adapters/rag_templates_bridge.py`: Unified interface adapter
+- `iris_vector_rag/adapters/rag_templates_bridge.py`: Unified interface adapter
 - `config/rag_integration.yaml`: Environment-independent configuration
 - `tests/integration/test_rag_bridge.py`: Interface validation
 

@@ -52,7 +52,7 @@ This document defines the service boundaries and integration patterns for the RA
 | Service Layer | Responsibility | Interface Contract | Error Handling | Performance Target |
 |---------------|---------------|-------------------|----------------|-------------------|
 | **kg-ticket-resolver** | Knowledge graph memory management, insight generation | Memory APIs, GraphQL/REST | Graceful degradation to basic RAG | <200ms p95 |
-| **Adapter Bridge** | Interface abstraction, circuit breaking, monitoring | [`RAGResponse`](../adapters/rag_templates_bridge.py:42), async/await | Circuit breaker + fallback | <50ms overhead |
+| **Adapter Bridge** | Interface abstraction, circuit breaking, monitoring | [`RAGResponse`](../iris_vector_rag/adapters/rag_templates_bridge.py:42), async/await | Circuit breaker + fallback | <50ms overhead |
 | **RAG Pipelines** | Document processing, vector search, answer generation | [`RAGPipeline`](../iris_rag/core/base.py:12) interface | Pipeline-specific error handling | <500ms p95 |
 | **IRIS Database** | Vector storage, graph data persistence | SQL + vector functions | Connection pooling + retry | <100ms query time |
 
@@ -282,8 +282,8 @@ class MonitoringIntegration:
 
 | Interface | Location | Purpose | Protocol |
 |-----------|----------|---------|----------|
-| [`RAGTemplatesBridge`](../adapters/rag_templates_bridge.py:85) | adapters/rag_templates_bridge.py | Main integration adapter | Python async/await |
-| [`RAGResponse`](../adapters/rag_templates_bridge.py:42) | Standard response format | Cross-system data contract | JSON/dataclass |
+| [`RAGTemplatesBridge`](../iris_vector_rag/adapters/rag_templates_bridge.py:85) | iris_vector_rag/adapters/rag_templates_bridge.py | Main integration adapter | Python async/await |
+| [`RAGResponse`](../iris_vector_rag/adapters/rag_templates_bridge.py:42) | Standard response format | Cross-system data contract | JSON/dataclass |
 | [rag_integration.yaml](../config/rag_integration.yaml:1) | Configuration management | Environment-independent config | YAML |
 | Health endpoints | /health/* routes | System monitoring | HTTP REST |
 

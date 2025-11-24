@@ -106,19 +106,97 @@ def _get_iris_dbapi_module():
     try:
         import iris as iris_dbapi
 
-        # Check if iris_dbapi module has _DBAPI submodule with connect method
-        if hasattr(iris_dbapi, "_DBAPI") and hasattr(iris_dbapi._DBAPI, "connect"):
-            # The _DBAPI submodule provides the DBAPI interface
-            logger.info("Successfully imported 'iris' module with DBAPI interface")
-            return iris_dbapi._DBAPI
-        elif hasattr(iris_dbapi, "connect"):
-            # The iris_dbapi module itself provides the DBAPI interface
-            logger.info("Successfully imported 'iris' module with DBAPI interface")
+        # DEBUG: Log what we got
+        logger.debug(f"Imported iris module: type={type(iris_dbapi)}, has__file__={hasattr(iris_dbapi, '__file__')}")
+        logger.debug(f"iris_dbapi.__file__={getattr(iris_dbapi, '__file__', 'NO __file__')}")
+        logger.debug(f"hasattr(iris_dbapi, 'connect')={hasattr(iris_dbapi, 'connect')}")
+        if hasattr(iris_dbapi, 'connect'):
+            logger.debug(f"iris_dbapi.connect={iris_dbapi.connect}")
+
+        # Check if iris module has connect method (official API)
+        if hasattr(iris_dbapi, "connect"):
+            # The iris module provides the DBAPI interface
+            logger.info("Successfully imported 'iris' module with DBAPI interface directly")
             return iris_dbapi
         else:
-            logger.warning(
-                "'iris' module imported but doesn't appear to have DBAPI interface (no 'connect' method)"
-            )
+            logger.error("iris module imported but connect() method not found!")
+            logger.error(f"Available attributes: {[x for x in dir(iris_dbapi) if not x.startswith('_')][:20]}")
+
+            # Workaround for pytest module caching issue:
+            # During pytest collection, iris may be imported when PYTEST_CURRENT_TEST is set,
+            # causing partial initialization (only 3 attributes: current_dir, file_name_elsdk, os)
+            # Manually load _init_elsdk.py to inject DBAPI attributes into iris module
+            import os as os_mod
+            import sys
+
+            # Try to find _init_elsdk.py in multiple locations:
+            # 1. Same directory as the imported iris module
+            # 2. Virtual environment site-packages (if available)
+            # 3. All site-packages in sys.path
+
+            search_paths = []
+
+            # Priority 1: Try to find .venv relative to current working directory or project root
+            # This handles the case where uv doesn't add .venv to sys.path
+            cwd = os_mod.getcwd()
+            potential_venv_paths = [
+                os_mod.path.join(cwd, '.venv', 'lib'),
+                os_mod.path.join(os_mod.path.dirname(cwd), '.venv', 'lib'),
+                os_mod.path.join(os_mod.path.dirname(os_mod.path.dirname(cwd)), '.venv', 'lib'),
+            ]
+
+            for venv_lib in potential_venv_paths:
+                if os_mod.path.isdir(venv_lib):
+                    # Find python3.X/site-packages/iris
+                    for item in os_mod.listdir(venv_lib):
+                        if item.startswith('python3.'):
+                            site_packages = os_mod.path.join(venv_lib, item, 'site-packages', 'iris')
+                            if os_mod.path.isdir(site_packages):
+                                search_paths.append(site_packages)
+                                logger.info(f"Found venv iris at: {site_packages}")
+                                break
+
+            # Priority 2: Add the actual imported iris module's directory
+            if hasattr(iris_dbapi, '__file__') and iris_dbapi.__file__:
+                iris_dir = os_mod.path.dirname(iris_dbapi.__file__)
+                if iris_dir not in search_paths:
+                    search_paths.append(iris_dir)
+
+            # Priority 3: Check all site-packages directories in sys.path
+            for path in sys.path:
+                if 'site-packages' in path:
+                    venv_iris_dir = os_mod.path.join(path, 'iris')
+                    if os_mod.path.isdir(venv_iris_dir) and venv_iris_dir not in search_paths:
+                        search_paths.append(venv_iris_dir)
+
+            # Try each search path
+            init_elsdk_path = None
+            for search_dir in search_paths:
+                candidate_path = os_mod.path.join(search_dir, '_init_elsdk.py')
+                if os_mod.path.exists(candidate_path):
+                    init_elsdk_path = candidate_path
+                    logger.info(f"Found _init_elsdk.py at {init_elsdk_path}")
+                    break
+
+            if init_elsdk_path and os_mod.path.exists(init_elsdk_path):
+                logger.info(f"Attempting to manually load _init_elsdk.py from {init_elsdk_path}")
+                try:
+                    with open(init_elsdk_path, 'r') as f:
+                        init_elsdk_code = compile(f.read(), init_elsdk_path, 'exec')
+                    exec(init_elsdk_code, iris_dbapi.__dict__)
+
+                    # Check if connect method is now available
+                    if hasattr(iris_dbapi, "connect"):
+                        logger.info("Successfully injected DBAPI attributes via manual _init_elsdk exec")
+                        return iris_dbapi
+                    else:
+                        logger.error("Manual _init_elsdk exec failed - connect() still not available")
+                except Exception as exec_error:
+                    logger.error(f"Failed to exec _init_elsdk.py: {exec_error}")
+            else:
+                logger.error(f"_init_elsdk.py not found in any search paths: {search_paths}")
+
+        # If neither condition is met, fall through to the except/fallback logic below
     except (ImportError, AttributeError) as e:
         logger.error(f"Failed to import 'iris' module (circular import issue): {e}")
 
@@ -165,11 +243,10 @@ def get_iris_dbapi_connection():
     Returns:
         A direct IRIS connection object or None if connection fails.
     """
-    # Use intersystems_iris DBAPI module
-    try:
-        import intersystems_iris.dbapi._DBAPI as iris
-    except ImportError as e:
-        logger.error(f"Cannot import intersystems_iris.dbapi module: {e}")
+    # Use existing UV-compatible fallback logic
+    iris = _get_iris_dbapi_module()
+    if iris is None:
+        logger.error("Cannot import intersystems_iris.dbapi module")
         return None
 
     # Get connection parameters from environment with auto-detection fallback
@@ -206,8 +283,15 @@ def get_iris_dbapi_connection():
                 f"Attempting IRIS connection to {host}:{port}/{namespace} as user {user}"
             )
 
-            # Use direct iris.connect() - this avoids SSL issues
-            conn = iris.connect(host, port, namespace, user, password)
+            # Use direct iris.connect() with keyword arguments (PyPI documentation format)
+            args = {
+                'hostname': host,
+                'port': port,
+                'namespace': namespace,
+                'username': user,
+                'password': password
+            }
+            conn = iris.connect(**args)
 
             # Validate the connection
             if conn is None:
