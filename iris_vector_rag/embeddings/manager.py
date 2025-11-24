@@ -181,7 +181,7 @@ class EmbeddingManager:
             logger.info(f"✅ SentenceTransformer initialized on device: {device}")
 
             def embed_texts(texts: List[str]) -> List[List[float]]:
-                embeddings = model.encode(texts, convert_to_tensor=False)
+                embeddings = model.encode(texts, convert_to_tensor=False, show_progress_bar=False)
                 return embeddings.tolist()
 
             return embed_texts
