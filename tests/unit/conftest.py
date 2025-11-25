@@ -294,12 +294,26 @@ def patch_external_dependencies(monkeypatch):
     mock_sentence_transformer = Mock()
     mock_sentence_transformer.encode = Mock(return_value=[[0.1, 0.2, 0.3]])
 
+    # Mock the module imports BEFORE they're used to avoid transformer errors
+    import sys
+
+    # Create mock modules
+    mock_transformers = Mock()
+    mock_sentence_transformers_module = Mock()
+    mock_sentence_transformers_module.SentenceTransformer = Mock(return_value=mock_sentence_transformer)
+
+    # Inject mocks into sys.modules to prevent actual imports
+    if 'transformers' not in sys.modules:
+        sys.modules['transformers'] = mock_transformers
+    if 'sentence_transformers' not in sys.modules:
+        sys.modules['sentence_transformers'] = mock_sentence_transformers_module
+
     try:
         monkeypatch.setattr(
             "sentence_transformers.SentenceTransformer",
             Mock(return_value=mock_sentence_transformer)
         )
-    except AttributeError:
+    except (AttributeError, KeyError):
         pass  # Module not available, skip patching
 
     # Patch OpenAI client

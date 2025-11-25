@@ -63,11 +63,21 @@ class OntologyAwareEntityExtractor:
         connection_manager: Optional[ConnectionManager] = None,
         embedding_manager: Optional[EmbeddingManager] = None,
         ontology_sources: Optional[List[Dict[str, Any]]] = None,
+        optimized_program_path: Optional[str] = None,
     ):
-        """Initialize the domain-agnostic entity extraction service."""
+        """Initialize the domain-agnostic entity extraction service.
+
+        Args:
+            config_manager: Configuration manager instance
+            connection_manager: Optional connection manager for storage
+            embedding_manager: Optional embedding manager for entity embeddings
+            ontology_sources: Optional list of ontology source configurations
+            optimized_program_path: Optional path to pre-optimized DSPy program (e.g., "entity_extractor_optimized.json")
+        """
         self.config_manager = config_manager
         self.connection_manager = connection_manager
         self.embedding_manager = embedding_manager
+        self.optimized_program_path = optimized_program_path
 
         # Load configuration
         self.config = self.config_manager.get("entity_extraction", {})
@@ -1005,6 +1015,22 @@ class EntityExtractionService(OntologyAwareEntityExtractor):
                 # Initialize batch module
                 self._batch_dspy_module = BatchEntityExtractionModule()
                 logger.info(f"✅ Batch DSPy module initialized (processes {batch_size} tickets/call)")
+
+                # Load optimized program if provided
+                if self.optimized_program_path:
+                    from pathlib import Path
+                    optimized_path = Path(self.optimized_program_path)
+                    if optimized_path.exists():
+                        logger.info(f"Loading DSPy optimized program from {optimized_path}")
+                        try:
+                            self._batch_dspy_module.load(str(optimized_path))
+                            logger.info("✅ Optimized DSPy program loaded successfully")
+                        except Exception as e:
+                            logger.warning(f"⚠️  Could not load optimized program: {e}")
+                            logger.warning("Continuing with default (unoptimized) extractor")
+                    else:
+                        logger.warning(f"⚠️  Optimized program path not found: {optimized_path}")
+                        logger.warning("Continuing with default (unoptimized) extractor")
 
             # Prepare tickets for batch processing
             tickets = [
