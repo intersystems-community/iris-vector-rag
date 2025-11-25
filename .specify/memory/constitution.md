@@ -1,23 +1,24 @@
 # iris-vector-rag Constitution
 
 <!--
-Sync Impact Report - Version 1.1.0
+Sync Impact Report - Version 1.2.0
 
-Version Change: 1.0.0 → 1.1.0
-Rationale: MINOR bump - added new Principle X (PyPI Publishing Standards)
+Version Change: 1.1.0 → 1.2.0
+Rationale: MINOR bump - added new Principle XI (Git Repository Workflow)
 
 Added Sections:
-  - Principle X: PyPI Publishing Standards
-  - Guidance on using twine instead of uv publish
-  - Rationale for credential compatibility
+  - Principle XI: Git Repository Workflow (Three-Tier Strategy)
+  - Daily development workflow for private/public separation
+  - Emergency sync workflow for immediate public releases
+  - Selective release workflow with clean commit history
 
 Modified Principles: None
 
 Removed Sections: None
 
 Templates Requiring Updates:
-  - ✅ CLAUDE.md (already contains PyPI workflow documentation)
-  - ⚠️  Build/release documentation may need update if exists
+  - ✅ CLAUDE.md (will be updated with git workflow section)
+  - ✅ CONTRIBUTING.md (will be created with detailed git workflows)
 
 Follow-up TODOs: None
 -->
@@ -142,6 +143,53 @@ ls -lh dist/
 twine upload dist/iris_vector_rag-*.whl dist/iris_vector_rag-*.tar.gz
 ```
 
+### XI. Git Repository Workflow (Three-Tier Strategy)
+The project uses a three-tier repository structure for selective public sharing while maintaining private development space.
+
+**Repository Structure**:
+- **origin** (private): `isc-tdyar/iris-vector-rag-private` - Private development repository
+- **fork** (public): `isc-tdyar/iris-vector-rag` - Public fork for staging contributions
+- **upstream** (community): `intersystems-community/iris-vector-rag` - Official community repository
+
+**Why**: Enables private experimental work while providing controlled public contributions via pull requests.
+
+**Daily Development Workflow**:
+```bash
+# 1. Private work (default workflow)
+git commit -am "feat: experimental feature"
+git push origin main
+
+# 2. Ready to share specific commits
+git checkout -b public/feature-name
+git cherry-pick <commit-hash>  # Select specific commits
+git push fork public/feature-name
+
+# 3. Contribute to community (create PR via GitHub)
+# PR from fork:public/feature-name → upstream:main
+```
+
+**Emergency Sync Workflow** (rare, when everything should be public immediately):
+```bash
+# Sync all repositories with same content
+git push origin main && git push fork main && git push upstream main
+```
+
+**Selective Release Workflow** (recommended):
+```bash
+# Create release branch with curated commits
+git checkout -b release/v0.5.x main
+git rebase -i HEAD~10  # Remove/squash private commits
+git push fork release/v0.5.x
+
+# Create PR: fork:release/v0.5.x → upstream:main
+```
+
+**Enforcement**:
+- Private experiments stay in `origin` (private repo)
+- Public contributions go through `fork` → `upstream` PR workflow
+- Emergency direct pushes to `upstream` require explicit justification
+- All public releases must have clean commit history (no private implementation details)
+
 ## Testing Requirements
 
 ### Contract Tests (TDD)
@@ -203,4 +251,4 @@ All PRs/reviews must verify:
 - ✅ Performance benchmarks pass
 - ✅ Constitution principles followed
 
-**Version**: 1.1.0 | **Ratified**: 2025-11-22 | **Last Amended**: 2025-11-25
+**Version**: 1.2.0 | **Ratified**: 2025-11-22 | **Last Amended**: 2025-11-25
