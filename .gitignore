@@ -197,5 +197,6 @@ PROGRESS.md
 TODO.md
 
 # Specification tracking directory (moved to feature-specific location)
-.specify/
+# Keep main project constitution but ignore feature-specific .specify directories
+specs/**/.specify/
 tools/nodejs/node_modules/
