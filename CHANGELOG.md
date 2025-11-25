@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.5.14] - 2025-11-24
+
+### Added
+- **DSPy Optimization Support** for entity extraction (Feature 063)
+  - New `optimized_program_path` parameter in `OntologyAwareEntityExtractor.__init__()`
+  - Load pre-trained DSPy programs for 31.8% F1 improvement (0.294 → 0.387)
+  - Library-first design with clean API parameter (not environment variable)
+  - Graceful fallback with clear logging when optimization files unavailable
+  - Zero breaking changes (backward compatible optional parameter)
+
+### Testing
+- 8/8 contract tests passing for DSPy optimization feature
+- 17/17 related entity extraction tests passing
+- 7 integration tests created using iris-devtester v1.5.0
+- All transformer import errors resolved (torch/torchvision compatibility)
+
+### Documentation
+- Usage examples in `examples/optimized_dspy_entity_extraction.py`
+- Complete test results in `docs/features/063-dspy-optimization/`
+- Updated STATUS.md, PROGRESS.md, TODO.md with Feature 063 completion
+
+### Dependencies
+- Updated iris-devtester to v1.5.0 from PyPI (significantly faster)
+- Resolved torch/torchvision compatibility (2.4.0/0.19.0)
+
+### Chore
+- Removed tools/nodejs/node_modules from git tracking (build artifacts)
+
 ## [0.5.10] - 2025-11-23
 
 ### Documentation

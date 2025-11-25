@@ -198,3 +198,4 @@ TODO.md
 
 # Specification tracking directory (moved to feature-specific location)
 .specify/
+tools/nodejs/node_modules/
