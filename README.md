@@ -41,8 +41,8 @@ Build intelligent applications that combine large language models with your ente
 
 ```bash
 # Clone repository
-git clone https://github.com/intersystems-community/iris-rag-templates.git
-cd iris-rag-templates
+git clone https://github.com/intersystems-community/iris-vector-rag.git
+cd iris-vector-rag
 
 # Setup environment (requires uv package manager)
 make setup-env
