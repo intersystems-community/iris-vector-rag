@@ -178,6 +178,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           
+      # Detect metadata
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -192,6 +193,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./iris_vector_rag/api/Dockerfile
           target: full
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -267,6 +269,8 @@ jobs:
     needs: [create-release, build-assets]
     if: "!needs.validate-version.outputs.is_prerelease"
     environment: pypi-release
+    permissions:
+      id-token: write
     
     steps:
       - name: Download release assets
@@ -280,7 +284,7 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-          packages_dir: dist/
+          packages-dir: dist/
 
   publish-test-pypi:
     name: Publish to Test PyPI
@@ -289,6 +293,8 @@ jobs:
     needs: [create-release, build-assets]
     if: needs.validate-version.outputs.is_prerelease
     environment: test-pypi-release
+    permissions:
+      id-token: write
     
     steps:
       - name: Download release assets
@@ -302,8 +308,8 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
-          packages_dir: dist/
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist/
 
   notify-release:
     name: Notify Release
