@@ -7,6 +7,8 @@ for InterSystems IRIS, including CLOB handling and vector search capabilities.
 
 import json
 import logging
+import os
+import time
 from iris_vector_rag.common.db_vector_utils import insert_vector
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -142,12 +144,40 @@ class IRISVectorStore(VectorStore):
 
     def _get_connection(self):
         """Get or create database connection."""
-        if self._connection is None:
-            try:
-                self._connection = self.connection_manager.get_connection("iris")
-            except Exception as e:
-                raise VectorStoreConnectionError(f"Failed to get IRIS connection: {e}")
+        try:
+            self._connection = self.connection_manager.get_connection("iris")
+        except Exception as e:
+            raise VectorStoreConnectionError(f"Failed to get IRIS connection: {e}")
         return self._connection
+
+    def _get_vector_data_type(self) -> str:
+        """
+        Detect actual vector column data type from IRIS metadata.
+        
+        Returns 'FLOAT' or 'DOUBLE'.
+        """
+        try:
+            connection = self._get_connection()
+            cursor = connection.cursor()
+            # Use IRIS system dictionary to find the actual datatype parameter
+            cursor.execute(
+                "SELECT Parameters FROM %Dictionary.CompiledProperty WHERE parent = ? AND Name = 'embedding'",
+                [self.table_name]
+            )
+            row = cursor.fetchone()
+            cursor.close()
+            if row and row[0]:
+                params = str(row[0])
+                if "DATATYPE,DOUBLE" in params:
+                    return "DOUBLE"
+                if "DATATYPE,FLOAT" in params:
+                    return "FLOAT"
+        except Exception as e:
+            logger.debug(f"Failed to detect vector data type for {self.table_name}: {e}")
+        
+        # Fallback to ENV or default
+        return os.environ.get("IRIS_VECTOR_DATA_TYPE") or "FLOAT"
+
 
     # ========================================================================
     # IRIS EMBEDDING Support Methods (Feature 051)
@@ -918,9 +948,14 @@ class IRISVectorStore(VectorStore):
 
             # Get current vector dimension from schema manager
             table_short_name = self.table_name.replace("RAG.", "")
+            schema_config = self.schema_manager.get_current_schema_config(table_short_name)
+            
             expected_dimension = self.schema_manager.get_vector_dimension(
                 table_short_name
             )
+            
+            # Use data type from actual table metadata if available, fallback to ENV or FLOAT
+            vector_data_type = self._get_vector_data_type()
 
             # Validate query embedding dimension matches expected
             if len(query_embedding) != expected_dimension:
@@ -947,6 +982,7 @@ class IRISVectorStore(VectorStore):
                 extra_columns=["text_content"],
                 top_k=top_k,
                 additional_where=additional_where,
+                vector_data_type=vector_data_type,
             )
 
             # DEBUG: Check if SQL contains DOUBLE or FLOAT

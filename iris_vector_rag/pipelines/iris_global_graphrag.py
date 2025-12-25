@@ -1,3 +1,4 @@
+import time
 """
 IRIS Global GraphRAG Pipeline
 
@@ -13,7 +14,6 @@ validation, and monitoring.
 import logging
 import os
 import sys
-import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 

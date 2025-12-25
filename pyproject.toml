@@ -238,6 +238,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers --strict-config"
+asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

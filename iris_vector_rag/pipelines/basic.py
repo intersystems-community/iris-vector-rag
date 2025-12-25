@@ -1,3 +1,4 @@
+import time
 """
 Basic RAG Pipeline implementation.
 
@@ -6,7 +7,6 @@ pipeline using vector similarity search and LLM generation.
 """
 
 import logging
-import time
 from typing import Any, Callable, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager

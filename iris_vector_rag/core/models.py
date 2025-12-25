@@ -1019,25 +1019,44 @@ class ModuleCoverage:
         return data
 
 
+@dataclass
+class BatchExtractionResult:
+    """Represents the result of batch entity extraction."""
+    batch_id: str
+    per_document_entities: Dict[str, List[Entity]] = field(default_factory=dict)
+    per_document_relationships: Dict[str, List[Relationship]] = field(default_factory=dict)
+    processing_time: float = 0.0
+    success_status: bool = True
+    retry_count: int = 0
+    error_message: Optional[str] = None
+
+    def get_entity_count_by_document(self) -> Dict[str, int]:
+        return {doc_id: len(entities) for doc_id, entities in self.per_document_entities.items()}
+
+@dataclass
+class ProcessingMetrics:
+    """Represents processing metrics for batch entity extraction."""
+    total_batches_processed: int = 0
+    total_documents_processed: int = 0
+    average_batch_processing_time: float = 0.0
+    speedup_factor: float = 1.0
+    entity_extraction_rate_per_batch: float = 0.0
+    zero_entity_documents_count: int = 0
+    failed_batches_count: int = 0
+    retry_attempts_total: int = 0
+
+    def update_with_batch(self, batch_result: BatchExtractionResult, batch_size: int) -> None:
+        self.total_batches_processed += 1
+        self.total_documents_processed += batch_size
+
 @dataclass(frozen=True)
 class CacheEntry:
-    """
-    Represents a stored LLM response in the cache.
-
-    Attributes:
-        prompt: The original prompt text
-        response: The LLM completion content
-        model_name: Name of the LLM model used
-        timestamp: When the response was cached
-        metadata: Additional extraction/query context
-    """
-
+    """Represents a cached LLM response."""
     prompt: str
     response: str
     model_name: str
     timestamp: float = field(default_factory=time.time)
     metadata: Dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass(frozen=True)
 class BenchmarkQuery:

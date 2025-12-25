@@ -8,7 +8,8 @@ automatic migration capabilities for vector dimensions and other schema changes.
 
 import json
 import logging
-from typing import Any, Dict, Optional
+import os
+from typing import Any, Dict, Optional, List
 
 logger = logging.getLogger(__name__)
 
@@ -339,8 +340,8 @@ class SchemaManager:
         model_name = self.get_embedding_model(table_name)
         expected_dim = self.get_vector_dimension(table_name, model_name)
 
-        # Get vector data type from configuration, default to FLOAT
-        vector_data_type = self.config_manager.get(
+        # Get vector data type from environment or configuration, default to FLOAT
+        vector_data_type = os.environ.get("IRIS_VECTOR_DATA_TYPE") or self.config_manager.get(
             "storage:iris:vector_data_type", "FLOAT"
         )
 
