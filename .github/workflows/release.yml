@@ -41,9 +41,9 @@ jobs:
           else
             VERSION=${GITHUB_REF#refs/tags/v}
             if [[ $VERSION =~ (alpha|beta|rc) ]]; then
-              IS_PRERELEASE=true
+              IS_PRERELEASE="true"
             else
-              IS_PRERELEASE=false
+              IS_PRERELEASE="false"
             fi
           fi
           
@@ -194,7 +194,6 @@ jobs:
         with:
           context: .
           file: ./iris_vector_rag/api/Dockerfile
-          target: full
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -257,7 +256,7 @@ jobs:
           tag_name: v${{ needs.validate-version.outputs.version }}
           name: Release v${{ needs.validate-version.outputs.version }}
           body_path: changelog.md
-          prerelease: ${{ needs.validate-version.outputs.is_prerelease }}
+          prerelease: ${{ needs.validate-version.outputs.is_prerelease == 'true' }}
           files: |
             dist/*
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -266,8 +265,8 @@ jobs:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [create-release, build-assets]
-    if: "!needs.validate-version.outputs.is_prerelease"
+    needs: [create-release, build-assets, validate-version]
+    if: "needs.validate-version.outputs.is_prerelease == 'false'"
     environment: pypi-release
     permissions:
       id-token: write
@@ -290,8 +289,8 @@ jobs:
     name: Publish to Test PyPI
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    needs: [create-release, build-assets]
-    if: needs.validate-version.outputs.is_prerelease
+    needs: [create-release, build-assets, validate-version]
+    if: "needs.validate-version.outputs.is_prerelease == 'true'"
     environment: test-pypi-release
     permissions:
       id-token: write
