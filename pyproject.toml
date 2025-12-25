@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iris-vector-rag"
-version = "0.5.14"
+version = "0.5.15"
 description = "Production-ready, extensible RAG framework with native IRIS vector search - unified API for basic, CRAG, GraphRAG, and ColBERT pipelines with RAGAS and DSPy integration"
 readme = "README.md"
 license = {text = "MIT"}
@@ -67,6 +67,8 @@ dependencies = [
     "docker>=6.1.3",
     "tiktoken>=0.5.0",
     "torch>=2.0.0",
+    "datasets>=2.14.0",
+    "dspy-ai>=2.4.0",
 ]
 
 [project.optional-dependencies]
@@ -116,7 +118,8 @@ api = [
     "websockets>=12.0",
     "redis>=5.0.0",
     "bcrypt>=4.0.0",
-    "python-jose[cryptography]>=3.3.0"
+    "python-jose[cryptography]>=3.3.0",
+    "email-validator>=2.0.0"
 ]
 all = [
     "uv>=0.1.0",
@@ -141,7 +144,10 @@ all = [
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",
     "opentelemetry-exporter-otlp>=1.20.0",
-    "tqdm>=4.64.0"
+    "tqdm>=4.64.0",
+    "email-validator>=2.0.0",
+    "datasets>=2.14.0",
+    "dspy-ai>=2.4.0"
 ]
 
 [dependency-groups]
@@ -202,7 +208,7 @@ extend-exclude = '''
   | \.venv
   | build
   | dist
-)/
+  | )/
 '''
 
 [tool.isort]
