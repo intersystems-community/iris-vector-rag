@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path  # Added for config path
 from typing import Any, Callable, Dict, List, Optional, Tuple  # Added Tuple
 
+import hashlib
+import hashlib
 import numpy as np
 import yaml  # Added for config loading
 
@@ -397,6 +399,16 @@ def timing_decorator(func: Callable) -> Callable:
         return result
 
     return wrapper
+
+
+def generate_prompt_hash(prompt: str) -> str:
+    """Generate SHA-256 hash for a prompt string."""
+    return hashlib.sha256(prompt.strip().encode("utf-8")).hexdigest()
+
+
+def generate_prompt_hash(prompt: str) -> str:
+    """Generate SHA-256 hash for a prompt string."""
+    return hashlib.sha256(prompt.strip().encode("utf-8")).hexdigest()
 
 
 # ... (Embedded Python specific utilities can remain as they are) ...
