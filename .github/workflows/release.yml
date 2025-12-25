@@ -81,7 +81,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          uv sync --group dev
+          uv sync --all-groups
           
       - name: Run unit tests
         run: |
