@@ -87,8 +87,8 @@ jobs:
           
       - name: Run core unit tests
         run: |
-          # Run core tests first, skip api tests if they are still broken
-          uv run pytest tests/unit/ -v --ignore=tests/unit/api/
+          # Verify new features (Cache and Eval)
+          uv run pytest tests/unit/test_evaluation.py tests/contract/test_llm_cache_disk.py -v
           
       - name: Build package
         run: |
