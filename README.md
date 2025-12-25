@@ -251,6 +251,24 @@ pipeline.load_documents(documents=docs)
 
 📖 **[Complete IRIS EMBEDDING Guide →](docs/IRIS_EMBEDDING_GUIDE.md)** - Configuration, performance tuning, multi-field vectorization, troubleshooting
 
+### Fast Iteration & Evaluation (New)
+
+**Develop and benchmark RAG pipelines with minimal latency and cost.**
+
+- 💾 **Persistent Disk Caching** - Cache LLM responses to local JSON files to avoid redundant API costs and enable offline development.
+- ⚡ **Auto-Hardening Bypass** - Automatically bypasses IRIS password locks for instant connectivity in local/CI containers.
+- 📊 **Unified Evaluation Framework** - Standardized multi-hop metrics (Recall@K, EM, F1) and dataset loaders (HotpotQA, MuSiQue).
+
+```python
+# Enable disk-based caching
+pipeline = create_pipeline('basic', llm_cache_backend='disk')
+
+# Standardized multi-hop evaluation
+from iris_vector_rag.evaluation import DatasetLoader, MetricsCalculator
+loader = DatasetLoader()
+queries = loader.load('musique', sample_size=100)
+```
+
 ## Model Context Protocol (MCP) Support
 
 **Expose RAG pipelines as MCP tools** for Claude Desktop and other MCP clients - enables conversational RAG workflows where Claude queries your documents during conversations.

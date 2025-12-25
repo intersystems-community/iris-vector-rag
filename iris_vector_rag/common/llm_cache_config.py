@@ -21,10 +21,11 @@ class CacheConfig:
 
     # Core settings
     enabled: bool = True
-    backend: str = "iris"  # memory, iris, redis
+    backend: str = "iris"  # memory, iris, redis, disk
     ttl_seconds: int = 3600
     normalize_prompts: bool = False
     max_cache_size: int = 1000
+    cache_directory: str = ".cache/iris_rag"
 
     # IRIS-specific settings
     table_name: str = "llm_cache"
@@ -53,6 +54,10 @@ class CacheConfig:
     max_retries: int = 3
     retry_delay: int = 1
     operation_timeout: int = 10
+
+    # Redis settings (added to fix linting)
+    redis_url: Optional[str] = None
+    redis_prefix: str = "llm_cache"
 
     @classmethod
     def from_env(cls) -> "CacheConfig":
@@ -83,6 +88,9 @@ class CacheConfig:
 
         if "LLM_CACHE_MAX_SIZE" in os.environ:
             config.max_cache_size = int(os.environ["LLM_CACHE_MAX_SIZE"])
+
+        if "LLM_CACHE_DIRECTORY" in os.environ:
+            config.cache_directory = os.environ["LLM_CACHE_DIRECTORY"]
 
         if "LLM_CACHE_IRIS_SCHEMA" in os.environ:
             config.iris_schema = os.environ["LLM_CACHE_IRIS_SCHEMA"]
@@ -118,6 +126,9 @@ class CacheConfig:
                     )
                     config.max_cache_size = cache_data.get(
                         "max_cache_size", config.max_cache_size
+                    )
+                    config.cache_directory = cache_data.get(
+                        "cache_directory", config.cache_directory
                     )
 
                     # IRIS settings
@@ -248,9 +259,9 @@ class CacheConfig:
 
     def validate(self) -> bool:
         """Validate the configuration settings."""
-        if self.backend not in ["memory", "iris"]:
+        if self.backend not in ["memory", "iris", "disk"]:
             logger.error(
-                f"Invalid cache backend: {self.backend}. Supported backends: memory, iris"
+                f"Invalid cache backend: {self.backend}. Supported backends: memory, iris, disk"
             )
             return False
 
