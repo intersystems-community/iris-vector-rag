@@ -111,11 +111,12 @@ jobs:
         
       - name: Install security tools
         run: |
+          uv venv
           uv pip install bandit
           
       - name: Run security checks
         run: |
-          uv run bandit -r . -x tests/ -f json -o bandit-report.json || true
+          uv run bandit -r iris_vector_rag -f json -o bandit-report.json || true
           
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -214,7 +215,7 @@ jobs:
         id: changelog
         run: |
           echo "Release v${{ needs.validate-version.outputs.version }}" > changelog.md
-          git log --pretty=format:"* %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> changelog.md || echo "Initial release" >> changelog.md
+          git log --pretty=format:"* %s" $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD >> changelog.md
           
           CHANGELOG=$(cat changelog.md)
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
