@@ -17,8 +17,7 @@ on:
         default: false
 
 env:
-  PYTHON_VERSION: "3.10"
-  POETRY_VERSION: "1.6.1"
+  PYTHON_VERSION: "3.11"
 
 jobs:
   validate-version:
@@ -50,8 +49,6 @@ jobs:
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
-          echo "Version: $VERSION"
-          echo "Is prerelease: $IS_PRERELEASE"
           
       - name: Validate version format
         run: |
@@ -74,40 +71,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: .venv
-          key: release-venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        run: uv python install ${{ matrix.python-version }}
           
       - name: Install dependencies
         run: |
-          poetry install --with dev
+          uv sync --group dev
           
       - name: Run unit tests
         run: |
-          poetry run pytest tests/unit/ -v
+          uv run pytest tests/unit/ -v
           
       - name: Build package
         run: |
-          poetry build
+          uv build
           
       - name: Test package installation
         run: |
-          pip install dist/*.whl
-          python -c "import iris_vector_rag; print('Package installation successful')"
+          uv pip install dist/*.whl
+          uv run python -c "import iris_vector_rag; print('Package installation successful')"
 
   security-check:
     name: Security Check for Release
@@ -119,23 +106,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          
-      - name: Install dependencies
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        
+      - name: Install security tools
         run: |
-          poetry install --with dev
+          uv pip install bandit
           
       - name: Run security checks
         run: |
-          poetry run bandit -r . -x tests/ -f json -o bandit-report.json || true
+          uv run bandit -r . -x tests/ -f json -o bandit-report.json || true
           
       - name: Upload security reports
         uses: actions/upload-artifact@v4
@@ -154,27 +134,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          
-      - name: Update version in pyproject.toml
-        run: |
-          poetry version ${{ needs.validate-version.outputs.version }}
-          
-      - name: Install dependencies
-        run: |
-          poetry install --with dev
-          
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        
       - name: Build package
         run: |
-          poetry build
+          uv build
           
       - name: Create checksums
         run: |
@@ -209,7 +174,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           
-      # Detect metadata
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -246,20 +210,12 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          
       - name: Generate changelog
         id: changelog
         run: |
-          pip install gitpython
-          python scripts/ci/generate-changelog.py \
-            --version "${{ needs.validate-version.outputs.version }}" \
-            --output changelog.md || echo "No changes found" > changelog.md
+          echo "Release v${{ needs.validate-version.outputs.version }}" > changelog.md
+          git log --pretty=format:"* %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> changelog.md || echo "Initial release" >> changelog.md
           
-          # Read changelog for GitHub release
           CHANGELOG=$(cat changelog.md)
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
@@ -364,6 +320,5 @@ jobs:
             
             :package: PyPI: https://pypi.org/project/rag-templates/
             :octocat: GitHub: ${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.validate-version.outputs.version }}
-            :books: Documentation: https://docs.rag-templates.dev
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
