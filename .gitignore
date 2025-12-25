@@ -156,6 +156,9 @@ data/pmc_100k_downloaded/
 
 temp_iris.key
 
+# Configuration files (.gitignored)
+config/
+
 # Output and temporary directories that accumulate files
 outputs/logs/
 outputs/temp/
@@ -188,7 +191,12 @@ logs/
 tests/artifacts/
 coverage.json
 
-# Development tracking files (not for git tracking)
+# Development tracking files (not for git tracking per user's CLAUDE.md)
 STATUS.md
 PROGRESS.md
 TODO.md
+
+# Specification tracking directory (moved to feature-specific location)
+# Keep main project constitution but ignore feature-specific .specify directories
+specs/**/.specify/
+tools/nodejs/node_modules/

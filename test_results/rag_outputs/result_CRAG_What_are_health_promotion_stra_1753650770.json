@@ -1,5 +1,0 @@
-{
-  "query": "What are health promotion strategies?",
-  "answer": "CRAG pipeline error: [SQLCODE: <-257>:<Cannot perform vector operation on vectors of different lengths>]\r\n[Location: <ServerLoop - Query Open()>]\r\n[%msg: <Cannot perform vector operation on vectors of different lengths>]",
-  "retrieved_documents": []
-}

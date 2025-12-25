@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iris-vector-rag"
-version = "0.5.13"
+version = "0.5.14"
 description = "Production-ready, extensible RAG framework with native IRIS vector search - unified API for basic, CRAG, GraphRAG, and ColBERT pipelines with RAGAS and DSPy integration"
 readme = "README.md"
 license = {text = "MIT"}
@@ -167,11 +167,11 @@ mcp = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/intersystems/rag-templates"
-Documentation = "https://github.com/intersystems/rag-templates/docs"
-Repository = "https://github.com/intersystems/rag-templates"
-"Bug Tracker" = "https://github.com/intersystems/rag-templates/issues"
-Changelog = "https://github.com/intersystems/rag-templates/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/intersystems-community/iris-vector-rag"
+Documentation = "https://github.com/intersystems-community/iris-vector-rag/tree/main/docs"
+Repository = "https://github.com/intersystems-community/iris-vector-rag"
+"Bug Tracker" = "https://github.com/intersystems-community/iris-vector-rag/issues"
+Changelog = "https://github.com/intersystems-community/iris-vector-rag/blob/main/CHANGELOG.md"
 
 [project.scripts]
 rag-templates = "iris_vector_rag.cli:main"
@@ -238,6 +238,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers --strict-config"
+asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

@@ -1,3 +1,4 @@
+import time
 """
 CRAG (Corrective RAG) Pipeline implementation for iris_rag package.
 
@@ -9,7 +10,6 @@ This pipeline implements Corrective Retrieval-Augmented Generation:
 """
 
 import logging
-import time
 from typing import Any, Callable, Dict, List, Literal, Optional
 
 from ..core.base import RAGPipeline

@@ -4,9 +4,9 @@ Handoff guide for integrating kg-ticket-resolver with rag-templates using only v
 
 ## Components You Will Use (Validated)
 
-- Unified adapter: [`RAGTemplatesBridge`](adapters/rag_templates_bridge.py:86) with async entrypoint [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:203)
-- Technique selector: [`RAGTechnique`](adapters/rag_templates_bridge.py:36) = {basic, crag, graphrag, basic_reranking}
-- Standard response: [`RAGResponse`](adapters/rag_templates_bridge.py:52)
+- Unified adapter: [`RAGTemplatesBridge`](iris_vector_rag/adapters/rag_templates_bridge.py:86) with async entrypoint [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203)
+- Technique selector: [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36) = {basic, crag, graphrag, basic_reranking}
+- Standard response: [`RAGResponse`](iris_vector_rag/adapters/rag_templates_bridge.py:52)
 - Base pipeline interface: [`RAGPipeline`](iris_rag/core/base.py:12)
 - Concrete pipelines:
   - [`BasicRAGPipeline`](iris_rag/pipelines/basic.py:20) — standard vector RAG
@@ -18,7 +18,7 @@ Note: Non-validated pipeline names (ColBERT, HyDE, NodeRAG, HybridIFind) are not
 
 ## Quick Start (Async)
 
-- Entry API and enums used below: [`RAGTemplatesBridge.__init__()`](adapters/rag_templates_bridge.py:98), [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:203), [`RAGTechnique`](adapters/rag_templates_bridge.py:36)
+- Entry API and enums used below: [`RAGTemplatesBridge.__init__()`](iris_vector_rag/adapters/rag_templates_bridge.py:98), [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203), [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
 
 Example:
 ```python
@@ -33,14 +33,14 @@ async def main():
 asyncio.run(main())
 ```
 
-Returned object follows [`RAGResponse`](adapters/rag_templates_bridge.py:52). See also health/metrics: [`RAGTemplatesBridge.get_health_status()`](adapters/rag_templates_bridge.py:332), [`RAGTemplatesBridge.get_metrics()`](adapters/rag_templates_bridge.py:323).
+Returned object follows [`RAGResponse`](iris_vector_rag/adapters/rag_templates_bridge.py:52). See also health/metrics: [`RAGTemplatesBridge.get_health_status()`](iris_vector_rag/adapters/rag_templates_bridge.py:332), [`RAGTemplatesBridge.get_metrics()`](iris_vector_rag/adapters/rag_templates_bridge.py:323).
 
 ## Configuration Patterns (Proven by Implementation)
 
-- Bridge configuration keys (read in [`RAGTemplatesBridge.__init__()`](adapters/rag_templates_bridge.py:98)):
-  - `rag_integration.default_technique` → mapped to [`RAGTechnique`](adapters/rag_templates_bridge.py:36)
-  - `rag_integration.fallback_technique` → used in circuit-breaker fallback within [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:251)
-  - `rag_integration.circuit_breaker.*` → consumed by [`CircuitBreakerConfig`](adapters/rag_templates_bridge.py:63)
+- Bridge configuration keys (read in [`RAGTemplatesBridge.__init__()`](iris_vector_rag/adapters/rag_templates_bridge.py:98)):
+  - `rag_integration.default_technique` → mapped to [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
+  - `rag_integration.fallback_technique` → used in circuit-breaker fallback within [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:251)
+  - `rag_integration.circuit_breaker.*` → consumed by [`CircuitBreakerConfig`](iris_vector_rag/adapters/rag_templates_bridge.py:63)
 - Pipelines read their own config sections:
   - Basic: [`BasicRAGPipeline.__init__()`](iris_rag/pipelines/basic.py:30) → `pipelines:basic`
   - Reranking: [`BasicRAGRerankingPipeline.__init__()`](iris_rag/pipelines/basic_rerank.py:59) → `pipelines:basic_reranking` with fallback to `pipelines:basic`
@@ -64,7 +64,7 @@ rag_integration:
   - CRAG: [`CRAGPipeline.query()`](iris_rag/pipelines/crag.py:161)
   - Reranking: [`BasicRAGRerankingPipeline.query()`](iris_rag/pipelines/basic_rerank.py:93)
   - GraphRAG: [`GraphRAGPipeline.query()`](iris_rag/pipelines/graphrag.py:101)
-- Standardized response fields: query, answer, contexts, retrieved_documents, execution_time, metadata; adapter returns [`RAGResponse`](adapters/rag_templates_bridge.py:52) for app-friendly consumption.
+- Standardized response fields: query, answer, contexts, retrieved_documents, execution_time, metadata; adapter returns [`RAGResponse`](iris_vector_rag/adapters/rag_templates_bridge.py:52) for app-friendly consumption.
 
 Interface validation evidence:
 - Constructor-level success on real infrastructure with measured times:
@@ -94,22 +94,22 @@ GraphRAG readiness:
 
 - Custom LLM function: pass into pipelines or use bridge default; CRAG and Basic honor llm_func in their constructors ([`BasicRAGPipeline.__init__()`](iris_rag/pipelines/basic.py:30), [`CRAGPipeline.__init__()`](iris_rag/pipelines/crag.py:32))
 - Custom reranker for reranking pipeline: supply `reranker_func` ([`BasicRAGRerankingPipeline.__init__()`](iris_rag/pipelines/basic_rerank.py:59)); default [`hf_reranker`](iris_rag/pipelines/basic_rerank.py:16)
-- Technique switching and fallback at runtime handled by bridge: circuit breaker gates and fallback in [`RAGTemplatesBridge._check_circuit_breaker()`](adapters/rag_templates_bridge.py:164) and [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:248)
-- Safe pipeline access via context manager: [`RAGTemplatesBridge.pipeline_context()`](adapters/rag_templates_bridge.py:415)
+- Technique switching and fallback at runtime handled by bridge: circuit breaker gates and fallback in [`RAGTemplatesBridge._check_circuit_breaker()`](iris_vector_rag/adapters/rag_templates_bridge.py:164) and [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:248)
+- Safe pipeline access via context manager: [`RAGTemplatesBridge.pipeline_context()`](iris_vector_rag/adapters/rag_templates_bridge.py:415)
 
 ## Recommended Integration Flow (kg-ticket-resolver)
 
 1) Initialize the bridge and confirm health
-   - Create bridge: [`RAGTemplatesBridge.__init__()`](adapters/rag_templates_bridge.py:98)
-   - Check health: [`RAGTemplatesBridge.get_health_status()`](adapters/rag_templates_bridge.py:332)
+   - Create bridge: [`RAGTemplatesBridge.__init__()`](iris_vector_rag/adapters/rag_templates_bridge.py:98)
+   - Check health: [`RAGTemplatesBridge.get_health_status()`](iris_vector_rag/adapters/rag_templates_bridge.py:332)
 2) Ensure data prerequisites per technique
    - Run validator/orchestrator as above; for GraphRAG, populate Entities/Relationships tables
 3) Route queries
-   - Call unified async entrypoint: [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:203)
-   - Select technique via [`RAGTechnique`](adapters/rag_templates_bridge.py:36)
+   - Call unified async entrypoint: [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203)
+   - Select technique via [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
 4) Monitor and operate
-   - Metrics: [`RAGTemplatesBridge.get_metrics()`](adapters/rag_templates_bridge.py:323)
-   - Circuit-breaker tuning: [`CircuitBreakerConfig`](adapters/rag_templates_bridge.py:63)
+   - Metrics: [`RAGTemplatesBridge.get_metrics()`](iris_vector_rag/adapters/rag_templates_bridge.py:323)
+   - Circuit-breaker tuning: [`CircuitBreakerConfig`](iris_vector_rag/adapters/rag_templates_bridge.py:63)
 
 ## Guardrails and Non-Goals
 
@@ -136,10 +136,10 @@ GraphRAG readiness:
   - [`BasicRAGRerankingPipeline`](iris_rag/pipelines/basic_rerank.py:40)
   - [`GraphRAGPipeline`](iris_rag/pipelines/graphrag.py:17)
 - Integration boundary:
-  - [`RAGTemplatesBridge`](adapters/rag_templates_bridge.py:86)
-  - [`RAGTemplatesBridge.query()`](adapters/rag_templates_bridge.py:203)
-  - [`RAGTechnique`](adapters/rag_templates_bridge.py:36)
-  - [`RAGResponse`](adapters/rag_templates_bridge.py:52)
+  - [`RAGTemplatesBridge`](iris_vector_rag/adapters/rag_templates_bridge.py:86)
+  - [`RAGTemplatesBridge.query()`](iris_vector_rag/adapters/rag_templates_bridge.py:203)
+  - [`RAGTechnique`](iris_vector_rag/adapters/rag_templates_bridge.py:36)
+  - [`RAGResponse`](iris_vector_rag/adapters/rag_templates_bridge.py:52)
 - Validation and setup:
   - [`ValidatedPipelineFactory`](iris_rag/validation/factory.py:30)
   - [`PreConditionValidator`](iris_rag/validation/validator.py:39)

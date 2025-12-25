@@ -1,6 +1,7 @@
 import uuid
+import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 from enum import Enum
 
@@ -690,9 +691,9 @@ class CoverageReport:
     analysis_duration_seconds: float
 
     # Optional metadata fields
-    git_commit_hash: str = None
-    ci_build_id: str = None
-    branch_coverage_percentage: float = None
+    git_commit_hash: Optional[str] = None
+    ci_build_id: Optional[str] = None
+    branch_coverage_percentage: Optional[float] = None
 
     # Module coverage breakdown
     module_coverage: List[Dict[str, Any]] = field(default_factory=list)
@@ -819,14 +820,14 @@ class CoverageReport:
             return NotImplemented
         return self.overall_coverage_percentage > other.overall_coverage_percentage
 
-    def __eq__(self, other: 'CoverageReport') -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare reports by ID and timestamp."""
         if not isinstance(other, CoverageReport):
             return NotImplemented
         return (self.report_id == other.report_id and
                 self.timestamp == other.timestamp)
 
-    def __ne__(self, other: 'CoverageReport') -> bool:
+    def __ne__(self, other: object) -> bool:
         """Compare reports by ID and timestamp."""
         return not self.__eq__(other)
 
@@ -883,11 +884,11 @@ class ModuleCoverage:
 
     # Optional detailed fields
     uncovered_lines: List[int] = field(default_factory=list)
-    priority_level: str = None
+    priority_level: Optional[str] = None
     is_legacy_module: bool = False
-    exemption_justification: str = None
-    analysis_time_ms: float = None
-    vector_operation_coverage: float = None
+    exemption_justification: Optional[str] = None
+    analysis_time_ms: Optional[float] = None
+    vector_operation_coverage: Optional[float] = None
 
     def __post_init__(self):
         """Validate module data after initialization."""
@@ -1018,17 +1019,60 @@ class ModuleCoverage:
         return data
 
 
-# Example of how other models might be added later:
-# @dataclass(frozen=True)
-# class Chunk(Document):
-#     """Represents a chunk of a larger document."""
-#     parent_document_id: str
-#     chunk_index: int
-#     # Could have its own metadata or inherit/extend parent's
+@dataclass
+class BatchExtractionResult:
+    """Represents the result of batch entity extraction."""
+    batch_id: str
+    per_document_entities: Dict[str, List[Entity]] = field(default_factory=dict)
+    per_document_relationships: Dict[str, List[Relationship]] = field(default_factory=dict)
+    processing_time: float = 0.0
+    success_status: bool = True
+    retry_count: int = 0
+    error_message: Optional[str] = None
 
-# @dataclass(frozen=True)
-# class RetrievedDocument:
-#     """Represents a document retrieved by the RAG pipeline, possibly with a score."""
-#     document: Document
-#     score: float = field(default=0.0)
-#     # Any other retrieval-specific info
+    def get_entity_count_by_document(self) -> Dict[str, int]:
+        return {doc_id: len(entities) for doc_id, entities in self.per_document_entities.items()}
+
+@dataclass
+class ProcessingMetrics:
+    """Represents processing metrics for batch entity extraction."""
+    total_batches_processed: int = 0
+    total_documents_processed: int = 0
+    average_batch_processing_time: float = 0.0
+    speedup_factor: float = 1.0
+    entity_extraction_rate_per_batch: float = 0.0
+    zero_entity_documents_count: int = 0
+    failed_batches_count: int = 0
+    retry_attempts_total: int = 0
+
+    def update_with_batch(self, batch_result: BatchExtractionResult, batch_size: int) -> None:
+        self.total_batches_processed += 1
+        self.total_documents_processed += batch_size
+
+@dataclass(frozen=True)
+class CacheEntry:
+    """Represents a cached LLM response."""
+    prompt: str
+    response: str
+    model_name: str
+    timestamp: float = field(default_factory=time.time)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass(frozen=True)
+class BenchmarkQuery:
+    """
+    Standardized query object for multi-hop RAG evaluation.
+
+    Attributes:
+        id: Unique query identifier
+        question: The natural language question
+        answer: Gold-standard answer (string or list)
+        supporting_docs: List of ground-truth document IDs required for answering
+        metadata: Dataset-specific attributes (e.g., question_decomposition)
+    """
+
+    id: str
+    question: str
+    answer: Union[str, List[str]]
+    supporting_docs: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)

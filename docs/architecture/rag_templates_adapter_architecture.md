@@ -37,7 +37,7 @@ The RAG Templates Adapter Layer (M1) provides a unified interface compatibility 
 │  ┌─────────────────────────────────────────────────────────────────────────┐ │
 │  │                      ADAPTER BRIDGE LAYER                              │ │
 │  │  ┌─────────────────────────────────────────────────────────────────────┐│ │
-│  │  │               RAGTemplatesBridge (adapters/rag_templates_bridge.py) ││ │
+│  │  │               RAGTemplatesBridge (iris_vector_rag/adapters/rag_templates_bridge.py) ││ │
 │  │  │                                                                     ││ │
 │  │  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐     ││ │
 │  │  │  │ Circuit Breaker │  │ Performance     │  │ Query Router    │     ││ │
@@ -143,7 +143,7 @@ The RAG Templates Adapter Layer (M1) provides a unified interface compatibility 
 
 ### 3.1 Adapter Bridge Interface
 
-**File**: [`adapters/rag_templates_bridge.py`](../adapters/rag_templates_bridge.py:1)
+**File**: [`iris_vector_rag/adapters/rag_templates_bridge.py`](../iris_vector_rag/adapters/rag_templates_bridge.py:1)
 
 **Key Components**:
 - **RAGTemplatesBridge**: Main adapter class (324 lines)
@@ -306,7 +306,7 @@ CMD ["python", "-m", "adapters.rag_templates_bridge"]
 ## 7. Implementation Roadmap
 
 ### 7.1 Phase 1: Core Implementation (Week 1-2)
-- [x] **Unified Bridge Adapter**: [`RAGTemplatesBridge`](../adapters/rag_templates_bridge.py:85) class
+- [x] **Unified Bridge Adapter**: [`RAGTemplatesBridge`](../iris_vector_rag/adapters/rag_templates_bridge.py:85) class
 - [x] **Configuration System**: Environment-independent [`rag_integration.yaml`](../config/rag_integration.yaml:1)  
 - [x] **Service Boundaries**: Clean separation and interface contracts
 - [x] **Performance Framework**: Monitoring and SLO enforcement

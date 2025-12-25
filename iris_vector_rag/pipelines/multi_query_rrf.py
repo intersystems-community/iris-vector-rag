@@ -1,3 +1,4 @@
+import time
 """
 Multi-Query with RRF Fusion Pipeline
 
@@ -286,7 +287,6 @@ Return only the alternative queries, one per line, without numbering.
                     - raw_result_count: Total documents before fusion
                     - execution_time: Total execution time
         """
-        import time
         start_time = time.time()
 
         logger.info(f"Multi-query RRF pipeline query: '{query}'")

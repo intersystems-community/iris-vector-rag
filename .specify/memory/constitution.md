@@ -1,5 +1,27 @@
 # iris-vector-rag Constitution
 
+<!--
+Sync Impact Report - Version 1.1.0
+
+Version Change: 1.0.0 → 1.1.0
+Rationale: MINOR bump - added new Principle X (PyPI Publishing Standards)
+
+Added Sections:
+  - Principle X: PyPI Publishing Standards
+  - Guidance on using twine instead of uv publish
+  - Rationale for credential compatibility
+
+Modified Principles: None
+
+Removed Sections: None
+
+Templates Requiring Updates:
+  - ✅ CLAUDE.md (already contains PyPI workflow documentation)
+  - ⚠️  Build/release documentation may need update if exists
+
+Follow-up TODOs: None
+-->
+
 ## Core Principles
 
 ### I. Library-First Design
@@ -97,6 +119,29 @@ Start simple. Build for current requirements, not hypothetical future needs. Pre
 - "We might need this later" is not justification
 - Delete unused code immediately
 
+### X. PyPI Publishing Standards
+MUST use `twine` for publishing packages to PyPI. DO NOT use `uv publish`.
+
+**Why**: `uv publish` does not properly read credentials from `.pypirc` files, causing authentication failures. `twine` is the standard Python packaging tool with mature credential handling.
+
+**Enforcement**:
+- Use `twine upload dist/*` for PyPI publishing
+- Verify `.pypirc` configuration before publishing
+- Build distributions with `uv build` (or `python -m build`)
+- Never commit `.pypirc` or credentials to version control
+
+**Publishing Workflow**:
+```bash
+# 1. Build distribution packages
+uv build
+
+# 2. Verify distributions created
+ls -lh dist/
+
+# 3. Publish to PyPI using twine (reads ~/.pypirc automatically)
+twine upload dist/iris_vector_rag-*.whl dist/iris_vector_rag-*.tar.gz
+```
+
 ## Testing Requirements
 
 ### Contract Tests (TDD)
@@ -158,4 +203,4 @@ All PRs/reviews must verify:
 - ✅ Performance benchmarks pass
 - ✅ Constitution principles followed
 
-**Version**: 1.0.0 | **Ratified**: 2025-11-22 | **Last Amended**: 2025-11-22
+**Version**: 1.1.0 | **Ratified**: 2025-11-22 | **Last Amended**: 2025-11-25

@@ -1,3 +1,4 @@
+import time
 """
 Ontology-Enhanced GraphRAG Pipeline - Merged production-hardened + complete functionality.
 
@@ -12,7 +13,6 @@ This implementation combines:
 """
 
 import logging
-import time
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from ..config.manager import ConfigurationManager

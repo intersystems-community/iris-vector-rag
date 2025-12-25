@@ -336,7 +336,7 @@ def embed_texts(config_name: str, texts: List[str]) -> EmbeddingResult:
     try:
         # Time the embedding generation
         embed_start = time.time()
-        embeddings = model.encode(texts, convert_to_tensor=False)
+        embeddings = model.encode(texts, convert_to_tensor=False, show_progress_bar=False)
         embeddings_list = embeddings.tolist()
         embed_time_ms = (time.time() - embed_start) * 1000
 

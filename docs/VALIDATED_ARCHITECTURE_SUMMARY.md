@@ -13,9 +13,9 @@ Validated architecture summary for rag-templates based solely on implemented cod
   - [BasicRAGRerankingPipeline](iris_rag/pipelines/basic_rerank.py:40)
   - [GraphRAGPipeline](iris_rag/pipelines/graphrag.py:17)
 - Integration boundary for consuming apps (e.g., kg-ticket-resolver) is a unified adapter:
-  - [RAGTemplatesBridge](adapters/rag_templates_bridge.py:86) with async [RAGTemplatesBridge.query](adapters/rag_templates_bridge.py:203)
-  - Technique routing via [RAGTechnique](adapters/rag_templates_bridge.py:36)
-  - Standardized response object [RAGResponse](adapters/rag_templates_bridge.py:51)
+  - [RAGTemplatesBridge](iris_vector_rag/adapters/rag_templates_bridge.py:86) with async [RAGTemplatesBridge.query](iris_vector_rag/adapters/rag_templates_bridge.py:203)
+  - Technique routing via [RAGTechnique](iris_vector_rag/adapters/rag_templates_bridge.py:36)
+  - Standardized response object [RAGResponse](iris_vector_rag/adapters/rag_templates_bridge.py:51)
 
 ## Proven IRIS Integration Patterns
 
@@ -42,7 +42,7 @@ Validated architecture summary for rag-templates based solely on implemented cod
   - [ValidatedPipelineFactory._create_pipeline_instance](iris_rag/validation/factory.py:111)
   - [SetupOrchestrator.setup_pipeline](iris_rag/validation/orchestrator.py:72) and embedding fulfillment [SetupOrchestrator._ensure_document_embeddings](iris_rag/validation/orchestrator.py:235)
 - Unified adapter initialization registry (for consumers):
-  - [RAGTemplatesBridge._initialize_pipelines](adapters/rag_templates_bridge.py:134) registers Basic, CRAG, Graph, Reranking
+  - [RAGTemplatesBridge._initialize_pipelines](iris_vector_rag/adapters/rag_templates_bridge.py:134) registers Basic, CRAG, Graph, Reranking
 
 ## Runtime Validation Evidence Boundaries
 
@@ -58,9 +58,9 @@ Validated architecture summary for rag-templates based solely on implemented cod
 ## Error Handling and Resilience
 
 - Circuit breaker states and flow:
-  - States [CircuitBreakerState](adapters/rag_templates_bridge.py:44)
-  - Gate check [RAGTemplatesBridge._check_circuit_breaker](adapters/rag_templates_bridge.py:164)
-  - Fallback to configured technique when OPEN [RAGTemplatesBridge.query](adapters/rag_templates_bridge.py:251)
+  - States [CircuitBreakerState](iris_vector_rag/adapters/rag_templates_bridge.py:44)
+  - Gate check [RAGTemplatesBridge._check_circuit_breaker](iris_vector_rag/adapters/rag_templates_bridge.py:164)
+  - Fallback to configured technique when OPEN [RAGTemplatesBridge.query](iris_vector_rag/adapters/rag_templates_bridge.py:251)
 - CRAG guarded execution returns structured error payloads:
   - Error branch in [CRAGPipeline.query](iris_rag/pipelines/crag.py:217)
 
@@ -76,13 +76,13 @@ Validated architecture summary for rag-templates based solely on implemented cod
 ## Migration Path for Consuming Applications (kg-ticket-resolver)
 
 1) Instantiate the bridge and select a technique (defaults via config):
-   - Bridge init and config keys [RAGTemplatesBridge.__init__](adapters/rag_templates_bridge.py:98)
-   - Default and fallback technique resolution [RAGTemplatesBridge.__init__](adapters/rag_templates_bridge.py:110)
+   - Bridge init and config keys [RAGTemplatesBridge.__init__](iris_vector_rag/adapters/rag_templates_bridge.py:98)
+   - Default and fallback technique resolution [RAGTemplatesBridge.__init__](iris_vector_rag/adapters/rag_templates_bridge.py:110)
 2) Call the unified async entrypoint and consume standardized response:
-   - [RAGTemplatesBridge.query](adapters/rag_templates_bridge.py:203) returns [RAGResponse](adapters/rag_templates_bridge.py:52)
+   - [RAGTemplatesBridge.query](iris_vector_rag/adapters/rag_templates_bridge.py:203) returns [RAGResponse](iris_vector_rag/adapters/rag_templates_bridge.py:52)
 3) Monitor health and performance:
-   - [RAGTemplatesBridge.get_health_status](adapters/rag_templates_bridge.py:332)
-   - [RAGTemplatesBridge.get_metrics](adapters/rag_templates_bridge.py:323)
+   - [RAGTemplatesBridge.get_health_status](iris_vector_rag/adapters/rag_templates_bridge.py:332)
+   - [RAGTemplatesBridge.get_metrics](iris_vector_rag/adapters/rag_templates_bridge.py:323)
 4) Pre-deployment data readiness:
    - Run [SetupOrchestrator.setup_pipeline](iris_rag/validation/orchestrator.py:72) for 'basic', 'basic_rerank', 'crag'; for GraphRAG, populate KG tables then use the class directly or via bridge.
 
