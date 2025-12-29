@@ -1,3 +1,4 @@
+import time
 """
 Hybrid GraphRAG Pipeline with IRIS Graph Core Integration
 
@@ -9,7 +10,6 @@ robust error handling, and modular architecture.
 """
 
 import logging
-import time
 from typing import Any, Callable, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager

@@ -1,3 +1,4 @@
+import time
 """
 Hybrid GraphRAG Retrieval Methods
 
@@ -6,7 +7,6 @@ iris_vector_graph integration.
 """
 
 import logging
-import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ..core.models import Document

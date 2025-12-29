@@ -51,7 +51,7 @@ jobs:
           pip-audit --format=cyclone-json --output=pip-audit-cyclone.json || true
           
       - name: Upload dependency scan results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: dependency-scan-results
@@ -99,7 +99,7 @@ jobs:
           generateSarif: "1"
           
       - name: Upload code security results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: code-security-results
@@ -108,7 +108,7 @@ jobs:
             bandit-report.txt
             
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: semgrep.sarif
@@ -167,7 +167,7 @@ jobs:
           output: 'trivy-fs-results.sarif'
           
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: |
@@ -188,7 +188,7 @@ jobs:
             docker/docker-bench-security > docker-bench-results.txt || true
             
       - name: Upload Docker security results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: docker-security-results
@@ -213,7 +213,7 @@ jobs:
           output_file_path: checkov-results.sarif
           
       - name: Upload Checkov scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: checkov-results.sarif
@@ -264,7 +264,7 @@ jobs:
           run-tests: true
           
       - name: Upload compliance results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: compliance-results
@@ -290,16 +290,16 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
           
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+        uses: github/codeql-action/autobuild@v3
         
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{matrix.language}}"
 
@@ -328,7 +328,7 @@ jobs:
           publish_results: true
           
       - name: Upload SARIF results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
 
@@ -344,7 +344,7 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Download all security artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -358,7 +358,7 @@ jobs:
             --format markdown
             
       - name: Upload security report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-report
           path: security-report.md
@@ -437,7 +437,7 @@ jobs:
             zap-full-scan.py -t http://localhost:8000 -J zap-full-report.json || true
             
       - name: Upload penetration test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: penetration-test-results
