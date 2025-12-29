@@ -7,6 +7,10 @@ on:
       - 'tests/**/*_contract.py'
       - 'scripts/validate_tdd_compliance.py'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   tdd-compliance:
     runs-on: ubuntu-latest
@@ -35,6 +39,7 @@ jobs:
 
       - name: Post results as PR comment
         if: always()
+        continue-on-error: true  # Don't fail if commenting is not allowed (fork PRs)
         uses: actions/github-script@v7
         with:
           script: |
@@ -58,12 +63,18 @@ jobs:
               comment += '\n**Action Required**: Contract tests must fail before implementation!';
             }
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.log('Could not post PR comment (expected for fork PRs):', error.message);
+              console.log('\n--- TDD Compliance Results ---\n');
+              console.log(comment);
+            }
 
       - name: Check compliance (non-blocking)
         run: |
