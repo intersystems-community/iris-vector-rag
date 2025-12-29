@@ -106,7 +106,7 @@ jobs:
           python scripts/ci/test-docs-site.py
           
       - name: Upload documentation artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: documentation
           path: site/
@@ -124,7 +124,7 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Download documentation artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation
           path: site/
@@ -162,7 +162,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Download documentation artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation
           path: site/
@@ -263,7 +263,7 @@ jobs:
           poetry run pytest tests/docs/ -v
           
       - name: Upload example test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: example-test-results
@@ -277,7 +277,7 @@ jobs:
     
     steps:
       - name: Download documentation artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation
           path: site/
@@ -308,7 +308,7 @@ jobs:
     
     steps:
       - name: Download documentation artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation
           path: site/
@@ -333,7 +333,7 @@ jobs:
     
     steps:
       - name: Download documentation artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: documentation
           path: site/
@@ -350,7 +350,7 @@ jobs:
           lighthouse http://localhost:8000 --output=json --output-path=lighthouse-report.json
           
       - name: Upload performance report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-report
           path: lighthouse-report.json
