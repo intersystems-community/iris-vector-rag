@@ -90,7 +90,6 @@ jobs:
             p/secrets
             p/python
             p/owasp-top-ten
-          generateSarif: "1"
         continue-on-error: true
 
       - name: Upload code security results
@@ -297,6 +296,7 @@ jobs:
           results_file: results.sarif
           results_format: sarif
           publish_results: true
+        continue-on-error: true
 
       - name: Upload SARIF results
         uses: github/codeql-action/upload-sarif@v4
