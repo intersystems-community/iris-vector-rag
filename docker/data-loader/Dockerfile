@@ -56,6 +56,10 @@ RUN chmod +x ./entrypoint.sh
 # Switch to non-root user
 USER dataloader
 
+# Health check
+HEALTHCHECK --interval=60s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import os; sys.exit(0 if os.path.exists('scripts/load_sample_data.py') else 1)"
+
 # Environment variables
 ENV PYTHONPATH=/app \
     DATA_LOADER_MODE=batch \

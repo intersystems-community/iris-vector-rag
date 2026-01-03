@@ -1,0 +1,78 @@
+# Model Routing Configuration for SpecKit
+# Defines which models/tools to use for each workflow phase
+
+phases:
+  # Clarification phase - quick, cheap interactions
+  clarify:
+    orchestrator_model_alias: haiku
+    description: "Use Haiku for clarifying specs, asking questions, small edits"
+
+  # Task breakdown phase - structured analysis
+  tasks:
+    orchestrator_model_alias: haiku
+    description: "Use Haiku for breaking down work into tasks"
+
+  # Planning phase - deeper reasoning required
+  plan:
+    orchestrator_model_alias: opusplan
+    description: "Use Opus Plan Mode for architecture and planning (executes on Sonnet)"
+
+  # Implementation phase - high token volume, use Qwen (free on VPN) with Gemini fallback
+  implement:
+    tool: qwen_implement
+    orchestrator_model_alias: sonnet
+    description: "Use Qwen (free on VPN) or Gemini fallback for code implementation, Sonnet for orchestration"
+
+  # Review phase - validation and checking
+  review:
+    orchestrator_model_alias: sonnet
+    description: "Use Sonnet for code review and validation"
+
+  # Complex architecture - only when truly needed
+  architect:
+    orchestrator_model_alias: opus
+    description: "Reserve Opus for cross-service architecture decisions"
+
+# Model tier descriptions for agent context
+model_tiers:
+  haiku:
+    use_for:
+      - "Clarifying specs and requirements"
+      - "Small edits and summaries"
+      - "Task breakdown and checklists"
+      - "Quick questions and answers"
+    cost: "lowest"
+
+  sonnet:
+    use_for:
+      - "Planning within a single service"
+      - "Validating plans and checklists"
+      - "Coordinating implementation"
+      - "Code review"
+    cost: "moderate"
+
+  qwen:
+    use_for:
+      - "Code implementation (when on VPN)"
+      - "Large refactors and multi-file edits"
+      - "Generating patches and diffs"
+      - "High-volume code generation"
+    cost: "free (VPN only, falls back to Gemini)"
+    tool: "qwen_implement"
+
+  gemini_flash:
+    use_for:
+      - "Code implementation (fallback when off VPN)"
+      - "Same as Qwen but always available"
+    cost: "low (via MCP tool)"
+    tool: "gemini_implement"
+
+  opus:
+    use_for:
+      - "Cross-service architecture decisions"
+      - "Extremely complex reasoning"
+      - "Novel problem solving"
+    cost: "highest - use sparingly"
+
+# Default model when not in a specific phase
+default_model: sonnet

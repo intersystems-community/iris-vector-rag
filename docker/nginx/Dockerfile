@@ -52,6 +52,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 # Use custom entrypoint that handles configuration
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
+# Switch to non-root user
+USER nginx
+
 # Default command
 CMD ["nginx", "-g", "daemon off;"]
 
