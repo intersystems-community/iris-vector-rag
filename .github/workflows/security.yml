@@ -47,7 +47,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload dependency scan results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: dependency-scan-results
@@ -93,7 +93,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload code security results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: code-security-results
@@ -172,7 +172,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload Docker security results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: docker-security-results
@@ -234,7 +234,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload compliance results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: compliance-results
