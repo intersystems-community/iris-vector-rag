@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "iris-vector-rag"
 version = "0.5.16"
-description = "Production-ready, extensible RAG framework with native IRIS vector search - unified API for basic, CRAG, GraphRAG, and ColBERT pipelines with RAGAS and DSPy integration"
+description = "Enterprise RAG pipelines with native IRIS vector search. 6 production implementations with RAGAS evaluation, LangChain, AWS/Azure configs. No external VectorDB required."
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -16,18 +16,13 @@ maintainers = [
 ]
 keywords = [
     "rag",
-    "retrieval-augmented-generation", 
-    "intersystems",
+    "vector-search",
+    "langchain",
+    "ragas",
+    "enterprise-ai",
     "iris",
-    "vector-database",
-    "llm",
-    "ai",
-    "machine-learning",
-    "nlp",
-    "embeddings",
-    "semantic-search",
-    "mcp",
-    "model-context-protocol"
+    "intersystems",
+    "retrieval-augmented-generation"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
