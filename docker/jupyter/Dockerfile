@@ -5,7 +5,7 @@
 # Based on official Jupyter Docker images with RAG-specific customizations
 # =============================================================================
 
-FROM jupyter/scipy-notebook:latest as base
+FROM jupyter/scipy-notebook:python-3.11.6 as base
 
 # Build arguments
 ARG JUPYTER_TOKEN=rag_jupyter_token
