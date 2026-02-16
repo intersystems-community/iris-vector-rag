@@ -4,9 +4,8 @@ These tests define the expected behavior of the coverage warning plugin.
 They must fail initially and pass once the plugin is implemented.
 """
 
-import pytest
+import importlib.util
 from unittest.mock import Mock, patch
-import coverage
 
 
 class TestCoverageWarningContract:
@@ -16,11 +15,9 @@ class TestCoverageWarningContract:
         """Verify coverage_warnings plugin registers correctly with pytest."""
         # This should fail until plugin exists
         # Check if plugin module can be imported
-        try:
-            import tests.plugins.coverage_warnings
-            plugin_exists = True
-        except ImportError:
-            plugin_exists = False
+        plugin_exists = (
+            importlib.util.find_spec("tests.plugins.coverage_warnings") is not None
+        )
 
         assert plugin_exists, "coverage_warnings plugin not registered"
 

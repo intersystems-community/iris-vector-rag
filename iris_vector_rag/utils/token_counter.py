@@ -10,7 +10,6 @@ Implementation:
 - Provides edge case handling (None, empty strings, special characters)
 """
 
-from typing import Optional
 import tiktoken
 
 

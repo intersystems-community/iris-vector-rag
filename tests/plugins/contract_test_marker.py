@@ -8,7 +8,6 @@ Implements T018 from Feature 028.
 """
 
 import pytest
-from _pytest.outcomes import XFailed
 
 
 def pytest_configure(config):

@@ -6,7 +6,6 @@ Contract: Loading pre-optimized DSPy programs into EntityExtractionService
 Status: TDD - These tests verify the new optimized_program_path parameter
 """
 
-import pytest
 from iris_vector_rag.services.entity_extraction import OntologyAwareEntityExtractor
 
 

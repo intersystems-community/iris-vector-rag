@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Test script to verify the context extraction issue in RAGAs evaluation.
 This demonstrates that BasicRAG already provides contexts as strings.

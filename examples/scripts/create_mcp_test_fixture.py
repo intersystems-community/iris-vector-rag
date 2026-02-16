@@ -15,7 +15,6 @@ from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.testing.iris_devtools_bridge import IrisDevToolsBridge
-from sqlalchemy import text
 
 def create_mcp_test_fixture():
     """Create MCP test fixture with 5 documents."""
@@ -96,7 +95,7 @@ def create_mcp_test_fixture():
         try:
             cursor.execute(export_sql)
             conn.commit()
-            print(f"   ✅ Manual export succeeded")
+            print("   ✅ Manual export succeeded")
         except Exception as e2:
             print(f"   ❌ Manual export also failed: {e2}")
         finally:
@@ -127,8 +126,8 @@ def create_mcp_test_fixture():
     print(f"   ✅ Created {metadata_path}")
 
     print("\n✨ Fixture creation complete!")
-    print(f"📦 Fixture: tests/fixtures/dat/mcp-basic-rag-5docs/")
-    print(f"📄 Files:")
+    print("📦 Fixture: tests/fixtures/dat/mcp-basic-rag-5docs/")
+    print("📄 Files:")
     for f in fixture_dir.iterdir():
         print(f"   - {f.name}")
 

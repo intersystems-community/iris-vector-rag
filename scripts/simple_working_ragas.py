@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Simple Working RAGAS Evaluation - Out of the Box Solution
 
@@ -201,7 +202,7 @@ def test_pipeline_with_queries(
                     raise Exception(f"GraphRAG entity extraction failed: {load_result.get('error')}")
             else:
                 # Entity data exists, create pipeline normally
-                logger.info(f"✅ Sufficient entity data found, creating GraphRAG pipeline...")
+                logger.info("✅ Sufficient entity data found, creating GraphRAG pipeline...")
                 pipeline = create_pipeline(
                     pipeline_type, validate_requirements=True, auto_setup=True
                 )
@@ -569,6 +570,21 @@ def main():
             # Calculate RAGAS scores
             scores = calculate_simple_ragas_scores(pipeline_result["results"])
             pipeline_result["scores"] = scores
+            successful_queries = len(
+                [r for r in pipeline_result["results"] if r["success"]]
+            )
+            total_queries = len(pipeline_result["results"])
+            pipeline_result.update(
+                {
+                    "context_precision": scores["context_precision"],
+                    "context_recall": scores["context_recall"],
+                    "answer_relevancy": scores["answer_relevancy"],
+                    "faithfulness": scores["faithfulness"],
+                    "overall_performance": scores["overall_score"],
+                    "successful_queries": successful_queries,
+                    "total_queries": total_queries,
+                }
+            )
 
         results[pipeline_type] = pipeline_result
 

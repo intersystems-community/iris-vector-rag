@@ -16,7 +16,6 @@ actually persist to RAG.Entities table.
 import logging
 import os
 import sys
-from datetime import datetime
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -104,7 +103,7 @@ def test_entity_storage_persistence():
         )
 
         rows = cursor.fetchall()
-        logger.info(f"Retrieved entities:")
+        logger.info("Retrieved entities:")
         for row in rows:
             entity_id, entity_name, entity_type, description = row
             logger.info(

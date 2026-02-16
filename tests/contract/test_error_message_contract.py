@@ -4,8 +4,7 @@ These tests define the expected behavior of the error message validator.
 They must fail initially and pass once the plugin is implemented.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 
 
 class TestErrorMessageContract:

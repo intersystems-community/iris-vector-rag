@@ -5,7 +5,6 @@ Kicks off background ingestion of 1000+ PMC documents
 """
 
 import os
-import signal
 import subprocess
 import sys
 import time

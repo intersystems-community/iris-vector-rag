@@ -1,6 +1,4 @@
 import logging
-import os
-import time
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -50,7 +48,7 @@ class ConnectionManager:
         if backend_name in self._connections:
             try:
                 self._connections[backend_name].close()
-            except:
+            except Exception:
                 pass
             del self._connections[backend_name]
 
@@ -63,6 +61,10 @@ class ConnectionManager:
 
         from iris_vector_rag.common.iris_connection import get_iris_connection
         return get_iris_connection()
+
+    def create_connection(self, backend_name: str = "iris"):
+        """Create a database connection (alias for get_connection)."""
+        return self.get_connection(backend_name)
 
     def _create_dbapi_connection(self):
         """Create a native IRIS DBAPI connection."""

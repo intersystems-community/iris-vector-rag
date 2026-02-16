@@ -6,7 +6,7 @@ without failing the test run. Critical modules have higher thresholds.
 
 import coverage
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Any
 from dataclasses import dataclass
 import configparser
 

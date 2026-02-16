@@ -17,27 +17,22 @@ import json
 import logging
 import time
 import warnings
-from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import pandas as pd
+import torch
 
 # Statistical analysis
 from scipy import stats
-from scipy.stats import bootstrap
-
-warnings.filterwarnings("ignore")
-
-import torch
 
 # NLP and ML libraries
 from sentence_transformers import SentenceTransformer, util
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+from transformers import pipeline
+
+warnings.filterwarnings("ignore")
 
 # SpaCy import with fallback
 try:
@@ -50,16 +45,7 @@ except (ImportError, ValueError) as e:
 
 # RAGAS specific imports
 try:
-    from ragas import evaluate
-    from ragas.metrics import (
-        answer_correctness,
-        answer_relevancy,
-        answer_similarity,
-        context_precision,
-        context_recall,
-        context_utilization,
-        faithfulness,
-    )
+    import ragas  # noqa: F401
 
     RAGAS_AVAILABLE = True
 except ImportError:

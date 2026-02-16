@@ -326,21 +326,21 @@ def main():
     logger.info("🎯 DEMO EVALUATION COMPLETE")
     logger.info("=" * 80)
 
-    logger.info(f"\n📊 Rankings by Success Rate:")
+    logger.info("\n📊 Rankings by Success Rate:")
     for i, item in enumerate(comparison["rankings"]["by_success_rate"], 1):
         star = "⭐" if item['pipeline'] == "pylate_colbert" else "  "
         logger.info(f"  {star} {i}. {item['pipeline']}: {item['score']*100:.1f}%")
 
-    logger.info(f"\n⚡ Rankings by Speed:")
+    logger.info("\n⚡ Rankings by Speed:")
     for i, item in enumerate(comparison["rankings"]["by_speed"], 1):
         star = "⭐" if item['pipeline'] == "pylate_colbert" else "  "
         logger.info(f"  {star} {i}. {item['pipeline']}: {item['avg_time']:.3f}s")
 
-    logger.info(f"\n📄 Reports Generated:")
+    logger.info("\n📄 Reports Generated:")
     logger.info(f"  JSON: {json_file}")
     logger.info(f"  HTML: {html_file}")
 
-    logger.info(f"\n💡 To open the HTML report:")
+    logger.info("\n💡 To open the HTML report:")
     logger.info(f"  open {html_file}")
 
     logger.info("\n✨ Demo complete! For real evaluation with IRIS:")

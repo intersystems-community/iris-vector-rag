@@ -1,16 +1,13 @@
 # docs/reports/IRIS_VECTOR_SQL_PARAMETERIZATION_REPRO.py
-import os
 import sys
 
 sys.path.insert(0, ".")
-import random
 from typing import List
 
 from common.db_vector_utils import insert_vector
 from common.iris_dbapi_connector import get_iris_dbapi_connection
 from common.utils import get_embedding_func
 from common.vector_sql_utils import (
-    execute_vector_search_with_params,
     format_vector_search_sql,
     format_vector_search_sql_with_params,
 )

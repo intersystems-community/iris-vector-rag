@@ -2,6 +2,9 @@
 """
 DEBUG version - Show actual JSON output from batch extraction.
 """
+
+# ruff: noqa: E402
+
 import sys
 import json
 import logging

@@ -6,6 +6,8 @@ This script bridges the configuration gap between memory_config.yaml (which has
 config nested under rag_memory_config.knowledge_extraction.entity_extraction)
 and EntityExtractionService (which expects it at the top level).
 """
+# ruff: noqa: E402
+
 import sys
 import os
 import logging
@@ -78,7 +80,7 @@ def main():
 
         # Initialize GraphRAG pipeline
         logger.info("\nInitializing GraphRAG pipeline...")
-        pipeline = GraphRAGPipeline(
+        GraphRAGPipeline(
             config_manager=config_manager,
             connection_manager=connection_manager
         )

@@ -79,7 +79,7 @@ class TestBasicRAGErrorHandling:
 
                 # Execute query - should succeed after retries
                 try:
-                    result = basic_rag_pipeline.query(sample_query)
+                    basic_rag_pipeline.query(sample_query)
 
                     # If retries succeeded, verify retry logging
                     log_output = caplog.text.lower()
@@ -234,7 +234,7 @@ class TestBasicRAGErrorHandling:
         with pytest.raises(Exception):
             basic_rag_pipeline.query("test query")
 
-        log_output = caplog.text.lower()
+        caplog.text.lower()
 
         # Error SHOULD be logged
         assert len(caplog.records) > 0, "Errors should be logged"

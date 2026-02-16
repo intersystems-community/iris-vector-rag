@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ruff: noqa: E402
 """
 Comprehensive pipeline status test script.
 Tests all available RAG pipeline types and reports their status.
@@ -82,10 +83,10 @@ def test_pipeline(pipeline_type: str) -> Dict[str, Any]:
         )
 
         result["initialization"]["success"] = True
-        print(f"   ✓ Pipeline initialized successfully")
+        print("   ✓ Pipeline initialized successfully")
 
         # Step 2: Run a simple query
-        print(f"2. Running test query...")
+        print("2. Running test query...")
         test_query = "What is IRIS?"
 
         try:
@@ -98,14 +99,14 @@ def test_pipeline(pipeline_type: str) -> Dict[str, Any]:
                     if len(str(response)) > 200
                     else str(response)
                 )
-                print(f"   ✓ Query executed successfully")
+                print("   ✓ Query executed successfully")
                 print(f"   Response preview: {result['query_test']['response']}")
                 result["status"] = "working"
             else:
                 result["query_test"]["error"] = "Empty response received"
                 result["notes"].append("Pipeline returns empty responses")
                 result["status"] = "partial"
-                print(f"   ⚠ Query returned empty response")
+                print("   ⚠ Query returned empty response")
 
         except Exception as e:
             result["query_test"]["error"] = str(e)
@@ -123,7 +124,7 @@ def test_pipeline(pipeline_type: str) -> Dict[str, Any]:
 
     # Add additional checks
     if result["status"] == "working":
-        print(f"3. Additional checks...")
+        print("3. Additional checks...")
         try:
             # Test if pipeline has required methods
             required_methods = ["ingest", "query", "clear"]
@@ -138,7 +139,7 @@ def test_pipeline(pipeline_type: str) -> Dict[str, Any]:
                 result["status"] = "partial"
                 print(f"   ⚠ Missing methods: {', '.join(missing_methods)}")
             else:
-                print(f"   ✓ All required methods present")
+                print("   ✓ All required methods present")
 
         except Exception as e:
             result["notes"].append(f"Additional checks failed: {str(e)}")
@@ -221,7 +222,7 @@ def main():
     summary = generate_summary_report(results)
 
     print(f"\nTotal Pipelines Tested: {summary['total_pipelines']}")
-    print(f"\nStatus Breakdown:")
+    print("\nStatus Breakdown:")
     for status, count in summary["status_counts"].items():
         print(f"  - {status}: {count}")
 

@@ -11,8 +11,6 @@ IMPORTANT: This test MUST FAIL initially (TDD principle).
 """
 
 import pytest
-import asyncio
-import json
 import base64
 
 try:

@@ -7,7 +7,6 @@ to load pre-trained DSPy programs for improved entity extraction accuracy.
 Feature: 063-dspy-optimization
 """
 
-from pathlib import Path
 from iris_vector_rag.services.entity_extraction import OntologyAwareEntityExtractor
 from iris_vector_rag.config.manager import ConfigurationManager
 from langchain_core.documents import Document
@@ -125,16 +124,16 @@ def example_graceful_fallback():
     config_manager = ConfigurationManager(config)
 
     # Specify a file that doesn't exist
-    extractor = OntologyAwareEntityExtractor(
+    OntologyAwareEntityExtractor(
         config_manager=config_manager,
         optimized_program_path="nonexistent_file.json"  # File doesn't exist
     )
 
     print("\n✓ Initialized with nonexistent file (graceful fallback)")
-    print(f"  When extract_batch_with_dspy runs, it will:")
-    print(f"  1. Check if file exists")
-    print(f"  2. Log a warning if it doesn't")
-    print(f"  3. Continue with standard extraction (no errors!)")
+    print("  When extract_batch_with_dspy runs, it will:")
+    print("  1. Check if file exists")
+    print("  2. Log a warning if it doesn't")
+    print("  3. Continue with standard extraction (no errors!)")
 
 
 if __name__ == "__main__":

@@ -5,9 +5,6 @@ as required for critical modules. Tests MUST fail initially per TDD requirements
 """
 
 import pytest
-import os
-from unittest.mock import patch, mock_open
-from typing import Dict, Any
 
 
 @pytest.mark.requires_database

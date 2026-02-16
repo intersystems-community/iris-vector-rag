@@ -17,7 +17,6 @@ import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
 from iris_vector_rag.testing.backend_manager import (
-    BackendConfiguration,
     BackendMode,
     load_configuration,
 )
@@ -56,7 +55,7 @@ class TestCommunityModeExecution:
 
         for i in range(10):
             try:
-                with community_pool.acquire(timeout=5.0) as conn:
+                with community_pool.acquire(timeout=5.0):
                     # Simulate test work
                     time.sleep(0.05)
                     success_count += 1
@@ -162,7 +161,7 @@ class TestCommunityModeStressTest:
 
         for i in range(100):
             try:
-                with pool.acquire(timeout=5.0) as conn:
+                with pool.acquire(timeout=5.0):
                     # Simulate minimal work
                     time.sleep(0.01)
                     success_count += 1

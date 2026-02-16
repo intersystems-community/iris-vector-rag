@@ -11,8 +11,6 @@ Data Integrity targets from spec.md:
 """
 
 import pytest
-import hashlib
-from unittest.mock import Mock, patch
 
 
 class TestGraphRAGDataIntegrityContract:

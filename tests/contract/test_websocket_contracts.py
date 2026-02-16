@@ -7,7 +7,6 @@ IMPORTANT: These tests MUST FAIL initially (TDD principle).
 """
 
 import pytest
-import json
 
 try:
     from fastapi.testclient import TestClient

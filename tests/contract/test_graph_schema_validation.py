@@ -10,7 +10,7 @@ should fail with AttributeError when first run.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from dataclasses import dataclass
 from typing import List
 
@@ -62,29 +62,20 @@ class TestGraphPrerequisiteValidation:
 
     def test_prerequisite_validation_package_missing(self, schema_manager):
         """
-        CONTRACT: Validation fails when package not installed.
+        CONTRACT: GraphRAG fails fast when package not installed.
 
         GIVEN iris-vector-graph is NOT installed
-        WHEN validate_graph_prerequisites() is called
-        THEN ValidationResult.is_valid == False
-        AND ValidationResult.package_installed == False
-        AND ValidationResult.error_message contains "iris-vector-graph package not installed"
+        WHEN validate_graph_prerequisites(pipeline_type="graphrag") is called
+        THEN ImportError is raised with clear guidance
         """
         # Mock package not installed
         with patch.object(schema_manager, '_detect_iris_vector_graph', return_value=False):
-            # This will fail initially with AttributeError
-            result = schema_manager.validate_graph_prerequisites()
+            with pytest.raises(ImportError) as exc:
+                schema_manager.validate_graph_prerequisites(pipeline_type="graphrag")
 
-            assert isinstance(result, ValidationResult), \
-                "Must return ValidationResult instance"
-            assert result.is_valid is False, \
-                "Should be invalid when package not installed"
-            assert result.package_installed is False, \
-                "Should detect package not installed"
-            assert "iris-vector-graph" in result.error_message.lower(), \
-                "Error message should mention iris-vector-graph"
-            assert "not installed" in result.error_message.lower(), \
-                "Error message should indicate package not installed"
+            message = str(exc.value).lower()
+            assert "iris-vector-graph" in message
+            assert "install" in message
 
     def test_prerequisite_validation_tables_missing(self, schema_manager_with_db):
         """
@@ -141,7 +132,7 @@ class TestGraphPrerequisiteValidation:
         with patch.object(schema_manager, '_detect_iris_vector_graph', return_value=True):
             with patch.object(schema_manager, 'table_exists', side_effect=mock_table_exists):
                 # This will fail initially with AttributeError
-                result = schema_manager.validate_graph_prerequisites()
+                result = schema_manager.validate_graph_prerequisites(pipeline_type="graphrag")
 
                 assert result.is_valid is False, \
                     "Validation should fail when prerequisites not met"
@@ -173,7 +164,7 @@ class TestGraphPrerequisiteValidation:
         with patch.object(schema_manager, '_detect_iris_vector_graph', return_value=True):
             with patch.object(schema_manager, 'table_exists', side_effect=mock_table_exists):
                 # This will fail initially with AttributeError
-                result = schema_manager.validate_graph_prerequisites()
+                result = schema_manager.validate_graph_prerequisites(pipeline_type="graphrag")
 
                 # Validate error message clarity
                 error = result.error_message
@@ -207,7 +198,7 @@ class TestGraphPrerequisiteValidation:
                 start_time = time.time()
 
                 # This will fail initially with AttributeError
-                result = schema_manager.validate_graph_prerequisites()
+                result = schema_manager.validate_graph_prerequisites(pipeline_type="graphrag")
 
                 elapsed = time.time() - start_time
 
@@ -228,8 +219,8 @@ class TestGraphPrerequisiteValidation:
         with patch.object(schema_manager, '_detect_iris_vector_graph', return_value=True):
             with patch.object(schema_manager, 'table_exists', return_value=True):
                 # This will fail initially with AttributeError
-                result1 = schema_manager.validate_graph_prerequisites()
-                result2 = schema_manager.validate_graph_prerequisites()
+                result1 = schema_manager.validate_graph_prerequisites(pipeline_type="graphrag")
+                result2 = schema_manager.validate_graph_prerequisites(pipeline_type="graphrag")
 
                 assert result1.is_valid == result2.is_valid, \
                     "Repeated calls should return same validity"
@@ -308,9 +299,9 @@ class TestBackwardCompatibility:
         AND no graph tables are created
         """
         with patch.object(schema_manager, '_detect_iris_vector_graph', return_value=False):
-            # Call validation (should succeed gracefully)
+            # Call validation for non-GraphRAG pipeline (should not raise)
             # This will fail initially with AttributeError
-            result = schema_manager.validate_graph_prerequisites()
+            result = schema_manager.validate_graph_prerequisites(pipeline_type="rag")
 
             # Validation should indicate invalid but not crash
             assert result.is_valid is False, \

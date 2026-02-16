@@ -1,4 +1,3 @@
-import time
 """
 Ontology-Enhanced GraphRAG Pipeline - Merged production-hardened + complete functionality.
 
@@ -13,6 +12,7 @@ This implementation combines:
 """
 
 import logging
+import time
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from ..config.manager import ConfigurationManager
@@ -26,7 +26,6 @@ from ..embeddings.manager import EmbeddingManager
 from ..ontology.plugins import (
     GeneralOntologyPlugin,
     create_plugin_from_config,
-    get_ontology_plugin,
 )
 from ..ontology.reasoner import OntologyReasoner, QueryExpander
 from ..services.entity_extraction import EntityExtractionService
@@ -985,17 +984,12 @@ class GraphRAGPipeline(RAGPipeline):
         """Handle IRIS stream data."""
         if data is None:
             return ""
-        try:
-            import jaydebeapi
-
-            connection = self.connection_manager.get_connection()
-            if hasattr(connection, "__class__") and "jaydebeapi" in str(
-                connection.__class__
-            ):
-                if hasattr(data, "read"):
-                    return data.read().decode("utf-8") if data else ""
-        except ImportError:
-            pass
+        connection = self.connection_manager.get_connection()
+        if hasattr(connection, "__class__") and "jaydebeapi" in str(
+            connection.__class__
+        ):
+            if hasattr(data, "read"):
+                return data.read().decode("utf-8") if data else ""
         return str(data or "")
 
     def _generate_answer(

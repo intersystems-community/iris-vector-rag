@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Robust PMC Batch Ingestion System
 Processes all 998 PMC documents with proper error handling, progress tracking, and resumption capabilities.
 """
 
-import glob
 import json
 import logging
-import os
 import sys
 import time
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -255,7 +254,7 @@ class RobustPMCBatchProcessor:
 
         # Final summary
         total_time = time.time() - batch_start_time
-        self.logger.info(f"🎯 Batch processing complete!")
+        self.logger.info("🎯 Batch processing complete!")
         self.logger.info(
             f"   📊 Total processed: {self.progress['processed_count']}/{self.progress['total_files']}"
         )

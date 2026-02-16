@@ -6,6 +6,8 @@ TRUE END-TO-END RAG EVALUATION
 3. Verify real document retrieval and meaningful results
 """
 
+# ruff: noqa: E402
+
 import json
 import logging
 import os
@@ -15,7 +17,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-import numpy as np
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -184,7 +185,7 @@ class TrueE2EEvaluator:
                 documents_to_add.append(document_obj)
 
             # Use the existing add_documents method with proper Document objects
-            result = self.vector_store.add_documents(documents_to_add)
+            self.vector_store.add_documents(documents_to_add)
 
             logger.info(
                 f"Successfully added {len(expanded_documents)} documents using IRISVectorStore.add_documents()"
@@ -606,7 +607,7 @@ Provide only a numeric score (0.0-1.0):"""
         print(f"Questions Evaluated: {self.results['questions_evaluated']}")
         print(f"Total Documents Retrieved: {total_retrieved}")
         print(f"Execution Time: {execution_time:.2f} minutes")
-        print(f"E2E Status: Database populated ✅ Documents retrieved ✅")
+        print("E2E Status: Database populated ✅ Documents retrieved ✅")
 
         print("\nPipeline Results:")
         for pipeline_name, result in self.results["pipeline_results"].items():
@@ -618,7 +619,7 @@ Provide only a numeric score (0.0-1.0):"""
             )
 
         print(
-            f"\n🎯 TRUE E2E evaluation complete - database populated with real documents!"
+            "\n🎯 TRUE E2E evaluation complete - database populated with real documents!"
         )
 
 

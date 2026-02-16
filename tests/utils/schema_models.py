@@ -123,6 +123,11 @@ class SchemaMismatch:
         else:
             return f"{self.mismatch_type.value}: {self.table_name}"
 
+    @property
+    def issue(self) -> str:
+        """Human-readable mismatch summary for contract assertions."""
+        return self.mismatch_type.value.replace("_", " ")
+
 
 @dataclass
 class SchemaValidationResult:

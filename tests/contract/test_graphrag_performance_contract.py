@@ -12,8 +12,6 @@ Performance targets from spec.md:
 """
 
 import pytest
-import time
-from unittest.mock import Mock, patch
 
 
 class TestGraphRAGPerformanceContract:

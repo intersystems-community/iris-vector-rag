@@ -20,6 +20,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', '*.config.mjs'],
+    ignores: ['dist/', 'build/', 'coverage/', 'node_modules/', '*.min.js', '*.config.mjs'],
   }
 );

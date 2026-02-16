@@ -6,12 +6,7 @@ without complex import patching issues. Focuses on testable code paths.
 """
 
 import unittest
-import numpy as np
-from unittest.mock import Mock, patch, MagicMock
-import tempfile
-import yaml
-import json
-from pathlib import Path
+from unittest.mock import patch
 
 from iris_vector_rag.core.models import Document
 
@@ -59,8 +54,8 @@ class TestCoreModelsMassive(unittest.TestCase):
     def test_document_equality_and_hashing(self):
         """Test document equality and hashing behavior."""
         doc1 = Document(page_content="Same content", metadata={"source": "test"})
-        doc2 = Document(page_content="Same content", metadata={"source": "test"})
-        doc3 = Document(page_content="Different content", metadata={"source": "test"})
+        Document(page_content="Same content", metadata={"source": "test"})
+        Document(page_content="Different content", metadata={"source": "test"})
 
         # Test string representation
         str_repr = str(doc1)
@@ -465,7 +460,7 @@ class TestPipelineInitMassive(unittest.TestCase):
 
         for config in pipeline_configs:
             try:
-                pipeline = create_pipeline(**config)
+                create_pipeline(**config)
                 # Should return a pipeline instance or None
                 # Don't assert specific type as it depends on availability
 
@@ -539,7 +534,7 @@ class TestUtilsMassive(unittest.TestCase):
 
             # Test vector index creation (should handle mocked calls gracefully)
             try:
-                result = create_vector_index(
+                create_vector_index(
                     table_name='test_table',
                     dimension=384,
                     metric='COSINE'

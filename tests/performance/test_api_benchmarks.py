@@ -5,8 +5,9 @@ Measures latency, throughput, and resource usage.
 """
 
 import asyncio
+import gc
 import time
-from statistics import mean, median, stdev
+from statistics import mean, stdev
 
 import pytest
 
@@ -50,7 +51,7 @@ class TestAPIPerformanceBenchmarks:
         p95 = latencies[int(len(latencies) * 0.95)]
         p99 = latencies[int(len(latencies) * 0.99)]
 
-        print(f"\nQuery Latency Benchmark:")
+        print("\nQuery Latency Benchmark:")
         print(f"  p50: {p50:.2f}ms")
         print(f"  p95: {p95:.2f}ms")
         print(f"  p99: {p99:.2f}ms")
@@ -75,7 +76,7 @@ class TestAPIPerformanceBenchmarks:
         latencies.sort()
         p95 = latencies[int(len(latencies) * 0.95)]
 
-        print(f"\nHealth Check Latency Benchmark:")
+        print("\nHealth Check Latency Benchmark:")
         print(f"  p95: {p95:.2f}ms")
         print(f"  Mean: {mean(latencies):.2f}ms")
 
@@ -96,7 +97,7 @@ class TestAPIPerformanceBenchmarks:
         latencies.sort()
         p95 = latencies[int(len(latencies) * 0.95)]
 
-        print(f"\nAPI Key Validation Benchmark:")
+        print("\nAPI Key Validation Benchmark:")
         print(f"  p95: {p95:.2f}ms")
         print(f"  Mean: {mean(latencies):.2f}ms")
 
@@ -118,7 +119,7 @@ class TestAPIPerformanceBenchmarks:
         elapsed = time.time() - start
         throughput = checks_completed / elapsed
 
-        print(f"\nRate Limiter Throughput Benchmark:")
+        print("\nRate Limiter Throughput Benchmark:")
         print(f"  Checks/second: {throughput:.2f}")
         print(f"  Checks completed: {checks_completed}")
 
@@ -139,7 +140,7 @@ class TestAPIPerformanceBenchmarks:
         latencies.sort()
         p95 = latencies[int(len(latencies) * 0.95)]
 
-        print(f"\nConnection Pool Overhead Benchmark:")
+        print("\nConnection Pool Overhead Benchmark:")
         print(f"  p95: {p95:.2f}ms")
         print(f"  Mean: {mean(latencies):.2f}ms")
 
@@ -163,7 +164,7 @@ class TestAPIPerformanceBenchmarks:
         elapsed = time.time() - start
         throughput = concurrent_requests / elapsed
 
-        print(f"\nConcurrent Query Benchmark:")
+        print("\nConcurrent Query Benchmark:")
         print(f"  Concurrent requests: {concurrent_requests}")
         print(f"  Total time: {elapsed:.2f}s")
         print(f"  Throughput: {throughput:.2f} req/s")
@@ -203,7 +204,7 @@ class TestAPIPerformanceBenchmarks:
         latencies.sort()
         p95 = latencies[int(len(latencies) * 0.95)]
 
-        print(f"\nResponse Serialization Benchmark:")
+        print("\nResponse Serialization Benchmark:")
         print(f"  p95: {p95:.2f}ms")
         print(f"  Mean: {mean(latencies):.2f}ms")
 
@@ -224,7 +225,7 @@ class TestAPIPerformanceBenchmarks:
         latencies.sort()
         p95 = latencies[int(len(latencies) * 0.95)]
 
-        print(f"\nRequest Logging Overhead Benchmark:")
+        print("\nRequest Logging Overhead Benchmark:")
         print(f"  p95: {p95:.2f}ms")
         print(f"  Mean: {mean(latencies):.2f}ms")
 
@@ -244,7 +245,7 @@ class TestAPIPerformanceBenchmarks:
 
         avg_init_time = mean(initialization_times)
 
-        print(f"\nPipeline Initialization Benchmark:")
+        print("\nPipeline Initialization Benchmark:")
         print(f"  Average: {avg_init_time:.2f}ms")
 
         # Initialization can be slower but should be reasonable
@@ -252,7 +253,6 @@ class TestAPIPerformanceBenchmarks:
 
     def test_memory_usage_benchmark(self, benchmark_config):
         """Benchmark memory usage during operations."""
-        import sys
 
         initial_objects = len(gc.get_objects())
 
@@ -264,7 +264,7 @@ class TestAPIPerformanceBenchmarks:
         final_objects = len(gc.get_objects())
         objects_created = final_objects - initial_objects
 
-        print(f"\nMemory Usage Benchmark:")
+        print("\nMemory Usage Benchmark:")
         print(f"  Objects created: {objects_created}")
 
         # Cleanup
@@ -274,7 +274,6 @@ class TestAPIPerformanceBenchmarks:
         assert objects_created < 50000
 
 
-import gc
 
 
 class TestRateLimiterBenchmarks:
@@ -294,7 +293,7 @@ class TestRateLimiterBenchmarks:
         operations.sort()
         p95 = operations[int(len(operations) * 0.95)]
 
-        print(f"\nRedis Sliding Window Benchmark:")
+        print("\nRedis Sliding Window Benchmark:")
         print(f"  p95: {p95:.2f}ms")
         print(f"  Mean: {mean(operations):.2f}ms")
 
@@ -317,7 +316,7 @@ class TestRateLimiterBenchmarks:
         elapsed = time.time() - start
         throughput = num_checks / elapsed
 
-        print(f"\nConcurrent Rate Limit Checks Benchmark:")
+        print("\nConcurrent Rate Limit Checks Benchmark:")
         print(f"  Total checks: {num_checks}")
         print(f"  Total time: {elapsed:.2f}s")
         print(f"  Throughput: {throughput:.2f} checks/s")

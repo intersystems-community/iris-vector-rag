@@ -5,7 +5,6 @@ These tests validate the BatchMetricsTracker and ProcessingMetrics API contracts
 Tests MUST fail initially, then pass after implementation (TDD).
 """
 
-import pytest
 
 
 class TestBatchMetricsContract:

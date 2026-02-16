@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 General-Purpose Ontology Support Demonstration for GraphRAG
 
@@ -15,9 +16,7 @@ Usage:
 """
 
 import argparse
-import json
 import logging
-import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -31,8 +30,6 @@ from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.ontology.plugins import (
     GeneralOntologyPlugin,
-    create_plugin_from_config,
-    get_ontology_plugin,
 )
 from iris_vector_rag.ontology.reasoner import OntologyReasoner, QueryExpander
 from iris_vector_rag.pipelines.graphrag_merged import GraphRAGPipeline
@@ -195,7 +192,7 @@ def demonstrate_general_ontology_plugin(ontology_config: Dict[str, Any]):
         plugin = GeneralOntologyPlugin()
 
         print(f"Plugin Class: {plugin.__class__.__name__}")
-        print(f"Plugin Type: General-purpose, domain-agnostic")
+        print("Plugin Type: General-purpose, domain-agnostic")
 
         # Load ontology from configuration
         if ontology_config.get("sources"):
@@ -210,7 +207,7 @@ def demonstrate_general_ontology_plugin(ontology_config: Dict[str, Any]):
                 elif source["type"] == "owl" and "path" in source:
                     plugin.load_ontology_from_file(source["path"])
 
-            print(f"✓ Ontology loaded successfully")
+            print("✓ Ontology loaded successfully")
             print(f"✓ Concepts loaded: {len(plugin.hierarchy.concepts)}")
 
             # Auto-detect domain
@@ -222,7 +219,7 @@ def demonstrate_general_ontology_plugin(ontology_config: Dict[str, Any]):
                 plugin.domain = detected_domain
 
             # Show sample concepts
-            print(f"\nSample concepts:")
+            print("\nSample concepts:")
             for i, (concept_id, concept) in enumerate(
                 plugin.hierarchy.concepts.items()
             ):
@@ -239,7 +236,7 @@ def demonstrate_general_ontology_plugin(ontology_config: Dict[str, Any]):
 
             # Show auto-generated entity mappings
             if plugin.entity_mappings:
-                print(f"\nAuto-generated entity mappings:")
+                print("\nAuto-generated entity mappings:")
                 for entity_type, concepts in list(plugin.entity_mappings.items())[:5]:
                     print(f"  - {entity_type}: {concepts[:3]}")
 
@@ -314,7 +311,7 @@ def demonstrate_reasoning_capabilities(ontology_config: Dict[str, Any]):
                     plugin._load_example_concepts(source)
 
         if plugin.hierarchy.concepts:
-            reasoner = OntologyReasoner(plugin.hierarchy)
+            OntologyReasoner(plugin.hierarchy)
 
             print("--- GENERAL ONTOLOGY REASONING ---")
 
@@ -490,7 +487,7 @@ def run_performance_tests(ontology_config: Dict[str, Any]):
 
         total_concepts = len(plugin.hierarchy.concepts)
 
-        print(f"General plugin loading performance:")
+        print("General plugin loading performance:")
         print(f"  - Loaded general ontology plugin in {load_time:.2f}s")
         print(f"  - Total concepts loaded: {total_concepts}")
         print(
@@ -505,24 +502,24 @@ def run_performance_tests(ontology_config: Dict[str, Any]):
             )
             detection_time = time.time() - start_time
 
-            print(f"\nDomain auto-detection performance:")
+            print("\nDomain auto-detection performance:")
             print(f"  - Auto-detected domain '{domain}' in {detection_time*1000:.1f}ms")
 
         # Test reasoning performance
         if total_concepts > 0:
             start_time = time.time()
-            reasoner = OntologyReasoner(plugin.hierarchy)
+            OntologyReasoner(plugin.hierarchy)
 
             # Test subsumption queries
             test_count = min(10, total_concepts)
             for i, concept in enumerate(plugin.hierarchy.concepts.values()):
                 if i >= test_count:
                     break
-                ancestors = plugin.hierarchy.get_ancestors(concept.id, max_depth=2)
+                plugin.hierarchy.get_ancestors(concept.id, max_depth=2)
 
             reasoning_time = time.time() - start_time
 
-            print(f"\nReasoning performance:")
+            print("\nReasoning performance:")
             print(f"  - {test_count} subsumption queries in {reasoning_time:.3f}s")
             print(f"  - Average query time: {reasoning_time/test_count*1000:.1f}ms")
 

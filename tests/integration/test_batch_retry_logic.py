@@ -7,7 +7,7 @@ Tests FR-005: Retry with 2s, 4s, 8s delays, then split batch.
 
 import pytest
 import time
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.services.entity_extraction import EntityExtractionService
 from iris_vector_rag.config.manager import ConfigurationManager
@@ -77,10 +77,10 @@ class TestBatchRetryLogic:
             assert elapsed >= 6.0, \
                 f"Should have exponential backoff delays (2s+4s=6s min), got {elapsed:.1f}s"
 
-            print(f"\nExponential Backoff Validation:")
+            print("\nExponential Backoff Validation:")
             print(f"  Retry attempts: {result.retry_count}")
             print(f"  Total time: {elapsed:.1f}s (min 6s for 2s+4s delays)")
-            print(f"  Success after retries: ✓")
+            print("  Success after retries: ✓")
 
     def test_batch_splitting_after_max_retries(self, service, test_documents):
         """
@@ -113,7 +113,7 @@ class TestBatchRetryLogic:
                 )
 
         with patch.object(service, '_extract_batch_impl', side_effect=mock_extract_always_fail_batch):
-            result = service.extract_batch(test_documents)
+            service.extract_batch(test_documents)
 
             # Validate batch was split after 3 failed attempts
             assert batch_attempt_count['count'] >= 3, \
@@ -123,10 +123,10 @@ class TestBatchRetryLogic:
             assert individual_calls['count'] == len(test_documents), \
                 f"Should process {len(test_documents)} documents individually after split"
 
-            print(f"\nBatch Splitting Validation:")
+            print("\nBatch Splitting Validation:")
             print(f"  Batch attempts: {batch_attempt_count['count']}")
             print(f"  Individual document calls: {individual_calls['count']}")
-            print(f"  Batch splitting triggered: ✓")
+            print("  Batch splitting triggered: ✓")
 
     def test_retry_delays_are_exponential(self, service):
         """Validate retry delays follow exponential pattern (2s, 4s, 8s)."""
@@ -143,7 +143,7 @@ class TestBatchRetryLogic:
             raise Exception("Simulated failure")
 
         # Test retry delays
-        start = time.time()
+        time.time()
         try:
             extract_batch_with_retry(
                 documents=[Document(id="test", page_content="test")],
@@ -163,7 +163,7 @@ class TestBatchRetryLogic:
             assert 3.5 <= delay2 <= 4.5, \
                 f"Second retry delay should be ~4s, got {delay2:.1f}s"
 
-            print(f"\nRetry Delay Validation:")
+            print("\nRetry Delay Validation:")
             print(f"  First delay: {delay1:.1f}s (target: 2s)")
             print(f"  Second delay: {delay2:.1f}s (target: 4s)")
 
@@ -197,7 +197,7 @@ class TestBatchRetryLogic:
             assert elapsed >= 2.0, \
                 f"Should have 2s delay for first retry, got {elapsed:.1f}s"
 
-            print(f"\nSingle Retry Validation:")
+            print("\nSingle Retry Validation:")
             print(f"  Retry count: {result.retry_count}")
             print(f"  Time with delay: {elapsed:.1f}s (min 2s)")
 
@@ -213,7 +213,7 @@ class TestBatchRetryLogic:
     def test_retry_count_tracked_in_metrics(self, service, test_documents):
         """Validate retry attempts are tracked in processing metrics (FR-007)."""
         # Process batch (may have retries depending on LLM stability)
-        result = service.extract_batch(test_documents)
+        service.extract_batch(test_documents)
 
         # Get metrics
         metrics = service.get_batch_metrics()
@@ -224,6 +224,6 @@ class TestBatchRetryLogic:
         assert metrics.retry_attempts_total >= 0, \
             "Retry attempts must be non-negative"
 
-        print(f"\nRetry Metrics:")
+        print("\nRetry Metrics:")
         print(f"  Total retry attempts: {metrics.retry_attempts_total}")
         print(f"  Failed batches: {metrics.failed_batches_count}")

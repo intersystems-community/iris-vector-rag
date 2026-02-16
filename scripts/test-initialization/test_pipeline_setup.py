@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Pipeline Setup Testing from Clean IRIS
 
@@ -17,7 +18,6 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from common.utils import get_llm_func
 from iris_vector_rag import create_pipeline
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager

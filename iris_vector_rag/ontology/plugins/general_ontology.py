@@ -13,21 +13,17 @@ Key Features:
 - No hardcoded domain-specific assumptions
 """
 
-import json
 import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..loader import OntologyLoader, OWLLoader, RDFLoader, SKOSLoader
 from ..models import (
     Concept,
     ConceptHierarchy,
-    ConceptType,
-    OntologyRelationship,
     RelationType,
-    SemanticMapping,
 )
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,6 @@ Header Component
 Renders the main header for the RAG Templates demo application.
 """
 
-from datetime import datetime
 
 import streamlit as st
 from utils.app_config import get_config

@@ -5,9 +5,73 @@ Uses proper parameter binding for security and performance.
 
 import os
 import logging
-from typing import Any, Dict, List, Optional
+import math
+from typing import Any, Dict, List, Optional, Sequence
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_vector_data(
+    vector_data: Any,
+    target_dimension: int,
+) -> Optional[List[float]]:
+    if vector_data is None:
+        return None
+
+    normalized: Optional[List[float]] = None
+
+    try:
+        import numpy as np
+
+        if isinstance(vector_data, np.ndarray):
+            normalized = (
+                vector_data.astype("float32", copy=False).ravel().tolist()
+            )
+    except Exception:
+        pass
+
+    if normalized is None:
+        try:
+            import torch
+
+            if isinstance(vector_data, torch.Tensor):
+                normalized = (
+                    vector_data.detach()
+                    .to(dtype=torch.float32)
+                    .cpu()
+                    .contiguous()
+                    .flatten()
+                    .tolist()
+                )
+        except Exception:
+            pass
+
+    if normalized is None:
+        try:
+            if isinstance(vector_data, Sequence):
+                normalized = [float(value) for value in vector_data]
+            else:
+                normalized = [float(vector_data)]
+        except Exception:
+            return None
+
+    if not normalized:
+        return None
+
+    non_finite = 0
+    for idx, value in enumerate(normalized):
+        if not math.isfinite(value):
+            normalized[idx] = 0.0
+            non_finite += 1
+
+    if non_finite and os.environ.get("IRIS_VECTOR_DEBUG"):
+        logger.warning("Vector contained %s non-finite values; coerced to 0.0", non_finite)
+
+    processed_vector = normalized[:target_dimension]
+    if len(processed_vector) < target_dimension:
+        processed_vector.extend([0.0] * (target_dimension - len(processed_vector)))
+
+    return processed_vector
 
 
 def insert_vector(
@@ -18,16 +82,27 @@ def insert_vector(
     target_dimension: int,
     key_columns: Dict[str, Any],
     additional_data: Optional[Dict[str, Any]] = None,
+    vector_data_type: Optional[str] = None,
 ) -> bool:
     """
     Inserts a record with a vector embedding using parameter binding.
     """
-    if cursor is None: return False
+    if cursor is None:
+        return False
 
     # Process vector
-    processed_vector = vector_data[:target_dimension]
-    if len(processed_vector) < target_dimension:
-        processed_vector.extend([0.0] * (target_dimension - len(processed_vector)))
+    processed_vector = _normalize_vector_data(vector_data, target_dimension)
+    if processed_vector is None:
+        logger.error("Insert failed: unable to normalize vector input")
+        return False
+    if os.environ.get("IRIS_VECTOR_DEBUG"):
+        logger.info(
+            "Vector insert: dim=%s target=%s first=%s last=%s",
+            len(processed_vector),
+            target_dimension,
+            processed_vector[0],
+            processed_vector[-1],
+        )
     embedding_str = "[" + ",".join(map(str, processed_vector)) + "]"
 
     # Prepare data
@@ -36,7 +111,7 @@ def insert_vector(
     values = [all_data[c] for c in columns]
     
     # Get vector type
-    vector_data_type = os.environ.get("IRIS_VECTOR_DATA_TYPE") or "FLOAT"
+    vector_data_type = vector_data_type or os.environ.get("IRIS_VECTOR_DATA_TYPE") or "FLOAT"
 
     # Build SQL
     column_names = columns + [vector_column_name]

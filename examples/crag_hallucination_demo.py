@@ -19,17 +19,17 @@ Usage:
     python examples/crag_hallucination_demo.py --medical-domain --export-html
 """
 
+# ruff: noqa: E402
+
 import argparse
 import json
 import logging
 import re
 import time
-from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from colorama import Back, Fore, Style, init
@@ -62,7 +62,6 @@ from dotenv import load_dotenv
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import iris_vector_rag
-from iris_vector_rag.core.models import Document
 
 # Load environment variables
 load_dotenv()
@@ -348,7 +347,7 @@ class CorrectionVisualizer:
 
         # Header
         output.append("=" * 80)
-        output.append(f"HALLUCINATION DETECTION DEMONSTRATION")
+        output.append("HALLUCINATION DETECTION DEMONSTRATION")
         output.append("=" * 80)
         output.append(f"Query: {self._colorize(query, Fore.CYAN, Style.BRIGHT)}")
         output.append("")
@@ -613,14 +612,16 @@ class CRAGHallucinationDemo:
         self.logger = logging.getLogger(__name__)
 
     def _setup_pipelines(self):
-        """Initialize real iris_rag pipelines with database connections."""
+        """Initialize real iris_vector_rag pipelines with database connections."""
         try:
             # Setup LLM function for pipelines
             llm_func = self._get_llm_function()
+            from iris_vector_rag.common.utils import get_embedding_func
+            stub_embedding_func = get_embedding_func(provider="stub")
 
             # Create BasicRAG pipeline
             self.logger.info("Creating BasicRAG pipeline...")
-            self.basic_rag = iris_rag.create_pipeline(
+            self.basic_rag = iris_vector_rag.create_pipeline(
                 pipeline_type="basic",
                 llm_func=llm_func,
                 auto_setup=True,
@@ -630,20 +631,21 @@ class CRAGHallucinationDemo:
 
             # Create CRAG pipeline
             self.logger.info("Creating CRAG pipeline...")
-            self.crag = iris_rag.create_pipeline(
+            self.crag = iris_vector_rag.create_pipeline(
                 pipeline_type="crag",
                 llm_func=llm_func,
+                embedding_func=stub_embedding_func,
                 auto_setup=True,
                 validate_requirements=True,
             )
             self.logger.info("✓ CRAG pipeline created successfully")
 
             self.logger.info(
-                "Real iris_rag pipelines initialized with database connections"
+                "Real iris_vector_rag pipelines initialized with database connections"
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to initialize iris_rag pipelines: {e}")
+            self.logger.error(f"Failed to initialize iris_vector_rag pipelines: {e}")
             raise RuntimeError(
                 f"Could not initialize RAG pipelines for demonstration: {e}"
             )
@@ -673,7 +675,7 @@ class CRAGHallucinationDemo:
                     return response.choices[0].message.content.strip()
 
                 # Test the LLM function
-                test_response = openai_llm("Test prompt")
+                openai_llm("Test prompt")
                 self.logger.info("Using OpenAI LLM for demonstration")
                 return openai_llm
 

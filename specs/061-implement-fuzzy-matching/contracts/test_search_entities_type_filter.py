@@ -5,7 +5,6 @@ Tests acceptance scenario:
 - Scenario 3: Entity type filtering
 """
 
-import pytest
 
 
 class TestSearchEntitiesTypeFilter:

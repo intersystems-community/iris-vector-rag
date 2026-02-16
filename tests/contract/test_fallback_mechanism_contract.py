@@ -51,11 +51,11 @@ class TestFallbackMechanismContract:
         result = graphrag_pipeline.query(query, method="hybrid")
 
         # Verify fallback succeeded
-        assert len(result['contexts']) > 0, \
+        assert len(result['retrieved_documents']) > 0, \
             "Fallback should retrieve documents successfully"
 
         # Verify documents have expected fields
-        for doc in result['contexts']:
+        for doc in result['retrieved_documents']:
             assert hasattr(doc, 'page_content') or hasattr(doc, 'content'), \
                 "Document should have content field"
             assert hasattr(doc, 'metadata'), \
@@ -189,5 +189,5 @@ class TestFallbackMechanismContract:
         # System should remain functional
         # Try another query to verify state consistency
         result2 = graphrag_pipeline.query("diabetes treatment", method="hybrid")
-        assert len(result2.contexts) > 0, \
+        assert len(result2["contexts"]) > 0, \
             "Pipeline should remain functional after graceful degradation"

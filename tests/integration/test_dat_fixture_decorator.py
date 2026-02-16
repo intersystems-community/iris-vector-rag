@@ -207,7 +207,7 @@ def test_checksum_validation_passes(fixture_metadata):
     assert fixture_metadata.checksum_valid, \
         "Checksum validation should pass for valid fixture"
 
-    print(f"✓ Checksum validation passed")
+    print("✓ Checksum validation passed")
 
 
 # ==============================================================================

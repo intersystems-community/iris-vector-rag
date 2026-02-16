@@ -27,7 +27,6 @@ Usage:
 import os
 import sys
 import time
-from typing import Optional
 
 # Setup path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
@@ -107,7 +106,7 @@ def test_iris_connection():
             retrieved_k=1
         )
 
-        print(f"  ✓ Connected to IRIS")
+        print("  ✓ Connected to IRIS")
         print(f"  ✓ Found {len(results)} test result(s)")
         print()
         return True
@@ -169,7 +168,7 @@ def create_iris_quipler(
             search_only=True
         )
 
-        print(f"  ✓ Created QUIPLER instance")
+        print("  ✓ Created QUIPLER instance")
         print(f"    - retrieved_k: {retrieved_k} (documents per query)")
         print(f"    - reranked_k: {reranked_k} (top docs after reranking)")
         print(f"    - rrf_k: {rrf_k} (RRF constant)")
@@ -179,8 +178,8 @@ def create_iris_quipler(
 
     except ImportError as e:
         print(f"  ❌ Failed to import QUIPLER: {e}")
-        print(f"  ℹ️  QUIPLER is only available in retrieve-dspy fork")
-        print(f"  ℹ️  Clone from: https://github.com/isc-tdyar/retrieve-dspy")
+        print("  ℹ️  QUIPLER is only available in retrieve-dspy fork")
+        print("  ℹ️  Clone from: https://github.com/isc-tdyar/retrieve-dspy")
         return None, None
 
 

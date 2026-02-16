@@ -3,20 +3,23 @@ Common configuration module for IRIS RAG system
 Provides unified access to configuration settings
 """
 
-import os
 import sys
 from pathlib import Path
 
-# Add config path to sys.path
-config_dir = Path(__file__).parent.parent / "config"
-sys.path.insert(0, str(config_dir))
 
-from loader import get_config
+def _load_config():
+    config_dir = Path(__file__).parent.parent / "config"
+    config_path = str(config_dir)
+    if config_path not in sys.path:
+        sys.path.insert(0, config_path)
+    from loader import get_config
+
+    return get_config()
 
 
 def get_iris_config():
     """Get IRIS database configuration"""
-    config = get_config()
+    config = _load_config()
     if not config:
         raise ValueError("Failed to load configuration")
 
@@ -33,7 +36,7 @@ def get_iris_config():
 
 def get_embedding_config():
     """Get embedding model configuration"""
-    config = get_config()
+    config = _load_config()
     if not config:
         raise ValueError("Failed to load configuration")
 
@@ -42,7 +45,7 @@ def get_embedding_config():
 
 def get_storage_config():
     """Get storage configuration"""
-    config = get_config()
+    config = _load_config()
     if not config:
         raise ValueError("Failed to load configuration")
 
@@ -51,7 +54,7 @@ def get_storage_config():
 
 def get_pipeline_config():
     """Get pipeline configuration"""
-    config = get_config()
+    config = _load_config()
     if not config:
         raise ValueError("Failed to load configuration")
 

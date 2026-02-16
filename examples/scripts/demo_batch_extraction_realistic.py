@@ -5,6 +5,8 @@ Realistic Batch Extraction Demo - Shows exactly what happens in production.
 This demonstrates the batch extraction feature with realistic TrakCare tickets,
 showing the actual performance improvement and logging output you'll see in production.
 """
+# ruff: noqa: E402
+
 import sys
 import time
 import logging
@@ -122,15 +124,15 @@ def main():
         for ticket in REALISTIC_TICKETS
     ]
 
-    logger.info(f"")
+    logger.info("")
     logger.info("=" * 80)
     logger.info(f"INDEXING {len(documents)} REALISTIC TRAKCARE TICKETS")
     logger.info("=" * 80)
     logger.info("")
     logger.info("Batch Extraction Configuration:")
-    logger.info(f"  • Batch size: 5 tickets per LLM call")
+    logger.info("  • Batch size: 5 tickets per LLM call")
     logger.info(f"  • Total batches: {(len(documents) + 4) // 5}")
-    logger.info(f"  • Expected speedup: ~3x faster than individual processing")
+    logger.info("  • Expected speedup: ~3x faster than individual processing")
     logger.info("")
 
     try:
@@ -159,7 +161,7 @@ def main():
         logger.info("✅ BATCH EXTRACTION DEMO COMPLETE!")
         logger.info("=" * 80)
         logger.info("")
-        logger.info(f"📊 Performance Results:")
+        logger.info("📊 Performance Results:")
         logger.info(f"  • Tickets indexed: {len(documents)}")
         logger.info(f"  • Total time: {elapsed:.1f}s")
         logger.info(f"  • Rate: {tickets_per_second:.2f} tickets/sec")
@@ -173,7 +175,7 @@ def main():
         return 0
 
     except Exception as e:
-        logger.error(f"")
+        logger.error("")
         logger.error("=" * 80)
         logger.error(f"❌ Demo failed: {e}")
         logger.error("=" * 80)

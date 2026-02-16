@@ -15,7 +15,6 @@ from iris_vector_rag.core.models import (
     Entity,
     EntityTypes,
     Relationship,
-    RelationshipTypes,
 )
 from iris_vector_rag.embeddings.manager import EmbeddingManager
 from iris_vector_rag.services.entity_extraction import EntityExtractionService

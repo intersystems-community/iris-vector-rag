@@ -197,7 +197,7 @@ def render_query_history(limit: int = 10) -> Optional[str]:
     # Create a list of query options with metadata
     query_options = []
     for i, entry in enumerate(history):
-        timestamp = entry.get("timestamp", "Unknown")
+        entry.get("timestamp", "Unknown")
         pipeline = entry.get("pipeline", "Unknown")
         query = entry.get("query", "")
         execution_time = entry.get("execution_time", 0)

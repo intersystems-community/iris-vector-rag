@@ -2,7 +2,6 @@
 Unit tests for the Evaluation Framework (metrics and normalization).
 """
 
-import pytest
 from iris_vector_rag.evaluation.metrics import MetricsCalculator
 
 def test_metrics_fuzzy_recall():

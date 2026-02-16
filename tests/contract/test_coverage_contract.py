@@ -7,7 +7,6 @@ Contract: coverage_reporting_contract.md
 import configparser
 import subprocess
 
-import pytest
 
 
 def test_coverage_configuration():

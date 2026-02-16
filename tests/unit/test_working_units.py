@@ -5,9 +5,7 @@ Simple unit tests that work with the actual codebase to measure coverage improve
 """
 
 import unittest
-from unittest.mock import Mock, patch, mock_open
-import tempfile
-import yaml
+from unittest.mock import patch, mock_open
 
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.config.manager import ConfigurationManager

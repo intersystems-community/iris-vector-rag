@@ -9,8 +9,8 @@ Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
+import importlib.util
 import pytest
-from typing import Dict, Any
 
 
 class TestTechniqueHandlerInterface:
@@ -18,11 +18,8 @@ class TestTechniqueHandlerInterface:
 
     def test_technique_handlers_module_exists(self):
         """Verify iris_rag.mcp.technique_handlers module can be imported."""
-        try:
-            import iris_vector_rag.mcp.technique_handlers
-            assert True
-        except ImportError as e:
-            pytest.fail(f"TechniqueHandlers module not found: {e}")
+        if importlib.util.find_spec("iris_vector_rag.mcp.technique_handlers") is None:
+            pytest.fail("TechniqueHandlers module not found")
 
     def test_technique_handler_registry_exists(self):
         """Verify TechniqueHandlerRegistry class exists."""
@@ -247,7 +244,7 @@ class TestGraphRAGHandler:
 
         # Verify GraphRAG-specific metadata
         assert 'metadata' in result
-        metadata = result['metadata']
+        result['metadata']
         # May include search_method, graph_traversal_depth, rrf_score
 
     def test_graphrag_handler_validate_params_search_method(self):

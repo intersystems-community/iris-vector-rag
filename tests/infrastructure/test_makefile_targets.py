@@ -32,15 +32,14 @@ FIXED CONSTITUTIONAL VIOLATIONS:
 - Ensured all tests capture actual make target behavior
 """
 
-import json
 import os
 import shutil
 import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import Mock, call, patch
+from typing import Any, Dict, List
+from unittest.mock import patch
 
 import pytest
 
@@ -737,7 +736,7 @@ ANTHROPIC_API_KEY=test_key
         # CONSTITUTIONAL REQUIREMENT: Validate real container status output
         if result["success"]:
             # docker-ps should provide meaningful container information
-            output_lower = result["stdout"].lower()
+            result["stdout"].lower()
             # May be empty if no containers, but should be valid docker output format
             assert isinstance(
                 result["stdout"], str
@@ -963,7 +962,7 @@ ANTHROPIC_API_KEY=test_key
             print(f"\nPARALLEL BUILD FAILURE: {result['stderr']}")
         else:
             # Validate parallel build output shows actual build status
-            output_lower = result["stdout"].lower()
+            result["stdout"].lower()
             assert len(result["stdout"]) > 0, "Parallel build should provide output"
             print(f"\nPARALLEL BUILD SUCCESS: {result['stdout'][:200]}...")
 

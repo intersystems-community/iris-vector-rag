@@ -4,7 +4,6 @@ Sidebar Navigation Component
 Renders the main navigation sidebar for the RAG Templates demo application.
 """
 
-from typing import List
 
 import streamlit as st
 from utils.session_state import get_session_summary
@@ -126,7 +125,7 @@ def render_session_summary():
             most_used = max(pipeline_usage.items(), key=lambda x: x[1])
             st.markdown(f"**Most Used:** {most_used[0]} ({most_used[1]}x)")
 
-    except Exception as e:
+    except Exception:
         st.markdown("*Session stats unavailable*")
 
 

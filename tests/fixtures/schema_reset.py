@@ -6,7 +6,6 @@ Implements T015 from Feature 028.
 """
 
 import time
-from typing import List
 
 from tests.utils.schema_models import get_expected_rag_schema, SchemaDefinition, ColumnType
 

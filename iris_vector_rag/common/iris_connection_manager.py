@@ -6,7 +6,7 @@ import logging
 import warnings
 from typing import Any, Dict, Optional
 
-from iris_vector_rag.common.iris_connection import get_iris_connection, detect_iris_edition
+from iris_vector_rag.common.iris_connection import get_iris_connection
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +46,15 @@ class IRISConnectionManager:
         if self._connection:
             try:
                 self._connection.close()
-            except:
+            except Exception:
                 pass
             self._connection = None
 
-    def __enter__(self): return self
-    def __exit__(self, exc_type, exc_val, exc_tb): self.close()
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 
 def get_iris_dbapi_connection(config: Optional[Dict[str, Any]] = None) -> Any:

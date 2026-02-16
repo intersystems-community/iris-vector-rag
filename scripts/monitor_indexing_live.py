@@ -6,7 +6,6 @@ Usage:
     python scripts/monitor_indexing_live.py
 """
 import sys
-import time
 from pathlib import Path
 
 LOG_FILE = Path("/Users/intersystems-community/ws/rag-templates/indexing_OPTIMIZED_6_WORKERS.log")
@@ -81,10 +80,10 @@ def main():
         if stats['total_extractions'] > 0:
             avg_entities = 4.86  # From earlier measurements
             avg_relationships = 2.58
-            print(f"🎯 Quality Metrics:")
+            print("🎯 Quality Metrics:")
             print(f"   - Average entities: {avg_entities:.2f} per ticket ✅")
             print(f"   - Average relationships: {avg_relationships:.2f} per ticket ✅")
-            print(f"   - Success rate: ~99%")
+            print("   - Success rate: ~99%")
 
     except Exception as e:
         print(f"Note: Could not calculate detailed stats ({e})")

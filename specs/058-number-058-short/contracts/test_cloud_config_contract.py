@@ -17,8 +17,54 @@ Test Coverage:
 
 import pytest
 import os
-from unittest.mock import patch, MagicMock
-from pathlib import Path
+from unittest.mock import patch
+from contextlib import contextmanager
+
+PROJECT_CONTAINER_NAME = "iris-vector-rag-tests"
+
+
+@contextmanager
+def iris_connection():
+    """Provide a real IRIS connection using iris-devtester without hardcoded ports."""
+    try:
+        from iris_devtester import IRISContainer
+    except ImportError:
+        pytest.skip("iris-devtester not available")
+
+    import iris.dbapi as iris_dbapi
+
+    started = False
+    container = None
+    try:
+        try:
+            container = IRISContainer.attach(PROJECT_CONTAINER_NAME)
+        except Exception:
+            container = (
+                IRISContainer.community(name=PROJECT_CONTAINER_NAME)
+                .with_preconfigured_password("SYS")
+            )
+            container.start()
+            container.get_connection()
+            started = True
+
+        config = container.get_config()
+        port = container.get_exposed_port(1972)
+
+        conn = iris_dbapi.connect(
+            hostname=config.host,
+            port=port,
+            namespace=config.namespace,
+            username=config.username,
+            password=config.password,
+        )
+
+        try:
+            yield conn
+        finally:
+            conn.close()
+    finally:
+        if started and container is not None:
+            container.stop()
 
 
 class TestEnvironmentVariableConfiguration:
@@ -388,20 +434,11 @@ class TestPreflightValidation:
         THEN ValidationResult with FAIL status is returned with actionable message
         """
         # Import required modules
-        import iris.dbapi as iris_dbapi
         from iris_vector_rag.config.validators import VectorDimensionValidator, ValidationStatus
         from iris_vector_rag.config.entities import VectorConfiguration, TableConfiguration, ConfigSource
 
         # Connect to real IRIS database
-        conn = iris_dbapi.connect(
-            hostname='localhost',
-            port=1972,
-            namespace='USER',
-            username='_SYSTEM',
-            password='SYS'
-        )
-
-        try:
+        with iris_connection() as conn:
             cursor = conn.cursor()
 
             # Create test table with 384 dimensions if it doesn't exist
@@ -439,9 +476,7 @@ class TestPreflightValidation:
             cursor.execute("DROP TABLE RAG.TestEntities_384")
             conn.commit()
 
-        finally:
             cursor.close()
-            conn.close()
 
     @pytest.mark.integration
     def test_namespace_permission_validation(self):
@@ -451,20 +486,11 @@ class TestPreflightValidation:
         THEN ValidationResult with PASS status is returned
         """
         # Import required modules
-        import iris.dbapi as iris_dbapi
         from iris_vector_rag.config.validators import NamespaceValidator, ValidationStatus
         from iris_vector_rag.config.entities import ConnectionConfiguration, TableConfiguration, ConfigSource
 
         # Connect to real IRIS database
-        conn = iris_dbapi.connect(
-            hostname='localhost',
-            port=1972,
-            namespace='USER',
-            username='_SYSTEM',
-            password='SYS'
-        )
-
-        try:
+        with iris_connection() as conn:
             # Test validation with USER namespace
             connection_config = ConnectionConfiguration(
                 host='localhost',
@@ -489,9 +515,6 @@ class TestPreflightValidation:
                 assert "USER" in result.message or "validated" in result.message.lower()
                 assert result.details is not None
                 assert result.details['namespace'] == 'USER'
-
-        finally:
-            conn.close()
 
 
 class TestBackwardCompatibility:
@@ -554,7 +577,7 @@ class TestConfigurationLogging:
         WHEN configuration is accessed
         THEN ConfigurationSource entries track where each value came from
         """
-        with patch.dict(os.environ, {'IRIS_HOST': 'env-host.example.com'}, clear=False):
+        with patch.dict(os.environ, {'IRIS_HOST': 'env-host.example.com'}, clear=True):
             import tempfile
             import yaml
 

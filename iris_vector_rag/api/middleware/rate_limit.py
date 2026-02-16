@@ -6,9 +6,7 @@ Uses Elasticsearch-inspired adaptive concurrency patterns.
 """
 
 import logging
-import time
 from datetime import datetime, timedelta
-from typing import Optional
 
 import redis
 from fastapi import Request, HTTPException

@@ -73,6 +73,10 @@ def create_pipeline(
 
     # Use validated factory if validation is requested
     if validate_requirements:
+        if embedding_func:
+            kwargs["embedding_func"] = embedding_func
+        if pipeline_type == "graphrag" and not auto_setup:
+            auto_setup = True
         factory = ValidatedPipelineFactory(connection_manager, config_manager)
         return factory.create_pipeline(
             pipeline_type=pipeline_type,

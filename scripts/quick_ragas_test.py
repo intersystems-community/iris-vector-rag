@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Quick RAGAS test with working pipelines
 """
@@ -82,7 +83,7 @@ def run_simple_ragas_eval():
     try:
         evaluation = ragas.evaluate_pipeline(results, ground_truths, "BasicRAG")
 
-        print(f"\n📊 RAGAS Results:")
+        print("\n📊 RAGAS Results:")
         print(f"   Answer Correctness: {evaluation.answer_correctness.mean_score:.3f}")
         print(f"   Faithfulness: {evaluation.faithfulness.mean_score:.3f}")
         print(f"   Context Precision: {evaluation.context_precision.mean_score:.3f}")

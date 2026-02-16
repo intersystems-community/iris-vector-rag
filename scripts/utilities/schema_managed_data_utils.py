@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Schema-Manager-Based Data Utilities
 
@@ -106,7 +107,7 @@ def clear_rag_data():
                             f"{rows_cleared} rows deleted from RAG.{table} (fallback)"
                         )
                         total_cleared += rows_cleared
-                    except:
+                    except Exception:
                         logger.info(
                             f"Table RAG.{table} does not exist or is inaccessible"
                         )

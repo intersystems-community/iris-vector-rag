@@ -8,8 +8,7 @@ Reference: specs/047-create-a-unified/tasks.md (T032)
 """
 
 import pytest
-from pathlib import Path
-from tests.fixtures.manager import FixtureManager, IncompatibleVersionError
+from tests.fixtures.manager import FixtureManager
 
 
 # ==============================================================================
@@ -117,13 +116,6 @@ class TestSemanticVersioning:
         fixture_manager.scan_fixtures()
 
         # Basic semver ordering tests
-        versions = [
-            ("1.0.0", "2.0.0", True),   # 1.0.0 < 2.0.0
-            ("1.0.0", "1.1.0", True),   # 1.0.0 < 1.1.0
-            ("1.0.0", "1.0.1", True),   # 1.0.0 < 1.0.1
-            ("2.0.0", "1.0.0", False),  # 2.0.0 > 1.0.0
-            ("1.0.0", "1.0.0", False),  # 1.0.0 == 1.0.0
-        ]
 
         # Note: This test assumes version comparison is needed
         # If FixtureManager doesn't compare versions yet, this validates the API

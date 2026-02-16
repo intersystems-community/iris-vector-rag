@@ -173,7 +173,7 @@ class PreConditionValidator:
                     details={"error": str(e)},
                     suggestions=[
                         f"Create table {table_name}",
-                        f"Check database permissions",
+                        "Check database permissions",
                     ],
                 )
 

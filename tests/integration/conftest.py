@@ -6,11 +6,9 @@ mock external APIs (LLM, embeddings).
 """
 
 import pytest
-import os
 import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, Any, Generator
+from typing import Dict, Any
 from unittest.mock import Mock
 
 
@@ -63,7 +61,6 @@ except Exception:
 def iris_engine(iris_connection_config):
     """Create SQLAlchemy engine for IRIS database."""
     try:
-        import sqlalchemy_iris
         from sqlalchemy import create_engine
 
         engine = create_engine(iris_connection_config["connection_string"])
@@ -92,7 +89,7 @@ def iris_connection(iris_engine):
         # Rollback any uncommitted changes
         try:
             conn.rollback()
-        except:
+        except Exception:
             pass
         conn.close()
 
@@ -367,7 +364,7 @@ except Exception:
 
             if "AVAILABLE" in result.stdout:
                 return  # IRIS is available
-        except:
+        except Exception:
             continue
 
     # No IRIS available - warn but don't fail session

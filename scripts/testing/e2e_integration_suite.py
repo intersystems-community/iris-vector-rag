@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Comprehensive End-to-End Integration Test Suite for RAG-Templates
 
@@ -12,13 +13,12 @@ CONSTITUTIONAL COMPLIANCE: All tests execute against live IRIS database
 import argparse
 import json
 import logging
-import os
 import sys
 import time
 import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -26,8 +26,7 @@ sys.path.insert(0, str(project_root))
 
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
-from scripts.testing.example_runner import ExampleTestResult, ExampleTestRunner
-from scripts.testing.mock_providers import MockLLMProvider
+from scripts.testing.example_runner import ExampleTestRunner
 from scripts.testing.validation_suite import ValidationSuite
 
 
@@ -559,7 +558,7 @@ class E2EIntegrationTestSuite:
                     report += f"  - {table}: {status}\n"
 
         # Production readiness assessment
-        report += f"""
+        report += """
 ## Production Readiness Assessment
 
 ### ✅ Strengths
@@ -648,7 +647,7 @@ Several critical issues need to be resolved before public release.
         with open(report_file, "w") as f:
             f.write(report_content)
 
-        self.logger.info(f"✅ E2E integration test suite completed!")
+        self.logger.info("✅ E2E integration test suite completed!")
         self.logger.info(f"📊 Report saved to: {report_file}")
         self.logger.info(f"📋 JSON results saved to: {json_file}")
 

@@ -1,4 +1,3 @@
-import time
 """
 Hybrid GraphRAG Retrieval Methods
 
@@ -7,7 +6,8 @@ iris_vector_graph integration.
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple
+import time
+from typing import Any, Callable, Dict, List, Tuple
 
 from ..core.models import Document
 from ._hybrid_utils import (
@@ -251,7 +251,7 @@ class HybridRetrievalMethods:
             for i in range(iterations):
                 try:
                     start_time = time.perf_counter()
-                    response = query_func(
+                    query_func(
                         query_text=query_text,
                         method=method,
                         generate_answer=False,

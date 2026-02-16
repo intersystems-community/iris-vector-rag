@@ -116,7 +116,7 @@ class TestPyLateColBERTErrorHandling:
         with pytest.raises(Exception):
             pylate_colbert_pipeline.query("test query")
 
-        log_output = caplog.text.lower()
+        caplog.text.lower()
 
         # Error SHOULD be logged
         assert len(caplog.records) > 0, "Errors should be logged"
@@ -210,7 +210,7 @@ class TestPyLateColBERTErrorHandling:
             )
 
             try:
-                result = pylate_colbert_pipeline.query(sample_query)
+                pylate_colbert_pipeline.query(sample_query)
 
                 # If query succeeded, verify fallback occurred
                 log_output = caplog.text.lower()
@@ -243,7 +243,7 @@ class TestPyLateColBERTErrorHandling:
             )
 
             try:
-                result = pylate_colbert_pipeline.query(sample_query)
+                pylate_colbert_pipeline.query(sample_query)
 
                 # If query succeeded, verify fallback occurred
                 log_output = caplog.text.lower()

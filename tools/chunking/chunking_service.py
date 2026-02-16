@@ -628,11 +628,11 @@ def main():
         print(f"❌ Error: {results['error']}")
         return
 
-    print(f"\n📊 PROCESSING RESULTS:")
+    print("\n📊 PROCESSING RESULTS:")
     print(f"Documents processed: {results['processed_documents']}")
     print(f"Total chunks created: {results['total_chunks_created']}")
 
-    print(f"\n📈 STRATEGY PERFORMANCE:")
+    print("\n📈 STRATEGY PERFORMANCE:")
     for strategy, stats in results["strategy_results"].items():
         avg_chunks = (
             stats["chunks"] / stats["documents"] if stats["documents"] > 0 else 0
@@ -646,7 +646,7 @@ def main():
         for error in results["errors"][:3]:  # Show first 3 errors
             print(f"  - {error}")
 
-    print(f"\n📋 DETAILED ANALYSIS (first 3 documents):")
+    print("\n📋 DETAILED ANALYSIS (first 3 documents):")
     for i, analysis in enumerate(results["analysis_results"][:3]):
         doc_info = analysis["document_info"]
         print(f"\n  Document {i+1}: {doc_info['doc_id']}")
@@ -661,7 +661,7 @@ def main():
                     f"    {strategy}: {stats['chunk_count']} chunks, avg {stats['avg_chunk_length']:.0f} chars"
                 )
 
-    print(f"\n✅ Demo completed successfully!")
+    print("\n✅ Demo completed successfully!")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,8 @@ automatic migration capabilities for vector dimensions and other schema changes.
 import json
 import logging
 import os
-from typing import Any, Dict, Optional, List
+import time
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +33,27 @@ class SchemaManager:
     _config_loaded = False  # Flag to prevent redundant config loading
     _tables_validated = set()  # Cache for ensure_table_exists() to prevent spam
 
-    def __init__(self, connection_manager, config_manager):
+    def __init__(
+        self,
+        connection_manager=None,
+        config_manager=None,
+        connection_string: Optional[str] = None,
+        base_embedding_dimension: Optional[int] = None,
+    ):
+        if config_manager is None:
+            from iris_vector_rag.config.manager import ConfigurationManager
+
+            config_manager = ConfigurationManager()
+
+        if connection_manager is None:
+            from iris_vector_rag.core.connection import ConnectionManager
+
+            connection_manager = ConnectionManager(config_manager)
+
         self.connection_manager = connection_manager
         self.config_manager = config_manager
         self.schema_version = "1.0.0"
+        self.pipeline_type: Optional[str] = None
 
         # Cache for dimension lookups
         self._dimension_cache = {}
@@ -54,6 +72,8 @@ class SchemaManager:
             )
             # Use cloud_config for vector dimension (supports VECTOR_DIMENSION env var)
             self.base_embedding_dimension = cloud_config.vector.vector_dimension
+            if base_embedding_dimension is not None:
+                self.base_embedding_dimension = base_embedding_dimension
 
             # Now build mappings (these methods reference the attributes we just set)
             self._build_model_dimension_mapping()
@@ -80,13 +100,227 @@ class SchemaManager:
         # Validate configuration consistency
         self._validate_configuration()
 
+        # Build mappings for dimension lookup and table configuration
+        self._build_model_dimension_mapping()
+        self._build_table_configurations()
+
+    def _detect_iris_vector_graph(self) -> bool:
+        """Detect iris-vector-graph package availability without importing it."""
+        try:
+            import importlib.util
+
+            return importlib.util.find_spec("iris_vector_graph") is not None
+        except Exception:
+            return False
+
+    def table_exists(self, table_name: str) -> bool:
+        """Check whether a table exists in the RAG schema."""
+        if "." in table_name:
+            schema, table = table_name.split(".", 1)
+        else:
+            schema, table = "RAG", table_name
+
+        conn = self.connection_manager.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                f"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES "
+                f"WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'"
+            )
+            return cursor.fetchone()[0] > 0
+        finally:
+            cursor.close()
+
+    def validate_graph_prerequisites(self, pipeline_type: str = "graphrag"):
+        """Validate iris-vector-graph package and required tables."""
+        try:
+            from tests.contract.test_graph_schema_validation import ValidationResult
+        except Exception:
+            from dataclasses import dataclass
+            from typing import List
+
+            @dataclass
+            class ValidationResult:
+                is_valid: bool
+                package_installed: bool
+                missing_tables: List[str]
+                error_message: str
+
+        is_graphrag = (pipeline_type or "").lower() in {
+            "graphrag",
+            "hybrid_graphrag",
+            "hybridgraphrag",
+        }
+
+        if not self._detect_iris_vector_graph():
+            message = (
+                "iris-vector-graph package is required for GraphRAG pipelines. "
+                "Install with `pip install iris-vector-graph`."
+            )
+            if is_graphrag:
+                raise ImportError(message)
+            return ValidationResult(
+                is_valid=False,
+                package_installed=False,
+                missing_tables=[],
+                error_message=message,
+            )
+
+        required_tables = [
+            "rdf_labels",
+            "rdf_props",
+            "rdf_edges",
+            "kg_NodeEmbeddings_optimized",
+        ]
+        missing_tables = [
+            table for table in required_tables if not self.table_exists(table)
+        ]
+
+        schema_errors = []
+        for table in required_tables:
+            if table in missing_tables:
+                continue
+            if not hasattr(self, "_table_configs"):
+                continue
+
+            expected_config = self._get_expected_schema_config(table, pipeline_type)
+            expected_columns = [
+                col.get("name")
+                for col in expected_config.get("columns", [])
+                if isinstance(col, dict)
+            ]
+            if not expected_columns:
+                continue
+            actual_columns = self.verify_table_structure(table)
+            if not actual_columns:
+                schema_errors.append(
+                    f"Schema inspection failed for {table} (no columns returned)"
+                )
+                continue
+            missing_columns = [
+                col for col in expected_columns if col not in actual_columns
+            ]
+            if missing_columns:
+                schema_errors.append(
+                    f"{table} missing columns: {', '.join(missing_columns)}"
+                )
+
+        if missing_tables or schema_errors:
+            error_parts = []
+            if missing_tables:
+                error_parts.append(
+                    f"Missing graph tables: {', '.join(missing_tables)}"
+                )
+            if schema_errors:
+                error_parts.append("Schema mismatches: " + "; ".join(schema_errors))
+            error_parts.append("Run ensure_iris_vector_graph_tables() to remediate.")
+            error_message = " ".join(error_parts)
+            logger.warning(
+                "PPR unavailable: graph prerequisites not satisfied. %s",
+                error_message,
+            )
+            return ValidationResult(
+                is_valid=False,
+                package_installed=True,
+                missing_tables=missing_tables,
+                error_message=error_message,
+            )
+
+        logger.info("PPR available: graph prerequisites satisfied")
+
+        return ValidationResult(
+            is_valid=True,
+            package_installed=True,
+            missing_tables=[],
+            error_message="",
+        )
+
+    def ensure_iris_vector_graph_tables(self, pipeline_type: str = "graphrag"):
+        """Ensure required iris-vector-graph tables exist and return initialization result."""
+        try:
+            from tests.contract.test_graph_schema_initialization import InitializationResult
+        except Exception:
+            from dataclasses import dataclass
+            from typing import List, Dict
+
+            @dataclass
+            class InitializationResult:
+                package_detected: bool
+                tables_attempted: List[str]
+                tables_created: Dict[str, bool]
+                total_time_seconds: float
+                error_messages: Dict[str, str]
+
+        start_time = time.time()
+
+        is_graphrag = (pipeline_type or "").lower() in {
+            "graphrag",
+            "hybrid_graphrag",
+            "hybridgraphrag",
+        }
+
+        if not self._detect_iris_vector_graph():
+            message = (
+                "iris-vector-graph package is required for GraphRAG pipelines. "
+                "Install with `pip install iris-vector-graph`."
+            )
+            if is_graphrag:
+                raise ImportError(message)
+            return InitializationResult(
+                package_detected=False,
+                tables_attempted=[],
+                tables_created={},
+                total_time_seconds=time.time() - start_time,
+                error_messages={},
+            )
+
+        tables_attempted = [
+            "rdf_labels",
+            "rdf_props",
+            "rdf_edges",
+            "kg_NodeEmbeddings_optimized",
+        ]
+        tables_created: Dict[str, bool] = {}
+        error_messages: Dict[str, str] = {}
+
+        for table in tables_attempted:
+            try:
+                created = bool(
+                    self.ensure_table_schema(table, pipeline_type=pipeline_type)
+                )
+                tables_created[table] = created
+                if not created:
+                    error_messages[table] = (
+                        f"ensure_table_schema returned False for {table}"
+                    )
+            except Exception as exc:
+                tables_created[table] = False
+                error_messages[table] = f"{type(exc).__name__}: {exc}"
+
+        if error_messages:
+            logger.error(
+                "Graph table initialization failed for %s",
+                ", ".join(sorted(error_messages.keys())),
+            )
+        else:
+            logger.info("Graph table initialization completed successfully")
+
+        total_time_seconds = time.time() - start_time
+        return InitializationResult(
+            package_detected=True,
+            tables_attempted=tables_attempted,
+            tables_created=tables_created,
+            total_time_seconds=total_time_seconds,
+            error_messages=error_messages,
+        )
+
         # Build unified model-to-dimension mapping from config
         self._build_model_dimension_mapping()
 
         # Build table-specific configurations from config
         self._build_table_configurations()
 
-        logger.info(f"✅ Schema Manager: Configuration validated and loaded")
+        logger.info("✅ Schema Manager: Configuration validated and loaded")
         logger.info(
             f"   Base embedding: {self.base_embedding_model} ({self.base_embedding_dimension}D)"
         )
@@ -219,6 +453,10 @@ class SchemaManager:
     def ensure_schema_metadata_table(self):
         """Create schema metadata table if it doesn't exist."""
         connection = self.connection_manager.get_connection()
+        if connection is None:
+            raise ConnectionError(
+                "Missing configuration: IRIS connection unavailable (check IRIS_* settings)"
+            )
         cursor = connection.cursor()
 
         try:
@@ -333,7 +571,7 @@ class SchemaManager:
             cursor.close()
 
     def _get_expected_schema_config(
-        self, table_name: str, pipeline_type: str = None
+        self, table_name: str, pipeline_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """Get expected schema configuration based on current system config and pipeline requirements."""
         # Get model and dimension from centralized methods
@@ -528,7 +766,7 @@ class SchemaManager:
         return config
 
     def _get_table_requirements_config(
-        self, table_name: str, pipeline_type: str
+        self, table_name: str, pipeline_type: Optional[str]
     ) -> Dict[str, Any]:
         """Extract table configuration from pipeline requirements."""
         try:
@@ -558,7 +796,7 @@ class SchemaManager:
         # Default configuration
         return {"text_content_type": "LONGVARCHAR", "supports_vector_search": True}
 
-    def needs_migration(self, table_name: str, pipeline_type: str = None) -> bool:
+    def needs_migration(self, table_name: str, pipeline_type: Optional[str] = None) -> bool:
         """Check if table needs migration based on configuration and physical structure.
 
         Uses class-level caching to avoid repeated expensive validation checks.
@@ -643,7 +881,7 @@ class SchemaManager:
         return False
 
     def migrate_table(
-        self, table_name: str, preserve_data: bool = False, pipeline_type: str = None
+        self, table_name: str, preserve_data: bool = False, pipeline_type: Optional[str] = None
     ) -> bool:
         """
         Migrate table to match expected configuration.
@@ -999,7 +1237,7 @@ class SchemaManager:
             if table_exists:
                 cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks")
 
-            create_sql = f"""
+            create_sql = """
             CREATE TABLE RAG.DocumentChunks (
                 id VARCHAR(255) PRIMARY KEY,
                 chunk_id VARCHAR(255),
@@ -1033,7 +1271,7 @@ class SchemaManager:
             logger.error(f"Failed to migrate DocumentChunks table: {e}")
             return False
 
-    def ensure_table_schema(self, table_name: str, pipeline_type: str = None) -> bool:
+    def _ensure_table_schema_legacy(self, table_name: str, pipeline_type: Optional[str] = None) -> bool:
         """
         Ensure table schema matches current configuration.
         Performs migration if needed and ensures vector indexes exist.
@@ -1849,7 +2087,7 @@ class SchemaManager:
             logger.error(f"Failed to ensure schema for {pipeline_type}: {e}")
             return False
 
-    def ensure_table_schema(self, table_name: str, pipeline_type: str = None) -> bool:
+    def ensure_table_schema(self, table_name: str, pipeline_type: Optional[str] = None) -> bool:
         """
         Ensure a specific table exists with proper schema.
 
@@ -1892,7 +2130,7 @@ class SchemaManager:
         """Ensure standard RAG tables exist."""
         try:
             # Check class-level cache first to avoid repeated validation spam
-            if table_name in SchemaManager._tables_validated:
+            if table_name in SchemaManager._tables_validated and table_name not in ("Entities", "SourceDocuments"):
                 logger.debug(f"Table RAG.{table_name} already validated (cached) - skipping check")
                 return True
 
@@ -1911,6 +2149,91 @@ class SchemaManager:
             exists = cursor.fetchone()[0] > 0
 
             if exists:
+                if table_name == "SourceDocuments":
+                    try:
+                        cursor.execute(
+                            """
+                            SELECT COLUMN_NAME
+                            FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments'
+                            """
+                        )
+                        columns = {row[0].lower() for row in cursor.fetchall()}
+
+                        if "text_content" not in columns:
+                            cursor.execute(
+                                "ALTER TABLE RAG.SourceDocuments ADD text_content LONGVARCHAR"
+                            )
+                            conn.commit()
+                            columns.add("text_content")
+
+                        if "doc_id" not in columns:
+                            cursor.execute(
+                                "ALTER TABLE RAG.SourceDocuments ADD doc_id VARCHAR(255)"
+                            )
+                            if "id" in columns:
+                                cursor.execute(
+                                    "UPDATE RAG.SourceDocuments SET doc_id = id WHERE doc_id IS NULL"
+                                )
+                            conn.commit()
+                            columns.add("doc_id")
+
+                        if "embedding" not in columns:
+                            embedding_config = self.config_manager.get_embedding_config()
+                            dimension = embedding_config.get("dimension", 384)
+                            cursor.execute(
+                                f"ALTER TABLE RAG.SourceDocuments ADD embedding VECTOR(FLOAT, {dimension})"
+                            )
+                            conn.commit()
+                    except Exception as exc:
+                        logger.warning(
+                            f"Failed to ensure SourceDocuments columns: {exc}"
+                        )
+                if table_name == "Entities":
+                    try:
+                        cursor.execute(
+                            """
+                            SELECT COLUMN_NAME
+                            FROM INFORMATION_SCHEMA.COLUMNS
+                            WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'Entities'
+                            """
+                        )
+                        columns = {row[0].lower() for row in cursor.fetchall()}
+
+                        if "entity_id" not in columns:
+                            cursor.execute(
+                                "ALTER TABLE RAG.Entities ADD entity_id VARCHAR(255)"
+                            )
+                            if "id" in columns:
+                                cursor.execute(
+                                    "UPDATE RAG.Entities SET entity_id = id WHERE entity_id IS NULL"
+                                )
+                            conn.commit()
+                            columns.add("entity_id")
+
+                        if "entity_name" not in columns:
+                            cursor.execute(
+                                "ALTER TABLE RAG.Entities ADD entity_name VARCHAR(255)"
+                            )
+                            if "name" in columns:
+                                cursor.execute(
+                                    "UPDATE RAG.Entities SET entity_name = name WHERE entity_name IS NULL"
+                                )
+                            conn.commit()
+                            columns.add("entity_name")
+
+                        if "source_doc_id" not in columns:
+                            cursor.execute(
+                                "ALTER TABLE RAG.Entities ADD source_doc_id VARCHAR(255)"
+                            )
+                            if "doc_id" in columns:
+                                cursor.execute(
+                                    "UPDATE RAG.Entities SET source_doc_id = doc_id WHERE source_doc_id IS NULL"
+                                )
+                            conn.commit()
+                    except Exception as exc:
+                        logger.warning(f"Failed to ensure Entities columns: {exc}")
+
                 logger.debug(f"Table RAG.{table_name} exists - caching validation result")
                 SchemaManager._tables_validated.add(table_name)  # Cache the result
                 cursor.close()
@@ -1947,7 +2270,7 @@ class SchemaManager:
             try:
                 conn.rollback()
                 cursor.close()
-            except:
+            except Exception:
                 pass
             return False
 
@@ -2121,7 +2444,7 @@ class SchemaManager:
             cursor = conn.cursor()
 
             index_name = index_config.get("name")
-            table_name = index_config.get("table")
+            index_config.get("table")
             index_type = index_config.get("type", "BTREE")
 
             # Basic index creation - could be enhanced for specific types
@@ -2130,7 +2453,7 @@ class SchemaManager:
                 logger.info(f"HNSW index {index_name} requires specialized creation")
                 cursor.close()
                 return (
-                    index_config.get("required", True) == False
+                    not index_config.get("required", True)
                 )  # Optional indexes return True
 
             cursor.close()

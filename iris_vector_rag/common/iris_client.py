@@ -78,7 +78,7 @@ class IRISClient:
         if self._connection:
             try:
                 self._connection.close()
-            except:
+            except Exception:
                 pass
             self._connection = None
 

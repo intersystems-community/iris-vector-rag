@@ -48,6 +48,9 @@ cd iris-vector-rag
 make setup-env
 make install
 source .venv/bin/activate
+
+# GraphRAG dependency (required for graphrag pipelines)
+pip install iris-vector-graph
 ```
 
 ### 2. Start IRIS Database

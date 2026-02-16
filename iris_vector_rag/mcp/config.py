@@ -9,7 +9,7 @@ Branch: 043-complete-mcp-tools
 """
 
 import os
-from typing import Optional, Literal
+from typing import Literal
 from dataclasses import dataclass
 
 

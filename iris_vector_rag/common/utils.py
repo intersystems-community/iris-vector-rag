@@ -6,9 +6,8 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path  # Added for config path
-from typing import Any, Callable, Dict, List, Optional, Tuple  # Added Tuple
+from typing import Any, Callable, Dict, List, Optional  # Added Tuple
 
-import hashlib
 import hashlib
 import numpy as np
 import yaml  # Added for config loading
@@ -406,11 +405,6 @@ def generate_prompt_hash(prompt: str) -> str:
     return hashlib.sha256(prompt.strip().encode("utf-8")).hexdigest()
 
 
-def generate_prompt_hash(prompt: str) -> str:
-    """Generate SHA-256 hash for a prompt string."""
-    return hashlib.sha256(prompt.strip().encode("utf-8")).hexdigest()
-
-
 # ... (Embedded Python specific utilities can remain as they are) ...
 
 _iris_connector_embedded = None
@@ -428,7 +422,32 @@ def get_iris_connector_for_embedded():
                 raise ImportError(
                     "IRIS Embedded Python module 'iris' not found. Ensure it is installed in your environment."
                 )
-            _iris_connector_embedded = iris.connect()
+            host = os.environ.get("IRIS_HOST", "localhost")
+            port = int(os.environ.get("IRIS_PORT", "1974"))
+            namespace = os.environ.get("IRIS_NAMESPACE", "USER")
+            username = os.environ.get("IRIS_USERNAME", "SuperUser")
+            password = os.environ.get("IRIS_PASSWORD", "SYS")
+
+            if hasattr(iris, "createConnection"):
+                _iris_connector_embedded = iris.createConnection(
+                    host,
+                    port,
+                    namespace,
+                    username,
+                    password,
+                )
+            elif hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
+                _iris_connector_embedded = iris.dbapi.connect(
+                    host,
+                    port,
+                    namespace,
+                    username,
+                    password,
+                )
+            else:
+                raise AttributeError(
+                    "IRIS module does not expose createConnection or dbapi.connect"
+                )
             print("IRIS Embedded Python: DBAPI connection established.")
         except ImportError:
             print("IRIS Embedded Python: 'iris' module not found.")
@@ -452,7 +471,8 @@ def get_embedding_func_for_embedded(model_name_override: Optional[str] = None):
             f"IRIS Embedded Python: Loading embedding model {effective_model_name} (dim: {dimension})"
         )
         # This would call build_hf_embedder or similar for embedded context
-        _embedding_model_embedded = lambda texts: [[0.1] * dimension for _ in texts]
+        def _embedding_model_embedded(texts):
+            return [[0.1] * dimension for _ in texts]
     return _embedding_model_embedded
 
 
@@ -461,9 +481,11 @@ def get_llm_func_for_embedded(provider: str = "stub", model_name: str = "stub-mo
     if _llm_embedded is None:
         print(f"IRIS Embedded Python: Initializing LLM {provider} - {model_name}")
         if provider == "stub":
-            _llm_embedded = lambda prompt: f"Embedded Stub LLM: {prompt[:30]}"
+            def _llm_embedded(prompt):
+                return f"Embedded Stub LLM: {prompt[:30]}"
         else:
-            _llm_embedded = lambda prompt: "Error: LLM not configured for embedded"
+            def _llm_embedded(prompt):
+                return "Error: LLM not configured for embedded"
     return _llm_embedded
 
 

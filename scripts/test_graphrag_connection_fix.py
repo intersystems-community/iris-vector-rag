@@ -92,7 +92,7 @@ def test_graphrag_connection_usage():
         print("\n🔍 Testing end-to-end GraphRAG query...")
         try:
             result = pipeline.query("What are the symptoms of diabetes?", top_k=5)
-            print(f"✅ End-to-end query executed successfully")
+            print("✅ End-to-end query executed successfully")
             print(f"   - Method: {result['metadata']['retrieval_method']}")
             print(f"   - Documents: {result['metadata']['num_retrieved']}")
             print(f"   - Time: {result['metadata']['processing_time']:.3f}s")
@@ -129,10 +129,8 @@ def test_connection_api_comparison():
     print("=" * 40)
 
     try:
-        from iris_vector_rag.pipelines.crag import CRAGPipeline
-
         config_manager = ConfigurationManager()
-        connection_manager = ConnectionManager(config_manager)
+        ConnectionManager(config_manager)
 
         # Test that both use same connection pattern
         print("✅ Both GraphRAG and CRAG now use: connection_manager.get_connection()")

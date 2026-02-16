@@ -5,9 +5,9 @@ Side-by-side comparison of multiple RAG pipelines with the same query.
 Provides detailed analysis of differences in performance, quality, and results.
 """
 
-import asyncio
+# ruff: noqa: E402
+
 import sys
-import threading
 import time
 from pathlib import Path
 from typing import Any, Dict, List
@@ -18,13 +18,11 @@ import streamlit as st
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from components.header import render_loading_spinner, render_page_header
+from components.header import render_page_header
 from components.query_input import render_query_input
 from components.results_display import render_query_result
-from components.sidebar import render_pipeline_selector
-from utils.app_config import get_config
 from utils.pipeline_integration import execute_pipeline_query
-from utils.session_state import add_performance_metric, add_to_query_history
+from utils.session_state import add_to_query_history
 
 
 def main():
@@ -333,7 +331,7 @@ def render_side_by_side_comparison():
                 st.caption(f"Quality Score: {quality_score:.1%}")
 
                 # Show full result button
-                if st.button(f"📄 Full Details", key=f"details_{pipeline}"):
+                if st.button("📄 Full Details", key=f"details_{pipeline}"):
                     with st.expander(f"{pipeline} Full Result", expanded=True):
                         render_query_result(result)
             else:

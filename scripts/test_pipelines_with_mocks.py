@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ruff: noqa: E402
 """
 Pipeline status test with mock connections.
 Tests all available RAG pipeline types without requiring a real IRIS connection.
@@ -9,8 +10,8 @@ import os
 import sys
 import traceback
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Dict, List
+from unittest.mock import Mock, patch
 
 # Add the project root to the path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -143,7 +144,7 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
     
     try:
         # Step 1: Import and setup mocks
-        print(f"1. Setting up mocks and importing pipeline...")
+        print("1. Setting up mocks and importing pipeline...")
         
         from iris_vector_rag.config.manager import ConfigurationManager
 
@@ -201,12 +202,11 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
             )
         
         result["initialization"]["success"] = True
-        print(f"   ✓ Pipeline initialized successfully")
+        print("   ✓ Pipeline initialized successfully")
         
         # Step 3: Check methods
-        print(f"3. Checking pipeline methods...")
+        print("3. Checking pipeline methods...")
         required_methods = ["ingest", "query", "clear", "get_documents"]
-        optional_methods = ["setup", "validate", "get_stats"]
         
         for method in required_methods:
             if hasattr(pipeline, method):
@@ -218,10 +218,10 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
             print(f"   ⚠ Missing required methods: {', '.join(result['method_check']['missing'])}")
             result["notes"].append(f"Missing methods: {', '.join(result['method_check']['missing'])}")
         else:
-            print(f"   ✓ All required methods present")
+            print("   ✓ All required methods present")
         
         # Step 4: Test ingestion (mock)
-        print(f"4. Testing document ingestion...")
+        print("4. Testing document ingestion...")
         try:
             mock_docs = create_mock_documents(3)
             
@@ -231,7 +231,7 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
                     pipeline.ingest(mock_docs)
             
             result["ingestion_test"]["success"] = True
-            print(f"   ✓ Ingestion test passed (mocked)")
+            print("   ✓ Ingestion test passed (mocked)")
             
         except Exception as e:
             result["ingestion_test"]["error"] = str(e)
@@ -239,7 +239,7 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
             print(f"   ✗ Ingestion failed: {str(e)}")
         
         # Step 5: Test query
-        print(f"5. Testing query functionality...")
+        print("5. Testing query functionality...")
         test_query = "What is IRIS?"
         
         try:
@@ -252,14 +252,14 @@ def test_pipeline_with_mocks(pipeline_type: str) -> Dict[str, Any]:
             if response:
                 result["query_test"]["success"] = True
                 result["query_test"]["response"] = str(response)[:200] + "..." if len(str(response)) > 200 else str(response)
-                print(f"   ✓ Query executed successfully")
+                print("   ✓ Query executed successfully")
                 print(f"   Response preview: {result['query_test']['response']}")
                 result["status"] = "working"
             else:
                 result["query_test"]["error"] = "Empty response received"
                 result["notes"].append("Pipeline returns empty responses")
                 result["status"] = "partial"
-                print(f"   ⚠ Query returned empty response")
+                print("   ⚠ Query returned empty response")
                 
         except Exception as e:
             result["query_test"]["error"] = str(e)
@@ -367,7 +367,7 @@ def main():
     summary = generate_summary_report(results)
     
     print(f"\nTotal Pipelines Tested: {summary['total_pipelines']}")
-    print(f"\nStatus Breakdown:")
+    print("\nStatus Breakdown:")
     for status, count in summary["status_counts"].items():
         print(f"  - {status}: {count}")
     

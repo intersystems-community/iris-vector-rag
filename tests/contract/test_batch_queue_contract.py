@@ -5,7 +5,6 @@ These tests validate the BatchQueue API contract before implementation.
 Tests MUST fail initially, then pass after implementation (TDD).
 """
 
-import pytest
 from iris_vector_rag.core.models import Document
 
 

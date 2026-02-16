@@ -8,8 +8,7 @@ Related Bug Report: BUG_REPORT_ENTITY_TYPES_CONFIG.md
 """
 
 import pytest
-from typing import List, Dict, Any
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 
 class TestBatchEntityExtractionConfiguration:
@@ -99,7 +98,6 @@ class TestBatchEntityExtractionConfiguration:
     def test_entity_extraction_service_passes_entity_types(self):
         """Test that EntityExtractionService passes entity_types to BatchEntityExtractionModule."""
         from iris_vector_rag.services.entity_extraction import EntityExtractionService
-        from iris_vector_rag.core.models import Document
         import inspect
 
         # Verify extract_batch_with_dspy has entity_types parameter

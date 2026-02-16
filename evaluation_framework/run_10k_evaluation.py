@@ -159,9 +159,9 @@ def run_production_evaluation():
         f.write(report)
 
     # Print summary
-    print(f"\nRESULTS:")
-    print(f"Documents: 10,000")
-    print(f"Questions: 2,000")
+    print("\nRESULTS:")
+    print("Documents: 10,000")
+    print("Questions: 2,000")
     print(f"Duration: {execution_time:.1f}s")
     print(f"Best: {ranked[0][0]} ({ranked[0][1]['mean_score']:.3f})")
     print(f"Results: {results_file}")

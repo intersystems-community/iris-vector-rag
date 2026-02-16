@@ -15,7 +15,7 @@ class TestPipelineBehavior:
     def test_pipeline_creation_requires_iris_vector_graph(self):
         """Creating HybridGraphRAG should fail if iris-vector-graph is missing."""
         # This test should FAIL until implementation is complete
-        with patch('iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules') as mock_import:
+        with patch('iris_vector_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules') as mock_import:
             mock_import.side_effect = ImportError("HybridGraphRAG requires iris-vector-graph package")
 
             from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
@@ -29,7 +29,7 @@ class TestPipelineBehavior:
         from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 
         # Mock successful import
-        with patch('iris_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules') as mock_import:
+        with patch('iris_vector_rag.pipelines.hybrid_graphrag_discovery.GraphCoreDiscovery.import_graph_core_modules') as mock_import:
             mock_import.return_value = {
                 "IRISGraphEngine": Mock(),
                 "HybridSearchFusion": Mock(),
@@ -64,7 +64,7 @@ class TestPipelineBehavior:
                 "VectorOptimizer": Mock(),
             }
 
-            pipeline = HybridGraphRAGPipeline()
+            HybridGraphRAGPipeline()
 
             # All methods should work without fallbacks
             methods = ["hybrid", "rrf", "text", "vector", "kg"]

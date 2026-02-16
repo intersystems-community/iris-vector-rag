@@ -25,23 +25,24 @@ Requirements:
     - json for data export
 """
 
+# ruff: noqa: E402
+
 import argparse
 import json
 import logging
-import os
 import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Third-party imports
 try:
     import matplotlib.patches as mpatches
     import matplotlib.pyplot as plt
     import networkx as nx
-    from colorama import Back, Fore, Style, init
+    from colorama import Fore, Style, init
 
     init(autoreset=True)  # Initialize colorama
 except ImportError as e:
@@ -57,7 +58,7 @@ sys.path.insert(0, str(project_root))
 try:
     from iris_vector_rag.config.manager import ConfigurationManager
     from iris_vector_rag.core.connection import ConnectionManager
-    from iris_vector_rag.core.models import Document, Entity, Relationship
+    from iris_vector_rag.core.models import Document
     from iris_vector_rag.pipelines.basic import BasicRAGPipeline
     from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
     from iris_vector_rag.services.entity_extraction import EntityExtractionService
@@ -362,7 +363,7 @@ class GraphRAGMultiHopDemo:
     def demonstrate_2hop_queries(self) -> None:
         """Demonstrate 2-hop queries with visualization."""
         print(f"\n{Fore.CYAN}{'='*60}")
-        print(f"🔄 2-HOP QUERY DEMONSTRATIONS")
+        print("🔄 2-HOP QUERY DEMONSTRATIONS")
         print(f"{'='*60}{Style.RESET_ALL}")
 
         queries_2hop = [
@@ -400,7 +401,7 @@ class GraphRAGMultiHopDemo:
     def demonstrate_3hop_queries(self) -> None:
         """Demonstrate 3-hop queries with complex reasoning."""
         print(f"\n{Fore.CYAN}{'='*60}")
-        print(f"🔄 3-HOP QUERY DEMONSTRATIONS")
+        print("🔄 3-HOP QUERY DEMONSTRATIONS")
         print(f"{'='*60}{Style.RESET_ALL}")
 
         queries_3hop = [
@@ -438,7 +439,7 @@ class GraphRAGMultiHopDemo:
     def demonstrate_complex_reasoning_queries(self) -> None:
         """Demonstrate complex reasoning queries requiring deep graph traversal."""
         print(f"\n{Fore.CYAN}{'='*60}")
-        print(f"🧠 COMPLEX REASONING QUERY DEMONSTRATIONS")
+        print("🧠 COMPLEX REASONING QUERY DEMONSTRATIONS")
         print(f"{'='*60}{Style.RESET_ALL}")
 
         complex_queries = [
@@ -726,7 +727,7 @@ class GraphRAGMultiHopDemo:
     def compare_with_single_hop_rag(self) -> None:
         """Compare multi-hop GraphRAG results with single-hop RAG."""
         print(f"\n{Fore.CYAN}{'='*60}")
-        print(f"⚖️  MULTI-HOP vs SINGLE-HOP COMPARISON")
+        print("⚖️  MULTI-HOP vs SINGLE-HOP COMPARISON")
         print(f"{'='*60}{Style.RESET_ALL}")
 
         comparison_queries = [
@@ -811,9 +812,9 @@ class GraphRAGMultiHopDemo:
         print(f"  Time Overhead: {time_ratio:.1f}x (GraphRAG vs Basic RAG)")
 
         if comparison["graphrag"]["documents"] > comparison["basic_rag"]["documents"]:
-            print(f"  ✅ GraphRAG retrieved more diverse documents")
+            print("  ✅ GraphRAG retrieved more diverse documents")
         if "knowledge_graph" in comparison["graphrag"]["method"]:
-            print(f"  ✅ GraphRAG used knowledge graph traversal")
+            print("  ✅ GraphRAG used knowledge graph traversal")
 
     def _visualize_comparison_results(self, results: List[Dict[str, Any]]) -> None:
         """Create comparison visualization."""
@@ -915,7 +916,7 @@ class GraphRAGMultiHopDemo:
     def generate_performance_report(self) -> None:
         """Generate comprehensive performance analysis report."""
         print(f"\n{Fore.CYAN}{'='*60}")
-        print(f"📊 PERFORMANCE ANALYSIS REPORT")
+        print("📊 PERFORMANCE ANALYSIS REPORT")
         print(f"{'='*60}{Style.RESET_ALL}")
 
         if not self.query_results:
@@ -1117,11 +1118,11 @@ class GraphRAGMultiHopDemo:
     def run_full_demonstration(self) -> None:
         """Run the complete GraphRAG multi-hop demonstration."""
         print(f"{Fore.CYAN}{'='*80}")
-        print(f"🚀 GRAPHRAG MULTI-HOP QUERY DEMONSTRATION")
+        print("🚀 GRAPHRAG MULTI-HOP QUERY DEMONSTRATION")
         print(f"{'='*80}{Style.RESET_ALL}")
-        print(f"This demonstration showcases GraphRAG's ability to handle complex")
-        print(f"multi-hop queries that traverse knowledge graphs to discover")
-        print(f"relationships between entities across multiple documents.")
+        print("This demonstration showcases GraphRAG's ability to handle complex")
+        print("multi-hop queries that traverse knowledge graphs to discover")
+        print("relationships between entities across multiple documents.")
         print(f"{'='*80}")
 
         try:
@@ -1144,7 +1145,7 @@ class GraphRAGMultiHopDemo:
             self.generate_performance_report()
 
             print(f"\n{Fore.GREEN}{'='*80}")
-            print(f"✅ DEMONSTRATION COMPLETED SUCCESSFULLY")
+            print("✅ DEMONSTRATION COMPLETED SUCCESSFULLY")
             print(f"{'='*80}{Style.RESET_ALL}")
             print(f"📁 All outputs saved to: {self.output_dir}")
             print(f"📊 Performance report: {self.output_dir}/performance_report.html")

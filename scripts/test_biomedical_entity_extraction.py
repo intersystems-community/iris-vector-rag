@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Test biomedical entity extraction from PMC documents.
 
@@ -35,12 +36,12 @@ class BiomedicalEntityExtractor:
             # Try scispacy models
             self.nlp = spacy.load("en_core_sci_sm")
             logger.info("Loaded scispacy model: en_core_sci_sm")
-        except:
+        except Exception:
             try:
                 # Try biobert model
                 self.nlp = spacy.load("en_ner_bc5cdr_md")
                 logger.info("Loaded biomedical model: en_ner_bc5cdr_md")
-            except:
+            except Exception:
                 # Fallback to general model
                 try:
                     self.nlp = spacy.load("en_core_web_sm")
@@ -53,7 +54,7 @@ class BiomedicalEntityExtractor:
                     logger.info(
                         "Then: pip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.0/en_core_sci_sm-0.5.0.tar.gz"
                     )
-                except:
+                except Exception:
                     logger.error(
                         "No spacy model found. Install with: python -m spacy download en_core_web_sm"
                     )

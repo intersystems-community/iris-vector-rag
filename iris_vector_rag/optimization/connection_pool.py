@@ -12,8 +12,8 @@ import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from ..core.connection import ConnectionManager
 

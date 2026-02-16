@@ -6,7 +6,7 @@ Unified to use iris_connection.py for consistency and UV compatibility.
 import logging
 from typing import Any, Dict, Optional
 
-from iris_vector_rag.common.iris_connection import get_iris_connection, auto_detect_iris_port
+from iris_vector_rag.common.iris_connection import get_iris_connection
 
 logger = logging.getLogger(__name__)
 

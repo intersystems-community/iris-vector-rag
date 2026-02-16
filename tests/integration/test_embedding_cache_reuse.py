@@ -194,7 +194,7 @@ class TestCacheBehaviorIntegration:
         print(f"\nTotal time: {total_time:.3f}s")
         print(f"Average per manager: {avg_time:.4f}s")
         print(f"\nWithout caching: ~{num_managers * 0.4:.1f}s (20 × 0.4s)")
-        print(f"With caching: ~0.6s (1 × 0.4s + 19 × 0.01s)")
+        print("With caching: ~0.6s (1 × 0.4s + 19 × 0.01s)")
 
         # This will FAIL before caching implementation
         # Expected: ~0.6s total, Actual before fix: ~8.0s

@@ -17,7 +17,6 @@ import os
 import re
 import subprocess
 import threading
-import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from iris_vector_rag.common.exceptions import ValidationError
@@ -45,8 +44,10 @@ def _get_iris_dbapi_module():
 
     try:
         import iris
-        if hasattr(iris, "connect"):
+        if hasattr(iris, "createConnection"):
             return iris
+        if hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
+            return iris.dbapi
             
         import importlib.util
         iris_dir = os.path.dirname(iris.__file__)
@@ -63,14 +64,18 @@ def _get_iris_dbapi_module():
                     import iris.dbapi as iris_dbapi
                     return iris_dbapi
                 except ImportError:
-                    return iris
+                    if hasattr(iris, "createConnection"):
+                        return iris
+                    return None
     except Exception as e:
         logger.error(f"Deep IRIS import fix failed: {e}")
 
     try:
         import iris
-        if hasattr(iris, "connect"):
+        if hasattr(iris, "createConnection"):
             return iris
+        if hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
+            return iris.dbapi
     except ImportError:
         pass
 
@@ -91,7 +96,8 @@ def auto_detect_iris_port() -> Optional[int]:
                     match = re.search(r"0\.0\.0\.0:(\d+)->1972/tcp", line)
                     if match:
                         return int(match.group(1))
-    except Exception: pass
+    except Exception:
+        pass
 
     try:
         result = subprocess.run(["iris", "list"], capture_output=True, text=True, timeout=5)
@@ -102,8 +108,10 @@ def auto_detect_iris_port() -> Optional[int]:
                     for j in range(i + 1, min(i + 5, len(lines))):
                         if "SuperServers:" in lines[j]:
                             match = re.search(r"SuperServers:\s+(\d+)", lines[j])
-                            if match: return int(match.group(1))
-    except Exception: pass
+                            if match:
+                                return int(match.group(1))
+    except Exception:
+        pass
     return None
 
 
@@ -130,7 +138,8 @@ def _get_connection_params_from_env() -> Dict[str, Any]:
 
 def detect_iris_edition() -> Tuple[str, int]:
     global _edition_cache
-    if _edition_cache is not None: return _edition_cache
+    if _edition_cache is not None:
+        return _edition_cache
     backend_mode = os.environ.get("IRIS_BACKEND_MODE", "").lower()
     if backend_mode in ("community", "enterprise"):
         max_connections = 1 if backend_mode == "community" else 999
@@ -150,7 +159,8 @@ def _hard_fix_iris_passwords(host: str, port: int):
                 if str(port) in line and "tcp" in line:
                     container_name = line.split("\t")[0].strip()
                     break
-        if not container_name: return False
+        if not container_name:
+            return False
         logger.info(f"Bypassing IRIS hardening for: {container_name}")
         cmds = [
             'Set user = ##class(Security.Users).%OpenId("SuperUser")',
@@ -165,7 +175,8 @@ def _hard_fix_iris_passwords(host: str, port: int):
         ]
         subprocess.run(["docker", "exec", "-i", container_name, "iris", "session", "IRIS", "-U", "%SYS"], input="\n".join(cmds).encode(), capture_output=True, timeout=15)
         return True
-    except Exception: return False
+    except Exception:
+        return False
 
 
 def get_iris_connection(
@@ -176,7 +187,11 @@ def get_iris_connection(
     password: Optional[str] = None,
 ) -> Any:
     env = _get_connection_params_from_env()
-    h, p, n, u, pwd = host or env["host"], port or env["port"], namespace or env["namespace"], username or env["username"], password or env["password"]
+    h = env["host"] if host is None else host
+    p = env["port"] if port is None else port
+    n = env["namespace"] if namespace is None else namespace
+    u = env["username"] if username is None else username
+    pwd = env["password"] if password is None else password
     _validate_connection_params(h, p, n, u, pwd)
     cache_key = (h, p, n, u)
 
@@ -191,24 +206,40 @@ def get_iris_connection(
                     cursor.close()
                     return conn
                 except Exception:
-                    try: conn.close()
-                    except: pass
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
                     del _connection_cache[cache_key]
 
             iris_mod = _get_iris_dbapi_module()
-            if iris_mod is None: raise ConnectionError("Cannot import IRIS DBAPI module")
+            if iris_mod is None:
+                raise ConnectionError("Cannot import IRIS DBAPI module")
 
             try:
-                conn = iris_mod.connect(hostname=h, port=p, namespace=n, username=u, password=pwd)
+                if hasattr(iris_mod, "createConnection"):
+                    conn = iris_mod.createConnection(h, p, n, u, pwd)
+                else:
+                    conn = iris_mod.connect(
+                        hostname=h,
+                        port=p,
+                        namespace=n,
+                        username=u,
+                        password=pwd,
+                    )
                 _connection_cache[cache_key] = conn
                 logger.info(f"✅ Connected to IRIS at {h}:{p}/{n}")
                 return conn
             except Exception as e:
                 msg = str(e).lower()
                 if ("password change required" in msg or "expired" in msg) and attempt == 0:
-                    if _hard_fix_iris_passwords(h, p): continue
-                if attempt == 1: raise ConnectionError(f"IRIS connection failed: {e}") from e
-    return None # Should not be reachable
+                    if _hard_fix_iris_passwords(h, p):
+                        continue
+                    if attempt == 1:
+                        raise ConnectionError(
+                            f"IRIS connection failed to {h}:{p}/{n}: {e} (check configuration)"
+                        ) from e
+    return None  # Should not be reachable
 
 
 class IRISConnectionPool:
@@ -237,28 +268,39 @@ class IRISConnectionPool:
             raise queue.Empty(f"Connection pool exhausted (timeout={timeout}s)")
 
     def release(self, connection):
-        try: self._available_connections.put_nowait(connection)
-        except: pass
+        try:
+            self._available_connections.put_nowait(connection)
+        except Exception:
+            pass
 
 
     def close_all(self):
         with self._lock:
             for conn in self._all_connections:
-                try: conn.close()
-                except: pass
+                try:
+                    conn.close()
+                except Exception:
+                    pass
             self._all_connections.clear()
             while not self._available_connections.empty():
-                try: self._available_connections.get_nowait()
-                except: break
+                try:
+                    self._available_connections.get_nowait()
+                except Exception:
+                    break
 
-    def __enter__(self): return self
-    def __exit__(self, exc_type, exc_val, exc_tb): self.close_all()
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close_all()
 
 
 class _PooledConnection:
     def __init__(self, pool: IRISConnectionPool, connection):
         self._pool, self._connection = pool, connection
-    def __enter__(self): return self._connection
+
+    def __enter__(self):
+        return self._connection
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._pool.release(self._connection)
         return False

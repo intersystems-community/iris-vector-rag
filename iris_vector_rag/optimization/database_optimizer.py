@@ -8,7 +8,7 @@ achieve sub-200ms GraphRAG response times.
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager

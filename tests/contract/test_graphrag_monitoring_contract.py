@@ -12,10 +12,7 @@ Monitoring targets from spec.md:
 """
 
 import pytest
-import time
-import json
-from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 
 
 class TestGraphRAGMonitoringContract:

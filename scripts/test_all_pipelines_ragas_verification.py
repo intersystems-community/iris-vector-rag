@@ -8,9 +8,8 @@ import json
 import logging
 import os
 import sys
-import traceback
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 # Add paths for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -53,7 +52,7 @@ class ComprehensivePipelineRAGASTest:
         for pipeline_name, (module_name, class_name) in pipeline_imports.items():
             try:
                 module = __import__(module_name, fromlist=[class_name])
-                pipeline_class = getattr(module, class_name)
+                getattr(module, class_name)
                 results[pipeline_name] = True
                 logger.info(f"  ✓ {pipeline_name}: Import successful")
             except ImportError as e:
@@ -435,7 +434,7 @@ class ComprehensivePipelineRAGASTest:
 
         # Overall status
         overall = summary["overall_status"]
-        logger.info(f"\n🏆 OVERALL VERIFICATION STATUS:")
+        logger.info("\n🏆 OVERALL VERIFICATION STATUS:")
         logger.info(
             f"   • All pipelines clean: {'✓' if overall['all_pipelines_clean'] else '✗'}"
         )

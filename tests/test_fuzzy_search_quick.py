@@ -83,7 +83,7 @@ def test_fuzzy_search():
     if results:
         print(f"   ✅ Found match: {results[0]['entity_name']}")
     else:
-        print(f"   ⚠️  No match found (may need fuzzy=True)")
+        print("   ⚠️  No match found (may need fuzzy=True)")
     print()
 
     # Test 6: Entity type filtering
@@ -112,6 +112,6 @@ if __name__ == "__main__":
         test_fuzzy_search()
     except Exception as e:
         print(f"❌ Error: {e}")
-        print(f"\nMake sure IRIS database is running: docker-compose up -d")
+        print("\nMake sure IRIS database is running: docker-compose up -d")
         import traceback
         traceback.print_exc()

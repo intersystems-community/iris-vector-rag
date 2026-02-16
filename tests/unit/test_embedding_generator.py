@@ -8,7 +8,7 @@ Reference: specs/047-create-a-unified/tasks.md (T051)
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import numpy as np
 
 
@@ -107,11 +107,11 @@ class TestEmbeddingGeneratorConstructor:
         mock_model = Mock()
         mock_model.encode = Mock(return_value=np.array([[0.1] * 512]))  # Different dimension to test validation
 
-        with patch('sentence_transformers.SentenceTransformer', return_value=mock_model) as mock_st:
+        with patch('sentence_transformers.SentenceTransformer', return_value=mock_model):
             # This will raise DimensionMismatchError because model returns 512 but we expect 384
             from tests.fixtures.embedding_generator import DimensionMismatchError
             with pytest.raises(DimensionMismatchError):
-                generator = EmbeddingGenerator(model_name="test-model", dimension=384)
+                EmbeddingGenerator(model_name="test-model", dimension=384)
 
 
 # ==============================================================================

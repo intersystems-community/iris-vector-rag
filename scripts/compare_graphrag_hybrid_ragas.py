@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 RAGAS Comparison: GraphRAG vs HybridGraphRAG
 
@@ -20,13 +21,12 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from evaluation_framework.ragas_metrics_framework import BiomedicalRAGASFramework
 from scripts.data_loaders.pmc_loader import SAMPLE_QUERIES
 
 # Import RAGAS framework
@@ -122,7 +122,7 @@ class GraphRAGHybridComparison:
             for query in test_queries:
                 start_time = time.perf_counter()
                 try:
-                    result = graphrag.query(
+                    graphrag.query(
                         query, method="kg", top_k=5, generate_answer=False
                     )
                     end_time = time.perf_counter()
@@ -163,7 +163,7 @@ class GraphRAGHybridComparison:
                     for query in test_queries:
                         start_time = time.perf_counter()
                         try:
-                            result = hybrid_graphrag.query(
+                            hybrid_graphrag.query(
                                 query, method=method, top_k=5, generate_answer=False
                             )
                             end_time = time.perf_counter()
@@ -328,7 +328,7 @@ class GraphRAGHybridComparison:
         print(f"📊 Queries Tested: {results['num_queries_tested']}")
 
         # Performance Summary
-        print(f"\n⚡ PERFORMANCE ANALYSIS:")
+        print("\n⚡ PERFORMANCE ANALYSIS:")
         timing = results["timing_analysis"]
         if timing["GraphRAG"]["available"]:
             print(f"   GraphRAG Average: {timing['GraphRAG']['avg_time']:.1f}ms")
@@ -352,7 +352,7 @@ class GraphRAGHybridComparison:
                 print(f"   ⚠️  Performance Change: {abs(improvement):.1f}% slower")
 
         # RAGAS Quality Summary
-        print(f"\n📈 RAGAS QUALITY METRICS:")
+        print("\n📈 RAGAS QUALITY METRICS:")
         ragas = results["ragas_evaluation"]
         pipeline_metrics = ragas.get("pipeline_metrics", {})
 
@@ -368,13 +368,13 @@ class GraphRAGHybridComparison:
                 print(f"   📊 Quality Change: {abs(improvement):.1f}% different")
 
         # Capabilities Summary
-        print(f"\n🛠️  CAPABILITIES COMPARISON:")
+        print("\n🛠️  CAPABILITIES COMPARISON:")
         capabilities = summary["capabilities_comparison"]
         for pipeline, caps in capabilities.items():
             print(f"   {pipeline}: {', '.join(caps)}")
 
         # Recommendations
-        print(f"\n💡 RECOMMENDATIONS:")
+        print("\n💡 RECOMMENDATIONS:")
         if results["iris_graph_core_available"]:
             print("   ✅ Use HybridGraphRAG for enhanced search capabilities")
             print("   ✅ Consider 'hybrid' or 'rrf' methods for best performance")

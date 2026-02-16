@@ -6,7 +6,7 @@ special handling for ID normalization in multi-hop datasets.
 """
 
 import re
-from typing import Any, List, Set, Union, Collection
+from typing import List, Collection
 
 
 class MetricsCalculator:

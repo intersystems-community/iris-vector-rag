@@ -8,8 +8,7 @@ to ensure they can be imported and initialized correctly.
 
 import logging
 import sys
-import traceback
-from typing import Any, Dict
+from typing import Dict
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +32,7 @@ def test_module_imports() -> Dict[str, bool]:
     for module_name in modules_to_test:
         try:
             logger.info(f"Testing import of {module_name}...")
-            module = __import__(module_name)
+            __import__(module_name)
             results[module_name] = True
             logger.info(f"✓ {module_name} imported successfully")
         except Exception as e:
@@ -56,7 +55,7 @@ def test_component_initialization() -> Dict[str, bool]:
         )
 
         config = QuestionGenerationConfig(total_questions=5, min_confidence_score=0.5)
-        generator = create_biomedical_question_generator(config)
+        create_biomedical_question_generator(config)
         results["biomedical_question_generator"] = True
         logger.info("✓ Biomedical question generator initialized")
 
@@ -69,7 +68,7 @@ def test_component_initialization() -> Dict[str, bool]:
         logger.info("Testing RAGAS metrics framework initialization...")
         from ragas_metrics_framework import create_biomedical_ragas_framework
 
-        framework = create_biomedical_ragas_framework()
+        create_biomedical_ragas_framework()
         results["ragas_metrics_framework"] = True
         logger.info("✓ RAGAS metrics framework initialized")
 
@@ -82,7 +81,7 @@ def test_component_initialization() -> Dict[str, bool]:
         logger.info("Testing statistical evaluation methodology initialization...")
         from statistical_evaluation_methodology import create_statistical_framework
 
-        stats_framework = create_statistical_framework()
+        create_statistical_framework()
         results["statistical_evaluation_methodology"] = True
         logger.info("✓ Statistical evaluation methodology initialized")
 
@@ -95,7 +94,7 @@ def test_component_initialization() -> Dict[str, bool]:
         logger.info("Testing comparative analysis system initialization...")
         from comparative_analysis_system import create_comparative_analysis_system
 
-        analysis_system = create_comparative_analysis_system()
+        create_comparative_analysis_system()
         results["comparative_analysis_system"] = True
         logger.info("✓ Comparative analysis system initialized")
 
@@ -109,7 +108,7 @@ def test_component_initialization() -> Dict[str, bool]:
         from pmc_data_pipeline import PMCProcessingConfig, create_pmc_data_pipeline
 
         config = PMCProcessingConfig(max_documents=10, batch_size=5)
-        pipeline = create_pmc_data_pipeline(config)
+        create_pmc_data_pipeline(config)
         results["pmc_data_pipeline"] = True
         logger.info("✓ PMC data pipeline initialized")
 
@@ -122,7 +121,7 @@ def test_component_initialization() -> Dict[str, bool]:
         logger.info("Testing empirical reporting framework initialization...")
         from empirical_reporting import create_empirical_reporting_framework
 
-        reporting = create_empirical_reporting_framework()
+        create_empirical_reporting_framework()
         results["empirical_reporting"] = True
         logger.info("✓ Empirical reporting framework initialized")
 
@@ -160,7 +159,7 @@ def test_basic_functionality() -> Dict[str, bool]:
 
         # This might fail due to missing models, but we just test the interface
         try:
-            questions = generator.generate_questions_from_documents(test_documents)
+            generator.generate_questions_from_documents(test_documents)
             results["question_generation_functionality"] = True
             logger.info("✓ Question generation functionality works")
         except Exception as e:
@@ -186,7 +185,7 @@ def test_basic_functionality() -> Dict[str, bool]:
             "pipeline_B": np.random.normal(0.6, 0.1, 50),
         }
 
-        power_result = stats_framework.conduct_power_analysis(test_data, "faithfulness")
+        stats_framework.conduct_power_analysis(test_data, "faithfulness")
         results["statistical_functionality"] = True
         logger.info("✓ Statistical framework functionality works")
 

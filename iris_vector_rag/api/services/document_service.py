@@ -10,7 +10,6 @@ import asyncio
 from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime
-from pathlib import Path
 
 from iris_vector_rag.api.models.upload import (
     DocumentUploadOperation,

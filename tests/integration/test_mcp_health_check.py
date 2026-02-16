@@ -129,7 +129,7 @@ class TestMCPHealthCheck:
         bridge = MCPBridge()
 
         start = time.time()
-        result = await bridge.health_check()
+        await bridge.health_check()
         elapsed_ms = (time.time() - start) * 1000
 
         assert elapsed_ms < 500, \

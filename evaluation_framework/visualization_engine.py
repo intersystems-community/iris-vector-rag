@@ -3,16 +3,13 @@ RAG Evaluation Visualization Engine
 Creates beautiful interactive HTML reports with spider charts and performance dashboards
 """
 
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 import numpy as np
-import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import plotly.offline as pyo
 from plotly.subplots import make_subplots

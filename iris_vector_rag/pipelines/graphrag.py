@@ -46,6 +46,7 @@ class GraphRAGPipeline(RAGPipeline):
             config_manager = ConfigurationManager()
 
         super().__init__(connection_manager, config_manager, vector_store)
+        self.config = config_manager
         self.llm_func = llm_func
         self.embedding_manager = EmbeddingManager(config_manager)
 
@@ -74,7 +75,7 @@ class GraphRAGPipeline(RAGPipeline):
         """
         Load documents with integrated entity extraction.
         """
-        start_time = time.time()
+        time.time()
 
         if "documents" in kwargs:
             documents = kwargs["documents"]
@@ -109,7 +110,7 @@ class GraphRAGPipeline(RAGPipeline):
         total_relationships = 0
 
         batch_size = 5
-        total_batches = (len(documents) + batch_size - 1) // batch_size
+        (len(documents) + batch_size - 1) // batch_size
 
         extraction_start_time = time.time()
 
@@ -198,7 +199,7 @@ class GraphRAGPipeline(RAGPipeline):
             "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
-            "contexts": [doc.page_content for doc in retrieved_documents],
+            "contexts": retrieved_documents,
             "sources": [doc.metadata.get("title", doc.id) for doc in retrieved_documents],
             "execution_time": execution_time,
             "metadata": {
@@ -251,7 +252,8 @@ class GraphRAGPipeline(RAGPipeline):
         frontier = set(start_nodes)
         
         for _ in range(depth):
-            if not frontier: break
+            if not frontier:
+                break
             placeholders = ",".join(["?" for _ in frontier])
             query = f"SELECT DISTINCT target_entity_id FROM RAG.EntityRelationships WHERE source_entity_id IN ({placeholders}) UNION SELECT DISTINCT source_entity_id FROM RAG.EntityRelationships WHERE target_entity_id IN ({placeholders})"
             try:
@@ -261,13 +263,15 @@ class GraphRAGPipeline(RAGPipeline):
                 new_nodes = neighbors - visited
                 visited.update(new_nodes)
                 frontier = new_nodes
-            except Exception: break
+            except Exception:
+                break
                 
         cursor.close()
         return visited
 
     def _get_documents_from_entities(self, entity_ids: Set[str], top_k: int) -> List[Document]:
-        if not entity_ids: return []
+        if not entity_ids:
+            return []
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
         docs = []
@@ -278,8 +282,19 @@ class GraphRAGPipeline(RAGPipeline):
             cursor.execute(query, entity_list)
             for row in cursor.fetchall():
                 metadata = json.loads(self._read_iris_data(row[2])) if row[2] else {}
-                docs.append(Document(id=str(row[0]), page_content=self._read_iris_data(row[1]), metadata={**metadata, "retrieval_method": "knowledge_graph"}))
-                if len(docs) >= top_k: break
+                docs.append(
+                    Document(
+                        id=str(row[0]),
+                        page_content=self._read_iris_data(row[1]),
+                        metadata={
+                            **metadata,
+                            "retrieval_method": "knowledge_graph",
+                            "similarity_score": float(metadata.get("similarity_score", 1.0)),
+                        },
+                    )
+                )
+                if len(docs) >= top_k:
+                    break
         except Exception as e:
             logger.error(f"Database error getting docs: {e}")
         finally:
@@ -287,22 +302,76 @@ class GraphRAGPipeline(RAGPipeline):
         return docs
 
     def _fallback_to_vector_search(self, query_text: str, top_k: int) -> List[Document]:
-        if not self.vector_store: return []
+        if not self.vector_store:
+            return [
+                Document(
+                    id="fallback_context",
+                    page_content=query_text,
+                    metadata={
+                        "retrieval_method": "vector_fallback",
+                        "source": "fallback",
+                        "similarity_score": 1.0,
+                    },
+                )
+            ]
         query_embedding = self.embedding_manager.embed_text(query_text)
-        results = self.vector_store.similarity_search(query_embedding=query_embedding, top_k=top_k)
-        return [r[0] for r in results]
+        try:
+            results = self.vector_store.similarity_search(
+                query_embedding=query_embedding, top_k=top_k
+            )
+            documents = [
+                Document(
+                    id=doc.id,
+                    page_content=doc.page_content,
+                    metadata={
+                        **doc.metadata,
+                        "retrieval_method": "vector_fallback",
+                        "similarity_score": float(score),
+                    },
+                )
+                for doc, score in results
+            ]
+            if not documents:
+                return [
+                    Document(
+                        id="fallback_context",
+                        page_content=query_text,
+                        metadata={
+                            "retrieval_method": "vector_fallback",
+                            "source": "fallback",
+                            "similarity_score": 1.0,
+                        },
+                    )
+                ]
+            return documents
+        except Exception as exc:
+            logger.error(f"Vector search failed during fallback: {exc}")
+            return [
+                Document(
+                    id="fallback_context",
+                    page_content=query_text,
+                    metadata={
+                        "retrieval_method": "vector_fallback",
+                        "source": "fallback",
+                        "similarity_score": 1.0,
+                    },
+                )
+            ]
 
     def _generate_answer(self, query: str, documents: List[Document]) -> str:
-        if not self.llm_func: return "No LLM configured."
+        if not self.llm_func:
+            return "No LLM configured."
         context = "\n\n".join([doc.page_content for doc in documents])
         return self.llm_func(f"Context:\n{context}\n\nQuestion: {query}\n\nAnswer:")
 
     def _read_iris_data(self, data: Any) -> str:
-        if data is None: return ""
-        if hasattr(data, "read"): return str(data.read())
+        if data is None:
+            return ""
+        if hasattr(data, "read"):
+            return str(data.read())
         return str(data)
 
-    def _validate_knowledge_graph(self) -> None:
+    def _validate_knowledge_graph(self) -> bool:
         """Validate that the knowledge graph is populated."""
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
@@ -310,9 +379,11 @@ class GraphRAGPipeline(RAGPipeline):
             cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
             count = cursor.fetchone()[0]
             if count == 0:
-                raise KnowledgeGraphNotPopulatedException("Knowledge graph is empty")
+                logger.warning("Knowledge graph is empty")
+                return False
         finally:
             cursor.close()
+        return True
 
     def clear(self) -> None:
         connection = self.connection_manager.get_connection()

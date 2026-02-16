@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Test vector search directly to understand why retrieval returns empty results.
 """
@@ -83,7 +84,7 @@ def test_vector_search():
             try:
                 # This is the typical IRIS vector search syntax
                 cursor.execute(
-                    f"""
+                    """
                     SELECT TOP 5 
                         doc_id,
                         VECTOR_DOT_PRODUCT(embedding, TO_VECTOR(?)) as similarity

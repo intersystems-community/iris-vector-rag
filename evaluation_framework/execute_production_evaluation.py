@@ -17,7 +17,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 # Add framework paths
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -29,7 +29,6 @@ from evaluation_orchestrator import EvaluationExperimentConfig, EvaluationOrches
 # Production imports
 from production_evaluation_config import (
     ProductionEvaluationConfig,
-    ProductionExecutionOrchestrator,
 )
 
 # Pipeline imports - using correct class names
@@ -129,7 +128,7 @@ def validate_production_environment(logger: logging.Logger) -> bool:
     try:
         from ragas_metrics_framework import create_biomedical_ragas_framework
 
-        ragas_framework = create_biomedical_ragas_framework()
+        create_biomedical_ragas_framework()
         logger.info("✅ RAGAS Framework: Ready")
     except Exception as e:
         logger.error(f"❌ RAGAS Framework: Failed - {e}")
@@ -138,14 +137,14 @@ def validate_production_environment(logger: logging.Logger) -> bool:
     try:
         from biomedical_question_generator import create_biomedical_question_generator
 
-        question_generator = create_biomedical_question_generator()
+        create_biomedical_question_generator()
         logger.info("✅ Question Generator: Ready")
     except Exception as e:
         logger.error(f"❌ Question Generator: Failed - {e}")
         validation_passed = False
 
     try:
-        reporting_framework = create_empirical_reporting_framework()
+        create_empirical_reporting_framework()
         logger.info("✅ Empirical Reporting: Ready")
     except Exception as e:
         logger.error(f"❌ Empirical Reporting: Failed - {e}")

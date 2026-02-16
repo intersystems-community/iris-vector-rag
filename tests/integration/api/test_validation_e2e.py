@@ -147,7 +147,6 @@ class TestValidationErrorHandling:
         """
         response = client.post(
             "/api/v1/basic/_search",
-            headers=auth_header,
             data="not valid json{{{",  # Malformed JSON
             headers={**auth_header, "Content-Type": "application/json"}
         )

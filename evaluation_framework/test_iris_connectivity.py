@@ -7,8 +7,7 @@ This test ensures the framework can connect to IRIS before proceeding with evalu
 import logging
 import os
 import sys
-import traceback
-from typing import Any, Dict, Optional
+from typing import Dict
 
 # Add paths for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -32,7 +31,7 @@ class IRISConnectivityTest:
         """Test if IRIS Python modules can be imported."""
         try:
             logger.info("Testing IRIS intersystems-irispython import...")
-            import iris
+            import iris  # noqa: F401
 
             logger.info("✓ IRIS module imported successfully")
             return True
@@ -47,7 +46,7 @@ class IRISConnectivityTest:
         """Test IRIS DBAPI connector from common utilities."""
         try:
             logger.info("Testing IRIS DBAPI connector...")
-            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection  # noqa: F401
 
             logger.info("✓ IRIS DBAPI connector imported successfully")
             return True
@@ -64,7 +63,7 @@ class IRISConnectivityTest:
             logger.info("Testing IRIS connection manager...")
             from iris_vector_rag.common.iris_connection_manager import IRISConnectionManager
 
-            manager = IRISConnectionManager()
+            IRISConnectionManager()
             logger.info("✓ IRIS connection manager initialized successfully")
             return True
         except ImportError as e:
@@ -117,7 +116,6 @@ class IRISConnectivityTest:
             pipelines_success = 0
 
             try:
-                from iris_vector_rag.pipelines.basic import BasicRAG
 
                 logger.info("✓ BasicRAG imported successfully")
                 pipelines_success += 1
@@ -126,7 +124,6 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_vector_rag.pipelines.crag import CRAG
 
                 logger.info("✓ CRAG imported successfully")
                 pipelines_success += 1
@@ -135,7 +132,6 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_vector_rag.pipelines.graphrag import GraphRAG
 
                 logger.info("✓ GraphRAG imported successfully")
                 pipelines_success += 1
@@ -144,7 +140,6 @@ class IRISConnectivityTest:
             pipelines_tested += 1
 
             try:
-                from iris_vector_rag.pipelines.basic_rerank import BasicRAGReranking
 
                 logger.info("✓ BasicRAGReranking imported successfully")
                 pipelines_success += 1

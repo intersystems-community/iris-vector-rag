@@ -11,7 +11,6 @@ Tests edge cases from spec:
 - Very short query strings
 """
 
-import pytest
 
 
 class TestSearchEntitiesEdgeCases:

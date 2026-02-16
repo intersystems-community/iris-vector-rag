@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Complete Workflow Testing from Clean IRIS
 
@@ -64,7 +65,7 @@ def test_complete_workflow(verbose: bool = False):
             log(f"   ✅ Pipeline created ({creation_time:.2f}s)", "success")
 
             # Step 2: Data Ingestion
-            log(f"Step 2: Loading test documents...", "info")
+            log("Step 2: Loading test documents...", "info")
             data_start = time.time()
 
             mock_data = MockDataProvider()
@@ -86,7 +87,7 @@ def test_complete_workflow(verbose: bool = False):
             )
 
             # Step 3: Query Testing
-            log(f"Step 3: Testing query functionality...", "info")
+            log("Step 3: Testing query functionality...", "info")
             query_start = time.time()
 
             test_queries = [
@@ -127,7 +128,7 @@ def test_complete_workflow(verbose: bool = False):
             )
 
             # Step 4: Validation
-            log(f"Step 4: Validating results...", "info")
+            log("Step 4: Validating results...", "info")
 
             validation_checks = {
                 "pipeline_created": pipeline is not None,
@@ -168,7 +169,7 @@ def test_complete_workflow(verbose: bool = False):
                 )
 
             if verbose:
-                log(f"   Validation details:", "info")
+                log("   Validation details:", "info")
                 for check, passed in validation_checks.items():
                     status = "✅" if passed else "❌"
                     log(f"     {status} {check}", "info")
@@ -275,7 +276,7 @@ def test_framework_resilience():
         # Test 2: Invalid query handling
         log("Test 2: Invalid query handling...", "info")
         try:
-            result = pipeline.query("", generate_answer=True)
+            pipeline.query("", generate_answer=True)
             resilience_tests["invalid_queries"] = True
             log("   ✅ Invalid query handling successful", "success")
         except Exception as e:

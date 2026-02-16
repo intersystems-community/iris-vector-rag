@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Production Readiness Test with Auto-Setup
 
@@ -12,13 +13,14 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-import iris_vector_rag
+import iris_vector_rag as iris_rag
+
 from common.utils import get_llm_func
 
 

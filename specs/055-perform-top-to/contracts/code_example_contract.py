@@ -106,7 +106,7 @@ def test_readme_examples_use_valid_imports():
                         if not any(p.exists() for p in possible_paths):
                             invalid_imports.append((line_num, module, "Module file not found"))
 
-        except Exception as e:
+        except Exception:
             # Skip if we can't parse (will be caught by syntax test)
             pass
 
@@ -167,7 +167,7 @@ def test_readme_create_pipeline_examples_match_api():
                                 valid_types = ['basic', 'basic_rerank', 'crag', 'graphrag', 'multi_query_rrf', 'pylate_colbert']
                                 if pipeline_type not in valid_types:
                                     api_violations.append((line_num, f"Unknown pipeline type: {pipeline_type}"))
-            except:
+            except Exception:
                 pass  # Syntax errors caught elsewhere
 
     assert len(api_violations) == 0, \

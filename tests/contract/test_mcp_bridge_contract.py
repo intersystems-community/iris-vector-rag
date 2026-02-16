@@ -9,8 +9,8 @@ Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
+import importlib.util
 import pytest
-from typing import Dict, Any, List
 
 
 class TestMCPBridgeContract:
@@ -18,11 +18,8 @@ class TestMCPBridgeContract:
 
     def test_bridge_module_exists(self):
         """Verify iris_rag.mcp.bridge module can be imported."""
-        try:
-            import iris_vector_rag.mcp.bridge
-            assert True
-        except ImportError as e:
-            pytest.fail(f"MCPBridge module not found: {e}")
+        if importlib.util.find_spec("iris_vector_rag.mcp.bridge") is None:
+            pytest.fail("MCPBridge module not found")
 
     def test_bridge_class_exists(self):
         """Verify MCPBridge class exists in module."""

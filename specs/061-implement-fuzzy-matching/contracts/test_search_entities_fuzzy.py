@@ -8,7 +8,6 @@ Tests acceptance scenarios:
 - Scenario 8: Spelling variations (color vs colour)
 """
 
-import pytest
 
 
 class TestSearchEntitiesFuzzy:

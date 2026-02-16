@@ -12,7 +12,7 @@ from uuid import UUID
 
 import bcrypt
 from fastapi import Request, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 

@@ -9,7 +9,7 @@ import os
 import subprocess
 import time
 import logging
-from typing import Optional, Tuple
+from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -136,24 +136,15 @@ class IRISPasswordResetHandler:
         Returns:
             Tuple of (success, message)
         """
-        try:
-            import requests
+        # Get management portal URL
+        os.environ.get("IRIS_HOST", "localhost")
+        os.environ.get("IRIS_MGMT_PORT", "52773")
 
-            # Get management portal URL
-            host = os.environ.get("IRIS_HOST", "localhost")
-            mgmt_port = os.environ.get("IRIS_MGMT_PORT", "52773")
+        # Try to reset via REST API
+        # Note: This requires the Management Portal to be accessible
 
-            # Try to reset via REST API
-            # Note: This requires the Management Portal to be accessible
-            url = f"http://{host}:{mgmt_port}/api/mgmnt/v1/user/password"
-
-            # This is a simplified approach - actual implementation would need proper auth
-            return False, "Management Portal API password reset not implemented. Use Docker exec method."
-
-        except ImportError:
-            return False, "requests package not available"
-        except Exception as e:
-            return False, f"Management Portal reset failed: {str(e)}"
+        # This is a simplified approach - actual implementation would need proper auth
+        return False, "Management Portal API password reset not implemented. Use Docker exec method."
 
     def auto_remediate_password_issue(self, error: Exception) -> bool:
         """
@@ -182,7 +173,7 @@ class IRISPasswordResetHandler:
             logger.error(f"✗ {message}")
             logger.error("Manual intervention required:")
             logger.error(f"  1. docker exec -it {self.container_name} bash")
-            logger.error(f"  2. iris session IRIS -U %SYS")
+            logger.error("  2. iris session IRIS -U %SYS")
             logger.error(f"  3. Do ##class(Security.Users).ChangePassword('{self.default_user}','{self.default_password}')")
             return False
 
@@ -219,7 +210,7 @@ if __name__ == "__main__":
     success, message = handler.reset_iris_password()
 
     print(f"\n{'='*60}")
-    print(f"Password Reset Test")
+    print("Password Reset Test")
     print(f"{'='*60}")
     print(f"Result: {'SUCCESS' if success else 'FAILED'}")
     print(f"Message: {message}")

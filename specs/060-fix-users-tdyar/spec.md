@@ -6,7 +6,7 @@
 **Status**: Draft
 **Input**:
 1. Bug Report: "/Users/tdyar/ws/hipporag2-pipeline/BUG_REPORT_IRIS_VECTOR_RAG_PPR_SCHEMA.md"
-2. FHIR-AI v0.5.3 Testing Feedback: "iris.connect() AttributeError in iris_dbapi_connector.py line 210"
+2. v0.5.3 Testing Feedback: "iris.connect() AttributeError in iris_dbapi_connector.py line 210"
 
 ## Overview
 
@@ -42,7 +42,7 @@ As a data processing pipeline operator, when I install iris-vector-graph to enab
 
 5. **Given** iris-vector-graph is installed and PPR retrieval is requested, **When** the system attempts to compute personalized page rank scores, **Then** the operation succeeds without "Table not found" errors
 
-6. **Given** iris-vector-graph is NOT installed and a pipeline is initialized, **When** the pipeline setup runs, **Then** the system proceeds normally without attempting to create graph tables
+6. **Given** iris-vector-graph is NOT installed and a GraphRAG pipeline is initialized, **When** the pipeline setup runs, **Then** the system raises a clear ImportError indicating that iris-vector-graph is required for GraphRAG functionality
 
 7. **Given** iris-vector-graph is installed but table creation fails, **When** the initialization error occurs, **Then** the system provides a clear error message indicating which tables failed to initialize and why
 
@@ -75,14 +75,14 @@ As a data processing pipeline operator, when I install iris-vector-graph to enab
 **Automatic Detection and Initialization (Bug 2):**
 - **FR-005**: System MUST automatically detect when iris-vector-graph package is installed in the Python environment
 - **FR-006**: System MUST automatically create all required graph tables (rdf_labels, rdf_props, rdf_edges, kg_NodeEmbeddings_optimized) during pipeline initialization when iris-vector-graph is detected
-- **FR-007**: System MUST skip graph table creation when iris-vector-graph is not installed without raising errors
+- **FR-007**: System MUST fail with a clear error message when GraphRAG pipeline is used without iris-vector-graph installed
 - **FR-008**: System MUST verify that all required tables exist before attempting Personalized PageRank operations
 
 **Error Handling and Feedback:**
 - **FR-009**: System MUST provide clear error messages when table creation fails, indicating which specific table(s) failed and the underlying database error
 - **FR-010**: System MUST log successful graph table initialization with confirmation of which tables were created
 - **FR-011**: System MUST fail fast with a descriptive error (not silent fallback) when PPR is requested but required tables are missing
-- **FR-012**: System MUST distinguish between "iris-vector-graph not installed" (expected) and "tables missing but should exist" (error condition)
+- **FR-012**: System MUST treat "iris-vector-graph not installed" as an error condition when GraphRAG pipelines are used
 
 **Schema Management:**
 - **FR-013**: System MUST integrate graph table initialization into the existing SchemaManager initialization flow
@@ -98,12 +98,12 @@ As a data processing pipeline operator, when I install iris-vector-graph to enab
 
 **Measurable Outcomes:**
 1. **Connection Success**: 100% of connection attempts succeed without AttributeError (currently 0% in v0.5.3)
-2. **Test Pass Rate**: 6/6 FHIR-AI tests pass (currently 3/6 in v0.5.3)
+2. **Test Pass Rate**: All connection-related integration tests pass (ConnectionManager, IRISVectorStore, SchemaManager)
 3. **Table Creation Success**: 100% of required graph tables are created when iris-vector-graph is installed
 4. **Error Reduction**: Zero "Table not found" errors during PPR operations when iris-vector-graph is available
 5. **Silent Failure Elimination**: PPR failures are explicitly reported (not silent fallback to uniform scoring)
 6. **Initialization Time**: Graph table creation adds less than 5 seconds to pipeline initialization
-7. **Backward Compatibility**: Pipelines without iris-vector-graph continue to work exactly as before
+7. **Backward Compatibility**: Non-GraphRAG pipelines continue to work without iris-vector-graph; GraphRAG pipelines require it
 
 **Qualitative Measures:**
 1. **Framework Usability**: All database operations work correctly (ConnectionManager, IRISVectorStore, SchemaManager)
@@ -148,14 +148,14 @@ As a data processing pipeline operator, when I install iris-vector-graph to enab
 
 1. The `iris.connect()` method call at `iris_dbapi_connector.py:210` is the primary cause of connection failures in v0.5.3
 2. The SchemaManager already knows about graph table definitions (confirmed in schema_manager.py:1864)
-3. The iris-vector-graph package is an optional dependency (not required for core functionality)
+3. The iris-vector-graph package is a REQUIRED dependency for GraphRAG pipelines (hybrid_graphrag, hybrid_graphrag_discovery). The package is already declared as required in pyproject.toml's `hybrid-graphrag` optional dependency group.
 4. Users who install iris-vector-graph expect graph features to work automatically
 5. Database connection has sufficient permissions to create tables
 6. The CloudConfiguration API implemented in v0.5.3 for dimension reading should be preserved (it fixed the dimension bug)
 
 ### Constraints
 
-1. Must maintain backward compatibility with pipelines that don't use iris-vector-graph
+1. Must maintain backward compatibility with non-GraphRAG pipelines that don't use iris-vector-graph
 2. Cannot require manual database setup steps (must be automatic)
 3. Must work with existing SchemaManager table creation patterns
 4. Cannot introduce breaking changes to pipeline initialization API
@@ -172,14 +172,14 @@ As a data processing pipeline operator, when I install iris-vector-graph to enab
 
 ### External Dependencies
 - **intersystems-irispython>=5.1.2**: IRIS database driver with correct connection APIs
-- iris-vector-graph package (optional, detected at runtime for Bug 2 fix)
+- **iris-vector-graph**: Required for GraphRAG (HybridGraphRAG) pipelines; optional for non-GraphRAG pipelines
 - IRIS database with table creation permissions
 
 ## Success Metrics
 
 ### Primary Metrics
 - **Connection Success Rate**: Percentage of connection attempts that succeed (target: 100%, currently 0% in v0.5.3)
-- **Test Pass Rate**: Ratio of passing FHIR-AI tests (target: 6/6, currently 3/6 in v0.5.3)
+- **Test Pass Rate**: Ratio of passing connection-related integration tests (target: 100%)
 - **PPR Success Rate**: Percentage of PPR operations that succeed without table errors (target: 100% when iris-vector-graph is installed)
 - **Silent Failure Rate**: Number of silent fallbacks to uniform scoring (target: 0)
 - **Initialization Failures**: Number of table creation errors per 1000 pipeline setups (target: < 1)
@@ -189,6 +189,11 @@ As a data processing pipeline operator, when I install iris-vector-graph to enab
 - **Error Message Clarity**: Percentage of users who can diagnose issues from error messages alone (target: > 90%)
 - **Documentation Reduction**: Reduction in manual setup documentation needed (target: eliminate all database setup steps)
 - **Regression Prevention**: All v0.5.2 passing tests continue to pass in v0.5.4 (CloudConfiguration, environment variables, document model)
+
+## Clarifications
+
+### Session 2026-02-09
+- Q: What is the scope of iris-vector-graph as a required dependency? → A: Required for HybridGraphRAG pipelines only (other pipelines work without it)
 
 ## Out of Scope
 

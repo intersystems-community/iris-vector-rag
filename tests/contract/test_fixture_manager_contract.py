@@ -9,7 +9,6 @@ Contract Reference: specs/047-create-a-unified/contracts/fixture_manager_contrac
 """
 
 import pytest
-from pathlib import Path
 import time
 
 
@@ -112,7 +111,7 @@ class TestFixtureManagerConstructor:
         from tests.fixtures.manager import FixtureManager
 
         non_existent = tmp_path / "does_not_exist" / "fixtures"
-        manager = FixtureManager(fixtures_root=non_existent)
+        FixtureManager(fixtures_root=non_existent)
 
         assert non_existent.exists()
         assert non_existent.is_dir()
@@ -274,7 +273,7 @@ class TestScanFixtures:
         create_test_fixture("test-fixture")
 
         # First scan
-        manifest1 = fixture_manager.scan_fixtures()
+        fixture_manager.scan_fixtures()
 
         # Add another fixture
         create_test_fixture("new-fixture")

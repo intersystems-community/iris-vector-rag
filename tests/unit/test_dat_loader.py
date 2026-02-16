@@ -9,9 +9,8 @@ Reference: specs/047-create-a-unified/tasks.md (T099)
 
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 import tempfile
-import shutil
 
 
 @pytest.mark.unit
@@ -45,7 +44,7 @@ class TestDATFixtureLoaderIntegration:
         with patch.object(manager, '_validate_version_compatibility') as mock_validate:
             try:
                 manager._load_dat_fixture(fixture_dir, metadata)
-            except:
+            except Exception:
                 pass  # Ignore other errors, we just want to verify the call
 
             mock_validate.assert_called_once_with(metadata)
@@ -72,7 +71,6 @@ class TestDATFixtureLoaderIntegration:
         )
 
         # Use non-existent path to test graceful fallback
-        import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
             fixture_dir = Path(tmpdir) / "nonexistent"
 
@@ -92,7 +90,7 @@ class TestDATFixtureLoaderIntegration:
 
         manager = FixtureManager()
 
-        metadata = FixtureMetadata(
+        FixtureMetadata(
             name="test",
             version="1.0.0",
             description="Test",
@@ -198,7 +196,6 @@ class TestJSONFixtureLoading:
         """_load_json_fixture requires JSON file to exist."""
         from tests.fixtures.manager import FixtureManager, FixtureLoadError
         from tests.fixtures.models import FixtureMetadata
-        import tempfile
 
         manager = FixtureManager()
 
@@ -227,7 +224,6 @@ class TestJSONFixtureLoading:
         """_load_json_fixture handles invalid JSON gracefully."""
         from tests.fixtures.manager import FixtureManager, FixtureLoadError
         from tests.fixtures.models import FixtureMetadata
-        import tempfile
 
         manager = FixtureManager()
 

@@ -13,8 +13,6 @@ Reference: GRAPHRAG_BUGS_FIXED.md, GRAPHRAG_BUGS_REPORT.md, GRAPHRAG_BUG_5_API_K
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from iris_vector_rag.core.models import Document, Entity
 
 
 class TestBug1EntityExtractionEnabledFlag:

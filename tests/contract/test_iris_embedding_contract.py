@@ -12,7 +12,6 @@ vectorization APIs meet the documented requirements.
 
 import pytest
 from uuid import uuid4
-from typing import List, Dict, Any
 import time
 
 # These imports will fail initially - that's expected for TDD
@@ -96,11 +95,13 @@ class TestValidateEmbeddingConfig:
         When: validate(config) is called
         Then: Returns ValidationResult with valid=True
         """
+        import sys
+
         config = EmbeddingConfig(
             name="test_valid",
             model_name="sentence-transformers/all-MiniLM-L6-v2",
             hf_cache_path="/var/lib/huggingface",
-            python_path="/usr/bin/python3",
+            python_path=sys.executable,
             embedding_class="%Embedding.SentenceTransformers",
             batch_size=32,
             device_preference="auto"
@@ -119,11 +120,13 @@ class TestValidateEmbeddingConfig:
         When: validate(config) is called
         Then: Returns ValidationResult with valid=False and MODEL_NOT_FOUND error
         """
+        import sys
+
         config = EmbeddingConfig(
             name="test_missing_model",
             model_name="nonexistent-model/does-not-exist",
             hf_cache_path="/tmp/nonexistent_cache",
-            python_path="/usr/bin/python3",
+            python_path=sys.executable,
             embedding_class="%Embedding.SentenceTransformers",
             batch_size=32,
             device_preference="auto"
@@ -153,7 +156,7 @@ class TestGenerateEmbeddings:
         # Cleanup: clear cache after test
         try:
             clear_cache(self.config_name)
-        except:
+        except Exception:
             pass
 
     def test_embed_texts_cache_hit(self):
@@ -177,7 +180,7 @@ class TestGenerateEmbeddings:
         # Second call: should hit cache
         start_time = time.time()
         result2 = embed_texts(self.config_name, texts)
-        elapsed_ms = (time.time() - start_time) * 1000
+        (time.time() - start_time) * 1000
 
         # Verify cache hit
         assert len(result2.embeddings) == 2

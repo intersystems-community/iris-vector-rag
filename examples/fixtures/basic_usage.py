@@ -17,6 +17,8 @@ Run:
     IRIS_PORT=21972 python examples/fixtures/basic_usage.py
 """
 
+# ruff: noqa: E402
+
 import sys
 from pathlib import Path
 
@@ -104,7 +106,7 @@ def example_3_get_fixture_info():
         print(f"Created By: {metadata.created_by}")
         print(f"Checksum: {metadata.checksum}")
         print(f"Namespace: {metadata.namespace}")
-        print(f"\nTable Details:")
+        print("\nTable Details:")
         for table, count in metadata.row_counts.items():
             print(f"  {table:<40} {count:>6} rows")
 
@@ -145,7 +147,7 @@ def example_4_load_fixture():
 
     if result.success:
         print(result.summary())
-        print(f"\n Fixture loaded successfully!")
+        print("\n Fixture loaded successfully!")
     else:
         print(f" Fixture loading failed: {result.error_message}")
 
@@ -184,7 +186,7 @@ def example_5_load_with_embeddings():
     if result.success:
         print(f" Fixture loaded in {result.load_time_seconds:.2f}s")
         print(f" {result.rows_loaded} rows loaded")
-        print(f" Embeddings generated for:")
+        print(" Embeddings generated for:")
         for table in result.tables_loaded:
             print(f"  - {table}")
     else:

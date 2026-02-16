@@ -20,7 +20,6 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import statistics
 import sys
 import time
@@ -36,9 +35,9 @@ sys.path.insert(0, str(project_root))
 
 # Third-party imports with graceful fallback
 try:
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    import seaborn as sns
+    import matplotlib.pyplot as plt  # noqa: F401
+    import pandas as pd  # noqa: F401
+    import seaborn as sns  # noqa: F401
 
     VISUALIZATION_AVAILABLE = True
 except ImportError:
@@ -733,7 +732,7 @@ class GraphRAGTestHarness:
 
         report = self.comparison_report
 
-        file.write(f"# GraphRAG Implementation Comparison Report\n\n")
+        file.write("# GraphRAG Implementation Comparison Report\n\n")
         file.write(f"**Generated:** {report.timestamp}\n")
         file.write(f"**Test Suite:** {report.test_suite_name}\n\n")
 

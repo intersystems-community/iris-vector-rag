@@ -55,12 +55,13 @@ def check_environment():
     print()
 
     # Check iris_rag import
-    try:
-        import iris_vector_rag
-        print(f"  ✓ iris_rag installed")
-    except ImportError:
-        print(f"  ❌ iris_rag not found")
-        print(f"     Run: pip install -e /Users/intersystems-community/ws/rag-templates")
+    import importlib.util
+
+    if importlib.util.find_spec("iris_vector_rag"):
+        print("  ✓ iris_rag installed")
+    else:
+        print("  ❌ iris_rag not found")
+        print("     Run: pip install -e /Users/intersystems-community/ws/rag-templates")
         return False
 
     print()
@@ -335,7 +336,7 @@ def compare_approaches(question: str):
 
     if only_multi > 0:
         print(f"  ✨ Multi-query found {only_multi} additional relevant document(s)")
-        print(f"     that single query missed!")
+        print("     that single query missed!")
     print()
 
 
@@ -367,7 +368,7 @@ def main():
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM RAG.Documents")
         count = cursor.fetchone()[0]
-        print(f"  ✓ Connected to IRIS")
+        print("  ✓ Connected to IRIS")
         print(f"  ✓ Found {count:,} documents in RAG.Documents")
         cursor.close()
         print()

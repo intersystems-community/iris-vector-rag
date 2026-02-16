@@ -5,7 +5,7 @@ Supports HotpotQA, 2WikiMultiHopQA, and MuSiQue datasets via HuggingFace.
 """
 
 import logging
-from typing import Any, Dict, Iterator, List, Optional, Union, cast
+from typing import Any, Iterator, cast
 
 from datasets import load_dataset
 from iris_vector_rag.core.models import BenchmarkQuery

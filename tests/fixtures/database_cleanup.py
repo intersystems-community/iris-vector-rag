@@ -8,7 +8,6 @@ Implements T016 from Feature 028.
 import time
 from typing import Optional
 
-from tests.fixtures.database_state import TestDatabaseState, TestStateRegistry
 
 
 class DatabaseCleanupHandler:
@@ -40,31 +39,14 @@ class DatabaseCleanupHandler:
         Raises:
             Exception: If cleanup operations fail
         """
-        cursor = self.connection.cursor()
-
         try:
-            # Delete in order to respect foreign key constraints
-            # Relationships reference Entities
-            # DocumentChunks reference SourceDocuments
-            # Entities are standalone
-            # SourceDocuments are standalone
+            from tests.fixtures.idt_cleanup import reset_rag_schema
 
-            cleanup_tables = [
-                'RAG.Relationships',
-                'RAG.DocumentChunks',
-                'RAG.Entities',
-                'RAG.SourceDocuments'
-            ]
-
-            for table in cleanup_tables:
-                delete_sql = f"DELETE FROM {table} WHERE test_run_id = ?"
-                cursor.execute(delete_sql, [self.test_run_id])
-
-            self.connection.commit()
-
+            reset_rag_schema(self.connection, schema="RAG", strict=True)
         except Exception as e:
-            self.connection.rollback()
-            raise Exception(f"Cleanup failed for test_run_id {self.test_run_id}: {str(e)}")
+            raise Exception(
+                f"Cleanup failed for test_run_id {self.test_run_id}: {str(e)}"
+            )
 
     def cleanup_timed(self) -> float:
         """
@@ -95,18 +77,18 @@ class DatabaseCleanupHandler:
             True if no data remains for this test_run_id, False otherwise
         """
         cursor = self.connection.cursor()
+        try:
+            cursor.execute(
+                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ?",
+                ["RAG"],
+            )
+            tables = [row[0] for row in cursor.fetchall()]
+        except Exception:
+            return True
 
-        tables_to_check = [
-            'RAG.SourceDocuments',
-            'RAG.DocumentChunks',
-            'RAG.Entities',
-            'RAG.Relationships'
-        ]
-
-        for table in tables_to_check:
-            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE test_run_id = ?", [self.test_run_id])
+        for table in tables:
+            cursor.execute(f"SELECT COUNT(*) FROM RAG.{table}")
             count = cursor.fetchone()[0]
-
             if count > 0:
                 return False
 
@@ -121,16 +103,17 @@ class DatabaseCleanupHandler:
         """
         cursor = self.connection.cursor()
         total = 0
+        try:
+            cursor.execute(
+                "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ?",
+                ["RAG"],
+            )
+            tables = [row[0] for row in cursor.fetchall()]
+        except Exception:
+            return 0
 
-        tables_to_check = [
-            'RAG.SourceDocuments',
-            'RAG.DocumentChunks',
-            'RAG.Entities',
-            'RAG.Relationships'
-        ]
-
-        for table in tables_to_check:
-            cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE test_run_id = ?", [self.test_run_id])
+        for table in tables:
+            cursor.execute(f"SELECT COUNT(*) FROM RAG.{table}")
             total += cursor.fetchone()[0]
 
         return total
@@ -144,7 +127,7 @@ class CleanupRegistry:
     """
 
     _instance: Optional['CleanupRegistry'] = None
-    _handlers: dict = {}
+    _handlers: dict[str, "DatabaseCleanupHandler"] = {}
 
     def __new__(cls) -> 'CleanupRegistry':
         """Singleton pattern for global registry."""

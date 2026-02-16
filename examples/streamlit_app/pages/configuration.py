@@ -5,12 +5,13 @@ Pipeline settings management, environment configuration, and system preferences.
 Provides comprehensive configuration management for RAG pipelines and application settings.
 """
 
+# ruff: noqa: E402
+
 import json
 import os
 import sys
-from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 import streamlit as st
 
@@ -19,8 +20,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from components.header import render_notification, render_page_header
-from utils.app_config import AppConfig, get_config
-from utils.session_state import get_session_state, update_session_state
+from utils.app_config import get_config
 
 
 def main():
@@ -63,7 +63,7 @@ def render_pipeline_configuration():
     )
 
     # Load current configuration
-    config = get_config()
+    get_config()
     current_settings = get_pipeline_settings(pipeline_type)
 
     # Pipeline-specific settings
@@ -98,7 +98,7 @@ def render_basic_rag_settings(settings: Dict[str, Any]):
     col1, col2 = st.columns(2)
 
     with col1:
-        chunk_size = st.number_input(
+        st.number_input(
             "Chunk Size",
             min_value=100,
             max_value=2000,
@@ -108,7 +108,7 @@ def render_basic_rag_settings(settings: Dict[str, Any]):
             key="basic_rag_chunk_size",
         )
 
-        chunk_overlap = st.number_input(
+        st.number_input(
             "Chunk Overlap",
             min_value=0,
             max_value=500,
@@ -119,7 +119,7 @@ def render_basic_rag_settings(settings: Dict[str, Any]):
         )
 
     with col2:
-        top_k = st.number_input(
+        st.number_input(
             "Top K Results",
             min_value=1,
             max_value=20,
@@ -129,7 +129,7 @@ def render_basic_rag_settings(settings: Dict[str, Any]):
             key="basic_rag_top_k",
         )
 
-        similarity_threshold = st.slider(
+        st.slider(
             "Similarity Threshold",
             min_value=0.0,
             max_value=1.0,
@@ -147,7 +147,7 @@ def render_basic_rerank_settings(settings: Dict[str, Any]):
     col1, col2 = st.columns(2)
 
     with col1:
-        initial_k = st.number_input(
+        st.number_input(
             "Initial K Results",
             min_value=5,
             max_value=50,
@@ -157,7 +157,7 @@ def render_basic_rerank_settings(settings: Dict[str, Any]):
             key="rerank_initial_k",
         )
 
-        final_k = st.number_input(
+        st.number_input(
             "Final K Results",
             min_value=1,
             max_value=20,
@@ -168,7 +168,7 @@ def render_basic_rerank_settings(settings: Dict[str, Any]):
         )
 
     with col2:
-        rerank_model = st.selectbox(
+        st.selectbox(
             "Rerank Model",
             [
                 "cross-encoder/ms-marco-MiniLM-L-6-v2",
@@ -180,7 +180,7 @@ def render_basic_rerank_settings(settings: Dict[str, Any]):
             key="rerank_model",
         )
 
-        rerank_threshold = st.slider(
+        st.slider(
             "Rerank Threshold",
             min_value=0.0,
             max_value=1.0,
@@ -198,7 +198,7 @@ def render_crag_settings(settings: Dict[str, Any]):
     col1, col2 = st.columns(2)
 
     with col1:
-        relevance_threshold = st.slider(
+        st.slider(
             "Relevance Threshold",
             min_value=0.0,
             max_value=1.0,
@@ -208,7 +208,7 @@ def render_crag_settings(settings: Dict[str, Any]):
             key="crag_relevance",
         )
 
-        correction_enabled = st.checkbox(
+        st.checkbox(
             "Enable Correction",
             value=settings.get("correction_enabled", True),
             help="Enable automatic correction of irrelevant documents",
@@ -216,14 +216,14 @@ def render_crag_settings(settings: Dict[str, Any]):
         )
 
     with col2:
-        web_search_fallback = st.checkbox(
+        st.checkbox(
             "Web Search Fallback",
             value=settings.get("web_search_fallback", False),
             help="Use web search when local documents are insufficient",
             key="crag_web_fallback",
         )
 
-        max_corrections = st.number_input(
+        st.number_input(
             "Max Corrections",
             min_value=1,
             max_value=10,
@@ -241,7 +241,7 @@ def render_graph_rag_settings(settings: Dict[str, Any]):
     col1, col2 = st.columns(2)
 
     with col1:
-        graph_depth = st.number_input(
+        st.number_input(
             "Graph Traversal Depth",
             min_value=1,
             max_value=5,
@@ -251,7 +251,7 @@ def render_graph_rag_settings(settings: Dict[str, Any]):
             key="graph_depth",
         )
 
-        entity_extraction = st.checkbox(
+        st.checkbox(
             "Entity Extraction",
             value=settings.get("entity_extraction", True),
             help="Enable automatic entity extraction",
@@ -259,7 +259,7 @@ def render_graph_rag_settings(settings: Dict[str, Any]):
         )
 
     with col2:
-        relationship_threshold = st.slider(
+        st.slider(
             "Relationship Threshold",
             min_value=0.0,
             max_value=1.0,
@@ -269,7 +269,7 @@ def render_graph_rag_settings(settings: Dict[str, Any]):
             key="graph_rel_threshold",
         )
 
-        community_detection = st.checkbox(
+        st.checkbox(
             "Community Detection",
             value=settings.get("community_detection", False),
             help="Enable community detection in graph",
@@ -285,7 +285,7 @@ def render_common_pipeline_settings(settings: Dict[str, Any]):
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            model_name = st.selectbox(
+            st.selectbox(
                 "LLM Model",
                 [
                     "gpt-3.5-turbo",
@@ -299,7 +299,7 @@ def render_common_pipeline_settings(settings: Dict[str, Any]):
                 key="common_model",
             )
 
-            temperature = st.slider(
+            st.slider(
                 "Temperature",
                 min_value=0.0,
                 max_value=2.0,
@@ -310,7 +310,7 @@ def render_common_pipeline_settings(settings: Dict[str, Any]):
             )
 
         with col2:
-            max_tokens = st.number_input(
+            st.number_input(
                 "Max Tokens",
                 min_value=100,
                 max_value=4000,
@@ -320,7 +320,7 @@ def render_common_pipeline_settings(settings: Dict[str, Any]):
                 key="common_max_tokens",
             )
 
-            timeout = st.number_input(
+            st.number_input(
                 "Timeout (seconds)",
                 min_value=10,
                 max_value=300,
@@ -331,14 +331,14 @@ def render_common_pipeline_settings(settings: Dict[str, Any]):
             )
 
         with col3:
-            enable_streaming = st.checkbox(
+            st.checkbox(
                 "Enable Streaming",
                 value=settings.get("enable_streaming", False),
                 help="Stream responses as they are generated",
                 key="common_streaming",
             )
 
-            enable_caching = st.checkbox(
+            st.checkbox(
                 "Enable Caching",
                 value=settings.get("enable_caching", True),
                 help="Cache responses for faster retrieval",
@@ -396,7 +396,7 @@ def render_api_keys_section():
 
         with col1:
             st.markdown("**OpenAI Configuration**")
-            openai_key = st.text_input(
+            st.text_input(
                 "OpenAI API Key",
                 value=get_masked_env_var("OPENAI_API_KEY"),
                 type="password",
@@ -404,7 +404,7 @@ def render_api_keys_section():
                 key="openai_api_key",
             )
 
-            openai_org = st.text_input(
+            st.text_input(
                 "OpenAI Organization ID",
                 value=os.getenv("OPENAI_ORG_ID", ""),
                 help="Optional: OpenAI organization ID",
@@ -413,7 +413,7 @@ def render_api_keys_section():
 
         with col2:
             st.markdown("**Anthropic Configuration**")
-            anthropic_key = st.text_input(
+            st.text_input(
                 "Anthropic API Key",
                 value=get_masked_env_var("ANTHROPIC_API_KEY"),
                 type="password",
@@ -421,7 +421,7 @@ def render_api_keys_section():
                 key="anthropic_api_key",
             )
 
-            cohere_key = st.text_input(
+            st.text_input(
                 "Cohere API Key",
                 value=get_masked_env_var("COHERE_API_KEY"),
                 type="password",
@@ -446,21 +446,21 @@ def render_database_configuration():
         if db_type == "Pinecone":
             col1, col2 = st.columns(2)
             with col1:
-                pinecone_key = st.text_input(
+                st.text_input(
                     "Pinecone API Key",
                     value=get_masked_env_var("PINECONE_API_KEY"),
                     type="password",
                     key="pinecone_key",
                 )
             with col2:
-                pinecone_env = st.text_input(
+                st.text_input(
                     "Pinecone Environment",
                     value=os.getenv("PINECONE_ENVIRONMENT", ""),
                     key="pinecone_env",
                 )
 
         elif db_type == "Weaviate":
-            weaviate_url = st.text_input(
+            st.text_input(
                 "Weaviate URL",
                 value=os.getenv("WEAVIATE_URL", "http://localhost:8080"),
                 key="weaviate_url",
@@ -482,7 +482,7 @@ def render_external_services_configuration():
         )
 
         if search_provider in ["Google", "Bing"]:
-            search_api_key = st.text_input(
+            st.text_input(
                 f"{search_provider} Search API Key",
                 value=get_masked_env_var(f"{search_provider.upper()}_SEARCH_API_KEY"),
                 type="password",
@@ -512,23 +512,23 @@ def render_ui_preferences():
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            theme = st.selectbox(
+            st.selectbox(
                 "Theme", ["Light", "Dark", "Auto"], index=2, key="ui_theme"
             )
 
-            sidebar_default = st.checkbox(
+            st.checkbox(
                 "Sidebar Expanded by Default", value=True, key="sidebar_expanded"
             )
 
         with col2:
-            auto_refresh = st.checkbox(
+            st.checkbox(
                 "Auto-refresh Metrics",
                 value=True,
                 help="Automatically refresh performance metrics",
                 key="auto_refresh",
             )
 
-            show_debug_info = st.checkbox(
+            st.checkbox(
                 "Show Debug Information",
                 value=False,
                 help="Display debug information in UI",
@@ -536,7 +536,7 @@ def render_ui_preferences():
             )
 
         with col3:
-            max_history = st.number_input(
+            st.number_input(
                 "Max Query History",
                 min_value=10,
                 max_value=1000,
@@ -555,7 +555,7 @@ def render_performance_preferences():
         col1, col2 = st.columns(2)
 
         with col1:
-            concurrent_requests = st.number_input(
+            st.number_input(
                 "Max Concurrent Requests",
                 min_value=1,
                 max_value=10,
@@ -565,7 +565,7 @@ def render_performance_preferences():
                 key="max_concurrent",
             )
 
-            cache_ttl = st.number_input(
+            st.number_input(
                 "Cache TTL (minutes)",
                 min_value=1,
                 max_value=1440,
@@ -576,14 +576,14 @@ def render_performance_preferences():
             )
 
         with col2:
-            enable_metrics_collection = st.checkbox(
+            st.checkbox(
                 "Enable Metrics Collection",
                 value=True,
                 help="Collect performance metrics for analysis",
                 key="metrics_collection",
             )
 
-            enable_error_reporting = st.checkbox(
+            st.checkbox(
                 "Enable Error Reporting",
                 value=True,
                 help="Report errors for debugging",
@@ -599,7 +599,7 @@ def render_logging_preferences():
         col1, col2 = st.columns(2)
 
         with col1:
-            log_level = st.selectbox(
+            st.selectbox(
                 "Log Level",
                 ["DEBUG", "INFO", "WARNING", "ERROR"],
                 index=1,
@@ -607,12 +607,12 @@ def render_logging_preferences():
                 key="log_level",
             )
 
-            log_to_file = st.checkbox(
+            st.checkbox(
                 "Log to File", value=True, help="Save logs to file", key="log_to_file"
             )
 
         with col2:
-            max_log_size = st.number_input(
+            st.number_input(
                 "Max Log File Size (MB)",
                 min_value=1,
                 max_value=100,
@@ -622,7 +622,7 @@ def render_logging_preferences():
                 key="max_log_size",
             )
 
-            log_retention = st.number_input(
+            st.number_input(
                 "Log Retention (days)",
                 min_value=1,
                 max_value=365,
@@ -659,7 +659,7 @@ def render_configuration_management():
             if st.button("📤 Export All Settings", key="export_all"):
                 export_all_configurations()
 
-            export_format = st.selectbox(
+            st.selectbox(
                 "Export Format", ["JSON", "YAML", "TOML"], index=0, key="export_format"
             )
 
@@ -701,14 +701,14 @@ def render_advanced_settings():
         col1, col2 = st.columns(2)
 
         with col1:
-            debug_mode = st.checkbox(
+            st.checkbox(
                 "Debug Mode",
                 value=False,
                 help="Enable detailed debugging",
                 key="debug_mode",
             )
 
-            experimental_features = st.checkbox(
+            st.checkbox(
                 "Experimental Features",
                 value=False,
                 help="Enable experimental features (use with caution)",
@@ -716,7 +716,7 @@ def render_advanced_settings():
             )
 
         with col2:
-            custom_config_path = st.text_input(
+            st.text_input(
                 "Custom Config Path",
                 value="",
                 help="Path to custom configuration directory",

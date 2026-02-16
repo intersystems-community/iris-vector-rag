@@ -7,7 +7,6 @@ Manages active WebSocket sessions with heartbeat and reconnection support.
 
 import logging
 import asyncio
-import json
 from typing import Dict, Optional, Set
 from uuid import UUID, uuid4
 from datetime import datetime
@@ -211,7 +210,7 @@ class ConnectionManager:
             session.message_count += 1
             session.last_activity_at = datetime.utcnow()
 
-        except (WebSocketDisconnect, ConnectionClosed) as e:
+        except (WebSocketDisconnect, ConnectionClosed):
             logger.warning(f"Failed to send event - connection closed: {session_id}")
             await self.disconnect(session_id)
 

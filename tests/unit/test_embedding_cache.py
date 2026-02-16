@@ -10,10 +10,8 @@ Test Coverage:
 - T004: Different model+device configurations get separate cache entries
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from concurrent.futures import ThreadPoolExecutor
-import logging
 
 from iris_vector_rag.embeddings.manager import EmbeddingManager
 from iris_vector_rag.config.manager import ConfigurationManager
@@ -207,7 +205,7 @@ class TestCacheKeyGeneration:
                     "device": device
                 }
             }
-            manager = EmbeddingManager(config)
+            EmbeddingManager(config)
 
             # Verify _get_cached_sentence_transformer was called with correct args
             # (in real implementation, this creates cache key "{model}:{device}")

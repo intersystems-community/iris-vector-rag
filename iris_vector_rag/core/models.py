@@ -1,5 +1,6 @@
 import uuid
 import time
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
@@ -112,6 +113,14 @@ class Document:
         # Convert dict to a hashable form (tuple of sorted items) for hashing
         meta_tuple = tuple(sorted(self.metadata.items()))
         return hash((self.page_content, meta_tuple, self.id))
+
+    @property
+    def similarity_score(self) -> float:
+        """Return similarity score from metadata or default when absent."""
+        try:
+            return float(self.metadata.get("similarity_score", 1.0))
+        except (TypeError, ValueError):
+            return 1.0
 
     # Note: If __hash__ is defined, __eq__ should also be defined if not using dataclass's default.
     # Since frozen=True implies eq=True by default, the auto-generated __eq__ should be fine
@@ -641,6 +650,8 @@ class ProcessingMetrics:
 
     def __post_init__(self):
         """Post-initialization validation."""
+        if self.speedup_factor is None:
+            self.speedup_factor = 1.0
         if self.total_batches_processed < 0:
             raise ValueError("Total batches must be non-negative")
         if self.total_documents_processed < 0:
@@ -661,7 +672,6 @@ class ProcessingMetrics:
 
 # Coverage Analysis Models
 
-import re
 
 
 # Critical modules requiring 80% coverage per constitutional requirements
@@ -1018,36 +1028,6 @@ class ModuleCoverage:
 
         return data
 
-
-@dataclass
-class BatchExtractionResult:
-    """Represents the result of batch entity extraction."""
-    batch_id: str
-    per_document_entities: Dict[str, List[Entity]] = field(default_factory=dict)
-    per_document_relationships: Dict[str, List[Relationship]] = field(default_factory=dict)
-    processing_time: float = 0.0
-    success_status: bool = True
-    retry_count: int = 0
-    error_message: Optional[str] = None
-
-    def get_entity_count_by_document(self) -> Dict[str, int]:
-        return {doc_id: len(entities) for doc_id, entities in self.per_document_entities.items()}
-
-@dataclass
-class ProcessingMetrics:
-    """Represents processing metrics for batch entity extraction."""
-    total_batches_processed: int = 0
-    total_documents_processed: int = 0
-    average_batch_processing_time: float = 0.0
-    speedup_factor: float = 1.0
-    entity_extraction_rate_per_batch: float = 0.0
-    zero_entity_documents_count: int = 0
-    failed_batches_count: int = 0
-    retry_attempts_total: int = 0
-
-    def update_with_batch(self, batch_result: BatchExtractionResult, batch_size: int) -> None:
-        self.total_batches_processed += 1
-        self.total_documents_processed += batch_size
 
 @dataclass(frozen=True)
 class CacheEntry:

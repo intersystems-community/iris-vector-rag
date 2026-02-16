@@ -7,6 +7,9 @@ This script tests the new extract_batch_with_dspy() method to ensure it:
 2. Achieves ~3x speedup over individual extraction
 3. Maintains extraction quality (4+ entities per ticket)
 """
+
+# ruff: noqa: E402
+
 import sys
 import time
 import logging
@@ -117,7 +120,7 @@ def test_individual_extraction(service: EntityExtractionService):
     total_entities = sum(len(ents) for ents in results.values())
     avg_entities = total_entities / len(results)
 
-    logger.info(f"\n📊 Individual Extraction Results:")
+    logger.info("\n📊 Individual Extraction Results:")
     logger.info(f"   Tickets processed: {len(results)}")
     logger.info(f"   Total entities: {total_entities}")
     logger.info(f"   Avg entities/ticket: {avg_entities:.2f}")
@@ -148,7 +151,7 @@ def test_batch_extraction(service: EntityExtractionService):
     total_entities = sum(len(ents) for ents in results.values())
     avg_entities = total_entities / len(results) if results else 0
 
-    logger.info(f"\n📊 Batch Extraction Results:")
+    logger.info("\n📊 Batch Extraction Results:")
     logger.info(f"   Tickets processed: {len(results)}")
     logger.info(f"   Total entities: {total_entities}")
     logger.info(f"   Avg entities/ticket: {avg_entities:.2f}")
@@ -166,7 +169,7 @@ def compare_results(individual_results, batch_results):
 
     speedup = individual_results["time"] / batch_results["time"]
 
-    logger.info(f"\n🚀 Speedup Analysis:")
+    logger.info("\n🚀 Speedup Analysis:")
     logger.info(f"   Individual time: {individual_results['time']:.2f}s")
     logger.info(f"   Batch time: {batch_results['time']:.2f}s")
     logger.info(f"   Speedup factor: {speedup:.2f}x")
@@ -178,14 +181,14 @@ def compare_results(individual_results, batch_results):
     else:
         logger.info(f"   ❌ NEEDS IMPROVEMENT: Only {speedup:.1f}x speedup (target: 3x)")
 
-    logger.info(f"\n📊 Quality Comparison:")
+    logger.info("\n📊 Quality Comparison:")
     logger.info(f"   Individual avg entities: {individual_results['entities']/individual_results['tickets']:.2f}")
     logger.info(f"   Batch avg entities: {batch_results['entities']/batch_results['tickets']:.2f}")
 
     if batch_results["entities"] >= individual_results["entities"] * 0.9:
-        logger.info(f"   ✅ Quality maintained in batch mode")
+        logger.info("   ✅ Quality maintained in batch mode")
     else:
-        logger.info(f"   ⚠️  Quality may be degraded in batch mode")
+        logger.info("   ⚠️  Quality may be degraded in batch mode")
 
 
 def main():

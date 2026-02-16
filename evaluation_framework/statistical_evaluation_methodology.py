@@ -22,38 +22,20 @@ import warnings
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("ignore")
-
-import pingouin as pg
 
 # Statistical libraries
 from scipy import stats
-from scipy.stats import (
-    bootstrap,
-    chi2_contingency,
-    combine_pvalues,
-    f_oneway,
-    friedmanchisquare,
-    kruskal,
-    mannwhitneyu,
-    permutation_test,
-    ttest_ind,
-    ttest_rel,
-    wilcoxon,
-)
 
 # Machine learning for effect size
-from sklearn.metrics import cohen_kappa_score
-from sklearn.preprocessing import StandardScaler
-from statsmodels.stats.contingency_tables import mcnemar
-from statsmodels.stats.descriptivestats import describe
 from statsmodels.stats.multitest import multipletests
 from statsmodels.stats.power import ttest_power
+
+warnings.filterwarnings("ignore")
 
 # Bayesian analysis
 try:
@@ -855,7 +837,7 @@ class StatisticalEvaluationFramework:
             n_groups = len(pipeline_names)
 
             # Bayesian model
-            with pm.Model() as model:
+            with pm.Model():
                 # Priors
                 mu = pm.Normal(
                     "mu",
@@ -866,7 +848,7 @@ class StatisticalEvaluationFramework:
                 sigma = pm.HalfNormal("sigma", sigma=np.std(all_scores))
 
                 # Likelihood
-                likelihood = pm.Normal(
+                pm.Normal(
                     "likelihood", mu=mu[group_indices], sigma=sigma, observed=all_scores
                 )
 

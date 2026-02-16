@@ -16,7 +16,6 @@ from langchain_core.outputs import Generation
 
 from iris_vector_rag.common.llm_cache_config import CacheConfig, load_cache_config
 from iris_vector_rag.common.llm_cache_iris import IRISCacheBackend, create_iris_cache_backend
-from iris_vector_rag.common.llm_cache_disk import DiskCacheBackend, create_disk_cache_backend
 
 logger = logging.getLogger(__name__)
 
@@ -553,7 +552,7 @@ class LangchainIRISCacheWrapper:
                     try:
                         json.dumps(gen_data)
                         safe_generations.append(gen_data)
-                    except:
+                    except Exception:
                         safe_generations.append(
                             {
                                 "text": f"Generation {i} serialization failed",
@@ -757,7 +756,7 @@ class LangchainIRISCacheWrapper:
                     try:
                         json.dumps(gen_data)
                         safe_generations.append(gen_data)
-                    except:
+                    except Exception:
                         safe_generations.append(
                             {
                                 "text": f"Generation {i} serialization failed",

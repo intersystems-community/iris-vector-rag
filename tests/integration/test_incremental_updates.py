@@ -33,7 +33,7 @@ class TestIncrementalFixtureUpdates:
         from tests.fixtures.models import FixtureMetadata
         import json
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Create minimal fixture metadata
         metadata = FixtureMetadata(
@@ -98,7 +98,7 @@ class TestIncrementalFixtureUpdates:
         manager = FixtureManager()
 
         # Perform migration
-        result = manager.migrate(
+        manager.migrate(
             fixture_name=str(base_fixture),
             target_version="2.0.0",
             changes=["Added new table RAG.EntityRelationships"],
@@ -154,7 +154,7 @@ class TestIncrementalFixtureUpdates:
 
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Create base fixture with 10 entities
         # ... (populate database with 10 entities)
@@ -206,7 +206,7 @@ class TestIncrementalFixtureUpdates:
 
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Compare two fixtures
         # diff = manager.diff_fixtures("medical-20-v1", "medical-20-v2")
@@ -223,7 +223,7 @@ class TestIncrementalFixtureUpdates:
 
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Export only RAG.Entities table
         # result = manager.create(
@@ -243,7 +243,7 @@ class TestIncrementalFixtureUpdates:
 
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Create delta fixture with new data
         # delta = manager.create("medical-20-delta", tables=["RAG.Entities"])
@@ -281,7 +281,7 @@ class TestFixtureVersioning:
 
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Load specific version
         # result = manager.load("medical-20", version="1.2.0")

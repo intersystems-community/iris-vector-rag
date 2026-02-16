@@ -68,7 +68,7 @@ class TestDiagnosticLoggingContract:
         Then: Log contains "Query embedding dimensions: 384"
         """
         query = "What are the symptoms of diabetes?"
-        result = graphrag_pipeline.query(query)
+        graphrag_pipeline.query(query)
 
         log_output = log_capture.getvalue()
 
@@ -89,7 +89,7 @@ class TestDiagnosticLoggingContract:
         Then: Log contains "Total documents in RAG.SourceDocuments: <count>"
         """
         query = "What are the symptoms of diabetes?"
-        result = graphrag_pipeline.query(query)
+        graphrag_pipeline.query(query)
 
         log_output = log_capture.getvalue()
 
@@ -107,7 +107,7 @@ class TestDiagnosticLoggingContract:
         Then: Log contains "Documents with embeddings: <count>"
         """
         query = "What are the symptoms of diabetes?"
-        result = graphrag_pipeline.query(query)
+        graphrag_pipeline.query(query)
 
         log_output = log_capture.getvalue()
 
@@ -124,12 +124,12 @@ class TestDiagnosticLoggingContract:
         Then: Log contains SQL query with VECTOR_DOT_PRODUCT
         """
         query = "What are the symptoms of diabetes?"
-        result = graphrag_pipeline.query(query)
+        graphrag_pipeline.query(query)
 
         log_output = log_capture.getvalue()
 
         # Should log SQL query
-        assert "SQL query" in log_output.lower(), \
+        assert "sql query" in log_output.lower(), \
             "DEBUG log missing 'SQL query executed:' or 'SQL query:'"
 
         # SQL should contain VECTOR_DOT_PRODUCT (IRIS vector search function)
@@ -145,7 +145,7 @@ class TestDiagnosticLoggingContract:
         Then: Log contains "Top-K parameter: <K>"
         """
         query = "What are the symptoms of diabetes?"
-        result = graphrag_pipeline.query(query)
+        graphrag_pipeline.query(query)
 
         log_output = log_capture.getvalue()
 
@@ -233,7 +233,7 @@ class TestDiagnosticLoggingContract:
 
         try:
             query = "What are the symptoms of diabetes?"
-            result = graphrag_pipeline.query(query)
+            graphrag_pipeline.query(query)
 
             log_output = log_stream.getvalue()
 

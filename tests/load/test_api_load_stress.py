@@ -7,7 +7,6 @@ Uses locust for load testing.
 
 import random
 import time
-from datetime import datetime
 
 import pytest
 
@@ -28,7 +27,7 @@ class TestAPILoadTests:
 
     def test_sustained_query_load(self, load_test_config):
         """Test sustained query load."""
-        print(f"\n=== Sustained Query Load Test ===")
+        print("\n=== Sustained Query Load Test ===")
         print(f"Duration: {load_test_config['duration_seconds']}s")
         print(f"Target users: {load_test_config['users']}")
         print(f"Target RPS: {load_test_config['target_rps']}")
@@ -61,7 +60,7 @@ class TestAPILoadTests:
         response_times.sort()
         p95 = response_times[int(len(response_times) * 0.95)] if response_times else 0
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Total requests: {total_requests}")
         print(f"  Failed requests: {failed_requests}")
         print(f"  Success rate: {((total_requests - failed_requests) / total_requests * 100):.2f}%")
@@ -74,7 +73,7 @@ class TestAPILoadTests:
 
     def test_spike_load(self, load_test_config):
         """Test API behavior during traffic spike."""
-        print(f"\n=== Spike Load Test ===")
+        print("\n=== Spike Load Test ===")
 
         normal_rps = 10
         spike_rps = 200
@@ -106,7 +105,7 @@ class TestAPILoadTests:
 
         success_rate = (total_requests - failed_requests) / total_requests * 100
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Total requests: {total_requests}")
         print(f"  Failed requests: {failed_requests}")
         print(f"  Success rate: {success_rate:.2f}%")
@@ -116,7 +115,7 @@ class TestAPILoadTests:
 
     def test_rate_limit_enforcement_under_load(self):
         """Test rate limiting under heavy load."""
-        print(f"\n=== Rate Limit Enforcement Test ===")
+        print("\n=== Rate Limit Enforcement Test ===")
 
         requests_per_minute = 60  # Basic tier limit
         requests_attempted = 100
@@ -131,7 +130,7 @@ class TestAPILoadTests:
             else:
                 denied_requests += 1
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Requests attempted: {requests_attempted}")
         print(f"  Allowed requests: {allowed_requests}")
         print(f"  Denied requests: {denied_requests}")
@@ -142,7 +141,7 @@ class TestAPILoadTests:
 
     def test_concurrent_websocket_connections(self):
         """Test concurrent WebSocket connections."""
-        print(f"\n=== Concurrent WebSocket Connections Test ===")
+        print("\n=== Concurrent WebSocket Connections Test ===")
 
         max_connections = 100
         connections_established = 0
@@ -156,7 +155,7 @@ class TestAPILoadTests:
             except Exception:
                 connection_failures += 1
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Connections attempted: {max_connections}")
         print(f"  Connections established: {connections_established}")
         print(f"  Connection failures: {connection_failures}")
@@ -166,7 +165,7 @@ class TestAPILoadTests:
 
     def test_database_connection_pool_saturation(self):
         """Test behavior when connection pool is saturated."""
-        print(f"\n=== Connection Pool Saturation Test ===")
+        print("\n=== Connection Pool Saturation Test ===")
 
         pool_size = 20
         concurrent_queries = 50
@@ -184,7 +183,7 @@ class TestAPILoadTests:
                 time.sleep(0.01)  # Mock wait time
                 successful_queries += 1
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Pool size: {pool_size}")
         print(f"  Concurrent queries: {concurrent_queries}")
         print(f"  Successful queries: {successful_queries}")
@@ -196,9 +195,8 @@ class TestAPILoadTests:
     def test_memory_leak_under_load(self):
         """Test for memory leaks under sustained load."""
         import gc
-        import sys
 
-        print(f"\n=== Memory Leak Test ===")
+        print("\n=== Memory Leak Test ===")
 
         initial_object_count = len(gc.get_objects())
 
@@ -219,7 +217,7 @@ class TestAPILoadTests:
         final_object_count = len(gc.get_objects())
         object_growth = final_object_count - initial_object_count
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Initial objects: {initial_object_count}")
         print(f"  Final objects: {final_object_count}")
         print(f"  Object growth: {object_growth}")
@@ -229,7 +227,7 @@ class TestAPILoadTests:
 
     def test_error_recovery_under_load(self):
         """Test error recovery under load."""
-        print(f"\n=== Error Recovery Test ===")
+        print("\n=== Error Recovery Test ===")
 
         total_requests = 1000
         error_rate = 0.1  # 10% error rate
@@ -249,7 +247,7 @@ class TestAPILoadTests:
             else:
                 successful_requests += 1
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Total requests: {total_requests}")
         print(f"  Successful requests: {successful_requests}")
         print(f"  Error requests: {error_requests}")
@@ -261,7 +259,7 @@ class TestAPILoadTests:
 
     def test_gradual_load_ramp_up(self):
         """Test gradual load increase."""
-        print(f"\n=== Gradual Load Ramp-up Test ===")
+        print("\n=== Gradual Load Ramp-up Test ===")
 
         phases = [
             {"users": 10, "duration": 5},
@@ -304,7 +302,7 @@ class TestStressTests:
 
     def test_maximum_throughput(self):
         """Test maximum throughput capacity."""
-        print(f"\n=== Maximum Throughput Test ===")
+        print("\n=== Maximum Throughput Test ===")
 
         duration = 10  # seconds
         requests = 0
@@ -320,7 +318,7 @@ class TestStressTests:
         elapsed = time.time() - start_time
         max_rps = requests / elapsed
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Duration: {elapsed:.2f}s")
         print(f"  Total requests: {requests}")
         print(f"  Max RPS: {max_rps:.2f}")
@@ -330,7 +328,7 @@ class TestStressTests:
 
     def test_sustained_maximum_load(self):
         """Test sustained operation at maximum load."""
-        print(f"\n=== Sustained Maximum Load Test ===")
+        print("\n=== Sustained Maximum Load Test ===")
 
         duration = 30  # seconds
         target_rps = 500
@@ -350,7 +348,7 @@ class TestStressTests:
         actual_rps = requests / elapsed
         error_rate = errors / requests * 100 if requests > 0 else 0
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Duration: {elapsed:.2f}s")
         print(f"  Target RPS: {target_rps}")
         print(f"  Actual RPS: {actual_rps:.2f}")
@@ -361,7 +359,7 @@ class TestStressTests:
 
     def test_resource_exhaustion_recovery(self):
         """Test recovery from resource exhaustion."""
-        print(f"\n=== Resource Exhaustion Recovery Test ===")
+        print("\n=== Resource Exhaustion Recovery Test ===")
 
         # Simulate resource exhaustion
         print("Phase 1: Normal operation")
@@ -387,7 +385,7 @@ class TestStressTests:
 
         recovery_success_rate = (recovery_requests - recovery_failures) / recovery_requests * 100
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Exhaustion failures: {failures}/{exhausted_requests}")
         print(f"  Recovery success rate: {recovery_success_rate:.2f}%")
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Unified PMC Document Loader
 
@@ -18,13 +19,12 @@ Uses existing modules:
 import json
 import logging
 import os
-import shutil
 import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Dict, Generator, List
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -387,7 +387,7 @@ class PMCDatasetLoader:
                 }
                 f.write(json.dumps(standardized_doc, default=str) + "\n")
 
-        logger.info(f"✅ Generated standardized output:")
+        logger.info("✅ Generated standardized output:")
         logger.info(
             f"  📄 {self.metadata_file.name}: {self.metadata_file.stat().st_size / 1024:.1f} KB"
         )

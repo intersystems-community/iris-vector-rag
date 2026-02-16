@@ -569,7 +569,36 @@ class SetupOrchestrator:
                 # Legacy schema approach
                 cursor.execute(
                     """
-                    SELECT doc_id, text_content as content
+                    SELECT COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments'
+                """
+                )
+                columns = {row[0].lower() for row in cursor.fetchall()}
+                candidate_content_columns = [
+                    "content",
+                    "text_content",
+                    "text",
+                    "document_text",
+                ]
+                content_column = next(
+                    (col for col in candidate_content_columns if col in columns),
+                    None,
+                )
+                doc_id_column = "doc_id" if "doc_id" in columns else (
+                    "id" if "id" in columns else None
+                )
+
+                if not content_column or not doc_id_column:
+                    logger.warning(
+                        "SourceDocuments missing required columns for embedding generation: %s",
+                        sorted(columns),
+                    )
+                    return
+
+                cursor.execute(
+                    f"""
+                    SELECT {doc_id_column} as doc_id, {content_column} as content
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NULL
                 """
@@ -998,7 +1027,7 @@ class SetupOrchestrator:
 
         # Create a temporary table or use IN clause for efficiency
         doc_ids_str = "', '".join(target_doc_ids)
-        query = f"""
+        f"""
             SELECT doc_id
             FROM (
                 SELECT DISTINCT '{doc_ids_str.split("', '")[0]}' as doc_id

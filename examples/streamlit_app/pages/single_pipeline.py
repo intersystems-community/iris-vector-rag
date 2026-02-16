@@ -5,6 +5,8 @@ Deep dive into individual RAG pipeline performance and capabilities.
 Allows detailed exploration of a single pipeline with comprehensive configuration options.
 """
 
+# ruff: noqa: E402
+
 import sys
 from pathlib import Path
 
@@ -15,13 +17,10 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from components.header import (
-    render_error_message,
-    render_loading_spinner,
     render_page_header,
 )
 from components.query_input import (
     render_query_configuration,
-    render_query_history,
     render_query_input,
 )
 from components.results_display import render_query_result

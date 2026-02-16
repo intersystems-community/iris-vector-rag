@@ -5,7 +5,6 @@ Tests acceptance scenarios:
 - Scenario 4: Exact matching (fuzzy=False) should not match descriptors
 """
 
-import pytest
 
 
 class TestSearchEntitiesExact:

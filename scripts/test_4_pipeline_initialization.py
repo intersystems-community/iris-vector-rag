@@ -33,13 +33,13 @@ def test_pipeline_initialization():
         ]
         missing_pipelines = [p for p in expected_pipelines if p not in pipeline_names]
         if missing_pipelines:
-            print(f"\n❌ Missing pipelines:")
+            print("\n❌ Missing pipelines:")
             for name in missing_pipelines:
                 print(f"  ✗ {name}")
 
         # Success check
         if len(pipeline_names) == 4:
-            print(f"\n🎉 SUCCESS: All 4 pipelines initialized correctly!")
+            print("\n🎉 SUCCESS: All 4 pipelines initialized correctly!")
             print(
                 f"🚀 Evaluation will now run {len(pipeline_names)} × 500 questions = {len(pipeline_names) * 500} total evaluations"
             )

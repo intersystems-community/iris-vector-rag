@@ -9,11 +9,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 
 from iris_vector_rag.api.models.auth import ApiKey, Permission, RateLimitTier
 from iris_vector_rag.api.models.request import QueryRequest
-from iris_vector_rag.api.models.response import QueryResponse
 
 
 class TestQueryRoutes:
@@ -236,9 +234,8 @@ class TestQueryRoutes:
 
     def test_query_without_permission(self, mock_pipeline_manager):
         """Test query without read permission."""
-        from iris_vector_rag.api.routes.query import execute_query
 
-        api_key = ApiKey(
+        ApiKey(
             key_id="test-key-id",
             key_secret_hash="hashed-secret",
             name="Test Key",
@@ -251,7 +248,7 @@ class TestQueryRoutes:
             owner_email="test@example.com",
         )
 
-        request = QueryRequest(
+        QueryRequest(
             query="What is diabetes?",
             top_k=5,
         )

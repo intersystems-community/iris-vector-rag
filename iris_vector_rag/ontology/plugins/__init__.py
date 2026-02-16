@@ -18,7 +18,7 @@ Available Plugin:
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 from .general_ontology import DomainConfiguration, GeneralOntologyPlugin
 
@@ -98,7 +98,7 @@ def create_ontology_plugin(
 
         if source_path and Path(source_path).exists():
             try:
-                hierarchy = plugin.load_ontology_from_file(source_path, source_type)
+                plugin.load_ontology_from_file(source_path, source_type)
                 logger.info(f"Loaded {source_type} ontology from {source_path}")
             except Exception as e:
                 logger.error(

@@ -436,7 +436,7 @@ def test_comprehensive_validation():
     with open(report_file, "w") as f:
         json.dump(report, f, indent=2)
 
-    print(f"\n🎯 COMPREHENSIVE VALIDATION COMPLETE")
+    print("\n🎯 COMPREHENSIVE VALIDATION COMPLETE")
     print(f"📊 Report saved to: {report_file}")
     print(f"✅ Working: {len(report['summary']['working_pipeline_names'])}")
     print(f"⚠️  Partial: {len(report['summary']['partial_pipeline_names'])}")

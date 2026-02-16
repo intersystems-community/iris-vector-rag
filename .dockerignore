@@ -8,6 +8,9 @@ env/
 .env
 venv/
 .venv/
+node_modules/
+coverage/
+.env*
 build/
 develop-eggs/
 dist/

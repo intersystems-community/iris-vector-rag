@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Main script for executing example tests in rag-templates.
 
@@ -21,7 +22,6 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from scripts.testing.example_runner import ExampleTestResult, ExampleTestRunner
-from scripts.testing.mock_providers import MockLLMProvider
 from scripts.testing.validation_suite import ValidationSuite
 
 
@@ -86,7 +86,7 @@ def get_examples_to_test(
 def print_test_summary(examples: List[str], config: Dict):
     """Print summary of tests to be executed."""
     print(f"\n{'='*60}")
-    print(f"Example Test Execution Plan")
+    print("Example Test Execution Plan")
     print(f"{'='*60}")
     print(f"Total examples: {len(examples)}")
 
@@ -171,7 +171,7 @@ def generate_final_report(results: List[tuple], config: Dict, args: argparse.Nam
     avg_memory = sum(memory_usage) / len(memory_usage) if memory_usage else 0.0
 
     print(f"\n{'='*60}")
-    print(f"Final Test Results")
+    print("Final Test Results")
     print(f"{'='*60}")
     print(f"Total examples: {total}")
     print(f"Passed: {passed} (✅)")
@@ -183,7 +183,7 @@ def generate_final_report(results: List[tuple], config: Dict, args: argparse.Nam
 
     # Show failed examples
     if failed > 0:
-        print(f"\nFailed Examples:")
+        print("\nFailed Examples:")
         for example, result in results:
             if not result.success:
                 print(f"  ❌ {example}: {result.error_message}")
@@ -201,7 +201,7 @@ def generate_final_report(results: List[tuple], config: Dict, args: argparse.Nam
         )
         return 1
 
-    print(f"\n🎉 All tests completed successfully!")
+    print("\n🎉 All tests completed successfully!")
     return 0
 
 
@@ -363,7 +363,7 @@ Examples:
         # Handle failures
         if not result.success and not args.continue_on_failure:
             print(f"\n❌ Stopping due to failure in {example}")
-            print(f"Use --continue-on-failure to continue testing after failures")
+            print("Use --continue-on-failure to continue testing after failures")
             break
 
     # Generate comprehensive report

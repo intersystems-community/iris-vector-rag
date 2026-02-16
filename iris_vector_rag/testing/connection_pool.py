@@ -141,6 +141,9 @@ class MockConnection:
 
     def __init__(self):
         self._closed = False
+        self.connection_string = "mock://connection"
+        self._source_documents = []
+        self._entities = []
 
     def close(self):
         """Close connection."""
@@ -148,16 +151,75 @@ class MockConnection:
 
     def cursor(self):
         """Return mock cursor."""
-        return MockCursor()
+        return MockCursor(self)
+
+    def commit(self):
+        """Commit mock transaction."""
+        return None
 
 
 class MockCursor:
     """Mock cursor for testing purposes."""
 
-    def execute(self, query: str):
+    def __init__(self, connection):
+        self._connection = connection
+        self._results = []
+
+    def execute(self, query: str, params=None):
         """Execute mock query."""
-        pass
+        sql = query.strip().lower()
+        params = params or []
+
+        if "insert into rag.sourcedocuments" in sql and params:
+            doc_id = params[0]
+            self._connection._source_documents.append(doc_id)
+            self._results = []
+            return None
+
+        if "insert into rag.entities" in sql and params:
+            self._connection._entities.append(
+                {
+                    "entity_id": params[0],
+                    "entity_name": params[1],
+                    "source_doc_id": params[3],
+                }
+            )
+            self._results = []
+            return None
+
+        if sql.startswith("select doc_id from rag.sourcedocuments"):
+            self._results = [(doc_id,) for doc_id in self._connection._source_documents]
+            return None
+
+        if sql.startswith("select count(*) from rag.entities"):
+            self._results = [(len(self._connection._entities),)]
+            return None
+
+        if "from rag.entities e" in sql and "join rag.sourcedocuments" in sql:
+            joined = []
+            for entity in self._connection._entities:
+                if entity["source_doc_id"] in self._connection._source_documents:
+                    joined.append(
+                        (
+                            entity["entity_name"],
+                            entity["source_doc_id"],
+                            entity["source_doc_id"],
+                        )
+                    )
+            self._results = joined
+            return None
+
+        self._results = []
+        return None
 
     def fetchone(self):
         """Fetch one mock result."""
-        return (1,)
+        if not self._results:
+            return None
+        return self._results.pop(0)
+
+    def fetchall(self):
+        """Fetch all mock results."""
+        results = list(self._results)
+        self._results = []
+        return results

@@ -11,7 +11,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import coverage
 
@@ -127,7 +127,6 @@ class CoverageTracker:
         module_reports = []
 
         # Analyze each file
-        analysis = cov.analysis2
 
         for filename in cov.get_data().measured_files():
             # Convert file path to module name

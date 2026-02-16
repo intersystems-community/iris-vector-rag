@@ -3,7 +3,6 @@
 Quick check of current database state and available PMC documents
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -64,7 +63,7 @@ def check_database():
         try:
             cursor = client.execute_query("SELECT COUNT(*) FROM RAG.Entities")
             entity_count = cursor.fetchone()[0] if cursor else 0
-        except:
+        except Exception:
             entity_count = 0
 
         # Check relationships
@@ -73,14 +72,14 @@ def check_database():
                 "SELECT COUNT(*) FROM RAG.EntityRelationships"
             )
             relationship_count = cursor.fetchone()[0] if cursor else 0
-        except:
+        except Exception:
             relationship_count = 0
 
         # Check embeddings
         try:
             cursor = client.execute_query("SELECT COUNT(*) FROM RAG.ChunkEmbeddings")
             embedding_count = cursor.fetchone()[0] if cursor else 0
-        except:
+        except Exception:
             embedding_count = 0
 
         print(f"📄 Documents in database: {doc_count:,}")
@@ -115,7 +114,7 @@ if __name__ == "__main__":
     db_state = check_database()
 
     # Summary
-    print(f"\n📋 SUMMARY")
+    print("\n📋 SUMMARY")
     print("=" * 60)
     print(f"Available PMC files: {file_count}")
     if db_state:

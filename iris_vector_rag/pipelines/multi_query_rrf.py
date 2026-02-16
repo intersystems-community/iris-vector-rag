@@ -1,4 +1,3 @@
-import time
 """
 Multi-Query with RRF Fusion Pipeline
 
@@ -22,9 +21,10 @@ Example:
     >>> # ranked by RRF score
 """
 
-from typing import Dict, List, Any, Optional
 from collections import defaultdict
+from typing import Any, Dict, List, Optional
 import logging
+import time
 
 from iris_vector_rag.core.base import RAGPipeline
 from iris_vector_rag.core.models import Document
