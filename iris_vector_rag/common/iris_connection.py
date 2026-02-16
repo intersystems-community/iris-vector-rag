@@ -235,11 +235,15 @@ def get_iris_connection(
                 if ("password change required" in msg or "expired" in msg) and attempt == 0:
                     if _hard_fix_iris_passwords(h, p):
                         continue
-                    if attempt == 1:
-                        raise ConnectionError(
-                            f"IRIS connection failed to {h}:{p}/{n}: {e} (check configuration)"
-                        ) from e
-    return None  # Should not be reachable
+                
+                # Always raise on final attempt or if not a password issue that we can fix
+                if attempt == 1 or not ("password change required" in msg or "expired" in msg):
+                    raise ConnectionError(
+                        f"IRIS connection failed to {h}:{p}/{n}: {e} (check configuration)"
+                    ) from e
+        
+        # This part should theoretically not be reached if all paths raise or return
+        raise ConnectionError(f"IRIS connection failed to {h}:{p}/{n}")
 
 
 class IRISConnectionPool:

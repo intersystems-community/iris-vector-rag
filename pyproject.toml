@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iris-vector-rag"
-version = "0.5.17"
+version = "0.5.18"
 description = "Enterprise RAG pipelines with native IRIS vector search. 6 production implementations with RAGAS evaluation, LangChain, AWS/Azure configs. No external VectorDB required."
 readme = "README.md"
 license = {text = "MIT"}
