@@ -1,4 +1,27 @@
-# IRIS Vector RAG Constitution
+# iris-vector-rag Constitution
+
+<!--
+Sync Impact Report - Version 1.2.0
+
+Version Change: 1.1.0 → 1.2.0
+Rationale: MINOR bump - added new Principle XI (Git Repository Workflow)
+
+Added Sections:
+  - Principle XI: Git Repository Workflow (Three-Tier Strategy)
+  - Daily development workflow for private/public separation
+  - Emergency sync workflow for immediate public releases
+  - Selective release workflow with clean commit history
+
+Modified Principles: None
+
+Removed Sections: None
+
+Templates Requiring Updates:
+  - ✅ CLAUDE.md (will be updated with git workflow section)
+  - ✅ CONTRIBUTING.md (will be created with detailed git workflows)
+
+Follow-up TODOs: None
+-->
 
 ## Core Principles
 

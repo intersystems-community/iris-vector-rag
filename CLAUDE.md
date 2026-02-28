@@ -495,6 +495,92 @@ logging:
 
 **Complete Documentation**: `iris_rag/api/README.md`
 
+## Git Workflow (Three-Tier Repository Strategy)
+
+### Repository Structure
+The project uses three repositories for selective public sharing:
+
+```
+origin (private)    → isc-tdyar/iris-vector-rag-private
+fork (public)       → isc-tdyar/iris-vector-rag
+upstream (community)→ intersystems-community/iris-vector-rag
+```
+
+**Current remotes:**
+```bash
+git remote -v
+# origin    https://github.com/isc-tdyar/iris-vector-rag-private.git
+# fork      https://github.com/isc-tdyar/iris-vector-rag.git
+# upstream  https://github.com/intersystems-community/iris-vector-rag.git
+```
+
+### Daily Development Workflow
+
+**1. Private Work (Default)**
+```bash
+# Work on features privately
+git commit -am "feat: experimental feature"
+git push origin main  # Push to private repo only
+```
+
+**2. Selective Public Sharing**
+```bash
+# Cherry-pick commits for public release
+git checkout -b public/feature-name
+git cherry-pick <commit-hash>  # Select specific commits
+git push fork public/feature-name
+
+# Create PR on GitHub: fork:public/feature-name → upstream:main
+```
+
+**3. Emergency Sync (Rare)**
+```bash
+# Sync all repositories immediately (requires write access)
+git push origin main && git push fork main && git push upstream main
+```
+
+### Release Workflow
+
+**Version Bump and Publish:**
+```bash
+# 1. Update version
+vim pyproject.toml  # version = "0.5.x"
+
+# 2. Build and publish to PyPI
+uv build
+twine upload dist/iris_vector_rag-*.whl dist/iris_vector_rag-*.tar.gz
+
+# 3. Commit and tag
+git commit -am "chore: bump version to 0.5.x"
+git tag -a v0.5.x -m "Release v0.5.x"
+
+# 4. Push to all repositories
+git push origin main
+git push fork main
+git push upstream main
+git push --tags
+```
+
+**IMPORTANT**: Always use `twine` for PyPI publishing (not `uv publish`). See Constitution Principle X.
+
+### Troubleshooting Git Operations
+
+**Divergent branches error:**
+```bash
+# Use merge strategy to reconcile
+git pull fork main --no-rebase --no-edit
+```
+
+**Check remote status:**
+```bash
+git remote -v
+git fetch --all
+git log --oneline --graph --all --decorate -10
+```
+
+### See Also
+- **Complete Git Guide**: `CONTRIBUTING.md`
+- **Constitution**: `.specify/memory/constitution.md` (Principle XI)
 
 ## Active Technologies
 - Python 3.10+ (existing codebase uses 3.10-3.12) (051-enterprise-enhancements)
