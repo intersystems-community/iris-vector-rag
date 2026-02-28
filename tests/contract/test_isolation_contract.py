@@ -4,7 +4,6 @@ Feature: 025-fixes-for-testing
 Contract: test_isolation_contract.md
 """
 
-import inspect
 
 import pytest
 
@@ -12,7 +11,6 @@ import pytest
 def test_fixture_scopes_configured():
     """REQ-2: Validate fixture scopes for optimal performance and isolation."""
     # Check that E2E conftest exists and has proper fixtures
-    import sys
     from pathlib import Path
 
     # Load E2E conftest module

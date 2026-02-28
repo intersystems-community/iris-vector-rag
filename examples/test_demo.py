@@ -34,7 +34,7 @@ def test_basic_functionality():
     for i, detection in enumerate(result["detections"], 1):
         print(f"  {i}. {detection['type']}: {detection['explanation']}")
 
-    print(f"\nProcessing times:")
+    print("\nProcessing times:")
     print(f"  Basic RAG: {result['basic_time']:.3f}s")
     print(f"  CRAG: {result['crag_time']:.3f}s")
 

@@ -6,10 +6,9 @@ Provides /ws endpoint for query and document upload streaming.
 """
 
 import logging
-import json
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from iris_vector_rag.api.models.websocket import (
     WebSocketAuthMessage,
@@ -240,7 +239,7 @@ def create_websocket_router(
                         data={"error": str(e)},
                         request_id=uuid4()
                     )
-                except:
+                except Exception:
                     pass
 
         finally:

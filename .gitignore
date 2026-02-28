@@ -200,3 +200,26 @@ TODO.md
 # Keep main project constitution but ignore feature-specific .specify directories
 specs/**/.specify/
 tools/nodejs/node_modules/
+
+# Generated artifacts and editor configs (060 cleanup)
+.opencode/
+.mcp.json
+.coveragerc
+CODEX.md
+TABNINE.md
+
+# Stray top-level modules (not part of package)
+/common/
+/iris_rag/
+
+# Root conftest (tests have their own)
+/conftest.py
+
+# Evaluation/report outputs
+outputs/reports/
+outputs/
+
+# Feature spec dirs for non-active features
+specs/025-fixes-for-testing/
+specs/043-complete-mcp-tools/
+specs/061-implement-fuzzy-matching/

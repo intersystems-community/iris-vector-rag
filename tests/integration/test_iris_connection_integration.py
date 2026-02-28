@@ -48,7 +48,7 @@ class TestIRISConnectionIntegration:
         cursor = conn.cursor()
 
         # Execute test query
-        cursor.execute("SELECT %SYSTEM.Version.GetVersion()")
+        cursor.execute("SELECT $ZVERSION")
         version = cursor.fetchone()
         cursor.close()
 

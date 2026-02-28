@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 GraphRAG Visualization Demo Script
 
@@ -7,7 +8,6 @@ of the GraphRAG pipeline, including Plotly, D3.js, and traversal path visualizat
 """
 
 import logging
-import os
 import sys
 import time
 from pathlib import Path
@@ -93,10 +93,10 @@ class GraphVisualizationDemo:
 
             cursor.close()
 
-            logger.info(f"Knowledge Graph Status:")
+            logger.info("Knowledge Graph Status:")
             logger.info(f"  - Total Entities: {entity_count}")
             logger.info(f"  - Total Relationships: {relationship_count}")
-            logger.info(f"  - Entity Type Distribution:")
+            logger.info("  - Entity Type Distribution:")
             for entity_type, count in entity_types:
                 logger.info(f"    * {entity_type}: {count}")
 
@@ -297,7 +297,7 @@ class GraphVisualizationDemo:
 
         try:
             # Run query to build traversal data
-            result = self.graphrag.query(query, top_k=3)
+            self.graphrag.query(query, top_k=3)
 
             if self.graphrag.last_traversal_data:
                 # Build graph from traversal data
@@ -313,7 +313,7 @@ class GraphVisualizationDemo:
                 )
 
                 logger.info(f"Graph exported to GraphML: {graphml_file}")
-                logger.info(f"Graph statistics:")
+                logger.info("Graph statistics:")
                 logger.info(f"  - Nodes: {graph.number_of_nodes()}")
                 logger.info(f"  - Edges: {graph.number_of_edges()}")
                 logger.info(
@@ -338,7 +338,7 @@ class GraphVisualizationDemo:
         times_no_viz = []
         for i in range(iterations):
             start_time = time.perf_counter()
-            result = self.graphrag.query(query, top_k=5, visualize=False)
+            self.graphrag.query(query, top_k=5, visualize=False)
             end_time = time.perf_counter()
             times_no_viz.append((end_time - start_time) * 1000)
 
@@ -346,7 +346,7 @@ class GraphVisualizationDemo:
         times_with_viz = []
         for i in range(iterations):
             start_time = time.perf_counter()
-            result = self.graphrag.query(
+            self.graphrag.query(
                 query, top_k=5, visualize=True, visualization_type="plotly"
             )
             end_time = time.perf_counter()
@@ -409,7 +409,7 @@ class GraphVisualizationDemo:
         for file in self.output_dir.glob("*.graphml"):
             logger.info(f"  - {file.name}")
         logger.info(
-            f"Open the HTML files in a web browser to view the interactive visualizations."
+            "Open the HTML files in a web browser to view the interactive visualizations."
         )
 
 

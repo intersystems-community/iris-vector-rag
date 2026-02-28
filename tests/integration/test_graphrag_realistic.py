@@ -74,7 +74,6 @@ class TestGraphRAGRealistic:
 
         # Get an entity that HAS relationships (not just any entity)
         # Use the iris_connection fixture directly (already a SQLAlchemy connection)
-        from sqlalchemy import text
 
         # Get the actual connection from the fixture (it's passed via graphrag_with_existing_data)
         # We stored it in the pipeline's connection manager mock
@@ -255,7 +254,7 @@ class TestHybridGraphRAGSmoke:
             # Try to query optimized embeddings table
             cursor.execute("SELECT COUNT(*) FROM kg_NodeEmbeddings_optimized")
             opt_count = cursor.fetchone()[0]
-        except:
+        except Exception:
             pytest.skip("iris-vector-graph optimized tables not available")
         finally:
             cursor.close()

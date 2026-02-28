@@ -50,8 +50,8 @@ class TestMCPRESTConsistency:
                len(rest_result.get('retrieved_documents', rest_result.get('documents', [])))
 
         # Response structure should be identical
-        mcp_keys = set(mcp_response.keys())
-        rest_keys = set(rest_result.keys())
+        set(mcp_response.keys())
+        set(rest_result.keys())
 
         # Allow for minor key naming differences (retrieved_documents vs documents)
         # but overall structure should be the same

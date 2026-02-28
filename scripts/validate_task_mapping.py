@@ -15,7 +15,7 @@ import sys
 import re
 import argparse
 from pathlib import Path
-from typing import List, Dict, Set, Tuple
+from typing import List, Dict, Tuple
 import json
 
 

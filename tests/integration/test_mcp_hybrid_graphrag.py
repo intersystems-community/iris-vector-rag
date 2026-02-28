@@ -59,7 +59,7 @@ class TestMCPHybridGraphRAG:
         )
 
         assert result['success'] is True
-        metadata = result['result']['metadata']
+        result['result']['metadata']
 
         # May include search_method, graph_traversal_depth, rrf_score
         # (depending on implementation)

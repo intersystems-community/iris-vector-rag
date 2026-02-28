@@ -2,7 +2,7 @@
 Integration tests for Bug 1: Connection API Fix (v0.5.4)
 
 Tests verify that:
-1. intersystems_iris.connect() is used correctly (official intersystems-irispython v5.3.0)
+1. iris.createConnection() is used correctly (official intersystems-irispython v5.3.0)
 2. No AttributeError during connection establishment
 3. ConnectionError raised (not AttributeError) for invalid connections
 4. Error messages are clear and actionable
@@ -36,7 +36,7 @@ class TestBug1ConnectionAPIFix:
         conn.close()
 
         assert result is not None, "Test query should return result"
-        print("✅ Bug 1 Fix: Connection established successfully using intersystems_iris.connect()")
+        print("✅ Bug 1 Fix: Connection established successfully using iris.createConnection()")
 
     def test_no_attribute_error_on_connection(self):
         """T022: Verify no AttributeError about missing 'connect' method"""

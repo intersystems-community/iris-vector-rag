@@ -4,9 +4,6 @@ These tests define the expected behavior of the task mapping validator.
 They must fail initially and pass once the validator is implemented.
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from pathlib import Path
 
 
 class TestTaskMappingContract:

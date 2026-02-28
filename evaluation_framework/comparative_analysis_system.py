@@ -19,15 +19,15 @@ import json
 import logging
 import pickle
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import torch
 import plotly.express as px
 import plotly.graph_objects as go
 import seaborn as sns
@@ -37,17 +37,14 @@ from biomedical_question_generator import (
     BiomedicalQuestion,
     BiomedicalQuestionGenerator,
     QuestionGenerationConfig,
-    create_biomedical_question_generator,
 )
 from plotly.subplots import make_subplots
 from ragas_metrics_framework import (
-    BiomedicalRAGASFramework,
     ComprehensiveRAGASResults,
     create_biomedical_ragas_framework,
 )
 from statistical_evaluation_methodology import (
     PowerAnalysisResult,
-    StatisticalEvaluationFramework,
     StatisticalTestResult,
     create_statistical_framework,
 )
@@ -55,7 +52,6 @@ from statistical_evaluation_methodology import (
 # Pipeline imports (existing infrastructure)
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline
 from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
 from iris_vector_rag.pipelines.crag import CRAGPipeline
 from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 

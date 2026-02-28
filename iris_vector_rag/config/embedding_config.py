@@ -9,8 +9,8 @@ Purpose: Define configuration data models for IRIS EMBEDDING integration
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional, Dict, Any
 from pathlib import Path
+import importlib.util
 import os
-import sys
 
 
 @dataclass
@@ -173,17 +173,17 @@ def validate_embedding_config(config: EmbeddingConfig) -> ValidationResult:
 
     # Check 3: Verify required packages (basic check)
     # Note: Full package check would require running pip list in target Python
-    try:
-        import sentence_transformers
-        import torch
+    has_sentence = importlib.util.find_spec("sentence_transformers") is not None
+    has_torch = importlib.util.find_spec("torch") is not None
+    if has_sentence and has_torch:
         result.add_warning(
             "Package validation: sentence-transformers and torch found in current environment. "
             "Ensure they are also installed in python_path environment."
         )
-    except ImportError as e:
-        result.add_error(
-            f"MISSING_DEPENDENCIES: Required Python packages missing in current environment: {e}. "
-            "Run: pip install sentence-transformers torch"
+    else:
+        result.add_warning(
+            "Package validation: sentence-transformers and/or torch not found in current environment. "
+            "Install with: pip install sentence-transformers torch"
         )
 
     # Check 4: Validate device preference

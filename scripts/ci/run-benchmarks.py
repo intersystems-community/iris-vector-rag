@@ -7,12 +7,11 @@ This script runs performance benchmarks and compares results against baseline.
 
 import argparse
 import json
-import os
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import psutil
 
@@ -159,7 +158,7 @@ def run_custom_benchmarks(args: argparse.Namespace) -> Dict[str, Any]:
         # Benchmark 1: Pipeline factory initialization
         start_time = time.time()
         for _ in range(10):
-            factory = PipelineFactory(config_manager)
+            PipelineFactory(config_manager)
         end_time = time.time()
 
         benchmarks.append(
@@ -179,7 +178,7 @@ def run_custom_benchmarks(args: argparse.Namespace) -> Dict[str, Any]:
         # Benchmark 2: Configuration loading
         start_time = time.time()
         for _ in range(5):
-            config = config_manager.get_config()
+            config_manager.get_config()
         end_time = time.time()
 
         benchmarks.append(

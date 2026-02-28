@@ -5,7 +5,6 @@ Defines core data structures for fixture metadata, manifests, and load results.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Any

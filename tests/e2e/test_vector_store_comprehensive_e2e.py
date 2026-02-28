@@ -41,7 +41,7 @@ def vector_store(connection_manager, config_manager):
         cursor.execute("DROP TABLE IF EXISTS RAG.SourceDocuments")
         conn.commit()
         cursor.close()
-    except Exception as e:
+    except Exception:
         # Ignore errors if table doesn't exist
         pass
 
@@ -216,15 +216,12 @@ class TestVectorStoreSimilaritySearch:
         results = vector_store.similarity_search("Python language", k=2)
 
         # Should find Python-related document
-        found_python = False
         for result in results:
             if hasattr(result, "page_content"):
                 if "Python" in result.page_content:
-                    found_python = True
                     break
             elif isinstance(result, tuple) and len(result) >= 1:
                 if "Python" in str(result[0]):
-                    found_python = True
                     break
 
         # May not always find exact match due to embedding similarity

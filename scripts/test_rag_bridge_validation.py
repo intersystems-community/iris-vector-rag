@@ -447,7 +447,7 @@ class RAGBridgeValidator:
         overall_pass = passed_tests == total_tests
 
         print(f"\n{'='*60}")
-        print(f"🎯 VALIDATION SUMMARY")
+        print("🎯 VALIDATION SUMMARY")
         print(f"{'='*60}")
         print(f"Tests Passed: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
         print(f"Overall Result: {'✅ PASS' if overall_pass else '❌ FAIL'}")

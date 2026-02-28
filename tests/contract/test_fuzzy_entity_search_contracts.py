@@ -21,7 +21,7 @@ import pytest
 
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
-from iris_vector_rag.core.models import Entity, EntityTypes
+from iris_vector_rag.core.models import Entity
 from iris_vector_rag.services.storage import EntityStorageAdapter
 
 

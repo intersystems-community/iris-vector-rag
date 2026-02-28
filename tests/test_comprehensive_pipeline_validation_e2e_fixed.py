@@ -358,7 +358,7 @@ class ComprehensivePipelineValidator:
                 from iris_vector_rag.config.manager import ConfigurationManager
                 from iris_vector_rag.core.connection import ConnectionManager
 
-                pipeline = pipeline_class(
+                pipeline_class(
                     connection_manager=ConnectionManager(),
                     config_manager=ConfigurationManager(),
                 )
@@ -404,7 +404,7 @@ class ComprehensivePipelineValidator:
         ]
 
         infrastructure_available = self._check_infrastructure_availability()
-        logger.info(f"🚀 COMPREHENSIVE PIPELINE VALIDATION")
+        logger.info("🚀 COMPREHENSIVE PIPELINE VALIDATION")
         logger.info(f"🏗️  Infrastructure Available: {infrastructure_available}")
         logger.info(f"📊 Testing {len(pipelines_to_test)} pipelines")
 
@@ -489,7 +489,7 @@ def test_comprehensive_pipeline_validation():
         json.dump(report, f, indent=2)
 
     # Print summary
-    print(f"\n🎯 COMPREHENSIVE PIPELINE VALIDATION COMPLETE")
+    print("\n🎯 COMPREHENSIVE PIPELINE VALIDATION COMPLETE")
     print(f"📊 Report saved to: {report_file}")
     print(f"🏗️  Infrastructure Available: {report['infrastructure_available']}")
     print(f"🧪 Test Mode: {report['test_mode'].upper()}")

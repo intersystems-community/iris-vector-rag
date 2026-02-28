@@ -4,6 +4,7 @@
 from typing import Any, Callable, Dict, List, Optional
 
 from iris_vector_rag.common.utils import get_llm_func  # Import get_llm_func
+from iris_vector_rag.executor import SqlExecutor  # SqlExecutor protocol
 
 from .config.manager import ConfigurationManager
 from .core.base import RAGPipeline
@@ -73,6 +74,10 @@ def create_pipeline(
 
     # Use validated factory if validation is requested
     if validate_requirements:
+        if embedding_func:
+            kwargs["embedding_func"] = embedding_func
+        if pipeline_type == "graphrag" and not auto_setup:
+            auto_setup = True
         factory = ValidatedPipelineFactory(connection_manager, config_manager)
         return factory.create_pipeline(
             pipeline_type=pipeline_type,
@@ -281,4 +286,5 @@ __all__ = [
     "PreConditionValidator",
     "SetupOrchestrator",
     "get_pipeline_requirements",
+    "SqlExecutor",
 ]

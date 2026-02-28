@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **hipporag2 Compatibility**: Enhanced batch storage reliability for downstream pipelines like hipporag2-pipeline
 
 ### Changed
-- **iris-vector-graph Dependency**: Updated minimum version to >=1.1.7 to leverage upstream PPR connection type fixes and improved graph traversal reliability
+- **iris-vector-graph Dependency**: Updated minimum version to >=1.6.0 to align with the latest graph engine release
 
 ## [Unreleased] - 2025-06-08
 

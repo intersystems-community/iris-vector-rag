@@ -1,3 +1,5 @@
+# pyright: reportMissingImports=false
+
 """
 PyLate ColBERT Pipeline with Consistent Configuration
 
@@ -5,9 +7,11 @@ Simple PyLate-based ColBERT implementation that follows the same configuration
 patterns as BasicRAGReranking for consistency across the evaluation framework.
 """
 
+import importlib
 import logging
+import os
 import tempfile
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ...core.models import Document
 from ..basic import BasicRAGPipeline
@@ -25,8 +29,8 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
     def __init__(
         self,
-        connection_manager,
-        config_manager,
+        connection_manager=None,
+        config_manager=None,
         embedding_config: Optional[str] = None,
         **kwargs,
     ):
@@ -98,7 +102,9 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         """Import PyLate components; return True on success, else False."""
         try:
             global models, rank
-            from pylate import models, rank
+            module = importlib.import_module("pylate")
+            models = module.models
+            rank = module.rank
 
             logger.debug("PyLate library imported successfully")
             return True
@@ -210,6 +216,16 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
                 "Expected: Non-empty query string\n"
                 "Actual: Empty or whitespace-only string\n"
                 "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
+            )
+
+        if kwargs.get("generate_answer", True) and not os.environ.get("OPENAI_API_KEY"):
+            logger.error(
+                "Missing OPENAI_API_KEY for PyLate ColBERT query. "
+                "Pipeline=pylate_colbert, operation=query, state=missing_api_key."
+            )
+            raise ValueError(
+                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
+                "or configure your API key before running PyLate ColBERT queries."
             )
 
         # Validate top_k

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Test script for IRIS Global GraphRAG pipeline integration.
 
@@ -8,7 +9,6 @@ RAG framework.
 """
 
 import logging
-import os
 import sys
 from pathlib import Path
 
@@ -220,7 +220,7 @@ def test_web_interface(pipeline):
         interface = IRISGlobalGraphRAGInterface(pipeline)
 
         # Create Flask app (don't run it)
-        app = interface.create_flask_app()
+        interface.create_flask_app()
 
         logger.info("✅ Web interface created successfully")
         logger.info(

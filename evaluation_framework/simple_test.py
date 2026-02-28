@@ -9,8 +9,7 @@ to ensure the framework structure is sound.
 import logging
 import os
 import sys
-import traceback
-from typing import Any, Dict
+from typing import Dict
 
 # Add the evaluation_framework directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +26,6 @@ def test_core_imports() -> Dict[str, bool]:
     # Test basic empirical reporting
     try:
         logger.info("Testing empirical reporting import...")
-        from empirical_reporting import create_empirical_reporting_framework
 
         results["empirical_reporting"] = True
         logger.info("✓ Empirical reporting imported successfully")
@@ -39,7 +37,6 @@ def test_core_imports() -> Dict[str, bool]:
     try:
         logger.info("Testing configuration classes...")
         import importlib.util
-        import sys
 
         # Load and test configuration classes without the ML dependencies
         spec = importlib.util.spec_from_file_location(
@@ -68,17 +65,26 @@ def test_core_imports() -> Dict[str, bool]:
             # Monkey patch the missing classes
             import transformers
 
-            transformers.AutoModelForSeq2SeqLM = MockAutoModel
-            transformers.AutoTokenizer = MockAutoTokenizer
+            original_auto_model = getattr(transformers, "AutoModelForSeq2SeqLM", None)
+            original_auto_tokenizer = getattr(transformers, "AutoTokenizer", None)
 
-            spec.loader.exec_module(module)
-            config_class = getattr(module, "QuestionGenerationConfig", None)
-            if config_class:
-                config = config_class(total_questions=5, min_confidence_score=0.5)
-                results["question_config"] = True
-                logger.info("✓ Question generation config works")
-            else:
-                results["question_config"] = False
+            try:
+                transformers.AutoModelForSeq2SeqLM = MockAutoModel
+                transformers.AutoTokenizer = MockAutoTokenizer
+
+                spec.loader.exec_module(module)
+                config_class = getattr(module, "QuestionGenerationConfig", None)
+                if config_class:
+                    config_class(total_questions=5, min_confidence_score=0.5)
+                    results["question_config"] = True
+                    logger.info("✓ Question generation config works")
+                else:
+                    results["question_config"] = False
+            finally:
+                if original_auto_model is not None:
+                    transformers.AutoModelForSeq2SeqLM = original_auto_model
+                if original_auto_tokenizer is not None:
+                    transformers.AutoTokenizer = original_auto_tokenizer
         else:
             results["question_config"] = False
 
@@ -162,8 +168,8 @@ def test_data_structures() -> Dict[str, bool]:
         df = pd.DataFrame(evaluation_data)
 
         # Test aggregation
-        mean_scores = df.select_dtypes(include=[np.number]).mean()
-        std_scores = df.select_dtypes(include=[np.number]).std()
+        df.select_dtypes(include=[np.number]).mean()
+        df.select_dtypes(include=[np.number]).std()
 
         # Test ranking
         df["overall_score"] = df[
@@ -215,16 +221,16 @@ This evaluation compared 4 RAG pipelines using comprehensive RAGAS metrics.
         """
 
         # Test HTML generation
-        html_content = f"""
+        html_content = """
 <!DOCTYPE html>
 <html>
 <head>
     <title>Biomedical RAG Evaluation Report</title>
     <style>
-        body {{ font-family: Arial, sans-serif; margin: 40px; }}
-        h1 {{ color: #2c3e50; }}
-        h2 {{ color: #34495e; border-bottom: 2px solid #ecf0f1; }}
-        .metric {{ background: #f8f9fa; padding: 10px; margin: 10px 0; }}
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; border-bottom: 2px solid #ecf0f1; }
+        .metric { background: #f8f9fa; padding: 10px; margin: 10px 0; }
     </style>
 </head>
 <body>

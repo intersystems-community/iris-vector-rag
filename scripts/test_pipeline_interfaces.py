@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ruff: noqa: E402
 """
 Test script to examine the actual interfaces of RAG pipelines.
 This helps understand what methods each pipeline provides.
@@ -10,6 +11,7 @@ import os
 import sys
 from datetime import datetime
 from typing import Any, Dict
+from unittest.mock import MagicMock
 
 # Add the project root to the path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -25,6 +27,7 @@ from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 from iris_vector_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
 from iris_vector_rag.pipelines.hyde import HyDERAGPipeline
 from iris_vector_rag.pipelines.noderag import NodeRAGPipeline
+from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline as ColBERTRAGPipeline
 
 PIPELINE_CLASSES = {
     "basic": BasicRAGPipeline,
@@ -214,7 +217,7 @@ def main():
 
         print(f"\nBase Classes: {', '.join(interface['base_classes'])}")
         print(f"Module: {interface['module']}")
-        print(f"\nKey Methods Found:")
+        print("\nKey Methods Found:")
 
         important_methods = [
             "execute",

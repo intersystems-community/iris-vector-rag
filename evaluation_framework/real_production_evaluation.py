@@ -4,6 +4,8 @@ Real Production 10K Document Biomedical RAG Evaluation
 Uses actual vector search, real LLMs, and genuine RAGAS evaluation.
 """
 
+# ruff: noqa: E402
+
 import json
 import logging
 import os
@@ -13,7 +15,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
-import numpy as np
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -517,14 +518,14 @@ Provide only a numeric score (0.0-1.0):"""
         print(f"Documents Processed: {self.results['documents_processed']}")
         print(f"Questions Evaluated: {self.results['questions_evaluated']}")
         print(f"Execution Time: {execution_time:.2f} minutes")
-        print(f"Infrastructure: Real vector search + Real LLM + Real RAGAS")
+        print("Infrastructure: Real vector search + Real LLM + Real RAGAS")
 
         print("\nPipeline Results:")
         for pipeline_name, result in self.results["pipeline_results"].items():
             score = result["metrics"]["overall_score"]
             print(f"  {pipeline_name}: {score:.3f}")
 
-        print(f"\n✅ Real evaluation complete - no more mock data!")
+        print("\n✅ Real evaluation complete - no more mock data!")
 
 
 def main():

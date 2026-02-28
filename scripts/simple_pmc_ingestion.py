@@ -33,7 +33,6 @@ def process_pmc_files():
     REAL ingestion using loader_fixed with embeddings and schema ensure.
     This simple script now performs true ingestion into IRIS.
     """
-    import glob
     import json
     import os
     from datetime import datetime

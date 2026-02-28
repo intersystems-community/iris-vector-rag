@@ -11,7 +11,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -61,7 +61,7 @@ def test_configuration():
             assert config.num_queries == 10
             assert config.pipelines == ["BasicRAG", "CRAG"]
             assert str(config.output_dir) == "/tmp/test_ragas"
-            assert config.use_cache == False
+            assert not config.use_cache
 
         print("✅ Configuration handling validated")
         return True
@@ -284,7 +284,6 @@ def test_shell_script_structure():
         assert script_path.exists(), "Shell script not found"
 
         # Check that script is executable
-        import stat
 
         assert os.access(script_path, os.X_OK), "Shell script is not executable"
 

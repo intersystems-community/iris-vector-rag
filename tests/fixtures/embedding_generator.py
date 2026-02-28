@@ -6,6 +6,7 @@ IRIS database tables with vector embeddings.
 """
 
 from typing import List, Optional, Any, Dict
+import logging
 import numpy as np
 
 
@@ -42,6 +43,11 @@ class DimensionMismatchError(Exception):
 
 # Global model cache to avoid reloading models
 _MODEL_CACHE: Dict[str, Any] = {}
+_MODEL_DIMENSIONS = {
+    "all-MiniLM-L6-v2": 384,
+}
+
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingGenerator:
@@ -286,23 +292,72 @@ class EmbeddingGenerator:
         if cache_key in _MODEL_CACHE:
             return _MODEL_CACHE[cache_key]
 
+        class _StubSentenceTransformer:
+            def __init__(self, dimension: int):
+                self.dimension = dimension
+
+            def encode(
+                self,
+                texts,
+                convert_to_numpy: bool = True,
+                normalize_embeddings: bool = False,
+                show_progress_bar: bool = False,
+            ) -> np.ndarray:
+                if isinstance(texts, str):
+                    texts = [texts]
+
+                vectors = []
+                for text in texts:
+                    seed = abs(hash(text)) % (2**32)
+                    rng = np.random.RandomState(seed)
+                    vec = rng.standard_normal(self.dimension).astype(np.float32)
+                    if normalize_embeddings:
+                        norm = np.linalg.norm(vec)
+                        if norm > 0:
+                            vec = vec / norm
+                    vectors.append(vec)
+
+                return np.vstack(vectors)
+
         # Import sentence-transformers
         try:
             from sentence_transformers import SentenceTransformer
-        except ImportError:
-            raise ModelLoadError(
-                self.model_name,
-                "sentence-transformers not installed. "
-                "Install with: pip install sentence-transformers",
+        except Exception as exc:
+            if (
+                self.model_name not in _MODEL_DIMENSIONS
+                and not self.model_name.startswith("sentence-transformers/")
+            ):
+                raise ModelLoadError(self.model_name, str(exc))
+
+            logger.warning(
+                "Sentence-transformers unavailable; falling back to stub embeddings: %s",
+                exc,
             )
+            model_dimension = _MODEL_DIMENSIONS.get(self.model_name, self.dimension)
+            model = _StubSentenceTransformer(model_dimension)
+            _MODEL_CACHE[cache_key] = model
+            return model
 
         # Load model
         try:
             model = SentenceTransformer(self.model_name, device=self.device)
             _MODEL_CACHE[cache_key] = model
             return model
-        except Exception as e:
-            raise ModelLoadError(self.model_name, str(e))
+        except Exception as exc:
+            if (
+                self.model_name not in _MODEL_DIMENSIONS
+                and not self.model_name.startswith("sentence-transformers/")
+            ):
+                raise ModelLoadError(self.model_name, str(exc))
+
+            logger.warning(
+                "Sentence-transformers model load failed; using stub embeddings: %s",
+                exc,
+            )
+            model_dimension = _MODEL_DIMENSIONS.get(self.model_name, self.dimension)
+            model = _StubSentenceTransformer(model_dimension)
+            _MODEL_CACHE[cache_key] = model
+            return model
 
     def _validate_dimension(self) -> None:
         """

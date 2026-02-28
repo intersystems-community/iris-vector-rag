@@ -6,11 +6,9 @@ including configurable time windows, retention policies, and performance optimiz
 """
 
 import asyncio
-import time
 import unittest
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.memory.models import MemoryItem, TemporalWindow, TemporalWindowConfig

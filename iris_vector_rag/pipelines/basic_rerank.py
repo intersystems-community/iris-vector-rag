@@ -6,6 +6,7 @@ eliminating code duplication through proper inheritance.
 """
 
 import logging
+import os
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ..core.models import Document
@@ -141,6 +142,15 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
             )
 
+        generate_answer = kwargs.get("generate_answer", True)
+
+        # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
+        if generate_answer and not os.environ.get("OPENAI_API_KEY"):
+            raise ValueError(
+                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
+                "or configure your API key before running BasicRerankRAG queries."
+            )
+
         # Calculate how many documents to retrieve for reranking pool
         initial_k = min(top_k * self.rerank_factor, 100)  # Cap at 100 for performance
 
@@ -180,7 +190,6 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 logger.debug(f"No reranker available, returning top {top_k} documents")
 
         # Now generate answer if requested (using reranked documents)
-        generate_answer = kwargs.get("generate_answer", True)
         if generate_answer and self.llm_func and final_documents:
             try:
                 custom_prompt = kwargs.get("custom_prompt")

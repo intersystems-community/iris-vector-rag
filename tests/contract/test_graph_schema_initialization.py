@@ -11,7 +11,7 @@ should fail with AttributeError when first run.
 
 import pytest
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from dataclasses import dataclass
 from typing import List, Dict
 
@@ -80,32 +80,21 @@ class TestGraphTableInitialization:
             assert len(result.error_messages) == 0, \
                 f"Should have no errors, got: {result.error_messages}"
 
-    def test_graph_tables_skipped_when_package_not_installed(self, schema_manager):
+    def test_graph_tables_require_package_for_graphrag(self, schema_manager):
         """
-        CONTRACT: No tables created when package not installed.
+        CONTRACT: GraphRAG fails fast when package not installed.
 
         GIVEN iris-vector-graph is NOT installed
-        WHEN ensure_iris_vector_graph_tables() is called
-        THEN no tables are created
-        AND InitializationResult.package_detected == False
-        AND InitializationResult.tables_attempted is empty
-        AND InitializationResult.tables_created is empty
+        WHEN ensure_iris_vector_graph_tables(pipeline_type="graphrag") is called
+        THEN ImportError is raised with clear guidance
         """
-        # Mock package detection as not installed
         with patch.object(schema_manager, '_detect_iris_vector_graph', return_value=False):
-            # This will fail initially with AttributeError
-            result = schema_manager.ensure_iris_vector_graph_tables()
+            with pytest.raises(ImportError) as exc:
+                schema_manager.ensure_iris_vector_graph_tables(pipeline_type="graphrag")
 
-            assert isinstance(result, InitializationResult), \
-                "Must return InitializationResult instance"
-            assert result.package_detected is False, \
-                "Should detect package not installed"
-            assert result.tables_attempted == [], \
-                "Should not attempt any tables when package not installed"
-            assert result.tables_created == {}, \
-                "Should not create any tables when package not installed"
-            assert result.error_messages == {}, \
-                "Should have no errors when package not installed"
+            message = str(exc.value).lower()
+            assert "iris-vector-graph" in message
+            assert "install" in message
 
     def test_idempotent_table_creation(self, schema_manager_with_db):
         """
@@ -218,7 +207,7 @@ class TestGraphTableInitialization:
         with patch.object(schema_manager, '_detect_iris_vector_graph', return_value=True):
             with patch.object(schema_manager, 'ensure_table_schema', side_effect=mock_ensure_table_schema):
                 # This will fail initially with AttributeError
-                result = schema_manager.ensure_iris_vector_graph_tables()
+                schema_manager.ensure_iris_vector_graph_tables()
 
                 # Validate order
                 expected_order = ["rdf_labels", "rdf_props", "rdf_edges", "kg_NodeEmbeddings_optimized"]

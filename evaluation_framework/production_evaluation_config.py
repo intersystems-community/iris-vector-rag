@@ -7,7 +7,7 @@ Optimized for large-scale evaluation with robust error handling and monitoring.
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -206,15 +206,13 @@ class ProductionExecutionOrchestrator:
         try:
             for pipeline_name in self.config.target_pipelines:
                 if pipeline_name == "BasicRAGPipeline":
-                    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
+                    pass
                 elif pipeline_name == "CRAGPipeline":
-                    from iris_vector_rag.pipelines.crag import CRAGPipeline
+                    pass
                 elif pipeline_name == "GraphRAGPipeline":
-                    from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
+                    pass
                 elif pipeline_name == "BasicRAGRerankingPipeline":
-                    from iris_vector_rag.pipelines.basic_rerank import (
-                        BasicRAGRerankingPipeline,
-                    )
+                    pass
 
                 self.logger.info(f"✅ {pipeline_name} import validated")
         except Exception as e:
@@ -226,12 +224,10 @@ class ProductionExecutionOrchestrator:
             # Test key framework components
             from empirical_reporting import create_empirical_reporting_framework
 
-            reporting = create_empirical_reporting_framework()
+            create_empirical_reporting_framework()
             self.logger.info("✅ Empirical reporting framework validated")
 
             # Test statistical components
-            import numpy as np
-            import scipy.stats
 
             self.logger.info("✅ Statistical analysis components validated")
 
@@ -339,7 +335,7 @@ def main():
     if ready:
         # Create execution script
         script_path = orchestrator.create_execution_script()
-        print(f"✅ Production evaluation system validated and ready")
+        print("✅ Production evaluation system validated and ready")
         print(f"📝 Execution script created: {script_path}")
         print(f"🚀 Run with: python {script_path}")
     else:

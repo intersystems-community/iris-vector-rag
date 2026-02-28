@@ -17,46 +17,33 @@ Key Features:
 8. Integration with IRIS vector database
 """
 
-import asyncio
-import gzip
-import hashlib
 import json
 import logging
-import pickle
 import re
 import sqlite3
 import time
 import xml.etree.ElementTree as ET
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
-from urllib.parse import urljoin
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 import ftfy
 import nltk
 import numpy as np
-import pandas as pd
-import psycopg2
-import requests
 
 # Scientific/medical processing
 import spacy
 
 # Database integration
-import sqlalchemy as sa
-import torch
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize, word_tokenize
 from sentence_transformers import SentenceTransformer
 
 # Data processing
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from sqlalchemy import create_engine, text
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoTokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -258,7 +245,7 @@ class PMCDataPipeline:
             nltk.download("punkt", quiet=True)
             nltk.download("stopwords", quiet=True)
             self.stop_words = set(stopwords.words("english"))
-        except:
+        except Exception:
             self.stop_words = set()
 
         logger.info("NLP models initialized successfully")
@@ -1200,7 +1187,7 @@ class PMCDataPipeline:
             if file_path.is_file() and file_path.stat().st_mtime < cutoff_time:
                 try:
                     file_path.unlink()
-                except:
+                except Exception:
                     pass
 
     # Additional utility methods for XML parsing
@@ -1324,7 +1311,7 @@ if __name__ == "__main__":
     # Process documents
     stats = pipeline.process_documents(sample_docs)
 
-    print(f"Processing completed:")
+    print("Processing completed:")
     print(f"- Total documents: {stats.total_documents}")
     print(f"- Successful: {stats.successful_documents}")
     print(f"- Failed: {stats.failed_documents}")

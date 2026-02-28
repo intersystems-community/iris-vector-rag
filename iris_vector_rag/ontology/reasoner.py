@@ -15,12 +15,10 @@ Key Features:
 """
 
 import logging
-import math
-import re
 from abc import ABC, abstractmethod
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Set
 
 from .models import (
     Concept,
@@ -28,7 +26,6 @@ from .models import (
     InferenceRule,
     OntologyRelationship,
     RelationType,
-    SemanticMapping,
 )
 
 logger = logging.getLogger(__name__)

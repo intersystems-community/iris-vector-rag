@@ -6,8 +6,6 @@ IRIS database connections and actual document processing (no mocks).
 """
 
 import logging
-import os
-from pathlib import Path
 
 import pytest
 

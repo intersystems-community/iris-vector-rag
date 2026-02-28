@@ -5,8 +5,7 @@ Tests the automatic creation and management of HNSW indexes
 with ACORN-1 optimization fallback.
 """
 
-import logging
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -51,10 +50,6 @@ class TestEnsureHNSWIndex:
         )
 
         # Verify check query was executed
-        expected_check_sql = """
-                SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES 
-                WHERE TABLE_NAME = ? AND INDEX_NAME = ?
-            """
         mock_cursor.execute.assert_called_once()
         args = mock_cursor.execute.call_args[0]
         assert "SELECT COUNT(*)" in args[0]

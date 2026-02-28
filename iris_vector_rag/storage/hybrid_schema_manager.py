@@ -7,7 +7,7 @@ for advanced hybrid search capabilities.
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict
 
 from .schema_manager import SchemaManager
 
@@ -128,7 +128,7 @@ class HybridGraphRAGSchemaManager(SchemaManager):
             try:
                 conn.rollback()
                 cursor.close()
-            except:
+            except Exception:
                 pass
             return False
 

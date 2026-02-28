@@ -5,15 +5,13 @@ This module provides base classes and implementations for loading ontologies
 from various formats including OWL, RDF, and SKOS.
 """
 
-import json
 import logging
 import urllib.parse
 import uuid
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from .models import (
     Concept,

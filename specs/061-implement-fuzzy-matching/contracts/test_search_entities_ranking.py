@@ -5,7 +5,6 @@ Tests functional requirement:
 - FR-005: Results ranked with exact matches first, then by edit distance
 """
 
-import pytest
 
 
 class TestSearchEntitiesRanking:

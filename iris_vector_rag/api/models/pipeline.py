@@ -5,7 +5,7 @@ Pydantic models for Pipeline Instance entity (Entity 2 from data-model.md).
 Represents initialized RAG pipeline with health status and performance stats.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from pydantic import BaseModel, Field
 from enum import Enum
 from uuid import UUID

@@ -161,14 +161,16 @@ def get_iris_connection_in_best_env():
         try:
             import iris
 
-            if hasattr(iris, "connect"):
-                return iris.connect(
-                    hostname=os.environ.get("IRIS_HOST", "localhost"),
-                    port=int(os.environ.get("IRIS_PORT", "1974")),
-                    namespace=os.environ.get("IRIS_NAMESPACE", "USER"),
-                    username=os.environ.get("IRIS_USERNAME", "SuperUser"),
-                    password=os.environ.get("IRIS_PASSWORD", "SYS"),
-                )
+            host = os.environ.get("IRIS_HOST", "localhost")
+            port = int(os.environ.get("IRIS_PORT", "1974"))
+            namespace = os.environ.get("IRIS_NAMESPACE", "USER")
+            username = os.environ.get("IRIS_USERNAME", "SuperUser")
+            password = os.environ.get("IRIS_PASSWORD", "SYS")
+
+            if hasattr(iris, "createConnection"):
+                return iris.createConnection(host, port, namespace, username, password)
+            if hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
+                return iris.dbapi.connect(host, port, namespace, username, password)
         except Exception as e:
             logger.warning(f"Direct IRIS import failed: {e}")
 

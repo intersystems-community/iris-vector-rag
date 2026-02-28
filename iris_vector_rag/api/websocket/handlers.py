@@ -8,7 +8,6 @@ Provides real-time event streaming for long-running operations.
 import logging
 import asyncio
 from uuid import UUID, uuid4
-from typing import AsyncIterator
 
 from iris_vector_rag.api.models.websocket import (
     EventType,

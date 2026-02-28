@@ -9,7 +9,6 @@ Reference: specs/047-create-a-unified/tasks.md (T098)
 
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 import tempfile
 import shutil
 import json
@@ -45,7 +44,7 @@ class TestFixtureManagerInit:
         assert not temp_fixtures_dir.exists()
 
         # Initialize manager
-        manager = FixtureManager(fixtures_root=temp_fixtures_dir)
+        FixtureManager(fixtures_root=temp_fixtures_dir)
 
         # Directory should be created
         assert temp_fixtures_dir.exists()

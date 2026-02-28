@@ -13,7 +13,7 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -260,7 +260,7 @@ class TestHybridGraphRAGPipeline:
             ) as mock_fallback:
                 mock_fallback.return_value = ([Mock()], "fallback")
 
-                result = pipeline.query("test query", method="hybrid", generate_answer=False)
+                pipeline.query("test query", method="hybrid", generate_answer=False)
 
                 # Should use enhanced fallback when hybrid unavailable
                 mock_fallback.assert_called_once()

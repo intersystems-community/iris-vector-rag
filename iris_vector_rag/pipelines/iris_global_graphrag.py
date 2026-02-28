@@ -11,16 +11,16 @@ validation, and monitoring.
 """
 
 import logging
+import time
 import os
 import sys
-import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
-from ..core.exceptions import PipelineConfigurationError, RAGException
+from ..core.exceptions import RAGException
 from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
 
@@ -197,7 +197,7 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
         try:
             # Use our connection manager if available
             if self.connection_manager:
-                connection = self.connection_manager.get_connection()
+                self.connection_manager.get_connection()
                 self.iris_engine = self.global_graphrag_module.get_sqlalchemy_engine()
                 self.irispy = self.global_graphrag_module.get_irispy()
             else:
@@ -356,7 +356,7 @@ class IRISGlobalGraphRAGPipeline(RAGPipeline):
     def _store_graph_relations(self, doc: Document):
         """Store graph relations in IRIS globals."""
         metadata = doc.metadata or {}
-        entities = metadata.get("entities", [])
+        metadata.get("entities", [])
         relationships = metadata.get("relationships", [])
 
         global_name = self.config.get("graph_relations_global", "GraphRelations")

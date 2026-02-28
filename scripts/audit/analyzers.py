@@ -142,7 +142,7 @@ def analyze_inconsistent_patterns(targets: List[MakeTarget]) -> List[AuditIssue]
                         ),
                         category=IssueCategory.INCONSISTENT_PATTERN,
                         severity=Severity.MEDIUM,
-                        description=f"Inconsistent IRIS_PORT configuration across RAGAS targets",
+                        description="Inconsistent IRIS_PORT configuration across RAGAS targets",
                         current_value=config,
                         recommended_fix="Standardize all RAGAS targets to use ${IRIS_PORT:-1972}",
                         rationale="FR-004: Similar targets must use consistent configuration patterns",

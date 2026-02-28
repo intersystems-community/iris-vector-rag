@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Simple IFind setup - creates IFind table and configures pipeline.
 
@@ -38,7 +39,7 @@ class SimpleIFindSetup:
             # Drop table if exists
             try:
                 self.cursor.execute("DROP TABLE IF EXISTS RAG.SourceDocumentsIFind")
-            except:
+            except Exception:
                 pass
 
             # Create new table with same structure as SourceDocuments
@@ -240,7 +241,7 @@ class SimpleIFindSetup:
         try:
             self.cursor.close()
             self.connection.close()
-        except:
+        except Exception:
             pass
 
 

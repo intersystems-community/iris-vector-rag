@@ -5,8 +5,7 @@ Tests the safe vector query building and execution utilities that use
 the proven single-parameter pattern for IRIS vector operations.
 """
 
-import re
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 

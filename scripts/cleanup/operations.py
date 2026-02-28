@@ -19,15 +19,11 @@ from .models import (
     DocumentationUpdateReport,
     FileCategory,
     FileInventory,
-    GeneratedOutput,
     MoveReport,
     RemovalReport,
     RepositoryFile,
     RollbackReport,
-    StatusFile,
-    TemporaryFile,
     TestReport,
-    TopLevelFile,
 )
 
 # Essential files that must remain at repository root
@@ -185,7 +181,7 @@ def _classify_single_file(file: RepositoryFile, repo_root: Path) -> tuple[FileCa
 
     # Status files (move to docs/)
     if filename in STATUS_FILES:
-        return FileCategory.RELOCATABLE, f"Status file - move to docs/"
+        return FileCategory.RELOCATABLE, "Status file - move to docs/"
 
     # Temporary/cache files
     for pattern in TEMP_PATTERNS:
@@ -544,7 +540,7 @@ def update_documentation_index(
         if updated_content != content:
             if not dry_run:
                 index_file.write_text(updated_content)
-            print(f"Updated DOCUMENTATION_INDEX.md")
+            print("Updated DOCUMENTATION_INDEX.md")
             return True
         else:
             print("No updates needed in DOCUMENTATION_INDEX.md")

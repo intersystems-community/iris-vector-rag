@@ -10,7 +10,6 @@ import logging
 import time
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
-from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
@@ -492,6 +491,6 @@ def register_vectorization_callback(config_name: str):
     # For testing, just validate that callback exists
     if iris_batch_embedding_callback is None:
         raise ValueError(
-            f"CALLBACK_NOT_FOUND: iris_batch_embedding_callback not available. "
+            "CALLBACK_NOT_FOUND: iris_batch_embedding_callback not available. "
             "Ensure iris_rag.embeddings.iris_embedding module is loaded."
         )

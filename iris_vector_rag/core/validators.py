@@ -31,7 +31,7 @@ import inspect
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type, get_type_hints
+from typing import Any, Dict, List, Optional, Type
 
 from iris_vector_rag.core.base import RAGPipeline
 

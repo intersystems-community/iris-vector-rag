@@ -79,7 +79,7 @@ class TestBasicRerankRAGErrorHandling:
 
                 # Execute query - should succeed after retries
                 try:
-                    result = basic_rerank_pipeline.query(sample_query)
+                    basic_rerank_pipeline.query(sample_query)
 
                     # If retries succeeded, verify retry logging
                     log_output = caplog.text.lower()
@@ -234,7 +234,7 @@ class TestBasicRerankRAGErrorHandling:
         with pytest.raises(Exception):
             basic_rerank_pipeline.query("test query")
 
-        log_output = caplog.text.lower()
+        caplog.text.lower()
 
         # Error SHOULD be logged
         assert len(caplog.records) > 0, "Errors should be logged"
@@ -328,7 +328,7 @@ class TestBasicRerankRAGErrorHandling:
             )
 
             try:
-                result = basic_rerank_pipeline.query(sample_query)
+                basic_rerank_pipeline.query(sample_query)
 
                 # If query succeeded, verify fallback occurred
                 log_output = caplog.text.lower()

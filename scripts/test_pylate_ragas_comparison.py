@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 PyLate ColBERT RAGAS Evaluation - Pipeline Comparison
 
@@ -17,7 +18,6 @@ Usage:
 
 import json
 import logging
-import os
 import sys
 import time
 from datetime import datetime
@@ -530,15 +530,15 @@ def main():
     logger.info("\n" + "=" * 80)
     logger.info("🎯 EVALUATION COMPLETE")
     logger.info("=" * 80)
-    logger.info(f"\n📊 Rankings by Success Rate:")
+    logger.info("\n📊 Rankings by Success Rate:")
     for i, item in enumerate(comparison["rankings"]["by_success_rate"], 1):
         logger.info(f"  {i}. {item['pipeline']}: {item['score']*100:.1f}%")
 
-    logger.info(f"\n⚡ Rankings by Speed:")
+    logger.info("\n⚡ Rankings by Speed:")
     for i, item in enumerate(comparison["rankings"]["by_speed"], 1):
         logger.info(f"  {i}. {item['pipeline']}: {item['avg_time']:.3f}s")
 
-    logger.info(f"\n📄 Reports Generated:")
+    logger.info("\n📄 Reports Generated:")
     logger.info(f"  JSON: {json_file}")
     logger.info(f"  HTML: {html_file}")
 

@@ -6,10 +6,13 @@ Purpose: Extract entities from text during EMBEDDING vectorization
          for automatic knowledge graph population.
 """
 
+import logging
+import re
+import time
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
-from uuid import UUID, uuid4
 from datetime import datetime, timezone
+from typing import Any, Dict, List
+from uuid import UUID, uuid4
 
 
 @dataclass
@@ -170,11 +173,6 @@ class DocumentEntities:
             )
 
 
-import logging
-import time
-import json
-import re
-from typing import Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -479,7 +477,7 @@ def configure_entity_types(
     """
     # In production, this would UPDATE %Embedding.Config table
     # For testing, we use the in-memory config store from iris_embedding.py
-    from iris_vector_rag.embeddings.iris_embedding import _CONFIG_STORE, get_config
+    from iris_vector_rag.embeddings.iris_embedding import _CONFIG_STORE
 
     if config_name not in _CONFIG_STORE:
         raise ValueError(

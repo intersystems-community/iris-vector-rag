@@ -24,10 +24,8 @@ Usage:
 """
 
 import argparse
-import concurrent.futures
 import json
 import logging
-import os
 import queue
 import statistics
 import subprocess
@@ -38,7 +36,7 @@ import traceback
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -49,8 +47,6 @@ try:
     import matplotlib.pyplot as plt
     import numpy as np
     import psutil
-    import seaborn as sns
-
     MONITORING_AVAILABLE = True
 except ImportError:
     MONITORING_AVAILABLE = False
@@ -1139,13 +1135,13 @@ class PerformanceBenchmarkSuite:
     def display_results(self, result: BenchmarkResult) -> None:
         """Display benchmark results to console."""
         print(f"\n{'='*80}")
-        print(f"🏁 PERFORMANCE BENCHMARK RESULTS")
+        print("🏁 PERFORMANCE BENCHMARK RESULTS")
         print(f"{'='*80}")
 
         print(f"\n{result.summary}")
 
         if result.implementation_comparison:
-            print(f"\n📊 IMPLEMENTATION COMPARISON:")
+            print("\n📊 IMPLEMENTATION COMPARISON:")
             for impl, stats in result.implementation_comparison.items():
                 print(f"\n{impl.upper()}:")
                 print(
@@ -1157,7 +1153,7 @@ class PerformanceBenchmarkSuite:
                 print(f"  Average Confidence: {stats.get('average_confidence', 0):.2f}")
 
         if result.recommendations:
-            print(f"\n💡 RECOMMENDATIONS:")
+            print("\n💡 RECOMMENDATIONS:")
             for rec in result.recommendations:
                 print(f"  - {rec}")
 
@@ -1178,7 +1174,7 @@ class PerformanceBenchmarkSuite:
         else:
             test_status.append("❌ RAGAS Evaluation")
 
-        print(f"\n🧪 TEST COMPLETION STATUS:")
+        print("\n🧪 TEST COMPLETION STATUS:")
         for status in test_status:
             print(f"  - {status}")
 

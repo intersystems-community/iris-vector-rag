@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ruff: noqa: E402
 """
 Comprehensive pipeline test that properly mocks database connections.
 Tests all RAG pipelines with their actual interfaces.
@@ -9,8 +10,8 @@ import os
 import sys
 import traceback
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any, Dict, List
+from unittest.mock import Mock, patch
 
 # Add the project root to the path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -25,12 +26,12 @@ from iris_vector_rag.core.models import Document
 
 # Pipeline imports
 from iris_vector_rag.pipelines.basic import BasicRAGPipeline
-from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
 from iris_vector_rag.pipelines.crag import CRAGPipeline
 from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 from iris_vector_rag.pipelines.hybrid_ifind import HybridIFindRAGPipeline
 from iris_vector_rag.pipelines.hyde import HyDERAGPipeline
 from iris_vector_rag.pipelines.noderag import NodeRAGPipeline
+from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline as ColBERTRAGPipeline
 
 PIPELINE_INFO = {
     "basic": {
@@ -234,7 +235,7 @@ def test_pipeline(pipeline_type: str, pipeline_info: Dict[str, Any]) -> Dict[str
         print(f"   ✓ Pipeline initialized successfully in {init_time:.3f}s")
         
         # Step 2: Test load_documents
-        print(f"\n2. Testing document loading...")
+        print("\n2. Testing document loading...")
         start_time = datetime.now()
         
         try:
@@ -259,7 +260,7 @@ def test_pipeline(pipeline_type: str, pipeline_info: Dict[str, Any]) -> Dict[str
             print(f"   ✗ Document loading failed: {str(e)}")
         
         # Step 3: Test query method
-        print(f"\n3. Testing query method...")
+        print("\n3. Testing query method...")
         start_time = datetime.now()
         
         try:
@@ -283,7 +284,7 @@ def test_pipeline(pipeline_type: str, pipeline_info: Dict[str, Any]) -> Dict[str
                 print(f"   Response preview: {result['tests']['query']['response']}")
             else:
                 result["tests"]["query"]["error"] = "Empty response"
-                print(f"   ⚠ Query returned empty response")
+                print("   ⚠ Query returned empty response")
                 
         except Exception as e:
             result["tests"]["query"]["error"] = str(e)
@@ -291,7 +292,7 @@ def test_pipeline(pipeline_type: str, pipeline_info: Dict[str, Any]) -> Dict[str
             print(f"   ✗ Query failed: {str(e)}")
         
         # Step 4: Test execute method
-        print(f"\n4. Testing execute method...")
+        print("\n4. Testing execute method...")
         start_time = datetime.now()
         
         try:
@@ -316,7 +317,7 @@ def test_pipeline(pipeline_type: str, pipeline_info: Dict[str, Any]) -> Dict[str
                     print(f"   Response keys: {list(response.keys())}")
             else:
                 result["tests"]["execute"]["error"] = "Empty response"
-                print(f"   ⚠ Execute returned empty response")
+                print("   ⚠ Execute returned empty response")
                 
         except Exception as e:
             result["tests"]["execute"]["error"] = str(e)

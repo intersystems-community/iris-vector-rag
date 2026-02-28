@@ -5,7 +5,8 @@ An interactive demonstration of the RAG Templates framework showcasing
 all available RAG pipelines with side-by-side comparisons and performance metrics.
 """
 
-import os
+# ruff: noqa: E402
+
 import sys
 from pathlib import Path
 
@@ -50,7 +51,7 @@ def main():
     """Main application entry point."""
 
     # Initialize configuration and session state
-    config = AppConfig()
+    AppConfig()
     initialize_session_state()
 
     # Render header

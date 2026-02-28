@@ -23,16 +23,14 @@ import argparse
 import gc
 import json
 import logging
-import os
 import statistics
 import sys
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import psutil
 
@@ -42,9 +40,9 @@ sys.path.insert(0, str(project_root))
 
 # Third-party imports with graceful fallback
 try:
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    import seaborn as sns
+    import matplotlib.pyplot as plt  # noqa: F401
+    import pandas as pd  # noqa: F401
+    import seaborn as sns  # noqa: F401
 
     VISUALIZATION_AVAILABLE = True
 except ImportError:
@@ -55,12 +53,10 @@ except ImportError:
 
 # IRIS RAG imports
 try:
-    from data.pmc_processor import _chunk_pmc_content, extract_abstract
+    from data.pmc_processor import extract_abstract
     from iris_vector_rag.config.manager import ConfigurationManager
     from iris_vector_rag.core.connection import ConnectionManager
     from iris_vector_rag.core.models import Document
-    from iris_vector_rag.pipelines.basic import BasicRAGPipeline
-    from iris_vector_rag.pipelines.crag import CRAGPipeline
     from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline as CurrentGraphRAG
     from iris_vector_rag.pipelines.graphrag_merged import GraphRAGPipeline as MergedGraphRAG
 except ImportError as e:
@@ -574,7 +570,7 @@ class GraphRAGScaleTester:
                 time.sleep(random.uniform(0.1, 2.0))  # Simulate processing time
 
                 mock_docs = random.randint(1, 10)
-                answer_length = random.randint(50, 500)
+                random.randint(50, 500)
 
                 return {
                     "query": query_text,
@@ -868,7 +864,7 @@ with 10,000+ documents to validate production readiness and performance characte
         for bottleneck in bottlenecks:
             report += f"### {bottleneck['category']}\n"
             report += f"{bottleneck['analysis']}\n\n"
-            report += f"**Recommendations:**\n"
+            report += "**Recommendations:**\n"
             for rec in bottleneck["recommendations"]:
                 report += f"- {rec}\n"
             report += "\n"

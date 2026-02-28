@@ -7,10 +7,9 @@ for sub-200ms query performance in GraphRAG applications.
 """
 
 import logging
-import math
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
@@ -211,7 +210,7 @@ class HNSWIndexTuner:
             try:
                 cursor.execute(f"DROP INDEX {index_name}")
                 logger.debug(f"Dropped existing index {index_name}")
-            except:
+            except Exception:
                 pass  # Index doesn't exist
 
             # Create HNSW index with optimized parameters
@@ -424,7 +423,7 @@ class HNSWIndexTuner:
         try:
             # IRIS-specific query for index statistics
             cursor.execute(
-                f"""
+                """
                 SELECT 
                     INDEX_NAME,
                     TABLE_NAME,

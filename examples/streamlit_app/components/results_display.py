@@ -4,8 +4,6 @@ Results Display Component
 Renders query results, retrieved documents, and performance metrics.
 """
 
-import json
-import time
 from typing import Any, Dict, List
 
 import streamlit as st
@@ -193,7 +191,7 @@ def render_single_document(
 
                 if len(content) > 300:
                     if st.button(
-                        f"Show Full Content", key=f"expand_{pipeline}_{index}"
+                        "Show Full Content", key=f"expand_{pipeline}_{index}"
                     ):
                         st.markdown("**Full Content:**")
                         st.markdown(content)

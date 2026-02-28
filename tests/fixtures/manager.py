@@ -19,7 +19,7 @@ from .models import (
     FixtureSourceType,
     MigrationResult,
 )
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 
 
@@ -565,23 +565,16 @@ class FixtureManager:
         else:
             conn = self._connection
 
-        cursor = conn.cursor()
-        total_deleted = 0
+        try:
+            from tests.fixtures.idt_cleanup import truncate_tables_schema
 
-        for table in tables:
-            try:
-                # Delete all rows
-                cursor.execute(f"DELETE FROM {table}")
-                deleted = cursor.rowcount
-                total_deleted += deleted
-            except Exception as e:
-                # Log error but continue with other tables
-                print(f"Warning: Failed to cleanup {table}: {e}", file=sys.stderr)
+            schema = truncate_tables_schema(conn, tables, strict=False)
+            if schema:
+                return 0
+        except Exception as e:
+            print(f"Warning: idt cleanup failed: {e}", file=sys.stderr)
 
-        conn.commit()
-        cursor.close()
-
-        return total_deleted
+        return 0
 
     def _load_dat_fixture(self, fixture_dir: Path, metadata: FixtureMetadata) -> int:
         """
@@ -611,7 +604,6 @@ class FixtureManager:
                 sys.path.insert(0, str(iris_devtools_path))
 
             from iris_devtools.fixtures.loader import DATFixtureLoader
-            from iris_devtools.config import IRISConfig
 
             # Get IRIS connection configuration
             # Try to extract config from existing connection if available
@@ -653,7 +645,7 @@ class FixtureManager:
             # Return total rows from our metadata (iris-devtools doesn't track row counts in LoadResult)
             return sum(metadata.row_counts.values())
 
-        except ImportError as e:
+        except ImportError:
             # iris-devtools not available - return mock success for contract tests
             # In production, this should fail, but for contract tests we just return the expected row count
             # This allows contract tests to validate the API without requiring iris-devtools installation

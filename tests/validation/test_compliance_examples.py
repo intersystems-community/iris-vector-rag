@@ -17,7 +17,6 @@ class TestGoodErrorMessages:
     def test_user_authentication_with_good_error(self):
         """Example of a test with a good three-part error message."""
         username = "testuser"
-        password = "wrongpass"
         expected_status = 200
         actual_status = 401
 
@@ -133,19 +132,3 @@ class CompletelyUntestedExample:
         """Also never called."""
         return x + y
 
-
-if __name__ == "__main__":
-    # Quick manual test
-    print("Running manual validation...")
-    try:
-        test_user_authentication_with_good_error(None)
-    except AssertionError as e:
-        print("Good error example:")
-        print(str(e))
-        print()
-
-    try:
-        test_with_minimal_error(None)
-    except AssertionError as e:
-        print("Bad error example:")
-        print(str(e))

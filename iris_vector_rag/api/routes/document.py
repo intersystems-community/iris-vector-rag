@@ -10,7 +10,6 @@ from uuid import UUID
 from typing import List
 
 from fastapi import APIRouter, Request, HTTPException, Depends, UploadFile, File, Form
-from fastapi.responses import JSONResponse
 
 from iris_vector_rag.api.models.upload import (
     DocumentUploadOperation,

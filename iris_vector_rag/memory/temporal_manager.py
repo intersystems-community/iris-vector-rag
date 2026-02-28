@@ -9,7 +9,6 @@ Demonstrates configurable time windows, retention policies, and performance opti
 import hashlib
 import logging
 import time
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -450,7 +449,7 @@ class TemporalMemoryManager:
 
             # Add context filters
             for filter_key, filter_value in query.context_filters.items():
-                sql_query += f" AND context LIKE ?"
+                sql_query += " AND context LIKE ?"
                 params.append(f"%{filter_key}:{filter_value}%")
 
             sql_query += " ORDER BY created_at DESC"

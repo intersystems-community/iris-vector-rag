@@ -17,22 +17,15 @@ Key Features:
 """
 
 import argparse
-import asyncio
 import hashlib
 import json
 import logging
-import shutil
-import subprocess
-import sys
-import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
-import pandas as pd
 import yaml
 from biomedical_question_generator import (
     BiomedicalQuestionGenerator,
@@ -48,24 +41,17 @@ from comparative_analysis_system import (
 # Import our evaluation frameworks
 from pmc_data_pipeline import (
     PMCDataPipeline,
-    PMCDocument,
     ProcessingConfig,
     create_pmc_data_pipeline,
 )
 from ragas_metrics_framework import (
     BiomedicalRAGASFramework,
-    create_biomedical_ragas_framework,
 )
 from statistical_evaluation_methodology import (
     StatisticalEvaluationFramework,
-    create_statistical_framework,
 )
 
 # Import existing pipeline infrastructure
-from iris_vector_rag.pipelines.basic import BasicRAGPipeline
-from iris_vector_rag.pipelines.basic_rerank import BasicRAGRerankingPipeline
-from iris_vector_rag.pipelines.crag import CRAGPipeline
-from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -745,7 +731,7 @@ class EvaluationOrchestrator:
 
         # Load documents and questions
         processed_docs = self._load_processed_documents()
-        questions = self._load_evaluation_questions()
+        self._load_evaluation_questions()
 
         # Run comprehensive comparison
         results = self.comparative_analysis.run_comprehensive_comparison(
@@ -934,7 +920,7 @@ class EvaluationOrchestrator:
             for i, rec in enumerate(self.current_run.final_recommendations, 1):
                 report += f"{i}. {rec}\n"
 
-        report += f"""
+        report += """
 ## Execution Details
 """
         for stage in self.current_run.stages:

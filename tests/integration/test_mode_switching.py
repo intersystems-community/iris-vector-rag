@@ -9,7 +9,6 @@ These tests verify:
 Status: Tests MUST FAIL until Phase 3.3 implementation
 """
 
-import os
 from pathlib import Path
 
 import pytest

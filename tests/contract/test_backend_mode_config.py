@@ -11,22 +11,23 @@ Contract: specs/035-make-2-modes/contracts/backend_config_contract.yaml
 Status: Tests MUST FAIL until Phase 3.3 implementation
 """
 
-import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
 from iris_vector_rag.testing.backend_manager import (
     BackendConfiguration,
+    BackendMode,
+    ConfigSource,
     ConfigurationError,
-    EditionMismatchError,
     IrisDevtoolsMissingError,
     load_configuration,
     log_session_start,
     validate_configuration,
 )
+from iris_vector_rag.testing.exceptions import EditionMismatchError
 from iris_vector_rag.testing.validators import IRISEdition
 
 
@@ -71,7 +72,7 @@ class TestBackendConfigurationLoading:
         config_file = tmp_path / "backend_modes.yaml"
         config_file.write_text("backend_mode: community\n")
 
-        with patch("iris_rag.testing.backend_manager.DEFAULT_CONFIG_PATH", config_file):
+        with patch("iris_vector_rag.testing.backend_manager.DEFAULT_CONFIG_PATH", config_file):
             config = load_configuration()
 
         assert config.mode.value == "community"
@@ -95,7 +96,7 @@ class TestBackendConfigurationLoading:
         # Point to nonexistent config file
         nonexistent_config = tmp_path / "nonexistent.yaml"
 
-        with patch("iris_rag.testing.backend_manager.DEFAULT_CONFIG_PATH", nonexistent_config):
+        with patch("iris_vector_rag.testing.backend_manager.DEFAULT_CONFIG_PATH", nonexistent_config):
             config = load_configuration()
 
         assert config.mode.value == "community"
@@ -229,7 +230,3 @@ class TestBackendModeLogging:
         assert "backend mode" in log_message
         assert "community" in log_message
         assert "environment" in log_message
-
-
-# Missing enum imports - will be added when implementation exists
-from iris_vector_rag.testing.backend_manager import BackendMode, ConfigSource

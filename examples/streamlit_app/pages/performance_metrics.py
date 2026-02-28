@@ -5,15 +5,15 @@ Comprehensive analytics and visualizations for RAG pipeline performance.
 Provides detailed insights into execution times, accuracy metrics, and system performance.
 """
 
-import json
+# ruff: noqa: E402
+
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
 # Add project root to path
@@ -21,7 +21,6 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from components.header import render_metric_card, render_page_header
-from utils.app_config import get_config
 from utils.session_state import (
     get_performance_metrics,
     get_query_history,

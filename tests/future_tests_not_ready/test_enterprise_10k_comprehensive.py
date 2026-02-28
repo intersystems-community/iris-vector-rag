@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#+#+#+#+# ruff: noqa: E402
 """
 Enterprise 10K Comprehensive Testing Framework
 
@@ -25,12 +26,10 @@ Usage:
 import gc
 import json
 import logging
-import os
 import statistics
 import sys
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -139,7 +138,7 @@ class GraphTraversalOptimizer:
         traversal_path = []
 
         # Initialize globals pointer structure for efficient traversal
-        entity_pointers = self._initialize_entity_pointers(start_entities)
+        self._initialize_entity_pointers(start_entities)
 
         # Breadth-first traversal with pointer chasing optimization
         current_level = start_entities
@@ -454,7 +453,7 @@ class Enterprise10KTester:
         self, pipeline_id: str, pipeline_class: type, documents: List[Document]
     ) -> EnterpriseTestResult:
         """Test individual pipeline with comprehensive metrics."""
-        start_time = time.time()
+        time.time()
 
         # Initialize result
         result = EnterpriseTestResult(
@@ -581,7 +580,7 @@ class Enterprise10KTester:
         for query in self.ENTERPRISE_QUERIES:
             try:
                 start_time = time.time()
-                response = pipeline.query(
+                pipeline.query(
                     query_text=query, top_k=10, include_sources=True
                 )
                 query_time_ms = (time.time() - start_time) * 1000

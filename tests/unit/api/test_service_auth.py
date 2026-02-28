@@ -4,14 +4,14 @@ Unit tests for authentication service.
 Tests the API key management service in isolation.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import bcrypt
 import pytest
 from fastapi import HTTPException
 
-from iris_vector_rag.api.models.auth import ApiKey, ApiKeyCreateRequest, Permission, RateLimitTier
+from iris_vector_rag.api.models.auth import ApiKeyCreateRequest, Permission, RateLimitTier
 from iris_vector_rag.api.services.auth_service import AuthService
 
 

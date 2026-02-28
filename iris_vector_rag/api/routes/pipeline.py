@@ -6,7 +6,6 @@ Provides GET /pipelines endpoints for listing and inspecting pipelines.
 """
 
 import logging
-from typing import List
 
 from fastapi import APIRouter, HTTPException, Path
 

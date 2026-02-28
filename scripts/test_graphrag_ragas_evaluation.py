@@ -22,7 +22,6 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import statistics
 import sys
 import time
@@ -30,7 +29,7 @@ import traceback
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -38,7 +37,6 @@ sys.path.insert(0, str(project_root))
 
 # Third-party imports with graceful fallback
 try:
-    import pandas as pd
     from datasets import Dataset
     from ragas import evaluate
     from ragas.metrics import (
@@ -1091,12 +1089,12 @@ class RAGASEvaluator:
     def display_results(self, report: RAGASEvaluationReport) -> None:
         """Display evaluation results to console."""
         print(f"\n{'='*80}")
-        print(f"📊 RAGAS EVALUATION RESULTS")
+        print("📊 RAGAS EVALUATION RESULTS")
         print(f"{'='*80}")
 
         print(f"\n{report.summary}")
 
-        print(f"\n📈 PIPELINE PERFORMANCE:")
+        print("\n📈 PIPELINE PERFORMANCE:")
         for pipeline_name, scores in report.pipeline_scores.items():
             print(f"\n{pipeline_name.upper()}:")
             print(f"  Overall Score: {scores['overall_score']:.3f}")
@@ -1107,13 +1105,13 @@ class RAGASEvaluator:
             print(f"  Answer Relevance: {scores['answer_relevance']:.3f}")
             print(f"  Success Rate: {scores['success_rate']:.2%}")
 
-        print(f"\n🎯 TARGET ACHIEVEMENT:")
+        print("\n🎯 TARGET ACHIEVEMENT:")
         for pipeline_name, targets in report.target_achievement.items():
             achieved_count = sum(targets.values())
             total_count = len(targets)
             print(f"  {pipeline_name}: {achieved_count}/{total_count} metrics ≥80%")
 
-        print(f"\n💡 RECOMMENDATIONS:")
+        print("\n💡 RECOMMENDATIONS:")
         for rec in report.improvement_recommendations:
             print(f"  - {rec}")
 

@@ -15,10 +15,8 @@ Priority 1 Components Under Test:
 """
 
 import logging
-import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
-import numpy as np
 import pytest
 
 from iris_vector_rag.config.manager import ConfigurationManager
@@ -439,7 +437,7 @@ class TestVectorStoreIRISPerformance:
 
         for query_text in test_queries:
             # Start performance monitoring for search
-            e2e_performance_monitor.start_timer(f"large_scale_search")
+            e2e_performance_monitor.start_timer("large_scale_search")
 
             query_embedding = e2e_embedding_function(query_text)
 

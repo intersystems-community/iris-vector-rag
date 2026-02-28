@@ -15,7 +15,6 @@ from ..embeddings.manager import EmbeddingManager
 from ..pipelines.basic import BasicRAGPipeline
 from ..pipelines.basic_rerank import BasicRAGRerankingPipeline
 from ..pipelines.crag import CRAGPipeline
-from ..pipelines.graphrag import GraphRAGPipeline
 from ..pipelines.hybrid_graphrag import HybridGraphRAGPipeline
 from .orchestrator import SetupOrchestrator
 from .requirements import get_pipeline_requirements

@@ -7,6 +7,7 @@ pipeline using vector similarity search and LLM generation.
 
 import logging
 import time
+import os
 from typing import Any, Callable, Dict, List, Optional
 
 from ..config.manager import ConfigurationManager
@@ -138,6 +139,20 @@ class BasicRAGPipeline(RAGPipeline):
         documents_loaded = 0
         embeddings_generated = 0
         documents_failed = 0
+
+        # Validate embedding dimensions early (contract requirement FR-023)
+        if generate_embeddings and hasattr(self, "embedding_manager") and self.embedding_manager:
+            sample_doc = documents[0]
+            if isinstance(sample_doc, Document):
+                sample_text = sample_doc.page_content
+            elif isinstance(sample_doc, dict):
+                sample_text = sample_doc.get("page_content") or sample_doc.get("text") or sample_doc.get("content")
+            else:
+                sample_text = str(sample_doc)
+
+            if sample_text:
+                embedding = self.embedding_manager.generate_embedding(sample_text)
+                self._validate_embedding_dimension(embedding)
 
         # For contract tests without database, gracefully handle vector store operations
         try:
@@ -456,6 +471,33 @@ class BasicRAGPipeline(RAGPipeline):
         kwargs.get("similarity_threshold", 0.0)
         retrieval_method = kwargs.get("method", "vector")
 
+        # Validate query embedding dimensions (contract requirement FR-022)
+        if hasattr(self, "embedding_manager") and self.embedding_manager:
+            query_embedding = self.embedding_manager.generate_embedding(query)
+            self._validate_embedding_dimension(query_embedding)
+
+        # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
+        if generate_answer and not os.environ.get("OPENAI_API_KEY"):
+            logger.error(
+                "Missing OPENAI_API_KEY for BasicRAG query. "
+                "Pipeline=basic_rag, operation=query, state=missing_api_key."
+            )
+            raise ValueError(
+                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
+                "or configure your API key before running BasicRAG queries."
+            )
+
+        if not self.vector_store:
+            logger.error(
+                "BasicRAG pipeline error: vector_store missing during query operation. "
+                "Pipeline=basic_rag, operation=query, state=vector_store=None."
+            )
+            raise RuntimeError(
+                "BasicRAG pipeline error: vector_store missing during query operation. "
+                "Pipeline=basic, operation=query, state=vector_store=None. "
+                "Fix: initialize the pipeline with a vector store or check configuration."
+            )
+
         # Step 1: Retrieve relevant documents
         try:
             # Use vector store for retrieval
@@ -519,6 +561,17 @@ class BasicRAGPipeline(RAGPipeline):
             f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved"
         )
         return response
+
+    def _validate_embedding_dimension(self, embedding: List[float]) -> None:
+        """Validate embedding dimension matches expected model output."""
+        expected_dim = self.embedding_manager.get_embedding_dimension()
+        actual_dim = len(embedding)
+        if actual_dim != expected_dim:
+            raise ValueError(
+                "Embedding dimension mismatch: expected "
+                f"{expected_dim}, got {actual_dim}. "
+                "Fix: reconfigure embedding model to produce the expected dimension."
+            )
 
     def retrieve(self, query_text: str, top_k: int = 5, **kwargs) -> List[Document]:
         """

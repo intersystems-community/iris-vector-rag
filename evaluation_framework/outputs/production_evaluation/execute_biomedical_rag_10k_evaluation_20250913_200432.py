@@ -7,7 +7,6 @@ Generated on: 2025-09-13T20:04:36.187389
 import logging
 import os
 import sys
-from datetime import datetime
 
 # Add framework to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,12 +24,12 @@ def main():
     logger = logging.getLogger("production_evaluation")
 
     logger.info("Starting production biomedical RAG evaluation")
-    logger.info(f"Experiment: biomedical_rag_10k_evaluation")
-    logger.info(f"Run ID: biomedical_rag_10k_evaluation_20250913_200432")
-    logger.info(f"Target Documents: 10,000")
-    logger.info(f"Target Questions: 2,000")
+    logger.info("Experiment: biomedical_rag_10k_evaluation")
+    logger.info("Run ID: biomedical_rag_10k_evaluation_20250913_200432")
+    logger.info("Target Documents: 10,000")
+    logger.info("Target Questions: 2,000")
     logger.info(
-        f"Target Pipelines: BasicRAGPipeline, CRAGPipeline, GraphRAGPipeline, BasicRAGRerankingPipeline"
+        "Target Pipelines: BasicRAGPipeline, CRAGPipeline, GraphRAGPipeline, BasicRAGRerankingPipeline"
     )
 
     try:

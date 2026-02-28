@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Comprehensive RAGAS Evaluation Script - One-Stop Solution
 
@@ -13,7 +14,6 @@ Usage:
 """
 
 import logging
-import os
 import sys
 import time
 from pathlib import Path
@@ -74,7 +74,7 @@ def load_documents_into_pipelines(data_dir: str = "data/sample_10_docs"):
             failed_loads.append(pipeline_type)
             logger.error(f"❌ Failed to load documents into {pipeline_type}: {e}")
 
-    logger.info(f"📊 Document loading summary:")
+    logger.info("📊 Document loading summary:")
     logger.info(f"   ✅ Successful: {successful_loads}")
     logger.info(f"   ❌ Failed: {failed_loads}")
 
@@ -136,7 +136,7 @@ def run_comprehensive_evaluation():
         html_report = f"outputs/reports/ragas_evaluations/ragas_report_{timestamp}.html"
         json_report = f"outputs/reports/ragas_evaluations/ragas_report_{timestamp}.json"
 
-        logger.info(f"📄 Reports generated:")
+        logger.info("📄 Reports generated:")
         logger.info(f"   📊 HTML Report: {html_report}")
         logger.info(f"   📋 JSON Report: {json_report}")
 

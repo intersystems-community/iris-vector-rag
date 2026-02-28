@@ -5,7 +5,7 @@ They must fail initially and pass once the validation is implemented.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 import git
 from datetime import datetime
 
@@ -38,7 +38,6 @@ class TestTDDValidationContract:
     def test_TDD001_violation_detection(self):
         """Verify system detects when contract tests never failed."""
         from scripts.validate_tdd_compliance import check_test_history
-        from pathlib import Path
 
         # Mock git repo with test that was always passing
         mock_repo = Mock(spec=git.Repo)

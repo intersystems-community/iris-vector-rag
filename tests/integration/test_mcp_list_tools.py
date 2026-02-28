@@ -9,7 +9,6 @@ Branch: 043-complete-mcp-tools
 """
 
 import pytest
-from typing import List, Dict, Any
 
 
 @pytest.mark.integration
@@ -191,7 +190,7 @@ class TestMCPListTools:
         bridge = MCPBridge()
 
         start_time = time.time()
-        tools = await bridge.list_tools()
+        await bridge.list_tools()
         elapsed_ms = (time.time() - start_time) * 1000
 
         # List tools should be very fast (< 100ms)

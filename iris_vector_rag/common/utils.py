@@ -6,8 +6,9 @@ import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path  # Added for config path
-from typing import Any, Callable, Dict, List, Optional, Tuple  # Added Tuple
+from typing import Any, Callable, Dict, List, Optional  # Added Tuple
 
+import hashlib
 import numpy as np
 import yaml  # Added for config loading
 
@@ -351,6 +352,40 @@ def get_llm_func(
 
             _llm_instance = StubLLM(model_name=model_name, **kwargs)
             _current_llm_key = llm_key
+
+        elif provider == "iris_llm":
+            try:
+                from iris_llm import Provider  # type: ignore[import]
+                from iris_llm.langchain import ChatIris  # type: ignore[import]
+            except ImportError as exc:
+                raise ImportError(
+                    "provider='iris_llm' requires the iris_llm wheel. "
+                    "Install with: pip install iris_llm-*.whl"
+                ) from exc
+
+            api_key = kwargs.get("api_key") or os.getenv("OPENAI_API_KEY", "")
+            base_url = kwargs.get("base_url")
+            if base_url:
+                iris_provider = Provider.new_openai(api_key=api_key, base_url=base_url)
+            else:
+                if not api_key:
+                    raise ValueError(
+                        "provider='iris_llm' requires OPENAI_API_KEY env var "
+                        "or a base_url kwarg for gateway/NIM override."
+                    )
+                iris_provider = Provider.new_openai(api_key=api_key)
+
+            chat = ChatIris(provider=iris_provider, model=model_name)
+            _llm_instance = chat
+            _current_llm_key = llm_key
+
+            def query_iris_llm(prompt: str) -> str:
+                from langchain_core.messages import HumanMessage
+                response = chat.invoke([HumanMessage(content=prompt)])
+                return str(response.content)
+
+            return query_iris_llm
+
         else:
             raise ValueError(f"Unsupported LLM provider: {provider}")
 
@@ -399,6 +434,11 @@ def timing_decorator(func: Callable) -> Callable:
     return wrapper
 
 
+def generate_prompt_hash(prompt: str) -> str:
+    """Generate SHA-256 hash for a prompt string."""
+    return hashlib.sha256(prompt.strip().encode("utf-8")).hexdigest()
+
+
 # ... (Embedded Python specific utilities can remain as they are) ...
 
 _iris_connector_embedded = None
@@ -416,7 +456,32 @@ def get_iris_connector_for_embedded():
                 raise ImportError(
                     "IRIS Embedded Python module 'iris' not found. Ensure it is installed in your environment."
                 )
-            _iris_connector_embedded = iris.connect()
+            host = os.environ.get("IRIS_HOST", "localhost")
+            port = int(os.environ.get("IRIS_PORT", "1974"))
+            namespace = os.environ.get("IRIS_NAMESPACE", "USER")
+            username = os.environ.get("IRIS_USERNAME", "SuperUser")
+            password = os.environ.get("IRIS_PASSWORD", "SYS")
+
+            if hasattr(iris, "createConnection"):
+                _iris_connector_embedded = iris.createConnection(
+                    host,
+                    port,
+                    namespace,
+                    username,
+                    password,
+                )
+            elif hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
+                _iris_connector_embedded = iris.dbapi.connect(
+                    host,
+                    port,
+                    namespace,
+                    username,
+                    password,
+                )
+            else:
+                raise AttributeError(
+                    "IRIS module does not expose createConnection or dbapi.connect"
+                )
             print("IRIS Embedded Python: DBAPI connection established.")
         except ImportError:
             print("IRIS Embedded Python: 'iris' module not found.")
@@ -440,19 +505,37 @@ def get_embedding_func_for_embedded(model_name_override: Optional[str] = None):
             f"IRIS Embedded Python: Loading embedding model {effective_model_name} (dim: {dimension})"
         )
         # This would call build_hf_embedder or similar for embedded context
-        _embedding_model_embedded = lambda texts: [[0.1] * dimension for _ in texts]
+        def _embedding_model_embedded(texts):
+            return [[0.1] * dimension for _ in texts]
     return _embedding_model_embedded
 
 
-def get_llm_func_for_embedded(provider: str = "stub", model_name: str = "stub-model"):
-    global _llm_embedded
-    if _llm_embedded is None:
-        print(f"IRIS Embedded Python: Initializing LLM {provider} - {model_name}")
-        if provider == "stub":
-            _llm_embedded = lambda prompt: f"Embedded Stub LLM: {prompt[:30]}"
-        else:
-            _llm_embedded = lambda prompt: "Error: LLM not configured for embedded"
-    return _llm_embedded
+def get_llm_func_for_embedded(provider: str = "iris_llm", model_name: str = "gpt-4o-mini"):
+    """
+    Return an LLM callable for use inside IRIS embedded Python (``%SYS.Python``).
+
+    Tries ``iris_llm`` first; falls back to the stub provider if the wheel is absent.
+    """
+    try:
+        from iris_llm import Provider  # type: ignore[import]
+        from iris_llm.langchain import ChatIris  # type: ignore[import]
+        from langchain_core.messages import HumanMessage
+
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        iris_provider = Provider.new_openai(api_key=api_key)
+        chat = ChatIris(provider=iris_provider, model=model_name)
+
+        def _embedded_call(prompt: str) -> str:
+            return chat.invoke([HumanMessage(content=prompt)]).content
+
+        return _embedded_call
+
+    except ImportError:
+        logger.warning(
+            "iris_llm not available for embedded mode; falling back to stub LLM. "
+            "Install the iris_llm wheel for full embedded support."
+        )
+        return get_llm_func(provider="stub")
 
 
 if __name__ == "__main__":

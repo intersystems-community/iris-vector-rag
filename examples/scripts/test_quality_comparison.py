@@ -3,8 +3,10 @@
 Quality comparison: Same 3 tickets, individual vs batch.
 This proves batch extraction maintains quality.
 """
+
+# ruff: noqa: E402
+
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent / "iris_rag"))

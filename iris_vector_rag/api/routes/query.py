@@ -8,10 +8,8 @@ Provides POST /{pipeline}/_search endpoints for all pipelines.
 import logging
 import time
 from uuid import UUID, uuid4
-from typing import Optional
 
 from fastapi import APIRouter, Request, HTTPException, Depends
-from fastapi.responses import JSONResponse
 
 from iris_vector_rag.api.models.request import QueryRequest
 from iris_vector_rag.api.models.response import QueryResponse, Document, DocumentMetadata
@@ -192,7 +190,7 @@ def create_query_router(
                 filters=query_request.filters
             )
 
-            query_time_ms = int((time.time() - query_start) * 1000)
+            int((time.time() - query_start) * 1000)
 
             # Parse response (FR-002)
             # Assuming pipeline returns dict with: answer, retrieved_documents, metadata

@@ -8,7 +8,6 @@ Reference: specs/047-create-a-unified/tasks.md (T031)
 """
 
 import pytest
-from pathlib import Path
 from tests.fixtures.manager import FixtureManager
 
 
@@ -100,7 +99,7 @@ class TestFixtureIsolation:
             pytest.skip("No fixtures available for testing")
 
         fixture_name = fixtures[0].name
-        metadata = fixture_manager.get_fixture(fixture_name)
+        fixture_manager.get_fixture(fixture_name)
 
         # First load: Clean database
         result1 = fixture_manager.load_fixture(

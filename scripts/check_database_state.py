@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Database State Checker - Check what's actually in our IRIS database
 """
@@ -10,7 +11,6 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import intersystems_irispython._IRIS as iris
 
 from common.iris_connection_manager import IRISConnectionManager
 

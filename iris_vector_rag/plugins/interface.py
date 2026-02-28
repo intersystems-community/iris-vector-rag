@@ -6,7 +6,7 @@ This module defines the interface that all RAG pipeline plugins must implement.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Type
 
 from ..core.base import RAGPipeline
 from ..storage.schema_manager import SchemaManager

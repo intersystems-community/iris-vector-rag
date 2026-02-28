@@ -12,7 +12,7 @@ Status: Tests MUST FAIL until Phase 3.3 implementation
 
 import time
 from threading import Thread
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -74,7 +74,7 @@ class TestConnectionAcquisitionAndRelease:
         Requirement: FR-003
         """
         pool = ConnectionPool(mode=BackendMode.ENTERPRISE)
-        mock_connection = MagicMock()
+        MagicMock()
 
         # Acquire connection
         with pool.acquire() as conn:

@@ -16,7 +16,6 @@ Priority 1 Components Under Test:
 """
 
 import logging
-import time
 from typing import Any, Dict, List
 
 import pytest
@@ -193,7 +192,7 @@ class TestCoreFrameworkDocumentLifecycle:
         # Test each biomedical query
         for i, query_data in enumerate(e2e_biomedical_queries):
             query_text = query_data["query"]
-            expected_topics = query_data["expected_topics"]
+            query_data["expected_topics"]
             expected_keywords = query_data["expected_keywords"]
 
             logger.info(f"Testing query {i+1}: {query_text}")

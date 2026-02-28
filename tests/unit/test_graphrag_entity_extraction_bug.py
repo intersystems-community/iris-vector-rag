@@ -14,7 +14,7 @@ zero entities are EXTRACTED (not zero entities stored).
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
 

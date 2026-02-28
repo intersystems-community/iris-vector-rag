@@ -5,13 +5,9 @@ This test suite covers the OntologyLoader base class and its concrete implementa
 for loading ontologies from various formats including OWL, RDF, and SKOS.
 """
 
-import json
-import os
-import tempfile
 import unittest
-from pathlib import Path
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from typing import Any, Dict
+from unittest.mock import Mock, patch
 
 from iris_vector_rag.ontology.loader import (
     OntologyLoader,
@@ -25,8 +21,6 @@ from iris_vector_rag.ontology.models import (
     ConceptHierarchy,
     ConceptType,
     OntologyMetadata,
-    OntologyRelationship,
-    RelationType,
     SemanticMapping,
 )
 
@@ -510,7 +504,7 @@ class TestOntologyLoaderIntegration(unittest.TestCase):
         loader = MockOntologyLoader("/test/path")
 
         # Load ontology
-        hierarchy = loader.load("/test/file.owl")
+        loader.load("/test/file.owl")
 
         # Test concept extraction
         concepts = loader.extract_concepts()

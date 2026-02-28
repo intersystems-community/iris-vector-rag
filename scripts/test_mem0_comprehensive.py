@@ -229,7 +229,7 @@ class Mem0ComprehensiveTest:
             try:
                 result = sock.connect_ex((host, port))
                 port_open = result == 0
-            except:
+            except Exception:
                 port_open = False
             finally:
                 sock.close()
@@ -242,7 +242,7 @@ class Mem0ComprehensiveTest:
                 process_found = (
                     "mem0" in ps_output.stdout and "server" in ps_output.stdout
                 )
-            except:
+            except Exception:
                 process_found = False
 
             duration = time.time() - start_time
@@ -474,7 +474,7 @@ class Mem0ComprehensiveTest:
             if success:
                 message = f"Performance acceptable. Storage: {batch_duration:.2f}s, Search: {search_duration:.2f}s"
             else:
-                message = f"Performance issues detected. Times exceeded thresholds"
+                message = "Performance issues detected. Times exceeded thresholds"
 
             self.log_result(
                 "Performance & Timeouts", success, duration, message, details

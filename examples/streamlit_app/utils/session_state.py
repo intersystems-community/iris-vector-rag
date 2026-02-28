@@ -4,7 +4,6 @@ Session State Management
 Manages Streamlit session state for the RAG Templates demo application.
 """
 
-import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 

@@ -135,7 +135,6 @@ class DeprecatedParamPipeline(RAGPipeline):
 
     def query(self, query: str = None, query_text: str = None, top_k: int = 20, **kwargs) -> Dict[str, Any]:
         """Uses deprecated query_text parameter."""
-        actual_query = query or query_text
         return {
             'answer': 'Test',
             'retrieved_documents': [],

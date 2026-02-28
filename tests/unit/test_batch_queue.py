@@ -4,7 +4,6 @@ Unit tests for batch queue management.
 Tests BatchQueue logic in isolation without dependencies.
 """
 
-import pytest
 from iris_vector_rag.common.batch_utils import BatchQueue
 from iris_vector_rag.core.models import Document
 
@@ -191,7 +190,7 @@ class TestBatchQueue:
         # Should fit small (100) + large (7000) = 7100 <= 8000
         # OR just small + medium + tiny if FIFO strictly followed
         # Implementation may vary, but should respect budget
-        total_tokens = sum([100, 7000])  # Assuming first two fit
+        sum([100, 7000])  # Assuming first two fit
         assert len(batch) <= 4, "Batch size should be reasonable"
 
     def test_custom_token_budget_initialization(self):

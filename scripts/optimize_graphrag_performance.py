@@ -21,7 +21,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -183,7 +183,7 @@ class GraphRAGPerformanceOptimizer:
         )
 
         # Create baseline pipeline
-        baseline_pipeline = GraphRAGPipeline(
+        GraphRAGPipeline(
             connection_manager=self.connection_manager,
             config_manager=self.config_manager,
         )
@@ -212,7 +212,7 @@ class GraphRAGPerformanceOptimizer:
 
         for i, query in enumerate(test_queries):
             try:
-                start_time = time.perf_counter()
+                time.perf_counter()
 
                 # Execute query (would normally load documents first)
                 # For baseline measurement, we'll simulate response times
@@ -804,7 +804,7 @@ def main():
         # Print summary
         improvement = results.get("performance_improvement", {})
         if improvement:
-            logger.info(f"🎉 Optimization completed successfully!")
+            logger.info("🎉 Optimization completed successfully!")
             logger.info(
                 f"   Response time improved by {improvement.get('response_time_improvement_ms', 0):.1f}ms"
             )

@@ -78,11 +78,11 @@ class TestBatchPerformance:
         actual_speedup = expected_single_doc_time / elapsed
 
         # Validate 3x speedup (allow 20% tolerance: 2.4x - 3.6x)
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Batch processing time: {elapsed:.1f}s ({elapsed/60:.1f} min)")
         print(f"  Expected single-doc time: {expected_single_doc_time:.1f}s ({expected_single_doc_time/3600:.1f} hours)")
         print(f"  Actual speedup: {actual_speedup:.2f}x")
-        print(f"  Target speedup: 3.0x (tolerance: 2.4x - 3.6x)")
+        print("  Target speedup: 3.0x (tolerance: 2.4x - 3.6x)")
 
         assert actual_speedup >= 2.4, \
             f"Speedup must be at least 2.4x (target 3.0x), got {actual_speedup:.2f}x"
@@ -90,7 +90,7 @@ class TestBatchPerformance:
 
         # Validate batch succeeded
         assert result.success_status, "Batch processing must complete successfully"
-        print(f"  ✓ Batch processing succeeded")
+        print("  ✓ Batch processing succeeded")
 
     def test_10k_documents_speedup_target_3x(self, service, documents_10k):
         """
@@ -113,18 +113,18 @@ class TestBatchPerformance:
         expected_single_doc_time = 10000 * single_doc_baseline  # 72000s = 20 hours
         actual_speedup = expected_single_doc_time / elapsed
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Batch processing time: {elapsed:.1f}s ({elapsed/60:.1f} min)")
         print(f"  Expected single-doc time: {expected_single_doc_time:.1f}s ({expected_single_doc_time/3600:.1f} hours)")
         print(f"  Actual speedup: {actual_speedup:.2f}x")
-        print(f"  Target speedup: 3.0x (tolerance: 2.4x - 3.6x)")
+        print("  Target speedup: 3.0x (tolerance: 2.4x - 3.6x)")
 
         assert actual_speedup >= 2.4, \
             f"Speedup must be at least 2.4x at 10K scale, got {actual_speedup:.2f}x"
         print(f"  ✓ Speedup requirement met at 10K scale: {actual_speedup:.2f}x >= 2.4x")
 
         assert result.success_status, "Large-scale batch must succeed"
-        print(f"  ✓ Large-scale batch processing succeeded")
+        print("  ✓ Large-scale batch processing succeeded")
 
     def test_quality_maintenance_4_86_entities_per_doc(self, service, documents_1k):
         """
@@ -144,11 +144,11 @@ class TestBatchPerformance:
         total_entities = len(result.get_all_entities())
         avg_entities_per_doc = total_entities / len(documents_1k)
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Total documents: {len(documents_1k)}")
         print(f"  Total entities extracted: {total_entities}")
         print(f"  Average entities per document: {avg_entities_per_doc:.2f}")
-        print(f"  Target: 4.86 entities/doc (tolerance: >= 4.0)")
+        print("  Target: 4.86 entities/doc (tolerance: >= 4.0)")
 
         # Validate quality maintained (allow some tolerance: >= 4.0)
         assert avg_entities_per_doc >= 4.0, \
@@ -160,7 +160,7 @@ class TestBatchPerformance:
         zero_entity_docs = sum(1 for count in entity_counts.values() if count == 0)
         zero_entity_pct = (zero_entity_docs / len(documents_1k)) * 100
 
-        print(f"\nAdditional Quality Metrics:")
+        print("\nAdditional Quality Metrics:")
         print(f"  Documents with zero entities: {zero_entity_docs} ({zero_entity_pct:.1f}%)")
         print(f"  Max entities in single doc: {max(entity_counts.values())}")
         print(f"  Min entities in single doc: {min(entity_counts.values())}")
@@ -204,26 +204,26 @@ class TestBatchPerformance:
         # Process mixed batch
         result = service.extract_batch(mixed_docs)
 
-        print(f"\nResults:")
-        print(f"  Total document types: 4 (tickets, emails, docs, notes)")
+        print("\nResults:")
+        print("  Total document types: 4 (tickets, emails, docs, notes)")
         print(f"  Total documents: {len(mixed_docs)}")
         print(f"  Documents processed: {len(result.per_document_entities)}")
 
         # Validate all documents processed
         assert len(result.per_document_entities) == len(mixed_docs), \
             "All document types must be processed"
-        print(f"  ✓ All document types processed successfully")
+        print("  ✓ All document types processed successfully")
 
         # Validate success
         assert result.success_status, "Mixed document batch must succeed"
-        print(f"  ✓ Batch processing succeeded with mixed types")
+        print("  ✓ Batch processing succeeded with mixed types")
 
         # Validate entities extracted from each type
         for doc in mixed_docs:
             assert doc.id in result.per_document_entities, \
                 f"Document {doc.id} must have entity results"
 
-        print(f"  ✓ All documents have entity extraction results")
+        print("  ✓ All documents have entity extraction results")
 
     def test_throughput_metrics(self, service, documents_1k):
         """Validate throughput meets target (25 tickets/min with batching)."""
@@ -232,17 +232,17 @@ class TestBatchPerformance:
         print(f"{'='*60}")
 
         start_time = time.time()
-        result = service.extract_batch(documents_1k)
+        service.extract_batch(documents_1k)
         elapsed = time.time() - start_time
 
         # Calculate throughput
         docs_per_second = len(documents_1k) / elapsed
         docs_per_minute = docs_per_second * 60
 
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Processing time: {elapsed:.1f}s")
         print(f"  Throughput: {docs_per_minute:.1f} docs/min")
-        print(f"  Target: >= 20 docs/min (3x improvement over 8.33 baseline)")
+        print("  Target: >= 20 docs/min (3x improvement over 8.33 baseline)")
 
         # Validate throughput improvement
         assert docs_per_minute >= 20.0, \
@@ -256,12 +256,12 @@ class TestBatchPerformance:
         print(f"{'='*60}")
 
         # Process batch
-        result = service.extract_batch(documents_1k)
+        service.extract_batch(documents_1k)
 
         # Get metrics
         metrics = service.get_batch_metrics()
 
-        print(f"\nStatistics:")
+        print("\nStatistics:")
         print(f"  Total batches processed: {metrics.total_batches_processed}")
         print(f"  Total documents processed: {metrics.total_documents_processed}")
         print(f"  Average batch time: {metrics.average_batch_processing_time:.2f}s")
@@ -277,7 +277,7 @@ class TestBatchPerformance:
         assert metrics.average_batch_processing_time > 0, \
             "Should track processing time"
 
-        print(f"  ✓ All statistics tracked correctly")
+        print("  ✓ All statistics tracked correctly")
 
     def test_batch_vs_single_doc_quality_equivalence(self, service):
         """Validate batch extraction quality equals single-doc (FR-008)."""
@@ -297,7 +297,7 @@ class TestBatchPerformance:
 
         # Process individually (if supported)
         # For now, validate batch extraction produces consistent results
-        print(f"\nResults:")
+        print("\nResults:")
         print(f"  Documents processed: {len(batch_entities)}")
 
         # Validate consistency across documents
@@ -311,7 +311,7 @@ class TestBatchPerformance:
         # Variance should be low for similar documents
         assert variance < 10.0, \
             f"Extraction should be consistent across similar docs (variance {variance:.2f})"
-        print(f"  ✓ Consistent extraction across documents")
+        print("  ✓ Consistent extraction across documents")
 
     def test_memory_usage_bounded(self, service, documents_1k):
         """Validate memory usage stays bounded during batch processing."""
@@ -322,12 +322,12 @@ class TestBatchPerformance:
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Process batch
-        result = service.extract_batch(documents_1k)
+        service.extract_batch(documents_1k)
 
         final_memory = process.memory_info().rss / 1024 / 1024  # MB
         memory_increase = final_memory - initial_memory
 
-        print(f"\nMemory Usage:")
+        print("\nMemory Usage:")
         print(f"  Initial: {initial_memory:.1f} MB")
         print(f"  Final: {final_memory:.1f} MB")
         print(f"  Increase: {memory_increase:.1f} MB")

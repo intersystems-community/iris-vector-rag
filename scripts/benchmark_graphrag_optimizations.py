@@ -13,13 +13,11 @@ Usage:
 """
 
 import argparse
-import asyncio
 import json
 import logging
 import os
 import statistics
 import sys
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -282,11 +280,11 @@ class GraphRAGBenchmark:
         logger.info("Testing individual optimization components...")
 
         component_results = {}
-        base_pipeline = self.setup_baseline_pipeline()
+        self.setup_baseline_pipeline()
 
         # Test cache only
         logger.info("Testing cache optimization...")
-        cache_manager = GraphRAGCacheManager(self.config_manager)
+        GraphRAGCacheManager(self.config_manager)
         # Note: For this test, we would need to modify the pipeline to use cache
         # This is a simplified test structure
 
@@ -312,7 +310,7 @@ class GraphRAGBenchmark:
 
         # Test parallel processing
         logger.info("Testing parallel processing...")
-        parallel_processor = GraphRAGParallelProcessor(max_workers=8)
+        GraphRAGParallelProcessor(max_workers=8)
         # Note: Full integration would require pipeline modifications
 
         self.component_results = component_results
@@ -536,7 +534,7 @@ class GraphRAGBenchmark:
         md_path = self.output_dir / md_filename
 
         with open(md_path, "w") as f:
-            f.write(f"# GraphRAG Performance Benchmark Report\n\n")
+            f.write("# GraphRAG Performance Benchmark Report\n\n")
             f.write(f"**Generated:** {report['timestamp']}\n\n")
 
             # Executive Summary
@@ -707,7 +705,7 @@ def main():
             logger.info("=" * 60)
             logger.info("RUNNING OPTIMIZED BENCHMARK")
             logger.info("=" * 60)
-            optimization_metrics = benchmark.run_optimized_benchmark(args.iterations)
+            benchmark.run_optimized_benchmark(args.iterations)
 
         # Run concurrent load test
         if args.concurrent_test:

@@ -44,7 +44,7 @@ def validate_and_fix_embedding(embedding: List[float]) -> Optional[List[float]]:
 
         # Check for NaN or inf values - REJECT rather than zero out
         if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
-            logger.error(f"Found NaN/inf values in embedding - REJECTING (would create meaningless zero vector)")
+            logger.error("Found NaN/inf values in embedding - REJECTING (would create meaningless zero vector)")
             return None
 
         # Ensure all values are finite
@@ -468,7 +468,7 @@ def process_and_load_documents(
         if not conn_provided:
             try:
                 connection.close()
-            except:
+            except Exception:
                 pass
 
         return {

@@ -55,10 +55,11 @@ class TestGetIRISConnectionBasic:
         cursor = conn.cursor()
         cursor.execute("SELECT 1")
         result = cursor.fetchone()
+        assert result is not None, "Query execution must return result"
+        value = result[0]
         cursor.close()
 
-        assert result is not None, "Query execution must return result"
-        assert result[0] == 1, "Query result must match expected value"
+        assert value == 1, "Query result must match expected value"
 
     @pytest.mark.skipif(
         os.environ.get("SKIP_IRIS_CONTAINER", "0") == "1",

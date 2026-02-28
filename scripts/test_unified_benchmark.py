@@ -6,8 +6,8 @@ This tests the consolidated benchmarking approach without requiring
 full infrastructure setup.
 """
 
+import importlib
 import os
-import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -19,7 +19,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 def test_unified_benchmark_imports():
     """Test that unified benchmark can be imported."""
     try:
-        from unified_rag_benchmark import BenchmarkConfig, UnifiedRAGBenchmark
+        module = importlib.import_module("unified_rag_benchmark")
+        getattr(module, "BenchmarkConfig")
+        getattr(module, "UnifiedRAGBenchmark")
 
         print("✅ Unified benchmark imports successful")
         return True

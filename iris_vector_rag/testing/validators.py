@@ -12,7 +12,6 @@ from typing import Any
 
 from iris_vector_rag.testing.exceptions import (
     EditionDetectionError,
-    EditionMismatchError,
 )
 
 

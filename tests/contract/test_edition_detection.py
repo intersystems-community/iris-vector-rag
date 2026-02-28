@@ -9,7 +9,7 @@ Contract: specs/035-make-2-modes/contracts/backend_config_contract.yaml
 Status: Tests MUST FAIL until Phase 3.3 implementation
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

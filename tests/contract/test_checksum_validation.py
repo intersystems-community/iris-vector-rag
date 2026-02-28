@@ -8,7 +8,6 @@ Reference: specs/047-create-a-unified/tasks.md (T030)
 """
 
 import pytest
-from pathlib import Path
 from tests.fixtures.manager import FixtureManager, FixtureError
 from tests.fixtures.models import FixtureMetadata
 
@@ -153,7 +152,7 @@ class TestChecksumValidation:
         for invalid in invalid_checksums:
             try:
                 # Create metadata with invalid checksum
-                metadata = FixtureMetadata(
+                FixtureMetadata(
                     name="test",
                     version="1.0.0",
                     description="Test",

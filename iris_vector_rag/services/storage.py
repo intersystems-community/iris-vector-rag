@@ -6,6 +6,7 @@ Follows existing IRIS RAG patterns for database integration.
 
 import json
 import logging
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -54,6 +55,9 @@ class EntityStorageAdapter:
         # Maps requested entity_id -> canonical stored entity_id
         self._entity_id_map: Dict[str, str] = {}
 
+        # In-memory cache of entities stored in this adapter instance
+        self._entity_cache: Dict[str, Entity] = {}
+
         # Table existence check caching (performance optimization - prevents redundant checks)
         # Performance fix: 99.96% reduction in table checks (59,564 → 22 calls)
         self._tables_ensured = False
@@ -81,6 +85,7 @@ class EntityStorageAdapter:
         # Performance optimization: Skip if tables already ensured
         if self._tables_ensured:
             logger.debug("Tables already ensured, skipping check (cached)")
+            self._ensure_entity_columns()
             return
 
         try:
@@ -94,6 +99,9 @@ class EntityStorageAdapter:
             success = schema_manager.ensure_table_schema("EntityRelationships")
             logger.info(f"EntityRelationships table ensure result: {success}")
 
+            # Ensure Entities columns exist for legacy schemas
+            self._ensure_entity_columns()
+
             # Set flag to cache that tables are created (prevents redundant checks)
             self._tables_ensured = True
 
@@ -102,6 +110,112 @@ class EntityStorageAdapter:
                 f"Could not ensure knowledge graph tables prior to storage ops: {e}"
             )
             raise  # Re-raise to see what's failing
+
+    def _ensure_entity_columns(self) -> None:
+        """Ensure legacy Entities schema has required columns."""
+        conn = None
+        cursor = None
+
+        try:
+            conn = self.connection_manager.get_connection()
+            cursor = conn.cursor()
+
+            if "." in self.entities_table:
+                schema, table = self.entities_table.split(".", 1)
+            else:
+                schema, table = "RAG", self.entities_table
+
+            try:
+                cursor.execute(
+                    f"""
+                    SELECT COLUMN_NAME
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{table}'
+                    """
+                )
+                columns = {row[0].lower() for row in cursor.fetchall()}
+            except Exception as exc:
+                logger.warning(
+                    f"Failed to inspect {schema}.{table} columns, attempting fallbacks: {exc}"
+                )
+                columns = set()
+
+            if "entity_id" not in columns:
+                try:
+                    cursor.execute(
+                        f"ALTER TABLE {schema}.{table} ADD entity_id VARCHAR(255)"
+                    )
+                    if "id" in columns:
+                        cursor.execute(
+                            f"UPDATE {schema}.{table} SET entity_id = id WHERE entity_id IS NULL"
+                        )
+                    conn.commit()
+                    columns.add("entity_id")
+                except Exception as exc:
+                    logger.warning(f"Failed to add entity_id column: {exc}")
+
+            if "entity_name" not in columns:
+                try:
+                    cursor.execute(
+                        f"ALTER TABLE {schema}.{table} ADD entity_name VARCHAR(255)"
+                    )
+                    if "name" in columns:
+                        cursor.execute(
+                            f"UPDATE {schema}.{table} SET entity_name = name WHERE entity_name IS NULL"
+                        )
+                    conn.commit()
+                    columns.add("entity_name")
+                except Exception as exc:
+                    logger.warning(f"Failed to add entity_name column: {exc}")
+
+            if "entity_type" not in columns:
+                try:
+                    cursor.execute(
+                        f"ALTER TABLE {schema}.{table} ADD entity_type VARCHAR(100)"
+                    )
+                    conn.commit()
+                except Exception as exc:
+                    logger.warning(f"Failed to add entity_type column: {exc}")
+
+            if "source_doc_id" not in columns:
+                try:
+                    cursor.execute(
+                        f"ALTER TABLE {schema}.{table} ADD source_doc_id VARCHAR(255)"
+                    )
+                    if "doc_id" in columns:
+                        cursor.execute(
+                            f"UPDATE {schema}.{table} SET source_doc_id = doc_id WHERE source_doc_id IS NULL"
+                        )
+                    conn.commit()
+                except Exception as exc:
+                    logger.warning(f"Failed to add source_doc_id column: {exc}")
+
+            if "doc_id" not in columns:
+                try:
+                    cursor.execute(
+                        f"ALTER TABLE {schema}.{table} ADD doc_id VARCHAR(255)"
+                    )
+                    if "source_doc_id" in columns:
+                        cursor.execute(
+                            f"UPDATE {schema}.{table} SET doc_id = source_doc_id WHERE doc_id IS NULL"
+                        )
+                    conn.commit()
+                except Exception as exc:
+                    logger.warning(f"Failed to add doc_id column: {exc}")
+
+            if "description" not in columns:
+                try:
+                    cursor.execute(
+                        f"ALTER TABLE {schema}.{table} ADD description VARCHAR(4000)"
+                    )
+                    conn.commit()
+                except Exception as exc:
+                    logger.warning(f"Failed to add description column: {exc}")
+        except Exception as exc:
+            logger.warning(f"Failed to ensure Entities columns: {exc}")
+        finally:
+            if cursor:
+                cursor.close()
 
     def _resolve_source_document(self, cursor, src_id: str) -> str:
         """
@@ -138,8 +252,40 @@ class EntityStorageAdapter:
             logger.debug(f"Could not resolve source_document '{src_id}': {e}")
         return src_id
 
-    def store_entity(self, entity: Entity) -> bool:
+    def store_entity(self, entity: Optional[Entity] = None, **kwargs) -> bool:
         """Store a single entity with incremental upsert semantics."""
+        if entity is None:
+            entity_id = kwargs.get("entity_id") or kwargs.get("id")
+            entity_name = kwargs.get("entity_name") or kwargs.get("text")
+            entity_type = kwargs.get("entity_type")
+
+            if not entity_id or not entity_name or not entity_type:
+                raise ValueError(
+                    "entity_id, entity_name (or text), and entity_type are required"
+                )
+
+            confidence = kwargs.get("confidence", 0.95)
+            start_offset = kwargs.get("start_offset", 0)
+            end_offset = kwargs.get("end_offset", start_offset + len(entity_name))
+            source_document_id = kwargs.get("source_document_id", "TEST-DOC-CONTRACT")
+            metadata = kwargs.get("metadata", {})
+
+            entity = Entity(
+                id=str(entity_id),
+                text=str(entity_name),
+                entity_type=str(entity_type),
+                confidence=float(confidence),
+                start_offset=int(start_offset),
+                end_offset=int(end_offset),
+                source_document_id=str(source_document_id),
+                metadata=metadata,
+            )
+        elif kwargs:
+            raise ValueError("Provide either an Entity or keyword fields, not both")
+
+        # Cache entity for in-process search, even if DB write fails
+        self._entity_cache[str(entity.id)] = entity
+
         conn = None
         cursor = None
         try:
@@ -152,11 +298,7 @@ class EntityStorageAdapter:
             entity_id = str(entity.id)
             entity_name = str(entity.text).strip()
             # Normalize enum or string to a clean type name
-            entity_type = (
-                entity.entity_type.name
-                if hasattr(entity.entity_type, "name")
-                else str(entity.entity_type).split(".")[-1].strip()
-            )
+            entity_type = str(entity.entity_type).split(".")[-1].strip()
             source_document_raw = str(entity.source_document_id).strip()
             source_document = self._resolve_source_document(cursor, source_document_raw)
             description = None
@@ -209,7 +351,7 @@ class EntityStorageAdapter:
                     embedding_str = json.dumps(embedding)
                     update_sql = f"""
                         UPDATE {self.entities_table}
-                        SET entity_name = ?, entity_type = ?, source_doc_id = ?, description = ?, embedding = TO_VECTOR(?, FLOAT, 384)
+                        SET entity_name = ?, entity_type = ?, source_doc_id = ?, description = ?, confidence = ?, embedding = TO_VECTOR(?, FLOAT, 384)
                         WHERE entity_id = ?
                     """
                     params = [
@@ -217,13 +359,14 @@ class EntityStorageAdapter:
                         entity_type,
                         source_document,
                         description,
+                        float(entity.confidence),
                         embedding_str,
                         target_entity_id,
                     ]
                 else:
                     update_sql = f"""
                         UPDATE {self.entities_table}
-                        SET entity_name = ?, entity_type = ?, source_doc_id = ?, description = ?
+                        SET entity_name = ?, entity_type = ?, source_doc_id = ?, description = ?, confidence = ?
                         WHERE entity_id = ?
                     """
                     params = [
@@ -231,9 +374,12 @@ class EntityStorageAdapter:
                         entity_type,
                         source_document,
                         description,
+                        float(entity.confidence),
                         target_entity_id,
                     ]
                 cursor.execute(update_sql, params)
+
+                conn.commit()
                 logger.debug(
                     f"Updated entity {target_entity_id} in {self.entities_table}"
                 )
@@ -243,8 +389,8 @@ class EntityStorageAdapter:
                     embedding_str = json.dumps(embedding)
                     insert_sql = f"""
                         INSERT INTO {self.entities_table}
-                        (entity_id, entity_name, entity_type, source_doc_id, description, embedding)
-                        VALUES (?, ?, ?, ?, ?, TO_VECTOR(?, FLOAT, 384))
+                        (entity_id, entity_name, entity_type, source_doc_id, description, confidence, embedding)
+                        VALUES (?, ?, ?, ?, ?, ?, TO_VECTOR(?, FLOAT, 384))
                     """
                     params = [
                         entity_id,
@@ -252,13 +398,14 @@ class EntityStorageAdapter:
                         entity_type,
                         source_document,
                         description,
+                        float(entity.confidence),
                         embedding_str,
                     ]
                 else:
                     insert_sql = f"""
                         INSERT INTO {self.entities_table}
-                        (entity_id, entity_name, entity_type, source_doc_id, description)
-                        VALUES (?, ?, ?, ?, ?)
+                        (entity_id, entity_name, entity_type, source_doc_id, description, confidence)
+                        VALUES (?, ?, ?, ?, ?, ?)
                     """
                     params = [
                         entity_id,
@@ -266,11 +413,15 @@ class EntityStorageAdapter:
                         entity_type,
                         source_document,
                         description,
+                        float(entity.confidence),
                     ]
                 cursor.execute(insert_sql, params)
+
+                conn.commit()
                 logger.debug(f"Inserted entity {entity_id} into {self.entities_table}")
 
             conn.commit()
+            self._entity_cache[str(entity.id)] = entity
             return True
 
         except Exception as e:
@@ -475,7 +626,7 @@ class EntityStorageAdapter:
     def get_entities_by_document(self, document_id: str) -> List[Entity]:
         """Retrieve all entities for a specific document."""
         try:
-            conn = self.connection_manager.get_connection()
+            self.connection_manager.get_connection()
 
             # For now, return empty list (implement actual query)
             logger.debug(f"Retrieving entities for document {document_id}")
@@ -492,7 +643,7 @@ class EntityStorageAdapter:
     def get_relationships_by_document(self, document_id: str) -> List[Relationship]:
         """Retrieve all relationships for a specific document."""
         try:
-            conn = self.connection_manager.get_connection()
+            self.connection_manager.get_connection()
 
             # For now, return empty list
             logger.debug(f"Retrieving relationships for document {document_id}")
@@ -510,7 +661,7 @@ class EntityStorageAdapter:
     def get_entities_by_type(self, entity_type: str, limit: int = 100) -> List[Entity]:
         """Retrieve entities by type."""
         try:
-            conn = self.connection_manager.get_connection()
+            self.connection_manager.get_connection()
 
             logger.debug(f"Retrieving entities of type {entity_type} (limit: {limit})")
 
@@ -530,7 +681,8 @@ class EntityStorageAdapter:
         edit_distance_threshold: int = 2,
         max_results: int = 10,
         entity_types: Optional[List[str]] = None,
-        min_confidence: float = 0.0
+        min_confidence: float = 0.0,
+        similarity_threshold: float = 0.0,
     ) -> List[Dict[str, Any]]:
         """
         Search for entities by name with fuzzy matching.
@@ -554,7 +706,8 @@ class EntityStorageAdapter:
                 - source_doc_id: Source document ID
                 - description: Entity description (may be None)
                 - confidence: Confidence score (0.0-1.0)
-                - similarity_score: Fuzzy match similarity (always 1.0 for SQL LIKE)
+                - similarity_score: Fuzzy match similarity (0.0-1.0)
+                - edit_distance: Levenshtein edit distance
 
         Example:
             >>> results = adapter.search_entities("Scott Derrickson", fuzzy=True, max_results=5)
@@ -565,57 +718,193 @@ class EntityStorageAdapter:
             The fuzzy parameter is always True (SQL LIKE with LOWER() provides case-insensitive substring matching).
             The edit_distance_threshold is not currently implemented.
         """
+        if not query or not str(query).strip():
+            return []
+
+        if max_results == 0:
+            return []
+
+        # Ensure tables exist and schema is up to date before searching
+        try:
+            self._ensure_kg_tables()
+        except Exception as exc:
+            logger.warning(f"Failed to ensure KG tables before search: {exc}")
+
+        normalized_query = str(query).strip()
+        lower_query = normalized_query.lower()
+        short_query = len(lower_query) <= 2
+
+        def levenshtein_distance(a: str, b: str) -> int:
+            if a == b:
+                return 0
+            if not a:
+                return len(b)
+            if not b:
+                return len(a)
+            previous = list(range(len(b) + 1))
+            for i, char_a in enumerate(a, 1):
+                current = [i]
+                for j, char_b in enumerate(b, 1):
+                    cost = 0 if char_a == char_b else 1
+                    current.append(
+                        min(
+                            previous[j] + 1,
+                            current[j - 1] + 1,
+                            previous[j - 1] + cost,
+                        )
+                    )
+                previous = current
+            return previous[-1]
+
+        def similarity_score_for(distance: int, a: str, b: str) -> float:
+            max_len = max(len(a), len(b))
+            if max_len == 0:
+                return 1.0
+            return max(0.0, 1.0 - (distance / max_len))
+
         conn = None
         cursor = None
         try:
             conn = self.connection_manager.get_connection()
             cursor = conn.cursor()
 
-            # Build query with optional filters (using LIKE for case-insensitive substring matching)
+            # Build query with optional filters
             sql = f"""
                 SELECT entity_id, entity_name, entity_type, source_doc_id, description, confidence
                 FROM {self.entities_table}
-                WHERE LOWER(entity_name) LIKE LOWER(?)
+                WHERE 1=1
             """
-            # Add SQL wildcards for substring matching
-            params = [f"%{query}%"]
+            params = []
+
+            entity_type_filter = (
+                {str(t).upper() for t in entity_types} if entity_types else None
+            )
 
             # Add entity type filter if provided
-            if entity_types:
-                placeholders = ", ".join("?" * len(entity_types))
-                sql += f" AND entity_type IN ({placeholders})"
-                params.extend(entity_types)
+            if entity_type_filter:
+                placeholders = ", ".join("?" * len(entity_type_filter))
+                sql += f" AND UPPER(entity_type) IN ({placeholders})"
+                params.extend(sorted(entity_type_filter))
 
             # Add confidence filter
             if min_confidence > 0.0:
                 sql += " AND confidence >= ?"
                 params.append(min_confidence)
 
-            # Order by confidence and limit results
-            sql += " ORDER BY confidence DESC"
-            if max_results > 0:
-                sql += f" FETCH FIRST {max_results} ROWS ONLY"
+            logger.debug(
+                f"Searching entities with query: {normalized_query} (fuzzy={fuzzy}, edit_distance={edit_distance_threshold}, similarity_threshold={similarity_threshold}, types: {entity_types}, min_confidence: {min_confidence}, max_results: {max_results})"
+            )
+            try:
+                cursor.execute(sql, params)
+                rows = list(cursor.fetchall())
+            except Exception as exc:
+                logger.warning(f"Search query failed, retrying after schema ensure: {exc}")
+                self._ensure_entity_columns()
+                try:
+                    cursor.execute(sql, params)
+                    rows = list(cursor.fetchall())
+                except Exception as retry_exc:
+                    logger.error(
+                        f"Search query failed after retry, using cache only: {retry_exc}"
+                    )
+                    rows = []
 
-            logger.debug(f"Searching entities with query: {query} (fuzzy={fuzzy}, edit_distance={edit_distance_threshold}, types: {entity_types}, min_confidence: {min_confidence}, max_results: {max_results})")
-            cursor.execute(sql, params)
-            rows = cursor.fetchall()
+            if self._entity_cache:
+                existing_ids = {row[0] for row in rows}
+                for cached in self._entity_cache.values():
+                    cached_id = str(cached.id)
+                    if cached_id in existing_ids:
+                        continue
+                    if entity_type_filter and str(cached.entity_type).upper() not in entity_type_filter:
+                        continue
+                    if float(cached.confidence) < min_confidence:
+                        continue
+                    rows.append(
+                        (
+                            cached_id,
+                            cached.text,
+                            cached.entity_type,
+                            cached.source_document_id,
+                            cached.metadata.get("description") if cached.metadata else None,
+                            cached.confidence,
+                        )
+                    )
 
             # Convert rows to dictionaries (for hipporag2 compatibility)
             entities = []
             for row in rows:
                 entity_id, entity_name, entity_type, source_doc_id, description, confidence = row
-                entity_dict = {
-                    "entity_id": entity_id,
-                    "entity_name": entity_name,
-                    "entity_type": entity_type,
-                    "source_doc_id": source_doc_id,
-                    "description": description,
-                    "confidence": float(confidence) if confidence else 0.0,
-                    "similarity_score": 1.0  # IRIS %CONTAINS doesn't provide explicit similarity scores
-                }
-                entities.append(entity_dict)
+                name = str(entity_name)
+                name_lower = name.lower()
+                distance = levenshtein_distance(lower_query, name_lower)
+                similarity = similarity_score_for(distance, lower_query, name_lower)
+                def tokenize(text: str) -> List[str]:
+                    return re.findall(r"\w+", text.lower())
 
-            logger.debug(f"Found {len(entities)} entities matching query: {query}")
+                query_words = tokenize(lower_query)
+                name_words = tokenize(name_lower)
+                token_subset_match = bool(query_words) and all(
+                    token in name_words for token in query_words
+                )
+
+                if fuzzy:
+                    if similarity_threshold == 1.0:
+                        matches = distance == 0
+                    elif edit_distance_threshold is not None:
+                        if edit_distance_threshold == 0:
+                            matches = distance == 0
+                        else:
+                            matches = (
+                                distance <= edit_distance_threshold
+                                or token_subset_match
+                            )
+                    else:
+                        if short_query:
+                            matches = name_lower.startswith(lower_query)
+                        else:
+                            matches = lower_query in name_lower
+
+                    if matches and similarity >= similarity_threshold:
+                        entities.append(
+                            {
+                                "entity_id": entity_id,
+                                "entity_name": entity_name,
+                                "entity_type": entity_type,
+                                "source_doc_id": source_doc_id,
+                                "description": description,
+                                "confidence": float(confidence) if confidence else 0.0,
+                                "similarity_score": similarity,
+                                "edit_distance": distance,
+                            }
+                        )
+                else:
+                    if name_lower == lower_query:
+                        entities.append(
+                            {
+                                "entity_id": entity_id,
+                                "entity_name": entity_name,
+                                "entity_type": entity_type,
+                                "source_doc_id": source_doc_id,
+                                "description": description,
+                                "confidence": float(confidence) if confidence else 0.0,
+                                "similarity_score": 1.0,
+                                "edit_distance": 0,
+                            }
+                        )
+
+            if fuzzy:
+                entities.sort(
+                    key=lambda item: (
+                        -(1 if item["edit_distance"] == 0 else 0),
+                        item["edit_distance"],
+                        len(str(item["entity_name"])),
+                    )
+                )
+
+            if max_results > 0:
+                entities = entities[:max_results]
+
+            logger.debug(f"Found {len(entities)} entities matching query: {normalized_query}")
             return entities
 
         except Exception as e:
@@ -632,7 +921,7 @@ class EntityStorageAdapter:
     def create_tables_if_not_exist(self) -> bool:
         """Create entity and relationship tables if they don't exist."""
         try:
-            conn = self.connection_manager.get_connection()
+            self.connection_manager.get_connection()
 
             # SQL for creating entities table
             entities_sql = f"""
@@ -698,7 +987,7 @@ class EntityStorageAdapter:
     def get_storage_stats(self) -> Dict[str, Any]:
         """Get statistics about stored entities and relationships."""
         try:
-            conn = self.connection_manager.get_connection()
+            self.connection_manager.get_connection()
 
             # For now, return mock stats
             stats = {

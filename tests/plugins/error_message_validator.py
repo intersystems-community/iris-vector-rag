@@ -8,7 +8,7 @@ This plugin ensures test failure messages follow the three-part structure:
 
 import re
 import logging
-from typing import Dict, Optional, Any
+from typing import Dict
 from dataclasses import dataclass
 from unittest.mock import patch
 

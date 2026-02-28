@@ -25,230 +25,49 @@ Follow-up TODOs: None
 
 ## Core Principles
 
-### I. Library-First Design
-Every feature starts as a standalone library component with a programmatic API before CLI/web/API exposure. Libraries must be self-contained, independently testable, and documented. Clear purpose required - no organizational-only libraries.
+### Principle 1: IRIS-First Integration Testing
+- Tests must run against a live InterSystems IRIS instance; never skip IRIS tests by default.
+- Use iris-devtester for container lifecycle and port management; do not hardcode IRIS ports.
 
-**Why**: Enables maximum reusability, testability, and flexibility for users integrating iris-vector-rag into their systems.
+### Principle 2: VECTOR Client Limitation (TO_VECTOR required)
+- VECTOR columns cannot be inserted directly via SQL; this is a client limitation, not a server limitation.
+- All VECTOR inserts must use the TO_VECTOR() function (e.g., `TO_VECTOR(?, FLOAT, 384)`), and the limitation must be documented when relevant.
 
-### II. .DAT Fixture-First Testing (NON-NEGOTIABLE)
-Integration and E2E tests with ≥10 entities MUST use .DAT fixtures loaded via iris-devtools. Performance mandate: 100-200x faster than JSON fixtures (0.5-2s vs 39-75s for 100 entities).
+### Principle 3: .DAT Fixture-First Performance Rule
+- Prefer .DAT fixtures for IRIS test data: they are 100x–200x faster than JSON in IRIS load paths.
+- Use iris-devtools for .DAT fixture workflows; choose JSON or programmatic fixtures only when .DAT is not feasible.
+- Fixture documentation lives in tests/fixtures/README.md.
 
-**Why**: InterSystems IRIS binary format provides orders of magnitude faster test execution, enabling comprehensive integration testing without CI timeout issues.
+### Principle 4: Test Isolation by Database State
+- Fixtures must provide isolated database states per test.
+- Checksum validation ensures reproducibility, and version compatibility checks are required for fixtures.
 
-**Enforcement**:
-- All integration/E2E tests with ≥10 entities use `.DAT` fixtures
-- Programmatic fixtures allowed for <10 entities or mocked components
-- Use `@pytest.mark.dat_fixture("fixture-name")` decorator
-- See `tests/fixtures/manager.py` for fixture management
+### Principle 5: Embedding Generation Standards
+- Default embedding dimension is 384 (sentence-transformers/all-MiniLM-L6-v2).
+- Sentence-transformers integration must be supported and documented.
+- NULL or missing embeddings must be handled with zero vectors and explicit logging.
 
-### III. Test-First (TDD) (NON-NEGOTIABLE)
-Contract tests written → User approved → Tests fail → Implement → Tests pass. Red-Green-Refactor cycle strictly enforced.
+### Principle 6: Configuration & Secrets Hygiene
+- Configuration must be environment-driven and validated early; errors should be actionable.
+- Never log secrets; passwords and API keys must be masked in logs and diagnostics.
 
-**Why**: Prevents scope creep, ensures requirements are testable, and validates implementation correctness.
+### Principle 7: Backend Mode Awareness (Feature 035)
+- The system must be explicit about backend mode (Community Edition vs Enterprise Edition).
+- Connection pooling behavior differs by mode; document limits for Community Edition and unlimited pools for Enterprise Edition.
 
-**Enforcement**:
-- Contract tests created before implementation
-- All contract tests must fail initially (red phase)
-- Implementation proceeds only after tests written and reviewed
-- Integration tests added after contract tests pass
+## Development Workflow
+- Contract tests define required behaviors and must pass before merge.
+- Prefer small, composable changes; keep interfaces stable and document breaking changes.
 
-### IV. Backward Compatibility (NON-NEGOTIABLE)
-All new features default to disabled. Zero breaking changes to existing public APIs.
+## Examples
 
-**Why**: iris-vector-rag is a production library used by multiple teams. Breaking changes harm user trust and adoption.
-
-**Enforcement**:
-- All new features opt-in (disabled by default)
-- Existing test suite must pass unchanged
-- Configuration changes are additive only
-- Deprecation warnings required 2 releases before removal
-
-### V. InterSystems IRIS Integration
-All vector storage uses IRIS native capabilities. No fallback to alternative databases. IRIS-specific features (vector search, SQL optimization, transactions) are first-class citizens.
-
-**Why**: iris-vector-rag is built specifically for InterSystems IRIS. Supporting multiple backends dilutes focus and testing coverage.
-
-**Enforcement**:
-- Vector operations use IRIS native vector search
-- Batch operations use IRIS transactions
-- Test fixtures use IRIS .DAT format
-- No "if iris_available" conditionals for core functionality
-
-### VI. Performance Standards
-- Query operations: <5ms overhead when features disabled
-- Bulk operations: 10x+ speedup vs one-by-one (10K docs <10s)
-- Monitoring: <5% overhead when enabled, 0% when disabled
-- Test execution: Integration tests complete in <30s total
-
-**Why**: Production RAG systems require sub-second query latency and efficient document indexing.
-
-**Enforcement**:
-- Performance benchmarks in contract tests
-- CI fails if performance regressions detected
-- pytest-benchmark for automated measurement
-
-### VII. Observability
-All operations emit structured logs. Critical paths instrumented with OpenTelemetry spans. Text I/O ensures debuggability.
-
-**Why**: Production systems require visibility into failures, performance bottlenecks, and usage patterns.
-
-**Enforcement**:
-- OpenTelemetry integration for query/indexing operations
-- Structured logging (JSON format) for all errors
-- Clear error messages with actionable guidance
-
-### VIII. Security-First
-- SQL injection prevention via parameterized queries
-- RBAC policy interface for access control
-- Audit logging for permission decisions
-- No secrets in logs or error messages
-
-**Why**: RAG systems often handle sensitive documents requiring enterprise-grade security controls.
-
-**Enforcement**:
-- All metadata filters use parameterized SQL
-- Contract tests verify SQL injection prevention
-- RBAC permission checks before data access
-
-### IX. Simplicity (YAGNI)
-Start simple. Build for current requirements, not hypothetical future needs. Premature abstraction is technical debt.
-
-**Why**: Unnecessary complexity slows development, increases bug surface area, and confuses users.
-
-**Enforcement**:
-- New abstractions require justification in design docs
-- "We might need this later" is not justification
-- Delete unused code immediately
-
-### X. PyPI Publishing Standards
-MUST use `twine` for publishing packages to PyPI. DO NOT use `uv publish`.
-
-**Why**: `uv publish` does not properly read credentials from `.pypirc` files, causing authentication failures. `twine` is the standard Python packaging tool with mature credential handling.
-
-**Enforcement**:
-- Use `twine upload dist/*` for PyPI publishing
-- Verify `.pypirc` configuration before publishing
-- Build distributions with `uv build` (or `python -m build`)
-- Never commit `.pypirc` or credentials to version control
-
-**Publishing Workflow**:
-```bash
-# 1. Build distribution packages
-uv build
-
-# 2. Verify distributions created
-ls -lh dist/
-
-# 3. Publish to PyPI using twine (reads ~/.pypirc automatically)
-twine upload dist/iris_vector_rag-*.whl dist/iris_vector_rag-*.tar.gz
+```sql
+-- Vector insert must use TO_VECTOR (client limitation)
+INSERT INTO RAG.DocumentChunks (chunk_id, embedding)
+VALUES (?, TO_VECTOR(?, FLOAT, 384));
 ```
-
-### XI. Git Repository Workflow (Three-Tier Strategy)
-The project uses a three-tier repository structure for selective public sharing while maintaining private development space.
-
-**Repository Structure**:
-- **origin** (private): `isc-tdyar/iris-vector-rag-private` - Private development repository
-- **fork** (public): `isc-tdyar/iris-vector-rag` - Public fork for staging contributions
-- **upstream** (community): `intersystems-community/iris-vector-rag` - Official community repository
-
-**Why**: Enables private experimental work while providing controlled public contributions via pull requests.
-
-**Daily Development Workflow**:
-```bash
-# 1. Private work (default workflow)
-git commit -am "feat: experimental feature"
-git push origin main
-
-# 2. Ready to share specific commits
-git checkout -b public/feature-name
-git cherry-pick <commit-hash>  # Select specific commits
-git push fork public/feature-name
-
-# 3. Contribute to community (create PR via GitHub)
-# PR from fork:public/feature-name → upstream:main
-```
-
-**Emergency Sync Workflow** (rare, when everything should be public immediately):
-```bash
-# Sync all repositories with same content
-git push origin main && git push fork main && git push upstream main
-```
-
-**Selective Release Workflow** (recommended):
-```bash
-# Create release branch with curated commits
-git checkout -b release/v0.5.x main
-git rebase -i HEAD~10  # Remove/squash private commits
-git push fork release/v0.5.x
-
-# Create PR: fork:release/v0.5.x → upstream:main
-```
-
-**Enforcement**:
-- Private experiments stay in `origin` (private repo)
-- Public contributions go through `fork` → `upstream` PR workflow
-- Emergency direct pushes to `upstream` require explicit justification
-- All public releases must have clean commit history (no private implementation details)
-
-## Testing Requirements
-
-### Contract Tests (TDD)
-- **Purpose**: Define expected behavior before implementation
-- **Coverage**: ~8-12 tests per feature
-- **Location**: `tests/contract/`
-- **Format**: pytest with descriptive names (`test_custom_field_configuration`)
-
-### Integration Tests
-- **Purpose**: Validate end-to-end workflows with real IRIS database
-- **Coverage**: ~10-15 tests per feature
-- **Location**: `tests/integration/`
-- **Requirement**: Use .DAT fixtures for ≥10 entities
-
-### Unit Tests
-- **Purpose**: Test individual components in isolation
-- **Coverage**: ~15-20 tests per module
-- **Location**: `tests/unit/`
-- **Scope**: Pure Python logic, mocked external dependencies
-
-### Performance Benchmarks
-- **Purpose**: Validate performance requirements
-- **Tool**: pytest-benchmark
-- **Location**: `tests/benchmarks/`
-- **CI**: Fails on >10% regression
-
-## Configuration Standards
-
-### YAML Configuration
-- **Format**: YAML with clear hierarchy
-- **Location**: `iris_vector_rag/config/default_config.yaml`
-- **Changes**: Additive only (no removals)
-- **Documentation**: Every new key documented in comments
-
-### Environment Variables
-- **Prefix**: `IRIS_` for IRIS-specific settings
-- **Format**: UPPER_SNAKE_CASE
-- **Precedence**: Env vars override YAML config
-- **Secrets**: Use env vars, never commit to version control
 
 ## Governance
+- This constitution supersedes other practices; amendments require documentation and review.
 
-### Constitution Authority
-This constitution supersedes all other development practices. When conflicts arise, constitution principles take precedence.
-
-### Amendments
-- Amendments require documentation in `.specify/memory/constitution.md`
-- Major changes require team discussion and approval
-- Include migration plan for breaking changes
-
-### Complexity Justification
-Any addition that violates simplicity (Principle IX) requires explicit justification in design documents explaining why the complexity is necessary.
-
-### Code Review Requirements
-All PRs/reviews must verify:
-- ✅ Tests written before implementation (TDD)
-- ✅ .DAT fixtures used for integration tests ≥10 entities
-- ✅ Backward compatibility maintained
-- ✅ Performance benchmarks pass
-- ✅ Constitution principles followed
-
-**Version**: 1.2.0 | **Ratified**: 2025-11-22 | **Last Amended**: 2025-11-25
+**Version**: 1.0.0 | **Ratified**: 2026-02-08 | **Last Amended**: 2026-02-08

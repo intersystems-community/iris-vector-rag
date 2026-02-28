@@ -7,6 +7,7 @@ for InterSystems IRIS, including CLOB handling and vector search capabilities.
 
 import json
 import logging
+import os
 from iris_vector_rag.common.db_vector_utils import insert_vector
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -142,12 +143,40 @@ class IRISVectorStore(VectorStore):
 
     def _get_connection(self):
         """Get or create database connection."""
-        if self._connection is None:
-            try:
-                self._connection = self.connection_manager.get_connection("iris")
-            except Exception as e:
-                raise VectorStoreConnectionError(f"Failed to get IRIS connection: {e}")
+        try:
+            self._connection = self.connection_manager.get_connection("iris")
+        except Exception as e:
+            raise VectorStoreConnectionError(f"Failed to get IRIS connection: {e}")
         return self._connection
+
+    def _get_vector_data_type(self) -> str:
+        """
+        Detect actual vector column data type from IRIS metadata.
+        
+        Returns 'FLOAT' or 'DOUBLE'.
+        """
+        try:
+            connection = self._get_connection()
+            cursor = connection.cursor()
+            # Use IRIS system dictionary to find the actual datatype parameter
+            cursor.execute(
+                "SELECT Parameters FROM %Dictionary.CompiledProperty WHERE parent = ? AND Name = 'embedding'",
+                [self.table_name]
+            )
+            row = cursor.fetchone()
+            cursor.close()
+            if row and row[0]:
+                params = str(row[0])
+                if "DATATYPE,DOUBLE" in params:
+                    return "DOUBLE"
+                if "DATATYPE,FLOAT" in params:
+                    return "FLOAT"
+        except Exception as e:
+            logger.debug(f"Failed to detect vector data type for {self.table_name}: {e}")
+        
+        # Fallback to ENV or default
+        return os.environ.get("IRIS_VECTOR_DATA_TYPE") or "FLOAT"
+
 
     # ========================================================================
     # IRIS EMBEDDING Support Methods (Feature 051)
@@ -337,10 +366,6 @@ class IRISVectorStore(VectorStore):
             try:
                 # Use schema manager to ensure proper table creation
                 table_short_name = self.table_name.replace("RAG.", "")
-                expected_config = {
-                    "vector_dimension": self.vector_dimension,
-                    "vector_data_type": "FLOAT",
-                }
                 success = self.schema_manager.ensure_table_schema(table_short_name)
                 if success:
                     logger.info(f"✅ Successfully created table {self.table_name}")
@@ -615,7 +640,8 @@ class IRISVectorStore(VectorStore):
             from ..embeddings.manager import EmbeddingManager
 
             embedding_manager = EmbeddingManager(self.config_manager)
-            embedding_func = lambda text: embedding_manager.embed_text(text)
+            def embedding_func(text):
+                return embedding_manager.embed_text(text)
 
             embeddings = []
             for doc in documents:
@@ -658,6 +684,27 @@ class IRISVectorStore(VectorStore):
             # Ensure table exists before any operations
             self._ensure_table_exists(cursor)
 
+            # Determine actual schema columns for inserts
+            table_short_name = self.table_name.replace("RAG.", "")
+            cursor.execute(
+                """
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+                """,
+                ["RAG", table_short_name],
+            )
+            columns = {row[0].lower() for row in cursor.fetchall()}
+            id_column = "id" if "id" in columns else "doc_id"
+            text_column = (
+                "text_content"
+                if "text_content" in columns
+                else ("content" if "content" in columns else "text_content")
+            )
+            has_content_column = "content" in columns
+            has_source_column = "source" in columns
+            has_doc_id_column = "doc_id" in columns
+
             # If embeddings are provided, ensure the table has the proper vector schema
             if embeddings:
                 logger.debug(
@@ -681,8 +728,8 @@ class IRISVectorStore(VectorStore):
             for i, doc in enumerate(documents):
                 metadata_json = json.dumps(doc.metadata)
 
-                # Check if document exists - use doc_id column (correct schema)
-                check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE doc_id = ?"
+                # Check if document exists - use actual id column
+                check_sql = f"SELECT COUNT(*) FROM {self.table_name} WHERE {id_column} = ?"
                 cursor.execute(check_sql, [doc.id])
                 exists = cursor.fetchone()[0] > 0
 
@@ -693,17 +740,26 @@ class IRISVectorStore(VectorStore):
                     )
                     # Use the required insert_vector utility function for vector insertions/updates
                     # Use doc_id and text_content per the actual IRIS schema
+                    additional_data = {
+                        text_column: doc.page_content,
+                        "metadata": metadata_json,
+                    }
+                    if has_content_column and "content" not in additional_data:
+                        additional_data["content"] = doc.page_content
+                    if has_source_column:
+                        additional_data["source"] = doc.metadata.get("source", "unknown")
+                    if has_doc_id_column and id_column != "doc_id":
+                        additional_data["doc_id"] = doc.id
+
                     success = insert_vector(
                         cursor=cursor,
                         table_name=self.table_name,
                         vector_column_name="embedding",
                         vector_data=embeddings[i],
                         target_dimension=self.vector_dimension,
-                        key_columns={"doc_id": doc.id},
-                        additional_data={
-                            "text_content": doc.page_content,
-                            "metadata": metadata_json,
-                        },
+                        key_columns={id_column: doc.id},
+                        additional_data=additional_data,
+                        vector_data_type=self._get_vector_data_type(),
                     )
                     if success:
                         added_ids.append(doc.id)
@@ -715,26 +771,52 @@ class IRISVectorStore(VectorStore):
                 else:
                     # Insert without embedding - use correct schema (doc_id, text_content, metadata)
                     if exists:
+                        set_columns = [text_column]
+                        params = [doc.page_content]
+                        if has_content_column and text_column != "content":
+                            set_columns.append("content")
+                            params.append(doc.page_content)
+                        if has_source_column:
+                            set_columns.append("source")
+                            params.append(doc.metadata.get("source", "unknown"))
+                        if has_doc_id_column and id_column != "doc_id":
+                            set_columns.append("doc_id")
+                            params.append(doc.id)
+                        set_columns.append("metadata")
+                        params.append(metadata_json)
+
                         update_sql = f"""
                         UPDATE {self.table_name}
-                        SET text_content = ?, metadata = ?
-                        WHERE doc_id = ?
+                        SET {', '.join([f'{col} = ?' for col in set_columns])}
+                        WHERE {id_column} = ?
                         """
-                        cursor.execute(
-                            update_sql, [doc.page_content, metadata_json, doc.id]
-                        )
+                        params.append(doc.id)
+                        cursor.execute(update_sql, params)
                         logger.debug(
                             f"Updated existing document {doc.id} without vector"
                         )
                     else:
                         # Insert using correct schema
-                        insert_sql = f"""
-                        INSERT INTO {self.table_name} (doc_id, text_content, metadata)
-                        VALUES (?, ?, ?)
-                        """
-                        cursor.execute(
-                            insert_sql, [doc.id, doc.page_content, metadata_json]
+                        insert_columns = [id_column, text_column]
+                        values = [doc.id, doc.page_content]
+                        if has_content_column and text_column != "content":
+                            insert_columns.append("content")
+                            values.append(doc.page_content)
+                        if has_source_column:
+                            insert_columns.append("source")
+                            values.append(doc.metadata.get("source", "unknown"))
+                        if has_doc_id_column and id_column != "doc_id":
+                            insert_columns.append("doc_id")
+                            values.append(doc.id)
+                        insert_columns.append("metadata")
+                        values.append(metadata_json)
+
+                        insert_sql = (
+                            f"INSERT INTO {self.table_name} "
+                            f"({', '.join(insert_columns)}) VALUES "
+                            f"({', '.join(['?' for _ in insert_columns])})"
                         )
+                        cursor.execute(insert_sql, values)
                         logger.debug(f"Inserted new document {doc.id} without vector")
 
                     added_ids.append(doc.id)
@@ -900,27 +982,73 @@ class IRISVectorStore(VectorStore):
 
             # Build metadata filter clause if needed
             additional_where = None
+            filter_conditions = []
+
+            # Get current vector dimension from schema manager
+            table_short_name = self.table_name.replace("RAG.", "")
+            schema_config = (
+                self.schema_manager.get_current_schema_config(table_short_name) or {}
+            )
+            if not schema_config:
+                try:
+                    cursor.execute(
+                        """
+                        SELECT COLUMN_NAME
+                        FROM INFORMATION_SCHEMA.COLUMNS
+                        WHERE TABLE_SCHEMA = ? AND UPPER(TABLE_NAME) = UPPER(?)
+                        """,
+                        ["RAG", table_short_name],
+                    )
+                    columns = {row[0].lower() for row in cursor.fetchall()}
+                except Exception:
+                    columns = set()
+                schema_config = {
+                    "id_column": "id"
+                    if "id" in columns
+                    else ("doc_id" if "doc_id" in columns else "doc_id"),
+                    "text_column": "content"
+                    if "content" in columns
+                    else (
+                        "text_content"
+                        if "text_content" in columns
+                        else "text_content"
+                    ),
+                    "metadata_column": "metadata"
+                    if "metadata" in columns
+                    else (
+                        "metadata_json"
+                        if "metadata_json" in columns
+                        else "metadata"
+                    ),
+                }
+
+            id_column = schema_config.get("id_column", "doc_id")
+            text_column = schema_config.get("text_column", "text_content")
+            metadata_column = schema_config.get("metadata_column", "metadata")
+
             if filter:
-                filter_conditions = []
                 for key, value in filter.items():
                     # Key is already validated, safe to use in f-string
                     # IRIS SQL has no standard JSON functions; use LIKE on metadata JSON text
                     # Pattern matches: "key": "value" in JSON string (with optional space after colon)
                     # This is best-effort filtering on serialized JSON
-                    escaped_value = str(value).replace("'", "''")  # SQL escape single quotes
-                    # Match both formats: "key":"value" and "key": "value" (with space)
+                    escaped_value = str(value).replace("'", "''")
                     filter_conditions.append(
-                        f"(metadata LIKE '%\"{key}\":\"{escaped_value}\"%' OR metadata LIKE '%\"{key}\": \"{escaped_value}\"%')"
+                        f"({metadata_column} LIKE '%\"{key}\":\"{escaped_value}\"%' OR {metadata_column} LIKE '%\"{key}\": \"{escaped_value}\"%')"
                     )
 
                 if filter_conditions:
                     additional_where = " AND ".join(filter_conditions)
 
-            # Get current vector dimension from schema manager
-            table_short_name = self.table_name.replace("RAG.", "")
-            expected_dimension = self.schema_manager.get_vector_dimension(
-                table_short_name
-            )
+            try:
+                expected_dimension = self.schema_manager.get_vector_dimension(
+                    table_short_name
+                )
+            except Exception:
+                expected_dimension = len(query_embedding)
+            
+            # Use data type from actual table metadata if available, fallback to ENV or FLOAT
+            vector_data_type = self._get_vector_data_type()
 
             # Validate query embedding dimension matches expected
             if len(query_embedding) != expected_dimension:
@@ -928,9 +1056,33 @@ class IRISVectorStore(VectorStore):
                 logger.error(error_msg)
                 raise VectorStoreDataError(error_msg)
 
+            logger.debug(f"Query embedding dimensions: {len(query_embedding)}")
+            logger.debug(f"Top-K parameter: {top_k}")
+
+            try:
+                cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
+                total_docs = cursor.fetchone()[0]
+                logger.debug(f"Total documents in {self.table_name}: {total_docs}")
+
+                cursor.execute(
+                    f"SELECT COUNT(*) FROM {self.table_name} WHERE embedding IS NOT NULL"
+                )
+                embedded_docs = cursor.fetchone()[0]
+                logger.debug(f"Documents with embeddings: {embedded_docs}")
+            except Exception as exc:
+                logger.debug(
+                    f"Unable to fetch document counts for {self.table_name}: {exc}"
+                )
+                logger.debug("Documents with embeddings: 0")
+
             logger.debug(
                 f"Vector search: query={len(query_embedding)}D, expected={expected_dimension}D, table={table_short_name}"
             )
+
+            apply_filter_in_python = bool(filter)
+            search_top_k = max(top_k * 5, top_k) if apply_filter_in_python else top_k
+            if apply_filter_in_python:
+                additional_where = None
 
             # Convert query embedding to bracketed string format for TO_VECTOR
             # IMPORTANT: TO_VECTOR() does NOT accept parameter markers
@@ -943,10 +1095,11 @@ class IRISVectorStore(VectorStore):
                 vector_column="embedding",
                 vector_string=embedding_str,
                 vector_dimension=expected_dimension,
-                id_column="doc_id",
-                extra_columns=["text_content"],
-                top_k=top_k,
+                id_column=id_column,
+                extra_columns=[text_column],
+                top_k=search_top_k,
                 additional_where=additional_where,
+                vector_data_type=vector_data_type,
             )
 
             # DEBUG: Check if SQL contains DOUBLE or FLOAT
@@ -961,16 +1114,39 @@ class IRISVectorStore(VectorStore):
             logger.debug(
                 f"Executing safe vector search with {len(query_embedding)}D vector"
             )
+            logger.debug(f"SQL query executed: {sql}")
             try:
                 rows = execute_safe_vector_search(cursor, sql)
             except Exception as e:
+                error_text = str(e)
                 # Check if this is a table not found error
-                if "Table" in str(e) and "not found" in str(e):
+                if "Table" in error_text and "not found" in error_text:
                     logger.info(
                         f"Table {self.table_name} not found, attempting to create it automatically"
                     )
                     self._create_table_automatically()
                     # Retry the search after table creation
+                    rows = execute_safe_vector_search(cursor, sql)
+                elif "different datatypes" in error_text.lower():
+                    # Retry with alternate vector data type (FLOAT <-> DOUBLE)
+                    fallback_type = (
+                        "DOUBLE" if vector_data_type.upper() == "FLOAT" else "FLOAT"
+                    )
+                    logger.warning(
+                        "Vector datatype mismatch detected; retrying with %s",
+                        fallback_type,
+                    )
+                    sql = build_safe_vector_dot_sql(
+                        table=self.table_name,
+                        vector_column="embedding",
+                        vector_string=embedding_str,
+                        vector_dimension=expected_dimension,
+                        id_column=id_column,
+                        extra_columns=[text_column],
+                        top_k=search_top_k,
+                        additional_where=additional_where,
+                        vector_data_type=fallback_type,
+                    )
                     rows = execute_safe_vector_search(cursor, sql)
                 else:
                     # Log the SQL that failed for debugging
@@ -986,16 +1162,36 @@ class IRISVectorStore(VectorStore):
                 try:
                     doc_ids = [row[0] for row in rows]
                     placeholders = ",".join(["?" for _ in doc_ids])
-                    # Use 'doc_id' column (correct schema)
-                    metadata_sql = f"SELECT doc_id, metadata FROM {self.table_name} WHERE doc_id IN ({placeholders})"
+                    metadata_sql = (
+                        f"SELECT {id_column}, {metadata_column} FROM {self.table_name} "
+                        f"WHERE {id_column} IN ({placeholders})"
+                    )
                     cursor.execute(metadata_sql, doc_ids)
-                    metadata_map = {row[0]: row[1] for row in cursor.fetchall()}
+                    metadata_map = {}
+                    for doc_id, metadata_json in cursor.fetchall():
+                        if isinstance(metadata_json, dict):
+                            metadata_map[doc_id] = metadata_json
+                            continue
+                        if not metadata_json:
+                            metadata_map[doc_id] = {}
+                            continue
+                        try:
+                            metadata_map[doc_id] = json.loads(metadata_json)
+                        except Exception:
+                            metadata_map[doc_id] = {}
                 except (TypeError, AttributeError):
                     # Handle Mock objects by skipping metadata fetch
                     logger.debug(
                         "Rows is not iterable (likely a Mock object), skipping metadata fetch"
                     )
                     metadata_map = {}
+
+            if apply_filter_in_python and filter:
+                def _matches(meta: Dict[str, Any]) -> bool:
+                    return all(meta.get(k) == v for k, v in filter.items())
+
+                rows = [row for row in rows if _matches(metadata_map.get(row[0], {}))]
+                rows = rows[:top_k]
 
             results = []
             # Handle Mock objects that aren't iterable
@@ -1044,7 +1240,13 @@ class IRISVectorStore(VectorStore):
             # Handle Mock objects that don't have len()
             try:
                 result_count = len(results)
-                logger.debug(f"Vector search returned {result_count} results")
+                if result_count == 0:
+                    logger.info("Vector search returned 0 results")
+                    logger.debug("Similarity scores: []")
+                else:
+                    logger.debug(f"Vector search returned {result_count} results")
+                    similarity_scores = [score for _, score in results]
+                    logger.debug(f"Similarity scores: {similarity_scores}")
             except (TypeError, AttributeError):
                 # Handle Mock objects or other non-sequence types
                 logger.debug(
@@ -1053,6 +1255,8 @@ class IRISVectorStore(VectorStore):
             return results
 
         except Exception as e:
+            logger.info("Vector search returned 0 results")
+            logger.debug("Similarity scores: []")
             sanitized_error = self._sanitize_error_message(e, "similarity_search")
             logger.error(sanitized_error)
             raise VectorStoreConnectionError(f"Vector search failed: {sanitized_error}")

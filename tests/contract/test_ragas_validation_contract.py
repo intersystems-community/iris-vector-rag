@@ -6,6 +6,7 @@ Requirements: FR-019, FR-020, FR-021, FR-022
 """
 
 import json
+import warnings
 import os
 import subprocess
 from pathlib import Path
@@ -179,7 +180,7 @@ class TestRAGASValidationContract:
 
         # Soft assertion - warning only
         if answer_relevancy <= 0.30:
-            pytest.warn(
+            warnings.warn(
                 f"Answer relevancy {answer_relevancy:.2%} <= 30%. "
                 f"Answers may not be directly relevant to queries."
             )

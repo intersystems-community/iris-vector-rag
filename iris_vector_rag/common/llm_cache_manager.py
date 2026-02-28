@@ -127,6 +127,23 @@ class LangchainCacheManager:
                     else:
                         raise
 
+            elif self.config.backend == "disk":
+                try:
+                    from iris_vector_rag.common.llm_cache_disk import create_disk_cache_backend
+                    self.cache_backend = create_disk_cache_backend(self.config)
+                    # We can use the same wrapper as it just calls .get() and .set()
+                    cache = LangchainIRISCacheWrapper(self.cache_backend)
+                    langchain.llm_cache = cache
+                    logger.info(f"Langchain disk cache configured at {self.config.cache_directory}")
+                except Exception as e:
+                    logger.error(f"Failed to setup disk cache: {e}")
+                    if self.config.graceful_fallback:
+                        cache = InMemoryCache()
+                        langchain.llm_cache = cache
+                        logger.info("Langchain memory cache configured as fallback")
+                    else:
+                        raise
+
             else:
                 logger.error(
                     f"Unsupported cache backend: {self.config.backend}. Supported backends: memory, iris"
@@ -535,7 +552,7 @@ class LangchainIRISCacheWrapper:
                     try:
                         json.dumps(gen_data)
                         safe_generations.append(gen_data)
-                    except:
+                    except Exception:
                         safe_generations.append(
                             {
                                 "text": f"Generation {i} serialization failed",
@@ -739,7 +756,7 @@ class LangchainIRISCacheWrapper:
                     try:
                         json.dumps(gen_data)
                         safe_generations.append(gen_data)
-                    except:
+                    except Exception:
                         safe_generations.append(
                             {
                                 "text": f"Generation {i} serialization failed",

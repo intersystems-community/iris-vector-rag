@@ -295,7 +295,6 @@ class DirectOpenAILM(dspy.BaseLM):
         This method is called by DSPy when executing predictions.
         """
         import requests
-        import json
 
         # Build messages array
         if messages is None:

@@ -13,7 +13,6 @@ from tests.utils.schema_models import (
     SchemaValidationResult,
     SchemaMismatch,
     MismatchType,
-    ColumnType,
     get_expected_rag_schema
 )
 
@@ -61,6 +60,31 @@ class SchemaValidator:
             existing_tables = {row[0] for row in cursor.fetchall()}
 
             validated_tables = []
+
+            if table_name:
+                matching = [
+                    schema_def
+                    for schema_def in self.expected_schemas
+                    if schema_def.table_name == table_name
+                ]
+                if not matching:
+                    mismatches.append(
+                        SchemaMismatch(
+                            table_name=table_name,
+                            mismatch_type=MismatchType.MISSING_TABLE,
+                            severity="error",
+                        )
+                    )
+                    validation_time_ms = int((time.time() - start_time) * 1000)
+                    return SchemaValidationResult(
+                        is_valid=False,
+                        mismatches=mismatches,
+                        validated_tables=[table_name],
+                        validation_time_ms=validation_time_ms,
+                        message="Schema validation failed: missing table",
+                    )
+                # Narrow validation to the specified table
+                self.expected_schemas = matching
 
             # Check each expected table
             for schema_def in self.expected_schemas:

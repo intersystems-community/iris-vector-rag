@@ -6,14 +6,13 @@ optimization components, tracking cache hit rates, connection pool utilization,
 parallel processing metrics, and query performance to ensure sub-200ms response times.
 """
 
-import json
 import logging
 import threading
 import time
-from collections import defaultdict, deque
-from dataclasses import asdict, dataclass
+from collections import deque
+from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -525,7 +524,7 @@ class GraphRAGPerformanceMonitor:
             try:
                 cache_stats = self.cache_manager.get_cache_stats()
                 cache_hit_rate = cache_stats["overall"]["overall_hit_rate"]
-            except:
+            except Exception:
                 pass
 
         # Get connection pool metrics
@@ -536,7 +535,7 @@ class GraphRAGPerformanceMonitor:
                 connection_utilization = pool_stats["active_connections"] / max(
                     1, pool_stats["peak_size"]
                 )
-            except:
+            except Exception:
                 pass
 
         # Get parallel processor metrics
@@ -545,7 +544,7 @@ class GraphRAGPerformanceMonitor:
             try:
                 processor_stats = self.parallel_processor.get_performance_stats()
                 parallel_operations = processor_stats.get("total_operations", 0)
-            except:
+            except Exception:
                 pass
 
         return PerformanceSnapshot(

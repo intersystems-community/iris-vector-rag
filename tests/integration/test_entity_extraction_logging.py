@@ -79,7 +79,7 @@ def test_entity_extraction_service_logs_llm_config(config_with_openai, caplog):
     ======================================================================
     """
     with caplog.at_level(logging.INFO):
-        service = EntityExtractionService(
+        EntityExtractionService(
             config_manager=config_with_openai,
             connection_manager=None,
             embedding_manager=None,
@@ -197,7 +197,7 @@ def test_fallback_individual_extraction_logs_progress(
         }
 
         with caplog.at_level(logging.INFO):
-            result = service.extract_batch_with_dspy(sample_documents, batch_size=5)
+            service.extract_batch_with_dspy(sample_documents, batch_size=5)
 
     # Verify fallback logging
     log_text = caplog.text
@@ -224,7 +224,7 @@ def test_no_silent_failures_llm_config_warning(caplog):
     }
 
     with caplog.at_level(logging.WARNING):
-        service = EntityExtractionService(
+        EntityExtractionService(
             config_manager=config,
             connection_manager=None,
             embedding_manager=None,

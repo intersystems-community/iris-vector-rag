@@ -19,7 +19,6 @@ from iris_vector_rag.core.models import (
     Document,
     BatchExtractionResult,
     ProcessingMetrics,
-    BatchStatus,
 )
 
 

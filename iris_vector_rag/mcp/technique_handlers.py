@@ -104,7 +104,7 @@ class TechniqueHandler:
                     'tokens_used': result.get('tokens_used', 0)
                 }
             }
-        except Exception as e:
+        except Exception:
             self._error_count += 1
             raise
 

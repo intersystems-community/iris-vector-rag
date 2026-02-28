@@ -21,7 +21,7 @@ async def start_python_bridge():
     from iris_vector_rag.mcp.config import load_config
 
     config = load_config()
-    bridge = MCPBridge(config)
+    MCPBridge(config)
 
     print(f"Starting Python MCP Bridge on port {config.python_bridge_port}")
     print(f"Auth mode: {config.auth_mode}")

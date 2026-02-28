@@ -1,6 +1,8 @@
 import uuid
+import time
+import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 from enum import Enum
 
@@ -111,6 +113,14 @@ class Document:
         # Convert dict to a hashable form (tuple of sorted items) for hashing
         meta_tuple = tuple(sorted(self.metadata.items()))
         return hash((self.page_content, meta_tuple, self.id))
+
+    @property
+    def similarity_score(self) -> float:
+        """Return similarity score from metadata or default when absent."""
+        try:
+            return float(self.metadata.get("similarity_score", 1.0))
+        except (TypeError, ValueError):
+            return 1.0
 
     # Note: If __hash__ is defined, __eq__ should also be defined if not using dataclass's default.
     # Since frozen=True implies eq=True by default, the auto-generated __eq__ should be fine
@@ -640,6 +650,8 @@ class ProcessingMetrics:
 
     def __post_init__(self):
         """Post-initialization validation."""
+        if self.speedup_factor is None:
+            self.speedup_factor = 1.0
         if self.total_batches_processed < 0:
             raise ValueError("Total batches must be non-negative")
         if self.total_documents_processed < 0:
@@ -660,7 +672,6 @@ class ProcessingMetrics:
 
 # Coverage Analysis Models
 
-import re
 
 
 # Critical modules requiring 80% coverage per constitutional requirements
@@ -690,9 +701,9 @@ class CoverageReport:
     analysis_duration_seconds: float
 
     # Optional metadata fields
-    git_commit_hash: str = None
-    ci_build_id: str = None
-    branch_coverage_percentage: float = None
+    git_commit_hash: Optional[str] = None
+    ci_build_id: Optional[str] = None
+    branch_coverage_percentage: Optional[float] = None
 
     # Module coverage breakdown
     module_coverage: List[Dict[str, Any]] = field(default_factory=list)
@@ -819,14 +830,14 @@ class CoverageReport:
             return NotImplemented
         return self.overall_coverage_percentage > other.overall_coverage_percentage
 
-    def __eq__(self, other: 'CoverageReport') -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare reports by ID and timestamp."""
         if not isinstance(other, CoverageReport):
             return NotImplemented
         return (self.report_id == other.report_id and
                 self.timestamp == other.timestamp)
 
-    def __ne__(self, other: 'CoverageReport') -> bool:
+    def __ne__(self, other: object) -> bool:
         """Compare reports by ID and timestamp."""
         return not self.__eq__(other)
 
@@ -883,11 +894,11 @@ class ModuleCoverage:
 
     # Optional detailed fields
     uncovered_lines: List[int] = field(default_factory=list)
-    priority_level: str = None
+    priority_level: Optional[str] = None
     is_legacy_module: bool = False
-    exemption_justification: str = None
-    analysis_time_ms: float = None
-    vector_operation_coverage: float = None
+    exemption_justification: Optional[str] = None
+    analysis_time_ms: Optional[float] = None
+    vector_operation_coverage: Optional[float] = None
 
     def __post_init__(self):
         """Validate module data after initialization."""
@@ -1018,17 +1029,30 @@ class ModuleCoverage:
         return data
 
 
-# Example of how other models might be added later:
-# @dataclass(frozen=True)
-# class Chunk(Document):
-#     """Represents a chunk of a larger document."""
-#     parent_document_id: str
-#     chunk_index: int
-#     # Could have its own metadata or inherit/extend parent's
+@dataclass(frozen=True)
+class CacheEntry:
+    """Represents a cached LLM response."""
+    prompt: str
+    response: str
+    model_name: str
+    timestamp: float = field(default_factory=time.time)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
-# @dataclass(frozen=True)
-# class RetrievedDocument:
-#     """Represents a document retrieved by the RAG pipeline, possibly with a score."""
-#     document: Document
-#     score: float = field(default=0.0)
-#     # Any other retrieval-specific info
+@dataclass(frozen=True)
+class BenchmarkQuery:
+    """
+    Standardized query object for multi-hop RAG evaluation.
+
+    Attributes:
+        id: Unique query identifier
+        question: The natural language question
+        answer: Gold-standard answer (string or list)
+        supporting_docs: List of ground-truth document IDs required for answering
+        metadata: Dataset-specific attributes (e.g., question_decomposition)
+    """
+
+    id: str
+    question: str
+    answer: Union[str, List[str]]
+    supporting_docs: List[str] = field(default_factory=list)
+    metadata: Dict[str, Any] = field(default_factory=dict)

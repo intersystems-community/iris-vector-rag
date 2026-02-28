@@ -9,7 +9,6 @@ Fixture must be loaded before running:
 """
 
 import pytest
-from typing import Dict, Any
 from sqlalchemy import text
 
 

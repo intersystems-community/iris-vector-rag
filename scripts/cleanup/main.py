@@ -12,18 +12,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from .models import FileCategory
 from .operations import (
     check_broken_links,
     classify_files,
-    consolidate_duplicates,
     move_files,
     remove_files,
-    rollback_changes,
     scan_repository,
     update_documentation,
     update_documentation_index,
-    validate_tests,
 )
 
 
@@ -39,11 +35,11 @@ def main():
     args = parser.parse_args()
 
     repo_root = args.repo_root.resolve()
-    print(f"Repository Cleanup Utility")
-    print(f"=" * 50)
+    print("Repository Cleanup Utility")
+    print("=" * 50)
     print(f"Repository: {repo_root}")
     print(f"Dry run: {args.dry_run}")
-    print(f"=" * 50)
+    print("=" * 50)
     print()
 
     # Phase 1: Scan and Classify
@@ -53,7 +49,7 @@ def main():
         print(f"  Scanned {inventory.total_files} files")
 
         report = classify_files(inventory)
-        print(f"  Classification complete:")
+        print("  Classification complete:")
         print(report.to_summary())
 
         removable = inventory.get_removable_files()

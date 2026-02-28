@@ -207,12 +207,12 @@ class IRISSQLUtils:
             if cursor:
                 try:
                     cursor.close()
-                except:
+                except Exception:
                     pass
             if temp_connection:
                 try:
                     temp_connection.close()
-                except:
+                except Exception:
                     pass
 
     @staticmethod
@@ -325,12 +325,12 @@ class IRISSQLUtils:
             if cursor:
                 try:
                     cursor.close()
-                except:
+                except Exception:
                     pass
             if temp_connection:
                 try:
                     temp_connection.close()
-                except:
+                except Exception:
                     pass
 
     @staticmethod
@@ -452,12 +452,12 @@ class IRISSQLUtils:
             if cursor:
                 try:
                     cursor.close()
-                except:
+                except Exception:
                     pass
             if temp_connection:
                 try:
                     temp_connection.close()
-                except:
+                except Exception:
                     pass
 
     @staticmethod
@@ -684,7 +684,7 @@ def test_iris_sql_utils():
                         cursor.execute("DROP INDEX test_vector_idx")
                         cursor.close()
                         print("✓ Test index cleaned up")
-                    except:
+                    except Exception:
                         pass
 
                 connection.close()

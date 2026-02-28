@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from iris_vector_rag.api.models.upload import DocumentUploadOperation, UploadStatus
+from iris_vector_rag.api.models.upload import UploadStatus
 from iris_vector_rag.api.services.document_service import DocumentService
 
 

@@ -12,10 +12,7 @@ Tests all ontology-related functionality including:
 - Performance and scalability
 """
 
-import json
 import tempfile
-from pathlib import Path
-from typing import Any, Dict, List
 
 import pytest
 
@@ -27,14 +24,11 @@ from iris_vector_rag.ontology.loader import OntologyLoader
 from iris_vector_rag.ontology.models import (
     Concept,
     ConceptHierarchy,
-    InferenceRule,
     OntologyRelationship,
-    SemanticMapping,
 )
 from iris_vector_rag.ontology.plugins import (
     GeneralOntologyPlugin,
     create_plugin_from_config,
-    get_ontology_plugin,
 )
 from iris_vector_rag.ontology.reasoner import OntologyReasoner, QueryExpander
 from iris_vector_rag.services.entity_extraction import OntologyAwareEntityExtractor
@@ -580,7 +574,7 @@ class TestMultiDomainSupport:
         plugin = GeneralOntologyPlugin()
 
         # Create multi-domain hierarchy
-        concepts = [
+        [
             Concept("entity", "Entity", "Universal entity"),
             Concept("legal_entity", "Legal Entity", "Legal concept"),
             Concept("medical_entity", "Medical Entity", "Medical concept"),
@@ -692,7 +686,7 @@ class TestPerformance:
                     f"concept_{i}", f"concept_{i-1}", "is_a"
                 )
 
-        reasoner = OntologyReasoner(plugin.hierarchy)
+        OntologyReasoner(plugin.hierarchy)
 
         import time
 
@@ -700,7 +694,7 @@ class TestPerformance:
 
         # Test subsumption queries
         for i in range(10, 40):
-            ancestors = plugin.hierarchy.get_ancestors(f"concept_{i}", max_depth=5)
+            plugin.hierarchy.get_ancestors(f"concept_{i}", max_depth=5)
 
         reasoning_time = time.time() - start_time
 
@@ -738,7 +732,7 @@ class TestIntegration:
         assert detected_domain == "general"
 
         # 4. Create reasoner
-        reasoner = OntologyReasoner(plugin.hierarchy)
+        OntologyReasoner(plugin.hierarchy)
 
         # 5. Test entity extraction
         config_manager = ConfigurationManager()

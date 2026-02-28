@@ -134,22 +134,55 @@ class FixtureService:
         
         return filtered
     
-    def create_fixture(self, fixture_data: Dict[str, Any], fixture_type: str) -> Dict[str, Any]:
+    def create_fixture(
+        self, fixture_data: Dict[str, Any], fixture_type: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Create a new fixture (for testing purposes).
         
         Args:
             fixture_data: Fixture document data
-            fixture_type: Type of fixture to add to
+            fixture_type: Type of fixture to add to (optional; inferred from fixture_data)
             
         Returns:
             The created fixture data
         """
         # This is a test implementation - doesn't persist to disk
-        if fixture_type not in self._cache:
-            self._cache[fixture_type] = []
+        resolved_type = fixture_type or fixture_data.get("fixture_type", "document")
+        if resolved_type not in self._cache:
+            self._cache[resolved_type] = []
         
-        self._cache[fixture_type].append(fixture_data)
+        self._cache[resolved_type].append(fixture_data)
         return fixture_data
+
+    def list_fixtures(
+        self,
+        fixture_type: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """List fixtures optionally filtered by type or tags."""
+        if fixture_type:
+            fixtures = list(self._cache.get(fixture_type, []))
+        else:
+            fixtures = []
+            for cached in self._cache.values():
+                fixtures.extend(cached)
+
+        if tags:
+            fixtures = [
+                fixture
+                for fixture in fixtures
+                if any(tag in fixture.get("tags", []) for tag in tags)
+            ]
+
+        return fixtures
+
+    def get_fixture(self, fixture_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve a fixture by its fixture_id."""
+        for fixtures in self._cache.values():
+            for fixture in fixtures:
+                if fixture.get("fixture_id") == fixture_id:
+                    return fixture
+        return None
     
     def clear_cache(self):
         """Clear the fixture cache."""

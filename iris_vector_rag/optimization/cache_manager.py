@@ -164,7 +164,7 @@ class LRUCache:
                 return value.__sizeof__()
             else:
                 return 1024  # Default estimate
-        except:
+        except Exception:
             return 1024
 
 
@@ -361,7 +361,7 @@ class GraphRAGCacheManager:
         # Note: This would need to be integrated with the actual GraphRAG pipeline
         # For now, just prepare the cache keys
         for query in warm_queries:
-            cache_key = self._generate_query_key(query, 10)
+            self._generate_query_key(query, 10)
             # In a real implementation, we'd execute the query and cache the result
             warmed_count += 1
 

@@ -4,14 +4,13 @@ Unit tests for WebSocket handlers.
 Tests the WebSocket connection and event handlers in isolation.
 """
 
-import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from iris_vector_rag.api.models.auth import ApiKey, Permission, RateLimitTier
-from iris_vector_rag.api.models.websocket import WebSocketEvent, WebSocketSession
+from iris_vector_rag.api.models.websocket import WebSocketEvent
 from iris_vector_rag.api.websocket.connection import ConnectionManager
 
 

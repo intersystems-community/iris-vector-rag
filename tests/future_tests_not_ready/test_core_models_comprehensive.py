@@ -1,3 +1,4 @@
+#+#+#+#+# ruff: noqa: F821
 """
 Comprehensive unit tests for core framework models and utilities.
 
@@ -5,12 +6,9 @@ This test suite focuses on increasing test coverage for the most fundamental
 components of the RAG framework without requiring external dependencies.
 """
 
-import json
-import tempfile
 import unittest
 from datetime import datetime
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 from iris_vector_rag.core.base import RAGPipeline, VectorStore
 from iris_vector_rag.core.exceptions import (
@@ -24,16 +22,11 @@ from iris_vector_rag.core.exceptions import (
 # Core model imports
 from iris_vector_rag.core.models import (
     Document,
-    Entity,
-    EntityTypes,
-    Relationship,
-    RelationshipTypes,
 )
 
 # Memory model imports
 from iris_vector_rag.memory.models import (
     GenericMemoryItem,
-    MemoryItem,
     MemoryType,
     TemporalContext,
     TemporalQuery,
@@ -54,13 +47,8 @@ from iris_vector_rag.ontology.models import (
 
 # Validation imports
 from iris_vector_rag.validation.requirements import (
-    EnvironmentValidator,
     RequirementCheck,
     ValidationRequirement,
-    check_embedding_model,
-    check_iris_connection,
-    check_llm_config,
-    validate_config,
     validate_dependencies,
     validate_environment,
 )
@@ -438,7 +426,7 @@ class TestFrameworkIntegration(unittest.TestCase):
     def test_rag_query_to_response_workflow(self):
         """Test complete query to response workflow with models."""
         # Create query
-        query = RAGQuery(text="What is AI?", max_results=3)
+        RAGQuery(text="What is AI?", max_results=3)
 
         # Create mock documents
         docs = [

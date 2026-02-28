@@ -13,7 +13,7 @@ attributes like tenant ID, security classification, or department.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from iris_vector_rag.exceptions import VectorStoreConfigurationError
 
 
@@ -30,13 +30,6 @@ class TestCustomFieldConfiguration:
         AND both default and custom fields are allowed for filtering
         """
         # Mock configuration with custom fields
-        custom_config = {
-            "storage": {
-                "iris": {
-                    "custom_filter_keys": ["tenant_id", "security_level", "department"]
-                }
-            }
-        }
 
         # This will fail initially with AttributeError:
         # 'IRISVectorStore' object has no attribute 'get_allowed_filter_keys'
@@ -61,9 +54,6 @@ class TestCustomFieldConfiguration:
         AND query proceeds normally
         """
         # Configure custom fields
-        custom_config = {
-            "storage": {"iris": {"custom_filter_keys": ["tenant_id"]}}
-        }
 
         # Valid metadata filter using custom field
         metadata_filter = {"tenant_id": "acme_corp", "source": "docs.pdf"}
@@ -94,7 +84,6 @@ class TestCustomFieldConfiguration:
         from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
         from iris_vector_rag.config.manager import ConfigurationManager
         from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
-        from unittest.mock import MagicMock
 
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "test_mode")
 
@@ -156,7 +145,7 @@ class TestCustomFieldConfiguration:
         with pytest.raises(VectorStoreConfigurationError) as exc_info:
             # Configuration should be validated during initialization
             from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
-            manager = MetadataFilterManager(custom_config)
+            MetadataFilterManager(custom_config)
 
         error_msg = str(exc_info.value)
         assert "source" in error_msg, "Error should mention conflicting field 'source'"
@@ -179,7 +168,7 @@ class TestCustomFieldConfiguration:
         # This will fail initially - expecting validation error for SQL injection
         with pytest.raises(VectorStoreConfigurationError) as exc_info:
             from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
-            manager = MetadataFilterManager(malicious_config)
+            MetadataFilterManager(malicious_config)
 
         error_msg = str(exc_info.value)
         assert "DROP TABLE" in error_msg or "invalid" in error_msg.lower()
@@ -198,7 +187,6 @@ class TestCustomFieldConfiguration:
         from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
         from iris_vector_rag.config.manager import ConfigurationManager
         from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
-        from unittest.mock import MagicMock
 
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "test_mode")
 
@@ -244,7 +232,6 @@ class TestCustomFieldConfiguration:
         from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
         from iris_vector_rag.config.manager import ConfigurationManager
         from iris_vector_rag.storage.metadata_filter_manager import MetadataFilterManager
-        from unittest.mock import MagicMock
 
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "test_mode")
 
@@ -297,9 +284,6 @@ class TestCustomFieldConfiguration:
         AND proper parameterization prevents code execution
         """
         # Configure custom field
-        config = {
-            "storage": {"iris": {"custom_filter_keys": ["tenant_id"]}}
-        }
 
         # Metadata filter with SQL injection attempt in VALUE
         malicious_filter = {"tenant_id": "'; DROP TABLE SourceDocuments;--"}
@@ -438,7 +422,7 @@ class TestMetadataFilterIntegration:
 
             # Verify expected counts
             if tenant_name == "acme":
-                assert len(matching_results) == 2, f"ACME should have 2 documents"
+                assert len(matching_results) == 2, "ACME should have 2 documents"
             else:
                 assert len(matching_results) == 1, f"{tenant_name} should have 1 document"
 
@@ -507,7 +491,7 @@ class TestMetadataFilterIntegration:
         matching_results = [r for r in results if r.id.startswith(test_id_prefix)]
 
         # Should only return engineering + confidential document
-        assert len(matching_results) == 1, f"Should return 1 document matching all filters"
+        assert len(matching_results) == 1, "Should return 1 document matching all filters"
         assert matching_results[0].id == f"{test_id_prefix}_1"
         assert matching_results[0].metadata["department"] == "engineering"
         assert matching_results[0].metadata["security_level"] == "confidential"
@@ -634,8 +618,6 @@ def iris_vector_store(monkeypatch):
     """
     from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
     from iris_vector_rag.config.manager import ConfigurationManager
-    from unittest.mock import MagicMock
-    import os
 
     # Set test environment to prevent connection attempts
     monkeypatch.setenv("PYTEST_CURRENT_TEST", "test_mode")

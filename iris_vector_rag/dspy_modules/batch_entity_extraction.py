@@ -192,7 +192,7 @@ class BatchEntityExtractionModule(dspy.Module):
             )
 
             if results is None:
-                logger.error(f"Failed to parse batch results after retry attempts")
+                logger.error("Failed to parse batch results after retry attempts")
                 # Return empty results for all tickets
                 return [
                     {"ticket_id": t["id"], "entities": [], "relationships": []}

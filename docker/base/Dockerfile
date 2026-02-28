@@ -75,6 +75,10 @@ RUN chown -R appuser:appuser /app
 COPY docker/base/healthcheck.py /usr/local/bin/healthcheck.py
 RUN chmod +x /usr/local/bin/healthcheck.py
 
+# Health check configuration
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python /usr/local/bin/healthcheck.py || exit 1
+
 # Switch to non-root user
 USER appuser
 

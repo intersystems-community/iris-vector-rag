@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Comprehensive RAGAS Evaluation Script for All Pipelines
 
@@ -18,14 +19,13 @@ import hashlib
 import json
 import logging
 import os
-import statistics
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -35,8 +35,6 @@ sys.path.insert(0, str(project_root))
 
 from evaluation_framework.ragas_metrics_framework import (
     BiomedicalRAGASFramework,
-    ComprehensiveRAGASResults,
-    RAGASResult,
 )
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
@@ -431,7 +429,7 @@ class RAGASEvaluationOrchestrator:
             return self._create_empty_metrics()
 
         # Prepare data for RAGAS evaluation
-        queries = [r["query"] for r in successful_results]
+        [r["query"] for r in successful_results]
         ground_truth_answers = GROUND_TRUTH_ANSWERS[: len(successful_results)]
 
         # Use RAGAS framework

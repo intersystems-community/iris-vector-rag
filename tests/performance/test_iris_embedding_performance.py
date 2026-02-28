@@ -11,20 +11,15 @@ Tests validate performance targets:
 
 import pytest
 import time
-from typing import List
-from unittest.mock import Mock, patch
 
-from iris_vector_rag.config.embedding_config import create_embedding_config
 from iris_vector_rag.embeddings.iris_embedding import (
     configure_embedding,
     embed_texts,
-    get_config,
     _CONFIG_STORE,
 )
 from iris_vector_rag.embeddings.manager import (
     clear_cache,
     get_cache_stats,
-    _SENTENCE_TRANSFORMER_CACHE,
 )
 
 
@@ -78,14 +73,14 @@ class TestCacheHitRate:
         config_name = test_config.name
         
         # Warmup phase - load model into cache
-        print(f"\n[T021] Warmup phase: Loading model into cache...")
+        print("\n[T021] Warmup phase: Loading model into cache...")
         for i in range(10):
             result = embed_texts(config_name, sample_texts)
             if i == 0:
                 assert not result.cache_hit, "First call should be cache miss"
         
         # Measurement phase
-        print(f"[T021] Measurement phase: Testing cache hit rate...")
+        print("[T021] Measurement phase: Testing cache hit rate...")
         cache_hits = 0
         total_calls = 100
         
@@ -157,10 +152,10 @@ class TestEmbeddingPerformance:
         avg_time_ms = sum(timings) / len(timings)
         p95_time_ms = sorted(timings)[int(len(timings) * 0.95)]
         
-        print(f"\n[T022] Cache hit performance:")
+        print("\n[T022] Cache hit performance:")
         print(f"  Average: {avg_time_ms:.1f}ms")
         print(f"  P95: {p95_time_ms:.1f}ms")
-        print(f"  Target: <100ms (relaxed from 50ms for development hardware)")
+        print("  Target: <100ms (relaxed from 50ms for development hardware)")
 
         # Assertion: P95 < 100ms (relaxed from 50ms for MacBook hardware)
         # Note: 50ms target is for production server hardware with GPU
@@ -183,11 +178,11 @@ class TestEmbeddingPerformance:
         result = embed_texts(config_name, sample_texts)
         elapsed_ms = (time.perf_counter() - start) * 1000
         
-        print(f"\n[T022] Cache miss performance:")
+        print("\n[T022] Cache miss performance:")
         print(f"  Total time: {elapsed_ms:.1f}ms")
         print(f"  Model load: {result.model_load_time_ms:.1f}ms")
         print(f"  Embedding: {result.embedding_time_ms:.1f}ms")
-        print(f"  Target: <5000ms")
+        print("  Target: <5000ms")
         
         # Assertion: <5000ms total
         assert elapsed_ms < 5000, f"Cache miss {elapsed_ms:.1f}ms exceeds 5000ms target"
@@ -207,7 +202,7 @@ class TestEmbeddingPerformance:
             texts = [f"Text {i}" for i in range(batch_size)]
             
             start = time.perf_counter()
-            result = embed_texts(config_name, texts)
+            embed_texts(config_name, texts)
             elapsed_ms = (time.perf_counter() - start) * 1000
             
             timings[batch_size] = elapsed_ms
@@ -263,12 +258,12 @@ class TestBulkVectorization:
         
         elapsed_seconds = time.perf_counter() - start
         
-        print(f"\n[T023] Bulk vectorization results:")
+        print("\n[T023] Bulk vectorization results:")
         print(f"  Total texts: {total_embeddings}")
         print(f"  Total time: {elapsed_seconds:.1f}s")
         print(f"  Throughput: {total_embeddings/elapsed_seconds:.1f} texts/sec")
-        print(f"  Target: <30 seconds")
-        print(f"  Baseline: ~1200 seconds (20 minutes)")
+        print("  Target: <30 seconds")
+        print("  Baseline: ~1200 seconds (20 minutes)")
         print(f"  Speedup: {1200/elapsed_seconds:.0f}x")
         
         # Assertion: <30 seconds
@@ -294,7 +289,7 @@ class TestBulkVectorization:
         elapsed_seconds = time.perf_counter() - start
         throughput = total_embeddings / elapsed_seconds
         
-        print(f"\n[T023] Streaming vectorization:")
+        print("\n[T023] Streaming vectorization:")
         print(f"  Throughput: {throughput:.1f} texts/sec")
         print(f"  Total time: {elapsed_seconds:.1f}s for {total_texts} texts")
         
@@ -329,11 +324,11 @@ class TestGPUFallback:
         assert len(result.embeddings) == 5
         assert all(len(emb) == 384 for emb in result.embeddings)
 
-        print(f"\n[T024] GPU fallback logic test:")
-        print(f"  CPU execution: SUCCESS")
+        print("\n[T024] GPU fallback logic test:")
+        print("  CPU execution: SUCCESS")
         print(f"  Device: {result.device_used}")
         print(f"  Embeddings generated: {len(result.embeddings)}")
-        print(f"  Note: Full GPU OOM testing requires CUDA hardware")
+        print("  Note: Full GPU OOM testing requires CUDA hardware")
 
     def test_device_detection_priority(self, test_config):
         """Verify device detection follows CUDA > MPS > CPU priority."""
@@ -343,7 +338,7 @@ class TestGPUFallback:
         test_config.device_preference = "auto"
         device = _detect_device(test_config)
         
-        print(f"\n[T024] Device detection:")
+        print("\n[T024] Device detection:")
         print(f"  Detected device: {device}")
         print(f"  Preference: {test_config.device_preference}")
         
@@ -368,7 +363,6 @@ class TestEntityExtractionPerformance:
         Baseline: 10 single calls @ 2sec each = 20 seconds
         Expected: 1 batch call @ 3-4 seconds
         """
-        from iris_vector_rag.embeddings.entity_extractor import extract_entities_batch
         
         # This test requires real LLM, so it's skipped
         # Contract test validates the API works correctly
@@ -384,7 +378,7 @@ class TestEntityExtractionPerformance:
         assert "Disease" in test_config.entity_types
         assert "Medication" in test_config.entity_types
         
-        print(f"\n[T025] Entity extraction config:")
+        print("\n[T025] Entity extraction config:")
         print(f"  Enabled: {test_config.enable_entity_extraction}")
         print(f"  Entity types: {test_config.entity_types}")
 
@@ -411,9 +405,9 @@ def test_performance_summary_report(test_config, sample_texts):
         embed_texts(config_name, sample_texts)
     
     stats = get_cache_stats(config_name)
-    print(f"\n[T021] Cache Hit Rate:")
+    print("\n[T021] Cache Hit Rate:")
     print(f"  Hit rate: {stats.hit_rate*100:.1f}%")
-    print(f"  Target: >=95%")
+    print("  Target: >=95%")
     print(f"  Status: {'✅ PASS' if stats.hit_rate >= 0.95 else '❌ FAIL'}")
     
     # T022: Cache hit performance
@@ -424,26 +418,26 @@ def test_performance_summary_report(test_config, sample_texts):
         timings.append((time.perf_counter() - start) * 1000)
     
     avg_hit_time = sum(timings) / len(timings)
-    print(f"\n[T022] Cache Hit Performance:")
+    print("\n[T022] Cache Hit Performance:")
     print(f"  Average: {avg_hit_time:.1f}ms")
-    print(f"  Target: <50ms")
+    print("  Target: <50ms")
     print(f"  Status: {'✅ PASS' if avg_hit_time < 50 else '❌ FAIL'}")
     
     # T023: Bulk vectorization estimate
     estimated_1746_time = (1746 / 32) * avg_hit_time / 1000
-    print(f"\n[T023] Bulk Vectorization (Estimated):")
+    print("\n[T023] Bulk Vectorization (Estimated):")
     print(f"  1,746 rows: ~{estimated_1746_time:.1f}s")
-    print(f"  Target: <30s")
+    print("  Target: <30s")
     print(f"  Status: {'✅ PASS' if estimated_1746_time < 30 else '❌ FAIL'}")
     
     # Overall speedup
     baseline_seconds = 1200  # 20 minutes
     speedup = baseline_seconds / estimated_1746_time
-    print(f"\n[OVERALL] Performance Improvement:")
+    print("\n[OVERALL] Performance Improvement:")
     print(f"  Baseline: {baseline_seconds}s (20 minutes)")
     print(f"  Current: ~{estimated_1746_time:.1f}s")
     print(f"  Speedup: {speedup:.0f}x")
-    print(f"  Target: 50x")
+    print("  Target: 50x")
     print(f"  Status: {'✅ PASS' if speedup >= 50 else '❌ FAIL'}")
     
     print("\n" + "="*70)

@@ -8,7 +8,6 @@ Reference: specs/047-create-a-unified/tasks.md (T087)
 """
 
 import pytest
-from pathlib import Path
 
 
 @pytest.mark.contract
@@ -45,7 +44,6 @@ class TestFixtureMigration:
 
     def test_migrate_returns_migration_result(self):
         """✅ migrate() returns MigrationResult with status and changes."""
-        from tests.fixtures.manager import FixtureManager
         from tests.fixtures.models import MigrationResult
 
         # Test that MigrationResult class exists
@@ -58,7 +56,7 @@ class TestFixtureMigration:
             migration_time=0.1,
         )
 
-        assert result.success == True
+        assert result.success
         assert result.old_version == "1.0.0"
         assert result.new_version == "2.0.0"
         assert result.changes_applied == ["test change"]
@@ -69,7 +67,7 @@ class TestFixtureMigration:
         # Implementation will be tested in integration tests
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Contract: migrate() should update manifest.json version field
         # Example usage:
@@ -83,7 +81,7 @@ class TestFixtureMigration:
         """✅ migrate() records migration in manifest.json migration_history."""
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Contract: migration_history should be list of migration records
         # Each record: {"from_version": "1.0.0", "to_version": "2.0.0", "timestamp": "...", "changes": [...]}
@@ -93,7 +91,7 @@ class TestFixtureMigration:
         """✅ migrate() validates source and target versions are compatible."""
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Contract: should check if migration from source to target is possible
         # Should raise VersionMismatchError if incompatible (e.g., 1.0 -> 3.0 without 2.0)
@@ -240,7 +238,7 @@ class TestIncrementalUpdates:
         """✅ FixtureManager can detect changes between fixture versions."""
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Contract: Future feature - will be able to diff two fixture versions
         # For now, skip this test as it's not yet implemented
@@ -251,7 +249,7 @@ class TestIncrementalUpdates:
         """✅ FixtureManager supports exporting only changed tables."""
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Contract: should allow exporting specific tables instead of entire namespace
         # Example: manager.create("medical-20", tables=["RAG.Entities"], incremental=True)
@@ -261,7 +259,7 @@ class TestIncrementalUpdates:
         """✅ FixtureManager can merge incremental updates into existing fixture."""
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager()
+        FixtureManager()
 
         # Contract: should be able to apply delta to existing fixture
         # Example: manager.update("medical-20", delta_fixture="medical-20-delta")

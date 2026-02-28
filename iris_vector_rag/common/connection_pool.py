@@ -16,7 +16,15 @@ import os
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional
 
-import iris.dbapi as iris_dbapi
+try:
+    import iris.dbapi as iris_dbapi
+    if not hasattr(iris_dbapi, "connect"):
+        raise ImportError("IRIS DB-API missing connect()")
+except Exception as exc:
+    raise ImportError(
+        "IRIS DB-API not available or incompatible. "
+        "Install/verify the InterSystems IRIS Python client (intersystems-irispython)."
+    ) from exc
 
 logger = logging.getLogger(__name__)
 

@@ -10,7 +10,6 @@ Simplified approach: Test the signature and basic logic without full service ini
 """
 
 import pytest
-from unittest.mock import MagicMock
 import inspect
 
 from iris_vector_rag.services.entity_extraction import EntityExtractionService, DEFAULT_ENTITY_TYPES

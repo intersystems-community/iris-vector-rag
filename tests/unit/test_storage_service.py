@@ -11,7 +11,6 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from iris_vector_rag.services.storage import EntityStorageAdapter
 from iris_vector_rag.core.connection import ConnectionManager
-from iris_vector_rag.storage.schema_manager import SchemaManager
 
 
 class TestEntityStorageDocumentation:

@@ -120,7 +120,7 @@ class TestGraphRAGVectorSearchIntegration:
 
         # Check for diagnostic log entries
         log_messages = [record.message for record in caplog.records]
-        log_text = " ".join(log_messages)
+        " ".join(log_messages)
 
         # Should have some diagnostic logging
         assert len(log_messages) > 0, \

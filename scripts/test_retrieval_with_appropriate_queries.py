@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Test retrieval with queries appropriate for the PMC content in the database.
 """
@@ -76,7 +77,7 @@ def test_retrieval():
                 # Try to generate a response
                 try:
                     response = pipeline.generate(query, retrieved_docs)
-                    print(f"\n📝 Generated Response:")
+                    print("\n📝 Generated Response:")
                     print(f"{response[:500]}...")
                 except Exception as e:
                     print(f"\n⚠️  Generation failed: {e}")
@@ -107,7 +108,7 @@ def test_retrieval():
                 print(f"  ✅ Surprisingly retrieved {len(retrieved_docs)} documents")
             else:
                 print(
-                    f"  ❌ No documents retrieved (as expected - no metformin/SGLT2 content)"
+                    "  ❌ No documents retrieved (as expected - no metformin/SGLT2 content)"
                 )
         except Exception as e:
             print(f"  ❌ Error: {e}")

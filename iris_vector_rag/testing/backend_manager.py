@@ -21,16 +21,15 @@ from iris_vector_rag.config.backend_modes import (
     ConfigurationError,
     ExecutionStrategy,
 )
-from iris_vector_rag.testing.validators import (
-    EditionMismatchError,
-    IRISEdition,
-)
+from iris_vector_rag.testing.exceptions import EditionMismatchError
+from iris_vector_rag.testing.validators import IRISEdition
+from iris_vector_rag.testing.exceptions import IrisDevtoolsMissingError
 
 
 # Default configuration file path
 DEFAULT_CONFIG_PATH = Path(".specify/config/backend_modes.yaml")
-
-from iris_vector_rag.testing.exceptions import IrisDevtoolsMissingError
+# Default iris-devtools path (optional)
+DEFAULT_DEVTOOLS_PATH = Path("../iris-devtools")
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ class BackendConfiguration:
 
     mode: BackendMode
     source: ConfigSource
-    iris_devtools_path: Path = Path("../iris-devtools")
+    iris_devtools_path: Path = DEFAULT_DEVTOOLS_PATH
 
     @property
     def max_connections(self) -> int:
@@ -123,7 +122,7 @@ def load_configuration(
 
                 # Optional: custom iris-devtools path
                 iris_devtools_path = Path(
-                    config_data.get("iris_devtools_path", "../iris-devtools")
+                    config_data.get("iris_devtools_path", DEFAULT_DEVTOOLS_PATH)
                 )
 
                 return BackendConfiguration(
@@ -165,8 +164,11 @@ def validate_configuration(
         >>> validate_configuration(config, IRISEdition.COMMUNITY)  # OK
         >>> validate_configuration(config, IRISEdition.ENTERPRISE)  # Raises EditionMismatchError
     """
-    # Check iris-devtools exists
-    if not config.iris_devtools_path.exists():
+    # Check iris-devtools exists (only when explicitly configured)
+    if (
+        config.iris_devtools_path != DEFAULT_DEVTOOLS_PATH
+        and not config.iris_devtools_path.exists()
+    ):
         raise IrisDevtoolsMissingError(
             f"iris-devtools not found at {config.iris_devtools_path}\n"
             "Required development dependency.\n"

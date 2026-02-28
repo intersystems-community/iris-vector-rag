@@ -3,7 +3,6 @@ Contract tests for GraphRAG test fixture management.
 These tests should fail initially and pass once implementation is complete.
 """
 import pytest
-from typing import List, Dict, Any
 
 
 class TestFixtureContracts:

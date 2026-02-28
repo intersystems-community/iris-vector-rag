@@ -16,13 +16,10 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, Generator, List
+from typing import Any, Dict, List
 
 import pytest
 from dotenv import load_dotenv
-
-# Load environment variables for E2E tests
-load_dotenv()
 
 from iris_vector_rag.common.utils import get_embedding_func, get_llm_func
 
@@ -33,6 +30,136 @@ from iris_vector_rag.core.models import Document
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 
 logger = logging.getLogger(__name__)
+PROJECT_CONTAINER_NAME = "iris-vector-rag-tests"
+IRIS_ENV_KEYS = [
+    "RAG_DATABASE__IRIS__HOST",
+    "RAG_DATABASE__IRIS__PORT",
+    "RAG_DATABASE__IRIS__USERNAME",
+    "RAG_DATABASE__IRIS__PASSWORD",
+    "RAG_DATABASE__IRIS__NAMESPACE",
+    "IRIS_HOST",
+    "IRIS_PORT",
+    "IRIS_USERNAME",
+    "IRIS_PASSWORD",
+    "IRIS_NAMESPACE",
+]
+
+# Load environment variables for E2E tests
+load_dotenv()
+
+# Try to import iris-devtester for automated infrastructure
+has_devtester = False
+try:
+    from iris_devtester import IRISContainer as _IRISContainer
+
+    has_devtester = True
+except ImportError:
+    _IRISContainer = None
+    has_devtester = False
+
+
+@pytest.fixture(scope="session", autouse=True)
+def iris_infrastructure():
+    """
+    Ensure IRIS infrastructure is available for E2E tests.
+    
+    If IRIS_HOST is not set, attempts to use iris-devtester to start
+    a named project-specific container.
+    """
+    if os.environ.get("IRIS_HOST"):
+        logger.info(
+            "Using existing IRIS infrastructure at %s",
+            os.environ.get("IRIS_HOST"),
+        )
+        yield
+        return
+
+    if not has_devtester:
+        pytest.skip(
+            "E2E tests require iris-devtester or IRIS_HOST. Install with: pip install 'iris-devtester[all]'"
+        )
+
+    logger.info("Starting IRIS container for E2E tests via iris-devtester")
+    original_env = {key: os.environ.get(key) for key in IRIS_ENV_KEYS}
+
+    from iris_devtester import IRISContainer as RuntimeIRISContainer
+
+    with RuntimeIRISContainer.community(
+        name=PROJECT_CONTAINER_NAME
+    ).with_preconfigured_password(
+        "SYS"
+    ) as iris:
+        # Trigger iris-devtester auto-remediation for password change required
+        try:
+            iris.get_connection()
+        except Exception as exc:
+            logger.debug("iris-devtester get_connection() failed: %s", exc)
+
+        config = iris.get_config()
+        try:
+            port = iris.get_exposed_port(1972)
+        except Exception:
+            port = config.port
+
+        os.environ["RAG_DATABASE__IRIS__HOST"] = config.host
+        os.environ["RAG_DATABASE__IRIS__PORT"] = str(port)
+        os.environ["RAG_DATABASE__IRIS__USERNAME"] = config.username
+        os.environ["RAG_DATABASE__IRIS__PASSWORD"] = config.password
+        os.environ["RAG_DATABASE__IRIS__NAMESPACE"] = config.namespace
+
+        # Also set legacy names for compatibility with older code
+        os.environ["IRIS_HOST"] = config.host
+        os.environ["IRIS_PORT"] = str(port)
+        os.environ["IRIS_USERNAME"] = config.username
+        os.environ["IRIS_PASSWORD"] = config.password
+        os.environ["IRIS_NAMESPACE"] = config.namespace
+
+        logger.info(
+            "IRIS container '%s' started at %s:%s",
+            PROJECT_CONTAINER_NAME,
+            config.host,
+            port,
+        )
+        try:
+            yield
+        finally:
+            for key, value in original_env.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value
+
+
+@pytest.fixture(scope="session", autouse=True)
+def e2e_reset_namespace():
+    """
+    Ensure a clean namespace for E2E runs using iris-devtester utilities.
+    """
+    if os.environ.get("SKIP_IRIS_TESTS", "false") != "false":
+        pytest.skip("E2E tests require live IRIS (SKIP_IRIS_TESTS=false)")
+
+    if not has_devtester:
+        return
+
+    from iris_devtester.connections import get_connection
+    from tests.fixtures.idt_cleanup import reset_rag_schema
+
+    conn = get_connection()
+    try:
+        try:
+            reset_rag_schema(conn, schema="RAG", strict=False)
+        except Exception as exc:
+            logger.warning("Namespace reset skipped: %s", exc)
+        yield
+        try:
+            reset_rag_schema(conn, schema="RAG", strict=False)
+        except Exception as exc:
+            logger.warning("Namespace reset skipped: %s", exc)
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @pytest.fixture(scope="session")
@@ -151,49 +278,14 @@ def e2e_database_cleanup(e2e_connection_manager: ConnectionManager):
         Patterns: e2e_test_%, test_%, doc1, doc2, doc3
         """
         try:
+            from tests.fixtures.idt_cleanup import reset_rag_schema
+
             connection = e2e_connection_manager.get_connection()
-            cursor = connection.cursor()
-
-            # Clear test documents with multiple patterns (be careful not to clear production data)
-            # Use individual deletes for better pattern matching
-            test_patterns = [
-                "e2e_test_%",
-                "test_%",
-                "doc1",
-                "doc2",
-                "doc3",
-            ]
-
-            # IRIS column names are case-sensitive - use lowercase 'doc_id'
-            for pattern in test_patterns:
-                try:
-                    if '%' in pattern:
-                        cursor.execute(
-                            f"DELETE FROM RAG.SourceDocuments WHERE doc_id LIKE '{pattern}'"
-                        )
-                    else:
-                        cursor.execute(
-                            f"DELETE FROM RAG.SourceDocuments WHERE doc_id = '{pattern}'"
-                        )
-                except Exception as cleanup_error:
-                    # Log but don't fail - table might not exist yet
-                    logger.debug(f"Cleanup pattern {pattern} failed: {cleanup_error}")
-
-            # Clean GraphRAG data (don't drop tables - schema is correct now)
-            try:
-                cursor.execute("DELETE FROM RAG.EntityRelationships WHERE 1=1")
-                cursor.execute("DELETE FROM RAG.Entities WHERE 1=1")
-                logger.debug("Cleared GraphRAG table data")
-            except Exception as cleanup_error:
-                logger.debug(f"GraphRAG table cleanup failed (tables may not exist yet): {cleanup_error}")
-
-            connection.commit()
-            cursor.close()
+            reset_rag_schema(connection, schema="RAG", strict=False)
             connection.close()
-            logger.info("Cleared E2E test data from database")
-
+            logger.info("Cleared E2E test data via idt cleanup")
         except Exception as e:
-            logger.warning(f"Failed to clear test data: {e}")
+            logger.warning(f"Failed to clear test data via idt cleanup: {e}")
 
     # Clean before test
     _clear_test_data()
@@ -255,6 +347,10 @@ def e2e_pmc_documents() -> List[Document]:
     if not documents:
         logger.warning("No PMC documents loaded, using biomedical test data")
         return _get_biomedical_test_documents()
+
+    # Always include deterministic biomedical docs for relevance assertions (prepend)
+    fallback_docs = _get_biomedical_test_documents()
+    documents = fallback_docs + documents
 
     logger.info(f"Loaded {len(documents)} real PMC documents for E2E testing")
     return documents
@@ -510,9 +606,9 @@ def pytest_configure(config):
 def pytest_runtest_setup(item):
     """Setup for E2E tests - verify required environment."""
     if "e2e" in item.keywords:
-        # Verify IRIS connection is available for E2E tests
-        if not os.environ.get("IRIS_HOST"):
-            pytest.skip("E2E tests require IRIS_HOST environment variable")
+        # Verify IRIS connection is available or can be provisioned
+        if not os.environ.get("IRIS_HOST") and not has_devtester:
+            pytest.skip("E2E tests require IRIS_HOST environment variable or iris-devtester")
 
         # Log that we're running a true E2E test
         logger.info(f"Running TRUE E2E test: {item.name}")

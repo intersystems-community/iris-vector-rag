@@ -62,7 +62,7 @@ class TestBatchSizing:
         # Validate success
         assert result.success_status, "Variable-size batch must succeed"
 
-        print(f"\nVariable Size Batch Results:")
+        print("\nVariable Size Batch Results:")
         print(f"  Small docs (5): {len([d for d in small_docs])}")
         print(f"  Medium docs (3): {len([d for d in medium_docs])}")
         print(f"  Large docs (2): {len([d for d in large_docs])}")

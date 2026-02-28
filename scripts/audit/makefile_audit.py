@@ -13,11 +13,10 @@ from pathlib import Path
 
 # Add parent directory to path for imports
 import os
-import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from analyzers import analyze_all_issues
-from models import AuditReport, Severity
+from models import AuditReport
 from parsers import MakefileParser
 from reporters import MarkdownReporter
 
@@ -121,7 +120,7 @@ Examples:
             logger.error(f"Makefile not found at path: {args.makefile}")
             return 1
 
-        logger.info(f"Starting Makefile audit")
+        logger.info("Starting Makefile audit")
         logger.info(f"Parsing: {makefile_path.absolute()}")
 
         # Parse Makefile

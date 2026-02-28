@@ -16,37 +16,26 @@ Key Features:
 8. Risk assessment and limitations analysis
 """
 
-import base64
 import json
 import logging
 import warnings
 from dataclasses import dataclass, field
 from datetime import datetime
-from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import markdown
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
-import plotly.io as pio
 import seaborn as sns
-import yaml
-from jinja2 import Environment, FileSystemLoader, Template
 from plotly.subplots import make_subplots
 
 warnings.filterwarnings("ignore")
 
-import statsmodels.api as sm
 
 # Statistics and analysis
-from scipy import stats
-from sklearn.metrics import classification_report, confusion_matrix
-from statsmodels.stats.contingency_tables import mcnemar
-from statsmodels.stats.power import ttest_power
 
 logger = logging.getLogger(__name__)
 
@@ -1049,7 +1038,7 @@ These findings provide evidence-based guidance for:
         # Convert sections to HTML
         content_html = ""
         for section in sections:
-            content_html += f"<div class='section'>\n"
+            content_html += "<div class='section'>\n"
 
             # Convert markdown to HTML
             section_html = markdown.markdown(section.content)

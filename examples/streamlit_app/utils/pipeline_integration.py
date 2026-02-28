@@ -5,13 +5,15 @@ Manages the integration between Streamlit and RAG pipeline implementations.
 Handles pipeline initialization, query execution, and result processing.
 """
 
+# ruff: noqa: E402
+
 import logging
 import sys
 import time
 import traceback
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent.parent.parent

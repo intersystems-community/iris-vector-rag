@@ -25,7 +25,6 @@ Reference: specs/047-create-a-unified/tasks.md (T078-T084)
 """
 
 import pytest
-from typing import Optional, Dict, Any
 from pathlib import Path
 
 

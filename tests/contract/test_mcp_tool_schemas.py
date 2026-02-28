@@ -8,8 +8,9 @@ Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
-import pytest
+import importlib.util
 import json
+import pytest
 from pathlib import Path
 
 
@@ -48,11 +49,8 @@ class TestMCPToolSchemaModule:
 
     def test_tool_schemas_module_exists(self):
         """Verify iris_rag.mcp.tool_schemas module can be imported."""
-        try:
-            import iris_vector_rag.mcp.tool_schemas
-            assert True
-        except ImportError as e:
-            pytest.fail(f"tool_schemas module not found: {e}")
+        if importlib.util.find_spec("iris_vector_rag.mcp.tool_schemas") is None:
+            pytest.fail("tool_schemas module not found")
 
     def test_tool_schemas_module_has_get_schema_function(self):
         """Verify module provides get_schema function."""

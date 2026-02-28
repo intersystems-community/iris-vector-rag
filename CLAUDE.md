@@ -265,7 +265,7 @@ pip install rag-templates[hybrid-graphrag]
 This installs the `iris-vector-graph` package providing iris_graph_core integration for 50x performance improvements.
 
 **Requirements:**
-- iris-vector-graph>=2.0.0 is now a mandatory dependency
+- iris-vector-graph>=1.6.0 is now a mandatory dependency
 - No fallback mechanisms - the pipeline will fail fast with clear error messages if the package is missing
 - All retrieval methods (hybrid, rrf, text, vector, kg) require iris-vector-graph
 

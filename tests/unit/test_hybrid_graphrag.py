@@ -77,7 +77,7 @@ class TestHybridGraphRAGImportBehavior:
 
             # Should not be able to create pipeline at all
             with pytest.raises(ImportError):
-                pipeline = HybridGraphRAGPipeline()
+                HybridGraphRAGPipeline()
 
             # Should not reach this point
             # No pipeline instance means no graceful degradation

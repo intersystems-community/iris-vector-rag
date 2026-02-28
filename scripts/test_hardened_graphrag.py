@@ -10,16 +10,12 @@ This script validates:
 """
 
 import logging
-import os
 import sys
-import tempfile
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from iris_vector_rag.config.manager import ConfigurationManager
-from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.graphrag import (
     EntityExtractionFailedException,
@@ -45,7 +41,7 @@ def test_empty_knowledge_graph_validation():
 
         # Try to query empty knowledge graph - should fail hard
         try:
-            result = pipeline.query("What are the symptoms of diabetes?")
+            pipeline.query("What are the symptoms of diabetes?")
             print("❌ FAIL: Query should have failed with empty knowledge graph")
             return False
         except KnowledgeGraphNotPopulatedException as e:
@@ -195,7 +191,7 @@ def test_fail_hard_behavior_scenarios():
         # Test 3: Query before loading any documents
         try:
             empty_pipeline = GraphRAGPipeline()
-            result = empty_pipeline.query("test query")
+            empty_pipeline.query("test query")
             print("❌ FAIL: Should have failed querying empty knowledge graph")
             return False
         except KnowledgeGraphNotPopulatedException:

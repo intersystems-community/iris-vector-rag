@@ -6,7 +6,7 @@ with consistent configuration and resolves the original memory/type issues.
 """
 
 import logging
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -100,9 +100,9 @@ class TestPyLateColBERTPipeline:
         assert pipeline.rerank_factor == 2
         assert pipeline.model_name == "lightonai/GTE-ModernColBERT-v1"
         # PyLate not installed, so use_native_reranking will be False in fallback mode
-        assert pipeline.use_native_reranking == False
+        assert not pipeline.use_native_reranking
         # is_initialized is False when PyLate unavailable (fallback mode)
-        assert pipeline.is_initialized == False
+        assert not pipeline.is_initialized
 
     def test_configuration_consistency_with_basic_reranking(self, mock_dependencies):
         """Test that configuration follows same patterns as BasicRAGReranking."""
@@ -140,7 +140,7 @@ class TestPyLateColBERTPipeline:
             pipeline.vector_store.add_documents = Mock(return_value=["id1", "id2", "id3", "id4", "id5"])
 
             # PyLate's load_documents takes documents as first arg
-            result = pipeline.load_documents(sample_documents)
+            pipeline.load_documents(sample_documents)
 
         # Should store documents for PyLate reranking
         assert len(pipeline._document_store) == len(sample_documents)
@@ -190,9 +190,9 @@ class TestPyLateColBERTPipeline:
         )
 
         # In fallback mode (PyLate not installed), is_initialized is False
-        assert pipeline.is_initialized == False
+        assert not pipeline.is_initialized
         # use_native_reranking should be False in fallback mode
-        assert pipeline.use_native_reranking == False
+        assert not pipeline.use_native_reranking
 
     def test_pipeline_info_format(self, mock_dependencies):
         """Test that get_pipeline_info returns consistent format."""
@@ -302,8 +302,8 @@ class TestPyLateColBERTPipeline:
         )
 
         # In fallback mode (PyLate not available)
-        assert pipeline.is_initialized == False
-        assert pipeline.use_native_reranking == False
+        assert not pipeline.is_initialized
+        assert not pipeline.use_native_reranking
         assert pipeline.model is None
         assert pipeline.index_folder is None
 
@@ -383,7 +383,6 @@ class TestPyLateColBERTPipeline:
 
     def test_query_with_different_top_k_values(self, mock_dependencies, sample_documents):
         """Test query with various top_k values."""
-        from unittest.mock import patch
 
         pipeline = PyLateColBERTPipeline(
             mock_dependencies["connection_manager"],
@@ -465,7 +464,6 @@ class TestPyLateColBERTPipeline:
 
     def test_multiple_queries_increment_stats(self, mock_dependencies, sample_documents):
         """Test that multiple queries increment stats correctly."""
-        from unittest.mock import patch
 
         pipeline = PyLateColBERTPipeline(
             mock_dependencies["connection_manager"],

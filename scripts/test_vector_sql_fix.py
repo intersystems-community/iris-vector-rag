@@ -8,9 +8,7 @@ generate proper IRIS-compatible SQL without triggering auto-parameterization.
 
 import logging
 import os
-import re
 import sys
-from typing import List
 
 # Add the project root to sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -257,7 +255,7 @@ def test_sql_injection_prevention():
             }
             kwargs[param_name] = malicious_value
 
-            sql = format_vector_search_sql(**kwargs)
+            format_vector_search_sql(**kwargs)
             logger.error(f"❌ FAILED: SQL injection not prevented for {param_name}")
             return False
 

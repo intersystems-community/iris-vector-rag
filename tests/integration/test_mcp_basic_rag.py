@@ -10,7 +10,6 @@ Branch: 043-complete-mcp-tools
 
 import pytest
 import time
-from typing import Dict, Any
 
 
 @pytest.mark.integration

@@ -41,13 +41,16 @@ Build intelligent applications that combine large language models with your ente
 
 ```bash
 # Clone repository
-git clone https://github.com/intersystems-community/iris-rag-templates.git
-cd iris-rag-templates
+git clone https://github.com/intersystems-community/iris-vector-rag.git
+cd iris-vector-rag
 
 # Setup environment (requires uv package manager)
 make setup-env
 make install
 source .venv/bin/activate
+
+# GraphRAG dependency (required for graphrag pipelines)
+pip install iris-vector-graph
 ```
 
 ### 2. Start IRIS Database
@@ -250,6 +253,24 @@ pipeline.load_documents(documents=docs)
 ```
 
 📖 **[Complete IRIS EMBEDDING Guide →](docs/IRIS_EMBEDDING_GUIDE.md)** - Configuration, performance tuning, multi-field vectorization, troubleshooting
+
+### Fast Iteration & Evaluation (New)
+
+**Develop and benchmark RAG pipelines with minimal latency and cost.**
+
+- 💾 **Persistent Disk Caching** - Cache LLM responses to local JSON files to avoid redundant API costs and enable offline development.
+- ⚡ **Auto-Hardening Bypass** - Automatically bypasses IRIS password locks for instant connectivity in local/CI containers.
+- 📊 **Unified Evaluation Framework** - Standardized multi-hop metrics (Recall@K, EM, F1) and dataset loaders (HotpotQA, MuSiQue).
+
+```python
+# Enable disk-based caching
+pipeline = create_pipeline('basic', llm_cache_backend='disk')
+
+# Standardized multi-hop evaluation
+from iris_vector_rag.evaluation import DatasetLoader, MetricsCalculator
+loader = DatasetLoader()
+queries = loader.load('musique', sample_size=100)
+```
 
 ## Model Context Protocol (MCP) Support
 

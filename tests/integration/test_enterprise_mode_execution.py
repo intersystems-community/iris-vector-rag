@@ -17,7 +17,6 @@ import pytest
 
 # These imports will fail until implementation - expected behavior for TDD
 from iris_vector_rag.testing.backend_manager import (
-    BackendConfiguration,
     BackendMode,
     load_configuration,
 )
@@ -57,7 +56,7 @@ class TestEnterpriseModeExecution:
         def parallel_task():
             nonlocal success_count
             try:
-                with enterprise_pool.acquire(timeout=5.0) as conn:
+                with enterprise_pool.acquire(timeout=5.0):
                     # Simulate test work
                     time.sleep(0.1)
                     success_count += 1
@@ -123,7 +122,7 @@ class TestEnterpriseModeExecution:
         def concurrent_task():
             nonlocal success_count
             try:
-                with enterprise_pool.acquire(timeout=10.0) as conn:
+                with enterprise_pool.acquire(timeout=10.0):
                     time.sleep(0.05)
                     success_count += 1
             except Exception as e:
@@ -185,7 +184,7 @@ class TestEnterpriseModeStressTest:
             nonlocal success_count
             for _ in range(10):  # Each thread does 10 operations
                 try:
-                    with pool.acquire(timeout=10.0) as conn:
+                    with pool.acquire(timeout=10.0):
                         time.sleep(0.01)
                         success_count += 1
                 except Exception as e:

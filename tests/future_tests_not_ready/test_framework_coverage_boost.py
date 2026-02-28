@@ -6,11 +6,8 @@ coverage from 10% to 30%+ by exercising core modules that are currently untested
 """
 
 import os
-import tempfile
 import unittest
-from datetime import datetime
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 from iris_vector_rag.core.base import RAGPipeline, VectorStore
 from iris_vector_rag.core.exceptions import ConfigurationError, RAGError, ValidationError

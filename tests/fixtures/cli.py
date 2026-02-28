@@ -7,12 +7,9 @@ Provides a user-friendly CLI for loading, creating, and managing test fixtures.
 
 import sys
 import argparse
-from pathlib import Path
-from typing import Optional, List
 import time
 
 from .manager import FixtureManager, FixtureError
-from .models import FixtureSourceType
 
 
 def print_header(message: str):
@@ -107,7 +104,7 @@ def cmd_info(args, manager: FixtureManager):
     print(f"\nTotal rows: {total_rows}")
 
     if metadata.requires_embeddings:
-        print(f"\nEmbeddings:   Required")
+        print("\nEmbeddings:   Required")
         print(f"  Model:      {metadata.embedding_model or 'default'}")
         print(f"  Dimension:  {metadata.embedding_dimension}")
 
@@ -393,7 +390,7 @@ Examples:
     load_parser.add_argument("--generate-embeddings", action="store_true", help="Generate embeddings after loading")
 
     # Workflow command
-    workflow_parser = subparsers.add_parser("workflow", help="Interactive fixture creation")
+    subparsers.add_parser("workflow", help="Interactive fixture creation")
 
     # Create command
     create_parser = subparsers.add_parser("create", help="Create fixture from current database")

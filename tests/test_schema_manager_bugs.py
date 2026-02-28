@@ -11,8 +11,7 @@ These tests would have caught all three bugs before they reached production.
 import pytest
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import logging
+from unittest.mock import patch, MagicMock
 
 # Add rag-templates to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -60,7 +59,7 @@ embedding_model:
             schema_manager1 = SchemaManager(config_manager1)
 
             # Verify initial state
-            assert SchemaManager._config_loaded == True
+            assert SchemaManager._config_loaded
             assert len(SchemaManager._schema_validation_cache) >= 0
 
             # Create second instance - should use cached validation
@@ -320,7 +319,7 @@ embedding_model:
                 # Each extraction would call needs_migration
                 # With caching, validation should only run ONCE total
                 with patch.object(SchemaManager, '_validate_table_dimension', return_value=True):
-                    result = schema_manager.needs_migration("Entities")
+                    schema_manager.needs_migration("Entities")
 
             # CRITICAL: With class-level caching, validation should run minimal times
             # Without caching, it would run 100+ times (severe performance issue)
@@ -359,7 +358,7 @@ embedding_model:
                 # Create 10 instances
                 for i in range(10):
                     config_manager = ConfigurationManager(str(config_path))
-                    schema_manager = SchemaManager(config_manager)
+                    SchemaManager(config_manager)
 
                 # Config should only load ONCE
                 assert load_count == 1, \

@@ -6,6 +6,8 @@ This script validates the structure and basic functionality of the
 GraphRAG multi-hop demonstration without requiring visualization packages.
 """
 
+# ruff: noqa: E402
+
 import json
 import sys
 from pathlib import Path
@@ -70,19 +72,17 @@ def test_core_imports():
 
     try:
         # Test IRIS RAG imports
-        from iris_vector_rag.config.manager import ConfigurationManager
-        from iris_vector_rag.core.connection import ConnectionManager
         from iris_vector_rag.core.models import Document, Entity, Relationship
 
         print("✅ IRIS RAG core imports successful")
 
         # Test model creation
-        doc = Document(
+        Document(
             page_content="Test content", metadata={"test": "value"}, id="test_doc"
         )
         print("✅ Document model creation successful")
 
-        entity = Entity(
+        Entity(
             text="test entity",
             entity_type="TEST",
             confidence=0.9,
@@ -92,7 +92,7 @@ def test_core_imports():
         )
         print("✅ Entity model creation successful")
 
-        relationship = Relationship(
+        Relationship(
             source_entity_id="entity1",
             target_entity_id="entity2",
             relationship_type="test_relationship",

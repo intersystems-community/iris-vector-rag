@@ -55,7 +55,7 @@ def test_mem0_imports():
         # Test if mem0 integration modules exist
         integration_dir = project_root / "mem0_integration"
         if integration_dir.exists():
-            print(f"   ✅ mem0_integration directory: Found")
+            print("   ✅ mem0_integration directory: Found")
 
             # Check key files
             key_files = [
@@ -98,14 +98,14 @@ def test_basic_functionality():
             },
         }
 
-        print(f"   ✅ Memory structure creation: OK")
+        print("   ✅ Memory structure creation: OK")
         print(f"   📝 Example memory: {memory_example['type']}")
 
         # Test JSON serialization
         import json
 
-        serialized = json.dumps(memory_example, indent=2)
-        print(f"   ✅ JSON serialization: OK")
+        json.dumps(memory_example, indent=2)
+        print("   ✅ JSON serialization: OK")
 
         return True
 

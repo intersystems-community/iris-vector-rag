@@ -5,10 +5,8 @@ This test suite covers the IRISStorage class which provides IRIS-specific storag
 operations for RAG templates, including document insertion, vector search, and metadata queries.
 """
 
-import json
 import unittest
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
@@ -228,7 +226,7 @@ class TestIRISStorage(unittest.TestCase):
         ]
         self.mock_cursor.fetchone.return_value = [1]
 
-        result = self.storage.store_documents(documents, embeddings)
+        self.storage.store_documents(documents, embeddings)
 
         # Verify UPDATE was called
         update_calls = [

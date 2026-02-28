@@ -19,15 +19,14 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import spacy
-from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
+from transformers import pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -251,7 +250,7 @@ class BiomedicalQuestionGenerator:
 
         # Generate diverse question types
         all_questions = []
-        target_per_type = self.config.total_questions // len(
+        self.config.total_questions // len(
             self.config.question_types_distribution
         )
 

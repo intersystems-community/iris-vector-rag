@@ -16,7 +16,7 @@ import logging
 import os
 import sys
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -296,7 +296,7 @@ class GraphRAGValidator:
 
             cursor.close()
 
-            logger.info(f"📊 Knowledge graph contains:")
+            logger.info("📊 Knowledge graph contains:")
             logger.info(f"   - {entity_count} entities")
             logger.info(f"   - {relationship_count} relationships")
 
@@ -384,7 +384,7 @@ class GraphRAGValidator:
 
             # Attempt query - should fail with KnowledgeGraphNotPopulatedException
             try:
-                result = empty_graphrag_pipeline.query(
+                empty_graphrag_pipeline.query(
                     "What are the symptoms of diabetes?"
                 )
                 logger.error("❌ Query should have failed with empty knowledge graph")
@@ -455,7 +455,7 @@ class GraphRAGValidator:
                 graphrag_result["metadata"]["retrieval_method"]
                 != "knowledge_graph_traversal"
             ):
-                logger.error(f"❌ GraphRAG did not use knowledge graph traversal")
+                logger.error("❌ GraphRAG did not use knowledge graph traversal")
                 return False
 
             logger.info("✅ GraphRAG vs BasicRAG comparison completed")
@@ -556,7 +556,7 @@ class GraphRAGValidator:
             json.dump(report, f, indent=2)
 
         logger.info(f"\n{'='*60}")
-        logger.info(f"📊 VALIDATION SUMMARY")
+        logger.info("📊 VALIDATION SUMMARY")
         logger.info(f"{'='*60}")
         logger.info(f"Total Tests: {report['summary']['total_tests']}")
         logger.info(f"Passed: {report['summary']['passed_tests']}")

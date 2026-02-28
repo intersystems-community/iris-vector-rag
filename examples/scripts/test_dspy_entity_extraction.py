@@ -43,7 +43,7 @@ def main():
         # Inject the entity_extraction config at the top level for EntityExtractionService
         config_manager._config["entity_extraction"] = entity_config
 
-        logger.info(f"📝 Entity extraction config:")
+        logger.info("📝 Entity extraction config:")
         logger.info(f"   Method: {entity_config.get('method')}")
         logger.info(f"   Entity types: {entity_config.get('entity_types')}")
         logger.info(f"   DSPy enabled: {entity_config.get('llm', {}).get('use_dspy')}")
@@ -51,14 +51,14 @@ def main():
         # Initialize connection (optional for this test)
         try:
             connection_manager = ConnectionManager(config_manager)
-            logger.info(f"✅ Connection manager initialized")
-        except:
+            logger.info("✅ Connection manager initialized")
+        except Exception:
             connection_manager = None
             logger.warning("⚠️  Connection manager not available (OK for test)")
 
         # Initialize entity extraction service
         extractor = EntityExtractionService(config_manager, connection_manager)
-        logger.info(f"✅ Entity extraction service initialized")
+        logger.info("✅ Entity extraction service initialized")
         logger.info(f"   Method: {extractor.method}")
         logger.info(f"   Enabled types: {extractor.enabled_types}")
 

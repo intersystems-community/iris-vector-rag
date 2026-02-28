@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 # Add evaluation framework to path
 sys.path.insert(
@@ -30,7 +30,6 @@ sys.path.insert(
 )
 
 from comparative_analysis_system import (
-    ComparativeAnalysisSystem,
     PipelineEvaluationConfig,
     create_comparative_analysis_system,
 )
@@ -38,8 +37,6 @@ from comparative_analysis_system import (
 # Import existing evaluation infrastructure
 from evaluation_orchestrator import (
     EvaluationExperimentConfig,
-    EvaluationOrchestrator,
-    create_evaluation_orchestrator,
 )
 from real_production_evaluation import RealProductionEvaluator
 
@@ -451,7 +448,7 @@ def main():
         else:  # 'full'
             results = benchmark.run_full_benchmark()
 
-        print(f"\nBenchmark completed successfully!")
+        print("\nBenchmark completed successfully!")
         print(f"Results saved to: {config.output_dir}")
 
         if "performance" in results:

@@ -10,13 +10,11 @@ Tests cover all aspects of performance monitoring including:
 - Real-time monitoring lifecycle
 """
 
-import json
 import threading
 import time
 import unittest
-from datetime import datetime, timedelta
-from typing import Any, Dict
-from unittest.mock import MagicMock, Mock, patch
+from datetime import datetime
+from unittest.mock import patch
 
 from iris_vector_rag.optimization.performance_monitor import (
     GraphRAGPerformanceMonitor,
@@ -367,7 +365,6 @@ class TestGraphRAGPerformanceMonitor(unittest.TestCase):
 
     def test_thread_safety(self):
         """Test that performance recording is thread-safe."""
-        import threading
         import time as time_module
 
         # Function to record performance in a thread

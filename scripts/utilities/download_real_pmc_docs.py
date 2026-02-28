@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 Download Real PMC Documents
 
@@ -7,7 +8,6 @@ Works with existing data/loader_fixed.py infrastructure.
 """
 
 import logging
-import os
 import random
 import sys
 import time
@@ -158,7 +158,7 @@ class SimplePMCDownloader:
 
             return has_title and has_content
 
-        except:
+        except Exception:
             return False
 
 

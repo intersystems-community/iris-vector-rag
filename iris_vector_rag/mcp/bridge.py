@@ -8,8 +8,9 @@ Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
-from typing import Dict, Any, List, Optional
+import inspect
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 from iris_vector_rag.mcp.technique_handlers import TechniqueHandlerRegistry
 from iris_vector_rag.mcp.config import load_config
 from iris_vector_rag.mcp import tool_schemas
@@ -18,12 +19,13 @@ from iris_vector_rag.mcp import tool_schemas
 class MCPBridge:
     """Main MCP bridge implementation."""
 
-    def __init__(self, config=None, pipeline_manager=None):
+    def __init__(self, config=None, pipeline_manager=None, additional_handlers: Optional[Dict[str, Any]] = None):
         self.config = config or load_config()
         self.registry = TechniqueHandlerRegistry()
         self._request_count = 0
         self._start_time = datetime.now()
         self._pipeline_manager = pipeline_manager
+        self.additional_handlers: Dict[str, Any] = additional_handlers or {}
 
     def _get_pipeline_manager(self):
         """Get or create PipelineManager instance (reuse from REST API if available)."""
@@ -31,7 +33,7 @@ class MCPBridge:
             try:
                 # Try to import and use REST API's PipelineManager singleton
                 from iris_vector_rag.api.services import PipelineManager
-                self._pipeline_manager = PipelineManager.get_instance()
+                self._pipeline_manager = PipelineManager.get_instance()  # type: ignore[attr-defined]
             except ImportError:
                 # REST API not available, use standalone mode
                 pass
@@ -60,14 +62,22 @@ class MCPBridge:
                 # TODO: Validate API key via REST API AuthService
                 pass
 
-            # Get handler
-            handler = self.registry.get_handler(technique)
+            handler = None
+            result = None
 
-            # Validate parameters
-            validated_params = handler.validate_params(params)
+            try:
+                handler = self.registry.get_handler(technique)
+            except KeyError:
+                handler = None
 
-            # Execute
-            result = await handler.execute(query, validated_params)
+            if handler is not None:
+                validated_params = handler.validate_params(params)
+                result = await handler.execute(query, validated_params)
+            else:
+                handler = self._find_additional_handler(technique)
+                validated_params = self._validate_additional_handler_params(handler, technique, params)
+                execution = handler.execute(technique, validated_params)
+                result = await execution if inspect.isawaitable(execution) else execution
 
             self._request_count += 1
 
@@ -76,7 +86,7 @@ class MCPBridge:
                 'result': result
             }
 
-        except KeyError as e:
+        except KeyError:
             return {
                 'success': False,
                 'error': f"Unknown technique: {technique}"
@@ -168,7 +178,40 @@ class MCPBridge:
             }
         }
 
+    def _find_additional_handler(self, technique: str) -> Any:
+        """Return the first additional handler that exposes the requested tool."""
+        for handler in self.additional_handlers.values():
+            has_tool = getattr(handler, 'has_tool', None)
+            if callable(has_tool) and has_tool(technique):
+                return handler
+        raise KeyError(f"Unknown technique: {technique}")
+
+    def _validate_additional_handler_params(
+        self,
+        handler: Any,
+        technique: str,
+        params: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Normalize parameter validation for additional handlers."""
+        validator = getattr(handler, 'validate_params', None)
+        if validator is None:
+            return params
+        try:
+            return validator(technique, params)
+        except TypeError:
+            return validator(params)
+
     async def list_tools(self) -> List[Dict[str, Any]]:
         """List all available MCP tools."""
         all_schemas = tool_schemas.get_all_schemas()
-        return list(all_schemas.values())
+        tools = list(all_schemas.values())
+        for handler in self.additional_handlers.values():
+            get_tools = getattr(handler, 'get_tools', None)
+            if callable(get_tools):
+                try:
+                    extra_tools = get_tools()
+                except Exception:
+                    continue
+                if isinstance(extra_tools, list):
+                    tools.extend(extra_tools)
+        return tools

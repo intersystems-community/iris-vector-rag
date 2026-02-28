@@ -207,6 +207,6 @@ def test_graphrag_smoke_test():
     # Check entity count (may be 0, that's OK for smoke test)
     entity_count = get_entity_count()
 
-    print(f"\n✓ GraphRAG smoke test passed")
+    print("\n✓ GraphRAG smoke test passed")
     print(f"  Entities in database: {entity_count}")
-    print(f"  Note: Integration tests require 100+ entities")
+    print("  Note: Integration tests require 100+ entities")

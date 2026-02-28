@@ -12,7 +12,6 @@ Feature: Complete MCP Tools Implementation
 Branch: 043-complete-mcp-tools
 """
 
-import asyncio
 import sys
 import argparse
 import subprocess
@@ -45,7 +44,7 @@ class MCPServerCLI:
         deployment_mode = mode or config.deployment_mode
         transport_mode = transport or config.transport
 
-        print(f"Starting MCP Server...")
+        print("Starting MCP Server...")
         print(f"  Mode: {deployment_mode}")
         print(f"  Transport: {transport_mode}")
 
@@ -226,7 +225,7 @@ class MCPServerCLI:
                 return 1
 
         except requests.exceptions.RequestException as e:
-            print(f"  ERROR: Cannot connect to MCP server")
+            print("  ERROR: Cannot connect to MCP server")
             print(f"  {e}")
             return 1
 
@@ -264,7 +263,7 @@ class MCPServerCLI:
                 return 1
 
         except requests.exceptions.RequestException as e:
-            print(f"  ERROR: Cannot connect to MCP server")
+            print("  ERROR: Cannot connect to MCP server")
             print(f"  {e}")
             return 1
 

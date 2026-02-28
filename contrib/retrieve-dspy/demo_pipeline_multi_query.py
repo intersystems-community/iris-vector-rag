@@ -45,7 +45,7 @@ def check_environment():
     if openai_key:
         print(f"  OPENAI_API_KEY: {openai_key[:12]}... ✓")
     else:
-        print(f"  OPENAI_API_KEY: not set (LLM expansion unavailable)")
+        print("  OPENAI_API_KEY: not set (LLM expansion unavailable)")
 
     print()
     return True
@@ -64,7 +64,7 @@ def test_iris_connection():
         count = cursor.fetchone()[0]
         cursor.close()
 
-        print(f"  ✓ Connected to IRIS")
+        print("  ✓ Connected to IRIS")
         print(f"  ✓ Found {count:,} documents")
         print()
         return True
@@ -134,7 +134,7 @@ def run_demo(use_llm: bool = False, num_queries: int = 4, top_k: int = 20):
         print()
 
         # Display results summary
-        print(f"📊 Results Summary:")
+        print("📊 Results Summary:")
         print(f"  Raw results: {result['metadata']['raw_result_count']}")
         print(f"  Final results: {result['metadata']['final_result_count']}")
         print(f"  Execution time: {result['metadata']['execution_time']:.2f}s")

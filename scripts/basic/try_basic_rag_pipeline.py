@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """
 Test script for Basic RAG Pipeline.
 
@@ -17,9 +18,10 @@ from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-import iris_vector_rag
 
 load_dotenv()
+
+import iris_vector_rag as iris_rag
 
 # === CONFIGURATION ===
 USE_REAL_LLM = True  # Change to False to use dummy_llm

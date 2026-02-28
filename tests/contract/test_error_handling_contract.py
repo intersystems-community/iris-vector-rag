@@ -145,8 +145,8 @@ class TestErrorHandlingContract:
         result1 = graphrag_pipeline.query(query1, method="rrf")
 
         # Verify first query used fallback
-        assert len(result1.contexts) > 0, "First query should succeed via fallback"
-        assert result1.metadata['retrieval_method'] == 'vector_fallback', \
+        assert len(result1["contexts"]) > 0, "First query should succeed via fallback"
+        assert result1["metadata"]["retrieval_method"] == "vector_fallback", \
             "First query should use fallback"
 
         # Remove mock for second query (or keep it - both should work)
@@ -156,17 +156,17 @@ class TestErrorHandlingContract:
         result2 = graphrag_pipeline.query(query2, method="rrf")
 
         # Verify second query succeeded
-        assert len(result2.contexts) > 0, \
+        assert len(result2["contexts"]) > 0, \
             "Second query should succeed after first query fallback"
 
         # Verify pipeline state is consistent
         assert result2 is not None, "Pipeline should remain functional"
 
         # Verify no degradation in results
-        assert len(result2.contexts) >= len(result1.contexts) * 0.5, \
+        assert len(result2["contexts"]) >= len(result1["contexts"]) * 0.5, \
             "Second query should retrieve similar number of documents (within 50%)"
 
         # Execute third query to verify sustained functionality
         result3 = graphrag_pipeline.query("diabetes prevention strategies", method="hybrid")
-        assert len(result3.contexts) > 0, \
+        assert len(result3["contexts"]) > 0, \
             "Third query should also succeed - pipeline fully functional"

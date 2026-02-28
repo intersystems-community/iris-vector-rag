@@ -91,8 +91,9 @@ USER apiuser
 # Expose API port
 EXPOSE 8000
 
-# Health check is handled by docker-compose.yml using curl
-# HEALTHCHECK disabled in favor of compose-level healthcheck
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Entry point
 ENTRYPOINT ["/app/entrypoint.sh"]

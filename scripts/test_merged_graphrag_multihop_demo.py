@@ -21,14 +21,13 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import sys
 import time
 import traceback
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
@@ -36,9 +35,9 @@ sys.path.insert(0, str(project_root))
 
 # Third-party imports with graceful fallback
 try:
-    import matplotlib.patches as mpatches
-    import matplotlib.pyplot as plt
-    import networkx as nx
+    import matplotlib.patches as mpatches  # noqa: F401
+    import matplotlib.pyplot as plt  # noqa: F401
+    import networkx as nx  # noqa: F401
 
     VISUALIZATION_AVAILABLE = True
 except ImportError:
@@ -681,7 +680,7 @@ class MergedGraphRAGMultiHopDemo:
         """Extract graph traversal path information from query result."""
         step_timings = result.get("metadata", {}).get("step_timings_ms", {})
         entities_found = result.get("metadata", {}).get("entities_found", 0)
-        relationships = result.get("metadata", {}).get("relationships_traversed", 0)
+        result.get("metadata", {}).get("relationships_traversed", 0)
 
         # Create simplified traversal path
         traversal_steps = []
@@ -711,7 +710,7 @@ class MergedGraphRAGMultiHopDemo:
     def demonstrate_biomedical_multihop_queries(self) -> None:
         """Run biomedical multi-hop query demonstrations."""
         print(f"\n{Fore.CYAN}{'='*80}")
-        print(f"🧬 BIOMEDICAL MULTI-HOP QUERY DEMONSTRATIONS")
+        print("🧬 BIOMEDICAL MULTI-HOP QUERY DEMONSTRATIONS")
         print(f"{'='*80}{Style.RESET_ALL}")
 
         # Setup pipelines
@@ -805,7 +804,7 @@ class MergedGraphRAGMultiHopDemo:
         elif time_diff > 0:
             print(f"  🐌 Merged is SLOWER by {time_diff:.1f}ms ({time_pct:.1f}%)")
         else:
-            print(f"  ⚖️  Similar performance")
+            print("  ⚖️  Similar performance")
 
         # Quality comparison
         doc_diff = len(merged_result.final_documents) - len(
@@ -816,7 +815,7 @@ class MergedGraphRAGMultiHopDemo:
         elif doc_diff < 0:
             print(f"  📉 Merged retrieved {abs(doc_diff)} FEWER documents")
         else:
-            print(f"  📊 Same number of documents retrieved")
+            print("  📊 Same number of documents retrieved")
 
         # Confidence comparison
         conf_diff = merged_result.confidence_score - current_result.confidence_score
@@ -825,7 +824,7 @@ class MergedGraphRAGMultiHopDemo:
         elif conf_diff < -0.05:
             print(f"  🎯 Merged has LOWER confidence ({conf_diff:.2f})")
         else:
-            print(f"  🎯 Similar confidence levels")
+            print("  🎯 Similar confidence levels")
 
         # Feature comparison
         current_method = current_result.performance_metrics.get(
@@ -840,7 +839,7 @@ class MergedGraphRAGMultiHopDemo:
                 f"  🔄 Different retrieval methods: {current_method} vs {merged_method}"
             )
             if merged_method == "vector_fallback":
-                print(f"    ℹ️  Merged used fallback mechanism")
+                print("    ℹ️  Merged used fallback mechanism")
 
     def _update_performance_metrics(self, result: MultiHopQueryResult) -> None:
         """Update overall performance metrics."""
@@ -972,7 +971,7 @@ class MergedGraphRAGMultiHopDemo:
     def generate_comprehensive_report(self) -> None:
         """Generate comprehensive test report."""
         print(f"\n{Fore.CYAN}{'='*80}")
-        print(f"📊 GENERATING COMPREHENSIVE REPORT")
+        print("📊 GENERATING COMPREHENSIVE REPORT")
         print(f"{'='*80}{Style.RESET_ALL}")
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1013,7 +1012,7 @@ class MergedGraphRAGMultiHopDemo:
         with open(md_file, "w") as f:
             self._write_markdown_report(f, report_data)
 
-        print(f"📄 Reports saved to:")
+        print("📄 Reports saved to:")
         print(f"  - JSON: {json_file}")
         print(f"  - Markdown: {md_file}")
 
@@ -1207,13 +1206,13 @@ class MergedGraphRAGMultiHopDemo:
     def _display_final_summary(self, report_data: Dict[str, Any]) -> None:
         """Display final test summary."""
         print(f"\n{Fore.GREEN}{'='*80}")
-        print(f"🎯 FINAL TEST SUMMARY")
+        print("🎯 FINAL TEST SUMMARY")
         print(f"{'='*80}{Style.RESET_ALL}")
 
         current_stats = report_data["performance_summary"]["current"]
         merged_stats = report_data["performance_summary"]["merged"]
 
-        print(f"📊 Test Results:")
+        print("📊 Test Results:")
         print(f"  - Total Queries: {report_data['test_execution']['total_queries']}")
         print(f"  - Current Success Rate: {current_stats['success_rate']:.2%}")
         print(f"  - Merged Success Rate: {merged_stats['success_rate']:.2%}")
@@ -1230,7 +1229,7 @@ class MergedGraphRAGMultiHopDemo:
         else:
             print(f"  - Performance: {abs(perf_change):.1f}% SLOWER 🐌")
 
-        print(f"\n🎯 Key Recommendations:")
+        print("\n🎯 Key Recommendations:")
         for rec in report_data["recommendations"][-3:]:  # Show last 3 recommendations
             print(f"  - {rec}")
 

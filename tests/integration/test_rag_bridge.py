@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch
 import pytest
 import pytest_asyncio
 
-from adapters.rag_templates_bridge import (
+from iris_vector_rag.adapters.rag_templates_bridge import (
     CircuitBreakerState,
     PerformanceMetrics,
     RAGResponse,
@@ -72,10 +72,10 @@ class TestRAGTemplatesBridge:
     async def bridge(self, mock_config_manager, mock_connection_manager):
         """Create bridge instance with mocked dependencies."""
         with patch(
-            "adapters.rag_templates_bridge.ConfigurationManager",
+            "iris_vector_rag.adapters.rag_templates_bridge.ConfigurationManager",
             return_value=mock_config_manager,
         ), patch(
-            "adapters.rag_templates_bridge.ConnectionManager",
+            "iris_vector_rag.adapters.rag_templates_bridge.ConnectionManager",
             return_value=mock_connection_manager,
         ):
 
@@ -396,8 +396,8 @@ class TestPerformanceBenchmarks:
     @pytest.mark.asyncio
     async def test_cold_start_performance(self):
         """Test bridge initialization performance (<50ms)."""
-        with patch("adapters.rag_templates_bridge.ConfigurationManager"), patch(
-            "adapters.rag_templates_bridge.ConnectionManager"
+        with patch("iris_vector_rag.adapters.rag_templates_bridge.ConfigurationManager"), patch(
+            "iris_vector_rag.adapters.rag_templates_bridge.ConnectionManager"
         ):
 
             start_time = time.time()
@@ -439,8 +439,8 @@ class TestRAGBridgeIntegration:
         # This would integrate with actual pipelines in a full test environment
         # For now, validates the interface contract
 
-        with patch("adapters.rag_templates_bridge.ConfigurationManager"), patch(
-            "adapters.rag_templates_bridge.ConnectionManager"
+        with patch("iris_vector_rag.adapters.rag_templates_bridge.ConfigurationManager"), patch(
+            "iris_vector_rag.adapters.rag_templates_bridge.ConnectionManager"
         ):
 
             bridge = RAGTemplatesBridge()

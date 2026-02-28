@@ -18,6 +18,9 @@ from iris_vector_rag.common.iris_connection_manager import get_iris_connection
 @pytest.fixture(scope="session", autouse=True)
 def clean_database_once():
     """Drop and recreate tables at session start with correct DOUBLE schema."""
+    import os
+
+    os.environ["IRIS_VECTOR_DATA_TYPE"] = "DOUBLE"
     conn = get_iris_connection()
     cursor = conn.cursor()
 

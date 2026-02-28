@@ -19,7 +19,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 # Initialize output template for early exits
 def create_output_template(execution_time: float = 0.0) -> Dict[str, Any]:
@@ -243,7 +243,7 @@ def run_test_extraction(config_manager: Optional['ConfigurationManager']) -> Dic
 
     try:
         # Create extractor (without connection or embedding manager for quick test)
-        extractor = OntologyAwareEntityExtractor(
+        OntologyAwareEntityExtractor(
             config_manager=config_manager,
             connection_manager=None,
             embedding_manager=None,
@@ -251,7 +251,6 @@ def run_test_extraction(config_manager: Optional['ConfigurationManager']) -> Dic
 
         # Try to extract entities using pattern-based method
         # (avoiding LLM calls for quick test)
-        from iris_vector_rag.core.models import Entity, EntityTypes
 
         # Simple pattern matching for test
         entities = []

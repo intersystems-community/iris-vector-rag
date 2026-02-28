@@ -6,13 +6,12 @@ enabling 8-16 parallel operations for sub-200ms response times. Implements
 async document retrieval, parallel entity extraction, and concurrent graph traversal.
 """
 
-import asyncio
 import logging
 import threading
 import time
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from ..core.models import Document
 

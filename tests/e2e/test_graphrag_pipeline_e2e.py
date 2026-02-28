@@ -10,15 +10,15 @@ Use pytest -m "not slow" to skip these tests in normal development.
 """
 
 import pytest
-
-# Mark all tests in this module as slow since they make real LLM API calls
-pytestmark = [pytest.mark.slow, pytest.mark.requires_llm_api]
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.core.models import Document
 from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline, KnowledgeGraphNotPopulatedException
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from iris_vector_rag.common.utils import get_llm_func
+
+# Mark all tests in this module as slow since they make real LLM API calls
+pytestmark = [pytest.mark.slow, pytest.mark.requires_llm_api]
 
 
 @pytest.fixture(scope="function")
