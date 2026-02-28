@@ -1,4 +1,5 @@
 # common/utils.py
+import hashlib
 import logging  # Added for logger usage in get_llm_func
 
 # import sqlalchemy  # Removed - not needed for IRIS
@@ -8,7 +9,6 @@ from dataclasses import dataclass, field
 from pathlib import Path  # Added for config path
 from typing import Any, Callable, Dict, List, Optional  # Added Tuple
 
-import hashlib
 import numpy as np
 import yaml  # Added for config loading
 
@@ -381,6 +381,7 @@ def get_llm_func(
 
             def query_iris_llm(prompt: str) -> str:
                 from langchain_core.messages import HumanMessage
+
                 response = chat.invoke([HumanMessage(content=prompt)])
                 return str(response.content)
 
@@ -504,13 +505,17 @@ def get_embedding_func_for_embedded(model_name_override: Optional[str] = None):
         print(
             f"IRIS Embedded Python: Loading embedding model {effective_model_name} (dim: {dimension})"
         )
+
         # This would call build_hf_embedder or similar for embedded context
         def _embedding_model_embedded(texts):
             return [[0.1] * dimension for _ in texts]
+
     return _embedding_model_embedded
 
 
-def get_llm_func_for_embedded(provider: str = "iris_llm", model_name: str = "gpt-4o-mini"):
+def get_llm_func_for_embedded(
+    provider: str = "iris_llm", model_name: str = "gpt-4o-mini"
+):
     """
     Return an LLM callable for use inside IRIS embedded Python (``%SYS.Python``).
 

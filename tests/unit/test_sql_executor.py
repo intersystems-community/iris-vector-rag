@@ -4,6 +4,7 @@ Unit tests for SqlExecutor protocol, MockSqlExecutor, and GraphRAGPipeline injec
 All tests run without a live IRIS connection (constitution P3: .DAT fixture-first;
 unit tests may use MockSqlExecutor instead of fixtures when no DB state is needed).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -13,10 +14,10 @@ import pytest
 
 from iris_vector_rag.executor import SqlExecutor
 
-
 # ---------------------------------------------------------------------------
 # MockSqlExecutor (T015)
 # ---------------------------------------------------------------------------
+
 
 class MockSqlExecutor:
     """
@@ -42,6 +43,7 @@ class MockSqlExecutor:
 # Protocol tests (T016 — test_sql_executor_protocol_isinstance)
 # ---------------------------------------------------------------------------
 
+
 def test_sql_executor_protocol_isinstance():
     """MockSqlExecutor satisfies the SqlExecutor runtime-checkable protocol."""
     mock = MockSqlExecutor()
@@ -57,21 +59,25 @@ def test_plain_object_not_sql_executor():
 # Import tests
 # ---------------------------------------------------------------------------
 
+
 def test_import_from_package():
     """SqlExecutor is importable from the top-level package."""
     from iris_vector_rag import SqlExecutor as SE  # noqa: F401
+
     assert SE is SqlExecutor
 
 
 def test_import_from_executor_module():
     """SqlExecutor is importable directly from iris_vector_rag.executor."""
     from iris_vector_rag.executor import SqlExecutor as SE  # noqa: F401
+
     assert SE is SqlExecutor
 
 
 # ---------------------------------------------------------------------------
 # Pipeline constructor tests (T016 — test_pipeline_no_executor_unchanged)
 # ---------------------------------------------------------------------------
+
 
 def _make_pipeline(executor=None):
     """Create a GraphRAGPipeline with mocked collaborators and optional executor."""
@@ -81,10 +87,11 @@ def _make_pipeline(executor=None):
     mock_cfg = MagicMock()
     mock_cfg.get.return_value = {}
 
-    with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"), \
-         patch("iris_vector_rag.pipelines.graphrag.EntityExtractionService"), \
-         patch("iris_vector_rag.pipelines.graphrag.SchemaManager"), \
-         patch("iris_vector_rag.storage.vector_store_iris.IRISVectorStore"):
+    with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"), patch(
+        "iris_vector_rag.pipelines.graphrag.EntityExtractionService"
+    ), patch("iris_vector_rag.pipelines.graphrag.SchemaManager"), patch(
+        "iris_vector_rag.storage.vector_store_iris.IRISVectorStore"
+    ):
         pipeline = GraphRAGPipeline(
             connection_manager=mock_cm,
             config_manager=mock_cfg,
@@ -109,6 +116,7 @@ def test_pipeline_stores_injected_executor():
 # ---------------------------------------------------------------------------
 # _execute_sql dispatch tests (T016 — test_pipeline_routes_through_executor)
 # ---------------------------------------------------------------------------
+
 
 def test_pipeline_routes_through_executor():
     """_execute_sql delegates to the injected executor and records the call."""
@@ -136,7 +144,9 @@ def test_execute_sql_passes_params():
     mock_exec = MockSqlExecutor({"WHERE": [{"entity_id": "E1"}]})
     pipeline = _make_pipeline(executor=mock_exec)
 
-    pipeline._execute_sql("SELECT entity_id FROM RAG.Entities WHERE entity_name LIKE ?", ["%fever%"])
+    pipeline._execute_sql(
+        "SELECT entity_id FROM RAG.Entities WHERE entity_name LIKE ?", ["%fever%"]
+    )
 
     assert mock_exec.calls[0][1] == ["%fever%"]
 
@@ -144,6 +154,7 @@ def test_execute_sql_passes_params():
 # ---------------------------------------------------------------------------
 # Exception propagation (T016 — test_execute_sql_empty_returns_list variant)
 # ---------------------------------------------------------------------------
+
 
 def test_executor_exception_propagates():
     """Exceptions from the executor propagate out of _execute_sql (not swallowed)."""
@@ -162,22 +173,27 @@ def test_executor_exception_propagates():
 # Phase 3 — US1: query-path tests (T018–T021)
 # ---------------------------------------------------------------------------
 
+
 def test_search_entities_via_executor(monkeypatch):
     """
     _find_seed_entities routes through executor; returned entity IDs come from mock rows.
     """
-    mock_exec = MockSqlExecutor({
-        "RAG.Entities": [
-            {"entity_id": "E1"},
-            {"entity_id": "E2"},
-        ]
-    })
+    mock_exec = MockSqlExecutor(
+        {
+            "RAG.Entities": [
+                {"entity_id": "E1"},
+                {"entity_id": "E2"},
+            ]
+        }
+    )
     pipeline = _make_pipeline(executor=mock_exec)
 
     # Stub entity extraction to return one entity with .text = "fever"
     fake_entity = MagicMock()
     fake_entity.text = "fever"
-    pipeline.entity_extraction_service.extract_entities = MagicMock(return_value=[fake_entity])
+    pipeline.entity_extraction_service.extract_entities = MagicMock(
+        return_value=[fake_entity]
+    )
 
     entity_ids = pipeline._find_seed_entities("patient has fever")
 
@@ -194,19 +210,21 @@ def test_traverse_relationships_via_executor():
     The SQL is a UNION of two selects; the MockSqlExecutor returns a combined
     flat list (one column per row, mirroring what IRIS returns after UNION).
     """
-    mock_exec = MockSqlExecutor({
-        "EntityRelationships": [
-            {"target_entity_id": "E2"},
-            {"target_entity_id": "E3"},
-        ]
-    })
+    mock_exec = MockSqlExecutor(
+        {
+            "EntityRelationships": [
+                {"target_entity_id": "E2"},
+                {"target_entity_id": "E3"},
+            ]
+        }
+    )
     pipeline = _make_pipeline(executor=mock_exec)
 
     visited = pipeline._expand_neighborhood({"E1"}, depth=1)
 
-    assert "E1" in visited   # seed always present
-    assert "E2" in visited   # returned by executor
-    assert "E3" in visited   # second neighbor
+    assert "E1" in visited  # seed always present
+    assert "E2" in visited  # returned by executor
+    assert "E3" in visited  # second neighbor
     assert any("EntityRelationships" in call[0] for call in mock_exec.calls)
 
 

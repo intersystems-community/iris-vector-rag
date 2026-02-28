@@ -4,6 +4,7 @@ iris_globals — thin wrappers for iris.gset / iris.gget globals access.
 All functions degrade gracefully when the ``iris`` DBAPI module is not installed
 (e.g. unit test environments, external Python runtimes).
 """
+
 from __future__ import annotations
 
 import logging
@@ -23,9 +24,12 @@ def gset(*path: str, value: str) -> None:
     """
     try:
         import iris  # type: ignore[import]
+
         iris.gset(*path, value)
     except ImportError:
-        logger.debug("iris module not available; gset(%s, value=%r) skipped", path, value)
+        logger.debug(
+            "iris module not available; gset(%s, value=%r) skipped", path, value
+        )
     except Exception as exc:
         logger.warning("iris.gset failed: %s", exc)
 
@@ -43,6 +47,7 @@ def gget(*path: str) -> str | None:
     """
     try:
         import iris  # type: ignore[import]
+
         return iris.gget(*path)
     except ImportError:
         logger.debug("iris module not available; gget(%s) returns None", path)

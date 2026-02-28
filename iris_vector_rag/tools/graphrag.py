@@ -4,6 +4,7 @@ as agent-callable tools.
 
 Requires iris_llm to be installed. Raises ImportError on module load if absent.
 """
+
 from __future__ import annotations
 
 import json
@@ -117,7 +118,9 @@ class GraphRAGToolSet(ToolSet):
                 src = r.get("source_entity_id") or r.get("SOURCE_ENTITY_ID", "")
                 tgt = r.get("target_entity_id") or r.get("TARGET_ENTITY_ID", "")
                 rel_type = r.get("relationship_type") or r.get("RELATIONSHIP_TYPE", "")
-                all_relationships.append({"source": src, "target": tgt, "type": rel_type})
+                all_relationships.append(
+                    {"source": src, "target": tgt, "type": rel_type}
+                )
                 for node in (src, tgt):
                     if node and node not in visited:
                         new_frontier.add(node)

@@ -5,6 +5,7 @@ Consumers of GraphRAGPipeline inject an executor so the pipeline can be
 unit-tested without a live IRIS connection.  The default path (no executor)
 is unchanged and continues to use the DBAPI cursor directly.
 """
+
 from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable

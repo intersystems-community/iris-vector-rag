@@ -1,7 +1,7 @@
 # Feature 065: iris_llm as IVR LLM Substrate
 
-**Branch**: 065-iris-llm-substrate  
-**Status**: Design / Experimental  
+**Branch**: 065-iris-llm-substrate
+**Status**: Design / Experimental
 **Visibility**: Private only — do NOT merge to public or publish to PyPI until aicore/AI Hub architecture stabilizes
 
 ---

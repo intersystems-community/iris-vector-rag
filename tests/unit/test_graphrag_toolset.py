@@ -3,6 +3,7 @@ Unit tests for GraphRAGToolSet with MockSqlExecutor (no live IRIS required).
 
 All tests mock iris_llm at the sys.modules level.
 """
+
 from __future__ import annotations
 
 import json
@@ -12,10 +13,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # MockSqlExecutor (same pattern as test_sql_executor.py)
 # ---------------------------------------------------------------------------
+
 
 class MockSqlExecutor:
     def __init__(self, responses: dict[str, list[dict]] | None = None) -> None:
@@ -34,6 +35,7 @@ class MockSqlExecutor:
 # iris_llm mock helpers
 # ---------------------------------------------------------------------------
 
+
 def _patch_iris_llm():
     """
     Return a context manager that patches iris_llm so tools/graphrag.py can import.
@@ -41,6 +43,7 @@ def _patch_iris_llm():
     The @tool decorator is made identity so decorated methods remain plain callables.
     ToolSet becomes a trivial base class.
     """
+
     class _FakeToolSet:
         def __init__(self, *a, **kw):
             pass
@@ -66,19 +69,25 @@ def _make_toolset(executor, pipeline_mock=None):
         if "iris_vector_rag.tools" in key:
             del sys.modules[key]
 
-    with _patch_iris_llm(), \
-         patch("iris_vector_rag.storage.vector_store_iris.IRISVectorStore"), \
-         patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"), \
-         patch("iris_vector_rag.pipelines.graphrag.EntityExtractionService"), \
-         patch("iris_vector_rag.pipelines.graphrag.SchemaManager"):
+    with _patch_iris_llm(), patch(
+        "iris_vector_rag.storage.vector_store_iris.IRISVectorStore"
+    ), patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"), patch(
+        "iris_vector_rag.pipelines.graphrag.EntityExtractionService"
+    ), patch(
+        "iris_vector_rag.pipelines.graphrag.SchemaManager"
+    ):
 
         from iris_vector_rag.tools.graphrag import GraphRAGToolSet
 
-        with patch.object(GraphRAGToolSet, "__init__", lambda self, executor: (
-            setattr(self, "_executor", executor) or
-            setattr(self, "_pipeline", pipeline_mock) or
-            None
-        )):
+        with patch.object(
+            GraphRAGToolSet,
+            "__init__",
+            lambda self, executor: (
+                setattr(self, "_executor", executor)
+                or setattr(self, "_pipeline", pipeline_mock)
+                or None
+            ),
+        ):
             toolset = GraphRAGToolSet(executor=executor)
 
     return toolset, pipeline_mock
@@ -87,6 +96,7 @@ def _make_toolset(executor, pipeline_mock=None):
 # ---------------------------------------------------------------------------
 # Import guard tests
 # ---------------------------------------------------------------------------
+
 
 def test_import_without_iris_llm_raises():
     """from iris_vector_rag.tools import GraphRAGToolSet raises ImportError without iris_llm."""
@@ -102,6 +112,7 @@ def test_import_without_iris_llm_raises():
 def test_import_iris_vector_rag_without_iris_llm():
     """Core iris_vector_rag imports cleanly even when tools submodule is inaccessible."""
     import iris_vector_rag
+
     assert hasattr(iris_vector_rag, "SqlExecutor")
     # tools is NOT imported by the core package
     assert "iris_vector_rag.tools" not in sys.modules or True  # optional
@@ -111,13 +122,16 @@ def test_import_iris_vector_rag_without_iris_llm():
 # Functional tests
 # ---------------------------------------------------------------------------
 
+
 def test_search_entities_returns_valid_json():
     """search_entities returns valid JSON with expected keys."""
-    executor = MockSqlExecutor({
-        "RAG.Entities": [
-            {"entity_id": "E1", "entity_name": "fever", "entity_type": "symptom"},
-        ]
-    })
+    executor = MockSqlExecutor(
+        {
+            "RAG.Entities": [
+                {"entity_id": "E1", "entity_name": "fever", "entity_type": "symptom"},
+            ]
+        }
+    )
     toolset, _ = _make_toolset(executor)
 
     result = toolset.search_entities(query="fever")
@@ -141,12 +155,18 @@ def test_search_entities_empty_returns_valid_json():
 
 def test_traverse_relationships_returns_valid_json():
     """traverse_relationships returns valid JSON with graph structure."""
-    executor = MockSqlExecutor({
-        "RAG.Entities": [{"entity_id": "E1"}],
-        "EntityRelationships": [
-            {"source_entity_id": "E1", "target_entity_id": "E2", "relationship_type": "causes"},
-        ],
-    })
+    executor = MockSqlExecutor(
+        {
+            "RAG.Entities": [{"entity_id": "E1"}],
+            "EntityRelationships": [
+                {
+                    "source_entity_id": "E1",
+                    "target_entity_id": "E2",
+                    "relationship_type": "causes",
+                },
+            ],
+        }
+    )
     toolset, _ = _make_toolset(executor)
 
     result = toolset.traverse_relationships(entity_text="fever")
@@ -188,6 +208,7 @@ def test_hybrid_search_returns_valid_json():
 
 def test_pipeline_exception_propagates():
     """Executor exceptions propagate out of search_entities (not swallowed)."""
+
     class BoomExecutor:
         def execute(self, sql, params=None):
             raise RuntimeError("executor exploded")

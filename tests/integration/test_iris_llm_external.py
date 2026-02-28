@@ -5,6 +5,7 @@ All tests in this file are skipped unless:
   1. The iris_llm wheel is installed (checked via importlib.util.find_spec)
   2. SKIP_IRIS_TESTS != "true"
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -76,6 +77,7 @@ def test_graphrag_toolset_live_iris():
     class LiveExecutor:
         def __init__(self):
             import iris as iris_dbapi  # type: ignore[import]
+
             self._conn = iris_dbapi.createConnection(
                 "localhost", port, "USER", "_SYSTEM", "SYS"
             )
@@ -96,6 +98,7 @@ def test_graphrag_toolset_live_iris():
 
     result = toolset.search_entities("fever")
     import json
+
     data = json.loads(result)
     assert "entities_found" in data
     assert "entities" in data
