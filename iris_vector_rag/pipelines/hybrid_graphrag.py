@@ -46,8 +46,9 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         vector_store=None,
         schema_manager=None,
         embedding_config: Optional[str] = None,
+        executor=None,
     ):
-        super().__init__(connection_manager, config_manager, llm_func, vector_store)
+        super().__init__(connection_manager, config_manager, llm_func, vector_store, executor=executor)
 
         # Store schema manager for iris_vector_graph table management
         self.schema_manager = schema_manager

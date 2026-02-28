@@ -1,7 +1,7 @@
 import time
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Tuple
 
 from ..config.manager import ConfigurationManager
 from ..core.base import RAGPipeline
@@ -9,6 +9,9 @@ from ..core.connection import ConnectionManager
 from ..core.exceptions import RAGException
 from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
+
+if TYPE_CHECKING:
+    from ..executor import SqlExecutor
 from ..services.entity_extraction import EntityExtractionService
 from ..storage.schema_manager import SchemaManager
 
@@ -38,6 +41,7 @@ class GraphRAGPipeline(RAGPipeline):
         config_manager: Optional[ConfigurationManager] = None,
         llm_func: Optional[Callable[[str], str]] = None,
         vector_store=None,
+        executor: Optional["SqlExecutor"] = None,
     ):
         if connection_manager is None:
             connection_manager = ConnectionManager()
@@ -48,6 +52,7 @@ class GraphRAGPipeline(RAGPipeline):
         super().__init__(connection_manager, config_manager, vector_store)
         self.config = config_manager
         self.llm_func = llm_func
+        self._executor = executor
         self.embedding_manager = EmbeddingManager(config_manager)
 
         # Initialize entity extraction service
@@ -228,64 +233,83 @@ class GraphRAGPipeline(RAGPipeline):
         from ..core.models import Document as CoreDoc
         doc_wrapper = CoreDoc(page_content=query_text, id="query")
         entities = self.entity_extraction_service.extract_entities(doc_wrapper)
-        
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
-        entity_ids = []
-        
+
+        entity_ids: List[str] = []
         for entity in entities:
             try:
-                cursor.execute("SELECT entity_id FROM RAG.Entities WHERE entity_name LIKE ?", [f"%{entity.text}%"])
-                for row in cursor.fetchall():
-                    if row[0] not in entity_ids:
-                        entity_ids.append(row[0])
+                rows = self._execute_sql(
+                    "SELECT entity_id FROM RAG.Entities WHERE entity_name LIKE ?",
+                    [f"%{entity.text}%"],
+                )
+                for row in rows:
+                    eid = row.get("entity_id") or row.get("ENTITY_ID")
+                    if eid and eid not in entity_ids:
+                        entity_ids.append(eid)
             except Exception:
                 pass
-        
-        cursor.close()
+
         return entity_ids
 
     def _expand_neighborhood(self, start_nodes: Set[str], depth: int) -> Set[str]:
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
         visited = set(start_nodes)
         frontier = set(start_nodes)
-        
+
         for _ in range(depth):
             if not frontier:
                 break
             placeholders = ",".join(["?" for _ in frontier])
-            query = f"SELECT DISTINCT target_entity_id FROM RAG.EntityRelationships WHERE source_entity_id IN ({placeholders}) UNION SELECT DISTINCT source_entity_id FROM RAG.EntityRelationships WHERE target_entity_id IN ({placeholders})"
+            sql = (
+                f"SELECT DISTINCT target_entity_id FROM RAG.EntityRelationships "
+                f"WHERE source_entity_id IN ({placeholders}) "
+                f"UNION "
+                f"SELECT DISTINCT source_entity_id FROM RAG.EntityRelationships "
+                f"WHERE target_entity_id IN ({placeholders})"
+            )
             try:
                 params = list(frontier) + list(frontier)
-                cursor.execute(query, params)
-                neighbors = {row[0] for row in cursor.fetchall()}
+                rows = self._execute_sql(sql, params)
+                neighbors: Set[str] = set()
+                for row in rows:
+                    val = (
+                        row.get("target_entity_id")
+                        or row.get("TARGET_ENTITY_ID")
+                        or row.get("source_entity_id")
+                        or row.get("SOURCE_ENTITY_ID")
+                    )
+                    if val:
+                        neighbors.add(val)
                 new_nodes = neighbors - visited
                 visited.update(new_nodes)
                 frontier = new_nodes
             except Exception:
                 break
-                
-        cursor.close()
+
         return visited
 
     def _get_documents_from_entities(self, entity_ids: Set[str], top_k: int) -> List[Document]:
         if not entity_ids:
             return []
-        connection = self.connection_manager.get_connection()
-        cursor = connection.cursor()
         docs = []
+        entity_list = list(entity_ids)[:50]
+        placeholders = ",".join(["?" for _ in entity_list])
+        sql = (
+            f"SELECT DISTINCT sd.doc_id, sd.text_content, sd.metadata "
+            f"FROM RAG.SourceDocuments sd "
+            f"JOIN RAG.Entities e ON sd.doc_id = e.source_doc_id "
+            f"WHERE e.entity_id IN ({placeholders}) "
+            f"ORDER BY sd.doc_id"
+        )
         try:
-            entity_list = list(entity_ids)[:50]
-            placeholders = ",".join(["?" for _ in entity_list])
-            query = f"SELECT DISTINCT sd.doc_id, sd.text_content, sd.metadata FROM RAG.SourceDocuments sd JOIN RAG.Entities e ON sd.doc_id = e.source_doc_id WHERE e.entity_id IN ({placeholders}) ORDER BY sd.doc_id"
-            cursor.execute(query, entity_list)
-            for row in cursor.fetchall():
-                metadata = json.loads(self._read_iris_data(row[2])) if row[2] else {}
+            rows = self._execute_sql(sql, entity_list)
+            for row in rows:
+                doc_id = row.get("doc_id") or row.get("DOC_ID", "")
+                text_content = row.get("text_content") or row.get("TEXT_CONTENT") or ""
+                metadata_raw = row.get("metadata") or row.get("METADATA")
+                metadata = json.loads(self._read_iris_data(metadata_raw)) if metadata_raw else {}
                 docs.append(
                     Document(
-                        id=str(row[0]),
-                        page_content=self._read_iris_data(row[1]),
+                        id=str(doc_id),
+                        page_content=self._read_iris_data(text_content),
                         metadata={
                             **metadata,
                             "retrieval_method": "knowledge_graph",
@@ -297,8 +321,6 @@ class GraphRAGPipeline(RAGPipeline):
                     break
         except Exception as e:
             logger.error(f"Database error getting docs: {e}")
-        finally:
-            cursor.close()
         return docs
 
     def _fallback_to_vector_search(self, query_text: str, top_k: int) -> List[Document]:
@@ -371,18 +393,43 @@ class GraphRAGPipeline(RAGPipeline):
             return str(data.read())
         return str(data)
 
-    def _validate_knowledge_graph(self) -> bool:
-        """Validate that the knowledge graph is populated."""
+    def _execute_sql(self, sql: str, params: Any = None) -> List[Dict[str, Any]]:
+        """
+        Execute *sql* and return rows as a list of dicts.
+
+        When an injected :class:`~iris_vector_rag.executor.SqlExecutor` is present,
+        delegates to it.  Otherwise falls back to the pipeline's own DBAPI connection
+        (existing behaviour — no regression when ``executor`` is ``None``).
+        """
+        if self._executor is not None:
+            return self._executor.execute(sql, params)
+
         connection = self.connection_manager.get_connection()
         cursor = connection.cursor()
         try:
-            cursor.execute("SELECT COUNT(*) FROM RAG.Entities")
-            count = cursor.fetchone()[0]
+            cursor.execute(sql, params if params is not None else [])
+            if cursor.description is None:
+                return []
+            cols = [d[0] for d in cursor.description]
+            return [dict(zip(cols, row)) for row in cursor.fetchall()]
+        finally:
+            cursor.close()
+
+    def _validate_knowledge_graph(self) -> bool:
+        """Validate that the knowledge graph is populated."""
+        try:
+            rows = self._execute_sql("SELECT COUNT(*) FROM RAG.Entities")
+            if not rows:
+                logger.warning("Knowledge graph is empty")
+                return False
+            # Result may come back as {"COUNT(*)": n} or {"EXPRESSION_1": n} etc.
+            count = next(iter(rows[0].values()), 0)
             if count == 0:
                 logger.warning("Knowledge graph is empty")
                 return False
-        finally:
-            cursor.close()
+        except Exception as e:
+            logger.warning(f"Could not validate knowledge graph: {e}")
+            return False
         return True
 
     def clear(self) -> None:

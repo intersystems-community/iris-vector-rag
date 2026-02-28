@@ -75,6 +75,10 @@ embedding = [
 hybrid-graphrag = [
     "iris-vector-graph>=1.6.0"
 ]
+# iris_llm is a compiled Rust wheel not on PyPI.
+# Install manually: pip install iris_llm-*.whl
+# Then: pip install "iris-vector-rag[iris_llm]"
+iris_llm = []
 monitoring = [
     "opentelemetry-api>=1.20.0",
     "opentelemetry-sdk>=1.20.0",

@@ -42,6 +42,12 @@ This feature covers changes **inside `iris-vector-rag-private` only**. The aicor
 
 5. **`iris.gset` globals integration (light)** — Store DSPy compiled program metadata in `^IVR.Programs` globals when `iris` module is available (same pattern as `aicore/python/rlm/toolset.py`). Allows `%AI.Agent` ObjectScript to discover available compiled programs.
 
+6. **`SqlExecutor` Protocol** — A `typing.Protocol` (runtime-checkable) with a single method `execute(sql: str, params=None) -> list[dict]`. Lives in `iris_vector_rag` core (no `iris_llm` dep). Allows any consumer (`ai-hub`, `iris_agent`) to supply an existing IRIS connection without IVR needing to know about DBAPI or `iris_llm` connection objects.
+
+7. **`GraphRAGPipeline` accepts `SqlExecutor`** — Add an optional `executor: SqlExecutor | None` constructor parameter to the base class (`iris_vector_rag/pipelines/graphrag.py`). When supplied, all SQL routes through `executor.execute()` instead of the pipeline's own DBAPI connection. Existing connection path unchanged when `executor` is not supplied. `HybridGraphRAGPipeline` inherits this automatically.
+
+8. **`GraphRAGToolSet` in `iris_vector_rag.tools`** — An `iris_llm.ToolSet` subclass in a new optional submodule `iris_vector_rag/tools/graphrag.py`. Accepts a `SqlExecutor` at construction, owns a `HybridGraphRAGPipeline` instance, exposes `search_entities`, `traverse_relationships`, and `hybrid_search` as `@tool`-decorated methods. Only importable when `iris_llm` is installed (same optional guard pattern as items 1–3 above). Consumer packages (`ai-hub`, `iris_agent`) import this — no toolset code lives in the consumer.
+
 ### Out of Scope
 
 - Any ObjectScript classes (`Sample.AI.Tools.IVR`, etc.) — belongs in `aicore`
@@ -50,6 +56,7 @@ This feature covers changes **inside `iris-vector-rag-private` only**. The aicor
 - Public release / PyPI publish
 - Embedded Python `%SYS.Python` setup/docs (IRIS instance config)
 - OAuth2 token acquisition flow (lives in `iris_llm` Rust core, not IVR)
+- `ai-hub` wiring (`IrisSyncWrapperExecutor` adapter, `fhir_graphrag.py` changes) — separate spec in `ai-hub/specs/014-graphrag-toolset`
 
 ---
 
@@ -116,34 +123,18 @@ Ran against `iris_llm-0.1.0-cp39-abi3-macosx_15_0_arm64.whl` from `../ai-hub/whe
 | File | Change |
 |------|--------|
 | `iris_vector_rag/common/utils.py` | Add `provider="iris_llm"` branch to `get_llm_func()`, implement `get_llm_func_for_embedded()` |
-| `iris_vector_rag/dspy_modules/entity_extraction_module.py` | Add `IrisLLMDSPyAdapter(dspy.BaseLM)` class |
+| `iris_vector_rag/dspy_modules/iris_llm_lm.py` | New file: standalone `IrisLLMDSPyAdapter(dspy.BaseLM)` |
 | `iris_vector_rag/dspy_modules/iris_llm_lm.py` | New file: standalone `IrisLLMDSPyAdapter` for reuse across all dspy modules |
 | `iris_vector_rag/common/iris_globals.py` | New file: thin wrapper for `iris.gset`/`iris.gget` with graceful fallback |
+| `iris_vector_rag/executor.py` | New file: `SqlExecutor` Protocol definition |
+| `iris_vector_rag/pipelines/graphrag.py` | Add optional `executor: SqlExecutor \| None` parameter to `GraphRAGPipeline.__init__`; add `_execute_sql` helper; route SQL through it when supplied |
+| `iris_vector_rag/tools/__init__.py` | New file: optional submodule init; top-level import guard for `iris_llm` |
+| `iris_vector_rag/tools/graphrag.py` | New file: `GraphRAGToolSet(ToolSet)` with `search_entities`, `traverse_relationships`, `hybrid_search` |
 | `pyproject.toml` | Add `[project.optional-dependencies] iris_llm = [...]` |
-| `tests/unit/test_iris_llm_substrate.py` | New: unit tests for all new paths (mocked iris_llm) |
+| `tests/unit/test_iris_llm_substrate.py` | New: unit tests for LLM substrate paths (mocked iris_llm) |
+| `tests/unit/test_sql_executor.py` | New: unit tests for `SqlExecutor` protocol + `MockSqlExecutor` + pipeline wiring |
+| `tests/unit/test_graphrag_toolset.py` | New: unit tests for `GraphRAGToolSet` with `MockSqlExecutor` (no IRIS needed) |
 | `tests/integration/test_iris_llm_external.py` | New: integration tests against real iris_llm (skipped if wheel not installed) |
-
----
-
-## Relationship to Broader Architecture
-
-```
-This feature (IVR-private)
-  └── enables: iris_llm as IVR LLM substrate (external + future embedded)
-
-aicore (separate, experimental)
-  └── Sample.AI.Tools.IVR — %AI.ToolSet calling IVR via %SYS.Python
-  └── Sample.AI.RLMAgent enhanced with IVR vector/graph search tools
-  └── depends on: this feature being stable in IVR
-
-AI Hub (architecture TBD)
-  └── may absorb or replace aicore
-  └── OAuth2 flow for IRIS AI Gateway → iris_llm Rust core
-  └── does NOT affect IVR's use of iris_llm as substrate
-
-iris-vector-graph (separate)
-  └── IRISGraphEngine tools as iris_llm ToolSet — future, separate feature
-```
 
 ---
 
@@ -157,15 +148,32 @@ iris-vector-graph (separate)
 
 4. **`iris.gset` for DSPy programs**: Is this actually useful before the ObjectScript bridge exists? Could defer to when `aicore` integration is further along.
 
+5. ~~**`HybridGraphRAGPipeline` SQL introspection**: Need to confirm the pipeline's internal SQL calls are reachable via a single executor injection point — or whether multiple call sites need patching.~~ **RESOLVED**: All cursor calls are in `GraphRAGPipeline` (base class). `HybridGraphRAGPipeline` has one additional cursor site in `_get_document_content_for_entity` which is a read helper outside the query-path scope of this feature. Injection into the base class covers all query-path methods (`_find_seed_entities`, `_expand_neighborhood`, `_get_documents_from_entities`, `_validate_knowledge_graph`).
+
 ---
 
 ## Tasks
+
+> **See [`tasks.md`](tasks.md) for the authoritative implementation schedule (T001–T044, 8 phases).**
+>
+> The task list below is superseded by `tasks.md` and retained only for historical context.
+> Do **not** use these T-numbers during implementation — use `tasks.md` numbering exclusively.
+
+<details>
+<summary>Original draft task list (superseded)</summary>
 
 - [ ] T001: Add `IrisLLMDSPyAdapter` in `iris_vector_rag/dspy_modules/iris_llm_lm.py`
 - [ ] T002: Add `provider="iris_llm"` to `get_llm_func()` in `common/utils.py`
 - [ ] T003: Implement real `get_llm_func_for_embedded()` with `iris_llm` fallback
 - [ ] T004: Add `iris_vector_rag/common/iris_globals.py` (gset/gget wrapper)
 - [ ] T005: Add `[iris_llm]` optional dependency to `pyproject.toml`
-- [ ] T006: Unit tests (mocked iris_llm)
-- [ ] T007: Integration tests (real iris_llm, skip if not installed)
-- [ ] T008: Update `CHANGELOG.md` and `README.md`
+- [ ] T006: Add `SqlExecutor` Protocol in `iris_vector_rag/executor.py`
+- [ ] T007: Wire `SqlExecutor` into `GraphRAGPipeline`
+- [ ] T008: Add `iris_vector_rag/tools/graphrag.py` (`GraphRAGToolSet`)
+- [ ] T009: Unit tests — LLM substrate (mocked iris_llm)
+- [ ] T010: Unit tests — `SqlExecutor` + pipeline wiring (MockSqlExecutor, no IRIS)
+- [ ] T011: Unit tests — `GraphRAGToolSet` (MockSqlExecutor, no IRIS)
+- [ ] T012: Integration tests (real iris_llm, skip if not installed)
+- [ ] T013: Update `CHANGELOG.md` and `README.md`
+
+</details>

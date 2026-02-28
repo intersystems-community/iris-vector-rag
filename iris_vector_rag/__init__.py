@@ -4,6 +4,7 @@
 from typing import Any, Callable, Dict, List, Optional
 
 from iris_vector_rag.common.utils import get_llm_func  # Import get_llm_func
+from iris_vector_rag.executor import SqlExecutor  # SqlExecutor protocol
 
 from .config.manager import ConfigurationManager
 from .core.base import RAGPipeline
@@ -285,4 +286,5 @@ __all__ = [
     "PreConditionValidator",
     "SetupOrchestrator",
     "get_pipeline_requirements",
+    "SqlExecutor",
 ]
