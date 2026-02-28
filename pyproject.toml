@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iris-vector-rag"
-version = "0.5.18"
+version = "0.5.19"
 description = "Enterprise RAG pipelines with native IRIS vector search. 6 production implementations with RAGAS evaluation, LangChain, AWS/Azure configs. No external VectorDB required."
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "InterSystems", email = "support@intersystems.com"}
+    {name = "Thomas Dyar", email = "thomas.dyar@intersystems.com"}
 ]
 maintainers = [
     {name = "Thomas Dyar", email = "thomas.dyar@intersystems.com"}
