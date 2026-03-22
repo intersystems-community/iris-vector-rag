@@ -1,0 +1,17 @@
+[package]
+name = "iris-vector-rag-skills"
+version = "1.0.0"
+description = "RAG pipeline patterns and IRIS vector search skills for AI coding assistants"
+authors = ["InterSystems Developer Community"]
+license = "MIT"
+repository = "https://github.com/intersystems-community/iris-vector-rag"
+
+[provides]
+skills = [
+    "skills/iris-rag-pipeline",
+    "skills/iris-vector-search",
+]
+kb_items = [
+    "kb/iris-vector-patterns.md",
+]
+plugins = []
