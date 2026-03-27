@@ -388,13 +388,22 @@ def compute_recall(
 
 
 def benchmark_phase3_plaid(
-    conn, model, docs: List[Dict], queries: List[str],
-    top_k: int, schema, ingestor, n_probe: int, n_clusters: Optional[int] = None
+    conn,
+    model,
+    docs: List[Dict],
+    queries: List[str],
+    top_k: int,
+    schema,
+    ingestor,
+    n_probe: int,
+    n_clusters: Optional[int] = None,
 ) -> Dict:
-    from iris_vector_rag.pipelines.colbert_iris.plaid import PLAIDBuilder, PLAIDSearcher
     from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
+    from iris_vector_rag.pipelines.colbert_iris.plaid import PLAIDBuilder, PLAIDSearcher
 
-    logger.info(f"  Phase 3 (PLAID): {len(docs)} docs, {len(queries)} queries, n_probe={n_probe}")
+    logger.info(
+        f"  Phase 3 (PLAID): {len(docs)} docs, {len(queries)} queries, n_probe={n_probe}"
+    )
 
     builder = PLAIDBuilder(conn, token_dim=TOKEN_DIM)
     k = n_clusters or PLAIDBuilder.recommended_k(len(docs) * 53)
@@ -447,8 +456,10 @@ def benchmark_phase3_plaid(
         **percentiles(query_times),
         "mean_pruning_ratio": round(float(np.mean(pruning_ratios)), 3),
         "mean_recall_at_k": round(float(np.mean(recalls)), 3),
-        "stages": {kk: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
-                   for kk, v in stage_times.items()},
+        "stages": {
+            kk: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
+            for kk, v in stage_times.items()
+        },
     }
 
 
@@ -545,8 +556,16 @@ def main():
         )
 
         tier_results["phase2"] = benchmark_phase2_indb_hnsw(
-            conn, model, tier_docs, queries, args.top_k,
-            schema, ingestor, args.k_per_token, args.hnsw_m, args.hnsw_ef,
+            conn,
+            model,
+            tier_docs,
+            queries,
+            args.top_k,
+            schema,
+            ingestor,
+            args.k_per_token,
+            args.hnsw_m,
+            args.hnsw_ef,
         )
         logger.info(
             f"  Phase2 p50={tier_results['phase2']['p50_ms']:.1f}ms "
@@ -556,8 +575,14 @@ def main():
 
         if not args.skip_plaid:
             tier_results["phase3"] = benchmark_phase3_plaid(
-                conn, model, tier_docs, queries, args.top_k,
-                schema, ingestor, n_probe=args.n_probe,
+                conn,
+                model,
+                tier_docs,
+                queries,
+                args.top_k,
+                schema,
+                ingestor,
+                n_probe=args.n_probe,
             )
             logger.info(
                 f"  Phase3 p50={tier_results['phase3']['p50_ms']:.1f}ms "
@@ -568,17 +593,20 @@ def main():
             )
             tier_results["speedup_phase3_vs_phase2"] = round(
                 tier_results["phase2"]["p50_ms"]
-                / max(tier_results["phase3"]["p50_ms"], 0.1), 2,
+                / max(tier_results["phase3"]["p50_ms"], 0.1),
+                2,
             )
 
         if not args.skip_baseline:
             tier_results["speedup_phase1_vs_baseline"] = round(
                 tier_results["baseline"]["p50_ms"]
-                / max(tier_results["phase1"]["p50_ms"], 0.1), 2,
+                / max(tier_results["phase1"]["p50_ms"], 0.1),
+                2,
             )
             tier_results["speedup_phase2_vs_baseline"] = round(
                 tier_results["baseline"]["p50_ms"]
-                / max(tier_results["phase2"]["p50_ms"], 0.1), 2,
+                / max(tier_results["phase2"]["p50_ms"], 0.1),
+                2,
             )
 
         all_results["tiers"][str(tier)] = tier_results

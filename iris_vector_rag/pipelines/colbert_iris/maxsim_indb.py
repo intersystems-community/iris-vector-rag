@@ -52,32 +52,32 @@ class MaxSimInDB:
         if len(candidate_doc_ids) == 0:
             return []
 
-        placeholders = ",".join(["?"] * len(candidate_doc_ids))
-
         q_vecs = np.array(query_token_vecs, dtype=np.float32)
-        n_q = len(q_vecs)
-
         per_qtok_sims: Dict[str, Dict[int, float]] = {}
+        batch_size = 500
 
         cur = self._conn.cursor()
         try:
             for q_idx, q_vec in enumerate(q_vecs):
                 vec_str = "[" + ",".join(f"{v:.6f}" for v in q_vec) + "]"
-                cur.execute(
-                    f"""
+                for i in range(0, len(candidate_doc_ids), batch_size):
+                    batch = candidate_doc_ids[i : i + batch_size]
+                    placeholders = ",".join(["?"] * len(batch))
+                    cur.execute(
+                        f"""
                     SELECT doc_id,
                            VECTOR_DOT_PRODUCT(tok_vec,
                                TO_VECTOR('{vec_str}', FLOAT, {self._token_dim})) AS sim
                     FROM RAG.DocumentTokenEmbeddings
                     WHERE doc_id IN ({placeholders})
                     """,
-                    candidate_doc_ids,
-                )
-                for row in cur.fetchall():
-                    doc_id, sim = row[0], float(row[1])
-                    doc_sims = per_qtok_sims.setdefault(doc_id, {})
-                    if q_idx not in doc_sims or sim > doc_sims[q_idx]:
-                        doc_sims[q_idx] = sim
+                        batch,
+                    )
+                    for row in cur.fetchall():
+                        doc_id, sim = row[0], float(row[1])
+                        doc_sims = per_qtok_sims.setdefault(doc_id, {})
+                        if q_idx not in doc_sims or sim > doc_sims[q_idx]:
+                            doc_sims[q_idx] = sim
         finally:
             cur.close()
 
@@ -85,8 +85,7 @@ class MaxSimInDB:
             return []
 
         scores = {
-            doc_id: sum(q_sims.values())
-            for doc_id, q_sims in per_qtok_sims.items()
+            doc_id: sum(q_sims.values()) for doc_id, q_sims in per_qtok_sims.items()
         }
         return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
@@ -128,10 +127,7 @@ class MaxSimInDB:
         finally:
             cur.close()
 
-        scores = {
-            doc_id: sum(q_sims.values())
-            for doc_id, q_sims in max_sim.items()
-        }
+        scores = {doc_id: sum(q_sims.values()) for doc_id, q_sims in max_sim.items()}
         return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
     # ------------------------------------------------------------------
