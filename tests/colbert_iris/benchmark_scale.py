@@ -51,16 +51,19 @@ DEFAULT_TOP_K = 10
 def load_ag_news(n: int) -> List[Dict[str, Any]]:
     try:
         from datasets import load_dataset
+
         ds = load_dataset("ag_news", split="train", trust_remote_code=True)
         docs = []
         for i, row in enumerate(ds):
             if i >= n:
                 break
-            docs.append({
-                "doc_id": f"agnews_{i:06d}",
-                "text": row["text"][:512],
-                "metadata": {"label": row["label"], "idx": i},
-            })
+            docs.append(
+                {
+                    "doc_id": f"agnews_{i:06d}",
+                    "text": row["text"][:512],
+                    "metadata": {"label": row["label"], "idx": i},
+                }
+            )
         return docs
     except Exception as e:
         logger.warning(f"AG News load failed ({e}); generating synthetic docs")
@@ -68,9 +71,26 @@ def load_ag_news(n: int) -> List[Dict[str, Any]]:
 
 
 def _synthetic_docs(n: int) -> List[Dict[str, Any]]:
-    words = ["chest", "pain", "fever", "lung", "heart", "blood", "patient",
-             "diagnosis", "treatment", "radiology", "lab", "report", "scan",
-             "medication", "symptom", "clinical", "medical", "hospital"]
+    words = [
+        "chest",
+        "pain",
+        "fever",
+        "lung",
+        "heart",
+        "blood",
+        "patient",
+        "diagnosis",
+        "treatment",
+        "radiology",
+        "lab",
+        "report",
+        "scan",
+        "medication",
+        "symptom",
+        "clinical",
+        "medical",
+        "hospital",
+    ]
     rng = np.random.default_rng(0)
     docs = []
     for i in range(n):
@@ -85,9 +105,10 @@ def _synthetic_docs(n: int) -> List[Dict[str, Any]]:
 
 
 def load_model(model_name: str = "lightonai/GTE-ModernColBERT-v1"):
-    import importlib
-    pylate = importlib.import_module("pylate")
-    model = pylate.models.ColBERT(model_name_or_path=model_name)
+    from pylate.models import ColBERT as _ColBERTCls
+
+
+    model = _ColBERTCls(model_name_or_path=model_name)
     logger.info(f"Loaded model: {model_name}")
     return model
 
@@ -109,7 +130,7 @@ def load_or_encode(model, docs: List[Dict], cache_path: Path) -> Dict[str, np.nd
     batch_size = 32
     texts = [d["text"] for d in docs]
     for i in range(0, len(texts), batch_size):
-        batch_texts = texts[i:i + batch_size]
+        batch_texts = texts[i : i + batch_size]
         batch_embs = model.encode(batch_texts, is_query=False)
         for j, emb in enumerate(batch_embs):
             doc_id = docs[i + j]["doc_id"]
@@ -122,7 +143,9 @@ def load_or_encode(model, docs: List[Dict], cache_path: Path) -> Dict[str, np.nd
         if (i // batch_size + 1) % 10 == 0:
             elapsed = time.perf_counter() - t0
             rate = (i + len(batch_texts)) / elapsed
-            logger.info(f"  Encoded {i + len(batch_texts)}/{len(docs)} docs ({rate:.1f} docs/sec)")
+            logger.info(
+                f"  Encoded {i + len(batch_texts)}/{len(docs)} docs ({rate:.1f} docs/sec)"
+            )
 
     elapsed = time.perf_counter() - t0
     logger.info(f"Encoding done in {elapsed:.1f}s ({len(docs)/elapsed:.1f} docs/sec)")
@@ -153,8 +176,13 @@ def percentiles(times: List[float]) -> Dict[str, float]:
 # ---------------------------------------------------------------------------
 
 
-def benchmark_baseline_pylate(model, docs: List[Dict], queries: List[str],
-                               emb_cache: Dict[str, np.ndarray], top_k: int) -> Dict:
+def benchmark_baseline_pylate(
+    model,
+    docs: List[Dict],
+    queries: List[str],
+    emb_cache: Dict[str, np.ndarray],
+    top_k: int,
+) -> Dict:
     logger.info(f"  Baseline (PyLate): {len(docs)} docs, {len(queries)} queries")
     query_times = []
     stage_times = {"encode_query": [], "encode_docs": [], "maxsim": []}
@@ -188,14 +216,23 @@ def benchmark_baseline_pylate(model, docs: List[Dict], queries: List[str],
         "n_docs": len(docs),
         "n_queries": len(queries),
         **percentiles(query_times),
-        "stages": {k: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
-                   for k, v in stage_times.items()},
+        "stages": {
+            k: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
+            for k, v in stage_times.items()
+        },
     }
 
 
-def benchmark_phase1_bulk_fetch(conn, model, docs: List[Dict], queries: List[str],
-                                 emb_cache: Dict[str, np.ndarray], top_k: int,
-                                 schema, ingestor) -> Dict:
+def benchmark_phase1_bulk_fetch(
+    conn,
+    model,
+    docs: List[Dict],
+    queries: List[str],
+    emb_cache: Dict[str, np.ndarray],
+    top_k: int,
+    schema,
+    ingestor,
+) -> Dict:
     from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
 
     logger.info(f"  Phase 1 (bulk fetch): {len(docs)} docs, {len(queries)} queries")
@@ -208,8 +245,12 @@ def benchmark_phase1_bulk_fetch(conn, model, docs: List[Dict], queries: List[str
         def encode(self, texts, is_query=False):
             if is_query:
                 return self._model.encode(texts, is_query=True)
-            return [self._cache.get(f"synth_{i:06d}", self._model.encode([t], is_query=False)[0])
-                    for i, t in enumerate(texts)]
+            return [
+                self._cache.get(
+                    f"synth_{i:06d}", self._model.encode([t], is_query=False)[0]
+                )
+                for i, t in enumerate(texts)
+            ]
 
     ingestor.set_model(CachedModel(model, emb_cache))
     schema.drop_tables()
@@ -249,17 +290,30 @@ def benchmark_phase1_bulk_fetch(conn, model, docs: List[Dict], queries: List[str
             "docs_per_sec": round(len(docs) / ingest_elapsed, 1),
             "total_tokens": stats.get("total_tokens", 0),
         },
-        "stages": {k: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
-                   for k, v in stage_times.items()},
+        "stages": {
+            k: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
+            for k, v in stage_times.items()
+        },
     }
 
 
-def benchmark_phase2_indb_hnsw(conn, model, docs: List[Dict], queries: List[str],
-                                 top_k: int, schema, ingestor,
-                                 k_per_token: int, hnsw_m: int, hnsw_ef: int) -> Dict:
+def benchmark_phase2_indb_hnsw(
+    conn,
+    model,
+    docs: List[Dict],
+    queries: List[str],
+    top_k: int,
+    schema,
+    ingestor,
+    k_per_token: int,
+    hnsw_m: int,
+    hnsw_ef: int,
+) -> Dict:
     from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
 
-    logger.info(f"  Phase 2 (in-DB HNSW): {len(docs)} docs, {len(queries)} queries, M={hnsw_m} ef={hnsw_ef}")
+    logger.info(
+        f"  Phase 2 (in-DB HNSW): {len(docs)} docs, {len(queries)} queries, M={hnsw_m} ef={hnsw_ef}"
+    )
 
     schema.create_hnsw_index(m=hnsw_m, ef_construction=hnsw_ef)
     schema.create_doc_index()
@@ -296,7 +350,10 @@ def benchmark_phase2_indb_hnsw(conn, model, docs: List[Dict], queries: List[str]
     hnsw_active = (
         "HNSW" in explain_plan.upper()
         or "IDX_TOK_VEC_HNSW" in explain_plan.upper()
-        or ("INDEX" in explain_plan.upper() and "FULL TABLE SCAN" not in explain_plan.upper())
+        or (
+            "INDEX" in explain_plan.upper()
+            and "FULL TABLE SCAN" not in explain_plan.upper()
+        )
     )
 
     return {
@@ -309,8 +366,10 @@ def benchmark_phase2_indb_hnsw(conn, model, docs: List[Dict], queries: List[str]
         **percentiles(query_times),
         "hnsw_index_active": hnsw_active,
         "explain_plan_snippet": explain_plan[:300] if explain_plan else "",
-        "stages": {k: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
-                   for k, v in stage_times.items()},
+        "stages": {
+            k: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
+            for k, v in stage_times.items()
+        },
     }
 
 
@@ -319,7 +378,9 @@ def benchmark_phase2_indb_hnsw(conn, model, docs: List[Dict], queries: List[str]
 # ---------------------------------------------------------------------------
 
 
-def compute_recall(baseline_results: List[Tuple], phase_results: List[Tuple], k: int) -> float:
+def compute_recall(
+    baseline_results: List[Tuple], phase_results: List[Tuple], k: int
+) -> float:
     if not baseline_results:
         return 0.0
     baseline_set = {r[0] for r in baseline_results[:k]}
@@ -349,13 +410,17 @@ def main():
     max_docs = max(tiers)
 
     import iris.dbapi as dbapi
+
     conn = dbapi.connect(
-        hostname=IRIS_HOST, port=IRIS_PORT,
-        namespace="USER", username="_SYSTEM", password="SYS"
+        hostname=IRIS_HOST,
+        port=IRIS_PORT,
+        namespace="USER",
+        username="_SYSTEM",
+        password="SYS",
     )
 
-    from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
     from iris_vector_rag.pipelines.colbert_iris.ingest import ColBERTIngestor
+    from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
 
     schema = ColBERTSchema(conn)
     ingestor = ColBERTIngestor(conn, token_dim=TOKEN_DIM)
@@ -382,8 +447,8 @@ def main():
         "business company merger acquisition",
         "environment climate change energy",
         "education university students academic",
-    ][:args.queries] * ((args.queries // 10) + 1)
-    queries = queries[:args.queries]
+    ][: args.queries] * ((args.queries // 10) + 1)
+    queries = queries[: args.queries]
 
     all_results = {"tiers": {}, "config": vars(args)}
 
@@ -414,8 +479,16 @@ def main():
         )
 
         tier_results["phase2"] = benchmark_phase2_indb_hnsw(
-            conn, model, tier_docs, queries, args.top_k,
-            schema, ingestor, args.k_per_token, args.hnsw_m, args.hnsw_ef
+            conn,
+            model,
+            tier_docs,
+            queries,
+            args.top_k,
+            schema,
+            ingestor,
+            args.k_per_token,
+            args.hnsw_m,
+            args.hnsw_ef,
         )
         logger.info(
             f"  Phase2 p50={tier_results['phase2']['p50_ms']:.1f}ms "
@@ -425,10 +498,14 @@ def main():
 
         if not args.skip_baseline:
             tier_results["speedup_phase1_vs_baseline"] = round(
-                tier_results["baseline"]["p50_ms"] / max(tier_results["phase1"]["p50_ms"], 0.1), 2
+                tier_results["baseline"]["p50_ms"]
+                / max(tier_results["phase1"]["p50_ms"], 0.1),
+                2,
             )
             tier_results["speedup_phase2_vs_baseline"] = round(
-                tier_results["baseline"]["p50_ms"] / max(tier_results["phase2"]["p50_ms"], 0.1), 2
+                tier_results["baseline"]["p50_ms"]
+                / max(tier_results["phase2"]["p50_ms"], 0.1),
+                2,
             )
 
         all_results["tiers"][str(tier)] = tier_results
@@ -450,7 +527,9 @@ def main():
         p2 = tr["phase2"]["p50_ms"]
         hnsw = "✓" if tr["phase2"]["hnsw_index_active"] else "✗"
         spd = tr.get("speedup_phase2_vs_baseline", "n/a")
-        logger.info(f"{tier:>8}  {b:>14.1f}  {p1:>12.1f}  {p2:>12.1f}  {hnsw:>6}  {spd!s:>8}")
+        logger.info(
+            f"{tier:>8}  {b:>14.1f}  {p1:>12.1f}  {p2:>12.1f}  {hnsw:>6}  {spd!s:>8}"
+        )
 
     logger.info(f"\nFull results: {args.output}")
 

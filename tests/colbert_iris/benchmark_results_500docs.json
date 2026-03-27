@@ -1,0 +1,102 @@
+{
+  "tiers": {
+    "500": {
+      "n_docs": 500,
+      "n_tokens_est": 4000,
+      "baseline": {
+        "approach": "baseline_pylate",
+        "n_docs": 500,
+        "n_queries": 10,
+        "p50_ms": 15.670041524572298,
+        "p95_ms": 111.35225160105608,
+        "p99_ms": 150.5936167185428,
+        "mean_ms": 33.43982080114074,
+        "min_ms": 14.278708957135677,
+        "max_ms": 160.4039579979144,
+        "stages": {
+          "encode_query": {
+            "mean_ms": 30.76060420135036,
+            "p95_ms": 107.52035420737218
+          },
+          "encode_docs": {
+            "mean_ms": 0.032904098043218255,
+            "p95_ms": 0.039326891419477754
+          },
+          "maxsim": {
+            "mean_ms": 2.646312501747161,
+            "p95_ms": 3.8758767448598492
+          }
+        }
+      },
+      "phase1": {
+        "approach": "phase1_bulk_fetch",
+        "n_docs": 500,
+        "n_queries": 10,
+        "p50_ms": 460.95016653998755,
+        "p95_ms": 749.7701684333147,
+        "p99_ms": 898.9255336549832,
+        "mean_ms": 518.2828956982121,
+        "min_ms": 441.1199999740347,
+        "max_ms": 936.2143749604002,
+        "ingest": {
+          "elapsed_s": 25.49,
+          "docs_per_sec": 19.6,
+          "total_tokens": 26705
+        },
+        "stages": {
+          "encode_query": {
+            "mean_ms": 20.908441400388256,
+            "p95_ms": 26.08242674032226
+          },
+          "fetch_tokens": {
+            "mean_ms": 397.89956343825907,
+            "p95_ms": 580.2158334711563
+          },
+          "maxsim": {
+            "mean_ms": 99.47489085956477,
+            "p95_ms": 145.05395836778908
+          }
+        }
+      },
+      "phase2": {
+        "approach": "phase2_indb_hnsw",
+        "n_docs": 500,
+        "n_queries": 10,
+        "hnsw_m": 16,
+        "hnsw_ef": 200,
+        "k_per_token": 50,
+        "p50_ms": 41.95670850458555,
+        "p95_ms": 86.66529604524831,
+        "p99_ms": 114.20142642280554,
+        "mean_ms": 49.51153760193847,
+        "min_ms": 39.376666012685746,
+        "max_ms": 121.08545901719481,
+        "hnsw_index_active": true,
+        "explain_plan_snippet": "('<plans>\\r\\n <plan>\\r\\n <sql>\\r\\n  SELECT TOP ? doc_id , VECTOR_DOT_PRODUCT ( tok_vec , TO_VECTOR ( ? , FLOAT , ? ) ) AS sim FROM RAG . DocumentTokenEmbeddings ORDER BY sim DESC /*#OPTIONS {\"xDBCIsoLevel\":\"0\"} */ /*#OPTIONS {\"DynamicSQLTypeList\":\"10,4,10\"} */\\r\\n </sql>\\r\\n <cost value=\"2002.4\"/>\\r",
+        "stages": {
+          "encode_query": {
+            "mean_ms": 23.895404109498486,
+            "p95_ms": 38.68590214406137
+          },
+          "indb_maxsim": {
+            "mean_ms": 25.616133492439985,
+            "p95_ms": 48.08578110241792
+          }
+        }
+      },
+      "speedup_phase1_vs_baseline": 0.03,
+      "speedup_phase2_vs_baseline": 0.37
+    }
+  },
+  "config": {
+    "tiers": "500",
+    "queries": 10,
+    "k_per_token": 50,
+    "top_k": 10,
+    "hnsw_m": 16,
+    "hnsw_ef": 200,
+    "model": "lightonai/GTE-ModernColBERT-v1",
+    "skip_baseline": false,
+    "output": "/tmp/colbert_bench_with_baseline.json"
+  }
+}

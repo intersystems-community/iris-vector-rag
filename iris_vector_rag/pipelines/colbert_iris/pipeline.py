@@ -43,18 +43,21 @@ class IRISColBERTPipeline(BasicRAGPipeline):
         if self._model is not None:
             return
         try:
-            import importlib
-            pylate = importlib.import_module("pylate")
-            self._model = pylate.models.ColBERT(model_name_or_path=self._model_name)
+            from pylate.models import ColBERT as _ColBERT
+            self._model = _ColBERT(model_name_or_path=self._model_name)
             self._ingestor.set_model(self._model)
             logger.info(f"Loaded ColBERT model: {self._model_name}")
         except Exception as e:
             raise RuntimeError(f"ColBERT model load failed: {e}") from e
 
-    def load_documents(self, documents=None, documents_path=None, **kwargs) -> Dict[str, Any]:
+    def load_documents(
+        self, documents=None, documents_path=None, **kwargs
+    ) -> Dict[str, Any]:
         self._load_model()
 
-        result = super().load_documents(documents=documents, documents_path=documents_path, **kwargs)
+        result = super().load_documents(
+            documents=documents, documents_path=documents_path, **kwargs
+        )
 
         docs_to_ingest = documents or []
         raw_docs = [
@@ -88,7 +91,9 @@ class IRISColBERTPipeline(BasicRAGPipeline):
         q_vecs = self._encode_query(query)
 
         if self._use_hnsw:
-            scored = self._maxsim.indb_maxsim(q_vecs, top_k=top_k, k_per_token=self._k_per_token)
+            scored = self._maxsim.indb_maxsim(
+                q_vecs, top_k=top_k, k_per_token=self._k_per_token
+            )
         else:
             candidate_ids = [
                 d.id if hasattr(d, "id") and d.id else d.page_content[:64]
@@ -103,7 +108,9 @@ class IRISColBERTPipeline(BasicRAGPipeline):
         answer = None
         if generate_answer and self.llm_func and final_docs:
             try:
-                answer = self._generate_answer(query, final_docs, kwargs.get("custom_prompt"))
+                answer = self._generate_answer(
+                    query, final_docs, kwargs.get("custom_prompt")
+                )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
@@ -120,7 +127,11 @@ class IRISColBERTPipeline(BasicRAGPipeline):
             "answer": answer,
             "retrieved_documents": final_docs,
             "contexts": [d.page_content for d in final_docs],
-            "sources": self._extract_sources(final_docs) if kwargs.get("include_sources", True) else [],
+            "sources": (
+                self._extract_sources(final_docs)
+                if kwargs.get("include_sources", True)
+                else []
+            ),
             "execution_time": round(elapsed, 3),
             "metadata": {
                 "pipeline_type": "iris_colbert",
@@ -158,12 +169,15 @@ class IRISColBERTPipeline(BasicRAGPipeline):
                 row = cur.fetchone()
                 if row:
                     import json as _json
+
                     meta = {}
                     try:
                         meta = _json.loads(row[2] or "{}")
                     except Exception:
                         pass
-                    docs.append(Document(id=row[0], page_content=row[1] or "", metadata=meta))
+                    docs.append(
+                        Document(id=row[0], page_content=row[1] or "", metadata=meta)
+                    )
         finally:
             cur.close()
         return docs
