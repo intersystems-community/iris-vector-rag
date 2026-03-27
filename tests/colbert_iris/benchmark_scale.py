@@ -25,7 +25,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -106,7 +106,6 @@ def _synthetic_docs(n: int) -> List[Dict[str, Any]]:
 
 def load_model(model_name: str = "lightonai/GTE-ModernColBERT-v1"):
     from pylate.models import ColBERT as _ColBERTCls
-
 
     model = _ColBERTCls(model_name_or_path=model_name)
     logger.info(f"Loaded model: {model_name}")
@@ -388,6 +387,71 @@ def compute_recall(
     return len(baseline_set & phase_set) / len(baseline_set)
 
 
+def benchmark_phase3_plaid(
+    conn, model, docs: List[Dict], queries: List[str],
+    top_k: int, schema, ingestor, n_probe: int, n_clusters: Optional[int] = None
+) -> Dict:
+    from iris_vector_rag.pipelines.colbert_iris.plaid import PLAIDBuilder, PLAIDSearcher
+    from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
+
+    logger.info(f"  Phase 3 (PLAID): {len(docs)} docs, {len(queries)} queries, n_probe={n_probe}")
+
+    builder = PLAIDBuilder(conn, token_dim=TOKEN_DIM)
+    k = n_clusters or PLAIDBuilder.recommended_k(len(docs) * 53)
+    logger.info(f"  Building centroids K={k}...")
+    t_build = time.perf_counter()
+    build_stats = builder.build(n_clusters=k)
+    build_elapsed = time.perf_counter() - t_build
+    logger.info(f"  Build done in {build_elapsed:.1f}s")
+
+    searcher = PLAIDSearcher(conn, token_dim=TOKEN_DIM)
+    ms = MaxSimInDB(conn, token_dim=TOKEN_DIM)
+
+    query_times, stage_times = [], {"encode_query": [], "plaid_search": []}
+    pruning_ratios, recalls = [], []
+
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT DISTINCT doc_id FROM RAG.ColBERTDocuments")
+        all_doc_ids = [r[0] for r in cur.fetchall()]
+    finally:
+        cur.close()
+
+    for q in queries:
+        t0 = time.perf_counter()
+        q_embs = model.encode([q], is_query=True)
+        q_vecs = np.array(q_embs[0], dtype=np.float32)
+        if q_vecs.ndim == 1:
+            q_vecs = q_vecs.reshape(1, -1)
+        t1 = time.perf_counter()
+
+        plaid_results, meta = searcher.search(q_vecs, top_k=top_k, n_probe=n_probe)
+        t2 = time.perf_counter()
+
+        query_times.append(t2 - t0)
+        stage_times["encode_query"].append((t1 - t0) * 1000)
+        stage_times["plaid_search"].append((t2 - t1) * 1000)
+        pruning_ratios.append(meta.get("pruning_ratio", 1.0))
+
+        phase1_ref = ms.bulk_fetch_maxsim(q_vecs, all_doc_ids, top_k=top_k)
+        recall = compute_recall(phase1_ref, plaid_results, top_k)
+        recalls.append(recall)
+
+    return {
+        "approach": "phase3_plaid",
+        "n_docs": len(docs),
+        "n_queries": len(queries),
+        "n_clusters": k,
+        "n_probe": n_probe,
+        "build_elapsed_s": round(build_elapsed, 2),
+        **percentiles(query_times),
+        "mean_pruning_ratio": round(float(np.mean(pruning_ratios)), 3),
+        "mean_recall_at_k": round(float(np.mean(recalls)), 3),
+        "stages": {kk: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
+                   for kk, v in stage_times.items()},
+    }
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -403,6 +467,8 @@ def main():
     parser.add_argument("--hnsw-ef", type=int, default=200)
     parser.add_argument("--model", default="lightonai/GTE-ModernColBERT-v1")
     parser.add_argument("--skip-baseline", action="store_true")
+    parser.add_argument("--skip-plaid", action="store_true")
+    parser.add_argument("--n-probe", type=int, default=4)
     parser.add_argument("--output", default="/tmp/colbert_scale_results.json")
     args = parser.parse_args()
 
@@ -479,16 +545,8 @@ def main():
         )
 
         tier_results["phase2"] = benchmark_phase2_indb_hnsw(
-            conn,
-            model,
-            tier_docs,
-            queries,
-            args.top_k,
-            schema,
-            ingestor,
-            args.k_per_token,
-            args.hnsw_m,
-            args.hnsw_ef,
+            conn, model, tier_docs, queries, args.top_k,
+            schema, ingestor, args.k_per_token, args.hnsw_m, args.hnsw_ef,
         )
         logger.info(
             f"  Phase2 p50={tier_results['phase2']['p50_ms']:.1f}ms "
@@ -496,16 +554,31 @@ def main():
             f"HNSW_active={tier_results['phase2']['hnsw_index_active']}"
         )
 
+        if not args.skip_plaid:
+            tier_results["phase3"] = benchmark_phase3_plaid(
+                conn, model, tier_docs, queries, args.top_k,
+                schema, ingestor, n_probe=args.n_probe,
+            )
+            logger.info(
+                f"  Phase3 p50={tier_results['phase3']['p50_ms']:.1f}ms "
+                f"p95={tier_results['phase3']['p95_ms']:.1f}ms "
+                f"K={tier_results['phase3']['n_clusters']} "
+                f"pruning={tier_results['phase3']['mean_pruning_ratio']:.2f} "
+                f"recall@{args.top_k}={tier_results['phase3']['mean_recall_at_k']:.3f}"
+            )
+            tier_results["speedup_phase3_vs_phase2"] = round(
+                tier_results["phase2"]["p50_ms"]
+                / max(tier_results["phase3"]["p50_ms"], 0.1), 2,
+            )
+
         if not args.skip_baseline:
             tier_results["speedup_phase1_vs_baseline"] = round(
                 tier_results["baseline"]["p50_ms"]
-                / max(tier_results["phase1"]["p50_ms"], 0.1),
-                2,
+                / max(tier_results["phase1"]["p50_ms"], 0.1), 2,
             )
             tier_results["speedup_phase2_vs_baseline"] = round(
                 tier_results["baseline"]["p50_ms"]
-                / max(tier_results["phase2"]["p50_ms"], 0.1),
-                2,
+                / max(tier_results["phase2"]["p50_ms"], 0.1), 2,
             )
 
         all_results["tiers"][str(tier)] = tier_results
@@ -525,10 +598,14 @@ def main():
         b = tr.get("baseline", {}).get("p50_ms", float("nan"))
         p1 = tr["phase1"]["p50_ms"]
         p2 = tr["phase2"]["p50_ms"]
+        p3 = tr.get("phase3", {}).get("p50_ms", float("nan"))
         hnsw = "✓" if tr["phase2"]["hnsw_index_active"] else "✗"
-        spd = tr.get("speedup_phase2_vs_baseline", "n/a")
+        spd2 = tr.get("speedup_phase2_vs_baseline", "n/a")
+        spd3 = tr.get("speedup_phase3_vs_phase2", "n/a")
+        recall = tr.get("phase3", {}).get("mean_recall_at_k", float("nan"))
         logger.info(
-            f"{tier:>8}  {b:>14.1f}  {p1:>12.1f}  {p2:>12.1f}  {hnsw:>6}  {spd!s:>8}"
+            f"{tier:>8}  {b:>14.1f}  {p1:>12.1f}  {p2:>12.1f}  {p3:>12.1f}  "
+            f"{hnsw:>4}  {spd2!s:>8}  {spd3!s:>8}  {recall:>8.3f}"
         )
 
     logger.info(f"\nFull results: {args.output}")

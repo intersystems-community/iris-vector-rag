@@ -54,6 +54,20 @@ class ColBERTSchema:
                     PRIMARY KEY (doc_id, tok_pos)
                 )
                 """,
+                """
+                CREATE TABLE RAG.ColBERTCentroids (
+                    centroid_id  INTEGER     NOT NULL,
+                    centroid_vec VECTOR(FLOAT, 128) NOT NULL,
+                    PRIMARY KEY (centroid_id)
+                )
+                """,
+                """
+                CREATE TABLE RAG.ColBERTDocCentroids (
+                    centroid_id INTEGER     NOT NULL,
+                    doc_id      VARCHAR(64) NOT NULL,
+                    PRIMARY KEY (centroid_id, doc_id)
+                )
+                """,
             ]:
                 try:
                     cur.execute(ddl)
