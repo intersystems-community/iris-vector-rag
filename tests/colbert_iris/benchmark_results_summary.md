@@ -1,8 +1,8 @@
 # ColBERT In-Database Benchmark Results
 
-**Date**: 2026-03-27  
-**Hardware**: Apple M-series MPS (ARM), `intersystems-iris-community:latest` in Docker  
-**Model**: `lightonai/GTE-ModernColBERT-v1` (128-d token embeddings, L2-normalised)  
+**Date**: 2026-03-27
+**Hardware**: Apple M-series MPS (ARM), `intersystems-iris-community:latest` in Docker
+**Model**: `lightonai/GTE-ModernColBERT-v1` (128-d token embeddings, L2-normalised)
 **Corpus**: AG News (newstext, 512-char truncated)
 
 ## Phase Descriptions
@@ -16,55 +16,93 @@
 
 ## Benchmark Results
 
-| Tier | Tokens | K | Baseline p50 | Phase 1 p50 | Phase 2 p50 | Phase 3 p50 | Pruning | Recall@10 | P3/P2 speedup |
-|---|---|---|---|---|---|---|---|---|---|
-| 500 docs | 26,705 | 64 | 15.7ms | 416ms | 40ms | 816ms | 0.997 | 0.63 | 0.02x |
-| 2,000 docs | 107,342 | 128 | — | — | 184ms | 4,175ms | 0.991 | 0.50 | 0.04x |
+| Tier | Tokens | K | Phase 2 p50 | Phase 3 p50 | Pruning | Recall@10 | Speedup |
+|---|---|---|---|---|---|---|---|
+| 500 docs | 26,705 | 64 | 40ms | 816ms | 0.997 | 0.63 | 0.02x |
+| 2,000 docs | 107,342 | 128 | 184ms | 4,175ms | 0.991 | 0.50 | 0.04x |
+| **5,000 docs** | **267,063** | **512** | **391ms** | **13,144ms** | **0.742** | **0.54** | **0.03x** |
 
 ## Key Findings
 
-### Finding 1: PLAID crossover not reached at ≤2K docs
-At 500 docs (26K tokens, K=64): pruning_ratio=0.997 — 99.7% of docs remain in the
-candidate set after Stage 1.5. PLAID provides no speedup at this scale.
+### Finding 1: PLAID pruning activates at T5K — but Stage 2 SQL overhead dominates
 
-At 2K docs (107K tokens, K=128): pruning_ratio=0.991. Still ~99% of docs hit.
+At 5K docs (267K tokens, K=512, n_probe=4): **pruning_ratio=0.742** — pruning IS working
+(26% of docs eliminated). But Phase 3 is 33x **slower** than Phase 2.
 
-**Root cause**: With K=128 centroids and n_probe=4, 4 query tokens × 4 centroid hits = 16
-unique centroids touched = 16/128 = 12.5% of centroid space. Since tokens distribute across
-docs, 12.5% of centroids maps to ~99% of docs. Pruning only activates when the centroid
-space is large enough that 12.5% coverage ≪ corpus coverage.
+**Root cause**: Stage 2 exact MaxSim on 3,700 candidates requires:
+- 4 query tokens × 3,700 candidates ÷ 500 (IN-list batch) = 29.6 SQL calls per query
+- Each SQL call: `VECTOR_DOT_PRODUCT` over all tokens in those candidates
+- Total: ~29 IRIS round-trips vs Phase 2's 4 round-trips
 
-**Oracle prediction confirmed**: Crossover at ~5K docs / 260K tokens where
-16/256 = 6.25% centroid coverage → ~25% doc coverage → genuine pruning.
+The Python-orchestrated batched approach adds prohibitive round-trip overhead.
+Phase 2 HNSW issues exactly 4 SQL calls (1 per query token), each leveraging
+IRIS's native HNSW graph traversal. PLAID as implemented adds 7× more round-trips
+while only eliminating 26% of the search space.
 
-### Finding 2: Phase 2 HNSW is fast and scales well
-- 500 docs: 40ms  
-- 2K docs: 184ms  
-- Phase 2 is already the best approach for the scale we can practically benchmark here.
+**Fix**: IRIS Embedded Python stored procedure for Stage 2 — single SQL call
+that loops over candidates in-database. This is the correct architecture but
+requires the stored procedure from FR-002 (out of scope for this branch).
 
-### Finding 3: Phase 1 bottleneck is SQL round-trips
-- 500 docs: 416ms (4 qtoks × 500 docs = 2000 VECTOR_DOT_PRODUCT calls, batched)
-- Phase 1 is 10x slower than Phase 2 — confirms Phase 2 is strictly better
+### Finding 2: Phase 2 HNSW scales better than expected at small scale
+- 500 docs: 40ms
+- 2K docs: 184ms
+- 5K docs: 391ms
+- Scaling is roughly O(N × q_tokens) not O(log N) — still dominated by round-trips
+  at this scale (267K tokens ÷ HNSW graph traversal overhead)
 
-### Finding 4: Baseline (in-memory) wins at small scale
-- 500 docs baseline: 15.7ms — doc embeddings in numpy arrays, zero I/O
-- Real-world baseline (without cache) would be 150-200ms for `model.encode(500 docs)`
-- At that point Phase 2 (40ms) is 4-5x faster than real baseline
+### Finding 3: Phase 1 is always worse than Phase 2
+- 500 docs: 416ms vs Phase 2's 40ms (10x slower)
+- Phase 1 is a dead end — Phase 2 dominates at all scales
 
-## PLAID Crossover Projection
+### Finding 4: Baseline (cached) wins at small scale
+- 500 docs baseline: 15.7ms — in-memory numpy, zero I/O
+- Real-world (no cache): 150-200ms for `model.encode()` — Phase 2 (40ms) wins
 
-Based on Phase 2 scaling (40ms → 184ms for 500→2K, roughly O(log N) with HNSW):
+### Finding 5: IRIS HNSW class lock (critical operational note)
+`CREATE INDEX AS HNSW` acquires a class compile lock on `RAG.DocumentTokenEmbeddings`
+that persists even after connection close. Any subsequent `UPDATE` on that table
+returns SQLCODE -110 (locking conflict). Fix:
+```bash
+# Kill the IRIS process holding the lock, then force-recompile:
+docker exec -i iris-container bash -c "echo \"set sc=\$SYSTEM.Process.Terminate(<PID>,1) write sc halt\" | /usr/irissys/bin/irissession IRIS -U %SYS"
+docker exec -i iris-container bash -c "echo \"set sc=\$SYSTEM.OBJ.Compile(\\\"RAG.DocumentTokenEmbeddings\\\",\\\"fck\\\") write sc halt\" | /usr/irissys/bin/irissession IRIS -U USER"
+```
+Must use **separate connections** for HNSW build and PLAID centroid assignment.
 
-| Scale | Tokens (est) | K | Phase 2 est | Phase 3 est | Pruning est | Speedup est |
+## PLAID Crossover: Revised Analysis
+
+The Python-orchestrated PLAID will **never beat Phase 2 HNSW** because:
+- Phase 2: O(Q × k_per_token) SQL calls — fixed at 4 calls regardless of corpus size
+- Phase 3: O(Q × n_candidates ÷ batch_size) SQL calls — grows with candidates
+
+The original PLAID paper runs entirely in-process (C++ or CUDA). Porting to
+Python-orchestrated SQL inherits IRIS round-trip overhead that negates pruning savings.
+
+**The correct Phase 3 architecture** (not yet implemented):
+```sql
+-- Single stored procedure call replaces all Python round-trips:
+CALL RAG.ColBERT_Search(query_token_json, top_k, n_probe)
+```
+This stored procedure (Embedded Python in IRIS) would:
+1. Stage 1: centroid scan (in-DB)
+2. Stage 1.5: DocCentroids lookup (in-DB)
+3. Stage 2: MaxSim over candidates (in-DB)
+Return: ranked (doc_id, score) list
+
+Expected: single network call ≈ 50-100ms at 5K docs, beating Phase 2 (391ms).
+
+## PLAID Crossover Projection (with stored procedure)
+
+| Scale | Tokens | K | Phase 2 | Phase 3 (SP) est | Pruning est | Speedup est |
 |---|---|---|---|---|---|---|
-| 5K docs | 265K | 256 | ~250ms | ~120ms | ~0.25 | ~2x |
-| 10K docs | 530K | 512 | ~350ms | ~90ms | ~0.10 | ~3.9x |
-| 50K docs | 2.6M | 2048 | ~900ms | ~80ms | ~0.03 | ~11x |
+| 5K docs | 267K | 512 | 391ms | ~80ms | ~0.26 | ~4.9x |
+| 10K docs | 530K | 512 | ~600ms | ~90ms | ~0.10 | ~6.7x |
+| 50K docs | 2.6M | 2048 | ~2500ms | ~100ms | ~0.03 | ~25x |
 
 ## IRIS-Specific Notes
 
 - `DROP TABLE IF EXISTS` not supported → use try/except on SQLCODE -201
-- `CREATE TABLE IF NOT EXISTS` not supported → use try/except on SQLCODE -201  
+- `CREATE TABLE IF NOT EXISTS` not supported → use try/except on SQLCODE -201
 - IN-list parameter limit ~500 → batch all IN-list queries
 - HNSW activated only with `TOP N ... ORDER BY sim DESC` pattern
 - Single-row INSERT rate: ~1000 rows/sec → 530K tokens for 10K docs = ~9 min ingest
