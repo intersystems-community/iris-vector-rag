@@ -169,12 +169,14 @@ def _get_iris_dbapi_module():
                     if os_mod.path.isdir(venv_iris_dir) and venv_iris_dir not in search_paths:
                         search_paths.append(venv_iris_dir)
 
-            # Try each search path
+            # Try each search path — check both legacy _init_elsdk.py and
+            # newer _elsdk_.py (renamed in intersystems-irispython >= 3.4)
             init_elsdk_path = None
             for search_dir in search_paths:
-                candidate_path = os_mod.path.join(search_dir, '_init_elsdk.py')
-                if os_mod.path.exists(candidate_path):
-                    init_elsdk_path = candidate_path
+                for candidate_name in ('_init_elsdk.py', '_elsdk_.py'):
+                    candidate_path = os_mod.path.join(search_dir, candidate_name)
+                    if os_mod.path.exists(candidate_path):
+                        init_elsdk_path = candidate_path
                     logger.info(f"Found _init_elsdk.py at {init_elsdk_path}")
                     break
 
