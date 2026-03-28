@@ -4,6 +4,16 @@
 **Created**: 2026-03-27
 **Status**: Draft
 
+## Clarifications
+
+### Session 2026-03-27
+
+- Q: Where should the numpy install for IRIS embedded Python live? → A: Install into the running spike container via a setup script / conftest fixture — no new Dockerfile added to the repo.
+- Q: What is the p95 latency target for the SP at T5K? → A: p95 ≤ 500ms.
+- Q: Stage 1 centroid scan: one SQL call per query token or batched? → A: One `iris.sql.exec()` per query token (4 in-process calls, simple, proven pattern).
+- Q: How should `search_via_sp()` surface SP errors to the caller? → A: Propagate raw `iris.dbapi.ProgrammingError` — no wrapping; matches existing codebase pattern.
+- Q: What fills the gap between 10 named tests and the 15-test minimum in FR-007? → A: Per-stage timing assertions (Stage 1 ≤ 10ms, Stage 1.5 ≤ 15ms, Stage 2 ≤ 200ms).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — Single-Call PLAID Search Beats Phase 2 HNSW (Priority: P1)
@@ -70,7 +80,7 @@ Python client code calls the procedure with standard `cursor.execute("CALL RAG.C
 
 ### Edge Cases
 
-- What if `q_vecs_json` is malformed? → SP raises descriptive error; client receives SQLCODE with message.
+- What if `q_vecs_json` is malformed? → SP raises a SQLCODE error; `search_via_sp()` lets the raw `iris.dbapi.ProgrammingError` propagate to the caller — no wrapping.
 - What if PLAID centroids not yet built? → SP returns empty result set (no SQLCODE -30 crash).
 - What if top_k > number of candidate docs? → Return all candidates, not an error.
 - What if temp table `#colbert_results` exists from a prior call on the same connection? → Drop-and-recreate at start of each SP invocation.
@@ -78,19 +88,20 @@ Python client code calls the procedure with standard `cursor.execute("CALL RAG.C
 
 ## Requirements *(mandatory)*
 
-### FR-001: Dockerfile with numpy Pre-installed
+### FR-001: numpy Pre-installed in Spike Container
 
-`docker/iris-langchain-spike/Dockerfile` (or equivalent) must include:
+numpy must be installed into the IRIS embedded Python path before tests run. Delivery mechanism: a `scripts/setup_spike_env.sh` script that runs:
+```bash
+docker exec iris-langchain-spike pip3 install --target /usr/irissys/mgr/python numpy==1.26.4
 ```
-RUN pip3 install --target /usr/irissys/mgr/python numpy==1.26.4
-```
+A pytest fixture in `tests/colbert_iris/conftest_sp.py` calls this script (or the equivalent command) as a session-scoped setup step, skipping if numpy is already present. No new Dockerfile is added to the repo.
 Verified by `import numpy` succeeding inside IRIS embedded Python.
 
 ### FR-002: `RAG.ColBERT_Search` ClassMethod
 
 An IRIS ClassMethod `RAG.ColBERT_Search` with `Language=python, SqlProc` that:
 1. Parses `q_vecs_json` → numpy array shape `(n_qtoks, 128)`
-2. **Stage 1**: For each query token, `SELECT TOP n_probe centroid_id FROM RAG.ColBERTCentroids ORDER BY VECTOR_DOT_PRODUCT(centroid_vec, TO_VECTOR(?)) DESC` — full table scan, no HNSW
+2. **Stage 1**: One `iris.sql.exec()` per query token: `SELECT TOP n_probe centroid_id FROM RAG.ColBERTCentroids ORDER BY VECTOR_DOT_PRODUCT(centroid_vec, TO_VECTOR(?)) DESC` — full table scan, no HNSW; 4 in-process calls for a 4-token query
 3. **Stage 1.5**: `SELECT DISTINCT doc_id FROM RAG.ColBERTDocCentroids WHERE centroid_id IN (...)` — single SQL call
 4. **Stage 2**: `SELECT doc_id, tok_vec FROM RAG.DocumentTokenEmbeddings WHERE doc_id IN (candidates)` — single SQL call; numpy matmul for MaxSim
 5. Populates session-scoped `#colbert_results (doc_id VARCHAR, score DOUBLE)` temp table
@@ -127,15 +138,20 @@ docker exec <container> irissession IRIS -U USER \
 - Results identical to Python-orchestrated Phase 3
 - Latency p50 < Phase 2 p50 at T5K (integration)
 - numpy matmul correctness (unit)
-- Malformed JSON raises clear error
+- Malformed JSON raises `iris.dbapi.ProgrammingError` (no wrapping)
 - Empty centroid table returns empty result (not crash)
 - n_probe=1 vs n_probe=8 recall tradeoff
 - CALL syntax works via iris.dbapi
 - Temp table cleaned up between calls
+- Stage 1 per-token timing ≤ 10ms (4 calls × K=512 centroid scan)
+- Stage 1.5 candidate expansion timing ≤ 15ms
+- Stage 2 token fetch + matmul timing ≤ 200ms
+- top_k > candidate count returns all candidates without error
+- numpy install verified (session-scoped fixture)
 
 ## Success Criteria *(mandatory)*
 
-- **SC-001**: T5K benchmark SP p50 ≤ 250ms (Phase 2 is 391ms — at least 1.5× faster).
+- **SC-001**: T5K benchmark SP p50 ≤ 250ms and p95 ≤ 500ms (Phase 2 is 391ms p50 — at least 1.5× faster at median).
 - **SC-002**: recall@10 ≥ 80% vs Phase 2 exact MaxSim at T5K, n_probe=4.
 - **SC-003**: `import numpy` succeeds in IRIS embedded Python on any container built from project Dockerfile.
 - **SC-004**: `cursor.execute("CALL RAG.ColBERT_Search(?, ?, ?)", ...)` returns rows without error.
