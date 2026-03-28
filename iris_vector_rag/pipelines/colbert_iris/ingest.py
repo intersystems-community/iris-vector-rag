@@ -44,7 +44,9 @@ class ColBERTIngestor:
         Returns stats dict.
         """
         if self._model is None:
-            raise RuntimeError("ColBERTIngestor: model not set — call set_model() first")
+            raise RuntimeError(
+                "ColBERTIngestor: model not set — call set_model() first"
+            )
 
         t0 = time.perf_counter()
         total_tokens = 0
@@ -74,7 +76,9 @@ class ColBERTIngestor:
             "docs_failed": failed,
             "total_tokens": total_tokens,
             "elapsed_s": round(elapsed, 2),
-            "docs_per_sec": round((len(docs) - failed) / elapsed, 1) if elapsed > 0 else 0,
+            "docs_per_sec": (
+                round((len(docs) - failed) / elapsed, 1) if elapsed > 0 else 0
+            ),
         }
 
     # ------------------------------------------------------------------

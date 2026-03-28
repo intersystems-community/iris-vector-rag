@@ -2,7 +2,7 @@
 
 ## Call Syntax (from iris.dbapi)
 ```python
-cursor.execute("CALL RAG.ColBERTSearch_Search(?, ?, ?)", [q_vecs_json, top_k, n_probe])
+cursor.execute("SELECT RAG.ColBERTSearch_Search(?, ?, ?)", [q_vecs_json, top_k, n_probe])
 # OR via search_via_sp() wrapper:
 results, meta = PLAIDSearcher(conn).search_via_sp(conn, query_vecs, top_k=10, n_probe=4)
 ```

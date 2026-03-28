@@ -25,7 +25,7 @@ class PLAIDBuilder:
     def recommended_k(n_tokens: int) -> int:
         raw = max(16, n_tokens // 400)
         exp = round(math.log2(raw))
-        return max(16, min(4096, 2 ** exp))
+        return max(16, min(4096, 2**exp))
 
     def build(self, n_clusters: Optional[int] = None) -> Dict:
         from sklearn.cluster import MiniBatchKMeans
@@ -43,7 +43,9 @@ class PLAIDBuilder:
         t0 = time.perf_counter()
         vecs, doc_ids, tok_positions = self._fetch_all_tokens()
 
-        km = MiniBatchKMeans(n_clusters=k, random_state=42, n_init=10, batch_size=min(10000, n_tokens))
+        km = MiniBatchKMeans(
+            n_clusters=k, random_state=42, n_init=10, batch_size=min(10000, n_tokens)
+        )
         labels = km.fit_predict(vecs)
         centroids = km.cluster_centers_.astype(np.float32)
         norms = np.linalg.norm(centroids, axis=1, keepdims=True)
@@ -86,7 +88,9 @@ class PLAIDBuilder:
             tok_positions.append(row[1])
             raw = row[2]
             if isinstance(raw, str):
-                v = np.array([float(x) for x in raw.strip("[]").split(",")], dtype=np.float32)
+                v = np.array(
+                    [float(x) for x in raw.strip("[]").split(",")], dtype=np.float32
+                )
             else:
                 v = np.array(raw, dtype=np.float32)
             vecs.append(v)
@@ -200,8 +204,14 @@ class PLAIDSearcher:
         stage15_ms = (time.perf_counter() - t0) * 1000
 
         if not candidate_ids:
-            return [], {"candidate_count": 0, "total_docs": 0, "pruning_ratio": 0.0,
-                        "stage1_ms": stage1_ms, "stage15_ms": stage15_ms, "stage2_ms": 0.0}
+            return [], {
+                "candidate_count": 0,
+                "total_docs": 0,
+                "pruning_ratio": 0.0,
+                "stage1_ms": stage1_ms,
+                "stage15_ms": stage15_ms,
+                "stage2_ms": 0.0,
+            }
 
         t0 = time.perf_counter()
         results = self._stage2_exact_maxsim(q_vecs, candidate_ids, top_k)
@@ -283,7 +293,9 @@ class PLAIDSearcher:
             finally:
                 cur.close()
 
-        scores = {doc_id: sum(q_sims.values()) for doc_id, q_sims in per_qtok_sims.items()}
+        scores = {
+            doc_id: sum(q_sims.values()) for doc_id, q_sims in per_qtok_sims.items()
+        }
         return sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
     def _total_doc_count(self) -> int:
@@ -296,3 +308,38 @@ class PLAIDSearcher:
             return 0
         finally:
             cur.close()
+
+    def search_via_sp(
+        self,
+        conn,
+        query_token_vecs: np.ndarray,
+        top_k: int = 10,
+        n_probe: int = 4,
+    ) -> Tuple[List[Tuple[str, float]], Dict]:
+        import json as _json
+
+        q_vecs = np.array(query_token_vecs, dtype=np.float32)
+        q_json = _json.dumps(q_vecs.tolist())
+
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                "SELECT RAG.ColBERTSearch_Search(?, ?, ?)",
+                [q_json, top_k, n_probe],
+            )
+            row = cur.fetchone()
+            raw_json = row[0]
+        finally:
+            cur.close()
+
+        raw = _json.loads(raw_json)
+        results = [(str(d), float(s)) for d, s in raw.get("results", [])]
+        meta = {
+            "n_centroids": raw.get("n_centroids", 0),
+            "n_candidates": raw.get("n_candidates", 0),
+            "stage1_ms": raw.get("stage1_ms", 0.0),
+            "stage15_ms": raw.get("stage15_ms", 0.0),
+            "stage2_ms": raw.get("stage2_ms", 0.0),
+            "total_ms": raw.get("total_ms", 0.0),
+        }
+        return results, meta

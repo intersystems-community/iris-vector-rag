@@ -1,9 +1,9 @@
 # Research Spike: `langchain-intersystems` Integration
 
-**Created**: 2026-03-22  
-**Owner**: Thomas Dyar  
-**Target**: Complete week of March 29 (before AIML71 deck due April 13)  
-**Branch for results**: `feat/langchain-intersystems-adapter`  
+**Created**: 2026-03-22
+**Owner**: Thomas Dyar
+**Target**: Complete week of March 29 (before AIML71 deck due April 13)
+**Branch for results**: `feat/langchain-intersystems-adapter`
 **PR target**: public `iris-vector-rag` repo
 
 ---

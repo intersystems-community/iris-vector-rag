@@ -20,10 +20,9 @@ import os
 import time
 import uuid
 
+import iris.dbapi as dbapi
 import numpy as np
 import pytest
-
-import iris.dbapi as dbapi
 
 from iris_vector_rag.pipelines.colbert_iris.ingest import ColBERTIngestor
 from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
@@ -91,7 +90,11 @@ def maxsim(conn, schema):
 
 def make_docs(n: int, prefix: str = "doc") -> list:
     return [
-        {"doc_id": f"{prefix}_{i}", "text": f"Medical text about topic {i}.", "metadata": {"idx": i}}
+        {
+            "doc_id": f"{prefix}_{i}",
+            "text": f"Medical text about topic {i}.",
+            "metadata": {"idx": i},
+        }
         for i in range(n)
     ]
 
@@ -142,7 +145,11 @@ def test_doc_index_created(schema):
 
 @pytest.mark.integration
 def test_ingest_single_doc(ingestor, schema):
-    doc = {"doc_id": "single_001", "text": "Single document for ingestion test.", "metadata": {}}
+    doc = {
+        "doc_id": "single_001",
+        "text": "Single document for ingestion test.",
+        "metadata": {},
+    }
     stats = ingestor.ingest_documents([doc])
     assert stats["docs_ingested"] == 1
     assert stats["docs_failed"] == 0
@@ -190,7 +197,11 @@ def test_ingest_metadata_roundtrip(ingestor, schema):
 
 @pytest.mark.integration
 def test_ingest_token_count_positive(ingestor, schema):
-    doc = {"doc_id": "token_count_001", "text": "Some text to be tokenised.", "metadata": {}}
+    doc = {
+        "doc_id": "token_count_001",
+        "text": "Some text to be tokenised.",
+        "metadata": {},
+    }
     stats = ingestor.ingest_documents([doc])
     assert stats["total_tokens"] > 0
 
@@ -266,13 +277,21 @@ def test_bulk_fetch_synthetic_ranking(conn, schema):
     docs = [
         {"doc_id": "synth_target", "text": "target document", "metadata": {}},
         {"doc_id": "synth_noise1", "text": "irrelevant noise document", "metadata": {}},
-        {"doc_id": "synth_noise2", "text": "another unrelated document", "metadata": {}},
+        {
+            "doc_id": "synth_noise2",
+            "text": "another unrelated document",
+            "metadata": {},
+        },
     ]
     ing.ingest_documents(docs)
 
     ms = MaxSimInDB(conn, token_dim=TOKEN_DIM)
-    results = ms.bulk_fetch_maxsim(target_vec, ["synth_target", "synth_noise1", "synth_noise2"], top_k=3)
-    assert results[0][0] == "synth_target", f"Expected synth_target first, got {results[0][0]}"
+    results = ms.bulk_fetch_maxsim(
+        target_vec, ["synth_target", "synth_noise1", "synth_noise2"], top_k=3
+    )
+    assert (
+        results[0][0] == "synth_target"
+    ), f"Expected synth_target first, got {results[0][0]}"
 
 
 # ---------------------------------------------------------------------------
@@ -327,9 +346,11 @@ def test_explain_uses_hnsw_for_token_query(maxsim, schema):
     plan = maxsim.explain_indb_query(q_vec, k_per_token=50)
     assert plan, "EXPLAIN returned empty plan"
     plan_upper = plan.upper()
-    assert "FULL TABLE SCAN" not in plan_upper or "HNSW" in plan_upper or "INDEX" in plan_upper, (
-        f"Query plan suggests no index usage:\n{plan}"
-    )
+    assert (
+        "FULL TABLE SCAN" not in plan_upper
+        or "HNSW" in plan_upper
+        or "INDEX" in plan_upper
+    ), f"Query plan suggests no index usage:\n{plan}"
 
 
 @pytest.mark.integration
@@ -339,9 +360,9 @@ def test_explain_no_full_table_scan_with_hnsw(maxsim, schema):
     q_vec = np.ones(TOKEN_DIM, dtype=np.float32)
     q_vec /= np.linalg.norm(q_vec)
     plan = maxsim.explain_indb_query(q_vec, k_per_token=10)
-    assert "READ" in plan.upper() or "INDEX" in plan.upper() or "HNSW" in plan.upper(), (
-        f"Expected index read in plan:\n{plan}"
-    )
+    assert (
+        "READ" in plan.upper() or "INDEX" in plan.upper() or "HNSW" in plan.upper()
+    ), f"Expected index read in plan:\n{plan}"
 
 
 @pytest.mark.integration
@@ -357,7 +378,10 @@ def test_explain_plan_contains_documenttokenembeddings(maxsim):
     q_vec = np.random.rand(TOKEN_DIM).astype(np.float32)
     q_vec /= np.linalg.norm(q_vec)
     plan = maxsim.explain_indb_query(q_vec)
-    assert "DOCUMENTTOKENEMBEDDINGS" in plan.upper() or "DocumentTokenEmbeddings".upper() in plan.upper()
+    assert (
+        "DOCUMENTTOKENEMBEDDINGS" in plan.upper()
+        or "DocumentTokenEmbeddings".upper() in plan.upper()
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -1,10 +1,10 @@
 # Spike Notes: `langchain-intersystems` Integration
 
-**Spike run**: 2026-03-23  
-**Branch**: `feat/langchain-intersystems-adapter`  
-**Wheel tested**: `langchain_intersystems-0.0.1-py3-none-any.whl` (READY 2026 hackathon kit)  
-**IRIS**: `intersystemsdc/iris-community:latest` — dedicated container `iris-langchain-spike` on port 13972  
-**Embeddings**: OpenAI `text-embedding-3-small` (1536-dim) for all questions; HuggingFace `all-MiniLM-L6-v2` (384-dim) for Q7  
+**Spike run**: 2026-03-23
+**Branch**: `feat/langchain-intersystems-adapter`
+**Wheel tested**: `langchain_intersystems-0.0.1-py3-none-any.whl` (READY 2026 hackathon kit)
+**IRIS**: `intersystemsdc/iris-community:latest` — dedicated container `iris-langchain-spike` on port 13972
+**Embeddings**: OpenAI `text-embedding-3-small` (1536-dim) for all questions; HuggingFace `all-MiniLM-L6-v2` (384-dim) for Q7
 **Raw results**: `docs/spike_results.json`
 
 ---
@@ -209,15 +209,15 @@ from langchain_core.documents import Document
 
 class IRISRAGRetriever(BaseRetriever):
     """Drop IRISVectorStore into any iris-vector-rag pipeline."""
-    
+
     def __init__(self, embeddings, connect_kwargs, collection_name, search_kwargs=None):
         self.vs = IRISVectorStore(embeddings, connect_kwargs=connect_kwargs,
                                    collection_name=collection_name)
         self.search_kwargs = search_kwargs or {"k": 5}
-    
+
     def _get_relevant_documents(self, query: str) -> list[Document]:
         return self.vs.similarity_search(query, **self.search_kwargs)
-    
+
     async def _aget_relevant_documents(self, query: str) -> list[Document]:
         return await self.vs.asimilarity_search(query, **self.search_kwargs)
 ```

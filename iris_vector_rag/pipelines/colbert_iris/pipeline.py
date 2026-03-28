@@ -44,6 +44,7 @@ class IRISColBERTPipeline(BasicRAGPipeline):
             return
         try:
             from pylate.models import ColBERT as _ColBERT
+
             self._model = _ColBERT(model_name_or_path=self._model_name)
             self._ingestor.set_model(self._model)
             logger.info(f"Loaded ColBERT model: {self._model_name}")

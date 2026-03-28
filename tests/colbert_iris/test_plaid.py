@@ -1,16 +1,17 @@
 import os
-import pytest
-import numpy as np
-import iris.dbapi as dbapi
 
-from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
+import iris.dbapi as dbapi
+import numpy as np
+import pytest
+
 from iris_vector_rag.pipelines.colbert_iris.ingest import ColBERTIngestor
 from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
 from iris_vector_rag.pipelines.colbert_iris.plaid import (
     PLAIDBuilder,
-    PLAIDSearcher,
     PLAIDNotBuiltError,
+    PLAIDSearcher,
 )
+from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
 
 IRIS_HOST = os.environ.get("IRIS_HOSTNAME", "localhost")
 IRIS_PORT = int(os.environ.get("IRIS_PORT", "13972"))
@@ -35,8 +36,11 @@ class DummyModel:
 @pytest.fixture(scope="module")
 def conn():
     c = dbapi.connect(
-        hostname=IRIS_HOST, port=IRIS_PORT,
-        namespace="USER", username="_SYSTEM", password="SYS",
+        hostname=IRIS_HOST,
+        port=IRIS_PORT,
+        namespace="USER",
+        username="_SYSTEM",
+        password="SYS",
     )
     yield c
     c.close()
@@ -49,7 +53,11 @@ def populated_db(conn):
     schema.create_tables(token_dim=TOKEN_DIM)
     ingestor = ColBERTIngestor(conn, model=DummyModel(), token_dim=TOKEN_DIM)
     docs = [
-        {"doc_id": f"plaid_{i:04d}", "text": f"Document {i} about topic {i % 10}.", "metadata": {"idx": i}}
+        {
+            "doc_id": f"plaid_{i:04d}",
+            "text": f"Document {i} about topic {i % 10}.",
+            "metadata": {"idx": i},
+        }
         for i in range(N_DOCS)
     ]
     ingestor.ingest_documents(docs, batch_size=20)
@@ -145,14 +153,17 @@ class TestPLAIDBuild:
 
 @pytest.mark.integration
 class TestRecommendedK:
-    @pytest.mark.parametrize("n_tokens,expected", [
-        (25_600, 64),
-        (102_400, 256),
-        (204_800, 512),
-        (400, 16),
-        (999, 16),
-        (16_000_000, 4096),
-    ])
+    @pytest.mark.parametrize(
+        "n_tokens,expected",
+        [
+            (25_600, 64),
+            (102_400, 256),
+            (204_800, 512),
+            (400, 16),
+            (999, 16),
+            (16_000_000, 4096),
+        ],
+    )
     def test_recommended_k(self, n_tokens, expected):
         assert PLAIDBuilder.recommended_k(n_tokens) == expected
 
@@ -259,4 +270,6 @@ class TestPLAIDSearch:
             recalls.append(recall)
 
         mean_recall = np.mean(recalls)
-        assert mean_recall >= 0.7, f"recall@10 too low: {mean_recall:.2f} (expected >=0.7 at 80 docs)"
+        assert (
+            mean_recall >= 0.7
+        ), f"recall@10 too low: {mean_recall:.2f} (expected >=0.7 at 80 docs)"

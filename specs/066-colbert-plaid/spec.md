@@ -166,4 +166,3 @@ Every row in `RAG.DocumentTokenEmbeddings` must have a non-null `centroid_id` af
 - Col-Bandit adaptive pruning (post-READY 2026)
 - IRIS Embedded Python stored procedure (Python orchestrator sufficient)
 - MS MARCO evaluation (AG News used as benchmark proxy)
-
