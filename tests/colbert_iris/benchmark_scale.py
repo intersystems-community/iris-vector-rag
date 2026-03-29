@@ -542,11 +542,11 @@ def benchmark_phase2_vecindex(
     schema=None,
     ingestor=None,
     existing_searcher=None,
+    emb_cache: Optional[Dict[str, np.ndarray]] = None,
 ) -> Dict:
-    from iris_vector_rag.pipelines.colbert_iris.vecindex_phase2 import VecIndexSearcher
-    from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
-    from iris_vector_rag.pipelines.colbert_iris.ingest import ColBERTIngestor
     from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
+    from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
+    from iris_vector_rag.pipelines.colbert_iris.vecindex_phase2 import VecIndexSearcher
 
     logger.info(
         f"  Phase 2 VecIndex (RP-tree): {len(docs)} docs, {len(queries)} queries, nprobe={nprobe}"
@@ -564,10 +564,41 @@ def benchmark_phase2_vecindex(
         ingest_elapsed = 0.0
         build_elapsed = 0.0
         logger.info("  Using provided VecIndex searcher (no ingest)...")
-    elif ingestor is not None:
-        logger.info("  Ingesting with dual-write to VecIndex...")
+    elif emb_cache is not None:
+        logger.info("  Bulk-inserting from embedding cache (no re-encoding)...")
         t_ingest = time.perf_counter()
-        stats = ingestor.ingest_documents(docs, use_vecindex=True, vecindex_searcher=searcher)
+        from iris_vector_graph import IRISGraphEngine
+        import intersystems_iris
+        native = intersystems_iris.createConnection(
+            hostname=getattr(conn, "hostname", os.environ.get("IRIS_HOSTNAME", "localhost")),
+            port=getattr(conn, "port", int(os.environ.get("IRIS_PORT", "1972"))),
+            namespace=getattr(conn, "namespace", "USER"),
+            username=os.environ.get("IRIS_USERNAME", "_SYSTEM"),
+            password=os.environ.get("IRIS_PASSWORD", "SYS"),
+        )
+        engine = IRISGraphEngine(native)
+        engine.vec_create_index("bench_vi", TOKEN_DIM, "dot")
+        pairs = []
+        for doc in docs:
+            embs = emb_cache.get(doc["doc_id"])
+            if embs is None:
+                continue
+            for pos, vec in enumerate(embs):
+                pairs.append({"id": f"{doc['doc_id']}:{pos}", "embedding": vec.tolist()})
+        CHUNK = 500
+        for i in range(0, len(pairs), CHUNK):
+            engine.vec_bulk_insert("bench_vi", pairs[i : i + CHUNK])
+        ingest_elapsed = time.perf_counter() - t_ingest
+        t_build = time.perf_counter()
+        engine.vec_build("bench_vi")
+        build_elapsed = time.perf_counter() - t_build
+        native.close()
+    elif ingestor is not None:
+        logger.info("  Ingesting with dual-write to VecIndex (slow: re-encodes docs)...")
+        t_ingest = time.perf_counter()
+        stats = ingestor.ingest_documents(
+            docs, use_vecindex=True, vecindex_searcher=searcher
+        )
         ingest_elapsed = time.perf_counter() - t_ingest
         build_elapsed = stats.get("vecindex_build_ms", 0) / 1000
     else:
@@ -580,10 +611,14 @@ def benchmark_phase2_vecindex(
     try:
         sql_conn.cursor()
     except AttributeError:
-        import iris.dbapi as _dbapi
         import os as _os
+
+        import iris.dbapi as _dbapi
+
         sql_conn = _dbapi.connect(
-            hostname=getattr(conn, "hostname", _os.environ.get("IRIS_HOSTNAME", "localhost")),
+            hostname=getattr(
+                conn, "hostname", _os.environ.get("IRIS_HOSTNAME", "localhost")
+            ),
             port=getattr(conn, "port", int(_os.environ.get("IRIS_PORT", "1972"))),
             namespace=getattr(conn, "namespace", "USER"),
             username=_os.environ.get("IRIS_USERNAME", "_SYSTEM"),
@@ -643,8 +678,10 @@ def benchmark_phase2_vecindex(
         **percentiles(query_times),
         "mean_recall_at_10": round(float(np.mean(recalls)), 3),
         "speedup_vs_phase2": round(p2_p50 / max(vi_p50, 0.1), 2),
-        "stages": {kk: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
-                   for kk, v in stage_times.items()},
+        "stages": {
+            kk: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
+            for kk, v in stage_times.items()
+        },
     }
 
 
@@ -762,8 +799,14 @@ def main():
 
         if not args.skip_plaid:
             tier_results["phase3"] = benchmark_phase3_plaid(
-                conn, model, tier_docs, queries, args.top_k,
-                schema, ingestor, n_probe=args.n_probe,
+                conn,
+                model,
+                tier_docs,
+                queries,
+                args.top_k,
+                schema,
+                ingestor,
+                n_probe=args.n_probe,
             )
             logger.info(
                 f"  Phase3 p50={tier_results['phase3']['p50_ms']:.1f}ms "
@@ -781,7 +824,12 @@ def main():
         if not args.skip_sp:
             try:
                 tier_results["phase3_sp"] = benchmark_phase3_sp(
-                    conn, model, tier_docs, queries, args.top_k, n_probe=args.n_probe,
+                    conn,
+                    model,
+                    tier_docs,
+                    queries,
+                    args.top_k,
+                    n_probe=args.n_probe,
                 )
                 logger.info(
                     f"  Phase3 SP p50={tier_results['phase3_sp']['p50_ms']:.1f}ms "
@@ -791,7 +839,8 @@ def main():
                 )
                 tier_results["speedup_sp_vs_phase2"] = round(
                     tier_results["phase2"]["p50_ms"]
-                    / max(tier_results["phase3_sp"]["p50_ms"], 0.1), 2,
+                    / max(tier_results["phase3_sp"]["p50_ms"], 0.1),
+                    2,
                 )
             except Exception as e:
                 logger.warning(f"  Phase3 SP skipped: {e}")
@@ -824,8 +873,15 @@ def main():
         if not args.skip_vecindex:
             try:
                 tier_results["phase2_vecindex"] = benchmark_phase2_vecindex(
-                    conn, model, tier_docs, queries, args.top_k,
-                    nprobe=args.n_probe, schema=schema, ingestor=ingestor,
+                    conn,
+                    model,
+                    tier_docs,
+                    queries,
+                    args.top_k,
+                    nprobe=args.n_probe,
+                    schema=schema,
+                    ingestor=ingestor,
+                    emb_cache=emb_cache,
                 )
                 vi = tier_results["phase2_vecindex"]
                 logger.info(
@@ -836,7 +892,8 @@ def main():
                 )
                 tier_results["speedup_vecindex_vs_phase2"] = vi["speedup_vs_phase2"]
             except Exception as e:
-                logger.warning(f"  Phase2-VecIndex skipped: {e}")
+                import traceback
+                logger.warning(f"  Phase2-VecIndex skipped: {e}\n{traceback.format_exc()}")
                 tier_results["phase2_vecindex_error"] = str(e)
 
         all_results["tiers"][str(tier)] = tier_results

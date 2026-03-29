@@ -1,8 +1,8 @@
 # IRIS Globals-Based Storage for ColBERT/PLAID Candidate Retrieval
 ## Comprehensive Analysis & Viability Assessment
 
-**Date**: March 28, 2026  
-**Analyst**: Claude Code  
+**Date**: March 28, 2026
+**Analyst**: Claude Code
 **Target**: iris-vector-rag-private ColBERT/PLAID Stage 1.5 optimization
 
 ---
@@ -31,7 +31,7 @@
 
 iris-vector-graph (v1.20.1 latest) ships with `Graph.KG.GraphIndex`, a **dual-write globals acceleration pattern** for graph traversal.
 
-**Key Commit**: `761d471` (2026-03-28)  
+**Key Commit**: `761d471` (2026-03-28)
 **Feature**: 028-nkg-integer-index | **Status**: Shipped & tested
 
 ### ^NKG Global Structure
@@ -53,17 +53,17 @@ iris-vector-graph (v1.20.1 latest) ships with `Graph.KG.GraphIndex`, a **dual-wr
 ClassMethod InsertIndex(pID As %String, s As %Binary, p As %Binary, o As %Binary, qualifiers As %Binary = "") As %Status [ ServerOnly = 1 ]
 {
     Set weight = ##class(Graph.KG.GraphIndex).ExtractWeight(qualifiers)
-    
+
     // Traditional SQL-backed storage
     Set ^KG("out", s, p, o) = weight
     Set ^KG("in", o, p, s) = weight
     Set tmp = $Increment(^KG("deg", s))
-    
+
     // NEW: Dual-write to ^NKG (integer-encoded B-tree index)
     Set sIdx = ##class(Graph.KG.GraphIndex).InternNode(s)
     Set oIdx = ##class(Graph.KG.GraphIndex).InternNode(o)
     Set pIdx = ##class(Graph.KG.GraphIndex).InternLabel(p)
-    
+
     Set ^NKG(-1, sIdx, -(pIdx+1), oIdx) = weight  // O(log N) B-tree insert
     Set ^NKG(-3, sIdx) = $Increment(...)
     Quit $$$OK
@@ -111,12 +111,12 @@ def get_graph_for_doc(doc_id: int, iris_handle, global_name="^GraphRelations"):
     nodes = []
     for name, node_type in iris_handle.iterator(global_name, doc_id, "Node"):
         nodes.append({"name": name, "type": node_type})
-    
+
     edges = []
     for src, _ in iris_handle.iterator(global_name, doc_id, "Edge"):
         for dst, rel in iris_handle.iterator(global_name, doc_id, "Edge", src):
             edges.append({"source": src, "target": dst, "relation": rel})
-    
+
     return {"doc_id": doc_id, "nodes": nodes, "edges": edges}
 ```
 
@@ -148,7 +148,7 @@ def stage15_globals(centroid_ids, top_k=10, n_probe=4):
     """
     g = iris.gref("^ColBERTIdx")
     candidates = {}  # doc_id → hit_count
-    
+
     # For each centroid returned from Stage 1, iterate its doc_ids
     for cid in centroid_ids[:n_probe]:  # n_probe centroids
         doc_id = ""
@@ -161,7 +161,7 @@ def stage15_globals(centroid_ids, top_k=10, n_probe=4):
                 candidates[doc_id] = candidates.get(doc_id, 0) + 1
             except:
                 break
-    
+
     # Filter to top-K by hit count (optional, or return all)
     return list(candidates.keys())
 ```
@@ -176,7 +176,7 @@ Similar to `^NKG`, intern doc_ids as integers for faster traversal:
 ^ColBERTIdx("$ND", dIdIdx) = doc_id             // integer → string doc_id
 ```
 
-**Advantage**: Smaller B-tree subscript size (integers vs. strings), faster $ORDER traversal.  
+**Advantage**: Smaller B-tree subscript size (integers vs. strings), faster $ORDER traversal.
 **Disadvantage**: Adds InternNode() complexity; recommend Option A first, benchmark, then upgrade if needed.
 
 ---
@@ -186,7 +186,7 @@ Similar to `^NKG`, intern doc_ids as integers for faster traversal:
 ### Phase 1: Prototype (1–2 weeks)
 
 1. **Create globals population SQL procedure** (in `sql/` or `iris_src/`)
-   - Read from `RAG.ColBERTDocCentroids` 
+   - Read from `RAG.ColBERTDocCentroids`
    - Populate `^ColBERTIdx(centroid_id, doc_id) = ""`
    - Called after ColBERT training (one-time, or on checkpoint load)
 
@@ -268,17 +268,17 @@ Similar to `^NKG`, intern doc_ids as integers for faster traversal:
 
 ### iris-vector-graph ^NKG (Graph Traversal)
 
-✅ **Proven in production** (v1.19.0+, 364 e2e tests pass)  
-✅ **Dual-write strategy** (maintains SQL + globals simultaneously)  
-✅ **Concurrent safe** (fine-grained locking, microsecond contention)  
-✅ **Fallback available** (pure ObjectScript path on DLL load failure)  
+✅ **Proven in production** (v1.19.0+, 364 e2e tests pass)
+✅ **Dual-write strategy** (maintains SQL + globals simultaneously)
+✅ **Concurrent safe** (fine-grained locking, microsecond contention)
+✅ **Fallback available** (pure ObjectScript path on DLL load failure)
 
 ### iris-vector-rag ColBERT Globals (Proposed)
 
-✅ **Simpler schema** (just 2 subscripts vs. ^NKG's complex internment)  
-✅ **Read-only workload** (no concurrent writes during query; only writes after training)  
-✅ **Lower latency ceiling** (candidates are pre-enumerated; no GROUP BY)  
-✅ **Backward compatible** (SQL fallback always available)  
+✅ **Simpler schema** (just 2 subscripts vs. ^NKG's complex internment)
+✅ **Read-only workload** (no concurrent writes during query; only writes after training)
+✅ **Lower latency ceiling** (candidates are pre-enumerated; no GROUP BY)
+✅ **Backward compatible** (SQL fallback always available)
 
 ---
 
@@ -294,14 +294,14 @@ import iris
 
 def populate():
     g = iris.gref("^ColBERTIdx")
-    
+
     # Clear existing
     g.kill()
-    
+
     # Read from SQL table and populate globals
     # SELECT centroid_id, doc_id FROM RAG.ColBERTDocCentroids
     cursor = iris.sql.exec("SELECT centroid_id, doc_id FROM RAG.ColBERTDocCentroids")
-    
+
     for row in cursor:
         cid, did = row
         # Set marker — B-tree auto-indexes by subscript
@@ -354,13 +354,13 @@ stage15_ms = (time.time() - stage15_start) * 1000
 ```python
 def stage15_candidate_expansion(hit_centroid_ids, n_probe=4, use_globals=True):
     """Stage 1.5 with graceful fallback"""
-    
+
     if use_globals:
         try:
             return stage15_globals(hit_centroid_ids, n_probe)
         except Exception as e:
             logging.warning(f"Globals lookup failed: {e}; falling back to SQL")
-    
+
     # Fallback: original SQL path
     return stage15_sql(hit_centroid_ids, n_probe)
 ```

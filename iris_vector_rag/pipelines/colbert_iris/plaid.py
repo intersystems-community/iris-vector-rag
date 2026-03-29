@@ -16,6 +16,10 @@ class PLAIDNotBuiltError(RuntimeError):
     pass
 
 
+def _format_vec_str(vec: np.ndarray) -> str:
+    return "[" + ",".join(f"{v:.6f}" for v in vec) + "]"
+
+
 class PLAIDBuilder:
     def __init__(self, conn, token_dim: int = TOKEN_DIM):
         self._conn = conn
@@ -65,8 +69,7 @@ class PLAIDBuilder:
         cur = self._conn.cursor()
         try:
             cur.execute("SELECT COUNT(*) FROM RAG.DocumentTokenEmbeddings")
-            count = cur.fetchone()[0]
-            return count
+            return cur.fetchone()[0]
         finally:
             cur.close()
 
@@ -87,12 +90,12 @@ class PLAIDBuilder:
             doc_ids.append(row[0])
             tok_positions.append(row[1])
             raw = row[2]
-            if isinstance(raw, str):
-                v = np.array(
-                    [float(x) for x in raw.strip("[]").split(",")], dtype=np.float32
-                )
-            else:
-                v = np.array(raw, dtype=np.float32)
+            v = np.array(
+                [float(x) for x in raw.strip("[]").split(",")]
+                if isinstance(raw, str)
+                else raw,
+                dtype=np.float32,
+            )
             vecs.append(v)
 
         return np.array(vecs, dtype=np.float32), doc_ids, tok_positions
@@ -123,7 +126,7 @@ class PLAIDBuilder:
         cur = self._conn.cursor()
         try:
             for cid, vec in enumerate(centroids):
-                vec_str = "[" + ",".join(f"{v:.6f}" for v in vec) + "]"
+                vec_str = _format_vec_str(vec)
                 cur.execute(
                     f"INSERT INTO RAG.ColBERTCentroids (centroid_id, centroid_vec) "
                     f"VALUES (?, TO_VECTOR(?, FLOAT, {self._token_dim}))",
@@ -174,8 +177,7 @@ class PLAIDSearcher:
         cur = self._conn.cursor()
         try:
             cur.execute("SELECT COUNT(*) FROM RAG.ColBERTCentroids")
-            count = cur.fetchone()[0]
-            return count > 0
+            return cur.fetchone()[0] > 0
         except Exception:
             return False
         finally:
@@ -234,7 +236,7 @@ class PLAIDSearcher:
         cur = self._conn.cursor()
         try:
             for q_vec in q_vecs:
-                vec_str = "[" + ",".join(f"{v:.6f}" for v in q_vec) + "]"
+                vec_str = _format_vec_str(q_vec)
                 cur.execute(
                     f"SELECT TOP {n_probe} centroid_id "
                     f"FROM RAG.ColBERTCentroids "
@@ -251,11 +253,11 @@ class PLAIDSearcher:
         if not centroid_ids:
             return []
         candidate_ids: set = set()
-        for i in range(0, len(centroid_ids), IN_LIST_BATCH):
-            batch = centroid_ids[i : i + IN_LIST_BATCH]
-            placeholders = ",".join(["?"] * len(batch))
-            cur = self._conn.cursor()
-            try:
+        cur = self._conn.cursor()
+        try:
+            for i in range(0, len(centroid_ids), IN_LIST_BATCH):
+                batch = centroid_ids[i : i + IN_LIST_BATCH]
+                placeholders = ",".join(["?"] * len(batch))
                 cur.execute(
                     f"SELECT DISTINCT doc_id FROM RAG.ColBERTDocCentroids "
                     f"WHERE centroid_id IN ({placeholders})",
@@ -263,21 +265,21 @@ class PLAIDSearcher:
                 )
                 for row in cur.fetchall():
                     candidate_ids.add(row[0])
-            finally:
-                cur.close()
+        finally:
+            cur.close()
         return list(candidate_ids)
 
     def _stage2_exact_maxsim(
         self, q_vecs: np.ndarray, candidate_ids: List[str], top_k: int
     ) -> List[Tuple[str, float]]:
         per_qtok_sims: Dict[str, Dict[int, float]] = {}
-        for i in range(0, len(candidate_ids), IN_LIST_BATCH):
-            batch = candidate_ids[i : i + IN_LIST_BATCH]
-            placeholders = ",".join(["?"] * len(batch))
-            cur = self._conn.cursor()
-            try:
+        cur = self._conn.cursor()
+        try:
+            for i in range(0, len(candidate_ids), IN_LIST_BATCH):
+                batch = candidate_ids[i : i + IN_LIST_BATCH]
+                placeholders = ",".join(["?"] * len(batch))
                 for q_idx, q_vec in enumerate(q_vecs):
-                    vec_str = "[" + ",".join(f"{v:.6f}" for v in q_vec) + "]"
+                    vec_str = _format_vec_str(q_vec)
                     cur.execute(
                         f"SELECT doc_id, "
                         f"VECTOR_DOT_PRODUCT(tok_vec, TO_VECTOR('{vec_str}', FLOAT, {self._token_dim})) AS sim "
@@ -290,8 +292,8 @@ class PLAIDSearcher:
                         doc_sims = per_qtok_sims.setdefault(doc_id, {})
                         if q_idx not in doc_sims or sim > doc_sims[q_idx]:
                             doc_sims[q_idx] = sim
-            finally:
-                cur.close()
+        finally:
+            cur.close()
 
         scores = {
             doc_id: sum(q_sims.values()) for doc_id, q_sims in per_qtok_sims.items()
@@ -302,8 +304,7 @@ class PLAIDSearcher:
         cur = self._conn.cursor()
         try:
             cur.execute("SELECT COUNT(*) FROM RAG.ColBERTDocuments")
-            count = cur.fetchone()[0]
-            return count
+            return cur.fetchone()[0]
         except Exception:
             return 0
         finally:

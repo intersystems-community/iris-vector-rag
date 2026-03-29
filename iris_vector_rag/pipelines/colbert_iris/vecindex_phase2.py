@@ -7,7 +7,9 @@ import numpy as np
 
 def _ensure_native_conn(conn):
     import os
+
     import intersystems_iris
+
     if isinstance(conn, intersystems_iris.IRISConnection):
         return conn
     hostname = getattr(conn, "hostname", os.environ.get("IRIS_HOSTNAME", "localhost"))
@@ -16,9 +18,16 @@ def _ensure_native_conn(conn):
     username = os.environ.get("IRIS_USERNAME", "_SYSTEM")
     password = os.environ.get("IRIS_PASSWORD", "SYS")
     return intersystems_iris.createConnection(
-        hostname=hostname, port=port,
-        namespace=namespace, username=username, password=password,
+        hostname=hostname,
+        port=port,
+        namespace=namespace,
+        username=username,
+        password=password,
     )
+
+
+def _to_dict(result) -> dict:
+    return result if isinstance(result, dict) else json.loads(str(result))
 
 
 class VecIndexNotAvailableError(RuntimeError):
@@ -45,13 +54,11 @@ class VecIndexSearcher:
         self._iris = self._engine._iris_obj()
 
     def build(self) -> dict:
-        result = self._engine.vec_build(self.index_name)
-        return result if isinstance(result, dict) else json.loads(str(result))
+        return _to_dict(self._engine.vec_build(self.index_name))
 
     def info(self) -> dict:
         try:
-            result = self._engine.vec_info(self.index_name)
-            return result if isinstance(result, dict) else json.loads(str(result))
+            return _to_dict(self._engine.vec_info(self.index_name))
         except Exception:
             return {"name": self.index_name, "count": 0}
 
@@ -66,8 +73,11 @@ class VecIndexSearcher:
         info = self.info()
         if info.get("count", -1) == -1 or "dim" not in info:
             self._engine.vec_create_index(
-                self.index_name, self.token_dim, "dot",
-                self.num_trees, self.leaf_size,
+                self.index_name,
+                self.token_dim,
+                "dot",
+                self.num_trees,
+                self.leaf_size,
             )
 
     def search(
@@ -85,9 +95,7 @@ class VecIndexSearcher:
                 "and ensure Graph.KG.VecIndex is loaded via scripts/deploy_vecindex.sh"
             )
 
-        q_vecs = np.array(query_token_vecs, dtype=np.float32)
-        if q_vecs.ndim == 1:
-            q_vecs = q_vecs.reshape(1, -1)
+        q_vecs = np.atleast_2d(query_token_vecs).astype(np.float32)
 
         t_search = time.perf_counter()
         per_doc_max: Dict[str, Dict[int, float]] = {}
@@ -108,8 +116,7 @@ class VecIndexSearcher:
 
         t_maxsim = time.perf_counter()
         final_scores: Dict[str, float] = {
-            doc_id: sum(q_sims.values())
-            for doc_id, q_sims in per_doc_max.items()
+            doc_id: sum(q_sims.values()) for doc_id, q_sims in per_doc_max.items()
         }
         results = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
         stage_maxsim_ms = (time.perf_counter() - t_maxsim) * 1000

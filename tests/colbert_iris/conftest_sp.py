@@ -70,6 +70,7 @@ def setup_colbert_sp():
         cur.close()
         if n_centroids == 0:
             from iris_vector_rag.pipelines.colbert_iris.plaid import PLAIDBuilder
+
             builder = PLAIDBuilder(conn, token_dim=128)
             builder.build(n_clusters=512)
     except Exception as e:

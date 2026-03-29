@@ -205,7 +205,9 @@ class TestCallSyntax:
             assert isinstance(item[0], str)
             assert isinstance(item[1], float)
 
-    @pytest.mark.xfail(reason="Overlap depends on K/centroid config; PLAID not production-ready at this scale")
+    @pytest.mark.xfail(
+        reason="Overlap depends on K/centroid config; PLAID not production-ready at this scale"
+    )
     def test_search_via_sp_matches_search(self, sp_conn):
         cur = sp_conn.cursor()
         try:
@@ -219,6 +221,7 @@ class TestCallSyntax:
             pytest.skip("Centroids not built — run PLAIDBuilder.build() first")
 
         from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
+
         ms = MaxSimInDB(sp_conn, token_dim=128)
         searcher = PLAIDSearcher(sp_conn, token_dim=128)
         cur = sp_conn.cursor()
@@ -245,7 +248,9 @@ class TestCallSyntax:
             statistics.mean(overlaps) >= 0.3
         ), f"Mean overlap {statistics.mean(overlaps):.2f} < 0.3 — SP returning no results for these queries"
 
-    @pytest.mark.xfail(reason="Stage 2 latency depends on K/candidate count; PLAID SP not production-ready")
+    @pytest.mark.xfail(
+        reason="Stage 2 latency depends on K/candidate count; PLAID SP not production-ready"
+    )
     def test_stage_timing_assertions(self, sp_conn):
         searcher = PLAIDSearcher(sp_conn, token_dim=128)
         q = make_query_vecs()

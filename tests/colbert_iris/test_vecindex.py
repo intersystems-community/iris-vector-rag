@@ -2,33 +2,27 @@ import os
 import statistics
 import time
 
+import iris.dbapi as dbapi
 import numpy as np
 import pytest
-
-import iris.dbapi as dbapi
 
 from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
 from iris_vector_rag.pipelines.colbert_iris.vecindex_phase2 import (
     VecIndexNotAvailableError,
     VecIndexSearcher,
 )
+from tests.colbert_iris.conftest import make_query_vecs
 
 IRIS_HOST = os.environ.get("IRIS_HOSTNAME", "localhost")
 IRIS_PORT = int(os.environ.get("IRIS_PORT", "13972"))
 TOKEN_DIM = 128
 
 
-def make_query_vecs(n_toks: int = 4, seed: int = 42) -> np.ndarray:
-    rng = np.random.default_rng(seed)
-    vecs = rng.random((n_toks, TOKEN_DIM)).astype(np.float32)
-    vecs /= np.linalg.norm(vecs, axis=1, keepdims=True)
-    return vecs
-
-
 @pytest.mark.integration
 class TestVecIndexIngest:
     def test_deploy_and_callable(self, setup_vecindex):
         from iris_vector_graph import IRISGraphEngine
+
         engine = IRISGraphEngine(setup_vecindex)
         result = engine.vec_create_index("test_deploy_ci", TOKEN_DIM, "dot")
         assert "dim" in str(result)
@@ -36,16 +30,20 @@ class TestVecIndexIngest:
 
     def test_vec_insert_single(self, setup_vecindex):
         from iris_vector_graph import IRISGraphEngine
+
         engine = IRISGraphEngine(setup_vecindex)
         engine.vec_create_index("test_single_ci", 4, "dot")
         engine.vec_insert("test_single_ci", "d:0", [0.1, 0.9, 0.0, 0.0])
-        results = engine.vec_search("test_single_ci", [0.1, 0.9, 0.0, 0.0], k=1, nprobe=1)
+        results = engine.vec_search(
+            "test_single_ci", [0.1, 0.9, 0.0, 0.0], k=1, nprobe=1
+        )
         assert len(results) >= 1
         assert results[0]["id"] == "d:0"
         engine.vec_drop("test_single_ci")
 
     def test_vec_build_returns_stats(self, setup_vecindex):
         from iris_vector_graph import IRISGraphEngine
+
         engine = IRISGraphEngine(setup_vecindex)
         engine.vec_create_index("test_build_ci", TOKEN_DIM, "dot", 4, 10)
         rng = np.random.default_rng(0)
@@ -62,7 +60,9 @@ class TestVecIndexIngest:
         conn, searcher = vecindex_80doc
         cur = conn.cursor()
         try:
-            cur.execute("SELECT COUNT(*) FROM RAG.DocumentTokenEmbeddings WHERE doc_id LIKE 'vi80%'")
+            cur.execute(
+                "SELECT COUNT(*) FROM RAG.DocumentTokenEmbeddings WHERE doc_id LIKE 'vi80%'"
+            )
             sql_count = cur.fetchone()[0]
         finally:
             cur.close()
@@ -72,29 +72,40 @@ class TestVecIndexIngest:
 
     def test_ingest_idempotent(self, setup_vecindex):
         from iris_vector_graph import IRISGraphEngine
-        from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
+
         from iris_vector_rag.pipelines.colbert_iris.ingest import ColBERTIngestor
-        from tests.colbert_iris.conftest_vecindex import DummyModel
+        from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
+        from tests.colbert_iris.conftest import DummyModel
 
         conn = dbapi.connect(
-            hostname=IRIS_HOST, port=IRIS_PORT,
-            namespace="USER", username="_SYSTEM", password="SYS",
+            hostname=IRIS_HOST,
+            port=IRIS_PORT,
+            namespace="USER",
+            username="_SYSTEM",
+            password="SYS",
         )
         schema = ColBERTSchema(conn)
         schema.drop_tables()
         schema.create_tables()
         ingestor = ColBERTIngestor(conn, model=DummyModel(), token_dim=TOKEN_DIM)
-        docs = [{"doc_id": f"idem_{i}", "text": f"Doc {i}", "metadata": {}} for i in range(10)]
+        docs = [
+            {"doc_id": f"idem_{i}", "text": f"Doc {i}", "metadata": {}}
+            for i in range(10)
+        ]
         searcher = VecIndexSearcher(conn, index_name="test_idem", token_dim=TOKEN_DIM)
 
-        stats1 = ingestor.ingest_documents(docs, use_vecindex=True, vecindex_searcher=searcher)
+        stats1 = ingestor.ingest_documents(
+            docs, use_vecindex=True, vecindex_searcher=searcher
+        )
         count1 = searcher.info().get("count", 0)
 
         searcher.drop()
         schema.drop_tables()
         schema.create_tables()
         searcher2 = VecIndexSearcher(conn, index_name="test_idem", token_dim=TOKEN_DIM)
-        stats2 = ingestor.ingest_documents(docs, use_vecindex=True, vecindex_searcher=searcher2)
+        stats2 = ingestor.ingest_documents(
+            docs, use_vecindex=True, vecindex_searcher=searcher2
+        )
         count2 = searcher2.info().get("count", 0)
 
         assert count1 == count2, f"Idempotent counts differ: {count1} vs {count2}"
@@ -128,6 +139,7 @@ class TestVecIndexSearch:
 
     def test_search_before_build_raises(self, setup_vecindex):
         from iris_vector_graph import IRISGraphEngine
+
         engine = IRISGraphEngine(setup_vecindex)
         engine.vec_create_index("test_empty_ci", TOKEN_DIM, "dot")
         searcher = VecIndexSearcher(setup_vecindex, index_name="test_empty_ci")
@@ -137,6 +149,7 @@ class TestVecIndexSearch:
 
     def test_doc_id_parsing(self, setup_vecindex):
         from iris_vector_graph import IRISGraphEngine
+
         engine = IRISGraphEngine(setup_vecindex)
         engine.vec_create_index("test_parse_ci", TOKEN_DIM, "dot", 1, 5)
         rng = np.random.default_rng(77)
@@ -146,11 +159,14 @@ class TestVecIndexSearch:
         engine.vec_build("test_parse_ci")
         searcher = VecIndexSearcher(setup_vecindex, index_name="test_parse_ci")
         results, _ = searcher.search(target.reshape(1, -1), top_k=1, nprobe=1)
-        assert results[0][0] == "myrealdoc", f"Expected 'myrealdoc', got '{results[0][0]}'"
+        assert (
+            results[0][0] == "myrealdoc"
+        ), f"Expected 'myrealdoc', got '{results[0][0]}'"
         engine.vec_drop("test_parse_ci")
 
     def test_vec_drop_cleans(self, setup_vecindex):
         from iris_vector_graph import IRISGraphEngine
+
         engine = IRISGraphEngine(setup_vecindex)
         engine.vec_create_index("test_drop_ci", 4, "dot")
         engine.vec_insert("test_drop_ci", "d:0", [0.1, 0.2, 0.3, 0.4])
@@ -162,11 +178,15 @@ class TestVecIndexSearch:
         conn, searcher = vecindex_80doc
         try:
             sql_cur = conn.cursor()
-            sql_cur.execute("SELECT COUNT(*) FROM RAG.ColBERTDocuments WHERE doc_id LIKE 'vi80%'")
+            sql_cur.execute(
+                "SELECT COUNT(*) FROM RAG.ColBERTDocuments WHERE doc_id LIKE 'vi80%'"
+            )
             n = sql_cur.fetchone()[0]
             sql_cur.close()
         except Exception:
-            pytest.skip("RAG.ColBERTDocuments not available (tables dropped by earlier test)")
+            pytest.skip(
+                "RAG.ColBERTDocuments not available (tables dropped by earlier test)"
+            )
 
         if n == 0:
             pytest.skip("No vi80 docs in ColBERTDocuments")
@@ -174,7 +194,9 @@ class TestVecIndexSearch:
         ms = MaxSimInDB(conn, token_dim=TOKEN_DIM)
         cur = conn.cursor()
         try:
-            cur.execute("SELECT DISTINCT doc_id FROM RAG.ColBERTDocuments WHERE doc_id LIKE 'vi80%'")
+            cur.execute(
+                "SELECT DISTINCT doc_id FROM RAG.ColBERTDocuments WHERE doc_id LIKE 'vi80%'"
+            )
             all_ids = [r[0] for r in cur.fetchall()]
         finally:
             cur.close()
@@ -190,9 +212,9 @@ class TestVecIndexSearch:
                 recall = len(ref_set & res_set) / max(len(ref_set), 1)
                 store.append(recall)
 
-        assert np.mean(recalls_n4) >= np.mean(recalls_n1), (
-            f"nprobe=4 recall {np.mean(recalls_n4):.2f} should be >= nprobe=1 {np.mean(recalls_n1):.2f}"
-        )
+        assert np.mean(recalls_n4) >= np.mean(
+            recalls_n1
+        ), f"nprobe=4 recall {np.mean(recalls_n4):.2f} should be >= nprobe=1 {np.mean(recalls_n1):.2f}"
 
     def test_metadata_keys_present(self, vecindex_80doc):
         _, searcher = vecindex_80doc
@@ -220,7 +242,10 @@ class TestNoClassCompileLock:
     def test_repeated_build_no_lock(self, setup_vecindex):
         import intersystems_iris
         from iris_vector_graph import IRISGraphEngine
-        from iris_vector_rag.pipelines.colbert_iris.vecindex_phase2 import VecIndexSearcher
+
+        from iris_vector_rag.pipelines.colbert_iris.vecindex_phase2 import (
+            VecIndexSearcher,
+        )
 
         for run in range(3):
             engine = IRISGraphEngine(setup_vecindex)
@@ -232,7 +257,9 @@ class TestNoClassCompileLock:
                 v /= np.linalg.norm(v)
                 engine.vec_insert(index_name, f"lockdoc_{i}:0", v.tolist())
             engine.vec_build(index_name)
-            searcher = VecIndexSearcher(setup_vecindex, index_name=index_name, token_dim=TOKEN_DIM)
+            searcher = VecIndexSearcher(
+                setup_vecindex, index_name=index_name, token_dim=TOKEN_DIM
+            )
             results, _ = searcher.search(make_query_vecs(4), top_k=5)
             assert len(results) >= 0
             engine.vec_drop(index_name)
@@ -242,14 +269,18 @@ class TestNoClassCompileLock:
         try:
             cur = conn.cursor()
             try:
-                cur.execute("SELECT COUNT(*) FROM RAG.ColBERTDocuments WHERE doc_id='__nonexistent__'")
+                cur.execute(
+                    "SELECT COUNT(*) FROM RAG.ColBERTDocuments WHERE doc_id='__nonexistent__'"
+                )
                 cur.fetchone()
                 conn.commit()
             finally:
                 cur.close()
         except Exception as e:
             if "-110" in str(e):
-                pytest.fail(f"SQLCODE -110 class compile lock after VecIndex build: {e}")
+                pytest.fail(
+                    f"SQLCODE -110 class compile lock after VecIndex build: {e}"
+                )
 
 
 @pytest.mark.integration
@@ -257,15 +288,21 @@ class TestVecIndexBenchmarkTier:
     def test_benchmark_tier_exists(self, vecindex_80doc):
         conn, searcher = vecindex_80doc
         from tests.colbert_iris.benchmark_scale import benchmark_phase2_vecindex
-        from tests.colbert_iris.conftest_vecindex import DummyModel
+        from tests.colbert_iris.conftest import DummyModel
 
         queries = ["document topic 0", "document topic 5", "document topic 9"]
         model = DummyModel()
 
         result = benchmark_phase2_vecindex(
-            conn, model,
-            docs=[{"doc_id": f"vi80_{i:04d}", "text": f"Document {i}", "metadata": {}} for i in range(80)],
-            queries=queries, top_k=5, nprobe=2,
+            conn,
+            model,
+            docs=[
+                {"doc_id": f"vi80_{i:04d}", "text": f"Document {i}", "metadata": {}}
+                for i in range(80)
+            ],
+            queries=queries,
+            top_k=5,
+            nprobe=2,
             existing_searcher=searcher,
         )
         for key in ["p50_ms", "p95_ms", "mean_recall_at_10", "speedup_vs_phase2"]:

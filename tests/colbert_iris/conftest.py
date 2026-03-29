@@ -19,9 +19,13 @@ TOKEN_DIM = 128
 def _iris_available() -> bool:
     try:
         import iris.dbapi as dbapi
+
         conn = dbapi.connect(
-            hostname=IRIS_HOST, port=IRIS_PORT,
-            namespace="USER", username="_SYSTEM", password="SYS",
+            hostname=IRIS_HOST,
+            port=IRIS_PORT,
+            namespace="USER",
+            username="_SYSTEM",
+            password="SYS",
         )
         conn.close()
         return True
@@ -42,32 +46,59 @@ class DummyModel:
         return results
 
 
+def _vecindex_already_deployed() -> bool:
+    try:
+        import intersystems_iris
+
+        conn = intersystems_iris.createConnection(
+            hostname=IRIS_HOST,
+            port=IRIS_PORT,
+            namespace="USER",
+            username="_SYSTEM",
+            password="SYS",
+        )
+        iris_obj = conn.createIRIS()
+        result = iris_obj.classMethodValue("Graph.KG.VecIndex", "Info", "__probe__")
+        conn.close()
+        return '"name"' in str(result)
+    except Exception:
+        return False
+
+
 @pytest.fixture(scope="session")
 def setup_vecindex():
     if not _iris_available():
         pytest.skip(f"IRIS not available at {IRIS_HOST}:{IRIS_PORT}")
 
-    deploy_script = os.path.join(SCRIPTS_DIR, "deploy_vecindex.sh")
-    result = subprocess.run(
-        ["bash", deploy_script, CONTAINER],
-        capture_output=True, text=True, timeout=30,
-    )
-    if result.returncode != 0:
-        pytest.skip(f"deploy_vecindex.sh failed: {result.stderr}")
+    if not _vecindex_already_deployed():
+        deploy_script = os.path.join(SCRIPTS_DIR, "deploy_vecindex.sh")
+        result = subprocess.run(
+            ["bash", deploy_script, CONTAINER],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            pytest.skip(f"deploy_vecindex.sh failed: {result.stderr}")
 
     import intersystems_iris
     from iris_vector_graph import IRISGraphEngine
 
     conn = intersystems_iris.createConnection(
-        hostname=IRIS_HOST, port=IRIS_PORT,
-        namespace="USER", username="_SYSTEM", password="SYS",
+        hostname=IRIS_HOST,
+        port=IRIS_PORT,
+        namespace="USER",
+        username="_SYSTEM",
+        password="SYS",
     )
 
     try:
         engine = IRISGraphEngine(conn)
         engine.vec_create_index("__smoke_test__", 4, "dot")
         engine.vec_insert("__smoke_test__", "s:0", [0.1, 0.2, 0.3, 0.4])
-        results = engine.vec_search("__smoke_test__", [0.1, 0.2, 0.3, 0.4], k=1, nprobe=1)
+        results = engine.vec_search(
+            "__smoke_test__", [0.1, 0.2, 0.3, 0.4], k=1, nprobe=1
+        )
         assert len(results) >= 1, f"VecIndex smoke test returned no results: {results}"
         engine.vec_drop("__smoke_test__")
     except Exception as e:
@@ -87,13 +118,17 @@ def vecindex_conn(setup_vecindex):
 def vecindex_80doc(setup_vecindex):
     import intersystems_iris
     from iris_vector_graph import IRISGraphEngine
-    from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
+
     from iris_vector_rag.pipelines.colbert_iris.ingest import ColBERTIngestor
+    from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
     from iris_vector_rag.pipelines.colbert_iris.vecindex_phase2 import VecIndexSearcher
 
     conn = intersystems_iris.createConnection(
-        hostname=IRIS_HOST, port=IRIS_PORT,
-        namespace="USER", username="_SYSTEM", password="SYS",
+        hostname=IRIS_HOST,
+        port=IRIS_PORT,
+        namespace="USER",
+        username="_SYSTEM",
+        password="SYS",
     )
     schema = ColBERTSchema(conn)
     schema.drop_tables()
@@ -101,7 +136,11 @@ def vecindex_80doc(setup_vecindex):
 
     ingestor = ColBERTIngestor(conn, model=DummyModel(), token_dim=TOKEN_DIM)
     docs = [
-        {"doc_id": f"vi80_{i:04d}", "text": f"Document {i} about topic {i % 10}.", "metadata": {}}
+        {
+            "doc_id": f"vi80_{i:04d}",
+            "text": f"Document {i} about topic {i % 10}.",
+            "metadata": {},
+        }
         for i in range(80)
     ]
     searcher = VecIndexSearcher(conn, index_name="test_vi80", token_dim=TOKEN_DIM)

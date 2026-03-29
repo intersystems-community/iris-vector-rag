@@ -179,10 +179,50 @@ ClassMethod SearchJSON(name As %String, jsonArray As %String, k As %Integer = 10
     Return ..Search(name, vec, k, nprobe)
 }
 
+ClassMethod SearchMultiJSON(name As %String, queriesJson As %String, k As %Integer = 10, nprobe As %Integer = 2) As %String
+{
+    Set queries = ##class(%DynamicArray).%FromJSON(queriesJson)
+    Set n = queries.%Size()
+    Set result = "["
+    For qi = 0:1:(n-1) {
+        Set qArr = queries.%Get(qi)
+        Set dim = qArr.%Size()
+        Set vec = ""
+        For i = 0:1:(dim-1) {
+            Set $vector(vec, i+1, "double") = +qArr.%Get(i)
+        }
+        Set oneResult = ..Search(name, vec, k, nprobe)
+        If qi > 0 Set result = result _ ","
+        Set result = result _ oneResult
+    }
+    Set result = result _ "]"
+    Return result
+}
+
 ClassMethod InsertJSON(name As %String, docId As %String, jsonArray As %String)
 {
     Set vec = ..JsonToVector(jsonArray)
     Do ..Insert(name, docId, vec)
+}
+
+ClassMethod InsertBatchJSON(name As %String, batchJson As %String) As %String
+{
+    Set batch = ##class(%DynamicArray).%FromJSON(batchJson)
+    Set n = batch.%Size()
+    Set inserted = 0
+    For bi = 0:1:(n-1) {
+        Set item = batch.%Get(bi)
+        Set docId = item.%Get("id")
+        Set vecArr = item.%Get("vec")
+        Set dim = vecArr.%Size()
+        Set vec = ""
+        For i = 0:1:(dim-1) {
+            Set $vector(vec, i+1, "double") = +vecArr.%Get(i)
+        }
+        Do ..Insert(name, docId, vec)
+        Set inserted = inserted + 1
+    }
+    Return "{""inserted"":"_inserted_"}"
 }
 
 ClassMethod BruteForceSearch(name As %String, queryVec As %Binary, k As %Integer = 10) As %String
