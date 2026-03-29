@@ -4,6 +4,12 @@
 **Created**: 2026-03-28
 **Status**: Draft
 
+## Clarifications
+
+### Session 2026-03-28
+
+- Q: Where do VecIndex.cls and User.Exec.cls live for deployment? → A: Vendored into `iris_vector_rag/pipelines/colbert_iris/sp/` alongside `ColBERTSearch.cls` — copied from `~/ws/iris-vector-graph/iris_src/src/Graph/KG/VecIndex.cls`. Keeps repo self-contained.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — Ingest Tokens into VecIndex (Priority: P1)
@@ -105,9 +111,9 @@ VecIndexSearcher(engine: IRISGraphEngine, index_name: str = "colbert_tokens", to
 
 Raised by `VecIndexSearcher.__init__()` if `engine.vec_info(index_name)` returns `{"count": 0}` or throws. Message includes: "Run ColBERTIngestor with use_vecindex=True then vec_build()".
 
-### FR-004: Deploy VecIndex.cls via Existing Script
+### FR-004: Deploy VecIndex.cls via Script
 
-`scripts/deploy_colbert_sp.sh` is extended (or a new `scripts/deploy_vecindex.sh`) to also deploy `Graph.KG.VecIndex` and `User.Exec` from the installed `iris-vector-graph` package. The `.cls` files live at `site-packages/iris_vector_graph/cls/` (or are extracted from the IVG repo).
+`scripts/deploy_vecindex.sh` copies `iris_vector_rag/pipelines/colbert_iris/sp/VecIndex.cls` and `UserExec.cls` (vendored from `iris-vector-graph`) into the target container and loads them via `irissession`. The `.cls` files are committed to this repo at `iris_vector_rag/pipelines/colbert_iris/sp/` — same pattern as `ColBERTSearch.cls` in 067. Source: `~/ws/iris-vector-graph/iris_src/src/Graph/KG/VecIndex.cls`.
 
 ### FR-005: Benchmark Integration
 
@@ -159,7 +165,22 @@ Raised by `VecIndexSearcher.__init__()` if `engine.vec_info(index_name)` returns
 5. `nprobe=2` default for balanced recall/speed; `nprobe=4` for high-recall mode.
 6. T5K (5000 docs, 267K tokens, 4 trees, leafSize=50) RP-tree build: ~10–30s one-time cost.
 7. `vec_insert` is incremental (no rebuild required per insert) but `vec_build()` must be called once after bulk ingest for optimal recall.
-8. The `iris-vector-graph` package `.cls` files are accessible for deploy — location TBD in FR-004.
+8. `VecIndex.cls` and `User.Exec.cls` vendored into `iris_vector_rag/pipelines/colbert_iris/sp/` — copied from `~/ws/iris-vector-graph/iris_src/src/Graph/KG/VecIndex.cls`.
+
+## All-Up Goals (inherited from 066/067, must be met here)
+
+This is the **definitive** spec for in-database ColBERT performance. Features 066 and 067 established the architecture and discovered the bottleneck. 068 is where the performance targets must actually land.
+
+| Goal | Source | Target | 067 result | 068 target |
+|---|---|---|---|---|
+| T5K query p50 | 067 SC-001 | ≤ 250ms | ❌ 490ms (SQL batching) | ≤ 250ms via VecIndex |
+| T5K query p95 | 067 SC-001 | ≤ 500ms | ❌ 820ms | ≤ 500ms |
+| recall@10 vs exact MaxSim | 067 SC-002 | ≥ 80% | ✅ 54% (K=64) / ~80% (K=512) | ≥ 80% at nprobe=2 |
+| Single callable interface | 067 SC-004 | One call per query | ✅ CALL works | `engine.vec_search()` per qtok |
+| No class compile lock | 067/066 blocker | Zero -110 errors | ❌ Every HNSW build | ✅ VecIndex globals (no DDL) |
+| Benchmark JSON by April 14 | 067 SC-006 | phase2_vecindex tier | ✅ phase3_sp (didn't meet perf) | phase2_vecindex + speedup |
+
+**The AIML71 / READY 2026 deck narrative** (April 28): "IRIS ColBERT retrieval via globals-native RP-tree ANN — no SQL VECTOR required, no DDL, 267K token vectors at sub-250ms p50."
 
 ## Dependencies
 
