@@ -3,6 +3,7 @@ from .maxsim_indb import MaxSimInDB
 from .pipeline import IRISColBERTPipeline
 from .plaid import PLAIDBuilder, PLAIDNotBuiltError, PLAIDSearcher
 from .schema import ColBERTSchema
+from .vecindex_phase2 import VecIndexNotAvailableError, VecIndexSearcher
 
 __all__ = [
     "IRISColBERTPipeline",
@@ -13,6 +14,8 @@ __all__ = [
     "PLAIDSearcher",
     "PLAIDNotBuiltError",
     "search_via_sp",
+    "VecIndexSearcher",
+    "VecIndexNotAvailableError",
 ]
 
 
@@ -20,3 +23,4 @@ def search_via_sp(conn, query_token_vecs, top_k=10, n_probe=4):
     return PLAIDSearcher(conn).search_via_sp(
         conn, query_token_vecs, top_k=top_k, n_probe=n_probe
     )
+

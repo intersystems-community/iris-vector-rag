@@ -11,7 +11,7 @@ Design choices:
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -38,24 +38,27 @@ class ColBERTIngestor:
         self,
         docs: List[Dict[str, Any]],
         batch_size: int = 32,
+        use_vecindex: bool = False,
+        vecindex_searcher=None,
     ) -> Dict[str, Any]:
-        """
-        Ingest a list of dicts with keys: doc_id, text, metadata (optional).
-        Returns stats dict.
-        """
         if self._model is None:
             raise RuntimeError(
                 "ColBERTIngestor: model not set — call set_model() first"
             )
 
+        if use_vecindex and vecindex_searcher is None:
+            from .vecindex_phase2 import VecIndexSearcher
+            vecindex_searcher = VecIndexSearcher(self._conn, token_dim=self._token_dim)
+            vecindex_searcher._ensure_index_created()
+
         t0 = time.perf_counter()
         total_tokens = 0
+        vecindex_count = 0
         failed = 0
 
         for i in range(0, len(docs), batch_size):
             batch = docs[i : i + batch_size]
             texts = [d["text"] for d in batch]
-
             token_embeddings = self._encode_batch(texts)
 
             for doc, tok_embs in zip(batch, token_embeddings):
@@ -63,6 +66,10 @@ class ColBERTIngestor:
                     self._insert_doc(doc)
                     self._insert_tokens(doc["doc_id"], tok_embs)
                     total_tokens += len(tok_embs)
+                    if use_vecindex and vecindex_searcher is not None:
+                        for pos, vec in enumerate(tok_embs):
+                            vecindex_searcher._fast_insert(doc["doc_id"], pos, vec)
+                            vecindex_count += 1
                 except Exception as e:
                     logger.warning(f"Failed to ingest doc {doc.get('doc_id')}: {e}")
                     failed += 1
@@ -71,15 +78,22 @@ class ColBERTIngestor:
             logger.debug(f"Ingested batch {i // batch_size + 1} ({len(batch)} docs)")
 
         elapsed = time.perf_counter() - t0
-        return {
+        stats: Dict[str, Any] = {
             "docs_ingested": len(docs) - failed,
             "docs_failed": failed,
             "total_tokens": total_tokens,
             "elapsed_s": round(elapsed, 2),
-            "docs_per_sec": (
-                round((len(docs) - failed) / elapsed, 1) if elapsed > 0 else 0
-            ),
+            "docs_per_sec": round((len(docs) - failed) / elapsed, 1) if elapsed > 0 else 0,
         }
+
+        if use_vecindex and vecindex_searcher is not None:
+            t_build = time.perf_counter()
+            vecindex_searcher.build()
+            stats["vecindex_count"] = vecindex_count
+            stats["vecindex_build_ms"] = round((time.perf_counter() - t_build) * 1000, 1)
+            stats["vecindex_ingest_mode"] = "engine_insert"
+
+        return stats
 
     # ------------------------------------------------------------------
     # Internal helpers

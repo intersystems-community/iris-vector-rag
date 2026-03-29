@@ -133,29 +133,29 @@ T001–T022 → T023 (all changes before final commit)
 
 ## Parallel Execution
 
-**Stream A** (setup + core):  
+**Stream A** (setup + core):
 T001 → T002 → T003 → T004 → T005 → T006 → T007
 
-**Stream B** (ingest + ingest tests):  
+**Stream B** (ingest + ingest tests):
 T008 → T009 → T010 (after T006)
 
-**Stream C** (search tests, after T010):  
+**Stream C** (search tests, after T010):
 T011, T012 in parallel
 
-**Stream D** (benchmark, after T011):  
+**Stream D** (benchmark, after T011):
 T013 → T014 → T015
 
-**Stream E** (polish, after T007, parallel with B/C/D):  
+**Stream E** (polish, after T007, parallel with B/C/D):
 T016, T017, T018
 
 **Final**: T019 → T020 → T021 → T022 → T023
 
 ## Implementation Strategy
 
-**MVP (US1 + US2 only — 9 tasks)**:  
+**MVP (US1 + US2 only — 9 tasks)**:
 T001–T007 (setup + VecIndexSearcher) → T008–T010 (dual-write ingest + fixture) → T011 (search tests) → T016/T017/T018 (polish)
 
-**Full delivery** (all 23 tasks):  
+**Full delivery** (all 23 tasks):
 Add T012 (lock tests), T013–T015 (benchmark), T019–T023 (validation + commit)
 
 **Task count per story**:

@@ -464,13 +464,19 @@ def benchmark_phase3_plaid(
 
 
 def benchmark_phase3_sp(
-    conn, model, docs: List[Dict], queries: List[str],
-    top_k: int, n_probe: int = 4,
+    conn,
+    model,
+    docs: List[Dict],
+    queries: List[str],
+    top_k: int,
+    n_probe: int = 4,
 ) -> Dict:
-    from iris_vector_rag.pipelines.colbert_iris.plaid import PLAIDSearcher
     from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
+    from iris_vector_rag.pipelines.colbert_iris.plaid import PLAIDSearcher
 
-    logger.info(f"  Phase 3 SP (in-DB): {len(docs)} docs, {len(queries)} queries, n_probe={n_probe}")
+    logger.info(
+        f"  Phase 3 SP (in-DB): {len(docs)} docs, {len(queries)} queries, n_probe={n_probe}"
+    )
 
     searcher = PLAIDSearcher(conn, token_dim=TOKEN_DIM)
     ms = MaxSimInDB(conn, token_dim=TOKEN_DIM)
@@ -496,7 +502,9 @@ def benchmark_phase3_sp(
         _ = q_vecs
         t1 = time.perf_counter()
 
-        sp_results, meta = searcher.search_via_sp(conn, q_vecs, top_k=top_k, n_probe=n_probe)
+        sp_results, meta = searcher.search_via_sp(
+            conn, q_vecs, top_k=top_k, n_probe=n_probe
+        )
         t2 = time.perf_counter()
 
         query_times.append(t2 - t0)
@@ -517,6 +525,124 @@ def benchmark_phase3_sp(
         **percentiles(query_times),
         "mean_pruning_ratio": round(float(np.mean(pruning_ratios)), 3),
         "mean_recall_at_k": round(float(np.mean(recalls)), 3),
+        "stages": {
+            kk: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
+            for kk, v in stage_times.items()
+        },
+    }
+
+
+def benchmark_phase2_vecindex(
+    conn,
+    model,
+    docs: List[Dict],
+    queries: List[str],
+    top_k: int = 10,
+    nprobe: int = 2,
+    schema=None,
+    ingestor=None,
+    existing_searcher=None,
+) -> Dict:
+    from iris_vector_rag.pipelines.colbert_iris.vecindex_phase2 import VecIndexSearcher
+    from iris_vector_rag.pipelines.colbert_iris.schema import ColBERTSchema
+    from iris_vector_rag.pipelines.colbert_iris.ingest import ColBERTIngestor
+    from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
+
+    logger.info(
+        f"  Phase 2 VecIndex (RP-tree): {len(docs)} docs, {len(queries)} queries, nprobe={nprobe}"
+    )
+
+    if schema is None:
+        schema = ColBERTSchema(conn)
+        schema.drop_tables()
+        schema.create_tables()
+
+    searcher = VecIndexSearcher(conn, index_name="bench_vi", token_dim=TOKEN_DIM)
+
+    if existing_searcher is not None:
+        searcher = existing_searcher
+        ingest_elapsed = 0.0
+        build_elapsed = 0.0
+        logger.info("  Using provided VecIndex searcher (no ingest)...")
+    elif ingestor is not None:
+        logger.info("  Ingesting with dual-write to VecIndex...")
+        t_ingest = time.perf_counter()
+        stats = ingestor.ingest_documents(docs, use_vecindex=True, vecindex_searcher=searcher)
+        ingest_elapsed = time.perf_counter() - t_ingest
+        build_elapsed = stats.get("vecindex_build_ms", 0) / 1000
+    else:
+        ingest_elapsed = 0.0
+        build_elapsed = 0.0
+        logger.info("  Using existing VecIndex (no ingest)...")
+
+    ms = MaxSimInDB(conn, token_dim=TOKEN_DIM)
+    sql_conn = conn
+    try:
+        sql_conn.cursor()
+    except AttributeError:
+        import iris.dbapi as _dbapi
+        import os as _os
+        sql_conn = _dbapi.connect(
+            hostname=getattr(conn, "hostname", _os.environ.get("IRIS_HOSTNAME", "localhost")),
+            port=getattr(conn, "port", int(_os.environ.get("IRIS_PORT", "1972"))),
+            namespace=getattr(conn, "namespace", "USER"),
+            username=_os.environ.get("IRIS_USERNAME", "_SYSTEM"),
+            password=_os.environ.get("IRIS_PASSWORD", "SYS"),
+        )
+        ms = MaxSimInDB(sql_conn, token_dim=TOKEN_DIM)
+    cur = sql_conn.cursor()
+    try:
+        cur.execute("SELECT DISTINCT doc_id FROM RAG.ColBERTDocuments")
+        all_ids = [r[0] for r in cur.fetchall()]
+    finally:
+        cur.close()
+
+    query_times, stage_times = [], {"encode_query": [], "vi_search": []}
+    recalls = []
+
+    for q in queries:
+        q_embs = model.encode([q], is_query=True)
+        q_vecs = np.array(q_embs[0], dtype=np.float32)
+        if q_vecs.ndim == 1:
+            q_vecs = q_vecs.reshape(1, -1)
+        t0 = time.perf_counter()
+        t_enc = time.perf_counter() - t0
+
+        t1 = time.perf_counter()
+        vi_results, meta = searcher.search(q_vecs, top_k=top_k, nprobe=nprobe)
+        t_vi = time.perf_counter() - t1
+
+        query_times.append((t_enc + t_vi))
+        stage_times["encode_query"].append(t_enc * 1000)
+        stage_times["vi_search"].append(t_vi * 1000)
+
+        p2_ref = ms.bulk_fetch_maxsim(q_vecs, all_ids, top_k=top_k)
+        p2_set = {r[0] for r in p2_ref}
+        vi_set = {r[0] for r in vi_results}
+        recalls.append(len(p2_set & vi_set) / max(len(p2_set), 1))
+
+    p2_ref_times = []
+    for q in queries:
+        q_vecs = np.array(model.encode([q], is_query=True)[0], dtype=np.float32)
+        if q_vecs.ndim == 1:
+            q_vecs = q_vecs.reshape(1, -1)
+        t0 = time.perf_counter()
+        ms.bulk_fetch_maxsim(q_vecs, all_ids, top_k=top_k)
+        p2_ref_times.append(time.perf_counter() - t0)
+
+    p2_p50 = float(np.percentile([t * 1000 for t in p2_ref_times], 50))
+    vi_p50 = float(np.percentile([t * 1000 for t in query_times], 50))
+
+    return {
+        "approach": "phase2_vecindex",
+        "n_docs": len(docs),
+        "n_queries": len(queries),
+        "nprobe": nprobe,
+        "ingest_elapsed_s": round(ingest_elapsed, 2),
+        "build_elapsed_s": round(build_elapsed, 2),
+        **percentiles(query_times),
+        "mean_recall_at_10": round(float(np.mean(recalls)), 3),
+        "speedup_vs_phase2": round(p2_p50 / max(vi_p50, 0.1), 2),
         "stages": {kk: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
                    for kk, v in stage_times.items()},
     }
@@ -538,6 +664,8 @@ def main():
     parser.add_argument("--model", default="lightonai/GTE-ModernColBERT-v1")
     parser.add_argument("--skip-baseline", action="store_true")
     parser.add_argument("--skip-plaid", action="store_true")
+    parser.add_argument("--skip-sp", action="store_true")
+    parser.add_argument("--skip-vecindex", action="store_true")
     parser.add_argument("--n-probe", type=int, default=4)
     parser.add_argument("--output", default="/tmp/colbert_scale_results.json")
     args = parser.parse_args()
@@ -634,15 +762,40 @@ def main():
 
         if not args.skip_plaid:
             tier_results["phase3"] = benchmark_phase3_plaid(
-                conn,
-                model,
-                tier_docs,
-                queries,
-                args.top_k,
-                schema,
-                ingestor,
-                n_probe=args.n_probe,
+                conn, model, tier_docs, queries, args.top_k,
+                schema, ingestor, n_probe=args.n_probe,
             )
+            logger.info(
+                f"  Phase3 p50={tier_results['phase3']['p50_ms']:.1f}ms "
+                f"p95={tier_results['phase3']['p95_ms']:.1f}ms "
+                f"K={tier_results['phase3']['n_clusters']} "
+                f"pruning={tier_results['phase3']['mean_pruning_ratio']:.2f} "
+                f"recall@{args.top_k}={tier_results['phase3']['mean_recall_at_k']:.3f}"
+            )
+            tier_results["speedup_phase3_vs_phase2"] = round(
+                tier_results["phase2"]["p50_ms"]
+                / max(tier_results["phase3"]["p50_ms"], 0.1),
+                2,
+            )
+
+        if not args.skip_sp:
+            try:
+                tier_results["phase3_sp"] = benchmark_phase3_sp(
+                    conn, model, tier_docs, queries, args.top_k, n_probe=args.n_probe,
+                )
+                logger.info(
+                    f"  Phase3 SP p50={tier_results['phase3_sp']['p50_ms']:.1f}ms "
+                    f"p95={tier_results['phase3_sp']['p95_ms']:.1f}ms "
+                    f"pruning={tier_results['phase3_sp']['mean_pruning_ratio']:.2f} "
+                    f"recall@{args.top_k}={tier_results['phase3_sp']['mean_recall_at_k']:.3f}"
+                )
+                tier_results["speedup_sp_vs_phase2"] = round(
+                    tier_results["phase2"]["p50_ms"]
+                    / max(tier_results["phase3_sp"]["p50_ms"], 0.1), 2,
+                )
+            except Exception as e:
+                logger.warning(f"  Phase3 SP skipped: {e}")
+                tier_results["phase3_sp_error"] = str(e)
             logger.info(
                 f"  Phase3 p50={tier_results['phase3']['p50_ms']:.1f}ms "
                 f"p95={tier_results['phase3']['p95_ms']:.1f}ms "
@@ -667,6 +820,24 @@ def main():
                 / max(tier_results["phase2"]["p50_ms"], 0.1),
                 2,
             )
+
+        if not args.skip_vecindex:
+            try:
+                tier_results["phase2_vecindex"] = benchmark_phase2_vecindex(
+                    conn, model, tier_docs, queries, args.top_k,
+                    nprobe=args.n_probe, schema=schema, ingestor=ingestor,
+                )
+                vi = tier_results["phase2_vecindex"]
+                logger.info(
+                    f"  Phase2-VecIndex p50={vi['p50_ms']:.1f}ms "
+                    f"p95={vi['p95_ms']:.1f}ms "
+                    f"recall@{args.top_k}={vi['mean_recall_at_10']:.3f} "
+                    f"speedup={vi['speedup_vs_phase2']:.2f}x"
+                )
+                tier_results["speedup_vecindex_vs_phase2"] = vi["speedup_vs_phase2"]
+            except Exception as e:
+                logger.warning(f"  Phase2-VecIndex skipped: {e}")
+                tier_results["phase2_vecindex_error"] = str(e)
 
         all_results["tiers"][str(tier)] = tier_results
 
