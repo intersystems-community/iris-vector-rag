@@ -101,12 +101,7 @@ class ColBERTIngestor:
         result = []
         for emb in embeddings:
             arr = np.atleast_2d(np.array(emb, dtype=np.float32))
-            if arr.shape[0] == 1 and arr.ndim == 2:
-                arr = arr.reshape(-1, arr.shape[1])
-            elif arr.ndim == 1:
-                arr = arr.reshape(1, -1)
-            arr = self._normalise(arr)
-            result.append(arr)
+            result.append(self._normalise(arr))
         return result
 
     @staticmethod

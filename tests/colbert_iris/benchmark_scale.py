@@ -510,18 +510,14 @@ def benchmark_phase3_sp(
             q_vecs = q_vecs.reshape(1, -1)
         t0 = time.perf_counter()
 
-        t_enc = time.perf_counter()
-        _ = q_vecs
-        t1 = time.perf_counter()
-
         sp_results, meta = searcher.search_via_sp(
             conn, q_vecs, top_k=top_k, n_probe=n_probe
         )
-        t2 = time.perf_counter()
+        t1 = time.perf_counter()
 
-        query_times.append(t2 - t0)
-        stage_times["encode_query"].append((t1 - t0) * 1000)
-        stage_times["sp_call"].append((t2 - t1) * 1000)
+        query_times.append(t1 - t0)
+        stage_times["encode_query"].append(0.0)
+        stage_times["sp_call"].append((t1 - t0) * 1000)
         pruning_ratios.append(meta.get("n_candidates", 0) / max(len(all_doc_ids), 1))
 
         p2_ref = ms.indb_maxsim(q_vecs, top_k=top_k, k_per_token=50)
@@ -660,14 +656,11 @@ def benchmark_phase2_vecindex(
         if q_vecs.ndim == 1:
             q_vecs = q_vecs.reshape(1, -1)
         t0 = time.perf_counter()
-        t_enc = time.perf_counter() - t0
-
-        t1 = time.perf_counter()
         vi_results, meta = searcher.search(q_vecs, top_k=top_k, nprobe=nprobe)
-        t_vi = time.perf_counter() - t1
+        t_vi = time.perf_counter() - t0
 
-        query_times.append((t_enc + t_vi))
-        stage_times["encode_query"].append(t_enc * 1000)
+        query_times.append(t_vi)
+        stage_times["encode_query"].append(0.0)
         stage_times["vi_search"].append(t_vi * 1000)
 
         p2_ref = ms.bulk_fetch_maxsim(q_vecs, all_ids, top_k=top_k)
