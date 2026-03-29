@@ -147,22 +147,26 @@ StageTwo
 		}
 	}
 	
-	// Stage 2: Exact MaxSim scoring
+	// Stage 2: Exact MaxSim scoring — pre-load each doc's tokens once
 	Kill ^||ranked
 	Set docId = ""
 	For {
 		Set docId = $Order(^||candidates(docId))
 		Quit:docId=""
+		Kill tVecs
+		Set tp = "", nTok = 0
+		For {
+			Set tp = $Order(^PLAID(name, "docTokens", docId, tp))
+			Quit:tp=""
+			Set nTok = nTok + 1
+			Set tVecs(nTok) = ^PLAID(name, "docTokens", docId, tp)
+		}
 		Set maxsim = 0
 		For q = 0:1:(nQ-1) {
 			Set qVec = queryVecs(q)
 			Set maxDot = -999999
-			Set tp = ""
-			For {
-				Set tp = $Order(^PLAID(name, "docTokens", docId, tp))
-				Quit:tp=""
-				Set tVec = ^PLAID(name, "docTokens", docId, tp)
-				Set dot = $vectorop("sum", $vectorop("v*", qVec, tVec))
+			For t = 1:1:nTok {
+				Set dot = $vectorop("sum", $vectorop("v*", qVec, tVecs(t)))
 				If dot > maxDot Set maxDot = dot
 			}
 			Set maxsim = maxsim + maxDot
