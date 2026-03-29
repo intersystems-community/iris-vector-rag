@@ -162,6 +162,29 @@ ClassMethod Search(name As %String, queryVec As %Binary, k As %Integer = 10, npr
     Return ..RankCandidates(name, queryVec, k)
 }
 
+ClassMethod JsonToVector(jsonArray As %String) As %Binary
+{
+    Set arr = ##class(%DynamicArray).%FromJSON(jsonArray)
+    Set dim = arr.%Size()
+    Set vec = ""
+    For i = 0:1:(dim-1) {
+        Set $vector(vec, i+1, "double") = +arr.%Get(i)
+    }
+    Return vec
+}
+
+ClassMethod SearchJSON(name As %String, jsonArray As %String, k As %Integer = 10, nprobe As %Integer = 2) As %String
+{
+    Set vec = ..JsonToVector(jsonArray)
+    Return ..Search(name, vec, k, nprobe)
+}
+
+ClassMethod InsertJSON(name As %String, docId As %String, jsonArray As %String)
+{
+    Set vec = ..JsonToVector(jsonArray)
+    Do ..Insert(name, docId, vec)
+}
+
 ClassMethod BruteForceSearch(name As %String, queryVec As %Binary, k As %Integer = 10) As %String
 {
     Set metric = $Get(^VecIdx(name, "cfg", "metric"), "cosine")
