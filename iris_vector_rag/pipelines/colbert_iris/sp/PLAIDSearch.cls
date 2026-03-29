@@ -38,6 +38,7 @@ ClassMethod StoreDocTokensBatch(name As %String, batchJSON As %String)
 		Set docId = docObj.%Get("id")
 		Set tokArr = docObj.%Get("tokens")
 		Set nTok = tokArr.%Size()
+		Set packed = ""
 		For t = 0:1:(nTok-1) {
 			Set tArr = tokArr.%Get(t)
 			Set dim = tArr.%Size()
@@ -45,8 +46,10 @@ ClassMethod StoreDocTokensBatch(name As %String, batchJSON As %String)
 			For i = 0:1:(dim-1) {
 				Set $vector(vec, i+1, "double") = +tArr.%Get(i)
 			}
-			Set ^PLAID(name, "docTokens", docId, t) = vec
+			Set packed = packed _ $ListBuild(vec)
 		}
+		Set ^PLAID(name, "docPacked", docId) = packed
+		Set ^PLAID(name, "docNTok", docId) = nTok
 		Set ^PLAID(name, "meta", "nDocs") = $Get(^PLAID(name, "meta", "nDocs"), 0) + 1
 		Set ^PLAID(name, "meta", "totalTokens") = $Get(^PLAID(name, "meta", "totalTokens"), 0) + nTok
 	}
@@ -56,6 +59,7 @@ ClassMethod StoreDocTokens(name As %String, docId As %String, tokensJSON As %Str
 {
 	Set arr = ##class(%DynamicArray).%FromJSON(tokensJSON)
 	Set nTok = arr.%Size()
+	Set packed = ""
 	For t = 0:1:(nTok-1) {
 		Set tArr = arr.%Get(t)
 		Set dim = tArr.%Size()
@@ -63,8 +67,10 @@ ClassMethod StoreDocTokens(name As %String, docId As %String, tokensJSON As %Str
 		For i = 0:1:(dim-1) {
 			Set $vector(vec, i+1, "double") = +tArr.%Get(i)
 		}
-		Set ^PLAID(name, "docTokens", docId, t) = vec
+		Set packed = packed _ $ListBuild(vec)
 	}
+	Set ^PLAID(name, "docPacked", docId) = packed
+	Set ^PLAID(name, "docNTok", docId) = nTok
 	Set ^PLAID(name, "meta", "nDocs") = $Get(^PLAID(name, "meta", "nDocs"), 0) + 1
 	Set ^PLAID(name, "meta", "totalTokens") = $Get(^PLAID(name, "meta", "totalTokens"), 0) + nTok
 }
@@ -88,7 +94,6 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 	Set nC = +$Get(^PLAID(name, "meta", "nCentroids"), 0)
 	If nC = 0 Return "[]"
 	
-	// Parse query tokens into $vector array
 	For q = 0:1:(nQ-1) {
 		Set qArr = tokens.%Get(q)
 		Set dim = qArr.%Size()
@@ -99,7 +104,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 		Set queryVecs(q) = qVec
 	}
 	
-	// Stage 1: Score query tokens against all centroids
+	// Stage 1: centroid scoring
 	Kill ^||centroidScore
 	For q = 0:1:(nQ-1) {
 		Set qVec = queryVecs(q)
@@ -112,7 +117,6 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 	
 	// Pick top nprobe centroids
 	Kill ^||topCentroids
-	Set negScore = ""
 	For c = 0:1:(nC-1) {
 		Set sc = +$Get(^||centroidScore(c), 0)
 		Set ^||topCentroids(-sc, c) = ""
@@ -133,7 +137,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 	}
 StageTwo
 	
-	// Stage 1.5: Gather candidate docs from top centroids
+	// Stage 1.5: candidate docs from top centroids
 	Kill ^||candidates
 	Set sc = ""
 	For {
@@ -147,26 +151,22 @@ StageTwo
 		}
 	}
 	
-	// Stage 2: Exact MaxSim scoring — pre-load each doc's tokens once
+	// Stage 2: MaxSim with packed token storage (1 $Get per doc)
 	Kill ^||ranked
 	Set docId = ""
 	For {
 		Set docId = $Order(^||candidates(docId))
 		Quit:docId=""
-		Kill tVecs
-		Set tp = "", nTok = 0
-		For {
-			Set tp = $Order(^PLAID(name, "docTokens", docId, tp))
-			Quit:tp=""
-			Set nTok = nTok + 1
-			Set tVecs(nTok) = ^PLAID(name, "docTokens", docId, tp)
-		}
+		Set packed = $Get(^PLAID(name, "docPacked", docId))
+		If packed = "" Continue
+		Set nTok = +$Get(^PLAID(name, "docNTok", docId))
 		Set maxsim = 0
 		For q = 0:1:(nQ-1) {
 			Set qVec = queryVecs(q)
 			Set maxDot = -999999
-			For t = 1:1:nTok {
-				Set dot = $vectorop("sum", $vectorop("v*", qVec, tVecs(t)))
+			Set ptr = 0
+			While $ListNext(packed, ptr, tVec) {
+				Set dot = $vectorop("sum", $vectorop("v*", qVec, tVec))
 				If dot > maxDot Set maxDot = dot
 			}
 			Set maxsim = maxsim + maxDot
@@ -174,7 +174,7 @@ StageTwo
 		Set ^||ranked(-maxsim, docId) = ""
 	}
 	
-	// TopK output
+	// TopK
 	Set result = "[", first = 1, cnt = 0
 	Set negSc = ""
 	For {
@@ -201,6 +201,7 @@ ClassMethod Insert(name As %String, docId As %String, tokensJSON As %String)
 	Set arr = ##class(%DynamicArray).%FromJSON(tokensJSON)
 	Set nTok = arr.%Size()
 	Set nC = +$Get(^PLAID(name, "meta", "nCentroids"), 0)
+	Set packed = ""
 	
 	For t = 0:1:(nTok-1) {
 		Set tArr = arr.%Get(t)
@@ -209,9 +210,8 @@ ClassMethod Insert(name As %String, docId As %String, tokensJSON As %String)
 		For i = 0:1:(dim-1) {
 			Set $vector(vec, i+1, "double") = +tArr.%Get(i)
 		}
-		Set ^PLAID(name, "docTokens", docId, t) = vec
+		Set packed = packed _ $ListBuild(vec)
 		
-		// Assign to nearest centroid
 		Set bestC = 0, bestDot = -999999
 		For c = 0:1:(nC-1) {
 			Set cVec = ^PLAID(name, "centroid", c)
@@ -220,6 +220,8 @@ ClassMethod Insert(name As %String, docId As %String, tokensJSON As %String)
 		}
 		Set ^PLAID(name, "docCentroid", bestC, docId) = ""
 	}
+	Set ^PLAID(name, "docPacked", docId) = packed
+	Set ^PLAID(name, "docNTok", docId) = nTok
 	Set ^PLAID(name, "meta", "nDocs") = $Get(^PLAID(name, "meta", "nDocs"), 0) + 1
 	Set ^PLAID(name, "meta", "totalTokens") = $Get(^PLAID(name, "meta", "totalTokens"), 0) + nTok
 }
