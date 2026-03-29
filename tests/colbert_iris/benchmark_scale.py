@@ -2,7 +2,19 @@
 Large-scale ColBERT benchmark comparing:
   - Baseline: PyLate (query-time doc encoding, Python MaxSim)
   - Phase 1:  Pre-stored tokens, Python bulk-fetch MaxSim
-  - Phase 2:  Pre-stored tokens, in-DB HNSW MaxSim
+  - Phase 2:  Pre-stored tokens, in-DB HNSW MaxSim (recommended fast path)
+  - Phase 3:  PLAID centroid pruning + MaxSim (research: PLAID paper 2022)
+  - Phase 2 VecIndex: RP-tree ANN over tokens (NOTE: wrong architecture for ColBERT)
+
+Architecture note on VecIndex recall:
+  PLAID/ColBERT ANN works over CENTROIDS, not raw tokens. ColBERT token embeddings
+  from the same document are highly correlated (~53 tokens/doc), so any ANN index
+  over tokens returns neighborhoods dominated by same-doc tokens rather than
+  spreading across the corpus. PLAID avoids this by k-means clustering all token
+  embeddings into K centroids (K~sqrt(N)), then searching centroids at query time.
+  Our Phase 3 uses this centroid approach. The VecIndex RP-tree search is an
+  alternative but not the canonical ColBERT candidate generation architecture.
+  See: PLAID (Santhanam et al., CIKM 2022), WARP (Scheerer et al., SIGIR 2025).
 
 Dataset: AG News (20K articles via datasets library, first N per tier)
 Scaling tiers: 500, 2000, 5000, 10000 docs

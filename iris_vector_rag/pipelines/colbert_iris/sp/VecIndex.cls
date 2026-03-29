@@ -258,12 +258,22 @@ ClassMethod BuildTree(name As %String, treeId As %Integer, idList As %List, dim 
     Set minSide = ($Number(n * 0.1) + 1)
     Set bestPlane = "", bestLeft = "", bestRight = "", bestBalance = 0
     For attempt = 1:1:10 {
-        Set plane = ..RandomHyperplane(dim)
-        Set leftIds = "", rightIds = ""
-        Set ptr = 0
+        Set idxA = $random(n) + 1, idxB = $random(n - 1) + 1
+        If idxB >= idxA Set idxB = idxB + 1
+        Set vecA = "", vecB = "", ptr = 0, pos = 0
         While $ListNext(idList, ptr, docId) {
-            Set vec = ^VecIdx(name, "vec", docId)
-            Set proj = $vectorop("sum", $vectorop("v*", vec, plane))
+            Set pos = pos + 1
+            If pos = idxA { Set vecA = ^VecIdx(name, "vec", docId) }
+            ElseIf pos = idxB { Set vecB = ^VecIdx(name, "vec", docId) }
+            If (vecA '= "") && (vecB '= "") Quit
+        }
+        Set diff = $vectorop("v-", vecA, vecB)
+        Set norm = $zsqr($vectorop("sum", $vectorop("v*", diff, diff)))
+        If norm = 0 Continue
+        Set plane = $vectorop("/", diff, norm)
+        Set leftIds = "", rightIds = "", ptr = 0
+        While $ListNext(idList, ptr, docId) {
+            Set proj = $vectorop("sum", $vectorop("v*", ^VecIdx(name, "vec", docId), plane))
             If proj >= 0 {
                 Set rightIds = rightIds _ $ListBuild(docId)
             } Else {
