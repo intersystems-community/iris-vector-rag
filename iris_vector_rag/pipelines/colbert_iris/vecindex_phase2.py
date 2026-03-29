@@ -100,10 +100,10 @@ class VecIndexSearcher:
         t_search = time.perf_counter()
         per_doc_max: Dict[str, Dict[int, float]] = {}
 
-        for q_idx, q_vec in enumerate(q_vecs):
-            hits = self._engine.vec_search(
-                self.index_name, q_vec.tolist(), k=k_per_token, nprobe=nprobe
-            )
+        all_hits = self._engine.vec_search_multi(
+            self.index_name, q_vecs.tolist(), k=k_per_token, nprobe=nprobe
+        )
+        for q_idx, hits in enumerate(all_hits):
             for hit in hits:
                 raw_id = hit["id"]
                 doc_id = raw_id.rsplit(":", 1)[0]

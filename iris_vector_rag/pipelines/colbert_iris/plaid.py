@@ -91,9 +91,11 @@ class PLAIDBuilder:
             tok_positions.append(row[1])
             raw = row[2]
             v = np.array(
-                [float(x) for x in raw.strip("[]").split(",")]
-                if isinstance(raw, str)
-                else raw,
+                (
+                    [float(x) for x in raw.strip("[]").split(",")]
+                    if isinstance(raw, str)
+                    else raw
+                ),
                 dtype=np.float32,
             )
             vecs.append(v)

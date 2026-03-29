@@ -567,10 +567,13 @@ def benchmark_phase2_vecindex(
     elif emb_cache is not None:
         logger.info("  Bulk-inserting from embedding cache (no re-encoding)...")
         t_ingest = time.perf_counter()
-        from iris_vector_graph import IRISGraphEngine
         import intersystems_iris
+        from iris_vector_graph import IRISGraphEngine
+
         native = intersystems_iris.createConnection(
-            hostname=getattr(conn, "hostname", os.environ.get("IRIS_HOSTNAME", "localhost")),
+            hostname=getattr(
+                conn, "hostname", os.environ.get("IRIS_HOSTNAME", "localhost")
+            ),
             port=getattr(conn, "port", int(os.environ.get("IRIS_PORT", "1972"))),
             namespace=getattr(conn, "namespace", "USER"),
             username=os.environ.get("IRIS_USERNAME", "_SYSTEM"),
@@ -584,7 +587,9 @@ def benchmark_phase2_vecindex(
             if embs is None:
                 continue
             for pos, vec in enumerate(embs):
-                pairs.append({"id": f"{doc['doc_id']}:{pos}", "embedding": vec.tolist()})
+                pairs.append(
+                    {"id": f"{doc['doc_id']}:{pos}", "embedding": vec.tolist()}
+                )
         CHUNK = 500
         for i in range(0, len(pairs), CHUNK):
             engine.vec_bulk_insert("bench_vi", pairs[i : i + CHUNK])
@@ -594,7 +599,9 @@ def benchmark_phase2_vecindex(
         build_elapsed = time.perf_counter() - t_build
         native.close()
     elif ingestor is not None:
-        logger.info("  Ingesting with dual-write to VecIndex (slow: re-encodes docs)...")
+        logger.info(
+            "  Ingesting with dual-write to VecIndex (slow: re-encodes docs)..."
+        )
         t_ingest = time.perf_counter()
         stats = ingestor.ingest_documents(
             docs, use_vecindex=True, vecindex_searcher=searcher
@@ -893,7 +900,10 @@ def main():
                 tier_results["speedup_vecindex_vs_phase2"] = vi["speedup_vs_phase2"]
             except Exception as e:
                 import traceback
-                logger.warning(f"  Phase2-VecIndex skipped: {e}\n{traceback.format_exc()}")
+
+                logger.warning(
+                    f"  Phase2-VecIndex skipped: {e}\n{traceback.format_exc()}"
+                )
                 tier_results["phase2_vecindex_error"] = str(e)
 
         all_results["tiers"][str(tier)] = tier_results
