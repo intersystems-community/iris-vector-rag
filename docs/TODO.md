@@ -33,7 +33,7 @@
 - [ ] Add more unit tests for coverage
 - [ ] Contract tests for all pipelines
 
-### Infrastructure  
+### Infrastructure
 - [ ] IRIS JSON metadata filtering (research needed)
 - [ ] Test data cleanup automation
 - [ ] Pre-flight check improvements
@@ -210,7 +210,7 @@ None currently
 - Performance optimization needed
 - Documentation gaps
 
-### Low Priority  
+### Low Priority
 - Minor UI improvements
 - Additional pipeline variants
 

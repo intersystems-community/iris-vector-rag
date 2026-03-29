@@ -34,16 +34,22 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 try:
-    from langchain_intersystems import IRISVectorStore, Predicate, SimilarityMetric  # noqa: F401
+    from langchain_intersystems import (  # noqa: F401
+        IRISVectorStore,
+        Predicate,
+        SimilarityMetric,
+    )
+
     _LANGCHAIN_INTERSYSTEMS_AVAILABLE = True
 except ImportError:
     _LANGCHAIN_INTERSYSTEMS_AVAILABLE = False
 
 try:
+    from langchain_core.callbacks import CallbackManagerForRetrieverRun
     from langchain_core.documents import Document
     from langchain_core.embeddings import Embeddings
     from langchain_core.retrievers import BaseRetriever
-    from langchain_core.callbacks import CallbackManagerForRetrieverRun
+
     _LANGCHAIN_CORE_AVAILABLE = True
 except ImportError:
     _LANGCHAIN_CORE_AVAILABLE = False
@@ -159,7 +165,9 @@ class IRISRAGRetriever(BaseRetriever):
             doc.metadata["_retrieval_score"] = round(float(score), 6)
             docs.append(doc)
 
-        logger.debug("IRISRAGRetriever returned %d docs for query=%r", len(docs), query[:60])
+        logger.debug(
+            "IRISRAGRetriever returned %d docs for query=%r", len(docs), query[:60]
+        )
         return docs
 
     def add_documents(self, documents: list["Document"]) -> list[str]:

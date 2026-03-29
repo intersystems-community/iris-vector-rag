@@ -16,8 +16,11 @@ def _iris_available() -> bool:
         import iris.dbapi as dbapi
 
         conn = dbapi.connect(
-            hostname=IRIS_HOST, port=IRIS_PORT,
-            namespace="USER", username="_SYSTEM", password="SYS",
+            hostname=IRIS_HOST,
+            port=IRIS_PORT,
+            namespace="USER",
+            username="_SYSTEM",
+            password="SYS",
         )
         conn.close()
         return True
@@ -35,14 +38,18 @@ def setup_colbert_sp():
 
     result = subprocess.run(
         ["bash", setup_script, CONTAINER],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True,
+        text=True,
+        timeout=60,
     )
     if result.returncode != 0:
         pytest.skip(f"setup_spike_env.sh failed: {result.stderr}")
 
     result = subprocess.run(
         ["bash", deploy_script, CONTAINER],
-        capture_output=True, text=True, timeout=30,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     if result.returncode != 0:
         pytest.skip(f"deploy_colbert_sp.sh failed: {result.stderr}")
@@ -50,9 +57,25 @@ def setup_colbert_sp():
     import iris.dbapi as dbapi
 
     conn = dbapi.connect(
-        hostname=IRIS_HOST, port=IRIS_PORT,
-        namespace="USER", username="_SYSTEM", password="SYS",
+        hostname=IRIS_HOST,
+        port=IRIS_PORT,
+        namespace="USER",
+        username="_SYSTEM",
+        password="SYS",
     )
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM RAG.ColBERTCentroids")
+        n_centroids = cur.fetchone()[0]
+        cur.close()
+        if n_centroids == 0:
+            from iris_vector_rag.pipelines.colbert_iris.plaid import PLAIDBuilder
+            builder = PLAIDBuilder(conn, token_dim=128)
+            builder.build(n_clusters=512)
+    except Exception as e:
+        conn.close()
+        pytest.skip(f"PLAID centroid build failed: {e}")
+
     try:
         cur = conn.cursor()
         q = np.random.default_rng(0).random((2, 128)).astype(np.float32)

@@ -17,4 +17,6 @@ __all__ = [
 
 
 def search_via_sp(conn, query_token_vecs, top_k=10, n_probe=4):
-    return PLAIDSearcher(conn).search_via_sp(conn, query_token_vecs, top_k=top_k, n_probe=n_probe)
+    return PLAIDSearcher(conn).search_via_sp(
+        conn, query_token_vecs, top_k=top_k, n_probe=n_probe
+    )

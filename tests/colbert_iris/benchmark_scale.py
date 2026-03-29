@@ -463,6 +463,65 @@ def benchmark_phase3_plaid(
     }
 
 
+def benchmark_phase3_sp(
+    conn, model, docs: List[Dict], queries: List[str],
+    top_k: int, n_probe: int = 4,
+) -> Dict:
+    from iris_vector_rag.pipelines.colbert_iris.plaid import PLAIDSearcher
+    from iris_vector_rag.pipelines.colbert_iris.maxsim_indb import MaxSimInDB
+
+    logger.info(f"  Phase 3 SP (in-DB): {len(docs)} docs, {len(queries)} queries, n_probe={n_probe}")
+
+    searcher = PLAIDSearcher(conn, token_dim=TOKEN_DIM)
+    ms = MaxSimInDB(conn, token_dim=TOKEN_DIM)
+
+    query_times, stage_times = [], {"encode_query": [], "sp_call": []}
+    pruning_ratios, recalls = [], []
+
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT DISTINCT doc_id FROM RAG.ColBERTDocuments")
+        all_doc_ids = [r[0] for r in cur.fetchall()]
+    finally:
+        cur.close()
+
+    for q in queries:
+        q_embs = model.encode([q], is_query=True)
+        q_vecs = np.array(q_embs[0], dtype=np.float32)
+        if q_vecs.ndim == 1:
+            q_vecs = q_vecs.reshape(1, -1)
+        t0 = time.perf_counter()
+
+        t_enc = time.perf_counter()
+        _ = q_vecs
+        t1 = time.perf_counter()
+
+        sp_results, meta = searcher.search_via_sp(conn, q_vecs, top_k=top_k, n_probe=n_probe)
+        t2 = time.perf_counter()
+
+        query_times.append(t2 - t0)
+        stage_times["encode_query"].append((t1 - t0) * 1000)
+        stage_times["sp_call"].append((t2 - t1) * 1000)
+        pruning_ratios.append(meta.get("n_candidates", 0) / max(len(all_doc_ids), 1))
+
+        p2_ref = ms.indb_maxsim(q_vecs, top_k=top_k, k_per_token=50)
+        p2_set = {r[0] for r in p2_ref}
+        sp_set = {r[0] for r in sp_results}
+        recalls.append(len(p2_set & sp_set) / max(len(p2_set), 1))
+
+    return {
+        "approach": "phase3_sp",
+        "n_docs": len(docs),
+        "n_queries": len(queries),
+        "n_probe": n_probe,
+        **percentiles(query_times),
+        "mean_pruning_ratio": round(float(np.mean(pruning_ratios)), 3),
+        "mean_recall_at_k": round(float(np.mean(recalls)), 3),
+        "stages": {kk: {"mean_ms": float(np.mean(v)), "p95_ms": float(np.percentile(v, 95))}
+                   for kk, v in stage_times.items()},
+    }
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
