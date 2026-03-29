@@ -119,3 +119,22 @@ Expected: single network call ≈ 50-100ms at 5K docs, beating Phase 2 (391ms).
 | `tests/colbert_iris/test_colbert_indb.py` | 26 integration tests (Phase 1+2) |
 | `tests/colbert_iris/test_plaid.py` | 27 integration tests (Phase 3) |
 | `tests/colbert_iris/benchmark_scale.py` | Full benchmark runner (all 3 phases) |
+
+---
+
+## 068 VecIndex RP-tree ANN (2026-03-29)
+
+**Environment**: ARM64 Docker (`colbert-bench` via `idt container up`), IRIS 2025.1 Community, 800 docs / 42,858 tokens
+
+| Approach | p50 | p95 | Notes |
+|---|---|---|---|
+| **P2 SQL HNSW** | **35-50ms** | ~80ms | M=16 efC=200; build=388s |
+| VecIndex RP-tree (xecute query path) | **~86,000ms** | — | CSV→$vector via 512 `$piece()` calls/query — unusable |
+
+**SC-001**: ❌ VecIndex search 1700× slower than P2 due to xecute overhead in query path.
+
+**Bug found and fixed**: VecIndex.BuildTree infinite recursion when all tokens project to same hyperplane side → `<MAXNUMBER>` overflow. Fixed in `iris-vector-graph 1.21.1` (PyPI 2026-03-29).
+
+**Root cause of slow search**: `User.Exec` xecute parses 128-element CSV per query token. Fix requires `VecIndex.SearchJSON()` API or `iris.gref()` `$vector` binary write.
+
+**Next**: Add `VecIndex.SearchJSON(name, jsonArray, k, nprobe)` ClassMethod to IVG — single xecute, eliminates CSV parsing overhead.

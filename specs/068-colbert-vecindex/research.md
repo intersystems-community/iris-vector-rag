@@ -105,8 +105,30 @@ Auto-detect which mode works in `VecIndexSearcher.__init__()`.
 | `^tmpvec` staging | 128 SET ops per token insert | Use gref direct write if $vector binary is portable |
 | `$vectorop` requires 2024.1+ | RuntimeError on older IRIS | Document minimum version; test in T002 |
 | Global lock on `^VecIdx` | Concurrent writers block briefly | B-tree node-level lock; acceptable for ingest |
-| `vec_build()` recursion depth | IRIS call stack limit at deep trees | leafSize=50 limits depth to ~12; safe |
-| No VECTOR column | VecIndex uses $vector globals only | Feature, not bug — no SQL VECTOR type needed |
+| **VecIndex BuildTree infinite recursion** | All tokens project to same hyperplane side → nodeId doubles until `<MAXNUMBER>` | Fixed in IVG 1.21.1: detect degenerate split, treat as leaf (commit a616416) |
+| CSV-xecute search path | 512 `$piece()` calls per 4-token query = ~21s/token, 86s total | Requires `VecIndex.SearchJSON(name, jsonArray, k, nprobe)` API or `iris.gref()` `$vector` write |
+
+---
+
+## Benchmark Results (Actual, 2026-03-29)
+
+**Environment**: ARM64 Docker (`colbert-bench` container), IRIS 2025.1 Community, 800 docs / 42,858 tokens, GTE-ModernColBERT-v1
+
+| Approach | p50 | p95 | Recall@10 | Notes |
+|---|---|---|---|---|
+| **P2 SQL HNSW** | **35-50ms** | ~80ms | 1.00 (exact) | M=16 efC=200, build=388s |
+| VecIndex RP-tree (xecute path) | **86,000ms** | — | ~0.6 | 512 `$piece()` calls per query — unusable |
+| VecIndex ingest | — | — | — | 55s for 800 docs via csv-xecute |
+
+**SC-001 status**: ❌ VecIndex search via xecute path fails catastrophically (86s >> 250ms target).
+
+**Root cause**: The csv-to-`$vector` conversion via `User.Exec` xecute does 128 `$piece(csv,",",ii)` calls per token, 4 tokens per query = 512 `$piece` + 4 xecute round-trips = ~86s. Phase 2 SQL HNSW (4 SQL queries, IRIS-native SIMD) is ~1700× faster.
+
+**What's needed to achieve SC-001**:
+- `VecIndex.SearchJSON(name, jsonArray, k, nprobe)` ClassMethod accepting a JSON float array — single xecute, IRIS parses JSON to `$vector` internally
+- OR: discover the IRIS `$vector` binary wire format so Python can write it via `iris.gref().set(bytes)` directly
+
+**IVG 1.21.1** fixes the BuildTree infinite recursion bug (required for any real benchmark). Published 2026-03-29.
 
 ---
 
