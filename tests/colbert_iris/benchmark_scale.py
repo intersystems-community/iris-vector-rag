@@ -170,16 +170,21 @@ def load_or_encode(model, docs: List[Dict], cache_path: Path) -> Dict[str, np.nd
 # ---------------------------------------------------------------------------
 
 
-def percentiles(times: List[float]) -> Dict[str, float]:
+def percentiles(times: List[float], n_warmup: int = 0) -> Dict[str, float]:
     arr = np.array(times) * 1000
-    return {
-        "p50_ms": float(np.percentile(arr, 50)),
-        "p95_ms": float(np.percentile(arr, 95)),
-        "p99_ms": float(np.percentile(arr, 99)),
-        "mean_ms": float(np.mean(arr)),
-        "min_ms": float(np.min(arr)),
-        "max_ms": float(np.max(arr)),
+    warm = arr[n_warmup:] if len(arr) > n_warmup else arr
+    result = {
+        "p50_ms": float(np.percentile(warm, 50)),
+        "p95_ms": float(np.percentile(warm, 95)),
+        "p99_ms": float(np.percentile(warm, 99)),
+        "mean_ms": float(np.mean(warm)),
+        "min_ms": float(np.min(warm)),
+        "max_ms": float(np.max(warm)),
     }
+    if n_warmup > 0 and len(arr) > n_warmup:
+        result["cold_p50_ms"] = float(np.percentile(arr[:n_warmup], 50))
+        result["warm_p50_ms"] = result["p50_ms"]
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -333,8 +338,9 @@ def benchmark_phase2_indb_hnsw(
     query_times = []
     stage_times = {"encode_query": [], "indb_maxsim": []}
 
+    N_WARMUP = 3
     q_vec_sample = None
-    for q in queries:
+    for i, q in enumerate(queries):
         t0 = time.perf_counter()
         q_embs = model.encode([q], is_query=True)
         q_vecs = np.array(q_embs[0], dtype=np.float32)
@@ -374,7 +380,7 @@ def benchmark_phase2_indb_hnsw(
         "hnsw_m": hnsw_m,
         "hnsw_ef": hnsw_ef,
         "k_per_token": k_per_token,
-        **percentiles(query_times),
+        **percentiles(query_times, n_warmup=N_WARMUP),
         "hnsw_index_active": hnsw_active,
         "explain_plan_snippet": explain_plan[:300] if explain_plan else "",
         "stages": {
@@ -429,6 +435,7 @@ def benchmark_phase3_plaid(
     searcher._engine = builder._engine
     ms = MaxSimInDB(conn, token_dim=TOKEN_DIM)
 
+    N_WARMUP = 3
     query_times, stage_times = [], {"encode_query": [], "plaid_search": []}
     pruning_ratios, recalls = [], []
 
@@ -439,7 +446,7 @@ def benchmark_phase3_plaid(
     finally:
         cur.close()
 
-    for q in queries:
+    for i, q in enumerate(queries):
         t0 = time.perf_counter()
         q_embs = model.encode([q], is_query=True)
         q_vecs = np.array(q_embs[0], dtype=np.float32)
@@ -466,7 +473,7 @@ def benchmark_phase3_plaid(
         "n_clusters": k,
         "n_probe": n_probe,
         "build_elapsed_s": round(build_elapsed, 2),
-        **percentiles(query_times),
+        **percentiles(query_times, n_warmup=N_WARMUP),
         "mean_pruning_ratio": round(float(np.mean(pruning_ratios)), 3),
         "mean_recall_at_k": round(float(np.mean(recalls)), 3),
         "stages": {
@@ -804,10 +811,12 @@ def main():
             args.hnsw_m,
             args.hnsw_ef,
         )
+        p2 = tier_results["phase2"]
+        warm2 = f" warm={p2['warm_p50_ms']:.1f}ms" if "warm_p50_ms" in p2 else ""
         logger.info(
-            f"  Phase2 p50={tier_results['phase2']['p50_ms']:.1f}ms "
-            f"p95={tier_results['phase2']['p95_ms']:.1f}ms "
-            f"HNSW_active={tier_results['phase2']['hnsw_index_active']}"
+            f"  Phase2 p50={p2['p50_ms']:.1f}ms "
+            f"p95={p2['p95_ms']:.1f}ms{warm2} "
+            f"HNSW_active={p2['hnsw_index_active']}"
         )
 
         if not args.skip_plaid:
@@ -821,20 +830,20 @@ def main():
                 ingestor,
                 n_probe=args.n_probe,
             )
+            p3 = tier_results["phase3"]
+            warm_str = f" warm={p3['warm_p50_ms']:.1f}ms" if "warm_p50_ms" in p3 else ""
             logger.info(
-                f"  Phase3 p50={tier_results['phase3']['p50_ms']:.1f}ms "
-                f"p95={tier_results['phase3']['p95_ms']:.1f}ms "
-                f"K={tier_results['phase3']['n_clusters']} "
-                f"pruning={tier_results['phase3']['mean_pruning_ratio']:.2f} "
-                f"recall@{args.top_k}={tier_results['phase3']['mean_recall_at_k']:.3f}"
+                f"  Phase3 p50={p3['p50_ms']:.1f}ms "
+                f"p95={p3['p95_ms']:.1f}ms{warm_str} "
+                f"K={p3['n_clusters']} "
+                f"pruning={p3['mean_pruning_ratio']:.2f} "
+                f"recall@{args.top_k}={p3['mean_recall_at_k']:.3f}"
             )
             tier_results["speedup_phase3_vs_phase2"] = round(
                 tier_results["phase2"]["p50_ms"]
                 / max(tier_results["phase3"]["p50_ms"], 0.1),
                 2,
             )
-
-        if not args.skip_sp:
             try:
                 tier_results["phase3_sp"] = benchmark_phase3_sp(
                     conn,
@@ -858,18 +867,6 @@ def main():
             except Exception as e:
                 logger.warning(f"  Phase3 SP skipped: {e}")
                 tier_results["phase3_sp_error"] = str(e)
-            logger.info(
-                f"  Phase3 p50={tier_results['phase3']['p50_ms']:.1f}ms "
-                f"p95={tier_results['phase3']['p95_ms']:.1f}ms "
-                f"K={tier_results['phase3']['n_clusters']} "
-                f"pruning={tier_results['phase3']['mean_pruning_ratio']:.2f} "
-                f"recall@{args.top_k}={tier_results['phase3']['mean_recall_at_k']:.3f}"
-            )
-            tier_results["speedup_phase3_vs_phase2"] = round(
-                tier_results["phase2"]["p50_ms"]
-                / max(tier_results["phase3"]["p50_ms"], 0.1),
-                2,
-            )
 
         if not args.skip_baseline:
             tier_results["speedup_phase1_vs_baseline"] = round(
