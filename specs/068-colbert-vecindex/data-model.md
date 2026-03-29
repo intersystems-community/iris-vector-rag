@@ -20,9 +20,9 @@ Primary storage for all VecIndex data. No SQL tables created or modified.
 ^VecIdx(index_name, "vec", "<doc_id>:<tok_pos>") = $vector(128 doubles)
 ```
 
-**Key format**: `"<doc_id>:<tok_pos>"` — e.g., `"agnews_000042:7"`.  
-**Parsing**: `key.rsplit(":", 1)` → `(doc_id, tok_pos)`.  
-**Constraint**: `doc_id` must not contain `:`.  
+**Key format**: `"<doc_id>:<tok_pos>"` — e.g., `"agnews_000042:7"`.
+**Parsing**: `key.rsplit(":", 1)` → `(doc_id, tok_pos)`.
+**Constraint**: `doc_id` must not contain `:`.
 **Scale**: T5K = 267,063 entries, ~280MB estimated disk.
 
 ### RP-Tree Index
@@ -34,9 +34,9 @@ Primary storage for all VecIndex data. No SQL tables created or modified.
 ^VecIdx(index_name, "tree", treeId, nodeId, "leaf", "<key>")     = ""
 ```
 
-**treeId**: 1..numTrees  
-**nodeId**: 1 (root), left = nodeId×2, right = nodeId×2+1  
-**Leaf nodes**: contain doc+token keys (`"<doc_id>:<tok_pos>"`), no embedding stored  
+**treeId**: 1..numTrees
+**nodeId**: 1 (root), left = nodeId×2, right = nodeId×2+1
+**Leaf nodes**: contain doc+token keys (`"<doc_id>:<tok_pos>"`), no embedding stored
 **Build**: `vec_build()` kills and rebuilds `^VecIdx(name, "tree")` from `^VecIdx(name, "vec")`
 
 ---
@@ -82,7 +82,7 @@ New return stats keys when `use_vecindex=True`:
 
 ## SQL Tables (unchanged)
 
-`RAG.DocumentTokenEmbeddings` — kept for backward compat. VecIndex is additive.  
+`RAG.DocumentTokenEmbeddings` — kept for backward compat. VecIndex is additive.
 `RAG.ColBERTDocuments` — unchanged.
 
 ---
@@ -96,6 +96,6 @@ VecIndex lifecycle:
                                          [vec_drop()] → EMPTY (globals killed)
 ```
 
-**Rebuild**: drop + re-ingest (no in-place update supported in this version).  
-**Persistence**: globals survive IRIS restarts — no re-ingest needed after container restart.  
+**Rebuild**: drop + re-ingest (no in-place update supported in this version).
+**Persistence**: globals survive IRIS restarts — no re-ingest needed after container restart.
 **Idempotency**: `vec_drop()` + full re-ingest is safe and deterministic.

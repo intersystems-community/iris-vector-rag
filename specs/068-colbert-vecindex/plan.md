@@ -8,13 +8,13 @@ Replace SQL HNSW Phase 2 ColBERT token search with `iris-vector-graph>=1.21.0` V
 
 ## Technical Context
 
-**Language/Version**: Python 3.12 (client), ObjectScript (VecIndex.cls), IRIS 2025.1 Community  
-**Primary Dependencies**: `iris-vector-graph>=1.21.0` (VecIndex, User.Exec, IRISGraphEngine), `intersystems-irispython>=5.1.2` (iris.dbapi + intersystems_iris.createIRIS)  
-**Storage**: `^VecIdx` globals (IRIS B-tree, paged), `RAG.DocumentTokenEmbeddings` SQL (kept for backward compat)  
-**Testing**: pytest, integration tests against `iris-langchain-spike` port 13972  
-**Target Platform**: macOS ARM64 (dev), Ubuntu ARM64 (IRIS container)  
-**Performance Goals**: T5K p50 ≤ 250ms, p95 ≤ 500ms, recall@10 ≥ 80% at nprobe=2  
-**Constraints**: No SQLCODE -110 errors; ingest 267K tokens without timeout; `iris-vector-graph` optional dep  
+**Language/Version**: Python 3.12 (client), ObjectScript (VecIndex.cls), IRIS 2025.1 Community
+**Primary Dependencies**: `iris-vector-graph>=1.21.0` (VecIndex, User.Exec, IRISGraphEngine), `intersystems-irispython>=5.1.2` (iris.dbapi + intersystems_iris.createIRIS)
+**Storage**: `^VecIdx` globals (IRIS B-tree, paged), `RAG.DocumentTokenEmbeddings` SQL (kept for backward compat)
+**Testing**: pytest, integration tests against `iris-langchain-spike` port 13972
+**Target Platform**: macOS ARM64 (dev), Ubuntu ARM64 (IRIS container)
+**Performance Goals**: T5K p50 ≤ 250ms, p95 ≤ 500ms, recall@10 ≥ 80% at nprobe=2
+**Constraints**: No SQLCODE -110 errors; ingest 267K tokens without timeout; `iris-vector-graph` optional dep
 **Scale/Scope**: T5K = 5000 docs, 267K token vectors, 128-d dot metric, 4 RP-trees
 
 ## Constitution Check

@@ -9,7 +9,7 @@ class VecIndexNotAvailableError(RuntimeError):
     """Raised when VecIndex is not built or Graph.KG.VecIndex is not deployed."""
 ```
 
-**Raised by**: `VecIndexSearcher.__init__()` when `vec_info()` returns count=0 or throws.  
+**Raised by**: `VecIndexSearcher.__init__()` when `vec_info()` returns count=0 or throws.
 **Message format**: `"VecIndex '{name}' is empty or not deployed. Run ColBERTIngestor with use_vecindex=True then vec_build(), and ensure Graph.KG.VecIndex is loaded via scripts/deploy_vecindex.sh"`
 
 ---
@@ -26,7 +26,7 @@ class VecIndexNotAvailableError(RuntimeError):
 | `num_trees` | `int` | `4` | RP-trees for build |
 | `leaf_size` | `int` | `50` | Max vectors per leaf node |
 
-**Side effects**: Creates `IRISGraphEngine(conn)` internally; caches `_iris_obj()`.  
+**Side effects**: Creates `IRISGraphEngine(conn)` internally; caches `_iris_obj()`.
 **Does NOT raise** if index is empty at init — raises `VecIndexNotAvailableError` only when `search()` is called on an empty index.
 
 ---
@@ -35,8 +35,8 @@ class VecIndexNotAvailableError(RuntimeError):
 
 Builds the RP-tree from all inserted vectors. Must be called after bulk ingest.
 
-**Returns**: `{"trees": 4, "vectors": N, "dim": 128, "metric": "dot"}`  
-**Raises**: `RuntimeError` if no vectors are present (`{"error": "no vectors found"}` from VecIndex.cls)  
+**Returns**: `{"trees": 4, "vectors": N, "dim": 128, "metric": "dot"}`
+**Raises**: `RuntimeError` if no vectors are present (`{"error": "no vectors found"}` from VecIndex.cls)
 **Duration**: ~15–30s for T5K (267K vectors, 4 trees)
 
 ---

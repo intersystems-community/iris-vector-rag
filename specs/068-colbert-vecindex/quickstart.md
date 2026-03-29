@@ -25,7 +25,7 @@ schema.create_tables()
 
 ingestor = ColBERTIngestor(conn, model=my_colbert_model, token_dim=128)
 
-docs = [{"doc_id": f"doc_{i}", "text": f"Document {i}", "metadata": {}} 
+docs = [{"doc_id": f"doc_{i}", "text": f"Document {i}", "metadata": {}}
         for i in range(5000)]
 
 stats = ingestor.ingest_documents(

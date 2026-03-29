@@ -206,6 +206,14 @@ ClassMethod BuildTree(name As %String, treeId As %Integer, idList As %List, dim 
     }
     If $ListLength(leftIds) = 0 Set leftIds = rightIds
     If $ListLength(rightIds) = 0 Set rightIds = leftIds
+    ; Degenerate split — both sides are identical. Treat this node as a leaf to stop infinite recursion.
+    If $ListLength(leftIds) = n, $ListLength(rightIds) = n {
+        Set ptr = 0
+        While $ListNext(idList, ptr, docId) {
+            Set ^VecIdx(name, "tree", treeId, nodeId, "leaf", docId) = ""
+        }
+        Return nodeId
+    }
     Set leftNode = nodeId * 2
     Set rightNode = nodeId * 2 + 1
     Set ^VecIdx(name, "tree", treeId, nodeId, "L") = leftNode
