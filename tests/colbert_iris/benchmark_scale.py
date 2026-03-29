@@ -426,6 +426,7 @@ def benchmark_phase3_plaid(
     logger.info(f"  Build done in {build_elapsed:.1f}s")
 
     searcher = PLAIDSearcher(conn, token_dim=TOKEN_DIM)
+    searcher._engine = builder._engine
     ms = MaxSimInDB(conn, token_dim=TOKEN_DIM)
 
     query_times, stage_times = [], {"encode_query": [], "plaid_search": []}

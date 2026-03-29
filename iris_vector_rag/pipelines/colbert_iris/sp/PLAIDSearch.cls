@@ -29,6 +29,29 @@ ClassMethod StoreCentroids(name As %String, centroidsJSON As %String)
 	If K > 0 Set ^PLAID(name, "meta", "dim") = dim
 }
 
+ClassMethod StoreDocTokensBatch(name As %String, batchJSON As %String)
+{
+	Set batch = ##class(%DynamicArray).%FromJSON(batchJSON)
+	Set nDocs = batch.%Size()
+	For d = 0:1:(nDocs-1) {
+		Set docObj = batch.%Get(d)
+		Set docId = docObj.%Get("id")
+		Set tokArr = docObj.%Get("tokens")
+		Set nTok = tokArr.%Size()
+		For t = 0:1:(nTok-1) {
+			Set tArr = tokArr.%Get(t)
+			Set dim = tArr.%Size()
+			Set vec = ""
+			For i = 0:1:(dim-1) {
+				Set $vector(vec, i+1, "double") = +tArr.%Get(i)
+			}
+			Set ^PLAID(name, "docTokens", docId, t) = vec
+		}
+		Set ^PLAID(name, "meta", "nDocs") = $Get(^PLAID(name, "meta", "nDocs"), 0) + 1
+		Set ^PLAID(name, "meta", "totalTokens") = $Get(^PLAID(name, "meta", "totalTokens"), 0) + nTok
+	}
+}
+
 ClassMethod StoreDocTokens(name As %String, docId As %String, tokensJSON As %String)
 {
 	Set arr = ##class(%DynamicArray).%FromJSON(tokensJSON)
