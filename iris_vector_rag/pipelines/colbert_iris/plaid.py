@@ -41,12 +41,12 @@ def _make_engine(conn):
 
 class PLAIDBuilder:
     def __init__(
-        self, conn, token_dim: int = TOKEN_DIM, index_name: str = _DEFAULT_INDEX
+        self, conn, token_dim: int = TOKEN_DIM, index_name: str = _DEFAULT_INDEX, _engine=None
     ):
         self._conn = conn
         self._token_dim = token_dim
         self._index_name = index_name
-        self._engine = _make_engine(conn)
+        self._engine = _engine if _engine is not None else _make_engine(conn)
 
     @staticmethod
     def recommended_k(n_tokens: int) -> int:
@@ -110,12 +110,12 @@ class PLAIDBuilder:
 
 class PLAIDSearcher:
     def __init__(
-        self, conn, token_dim: int = TOKEN_DIM, index_name: str = _DEFAULT_INDEX
+        self, conn, token_dim: int = TOKEN_DIM, index_name: str = _DEFAULT_INDEX, _engine=None
     ):
         self._conn = conn
         self._token_dim = token_dim
         self._index_name = index_name
-        self._engine = _make_engine(conn)
+        self._engine = _engine if _engine is not None else _make_engine(conn)
 
     def _centroids_built(self) -> bool:
         try:

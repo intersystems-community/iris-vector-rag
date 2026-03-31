@@ -44,8 +44,11 @@ def make_query_vecs(n_toks=4):
 @pytest.fixture(scope="module")
 def conn():
     c = dbapi.connect(
-        hostname=IRIS_HOST, port=IRIS_PORT,
-        namespace="USER", username="_SYSTEM", password="SYS",
+        hostname=IRIS_HOST,
+        port=IRIS_PORT,
+        namespace="USER",
+        username="_SYSTEM",
+        password="SYS",
     )
     yield c
     c.close()
@@ -63,7 +66,11 @@ def populated_db(conn, shared_engine):
     schema.create_tables(token_dim=TOKEN_DIM)
     ingestor = ColBERTIngestor(conn, model=DummyModel(), token_dim=TOKEN_DIM)
     docs = [
-        {"doc_id": f"plaid_{i:04d}", "text": f"Document {i} about topic {i % 10}.", "metadata": {"idx": i}}
+        {
+            "doc_id": f"plaid_{i:04d}",
+            "text": f"Document {i} about topic {i % 10}.",
+            "metadata": {"idx": i},
+        }
         for i in range(N_DOCS)
     ]
     ingestor.ingest_documents(docs, batch_size=20)
@@ -72,15 +79,11 @@ def populated_db(conn, shared_engine):
 
 
 def _builder(conn, engine):
-    b = PLAIDBuilder(conn, token_dim=TOKEN_DIM)
-    b._engine = engine
-    return b
+    return PLAIDBuilder(conn, token_dim=TOKEN_DIM, _engine=engine)
 
 
 def _searcher(conn, engine):
-    s = PLAIDSearcher(conn, token_dim=TOKEN_DIM)
-    s._engine = engine
-    return s
+    return PLAIDSearcher(conn, token_dim=TOKEN_DIM, _engine=engine)
 
 
 @pytest.fixture(scope="module")
@@ -152,8 +155,12 @@ class TestRecommendedK:
     @pytest.mark.parametrize(
         "n_tokens,expected",
         [
-            (25_600, 64), (102_400, 256), (204_800, 512),
-            (400, 16), (999, 16), (16_000_000, 4096),
+            (25_600, 64),
+            (102_400, 256),
+            (204_800, 512),
+            (400, 16),
+            (999, 16),
+            (16_000_000, 4096),
         ],
     )
     def test_recommended_k(self, n_tokens, expected):
@@ -203,12 +210,7 @@ class TestPLAIDSearch:
             with pytest.raises(PLAIDNotBuiltError):
                 s.search(make_query_vecs(), top_k=5, n_probe=4)
         finally:
-            b = PLAIDBuilder.__new__(PLAIDBuilder)
-            b._conn = populated_db
-            b._token_dim = TOKEN_DIM
-            b._index_name = "colbert_plaid"
-            b._engine = shared_engine
-            b.build(n_clusters=N_CLUSTERS)
+            _builder(populated_db, shared_engine).build(n_clusters=N_CLUSTERS)
 
     def test_recall_vs_phase2(self, built_db, shared_engine):
         ms = MaxSimInDB(built_db, token_dim=TOKEN_DIM)
