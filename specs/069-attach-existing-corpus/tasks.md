@@ -17,8 +17,8 @@
 
 **Purpose**: Ensure IVG engine is available and graph schema initialized
 
-- [ ] T001 Verify iris-vector-graph >= 1.27.0 is installed and `map_sql_table`, `validate_vector_table`, `vector_search` are importable in iris_vector_rag/pipelines/hybrid_graphrag.py
-- [ ] T002 Add `DimensionMismatchError` exception class and `AttachResult` TypedDict to iris_vector_rag/pipelines/hybrid_graphrag.py (from contracts/attach_existing_corpus.py)
+- [X] T001 Verify iris-vector-graph >= 1.27.0 is installed and `map_sql_table`, `validate_vector_table`, `vector_search` are importable in iris_vector_rag/pipelines/hybrid_graphrag.py
+- [X] T002 Add `DimensionMismatchError` exception class and `AttachResult` TypedDict to iris_vector_rag/pipelines/hybrid_graphrag.py (from contracts/attach_existing_corpus.py)
 
 ---
 
@@ -26,8 +26,8 @@
 
 **Purpose**: Add `_attached_corpora` dict and HNSW detection helper to `HybridGraphRAGPipeline`
 
-- [ ] T003 Add `self._attached_corpora: Dict[str, AttachResult] = {}` to `HybridGraphRAGPipeline.__init__()` in iris_vector_rag/pipelines/hybrid_graphrag.py
-- [ ] T004 Add `_detect_hnsw_index(self, source_table: str, embedding_col: str) -> Optional[bool]` private method to `HybridGraphRAGPipeline` in iris_vector_rag/pipelines/hybrid_graphrag.py — queries INFORMATION_SCHEMA.INDEXES for a VECTOR index on the column; returns True/False if detected, None if detection not supported on this IRIS build
+- [X] T003 Add `self._attached_corpora: Dict[str, AttachResult] = {}` to `HybridGraphRAGPipeline.__init__()` in iris_vector_rag/pipelines/hybrid_graphrag.py
+- [X] T004 Add `_detect_hnsw_index(self, source_table: str, embedding_col: str) -> Optional[bool]` private method to `HybridGraphRAGPipeline` in iris_vector_rag/pipelines/hybrid_graphrag.py — queries INFORMATION_SCHEMA.INDEXES for a VECTOR index on the column; returns True/False if detected, None if detection not supported on this IRIS build
 
 **Checkpoint**: Foundation ready — user story implementation can begin.
 
@@ -41,16 +41,16 @@
 
 ### Tests for User Story 1
 
-- [ ] T005 [P] [US1] Write test_attach_corpus_basic in tests/test_attach_corpus.py (repo root — not colbert_iris/, since this feature applies to any IRIS table) — creates a test table with 100 rows + VECTOR(FLOAT,384), calls `attach_existing_corpus`, asserts `AttachResult` has correct dimension/row_count/label and `has_hnsw_index` is a bool or None, verifies `engine.query("MATCH (d:TestDoc)")` returns rows
-- [ ] T006 [P] [US1] Write test_attach_corpus_idempotent in tests/test_attach_corpus.py — calls `attach_existing_corpus` twice with same params, asserts no error and same result
-- [ ] T007 [P] [US1] Write test_attach_corpus_vector_search in tests/test_attach_corpus.py — attaches table, runs `engine.vector_search()` with a random query vector matching the table dimension, asserts results returned with scores > 0
-- [ ] T008 [P] [US1] Write test_attach_new_rows_visible in tests/test_attach_corpus.py — attaches table, inserts new row, verifies graph query includes it without re-attach
+- [X] T005 [P] [US1] Write test_attach_corpus_basic in tests/test_attach_corpus.py (repo root — not colbert_iris/, since this feature applies to any IRIS table) — creates a test table with 100 rows + VECTOR(FLOAT,384), calls `attach_existing_corpus`, asserts `AttachResult` has correct dimension/row_count/label and `has_hnsw_index` is a bool or None, verifies `engine.query("MATCH (d:TestDoc)")` returns rows
+- [X] T006 [P] [US1] Write test_attach_corpus_idempotent in tests/test_attach_corpus.py — calls `attach_existing_corpus` twice with same params, asserts no error and same result
+- [X] T007 [P] [US1] Write test_attach_corpus_vector_search in tests/test_attach_corpus.py — attaches table, runs `engine.vector_search()` with a random query vector matching the table dimension, asserts results returned with scores > 0
+- [X] T008 [P] [US1] Write test_attach_new_rows_visible in tests/test_attach_corpus.py — attaches table, inserts new row, verifies graph query includes it without re-attach
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement `attach_existing_corpus(self, source_table, id_col, text_col, embedding_col, graph_label) -> AttachResult` on `HybridGraphRAGPipeline` in iris_vector_rag/pipelines/hybrid_graphrag.py — validate table exists, call `engine.validate_vector_table()`, call `engine.map_sql_table()`, detect HNSW, store in `_attached_corpora`, return AttachResult
-- [ ] T010 [US1] Add validation: if `source_table` or any column doesn't exist, raise `ValueError` with table/column name in iris_vector_rag/pipelines/hybrid_graphrag.py
-- [ ] T011 [US1] Add warning logging: if embedding column is all NULL, log warning but succeed; if no HNSW index, log suggestion to BUILD INDEX in iris_vector_rag/pipelines/hybrid_graphrag.py
+- [X] T009 [US1] Implement `attach_existing_corpus(self, source_table, id_col, text_col, embedding_col, graph_label) -> AttachResult` on `HybridGraphRAGPipeline` in iris_vector_rag/pipelines/hybrid_graphrag.py — validate table exists, call `engine.validate_vector_table()`, call `engine.map_sql_table()`, detect HNSW, store in `_attached_corpora`, return AttachResult
+- [X] T010 [US1] Add validation: if `source_table` or any column doesn't exist, raise `ValueError` with table/column name in iris_vector_rag/pipelines/hybrid_graphrag.py
+- [X] T011 [US1] Add warning logging: if embedding column is all NULL, log warning but succeed; if no HNSW index, log suggestion to BUILD INDEX in iris_vector_rag/pipelines/hybrid_graphrag.py
 
 **Checkpoint**: User Story 1 complete — attach + graph query + vector search works on RAG.SourceDocuments.
 
@@ -64,11 +64,11 @@
 
 ### Tests for User Story 2
 
-- [ ] T012 [P] [US2] Write test_attach_custom_table in tests/test_attach_corpus.py — creates `TestApp.Notes` with 50 rows, different column names (note_id, note_text, note_emb), calls attach with graph_label="Note", verifies MATCH works
+- [X] T012 [P] [US2] Write test_attach_custom_table in tests/test_attach_corpus.py — creates `TestApp.Notes` with 50 rows, different column names (note_id, note_text, note_emb), calls attach with graph_label="Note", verifies MATCH works
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] Verify no code changes needed — US1 implementation should already handle any table name. If schema-prefixed tables (e.g., `MyApp.ClinicalNotes`) need special handling in `validate_vector_table` or `map_sql_table`, fix in iris_vector_rag/pipelines/hybrid_graphrag.py
+- [X] T013 [US2] Verify no code changes needed — US1 implementation should already handle any table name. If schema-prefixed tables (e.g., `MyApp.ClinicalNotes`) need special handling in `validate_vector_table` or `map_sql_table`, fix in iris_vector_rag/pipelines/hybrid_graphrag.py
 
 **Checkpoint**: Custom tables work identically to RAG tables.
 
@@ -82,12 +82,12 @@
 
 ### Tests for User Story 3
 
-- [ ] T014 [P] [US3] Write test_dimension_mismatch_error in tests/test_attach_corpus.py — attaches 384-dim table, calls vector_search with 768-dim query, asserts `DimensionMismatchError` raised with message containing both dimensions
-- [ ] T015 [P] [US3] Write test_attach_all_null_embeddings in tests/test_attach_corpus.py — creates table with all-NULL VECTOR column, calls attach, asserts success with warning logged
+- [X] T014 [P] [US3] Write test_dimension_mismatch_error in tests/test_attach_corpus.py — attaches 384-dim table, calls vector_search with 768-dim query, asserts `DimensionMismatchError` raised with message containing both dimensions
+- [X] T015 [P] [US3] Write test_attach_all_null_embeddings in tests/test_attach_corpus.py — creates table with all-NULL VECTOR column, calls attach, asserts success with warning logged
 
 ### Implementation for User Story 3
 
-- [ ] T016 [US3] Add `_validate_query_dimension(self, graph_label: str, query_vec)` private method on `HybridGraphRAGPipeline` in iris_vector_rag/pipelines/hybrid_graphrag.py — looks up `_attached_corpora[graph_label]`, checks `len(query_vec) == dimension`, raises `DimensionMismatchError` if mismatch. Not a public API — callers use `engine.vector_search()` directly; this is a guard wired into the pipeline's existing search methods
+- [X] T016 [US3] Add `_validate_query_dimension(self, graph_label: str, query_vec)` private method on `HybridGraphRAGPipeline` in iris_vector_rag/pipelines/hybrid_graphrag.py — looks up `_attached_corpora[graph_label]`, checks `len(query_vec) == dimension`, raises `DimensionMismatchError` if mismatch. Not a public API — callers use `engine.vector_search()` directly; this is a guard wired into the pipeline's existing search methods
 
 **Checkpoint**: Dimension mismatches are caught with clear errors.
 
@@ -95,11 +95,11 @@
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T017 [P] Write test_attach_nonexistent_table in tests/test_attach_corpus.py — verifies ValueError for missing table
-- [ ] T018 [P] Write test_attach_nonexistent_column in tests/test_attach_corpus.py — verifies ValueError for missing column
-- [ ] T019 [P] Write test_upsert_repoint_label in tests/test_attach_corpus.py — attaches label to table A, then same label to table B, verifies graph queries now hit table B
-- [ ] T020 Run full test suite: `pytest tests/test_attach_corpus.py -v` — all tests pass
-- [ ] T021 Run quickstart.md validation against live IRIS
+- [X] T017 [P] Write test_attach_nonexistent_table in tests/test_attach_corpus.py — verifies ValueError for missing table
+- [X] T018 [P] Write test_attach_nonexistent_column in tests/test_attach_corpus.py — verifies ValueError for missing column
+- [X] T019 [P] Write test_upsert_repoint_label in tests/test_attach_corpus.py — attaches label to table A, then same label to table B, verifies graph queries now hit table B
+- [X] T020 Run full test suite: `pytest tests/test_attach_corpus.py -v` — all tests pass
+- [X] T021 Run quickstart.md validation against live IRIS
 
 ---
 

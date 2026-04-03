@@ -10,7 +10,7 @@ robust error handling, and modular architecture.
 
 import logging
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypedDict
 
 from ..config.manager import ConfigurationManager
 from ..core.connection import ConnectionManager
@@ -20,6 +20,20 @@ from .hybrid_graphrag_discovery import GraphCoreDiscovery
 from .hybrid_graphrag_retrieval import HybridRetrievalMethods
 
 logger = logging.getLogger(__name__)
+
+
+class AttachResult(TypedDict):
+    table: str
+    label: str
+    id_col: str
+    embedding_col: str
+    dimension: int
+    row_count: int
+    has_hnsw_index: Optional[bool]
+
+
+class DimensionMismatchError(ValueError):
+    pass
 
 
 class HybridGraphRAGPipeline(GraphRAGPipeline):
@@ -72,6 +86,8 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         self.fusion_engine = None
         self.text_engine = None
         self.vector_optimizer = None
+
+        self._attached_corpora: Dict[str, AttachResult] = {}
 
         # Initialize graph core integration
         self._initialize_graph_core()
@@ -146,6 +162,108 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         except Exception as e:
             logger.error(f"Failed to initialize iris_vector_graph components: {e}")
             raise
+
+    def _detect_hnsw_index(self, source_table: str, embedding_col: str) -> Optional[bool]:
+        try:
+            schema, tbl = source_table.split(".", 1) if "." in source_table else ("", source_table)
+            conn = self.iris_engine.conn if self.iris_engine else None
+            if conn is None:
+                return None
+            cur = conn.cursor()
+            try:
+                cur.execute(
+                    "SELECT COUNT(*) FROM INFORMATION_SCHEMA.INDEXES "
+                    "WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                    [schema or "USER", tbl, embedding_col],
+                )
+                row = cur.fetchone()
+                return row is not None and int(row[0]) > 0
+            finally:
+                cur.close()
+        except Exception:
+            return None
+
+    def attach_existing_corpus(
+        self,
+        source_table: str,
+        id_col: str,
+        text_col: str,
+        embedding_col: str,
+        graph_label: str,
+    ) -> AttachResult:
+        if self.iris_engine is None:
+            raise RuntimeError(
+                "iris_vector_graph engine not initialized. "
+                "Call _initialize_graph_core() first."
+            )
+
+        validation = self.iris_engine.validate_vector_table(source_table, embedding_col)
+        dimension = validation.get("dimension")
+        row_count = validation.get("row_count", 0)
+
+        if dimension is None and row_count > 0:
+            cur = self.iris_engine.conn.cursor()
+            try:
+                cur.execute(
+                    f"SELECT TOP 1 {embedding_col} "
+                    f"FROM {source_table} WHERE {embedding_col} IS NOT NULL"
+                )
+                row = cur.fetchone()
+                if row and row[0]:
+                    raw = row[0]
+                    if isinstance(raw, str):
+                        dimension = raw.count(",") + 1
+                    elif isinstance(raw, (list, tuple)):
+                        dimension = len(raw)
+                    elif isinstance(raw, bytes):
+                        dimension = len(raw) // 8
+            except Exception:
+                pass
+            finally:
+                cur.close()
+
+        if dimension is None or dimension == 0:
+            logger.warning(
+                f"No non-NULL embeddings found in {source_table}.{embedding_col} — "
+                f"vector search will return no results until embeddings are populated."
+            )
+
+        self.iris_engine.map_sql_table(
+            source_table, id_col, graph_label,
+            property_columns=[text_col],
+        )
+
+        has_hnsw = self._detect_hnsw_index(source_table, embedding_col)
+        if has_hnsw is False:
+            logger.warning(
+                f"No HNSW index found on {source_table}.{embedding_col} — "
+                f"vector search will use brute force. "
+                f"Consider running BUILD INDEX for better performance."
+            )
+
+        result: AttachResult = {
+            "table": source_table,
+            "label": graph_label,
+            "id_col": id_col,
+            "embedding_col": embedding_col,
+            "dimension": dimension if dimension else 0,
+            "row_count": row_count,
+            "has_hnsw_index": has_hnsw,
+        }
+        self._attached_corpora[graph_label] = result
+        return result
+
+    def _validate_query_dimension(self, graph_label: str, query_vec) -> None:
+        if graph_label not in self._attached_corpora:
+            return
+        expected_dim = self._attached_corpora[graph_label].get("dimension", 0)
+        if expected_dim and expected_dim > 0:
+            actual_dim = len(query_vec) if hasattr(query_vec, "__len__") else 0
+            if actual_dim > 0 and actual_dim != expected_dim:
+                raise DimensionMismatchError(
+                    f"Query vector dimension ({actual_dim}) does not match "
+                    f"table embedding dimension ({expected_dim})"
+                )
 
     def query(
         self,
