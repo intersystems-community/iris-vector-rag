@@ -1,8 +1,8 @@
 # Feature Specification: Attach Existing Corpus
 
-**Feature Branch**: `069-attach-existing-corpus`  
-**Created**: 2026-04-03  
-**Status**: Draft  
+**Feature Branch**: `069-attach-existing-corpus`
+**Created**: 2026-04-03
+**Status**: Draft
 **Input**: Attach existing corpus to graph — zero-copy bridge from RAG.SourceDocuments or any IRIS table to IVG graph nodes + vector search, reusing existing HNSW indexes without re-embedding or data duplication
 
 ## User Scenarios & Testing *(mandatory)*
@@ -62,6 +62,7 @@ A user attaches a table with 768-dim embeddings but later queries with a 384-dim
 - What happens when the table has 0 rows? → Success with warning (graph queries return empty, vector search returns empty)
 - What happens when the table has no HNSW index on the vector column? → Success with warning ("No HNSW index found — vector search will use brute force. Consider running BUILD INDEX for better performance.")
 - What happens when `attach_existing_corpus` is called twice with different labels for the same table? → Both labels work (one table, two graph labels)
+- What happens when `attach_existing_corpus` is called with the same label but a different table? → The label silently re-points to the new table (upsert semantics, matching IVG `map_sql_table` behavior). No explicit detach method in v1.
 
 ## Requirements *(mandatory)*
 
@@ -72,7 +73,7 @@ A user attaches a table with 768-dim embeddings but later queries with a 384-dim
 - **FR-003**: System MUST call `engine.map_sql_table(source_table, id_col, graph_label)` to create the graph-to-SQL bridge (zero-copy, no data duplication)
 - **FR-004**: System MUST call `engine.validate_vector_table(source_table, embedding_col)` to detect embedding dimension and row count
 - **FR-005**: System MUST store the detected embedding dimension so that subsequent `vector_search` calls can validate query vector dimensions before executing SQL
-- **FR-006**: System MUST be idempotent — calling `attach_existing_corpus` with the same parameters multiple times produces the same result
+- **FR-006**: System MUST be idempotent — calling `attach_existing_corpus` with the same parameters produces the same result; calling with the same label but a different table silently re-points the label (upsert semantics)
 - **FR-007**: System MUST NOT copy data, create new tables, or re-compute embeddings
 - **FR-008**: System MUST return a summary dict: `{table, label, id_col, embedding_col, dimension, row_count, has_hnsw_index}`
 
@@ -85,7 +86,7 @@ A user attaches a table with 768-dim embeddings but later queries with a 384-dim
 
 ### Measurable Outcomes
 
-- **SC-001**: Users can attach an existing 10,000-row corpus to graph + vector search in under 2 seconds (no data copy, no re-embedding)
+- **SC-001**: Users can attach an existing 10,000-row corpus to graph + vector search in under 2 seconds (no data copy, no re-embedding). 10K rows is the acceptance test ceiling — the operation is O(1) metadata calls regardless of table size.
 - **SC-002**: Graph queries over attached corpus return results immediately without any manual node creation
 - **SC-003**: Vector similarity search over attached corpus uses the existing HNSW index with no re-indexing
 - **SC-004**: Dimension mismatches are caught before SQL execution with a clear error message
@@ -97,3 +98,10 @@ A user attaches a table with 768-dim embeddings but later queries with a 384-dim
 - The source table already has a VECTOR column with embeddings populated (pre-computed by IVR ingest, external tools, or IRIS `%Embedding`)
 - The source table's VECTOR column may or may not have an HNSW index — the bridge works either way (HNSW just makes it faster)
 - `Graph_KG.table_mappings` table exists (created by `engine.initialize_schema()`)
+
+## Clarifications
+
+### Session 2026-04-03
+
+- Q: When a user re-attaches the same label to a different table, what happens? → A: Upsert — silently re-points the label to the new table (no explicit detach method in v1)
+- Q: What is the maximum table size for acceptance testing? → A: 10K rows is the ceiling — the operation is O(1) metadata calls, testing beyond 10K adds no signal
