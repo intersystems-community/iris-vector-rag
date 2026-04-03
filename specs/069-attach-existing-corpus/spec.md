@@ -75,7 +75,7 @@ A user attaches a table with 768-dim embeddings but later queries with a 384-dim
 - **FR-005**: System MUST store the detected embedding dimension so that subsequent `vector_search` calls can validate query vector dimensions before executing SQL
 - **FR-006**: System MUST be idempotent — calling `attach_existing_corpus` with the same parameters produces the same result; calling with the same label but a different table silently re-points the label (upsert semantics)
 - **FR-007**: System MUST NOT copy data, create new tables, or re-compute embeddings
-- **FR-008**: System MUST return a summary dict: `{table, label, id_col, embedding_col, dimension, row_count, has_hnsw_index}`
+- **FR-008**: System MUST return a summary dict: `{table, label, id_col, embedding_col, dimension, row_count, has_hnsw_index}` where `has_hnsw_index` is `True`, `False`, or `None` (detection not supported on this IRIS build)
 
 ### Key Entities
 

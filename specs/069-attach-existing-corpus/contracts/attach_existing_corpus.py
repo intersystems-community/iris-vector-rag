@@ -3,7 +3,7 @@
 This is the API contract, not implementation. Tests verify this signature and return type.
 """
 
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 
 class AttachResult(TypedDict):
@@ -13,11 +13,12 @@ class AttachResult(TypedDict):
     embedding_col: str
     dimension: int
     row_count: int
-    has_hnsw_index: bool
+    has_hnsw_index: Optional[bool]  # None = detection not supported on this IRIS build
 
 
 class DimensionMismatchError(ValueError):
     """Raised when query vector dimension != attached table embedding dimension."""
+
     pass
 
 
@@ -29,3 +30,7 @@ class DimensionMismatchError(ValueError):
 #     embedding_col: str,      # e.g., "embedding"
 #     graph_label: str,        # e.g., "Document"
 # ) -> AttachResult
+#
+# Private helpers (not public API):
+# _detect_hnsw_index(source_table, embedding_col) -> Optional[bool]
+# _validate_query_dimension(graph_label, query_vec) -> None  (raises DimensionMismatchError)
