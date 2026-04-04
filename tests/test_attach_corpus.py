@@ -1,5 +1,5 @@
-import os
 import logging
+import os
 
 import numpy as np
 import pytest
@@ -24,8 +24,8 @@ def _get_conn():
 
 
 def _get_engine(conn):
-    from iris_vector_graph import IRISGraphEngine
     import intersystems_iris
+    from iris_vector_graph import IRISGraphEngine
 
     native = intersystems_iris.createConnection(
         hostname=IRIS_HOST,
@@ -157,10 +157,6 @@ class TestAttachCorpusBasic:
         results = engine.execute_cypher("MATCH (d:TestDoc2) RETURN d.doc_id LIMIT 5")
         assert len(results) > 0
 
-    @pytest.mark.xfail(
-        reason="IVG vector_search TO_VECTOR type mismatch on IRIS 2025.1 — known upstream issue",
-        strict=False,
-    )
     def test_vector_search_returns_results(self, pipeline, engine, test_table):
         pipeline.attach_existing_corpus(
             source_table=test_table,
@@ -248,7 +244,9 @@ class TestAttachCustomTable:
             )
             assert result["label"] == "ClinNote"
             assert result["row_count"] == 50
-            results = engine.execute_cypher("MATCH (n:ClinNote) RETURN n.doc_id LIMIT 3")
+            results = engine.execute_cypher(
+                "MATCH (n:ClinNote) RETURN n.doc_id LIMIT 3"
+            )
             assert len(results) > 0
         finally:
             _drop_test_table(conn, table)
@@ -303,7 +301,9 @@ class TestDimensionMismatch:
                     graph_label="NullLabel",
                 )
             assert result["dimension"] is None or result["dimension"] == 0
-            assert any("non-NULL" in r.message or "NULL" in r.message for r in caplog.records)
+            assert any(
+                "non-NULL" in r.message or "NULL" in r.message for r in caplog.records
+            )
         finally:
             _drop_test_table(conn, table)
 
