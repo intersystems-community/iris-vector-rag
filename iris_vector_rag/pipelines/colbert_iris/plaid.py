@@ -41,7 +41,11 @@ def _make_engine(conn):
 
 class PLAIDBuilder:
     def __init__(
-        self, conn, token_dim: int = TOKEN_DIM, index_name: str = _DEFAULT_INDEX, _engine=None
+        self,
+        conn,
+        token_dim: int = TOKEN_DIM,
+        index_name: str = _DEFAULT_INDEX,
+        _engine=None,
     ):
         self._conn = conn
         self._token_dim = token_dim
@@ -110,7 +114,11 @@ class PLAIDBuilder:
 
 class PLAIDSearcher:
     def __init__(
-        self, conn, token_dim: int = TOKEN_DIM, index_name: str = _DEFAULT_INDEX, _engine=None
+        self,
+        conn,
+        token_dim: int = TOKEN_DIM,
+        index_name: str = _DEFAULT_INDEX,
+        _engine=None,
     ):
         self._conn = conn
         self._token_dim = token_dim

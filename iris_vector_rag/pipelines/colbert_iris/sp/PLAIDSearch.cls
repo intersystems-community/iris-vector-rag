@@ -93,7 +93,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 	Set nQ = tokens.%Size()
 	Set nC = +$Get(^PLAID(name, "meta", "nCentroids"), 0)
 	If nC = 0 Return "[]"
-	
+
 	For q = 0:1:(nQ-1) {
 		Set qArr = tokens.%Get(q)
 		Set dim = qArr.%Size()
@@ -103,7 +103,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 		}
 		Set queryVecs(q) = qVec
 	}
-	
+
 	// Stage 1: centroid scoring
 	Kill ^||centroidScore
 	For q = 0:1:(nQ-1) {
@@ -114,7 +114,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 			Set ^||centroidScore(c) = $Get(^||centroidScore(c), 0) + dot
 		}
 	}
-	
+
 	// Pick top nprobe centroids
 	Kill ^||topCentroids
 	For c = 0:1:(nC-1) {
@@ -136,7 +136,7 @@ ClassMethod Search(name As %String, queryTokensJSON As %String, k As %Integer = 
 		}
 	}
 StageTwo
-	
+
 	// Stage 1.5: candidate docs from top centroids
 	Kill ^||candidates
 	Set sc = ""
@@ -150,7 +150,7 @@ StageTwo
 			Set ^||candidates(docId) = ""
 		}
 	}
-	
+
 	// Stage 2: MaxSim with packed token storage (1 $Get per doc)
 	Kill ^||ranked
 	Set docId = ""
@@ -173,7 +173,7 @@ StageTwo
 		}
 		Set ^||ranked(-maxsim, docId) = ""
 	}
-	
+
 	// TopK
 	Set result = "[", first = 1, cnt = 0
 	Set negSc = ""
@@ -202,7 +202,7 @@ ClassMethod Insert(name As %String, docId As %String, tokensJSON As %String)
 	Set nTok = arr.%Size()
 	Set nC = +$Get(^PLAID(name, "meta", "nCentroids"), 0)
 	Set packed = ""
-	
+
 	For t = 0:1:(nTok-1) {
 		Set tArr = arr.%Get(t)
 		Set dim = tArr.%Size()
@@ -211,7 +211,7 @@ ClassMethod Insert(name As %String, docId As %String, tokensJSON As %String)
 			Set $vector(vec, i+1, "double") = +tArr.%Get(i)
 		}
 		Set packed = packed _ $ListBuild(vec)
-		
+
 		Set bestC = 0, bestDot = -999999
 		For c = 0:1:(nC-1) {
 			Set cVec = ^PLAID(name, "centroid", c)

@@ -62,7 +62,13 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         embedding_config: Optional[str] = None,
         executor=None,
     ):
-        super().__init__(connection_manager, config_manager, llm_func, vector_store, executor=executor)
+        super().__init__(
+            connection_manager,
+            config_manager,
+            llm_func,
+            vector_store,
+            executor=executor,
+        )
 
         # Store schema manager for iris_vector_graph table management
         self.schema_manager = schema_manager
@@ -163,9 +169,15 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             logger.error(f"Failed to initialize iris_vector_graph components: {e}")
             raise
 
-    def _detect_hnsw_index(self, source_table: str, embedding_col: str) -> Optional[bool]:
+    def _detect_hnsw_index(
+        self, source_table: str, embedding_col: str
+    ) -> Optional[bool]:
         try:
-            schema, tbl = source_table.split(".", 1) if "." in source_table else ("", source_table)
+            schema, tbl = (
+                source_table.split(".", 1)
+                if "." in source_table
+                else ("", source_table)
+            )
             conn = self.iris_engine.conn if self.iris_engine else None
             if conn is None:
                 return None
@@ -229,7 +241,9 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             )
 
         self.iris_engine.map_sql_table(
-            source_table, id_col, graph_label,
+            source_table,
+            id_col,
+            graph_label,
             property_columns=[text_col],
         )
 
@@ -400,7 +414,11 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         normalized: List[Document] = []
         for doc in documents:
             if isinstance(doc, Document):
-                score = doc.metadata.get("similarity_score") if hasattr(doc, "metadata") else None
+                score = (
+                    doc.metadata.get("similarity_score")
+                    if hasattr(doc, "metadata")
+                    else None
+                )
                 score_value = float(score) if score is not None else 1.0
                 normalized.append(
                     Document(
@@ -472,7 +490,9 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             )
             # If text search returns 0 results, fall back to vector search
             if not documents:
-                logger.warning("Text search returned 0 results. Falling back to vector search.")
+                logger.warning(
+                    "Text search returned 0 results. Falling back to vector search."
+                )
                 fallback_docs = self._fallback_to_vector_search(query_text, top_k)
                 return fallback_docs, "vector_fallback"
             return documents, method
@@ -492,7 +512,9 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             )
             # If HNSW returns 0 results, fall back to IRISVectorStore
             if not documents:
-                logger.warning("HNSW vector search returned 0 results. Falling back to IRISVectorStore.")
+                logger.warning(
+                    "HNSW vector search returned 0 results. Falling back to IRISVectorStore."
+                )
                 fallback_docs = self._fallback_to_vector_search(query_text, top_k)
                 return fallback_docs, "vector_fallback"
             return documents, method
