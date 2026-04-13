@@ -46,7 +46,15 @@
 
 ### Tests for US1
 
-- [ ] T007 [US1] Write `tests/objectscript/RAG/SDK/Test/SchemaTest.cls` as `%UnitTest.TestCase` subclass with: `TestInitialize` (calls `Initialize(384)`, asserts tables exist via `$SYSTEM.SQL.Schema.TableExists()`), `TestInitializeIdempotent` (calls twice, expects no error), `TestStatus` (parses returned JSON, asserts `embeddingDimension=384`), `TestDrop` (calls `Drop()`, asserts tables gone)
+- [ ] T007 [US1] Write `tests/objectscript/RAG/SDK/Test/SchemaTest.cls` as `%UnitTest.TestCase` subclass. Each test must compile and pass independently — no mocking. Specific assertions required:
+  - `TestInitialize`: call `##class(RAG.SDK.Schema).Initialize(384)`, assert `$SYSTEM.SQL.Schema.TableExists("RAG","SourceDocuments")=1`, assert `$SYSTEM.SQL.Schema.TableExists("RAG","DocumentChunks")=1`, assert `$SYSTEM.SQL.Schema.TableExists("RAG","Entities")=1`
+  - `TestEmbeddingColumnExists`: after Initialize, query `SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='RAG' AND TABLE_NAME='SourceDocuments' AND COLUMN_NAME='embedding'` — assert =1
+  - `TestInitializeIdempotent`: call Initialize(384) twice, assert no SQLCODE error on second call
+  - `TestStatus`: parse JSON from `##class(RAG.SDK.Schema).Status()`, assert `embeddingDimension=384`, assert `tables` array contains `"RAG.SourceDocuments"`, assert `documentCount=0`
+  - `TestDrop`: call Drop(), assert `$SYSTEM.SQL.Schema.TableExists("RAG","SourceDocuments")=0`
+  - `TestSchemaParity`: query INFORMATION_SCHEMA for RAG.SourceDocuments columns, assert column names and types match those defined in `sql/schema.sql` — catches schema drift between ObjectScript SDK and Python IVR
+
+### ⛔ PHASE GATE: DO NOT PROCEED TO PHASE 4 UNTIL ALL SchemaTest methods pass
 
 ### Implementation for US1
 
@@ -67,7 +75,14 @@
 
 ### Tests for US2
 
-- [ ] T009 [US2] Write `tests/objectscript/RAG/SDK/Test/PipelineTest.cls` with: `TestAddDocument` (calls AddDocument with 384-dim comma-vector, asserts row exists via SQL), `TestAddDocumentBatch` (inserts 10 at once, asserts count=10), `TestAddDocumentNullEmbedding` (empty embedding string, asserts row inserted with NULL embedding)
+- [ ] T009 [US2] Write `tests/objectscript/RAG/SDK/Test/PipelineTest.cls`. All assertions must execute live SQL against IRIS — no mocking:
+  - `TestAddDocumentWithVector`: call `AddDocument("test-001","Patient chest pain","{}","0.1,0.2,0.3,...")` (384 comma-separated floats), then `SELECT COUNT(*) FROM RAG.SourceDocuments WHERE doc_id='test-001'` — assert =1; `SELECT text_content FROM RAG.SourceDocuments WHERE doc_id='test-001'` — assert ="Patient chest pain"; verify embedding IS NOT NULL via `SELECT CASE WHEN embedding IS NULL THEN 0 ELSE 1 END FROM RAG.SourceDocuments WHERE doc_id='test-001'` — assert =1
+  - `TestAddDocumentNullEmbedding`: call `AddDocument("test-002","No vector","{}","")`, assert row inserted with NULL embedding, assert returned JSON has `"status":"ok"` not an error
+  - `TestAddDocumentBatch`: build JSON array of 10 docs with distinct doc_ids and 384-dim vectors, call `AddDocumentBatch`, assert `SELECT COUNT(*) FROM RAG.SourceDocuments WHERE doc_id LIKE 'batch-%'` = 10
+  - `TestAddDocumentDuplicateId`: call `AddDocument("test-001",...)` twice — second call must not crash; assert exactly 1 row with doc_id='test-001'
+  - `TestVectorRoundtrip`: after `AddDocument` with known vector "1.0,0.0,0.0,...", query `SELECT VECTOR_COSINE(embedding, TO_VECTOR('1.0,0.0,0.0,...', DOUBLE, 384)) FROM RAG.SourceDocuments WHERE doc_id='test-rt'` — assert score > 0.99 (self-similarity)
+
+### ⛔ PHASE GATE: DO NOT PROCEED TO PHASE 5 UNTIL ALL PipelineTest methods pass
 
 ### Implementation for US2
 
@@ -88,7 +103,16 @@
 
 ### Tests for US3
 
-- [ ] T011 [US3] Write `tests/objectscript/RAG/SDK/Test/SearchTest.cls` with: `TestVectorSearch` (insert 10 docs, search with matching vector, assert top result has highest score), `TestTextSearch` (insert docs with known keyword, assert TextSearch finds them), `TestHybridSearchRRF` (assert HybridSearch with strategy="RRF" returns merged results), `TestHybridSearchLinear` (strategy="linear")
+- [ ] T011 [US3] Write `tests/objectscript/RAG/SDK/Test/SearchTest.cls`. Tests must insert their own known data and verify exact results — not just "non-empty array":
+  - `TestVectorSearchReturnsTopResult`: insert doc "diabetes-001" with vector V1 and doc "diabetes-002" with vector V2 where V1 is more similar to query Q. Call `VectorSearch(Q,5)`. Parse returned JSON array. Assert `results[0].id = "diabetes-001"` (top result is most similar). Assert `results[0].score > results[1].score` (sorted descending). Assert all returned scores are in range 0.0-1.0.
+  - `TestVectorSearchDimensionDetection`: insert doc with 384-dim vector, call `VectorSearch` with 384-dim query — assert succeeds. Call with 128-dim query — assert returns JSON error, not an IRIS crash.
+  - `TestVectorSearchTopKRespected`: insert 20 docs, call `VectorSearch(Q,5)` — assert returned array has exactly 5 elements.
+  - `TestTextSearch`: insert doc with text "metformin diabetes treatment", call `TextSearch("metformin",5)` — assert returned JSON array contains a result with `id` matching the inserted doc.
+  - `TestHybridSearchRRF`: insert 5 docs, call `HybridSearch(Q,"diabetes",5,"RRF")` — assert returned JSON array is non-empty, all scores > 0, array is sorted descending by score.
+  - `TestHybridSearchLinear`: call `HybridSearch(Q,"diabetes",5,"linear")` — assert non-empty results, different ordering than RRF (insert data where the two strategies produce different top results to distinguish them).
+  - `TestSearchEmptyTable`: after `Drop()` and `Initialize(384)` with no documents, call `VectorSearch(Q,5)` — assert returns empty JSON array `[]` not an error.
+
+### ⛔ PHASE GATE: DO NOT PROCEED TO PHASE 6 UNTIL ALL SearchTest methods pass
 
 ### Implementation for US3
 
@@ -113,7 +137,16 @@
 
 ### Tests for US4
 
-- [ ] T014 [US4] Write `tests/objectscript/RAG/SDK/Test/BridgeTest.cls` with: `TestAttachTable` (creates `Test070.Notes` with VECTOR column, calls AttachTable, asserts returned JSON has rowCount>0), `TestAttachNonExistentTable` (asserts JSON error returned), `TestAttachWrongColumn` (non-existent column, asserts error)
+- [ ] T014 [US4] Write `tests/objectscript/RAG/SDK/Test/BridgeTest.cls`. Must create a real custom table in IRIS and verify actual graph mapping:
+  - `Setup`: create `Test070.ClinicalNotes` with columns `note_id VARCHAR(50) PK, note_text VARCHAR(2000), embedding VECTOR(DOUBLE,384)`, insert 5 rows with known 384-dim vectors
+  - `TestAttachTableSuccess`: call `##class(RAG.SDK.Bridge).AttachTable("Test070.ClinicalNotes","note_id","note_text","embedding","TestNote")`, parse returned JSON, assert `dimension=384`, assert `rowCount=5`, assert `label="TestNote"`
+  - `TestAttachTableRegisteredInMappings`: after AttachTable, query `SELECT COUNT(*) FROM Graph_KG.table_mappings WHERE label='TestNote'` — assert =1 (proves graph traversal can find it)
+  - `TestAttachNonExistentTable`: call `AttachTable("NoSuch.Table",...)` — assert returned JSON contains `"error"` key, not an IRIS exception
+  - `TestAttachMissingColumn`: call `AttachTable("Test070.ClinicalNotes","note_id","note_text","no_such_col","X")` — assert JSON error returned
+  - `TestAttachIdempotent`: call AttachTable twice with same params — assert `SELECT COUNT(*) FROM Graph_KG.table_mappings WHERE label='TestNote'` = 1 (upsert, not duplicate)
+  - `Teardown`: drop `Test070.ClinicalNotes`, delete from `Graph_KG.table_mappings WHERE label='TestNote'`
+
+### ⛔ PHASE GATE: DO NOT PROCEED TO PHASE 7 UNTIL ALL BridgeTest methods pass
 
 ### Implementation for US4
 
@@ -136,7 +169,11 @@
 
 ### Tests for US5
 
-- [ ] T016 [US5] Write `tests/objectscript/RAG/SDK/Test/EvaluateTest.cls` with: `TestRunRAGASMissingPackage` (mock missing ragas, assert clear error JSON), `TestRunRAGASOutputShape` (with packages installed, assert returned JSON has all 4 metric keys as floats 0-1)
+- [ ] T016 [US5] Write `tests/objectscript/RAG/SDK/Test/EvaluateTest.cls`:
+  - `TestRunRAGASMissingPackage`: temporarily rename `ragas` import to `ragas_NOTINSTALLED` to simulate missing package (or use a try/except check) — assert returned JSON contains `"error"` key with installation instructions containing the string `$system.Python.Install`
+  - `TestRunRAGASOutputShape`: with ragas+datasets installed, insert 5 documents with known content, call `RunRAGAS` with 3 questions and matching ground truths — parse returned JSON, assert all four keys present: `faithfulness`, `answer_relevancy`, `context_precision`, `context_recall`; assert each value is a float between 0.0 and 1.0 inclusive; assert `per_question` key is a JSON array with 3 elements
+
+### ⛔ PHASE GATE: DO NOT PROCEED TO PHASE 8 UNTIL ALL EvaluateTest methods pass
 
 ### Implementation for US5
 
@@ -153,8 +190,15 @@
 - [ ] T019 [P] Add `make deploy-sdk` target to `Makefile` that calls `scripts/deploy_sdk.sh` followed by `scripts/deploy_sdk_tests.sh`
 - [ ] T020 [P] Add `make test-sdk` target to `Makefile` that runs `%UnitTest.Manager.RunTest("RAG.SDK.Test", "/noload")` against the IRIS container
 - [ ] T020a [P] Write `tests/objectscript/RAG/SDK/Test/PerfTest.cls` — insert 10,000 documents via `AddDocumentBatch`, run `VectorSearch` 20 times, assert p50 latency < 100ms — satisfies SC-002
-- [ ] T021 Run full %UnitTest suite via `make test-sdk` — all 5 test classes pass
-- [ ] T022 Verify interoperability: insert 5 documents via ObjectScript `AddDocument`, query via Python `pipeline.query()`, assert documents returned
+- [ ] T021 Run full %UnitTest suite via `make test-sdk` — all 5 test classes (SchemaTest, PipelineTest, SearchTest, BridgeTest, EvaluateTest) pass with 0 failures and 0 errors. A single failing method in any class is a hard stop.
+- [ ] T022 Write and run `tests/test_sdk_e2e.py` — full cross-language E2E test in Python:
+  - Step 1: Call `##class(RAG.SDK.Schema).Drop()` via `intersystems_iris.classMethodValue`, then `Initialize(384)` — assert clean slate
+  - Step 2: Insert 10 documents via `##class(RAG.SDK.Pipeline).AddDocument(...)` — use known, distinct vectors
+  - Step 3: Call Python IVR `pipeline.query("diabetes treatment", top_k=5)` — assert returns documents inserted in Step 2 (proves ObjectScript→Python interop works)
+  - Step 4: Insert 5 more documents via Python IVR `pipeline.add_documents([...])` — use distinct text
+  - Step 5: Call `##class(RAG.SDK.Search).TextSearch("distinct_keyword", 5)` from ObjectScript — assert returns the Python-inserted documents (proves Python→ObjectScript interop works)
+  - Step 6: Assert total `SELECT COUNT(*) FROM RAG.SourceDocuments` = 15 (10 + 5)
+  - This test is the final gate — if it fails, the SDK is not shippable regardless of unit test results
 
 ---
 
