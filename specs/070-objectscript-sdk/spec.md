@@ -41,7 +41,7 @@ An ObjectScript developer wants to insert documents with pre-computed vector emb
 
 1. **Given** an initialized schema, **When** the developer calls `Do ##class(RAG.SDK.Pipeline).AddDocument("doc1", "Patient presents with chest pain...", "{""source"":""ER""}", "0.12,0.34,...")`, **Then** a row is inserted into `RAG.SourceDocuments` with the text, metadata, and `TO_VECTOR()` embedding.
 2. **Given** an initialized schema, **When** the developer calls `Do ##class(RAG.SDK.Pipeline).AddDocumentBatch(jsonArray)` with a JSON array of 100 documents (each with id, text, metadata, embedding), **Then** all 100 rows are inserted in a single batch.
-3. **Given** an initialized schema and the `sentence-transformers` package installed in the IRIS Python environment, **When** the developer calls `Do ##class(RAG.SDK.Pipeline).AddDocumentWithEmbed("doc2", "Metformin dosage...", "{}")`, **Then** the embedding is generated via `Language=python` and the row is inserted with the computed vector.
+3. **Given** an initialized schema and the `sentence-transformers` package installed in the IRIS Python environment, **When** the developer calls `Do ##class(RAG.SDK.Pipeline).AddDocumentWithEmbed("doc2", "Metformin dosage...", "{}")`, **Then** the embedding is generated via `Language=python` using `all-MiniLM-L6-v2` (384-dim, constitution default) and the row is inserted with the computed vector. An optional `model` parameter overrides the default.
 
 ---
 
@@ -55,7 +55,7 @@ An ObjectScript developer wants to run vector similarity search, text search, an
 
 1. **Given** 50 documents with embeddings in `RAG.SourceDocuments`, **When** the developer calls `Set results = ##class(RAG.SDK.Search).VectorSearch(queryVecStr, 10)`, **Then** results is a JSON array of up to 10 documents with `id`, `text`, `score` fields, sorted by score descending. The SQL uses `VECTOR_COSINE(embedding, TO_VECTOR(?, DOUBLE, N))`.
 2. **Given** 50 documents, **When** the developer calls `Set results = ##class(RAG.SDK.Search).TextSearch("chest pain", 10)`, **Then** results is a JSON array of matching documents using SQL `%CONTAINS` or `LIKE` text matching.
-3. **Given** 50 documents, **When** the developer calls `Set results = ##class(RAG.SDK.Search).HybridSearch(queryVecStr, "chest pain", 10)`, **Then** results combine vector and text scores.
+3. **Given** 50 documents, **When** the developer calls `Set results = ##class(RAG.SDK.Search).HybridSearch(queryVecStr, "chest pain", 10, "RRF")`, **Then** results combine vector and text scores using RRF (Reciprocal Rank Fusion) as the default strategy. The `strategy` parameter accepts `"RRF"` (default), `"linear"` (weighted combination), or a custom strategy name registered via a future extension point.
 
 ---
 
@@ -100,7 +100,7 @@ An ObjectScript developer wants to evaluate RAG quality using RAGAS metrics. Thi
 - **FR-001**: All classes MUST be in the `RAG.SDK` package namespace
 - **FR-002**: All methods MUST be ClassMethods (no instance state needed — SQL is the state)
 - **FR-003**: All methods MUST accept and return JSON strings (no `%DynamicObject` in signatures — keeps it wire-friendly for REST/MCP)
-- **FR-004**: Schema management MUST use SQL DDL (`CREATE TABLE`, `DROP TABLE`) — no direct global access
+- **FR-004**: Schema management MUST use SQL DDL (`CREATE TABLE`, `DROP TABLE`) read from a shared `.sql` file (`sql/schema.sql`) that both Python IVR and ObjectScript SDK reference — single source of truth, no hardcoded DDL in either language
 - **FR-005**: Document ingest MUST use `TO_VECTOR()` for pre-computed embeddings
 - **FR-006**: Search MUST use `VECTOR_COSINE()` or `VECTOR_DOT_PRODUCT()` SQL functions
 - **FR-007**: Bridge MUST delegate to IVG `Graph.KG.Meta` / `map_sql_table` — no reimplementation
@@ -133,3 +133,11 @@ An ObjectScript developer wants to evaluate RAG quality using RAGAS metrics. Thi
 - For `AddDocumentWithEmbed`: sentence-transformers installed in IRIS Python env
 - For `RunRAGAS`: ragas + datasets installed in IRIS Python env
 - The `RAG.*` schema namespace is shared between Python IVR and ObjectScript SDK
+
+## Clarifications
+
+### Session 2026-04-13
+
+- Q: How should HybridSearch combine vector and text scores? → A: RRF (Reciprocal Rank Fusion) as default, but pluggable — strategy parameter accepts "RRF", "linear", or custom name
+- Q: Should the SDK hardcode DDL or share it with Python IVR? → A: Shared `.sql` file (`sql/schema.sql`) — single source of truth for both languages
+- Q: What embedding model should AddDocumentWithEmbed default to? → A: `all-MiniLM-L6-v2` (384-dim) — constitution default, configurable via optional `model` parameter
