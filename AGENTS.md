@@ -14,6 +14,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-03
 - `^VecIdx` globals (IRIS B-tree, paged), `RAG.DocumentTokenEmbeddings` SQL (kept for backward compat) (068-colbert-vecindex)
 - Python 3.12 + ObjectScript (IRIS SQL) + iris-vector-graph >= 1.27.0 (`map_sql_table`, `validate_vector_table`, `vector_search`) (069-attach-existing-corpus)
 - Existing IRIS SQL tables (RAG.SourceDocuments, custom tables) — zero new tables created (069-attach-existing-corpus)
+- ObjectScript (IRIS 2025.1+) + Embedded Python (for 2 methods only) + IRIS SQL (VECTOR_COSINE, TO_VECTOR, %CONTAINS), IVG >= 1.27.0 (map_sql_table for Bridge) (070-objectscript-sdk)
+- Existing RAG.* SQL tables — shared with Python IVR, no new tables (070-objectscript-sdk)
 
 - Python 3.12, Docker, GitHub Actions (Ubuntu 24.04) + Checkov, Docker, GitHub Actions (001-fix-ci-security-failures)
 
@@ -33,9 +35,9 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.12, Docker, GitHub Actions (Ubuntu 24.04): Follow standard conventions
 
 ## Recent Changes
+- 070-objectscript-sdk: Added ObjectScript (IRIS 2025.1+) + Embedded Python (for 2 methods only) + IRIS SQL (VECTOR_COSINE, TO_VECTOR, %CONTAINS), IVG >= 1.27.0 (map_sql_table for Bridge)
 - 069-attach-existing-corpus: Added Python 3.12 + ObjectScript (IRIS SQL) + iris-vector-graph >= 1.27.0 (`map_sql_table`, `validate_vector_table`, `vector_search`)
 - 068-colbert-vecindex: Added Python 3.12 (client), ObjectScript (VecIndex.cls), IRIS 2025.1 Community + `iris-vector-graph>=1.21.0` (VecIndex, User.Exec, IRISGraphEngine), `intersystems-irispython>=5.1.2` (iris.dbapi + intersystems_iris.createIRIS)
-- 067-colbert-plaid-sp: Added Python 3.12 (IRIS embedded), Python 3.12 (test/benchmark client via spike venv) + `iris.sql` (IRIS embedded Python), `numpy==1.26.4` (pre-installed in container), `iris.dbapi` (external client)
 
 
 <!-- MANUAL ADDITIONS START -->
