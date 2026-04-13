@@ -103,7 +103,7 @@ An ObjectScript developer wants to evaluate RAG quality using RAGAS metrics. Thi
 - **FR-004**: Schema management MUST use SQL DDL (`CREATE TABLE`, `DROP TABLE`) read from a shared `.sql` file (`sql/schema.sql`) that both Python IVR and ObjectScript SDK reference — single source of truth, no hardcoded DDL in either language
 - **FR-005**: Document ingest MUST use `TO_VECTOR()` for pre-computed embeddings
 - **FR-006**: Search MUST use `VECTOR_COSINE()` or `VECTOR_DOT_PRODUCT()` SQL functions
-- **FR-007**: Bridge MUST delegate to IVG `Graph.KG.Meta` / `map_sql_table` — no reimplementation
+- **FR-007**: Bridge MUST register the table mapping by writing directly to `Graph_KG.table_mappings` SQL table (the same table IVG's Python `map_sql_table` writes to) — `Graph.KG.Meta` does not support table-level graph traversal registration
 - **FR-008**: RAGAS evaluation MUST use `Language=python` and clearly document prerequisites
 - **FR-009**: No method except `AddDocumentWithEmbed` and `RunRAGAS` may use `Language=python`
 - **FR-010**: SDK MUST operate on the same `RAG.*` tables as Python IVR — shared data, not a parallel schema

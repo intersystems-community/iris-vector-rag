@@ -93,7 +93,7 @@
 ### Implementation for US3
 
 - [ ] T012 [US3] Implement `iris_src/src/RAG/SDK/Search.cls` with three ClassMethods:
-  - `VectorSearch(queryVec As %String, topK As %Integer = 10) As %String` — uses `%SQL.Statement` to execute `SELECT TOP :topK doc_id, text_content, VECTOR_COSINE(embedding, TO_VECTOR(?, DOUBLE, 384)) AS score FROM RAG.SourceDocuments ORDER BY score DESC`; returns JSON array `[{"id":"...","text":"...","score":0.92},...]`
+  - `VectorSearch(queryVec As %String, topK As %Integer = 10) As %String` — detect dimension from queryVec (count commas + 1); execute `SELECT TOP :topK doc_id, text_content, VECTOR_COSINE(embedding, TO_VECTOR(?, DOUBLE, :dim)) AS score FROM RAG.SourceDocuments ORDER BY score DESC` via `%SQL.Statement`; returns JSON array `[{"id":"...","text":"...","score":0.92},...]`
   - `TextSearch(text As %String, topK As %Integer = 10) As %String` — `SELECT TOP :topK ... WHERE text_content %CONTAINS(:text)` with fallback to `LIKE '%'_text_'%'`; returns same JSON shape
   - `HybridSearch(queryVec As %String, text As %String, topK As %Integer = 10, strategy As %String = "RRF") As %String` — calls `VectorSearch` and `TextSearch`, dispatches to private `FuseRRF` or `FuseLinear` based on strategy param; returns merged JSON array
 
@@ -118,7 +118,11 @@
 ### Implementation for US4
 
 - [ ] T015 [US4] Implement `iris_src/src/RAG/SDK/Bridge.cls` with one ClassMethod:
-  - `AttachTable(table, idCol, textCol, embCol, label) As %String` — validates table/columns exist via `INFORMATION_SCHEMA.COLUMNS` query; calls `##class(Graph.KG.Meta).Set("table_mapping_"_label, table)` to register mapping; detects embedding dimension via `SELECT TOP 1 :embCol FROM :table WHERE :embCol IS NOT NULL`; returns `{"table":table,"label":label,"dimension":N,"rowCount":N}`
+  - `AttachTable(table, idCol, textCol, embCol, label) As %String` —
+    1) validate: `SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=:schema AND TABLE_NAME=:tbl AND COLUMN_NAME IN (:idCol,:textCol,:embCol)` — return JSON error if any missing;
+    2) detect dimension: count commas in first non-NULL value of embCol + 1;
+    3) register: `INSERT INTO Graph_KG.table_mappings (table_name, id_col, text_col, vector_col, label) VALUES (?,?,?,?,?)` (same table IVG's Python map_sql_table writes to — enables graph traversal);
+    4) return `{"table":table,"label":label,"dimension":N,"rowCount":N}`
 
 **Checkpoint**: Existing IRIS tables with VECTOR columns are bridged to graph with one ClassMethod call.
 
@@ -148,6 +152,7 @@
 - [ ] T018 [P] Write `iris_src/src/RAG/SDK/README.md` documenting all ClassMethods, prerequisites, and quickstart examples from `specs/070-objectscript-sdk/quickstart.md`
 - [ ] T019 [P] Add `make deploy-sdk` target to `Makefile` that calls `scripts/deploy_sdk.sh` followed by `scripts/deploy_sdk_tests.sh`
 - [ ] T020 [P] Add `make test-sdk` target to `Makefile` that runs `%UnitTest.Manager.RunTest("RAG.SDK.Test", "/noload")` against the IRIS container
+- [ ] T020a [P] Write `tests/objectscript/RAG/SDK/Test/PerfTest.cls` — insert 10,000 documents via `AddDocumentBatch`, run `VectorSearch` 20 times, assert p50 latency < 100ms — satisfies SC-002
 - [ ] T021 Run full %UnitTest suite via `make test-sdk` — all 5 test classes pass
 - [ ] T022 Verify interoperability: insert 5 documents via ObjectScript `AddDocument`, query via Python `pipeline.query()`, assert documents returned
 
