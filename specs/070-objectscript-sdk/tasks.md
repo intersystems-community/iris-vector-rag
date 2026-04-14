@@ -18,10 +18,10 @@
 
 **Purpose**: Create directory structure and shared DDL file.
 
-- [ ] T001 Create directory `iris_src/src/RAG/SDK/` for ObjectScript class files
-- [ ] T002 Create directory `tests/objectscript/RAG/SDK/Test/` for %UnitTest classes
-- [ ] T003 Create `sql/schema.sql` with `CREATE TABLE IF NOT EXISTS` DDL for RAG.SourceDocuments (doc_id VARCHAR(64) PK, title VARCHAR(500), text_content LONGVARCHAR, metadata LONGVARCHAR, embedding VECTOR(DOUBLE, 384)), RAG.DocumentChunks (chunk_id VARCHAR(64) PK, source_doc_id VARCHAR(64) FK, chunk_text LONGVARCHAR, chunk_embedding VECTOR(DOUBLE, 384)), and RAG.Entities (entity_id VARCHAR(64) PK, entity_name VARCHAR(500), entity_type VARCHAR(100), source_doc_id VARCHAR(64) FK) — statements separated by GO delimiters, all IF NOT EXISTS
-- [ ] T004 Refactor Python IVR's schema creation to read DDL from `sql/schema.sql` instead of hardcoded strings — update `iris_vector_rag/storage/enterprise_storage.py` and any other file with inline CREATE TABLE statements for RAG tables to use `open("sql/schema.sql").read()` and execute each GO-delimited statement
+- [X] T001 Create directory `iris_src/src/RAG/SDK/` for ObjectScript class files
+- [X] T002 Create directory `tests/objectscript/RAG/SDK/Test/` for %UnitTest classes
+- [X] T003 Create `sql/schema.sql` with `CREATE TABLE IF NOT EXISTS` DDL for RAG.SourceDocuments (doc_id VARCHAR(64) PK, title VARCHAR(500), text_content LONGVARCHAR, metadata LONGVARCHAR, embedding VECTOR(DOUBLE, 384)), RAG.DocumentChunks (chunk_id VARCHAR(64) PK, source_doc_id VARCHAR(64) FK, chunk_text LONGVARCHAR, chunk_embedding VECTOR(DOUBLE, 384)), and RAG.Entities (entity_id VARCHAR(64) PK, entity_name VARCHAR(500), entity_type VARCHAR(100), source_doc_id VARCHAR(64) FK) — statements separated by GO delimiters, all IF NOT EXISTS
+- [X] T004 Refactor Python IVR's schema creation to read DDL from `sql/schema.sql` instead of hardcoded strings — update `iris_vector_rag/storage/enterprise_storage.py` and any other file with inline CREATE TABLE statements for RAG tables to use `open("sql/schema.sql").read()` and execute each GO-delimited statement
 
 **Checkpoint**: Directory structure exists, sql/schema.sql is the single DDL source, Python IVR reads from it.
 
@@ -31,8 +31,8 @@
 
 **Purpose**: Deploy ObjectScript classes to IRIS and set up test infrastructure.
 
-- [ ] T005 Create `scripts/deploy_sdk.sh` — copies `iris_src/src/RAG/SDK/*.cls` to the IRIS container and loads them with `$SYSTEM.OBJ.Load()`, following the pattern of `scripts/deploy_vecindex.sh`
-- [ ] T006 Create `scripts/deploy_sdk_tests.sh` — copies `tests/objectscript/RAG/SDK/Test/*.cls` to the IRIS container for `%UnitTest.Manager.RunTest()`
+- [X] T005 Create `scripts/deploy_sdk.sh` — copies `iris_src/src/RAG/SDK/*.cls` to the IRIS container and loads them with `$SYSTEM.OBJ.Load()`, following the pattern of `scripts/deploy_vecindex.sh`
+- [X] T006 Create `scripts/deploy_sdk_tests.sh` — copies `tests/objectscript/RAG/SDK/Test/*.cls` to the IRIS container for `%UnitTest.Manager.RunTest()`
 
 **Checkpoint**: Deploy scripts exist. ObjectScript classes can be loaded into IRIS.
 
@@ -46,7 +46,7 @@
 
 ### Tests for US1
 
-- [ ] T007 [US1] Write `tests/objectscript/RAG/SDK/Test/SchemaTest.cls` as `%UnitTest.TestCase` subclass. Each test must compile and pass independently — no mocking. Specific assertions required:
+- [X] T007 [US1] Write `tests/objectscript/RAG/SDK/Test/SchemaTest.cls` as `%UnitTest.TestCase` subclass. Each test must compile and pass independently — no mocking. Specific assertions required:
   - `TestInitialize`: call `##class(RAG.SDK.Schema).Initialize(384)`, assert `$SYSTEM.SQL.Schema.TableExists("RAG","SourceDocuments")=1`, assert `$SYSTEM.SQL.Schema.TableExists("RAG","DocumentChunks")=1`, assert `$SYSTEM.SQL.Schema.TableExists("RAG","Entities")=1`
   - `TestEmbeddingColumnExists`: after Initialize, query `SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='RAG' AND TABLE_NAME='SourceDocuments' AND COLUMN_NAME='embedding'` — assert =1
   - `TestInitializeIdempotent`: call Initialize(384) twice, assert no SQLCODE error on second call
@@ -58,7 +58,7 @@
 
 ### Implementation for US1
 
-- [ ] T008 [US1] Implement `iris_src/src/RAG/SDK/Schema.cls` with three ClassMethods:
+- [X] T008 [US1] Implement `iris_src/src/RAG/SDK/Schema.cls` with three ClassMethods:
   - `Initialize(dim As %Integer = 384) As %String` — reads `sql/schema.sql` via `##class(%Stream.FileCharacter).%New()`, splits on `GO`, executes each DDL statement via `%SQL.Statement`, returns `{}`-JSON status
   - `Drop() As %String` — executes `DROP TABLE IF EXISTS` for each RAG table in reverse FK order
   - `Status() As %String` — queries INFORMATION_SCHEMA for RAG tables, counts rows in SourceDocuments, returns `{"tables":[...],"embeddingDimension":N,"documentCount":N}`
@@ -75,7 +75,7 @@
 
 ### Tests for US2
 
-- [ ] T009 [US2] Write `tests/objectscript/RAG/SDK/Test/PipelineTest.cls`. All assertions must execute live SQL against IRIS — no mocking:
+- [X] T009 [US2] Write `tests/objectscript/RAG/SDK/Test/PipelineTest.cls`. All assertions must execute live SQL against IRIS — no mocking:
   - `TestAddDocumentWithVector`: call `AddDocument("test-001","Patient chest pain","{}","0.1,0.2,0.3,...")` (384 comma-separated floats), then `SELECT COUNT(*) FROM RAG.SourceDocuments WHERE doc_id='test-001'` — assert =1; `SELECT text_content FROM RAG.SourceDocuments WHERE doc_id='test-001'` — assert ="Patient chest pain"; verify embedding IS NOT NULL via `SELECT CASE WHEN embedding IS NULL THEN 0 ELSE 1 END FROM RAG.SourceDocuments WHERE doc_id='test-001'` — assert =1
   - `TestAddDocumentNullEmbedding`: call `AddDocument("test-002","No vector","{}","")`, assert row inserted with NULL embedding, assert returned JSON has `"status":"ok"` not an error
   - `TestAddDocumentBatch`: build JSON array of 10 docs with distinct doc_ids and 384-dim vectors, call `AddDocumentBatch`, assert `SELECT COUNT(*) FROM RAG.SourceDocuments WHERE doc_id LIKE 'batch-%'` = 10
@@ -86,7 +86,7 @@
 
 ### Implementation for US2
 
-- [ ] T010 [US2] Implement `iris_src/src/RAG/SDK/Pipeline.cls` with three ClassMethods:
+- [X] T010 [US2] Implement `iris_src/src/RAG/SDK/Pipeline.cls` with three ClassMethods:
   - `AddDocument(id, text, metadata="{}",embedding="") As %String` — if embedding non-empty: `INSERT INTO RAG.SourceDocuments ... TO_VECTOR(:embedding, DOUBLE, 384)`, else insert with NULL; returns `{"id":id,"status":"ok"}`
   - `AddDocumentBatch(jsonArray As %String) As %String` — parses JSON array via `%DynamicArray.%FromJSON()`, loops calling `AddDocument` for each; returns `{"inserted":N,"errors":0}`
   - `AddDocumentWithEmbed(id, text, metadata="{}", model="all-MiniLM-L6-v2") As %String [Language=python]` — imports `sentence_transformers`, loads model, encodes text, returns comma-joined vector string; ObjectScript wrapper inserts via `AddDocument`
@@ -103,7 +103,7 @@
 
 ### Tests for US3
 
-- [ ] T011 [US3] Write `tests/objectscript/RAG/SDK/Test/SearchTest.cls`. Tests must insert their own known data and verify exact results — not just "non-empty array":
+- [X] T011 [US3] Write `tests/objectscript/RAG/SDK/Test/SearchTest.cls`. Tests must insert their own known data and verify exact results — not just "non-empty array":
   - `TestVectorSearchReturnsTopResult`: insert doc "diabetes-001" with vector V1 and doc "diabetes-002" with vector V2 where V1 is more similar to query Q. Call `VectorSearch(Q,5)`. Parse returned JSON array. Assert `results[0].id = "diabetes-001"` (top result is most similar). Assert `results[0].score > results[1].score` (sorted descending). Assert all returned scores are in range 0.0-1.0.
   - `TestVectorSearchDimensionDetection`: insert doc with 384-dim vector, call `VectorSearch` with 384-dim query — assert succeeds. Call with 128-dim query — assert returns JSON error, not an IRIS crash.
   - `TestVectorSearchTopKRespected`: insert 20 docs, call `VectorSearch(Q,5)` — assert returned array has exactly 5 elements.
@@ -116,12 +116,12 @@
 
 ### Implementation for US3
 
-- [ ] T012 [US3] Implement `iris_src/src/RAG/SDK/Search.cls` with three ClassMethods:
+- [X] T012 [US3] Implement `iris_src/src/RAG/SDK/Search.cls` with three ClassMethods:
   - `VectorSearch(queryVec As %String, topK As %Integer = 10) As %String` — 1) detect dimension from queryVec (count commas + 1); 2) call `##class(RAG.SDK.Bridge).GetDefaultTable()` to get target table config (falls back to RAG.SourceDocuments if not set); 3) execute `SELECT TOP :topK :idCol, :textCol, VECTOR_COSINE(:embCol, TO_VECTOR(?, DOUBLE, :dim)) AS score FROM :table ORDER BY score DESC` via `%SQL.Statement`; returns JSON array `[{"id":"...","text":"...","score":0.92},...]`
   - `TextSearch(text As %String, topK As %Integer = 10) As %String` — `SELECT TOP :topK ... WHERE text_content %CONTAINS(:text)` with fallback to `LIKE '%'_text_'%'`; returns same JSON shape
   - `HybridSearch(queryVec As %String, text As %String, topK As %Integer = 10, strategy As %String = "RRF") As %String` — calls `VectorSearch` and `TextSearch`, dispatches to private `FuseRRF` or `FuseLinear` based on strategy param; returns merged JSON array
 
-- [ ] T013 [P] [US3] Add private ClassMethods to `iris_src/src/RAG/SDK/Search.cls`:
+- [X] T013 [P] [US3] Add private ClassMethods to `iris_src/src/RAG/SDK/Search.cls`:
   - `FuseRRF(vecResults As %DynamicArray, txtResults As %DynamicArray, k As %Integer = 60) As %DynamicArray [Private]` — RRF formula `1/(k+rank_v) + 1/(k+rank_t)`, sort descending, return top N
   - `FuseLinear(vecResults As %DynamicArray, txtResults As %DynamicArray, alpha As %Double = 0.7) As %DynamicArray [Private]` — `alpha * vec_score + (1-alpha) * txt_score`
 
@@ -137,7 +137,7 @@
 
 ### Tests for US4
 
-- [ ] T014 [US4] Write `tests/objectscript/RAG/SDK/Test/BridgeTest.cls`. Must create a real custom table in IRIS and verify actual graph mapping AND overlay search:
+- [X] T014 [US4] Write `tests/objectscript/RAG/SDK/Test/BridgeTest.cls`. Must create a real custom table in IRIS and verify actual graph mapping AND overlay search:
   - `Setup`: create `Test070.ClinicalNotes` with columns `note_id VARCHAR(50) PK, note_text VARCHAR(2000), embedding VECTOR(DOUBLE,384)`, insert 5 rows with known 384-dim vectors
   - `TestAttachTableSuccess`: call `##class(RAG.SDK.Bridge).AttachTable("Test070.ClinicalNotes","note_id","note_text","embedding","TestNote")`, parse returned JSON, assert `dimension=384`, assert `rowCount=5`, assert `label="TestNote"`
   - `TestAttachTableRegisteredInMappings`: after AttachTable, query `SELECT COUNT(*) FROM Graph_KG.table_mappings WHERE label='TestNote'` — assert =1
@@ -153,7 +153,7 @@
 
 ### Implementation for US4
 
-- [ ] T015 [US4] Implement `iris_src/src/RAG/SDK/Bridge.cls` with three ClassMethods:
+- [X] T015 [US4] Implement `iris_src/src/RAG/SDK/Bridge.cls` with three ClassMethods:
   - `AttachTable(table, idCol, textCol, embCol, label) As %String` —
     1) validate: `SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=:schema AND TABLE_NAME=:tbl AND COLUMN_NAME IN (:idCol,:textCol,:embCol)` — return JSON error if any missing;
     2) detect dimension: count commas in first non-NULL value of embCol + 1;
@@ -174,7 +174,7 @@
 
 ### Tests for US5
 
-- [ ] T016 [US5] Write `tests/objectscript/RAG/SDK/Test/EvaluateTest.cls`:
+- [X] T016 [US5] Write `tests/objectscript/RAG/SDK/Test/EvaluateTest.cls`:
   - `TestRunRAGASMissingPackage`: temporarily rename `ragas` import to `ragas_NOTINSTALLED` to simulate missing package (or use a try/except check) — assert returned JSON contains `"error"` key with installation instructions containing the string `$system.Python.Install`
   - `TestRunRAGASOutputShape`: with ragas+datasets installed, insert 5 documents with known content, call `RunRAGAS` with 3 questions and matching ground truths — parse returned JSON, assert all four keys present: `faithfulness`, `answer_relevancy`, `context_precision`, `context_recall`; assert each value is a float between 0.0 and 1.0 inclusive; assert `per_question` key is a JSON array with 3 elements
 
@@ -182,7 +182,7 @@
 
 ### Implementation for US5
 
-- [ ] T017 [US5] Implement `iris_src/src/RAG/SDK/Evaluate.cls` with one ClassMethod:
+- [X] T017 [US5] Implement `iris_src/src/RAG/SDK/Evaluate.cls` with one ClassMethod:
   - `RunRAGAS(questionsJson, groundTruthsJson, topK=5, llmConfig="") As %String [Language=python]` — imports `ragas`, `datasets`; for each question calls `RAG.SDK.Search.VectorSearch` to retrieve contexts; builds `Dataset.from_list(data)`; calls `ragas.evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision, context_recall])`; returns JSON scores. On `ImportError`, returns `{"error":"RAGAS requires: Do $system.Python.Install(\"ragas\") and Do $system.Python.Install(\"datasets\")"}`
 
 **Checkpoint**: RAGAS evaluation runs from ObjectScript with interpretable JSON output.
@@ -191,12 +191,12 @@
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T018 [P] Write `iris_src/src/RAG/SDK/README.md` documenting all ClassMethods, prerequisites, and quickstart examples from `specs/070-objectscript-sdk/quickstart.md`
-- [ ] T019 [P] Add `make deploy-sdk` target to `Makefile` that calls `scripts/deploy_sdk.sh` followed by `scripts/deploy_sdk_tests.sh`
-- [ ] T020 [P] Add `make test-sdk` target to `Makefile` that runs `%UnitTest.Manager.RunTest("RAG.SDK.Test", "/noload")` against the IRIS container
-- [ ] T020a [P] Write `tests/objectscript/RAG/SDK/Test/PerfTest.cls` — insert 10,000 documents via `AddDocumentBatch`, run `VectorSearch` 20 times, assert p50 latency < 100ms — satisfies SC-002
-- [ ] T021 Run full %UnitTest suite via `make test-sdk` — all 5 test classes (SchemaTest, PipelineTest, SearchTest, BridgeTest, EvaluateTest) pass with 0 failures and 0 errors. A single failing method in any class is a hard stop.
-- [ ] T022 Write and run `tests/test_sdk_e2e.py` — full cross-language E2E test in Python:
+- [X] T018 [P] Write `iris_src/src/RAG/SDK/README.md` documenting all ClassMethods, prerequisites, and quickstart examples from `specs/070-objectscript-sdk/quickstart.md`
+- [X] T019 [P] Add `make deploy-sdk` target to `Makefile` that calls `scripts/deploy_sdk.sh` followed by `scripts/deploy_sdk_tests.sh`
+- [X] T020 [P] Add `make test-sdk` target to `Makefile` that runs `%UnitTest.Manager.RunTest("RAG.SDK.Test", "/noload")` against the IRIS container
+- [X] T020a [P] Write `tests/objectscript/RAG/SDK/Test/PerfTest.cls` — insert 10,000 documents via `AddDocumentBatch`, run `VectorSearch` 20 times, assert p50 latency < 100ms — satisfies SC-002
+- [X] T021 Run full %UnitTest suite via `make test-sdk` — all 5 test classes (SchemaTest, PipelineTest, SearchTest, BridgeTest, EvaluateTest) pass with 0 failures and 0 errors. A single failing method in any class is a hard stop.
+- [X] T022 Write and run `tests/test_sdk_e2e.py` — full cross-language E2E test in Python:
   - Step 1: Call `##class(RAG.SDK.Schema).Drop()` then `Initialize(384)` — clean slate
   - Step 2: Insert 10 documents via `##class(RAG.SDK.Pipeline).AddDocument(...)` — known vectors
   - Step 3: Call Python IVR `pipeline.query("diabetes treatment", top_k=5)` — assert returns ObjectScript-inserted docs
