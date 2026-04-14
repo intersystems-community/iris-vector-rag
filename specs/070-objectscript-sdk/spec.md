@@ -61,13 +61,17 @@ An ObjectScript developer wants to run vector similarity search, text search, an
 
 ### User Story 4 — Existing Table Bridge (Priority: P2)
 
-An ObjectScript developer has data in an existing IRIS table (e.g., `MyApp.ClinicalNotes`) with a VECTOR column. They want to make it searchable via IVG graph queries without copying data.
+An ObjectScript developer has data in an existing IRIS table (e.g., `MyApp.ClinicalNotes`) with a VECTOR column. They want two things: (a) make it searchable via IVG graph queries without copying data, AND (b) point the IVR SDK's `VectorSearch`, `TextSearch`, and `HybridSearch` operations at that table so they don't need to use `RAG.SourceDocuments` at all.
 
-**Independent Test**: Create a custom table, call `AttachTable`, verify graph queries work.
+**Independent Test**: Create a custom table, call `AttachTable`, call `SetDefaultTable`, then call `VectorSearch` and verify it searches the custom table — not `RAG.SourceDocuments`.
 
 **Acceptance Scenarios**:
 
-1. **Given** `MyApp.ClinicalNotes` with columns `note_id`, `note_text`, `embedding VECTOR(DOUBLE, 384)`, **When** the developer calls `Set result = ##class(RAG.SDK.Bridge).AttachTable("MyApp.ClinicalNotes", "note_id", "note_text", "embedding", "ClinNote")`, **Then** `##class(Graph.KG.Traversal).BFSFastJson(...)` can traverse the mapped nodes and `##class(RAG.SDK.Search).VectorSearch(...)` works against the existing table.
+1. **Given** `MyApp.ClinicalNotes` with columns `note_id`, `note_text`, `embedding VECTOR(DOUBLE, 384)`, **When** the developer calls `Do ##class(RAG.SDK.Bridge).AttachTable("MyApp.ClinicalNotes", "note_id", "note_text", "embedding", "ClinNote")`, **Then** `##class(Graph.KG.Traversal).BFSFastJson(...)` can traverse the mapped nodes.
+2. **Given** the same table, **When** the developer calls `Do ##class(RAG.SDK.Bridge).SetDefaultTable("MyApp.ClinicalNotes", "note_id", "note_text", "embedding")`, **Then** subsequent calls to `##class(RAG.SDK.Search).VectorSearch(queryVec, 5)` search `MyApp.ClinicalNotes` instead of `RAG.SourceDocuments` — the developer never touches `RAG.SourceDocuments` at all.
+3. **Given** `SetDefaultTable` has been called, **When** `##class(RAG.SDK.Search).GetDefaultTable()` is called, **Then** it returns `{"table":"MyApp.ClinicalNotes","id_col":"note_id","text_col":"note_text","embedding_col":"embedding"}`.
+4. **Given** no `SetDefaultTable` has been called, **When** any search method is called, **Then** it defaults to `RAG.SourceDocuments` (backward compatible).
+5. **Given** `SetDefaultTable` has been called with a table that has 10K rows and embeddings, **When** `VectorSearch` is called, **Then** results come from the custom table with correct scores — proving zero ETL was required.
 
 ---
 
@@ -107,20 +111,22 @@ An ObjectScript developer wants to evaluate RAG quality using RAGAS metrics. Thi
 - **FR-008**: RAGAS evaluation MUST use `Language=python` and clearly document prerequisites
 - **FR-009**: No method except `AddDocumentWithEmbed` and `RunRAGAS` may use `Language=python`
 - **FR-010**: SDK MUST operate on the same `RAG.*` tables as Python IVR — shared data, not a parallel schema
+- **FR-011**: `RAG.SDK.Bridge` MUST provide `SetDefaultTable(table, idCol, textCol, embCol)` that stores the table config in `Graph_KG.sdk_config` (or equivalent persistent store) so all subsequent `RAG.SDK.Search` calls use that table instead of `RAG.SourceDocuments`
+- **FR-012**: `RAG.SDK.Search` methods MUST check for a configured default table first (from `SetDefaultTable`) and fall back to `RAG.SourceDocuments` if none is set — backward compatible
 
 ### Key Entities
 
 - **RAG.SDK.Schema** — DDL wrapper (Initialize, Drop, Status)
 - **RAG.SDK.Pipeline** — document CRUD (AddDocument, AddDocumentBatch, AddDocumentWithEmbed)
 - **RAG.SDK.Search** — query operations (VectorSearch, TextSearch, HybridSearch)
-- **RAG.SDK.Bridge** — existing table bridge (AttachTable)
+- **RAG.SDK.Bridge** — existing table bridge (AttachTable, SetDefaultTable, GetDefaultTable)
 - **RAG.SDK.Evaluate** — RAGAS evaluation (RunRAGAS) [Language=python]
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: An ObjectScript developer can create schema, insert 100 documents with vectors, and run vector search without writing any Python — all in < 20 lines of ObjectScript
+- **SC-001**: An ObjectScript developer can point the SDK at an existing IRIS table and run vector search against it with zero ETL — all in < 10 lines of ObjectScript (`SetDefaultTable` + `VectorSearch`)
 - **SC-002**: `VectorSearch` returns results in < 100ms for 10K documents (same SQL as Python IVR)
 - **SC-003**: ObjectScript SDK and Python IVR operate on identical tables — a document inserted from ObjectScript is searchable from Python and vice versa
 - **SC-004**: RAGAS evaluation runs from ObjectScript with clear prerequisite documentation and returns interpretable JSON scores

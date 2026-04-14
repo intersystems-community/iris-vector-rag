@@ -110,14 +110,14 @@
   - `TestTextSearch`: insert doc with text "metformin diabetes treatment", call `TextSearch("metformin",5)` — assert returned JSON array contains a result with `id` matching the inserted doc.
   - `TestHybridSearchRRF`: insert 5 docs, call `HybridSearch(Q,"diabetes",5,"RRF")` — assert returned JSON array is non-empty, all scores > 0, array is sorted descending by score.
   - `TestHybridSearchLinear`: call `HybridSearch(Q,"diabetes",5,"linear")` — assert non-empty results, different ordering than RRF (insert data where the two strategies produce different top results to distinguish them).
-  - `TestSearchEmptyTable`: after `Drop()` and `Initialize(384)` with no documents, call `VectorSearch(Q,5)` — assert returns empty JSON array `[]` not an error.
+  - `TestDefaultTableFallback`: with no SetDefaultTable configured, call `VectorSearch` — assert results come from `RAG.SourceDocuments` (backward compat, no error)
 
 ### ⛔ PHASE GATE: DO NOT PROCEED TO PHASE 6 UNTIL ALL SearchTest methods pass
 
 ### Implementation for US3
 
 - [ ] T012 [US3] Implement `iris_src/src/RAG/SDK/Search.cls` with three ClassMethods:
-  - `VectorSearch(queryVec As %String, topK As %Integer = 10) As %String` — detect dimension from queryVec (count commas + 1); execute `SELECT TOP :topK doc_id, text_content, VECTOR_COSINE(embedding, TO_VECTOR(?, DOUBLE, :dim)) AS score FROM RAG.SourceDocuments ORDER BY score DESC` via `%SQL.Statement`; returns JSON array `[{"id":"...","text":"...","score":0.92},...]`
+  - `VectorSearch(queryVec As %String, topK As %Integer = 10) As %String` — 1) detect dimension from queryVec (count commas + 1); 2) call `##class(RAG.SDK.Bridge).GetDefaultTable()` to get target table config (falls back to RAG.SourceDocuments if not set); 3) execute `SELECT TOP :topK :idCol, :textCol, VECTOR_COSINE(:embCol, TO_VECTOR(?, DOUBLE, :dim)) AS score FROM :table ORDER BY score DESC` via `%SQL.Statement`; returns JSON array `[{"id":"...","text":"...","score":0.92},...]`
   - `TextSearch(text As %String, topK As %Integer = 10) As %String` — `SELECT TOP :topK ... WHERE text_content %CONTAINS(:text)` with fallback to `LIKE '%'_text_'%'`; returns same JSON shape
   - `HybridSearch(queryVec As %String, text As %String, topK As %Integer = 10, strategy As %String = "RRF") As %String` — calls `VectorSearch` and `TextSearch`, dispatches to private `FuseRRF` or `FuseLinear` based on strategy param; returns merged JSON array
 
@@ -137,25 +137,30 @@
 
 ### Tests for US4
 
-- [ ] T014 [US4] Write `tests/objectscript/RAG/SDK/Test/BridgeTest.cls`. Must create a real custom table in IRIS and verify actual graph mapping:
+- [ ] T014 [US4] Write `tests/objectscript/RAG/SDK/Test/BridgeTest.cls`. Must create a real custom table in IRIS and verify actual graph mapping AND overlay search:
   - `Setup`: create `Test070.ClinicalNotes` with columns `note_id VARCHAR(50) PK, note_text VARCHAR(2000), embedding VECTOR(DOUBLE,384)`, insert 5 rows with known 384-dim vectors
   - `TestAttachTableSuccess`: call `##class(RAG.SDK.Bridge).AttachTable("Test070.ClinicalNotes","note_id","note_text","embedding","TestNote")`, parse returned JSON, assert `dimension=384`, assert `rowCount=5`, assert `label="TestNote"`
-  - `TestAttachTableRegisteredInMappings`: after AttachTable, query `SELECT COUNT(*) FROM Graph_KG.table_mappings WHERE label='TestNote'` — assert =1 (proves graph traversal can find it)
-  - `TestAttachNonExistentTable`: call `AttachTable("NoSuch.Table",...)` — assert returned JSON contains `"error"` key, not an IRIS exception
-  - `TestAttachMissingColumn`: call `AttachTable("Test070.ClinicalNotes","note_id","note_text","no_such_col","X")` — assert JSON error returned
-  - `TestAttachIdempotent`: call AttachTable twice with same params — assert `SELECT COUNT(*) FROM Graph_KG.table_mappings WHERE label='TestNote'` = 1 (upsert, not duplicate)
-  - `Teardown`: drop `Test070.ClinicalNotes`, delete from `Graph_KG.table_mappings WHERE label='TestNote'`
+  - `TestAttachTableRegisteredInMappings`: after AttachTable, query `SELECT COUNT(*) FROM Graph_KG.table_mappings WHERE label='TestNote'` — assert =1
+  - `TestSetDefaultTable`: call `##class(RAG.SDK.Bridge).SetDefaultTable("Test070.ClinicalNotes","note_id","note_text","embedding")`, then call `GetDefaultTable()`, parse JSON, assert `table="Test070.ClinicalNotes"` — proves config persisted
+  - `TestOverlaySearch`: after SetDefaultTable, call `##class(RAG.SDK.Search).VectorSearch(queryVec, 5)` — parse results, assert ALL returned ids are from `Test070.ClinicalNotes` (i.e., match format "note-XXX" not "doc-XXX") — proves search hit the custom table, not RAG.SourceDocuments
+  - `TestDefaultTableFallback`: call `##class(Graph.KG.Meta).Delete("rag_sdk_default_table")` to clear config, then call `VectorSearch` — assert it searches `RAG.SourceDocuments` (backward compat)
+  - `TestAttachNonExistentTable`: call `AttachTable("NoSuch.Table",...)` — assert returned JSON contains `"error"` key
+  - `TestAttachMissingColumn`: call `AttachTable("Test070.ClinicalNotes","note_id","note_text","no_such_col","X")` — assert JSON error
+  - `TestAttachIdempotent`: call AttachTable twice — assert `SELECT COUNT(*) FROM Graph_KG.table_mappings WHERE label='TestNote'` = 1
+  - `Teardown`: drop `Test070.ClinicalNotes`, delete from `Graph_KG.table_mappings WHERE label='TestNote'`, clear `rag_sdk_default_table` meta key
 
-### ⛔ PHASE GATE: DO NOT PROCEED TO PHASE 7 UNTIL ALL BridgeTest methods pass
+### ⛔ PHASE GATE: DO NOT PROCEED TO PHASE 7 UNTIL ALL BridgeTest methods pass (including TestOverlaySearch)
 
 ### Implementation for US4
 
-- [ ] T015 [US4] Implement `iris_src/src/RAG/SDK/Bridge.cls` with one ClassMethod:
+- [ ] T015 [US4] Implement `iris_src/src/RAG/SDK/Bridge.cls` with three ClassMethods:
   - `AttachTable(table, idCol, textCol, embCol, label) As %String` —
     1) validate: `SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=:schema AND TABLE_NAME=:tbl AND COLUMN_NAME IN (:idCol,:textCol,:embCol)` — return JSON error if any missing;
     2) detect dimension: count commas in first non-NULL value of embCol + 1;
     3) register: `INSERT INTO Graph_KG.table_mappings (table_name, id_col, text_col, vector_col, label) VALUES (?,?,?,?,?)` (same table IVG's Python map_sql_table writes to — enables graph traversal);
     4) return `{"table":table,"label":label,"dimension":N,"rowCount":N}`
+  - `SetDefaultTable(table As %String, idCol As %String, textCol As %String, embCol As %String) As %String` — persists table config via `##class(Graph.KG.Meta).Set("rag_sdk_default_table", table)` + Set for each col; returns `{"table":table,"status":"ok"}`. This lets `RAG.SDK.Search` use any IRIS table as the search target without touching `RAG.SourceDocuments`.
+  - `GetDefaultTable() As %String` — reads from `Graph.KG.Meta`, returns `{"table":"...","id_col":"...","text_col":"...","embedding_col":"..."}` or `{"table":"RAG.SourceDocuments","id_col":"doc_id","text_col":"text_content","embedding_col":"embedding"}` as default if not set
 
 **Checkpoint**: Existing IRIS tables with VECTOR columns are bridged to graph with one ClassMethod call.
 
@@ -192,13 +197,14 @@
 - [ ] T020a [P] Write `tests/objectscript/RAG/SDK/Test/PerfTest.cls` — insert 10,000 documents via `AddDocumentBatch`, run `VectorSearch` 20 times, assert p50 latency < 100ms — satisfies SC-002
 - [ ] T021 Run full %UnitTest suite via `make test-sdk` — all 5 test classes (SchemaTest, PipelineTest, SearchTest, BridgeTest, EvaluateTest) pass with 0 failures and 0 errors. A single failing method in any class is a hard stop.
 - [ ] T022 Write and run `tests/test_sdk_e2e.py` — full cross-language E2E test in Python:
-  - Step 1: Call `##class(RAG.SDK.Schema).Drop()` via `intersystems_iris.classMethodValue`, then `Initialize(384)` — assert clean slate
-  - Step 2: Insert 10 documents via `##class(RAG.SDK.Pipeline).AddDocument(...)` — use known, distinct vectors
-  - Step 3: Call Python IVR `pipeline.query("diabetes treatment", top_k=5)` — assert returns documents inserted in Step 2 (proves ObjectScript→Python interop works)
-  - Step 4: Insert 5 more documents via Python IVR `pipeline.add_documents([...])` — use distinct text
-  - Step 5: Call `##class(RAG.SDK.Search).TextSearch("distinct_keyword", 5)` from ObjectScript — assert returns the Python-inserted documents (proves Python→ObjectScript interop works)
-  - Step 6: Assert total `SELECT COUNT(*) FROM RAG.SourceDocuments` = 15 (10 + 5)
-  - This test is the final gate — if it fails, the SDK is not shippable regardless of unit test results
+  - Step 1: Call `##class(RAG.SDK.Schema).Drop()` then `Initialize(384)` — clean slate
+  - Step 2: Insert 10 documents via `##class(RAG.SDK.Pipeline).AddDocument(...)` — known vectors
+  - Step 3: Call Python IVR `pipeline.query("diabetes treatment", top_k=5)` — assert returns ObjectScript-inserted docs
+  - Step 4: Insert 5 more documents via Python IVR `pipeline.add_documents([...])` — distinct text
+  - Step 5: Call `##class(RAG.SDK.Search).TextSearch("distinct_keyword", 5)` from ObjectScript — assert returns Python-inserted docs
+  - Step 6: **Overlay scenario**: call `##class(RAG.SDK.Bridge).SetDefaultTable("RAG.SourceDocuments","doc_id","text_content","embedding")` (points SDK at the default IVR table), then call `##class(RAG.SDK.Search).VectorSearch(queryVec,5)` — assert returns the same 15 docs from Steps 2+4
+  - Step 7: Assert `SELECT COUNT(*) FROM RAG.SourceDocuments` = 15
+  - This test is the final gate — if it fails, the SDK is not shippable
 
 ---
 
