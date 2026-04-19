@@ -50,4 +50,40 @@ ClassMethod GetDefaultTable() As %String
     Return {"table":(table),"id_col":($Get(^RAG.SDK.Config("default_id_col"),"doc_id")),"text_col":($Get(^RAG.SDK.Config("default_text_col"),"text_content")),"embedding_col":($Get(^RAG.SDK.Config("default_emb_col"),"embedding"))}.%ToJSON()
 }
 
+ClassMethod BuildBM25Index(indexName As %String = "rag_bm25", textCol As %String = "text_content") As %String
+{
+    Set cfg = ##class(RAG.SDK.Search).GetTableConfig()
+    Set table = cfg.%Get("table")
+    Set idCol = cfg.%Get("id_col")
+    Kill ^BM25Idx(indexName)
+    Set st = ##class(%SQL.Statement).%New()
+    Do st.%Prepare("SELECT "_idCol_", "_textCol_" FROM "_table)
+    Set rs = st.%Execute()
+    Set cnt = 0
+    While rs.%Next() {
+        Set docId = rs.%GetData(1)
+        Set txt = rs.%GetData(2)
+        Set strm = ##class(%Stream.GlobalCharacter).%Open(txt)  If $IsObject(strm) Set txt = strm.Read(8000)
+        Do ##class(Graph.KG.BM25Index).Insert(indexName, docId, txt)
+        Set cnt = cnt + 1
+    }
+    Set ^RAG.SDK.Config("bm25_index_name") = indexName
+    Return {"index":(indexName),"documents":(cnt),"status":"ok"}.%ToJSON()
+}
+
+ClassMethod SetVectorIndex(indexName As %String, nprobe As %Integer = 8) As %String
+{
+    Set ^RAG.SDK.Config("ivf_index_name") = indexName
+    Set ^RAG.SDK.Config("ivf_nprobe") = nprobe
+    Return {"index":(indexName),"nprobe":(nprobe),"status":"ok"}.%ToJSON()
+}
+
+ClassMethod ClearIndexes() As %String
+{
+    Kill ^RAG.SDK.Config("bm25_index_name")
+    Kill ^RAG.SDK.Config("ivf_index_name")
+    Kill ^RAG.SDK.Config("ivf_nprobe")
+    Return {"status":"ok"}.%ToJSON()
+}
+
 }

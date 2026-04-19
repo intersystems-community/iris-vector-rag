@@ -1,7 +1,7 @@
 Class RAG.SDK.Search
 {
 
-ClassMethod GetTableConfig() As %DynamicObject [ Private ]
+ClassMethod GetTableConfig() As %DynamicObject
 {
     Set table = $Get(^RAG.SDK.Config("default_table"), "")
     If table = "" Return {"table":"RAG.SourceDocuments","id_col":"doc_id","text_col":"text_content","embedding_col":"embedding"}
@@ -13,6 +13,12 @@ ClassMethod GetTableConfig() As %DynamicObject [ Private ]
 
 ClassMethod VectorSearch(queryVec As %String, topK As %Integer = 10) As %String
 {
+    Set ivfIndex = $Get(^RAG.SDK.Config("ivf_index_name"), "")
+    If ivfIndex '= "" {
+        Set nprobe = +$Get(^RAG.SDK.Config("ivf_nprobe"), 8)
+        Set raw = ##class(Graph.KG.IVFIndex).Search(ivfIndex, queryVec, topK, nprobe)
+        If $Extract(raw, 1) = "[" Return raw
+    }
     Set cfg = ..GetTableConfig()
     Set dim = $Length(queryVec, ",")
     If dim < 2 Return [].%ToJSON()
@@ -33,6 +39,11 @@ ClassMethod VectorSearch(queryVec As %String, topK As %Integer = 10) As %String
 
 ClassMethod TextSearch(text As %String, topK As %Integer = 10) As %String
 {
+    Set bm25Index = $Get(^RAG.SDK.Config("bm25_index_name"), "")
+    If bm25Index '= "" {
+        Set raw = ##class(Graph.KG.BM25Index).Search(bm25Index, text, topK)
+        If $Extract(raw, 1) = "[" Return raw
+    }
     Set cfg = ..GetTableConfig()
     Set sql = "SELECT TOP "_topK_" "_cfg.%Get("id_col")_", "_cfg.%Get("text_col")_" FROM "_cfg.%Get("table")_" WHERE SUBSTRING("_cfg.%Get("text_col")_",1,4000) LIKE ?"
     Set st = ##class(%SQL.Statement).%New()
