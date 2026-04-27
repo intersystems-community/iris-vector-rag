@@ -31,7 +31,7 @@ ragas>=0.1.0
 
 # Text processing
 nltk>=3.8
-ftfy>=6.1.0
+ftfy>=6.3.1
 
 # Report generation
 jinja2>=3.1.0
