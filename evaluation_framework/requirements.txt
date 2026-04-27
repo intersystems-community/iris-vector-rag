@@ -23,7 +23,7 @@ spacy>=3.6.0
 scispacy>=0.5.3
 
 # Statistical analysis
-statsmodels>=0.14.0
+statsmodels>=0.14.6
 pingouin>=0.5.3
 
 # RAGAS evaluation framework
