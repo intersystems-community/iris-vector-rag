@@ -45,7 +45,7 @@ jaydebeapi>=1.2.3
 # Utility libraries
 tqdm>=4.65.0
 python-dotenv>=1.0.0
-pathlib2>=2.3.0
+pathlib2>=2.3.7.post1
 
 # Testing and quality
 pytest>=7.4.0
