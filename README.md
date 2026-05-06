@@ -40,38 +40,32 @@ Build intelligent applications that combine large language models with your ente
 ### 1. Install
 
 ```bash
-# Clone repository
+pip install iris-vector-rag
+```
+
+Or from source:
+
+```bash
 git clone https://github.com/intersystems-community/iris-vector-rag.git
 cd iris-vector-rag
-
-# Setup environment (requires uv package manager)
-make setup-env
-make install
-source .venv/bin/activate
-
-# GraphRAG dependency (required for graphrag pipelines)
-pip install iris-vector-graph
+pip install -e .
 ```
 
 ### 2. Start IRIS Database
 
 ```bash
-# Start IRIS with Docker Compose
 docker-compose up -d
-
-# Initialize database schema
-make setup-db
-
-# Optional: Load sample medical data
-make load-data
 ```
 
-### 3. Configure API Keys
+This starts an IRIS Community Edition container with vector search enabled on `localhost:1972`.
+
+### 3. Configure
+
+Create a `.env` file with your API keys and IRIS connection:
 
 ```bash
 cat > .env << 'EOF'
 OPENAI_API_KEY=your-key-here
-ANTHROPIC_API_KEY=your-key-here  # Optional, for Claude models
 IRIS_HOST=localhost
 IRIS_PORT=1972
 IRIS_NAMESPACE=USER
@@ -80,17 +74,18 @@ IRIS_PASSWORD=SYS
 EOF
 ```
 
+The pipeline reads these via environment variables. You can also set them directly in your shell or pass a `config_path` to `create_pipeline()`.
+
 ### 4. Run Your First Query
 
 ```python
 from iris_vector_rag import create_pipeline
+from iris_vector_rag.core.models import Document
 
-# Create pipeline with automatic validation
+# Create pipeline (connects to IRIS, validates schema)
 pipeline = create_pipeline('basic', validate_requirements=True)
 
-# Load your documents
-from iris_rag.core.models import Document
-
+# Load documents
 docs = [
     Document(
         page_content="RAG combines retrieval with generation for accurate AI responses.",
@@ -101,19 +96,12 @@ docs = [
         metadata={"source": "vector_search.pdf", "page": 5}
     )
 ]
-
 pipeline.load_documents(documents=docs)
 
 # Query with LLM-generated answer
-result = pipeline.query(
-    query="What is RAG?",
-    top_k=5,
-    generate_answer=True
-)
-
+result = pipeline.query("What is RAG?", top_k=5, generate_answer=True)
 print(f"Answer: {result['answer']}")
 print(f"Sources: {result['sources']}")
-print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 ```
 
 ## Unified API Across All Pipelines
@@ -176,6 +164,27 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 
 📖 **[Complete Pipeline Guide →](docs/PIPELINE_GUIDE.md)** - Decision tree, performance comparison, configuration examples
 
+## Three Ways to Use This Project
+
+| Mode | Install | Entry Point | Use When |
+|------|---------|-------------|----------|
+| **Python Library** | `pip install iris-vector-rag` | `create_pipeline()` | You want RAG in your own app |
+| **REST API** | `pip install iris-vector-rag[api]` | `python -m iris_vector_rag.api.main` | You want HTTP endpoints for RAG queries |
+| **MCP Server** | `pip install iris-vector-rag[mcp]` | `python -m iris_vector_rag.mcp` | You want Claude Desktop to query your docs |
+
+All three modes require an IRIS database running (`docker-compose up -d` starts one).
+
+### Optional Extras
+
+```bash
+pip install iris-vector-rag[colbert]      # ColBERT late-interaction retrieval
+pip install iris-vector-rag[dspy]         # DSPy prompt optimization
+pip install iris-vector-rag[evaluation]   # RAGAS evaluation framework
+pip install iris-vector-rag[api]          # FastAPI REST server
+pip install iris-vector-rag[mcp]          # Model Context Protocol server
+pip install iris-vector-rag[all]          # Everything
+```
+
 ## Enterprise Features
 
 ### Production-Ready Database
@@ -193,7 +202,7 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 **Automatic concurrency management:**
 
 ```python
-from iris_rag.storage import IRISVectorStore
+from iris_vector_rag.storage import IRISVectorStore
 
 # Connection pool handles concurrency automatically
 store = IRISVectorStore()
