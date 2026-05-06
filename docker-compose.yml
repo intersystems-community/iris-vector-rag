@@ -9,8 +9,8 @@ services:
     image: intersystemsdc/iris-community:latest
     container_name: iris_db_rag_templates
     ports:
-      - "11972:1972"   # IRIS SuperServer port: container 1972 → host 11972
-      - "15273:52773"  # IRIS Management Portal: container 52773 → host 15273
+      - "21972:1972"   # IRIS SuperServer port: container 1972 → host 11972
+      - "25273:52773"  # IRIS Management Portal: container 52773 → host 15273
     environment:
       - IRISNAMESPACE=USER
       - ISC_DEFAULT_PASSWORD=SYS
