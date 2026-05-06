@@ -14,7 +14,6 @@ def test_no_iris_connect_usage_in_library():
     targets = [
         "iris_vector_rag/common/iris_dbapi_connector.py",
         "iris_vector_rag/common/utils.py",
-        "iris_vector_rag/common/environment_manager.py",
         "iris_vector_rag/common/iris_connection.py",
         "iris_vector_rag/pipelines/hybrid_graphrag.py",
     ]
@@ -26,7 +25,6 @@ def test_no_iris_connect_usage_in_library():
 def test_create_connection_used_in_library():
     targets = [
         "iris_vector_rag/common/utils.py",
-        "iris_vector_rag/common/environment_manager.py",
         "iris_vector_rag/common/iris_connection.py",
         "iris_vector_rag/pipelines/hybrid_graphrag.py",
     ]

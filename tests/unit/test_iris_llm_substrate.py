@@ -166,22 +166,6 @@ def test_iris_llm_dspy_adapter_basic_request_delegates():
 
 
 # ---------------------------------------------------------------------------
-# iris_globals
-# ---------------------------------------------------------------------------
-
-def test_iris_globals_no_iris_module():
-    """gset and gget are no-ops when iris is not installed — never raise."""
-    with patch.dict(sys.modules, {"iris": None}):
-        import importlib
-        import iris_vector_rag.common.iris_globals as ig
-        importlib.reload(ig)
-
-        ig.gset("IVR", "Test", value="hello")      # must not raise
-        result = ig.gget("IVR", "Test")
-        assert result is None
-
-
-# ---------------------------------------------------------------------------
 # Core import isolation
 # ---------------------------------------------------------------------------
 

@@ -8,6 +8,7 @@ Note: pytest-randomly has been disabled due to incompatibility with thinc/numpy
 random seeding (ValueError: Seed must be between 0 and 2**32 - 1).
 """
 
+import importlib.util
 import os
 import sys
 import tempfile
@@ -16,6 +17,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Generator
 from unittest.mock import AsyncMock, Mock
+
+collect_ignore_glob = []
+if importlib.util.find_spec("redis") is None:
+    collect_ignore_glob.append("**/api/test_*.py")
 
 import coverage
 import pytest
