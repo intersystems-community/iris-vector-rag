@@ -43,8 +43,12 @@ def _get_iris_dbapi_module():
         import iris
         if hasattr(iris, "connect") or hasattr(iris, "createConnection"):
             return iris
-    except ImportError:
-        pass
+        logger.warning(
+            "iris module imported from %s but has no connect/createConnection",
+            getattr(iris, "__file__", "unknown")
+        )
+    except Exception as e:
+        logger.error("Failed to import iris module: %s: %s", type(e).__name__, e)
 
     logger.error(
         "InterSystems IRIS Python SDK not available. "

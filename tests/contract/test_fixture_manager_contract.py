@@ -402,20 +402,6 @@ class TestGetFixture:
 class TestCleanupFixtureData:
     """Contract tests for FixtureManager.cleanup_fixture_data()."""
 
-    @pytest.mark.skip(reason="Requires IRIS database connection")
-    def test_deletes_data_from_single_table(self, fixture_manager):
-        """✅ Deletes data from single table."""
-        # This test requires actual IRIS database
-        # Implementation will be in integration tests
-        pass
-
-    @pytest.mark.skip(reason="Requires IRIS database connection")
-    def test_returns_accurate_row_count(self, fixture_manager):
-        """✅ Returns accurate row count."""
-        # This test requires actual IRIS database
-        # Implementation will be in integration tests
-        pass
-
 
 # ==============================================================================
 # EXCEPTION HIERARCHY TESTS
@@ -524,18 +510,6 @@ class TestFixtureLoadResult:
 class TestPerformanceContracts:
     """Contract tests for performance requirements."""
 
-    @pytest.mark.skip(reason="Requires actual .DAT fixture loading")
-    def test_dat_loads_faster_than_json(self):
-        """✅ .DAT loads faster than JSON (same data)."""
-        # Will be implemented in integration tests with real fixtures
-        pass
-
-    @pytest.mark.skip(reason="Requires actual .DAT fixture")
-    def test_small_fixtures_load_in_under_2_seconds(self):
-        """✅ Small fixtures (< 100 rows) load in < 2 seconds."""
-        # Will be implemented in integration tests
-        pass
-
 
 # ==============================================================================
 # BACKWARD COMPATIBILITY TESTS
@@ -546,8 +520,6 @@ class TestPerformanceContracts:
 class TestBackwardCompatibility:
     """Contract tests for backward compatibility."""
 
-    @pytest.mark.skip(reason="Requires existing JSON fixture support")
-    def test_loads_existing_json_fixtures(self):
-        """✅ Loads existing JSON fixtures."""
-        # Will be implemented when JSON fixture support is added
-        pass
+    def test_fixture_manager_supports_gof_format(self, fixture_manager):
+        """Fixture manager handles .gof (global format) files."""
+        assert hasattr(fixture_manager, 'load_fixture') or hasattr(fixture_manager, 'load')

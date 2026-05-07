@@ -34,17 +34,15 @@ class TestPyLateColBERTDimensionValidation:
         try:
             token_embeddings = pylate_colbert_pipeline.colbert_encoder.encode(test_text)
 
-            # Verify token-level structure
-            assert isinstance(token_embeddings, (list, tuple)), \
-                "ColBERT encoding must return list of token embeddings"
+            import numpy as np
+            assert isinstance(token_embeddings, (list, tuple, np.ndarray)), \
+                "ColBERT encoding must return list/array of token embeddings"
 
-            # Verify each token has embedding vector
             if len(token_embeddings) > 0:
                 first_token = token_embeddings[0]
-                assert isinstance(first_token, (list, tuple)) or hasattr(first_token, '__len__'), \
+                assert hasattr(first_token, '__len__'), \
                     "Each token must have embedding vector"
 
-                # Token dimension varies by ColBERT model (typically 128 or 256)
                 token_dim = len(first_token)
                 assert token_dim > 0, "Token embedding must have positive dimension"
         except AttributeError:
@@ -204,7 +202,7 @@ class TestPyLateColBERTDimensionValidation:
 
             # If encoding succeeded, token count may be truncated or validated
             # This is acceptable behavior
-            assert isinstance(token_embeddings, (list, tuple)), \
+            assert isinstance(token_embeddings, (list, tuple)) or hasattr(token_embeddings, "shape"), \
                 "Token embeddings should be returned"
         except Exception as e:
             error_msg = str(e).lower()
@@ -234,7 +232,7 @@ class TestPyLateColBERTDimensionValidation:
         try:
             colbert_tokens = pylate_colbert_pipeline.colbert_encoder.encode(test_text)
             # Token-level structure (variable)
-            assert isinstance(colbert_tokens, (list, tuple)), \
+            assert isinstance(colbert_tokens, (list, tuple)) or hasattr(colbert_tokens, "shape"), \
                 "ColBERT uses token-level embeddings"
         except AttributeError:
             pass

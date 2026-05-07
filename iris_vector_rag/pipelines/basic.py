@@ -567,6 +567,10 @@ class BasicRAGPipeline(RAGPipeline):
         expected_dim = self.embedding_manager.get_embedding_dimension()
         actual_dim = len(embedding)
         if actual_dim != expected_dim:
+            logger.error(
+                f"Dimension mismatch: expected {expected_dim}-dimensional embedding, "
+                f"got {actual_dim}. Verify embedding model configuration."
+            )
             raise ValueError(
                 "Embedding dimension mismatch: expected "
                 f"{expected_dim}, got {actual_dim}. "

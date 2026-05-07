@@ -97,18 +97,6 @@ class TestDATFixtureLoaderFixture:
         # dat_fixture_loader returns None when no marker present
         assert dat_fixture_loader is None  # No @pytest.mark.dat_fixture on this test
 
-    @pytest.mark.skip(reason="Requires actual fixture loading")
-    def test_fixture_loads_marked_fixture_automatically(self):
-        """✅ Fixture automatically loads when @pytest.mark.dat_fixture is present."""
-        # This will be tested in integration tests
-        pass
-
-    @pytest.mark.skip(reason="Requires actual fixture loading")
-    def test_fixture_cleanup_runs_after_test_completion(self):
-        """✅ Fixture cleanup runs after test completion."""
-        # This will be tested in integration tests
-        pass
-
 
 # ==============================================================================
 # FIXTURE SCOPE CONTRACT TESTS
@@ -123,21 +111,6 @@ class TestFixtureScope:
         """✅ function scope loads fixture before each test."""
         # Default scope should be function
         # This is verified by checking that cleanup happens after each test
-        pass
-
-    @pytest.mark.skip(reason="Requires pytest session execution")
-    def test_class_scope_loads_fixture_once_per_class(self):
-        """✅ class scope loads fixture once per test class."""
-        pass
-
-    @pytest.mark.skip(reason="Requires pytest session execution")
-    def test_module_scope_loads_fixture_once_per_module(self):
-        """✅ module scope loads fixture once per test module."""
-        pass
-
-    @pytest.mark.skip(reason="Requires pytest session execution")
-    def test_session_scope_loads_fixture_once_per_session(self):
-        """✅ session scope loads fixture once per pytest session."""
         pass
 
 

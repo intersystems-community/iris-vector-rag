@@ -175,49 +175,53 @@ class TestGenerateEmbeddings:
 
 @pytest.mark.contract
 class TestPopulateTableEmbeddings:
-    """Contract tests for EmbeddingGenerator.populate_table_embeddings()."""
+    """Contract tests for EmbeddingGenerator.populate_table_embeddings() — requires live IRIS with data."""
 
-    @pytest.mark.skip(reason="Requires IRIS database connection")
+    @pytest.fixture(autouse=True)
+    def _require_iris(self):
+        import iris
+        try:
+            import os
+            conn = iris.connect(
+                os.environ.get("IRIS_HOST", "localhost"),
+                int(os.environ.get("IRIS_PORT", "31972")),
+                "USER", "_SYSTEM", os.environ.get("IRIS_PASSWORD", "SYS")
+            )
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.close()
+        except Exception as e:
+            pytest.skip(f"IRIS not available: {e}")
+
     def test_populates_embeddings_for_all_rows(self, embedding_generator):
-        """✅ Populates embeddings for all rows."""
-        # Requires actual IRIS database - will be in integration tests
-        pass
+        from tests.fixtures.embedding_generator import EmbeddingGenerator
+        import os, iris
 
-    @pytest.mark.skip(reason="Requires IRIS database connection")
-    def test_uses_to_vector_function_for_iris(self, embedding_generator):
-        """✅ Uses TO_VECTOR() function for IRIS inserts."""
-        # Requires actual IRIS database - will be in integration tests
-        pass
+        conn = iris.connect(
+            os.environ.get("IRIS_HOST", "localhost"),
+            int(os.environ.get("IRIS_PORT", "31972")),
+            "USER", "_SYSTEM", os.environ.get("IRIS_PASSWORD", "SYS")
+        )
+        cursor = conn.cursor()
+        try:
+            cursor.execute("CREATE TABLE IF NOT EXISTS RAG.TestEmbeddings (id INT PRIMARY KEY, content VARCHAR(500), embedding VECTOR(FLOAT, 384))")
+            cursor.execute("DELETE FROM RAG.TestEmbeddings")
+            cursor.execute("INSERT INTO RAG.TestEmbeddings (id, content) VALUES (1, 'Hello world')")
+            cursor.execute("INSERT INTO RAG.TestEmbeddings (id, content) VALUES (2, 'Test document')")
+            cursor.execute("INSERT INTO RAG.TestEmbeddings (id, content) VALUES (3, 'Another doc')")
+            conn.commit()
 
-    @pytest.mark.skip(reason="Requires IRIS database connection")
-    def test_fetches_rows_in_batches(self, embedding_generator):
-        """✅ Fetches rows in batches (memory efficient)."""
-        # Requires actual IRIS database - will be in integration tests
-        pass
-
-    @pytest.mark.skip(reason="Requires IRIS database connection")
-    def test_handles_null_text_values(self, embedding_generator):
-        """✅ Handles NULL text values gracefully."""
-        # Requires actual IRIS database - will be in integration tests
-        pass
-
-    @pytest.mark.skip(reason="Requires IRIS database connection")
-    def test_commits_transaction_on_success(self, embedding_generator):
-        """✅ Commits transaction on success."""
-        # Requires actual IRIS database - will be in integration tests
-        pass
-
-    @pytest.mark.skip(reason="Requires IRIS database connection")
-    def test_rollbacks_on_error(self, embedding_generator):
-        """✅ Rollbacks on error."""
-        # Requires actual IRIS database - will be in integration tests
-        pass
-
-    @pytest.mark.skip(reason="Requires IRIS database connection")
-    def test_returns_accurate_row_count(self, embedding_generator):
-        """✅ Returns accurate row count."""
-        # Requires actual IRIS database - will be in integration tests
-        pass
+            count = embedding_generator.populate_table_embeddings(
+                connection=conn,
+                table_name="RAG.TestEmbeddings",
+                text_column="content",
+                embedding_column="embedding",
+            )
+            assert count == 3
+        finally:
+            cursor.execute("DROP TABLE IF EXISTS RAG.TestEmbeddings")
+            conn.commit()
+            cursor.close()
 
 
 # ==============================================================================

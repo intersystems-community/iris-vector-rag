@@ -102,10 +102,9 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         """Import PyLate components; return True on success, else False."""
         try:
             global models, rank
-            module = importlib.import_module("pylate")
-            models = module.models
-            rank = module.rank
-
+            from pylate import models as _models, rank as _rank
+            models = _models
+            rank = _rank
             logger.debug("PyLate library imported successfully")
             return True
         except Exception as e:
