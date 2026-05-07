@@ -15,6 +15,19 @@ from .basic import BasicRAGPipeline
 logger = logging.getLogger(__name__)
 
 
+class Reranker:
+    """Wraps a reranker function to provide a mockable .rerank() interface."""
+
+    def __init__(self, func):
+        self._func = func
+
+    def rerank(self, query: str, docs: List[Document]) -> List[Tuple[Document, float]]:
+        return self._func(query, docs)
+
+    def __call__(self, query: str, docs: List[Document]) -> List[Tuple[Document, float]]:
+        return self._func(query, docs)
+
+
 def hf_reranker(query: str, docs: List[Document]) -> List[Tuple[Document, float]]:
     """
     Default HuggingFace cross-encoder reranker function.
@@ -95,6 +108,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
 
         # Set reranker function (default to HuggingFace if none provided)
         self.reranker_func = reranker_func or hf_reranker
+        self.reranker = Reranker(self.reranker_func)
 
         logger.info(
             f"Initialized BasicRAGRerankingPipeline with rerank_factor={self.rerank_factor}"
@@ -165,7 +179,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         candidate_documents = parent_result.get("retrieved_documents", [])
 
         # Always rerank if we have multiple candidates and a reranker (fixes the logic issue!)
-        if len(candidate_documents) > 1 and self.reranker_func:
+        if len(candidate_documents) > 1 and self.reranker:
             try:
                 final_documents = self._rerank_documents(
                     query, candidate_documents, top_k
@@ -259,8 +273,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 f"Reranking {len(documents)} documents for query: {query_text[:50]}..."
             )
 
-            # Apply reranker function
-            reranked_results = self.reranker_func(query_text, documents)
+            reranked_results = self.reranker.rerank(query_text, documents)
 
             # Sort by score (descending)
             reranked_results = sorted(

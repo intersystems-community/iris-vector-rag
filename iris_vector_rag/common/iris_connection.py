@@ -33,53 +33,23 @@ _edition_cache: Optional[Tuple[str, int]] = None
 
 def _get_iris_dbapi_module():
     """
-    Import IRIS DBAPI module with UV compatibility fix for version 5.3.0+.
+    Import the IRIS connectivity module (intersystems-irispython).
+
+    Uses `import iris` which provides both iris.connect() and
+    iris.createConnection(). This follows the same pattern as
+    iris-vector-graph and the official InterSystems documentation.
     """
     try:
-        import iris.dbapi as iris_dbapi
-        if hasattr(iris_dbapi, "connect"):
-            return iris_dbapi
-    except (ImportError, AttributeError):
-        pass
-
-    try:
         import iris
-        if hasattr(iris, "createConnection"):
+        if hasattr(iris, "connect") or hasattr(iris, "createConnection"):
             return iris
-        if hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
-            return iris.dbapi
-            
-        import importlib.util
-        iris_dir = os.path.dirname(iris.__file__)
-        elsdk_path = os.path.join(iris_dir, "_elsdk_.py")
-        if os.path.exists(elsdk_path):
-            spec = importlib.util.spec_from_file_location("iris._elsdk_", elsdk_path)
-            if spec and spec.loader:
-                elsdk_mod = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(elsdk_mod)
-                for attr in dir(elsdk_mod):
-                    if not attr.startswith("__"):
-                        setattr(iris, attr, getattr(elsdk_mod, attr))
-                try:
-                    import iris.dbapi as iris_dbapi
-                    return iris_dbapi
-                except ImportError:
-                    if hasattr(iris, "createConnection"):
-                        return iris
-                    return None
-    except Exception as e:
-        logger.error(f"Deep IRIS import fix failed: {e}")
-
-    try:
-        import iris
-        if hasattr(iris, "createConnection"):
-            return iris
-        if hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
-            return iris.dbapi
     except ImportError:
         pass
 
-    logger.error("InterSystems IRIS DBAPI module could not be imported.")
+    logger.error(
+        "InterSystems IRIS Python SDK not available. "
+        "Install with: pip install intersystems-irispython>=5.1.2"
+    )
     return None
 
 

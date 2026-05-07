@@ -121,6 +121,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
     def _initialize_model(self):
         """Initialize PyLate ColBERT model."""
         self.model = models.ColBERT(model_name_or_path=self.model_name)
+        self.colbert_encoder = self.model
         logger.info(f"PyLate model '{self.model_name}' loaded")
 
     def load_documents(self, documents=None, documents_path: str = None, **kwargs) -> Dict[str, Any]:

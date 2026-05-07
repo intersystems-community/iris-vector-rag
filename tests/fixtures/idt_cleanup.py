@@ -35,13 +35,21 @@ def reset_rag_schema(connection, schema: str = "RAG", strict: bool = False) -> N
         module = importlib.import_module("iris_devtester.testing.schema_reset")
         resetter_cls = getattr(module, "SchemaResetter")
         resetter = resetter_cls(connection)
-        resetter.reset_rag_schema(
-            schema=schema,
-            order=RAG_DELETE_ORDER,
-            include_system=False,
-            strict=strict,
-        )
-        return
+        if hasattr(resetter, "reset_rag_schema"):
+            resetter.reset_rag_schema(
+                schema=schema,
+                order=RAG_DELETE_ORDER,
+                include_system=False,
+                strict=strict,
+            )
+            return
+        if hasattr(resetter, "truncate_tables"):
+            for table in RAG_DELETE_ORDER:
+                try:
+                    resetter.truncate_tables([f"{schema}.{table}"])
+                except Exception:
+                    pass
+            return
     except Exception as exc:
         if strict:
             raise

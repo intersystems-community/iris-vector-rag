@@ -13,6 +13,29 @@ from pathlib import Path
 import pytest
 
 
+def _ragas_venv_ready():
+    """Check if .venv has the dependencies needed for RAGAS evaluation."""
+    venv_python = Path(".venv/bin/python")
+    if not venv_python.exists():
+        return False
+    import subprocess
+    result = subprocess.run(
+        [str(venv_python), "-c", "import numpy; import ragas"],
+        capture_output=True, timeout=10
+    )
+    return result.returncode == 0
+
+
+pytestmark = [
+    pytest.mark.e2e,
+    pytest.mark.requires_llm,
+    pytest.mark.skipif(
+        not _ragas_venv_ready(),
+        reason="RAGAS evaluation requires .venv with numpy+ragas installed"
+    ),
+]
+
+
 class TestRAGASValidationContract:
     """Contract tests for RAGAS acceptance (RAG-003)."""
 

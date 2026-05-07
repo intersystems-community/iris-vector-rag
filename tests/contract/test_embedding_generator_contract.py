@@ -20,9 +20,19 @@ import numpy as np
 @pytest.fixture
 def embedding_generator():
     """Create EmbeddingGenerator instance for testing."""
-    from tests.fixtures.embedding_generator import EmbeddingGenerator
+    import sys
+    import importlib
 
-    return EmbeddingGenerator(
+    mocked_keys = [k for k in sys.modules if k.startswith("sentence_transformers")]
+    for k in mocked_keys:
+        if hasattr(sys.modules[k], "_mock_name") or hasattr(sys.modules[k], "assert_called"):
+            del sys.modules[k]
+
+    import tests.fixtures.embedding_generator as eg_module
+    eg_module._MODEL_CACHE.clear()
+    importlib.reload(eg_module)
+
+    return eg_module.EmbeddingGenerator(
         model_name="all-MiniLM-L6-v2", dimension=384, batch_size=32, device="cpu"
     )
 

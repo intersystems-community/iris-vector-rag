@@ -42,6 +42,15 @@ class RAGPipeline(abc.ABC):
         else:
             self.vector_store = vector_store
 
+    def _validate_dimensions(self, embedding: List[float], expected_dims: int) -> None:
+        actual_dims = len(embedding)
+        if actual_dims != expected_dims:
+            raise ValueError(
+                f"Dimension mismatch: got {actual_dims}-dimensional embedding, "
+                f"expected {expected_dims}. Verify your embedding model matches "
+                f"the index dimension, or re-index with the correct model."
+            )
+
     @abc.abstractmethod
     def load_documents(self, documents_path: str, **kwargs) -> None:
         """

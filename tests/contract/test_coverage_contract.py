@@ -6,6 +6,7 @@ Contract: coverage_reporting_contract.md
 
 import configparser
 import subprocess
+import sys
 
 
 
@@ -64,15 +65,17 @@ def test_coverage_runs_successfully():
     # Run a quick coverage check on a small subset
     result = subprocess.run(
         [
-            "pytest",
+            sys.executable,
+            "-m", "pytest",
             "tests/unit/",
-            "--cov=iris_rag",
+            "--cov=iris_vector_rag",
             "--cov=common",
             "--cov-report=term",
             "-q",
             "--tb=no",
             "-p",
             "no:randomly",
+            "--override-ini=addopts=",
         ],
         capture_output=True,
         text=True,
@@ -83,8 +86,8 @@ def test_coverage_runs_successfully():
     assert result.returncode in [
         0,
         1,
-    ], f"Coverage run failed with return code {result.returncode}"
-    assert "TOTAL" in result.stdout, "Coverage report must include TOTAL line"
+    ], f"Coverage run failed with return code {result.returncode}\nstderr: {result.stderr[:500]}"
+    assert "TOTAL" in result.stdout, f"Coverage report must include TOTAL line\nstdout: {result.stdout[:500]}\nstderr: {result.stderr[:500]}"
 
 
 def test_coverage_targets_defined():
