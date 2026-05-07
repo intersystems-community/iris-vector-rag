@@ -8,7 +8,7 @@ to Python strings, handling various edge cases and encoding issues.
 import logging
 from typing import Any, Dict
 
-from ..core.vector_store_exceptions import VectorStoreCLOBError
+from ..core.exceptions import VectorStoreCLOBError
 
 logger = logging.getLogger(__name__)
 

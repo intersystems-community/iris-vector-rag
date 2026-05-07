@@ -52,12 +52,20 @@ class PipelineCreationError(Exception):
 
 
 class ModuleLoadingError(Exception):
-    """
-    Raised when dynamic module loading fails.
+    """Raised when dynamic module loading fails."""
 
-    This exception is raised when:
-    - Module cannot be imported
-    - Module does not exist
-    - Module import raises an exception
-    - Class is not found in module
-    """
+
+class VectorStoreError(RAGException):
+    """Base exception for vector store operations."""
+
+
+class VectorStoreConnectionError(VectorStoreError):
+    """Raised when vector store connection fails."""
+
+
+class VectorStoreCLOBError(VectorStoreError):
+    """Raised when CLOB handling fails."""
+
+
+class VectorStoreDataError(VectorStoreError):
+    """Raised when vector store data operations fail."""

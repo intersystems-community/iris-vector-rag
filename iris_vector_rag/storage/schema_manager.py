@@ -2028,11 +2028,8 @@ class SchemaManager:
         schema_manager_type = requirements.get("schema_manager", "SchemaManager")
 
         if schema_manager_type == "HybridGraphRAGSchemaManager":
-            from .hybrid_schema_manager import HybridGraphRAGSchemaManager
-
-            logger.info(f"Creating HybridGraphRAGSchemaManager for {pipeline_type}")
-            return HybridGraphRAGSchemaManager(connection_manager, config_manager)
-        elif pipeline_type in ["graphrag", "hybrid_graphrag"]:
+            logger.warning("HybridGraphRAGSchemaManager is deprecated, using SchemaManager")
+        if pipeline_type in ["graphrag", "hybrid_graphrag"]:
             # Enhanced schema manager for graph-based pipelines
             logger.info(f"Creating enhanced SchemaManager for {pipeline_type}")
             manager = cls(connection_manager, config_manager)

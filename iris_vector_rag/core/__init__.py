@@ -6,7 +6,7 @@ from .base import RAGPipeline
 from .connection import ConnectionManager
 from .models import Document
 from .vector_store import VectorStore
-from .vector_store_exceptions import (
+from .exceptions import (
     VectorStoreCLOBError,
     VectorStoreConnectionError,
     VectorStoreDataError,

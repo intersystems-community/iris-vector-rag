@@ -16,7 +16,7 @@ from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
 from ..exceptions import VectorStoreConfigurationError
-from ..core.vector_store_exceptions import (
+from ..core.exceptions import (
     VectorStoreConnectionError,
     VectorStoreDataError,
     VectorStoreCLOBError,
