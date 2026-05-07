@@ -63,10 +63,10 @@ def test_extract_batch_validates_empty_list():
 
     try:
         config_mgr = ConfigurationManager()
-        # Create service - this may fail if config not available, that's OK for this test
+        conn_mgr = ConnectionManager(config_mgr)
         service = EntityExtractionService(
-            ConnectionManager(config_mgr),
-            {"batch_processing": {"enabled": False}}
+            config_mgr,
+            conn_mgr,
         )
 
         # Test empty list validation

@@ -254,14 +254,21 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             and self.use_native_reranking
             and self.is_initialized
         ):
-            final_documents = self._pylate_rerank(
-                query, candidate_documents, top_k
-            )
-            reranked = True
-            self.stats["reranking_operations"] += 1
-            logger.debug(
-                f"PyLate reranked {len(candidate_documents)} → {len(final_documents)} documents"
-            )
+            try:
+                final_documents = self._pylate_rerank(
+                    query, candidate_documents, top_k
+                )
+                reranked = True
+                self.stats["reranking_operations"] += 1
+                logger.debug(
+                    f"PyLate reranked {len(candidate_documents)} → {len(final_documents)} documents"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"ColBERT reranking failed, falling back to dense vector results: {e}"
+                )
+                final_documents = candidate_documents[:top_k]
+                reranked = False
         else:
             final_documents = candidate_documents[:top_k]
             reranked = False
@@ -302,7 +309,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         # Build response with consistent format
         contexts_list = [doc.page_content for doc in final_documents]
         sources = self._extract_sources(final_documents) if kwargs.get("include_sources", True) else []
-        retrieval_method = kwargs.get("method", "colbert_pylate")
+        retrieval_method = "colbert_pylate" if reranked else "dense_vector_fallback"
 
         response = {
             "query": query,

@@ -223,7 +223,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         # Build complete response (matching parent format exactly)
         contexts_list = [doc.page_content for doc in final_documents]
         sources = self._extract_sources(final_documents) if kwargs.get("include_sources", True) else []
-        retrieval_method = kwargs.get("method", "rerank")
+        retrieval_method = "rerank" if reranked else "vector_fallback"
 
         response = {
             "query": query,

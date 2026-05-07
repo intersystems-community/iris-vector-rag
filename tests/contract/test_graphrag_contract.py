@@ -34,22 +34,11 @@ def test_entity_extraction_dependencies():
 
 
 def test_graph_ai_integration_optional():
-    """graph-ai integration is optional and fails gracefully."""
-    try:
-        # Try importing optional graph-ai components
-        import sys
-
-        # Check if graph-ai is in path
-        graph_ai_available = any("graph-ai" in path for path in sys.path)
-
-        if graph_ai_available:
-            # If available, should be importable
-            # This is optional - just document availability
-            pass
-        else:
-            pytest.skip("graph-ai integration not available (optional)")
-    except Exception as e:
-        pytest.skip(f"graph-ai check failed: {e}")
+    """GraphRAG components import without requiring graph-ai package."""
+    from iris_vector_rag.pipelines.graphrag import GraphRAGPipeline
+    from iris_vector_rag.pipelines.hybrid_graphrag import HybridGraphRAGPipeline
+    assert GraphRAGPipeline is not None
+    assert HybridGraphRAGPipeline is not None
 
 
 def test_graphrag_pipeline_fixture_error_handling():
@@ -106,7 +95,7 @@ def test_graphrag_test_errors_are_skips():
         )
 
         if not has_skip_logic:
-            # This is informational - GraphRAG tests should handle missing deps
-            pytest.skip(
+            import warnings
+            warnings.warn(
                 f"{test_file.name} should handle missing GraphRAG dependencies"
             )
