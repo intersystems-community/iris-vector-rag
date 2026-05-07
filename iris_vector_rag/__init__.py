@@ -1,10 +1,18 @@
-# iris_rag package
-# This file makes the iris_rag directory a Python package.
+# iris_vector_rag package
 
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from iris_vector_rag.common.utils import get_llm_func  # Import get_llm_func
-from iris_vector_rag.executor import SqlExecutor  # SqlExecutor protocol
+try:
+    from dotenv import load_dotenv
+    _env_file = Path(__file__).resolve().parent.parent / ".env"
+    if _env_file.exists():
+        load_dotenv(_env_file)
+except ImportError:
+    pass
+
+from iris_vector_rag.common.utils import get_llm_func
+from iris_vector_rag.executor import SqlExecutor
 
 from .config.manager import ConfigurationManager
 from .core.base import RAGPipeline

@@ -32,25 +32,7 @@ class IRISSQLUtils:
         metric: str = "COSINE",
         index_type: str = "HNSW",
     ) -> bool:
-        """
-        Create a vector index using proper IRIS syntax.
-
-        Uses the correct IRIS HNSW index syntax from db_init_complete.sql:
-        CREATE INDEX IF NOT EXISTS idx_hnsw_source_embedding
-        ON RAG.SourceDocuments (embedding)
-        AS HNSW(M=16, efConstruction=200, Distance='COSINE');
-
-        Args:
-            connection: Database connection
-            table_name: Name of the table
-            column_name: Name of the vector column
-            index_name: Optional custom index name
-            metric: Vector similarity metric (COSINE, DOT, EUCLIDEAN)
-            index_type: Index type (HNSW, FLAT) - currently only HNSW supported
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Create a vector index using proper IRIS syntax."""
         if not index_name:
             # Clean table name for index naming
             clean_table = table_name.replace(".", "_")
@@ -100,18 +82,7 @@ class IRISSQLUtils:
         column_name: str,
         index_name: Optional[str] = None,
     ) -> bool:
-        """
-        Create a simple (non-vector) index using IRIS syntax.
-
-        Args:
-            connection: Database connection
-            table_name: Name of the table
-            column_name: Name of the column
-            index_name: Optional custom index name
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Create a simple (non-vector) index using IRIS syntax."""
         if not index_name:
             clean_table = table_name.replace(".", "_")
             index_name = f"{clean_table}_{column_name}_idx"
@@ -148,17 +119,7 @@ class IRISSQLUtils:
 
     @staticmethod
     def check_table_exists(connection: Any, table_name: str) -> bool:
-        """
-        Check if a table exists using IRIS-compatible syntax.
-        Uses a self-managed database connection to avoid "DataRow is inaccessible" errors.
-
-        Args:
-            connection: Database connection (kept for compatibility, but not used)
-            table_name: Name of the table (schema.table format)
-
-        Returns:
-            True if table exists, False otherwise
-        """
+        """Check if a table exists using IRIS-compatible syntax."""
         # Use self-managed connection to avoid interference with other operations
         if get_iris_dbapi_connection is None:
             logger.warning(
@@ -217,9 +178,7 @@ class IRISSQLUtils:
 
     @staticmethod
     def _check_table_exists_with_connection(connection: Any, table_name: str) -> bool:
-        """
-        Fallback method using provided connection for table existence check.
-        """
+        """Fallback method using provided connection for table existence check."""
         try:
             # Split schema and table name
             if "." in table_name:
@@ -251,18 +210,7 @@ class IRISSQLUtils:
     def check_index_exists(
         connection: Any, index_name: str, table_name: Optional[str] = None
     ) -> bool:
-        """
-        Check if an index exists using IRIS-compatible syntax.
-        Uses a self-managed database connection to avoid "DataRow is inaccessible" errors.
-
-        Args:
-            connection: Database connection (kept for compatibility, but not used)
-            index_name: Name of the index
-            table_name: Optional table name to filter by
-
-        Returns:
-            True if index exists, False otherwise
-        """
+        """Check if an index exists using IRIS-compatible syntax."""
         # Use self-managed connection to avoid interference with other operations
         if get_iris_dbapi_connection is None:
             logger.warning(
@@ -337,9 +285,7 @@ class IRISSQLUtils:
     def _check_index_exists_with_connection(
         connection: Any, index_name: str, table_name: Optional[str] = None
     ) -> bool:
-        """
-        Fallback method using provided connection for index existence check.
-        """
+        """Fallback method using provided connection for index existence check."""
         try:
             cursor = connection.cursor()
 
@@ -383,17 +329,7 @@ class IRISSQLUtils:
 
     @staticmethod
     def get_table_columns(connection: Any, table_name: str) -> List[Dict[str, Any]]:
-        """
-        Get column information for a table using IRIS-compatible syntax.
-        Uses a self-managed database connection to avoid "DataRow is inaccessible" errors.
-
-        Args:
-            connection: Database connection (kept for compatibility, but not used)
-            table_name: Name of the table (schema.table format)
-
-        Returns:
-            List of dictionaries with column information
-        """
+        """Get column information for a table using IRIS-compatible syntax."""
         # Use self-managed connection to avoid interference with other operations
         if get_iris_dbapi_connection is None:
             logger.warning(
@@ -464,9 +400,7 @@ class IRISSQLUtils:
     def _get_table_columns_with_connection(
         connection: Any, table_name: str
     ) -> List[Dict[str, Any]]:
-        """
-        Fallback method using provided connection for table columns check.
-        """
+        """Fallback method using provided connection for table columns check."""
         try:
             # Split schema and table name
             if "." in table_name:
@@ -511,18 +445,7 @@ class IRISSQLUtils:
         vector_column: str = "embedding",
         vector_config: dict = None,
     ) -> bool:
-        """
-        Optimize a table for vector operations by creating appropriate indices.
-
-        Args:
-            connection: Database connection
-            table_name: Name of the table
-            vector_column: Name of the vector column
-            vector_config: Vector index configuration with HNSW parameters
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Optimize a table for vector operations by creating appropriate indices."""
         try:
             logger.info(f"Optimizing table {table_name} for vector operations...")
 
@@ -564,19 +487,7 @@ class IRISSQLUtils:
         vector_config: dict,
         index_name: Optional[str] = None,
     ) -> bool:
-        """
-        Create a vector index using configurable HNSW parameters.
-
-        Args:
-            connection: Database connection
-            table_name: Name of the table
-            column_name: Name of the vector column
-            vector_config: Vector index configuration with HNSW parameters
-            index_name: Optional custom index name
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Create a vector index using configurable HNSW parameters."""
         if not index_name:
             # Clean table name for index naming
             clean_table = table_name.replace(".", "_")
