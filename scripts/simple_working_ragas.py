@@ -125,11 +125,15 @@ def evaluate_with_ragas(results: List[Dict[str, Any]]) -> Dict[str, float]:
         show_progress=True,
     )
 
+    def _avg(values):
+        valid = [v for v in values if v == v]
+        return sum(valid) / len(valid) if valid else 0.0
+
     return {
-        "faithfulness": result["faithfulness"],
-        "answer_relevancy": result["answer_relevancy"],
-        "context_precision": result["context_precision"],
-        "context_recall": result["context_recall"],
+        "faithfulness": _avg(result["faithfulness"]),
+        "answer_relevancy": _avg(result["answer_relevancy"]),
+        "context_precision": _avg(result["context_precision"]),
+        "context_recall": _avg(result["context_recall"]),
     }
 
 

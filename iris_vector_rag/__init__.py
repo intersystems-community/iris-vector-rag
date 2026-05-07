@@ -38,7 +38,7 @@ def create_pipeline(
     llm_func: Optional[Callable[[str], str]] = None,
     embedding_func: Optional[Callable[[List[str]], List[List[float]]]] = None,
     external_connection=None,
-    validate_requirements: bool = True,
+    validate_requirements: bool = False,
     auto_setup: bool = False,
     **kwargs,
 ) -> RAGPipeline:
@@ -103,9 +103,10 @@ def create_pipeline(
     # If no llm_func is provided, get one using the utility function
     effective_llm_func = llm_func
     if effective_llm_func is None:
-        # Use 'stub' provider for testing if not specified otherwise in config or kwargs
-        llm_provider = config_manager.get("llm.provider", "stub")
-        llm_model_name = config_manager.get("llm.model_name", "stub-model")
+        import os
+        default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
+        llm_provider = config_manager.get("llm.provider", default_provider)
+        llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
         effective_llm_func = get_llm_func(
             provider=llm_provider, model_name=llm_model_name, **kwargs
         )

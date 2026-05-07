@@ -85,6 +85,35 @@ IRIS_USERNAME=_SYSTEM           # IRIS username
 IRIS_PASSWORD=SYS               # IRIS password
 ```
 
+## Evaluate with RAGAS
+
+Compare pipelines side-by-side using real RAGAS metrics:
+
+```bash
+python examples/compare_pipelines.py --pipelines basic,basic_rerank
+```
+
+Or in code:
+
+```python
+from iris_vector_rag import create_pipeline
+from ragas import evaluate, EvaluationDataset, SingleTurnSample
+from ragas.metrics import faithfulness, context_precision, context_recall
+
+pipeline = create_pipeline('basic')
+pipeline.load_documents(documents=docs)
+result = pipeline.query("What is diabetes?", top_k=3, generate_answer=True)
+
+sample = SingleTurnSample(
+    user_input="What is diabetes?",
+    response=result["answer"],
+    retrieved_contexts=result["contexts"],
+    reference="Diabetes is a chronic condition...",
+)
+scores = evaluate(EvaluationDataset(samples=[sample]),
+                  metrics=[faithfulness, context_precision, context_recall])
+```
+
 ## Optional Extras
 
 ```bash
