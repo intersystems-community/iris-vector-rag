@@ -42,8 +42,8 @@ requires-python = ">=3.11"
 dependencies = [
     "openai>=1.0.0",
     "anthropic>=0.25.0",
-    "sentence-transformers>=5.1.1,<5.3.0",
-    "transformers>=4.41.0,<5.4.0",
+    "sentence-transformers>=5.1.1",
+    "transformers>=4.41.0",
     "numpy>=1.21.0",
     "pandas>=1.3.0",
     "pyyaml>=6.0",
@@ -68,8 +68,8 @@ dependencies = [
 [project.optional-dependencies]
 embedding = [
     "torch>=2.0.0",
-    "sentence-transformers>=5.1.1,<5.3.0",
-    "transformers>=4.41.0,<5.4.0",
+    "sentence-transformers>=5.1.1",
+    "transformers>=4.41.0",
     "iris-vector-graph>=1.82.0"
 ]
 hybrid-graphrag = [
@@ -89,15 +89,15 @@ dspy = [
     "dspy-ai>=2.0.0"
 ]
 evaluation = [
-    "scipy>=1.10.0",
+    "scipy>=1.17.1",
     "scikit-learn>=1.3.0",
-    "datasets>=2.13.0",
+    "datasets>=4.8.4",
     "spacy>=3.6.0",
-    "statsmodels>=0.14.0",
+    "statsmodels>=0.14.6",
     "pingouin>=0.5.3",
     "jinja2>=3.1.0",
-    "markdown>=3.4.0",
-    "nltk>=3.8",
+    "markdown>=3.10.2",
+    "nltk>=3.9.4",
 ]
 dev = [
     "uv>=0.1.0",
@@ -152,10 +152,10 @@ all = [
     "bcrypt>=4.0.0",
     "python-jose[cryptography]>=3.3.0",
     "dspy-ai>=2.0.0",
-    "scipy>=1.10.0",
+    "scipy>=1.17.1",
     "scikit-learn>=1.3.0",
-    "datasets>=2.13.0",
-    "statsmodels>=0.14.0",
+    "datasets>=4.8.4",
+    "statsmodels>=0.14.6",
     "tqdm>=4.64.0"
 ]
 
@@ -173,7 +173,7 @@ dev = [
     "pre-commit>=3.0.0",
     "build>=0.10.0",
     "twine>=4.0.0",
-    "gitpython==3.1.46",
+    "gitpython>=3.1.47",
 ]
 mcp = [
     "mcp>=0.1.0",
