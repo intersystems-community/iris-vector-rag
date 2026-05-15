@@ -29,7 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run: pip install -e ".[dspy]" intersystems-irispython>=5.1.2
+        run: pip install -e ".[dspy]" "intersystems-irispython>=5.1.2" "iris-vector-graph>=1.82.0"
 
       - name: Install test dependencies
         run: pip install pytest pytest-mock pytest-timeout pytest-asyncio coverage pytest-cov python-dotenv sqlalchemy

@@ -52,6 +52,7 @@ dependencies = [
     "typing-extensions>=4.0.0",
     "psutil>=7.0.0",
     "intersystems-irispython>=5.1.2",
+    "iris-vector-graph>=1.82.0",
     "langchain-openai>=0.3.24",
     "langchain>=0.3.25",
     "python-dotenv>=1.1.0",
