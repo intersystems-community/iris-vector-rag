@@ -32,7 +32,7 @@ jobs:
         run: pip install -e ".[dspy]" intersystems-irispython>=5.1.2
 
       - name: Install test dependencies
-        run: pip install pytest pytest-mock pytest-timeout pytest-asyncio
+        run: pip install pytest pytest-mock pytest-timeout pytest-asyncio coverage pytest-cov python-dotenv sqlalchemy
 
       - name: Run unit tests
         env:
