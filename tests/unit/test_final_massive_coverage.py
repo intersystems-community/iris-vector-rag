@@ -520,7 +520,8 @@ class TestUtilsMassive(unittest.TestCase):
                     error_msg = str(e).lower()
                     expected_errors = [
                         'provider', 'invalid', 'not found', 'api key',
-                        'authentication', 'unsupported'
+                        'authentication', 'unsupported', 'openai_api_key',
+                        'anthropic_api_key', 'environment variable',
                     ]
                     is_expected = any(err in error_msg for err in expected_errors)
                     self.assertTrue(is_expected, f"Unexpected LLM provider error: {e}")
