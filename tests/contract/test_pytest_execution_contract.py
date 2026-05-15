@@ -22,7 +22,7 @@ def test_pythonpath_allows_imports():
     """REQ-2: PYTHONPATH enables module imports."""
     # PYTHONPATH already set in conftest.py
     # Should not raise ModuleNotFoundError
-    import common
+    from iris_vector_rag import common
     import iris_vector_rag
 
     assert iris_vector_rag is not None

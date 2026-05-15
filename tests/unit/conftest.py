@@ -5,8 +5,7 @@ Unit tests should use mocks for external dependencies (database, LLM, embeddings
 """
 
 import pytest
-import iris_rag  # noqa: F401
-import common  # noqa: F401
+import iris_vector_rag  # noqa: F401
 from unittest.mock import Mock, MagicMock
 from pathlib import Path
 import tempfile
