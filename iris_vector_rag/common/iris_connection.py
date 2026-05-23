@@ -33,18 +33,20 @@ _edition_cache: Optional[Tuple[str, int]] = None
 
 def _get_iris_dbapi_module():
     """
-    Import the IRIS connectivity module (intersystems-irispython).
+    Import the IRIS connectivity module.
 
-    Uses `import iris` which provides both iris.connect() and
-    iris.createConnection(). This follows the same pattern as
-    iris-vector-graph and the official InterSystems documentation.
+    Prefers iris-embedded-python-wrapper (iris.dbapi) which provides
+    a unified connection API for both embedded and external modes.
+    Falls back to intersystems-irispython (iris.connect) if wrapper unavailable.
     """
     try:
         import iris
+        if hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
+            return iris
         if hasattr(iris, "connect") or hasattr(iris, "createConnection"):
             return iris
         logger.warning(
-            "iris module imported from %s but has no connect/createConnection",
+            "iris module imported from %s but has no usable connect method",
             getattr(iris, "__file__", "unknown")
         )
     except Exception as e:
@@ -202,15 +204,15 @@ def get_iris_connection(
                 raise ConnectionError("Cannot import IRIS DBAPI module")
 
             try:
-                if hasattr(iris_mod, "createConnection"):
+                if hasattr(iris_mod, "dbapi") and hasattr(iris_mod.dbapi, "connect"):
+                    conn = iris_mod.dbapi.connect(
+                        hostname=h, port=p, namespace=n, username=u, password=pwd,
+                    )
+                elif hasattr(iris_mod, "createConnection"):
                     conn = iris_mod.createConnection(h, p, n, u, pwd)
                 else:
                     conn = iris_mod.connect(
-                        hostname=h,
-                        port=p,
-                        namespace=n,
-                        username=u,
-                        password=pwd,
+                        hostname=h, port=p, namespace=n, username=u, password=pwd,
                     )
                 _connection_cache[cache_key] = conn
                 logger.info(f"✅ Connected to IRIS at {h}:{p}/{n}")

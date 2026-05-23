@@ -729,6 +729,11 @@ def mock_connection_failure(mocker):
 def basic_rag_pipeline(request):
     """Session-scoped BasicRAG pipeline — skips if IRIS unavailable."""
     from iris_vector_rag import create_pipeline
+    try:
+        import iris_vector_rag.embeddings.manager as _em
+        _em._SENTENCE_TRANSFORMER_CACHE.clear()
+    except Exception:
+        pass
 
     validate = 'integration' in str(request.node.fspath)
 

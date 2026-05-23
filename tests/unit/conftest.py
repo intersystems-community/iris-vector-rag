@@ -291,19 +291,15 @@ def reset_mocks():
 @pytest.fixture(autouse=True)
 def patch_external_dependencies(monkeypatch):
     """Automatically patch external dependencies for unit tests."""
-    # Patch sentence transformers to avoid downloading models
     mock_sentence_transformer = Mock()
     mock_sentence_transformer.encode = Mock(return_value=[[0.1, 0.2, 0.3]])
 
-    # Mock the module imports BEFORE they're used to avoid transformer errors
     import sys
 
-    # Create mock modules
     mock_transformers = Mock()
     mock_sentence_transformers_module = Mock()
     mock_sentence_transformers_module.SentenceTransformer = Mock(return_value=mock_sentence_transformer)
 
-    # Inject mocks into sys.modules to prevent actual imports
     if 'transformers' not in sys.modules:
         sys.modules['transformers'] = mock_transformers
     if 'sentence_transformers' not in sys.modules:
@@ -315,9 +311,8 @@ def patch_external_dependencies(monkeypatch):
             Mock(return_value=mock_sentence_transformer)
         )
     except (AttributeError, KeyError):
-        pass  # Module not available, skip patching
+        pass
 
-    # Patch OpenAI client
     try:
         monkeypatch.setattr(
             "openai.OpenAI",
@@ -327,3 +322,9 @@ def patch_external_dependencies(monkeypatch):
         pass
 
     yield
+
+    try:
+        import iris_vector_rag.embeddings.manager as _em
+        _em._SENTENCE_TRANSFORMER_CACHE.clear()
+    except Exception:
+        pass
