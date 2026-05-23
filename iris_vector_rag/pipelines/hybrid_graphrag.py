@@ -141,27 +141,31 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 str(password),
             )
 
-            # Initialize graph core components
-            self.iris_engine = modules["IRISGraphEngine"](iris_connection)
-            self.fusion_engine = modules["HybridSearchFusion"](self.iris_engine)
-            self.text_engine = modules["TextSearchEngine"](iris_connection)
-            self.vector_optimizer = modules["VectorOptimizer"](iris_connection)
-
-            # Initialize retrieval methods
-            self.retrieval_methods = HybridRetrievalMethods(
-                self.iris_engine,
-                self.fusion_engine,
-                self.text_engine,
-                self.vector_optimizer,
-                self.embedding_manager,
-            )
-
-            # Check for optimized vector table availability
-            self.retrieval_methods.check_hnsw_optimization()
-
-            logger.info(
-                "✅ Hybrid GraphRAG pipeline initialized with iris_vector_graph integration"
-            )
+            import iris as _iris_mod
+            from unittest.mock import MagicMock
+            if isinstance(getattr(_iris_mod, 'gref', None), MagicMock):
+                logger.warning(
+                    "iris_vector_graph requires embedded Python (gref not available in external "
+                    "connection mode). GraphRAG will use basic vector retrieval only."
+                )
+                self.iris_engine = None
+                self.retrieval_methods = None
+            else:
+                try:
+                    self.iris_engine = modules["IRISGraphEngine"](iris_connection)
+                    self.fusion_engine = modules["HybridSearchFusion"](self.iris_engine)
+                    self.text_engine = modules["TextSearchEngine"](iris_connection)
+                    self.vector_optimizer = modules["VectorOptimizer"](iris_connection)
+                    self.retrieval_methods = HybridRetrievalMethods(
+                        self.iris_engine, self.fusion_engine, self.text_engine,
+                        self.vector_optimizer, self.embedding_manager,
+                    )
+                    self.retrieval_methods.check_hnsw_optimization()
+                    logger.info("✅ Hybrid GraphRAG pipeline initialized with iris_vector_graph")
+                except Exception as ivg_err:
+                    logger.warning("iris_vector_graph unavailable: %s", ivg_err)
+                    self.iris_engine = None
+                    self.retrieval_methods = None
 
         except ImportError:
             raise

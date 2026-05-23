@@ -93,7 +93,7 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
 
         # Load model from disk (one-time operation per cache key)
         try:
-            from sentence_transformers.SentenceTransformer import SentenceTransformer
+            from sentence_transformers import SentenceTransformer
             logger.info(
                 "Loading SentenceTransformer model (one-time initialization): %s on %s",
                 model_name,

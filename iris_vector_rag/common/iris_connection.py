@@ -169,6 +169,17 @@ def get_iris_connection(
     _validate_connection_params(h, p, n, u, pwd)
     cache_key = (h, p, n, u)
 
+    import socket as _socket
+    with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as _s:
+        _s.settimeout(2.0)
+        try:
+            _s.connect((h, p))
+        except (ConnectionRefusedError, OSError, _socket.timeout):
+            raise ConnectionError(
+                f"IRIS connection failed to {h}:{p}/{n}: "
+                f"port {p} not reachable on {h} (check IRIS is running)"
+            )
+
     with _cache_lock:
         for attempt in range(2):
             if cache_key in _connection_cache:

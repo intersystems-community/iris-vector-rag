@@ -31,6 +31,12 @@ from iris_vector_rag.core.models import Document
 from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 from iris_vector_rag.common.utils import get_llm_func
 
+try:
+    from iris_vector_graph import RRFFusion as _IVGRRFFusion
+    _HAS_IVG_RRF = True
+except ImportError:
+    _HAS_IVG_RRF = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -196,67 +202,45 @@ Return only the alternative queries, one per line, without numbering.
         result_sets: List[List[Document]],
         top_k: int
     ) -> List[Document]:
-        """
-        Combine multiple result sets using Reciprocal Rank Fusion.
-
-        RRF formula: score = sum(1/(rank + k)) for each result set
-
-        Args:
-            result_sets: List of document lists from different queries
-            top_k: Number of top results to return
-
-        Returns:
-            Fused and reranked documents
-        """
-        # Track RRF scores and document details
-        rrf_scores: Dict[str, float] = defaultdict(float)
+        """Combine multiple result sets using Reciprocal Rank Fusion via iris-vector-graph."""
         doc_map: Dict[str, Document] = {}
         source_queries: Dict[str, List[str]] = defaultdict(list)
 
-        # Calculate RRF scores
-        for query_idx, result_set in enumerate(result_sets):
-            for rank, doc in enumerate(result_set, start=1):
-                # Use document ID as unique identifier
+        for result_set in result_sets:
+            for doc in result_set:
                 doc_id = doc.id if doc.id else str(hash(doc.page_content[:100]))
-
-                # RRF score: 1/(rank + k)
-                rrf_scores[doc_id] += 1.0 / (rank + self.rrf_k)
-
-                # Store document (keep first occurrence)
                 if doc_id not in doc_map:
                     doc_map[doc_id] = doc
-
-                # Track which queries found this document
                 if hasattr(doc, 'metadata') and 'source_query' in doc.metadata:
                     source_queries[doc_id].append(doc.metadata['source_query'])
 
-        # Sort by RRF score
-        sorted_docs = sorted(
-            rrf_scores.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        if _HAS_IVG_RRF:
+            ranked_lists = [
+                [(doc.id if doc.id else str(hash(doc.page_content[:100])), float(i))
+                 for i, doc in enumerate(rs)]
+                for rs in result_sets
+            ]
+            fused = _IVGRRFFusion.fuse_results(ranked_lists, c=self.rrf_k)
+            sorted_ids = [doc_id for doc_id, _ in fused[:top_k]]
+        else:
+            rrf_scores: Dict[str, float] = defaultdict(float)
+            for result_set in result_sets:
+                for rank, doc in enumerate(result_set, start=1):
+                    doc_id = doc.id if doc.id else str(hash(doc.page_content[:100]))
+                    rrf_scores[doc_id] += 1.0 / (rank + self.rrf_k)
+            sorted_ids = sorted(rrf_scores, key=rrf_scores.get, reverse=True)[:top_k]
 
-        # Create final results with RRF scores
         results = []
-        for new_rank, (doc_id, rrf_score) in enumerate(sorted_docs[:top_k], start=1):
-            doc = doc_map[doc_id]
-
-            # Add RRF score and rank to metadata
-            if hasattr(doc, 'metadata'):
-                doc.metadata['rrf_score'] = rrf_score
-                doc.metadata['rrf_rank'] = new_rank
-                doc.metadata['score'] = rrf_score  # For consistency
+        for doc_id in sorted_ids:
+            if doc_id in doc_map:
+                doc = doc_map[doc_id]
+                if not hasattr(doc, 'metadata') or doc.metadata is None:
+                    doc.metadata = {}
                 doc.metadata['source_queries'] = source_queries.get(doc_id, [])
-                doc.metadata['num_query_hits'] = len(source_queries.get(doc_id, []))
+                results.append(doc)
 
-            results.append(doc)
-
-        logger.info(
-            f"RRF fusion: {sum(len(rs) for rs in result_sets)} "
-            f"raw results → {len(results)} final results"
-        )
-
+        logger.info("RRF fusion: %d raw results → %d final results",
+                    sum(len(rs) for rs in result_sets), len(results))
         return results
 
     def query(

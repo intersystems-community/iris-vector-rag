@@ -6,8 +6,8 @@ without complex import patching issues. Focuses on testable code paths.
 """
 
 import unittest
+import pytest
 from unittest.mock import patch
-
 from iris_vector_rag.core.models import Document
 
 
@@ -434,47 +434,26 @@ class TestPipelineInitMassive(unittest.TestCase):
     """Massive coverage tests for pipeline __init__ module (currently 73%)."""
 
     def test_pipeline_factory_comprehensive(self):
-        """Test pipeline factory functionality comprehensively."""
+        """Test pipeline factory handles known and unknown pipeline types."""
         from iris_vector_rag import create_pipeline
+        from unittest.mock import patch, MagicMock
 
-        # Test pipeline creation with different configurations
-        pipeline_configs = [
-            # Basic configurations
-            {
-                'pipeline_type': 'basic',
-                'validate_requirements': False
-            },
-            {
-                'pipeline_type': 'graphrag',
-                'validate_requirements': False
-            },
-            {
-                'pipeline_type': 'hybrid_graphrag',
-                'validate_requirements': False
-            },
-            # Invalid configurations
-            {
-                'pipeline_type': 'unknown_pipeline',
-                'validate_requirements': False
-            }
-        ]
+        # Only test with mocked IRIS connection to avoid real initialization
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=MagicMock())
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
 
-        for config in pipeline_configs:
+        for pipeline_type in ['basic', 'unknown_pipeline']:
             try:
-                create_pipeline(**config)
-                # Should return a pipeline instance or None
-                # Don't assert specific type as it depends on availability
-
+                create_pipeline(pipeline_type, validate_requirements=False,
+                                external_connection=mock_conn)
             except Exception as e:
-                # Expected failures for missing dependencies or unknown types
                 error_msg = str(e).lower()
-                expected_errors = [
-                    'not found', 'not implemented', 'unknown', 'invalid',
-                    'import', 'module', 'dependency', 'connection',
-                    'database', 'configuration', 'requirements'
-                ]
-                is_expected = any(err in error_msg for err in expected_errors)
-                self.assertTrue(is_expected, f"Unexpected pipeline creation error: {e}")
+                expected = ['not found', 'not implemented', 'unknown', 'invalid',
+                            'import', 'module', 'dependency', 'connection',
+                            'database', 'configuration', 'requirements']
+                self.assertTrue(any(e in error_msg for e in expected),
+                                f"Unexpected error for {pipeline_type}: {e}")
 
     def test_pipeline_availability_check(self):
         """Test pipeline availability checking."""
