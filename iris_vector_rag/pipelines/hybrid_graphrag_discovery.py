@@ -8,6 +8,8 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
+from ..integrations.ivg import MIN_IVG_VERSION, assert_ivg_compatible, get_ivg_version
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +24,8 @@ class GraphCoreDiscovery:
         """Import iris_vector_graph modules or raise actionable ImportError."""
         message = (
             "HybridGraphRAG requires iris-vector-graph package. "
-            "Install with: pip install rag-templates[hybrid-graphrag]"
+            f"Install with: pip install 'iris-vector-rag[hybrid-graphrag]' "
+            f"(requires iris-vector-graph>={MIN_IVG_VERSION})"
         )
 
         if os.environ.get("FORCE_IRIS_VECTOR_GRAPH_IMPORT_ERROR") == "1":
@@ -34,6 +37,7 @@ class GraphCoreDiscovery:
 
             sys.modules.pop("iris_vector_graph", None)
             module = importlib.import_module("iris_vector_graph")
+            installed_version = assert_ivg_compatible(module)
             fusion_module = importlib.import_module("iris_vector_graph.fusion")
 
             def _get_attr(name: str):
@@ -41,20 +45,29 @@ class GraphCoreDiscovery:
 
             hybrid_fusion = getattr(fusion_module, "HybridSearchFusion", None)
             if hybrid_fusion is None:
-                hybrid_fusion = _get_attr("HybridSearchFusion")
+                hybrid_fusion = getattr(fusion_module, "RRFFusion", None)
+            if hybrid_fusion is None:
+                hybrid_fusion = _get_attr("RRFFusion")
 
             modules = {
                 "IRISGraphEngine": _get_attr("IRISGraphEngine"),
                 "HybridSearchFusion": hybrid_fusion,
                 "TextSearchEngine": _get_attr("TextSearchEngine"),
                 "VectorOptimizer": _get_attr("VectorOptimizer"),
+                "EmbedSelector": _get_attr("EmbedSelector"),
+                "IndexConfig": _get_attr("IndexConfig"),
+                "EngineStatus": _get_attr("EngineStatus"),
+                "GraphStore": _get_attr("GraphStore"),
             }
 
-            logger.info("Successfully imported iris_vector_graph modules")
+            logger.info(
+                "Successfully imported iris_vector_graph modules (version=%s)",
+                installed_version or get_ivg_version(module) or "unknown",
+            )
             self._import_cache["modules"] = modules
             return modules
         except ImportError as exc:
-            raise ImportError(message) from exc
+            raise ImportError(f"{message}. {exc}") from exc
 
     def get_connection_config(self) -> Dict[str, Any]:
         """Return IRIS connection configuration from environment variables."""
@@ -72,8 +85,6 @@ class GraphCoreDiscovery:
         """Validate required IRIS connection fields are present."""
         required_fields = ["host", "port", "namespace", "username", "password"]
         missing = [
-            field
-            for field in required_fields
-            if not connection_config.get(field)
+            field for field in required_fields if not connection_config.get(field)
         ]
         return len(missing) == 0, missing
