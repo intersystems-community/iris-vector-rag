@@ -42,12 +42,10 @@ class TestSmoke:
         load_result = pipeline.load_documents([doc])
 
         # Assert ingestion succeeded
-        assert load_result["documents_loaded"] >= 1, (
-            "Smoke test: ingest failed"
-        )
-        assert load_result["documents_failed"] == 0, (
-            "Smoke test: document ingestion should not have failures"
-        )
+        assert load_result["documents_loaded"] >= 1, "Smoke test: ingest failed"
+        assert (
+            load_result["documents_failed"] == 0
+        ), "Smoke test: document ingestion should not have failures"
 
         # Query
         query_result = pipeline.query(
@@ -59,9 +57,9 @@ class TestSmoke:
             "Smoke test: query returned error: "
             f"{query_result.get('error', 'unknown')}"
         )
-        assert len(query_result["retrieved_documents"]) >= 1, (
-            "Smoke test: no docs retrieved"
-        )
-        assert len(query_result.get("contexts", [])) >= 1, (
-            "Smoke test: no contexts returned"
-        )
+        assert (
+            len(query_result["retrieved_documents"]) >= 1
+        ), "Smoke test: no docs retrieved"
+        assert (
+            len(query_result.get("contexts", [])) >= 1
+        ), "Smoke test: no contexts returned"
