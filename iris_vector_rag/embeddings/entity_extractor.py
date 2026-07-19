@@ -42,7 +42,9 @@ class EntityExtractionResult:
         """Validate entity extraction result."""
         # Validate entity_type
         if not self.entity_type or not isinstance(self.entity_type, str):
-            raise ValueError(f"entity_type must be non-empty string, got '{self.entity_type}'")
+            raise ValueError(
+                f"entity_type must be non-empty string, got '{self.entity_type}'"
+            )
 
         # Validate entity_text
         if not self.entity_text:
@@ -79,7 +81,7 @@ class EntityExtractionResult:
             "confidence_score": self.confidence_score,
             "relationships": self.relationships,
             "extraction_method": self.extraction_method,
-            "extraction_timestamp": self.extraction_timestamp.isoformat()
+            "extraction_timestamp": self.extraction_timestamp.isoformat(),
         }
 
 
@@ -153,7 +155,9 @@ class ConfigurationResult:
     updated_at: datetime
 
     def __str__(self) -> str:
-        return f"Configured {len(self.entity_types)} entity types for '{self.config_name}'"
+        return (
+            f"Configured {len(self.entity_types)} entity types for '{self.config_name}'"
+        )
 
 
 @dataclass
@@ -173,7 +177,6 @@ class DocumentEntities:
             )
 
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -189,10 +192,9 @@ _RELATIONSHIP_STORE: List[Dict[str, Any]] = []
 # Entity Extraction Implementation (T011)
 # ============================================================================
 
+
 def extract_entities_batch(
-    texts: List[str],
-    config,  # EmbeddingConfig type
-    batch_size: int = 10
+    texts: List[str], config, batch_size: int = 10  # EmbeddingConfig type
 ) -> BatchEntityExtractionResult:
     """
     Extract entities from multiple documents using batched LLM calls (FR-018).
@@ -232,14 +234,12 @@ def extract_entities_batch(
     total_entities = 0
 
     for batch_start in range(0, len(texts), batch_size):
-        batch_texts = texts[batch_start:batch_start + batch_size]
+        batch_texts = texts[batch_start : batch_start + batch_size]
 
         # Call LLM for entity extraction (with retry)
         try:
             batch_entities = _call_llm_entity_extraction(
-                batch_texts,
-                config.entity_types,
-                retry_attempts=3
+                batch_texts, config.entity_types, retry_attempts=3
             )
             llm_calls_made += 1
         except Exception as e:
@@ -247,18 +247,14 @@ def extract_entities_batch(
             # Return empty results for failed batch
             for i, text in enumerate(batch_texts):
                 document_results.append(
-                    DocumentEntityResult(
-                        doc_index=batch_start + i,
-                        entities=[]
-                    )
+                    DocumentEntityResult(doc_index=batch_start + i, entities=[])
                 )
             continue
 
         # Parse entities for each document in batch
         for i, (text, entities) in enumerate(zip(batch_texts, batch_entities)):
             doc_result = DocumentEntityResult(
-                doc_index=batch_start + i,
-                entities=entities
+                doc_index=batch_start + i, entities=entities
             )
             document_results.append(doc_result)
             total_entities += len(entities)
@@ -270,14 +266,12 @@ def extract_entities_batch(
         total_entities_extracted=total_entities,
         extraction_time_ms=elapsed_time_ms,
         llm_calls_made=llm_calls_made,
-        batch_size=len(texts)
+        batch_size=len(texts),
     )
 
 
 def _call_llm_entity_extraction(
-    texts: List[str],
-    entity_types: List[str],
-    retry_attempts: int = 3
+    texts: List[str], entity_types: List[str], retry_attempts: int = 3
 ) -> List[List[EntityExtractionResult]]:
     """
     Call LLM API to extract entities from batch of texts.
@@ -306,9 +300,7 @@ def _call_llm_entity_extraction(
             results = []
             for doc_idx, text in enumerate(texts):
                 doc_entities = _extract_entities_rule_based(
-                    text,
-                    entity_types,
-                    doc_id=uuid4()
+                    text, entity_types, doc_id=uuid4()
                 )
                 results.append(doc_entities)
 
@@ -333,9 +325,7 @@ def _call_llm_entity_extraction(
 
 
 def _extract_entities_rule_based(
-    text: str,
-    entity_types: List[str],
-    doc_id: UUID
+    text: str, entity_types: List[str], doc_id: UUID
 ) -> List[EntityExtractionResult]:
     """
     Rule-based entity extraction (fallback/testing).
@@ -361,7 +351,7 @@ def _extract_entities_rule_based(
         "Medication": r"\b(insulin|metformin|aspirin|ibuprofen|lisinopril|therapy)\b",
         "Symptom": r"\b(fever|pain|nausea|fatigue|headache|cough|elevated blood glucose|glucose)\b",
         "Person": r"\b([A-Z][a-z]+ [A-Z][a-z]+)\b",
-        "Organization": r"\b([A-Z][a-z]+ (?:Corporation|Inc|LLC|Ltd))\b"
+        "Organization": r"\b([A-Z][a-z]+ (?:Corporation|Inc|LLC|Ltd))\b",
     }
 
     for entity_type in entity_types:
@@ -385,7 +375,7 @@ def _extract_entities_rule_based(
                 confidence_score=0.85,  # Rule-based has lower confidence
                 extraction_method="rule_based",
                 extraction_timestamp=timestamp,
-                relationships=[]
+                relationships=[],
             )
             entities.append(entity)
 
@@ -393,8 +383,7 @@ def _extract_entities_rule_based(
 
 
 def store_entities(
-    doc_id: UUID,
-    entities: List[EntityExtractionResult]
+    doc_id: UUID, entities: List[EntityExtractionResult]
 ) -> EntityStorageResult:
     """
     Store extracted entities in GraphRAG knowledge graph.
@@ -430,12 +419,14 @@ def store_entities(
     for entity in entities:
         if entity.relationships:
             for rel in entity.relationships:
-                _RELATIONSHIP_STORE.append({
-                    "source_entity_id": entity.entity_id,
-                    "target_entity_id": rel.get("target_entity_id"),
-                    "relationship_type": rel.get("type"),
-                    "doc_id": doc_id
-                })
+                _RELATIONSHIP_STORE.append(
+                    {
+                        "source_entity_id": entity.entity_id,
+                        "target_entity_id": rel.get("target_entity_id"),
+                        "relationship_type": rel.get("type"),
+                        "doc_id": doc_id,
+                    }
+                )
                 relationships_created += 1
 
     elapsed_time_ms = (time.time() - start_time) * 1000
@@ -446,13 +437,12 @@ def store_entities(
         entities_stored=len(new_entities),
         relationships_created=relationships_created,
         storage_time_ms=elapsed_time_ms,
-        graph_tables_updated=graph_tables
+        graph_tables_updated=graph_tables,
     )
 
 
 def configure_entity_types(
-    config_name: str,
-    entity_types: List[str]
+    config_name: str, entity_types: List[str]
 ) -> ConfigurationResult:
     """
     Configure entity types for domain-specific extraction.
@@ -493,7 +483,7 @@ def configure_entity_types(
     return ConfigurationResult(
         config_name=config_name,
         entity_types=entity_types,
-        updated_at=datetime.now(timezone.utc)
+        updated_at=datetime.now(timezone.utc),
     )
 
 
@@ -540,5 +530,5 @@ def get_entities(doc_id: UUID) -> DocumentEntities:
         doc_id=doc_id,
         entities=entities,
         entity_count=len(entities),
-        extraction_timestamp=latest_timestamp
+        extraction_timestamp=latest_timestamp,
     )

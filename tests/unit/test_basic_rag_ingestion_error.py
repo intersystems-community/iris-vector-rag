@@ -26,7 +26,9 @@ class TestBasicRAGIngestionError:
         """
         # Setup: Create a mock vector store that raises an exception
         mock_vector_store = Mock()
-        mock_vector_store.add_documents.side_effect = RuntimeError("Database connection failed")
+        mock_vector_store.add_documents.side_effect = RuntimeError(
+            "Database connection failed"
+        )
 
         # Create pipeline with mocked vector store
         pipeline = BasicRAGPipeline(vector_store=mock_vector_store)
@@ -55,7 +57,9 @@ class TestBasicRAGIngestionError:
         error = exc_info.value
         assert error.documents_loaded == 0, "documents_loaded should be 0 on failure"
         assert error.documents_failed == 3, "documents_failed should match input length"
-        assert "Database connection failed" in str(error), "Original error should be mentioned"
+        assert "Database connection failed" in str(
+            error
+        ), "Original error should be mentioned"
         assert error.original_error is not None, "original_error should be preserved"
 
     def test_load_documents_raises_ingestion_error_when_vector_store_missing(self):
@@ -93,7 +97,9 @@ class TestBasicRAGIngestionError:
         """
         # Setup: Create pipeline with failing vector store
         mock_vector_store = Mock()
-        mock_vector_store.add_documents.side_effect = ValueError("Invalid document format")
+        mock_vector_store.add_documents.side_effect = ValueError(
+            "Invalid document format"
+        )
         pipeline = BasicRAGPipeline(vector_store=mock_vector_store)
 
         # Prepare test documents

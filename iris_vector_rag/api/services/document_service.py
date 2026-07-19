@@ -16,9 +16,8 @@ from iris_vector_rag.api.models.upload import (
     DocumentUploadRequest,
     DocumentUploadResponse,
     UploadStatus,
-    PipelineType
+    PipelineType,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class DocumentService:
         api_key_id: UUID,
         file_size_bytes: int,
         total_documents: int,
-        request: DocumentUploadRequest
+        request: DocumentUploadRequest,
     ) -> DocumentUploadResponse:
         """
         Initiate document upload operation.
@@ -92,7 +91,7 @@ class DocumentService:
             failed_documents=0,
             progress_percentage=0.0,
             file_size_bytes=file_size_bytes,
-            pipeline_type=request.pipeline_type
+            pipeline_type=request.pipeline_type,
         )
 
         # Store in database
@@ -112,14 +111,14 @@ class DocumentService:
                 operation_id,
                 request.pipeline_type,
                 request.chunk_size,
-                request.chunk_overlap
+                request.chunk_overlap,
             )
         )
 
         return DocumentUploadResponse(
             operation_id=operation_id,
             status=UploadStatus.PENDING,
-            message="Document upload initiated. Use operation_id to track progress."
+            message="Document upload initiated. Use operation_id to track progress.",
         )
 
     async def _process_upload(
@@ -127,7 +126,7 @@ class DocumentService:
         operation_id: UUID,
         pipeline_type: PipelineType,
         chunk_size: int,
-        chunk_overlap: int
+        chunk_overlap: int,
     ):
         """
         Process document upload asynchronously.
@@ -161,7 +160,9 @@ class DocumentService:
             if validation_errors:
                 operation.status = UploadStatus.FAILED
                 operation.validation_errors = validation_errors
-                operation.error_message = f"Validation failed with {len(validation_errors)} errors"
+                operation.error_message = (
+                    f"Validation failed with {len(validation_errors)} errors"
+                )
                 operation.completed_at = datetime.utcnow()
                 self._save_operation(operation)
                 return
@@ -218,7 +219,9 @@ class DocumentService:
             await asyncio.sleep(300)  # Keep for 5 minutes
             self.active_operations.pop(operation_id, None)
 
-    def get_operation_status(self, operation_id: UUID) -> Optional[DocumentUploadOperation]:
+    def get_operation_status(
+        self, operation_id: UUID
+    ) -> Optional[DocumentUploadOperation]:
         """
         Get status of upload operation.
 
@@ -267,8 +270,8 @@ class DocumentService:
                 progress_percentage=row[9],
                 file_size_bytes=row[10],
                 pipeline_type=PipelineType(row[11]),
-                validation_errors=row[12].split('|') if row[12] else None,
-                error_message=row[13]
+                validation_errors=row[12].split("|") if row[12] else None,
+                error_message=row[13],
             )
 
     def _save_operation(self, operation: DocumentUploadOperation):
@@ -284,7 +287,7 @@ class DocumentService:
             # Check if exists
             cursor.execute(
                 "SELECT COUNT(*) FROM document_upload_operations WHERE operation_id = ?",
-                (str(operation.operation_id),)
+                (str(operation.operation_id),),
             )
 
             exists = cursor.fetchone()[0] > 0
@@ -300,17 +303,24 @@ class DocumentService:
                     WHERE operation_id = ?
                 """
 
-                cursor.execute(query, (
-                    operation.status.value,
-                    operation.started_at,
-                    operation.completed_at,
-                    operation.processed_documents,
-                    operation.failed_documents,
-                    operation.progress_percentage,
-                    '|'.join(operation.validation_errors) if operation.validation_errors else None,
-                    operation.error_message,
-                    str(operation.operation_id)
-                ))
+                cursor.execute(
+                    query,
+                    (
+                        operation.status.value,
+                        operation.started_at,
+                        operation.completed_at,
+                        operation.processed_documents,
+                        operation.failed_documents,
+                        operation.progress_percentage,
+                        (
+                            "|".join(operation.validation_errors)
+                            if operation.validation_errors
+                            else None
+                        ),
+                        operation.error_message,
+                        str(operation.operation_id),
+                    ),
+                )
 
             else:
                 # Insert
@@ -323,29 +333,34 @@ class DocumentService:
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """
 
-                cursor.execute(query, (
-                    str(operation.operation_id),
-                    str(operation.api_key_id),
-                    operation.status.value,
-                    operation.created_at,
-                    operation.started_at,
-                    operation.completed_at,
-                    operation.total_documents,
-                    operation.processed_documents,
-                    operation.failed_documents,
-                    operation.progress_percentage,
-                    operation.file_size_bytes,
-                    operation.pipeline_type.value,
-                    '|'.join(operation.validation_errors) if operation.validation_errors else None,
-                    operation.error_message
-                ))
+                cursor.execute(
+                    query,
+                    (
+                        str(operation.operation_id),
+                        str(operation.api_key_id),
+                        operation.status.value,
+                        operation.created_at,
+                        operation.started_at,
+                        operation.completed_at,
+                        operation.total_documents,
+                        operation.processed_documents,
+                        operation.failed_documents,
+                        operation.progress_percentage,
+                        operation.file_size_bytes,
+                        operation.pipeline_type.value,
+                        (
+                            "|".join(operation.validation_errors)
+                            if operation.validation_errors
+                            else None
+                        ),
+                        operation.error_message,
+                    ),
+                )
 
             conn.commit()
 
     def list_operations(
-        self,
-        api_key_id: Optional[UUID] = None,
-        limit: int = 50
+        self, api_key_id: Optional[UUID] = None, limit: int = 50
     ) -> List[DocumentUploadOperation]:
         """
         List upload operations.
@@ -388,21 +403,23 @@ class DocumentService:
 
             operations = []
             for row in cursor.fetchall():
-                operations.append(DocumentUploadOperation(
-                    operation_id=UUID(row[0]),
-                    api_key_id=UUID(row[1]),
-                    status=UploadStatus(row[2]),
-                    created_at=row[3],
-                    started_at=row[4],
-                    completed_at=row[5],
-                    total_documents=row[6],
-                    processed_documents=row[7],
-                    failed_documents=row[8],
-                    progress_percentage=row[9],
-                    file_size_bytes=row[10],
-                    pipeline_type=PipelineType(row[11]),
-                    validation_errors=row[12].split('|') if row[12] else None,
-                    error_message=row[13]
-                ))
+                operations.append(
+                    DocumentUploadOperation(
+                        operation_id=UUID(row[0]),
+                        api_key_id=UUID(row[1]),
+                        status=UploadStatus(row[2]),
+                        created_at=row[3],
+                        started_at=row[4],
+                        completed_at=row[5],
+                        total_documents=row[6],
+                        processed_documents=row[7],
+                        failed_documents=row[8],
+                        progress_percentage=row[9],
+                        file_size_bytes=row[10],
+                        pipeline_type=PipelineType(row[11]),
+                        validation_errors=row[12].split("|") if row[12] else None,
+                        error_message=row[13],
+                    )
+                )
 
             return operations

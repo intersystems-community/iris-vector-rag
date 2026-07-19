@@ -15,8 +15,12 @@ from starlette.responses import Response
 
 from iris_vector_rag.api.models.auth import ApiKey
 from iris_vector_rag.api.models.quota import RateLimitQuota, RateLimitHeaders, QuotaType
-from iris_vector_rag.api.models.errors import ErrorResponse, ErrorType, ErrorInfo, ErrorDetails
-
+from iris_vector_rag.api.models.errors import (
+    ErrorResponse,
+    ErrorType,
+    ErrorInfo,
+    ErrorDetails,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +56,7 @@ class RateLimiter:
         return f"ratelimit:{api_key_id}:{quota_type.value}"
 
     def check_rate_limit(
-        self,
-        api_key: ApiKey,
-        quota_type: QuotaType = QuotaType.REQUESTS_PER_MINUTE
+        self, api_key: ApiKey, quota_type: QuotaType = QuotaType.REQUESTS_PER_MINUTE
     ) -> RateLimitQuota:
         """
         Check if request is within rate limits.
@@ -91,11 +93,7 @@ class RateLimiter:
 
         # Use Redis sorted set with timestamps as scores
         # Remove old entries outside window
-        self.redis.zremrangebyscore(
-            redis_key,
-            0,
-            window_start.timestamp()
-        )
+        self.redis.zremrangebyscore(redis_key, 0, window_start.timestamp())
 
         # Count current requests in window
         current_count = self.redis.zcard(redis_key)
@@ -113,7 +111,7 @@ class RateLimiter:
             window_end=window_end,
             next_reset_at=next_reset_at,
             current_count=current_count,
-            exceeded_count=0
+            exceeded_count=0,
         )
 
         # Check if limit exceeded (FR-015)
@@ -141,26 +139,23 @@ class RateLimiter:
                         reason="Too many requests",
                         details=ErrorDetails(
                             limit=limit,
-                            window=quota_type.value.replace('_', ' '),
+                            window=quota_type.value.replace("_", " "),
                             retry_after_seconds=retry_after_seconds,
                             message=f"Rate limit of {limit} {quota_type.value.replace('_', ' ')} exceeded. "
-                                   f"Retry after {retry_after_seconds} seconds."
-                        )
+                            f"Retry after {retry_after_seconds} seconds.",
+                        ),
                     )
                 ).model_dump(),
                 headers={
                     "Retry-After": str(retry_after_seconds),
                     "X-RateLimit-Limit": str(limit),
                     "X-RateLimit-Remaining": "0",
-                    "X-RateLimit-Reset": str(int(next_reset_at.timestamp()))
-                }
+                    "X-RateLimit-Reset": str(int(next_reset_at.timestamp())),
+                },
             )
 
         # Add current request to window
-        self.redis.zadd(
-            redis_key,
-            {str(now.timestamp()): now.timestamp()}
-        )
+        self.redis.zadd(redis_key, {str(now.timestamp()): now.timestamp()})
 
         # Set expiration to window size + buffer
         self.redis.expire(redis_key, window_seconds + 60)
@@ -189,13 +184,11 @@ class RateLimiter:
         return RateLimitHeaders(
             x_ratelimit_limit=quota.limit,
             x_ratelimit_remaining=quota.remaining,
-            x_ratelimit_reset=int(quota.next_reset_at.timestamp())
+            x_ratelimit_reset=int(quota.next_reset_at.timestamp()),
         )
 
     def check_concurrent_requests(
-        self,
-        api_key: ApiKey,
-        max_concurrent: int = 10
+        self, api_key: ApiKey, max_concurrent: int = 10
     ) -> bool:
         """
         Check concurrent request limit.
@@ -248,10 +241,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(
-        self,
-        app,
-        redis_client: redis.Redis,
-        max_concurrent_per_key: int = 10
+        self, app, redis_client: redis.Redis, max_concurrent_per_key: int = 10
     ):
         """
         Initialize rate limit middleware.
@@ -273,7 +263,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             "/docs/",
             "/redoc",
             "/redoc/",
-            "/openapi.json"
+            "/openapi.json",
         }
 
     async def dispatch(self, request: Request, call_next) -> Response:
@@ -292,7 +282,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Get authenticated API key (should be set by AuthenticationMiddleware)
-        api_key = getattr(request.state, 'api_key', None)
+        api_key = getattr(request.state, "api_key", None)
 
         if not api_key:
             # If no API key, authentication middleware will handle it
@@ -300,14 +290,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Check per-minute rate limit (FR-015)
         quota = self.rate_limiter.check_rate_limit(
-            api_key,
-            QuotaType.REQUESTS_PER_MINUTE
+            api_key, QuotaType.REQUESTS_PER_MINUTE
         )
 
         # Check concurrent request limit
         if not self.rate_limiter.check_concurrent_requests(
-            api_key,
-            self.max_concurrent_per_key
+            api_key, self.max_concurrent_per_key
         ):
             raise HTTPException(
                 status_code=429,
@@ -318,10 +306,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                         details=ErrorDetails(
                             limit=self.max_concurrent_per_key,
                             window="concurrent requests",
-                            message=f"Maximum {self.max_concurrent_per_key} concurrent requests allowed per API key"
-                        )
+                            message=f"Maximum {self.max_concurrent_per_key} concurrent requests allowed per API key",
+                        ),
                     )
-                ).model_dump()
+                ).model_dump(),
             )
 
         try:
@@ -331,7 +319,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             # Add rate limit headers to response (FR-016)
             headers = self.rate_limiter.get_rate_limit_headers(quota)
             response.headers["X-RateLimit-Limit"] = str(headers.x_ratelimit_limit)
-            response.headers["X-RateLimit-Remaining"] = str(headers.x_ratelimit_remaining)
+            response.headers["X-RateLimit-Remaining"] = str(
+                headers.x_ratelimit_remaining
+            )
             response.headers["X-RateLimit-Reset"] = str(headers.x_ratelimit_reset)
 
             return response

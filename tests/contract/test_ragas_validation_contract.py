@@ -19,6 +19,7 @@ def _can_run_ragas():
     try:
         import ragas  # noqa: F401
         import numpy  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -27,7 +28,9 @@ def _can_run_ragas():
 pytestmark = [
     pytest.mark.e2e,
     pytest.mark.skipif(not _can_run_ragas(), reason="pip install ragas numpy"),
-    pytest.mark.skipif(not os.environ.get("OPENAI_API_KEY"), reason="OPENAI_API_KEY required"),
+    pytest.mark.skipif(
+        not os.environ.get("OPENAI_API_KEY"), reason="OPENAI_API_KEY required"
+    ),
 ]
 
 
@@ -70,10 +73,13 @@ class TestRAGASEvaluation:
         )
 
         import iris
+
         conn = iris.connect(
             os.environ.get("IRIS_HOST", "localhost"),
             int(os.environ.get("IRIS_PORT", "31972")),
-            "USER", "_SYSTEM", os.environ.get("IRIS_PASSWORD", "SYS")
+            "USER",
+            "_SYSTEM",
+            os.environ.get("IRIS_PASSWORD", "SYS"),
         )
         cursor = conn.cursor()
         try:
@@ -99,19 +105,23 @@ class TestRAGASEvaluation:
                 answer = response.get("answer", "")
                 contexts = [
                     doc.page_content if hasattr(doc, "page_content") else str(doc)
-                    for doc in response.get("contexts", response.get("retrieved_documents", []))
+                    for doc in response.get(
+                        "contexts", response.get("retrieved_documents", [])
+                    )
                 ]
             except Exception:
                 answer = ""
                 contexts = []
 
             if answer or contexts:
-                samples.append(SingleTurnSample(
-                    user_input=item["query"],
-                    response=answer or "(no answer)",
-                    retrieved_contexts=contexts or ["(no context)"],
-                    reference=item["ground_truth"],
-                ))
+                samples.append(
+                    SingleTurnSample(
+                        user_input=item["query"],
+                        response=answer or "(no answer)",
+                        retrieved_contexts=contexts or ["(no context)"],
+                        reference=item["ground_truth"],
+                    )
+                )
 
         if not samples:
             pytest.skip("No successful pipeline queries — load documents first")
@@ -153,15 +163,20 @@ class TestRAGASEvaluation:
         assert score > 0.30, f"Answer relevancy {score:.1%} below 30% threshold"
 
     def test_overall_above_baseline(self, ragas_scores):
-        overall = sum([
-            ragas_scores["faithfulness"],
-            ragas_scores["answer_relevancy"],
-            ragas_scores["context_precision"],
-            ragas_scores["context_recall"],
-        ]) / 4
+        overall = (
+            sum(
+                [
+                    ragas_scores["faithfulness"],
+                    ragas_scores["answer_relevancy"],
+                    ragas_scores["context_precision"],
+                    ragas_scores["context_recall"],
+                ]
+            )
+            / 4
+        )
         assert overall > 0.144, f"Overall {overall:.1%} below 14.4% baseline"
 
     def test_all_queries_produced_results(self, ragas_scores):
-        assert ragas_scores["num_samples"] == ragas_scores["num_queries"], (
-            f"Only {ragas_scores['num_samples']}/{ragas_scores['num_queries']} queries succeeded"
-        )
+        assert (
+            ragas_scores["num_samples"] == ragas_scores["num_queries"]
+        ), f"Only {ragas_scores['num_samples']}/{ragas_scores['num_queries']} queries succeeded"

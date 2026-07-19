@@ -479,10 +479,9 @@ class BatchEntityProcessor:
 
         total_time_ms = (time.time() - start_time) * 1000
 
-        validation_passed = (
-            entity_result.get("validation_passed", False)
-            and relationship_result.get("validation_passed", False)
-        )
+        validation_passed = entity_result.get(
+            "validation_passed", False
+        ) and relationship_result.get("validation_passed", False)
 
         return {
             "entities_stored": entity_result.get("entities_stored", 0),

@@ -18,7 +18,9 @@ import pytest
 class TestCRAGFallbackMechanism:
     """Contract tests for CRAG fallback mechanism."""
 
-    def test_evaluator_failure_triggers_fallback(self, crag_pipeline, mocker, caplog, sample_query):
+    def test_evaluator_failure_triggers_fallback(
+        self, crag_pipeline, mocker, caplog, sample_query
+    ):
         """
         FR-015: Evaluator failure MUST trigger fallback to vector search.
 
@@ -29,11 +31,11 @@ class TestCRAGFallbackMechanism:
         caplog.set_level(logging.INFO)
 
         # Mock evaluator to fail (CRAG-specific component)
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             mocker.patch.object(
                 crag_pipeline.evaluator,
-                'evaluate',
-                side_effect=Exception("Evaluator service unavailable")
+                "evaluate",
+                side_effect=Exception("Evaluator service unavailable"),
             )
 
             try:
@@ -52,8 +54,9 @@ class TestCRAGFallbackMechanism:
                 if "retrieval_method" in metadata:
                     # Should indicate vector or fallback method
                     method = metadata["retrieval_method"].lower()
-                    assert "vector" in method or "fallback" in method, \
-                        "Metadata should indicate fallback method"
+                    assert (
+                        "vector" in method or "fallback" in method
+                    ), "Metadata should indicate fallback method"
             except Exception as e:
                 # Fallback may not be implemented yet
                 error_msg = str(e).lower()
@@ -74,13 +77,13 @@ class TestCRAGFallbackMechanism:
         """
         caplog.set_level(logging.WARNING)
 
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             failure_reason = "Evaluator timeout after 5 seconds"
 
             mocker.patch.object(
                 crag_pipeline.evaluator,
-                'evaluate',
-                side_effect=TimeoutError(failure_reason)
+                "evaluate",
+                side_effect=TimeoutError(failure_reason),
             )
 
             try:
@@ -91,8 +94,9 @@ class TestCRAGFallbackMechanism:
 
                 if "fallback" in log_output or "warning" in log_output:
                     # Verify reason is included
-                    assert "timeout" in log_output or "evaluator" in log_output, \
-                        "Fallback warning should include failure reason"
+                    assert (
+                        "timeout" in log_output or "evaluator" in log_output
+                    ), "Fallback warning should include failure reason"
             except TimeoutError:
                 pytest.skip("Fallback mechanism not yet implemented")
         else:
@@ -107,11 +111,11 @@ class TestCRAGFallbackMechanism:
         When: Vector search executes
         Then: Valid response structure returned
         """
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             mocker.patch.object(
                 crag_pipeline.evaluator,
-                'evaluate',
-                side_effect=Exception("Evaluator failure")
+                "evaluate",
+                side_effect=Exception("Evaluator failure"),
             )
 
             try:
@@ -134,7 +138,9 @@ class TestCRAGFallbackMechanism:
         else:
             pytest.skip("Pipeline does not have evaluator attribute")
 
-    def test_fallback_metadata_indicates_method(self, crag_pipeline, mocker, sample_query):
+    def test_fallback_metadata_indicates_method(
+        self, crag_pipeline, mocker, sample_query
+    ):
         """
         FR-018: Fallback metadata MUST indicate retrieval method.
 
@@ -142,11 +148,11 @@ class TestCRAGFallbackMechanism:
         When: Query completes
         Then: Metadata includes retrieval_method="vector_fallback" or similar
         """
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             mocker.patch.object(
                 crag_pipeline.evaluator,
-                'evaluate',
-                side_effect=Exception("Evaluator failure")
+                "evaluate",
+                side_effect=Exception("Evaluator failure"),
             )
 
             try:
@@ -157,14 +163,17 @@ class TestCRAGFallbackMechanism:
                 # Should indicate fallback method
                 if "retrieval_method" in metadata:
                     method = metadata["retrieval_method"].lower()
-                    assert "vector" in method or "fallback" in method, \
-                        f"Metadata should indicate fallback method, got: {method}"
+                    assert (
+                        "vector" in method or "fallback" in method
+                    ), f"Metadata should indicate fallback method, got: {method}"
             except Exception:
                 pytest.skip("Fallback mechanism not yet implemented")
         else:
             pytest.skip("Pipeline does not have evaluator attribute")
 
-    def test_fallback_does_not_cascade_errors(self, crag_pipeline, mocker, caplog, sample_query):
+    def test_fallback_does_not_cascade_errors(
+        self, crag_pipeline, mocker, caplog, sample_query
+    ):
         """
         FR-019: Fallback MUST NOT cascade original error.
 
@@ -174,13 +183,13 @@ class TestCRAGFallbackMechanism:
         """
         caplog.set_level(logging.ERROR)
 
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             original_error = "Original evaluator connection refused"
 
             mocker.patch.object(
                 crag_pipeline.evaluator,
-                'evaluate',
-                side_effect=ConnectionError(original_error)
+                "evaluate",
+                side_effect=ConnectionError(original_error),
             )
 
             try:
@@ -200,7 +209,9 @@ class TestCRAGFallbackMechanism:
         else:
             pytest.skip("Pipeline does not have evaluator attribute")
 
-    def test_successful_evaluator_skips_fallback(self, crag_pipeline, mocker, caplog, sample_query):
+    def test_successful_evaluator_skips_fallback(
+        self, crag_pipeline, mocker, caplog, sample_query
+    ):
         """
         FR-020: Successful evaluator MUST NOT trigger fallback.
 
@@ -210,17 +221,12 @@ class TestCRAGFallbackMechanism:
         """
         caplog.set_level(logging.INFO)
 
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             # Mock evaluator to succeed with high relevance
-            mock_evaluation = {
-                "is_relevant": True,
-                "relevance_score": 0.95
-            }
+            mock_evaluation = {"is_relevant": True, "relevance_score": 0.95}
 
             mocker.patch.object(
-                crag_pipeline.evaluator,
-                'evaluate',
-                return_value=mock_evaluation
+                crag_pipeline.evaluator, "evaluate", return_value=mock_evaluation
             )
 
             try:
@@ -230,22 +236,26 @@ class TestCRAGFallbackMechanism:
                 log_output = caplog.text.lower()
 
                 # Should NOT log fallback
-                assert "fallback" not in log_output, \
-                    "Successful evaluator should not trigger fallback"
+                assert (
+                    "fallback" not in log_output
+                ), "Successful evaluator should not trigger fallback"
 
                 # Metadata should NOT indicate fallback
                 metadata = result.get("metadata", {})
                 if "retrieval_method" in metadata:
                     method = metadata["retrieval_method"].lower()
-                    assert "fallback" not in method, \
-                        "Successful path should not indicate fallback"
+                    assert (
+                        "fallback" not in method
+                    ), "Successful path should not indicate fallback"
             except Exception:
                 # Evaluator integration may vary
                 pass
         else:
             pytest.skip("Pipeline does not have evaluator attribute")
 
-    def test_fallback_preserves_query_parameters(self, crag_pipeline, mocker, sample_query):
+    def test_fallback_preserves_query_parameters(
+        self, crag_pipeline, mocker, sample_query
+    ):
         """
         FR-017: Fallback MUST preserve original query parameters.
 
@@ -253,11 +263,11 @@ class TestCRAGFallbackMechanism:
         When: Fallback to vector search
         Then: Vector search uses top_k=5
         """
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             mocker.patch.object(
                 crag_pipeline.evaluator,
-                'evaluate',
-                side_effect=Exception("Evaluator failure")
+                "evaluate",
+                side_effect=Exception("Evaluator failure"),
             )
 
             try:
@@ -269,19 +279,23 @@ class TestCRAGFallbackMechanism:
 
                 # Should return up to 5 contexts
                 if contexts:
-                    assert len(contexts) <= 5, \
-                        "Fallback should preserve top_k parameter"
+                    assert (
+                        len(contexts) <= 5
+                    ), "Fallback should preserve top_k parameter"
 
                 # Metadata should indicate context count
                 if "context_count" in metadata:
-                    assert metadata["context_count"] <= 5, \
-                        "Context count should respect top_k"
+                    assert (
+                        metadata["context_count"] <= 5
+                    ), "Context count should respect top_k"
             except Exception:
                 pytest.skip("Fallback mechanism not yet implemented")
         else:
             pytest.skip("Pipeline does not have evaluator attribute")
 
-    def test_multiple_fallback_attempts_logged(self, crag_pipeline, mocker, caplog, sample_query):
+    def test_multiple_fallback_attempts_logged(
+        self, crag_pipeline, mocker, caplog, sample_query
+    ):
         """
         FR-016: Multiple fallback attempts MUST be logged.
 
@@ -291,11 +305,11 @@ class TestCRAGFallbackMechanism:
         """
         caplog.set_level(logging.WARNING)
 
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             mocker.patch.object(
                 crag_pipeline.evaluator,
-                'evaluate',
-                side_effect=Exception("Evaluator failure")
+                "evaluate",
+                side_effect=Exception("Evaluator failure"),
             )
 
             # Execute multiple queries
@@ -312,7 +326,8 @@ class TestCRAGFallbackMechanism:
             if "fallback" in log_output:
                 # Count fallback mentions (rough heuristic)
                 fallback_count = log_output.count("fallback")
-                assert fallback_count >= attempts or fallback_count > 0, \
-                    "Multiple fallback attempts should be logged"
+                assert (
+                    fallback_count >= attempts or fallback_count > 0
+                ), "Multiple fallback attempts should be logged"
         else:
             pytest.skip("Pipeline does not have evaluator attribute")

@@ -14,7 +14,10 @@ class TestConfigurationManagerUnit:
     def test_configuration_manager_initialization(self):
         """ConfigurationManager should initialize with default configuration."""
         # This test MUST fail until ConfigurationManager is fully testable
-        with pytest.raises(NotImplementedError, match="ConfigurationManager full testing not implemented"):
+        with pytest.raises(
+            NotImplementedError,
+            match="ConfigurationManager full testing not implemented",
+        ):
             # This would test initialization:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -22,12 +25,16 @@ class TestConfigurationManagerUnit:
             # assert config_manager is not None
             # assert hasattr(config_manager, 'config')
             # assert isinstance(config_manager.config, dict)
-            raise NotImplementedError("ConfigurationManager full testing not implemented")
+            raise NotImplementedError(
+                "ConfigurationManager full testing not implemented"
+            )
 
     def test_load_default_configuration(self):
         """ConfigurationManager should load default configuration from YAML."""
         # This test MUST fail until YAML loading is fully testable
-        with pytest.raises(NotImplementedError, match="Default YAML loading not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Default YAML loading not fully testable"
+        ):
             # This would test default config loading:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -44,7 +51,9 @@ class TestConfigurationManagerUnit:
     def test_load_configuration_from_file(self):
         """ConfigurationManager should load configuration from custom file."""
         # This test MUST fail until file loading is fully testable
-        with pytest.raises(NotImplementedError, match="File loading not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="File loading not fully testable"
+        ):
             # This would test custom file loading:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -69,7 +78,9 @@ class TestConfigurationManagerUnit:
     def test_load_configuration_from_environment(self):
         """ConfigurationManager should load configuration from environment variables."""
         # This test MUST fail until environment loading is fully testable
-        with pytest.raises(NotImplementedError, match="Environment loading not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Environment loading not fully testable"
+        ):
             # This would test environment variable loading:
             # import os
             # from iris_vector_rag.config.manager import ConfigurationManager
@@ -95,7 +106,9 @@ class TestConfigurationManagerUnit:
     def test_get_configuration_value_simple_key(self):
         """ConfigurationManager should retrieve simple configuration values."""
         # This test MUST fail until value retrieval is fully testable
-        with pytest.raises(NotImplementedError, match="Value retrieval not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Value retrieval not fully testable"
+        ):
             # This would test simple key retrieval:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -115,7 +128,9 @@ class TestConfigurationManagerUnit:
     def test_get_configuration_value_nested_key(self):
         """ConfigurationManager should retrieve nested configuration values."""
         # This test MUST fail until nested retrieval is fully testable
-        with pytest.raises(NotImplementedError, match="Nested retrieval not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Nested retrieval not fully testable"
+        ):
             # This would test nested key retrieval:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -141,7 +156,9 @@ class TestConfigurationManagerUnit:
     def test_set_configuration_value(self):
         """ConfigurationManager should allow setting configuration values."""
         # This test MUST fail until value setting is fully testable
-        with pytest.raises(NotImplementedError, match="Value setting not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Value setting not fully testable"
+        ):
             # This would test value setting:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -160,7 +177,9 @@ class TestConfigurationManagerUnit:
     def test_validate_required_configuration_keys(self):
         """ConfigurationManager should validate required configuration keys."""
         # This test MUST fail until validation is fully testable
-        with pytest.raises(NotImplementedError, match="Configuration validation not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Configuration validation not fully testable"
+        ):
             # This would test validation:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -187,7 +206,9 @@ class TestConfigurationManagerUnit:
     def test_merge_configurations(self):
         """ConfigurationManager should merge multiple configurations correctly."""
         # This test MUST fail until configuration merging is fully testable
-        with pytest.raises(NotImplementedError, match="Configuration merging not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Configuration merging not fully testable"
+        ):
             # This would test merging:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -219,7 +240,9 @@ class TestConfigurationManagerUnit:
     def test_configuration_persistence(self):
         """ConfigurationManager should persist configuration to file."""
         # This test MUST fail until persistence is fully testable
-        with pytest.raises(NotImplementedError, match="Configuration persistence not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Configuration persistence not fully testable"
+        ):
             # This would test persistence:
             # from iris_vector_rag.config.manager import ConfigurationManager
             # import tempfile
@@ -248,7 +271,9 @@ class TestConfigurationManagerUnit:
     def test_configuration_schema_validation(self):
         """ConfigurationManager should validate configuration against schema."""
         # This test MUST fail until schema validation is fully testable
-        with pytest.raises(NotImplementedError, match="Schema validation not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Schema validation not fully testable"
+        ):
             # This would test schema validation:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -287,7 +312,9 @@ class TestConfigurationManagerUnit:
     def test_configuration_inheritance(self):
         """ConfigurationManager should support configuration inheritance."""
         # This test MUST fail until inheritance is fully testable
-        with pytest.raises(NotImplementedError, match="Configuration inheritance not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Configuration inheritance not fully testable"
+        ):
             # This would test inheritance:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -324,7 +351,9 @@ class TestConfigurationManagerUnit:
     def test_configuration_template_expansion(self):
         """ConfigurationManager should expand template variables in configuration."""
         # This test MUST fail until template expansion is fully testable
-        with pytest.raises(NotImplementedError, match="Template expansion not fully testable"):
+        with pytest.raises(
+            NotImplementedError, match="Template expansion not fully testable"
+        ):
             # This would test template expansion:
             # import os
             # from iris_vector_rag.config.manager import ConfigurationManager
@@ -361,7 +390,10 @@ class TestConfigurationDatabaseIntegration:
     def test_configuration_with_iris_database_connectivity(self):
         """Configuration should properly configure IRIS database connections."""
         # This test MUST fail until IRIS integration is fully testable
-        with pytest.raises(NotImplementedError, match="IRIS configuration integration not fully testable"):
+        with pytest.raises(
+            NotImplementedError,
+            match="IRIS configuration integration not fully testable",
+        ):
             # This would test IRIS connectivity:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -380,12 +412,17 @@ class TestConfigurationDatabaseIntegration:
             # assert connection_params['port'] == 1972
             # assert connection_params['namespace'] == 'USER'
             # assert connection_params['username'] == 'test_user'
-            raise NotImplementedError("IRIS configuration integration not fully testable")
+            raise NotImplementedError(
+                "IRIS configuration integration not fully testable"
+            )
 
     def test_configuration_validation_with_clean_iris_setup(self):
         """Configuration validation should work with clean IRIS database setup."""
         # This test MUST fail until clean IRIS validation is fully testable
-        with pytest.raises(NotImplementedError, match="Clean IRIS configuration validation not fully testable"):
+        with pytest.raises(
+            NotImplementedError,
+            match="Clean IRIS configuration validation not fully testable",
+        ):
             # This would test clean setup validation:
             # from iris_vector_rag.config.manager import ConfigurationManager
             #
@@ -398,4 +435,6 @@ class TestConfigurationDatabaseIntegration:
             # assert validation_result.database_accessible is True
             # assert validation_result.required_tables_exist is True
             # assert validation_result.vector_operations_available is True
-            raise NotImplementedError("Clean IRIS configuration validation not fully testable")
+            raise NotImplementedError(
+                "Clean IRIS configuration validation not fully testable"
+            )

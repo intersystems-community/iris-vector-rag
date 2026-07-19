@@ -56,8 +56,9 @@ class TestBatchSizing:
         result = service.extract_batch(all_docs, token_budget=8192)
 
         # Validate all documents processed
-        assert len(result.per_document_entities) == len(all_docs), \
-            "All documents must be processed regardless of size variation"
+        assert len(result.per_document_entities) == len(
+            all_docs
+        ), "All documents must be processed regardless of size variation"
 
         # Validate success
         assert result.success_status, "Variable-size batch must succeed"
@@ -85,8 +86,9 @@ class TestBatchSizing:
         # Get first batch (8K budget = 2 docs max)
         batch = queue.get_next_batch(token_budget=8192)
 
-        assert len(batch) == 2, \
-            f"Batch should contain 2 docs (8000 tokens), got {len(batch)}"
+        assert (
+            len(batch) == 2
+        ), f"Batch should contain 2 docs (8000 tokens), got {len(batch)}"
 
         # Get second batch (remaining doc)
         batch2 = queue.get_next_batch(token_budget=8192)
@@ -98,10 +100,7 @@ class TestBatchSizing:
         queue = BatchQueue(token_budget=4096)
 
         # Add documents
-        docs = [
-            Document(id=f"doc{i}", page_content="Test document")
-            for i in range(5)
-        ]
+        docs = [Document(id=f"doc{i}", page_content="Test document") for i in range(5)]
 
         for doc in docs:
             queue.add_document(doc, token_count=1500)
@@ -109,8 +108,9 @@ class TestBatchSizing:
         # Get batch with 4K budget (2 docs max at 1500 tokens each)
         batch = queue.get_next_batch(token_budget=4096)
 
-        assert len(batch) == 2, \
-            f"4K budget should fit 2 docs at 1500 tokens each, got {len(batch)}"
+        assert (
+            len(batch) == 2
+        ), f"4K budget should fit 2 docs at 1500 tokens each, got {len(batch)}"
 
     def test_batch_queue_optimal_packing(self):
         """Validate batch queue packs documents optimally within budget."""
@@ -134,9 +134,10 @@ class TestBatchSizing:
         batch = queue.get_next_batch(token_budget=8192)
 
         # Validate batch respects budget
-        total_tokens = sum(tokens for doc, tokens in docs_and_tokens[:len(batch)])
-        assert total_tokens <= 8192, \
-            f"Batch must respect token budget (got {total_tokens} tokens)"
+        total_tokens = sum(tokens for doc, tokens in docs_and_tokens[: len(batch)])
+        assert (
+            total_tokens <= 8192
+        ), f"Batch must respect token budget (got {total_tokens} tokens)"
 
     def test_single_large_document_exceeds_budget(self):
         """Validate handling of single document exceeding token budget."""
@@ -166,8 +167,9 @@ class TestBatchSizing:
 
             # Allow ±20% tolerance
             tolerance = expected_approx * 0.2
-            assert abs(estimated - expected_approx) <= tolerance, \
-                f"Token estimation accuracy (expected ~{expected_approx}, got {estimated})"
+            assert (
+                abs(estimated - expected_approx) <= tolerance
+            ), f"Token estimation accuracy (expected ~{expected_approx}, got {estimated})"
 
     def test_batch_respects_configured_token_budget(self, service):
         """Validate service respects token_budget parameter in extract_batch()."""
@@ -182,20 +184,24 @@ class TestBatchSizing:
 
         # Validate result
         assert result.success_status, "Batch with custom budget must succeed"
-        assert len(result.per_document_entities) == len(docs), \
-            "All documents must be processed"
+        assert len(result.per_document_entities) == len(
+            docs
+        ), "All documents must be processed"
 
     def test_token_budget_from_config(self):
         """Validate token budget can be configured in memory_config.yaml."""
         config_manager = ConfigurationManager()
 
         # Load batch processing config
-        batch_config = config_manager.get_config('rag_memory_config.knowledge_extraction.entity_extraction.batch_processing')
+        batch_config = config_manager.get_config(
+            "rag_memory_config.knowledge_extraction.entity_extraction.batch_processing"
+        )
 
         assert batch_config is not None, "Batch processing config must exist"
-        assert 'token_budget' in batch_config, "Config must have token_budget"
-        assert batch_config['token_budget'] == 8192, \
-            f"Default token budget must be 8192 per FR-006, got {batch_config['token_budget']}"
+        assert "token_budget" in batch_config, "Config must have token_budget"
+        assert (
+            batch_config["token_budget"] == 8192
+        ), f"Default token budget must be 8192 per FR-006, got {batch_config['token_budget']}"
 
     def test_empty_document_token_count(self):
         """Validate empty documents handled correctly in batch queue."""
@@ -214,30 +220,24 @@ class TestBatchSizing:
         queue = BatchQueue()
 
         # Scenario 1: Small documents (many fit in batch)
-        small_docs = [
-            Document(id=f"small{i}", page_content="Small")
-            for i in range(20)
-        ]
+        small_docs = [Document(id=f"small{i}", page_content="Small") for i in range(20)]
 
         for doc in small_docs:
             queue.add_document(doc, token_count=200)  # 200 tokens each
 
         batch1 = queue.get_next_batch(token_budget=8192)
         # Should fit many small documents (8192 / 200 = ~40 docs)
-        assert len(batch1) >= 20, \
-            f"Should fit many small documents in batch, got {len(batch1)}"
+        assert (
+            len(batch1) >= 20
+        ), f"Should fit many small documents in batch, got {len(batch1)}"
 
         # Scenario 2: Large documents (few fit in batch)
         queue2 = BatchQueue()
-        large_docs = [
-            Document(id=f"large{i}", page_content="Large")
-            for i in range(5)
-        ]
+        large_docs = [Document(id=f"large{i}", page_content="Large") for i in range(5)]
 
         for doc in large_docs:
             queue2.add_document(doc, token_count=3000)  # 3000 tokens each
 
         batch2 = queue2.get_next_batch(token_budget=8192)
         # Should fit only 2 large documents (8192 / 3000 = ~2 docs)
-        assert len(batch2) == 2, \
-            f"Should fit only 2 large documents, got {len(batch2)}"
+        assert len(batch2) == 2, f"Should fit only 2 large documents, got {len(batch2)}"

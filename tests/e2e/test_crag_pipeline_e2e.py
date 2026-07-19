@@ -25,12 +25,12 @@ def clean_database_once():
     cursor = conn.cursor()
 
     # Drop tables completely
-    cursor.execute('DROP TABLE IF EXISTS RAG.DocumentChunks CASCADE')
-    cursor.execute('DROP TABLE IF EXISTS RAG.SourceDocuments CASCADE')
+    cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks CASCADE")
+    cursor.execute("DROP TABLE IF EXISTS RAG.SourceDocuments CASCADE")
     conn.commit()
 
     # Recreate with DOUBLE datatype
-    cursor.execute('''
+    cursor.execute("""
     CREATE TABLE RAG.SourceDocuments (
         doc_id VARCHAR(255) PRIMARY KEY,
         text_content TEXT,
@@ -38,10 +38,12 @@ def clean_database_once():
         embedding VECTOR(DOUBLE, 384),
         created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
-    ''')
-    cursor.execute("CREATE INDEX idx_hnsw_source_embedding ON RAG.SourceDocuments (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')")
+    """)
+    cursor.execute(
+        "CREATE INDEX idx_hnsw_source_embedding ON RAG.SourceDocuments (embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')"
+    )
 
-    cursor.execute('''
+    cursor.execute("""
     CREATE TABLE RAG.DocumentChunks (
         id VARCHAR(255) PRIMARY KEY,
         chunk_id VARCHAR(255),
@@ -54,10 +56,12 @@ def clean_database_once():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(doc_id)
     )
-    ''')
-    cursor.execute('CREATE INDEX idx_chunks_doc_id ON RAG.DocumentChunks (doc_id)')
-    cursor.execute('CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)')
-    cursor.execute("CREATE INDEX idx_hnsw_chunk_embedding ON RAG.DocumentChunks (chunk_embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')")
+    """)
+    cursor.execute("CREATE INDEX idx_chunks_doc_id ON RAG.DocumentChunks (doc_id)")
+    cursor.execute("CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)")
+    cursor.execute(
+        "CREATE INDEX idx_hnsw_chunk_embedding ON RAG.DocumentChunks (chunk_embedding) AS HNSW(M=16, efConstruction=200, Distance='COSINE')"
+    )
 
     conn.commit()
     cursor.close()
@@ -208,7 +212,9 @@ class TestCRAGPipelineDocumentLoading:
         """Test loading documents from a list."""
         crag_pipeline.load_documents(documents=confident_documents)
 
-        result = crag_pipeline.query("Python programming", top_k=2, generate_answer=False)
+        result = crag_pipeline.query(
+            "Python programming", top_k=2, generate_answer=False
+        )
         assert result is not None
         assert "contexts" in result
 
@@ -225,7 +231,9 @@ class TestCRAGPipelineDocumentLoading:
 
     def test_load_documents_with_embeddings(self, crag_pipeline, confident_documents):
         """Test loading documents with embedding generation."""
-        crag_pipeline.load_documents(documents=confident_documents, generate_embeddings=True)
+        crag_pipeline.load_documents(
+            documents=confident_documents, generate_embeddings=True
+        )
 
         result = crag_pipeline.query("Python", top_k=2, generate_answer=False)
         assert len(result["contexts"]) > 0
@@ -366,7 +374,9 @@ class TestCRAGPipelineCorrectiveActions:
 
     def test_corrective_action_for_confident(self, crag_pipeline):
         """Test that confident status uses initial results."""
-        result = crag_pipeline.query("quantum computing", top_k=2, generate_answer=False)
+        result = crag_pipeline.query(
+            "quantum computing", top_k=2, generate_answer=False
+        )
 
         metadata = result["metadata"]
         # Initial and final counts should be similar for confident retrieval
@@ -375,14 +385,18 @@ class TestCRAGPipelineCorrectiveActions:
 
     def test_corrective_action_for_ambiguous(self, crag_pipeline):
         """Test enhancement for ambiguous status."""
-        result = crag_pipeline.query("technology innovation", top_k=3, generate_answer=False)
+        result = crag_pipeline.query(
+            "technology innovation", top_k=3, generate_answer=False
+        )
 
         # Ambiguous may trigger enhancement
         assert len(result["contexts"]) > 0
 
     def test_corrective_action_for_disoriented(self, crag_pipeline):
         """Test knowledge base expansion for disoriented status."""
-        result = crag_pipeline.query("unrelated subject matter", top_k=2, generate_answer=False)
+        result = crag_pipeline.query(
+            "unrelated subject matter", top_k=2, generate_answer=False
+        )
 
         # Should attempt knowledge base expansion
         assert result is not None
@@ -395,7 +409,9 @@ class TestCRAGPipelineRetrievalEvaluator:
         """Test evaluator with high similarity scores."""
         crag_pipeline.load_documents(documents=confident_documents)
 
-        result = crag_pipeline.query("Python programming", top_k=2, generate_answer=False)
+        result = crag_pipeline.query(
+            "Python programming", top_k=2, generate_answer=False
+        )
 
         metadata = result["metadata"]
         assert "retrieval_status" in metadata
@@ -403,7 +419,9 @@ class TestCRAGPipelineRetrievalEvaluator:
     def test_evaluator_with_no_documents(self, crag_pipeline):
         """Test evaluator when no documents are retrieved."""
         # Query on empty database
-        result = crag_pipeline.query("nonexistent topic", top_k=2, generate_answer=False)
+        result = crag_pipeline.query(
+            "nonexistent topic", top_k=2, generate_answer=False
+        )
 
         metadata = result["metadata"]
         assert "retrieval_status" in metadata
@@ -458,7 +476,9 @@ class TestCRAGPipelineAnswerGeneration:
 
     def test_answer_with_no_documents(self, crag_pipeline):
         """Test answer generation when no documents are found."""
-        result = crag_pipeline.query("xyz nonexistent query", top_k=2, generate_answer=True)
+        result = crag_pipeline.query(
+            "xyz nonexistent query", top_k=2, generate_answer=True
+        )
 
         # Should handle gracefully
         assert "answer" in result
@@ -506,6 +526,7 @@ class TestCRAGPipelineErrorHandling:
         """Test query with invalid top_k value."""
         # New API validates and raises ValueError
         import pytest
+
         with pytest.raises(ValueError, match="top_k parameter out of valid range"):
             crag_pipeline.query("test", top_k=0, generate_answer=False)
 
@@ -544,7 +565,9 @@ class TestCRAGPipelineIntegration:
         ]
         crag_pipeline.load_documents(documents=docs)
 
-        result = crag_pipeline.query("Where is the Eiffel Tower?", top_k=2, generate_answer=True)
+        result = crag_pipeline.query(
+            "Where is the Eiffel Tower?", top_k=2, generate_answer=True
+        )
 
         assert "answer" in result
         assert "contexts" in result
@@ -554,7 +577,9 @@ class TestCRAGPipelineIntegration:
     def test_large_batch_loading(self, crag_pipeline):
         """Test loading a larger batch of documents."""
         docs = [
-            Document(id=f"crag_batch{i}", page_content=f"Document {i} about topic {i % 5}")
+            Document(
+                id=f"crag_batch{i}", page_content=f"Document {i} about topic {i % 5}"
+            )
             for i in range(25)
         ]
 
@@ -563,7 +588,9 @@ class TestCRAGPipelineIntegration:
         result = crag_pipeline.query("topic", top_k=5, generate_answer=False)
         assert result is not None
 
-    def test_sequential_queries_different_statuses(self, crag_pipeline, diverse_documents):
+    def test_sequential_queries_different_statuses(
+        self, crag_pipeline, diverse_documents
+    ):
         """Test sequential queries that might produce different statuses."""
         crag_pipeline.load_documents(documents=diverse_documents)
 

@@ -17,7 +17,7 @@ class TestBatchEntityExtractionConfiguration:
     def test_forward_accepts_entity_types_parameter(self):
         """Test that forward() method accepts entity_types parameter."""
         from iris_vector_rag.dspy_modules.batch_entity_extraction import (
-            BatchEntityExtractionModule
+            BatchEntityExtractionModule,
         )
         import inspect
 
@@ -25,20 +25,20 @@ class TestBatchEntityExtractionConfiguration:
         sig = inspect.signature(BatchEntityExtractionModule.forward)
 
         # Verify entity_types parameter exists
-        assert 'entity_types' in sig.parameters, (
-            "forward() method must accept 'entity_types' parameter"
-        )
+        assert (
+            "entity_types" in sig.parameters
+        ), "forward() method must accept 'entity_types' parameter"
 
         # Verify it's optional (has default value)
-        param = sig.parameters['entity_types']
-        assert param.default is not inspect.Parameter.empty, (
-            "entity_types parameter must be optional (have default value)"
-        )
+        param = sig.parameters["entity_types"]
+        assert (
+            param.default is not inspect.Parameter.empty
+        ), "entity_types parameter must be optional (have default value)"
 
     def test_forward_uses_custom_entity_types(self):
         """Test that forward() passes custom entity_types to DSPy module."""
         from iris_vector_rag.dspy_modules.batch_entity_extraction import (
-            BatchEntityExtractionModule
+            BatchEntityExtractionModule,
         )
 
         # Create mock DSPy extraction module
@@ -58,11 +58,15 @@ class TestBatchEntityExtractionConfiguration:
         # Verify custom entity types were passed to DSPy
         mock_extract.assert_called_once()
         call_kwargs = mock_extract.call_args[1]
-        assert 'entity_types' in call_kwargs, "entity_types must be passed to DSPy module"
+        assert (
+            "entity_types" in call_kwargs
+        ), "entity_types must be passed to DSPy module"
 
         # Verify the types are comma-separated
-        entity_types_arg = call_kwargs['entity_types']
-        assert isinstance(entity_types_arg, str), "entity_types must be comma-separated string for DSPy"
+        entity_types_arg = call_kwargs["entity_types"]
+        assert isinstance(
+            entity_types_arg, str
+        ), "entity_types must be comma-separated string for DSPy"
         assert "PERSON" in entity_types_arg
         assert "ORGANIZATION" in entity_types_arg
         assert "LOCATION" in entity_types_arg
@@ -70,7 +74,7 @@ class TestBatchEntityExtractionConfiguration:
     def test_forward_defaults_to_it_support_types(self):
         """Test backward compatibility: defaults to IT support types when entity_types=None."""
         from iris_vector_rag.dspy_modules.batch_entity_extraction import (
-            BatchEntityExtractionModule
+            BatchEntityExtractionModule,
         )
 
         module = BatchEntityExtractionModule()
@@ -87,7 +91,7 @@ class TestBatchEntityExtractionConfiguration:
         # Verify IT support types are used as default
         mock_extract.assert_called_once()
         call_kwargs = mock_extract.call_args[1]
-        entity_types_arg = call_kwargs['entity_types']
+        entity_types_arg = call_kwargs["entity_types"]
 
         # Verify IT support types are present
         assert "PRODUCT" in entity_types_arg
@@ -102,9 +106,9 @@ class TestBatchEntityExtractionConfiguration:
 
         # Verify extract_batch_with_dspy has entity_types parameter
         sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
-        assert 'entity_types' in sig.parameters, (
-            "extract_batch_with_dspy() must accept entity_types parameter"
-        )
+        assert (
+            "entity_types" in sig.parameters
+        ), "extract_batch_with_dspy() must accept entity_types parameter"
 
     def test_domain_presets_available(self):
         """Test that DOMAIN_PRESETS constant is defined with expected domains."""
@@ -116,13 +120,17 @@ class TestBatchEntityExtractionConfiguration:
         # Verify expected domains
         expected_domains = ["it_support", "biomedical", "legal", "general", "wikipedia"]
         for domain in expected_domains:
-            assert domain in DOMAIN_PRESETS, f"Domain '{domain}' must be in DOMAIN_PRESETS"
+            assert (
+                domain in DOMAIN_PRESETS
+            ), f"Domain '{domain}' must be in DOMAIN_PRESETS"
 
         # Verify preset structure
         for domain, types in DOMAIN_PRESETS.items():
             assert isinstance(types, list), f"{domain} preset must be a list"
             assert len(types) > 0, f"{domain} preset must not be empty"
-            assert all(isinstance(t, str) for t in types), f"{domain} preset must contain strings"
+            assert all(
+                isinstance(t, str) for t in types
+            ), f"{domain} preset must contain strings"
 
     def test_wikipedia_preset_includes_title_role_position(self):
         """Test that wikipedia preset includes TITLE, ROLE, POSITION for HippoRAG use case."""
@@ -141,15 +149,15 @@ class TestBatchEntityExtractionConfiguration:
     def test_signature_entity_types_field_is_configurable(self):
         """Test that BatchEntityExtractionSignature.entity_types field is not hardcoded."""
         from iris_vector_rag.dspy_modules.batch_entity_extraction import (
-            BatchEntityExtractionSignature
+            BatchEntityExtractionSignature,
         )
 
         # Get field description from model_fields
-        entity_types_field = BatchEntityExtractionSignature.model_fields['entity_types']
+        entity_types_field = BatchEntityExtractionSignature.model_fields["entity_types"]
 
         # Get description from DSPy's json_schema_extra
         json_extra = entity_types_field.json_schema_extra or {}
-        desc = json_extra.get('desc', '').lower()
+        desc = json_extra.get("desc", "").lower()
 
         # Should NOT contain hardcoded type list
         hardcoded_indicators = ["product, user, module", "trakcare"]
@@ -181,13 +189,13 @@ class TestBackwardCompatibility:
         import inspect
 
         sig = inspect.signature(EntityExtractionService.extract_batch_with_dspy)
-        entity_types_param = sig.parameters.get('entity_types')
+        entity_types_param = sig.parameters.get("entity_types")
 
         # Verify entity_types is optional
         assert entity_types_param is not None, "entity_types parameter must exist"
-        assert entity_types_param.default is not inspect.Parameter.empty, (
-            "entity_types must be optional for backward compatibility"
-        )
+        assert (
+            entity_types_param.default is not inspect.Parameter.empty
+        ), "entity_types must be optional for backward compatibility"
 
 
 class TestConfigurationResolution:
@@ -198,7 +206,7 @@ class TestConfigurationResolution:
         # This would require mocking the config, but the logic is tested in integration tests
         # Here we just verify the method accepts the parameter
         from iris_vector_rag.dspy_modules.batch_entity_extraction import (
-            BatchEntityExtractionModule
+            BatchEntityExtractionModule,
         )
 
         module = BatchEntityExtractionModule()
@@ -216,7 +224,7 @@ class TestConfigurationResolution:
 
         # Verify parameter types were used
         call_kwargs = mock_extract.call_args[1]
-        entity_types_arg = call_kwargs['entity_types']
+        entity_types_arg = call_kwargs["entity_types"]
         assert "CUSTOM_TYPE_1" in entity_types_arg
         assert "CUSTOM_TYPE_2" in entity_types_arg
 
@@ -226,12 +234,18 @@ HOTPOTQA_TEST_CASE = {
     "question": "What government position was held by the woman who portrayed Corliss Archer in the film Kiss and Tell?",
     "expected_answer": "Chief of Protocol",
     "source_text": "As an adult, she was named United States ambassador to Ghana and to Czechoslovakia and also served as Chief of Protocol of the United States.",
-    "required_entity_types": ["PERSON", "TITLE", "POSITION", "LOCATION", "ORGANIZATION"],
+    "required_entity_types": [
+        "PERSON",
+        "TITLE",
+        "POSITION",
+        "LOCATION",
+        "ORGANIZATION",
+    ],
     "expected_entity": {
         "text": "Chief of Protocol",
         "type": "TITLE",  # or POSITION
         "confidence": 0.8,
-    }
+    },
 }
 
 

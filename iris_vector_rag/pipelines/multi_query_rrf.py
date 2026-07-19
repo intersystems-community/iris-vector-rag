@@ -33,6 +33,7 @@ from iris_vector_rag.common.utils import get_llm_func
 
 try:
     from iris_vector_graph import RRFFusion as _IVGRRFFusion
+
     _HAS_IVG_RRF = True
 except ImportError:
     _HAS_IVG_RRF = False
@@ -64,7 +65,7 @@ class MultiQueryRRFPipeline(RAGPipeline):
         retrieved_k: int = 20,
         rrf_k: int = 60,
         use_llm_expansion: bool = False,
-        llm_model: str = "gpt-4o-mini"
+        llm_model: str = "gpt-4o-mini",
     ):
         """
         Initialize multi-query RRF pipeline.
@@ -92,7 +93,7 @@ class MultiQueryRRFPipeline(RAGPipeline):
         super().__init__(
             connection_manager=connection_manager,
             config_manager=config_manager,
-            vector_store=vector_store
+            vector_store=vector_store,
         )
 
         self.num_queries = num_queries
@@ -143,10 +144,12 @@ Return only the alternative queries, one per line, without numbering.
 
         try:
             response = self.llm(prompt)
-            variations = [line.strip() for line in response.strip().split('\n') if line.strip()]
+            variations = [
+                line.strip() for line in response.strip().split("\n") if line.strip()
+            ]
 
             # Include original query
-            all_queries = [query] + variations[:self.num_queries - 1]
+            all_queries = [query] + variations[: self.num_queries - 1]
 
             logger.info(f"Generated {len(all_queries)} queries via LLM")
             return all_queries
@@ -163,44 +166,62 @@ Return only the alternative queries, one per line, without numbering.
         query_lower = query.lower()
 
         if "what are" in query_lower or "what is" in query_lower:
-            base = query_lower.replace("what are the ", "").replace("what is the ", "").replace("what are ", "").replace("what is ", "").replace("?", "").strip()
-            variations.extend([
-                f"{base} overview",
-                f"{base} details",
-                f"list of {base}",
-            ])
+            base = (
+                query_lower.replace("what are the ", "")
+                .replace("what is the ", "")
+                .replace("what are ", "")
+                .replace("what is ", "")
+                .replace("?", "")
+                .strip()
+            )
+            variations.extend(
+                [
+                    f"{base} overview",
+                    f"{base} details",
+                    f"list of {base}",
+                ]
+            )
         elif "how" in query_lower:
-            base = query_lower.replace("how to ", "").replace("how ", "").replace("?", "").strip()
-            variations.extend([
-                f"{base} methods",
-                f"{base} process",
-                f"{base} steps",
-            ])
+            base = (
+                query_lower.replace("how to ", "")
+                .replace("how ", "")
+                .replace("?", "")
+                .strip()
+            )
+            variations.extend(
+                [
+                    f"{base} methods",
+                    f"{base} process",
+                    f"{base} steps",
+                ]
+            )
         elif "why" in query_lower:
             base = query_lower.replace("why ", "").replace("?", "").strip()
-            variations.extend([
-                f"{base} reasons",
-                f"{base} causes",
-                f"{base} explanation",
-            ])
+            variations.extend(
+                [
+                    f"{base} reasons",
+                    f"{base} causes",
+                    f"{base} explanation",
+                ]
+            )
         else:
             # Generic variations
-            variations.extend([
-                f"{query} overview",
-                f"{query} details",
-                f"{query} information",
-            ])
+            variations.extend(
+                [
+                    f"{query} overview",
+                    f"{query} details",
+                    f"{query} information",
+                ]
+            )
 
         # Limit to num_queries
-        final_variations = variations[:self.num_queries]
+        final_variations = variations[: self.num_queries]
 
         logger.info(f"Generated {len(final_variations)} simple query variations")
         return final_variations
 
     def _reciprocal_rank_fusion(
-        self,
-        result_sets: List[List[Document]],
-        top_k: int
+        self, result_sets: List[List[Document]], top_k: int
     ) -> List[Document]:
         """Combine multiple result sets using Reciprocal Rank Fusion via iris-vector-graph."""
         doc_map: Dict[str, Document] = {}
@@ -211,13 +232,15 @@ Return only the alternative queries, one per line, without numbering.
                 doc_id = doc.id if doc.id else str(hash(doc.page_content[:100]))
                 if doc_id not in doc_map:
                     doc_map[doc_id] = doc
-                if hasattr(doc, 'metadata') and 'source_query' in doc.metadata:
-                    source_queries[doc_id].append(doc.metadata['source_query'])
+                if hasattr(doc, "metadata") and "source_query" in doc.metadata:
+                    source_queries[doc_id].append(doc.metadata["source_query"])
 
         if _HAS_IVG_RRF:
             ranked_lists = [
-                [(doc.id if doc.id else str(hash(doc.page_content[:100])), float(i))
-                 for i, doc in enumerate(rs)]
+                [
+                    (doc.id if doc.id else str(hash(doc.page_content[:100])), float(i))
+                    for i, doc in enumerate(rs)
+                ]
                 for rs in result_sets
             ]
             fused = _IVGRRFFusion.fuse_results(ranked_lists, c=self.rrf_k)
@@ -234,21 +257,20 @@ Return only the alternative queries, one per line, without numbering.
         for doc_id in sorted_ids:
             if doc_id in doc_map:
                 doc = doc_map[doc_id]
-                if not hasattr(doc, 'metadata') or doc.metadata is None:
+                if not hasattr(doc, "metadata") or doc.metadata is None:
                     doc.metadata = {}
-                doc.metadata['source_queries'] = source_queries.get(doc_id, [])
+                doc.metadata["source_queries"] = source_queries.get(doc_id, [])
                 results.append(doc)
 
-        logger.info("RRF fusion: %d raw results → %d final results",
-                    sum(len(rs) for rs in result_sets), len(results))
+        logger.info(
+            "RRF fusion: %d raw results → %d final results",
+            sum(len(rs) for rs in result_sets),
+            len(results),
+        )
         return results
 
     def query(
-        self,
-        query: str,
-        top_k: int = 20,
-        generate_answer: bool = True,
-        **kwargs
+        self, query: str, top_k: int = 20, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Execute multi-query retrieval with RRF fusion.
@@ -289,15 +311,14 @@ Return only the alternative queries, one per line, without numbering.
 
             try:
                 results = self.vector_store.similarity_search(
-                    query=q,
-                    k=self.retrieved_k
+                    query=q, k=self.retrieved_k
                 )
 
                 # Add source query to metadata
                 for doc in results:
-                    if not hasattr(doc, 'metadata'):
+                    if not hasattr(doc, "metadata"):
                         doc.metadata = {}
-                    doc.metadata['source_query'] = q
+                    doc.metadata["source_query"] = q
 
                 all_results.append(results)
                 logger.debug(f"  → {len(results)} results")
@@ -330,27 +351,29 @@ Answer:"""
 
             except Exception as e:
                 logger.error(f"Answer generation failed: {e}")
-                answer = "Answer generation failed. Please check the retrieved documents."
+                answer = (
+                    "Answer generation failed. Please check the retrieved documents."
+                )
 
         # Build response
         execution_time = time.time() - start_time
 
         result = {
-            'answer': answer,
-            'retrieved_documents': fused_results,
-            'contexts': [doc.page_content for doc in fused_results],
-            'sources': [doc.id for doc in fused_results if doc.id],
-            'metadata': {
-                'pipeline': 'multi_query_rrf',
-                'queries': queries,
-                'num_queries': len(queries),
-                'raw_result_count': sum(len(rs) for rs in all_results),
-                'final_result_count': len(fused_results),
-                'rrf_k': self.rrf_k,
-                'execution_time': execution_time,
-                'execution_time_ms': int(execution_time * 1000),
-                'use_llm_expansion': self.use_llm_expansion
-            }
+            "answer": answer,
+            "retrieved_documents": fused_results,
+            "contexts": [doc.page_content for doc in fused_results],
+            "sources": [doc.id for doc in fused_results if doc.id],
+            "metadata": {
+                "pipeline": "multi_query_rrf",
+                "queries": queries,
+                "num_queries": len(queries),
+                "raw_result_count": sum(len(rs) for rs in all_results),
+                "final_result_count": len(fused_results),
+                "rrf_k": self.rrf_k,
+                "execution_time": execution_time,
+                "execution_time_ms": int(execution_time * 1000),
+                "use_llm_expansion": self.use_llm_expansion,
+            },
         }
 
         logger.info(
@@ -362,7 +385,9 @@ Answer:"""
 
         return result
 
-    def load_documents(self, documents_path: str = "", documents: List[Document] = None, **kwargs) -> None:
+    def load_documents(
+        self, documents_path: str = "", documents: List[Document] = None, **kwargs
+    ) -> None:
         """
         Load documents into vector store.
 

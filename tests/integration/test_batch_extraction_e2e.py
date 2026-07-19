@@ -29,13 +29,12 @@ class TestBatchExtractionE2E:
         """Generate 1,000 test documents for AS-1 validation."""
         documents = []
         for i in range(1000):
-            content = f"Sample support ticket {i}: User reported error in TrakCare module. " \
-                     f"The system failed to process patient data correctly. " \
-                     f"Error code: ERR{i:04d}. Version: 2024.1.{i % 10}."
-            documents.append(Document(
-                id=f"ticket-{i}",
-                page_content=content
-            ))
+            content = (
+                f"Sample support ticket {i}: User reported error in TrakCare module. "
+                f"The system failed to process patient data correctly. "
+                f"Error code: ERR{i:04d}. Version: 2024.1.{i % 10}."
+            )
+            documents.append(Document(id=f"ticket-{i}", page_content=content))
         return documents
 
     def test_as1_1k_documents_3x_speedup(self, service, sample_documents_1k):
@@ -54,8 +53,9 @@ class TestBatchExtractionE2E:
         batch_elapsed = time.time() - start_time
 
         # Validate batch completed successfully
-        assert batch_result.success_status, \
-            "Batch processing must complete successfully"
+        assert (
+            batch_result.success_status
+        ), "Batch processing must complete successfully"
 
         # Get baseline single-document time (estimate from config or measure)
         # For TrakCare: ~7.2 seconds per ticket (from spec.md production context)
@@ -66,15 +66,17 @@ class TestBatchExtractionE2E:
         actual_speedup = (1000 * single_doc_baseline) / batch_elapsed
 
         # Validate 3x speedup (allow 20% tolerance: 2.4x - 3.6x)
-        assert actual_speedup >= 2.4, \
-            f"Speedup must be at least 2.4x (target 3.0x), got {actual_speedup:.2f}x"
+        assert (
+            actual_speedup >= 2.4
+        ), f"Speedup must be at least 2.4x (target 3.0x), got {actual_speedup:.2f}x"
 
         # Validate quality maintained (4.86 entities/doc average from spec.md)
         total_entities = len(batch_result.get_all_entities())
         avg_entities_per_doc = total_entities / 1000
 
-        assert avg_entities_per_doc >= 4.0, \
-            f"Quality must be maintained (target 4.86 entities/doc), got {avg_entities_per_doc:.2f}"
+        assert (
+            avg_entities_per_doc >= 4.0
+        ), f"Quality must be maintained (target 4.86 entities/doc), got {avg_entities_per_doc:.2f}"
 
         print("\nAS-1 Results:")
         print(f"  Batch processing time: {batch_elapsed:.1f}s")
@@ -93,7 +95,9 @@ class TestBatchExtractionE2E:
         docs = [
             Document(id="doc1", page_content="TrakCare system error in module A"),
             Document(id="doc2", page_content="User login failed with error code 404"),
-            Document(id="doc3", page_content="Database connection timeout in version 2024.1")
+            Document(
+                id="doc3", page_content="Database connection timeout in version 2024.1"
+            ),
         ]
 
         # Process batch
@@ -104,21 +108,27 @@ class TestBatchExtractionE2E:
 
         for entity in all_entities:
             # Each entity must have source_document_id
-            assert hasattr(entity, 'source_document_id'), \
-                "Entity must have source_document_id attribute"
-            assert entity.source_document_id is not None, \
-                "Entity source_document_id cannot be None"
+            assert hasattr(
+                entity, "source_document_id"
+            ), "Entity must have source_document_id attribute"
+            assert (
+                entity.source_document_id is not None
+            ), "Entity source_document_id cannot be None"
 
             # Source document ID must be in original batch
-            assert entity.source_document_id in ["doc1", "doc2", "doc3"], \
-                f"Entity source_document_id must match batch documents, got {entity.source_document_id}"
+            assert entity.source_document_id in [
+                "doc1",
+                "doc2",
+                "doc3",
+            ], f"Entity source_document_id must match batch documents, got {entity.source_document_id}"
 
         # Validate per-document mapping
         for doc_id in ["doc1", "doc2", "doc3"]:
             doc_entities = result.per_document_entities.get(doc_id, [])
             for entity in doc_entities:
-                assert entity.source_document_id == doc_id, \
-                    "Entity in per_document_entities must have correct source_document_id"
+                assert (
+                    entity.source_document_id == doc_id
+                ), "Entity in per_document_entities must have correct source_document_id"
 
         print("\nAS-3 Results:")
         print(f"  Total entities: {len(all_entities)}")
@@ -134,8 +144,7 @@ class TestBatchExtractionE2E:
         """
         # Single document
         single_doc = Document(
-            id="single-doc",
-            page_content="Single urgent document for entity extraction"
+            id="single-doc", page_content="Single urgent document for entity extraction"
         )
 
         # Process through batch system (FR-010: always batch)
@@ -143,8 +152,9 @@ class TestBatchExtractionE2E:
 
         # Validate batch result
         assert result.success_status, "Single document batch must succeed"
-        assert "single-doc" in result.per_document_entities, \
-            "Result must contain single document"
+        assert (
+            "single-doc" in result.per_document_entities
+        ), "Result must contain single document"
 
         # Validate batch metadata
         assert result.batch_id is not None, "Batch must have ID"
@@ -161,7 +171,7 @@ class TestBatchExtractionE2E:
         doc = Document(
             id="test-doc",
             page_content="TrakCare error ERR001 in module PatientManagement. "
-                        "User admin reported issue with version 2024.1.5."
+            "User admin reported issue with version 2024.1.5.",
         )
 
         # Process via batch
@@ -170,14 +180,24 @@ class TestBatchExtractionE2E:
 
         # Process same document individually (if single-doc method exists)
         # For now, validate batch extraction produces reasonable results
-        assert len(batch_entities) > 0, \
-            "Batch extraction must extract entities from valid document"
+        assert (
+            len(batch_entities) > 0
+        ), "Batch extraction must extract entities from valid document"
 
         # Validate entity types are from configured types
-        valid_types = ["PRODUCT", "ERROR", "MODULE", "USER", "VERSION", "ACTION", "ORGANIZATION"]
+        valid_types = [
+            "PRODUCT",
+            "ERROR",
+            "MODULE",
+            "USER",
+            "VERSION",
+            "ACTION",
+            "ORGANIZATION",
+        ]
         for entity in batch_entities:
-            assert entity.entity_type in valid_types, \
-                f"Entity type must be valid (got {entity.entity_type})"
+            assert (
+                entity.entity_type in valid_types
+            ), f"Entity type must be valid (got {entity.entity_type})"
 
         print("\nQuality Validation:")
         print(f"  Entities extracted: {len(batch_entities)}")
@@ -190,15 +210,16 @@ class TestBatchExtractionE2E:
             Document(id="small", page_content="Short doc."),
             Document(id="medium", page_content="Medium length document. " * 50),
             Document(id="large", page_content="Very large document. " * 500),
-            Document(id="small2", page_content="Another short one.")
+            Document(id="small2", page_content="Another short one."),
         ]
 
         # Process batch
         result = service.extract_batch(docs, token_budget=8192)
 
         # Validate all documents processed
-        assert len(result.per_document_entities) == 4, \
-            "All documents must be processed regardless of size"
+        assert (
+            len(result.per_document_entities) == 4
+        ), "All documents must be processed regardless of size"
 
         # Validate success
         assert result.success_status, "Mixed-size batch must succeed"

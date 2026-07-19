@@ -25,43 +25,44 @@ class TestMCPBasicRAG:
         bridge = MCPBridge()
 
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What are the symptoms of diabetes?',
-            params={'top_k': 5}
+            technique="basic",
+            query="What are the symptoms of diabetes?",
+            params={"top_k": 5},
         )
 
         # Verify response structure
         assert isinstance(result, dict), "Response must be dict"
-        assert result['success'] is True, f"Query failed: {result.get('error')}"
-        assert 'result' in result
+        assert result["success"] is True, f"Query failed: {result.get('error')}"
+        assert "result" in result
 
-        response = result['result']
+        response = result["result"]
 
         # Verify answer exists and is non-empty
-        assert 'answer' in response, "Response missing 'answer' field"
-        assert isinstance(response['answer'], str)
-        assert len(response['answer']) > 0, "Answer is empty"
+        assert "answer" in response, "Response missing 'answer' field"
+        assert isinstance(response["answer"], str)
+        assert len(response["answer"]) > 0, "Answer is empty"
 
         # Verify retrieved_documents
-        assert 'retrieved_documents' in response
-        assert isinstance(response['retrieved_documents'], list)
-        assert len(response['retrieved_documents']) == 5, \
-            f"Expected 5 documents, got {len(response['retrieved_documents'])}"
+        assert "retrieved_documents" in response
+        assert isinstance(response["retrieved_documents"], list)
+        assert (
+            len(response["retrieved_documents"]) == 5
+        ), f"Expected 5 documents, got {len(response['retrieved_documents'])}"
 
         # Verify each document has required fields
-        for doc in response['retrieved_documents']:
-            assert 'doc_id' in doc or 'id' in doc, "Document missing ID"
-            assert 'content' in doc or 'text' in doc, "Document missing content"
-            assert 'score' in doc or 'similarity' in doc, "Document missing score"
+        for doc in response["retrieved_documents"]:
+            assert "doc_id" in doc or "id" in doc, "Document missing ID"
+            assert "content" in doc or "text" in doc, "Document missing content"
+            assert "score" in doc or "similarity" in doc, "Document missing score"
 
         # Verify sources
-        assert 'sources' in response
-        assert isinstance(response['sources'], list)
-        assert len(response['sources']) > 0, "Sources list is empty"
+        assert "sources" in response
+        assert isinstance(response["sources"], list)
+        assert len(response["sources"]) > 0, "Sources list is empty"
 
         # Verify metadata
-        assert 'metadata' in response
-        assert isinstance(response['metadata'], dict)
+        assert "metadata" in response
+        assert isinstance(response["metadata"], dict)
 
     @pytest.mark.asyncio
     async def test_basic_rag_performance_metrics(self, loaded_test_documents):
@@ -71,30 +72,28 @@ class TestMCPBasicRAG:
         bridge = MCPBridge()
 
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'top_k': 3}
+            technique="basic", query="What is diabetes?", params={"top_k": 3}
         )
 
-        assert result['success'] is True
-        response = result['result']
+        assert result["success"] is True
+        response = result["result"]
 
         # Verify performance metrics exist
-        assert 'performance' in response, "Response missing 'performance' field"
-        metrics = response['performance']
+        assert "performance" in response, "Response missing 'performance' field"
+        metrics = response["performance"]
 
         # Verify required performance fields
-        assert 'execution_time_ms' in metrics
-        assert 'retrieval_time_ms' in metrics
-        assert 'generation_time_ms' in metrics
-        assert 'tokens_used' in metrics
+        assert "execution_time_ms" in metrics
+        assert "retrieval_time_ms" in metrics
+        assert "generation_time_ms" in metrics
+        assert "tokens_used" in metrics
 
         # Verify metrics are reasonable values
-        assert metrics['execution_time_ms'] > 0
-        assert metrics['retrieval_time_ms'] >= 0
-        assert metrics['generation_time_ms'] >= 0
+        assert metrics["execution_time_ms"] > 0
+        assert metrics["retrieval_time_ms"] >= 0
+        assert metrics["generation_time_ms"] >= 0
         # tokens_used may be 0 if pipeline doesn't track usage (future enhancement)
-        assert metrics['tokens_used'] >= 0
+        assert metrics["tokens_used"] >= 0
 
     @pytest.mark.asyncio
     async def test_basic_rag_query_latency_p95(self, loaded_test_documents):
@@ -105,19 +104,20 @@ class TestMCPBasicRAG:
 
         start_time = time.time()
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What are the symptoms of diabetes?',
-            params={'top_k': 5}
+            technique="basic",
+            query="What are the symptoms of diabetes?",
+            params={"top_k": 5},
         )
         elapsed_ms = (time.time() - start_time) * 1000
 
         # Verify query completed successfully
-        assert result['success'] is True
+        assert result["success"] is True
 
         # Verify latency meets p95 requirement
         # Note: Includes LLM generation time which can be slow (typically 2-8s)
-        assert elapsed_ms < 10000, \
-            f"Query took {elapsed_ms:.1f}ms (p95 requirement: <10000ms)"
+        assert (
+            elapsed_ms < 10000
+        ), f"Query took {elapsed_ms:.1f}ms (p95 requirement: <10000ms)"
 
     @pytest.mark.asyncio
     async def test_basic_rag_with_minimal_parameters(self, loaded_test_documents):
@@ -128,17 +128,15 @@ class TestMCPBasicRAG:
 
         # Only provide query (top_k should use default)
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={}
+            technique="basic", query="What is diabetes?", params={}
         )
 
-        assert result['success'] is True
-        response = result['result']
+        assert result["success"] is True
+        response = result["result"]
 
         # Should use default top_k=5
-        assert 'retrieved_documents' in response
-        assert len(response['retrieved_documents']) == 5
+        assert "retrieved_documents" in response
+        assert len(response["retrieved_documents"]) == 5
 
     @pytest.mark.asyncio
     async def test_basic_rag_with_custom_top_k(self, loaded_test_documents):
@@ -149,25 +147,21 @@ class TestMCPBasicRAG:
 
         # Test with top_k=3
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'top_k': 3}
+            technique="basic", query="What is diabetes?", params={"top_k": 3}
         )
 
-        assert result['success'] is True
-        response = result['result']
-        assert len(response['retrieved_documents']) == 3
+        assert result["success"] is True
+        response = result["result"]
+        assert len(response["retrieved_documents"]) == 3
 
         # Test with top_k=10 (but only 5 docs exist, so returns 5)
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'top_k': 10}
+            technique="basic", query="What is diabetes?", params={"top_k": 10}
         )
 
-        assert result['success'] is True
-        response = result['result']
-        assert len(response['retrieved_documents']) == 5  # Only 5 docs in fixture
+        assert result["success"] is True
+        response = result["result"]
+        assert len(response["retrieved_documents"]) == 5  # Only 5 docs in fixture
 
     @pytest.mark.asyncio
     async def test_basic_rag_with_include_sources(self, loaded_test_documents):
@@ -178,22 +172,22 @@ class TestMCPBasicRAG:
 
         # With sources
         result_with = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'include_sources': True}
+            technique="basic",
+            query="What is diabetes?",
+            params={"include_sources": True},
         )
 
-        assert result_with['success'] is True
-        assert len(result_with['result']['sources']) > 0
+        assert result_with["success"] is True
+        assert len(result_with["result"]["sources"]) > 0
 
         # Without sources
         result_without = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'include_sources': False}
+            technique="basic",
+            query="What is diabetes?",
+            params={"include_sources": False},
         )
 
-        assert result_without['success'] is True
+        assert result_without["success"] is True
         # May still have sources (implementation choice), or empty list
 
     @pytest.mark.asyncio
@@ -205,22 +199,22 @@ class TestMCPBasicRAG:
 
         # With metadata
         result_with = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'include_metadata': True}
+            technique="basic",
+            query="What is diabetes?",
+            params={"include_metadata": True},
         )
 
-        assert result_with['success'] is True
-        assert 'metadata' in result_with['result']
+        assert result_with["success"] is True
+        assert "metadata" in result_with["result"]
 
         # Without metadata
         result_without = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'include_metadata': False}
+            technique="basic",
+            query="What is diabetes?",
+            params={"include_metadata": False},
         )
 
-        assert result_without['success'] is True
+        assert result_without["success"] is True
         # metadata field may still exist but be minimal
 
     @pytest.mark.asyncio
@@ -232,24 +226,20 @@ class TestMCPBasicRAG:
 
         # top_k too low (< 1)
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'top_k': 0}
+            technique="basic", query="What is diabetes?", params={"top_k": 0}
         )
 
-        assert result['success'] is False
-        assert 'error' in result
-        assert 'top_k' in result['error'].lower() or 'range' in result['error'].lower()
+        assert result["success"] is False
+        assert "error" in result
+        assert "top_k" in result["error"].lower() or "range" in result["error"].lower()
 
         # top_k too high (> 50)
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'top_k': 100}
+            technique="basic", query="What is diabetes?", params={"top_k": 100}
         )
 
-        assert result['success'] is False
-        assert 'error' in result
+        assert result["success"] is False
+        assert "error" in result
 
     @pytest.mark.asyncio
     async def test_basic_rag_empty_query_handling(self, loaded_test_documents):
@@ -258,16 +248,12 @@ class TestMCPBasicRAG:
 
         bridge = MCPBridge()
 
-        result = await bridge.invoke_technique(
-            technique='basic',
-            query='',
-            params={}
-        )
+        result = await bridge.invoke_technique(technique="basic", query="", params={})
 
         # Should either reject or handle gracefully
         # (implementation may choose to return error or empty result)
         assert isinstance(result, dict)
-        assert 'success' in result
+        assert "success" in result
 
     @pytest.mark.asyncio
     async def test_basic_rag_response_format_consistency(self, loaded_test_documents):
@@ -277,22 +263,28 @@ class TestMCPBasicRAG:
         bridge = MCPBridge()
 
         result = await bridge.invoke_technique(
-            technique='basic',
-            query='What is diabetes?',
-            params={'top_k': 5}
+            technique="basic", query="What is diabetes?", params={"top_k": 5}
         )
 
-        assert result['success'] is True
-        response = result['result']
+        assert result["success"] is True
+        response = result["result"]
 
         # Verify standard RAG response fields
-        required_fields = ['answer', 'retrieved_documents', 'sources', 'metadata', 'performance']
+        required_fields = [
+            "answer",
+            "retrieved_documents",
+            "sources",
+            "metadata",
+            "performance",
+        ]
         for field in required_fields:
             assert field in response, f"Response missing required field: {field}"
 
         # Verify metadata includes pipeline name
-        assert 'pipeline_name' in response['metadata'] or \
-               'technique' in response['metadata']
+        assert (
+            "pipeline_name" in response["metadata"]
+            or "technique" in response["metadata"]
+        )
 
     @pytest.mark.asyncio
     async def test_basic_rag_multiple_queries_sequential(self, loaded_test_documents):
@@ -302,18 +294,16 @@ class TestMCPBasicRAG:
         bridge = MCPBridge()
 
         queries = [
-            'What is diabetes?',
-            'What are the symptoms of diabetes?',
-            'How is diabetes treated?'
+            "What is diabetes?",
+            "What are the symptoms of diabetes?",
+            "How is diabetes treated?",
         ]
 
         for query in queries:
             result = await bridge.invoke_technique(
-                technique='basic',
-                query=query,
-                params={'top_k': 3}
+                technique="basic", query=query, params={"top_k": 3}
             )
 
-            assert result['success'] is True, f"Query failed: {query}"
-            assert 'answer' in result['result']
-            assert len(result['result']['retrieved_documents']) == 3
+            assert result["success"] is True, f"Query failed: {query}"
+            assert "answer" in result["result"]
+            assert len(result["result"]["retrieved_documents"]) == 3

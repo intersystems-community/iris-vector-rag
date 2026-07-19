@@ -63,7 +63,9 @@ class TestAPILoadTests:
         print("\nResults:")
         print(f"  Total requests: {total_requests}")
         print(f"  Failed requests: {failed_requests}")
-        print(f"  Success rate: {((total_requests - failed_requests) / total_requests * 100):.2f}%")
+        print(
+            f"  Success rate: {((total_requests - failed_requests) / total_requests * 100):.2f}%"
+        )
         print(f"  Actual RPS: {actual_rps:.2f}")
         print(f"  p95 latency: {p95:.2f}ms")
 
@@ -252,7 +254,9 @@ class TestAPILoadTests:
         print(f"  Successful requests: {successful_requests}")
         print(f"  Error requests: {error_requests}")
         print(f"  Recovered requests: {recovered_requests}")
-        print(f"  Final success rate: {successful_requests / total_requests * 100:.2f}%")
+        print(
+            f"  Final success rate: {successful_requests / total_requests * 100:.2f}%"
+        )
 
         # Should handle errors gracefully
         assert successful_requests / total_requests > 0.9  # >90% success
@@ -284,14 +288,18 @@ class TestAPILoadTests:
                     failures += 1
 
             success_rate = (requests - failures) / requests * 100 if requests > 0 else 0
-            results.append({
-                "users": phase["users"],
-                "requests": requests,
-                "failures": failures,
-                "success_rate": success_rate,
-            })
+            results.append(
+                {
+                    "users": phase["users"],
+                    "requests": requests,
+                    "failures": failures,
+                    "success_rate": success_rate,
+                }
+            )
 
-            print(f"  Requests: {requests}, Failures: {failures}, Success: {success_rate:.2f}%")
+            print(
+                f"  Requests: {requests}, Failures: {failures}, Success: {success_rate:.2f}%"
+            )
 
         # Should maintain success rate across all phases
         assert all(r["success_rate"] > 95 for r in results)
@@ -383,7 +391,9 @@ class TestStressTests:
                 recovery_failures += 1
             time.sleep(0.01)
 
-        recovery_success_rate = (recovery_requests - recovery_failures) / recovery_requests * 100
+        recovery_success_rate = (
+            (recovery_requests - recovery_failures) / recovery_requests * 100
+        )
 
         print("\nResults:")
         print(f"  Exhaustion failures: {failures}/{exhausted_requests}")

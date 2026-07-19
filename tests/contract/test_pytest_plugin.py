@@ -9,7 +9,6 @@ Reference: specs/047-create-a-unified/tasks.md (T075)
 
 import pytest
 
-
 # ==============================================================================
 # PYTEST MARKER CONTRACT TESTS
 # ==============================================================================
@@ -53,7 +52,9 @@ class TestDATFixtureMarker:
         def test_with_versioned_fixture():
             pass
 
-        marks = [m for m in test_with_versioned_fixture.pytestmark if m.name == "dat_fixture"]
+        marks = [
+            m for m in test_with_versioned_fixture.pytestmark if m.name == "dat_fixture"
+        ]
         assert len(marks) == 1
         assert marks[0].kwargs.get("version") == "1.0.0"
 

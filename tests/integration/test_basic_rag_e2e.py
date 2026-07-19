@@ -27,7 +27,7 @@ class TestBasicRAGIntegration:
         """
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         documents = docs_data["documents"]
@@ -36,10 +36,8 @@ class TestBasicRAGIntegration:
         load_result = basic_rag_pipeline.load_documents(documents)
 
         # Verify loading succeeded
-        assert load_result["documents_loaded"] > 0, \
-            "Should successfully load documents"
-        assert load_result["embeddings_generated"] > 0, \
-            "Should generate embeddings"
+        assert load_result["documents_loaded"] > 0, "Should successfully load documents"
+        assert load_result["embeddings_generated"] > 0, "Should generate embeddings"
 
         # Execute query
         query = "What are the symptoms of diabetes?"
@@ -51,8 +49,9 @@ class TestBasicRAGIntegration:
         assert "metadata" in result, "Query should return metadata"
 
         # Verify retrieval occurred
-        assert result["metadata"]["context_count"] >= 1, \
-            "Should retrieve at least 1 context"
+        assert (
+            result["metadata"]["context_count"] >= 1
+        ), "Should retrieve at least 1 context"
 
         # Verify answer quality
         assert len(result["answer"]) > 0, "Answer should be non-empty"
@@ -67,7 +66,7 @@ class TestBasicRAGIntegration:
         """
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         documents = docs_data["documents"]
@@ -77,16 +76,17 @@ class TestBasicRAGIntegration:
         result = basic_rag_pipeline.load_documents(documents)
 
         # Verify all documents loaded
-        assert result["documents_loaded"] == expected_count, \
-            f"Should load all {expected_count} documents"
+        assert (
+            result["documents_loaded"] == expected_count
+        ), f"Should load all {expected_count} documents"
 
         # Verify embeddings generated
-        assert result["embeddings_generated"] == expected_count, \
-            f"Should generate {expected_count} embeddings"
+        assert (
+            result["embeddings_generated"] == expected_count
+        ), f"Should generate {expected_count} embeddings"
 
         # Verify no failures
-        assert result["documents_failed"] == 0, \
-            "Should have no failed documents"
+        assert result["documents_failed"] == 0, "Should have no failed documents"
 
     def test_response_quality_metrics(self, basic_rag_pipeline):
         """
@@ -98,7 +98,7 @@ class TestBasicRAGIntegration:
         """
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         basic_rag_pipeline.load_documents(docs_data["documents"])
@@ -108,8 +108,7 @@ class TestBasicRAGIntegration:
         result = basic_rag_pipeline.query(query)
 
         # Verify answer quality
-        assert len(result["answer"]) > 10, \
-            "Answer should be substantive (>10 chars)"
+        assert len(result["answer"]) > 10, "Answer should be substantive (>10 chars)"
 
         # Verify source attribution
         metadata = result["metadata"]
@@ -118,8 +117,9 @@ class TestBasicRAGIntegration:
 
         # Verify execution time logged (optional)
         if "execution_time_ms" in metadata:
-            assert metadata["execution_time_ms"] > 0, \
-                "Execution time should be positive"
+            assert (
+                metadata["execution_time_ms"] > 0
+            ), "Execution time should be positive"
 
     def test_query_without_loaded_documents(self, basic_rag_pipeline):
         """
@@ -137,19 +137,18 @@ class TestBasicRAGIntegration:
             # If query succeeds, should indicate no contexts found
             if "contexts" in result:
                 # May return empty contexts or fallback answer
-                assert isinstance(result["contexts"], list), \
-                    "Contexts should be a list"
+                assert isinstance(result["contexts"], list), "Contexts should be a list"
 
             # Answer may indicate no information available
             if "answer" in result:
-                assert isinstance(result["answer"], str), \
-                    "Answer should be a string"
+                assert isinstance(result["answer"], str), "Answer should be a string"
         except Exception as e:
             error_msg = str(e).lower()
 
             # Error should be informative
-            assert "document" in error_msg or "context" in error_msg or "no" in error_msg, \
-                "Error should mention missing documents/contexts"
+            assert (
+                "document" in error_msg or "context" in error_msg or "no" in error_msg
+            ), "Error should mention missing documents/contexts"
 
     def test_multiple_queries_maintain_consistency(self, basic_rag_pipeline):
         """
@@ -161,7 +160,7 @@ class TestBasicRAGIntegration:
         """
         # Load sample documents
         sample_docs_path = "tests/data/sample_pmc_docs_basic.json"
-        with open(sample_docs_path, 'r') as f:
+        with open(sample_docs_path, "r") as f:
             docs_data = json.load(f)
 
         basic_rag_pipeline.load_documents(docs_data["documents"])
@@ -170,7 +169,7 @@ class TestBasicRAGIntegration:
         queries = [
             "What are diabetes symptoms?",
             "How is diabetes diagnosed?",
-            "What are diabetes risk factors?"
+            "What are diabetes risk factors?",
         ]
 
         for query in queries:
@@ -182,4 +181,6 @@ class TestBasicRAGIntegration:
             assert "metadata" in result, f"Query '{query}' should return metadata"
 
             # Verify quality
-            assert len(result["answer"]) > 0, f"Query '{query}' should have non-empty answer"
+            assert (
+                len(result["answer"]) > 0
+            ), f"Query '{query}' should have non-empty answer"

@@ -22,7 +22,6 @@ from .models import (
 from dataclasses import dataclass
 from datetime import datetime
 
-
 # ==============================================================================
 # FIXTURE STATE TRACKING
 # ==============================================================================
@@ -116,7 +115,9 @@ class FixtureLoadError(FixtureError):
 class VersionMismatchError(FixtureError):
     """Raised when fixture version is incompatible with migration target."""
 
-    def __init__(self, fixture_name: str, current_version: str, target_version: str, reason: str):
+    def __init__(
+        self, fixture_name: str, current_version: str, target_version: str, reason: str
+    ):
         self.fixture_name = fixture_name
         self.current_version = current_version
         self.target_version = target_version
@@ -277,7 +278,10 @@ class FixtureManager:
             self._track_fixture_state(
                 metadata=metadata,
                 checksum_valid=True,
-                row_counts={table: metadata.row_counts.get(table, 0) for table in metadata.tables},
+                row_counts={
+                    table: metadata.row_counts.get(table, 0)
+                    for table in metadata.tables
+                },
             )
 
             return FixtureLoadResult(
@@ -344,7 +348,7 @@ class FixtureManager:
                         # Skip corrupted manifests but continue scanning
                         print(
                             f"Warning: Skipping corrupted manifest {fixture_dir.name}: {e}",
-                            file=sys.stderr
+                            file=sys.stderr,
                         )
 
         # TODO: Scan for JSON fixtures in fixtures/graphrag/ (future)
@@ -498,7 +502,9 @@ class FixtureManager:
 
             # Compare with expected
             if actual_checksum != metadata.checksum:
-                raise ChecksumMismatchError(metadata.name, metadata.checksum, actual_checksum)
+                raise ChecksumMismatchError(
+                    metadata.name, metadata.checksum, actual_checksum
+                )
 
     def _validate_version_compatibility(self, metadata: FixtureMetadata) -> None:
         """
@@ -557,7 +563,10 @@ class FixtureManager:
         # Skip cleanup if no connection available (contract tests)
         if self._connection is None:
             try:
-                from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+                from iris_vector_rag.common.iris_dbapi_connector import (
+                    get_iris_dbapi_connection,
+                )
+
                 conn = get_iris_dbapi_connection()
             except Exception:
                 # No connection available - skip cleanup (contract tests)
@@ -599,7 +608,9 @@ class FixtureManager:
         # Try to import iris-devtools and load
         try:
             # Add parent directory to path to access iris-devtools
-            iris_devtools_path = Path(__file__).parent.parent.parent.parent / "iris-devtools"
+            iris_devtools_path = (
+                Path(__file__).parent.parent.parent.parent / "iris-devtools"
+            )
             if iris_devtools_path.exists():
                 sys.path.insert(0, str(iris_devtools_path))
 
@@ -638,8 +649,7 @@ class FixtureManager:
 
             if not result.success:
                 raise FixtureLoadError(
-                    metadata.name,
-                    "iris-devtools load_fixture returned success=False"
+                    metadata.name, "iris-devtools load_fixture returned success=False"
                 )
 
             # Return total rows from our metadata (iris-devtools doesn't track row counts in LoadResult)
@@ -652,7 +662,11 @@ class FixtureManager:
             return sum(metadata.row_counts.values())
         except Exception as e:
             # Check if it's a connection error (contract tests)
-            if "connection" in str(e).lower() or "iris" in str(e).lower() or "namespace" in str(e).lower():
+            if (
+                "connection" in str(e).lower()
+                or "iris" in str(e).lower()
+                or "namespace" in str(e).lower()
+            ):
                 # Return mock success for contract tests
                 # This graceful degradation allows testing the FixtureManager API
                 # without requiring actual IRIS database infrastructure
@@ -672,7 +686,9 @@ class FixtureManager:
         # Find JSON file in fixture directory
         json_files = list(fixture_dir.glob("*.json"))
         if not json_files:
-            raise FixtureLoadError(metadata.name, "No JSON file found in fixture directory")
+            raise FixtureLoadError(
+                metadata.name, "No JSON file found in fixture directory"
+            )
 
         json_file = json_files[0]
 
@@ -766,7 +782,9 @@ class FixtureManager:
             return self._connection
 
         # Import connection helper
-        from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+        from iris_vector_rag.common.iris_dbapi_connector import (
+            get_iris_dbapi_connection,
+        )
 
         return get_iris_dbapi_connection()
 
@@ -914,8 +932,7 @@ class FixtureManager:
             # Load manifest
             if not manifest_file.exists():
                 raise FixtureLoadError(
-                    fixture_name,
-                    f"Manifest not found: {manifest_file}"
+                    fixture_name, f"Manifest not found: {manifest_file}"
                 )
 
             with open(manifest_file, "r") as f:
@@ -980,7 +997,9 @@ class FixtureManager:
                 error_message=str(e),
             )
 
-    def _validate_migration_path(self, fixture_name: str, current_version: str, target_version: str) -> None:
+    def _validate_migration_path(
+        self, fixture_name: str, current_version: str, target_version: str
+    ) -> None:
         """
         Validate that migration from current to target version is compatible.
 
@@ -1018,16 +1037,20 @@ class FixtureManager:
                 fixture_name,
                 current_version,
                 target_version,
-                f"Invalid semantic version format: {e}"
+                f"Invalid semantic version format: {e}",
             )
 
         # Check for downgrade
-        if (target_major, target_minor, target_patch) < (current_major, current_minor, current_patch):
+        if (target_major, target_minor, target_patch) < (
+            current_major,
+            current_minor,
+            current_patch,
+        ):
             raise VersionMismatchError(
                 fixture_name,
                 current_version,
                 target_version,
-                "Downgrades not supported - target version must be >= current version"
+                "Downgrades not supported - target version must be >= current version",
             )
 
         # Check for major version jump (breaking change)
@@ -1036,5 +1059,5 @@ class FixtureManager:
                 fixture_name,
                 current_version,
                 target_version,
-                f"Major version jump detected - incompatible versions (skipping {current_major + 1}.x.x)"
+                f"Major version jump detected - incompatible versions (skipping {current_major + 1}.x.x)",
             )

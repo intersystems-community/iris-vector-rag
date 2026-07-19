@@ -384,8 +384,7 @@ class SetupOrchestrator:
         """Insert minimal test data to make pipelines functional."""
         try:
             # Insert a test document marker
-            cursor.execute(
-                """
+            cursor.execute("""
                 INSERT INTO RAG.SourceDocuments (filename, file_path, source_type, content_hash, file_size, metadata)
                 VALUES (
                     'test_document_marker.txt',
@@ -395,8 +394,7 @@ class SetupOrchestrator:
                     100,
                     '{"created_by": "auto_setup", "purpose": "minimal_test_data"}'
                 )
-            """
-            )
+            """)
             self.logger.info("✅ Inserted minimal test data marker")
         except Exception as e:
             self.logger.warning(f"Could not insert minimal test data: {e}")
@@ -496,33 +494,27 @@ class SetupOrchestrator:
             # Support both legacy schema (embedding in SourceDocuments) and clean schema (VectorEmbeddings table)
 
             # First check if SourceDocuments has embedding field (legacy schema)
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments' AND COLUMN_NAME = 'embedding'
-            """
-            )
+            """)
             has_embedding_field = cursor.fetchone()[0] > 0
 
             if has_embedding_field:
                 # Legacy schema approach
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT COUNT(*) FROM RAG.SourceDocuments
                     WHERE embedding IS NULL
-                """
-                )
+                """)
                 missing_count = cursor.fetchone()[0]
             else:
                 # Clean schema approach - check VectorEmbeddings table
                 try:
-                    cursor.execute(
-                        """
+                    cursor.execute("""
                         SELECT COUNT(*) FROM RAG.SourceDocuments s
                         LEFT JOIN RAG.VectorEmbeddings v ON s.id = v.chunk_id
                         WHERE v.embedding IS NULL OR v.id IS NULL
-                    """
-                    )
+                    """)
                     missing_count = cursor.fetchone()[0]
                 except Exception as e:
                     self.logger.warning(f"VectorEmbeddings join failed: {e}")
@@ -557,23 +549,19 @@ class SetupOrchestrator:
         try:
             # Get documents without embeddings
             # Check if SourceDocuments has embedding field (legacy schema)
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
                 WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments' AND COLUMN_NAME = 'embedding'
-            """
-            )
+            """)
             has_embedding_field = cursor.fetchone()[0] > 0
 
             if has_embedding_field:
                 # Legacy schema approach
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT COLUMN_NAME
                     FROM INFORMATION_SCHEMA.COLUMNS
                     WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments'
-                """
-                )
+                """)
                 columns = {row[0].lower() for row in cursor.fetchall()}
                 candidate_content_columns = [
                     "content",
@@ -585,8 +573,10 @@ class SetupOrchestrator:
                     (col for col in candidate_content_columns if col in columns),
                     None,
                 )
-                doc_id_column = "doc_id" if "doc_id" in columns else (
-                    "id" if "id" in columns else None
+                doc_id_column = (
+                    "doc_id"
+                    if "doc_id" in columns
+                    else ("id" if "id" in columns else None)
                 )
 
                 if not content_column or not doc_id_column:
@@ -596,25 +586,21 @@ class SetupOrchestrator:
                     )
                     return
 
-                cursor.execute(
-                    f"""
+                cursor.execute(f"""
                     SELECT {doc_id_column} as doc_id, {content_column} as content
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NULL
-                """
-                )
+                """)
                 documents = cursor.fetchall()
             else:
                 # Clean schema approach - get all documents since clean schema has no embeddings in SourceDocuments
                 try:
-                    cursor.execute(
-                        """
+                    cursor.execute("""
                         SELECT s.id, s.filename as content
                         FROM RAG.SourceDocuments s
                         LEFT JOIN RAG.VectorEmbeddings v ON s.id = v.chunk_id
                         WHERE v.embedding IS NULL OR v.id IS NULL
-                    """
-                    )
+                    """)
                     documents = cursor.fetchall()
                 except Exception as e:
                     self.logger.warning(
@@ -699,23 +685,19 @@ class SetupOrchestrator:
             # Final verification
             if has_embedding_field:
                 # Legacy schema approach
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT COUNT(*) FROM RAG.SourceDocuments
                     WHERE embedding IS NULL
-                """
-                )
+                """)
                 remaining_missing = cursor.fetchone()[0]
             else:
                 # Clean schema approach - check VectorEmbeddings table
                 try:
-                    cursor.execute(
-                        """
+                    cursor.execute("""
                         SELECT COUNT(*) FROM RAG.SourceDocuments s
                         LEFT JOIN RAG.VectorEmbeddings v ON s.id = v.chunk_id
                         WHERE v.embedding IS NULL OR v.id IS NULL
-                    """
-                    )
+                    """)
                     remaining_missing = cursor.fetchone()[0]
                 except Exception as e:
                     self.logger.warning(
@@ -1259,17 +1241,14 @@ class SetupOrchestrator:
 
         try:
             # Check if table exists
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES 
                 WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'DocumentChunks'
-            """
-            )
+            """)
 
             if cursor.fetchone()[0] == 0:
                 # Create table
-                cursor.execute(
-                    """
+                cursor.execute("""
                     CREATE TABLE RAG.DocumentChunks (
                         id VARCHAR(255) PRIMARY KEY,
                         chunk_id VARCHAR(255),
@@ -1282,8 +1261,7 @@ class SetupOrchestrator:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (doc_id) REFERENCES RAG.SourceDocuments(id)
                     )
-                """
-                )
+                """)
                 connection.commit()
                 self.logger.info("Created DocumentChunks table")
             else:
@@ -1478,14 +1456,12 @@ class SetupOrchestrator:
 
         try:
             # Check total count and count with embeddings
-            cursor.execute(
-                f"""
+            cursor.execute(f"""
                 SELECT
                     COUNT(*) as total_rows,
                     COUNT({column}) as rows_with_embeddings
                 FROM {table}
-            """
-            )
+            """)
 
             result = cursor.fetchone()
             total_rows = result[0]
@@ -1504,13 +1480,11 @@ class SetupOrchestrator:
                 return
 
             # Check embedding format
-            cursor.execute(
-                f"""
+            cursor.execute(f"""
                 SELECT TOP 1 {column}
                 FROM {table}
                 WHERE {column} IS NOT NULL
-            """
-            )
+            """)
 
             sample_result = cursor.fetchone()
             if sample_result and sample_result[0]:
@@ -1626,13 +1600,11 @@ class SetupOrchestrator:
             connection = self.connection_manager.get_connection()
             cursor = connection.cursor()
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT id, filename, file_path
                 FROM RAG.SourceDocuments
                 ORDER BY id
-            """
-            )
+            """)
             documents = cursor.fetchall()
 
             if not documents:
@@ -1710,12 +1682,10 @@ class SetupOrchestrator:
             )
             if cursor.fetchone()[0] == 0:
                 # Insert a test entity
-                cursor.execute(
-                    """
+                cursor.execute("""
                     INSERT INTO RAG.Entities (entity_id, entity_name, entity_type, description, confidence, source_document)
                     VALUES ('test_entity_1', 'Test Entity', 'concept', 'Minimal test entity for GraphRAG validation', 1.0, 'system_generated')
-                """
-                )
+                """)
                 self.logger.info("Test entity inserted")
             else:
                 self.logger.info("Test entity already exists")
@@ -1726,12 +1696,10 @@ class SetupOrchestrator:
             )
             if cursor.fetchone()[0] == 0:
                 # Insert a test relationship with required relationship_id
-                cursor.execute(
-                    """
+                cursor.execute("""
                     INSERT INTO RAG.EntityRelationships (relationship_id, source_entity_id, target_entity_id, relationship_type, confidence, source_document)
                     VALUES ('test_rel_1', 'test_entity_1', 'test_entity_1', 'self_reference', 1.0, 'system_generated')
-                """
-                )
+                """)
                 self.logger.info("Test relationship inserted")
             else:
                 self.logger.info("Test relationship already exists")

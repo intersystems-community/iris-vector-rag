@@ -48,8 +48,7 @@ class TestUnauthenticatedRequests:
         Validates FR-010: Reject unauthenticated requests with 401
         """
         response = client.post(
-            "/api/v1/basic/_search",
-            json={"query": "What is diabetes?"}
+            "/api/v1/basic/_search", json={"query": "What is diabetes?"}
         )
 
         assert response.status_code == 401
@@ -67,8 +66,7 @@ class TestUnauthenticatedRequests:
         Validates FR-010: Clear authentication instructions
         """
         response = client.post(
-            "/api/v1/basic/_search",
-            json={"query": "What is diabetes?"}
+            "/api/v1/basic/_search", json={"query": "What is diabetes?"}
         )
 
         assert response.status_code == 401
@@ -94,7 +92,7 @@ class TestUnauthenticatedRequests:
         response = client.post(
             "/api/v1/basic/_search",
             headers={"Authorization": "Bearer some_token"},
-            json={"query": "What is diabetes?"}
+            json={"query": "What is diabetes?"},
         )
 
         assert response.status_code == 401
@@ -103,7 +101,7 @@ class TestUnauthenticatedRequests:
         response = client.post(
             "/api/v1/basic/_search",
             headers={"Authorization": "ApiKey not_valid_base64!!!"},
-            json={"query": "What is diabetes?"}
+            json={"query": "What is diabetes?"},
         )
 
         assert response.status_code == 401
@@ -127,7 +125,7 @@ class TestUnauthenticatedRequests:
         response = client.post(
             "/api/v1/basic/_search",
             headers={"Authorization": f"ApiKey {fake_credentials}"},
-            json={"query": "What is diabetes?"}
+            json={"query": "What is diabetes?"},
         )
 
         assert response.status_code == 401
@@ -144,21 +142,21 @@ class TestUnauthenticatedRequests:
         caplog.set_level(logging.WARNING)
 
         response = client.post(
-            "/api/v1/basic/_search",
-            json={"query": "What is diabetes?"}
+            "/api/v1/basic/_search", json={"query": "What is diabetes?"}
         )
 
         assert response.status_code == 401
 
         # Check that failure was logged
         auth_failure_logged = any(
-            "authentication" in record.message.lower() or
-            "unauthorized" in record.message.lower()
+            "authentication" in record.message.lower()
+            or "unauthorized" in record.message.lower()
             for record in caplog.records
         )
 
-        assert auth_failure_logged, \
-            "Authentication failure should be logged for security monitoring"
+        assert (
+            auth_failure_logged
+        ), "Authentication failure should be logged for security monitoring"
 
     def test_all_endpoints_require_authentication(self, client):
         """
@@ -185,8 +183,9 @@ class TestUnauthenticatedRequests:
 
             # All should return 401 (except health endpoint)
             if endpoint != "/api/v1/health":
-                assert response.status_code == 401, \
-                    f"Endpoint {endpoint} should require authentication"
+                assert (
+                    response.status_code == 401
+                ), f"Endpoint {endpoint} should require authentication"
 
     def test_expired_api_key_returns_401(self, client):
         """

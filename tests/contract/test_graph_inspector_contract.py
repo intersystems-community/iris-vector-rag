@@ -22,9 +22,9 @@ class TestGraphInspectorContract:
 
     def test_graph_inspector_exists(self):
         """CA-SETUP: Verify script file exists at expected location."""
-        assert self.SCRIPT_PATH.exists(), (
-            f"Graph inspector script not found at {self.SCRIPT_PATH}"
-        )
+        assert (
+            self.SCRIPT_PATH.exists()
+        ), f"Graph inspector script not found at {self.SCRIPT_PATH}"
         assert self.SCRIPT_PATH.is_file()
 
     def test_graph_inspector_executable(self):
@@ -37,8 +37,7 @@ class TestGraphInspectorContract:
         )
         # Script should run (exit code 0, 1, 2, or 3 are all valid)
         assert result.returncode in [0, 1, 2, 3], (
-            f"Unexpected exit code {result.returncode}. "
-            f"Stderr: {result.stderr}"
+            f"Unexpected exit code {result.returncode}. " f"Stderr: {result.stderr}"
         )
 
     def test_graph_inspector_output_format(self):
@@ -97,9 +96,9 @@ class TestGraphInspectorContract:
         # If all tables exist but all counts are 0, exit code MUST be 1
         if all(output["tables_exist"].values()):
             if all(count == 0 for count in output["counts"].values()):
-                assert result.returncode == 1, (
-                    "Empty graph (all counts == 0) should return exit code 1"
-                )
+                assert (
+                    result.returncode == 1
+                ), "Empty graph (all counts == 0) should return exit code 1"
                 assert output["diagnosis"]["severity"] == "error"
                 assert "empty" in output["diagnosis"]["message"].lower()
 
@@ -116,13 +115,13 @@ class TestGraphInspectorContract:
 
         # Exit code 3 means the script couldn't connect/import — skip assertion
         if result.returncode == 3:
-            pytest.skip("Script returned exit 3 (import/connection error) — cannot test schema detection")
+            pytest.skip(
+                "Script returned exit 3 (import/connection error) — cannot test schema detection"
+            )
 
         # If any table is missing, exit code MUST be 2
         if not all(output["tables_exist"].values()):
-            assert result.returncode == 2, (
-                "Missing tables should return exit code 2"
-            )
+            assert result.returncode == 2, "Missing tables should return exit code 2"
             assert output["diagnosis"]["severity"] == "critical"
             assert "schema" in output["diagnosis"]["message"].lower()
 
@@ -139,9 +138,9 @@ class TestGraphInspectorContract:
         sample_entities = output["sample_entities"]
 
         assert isinstance(sample_entities, list)
-        assert len(sample_entities) <= 5, (
-            f"sample_entities should contain at most 5 items, got {len(sample_entities)}"
-        )
+        assert (
+            len(sample_entities) <= 5
+        ), f"sample_entities should contain at most 5 items, got {len(sample_entities)}"
 
     def test_graph_inspector_document_link_consistency(self):
         """CA-6: Verify linked + orphaned == total_entities."""
@@ -156,12 +155,12 @@ class TestGraphInspectorContract:
         doc_links = output["document_links"]
         counts = output["counts"]
 
-        assert doc_links["linked"] + doc_links["orphaned"] == doc_links["total_entities"], (
-            "linked + orphaned must equal total_entities"
-        )
-        assert doc_links["total_entities"] == counts["entities"], (
-            "total_entities must equal entity count"
-        )
+        assert (
+            doc_links["linked"] + doc_links["orphaned"] == doc_links["total_entities"]
+        ), "linked + orphaned must equal total_entities"
+        assert (
+            doc_links["total_entities"] == counts["entities"]
+        ), "total_entities must equal entity count"
 
     def test_graph_inspector_completeness_score_bounds(self):
         """CA-7: Verify completeness score is between 0.0 and 1.0."""
@@ -175,9 +174,9 @@ class TestGraphInspectorContract:
         output = json.loads(result.stdout)
         completeness_score = output["data_quality"]["completeness_score"]
 
-        assert 0.0 <= completeness_score <= 1.0, (
-            f"Completeness score must be 0.0-1.0, got {completeness_score}"
-        )
+        assert (
+            0.0 <= completeness_score <= 1.0
+        ), f"Completeness score must be 0.0-1.0, got {completeness_score}"
 
     def test_graph_inspector_suggestions_on_error(self):
         """CA-8: Verify suggestions provided when exit code != 0."""
@@ -193,12 +192,12 @@ class TestGraphInspectorContract:
         # If exit code is 1 (empty graph), must have at least 2 suggestions
         if result.returncode == 1:
             suggestions = output["diagnosis"]["suggestions"]
-            assert len(suggestions) >= 2, (
-                "Empty graph should provide at least 2 actionable suggestions"
-            )
-            assert any("extract" in s.lower() for s in suggestions), (
-                "Suggestions should mention entity extraction"
-            )
+            assert (
+                len(suggestions) >= 2
+            ), "Empty graph should provide at least 2 actionable suggestions"
+            assert any(
+                "extract" in s.lower() for s in suggestions
+            ), "Suggestions should mention entity extraction"
 
     def test_graph_inspector_connection_error_handling(self):
         """CA-10: Verify exit code 3 on database connection error."""
@@ -214,6 +213,6 @@ class TestGraphInspectorContract:
             output = json.loads(result.stdout)
             assert output["diagnosis"]["severity"] == "critical"
             suggestions = output["diagnosis"]["suggestions"]
-            assert len(suggestions) >= 1, (
-                "Connection/import error should provide troubleshooting suggestions"
-            )
+            assert (
+                len(suggestions) >= 1
+            ), "Connection/import error should provide troubleshooting suggestions"

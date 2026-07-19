@@ -16,8 +16,9 @@ class TestBatchExtractionContract:
         """Validate extract_batch() method exists on EntityExtractionService."""
         from iris_vector_rag.services.entity_extraction import EntityExtractionService
 
-        assert hasattr(EntityExtractionService, 'extract_batch'), \
-            "EntityExtractionService must have extract_batch() method"
+        assert hasattr(
+            EntityExtractionService, "extract_batch"
+        ), "EntityExtractionService must have extract_batch() method"
 
     def test_extract_batch_signature(self):
         """Validate extract_batch() has correct signature."""
@@ -28,13 +29,16 @@ class TestBatchExtractionContract:
         params = sig.parameters
 
         # Validate required parameters
-        assert 'self' in params, "extract_batch must be an instance method"
-        assert 'documents' in params, "extract_batch must accept 'documents' parameter"
+        assert "self" in params, "extract_batch must be an instance method"
+        assert "documents" in params, "extract_batch must accept 'documents' parameter"
 
         # Validate optional parameters with defaults
-        assert 'token_budget' in params, "extract_batch must accept 'token_budget' parameter"
-        assert params['token_budget'].default == 8192, \
-            "token_budget default must be 8192 per FR-006"
+        assert (
+            "token_budget" in params
+        ), "extract_batch must accept 'token_budget' parameter"
+        assert (
+            params["token_budget"].default == 8192
+        ), "token_budget default must be 8192 per FR-006"
 
     def test_extract_batch_returns_batch_result(self):
         """Validate extract_batch() returns BatchExtractionResult type."""
@@ -48,17 +52,21 @@ class TestBatchExtractionContract:
         service = EntityExtractionService(config_manager, connection_manager)
 
         # Create test document
-        test_doc = Document(id="test1", page_content="Test document for entity extraction.")
+        test_doc = Document(
+            id="test1", page_content="Test document for entity extraction."
+        )
 
         # Call extract_batch
         result = service.extract_batch([test_doc])
 
         # Validate return type
-        assert isinstance(result, BatchExtractionResult), \
-            "extract_batch must return BatchExtractionResult instance"
+        assert isinstance(
+            result, BatchExtractionResult
+        ), "extract_batch must return BatchExtractionResult instance"
         assert result.batch_id is not None, "BatchExtractionResult must have batch_id"
-        assert result.per_document_entities is not None, \
-            "BatchExtractionResult must have per_document_entities"
+        assert (
+            result.per_document_entities is not None
+        ), "BatchExtractionResult must have per_document_entities"
 
     def test_extract_batch_empty_documents_raises_error(self):
         """Validate extract_batch() raises ValueError on empty documents list."""
@@ -107,18 +115,19 @@ class TestBatchExtractionContract:
 
         # Required fields from data-model.md
         required_fields = [
-            'batch_id',
-            'per_document_entities',
-            'per_document_relationships',
-            'processing_time',
-            'success_status',
-            'retry_count',
-            'error_message'
+            "batch_id",
+            "per_document_entities",
+            "per_document_relationships",
+            "processing_time",
+            "success_status",
+            "retry_count",
+            "error_message",
         ]
 
         for field in required_fields:
-            assert field in params, \
-                f"BatchExtractionResult must have '{field}' field per data model"
+            assert (
+                field in params
+            ), f"BatchExtractionResult must have '{field}' field per data model"
 
     def test_batch_extraction_result_helper_methods(self):
         """Validate BatchExtractionResult has required helper methods."""
@@ -126,11 +135,12 @@ class TestBatchExtractionContract:
 
         # Required methods from data-model.md
         required_methods = [
-            'get_all_entities',
-            'get_all_relationships',
-            'get_entity_count_by_document'
+            "get_all_entities",
+            "get_all_relationships",
+            "get_entity_count_by_document",
         ]
 
         for method in required_methods:
-            assert hasattr(BatchExtractionResult, method), \
-                f"BatchExtractionResult must have '{method}' method per data model"
+            assert hasattr(
+                BatchExtractionResult, method
+            ), f"BatchExtractionResult must have '{method}' method per data model"

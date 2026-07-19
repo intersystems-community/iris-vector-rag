@@ -118,7 +118,9 @@ class TestBasicRerankPipelineDocumentLoading:
         rerank_pipeline.load_documents(documents=sample_documents)
 
         # Verify documents can be queried
-        result = rerank_pipeline.query("Python programming", top_k=2, generate_answer=False)
+        result = rerank_pipeline.query(
+            "Python programming", top_k=2, generate_answer=False
+        )
         assert result is not None
         assert "contexts" in result
         assert len(result["contexts"]) <= 2
@@ -146,7 +148,9 @@ class TestBasicRerankPipelineDocumentLoading:
         ]
 
         rerank_pipeline.load_documents(documents=docs)
-        result = rerank_pipeline.query("testing frameworks", top_k=1, generate_answer=False)
+        result = rerank_pipeline.query(
+            "testing frameworks", top_k=1, generate_answer=False
+        )
         assert result is not None
 
 
@@ -172,7 +176,9 @@ class TestBasicRerankPipelineQuerying:
     def test_query_with_various_top_k(self, rerank_pipeline):
         """Test queries with different top_k values."""
         for k in [1, 2, 3, 5]:
-            result = rerank_pipeline.query("machine learning", top_k=k, generate_answer=False)
+            result = rerank_pipeline.query(
+                "machine learning", top_k=k, generate_answer=False
+            )
 
             assert len(result["contexts"]) <= k
             # Should have metadata about reranking
@@ -195,7 +201,9 @@ class TestBasicRerankPipelineQuerying:
 
     def test_reranking_metadata(self, rerank_pipeline):
         """Test that reranking metadata is included in results."""
-        result = rerank_pipeline.query("Python libraries", top_k=3, generate_answer=False)
+        result = rerank_pipeline.query(
+            "Python libraries", top_k=3, generate_answer=False
+        )
 
         assert "metadata" in result
         metadata = result["metadata"]
@@ -266,7 +274,9 @@ class TestBasicRerankPipelineRerankingBehavior:
         contexts = result["contexts"]
         assert len(contexts) > 0
         # Check that Python is mentioned in top results
-        python_mentions = sum(1 for ctx in contexts if "Python" in ctx or "python" in ctx.lower())
+        python_mentions = sum(
+            1 for ctx in contexts if "Python" in ctx or "python" in ctx.lower()
+        )
         assert python_mentions > 0
 
     def test_reranking_with_multiple_candidates(self, rerank_pipeline):
@@ -289,7 +299,9 @@ class TestBasicRerankPipelineRerankingBehavior:
 class TestBasicRerankPipelineWithoutReranker:
     """Test pipeline behavior when reranker is not available."""
 
-    def test_pipeline_without_reranker_function(self, pipeline_dependencies, sample_documents):
+    def test_pipeline_without_reranker_function(
+        self, pipeline_dependencies, sample_documents
+    ):
         """Test pipeline when reranker function is None."""
         # Create pipeline without reranker
         pipeline = BasicRAGRerankingPipeline(
@@ -318,13 +330,16 @@ class TestBasicRerankPipelineErrorHandling:
         """Test query with invalid top_k value."""
         # New API validates and raises ValueError
         import pytest
+
         with pytest.raises(ValueError, match="top_k parameter out of valid range"):
             rerank_pipeline.query("test", top_k=0, generate_answer=False)
 
     def test_query_on_empty_database(self, rerank_pipeline):
         """Test query when no documents are loaded."""
         # Query without loading documents first
-        result = rerank_pipeline.query("nonexistent topic", top_k=3, generate_answer=False)
+        result = rerank_pipeline.query(
+            "nonexistent topic", top_k=3, generate_answer=False
+        )
 
         # Should return empty or minimal results
         assert result is not None
@@ -406,7 +421,9 @@ class TestBasicRerankPipelinePerformance:
 
         result = rerank_pipeline.query("test", top_k=3, generate_answer=False)
 
-        assert "execution_time" in result or "processing_time" in result.get("metadata", {})
+        assert "execution_time" in result or "processing_time" in result.get(
+            "metadata", {}
+        )
 
     def test_reranking_with_large_candidate_pool(self, rerank_pipeline):
         """Test reranking with large candidate pool."""
@@ -420,7 +437,9 @@ class TestBasicRerankPipelinePerformance:
         ]
         rerank_pipeline.load_documents(documents=docs)
 
-        result = rerank_pipeline.query("performance test", top_k=10, generate_answer=False)
+        result = rerank_pipeline.query(
+            "performance test", top_k=10, generate_answer=False
+        )
 
         assert len(result["contexts"]) <= 10
         assert "execution_time" in result
@@ -438,7 +457,9 @@ class TestBasicRerankPipelineCustomReranker:
             for doc in docs:
                 # Simple keyword matching score
                 score = sum(
-                    1.0 for word in query.lower().split() if word in doc.page_content.lower()
+                    1.0
+                    for word in query.lower().split()
+                    if word in doc.page_content.lower()
                 )
                 scores.append(score)
             return [(doc, score) for doc, score in zip(docs, scores)]
@@ -453,7 +474,9 @@ class TestBasicRerankPipelineCustomReranker:
 
         pipeline.load_documents(documents=sample_documents)
 
-        result = pipeline.query("Python machine learning", top_k=3, generate_answer=False)
+        result = pipeline.query(
+            "Python machine learning", top_k=3, generate_answer=False
+        )
 
         assert len(result["contexts"]) <= 3
         assert result["metadata"]["reranked"] is True

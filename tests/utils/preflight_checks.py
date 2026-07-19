@@ -47,7 +47,9 @@ class PreflightChecker:
         start = time.time()
 
         try:
-            from iris_vector_rag.common.iris_connection_manager import get_iris_connection
+            from iris_vector_rag.common.iris_connection_manager import (
+                get_iris_connection,
+            )
 
             conn = get_iris_connection()
             cursor = conn.cursor()
@@ -76,13 +78,21 @@ class PreflightChecker:
             duration_ms = int((time.time() - start) * 1000)
 
             # Check if this is a password change issue
-            if "Password change required" in str(e) or "password change required" in str(e).lower():
+            if (
+                "Password change required" in str(e)
+                or "password change required" in str(e).lower()
+            ):
                 try:
-                    from tests.utils.iris_password_reset import reset_iris_password_if_needed
+                    from tests.utils.iris_password_reset import (
+                        reset_iris_password_if_needed,
+                    )
 
                     if reset_iris_password_if_needed(e):
                         # Retry connection after password reset
-                        from iris_vector_rag.common.iris_connection_manager import get_iris_connection
+                        from iris_vector_rag.common.iris_connection_manager import (
+                            get_iris_connection,
+                        )
+
                         conn = get_iris_connection()
                         cursor = conn.cursor()
                         cursor.execute("SELECT 1")
@@ -155,7 +165,9 @@ class PreflightChecker:
         start = time.time()
 
         try:
-            from iris_vector_rag.common.iris_connection_manager import get_iris_connection
+            from iris_vector_rag.common.iris_connection_manager import (
+                get_iris_connection,
+            )
 
             conn = get_iris_connection()
             cursor = conn.cursor()
@@ -217,7 +229,9 @@ class PreflightChecker:
 
         # Log performance validation
         if total_duration >= 2.0:
-            print(f"WARNING: Pre-flight checks took {total_duration:.2f}s, exceeds 2s target (NFR-003)")
+            print(
+                f"WARNING: Pre-flight checks took {total_duration:.2f}s, exceeds 2s target (NFR-003)"
+            )
 
         return results
 
@@ -232,7 +246,9 @@ class PreflightChecker:
 
         for result in results:
             status = "✓" if result.passed else "✗"
-            print(f"{status} {result.check_name}: {result.message} ({result.duration_ms}ms)")
+            print(
+                f"{status} {result.check_name}: {result.message} ({result.duration_ms}ms)"
+            )
 
             if result.remediation:
                 print(f"  → Remediation: {result.remediation}")

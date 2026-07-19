@@ -10,7 +10,9 @@ import logging
 import pytest
 
 from iris_vector_rag.core.models import Document
-from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
+    PyLateColBERTPipeline,
+)
 from iris_vector_rag.config.manager import ConfigurationManager
 from iris_vector_rag.core.connection import ConnectionManager
 from iris_vector_rag.common.utils import get_llm_func
@@ -38,7 +40,7 @@ def pipeline_dependencies():
         "config_manager": config_manager,
         "connection_manager": connection_manager,
         "llm_func": llm_func,
-        "vector_store": vector_store
+        "vector_store": vector_store,
     }
 
 
@@ -50,61 +52,61 @@ def sample_biomedical_documents():
             page_content="Diabetes mellitus is a chronic metabolic disorder characterized by elevated blood glucose levels. "
             "Type 1 diabetes results from autoimmune destruction of pancreatic beta cells, while Type 2 diabetes "
             "involves insulin resistance and relative insulin deficiency.",
-            metadata={"source": "diabetes.txt", "doc_id": "dm_001"}
+            metadata={"source": "diabetes.txt", "doc_id": "dm_001"},
         ),
         Document(
             page_content="Hypertension, or high blood pressure, is a major risk factor for cardiovascular disease. "
             "It is defined as systolic blood pressure ≥140 mmHg or diastolic blood pressure ≥90 mmHg. "
             "Treatment includes lifestyle modifications and antihypertensive medications.",
-            metadata={"source": "hypertension.txt", "doc_id": "htn_001"}
+            metadata={"source": "hypertension.txt", "doc_id": "htn_001"},
         ),
         Document(
             page_content="Alzheimer's disease is a progressive neurodegenerative disorder and the most common cause of dementia. "
             "It is characterized by accumulation of amyloid-beta plaques and neurofibrillary tangles in the brain. "
             "Symptoms include memory loss, cognitive decline, and behavioral changes.",
-            metadata={"source": "alzheimers.txt", "doc_id": "ad_001"}
+            metadata={"source": "alzheimers.txt", "doc_id": "ad_001"},
         ),
         Document(
             page_content="COVID-19 is an infectious disease caused by SARS-CoV-2 coronavirus. "
             "Common symptoms include fever, cough, and shortness of breath. "
             "Severe cases can lead to acute respiratory distress syndrome and multi-organ failure.",
-            metadata={"source": "covid19.txt", "doc_id": "covid_001"}
+            metadata={"source": "covid19.txt", "doc_id": "covid_001"},
         ),
         Document(
             page_content="Cancer immunotherapy harnesses the immune system to fight cancer. "
             "Checkpoint inhibitors like PD-1 and CTLA-4 antibodies block immune checkpoint proteins, "
             "enabling T cells to recognize and destroy tumor cells more effectively.",
-            metadata={"source": "immunotherapy.txt", "doc_id": "immuno_001"}
+            metadata={"source": "immunotherapy.txt", "doc_id": "immuno_001"},
         ),
         Document(
             page_content="CRISPR-Cas9 is a revolutionary gene-editing technology that allows precise modification of DNA sequences. "
             "It uses a guide RNA to direct the Cas9 enzyme to specific genomic locations for targeted editing. "
             "Applications include treating genetic disorders and developing disease-resistant crops.",
-            metadata={"source": "crispr.txt", "doc_id": "crispr_001"}
+            metadata={"source": "crispr.txt", "doc_id": "crispr_001"},
         ),
         Document(
             page_content="Heart failure is a clinical syndrome where the heart cannot pump sufficient blood to meet the body's needs. "
             "Common causes include coronary artery disease, hypertension, and cardiomyopathy. "
             "Management includes ACE inhibitors, beta-blockers, diuretics, and lifestyle changes.",
-            metadata={"source": "heart_failure.txt", "doc_id": "hf_001"}
+            metadata={"source": "heart_failure.txt", "doc_id": "hf_001"},
         ),
         Document(
             page_content="Parkinson's disease is a progressive movement disorder caused by degeneration of dopaminergic neurons "
             "in the substantia nigra. Key symptoms include tremor, rigidity, bradykinesia, and postural instability. "
             "Treatment focuses on dopamine replacement therapy with levodopa and dopamine agonists.",
-            metadata={"source": "parkinsons.txt", "doc_id": "pd_001"}
+            metadata={"source": "parkinsons.txt", "doc_id": "pd_001"},
         ),
         Document(
             page_content="Asthma is a chronic inflammatory airway disease characterized by reversible airflow obstruction. "
             "Triggers include allergens, exercise, cold air, and respiratory infections. "
             "Treatment involves inhaled corticosteroids and bronchodilators for symptom control.",
-            metadata={"source": "asthma.txt", "doc_id": "asthma_001"}
+            metadata={"source": "asthma.txt", "doc_id": "asthma_001"},
         ),
         Document(
             page_content="Antibiotic resistance is a growing global health threat where bacteria evolve mechanisms to resist antimicrobial drugs. "
             "Key resistance mechanisms include enzymatic degradation, efflux pumps, and target site modifications. "
             "Strategies to combat resistance include antibiotic stewardship and development of novel antibiotics.",
-            metadata={"source": "antibiotic_resistance.txt", "doc_id": "abr_001"}
+            metadata={"source": "antibiotic_resistance.txt", "doc_id": "abr_001"},
         ),
     ]
 
@@ -119,7 +121,7 @@ class TestPyLateColBERTPipelineE2E:
             connection_manager=pipeline_dependencies["connection_manager"],
             config_manager=pipeline_dependencies["config_manager"],
             llm_func=pipeline_dependencies["llm_func"],
-            vector_store=pipeline_dependencies["vector_store"]
+            vector_store=pipeline_dependencies["vector_store"],
         )
 
     def test_pipeline_creation_fallback_mode(self, pipeline_dependencies):
@@ -129,7 +131,7 @@ class TestPyLateColBERTPipelineE2E:
                 connection_manager=pipeline_dependencies["connection_manager"],
                 config_manager=pipeline_dependencies["config_manager"],
                 llm_func=pipeline_dependencies["llm_func"],
-                vector_store=pipeline_dependencies["vector_store"]
+                vector_store=pipeline_dependencies["vector_store"],
             )
 
             assert pipeline is not None
@@ -142,13 +144,15 @@ class TestPyLateColBERTPipelineE2E:
         except Exception as e:
             pytest.fail(f"Failed to create PyLate pipeline: {e}")
 
-    def test_document_loading_e2e(self, pipeline_dependencies, sample_biomedical_documents):
+    def test_document_loading_e2e(
+        self, pipeline_dependencies, sample_biomedical_documents
+    ):
         """Test loading documents into PyLate pipeline (E2E with real vector store)."""
         pipeline = PyLateColBERTPipeline(
             connection_manager=pipeline_dependencies["connection_manager"],
             config_manager=pipeline_dependencies["config_manager"],
             llm_func=pipeline_dependencies["llm_func"],
-            vector_store=pipeline_dependencies["vector_store"]
+            vector_store=pipeline_dependencies["vector_store"],
         )
 
         result = pipeline.load_documents(sample_biomedical_documents)
@@ -159,9 +163,13 @@ class TestPyLateColBERTPipelineE2E:
         assert result["documents_loaded"] == 10
         assert pipeline.stats["documents_indexed"] == 10
 
-        logger.info(f"✓ Loaded {pipeline.stats['documents_indexed']} documents successfully")
+        logger.info(
+            f"✓ Loaded {pipeline.stats['documents_indexed']} documents successfully"
+        )
 
-    def test_query_execution_e2e(self, pipeline_dependencies, sample_biomedical_documents):
+    def test_query_execution_e2e(
+        self, pipeline_dependencies, sample_biomedical_documents
+    ):
         """Test query execution with real document retrieval (E2E)."""
         pipeline = self.create_test_pipeline(pipeline_dependencies)
 
@@ -169,10 +177,7 @@ class TestPyLateColBERTPipelineE2E:
         pipeline.load_documents(sample_biomedical_documents)
 
         # Execute query
-        result = pipeline.query(
-            "What are the symptoms of diabetes?",
-            top_k=3
-        )
+        result = pipeline.query("What are the symptoms of diabetes?", top_k=3)
 
         # Verify response structure
         assert "query" in result
@@ -190,9 +195,13 @@ class TestPyLateColBERTPipelineE2E:
         assert result["metadata"]["reranked"] is False  # Fallback mode
         assert result["metadata"]["num_retrieved"] == len(result["retrieved_documents"])
 
-        logger.info(f"✓ Query executed: {result['metadata']['num_retrieved']} docs retrieved")
+        logger.info(
+            f"✓ Query executed: {result['metadata']['num_retrieved']} docs retrieved"
+        )
 
-    def test_multiple_queries_e2e(self, pipeline_dependencies, sample_biomedical_documents):
+    def test_multiple_queries_e2e(
+        self, pipeline_dependencies, sample_biomedical_documents
+    ):
         """Test executing multiple queries on same loaded documents (E2E)."""
         pipeline = self.create_test_pipeline(pipeline_dependencies)
 
@@ -214,7 +223,9 @@ class TestPyLateColBERTPipelineE2E:
             # Verify stats tracking
             assert pipeline.stats["queries_processed"] == i
 
-            logger.info(f"✓ Query {i}: {result['metadata']['num_retrieved']} docs retrieved")
+            logger.info(
+                f"✓ Query {i}: {result['metadata']['num_retrieved']} docs retrieved"
+            )
 
     def test_pipeline_info_e2e(self, pipeline_dependencies):
         """Test getting pipeline information (E2E)."""
@@ -235,7 +246,9 @@ class TestPyLateColBERTPipelineE2E:
 
         logger.info("✓ Pipeline info retrieved successfully")
 
-    def test_query_with_custom_parameters_e2e(self, pipeline_dependencies, sample_biomedical_documents):
+    def test_query_with_custom_parameters_e2e(
+        self, pipeline_dependencies, sample_biomedical_documents
+    ):
         """Test query with custom parameters (E2E)."""
         pipeline = self.create_test_pipeline(pipeline_dependencies)
 
@@ -250,9 +263,7 @@ class TestPyLateColBERTPipelineE2E:
 
         # Test with include_sources=False
         result_no_sources = pipeline.query(
-            "What is COVID-19?",
-            top_k=2,
-            include_sources=False
+            "What is COVID-19?", top_k=2, include_sources=False
         )
         assert "sources" not in result_no_sources
 
@@ -277,7 +288,9 @@ class TestPyLateColBERTPipelineE2E:
 
         logger.info("✓ Empty query handled gracefully")
 
-    def test_stats_tracking_e2e(self, pipeline_dependencies, sample_biomedical_documents):
+    def test_stats_tracking_e2e(
+        self, pipeline_dependencies, sample_biomedical_documents
+    ):
         """Test statistics tracking across operations (E2E)."""
         pipeline = self.create_test_pipeline(pipeline_dependencies)
 
@@ -300,7 +313,9 @@ class TestPyLateColBERTPipelineE2E:
 
         logger.info("✓ Stats tracking verified")
 
-    def test_document_metadata_preservation_e2e(self, pipeline_dependencies, sample_biomedical_documents):
+    def test_document_metadata_preservation_e2e(
+        self, pipeline_dependencies, sample_biomedical_documents
+    ):
         """Test that document metadata is preserved through pipeline (E2E)."""
         pipeline = self.create_test_pipeline(pipeline_dependencies)
 
@@ -317,11 +332,15 @@ class TestPyLateColBERTPipelineE2E:
                 found_metadata_docs += 1
 
         # At least one document should have preserved metadata from our sample docs
-        assert found_metadata_docs > 0, "Expected at least one document with preserved metadata fields"
+        assert (
+            found_metadata_docs > 0
+        ), "Expected at least one document with preserved metadata fields"
 
         logger.info("✓ Document metadata preserved")
 
-    def test_contexts_match_documents_e2e(self, pipeline_dependencies, sample_biomedical_documents):
+    def test_contexts_match_documents_e2e(
+        self, pipeline_dependencies, sample_biomedical_documents
+    ):
         """Test that contexts field matches retrieved documents (E2E)."""
         pipeline = self.create_test_pipeline(pipeline_dependencies)
 
@@ -331,8 +350,12 @@ class TestPyLateColBERTPipelineE2E:
 
         assert len(result["contexts"]) == len(result["retrieved_documents"])
 
-        for i, (context, doc) in enumerate(zip(result["contexts"], result["retrieved_documents"])):
-            assert context == doc.page_content, f"Context {i} doesn't match document {i}"
+        for i, (context, doc) in enumerate(
+            zip(result["contexts"], result["retrieved_documents"])
+        ):
+            assert (
+                context == doc.page_content
+            ), f"Context {i} doesn't match document {i}"
 
         logger.info("✓ Contexts match documents")
 

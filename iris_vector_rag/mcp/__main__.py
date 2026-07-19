@@ -38,8 +38,8 @@ async def start_python_bridge():
 
 def start_nodejs_server():
     """Spawn Node.js MCP server as subprocess."""
-    nodejs_dir = Path(__file__).parent.parent.parent / 'nodejs'
-    cli_path = nodejs_dir / 'dist' / 'mcp' / 'cli.js'
+    nodejs_dir = Path(__file__).parent.parent.parent / "nodejs"
+    cli_path = nodejs_dir / "dist" / "mcp" / "cli.js"
 
     if not cli_path.exists():
         print(f"Error: Node.js CLI not found at {cli_path}")
@@ -49,7 +49,7 @@ def start_nodejs_server():
     print(f"Starting Node.js MCP Server from {cli_path}")
 
     try:
-        subprocess.run(['node', str(cli_path)], check=True)
+        subprocess.run(["node", str(cli_path)], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Node.js server exited with error: {e}")
         sys.exit(1)
@@ -63,15 +63,15 @@ def main():
     print("IRIS RAG MCP Server - Standalone Mode")
     print("=" * 60)
 
-    mode = os.getenv('MCP_SERVER_MODE', 'nodejs')
+    mode = os.getenv("MCP_SERVER_MODE", "nodejs")
 
-    if mode == 'python':
+    if mode == "python":
         # Start Python bridge only
         asyncio.run(start_python_bridge())
-    elif mode == 'nodejs':
+    elif mode == "nodejs":
         # Start Node.js server (which will connect to Python bridge)
         start_nodejs_server()
-    elif mode == 'both':
+    elif mode == "both":
         # Start both (Python bridge in background, Node.js in foreground)
         print("Starting in dual mode...")
         # Would use multiprocessing here
@@ -81,5 +81,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -11,7 +11,6 @@ Contract Reference: specs/047-create-a-unified/contracts/embedding_generator_con
 import pytest
 import numpy as np
 
-
 # ==============================================================================
 # FIXTURES
 # ==============================================================================
@@ -25,10 +24,13 @@ def embedding_generator():
 
     mocked_keys = [k for k in sys.modules if k.startswith("sentence_transformers")]
     for k in mocked_keys:
-        if hasattr(sys.modules[k], "_mock_name") or hasattr(sys.modules[k], "assert_called"):
+        if hasattr(sys.modules[k], "_mock_name") or hasattr(
+            sys.modules[k], "assert_called"
+        ):
             del sys.modules[k]
 
     import tests.fixtures.embedding_generator as eg_module
+
     eg_module._MODEL_CACHE.clear()
     importlib.reload(eg_module)
 
@@ -180,12 +182,16 @@ class TestPopulateTableEmbeddings:
     @pytest.fixture(autouse=True)
     def _require_iris(self):
         import iris
+
         try:
             import os
+
             conn = iris.connect(
                 os.environ.get("IRIS_HOST", "localhost"),
                 int(os.environ.get("IRIS_PORT", "31972")),
-                "USER", "_SYSTEM", os.environ.get("IRIS_PASSWORD", "SYS")
+                "USER",
+                "_SYSTEM",
+                os.environ.get("IRIS_PASSWORD", "SYS"),
             )
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
@@ -200,15 +206,25 @@ class TestPopulateTableEmbeddings:
         conn = iris.connect(
             os.environ.get("IRIS_HOST", "localhost"),
             int(os.environ.get("IRIS_PORT", "31972")),
-            "USER", "_SYSTEM", os.environ.get("IRIS_PASSWORD", "SYS")
+            "USER",
+            "_SYSTEM",
+            os.environ.get("IRIS_PASSWORD", "SYS"),
         )
         cursor = conn.cursor()
         try:
-            cursor.execute("CREATE TABLE IF NOT EXISTS RAG.TestEmbeddings (id INT PRIMARY KEY, content VARCHAR(500), embedding VECTOR(FLOAT, 384))")
+            cursor.execute(
+                "CREATE TABLE IF NOT EXISTS RAG.TestEmbeddings (id INT PRIMARY KEY, content VARCHAR(500), embedding VECTOR(FLOAT, 384))"
+            )
             cursor.execute("DELETE FROM RAG.TestEmbeddings")
-            cursor.execute("INSERT INTO RAG.TestEmbeddings (id, content) VALUES (1, 'Hello world')")
-            cursor.execute("INSERT INTO RAG.TestEmbeddings (id, content) VALUES (2, 'Test document')")
-            cursor.execute("INSERT INTO RAG.TestEmbeddings (id, content) VALUES (3, 'Another doc')")
+            cursor.execute(
+                "INSERT INTO RAG.TestEmbeddings (id, content) VALUES (1, 'Hello world')"
+            )
+            cursor.execute(
+                "INSERT INTO RAG.TestEmbeddings (id, content) VALUES (2, 'Test document')"
+            )
+            cursor.execute(
+                "INSERT INTO RAG.TestEmbeddings (id, content) VALUES (3, 'Another doc')"
+            )
             conn.commit()
 
             count = embedding_generator.populate_table_embeddings(

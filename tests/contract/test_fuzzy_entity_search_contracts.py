@@ -25,7 +25,9 @@ from iris_vector_rag.core.models import Entity
 from iris_vector_rag.services.storage import EntityStorageAdapter
 
 
-def create_test_entity(entity_id: str, entity_name: str, entity_type: str, confidence: float = 0.95) -> Entity:
+def create_test_entity(
+    entity_id: str, entity_name: str, entity_type: str, confidence: float = 0.95
+) -> Entity:
     """
     Helper function to create Entity objects for testing.
 
@@ -42,7 +44,7 @@ def create_test_entity(entity_id: str, entity_name: str, entity_type: str, confi
         start_offset=0,
         end_offset=len(entity_name),
         source_document_id="TEST-DOC-CONTRACT",
-        metadata={}
+        metadata={},
     )
 
 
@@ -139,7 +141,7 @@ class TestSearchEntitiesExact:
                 entity_id="e1",
                 entity_name="Scott Derrickson director",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 
@@ -163,7 +165,7 @@ class TestSearchEntitiesExact:
                 entity_id="e2",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.98
+                confidence=0.98,
             )
         )
 
@@ -190,7 +192,7 @@ class TestSearchEntitiesExact:
                 entity_id="e3",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 
@@ -214,7 +216,7 @@ class TestSearchEntitiesExact:
                 entity_id="e4",
                 entity_name="Test Entity",
                 entity_type="ORGANIZATION",
-                confidence=0.92
+                confidence=0.92,
             )
         )
 
@@ -233,7 +235,9 @@ class TestSearchEntitiesExact:
         assert result["entity_id"] == "e4"
         assert result["entity_type"] == "ORGANIZATION"
         # Use approximate equality for confidence (database may normalize values)
-        assert abs(result["confidence"] - 0.92) < 0.1, f"Expected confidence ≈0.92, got {result['confidence']}"
+        assert (
+            abs(result["confidence"] - 0.92) < 0.1
+        ), f"Expected confidence ≈0.92, got {result['confidence']}"
 
 
 # ============================================================================
@@ -256,7 +260,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e1",
                 entity_name="Scott Derrickson director",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 
@@ -268,7 +272,9 @@ class TestSearchEntitiesFuzzy:
         # Assert
         assert len(results) >= 1, "Fuzzy match should find entity with descriptor"
         assert results[0]["entity_name"] == "Scott Derrickson director"
-        assert "similarity_score" in results[0], "Fuzzy results must have similarity_score"
+        assert (
+            "similarity_score" in results[0]
+        ), "Fuzzy results must have similarity_score"
         assert "edit_distance" in results[0], "Fuzzy results must have edit_distance"
         assert 0.0 <= results[0]["similarity_score"] <= 1.0
 
@@ -283,7 +289,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e1",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -291,7 +297,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e2",
                 entity_name="Scott Derrickson director",
                 entity_type="PERSON",
-                confidence=0.92
+                confidence=0.92,
             )
         )
         entity_storage_adapter.store_entity(
@@ -299,7 +305,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e3",
                 entity_name="director Scott Derrickson filmmaker",
                 entity_type="PERSON",
-                confidence=0.88
+                confidence=0.88,
             )
         )
 
@@ -328,7 +334,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e4",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 
@@ -359,7 +365,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e5",
                 entity_name="color",
                 entity_type="CONCEPT",
-                confidence=0.9
+                confidence=0.9,
             )
         )
         entity_storage_adapter.store_entity(
@@ -367,7 +373,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e6",
                 entity_name="colour",
                 entity_type="CONCEPT",
-                confidence=0.9
+                confidence=0.9,
             )
         )
 
@@ -395,7 +401,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e7",
                 entity_name="test",
                 entity_type="CONCEPT",
-                confidence=0.9
+                confidence=0.9,
             )
         )
         entity_storage_adapter.store_entity(
@@ -403,7 +409,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e8",
                 entity_name="tests",
                 entity_type="CONCEPT",
-                confidence=0.9
+                confidence=0.9,
             )
         )
         entity_storage_adapter.store_entity(
@@ -411,7 +417,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e9",
                 entity_name="testing",
                 entity_type="CONCEPT",
-                confidence=0.9
+                confidence=0.9,
             )
         )
 
@@ -437,7 +443,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e10",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -445,7 +451,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e11",
                 entity_name="Scott Derrickson director filmmaker actor",
                 entity_type="PERSON",
-                confidence=0.85
+                confidence=0.85,
             )
         )
 
@@ -470,7 +476,7 @@ class TestSearchEntitiesFuzzy:
                 entity_id="e12",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 
@@ -504,7 +510,7 @@ class TestSearchEntitiesTypeFilter:
                 entity_id="e1",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -512,7 +518,7 @@ class TestSearchEntitiesTypeFilter:
                 entity_id="e2",
                 entity_name="Scott Derrickson Productions",
                 entity_type="ORGANIZATION",
-                confidence=0.92
+                confidence=0.92,
             )
         )
         entity_storage_adapter.store_entity(
@@ -520,7 +526,7 @@ class TestSearchEntitiesTypeFilter:
                 entity_id="e3",
                 entity_name="Scott Derrickson Studio",
                 entity_type="LOCATION",
-                confidence=0.88
+                confidence=0.88,
             )
         )
 
@@ -553,7 +559,7 @@ class TestSearchEntitiesTypeFilter:
                 entity_id="e4",
                 entity_name="John Smith",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -561,7 +567,7 @@ class TestSearchEntitiesTypeFilter:
                 entity_id="e5",
                 entity_name="John Smith Corp",
                 entity_type="ORGANIZATION",
-                confidence=0.92
+                confidence=0.92,
             )
         )
         entity_storage_adapter.store_entity(
@@ -569,7 +575,7 @@ class TestSearchEntitiesTypeFilter:
                 entity_id="e6",
                 entity_name="John Smith Building",
                 entity_type="LOCATION",
-                confidence=0.88
+                confidence=0.88,
             )
         )
 
@@ -598,7 +604,7 @@ class TestSearchEntitiesTypeFilter:
                 entity_id="e7",
                 entity_name="Universal Entity",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -606,7 +612,7 @@ class TestSearchEntitiesTypeFilter:
                 entity_id="e8",
                 entity_name="Universal Entity Org",
                 entity_type="ORGANIZATION",
-                confidence=0.92
+                confidence=0.92,
             )
         )
 
@@ -641,7 +647,7 @@ class TestSearchEntitiesRanking:
                 entity_id="e1",
                 entity_name="Scott Derrickson director",
                 entity_type="PERSON",
-                confidence=0.92
+                confidence=0.92,
             )
         )
         entity_storage_adapter.store_entity(
@@ -649,7 +655,7 @@ class TestSearchEntitiesRanking:
                 entity_id="e2",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -657,7 +663,7 @@ class TestSearchEntitiesRanking:
                 entity_id="e3",
                 entity_name="Scot Derrickson",
                 entity_type="PERSON",
-                confidence=0.88
+                confidence=0.88,
             )
         )
 
@@ -689,7 +695,7 @@ class TestSearchEntitiesRanking:
                 entity_id="e4",
                 entity_name="test entity",
                 entity_type="CONCEPT",
-                confidence=0.9
+                confidence=0.9,
             )
         )
         entity_storage_adapter.store_entity(
@@ -697,7 +703,7 @@ class TestSearchEntitiesRanking:
                 entity_id="e5",
                 entity_name="test entity with long descriptor",
                 entity_type="CONCEPT",
-                confidence=0.9
+                confidence=0.9,
             )
         )
 
@@ -709,12 +715,8 @@ class TestSearchEntitiesRanking:
         # Assert: Shorter name ranks higher
         assert len(results) >= 2
         # Find the two entities in results
-        entity4_idx = next(
-            i for i, r in enumerate(results) if r["entity_id"] == "e4"
-        )
-        entity5_idx = next(
-            i for i, r in enumerate(results) if r["entity_id"] == "e5"
-        )
+        entity4_idx = next(i for i, r in enumerate(results) if r["entity_id"] == "e4")
+        entity5_idx = next(i for i, r in enumerate(results) if r["entity_id"] == "e5")
         assert entity4_idx < entity5_idx, "Shorter name should rank higher"
 
     def test_max_results_limits_returned_count(self, entity_storage_adapter):
@@ -730,7 +732,7 @@ class TestSearchEntitiesRanking:
                     entity_id=f"e{i}",
                     entity_name=f"Test Entity {i}",
                     entity_type="CONCEPT",
-                    confidence=0.9
+                    confidence=0.9,
                 )
             )
 
@@ -763,7 +765,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e1",
                 entity_name="Test Entity",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 
@@ -785,7 +787,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e2",
                 entity_name="Existing Entity",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 
@@ -807,7 +809,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e3",
                 entity_name="François Truffaut",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -815,7 +817,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e4",
                 entity_name="北京",
                 entity_type="LOCATION",
-                confidence=0.92
+                confidence=0.92,
             )
         )
 
@@ -846,7 +848,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e5",
                 entity_name="Scott Derrickson",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -854,7 +856,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e6",
                 entity_name="Scott Derrickson director",
                 entity_type="PERSON",
-                confidence=0.92
+                confidence=0.92,
             )
         )
 
@@ -881,7 +883,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e7",
                 entity_name="Test",
                 entity_type="CONCEPT",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -889,7 +891,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e8",
                 entity_name="Tests",
                 entity_type="CONCEPT",
-                confidence=0.92
+                confidence=0.92,
             )
         )
 
@@ -913,7 +915,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e9",
                 entity_name="Test Entity",
                 entity_type="CONCEPT",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 
@@ -936,20 +938,12 @@ class TestSearchEntitiesEdgeCases:
         # Arrange: Multiple entities with 'A' character
         entity_storage_adapter.store_entity(
             create_test_entity(
-                entity_id="e10",
-                entity_name="A",
-                entity_type="CONCEPT",
-                confidence=0.9
-        
+                entity_id="e10", entity_name="A", entity_type="CONCEPT", confidence=0.9
             )
         )
         entity_storage_adapter.store_entity(
             create_test_entity(
-                entity_id="e11",
-                entity_name="AB",
-                entity_type="CONCEPT",
-                confidence=0.9
-        
+                entity_id="e11", entity_name="AB", entity_type="CONCEPT", confidence=0.9
             )
         )
         entity_storage_adapter.store_entity(
@@ -957,7 +951,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e12",
                 entity_name="ABC Long Name",
                 entity_type="CONCEPT",
-                confidence=0.9
+                confidence=0.9,
             )
         )
 
@@ -982,7 +976,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e13",
                 entity_name="John Smith",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
         entity_storage_adapter.store_entity(
@@ -990,7 +984,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e14",
                 entity_name="John Smith",
                 entity_type="PERSON",
-                confidence=0.92
+                confidence=0.92,
             )
         )
 
@@ -1017,7 +1011,7 @@ class TestSearchEntitiesEdgeCases:
                 entity_id="e15",
                 entity_name="SCOTT DERRICKSON",
                 entity_type="PERSON",
-                confidence=0.95
+                confidence=0.95,
             )
         )
 

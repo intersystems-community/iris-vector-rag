@@ -77,7 +77,9 @@ class TestBasicRAGPipelineDocumentLoading:
         basic_pipeline.load_documents(documents=sample_documents)
 
         # Verify documents can be queried
-        result = basic_pipeline.query("Python programming", top_k=1, generate_answer=False)
+        result = basic_pipeline.query(
+            "Python programming", top_k=1, generate_answer=False
+        )
         assert result is not None
         assert "contexts" in result
 
@@ -104,13 +106,16 @@ class TestBasicRAGPipelineDocumentLoading:
         basic_pipeline.load_documents(documents=docs)
 
         # Verify document is searchable
-        result = basic_pipeline.query("testing frameworks", top_k=1, generate_answer=False)
+        result = basic_pipeline.query(
+            "testing frameworks", top_k=1, generate_answer=False
+        )
         assert result is not None
 
     def test_load_empty_document_list(self, basic_pipeline):
         """Test loading empty document list."""
         # New API validates and rejects empty lists
         import pytest
+
         with pytest.raises(ValueError, match="Empty documents list"):
             basic_pipeline.load_documents(documents=[])
 
@@ -147,13 +152,17 @@ class TestBasicRAGPipelineQuerying:
     def test_query_with_top_k_variation(self, basic_pipeline):
         """Test queries with different top_k values."""
         for k in [1, 3, 5]:
-            result = basic_pipeline.query("What is machine learning?", top_k=k, generate_answer=False)
+            result = basic_pipeline.query(
+                "What is machine learning?", top_k=k, generate_answer=False
+            )
 
             assert len(result["contexts"]) <= k
 
     def test_query_without_answer_generation(self, basic_pipeline):
         """Test query without LLM answer generation."""
-        result = basic_pipeline.query("What is deep learning?", top_k=3, generate_answer=False)
+        result = basic_pipeline.query(
+            "What is deep learning?", top_k=3, generate_answer=False
+        )
 
         assert "contexts" in result
         # When generate_answer=False, answer field may be None or empty
@@ -168,7 +177,9 @@ class TestBasicRAGPipelineQuerying:
 
     def test_query_retrieval_quality(self, basic_pipeline):
         """Test that retrieved contexts are relevant."""
-        result = basic_pipeline.query("What is Python programming?", top_k=3, generate_answer=False)
+        result = basic_pipeline.query(
+            "What is Python programming?", top_k=3, generate_answer=False
+        )
 
         # Check that Python document is retrieved
         contexts_text = " ".join(result["contexts"])
@@ -176,7 +187,9 @@ class TestBasicRAGPipelineQuerying:
 
     def test_query_with_no_results(self, basic_pipeline):
         """Test query that should return few/no results."""
-        result = basic_pipeline.query("quantum physics string theory", top_k=3, generate_answer=False)
+        result = basic_pipeline.query(
+            "quantum physics string theory", top_k=3, generate_answer=False
+        )
 
         # Should still return a result structure
         assert "contexts" in result
@@ -201,7 +214,9 @@ class TestBasicRAGPipelineMetadata:
         """Test that query results have expected structure."""
         basic_pipeline.load_documents(documents=sample_documents)
 
-        result = basic_pipeline.query("machine learning", top_k=3, generate_answer=False)
+        result = basic_pipeline.query(
+            "machine learning", top_k=3, generate_answer=False
+        )
 
         # Verify result structure
         assert "contexts" in result
@@ -226,7 +241,9 @@ class TestBasicRAGPipelineMetadata:
         result = basic_pipeline.query("test", top_k=3, generate_answer=False)
 
         # Check execution time is recorded
-        assert "execution_time" in result or "processing_time" in result.get("metadata", {})
+        assert "execution_time" in result or "processing_time" in result.get(
+            "metadata", {}
+        )
 
 
 class TestBasicRAGPipelineConfiguration:
@@ -262,6 +279,7 @@ class TestBasicRAGPipelineErrorHandling:
         """Test query with invalid top_k value."""
         # New API validates and raises ValueError
         import pytest
+
         with pytest.raises(ValueError, match="top_k parameter out of valid range"):
             basic_pipeline.query("test", top_k=0, generate_answer=False)
 
@@ -288,7 +306,9 @@ class TestBasicRAGPipelineIntegration:
         basic_pipeline.load_documents(documents=docs)
 
         # Query
-        result = basic_pipeline.query("What is the capital of France?", top_k=2, generate_answer=True)
+        result = basic_pipeline.query(
+            "What is the capital of France?", top_k=2, generate_answer=True
+        )
 
         # Verify
         assert "answer" in result
@@ -298,7 +318,9 @@ class TestBasicRAGPipelineIntegration:
     def test_large_batch_loading(self, basic_pipeline):
         """Test loading a larger batch of documents."""
         docs = [
-            Document(id=f"batch{i}", page_content=f"Document {i} content about topic {i % 3}")
+            Document(
+                id=f"batch{i}", page_content=f"Document {i} content about topic {i % 3}"
+            )
             for i in range(20)
         ]
 
@@ -318,6 +340,8 @@ class TestBasicRAGPipelineIntegration:
         ]
         basic_pipeline.load_documents(documents=docs)
 
-        result = basic_pipeline.query("subject information", top_k=5, generate_answer=False)
+        result = basic_pipeline.query(
+            "subject information", top_k=5, generate_answer=False
+        )
 
         assert len(result["contexts"]) <= 5

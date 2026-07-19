@@ -22,7 +22,7 @@ def get_iris_dbapi_connection(config: Optional[Dict[str, Any]] = None) -> Any:
             port=config.get("port"),
             namespace=config.get("namespace"),
             username=config.get("username"),
-            password=config.get("password")
+            password=config.get("password"),
         )
     return get_iris_connection()
 
@@ -32,6 +32,7 @@ def get_iris_dbapi_module():
     Access the IRIS DBAPI module.
     """
     from iris_vector_rag.common.iris_connection import _get_iris_dbapi_module
+
     return _get_iris_dbapi_module()
 
 

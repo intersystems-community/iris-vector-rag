@@ -9,7 +9,6 @@ import time
 from typing import Optional
 
 
-
 class DatabaseCleanupHandler:
     """
     Handles cleanup of test data from database.
@@ -126,17 +125,19 @@ class CleanupRegistry:
     Ensures all test data is cleaned up even if tests fail.
     """
 
-    _instance: Optional['CleanupRegistry'] = None
+    _instance: Optional["CleanupRegistry"] = None
     _handlers: dict[str, "DatabaseCleanupHandler"] = {}
 
-    def __new__(cls) -> 'CleanupRegistry':
+    def __new__(cls) -> "CleanupRegistry":
         """Singleton pattern for global registry."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._handlers = {}
         return cls._instance
 
-    def register_handler(self, test_run_id: str, handler: DatabaseCleanupHandler) -> None:
+    def register_handler(
+        self, test_run_id: str, handler: DatabaseCleanupHandler
+    ) -> None:
         """
         Register a cleanup handler.
 

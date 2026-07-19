@@ -12,12 +12,11 @@ from uuid import UUID, uuid4
 from iris_vector_rag.api.models.websocket import (
     EventType,
     QueryProgressEvent,
-    DocumentUploadProgressEvent
+    DocumentUploadProgressEvent,
 )
 from iris_vector_rag.api.websocket.connection import ConnectionManager
 from iris_vector_rag.api.services.pipeline_manager import PipelineManager
 from iris_vector_rag.api.services.document_service import DocumentService
-
 
 logger = logging.getLogger(__name__)
 
@@ -30,9 +29,7 @@ class QueryStreamingHandler:
     """
 
     def __init__(
-        self,
-        connection_manager: ConnectionManager,
-        pipeline_manager: PipelineManager
+        self, connection_manager: ConnectionManager, pipeline_manager: PipelineManager
     ):
         """
         Initialize query streaming handler.
@@ -50,7 +47,7 @@ class QueryStreamingHandler:
         query: str,
         pipeline_name: str,
         top_k: int,
-        request_id: UUID
+        request_id: UUID,
     ):
         """
         Stream query execution progress.
@@ -70,11 +67,9 @@ class QueryStreamingHandler:
                 session_id=session_id,
                 event_type=EventType.QUERY_START,
                 data=QueryProgressEvent(
-                    query=query,
-                    pipeline=pipeline_name,
-                    is_final=False
+                    query=query, pipeline=pipeline_name, is_final=False
                 ).model_dump(),
-                request_id=request_id
+                request_id=request_id,
             )
 
             # Get pipeline
@@ -87,9 +82,9 @@ class QueryStreamingHandler:
                     event_type=EventType.ERROR,
                     data={
                         "error": f"Pipeline not found: {pipeline_name}",
-                        "is_final": True
+                        "is_final": True,
                     },
-                    request_id=request_id
+                    request_id=request_id,
                 )
                 return
 
@@ -104,9 +99,9 @@ class QueryStreamingHandler:
                     query=query,
                     pipeline=pipeline_name,
                     documents_retrieved=0,
-                    is_final=False
+                    is_final=False,
                 ).model_dump(),
-                request_id=request_id
+                request_id=request_id,
             )
 
             # Execute actual query
@@ -120,9 +115,9 @@ class QueryStreamingHandler:
                     query=query,
                     pipeline=pipeline_name,
                     documents_retrieved=len(result.get("retrieved_documents", [])),
-                    is_final=False
+                    is_final=False,
                 ).model_dump(),
-                request_id=request_id
+                request_id=request_id,
             )
 
             # Stream generation chunks (if LLM supports streaming)
@@ -131,7 +126,7 @@ class QueryStreamingHandler:
             # Simulate chunk streaming (in real implementation, LLM would stream)
             chunk_size = 50
             for i in range(0, len(answer), chunk_size):
-                chunk = answer[i:i+chunk_size]
+                chunk = answer[i : i + chunk_size]
                 is_final = (i + chunk_size) >= len(answer)
 
                 await self.connection_manager.send_event(
@@ -142,9 +137,9 @@ class QueryStreamingHandler:
                         pipeline=pipeline_name,
                         documents_retrieved=len(result.get("retrieved_documents", [])),
                         generation_chunk=chunk,
-                        is_final=is_final
+                        is_final=is_final,
                     ).model_dump(),
-                    request_id=request_id
+                    request_id=request_id,
                 )
 
                 # Small delay to simulate streaming
@@ -158,10 +153,12 @@ class QueryStreamingHandler:
                     "query": query,
                     "pipeline": pipeline_name,
                     "total_documents": len(result.get("retrieved_documents", [])),
-                    "execution_time_ms": result.get("metadata", {}).get("execution_time_ms", 0),
-                    "is_final": True
+                    "execution_time_ms": result.get("metadata", {}).get(
+                        "execution_time_ms", 0
+                    ),
+                    "is_final": True,
                 },
-                request_id=request_id
+                request_id=request_id,
             )
 
             logger.info(
@@ -180,9 +177,9 @@ class QueryStreamingHandler:
                     "error": str(e),
                     "query": query,
                     "pipeline": pipeline_name,
-                    "is_final": True
+                    "is_final": True,
                 },
-                request_id=request_id
+                request_id=request_id,
             )
 
 
@@ -194,9 +191,7 @@ class DocumentUploadProgressHandler:
     """
 
     def __init__(
-        self,
-        connection_manager: ConnectionManager,
-        document_service: DocumentService
+        self, connection_manager: ConnectionManager, document_service: DocumentService
     ):
         """
         Initialize document upload progress handler.
@@ -209,10 +204,7 @@ class DocumentUploadProgressHandler:
         self.document_service = document_service
 
     async def stream_upload_progress(
-        self,
-        session_id: UUID,
-        operation_id: UUID,
-        request_id: UUID
+        self, session_id: UUID, operation_id: UUID, request_id: UUID
     ):
         """
         Stream document upload progress.
@@ -239,9 +231,9 @@ class DocumentUploadProgressHandler:
                         event_type=EventType.ERROR,
                         data={
                             "error": f"Operation not found: {operation_id}",
-                            "operation_id": str(operation_id)
+                            "operation_id": str(operation_id),
                         },
-                        request_id=request_id
+                        request_id=request_id,
                     )
                     break
 
@@ -254,9 +246,9 @@ class DocumentUploadProgressHandler:
                             operation_id=operation_id,
                             processed_documents=operation.processed_documents,
                             total_documents=operation.total_documents,
-                            progress_percentage=operation.progress_percentage
+                            progress_percentage=operation.progress_percentage,
                         ).model_dump(),
-                        request_id=request_id
+                        request_id=request_id,
                     )
 
                     last_progress = operation.progress_percentage
@@ -268,7 +260,7 @@ class DocumentUploadProgressHandler:
                         operation_id=operation_id,
                         processed_documents=operation.processed_documents,
                         total_documents=operation.total_documents,
-                        progress_percentage=operation.progress_percentage
+                        progress_percentage=operation.progress_percentage,
                     ).model_dump()
 
                     event_data["status"] = operation.status.value
@@ -280,7 +272,7 @@ class DocumentUploadProgressHandler:
                         session_id=session_id,
                         event_type=EventType.DOCUMENT_UPLOAD_PROGRESS,
                         data=event_data,
-                        request_id=request_id
+                        request_id=request_id,
                     )
 
                     logger.info(
@@ -299,18 +291,11 @@ class DocumentUploadProgressHandler:
             await self.connection_manager.send_event(
                 session_id=session_id,
                 event_type=EventType.ERROR,
-                data={
-                    "error": str(e),
-                    "operation_id": str(operation_id)
-                },
-                request_id=request_id
+                data={"error": str(e), "operation_id": str(operation_id)},
+                request_id=request_id,
             )
 
-    async def watch_all_uploads(
-        self,
-        session_id: UUID,
-        api_key_id: UUID
-    ):
+    async def watch_all_uploads(self, session_id: UUID, api_key_id: UUID):
         """
         Watch all upload operations for an API key.
 
@@ -328,13 +313,16 @@ class DocumentUploadProgressHandler:
             while session_id in self.connection_manager.active_connections:
                 # Get all operations for API key
                 operations = self.document_service.list_operations(
-                    api_key_id=api_key_id,
-                    limit=50
+                    api_key_id=api_key_id, limit=50
                 )
 
                 # Find active operations
                 for operation in operations:
-                    if operation.status.value in ["pending", "validating", "processing"]:
+                    if operation.status.value in [
+                        "pending",
+                        "validating",
+                        "processing",
+                    ]:
                         # Start monitoring if not already
                         if operation.operation_id not in monitored_operations:
                             monitored_operations.add(operation.operation_id)
@@ -344,7 +332,7 @@ class DocumentUploadProgressHandler:
                                 self.stream_upload_progress(
                                     session_id=session_id,
                                     operation_id=operation.operation_id,
-                                    request_id=uuid4()
+                                    request_id=uuid4(),
                                 )
                             )
 

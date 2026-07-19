@@ -62,7 +62,9 @@ class TestBadErrorMessages:
 
     def test_with_vague_message(self):
         """Bad example: Vague error with no specifics."""
-        assert False, "Something went wrong with the thing"  # Bad: Vague what, no why, no action
+        assert (
+            False
+        ), "Something went wrong with the thing"  # Bad: Vague what, no why, no action
 
 
 class TestCoverageExamples:
@@ -131,4 +133,3 @@ class CompletelyUntestedExample:
     def another_untested_method(self, x, y):
         """Also never called."""
         return x + y
-

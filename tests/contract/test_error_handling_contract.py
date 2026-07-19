@@ -39,39 +39,44 @@ class TestErrorHandlingContract:
         query = "What are the complications of untreated diabetes?"
 
         # Mock to simulate table not found error
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_hnsw_vector',
-                side_effect=Exception("Table 'kg_NodeEmbeddings_optimized' not found")
+                "retrieve_via_hnsw_vector",
+                side_effect=Exception("Table 'kg_NodeEmbeddings_optimized' not found"),
             )
         else:
             mocker.patch.object(
                 graphrag_pipeline,
-                '_retrieve_via_hnsw_vector',
-                side_effect=Exception("Table 'kg_NodeEmbeddings_optimized' not found")
+                "_retrieve_via_hnsw_vector",
+                side_effect=Exception("Table 'kg_NodeEmbeddings_optimized' not found"),
             )
 
         # Execute query - should not raise exception
         result = graphrag_pipeline.query(query, method="vector")
 
         # Verify fallback succeeded
-        assert len(result['contexts']) > 0, \
-            "Should fall back to IRISVectorStore when tables missing"
+        assert (
+            len(result["contexts"]) > 0
+        ), "Should fall back to IRISVectorStore when tables missing"
 
-        assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
+        assert (
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
         # Verify error was logged
         log_output = caplog.text.lower()
-        assert any(keyword in log_output for keyword in ['error', 'table', 'not found']), \
-            "Should log error about missing table"
+        assert any(
+            keyword in log_output for keyword in ["error", "table", "not found"]
+        ), "Should log error about missing table"
 
         # Verify no exception propagated to caller
         assert result is not None, "Query should complete without raising exception"
 
     @pytest.mark.requires_database
-    def test_iris_vector_graph_connection_failure_handled(self, graphrag_pipeline, mocker, caplog):
+    def test_iris_vector_graph_connection_failure_handled(
+        self, graphrag_pipeline, mocker, caplog
+    ):
         """
         FR-024: System MUST handle iris_vector_graph connection failures.
 
@@ -85,33 +90,34 @@ class TestErrorHandlingContract:
         query = "What are the complications of untreated diabetes?"
 
         # Mock to simulate connection failure
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_hybrid_fusion',
-                side_effect=ConnectionError("Failed to connect to iris_vector_graph")
+                "retrieve_via_hybrid_fusion",
+                side_effect=ConnectionError("Failed to connect to iris_vector_graph"),
             )
         else:
             mocker.patch.object(
                 graphrag_pipeline,
-                '_retrieve_via_hybrid_fusion',
-                side_effect=ConnectionError("Failed to connect to iris_vector_graph")
+                "_retrieve_via_hybrid_fusion",
+                side_effect=ConnectionError("Failed to connect to iris_vector_graph"),
             )
 
         # Execute query - should not raise
         result = graphrag_pipeline.query(query, method="hybrid")
 
         # Verify fallback succeeded
-        assert len(result['contexts']) > 0, \
-            "Should fall back after connection failure"
+        assert len(result["contexts"]) > 0, "Should fall back after connection failure"
 
-        assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
+        assert (
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
         # Verify connection error was logged
         log_output = caplog.text.lower()
-        assert any(keyword in log_output for keyword in ['error', 'fail', 'connection']), \
-            "Should log error about connection failure"
+        assert any(
+            keyword in log_output for keyword in ["error", "fail", "connection"]
+        ), "Should log error about connection failure"
 
         # Verify no exception propagated
         assert result is not None, "Query should complete despite connection error"
@@ -131,17 +137,15 @@ class TestErrorHandlingContract:
         query2 = "How to prevent diabetes complications?"
 
         # Mock first query to trigger fallback
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mock_method = mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_rrf',
-                return_value=([], 'rrf')
+                "retrieve_via_rrf",
+                return_value=([], "rrf"),
             )
         else:
             mock_method = mocker.patch.object(
-                graphrag_pipeline,
-                '_retrieve_via_rrf',
-                return_value=([], 'rrf')
+                graphrag_pipeline, "_retrieve_via_rrf", return_value=([], "rrf")
             )
 
         # Execute first query
@@ -149,8 +153,9 @@ class TestErrorHandlingContract:
 
         # Verify first query used fallback
         assert len(result1["contexts"]) > 0, "First query should succeed via fallback"
-        assert result1["metadata"]["retrieval_method"] == "vector_fallback", \
-            "First query should use fallback"
+        assert (
+            result1["metadata"]["retrieval_method"] == "vector_fallback"
+        ), "First query should use fallback"
 
         # Remove mock for second query (or keep it - both should work)
         mock_method.stop()
@@ -159,17 +164,22 @@ class TestErrorHandlingContract:
         result2 = graphrag_pipeline.query(query2, method="rrf")
 
         # Verify second query succeeded
-        assert len(result2["contexts"]) > 0, \
-            "Second query should succeed after first query fallback"
+        assert (
+            len(result2["contexts"]) > 0
+        ), "Second query should succeed after first query fallback"
 
         # Verify pipeline state is consistent
         assert result2 is not None, "Pipeline should remain functional"
 
         # Verify no degradation in results
-        assert len(result2["contexts"]) >= len(result1["contexts"]) * 0.5, \
-            "Second query should retrieve similar number of documents (within 50%)"
+        assert (
+            len(result2["contexts"]) >= len(result1["contexts"]) * 0.5
+        ), "Second query should retrieve similar number of documents (within 50%)"
 
         # Execute third query to verify sustained functionality
-        result3 = graphrag_pipeline.query("diabetes prevention strategies", method="hybrid")
-        assert len(result3["contexts"]) > 0, \
-            "Third query should also succeed - pipeline fully functional"
+        result3 = graphrag_pipeline.query(
+            "diabetes prevention strategies", method="hybrid"
+        )
+        assert (
+            len(result3["contexts"]) > 0
+        ), "Third query should also succeed - pipeline fully functional"

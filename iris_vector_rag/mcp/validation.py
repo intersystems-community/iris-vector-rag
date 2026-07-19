@@ -31,7 +31,9 @@ class MCPError(Exception):
         super().__init__(message)
 
 
-def validate_query_length(query: str, min_length: int = 1, max_length: int = 8000) -> None:
+def validate_query_length(
+    query: str, min_length: int = 1, max_length: int = 8000
+) -> None:
     """
     Validate query string length.
 
@@ -44,15 +46,17 @@ def validate_query_length(query: str, min_length: int = 1, max_length: int = 800
         ValidationError: If query length is invalid
     """
     if not isinstance(query, str):
-        raise ValidationError('query', query, "Query must be a string")
+        raise ValidationError("query", query, "Query must be a string")
 
     if len(query) < min_length:
-        raise ValidationError('query', query,
-                             f"Query must be at least {min_length} character(s)")
+        raise ValidationError(
+            "query", query, f"Query must be at least {min_length} character(s)"
+        )
 
     if len(query) > max_length:
-        raise ValidationError('query', query,
-                             f"Query must be at most {max_length} characters")
+        raise ValidationError(
+            "query", query, f"Query must be at most {max_length} characters"
+        )
 
 
 def validate_top_k(top_k: int, min_value: int = 1, max_value: int = 50) -> None:
@@ -68,15 +72,13 @@ def validate_top_k(top_k: int, min_value: int = 1, max_value: int = 50) -> None:
         ValidationError: If top_k is invalid
     """
     if not isinstance(top_k, int):
-        raise ValidationError('top_k', top_k, "top_k must be an integer")
+        raise ValidationError("top_k", top_k, "top_k must be an integer")
 
     if top_k < min_value:
-        raise ValidationError('top_k', top_k,
-                             f"top_k must be at least {min_value}")
+        raise ValidationError("top_k", top_k, f"top_k must be at least {min_value}")
 
     if top_k > max_value:
-        raise ValidationError('top_k', top_k,
-                             f"top_k must be at most {max_value}")
+        raise ValidationError("top_k", top_k, f"top_k must be at most {max_value}")
 
 
 def validate_confidence_threshold(threshold: float) -> None:
@@ -90,12 +92,16 @@ def validate_confidence_threshold(threshold: float) -> None:
         ValidationError: If threshold is invalid
     """
     if not isinstance(threshold, (int, float)):
-        raise ValidationError('confidence_threshold', threshold,
-                             "confidence_threshold must be a number")
+        raise ValidationError(
+            "confidence_threshold", threshold, "confidence_threshold must be a number"
+        )
 
     if threshold < 0.0 or threshold > 1.0:
-        raise ValidationError('confidence_threshold', threshold,
-                             "confidence_threshold must be between 0.0 and 1.0")
+        raise ValidationError(
+            "confidence_threshold",
+            threshold,
+            "confidence_threshold must be between 0.0 and 1.0",
+        )
 
 
 def validate_enum_value(field: str, value: Any, allowed_values: list) -> None:
@@ -111,9 +117,8 @@ def validate_enum_value(field: str, value: Any, allowed_values: list) -> None:
         ValidationError: If value is not in allowed values
     """
     if value not in allowed_values:
-        allowed_str = ', '.join(str(v) for v in allowed_values)
-        raise ValidationError(field, value,
-                             f"{field} must be one of: {allowed_str}")
+        allowed_str = ", ".join(str(v) for v in allowed_values)
+        raise ValidationError(field, value, f"{field} must be one of: {allowed_str}")
 
 
 def validate_interaction_threshold(threshold: float) -> None:
@@ -127,12 +132,16 @@ def validate_interaction_threshold(threshold: float) -> None:
         ValidationError: If threshold is invalid
     """
     if not isinstance(threshold, (int, float)):
-        raise ValidationError('interaction_threshold', threshold,
-                             "interaction_threshold must be a number")
+        raise ValidationError(
+            "interaction_threshold", threshold, "interaction_threshold must be a number"
+        )
 
     if threshold < 0.0 or threshold > 1.0:
-        raise ValidationError('interaction_threshold', threshold,
-                             "interaction_threshold must be between 0.0 and 1.0")
+        raise ValidationError(
+            "interaction_threshold",
+            threshold,
+            "interaction_threshold must be between 0.0 and 1.0",
+        )
 
 
 def validate_graph_traversal_depth(depth: int) -> None:
@@ -146,12 +155,16 @@ def validate_graph_traversal_depth(depth: int) -> None:
         ValidationError: If depth is invalid
     """
     if not isinstance(depth, int):
-        raise ValidationError('graph_traversal_depth', depth,
-                             "graph_traversal_depth must be an integer")
+        raise ValidationError(
+            "graph_traversal_depth", depth, "graph_traversal_depth must be an integer"
+        )
 
     if depth < 1 or depth > 5:
-        raise ValidationError('graph_traversal_depth', depth,
-                             "graph_traversal_depth must be between 1 and 5")
+        raise ValidationError(
+            "graph_traversal_depth",
+            depth,
+            "graph_traversal_depth must be between 1 and 5",
+        )
 
 
 def validate_rrf_k(k_value: int) -> None:
@@ -165,12 +178,10 @@ def validate_rrf_k(k_value: int) -> None:
         ValidationError: If k value is invalid
     """
     if not isinstance(k_value, int):
-        raise ValidationError('rrf_k', k_value,
-                             "rrf_k must be an integer")
+        raise ValidationError("rrf_k", k_value, "rrf_k must be an integer")
 
     if k_value < 1 or k_value > 100:
-        raise ValidationError('rrf_k', k_value,
-                             "rrf_k must be between 1 and 100")
+        raise ValidationError("rrf_k", k_value, "rrf_k must be between 1 and 100")
 
 
 def validate_compression_ratio(ratio: float) -> None:
@@ -184,9 +195,11 @@ def validate_compression_ratio(ratio: float) -> None:
         ValidationError: If ratio is invalid
     """
     if not isinstance(ratio, (int, float)):
-        raise ValidationError('compression_ratio', ratio,
-                             "compression_ratio must be a number")
+        raise ValidationError(
+            "compression_ratio", ratio, "compression_ratio must be a number"
+        )
 
     if ratio < 0.1 or ratio > 1.0:
-        raise ValidationError('compression_ratio', ratio,
-                             "compression_ratio must be between 0.1 and 1.0")
+        raise ValidationError(
+            "compression_ratio", ratio, "compression_ratio must be between 0.1 and 1.0"
+        )

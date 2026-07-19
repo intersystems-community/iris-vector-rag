@@ -13,14 +13,13 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from iris_vector_rag.api.models.websocket import (
     WebSocketAuthMessage,
     EventType,
-    SubscriptionType
+    SubscriptionType,
 )
 from iris_vector_rag.api.websocket.connection import ConnectionManager
 from iris_vector_rag.api.websocket.handlers import (
     QueryStreamingHandler,
-    DocumentUploadProgressHandler
+    DocumentUploadProgressHandler,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +27,7 @@ logger = logging.getLogger(__name__)
 def create_websocket_router(
     connection_manager: ConnectionManager,
     query_handler: QueryStreamingHandler,
-    upload_handler: DocumentUploadProgressHandler
+    upload_handler: DocumentUploadProgressHandler,
 ) -> APIRouter:
     """
     Create WebSocket API router.
@@ -123,15 +122,15 @@ def create_websocket_router(
             # Start upload watching if subscribed
             if session.subscription_type in [
                 SubscriptionType.DOCUMENT_UPLOAD,
-                SubscriptionType.ALL
+                SubscriptionType.ALL,
             ]:
                 # Start watching all uploads for this API key
                 # (non-blocking background task)
                 import asyncio
+
                 asyncio.create_task(
                     upload_handler.watch_all_uploads(
-                        session_id=session_id,
-                        api_key_id=session.api_key_id
+                        session_id=session_id, api_key_id=session.api_key_id
                     )
                 )
 
@@ -148,7 +147,7 @@ def create_websocket_router(
                         # Client requesting query streaming
                         if session.subscription_type not in [
                             SubscriptionType.QUERY_STREAMING,
-                            SubscriptionType.ALL
+                            SubscriptionType.ALL,
                         ]:
                             await connection_manager.send_event(
                                 session_id=session_id,
@@ -156,19 +155,22 @@ def create_websocket_router(
                                 data={
                                     "error": "Not subscribed to query_streaming events"
                                 },
-                                request_id=uuid4()
+                                request_id=uuid4(),
                             )
                             continue
 
                         # Start query streaming (non-blocking)
                         import asyncio
+
                         asyncio.create_task(
                             query_handler.stream_query(
                                 session_id=session_id,
                                 query=message.get("query"),
                                 pipeline_name=message.get("pipeline", "basic"),
                                 top_k=message.get("top_k", 5),
-                                request_id=UUID(message.get("request_id", str(uuid4())))
+                                request_id=UUID(
+                                    message.get("request_id", str(uuid4()))
+                                ),
                             )
                         )
 
@@ -176,7 +178,7 @@ def create_websocket_router(
                         # Client requesting upload progress
                         if session.subscription_type not in [
                             SubscriptionType.DOCUMENT_UPLOAD,
-                            SubscriptionType.ALL
+                            SubscriptionType.ALL,
                         ]:
                             await connection_manager.send_event(
                                 session_id=session_id,
@@ -184,17 +186,20 @@ def create_websocket_router(
                                 data={
                                     "error": "Not subscribed to document_upload events"
                                 },
-                                request_id=uuid4()
+                                request_id=uuid4(),
                             )
                             continue
 
                         # Start upload progress streaming (non-blocking)
                         import asyncio
+
                         asyncio.create_task(
                             upload_handler.stream_upload_progress(
                                 session_id=session_id,
                                 operation_id=UUID(message.get("operation_id")),
-                                request_id=UUID(message.get("request_id", str(uuid4())))
+                                request_id=UUID(
+                                    message.get("request_id", str(uuid4()))
+                                ),
                             )
                         )
 
@@ -207,10 +212,8 @@ def create_websocket_router(
                         await connection_manager.send_event(
                             session_id=session_id,
                             event_type=EventType.ERROR,
-                            data={
-                                "error": f"Unknown message type: {message_type}"
-                            },
-                            request_id=uuid4()
+                            data={"error": f"Unknown message type: {message_type}"},
+                            request_id=uuid4(),
                         )
 
                 except WebSocketDisconnect:
@@ -224,7 +227,7 @@ def create_websocket_router(
                         session_id=session_id,
                         event_type=EventType.ERROR,
                         data={"error": str(e)},
-                        request_id=uuid4()
+                        request_id=uuid4(),
                     )
 
         except Exception as e:
@@ -237,7 +240,7 @@ def create_websocket_router(
                         session_id=session_id,
                         event_type=EventType.ERROR,
                         data={"error": str(e)},
-                        request_id=uuid4()
+                        request_id=uuid4(),
                     )
                 except Exception:
                     pass

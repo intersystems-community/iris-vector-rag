@@ -150,6 +150,7 @@ class TestAPIPerformanceBenchmarks:
     @pytest.mark.asyncio
     async def test_concurrent_query_benchmark(self, benchmark_config):
         """Benchmark concurrent query handling."""
+
         async def mock_query():
             await asyncio.sleep(0.01)  # Mock 10ms query
             return {"answer": "test"}
@@ -274,8 +275,6 @@ class TestAPIPerformanceBenchmarks:
         assert objects_created < 50000
 
 
-
-
 class TestRateLimiterBenchmarks:
     """Benchmarks specific to rate limiting."""
 
@@ -311,7 +310,9 @@ class TestRateLimiterBenchmarks:
         start = time.time()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            results = list(executor.map(lambda _: check_rate_limit(), range(num_checks)))
+            results = list(
+                executor.map(lambda _: check_rate_limit(), range(num_checks))
+            )
 
         elapsed = time.time() - start
         throughput = num_checks / elapsed

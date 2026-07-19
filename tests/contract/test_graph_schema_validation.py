@@ -112,9 +112,7 @@ class TestGraphPrerequisiteValidation:
                 assert (
                     "kg_NodeEmbeddings_optimized" in result.missing_tables
                 ), "Should list kg_NodeEmbeddings_optimized as missing"
-                assert (
-                    "nodes" in result.missing_tables
-                ), "Should list nodes as missing"
+                assert "nodes" in result.missing_tables, "Should list nodes as missing"
                 assert (
                     "kg_NodeEmbeddings" in result.missing_tables
                 ), "Should list kg_NodeEmbeddings as missing"

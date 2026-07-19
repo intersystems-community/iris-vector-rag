@@ -26,12 +26,13 @@ class TestTokenCounterContract:
         params = sig.parameters
 
         # Validate required parameters
-        assert 'text' in params, "estimate_tokens must accept 'text' parameter"
+        assert "text" in params, "estimate_tokens must accept 'text' parameter"
 
         # Validate optional parameters with defaults
-        assert 'model' in params, "estimate_tokens must accept 'model' parameter"
-        assert params['model'].default == "gpt-3.5-turbo", \
-            "model default must be 'gpt-3.5-turbo' per research.md"
+        assert "model" in params, "estimate_tokens must accept 'model' parameter"
+        assert (
+            params["model"].default == "gpt-3.5-turbo"
+        ), "model default must be 'gpt-3.5-turbo' per research.md"
 
     def test_estimate_tokens_accuracy_short_text(self):
         """Validate token estimation accuracy within ±10% tolerance for short text."""
@@ -47,8 +48,9 @@ class TestTokenCounterContract:
         expected = 9
         tolerance = expected * 0.1  # ±10%
 
-        assert abs(estimated - expected) <= tolerance, \
-            f"Token estimation must be within ±10% (expected ~{expected}, got {estimated})"
+        assert (
+            abs(estimated - expected) <= tolerance
+        ), f"Token estimation must be within ±10% (expected ~{expected}, got {estimated})"
 
     def test_estimate_tokens_empty_string_returns_zero(self):
         """Validate empty string returns 0 tokens."""
@@ -66,8 +68,9 @@ class TestTokenCounterContract:
         estimated = estimate_tokens(large_text)
 
         # Validate within reasonable range (4500-5500 tokens, ±10%)
-        assert 4500 <= estimated <= 5500, \
-            f"Large document estimation must be accurate (expected ~5000, got {estimated})"
+        assert (
+            4500 <= estimated <= 5500
+        ), f"Large document estimation must be accurate (expected ~5000, got {estimated})"
 
     def test_estimate_tokens_none_input_raises_error(self):
         """Validate None input raises ValueError."""
@@ -123,5 +126,6 @@ class TestTokenCounterContract:
         elapsed = time.time() - start
 
         # Should be very fast (tiktoken is Rust-based, ~1M tokens/sec)
-        assert elapsed < 0.01, \
-            f"Token estimation must be fast (expected <10ms, got {elapsed * 1000:.2f}ms)"
+        assert (
+            elapsed < 0.01
+        ), f"Token estimation must be fast (expected <10ms, got {elapsed * 1000:.2f}ms)"

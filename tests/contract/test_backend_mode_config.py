@@ -72,7 +72,9 @@ class TestBackendConfigurationLoading:
         config_file = tmp_path / "backend_modes.yaml"
         config_file.write_text("backend_mode: community\n")
 
-        with patch("iris_vector_rag.testing.backend_manager.DEFAULT_CONFIG_PATH", config_file):
+        with patch(
+            "iris_vector_rag.testing.backend_manager.DEFAULT_CONFIG_PATH", config_file
+        ):
             config = load_configuration()
 
         assert config.mode.value == "community"
@@ -96,7 +98,10 @@ class TestBackendConfigurationLoading:
         # Point to nonexistent config file
         nonexistent_config = tmp_path / "nonexistent.yaml"
 
-        with patch("iris_vector_rag.testing.backend_manager.DEFAULT_CONFIG_PATH", nonexistent_config):
+        with patch(
+            "iris_vector_rag.testing.backend_manager.DEFAULT_CONFIG_PATH",
+            nonexistent_config,
+        ):
             config = load_configuration()
 
         assert config.mode.value == "community"

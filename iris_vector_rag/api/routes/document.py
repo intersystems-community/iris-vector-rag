@@ -15,7 +15,7 @@ from iris_vector_rag.api.models.upload import (
     DocumentUploadOperation,
     DocumentUploadRequest,
     DocumentUploadResponse,
-    PipelineType
+    PipelineType,
 )
 from iris_vector_rag.api.models.auth import ApiKey, Permission
 from iris_vector_rag.api.middleware.auth import ApiKeyAuth
@@ -25,16 +25,14 @@ from iris_vector_rag.api.models.errors import (
     ErrorType,
     ErrorInfo,
     ErrorDetails,
-    validation_error
+    validation_error,
 )
-
 
 logger = logging.getLogger(__name__)
 
 
 def create_document_router(
-    document_service: DocumentService,
-    auth_service: ApiKeyAuth
+    document_service: DocumentService, auth_service: ApiKeyAuth
 ) -> APIRouter:
     """
     Create document API router.
@@ -61,7 +59,7 @@ def create_document_router(
             403: {"description": "Insufficient permissions (write required)"},
             413: {"description": "File size exceeds 100MB limit"},
             422: {"description": "Validation error"},
-            429: {"description": "Rate limit exceeded"}
+            429: {"description": "Rate limit exceeded"},
         },
         summary="Upload documents for indexing",
         description="""
@@ -81,15 +79,21 @@ def create_document_router(
 
         **Concurrent Uploads:**
         - Maximum 1-5 concurrent uploads per API key (tier-dependent)
-        """
+        """,
     )
     async def upload_documents(
         request: Request,
         file: UploadFile = File(..., description="Document file to upload"),
-        pipeline_type: PipelineType = Form(default=PipelineType.BASIC, description="Pipeline for indexing"),
-        chunk_size: int = Form(default=1000, ge=100, le=5000, description="Chunk size (characters)"),
-        chunk_overlap: int = Form(default=200, ge=0, le=1000, description="Chunk overlap (characters)"),
-        api_key: ApiKey = Depends(require_write_permission)
+        pipeline_type: PipelineType = Form(
+            default=PipelineType.BASIC, description="Pipeline for indexing"
+        ),
+        chunk_size: int = Form(
+            default=1000, ge=100, le=5000, description="Chunk size (characters)"
+        ),
+        chunk_overlap: int = Form(
+            default=200, ge=0, le=1000, description="Chunk overlap (characters)"
+        ),
+        api_key: ApiKey = Depends(require_write_permission),
     ) -> DocumentUploadResponse:
         """
         Upload documents for indexing (FR-021).
@@ -123,15 +127,15 @@ def create_document_router(
                     field="file",
                     rejected_value=f"{file.size} bytes",
                     message="File size exceeds maximum of 100 MB",
-                    max_value=max_size_bytes
-                ).model_dump()
+                    max_value=max_size_bytes,
+                ).model_dump(),
             )
 
         # Create upload request
         upload_request = DocumentUploadRequest(
             pipeline_type=pipeline_type,
             chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
+            chunk_overlap=chunk_overlap,
         )
 
         try:
@@ -144,7 +148,7 @@ def create_document_router(
                 api_key_id=api_key.key_id,
                 file_size_bytes=file.size or 0,
                 total_documents=estimated_docs,
-                request=upload_request
+                request=upload_request,
             )
 
             logger.info(f"Upload operation created: {response.operation_id}")
@@ -155,10 +159,8 @@ def create_document_router(
             raise HTTPException(
                 status_code=422,
                 detail=validation_error(
-                    field="file",
-                    rejected_value=file.filename,
-                    message=str(e)
-                ).model_dump()
+                    field="file", rejected_value=file.filename, message=str(e)
+                ).model_dump(),
             )
 
         except Exception as e:
@@ -171,9 +173,9 @@ def create_document_router(
                         reason="Failed to initiate upload",
                         details=ErrorDetails(
                             message="An unexpected error occurred. Please try again."
-                        )
+                        ),
                     )
-                ).model_dump()
+                ).model_dump(),
             )
 
     @router.get(
@@ -182,7 +184,7 @@ def create_document_router(
         responses={
             200: {"description": "Operation status"},
             401: {"description": "Authentication required"},
-            404: {"description": "Operation not found"}
+            404: {"description": "Operation not found"},
         },
         summary="Get upload operation status",
         description="""
@@ -201,12 +203,12 @@ def create_document_router(
         - processing: Indexing documents into pipeline
         - completed: All documents indexed successfully
         - failed: Operation failed (check error_message)
-        """
+        """,
     )
     async def get_operation_status(
         operation_id: UUID,
         request: Request,
-        api_key: ApiKey = Depends(require_write_permission)
+        api_key: ApiKey = Depends(require_write_permission),
     ) -> DocumentUploadOperation:
         """
         Get upload operation status (FR-023).
@@ -235,9 +237,9 @@ def create_document_router(
                         reason=f"Operation not found: {operation_id}",
                         details=ErrorDetails(
                             message=f"Upload operation '{operation_id}' does not exist"
-                        )
+                        ),
                     )
-                ).model_dump()
+                ).model_dump(),
             )
 
         # Verify operation belongs to API key
@@ -252,9 +254,9 @@ def create_document_router(
                             reason="Operation does not belong to this API key",
                             details=ErrorDetails(
                                 message="You can only view your own upload operations"
-                            )
+                            ),
                         )
-                    ).model_dump()
+                    ).model_dump(),
                 )
 
         return operation
@@ -270,12 +272,12 @@ def create_document_router(
         - Up to 50 most recent operations
         - Sorted by creation time (newest first)
         - Only operations belonging to authenticated API key (unless admin)
-        """
+        """,
     )
     async def list_operations(
         request: Request,
         api_key: ApiKey = Depends(require_write_permission),
-        limit: int = 50
+        limit: int = 50,
     ) -> List[DocumentUploadOperation]:
         """
         List upload operations (FR-023).
@@ -295,8 +297,7 @@ def create_document_router(
             operations = document_service.list_operations(limit=limit)
         else:
             operations = document_service.list_operations(
-                api_key_id=api_key.key_id,
-                limit=limit
+                api_key_id=api_key.key_id, limit=limit
             )
 
         return operations

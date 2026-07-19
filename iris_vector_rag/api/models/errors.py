@@ -281,7 +281,9 @@ class ErrorResponse(BaseModel):
 # Convenience factory functions for common errors
 
 
-def authentication_error(message: str, details: Optional[Dict[str, Any]] = None) -> ErrorResponse:
+def authentication_error(
+    message: str, details: Optional[Dict[str, Any]] = None
+) -> ErrorResponse:
     """Create authentication error response."""
     return ErrorResponse(
         error=ErrorInfo(
@@ -346,7 +348,9 @@ def service_unavailable_error(
     )
 
 
-def internal_server_error(request_id: str, message: Optional[str] = None) -> ErrorResponse:
+def internal_server_error(
+    request_id: str, message: Optional[str] = None
+) -> ErrorResponse:
     """Create internal server error response."""
     return ErrorResponse(
         error=ErrorInfo(

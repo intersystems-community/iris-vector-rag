@@ -27,17 +27,22 @@ def graphrag_with_existing_data(iris_connection):
     try:
         # Check entity count using the test's iris_connection (same port as fixture loading)
         from sqlalchemy import text
+
         result = iris_connection.execute(text("SELECT COUNT(*) FROM RAG.Entities"))
         entity_count = result.scalar()
 
         if entity_count < 10:
-            pytest.skip(f"Database has only {entity_count} entities. Need at least 10 for realistic testing. "
-                       f"Load fixture: python scripts/fixtures/create_graphrag_dat_fixture.py --cleanup-first")
+            pytest.skip(
+                f"Database has only {entity_count} entities. Need at least 10 for realistic testing. "
+                f"Load fixture: python scripts/fixtures/create_graphrag_dat_fixture.py --cleanup-first"
+            )
 
         print(f"\nTesting against database with {entity_count} entities")
 
         # Create pipeline - skip validation to avoid double-checking
-        pipeline = create_pipeline("graphrag", validate_requirements=False, auto_setup=False)
+        pipeline = create_pipeline(
+            "graphrag", validate_requirements=False, auto_setup=False
+        )
 
         # Inject the test's connection manager so pipeline uses same database
         from iris_vector_rag.core.connection import ConnectionManager
@@ -102,25 +107,29 @@ class TestGraphRAGRealistic:
             sample_entity,
             method="kg",
             top_k=10,
-            generate_answer=False  # Focus on retrieval
+            generate_answer=False,  # Focus on retrieval
         )
 
         # Verify retrieval succeeded
         assert result is not None, "Query should return result"
-        assert 'contexts' in result, "Result should have contexts"
-        assert 'metadata' in result, "Result should have metadata"
+        assert "contexts" in result, "Result should have contexts"
+        assert "metadata" in result, "Result should have metadata"
 
         # Verify documents retrieved (may use vector fallback if no relationships)
-        assert len(result['contexts']) >= 0, \
-            f"Query should complete with {entity_count} entities in database"
+        assert (
+            len(result["contexts"]) >= 0
+        ), f"Query should complete with {entity_count} entities in database"
 
         # Verify metadata
-        retrieval_method = result['metadata']['retrieval_method']
-        assert retrieval_method in ['knowledge_graph_traversal', 'vector_fallback'], \
-            f"Should use KG or fallback, got: {retrieval_method}"
+        retrieval_method = result["metadata"]["retrieval_method"]
+        assert retrieval_method in [
+            "knowledge_graph_traversal",
+            "vector_fallback",
+        ], f"Should use KG or fallback, got: {retrieval_method}"
 
-        assert result['metadata']['num_retrieved'] == len(result['contexts']), \
-            "Metadata should match retrieved count"
+        assert result["metadata"]["num_retrieved"] == len(
+            result["contexts"]
+        ), "Metadata should match retrieved count"
 
         # If we got results, great! If not, that's okay too (entity might not have relationships)
         print(f"\n  Query: '{sample_entity}'")
@@ -141,16 +150,13 @@ class TestGraphRAGRealistic:
 
         # Use very specific query unlikely to match entities
         result = pipeline.query(
-            "xyzabc123nonsense456query",
-            method="kg",
-            top_k=5,
-            generate_answer=False
+            "xyzabc123nonsense456query", method="kg", top_k=5, generate_answer=False
         )
 
         # Should still return something (via fallback or empty)
         assert result is not None
-        assert 'contexts' in result
-        assert 'metadata' in result
+        assert "contexts" in result
+        assert "metadata" in result
 
     @pytest.mark.integration
     @pytest.mark.requires_database
@@ -169,7 +175,7 @@ class TestGraphRAGRealistic:
             "error message troubleshooting",
             "system configuration problem",
             "network connectivity failure",
-            "application crash debugging"
+            "application crash debugging",
         ]
 
         results = []
@@ -179,12 +185,13 @@ class TestGraphRAGRealistic:
 
             # Verify each query succeeded
             assert result is not None, f"Query '{query}' should succeed"
-            assert 'contexts' in result
-            assert 'metadata' in result
+            assert "contexts" in result
+            assert "metadata" in result
 
         # Verify all queries completed
-        assert len(results) == len(queries), \
-            f"All {len(queries)} queries should complete"
+        assert len(results) == len(
+            queries
+        ), f"All {len(queries)} queries should complete"
 
     @pytest.mark.integration
     @pytest.mark.requires_database
@@ -199,30 +206,28 @@ class TestGraphRAGRealistic:
         pipeline, entity_count = graphrag_with_existing_data
 
         result = pipeline.query(
-            "system error diagnostic",
-            method="kg",
-            generate_answer=False
+            "system error diagnostic", method="kg", generate_answer=False
         )
 
         # Verify metadata fields
-        metadata = result['metadata']
+        metadata = result["metadata"]
 
-        assert 'retrieval_method' in metadata, \
-            "Metadata must include retrieval_method"
-        assert 'num_retrieved' in metadata, \
-            "Metadata must include num_retrieved"
-        assert 'pipeline_type' in metadata, \
-            "Metadata must include pipeline_type"
+        assert "retrieval_method" in metadata, "Metadata must include retrieval_method"
+        assert "num_retrieved" in metadata, "Metadata must include num_retrieved"
+        assert "pipeline_type" in metadata, "Metadata must include pipeline_type"
 
         # Verify at least one time field present
-        time_fields = ['processing_time', 'processing_time_ms', 'execution_time']
+        time_fields = ["processing_time", "processing_time_ms", "execution_time"]
         has_time = any(field in metadata for field in time_fields)
-        assert has_time, \
-            f"Metadata must include time field. Available: {list(metadata.keys())}"
+        assert (
+            has_time
+        ), f"Metadata must include time field. Available: {list(metadata.keys())}"
 
         # Verify pipeline type (accept both graphrag and hybrid_graphrag)
-        assert metadata['pipeline_type'] in ['graphrag', 'hybrid_graphrag'], \
-            f"Pipeline type should be graphrag or hybrid_graphrag, got: {metadata['pipeline_type']}"
+        assert metadata["pipeline_type"] in [
+            "graphrag",
+            "hybrid_graphrag",
+        ], f"Pipeline type should be graphrag or hybrid_graphrag, got: {metadata['pipeline_type']}"
 
 
 class TestHybridGraphRAGSmoke:
@@ -243,7 +248,9 @@ class TestHybridGraphRAGSmoke:
         This is a smoke test - just verifies methods don't crash.
         """
         try:
-            pipeline = create_pipeline("graphrag", validate_requirements=True, auto_setup=False)
+            pipeline = create_pipeline(
+                "graphrag", validate_requirements=True, auto_setup=False
+            )
         except Exception as e:
             pytest.skip(f"HybridGraphRAG not available: {e}")
 
@@ -263,13 +270,10 @@ class TestHybridGraphRAGSmoke:
             pytest.skip("iris-vector-graph tables exist but are empty")
 
         # Just smoke test - verify methods don't crash
-        for method in ['hybrid', 'rrf', 'text', 'vector']:
+        for method in ["hybrid", "rrf", "text", "vector"]:
             try:
                 result = pipeline.query(
-                    "test query",
-                    method=method,
-                    top_k=3,
-                    generate_answer=False
+                    "test query", method=method, top_k=3, generate_answer=False
                 )
                 # If it returns, it worked
                 assert result is not None

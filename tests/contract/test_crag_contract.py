@@ -25,12 +25,10 @@ class TestCRAGContract:
         When: Method existence is checked
         Then: query() method exists with correct signature
         """
-        assert hasattr(crag_pipeline, 'query'), \
-            "CRAG pipeline must have query() method"
+        assert hasattr(crag_pipeline, "query"), "CRAG pipeline must have query() method"
 
         # Verify method is callable
-        assert callable(crag_pipeline.query), \
-            "query() must be callable"
+        assert callable(crag_pipeline.query), "query() must be callable"
 
     def test_query_validates_required_parameter(self, crag_pipeline):
         """
@@ -45,16 +43,16 @@ class TestCRAGContract:
             crag_pipeline.query(query=None)
 
         error_msg = str(exc_info.value).lower()
-        assert "query" in error_msg, \
-            "Error message must mention 'query' parameter"
+        assert "query" in error_msg, "Error message must mention 'query' parameter"
 
         # Test query=""
         with pytest.raises(ValueError) as exc_info:
             crag_pipeline.query(query="")
 
         error_msg = str(exc_info.value).lower()
-        assert "query" in error_msg or "empty" in error_msg, \
-            "Error message must mention query or empty"
+        assert (
+            "query" in error_msg or "empty" in error_msg
+        ), "Error message must mention query or empty"
 
     def test_query_validates_top_k_range(self, crag_pipeline, sample_query):
         """
@@ -69,16 +67,18 @@ class TestCRAGContract:
             crag_pipeline.query(sample_query, top_k=0)
 
         error_msg = str(exc_info.value).lower()
-        assert "top_k" in error_msg or "top-k" in error_msg, \
-            "Error message must mention top_k parameter"
+        assert (
+            "top_k" in error_msg or "top-k" in error_msg
+        ), "Error message must mention top_k parameter"
 
         # Test top_k=101 (exceeds max)
         with pytest.raises(ValueError) as exc_info:
             crag_pipeline.query(sample_query, top_k=101)
 
         error_msg = str(exc_info.value).lower()
-        assert "top_k" in error_msg or "top-k" in error_msg, \
-            "Error message must mention top_k parameter"
+        assert (
+            "top_k" in error_msg or "top-k" in error_msg
+        ), "Error message must mention top_k parameter"
 
     @pytest.mark.requires_database
     def test_query_returns_valid_structure(self, crag_pipeline, sample_query):
@@ -98,12 +98,11 @@ class TestCRAGContract:
 
         # Verify metadata structure
         metadata = result["metadata"]
-        assert "retrieval_method" in metadata, \
-            "Metadata must include 'retrieval_method'"
-        assert "context_count" in metadata, \
-            "Metadata must include 'context_count'"
-        assert "sources" in metadata, \
-            "Metadata must include 'sources'"
+        assert (
+            "retrieval_method" in metadata
+        ), "Metadata must include 'retrieval_method'"
+        assert "context_count" in metadata, "Metadata must include 'context_count'"
+        assert "sources" in metadata, "Metadata must include 'sources'"
 
         # Verify data types
         assert isinstance(result["answer"], str), "Answer must be string"
@@ -118,11 +117,13 @@ class TestCRAGContract:
         When: Method existence is checked
         Then: load_documents() method exists
         """
-        assert hasattr(crag_pipeline, 'load_documents'), \
-            "CRAG pipeline must have load_documents() method"
+        assert hasattr(
+            crag_pipeline, "load_documents"
+        ), "CRAG pipeline must have load_documents() method"
 
-        assert callable(crag_pipeline.load_documents), \
-            "load_documents() must be callable"
+        assert callable(
+            crag_pipeline.load_documents
+        ), "load_documents() must be callable"
 
     def test_load_documents_validates_input(self, crag_pipeline):
         """
@@ -137,11 +138,14 @@ class TestCRAGContract:
             crag_pipeline.load_documents(documents=[])
 
         error_msg = str(exc_info.value).lower()
-        assert "documents" in error_msg or "empty" in error_msg, \
-            "Error message must mention documents or empty"
+        assert (
+            "documents" in error_msg or "empty" in error_msg
+        ), "Error message must mention documents or empty"
 
     @pytest.mark.requires_database
-    def test_load_documents_returns_valid_structure(self, crag_pipeline, sample_documents):
+    def test_load_documents_returns_valid_structure(
+        self, crag_pipeline, sample_documents
+    ):
         """
         FR-003: Load documents MUST return valid response structure.
 
@@ -152,18 +156,21 @@ class TestCRAGContract:
         result = crag_pipeline.load_documents(sample_documents)
 
         # Verify response structure
-        assert "documents_loaded" in result, \
-            "Response must have 'documents_loaded' field"
-        assert "documents_failed" in result, \
-            "Response must have 'documents_failed' field"
-        assert "embeddings_generated" in result, \
-            "Response must have 'embeddings_generated' field"
+        assert (
+            "documents_loaded" in result
+        ), "Response must have 'documents_loaded' field"
+        assert (
+            "documents_failed" in result
+        ), "Response must have 'documents_failed' field"
+        assert (
+            "embeddings_generated" in result
+        ), "Response must have 'embeddings_generated' field"
 
         # Verify values are reasonable
-        assert isinstance(result["documents_loaded"], int), \
-            "documents_loaded must be integer"
-        assert result["documents_loaded"] > 0, \
-            "Should load at least one document"
+        assert isinstance(
+            result["documents_loaded"], int
+        ), "documents_loaded must be integer"
+        assert result["documents_loaded"] > 0, "Should load at least one document"
 
     def test_query_accepts_method_parameter(self, crag_pipeline, sample_query):
         """
@@ -203,8 +210,9 @@ class TestCRAGContract:
 
         assert result is not None, "Query should return result"
         assert "metadata" in result, "Result should have metadata"
-        assert result["metadata"].get("retrieval_method") is not None, \
-            "Metadata should include retrieval_method"
+        assert (
+            result["metadata"].get("retrieval_method") is not None
+        ), "Metadata should include retrieval_method"
 
     def test_query_response_includes_execution_time(self, crag_pipeline, sample_query):
         """
@@ -220,10 +228,12 @@ class TestCRAGContract:
 
         # execution_time_ms is optional but recommended
         if "execution_time_ms" in metadata:
-            assert isinstance(metadata["execution_time_ms"], (int, float)), \
-                "execution_time_ms must be numeric"
-            assert metadata["execution_time_ms"] >= 0, \
-                "execution_time_ms must be non-negative"
+            assert isinstance(
+                metadata["execution_time_ms"], (int, float)
+            ), "execution_time_ms must be numeric"
+            assert (
+                metadata["execution_time_ms"] >= 0
+            ), "execution_time_ms must be non-negative"
 
     @pytest.mark.requires_database
     def test_crag_metadata_includes_relevance_score(self, crag_pipeline, sample_query):

@@ -84,7 +84,7 @@ class TestRateLimitEnforcement:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={"query": "What is diabetes?"}
+            json={"query": "What is diabetes?"},
         )
 
         # Should include rate limit headers regardless of status
@@ -118,7 +118,7 @@ class TestRateLimitEnforcement:
             response = client.post(
                 "/api/v1/basic/_search",
                 headers=auth_header,
-                json={"query": f"Query {i}"}
+                json={"query": f"Query {i}"},
             )
             responses.append(response)
 
@@ -128,8 +128,9 @@ class TestRateLimitEnforcement:
 
         # Should have received 429 at some point
         rate_limited_responses = [r for r in responses if r.status_code == 429]
-        assert len(rate_limited_responses) > 0, \
-            "Should receive 429 after exceeding rate limit"
+        assert (
+            len(rate_limited_responses) > 0
+        ), "Should receive 429 after exceeding rate limit"
 
         # Validate 429 response structure
         error_response = rate_limited_responses[0]
@@ -152,7 +153,7 @@ class TestRateLimitEnforcement:
             response = client.post(
                 "/api/v1/basic/_search",
                 headers=auth_header,
-                json={"query": f"Query {i}"}
+                json={"query": f"Query {i}"},
             )
 
             if response.status_code == 429:
@@ -160,7 +161,9 @@ class TestRateLimitEnforcement:
                 assert "Retry-After" in response.headers
                 retry_after = int(response.headers["Retry-After"])
                 assert retry_after > 0
-                assert retry_after <= 60  # Should be within 1 minute for per-minute limit
+                assert (
+                    retry_after <= 60
+                )  # Should be within 1 minute for per-minute limit
                 break
 
     def test_rate_limit_resets_after_window(self, client, auth_header):
@@ -194,7 +197,9 @@ class TestRateLimitEnforcement:
         # 3. Verify key 2 still has quota
         # 4. Verify key 1 gets 429 while key 2 succeeds
 
-    def test_rate_limit_remaining_decrements_with_each_request(self, client, auth_header):
+    def test_rate_limit_remaining_decrements_with_each_request(
+        self, client, auth_header
+    ):
         """
         Test that X-RateLimit-Remaining decrements correctly.
 
@@ -204,9 +209,7 @@ class TestRateLimitEnforcement:
         """
         # Get initial remaining count
         response1 = client.post(
-            "/api/v1/basic/_search",
-            headers=auth_header,
-            json={"query": "First query"}
+            "/api/v1/basic/_search", headers=auth_header, json={"query": "First query"}
         )
 
         if response1.status_code != 200:
@@ -216,16 +219,15 @@ class TestRateLimitEnforcement:
 
         # Send another request
         response2 = client.post(
-            "/api/v1/basic/_search",
-            headers=auth_header,
-            json={"query": "Second query"}
+            "/api/v1/basic/_search", headers=auth_header, json={"query": "Second query"}
         )
 
         remaining2 = int(response2.headers["X-RateLimit-Remaining"])
 
         # Remaining should have decreased
-        assert remaining2 < remaining1, \
-            "X-RateLimit-Remaining should decrement after each request"
+        assert (
+            remaining2 < remaining1
+        ), "X-RateLimit-Remaining should decrement after each request"
 
     def test_rate_limit_applies_to_all_endpoints(self, client, auth_header):
         """
@@ -249,9 +251,7 @@ class TestRateLimitEnforcement:
                 response = client.get(endpoint, headers=auth_header)
             else:
                 response = client.post(
-                    endpoint,
-                    headers=auth_header,
-                    json={"query": f"Query {i}"}
+                    endpoint, headers=auth_header, json={"query": f"Query {i}"}
                 )
 
             # X-RateLimit-Remaining should decrement across all endpoints

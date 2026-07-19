@@ -159,7 +159,10 @@ class ValidatedPipelineFactory:
         elif pipeline_type == "graphrag":
             return HybridGraphRAGPipeline(**pipeline_kwargs)
         elif pipeline_type == "pylate_colbert":
-            from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import PyLateColBERTPipeline
+            from iris_vector_rag.pipelines.colbert_pylate.pylate_pipeline import (
+                PyLateColBERTPipeline,
+            )
+
             return PyLateColBERTPipeline(**pipeline_kwargs)
         else:
             available_types = [

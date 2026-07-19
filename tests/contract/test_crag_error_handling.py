@@ -19,7 +19,9 @@ import pytest
 class TestCRAGErrorHandling:
     """Contract tests for CRAG error handling."""
 
-    def test_missing_api_key_error_is_actionable(self, crag_pipeline, mocker, sample_query):
+    def test_missing_api_key_error_is_actionable(
+        self, crag_pipeline, mocker, sample_query
+    ):
         """
         FR-009, FR-010: Missing API key error MUST include actionable guidance.
 
@@ -37,18 +39,20 @@ class TestCRAGErrorHandling:
         error_msg = str(exc_info.value).lower()
 
         # MUST mention specific env var
-        assert ("openai_api_key" in error_msg or
-                "api_key" in error_msg or
-                "api key" in error_msg), \
-            "Error message must mention API key"
+        assert (
+            "openai_api_key" in error_msg
+            or "api_key" in error_msg
+            or "api key" in error_msg
+        ), "Error message must mention API key"
 
         # MUST suggest how to fix
-        assert ("export" in error_msg or
-                "set" in error_msg or
-                "configure" in error_msg), \
-            "Error message must suggest how to set API key"
+        assert (
+            "export" in error_msg or "set" in error_msg or "configure" in error_msg
+        ), "Error message must suggest how to set API key"
 
-    def test_database_connection_retries_with_backoff(self, crag_pipeline, mocker, caplog, sample_query):
+    def test_database_connection_retries_with_backoff(
+        self, crag_pipeline, mocker, caplog, sample_query
+    ):
         """
         FR-012: Database connection failure MUST retry with exponential backoff.
 
@@ -62,19 +66,19 @@ class TestCRAGErrorHandling:
         # For pipelines without retry logic, this test documents the expected behavior
 
         # Mock connection to fail twice, succeed third time
-        if hasattr(crag_pipeline, 'vector_store'):
-            connection_mock = mocker.Mock(side_effect=[
-                ConnectionError("Timeout"),
-                ConnectionError("Timeout"),
-                mocker.Mock()  # Success on third try
-            ])
+        if hasattr(crag_pipeline, "vector_store"):
+            connection_mock = mocker.Mock(
+                side_effect=[
+                    ConnectionError("Timeout"),
+                    ConnectionError("Timeout"),
+                    mocker.Mock(),  # Success on third try
+                ]
+            )
 
             # Patch the connection method if it exists
-            if hasattr(crag_pipeline.vector_store, 'get_connection'):
+            if hasattr(crag_pipeline.vector_store, "get_connection"):
                 mocker.patch.object(
-                    crag_pipeline.vector_store,
-                    'get_connection',
-                    connection_mock
+                    crag_pipeline.vector_store, "get_connection", connection_mock
                 )
 
                 # Execute query - should succeed after retries
@@ -102,8 +106,8 @@ class TestCRAGErrorHandling:
         Then: Error message includes pipeline type, operation, and state
         """
         # Trigger an error by mocking a critical component
-        if hasattr(crag_pipeline, 'vector_store'):
-            mocker.patch.object(crag_pipeline, 'vector_store', None)
+        if hasattr(crag_pipeline, "vector_store"):
+            mocker.patch.object(crag_pipeline, "vector_store", None)
 
         with pytest.raises(Exception) as exc_info:
             crag_pipeline.query(sample_query)
@@ -111,15 +115,16 @@ class TestCRAGErrorHandling:
         error_msg = str(exc_info.value).lower()
 
         # MUST include pipeline type (at least "crag" or "rag")
-        assert ("crag" in error_msg or
-                "rag" in error_msg or
-                "pipeline" in error_msg), \
-            "Error message must mention pipeline type"
+        assert (
+            "crag" in error_msg or "rag" in error_msg or "pipeline" in error_msg
+        ), "Error message must mention pipeline type"
 
         # SHOULD include operation context
         # (This is a guideline - implementation may vary)
 
-    def test_dimension_mismatch_error_actionable(self, crag_pipeline, mocker, sample_query):
+    def test_dimension_mismatch_error_actionable(
+        self, crag_pipeline, mocker, sample_query
+    ):
         """
         FR-009, FR-010: Dimension mismatch error MUST be actionable.
 
@@ -128,13 +133,13 @@ class TestCRAGErrorHandling:
         Then: Error message includes expected (384) and actual dimensions with fix guidance
         """
         # Mock embedding to return wrong dimensions
-        if hasattr(crag_pipeline, 'embedding_manager'):
+        if hasattr(crag_pipeline, "embedding_manager"):
             corrupt_embedding = [0.1] * 768  # Wrong dimension (BERT-base)
 
             mocker.patch.object(
                 crag_pipeline.embedding_manager,
-                'generate_embedding',
-                return_value=corrupt_embedding
+                "generate_embedding",
+                return_value=corrupt_embedding,
             )
 
             with pytest.raises(Exception) as exc_info:
@@ -170,12 +175,17 @@ class TestCRAGErrorHandling:
 
         # Error message SHOULD include fix guidance
         actionable_keywords = ["fix", "set", "configure", "export", "add", "check"]
-        has_actionable_guidance = any(keyword in error_msg for keyword in actionable_keywords)
+        has_actionable_guidance = any(
+            keyword in error_msg for keyword in actionable_keywords
+        )
 
-        assert has_actionable_guidance, \
-            f"Error message should include actionable guidance. Got: {exc_info.value}"
+        assert (
+            has_actionable_guidance
+        ), f"Error message should include actionable guidance. Got: {exc_info.value}"
 
-    def test_transient_failure_handling(self, crag_pipeline, mocker, caplog, sample_query):
+    def test_transient_failure_handling(
+        self, crag_pipeline, mocker, caplog, sample_query
+    ):
         """
         FR-012: Transient failures MUST be handled gracefully.
 
@@ -189,12 +199,12 @@ class TestCRAGErrorHandling:
         # Actual implementation may vary
 
         # Simulate transient embedding service failure
-        if hasattr(crag_pipeline, 'embedding_manager'):
+        if hasattr(crag_pipeline, "embedding_manager"):
             # Mock to raise temporary error
             mocker.patch.object(
                 crag_pipeline.embedding_manager,
-                'generate_embedding',
-                side_effect=TimeoutError("Embedding service timeout")
+                "generate_embedding",
+                side_effect=TimeoutError("Embedding service timeout"),
             )
 
             try:
@@ -224,12 +234,8 @@ class TestCRAGErrorHandling:
         # Multiple failure scenario
 
         # Mock multiple components to fail
-        if hasattr(crag_pipeline, 'vector_store'):
-            mocker.patch.object(
-                crag_pipeline,
-                'vector_store',
-                None
-            )
+        if hasattr(crag_pipeline, "vector_store"):
+            mocker.patch.object(crag_pipeline, "vector_store", None)
 
         with pytest.raises(Exception):
             crag_pipeline.query("test query")
@@ -240,15 +246,23 @@ class TestCRAGErrorHandling:
         assert len(caplog.records) > 0, "Errors should be logged"
 
         # At least one error message should exist
-        error_messages = [record.message for record in caplog.records if record.levelno >= logging.ERROR]
-        assert len(error_messages) > 0, "At least one error should be logged at ERROR level"
+        error_messages = [
+            record.message
+            for record in caplog.records
+            if record.levelno >= logging.ERROR
+        ]
+        assert (
+            len(error_messages) > 0
+        ), "At least one error should be logged at ERROR level"
 
     def test_fail_fast_on_critical_config_missing(self, mocker):
         from iris_vector_rag import create_pipeline
 
         mocker.patch(
-            'iris_vector_rag.common.iris_connection.get_iris_connection',
-            side_effect=ConnectionError("IRIS connection failed (simulated missing config)")
+            "iris_vector_rag.common.iris_connection.get_iris_connection",
+            side_effect=ConnectionError(
+                "IRIS connection failed (simulated missing config)"
+            ),
         )
 
         try:
@@ -256,13 +270,18 @@ class TestCRAGErrorHandling:
             with pytest.raises(Exception) as exc_info:
                 pipeline.query("test query")
             error_msg = str(exc_info.value).lower()
-            assert any(k in error_msg for k in ("config", "key", "missing", "connect")), \
-                f"Error should mention missing configuration, got: {error_msg}"
+            assert any(
+                k in error_msg for k in ("config", "key", "missing", "connect")
+            ), f"Error should mention missing configuration, got: {error_msg}"
         except Exception as e:
             error_msg = str(e).lower()
-            assert any(k in error_msg for k in ("config", "requirement", "missing", "connect")), \
-                f"Initialization error should mention configuration, got: {error_msg}"
-    def test_evaluator_failure_error_is_actionable(self, crag_pipeline, mocker, sample_query):
+            assert any(
+                k in error_msg for k in ("config", "requirement", "missing", "connect")
+            ), f"Initialization error should mention configuration, got: {error_msg}"
+
+    def test_evaluator_failure_error_is_actionable(
+        self, crag_pipeline, mocker, sample_query
+    ):
         """
         FR-009, FR-010: CRAG evaluator failure MUST include actionable guidance.
 
@@ -271,11 +290,11 @@ class TestCRAGErrorHandling:
         Then: Error message suggests fallback or debugging steps
         """
         # Mock evaluator to fail (CRAG-specific component)
-        if hasattr(crag_pipeline, 'evaluator'):
+        if hasattr(crag_pipeline, "evaluator"):
             mocker.patch.object(
                 crag_pipeline.evaluator,
-                'evaluate',
-                side_effect=Exception("Evaluator service unavailable")
+                "evaluate",
+                side_effect=Exception("Evaluator service unavailable"),
             )
 
             try:
@@ -287,9 +306,12 @@ class TestCRAGErrorHandling:
                 if "evaluator" in error_msg or "evaluation" in error_msg:
                     # Check for actionable guidance
                     actionable_keywords = ["fallback", "retry", "check", "configure"]
-                    has_actionable = any(keyword in error_msg for keyword in actionable_keywords)
+                    has_actionable = any(
+                        keyword in error_msg for keyword in actionable_keywords
+                    )
 
-                    assert has_actionable or "service" in error_msg, \
-                        "Evaluator error should include actionable guidance"
+                    assert (
+                        has_actionable or "service" in error_msg
+                    ), "Evaluator error should include actionable guidance"
         else:
             pytest.skip("Pipeline does not have evaluator attribute")

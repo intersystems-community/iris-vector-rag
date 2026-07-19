@@ -37,23 +37,31 @@ class TestHNSWVectorContract:
 
         # Verify result structure
         assert result is not None, "Result should not be None"
-        assert ('contexts' in result), "Result should have contexts"
-        assert ('metadata' in result), "Result should have metadata"
+        assert "contexts" in result, "Result should have contexts"
+        assert "metadata" in result, "Result should have metadata"
 
         # Verify documents retrieved
-        assert len(result['contexts']) > 0, \
-            f"Vector search (or fallback) should retrieve documents, got {len(result['contexts'])}"
+        assert (
+            len(result["contexts"]) > 0
+        ), f"Vector search (or fallback) should retrieve documents, got {len(result['contexts'])}"
 
         # Verify metadata
-        assert 'retrieval_method' in result['metadata'], \
-            "Metadata should contain retrieval_method"
+        assert (
+            "retrieval_method" in result["metadata"]
+        ), "Metadata should contain retrieval_method"
 
-        method = result['metadata']['retrieval_method']
-        assert method in ['vector', 'hnsw_vector', 'vector_fallback', 'knowledge_graph'], \
-            f"Expected vector/hnsw_vector or fallback, got {method}"
+        method = result["metadata"]["retrieval_method"]
+        assert method in [
+            "vector",
+            "hnsw_vector",
+            "vector_fallback",
+            "knowledge_graph",
+        ], f"Expected vector/hnsw_vector or fallback, got {method}"
 
     @pytest.mark.requires_database
-    def test_hnsw_vector_fallback_on_zero_results(self, graphrag_pipeline, mocker, caplog):
+    def test_hnsw_vector_fallback_on_zero_results(
+        self, graphrag_pipeline, mocker, caplog
+    ):
         """
         FR-011: HNSW vector search MUST fall back when returning 0 results.
 
@@ -67,34 +75,35 @@ class TestHNSWVectorContract:
         query = "How is diabetes diagnosed?"
 
         # Mock HNSW vector search to return 0 results
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_hnsw_vector',
-                return_value=([], 'hnsw_vector')
+                "retrieve_via_hnsw_vector",
+                return_value=([], "hnsw_vector"),
             )
         else:
             mocker.patch.object(
                 graphrag_pipeline,
-                '_retrieve_via_hnsw_vector',
-                return_value=([], 'hnsw_vector')
+                "_retrieve_via_hnsw_vector",
+                return_value=([], "hnsw_vector"),
             )
 
         # Execute query
         result = graphrag_pipeline.query(query, method="vector")
 
         # Verify fallback
-        assert len(result['contexts']) > 0, \
-            "Fallback should retrieve documents"
+        assert len(result["contexts"]) > 0, "Fallback should retrieve documents"
 
-        assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
+        assert (
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
         # Verify logging
         log_output = caplog.text
-        assert any("fallback" in msg.lower() or "0 results" in msg.lower()
-                   for msg in log_output.split('\n')), \
-            "Should log warning about HNSW fallback"
+        assert any(
+            "fallback" in msg.lower() or "0 results" in msg.lower()
+            for msg in log_output.split("\n")
+        ), "Should log warning about HNSW fallback"
 
     @pytest.mark.requires_database
     def test_hnsw_vector_fallback_on_exception(self, graphrag_pipeline, mocker, caplog):
@@ -111,31 +120,34 @@ class TestHNSWVectorContract:
         query = "How is diabetes diagnosed?"
 
         # Mock HNSW to raise exception
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_hnsw_vector',
-                side_effect=Exception("HNSW search failed")
+                "retrieve_via_hnsw_vector",
+                side_effect=Exception("HNSW search failed"),
             )
         else:
             mocker.patch.object(
                 graphrag_pipeline,
-                '_retrieve_via_hnsw_vector',
-                side_effect=Exception("HNSW search failed")
+                "_retrieve_via_hnsw_vector",
+                side_effect=Exception("HNSW search failed"),
             )
 
         # Execute query - should not raise
         result = graphrag_pipeline.query(query, method="vector")
 
         # Verify fallback
-        assert len(result['contexts']) > 0, \
-            "Fallback should retrieve documents after exception"
+        assert (
+            len(result["contexts"]) > 0
+        ), "Fallback should retrieve documents after exception"
 
-        assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
+        assert (
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
         # Verify error logged
         log_output = caplog.text
-        assert any("error" in msg.lower() or "fail" in msg.lower()
-                   for msg in log_output.split('\n')), \
-            "Should log error about HNSW exception"
+        assert any(
+            "error" in msg.lower() or "fail" in msg.lower()
+            for msg in log_output.split("\n")
+        ), "Should log error about HNSW exception"

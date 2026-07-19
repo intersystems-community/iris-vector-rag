@@ -176,10 +176,10 @@ class TestHybridGraphRAGPipeline:
         self.mock_config_mgr._config = {
             "embedding_model": {
                 "name": "sentence-transformers/all-MiniLM-L6-v2",
-                "dimension": 384
+                "dimension": 384,
             },
             "database": {"schema": "RAG"},
-            "vector_search": {"metric": "COSINE", "top_k": 5}
+            "vector_search": {"metric": "COSINE", "top_k": 5},
         }
 
     def test_pipeline_initialization_without_graph_core(self):
@@ -255,9 +255,7 @@ class TestHybridGraphRAGPipeline:
             assert not pipeline.is_hybrid_enabled()
 
             # Mock the enhanced fallback method
-            with patch.object(
-                pipeline, "_enhanced_hybrid_fallback"
-            ) as mock_fallback:
+            with patch.object(pipeline, "_enhanced_hybrid_fallback") as mock_fallback:
                 mock_fallback.return_value = ([Mock()], "fallback")
 
                 pipeline.query("test query", method="hybrid", generate_answer=False)
@@ -339,17 +337,23 @@ class TestModularArchitecture:
             file_path = Path(__file__).parent.parent / module_file
             if file_path.exists():
                 line_count = len(file_path.read_text().splitlines())
-                assert line_count <= max_lines, f"{module_file} has {line_count} lines (>{max_lines})"
+                assert (
+                    line_count <= max_lines
+                ), f"{module_file} has {line_count} lines (>{max_lines})"
 
     def test_import_isolation(self):
         """Test that modules can be imported independently."""
         # Test discovery module
-        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import GraphCoreDiscovery
+        from iris_vector_rag.pipelines.hybrid_graphrag_discovery import (
+            GraphCoreDiscovery,
+        )
 
         assert GraphCoreDiscovery is not None
 
         # Test retrieval module
-        from iris_vector_rag.pipelines.hybrid_graphrag_retrieval import HybridRetrievalMethods
+        from iris_vector_rag.pipelines.hybrid_graphrag_retrieval import (
+            HybridRetrievalMethods,
+        )
 
         assert HybridRetrievalMethods is not None
 

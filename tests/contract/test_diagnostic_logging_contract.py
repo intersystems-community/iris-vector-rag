@@ -21,7 +21,7 @@ class TestDiagnosticLoggingContract:
         log_stream = StringIO()
         handler = logging.StreamHandler(log_stream)
         handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(levelname)s - %(message)s")
         handler.setFormatter(formatter)
 
         # Add handler to root logger
@@ -58,9 +58,10 @@ class TestDiagnosticLoggingContract:
         log_output = log_capture.getvalue()
 
         # If 0 results, message MUST be logged
-        if len(result['contexts']) == 0:
-            assert "Vector search returned 0 results" in log_output, \
-                "INFO log 'Vector search returned 0 results' missing when 0 results returned"
+        if len(result["contexts"]) == 0:
+            assert (
+                "Vector search returned 0 results" in log_output
+            ), "INFO log 'Vector search returned 0 results' missing when 0 results returned"
 
     def test_logs_query_embedding_dimensions(self, graphrag_pipeline, log_capture):
         """
@@ -76,12 +77,12 @@ class TestDiagnosticLoggingContract:
         log_output = log_capture.getvalue()
 
         # Should log query embedding dimensions
-        assert re.search(r"Query embedding dimensions: \d+", log_output), \
-            "DEBUG log missing 'Query embedding dimensions: <N>'"
+        assert re.search(
+            r"Query embedding dimensions: \d+", log_output
+        ), "DEBUG log missing 'Query embedding dimensions: <N>'"
 
         # Should be 384 for all-MiniLM-L6-v2
-        assert "384" in log_output, \
-            "Query embedding dimensions should be 384"
+        assert "384" in log_output, "Query embedding dimensions should be 384"
 
     def test_logs_total_documents(self, graphrag_pipeline, log_capture):
         """
@@ -97,9 +98,11 @@ class TestDiagnosticLoggingContract:
         log_output = log_capture.getvalue()
 
         # Should log total documents
-        assert re.search(r"Total documents in RAG\.SourceDocuments: \d+", log_output) or \
-               re.search(r"Total documents: \d+", log_output), \
-            "DEBUG log missing 'Total documents in RAG.SourceDocuments: <N>'"
+        assert re.search(
+            r"Total documents in RAG\.SourceDocuments: \d+", log_output
+        ) or re.search(
+            r"Total documents: \d+", log_output
+        ), "DEBUG log missing 'Total documents in RAG.SourceDocuments: <N>'"
 
     def test_logs_documents_with_embeddings(self, graphrag_pipeline, log_capture):
         """
@@ -115,8 +118,9 @@ class TestDiagnosticLoggingContract:
         log_output = log_capture.getvalue()
 
         # Should log documents with embeddings count
-        assert re.search(r"Documents with embeddings: \d+", log_output), \
-            "DEBUG log missing 'Documents with embeddings: <N>'"
+        assert re.search(
+            r"Documents with embeddings: \d+", log_output
+        ), "DEBUG log missing 'Documents with embeddings: <N>'"
 
     def test_logs_sql_query_executed(self, graphrag_pipeline, log_capture):
         """
@@ -132,12 +136,14 @@ class TestDiagnosticLoggingContract:
         log_output = log_capture.getvalue()
 
         # Should log SQL query
-        assert "sql query" in log_output.lower(), \
-            "DEBUG log missing 'SQL query executed:' or 'SQL query:'"
+        assert (
+            "sql query" in log_output.lower()
+        ), "DEBUG log missing 'SQL query executed:' or 'SQL query:'"
 
         # SQL should contain VECTOR_DOT_PRODUCT (IRIS vector search function)
-        assert "VECTOR_DOT_PRODUCT" in log_output, \
-            "SQL query should use VECTOR_DOT_PRODUCT for vector search"
+        assert (
+            "VECTOR_DOT_PRODUCT" in log_output
+        ), "SQL query should use VECTOR_DOT_PRODUCT for vector search"
 
     def test_logs_top_k_parameter(self, graphrag_pipeline, log_capture):
         """
@@ -153,11 +159,13 @@ class TestDiagnosticLoggingContract:
         log_output = log_capture.getvalue()
 
         # Should log top-K parameter
-        assert re.search(r"Top-K parameter: \d+", log_output) or \
-               re.search(r"top_k[:\s=]+\d+", log_output, re.IGNORECASE), \
-            "DEBUG log missing 'Top-K parameter: <N>'"
+        assert re.search(r"Top-K parameter: \d+", log_output) or re.search(
+            r"top_k[:\s=]+\d+", log_output, re.IGNORECASE
+        ), "DEBUG log missing 'Top-K parameter: <N>'"
 
-    def test_logs_similarity_scores_when_zero_results(self, graphrag_pipeline, log_capture):
+    def test_logs_similarity_scores_when_zero_results(
+        self, graphrag_pipeline, log_capture
+    ):
         """
         FR-004: System MUST log similarity scores (or lack thereof) when 0 results.
 
@@ -171,11 +179,12 @@ class TestDiagnosticLoggingContract:
         log_output = log_capture.getvalue()
 
         # Only check if 0 results returned
-        if len(result['contexts']) == 0:
+        if len(result["contexts"]) == 0:
             # Should log something about similarity scores
-            assert "similarity scores" in log_output.lower() or \
-                   "scores" in log_output.lower(), \
-                "DEBUG log missing similarity scores information when 0 results"
+            assert (
+                "similarity scores" in log_output.lower()
+                or "scores" in log_output.lower()
+            ), "DEBUG log missing similarity scores information when 0 results"
 
     def test_logging_level_info_shows_high_level_status(self, graphrag_pipeline):
         """
@@ -189,7 +198,7 @@ class TestDiagnosticLoggingContract:
         log_stream = StringIO()
         handler = logging.StreamHandler(log_stream)
         handler.setLevel(logging.INFO)
-        formatter = logging.Formatter('%(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(levelname)s - %(message)s")
         handler.setFormatter(formatter)
 
         logger = logging.getLogger()
@@ -203,14 +212,16 @@ class TestDiagnosticLoggingContract:
             log_output = log_stream.getvalue()
 
             # INFO should have high-level status
-            if len(result['contexts']) == 0:
-                assert "Vector search returned 0 results" in log_output, \
-                    "INFO log should show 0 results status"
+            if len(result["contexts"]) == 0:
+                assert (
+                    "Vector search returned 0 results" in log_output
+                ), "INFO log should show 0 results status"
             else:
                 # Should show successful retrieval
-                assert "Vector search returned" in log_output or \
-                       "retrieved" in log_output.lower(), \
-                    "INFO log should show retrieval status"
+                assert (
+                    "Vector search returned" in log_output
+                    or "retrieved" in log_output.lower()
+                ), "INFO log should show retrieval status"
 
         finally:
             logger.removeHandler(handler)
@@ -227,7 +238,7 @@ class TestDiagnosticLoggingContract:
         log_stream = StringIO()
         handler = logging.StreamHandler(log_stream)
         handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(levelname)s - %(message)s')
+        formatter = logging.Formatter("%(levelname)s - %(message)s")
         handler.setFormatter(formatter)
 
         logger = logging.getLogger()
@@ -252,8 +263,9 @@ class TestDiagnosticLoggingContract:
 
             # At least 5 diagnostic items should be present
             present_diagnostics = sum(1 for d in diagnostics if d)
-            assert present_diagnostics >= 5, \
-                f"Only {present_diagnostics}/6 diagnostic items logged in DEBUG mode"
+            assert (
+                present_diagnostics >= 5
+            ), f"Only {present_diagnostics}/6 diagnostic items logged in DEBUG mode"
 
         finally:
             logger.removeHandler(handler)

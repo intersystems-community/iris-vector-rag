@@ -22,25 +22,22 @@ def medical_20_fixture_validation(iris_connection):
     # Verify expected row counts
     result = iris_connection.execute(text("SELECT COUNT(*) FROM RAG.SourceDocuments"))
     doc_count = result.scalar()
-    assert doc_count == 3, \
-        f"Expected 3 source documents in fixture, found {doc_count}. " \
+    assert doc_count == 3, (
+        f"Expected 3 source documents in fixture, found {doc_count}. "
         f"Run: python scripts/fixtures/create_graphrag_dat_fixture.py --cleanup-first"
+    )
 
     result = iris_connection.execute(text("SELECT COUNT(*) FROM RAG.Entities"))
     entity_count = result.scalar()
-    assert entity_count == 21, \
-        f"Expected 21 entities in fixture, found {entity_count}"
+    assert entity_count == 21, f"Expected 21 entities in fixture, found {entity_count}"
 
-    result = iris_connection.execute(text("SELECT COUNT(*) FROM RAG.EntityRelationships"))
+    result = iris_connection.execute(
+        text("SELECT COUNT(*) FROM RAG.EntityRelationships")
+    )
     rel_count = result.scalar()
-    assert rel_count == 15, \
-        f"Expected 15 relationships in fixture, found {rel_count}"
+    assert rel_count == 15, f"Expected 15 relationships in fixture, found {rel_count}"
 
-    yield {
-        "documents": doc_count,
-        "entities": entity_count,
-        "relationships": rel_count
-    }
+    yield {"documents": doc_count, "entities": entity_count, "relationships": rel_count}
 
 
 @pytest.mark.integration
@@ -68,11 +65,14 @@ class TestMedical20FixtureIntegrity:
         """))
         joined_count = result.scalar()
 
-        assert joined_count == 21, \
-            f"Expected all 21 entities to have valid FK references, " \
+        assert joined_count == 21, (
+            f"Expected all 21 entities to have valid FK references, "
             f"but only {joined_count} joined successfully"
+        )
 
-    def test_no_orphaned_relationships(self, iris_connection, medical_20_fixture_validation):
+    def test_no_orphaned_relationships(
+        self, iris_connection, medical_20_fixture_validation
+    ):
         """Verify all relationships reference valid entities."""
         # Check source entities exist
         result = iris_connection.execute(text("""
@@ -83,8 +83,9 @@ class TestMedical20FixtureIntegrity:
             )
         """))
         orphaned_sources = result.scalar()
-        assert orphaned_sources == 0, \
-            f"Found {orphaned_sources} relationships with invalid source_entity_id"
+        assert (
+            orphaned_sources == 0
+        ), f"Found {orphaned_sources} relationships with invalid source_entity_id"
 
         # Check target entities exist
         result = iris_connection.execute(text("""
@@ -95,10 +96,13 @@ class TestMedical20FixtureIntegrity:
             )
         """))
         orphaned_targets = result.scalar()
-        assert orphaned_targets == 0, \
-            f"Found {orphaned_targets} relationships with invalid target_entity_id"
+        assert (
+            orphaned_targets == 0
+        ), f"Found {orphaned_targets} relationships with invalid target_entity_id"
 
-    def test_entity_type_distribution(self, iris_connection, medical_20_fixture_validation):
+    def test_entity_type_distribution(
+        self, iris_connection, medical_20_fixture_validation
+    ):
         """Verify expected entity type distribution."""
         result = iris_connection.execute(text("""
             SELECT entity_type, COUNT(*) as cnt
@@ -115,7 +119,9 @@ class TestMedical20FixtureIntegrity:
         assert types.get("Treatment", 0) == 2, "Expected 2 Treatment entities"
         assert types.get("Vaccine", 0) == 2, "Expected 2 Vaccine entities"
 
-    def test_relationship_type_distribution(self, iris_connection, medical_20_fixture_validation):
+    def test_relationship_type_distribution(
+        self, iris_connection, medical_20_fixture_validation
+    ):
         """Verify expected relationship type distribution."""
         result = iris_connection.execute(text("""
             SELECT relationship_type, COUNT(*) as cnt
@@ -127,13 +133,21 @@ class TestMedical20FixtureIntegrity:
         types = {row[0]: row[1] for row in result.fetchall()}
 
         # Verify key relationship types exist
-        assert types.get("treated_with", 0) == 4, "Expected 4 'treated_with' relationships"
-        assert types.get("has_subtype", 0) == 2, "Expected 2 'has_subtype' relationships"
-        assert types.get("prevented_by", 0) == 2, "Expected 2 'prevented_by' relationships"
+        assert (
+            types.get("treated_with", 0) == 4
+        ), "Expected 4 'treated_with' relationships"
+        assert (
+            types.get("has_subtype", 0) == 2
+        ), "Expected 2 'has_subtype' relationships"
+        assert (
+            types.get("prevented_by", 0) == 2
+        ), "Expected 2 'prevented_by' relationships"
 
 
 @pytest.mark.integration
-@pytest.mark.skip(reason="Requires GraphRAG pipeline setup - demonstrates intended usage")
+@pytest.mark.skip(
+    reason="Requires GraphRAG pipeline setup - demonstrates intended usage"
+)
 class TestGraphRAGWithMedical20Fixture:
     """
     GraphRAG integration tests using medical-20 fixture.
@@ -177,9 +191,10 @@ class TestGraphRAGWithMedical20Fixture:
         result = pipeline.query("How can COVID-19 be prevented?", top_k=5)
 
         answer_text = result["answer"].lower()
-        assert any(keyword in answer_text for keyword in [
-            "vaccine", "pfizer", "moderna", "mask", "n95"
-        ])
+        assert any(
+            keyword in answer_text
+            for keyword in ["vaccine", "pfizer", "moderna", "mask", "n95"]
+        )
 
     def test_hypertension_risk_query(self, medical_20_fixture_validation):
         """
@@ -191,14 +206,14 @@ class TestGraphRAGWithMedical20Fixture:
 
         pipeline = create_pipeline("graphrag")
         result = pipeline.query(
-            "What diseases are caused by high blood pressure?",
-            top_k=5
+            "What diseases are caused by high blood pressure?", top_k=5
         )
 
         answer_text = result["answer"].lower()
-        assert any(keyword in answer_text for keyword in [
-            "cardiovascular", "stroke", "heart failure"
-        ])
+        assert any(
+            keyword in answer_text
+            for keyword in ["cardiovascular", "stroke", "heart failure"]
+        )
 
     def test_multi_hop_traversal(self, iris_connection, medical_20_fixture_validation):
         """
@@ -218,13 +233,15 @@ class TestGraphRAGWithMedical20Fixture:
         neighbors = result.fetchall()
 
         # Should find at least 5 connected entities
-        assert len(neighbors) >= 5, \
-            f"Expected at least 5 entities connected to Diabetes, found {len(neighbors)}"
+        assert (
+            len(neighbors) >= 5
+        ), f"Expected at least 5 entities connected to Diabetes, found {len(neighbors)}"
 
         # Verify we found key entities
         neighbor_names = [row[0] for row in neighbors]
-        assert any("Metformin" in name for name in neighbor_names), \
-            "Expected to find Metformin connected to Diabetes"
+        assert any(
+            "Metformin" in name for name in neighbor_names
+        ), "Expected to find Metformin connected to Diabetes"
 
 
 @pytest.mark.integration
@@ -243,19 +260,22 @@ class TestFixtureAsGroundTruth:
             "Metformin",
             "COVID-19",
             "Pfizer-BioNTech",
-            "Hypertension"
+            "Hypertension",
         ]
 
         for entity_name in known_entities:
             result = iris_connection.execute(
                 text("SELECT COUNT(*) FROM RAG.Entities WHERE entity_name = :name"),
-                {"name": entity_name}
+                {"name": entity_name},
             )
             count = result.scalar()
-            assert count == 1, \
-                f"Expected to find entity '{entity_name}' exactly once, found {count}"
+            assert (
+                count == 1
+            ), f"Expected to find entity '{entity_name}' exactly once, found {count}"
 
-    def test_known_relationship_exists(self, iris_connection, medical_20_fixture_validation):
+    def test_known_relationship_exists(
+        self, iris_connection, medical_20_fixture_validation
+    ):
         """Verify specific known relationships exist in fixture."""
         # Diabetes treated_with Metformin
         result = iris_connection.execute(text("""
@@ -268,13 +288,12 @@ class TestFixtureAsGroundTruth:
         """))
 
         count = result.scalar()
-        assert count == 1, \
-            "Expected to find 'Type 2 diabetes treated_with Metformin' relationship"
+        assert (
+            count == 1
+        ), "Expected to find 'Type 2 diabetes treated_with Metformin' relationship"
 
     def test_fixture_completeness_for_scenario(
-        self,
-        iris_connection,
-        medical_20_fixture_validation
+        self, iris_connection, medical_20_fixture_validation
     ):
         """
         Verify fixture contains complete data for test scenarios.
@@ -283,21 +302,28 @@ class TestFixtureAsGroundTruth:
         test GraphRAG capabilities.
         """
         # Should have at least 3 different entity types
-        result = iris_connection.execute(text("SELECT COUNT(DISTINCT entity_type) FROM RAG.Entities"))
+        result = iris_connection.execute(
+            text("SELECT COUNT(DISTINCT entity_type) FROM RAG.Entities")
+        )
         type_count = result.scalar()
-        assert type_count >= 3, \
-            f"Expected at least 3 entity types, found {type_count}"
+        assert type_count >= 3, f"Expected at least 3 entity types, found {type_count}"
 
         # Should have at least 3 different relationship types
-        result = iris_connection.execute(text("SELECT COUNT(DISTINCT relationship_type) FROM RAG.EntityRelationships"))
+        result = iris_connection.execute(
+            text(
+                "SELECT COUNT(DISTINCT relationship_type) FROM RAG.EntityRelationships"
+            )
+        )
         rel_type_count = result.scalar()
-        assert rel_type_count >= 3, \
-            f"Expected at least 3 relationship types, found {rel_type_count}"
+        assert (
+            rel_type_count >= 3
+        ), f"Expected at least 3 relationship types, found {rel_type_count}"
 
         # Should have multi-document coverage (entities from different docs)
         result = iris_connection.execute(text("""
             SELECT COUNT(DISTINCT source_doc_id) FROM RAG.Entities
         """))
         doc_coverage = result.scalar()
-        assert doc_coverage == 3, \
-            f"Expected entities from all 3 documents, found {doc_coverage}"
+        assert (
+            doc_coverage == 3
+        ), f"Expected entities from all 3 documents, found {doc_coverage}"

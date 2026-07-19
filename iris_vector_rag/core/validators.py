@@ -101,35 +101,35 @@ class PipelineValidator:
     """
 
     # Required methods all pipelines must implement
-    REQUIRED_METHODS = ['query', 'load_documents']
+    REQUIRED_METHODS = ["query", "load_documents"]
 
     # Query method contract
     QUERY_METHOD_CONTRACT = {
-        'required_params': ['query'],
-        'optional_params': ['top_k', 'kwargs'],
-        'deprecated_params': ['query_text'],  # Should map to 'query'
-        'required_response_fields': [
-            'answer',
-            'retrieved_documents',
-            'contexts',
-            'sources',
-            'execution_time',
-            'metadata'
+        "required_params": ["query"],
+        "optional_params": ["top_k", "kwargs"],
+        "deprecated_params": ["query_text"],  # Should map to 'query'
+        "required_response_fields": [
+            "answer",
+            "retrieved_documents",
+            "contexts",
+            "sources",
+            "execution_time",
+            "metadata",
         ],
-        'required_metadata_fields': [
-            'num_retrieved',
-            'pipeline_type',
-            'generated_answer',
-            'processing_time',
-            'retrieval_method',
-            'context_count'
-        ]
+        "required_metadata_fields": [
+            "num_retrieved",
+            "pipeline_type",
+            "generated_answer",
+            "processing_time",
+            "retrieval_method",
+            "context_count",
+        ],
     }
 
     # Load documents method contract
     LOAD_DOCUMENTS_CONTRACT = {
-        'required_params': [],  # All params are optional
-        'optional_params': ['documents_path', 'documents', 'kwargs']
+        "required_params": [],  # All params are optional
+        "optional_params": ["documents_path", "documents", "kwargs"],
     }
 
     def __init__(self, strict_mode: bool = False):
@@ -142,8 +142,7 @@ class PipelineValidator:
         self.strict_mode = strict_mode
 
     def validate_pipeline_class(
-        self,
-        pipeline_class: Type[RAGPipeline]
+        self, pipeline_class: Type[RAGPipeline]
     ) -> List[PipelineContractViolation]:
         """
         Validate a pipeline class implementation.
@@ -164,44 +163,42 @@ class PipelineValidator:
 
         # Check inheritance
         if not issubclass(pipeline_class, RAGPipeline):
-            violations.append(PipelineContractViolation(
-                severity=ViolationSeverity.ERROR,
-                category="inheritance",
-                message=f"{pipeline_class.__name__} does not inherit from RAGPipeline",
-                location=f"{pipeline_class.__name__}",
-                suggestion="Ensure your pipeline class inherits from iris_vector_rag.core.base.RAGPipeline"
-            ))
+            violations.append(
+                PipelineContractViolation(
+                    severity=ViolationSeverity.ERROR,
+                    category="inheritance",
+                    message=f"{pipeline_class.__name__} does not inherit from RAGPipeline",
+                    location=f"{pipeline_class.__name__}",
+                    suggestion="Ensure your pipeline class inherits from iris_vector_rag.core.base.RAGPipeline",
+                )
+            )
             return violations  # Cannot continue validation
 
         # Check required methods exist
         for method_name in self.REQUIRED_METHODS:
             if not hasattr(pipeline_class, method_name):
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="missing_method",
-                    message=f"Required method '{method_name}' not implemented",
-                    location=f"{pipeline_class.__name__}.{method_name}",
-                    suggestion=f"Implement the {method_name} method as defined in RAGPipeline"
-                ))
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="missing_method",
+                        message=f"Required method '{method_name}' not implemented",
+                        location=f"{pipeline_class.__name__}.{method_name}",
+                        suggestion=f"Implement the {method_name} method as defined in RAGPipeline",
+                    )
+                )
 
         # Validate query method signature
-        if hasattr(pipeline_class, 'query'):
-            violations.extend(
-                self._validate_query_signature(pipeline_class)
-            )
+        if hasattr(pipeline_class, "query"):
+            violations.extend(self._validate_query_signature(pipeline_class))
 
         # Validate load_documents method signature
-        if hasattr(pipeline_class, 'load_documents'):
-            violations.extend(
-                self._validate_load_documents_signature(pipeline_class)
-            )
+        if hasattr(pipeline_class, "load_documents"):
+            violations.extend(self._validate_load_documents_signature(pipeline_class))
 
         return violations
 
     def validate_response(
-        self,
-        response: Dict[str, Any],
-        pipeline_name: str = "unknown"
+        self, response: Dict[str, Any], pipeline_name: str = "unknown"
     ) -> List[PipelineContractViolation]:
         """
         Validate a pipeline query response.
@@ -222,71 +219,78 @@ class PipelineValidator:
         violations = []
 
         # Check required response fields
-        for field in self.QUERY_METHOD_CONTRACT['required_response_fields']:
+        for field in self.QUERY_METHOD_CONTRACT["required_response_fields"]:
             if field not in response:
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="missing_field",
-                    message=f"Required field '{field}' missing from response",
-                    location=f"{pipeline_name}.query() response",
-                    suggestion=f"Ensure your query method returns a dict with '{field}' key"
-                ))
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="missing_field",
+                        message=f"Required field '{field}' missing from response",
+                        location=f"{pipeline_name}.query() response",
+                        suggestion=f"Ensure your query method returns a dict with '{field}' key",
+                    )
+                )
 
         # Validate field types
         violations.extend(self._validate_response_types(response, pipeline_name))
 
         # Validate metadata if present
-        if 'metadata' in response:
+        if "metadata" in response:
             violations.extend(
-                self._validate_metadata(response['metadata'], pipeline_name)
+                self._validate_metadata(response["metadata"], pipeline_name)
             )
 
         # Validate execution_time is reasonable
-        if 'execution_time' in response:
-            exec_time = response['execution_time']
+        if "execution_time" in response:
+            exec_time = response["execution_time"]
             if not isinstance(exec_time, (int, float)):
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="invalid_type",
-                    message=f"execution_time must be numeric, got {type(exec_time)}",
-                    location=f"{pipeline_name}.query() response",
-                    suggestion="Use time.time() to measure execution time"
-                ))
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="invalid_type",
+                        message=f"execution_time must be numeric, got {type(exec_time)}",
+                        location=f"{pipeline_name}.query() response",
+                        suggestion="Use time.time() to measure execution time",
+                    )
+                )
             elif exec_time < 0:
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="invalid_value",
-                    message=f"execution_time cannot be negative: {exec_time}",
-                    location=f"{pipeline_name}.query() response",
-                    suggestion="Check your time measurement logic"
-                ))
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="invalid_value",
+                        message=f"execution_time cannot be negative: {exec_time}",
+                        location=f"{pipeline_name}.query() response",
+                        suggestion="Check your time measurement logic",
+                    )
+                )
 
         return violations
 
     def _validate_query_signature(
-        self,
-        pipeline_class: Type[RAGPipeline]
+        self, pipeline_class: Type[RAGPipeline]
     ) -> List[PipelineContractViolation]:
         """Validate query method signature matches contract."""
         violations = []
-        method = getattr(pipeline_class, 'query')
+        method = getattr(pipeline_class, "query")
         sig = inspect.signature(method)
         params = list(sig.parameters.keys())
 
         # Remove 'self' from params
-        if 'self' in params:
-            params.remove('self')
+        if "self" in params:
+            params.remove("self")
 
         # Check required params exist
-        for required_param in self.QUERY_METHOD_CONTRACT['required_params']:
+        for required_param in self.QUERY_METHOD_CONTRACT["required_params"]:
             if required_param not in params:
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="method_signature",
-                    message=f"Required parameter '{required_param}' missing from query method",
-                    location=f"{pipeline_class.__name__}.query",
-                    suggestion=f"Add '{required_param}' parameter to query method signature"
-                ))
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="method_signature",
+                        message=f"Required parameter '{required_param}' missing from query method",
+                        location=f"{pipeline_class.__name__}.query",
+                        suggestion=f"Add '{required_param}' parameter to query method signature",
+                    )
+                )
 
         # Check for **kwargs support (allows flexibility)
         has_kwargs = any(
@@ -295,34 +299,37 @@ class PipelineValidator:
         )
 
         if not has_kwargs:
-            violations.append(PipelineContractViolation(
-                severity=ViolationSeverity.WARNING,
-                category="method_signature",
-                message="query method should accept **kwargs for flexibility",
-                location=f"{pipeline_class.__name__}.query",
-                suggestion="Add **kwargs parameter to query method signature"
-            ))
+            violations.append(
+                PipelineContractViolation(
+                    severity=ViolationSeverity.WARNING,
+                    category="method_signature",
+                    message="query method should accept **kwargs for flexibility",
+                    location=f"{pipeline_class.__name__}.query",
+                    suggestion="Add **kwargs parameter to query method signature",
+                )
+            )
 
         # Check if deprecated query_text is handled
         # This is checked via **kwargs or explicit parameter
-        if 'query_text' in params:
-            violations.append(PipelineContractViolation(
-                severity=ViolationSeverity.INFO,
-                category="deprecated_param",
-                message="query_text parameter is deprecated, use 'query' instead",
-                location=f"{pipeline_class.__name__}.query",
-                suggestion="Remove query_text parameter, handle via **kwargs if needed"
-            ))
+        if "query_text" in params:
+            violations.append(
+                PipelineContractViolation(
+                    severity=ViolationSeverity.INFO,
+                    category="deprecated_param",
+                    message="query_text parameter is deprecated, use 'query' instead",
+                    location=f"{pipeline_class.__name__}.query",
+                    suggestion="Remove query_text parameter, handle via **kwargs if needed",
+                )
+            )
 
         return violations
 
     def _validate_load_documents_signature(
-        self,
-        pipeline_class: Type[RAGPipeline]
+        self, pipeline_class: Type[RAGPipeline]
     ) -> List[PipelineContractViolation]:
         """Validate load_documents method signature matches contract."""
         violations = []
-        method = getattr(pipeline_class, 'load_documents')
+        method = getattr(pipeline_class, "load_documents")
         sig = inspect.signature(method)
 
         # Check for **kwargs support
@@ -332,124 +339,146 @@ class PipelineValidator:
         )
 
         if not has_kwargs:
-            violations.append(PipelineContractViolation(
-                severity=ViolationSeverity.WARNING,
-                category="method_signature",
-                message="load_documents method should accept **kwargs for flexibility",
-                location=f"{pipeline_class.__name__}.load_documents",
-                suggestion="Add **kwargs parameter to load_documents signature"
-            ))
+            violations.append(
+                PipelineContractViolation(
+                    severity=ViolationSeverity.WARNING,
+                    category="method_signature",
+                    message="load_documents method should accept **kwargs for flexibility",
+                    location=f"{pipeline_class.__name__}.load_documents",
+                    suggestion="Add **kwargs parameter to load_documents signature",
+                )
+            )
 
         return violations
 
     def _validate_response_types(
-        self,
-        response: Dict[str, Any],
-        pipeline_name: str
+        self, response: Dict[str, Any], pipeline_name: str
     ) -> List[PipelineContractViolation]:
         """Validate response field types."""
         violations = []
 
         # answer should be string
-        if 'answer' in response and not isinstance(response['answer'], str):
-            violations.append(PipelineContractViolation(
-                severity=ViolationSeverity.ERROR,
-                category="invalid_type",
-                message=f"'answer' must be string, got {type(response['answer'])}",
-                location=f"{pipeline_name}.query() response",
-                suggestion="Ensure LLM response is converted to string"
-            ))
+        if "answer" in response and not isinstance(response["answer"], str):
+            violations.append(
+                PipelineContractViolation(
+                    severity=ViolationSeverity.ERROR,
+                    category="invalid_type",
+                    message=f"'answer' must be string, got {type(response['answer'])}",
+                    location=f"{pipeline_name}.query() response",
+                    suggestion="Ensure LLM response is converted to string",
+                )
+            )
 
         # retrieved_documents should be list
-        if 'retrieved_documents' in response:
-            if not isinstance(response['retrieved_documents'], list):
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="invalid_type",
-                    message=f"'retrieved_documents' must be list, got {type(response['retrieved_documents'])}",
-                    location=f"{pipeline_name}.query() response",
-                    suggestion="Return list of Document objects"
-                ))
+        if "retrieved_documents" in response:
+            if not isinstance(response["retrieved_documents"], list):
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="invalid_type",
+                        message=f"'retrieved_documents' must be list, got {type(response['retrieved_documents'])}",
+                        location=f"{pipeline_name}.query() response",
+                        suggestion="Return list of Document objects",
+                    )
+                )
 
         # contexts should be list of strings
-        if 'contexts' in response:
-            if not isinstance(response['contexts'], list):
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="invalid_type",
-                    message=f"'contexts' must be list, got {type(response['contexts'])}",
-                    location=f"{pipeline_name}.query() response",
-                    suggestion="Return list of context strings"
-                ))
-            elif response['contexts'] and not all(isinstance(c, str) for c in response['contexts']):
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="invalid_type",
-                    message="'contexts' must contain only strings",
-                    location=f"{pipeline_name}.query() response",
-                    suggestion="Extract text content from Document objects"
-                ))
+        if "contexts" in response:
+            if not isinstance(response["contexts"], list):
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="invalid_type",
+                        message=f"'contexts' must be list, got {type(response['contexts'])}",
+                        location=f"{pipeline_name}.query() response",
+                        suggestion="Return list of context strings",
+                    )
+                )
+            elif response["contexts"] and not all(
+                isinstance(c, str) for c in response["contexts"]
+            ):
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="invalid_type",
+                        message="'contexts' must contain only strings",
+                        location=f"{pipeline_name}.query() response",
+                        suggestion="Extract text content from Document objects",
+                    )
+                )
 
         # sources should be list of strings
-        if 'sources' in response:
-            if not isinstance(response['sources'], list):
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.ERROR,
-                    category="invalid_type",
-                    message=f"'sources' must be list, got {type(response['sources'])}",
-                    location=f"{pipeline_name}.query() response",
-                    suggestion="Return list of source identifiers"
-                ))
+        if "sources" in response:
+            if not isinstance(response["sources"], list):
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.ERROR,
+                        category="invalid_type",
+                        message=f"'sources' must be list, got {type(response['sources'])}",
+                        location=f"{pipeline_name}.query() response",
+                        suggestion="Return list of source identifiers",
+                    )
+                )
 
         # metadata should be dict
-        if 'metadata' in response and not isinstance(response['metadata'], dict):
-            violations.append(PipelineContractViolation(
-                severity=ViolationSeverity.ERROR,
-                category="invalid_type",
-                message=f"'metadata' must be dict, got {type(response['metadata'])}",
-                location=f"{pipeline_name}.query() response",
-                suggestion="Return metadata as dictionary"
-            ))
+        if "metadata" in response and not isinstance(response["metadata"], dict):
+            violations.append(
+                PipelineContractViolation(
+                    severity=ViolationSeverity.ERROR,
+                    category="invalid_type",
+                    message=f"'metadata' must be dict, got {type(response['metadata'])}",
+                    location=f"{pipeline_name}.query() response",
+                    suggestion="Return metadata as dictionary",
+                )
+            )
 
         return violations
 
     def _validate_metadata(
-        self,
-        metadata: Dict[str, Any],
-        pipeline_name: str
+        self, metadata: Dict[str, Any], pipeline_name: str
     ) -> List[PipelineContractViolation]:
         """Validate metadata completeness."""
         violations = []
 
         # Check required metadata fields
-        for field in self.QUERY_METHOD_CONTRACT['required_metadata_fields']:
+        for field in self.QUERY_METHOD_CONTRACT["required_metadata_fields"]:
             if field not in metadata:
-                violations.append(PipelineContractViolation(
-                    severity=ViolationSeverity.WARNING,
-                    category="missing_metadata",
-                    message=f"Required metadata field '{field}' missing",
-                    location=f"{pipeline_name}.query() metadata",
-                    suggestion=f"Add '{field}' to response metadata"
-                ))
+                violations.append(
+                    PipelineContractViolation(
+                        severity=ViolationSeverity.WARNING,
+                        category="missing_metadata",
+                        message=f"Required metadata field '{field}' missing",
+                        location=f"{pipeline_name}.query() metadata",
+                        suggestion=f"Add '{field}' to response metadata",
+                    )
+                )
 
         # Validate specific metadata field types
-        if 'num_retrieved' in metadata and not isinstance(metadata['num_retrieved'], int):
-            violations.append(PipelineContractViolation(
-                severity=ViolationSeverity.WARNING,
-                category="invalid_type",
-                message=f"num_retrieved should be int, got {type(metadata['num_retrieved'])}",
-                location=f"{pipeline_name}.query() metadata",
-                suggestion="Use len(retrieved_documents) for num_retrieved"
-            ))
+        if "num_retrieved" in metadata and not isinstance(
+            metadata["num_retrieved"], int
+        ):
+            violations.append(
+                PipelineContractViolation(
+                    severity=ViolationSeverity.WARNING,
+                    category="invalid_type",
+                    message=f"num_retrieved should be int, got {type(metadata['num_retrieved'])}",
+                    location=f"{pipeline_name}.query() metadata",
+                    suggestion="Use len(retrieved_documents) for num_retrieved",
+                )
+            )
 
-        if 'generated_answer' in metadata and not isinstance(metadata['generated_answer'], bool):
-            violations.append(PipelineContractViolation(
-                severity=ViolationSeverity.WARNING,
-                category="invalid_type",
-                message=f"generated_answer should be bool, got {type(metadata['generated_answer'])}",
-                location=f"{pipeline_name}.query() metadata",
-                suggestion="Set generated_answer to True/False"
-            ))
+        if "generated_answer" in metadata and not isinstance(
+            metadata["generated_answer"], bool
+        ):
+            violations.append(
+                PipelineContractViolation(
+                    severity=ViolationSeverity.WARNING,
+                    category="invalid_type",
+                    message=f"generated_answer should be bool, got {type(metadata['generated_answer'])}",
+                    location=f"{pipeline_name}.query() metadata",
+                    suggestion="Set generated_answer to True/False",
+                )
+            )
 
         return violations
 

@@ -9,7 +9,6 @@ import subprocess
 import sys
 
 
-
 def test_coverage_configuration():
     """REQ-1: Validate .coveragerc excludes test files."""
     config = configparser.ConfigParser()
@@ -66,7 +65,8 @@ def test_coverage_runs_successfully():
     result = subprocess.run(
         [
             sys.executable,
-            "-m", "pytest",
+            "-m",
+            "pytest",
             "tests/unit/",
             "--cov=iris_vector_rag",
             "--cov=common",
@@ -87,7 +87,9 @@ def test_coverage_runs_successfully():
         0,
         1,
     ], f"Coverage run failed with return code {result.returncode}\nstderr: {result.stderr[:500]}"
-    assert "TOTAL" in result.stdout, f"Coverage report must include TOTAL line\nstdout: {result.stdout[:500]}\nstderr: {result.stderr[:500]}"
+    assert (
+        "TOTAL" in result.stdout
+    ), f"Coverage report must include TOTAL line\nstdout: {result.stdout[:500]}\nstderr: {result.stderr[:500]}"
 
 
 def test_coverage_targets_defined():
@@ -105,7 +107,7 @@ def test_coverage_targets_defined():
     assert contract_path.exists(), "Coverage reporting contract must exist"
 
     content = contract_path.read_text()
+    assert "60%" in content, "Coverage contract must document 60% overall target"
     assert (
-        "60%" in content
-    ), "Coverage contract must document 60% overall target"
-    assert "80%" in content, "Coverage contract must document 80% critical module target"
+        "80%" in content
+    ), "Coverage contract must document 80% critical module target"

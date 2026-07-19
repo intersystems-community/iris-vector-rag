@@ -14,7 +14,9 @@ class TestCleanSchemaFixtureContract:
     """Contract for database_with_clean_schema fixture."""
 
     @pytest.mark.contract
-    def test_clean_schema_fixture_provides_valid_connection(self, database_with_clean_schema):
+    def test_clean_schema_fixture_provides_valid_connection(
+        self, database_with_clean_schema
+    ):
         """Verify fixture provides working database connection."""
         # This will FAIL initially - fixture doesn't exist yet
         conn = database_with_clean_schema

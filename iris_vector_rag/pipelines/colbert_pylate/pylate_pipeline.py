@@ -43,7 +43,12 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             **kwargs: Additional arguments passed to BasicRAGPipeline
         """
         # Initialize parent pipeline (which handles embedding_config)
-        super().__init__(connection_manager, config_manager, embedding_config=embedding_config, **kwargs)
+        super().__init__(
+            connection_manager,
+            config_manager,
+            embedding_config=embedding_config,
+            **kwargs,
+        )
 
         # Use same config pattern as BasicRAGReranking for consistency
         self.colbert_config = self.config_manager.get(
@@ -103,6 +108,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         try:
             global models, rank
             from pylate import models as _models, rank as _rank
+
             models = _models
             rank = _rank
             logger.debug("PyLate library imported successfully")
@@ -123,7 +129,9 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         self.colbert_encoder = self.model
         logger.info(f"PyLate model '{self.model_name}' loaded")
 
-    def load_documents(self, documents=None, documents_path: str = None, **kwargs) -> Dict[str, Any]:
+    def load_documents(
+        self, documents=None, documents_path: str = None, **kwargs
+    ) -> Dict[str, Any]:
         """
         Load documents and prepare for retrieval.
 
@@ -149,7 +157,11 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             )
 
         # Validation: empty documents list
-        if documents is not None and isinstance(documents, list) and len(documents) == 0:
+        if (
+            documents is not None
+            and isinstance(documents, list)
+            and len(documents) == 0
+        ):
             raise ValueError(
                 "Error: Empty documents list\n"
                 "Context: PyLateColBERT document loading\n"
@@ -180,7 +192,9 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
             # Call parent to handle vector store indexing
             result = super().load_documents(documents=documents, **kwargs)
-            self.stats["documents_indexed"] = result.get("documents_loaded", len(documents))
+            self.stats["documents_indexed"] = result.get(
+                "documents_loaded", len(documents)
+            )
 
             logger.info(
                 f"Loaded {self.stats['documents_indexed']} documents for PyLate ColBERT"
@@ -255,9 +269,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             and self.is_initialized
         ):
             try:
-                final_documents = self._pylate_rerank(
-                    query, candidate_documents, top_k
-                )
+                final_documents = self._pylate_rerank(query, candidate_documents, top_k)
                 reranked = True
                 self.stats["reranking_operations"] += 1
                 logger.debug(
@@ -293,9 +305,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         if generate_answer and self.llm_func and final_documents:
             try:
                 custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(
-                    query, final_documents, custom_prompt
-                )
+                answer = self._generate_answer(query, final_documents, custom_prompt)
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
@@ -308,7 +318,11 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
         # Build response with consistent format
         contexts_list = [doc.page_content for doc in final_documents]
-        sources = self._extract_sources(final_documents) if kwargs.get("include_sources", True) else []
+        sources = (
+            self._extract_sources(final_documents)
+            if kwargs.get("include_sources", True)
+            else []
+        )
         retrieval_method = "colbert_pylate" if reranked else "dense_vector_fallback"
 
         response = {

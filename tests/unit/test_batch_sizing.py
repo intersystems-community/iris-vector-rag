@@ -23,8 +23,7 @@ class TestBatchSizing:
         batch1 = queue.get_next_batch(token_budget=8192)
 
         # Should fit many small documents (8192 / 200 = ~40)
-        assert len(batch1) >= 10, \
-            f"Should fit many small documents, got {len(batch1)}"
+        assert len(batch1) >= 10, f"Should fit many small documents, got {len(batch1)}"
 
         # Scenario 2: Large documents (few fit)
         queue2 = BatchQueue()
@@ -34,8 +33,7 @@ class TestBatchSizing:
         batch2 = queue2.get_next_batch(token_budget=8192)
 
         # Should fit few large documents (8192 / 3000 = ~2)
-        assert len(batch2) <= 3, \
-            f"Should fit few large documents, got {len(batch2)}"
+        assert len(batch2) <= 3, f"Should fit few large documents, got {len(batch2)}"
 
     def test_token_count_accumulation(self):
         """Validate token counts are accumulated correctly."""
@@ -51,8 +49,9 @@ class TestBatchSizing:
         batch = queue.get_next_batch(token_budget=600)
 
         # Should fit doc1 (100) + doc2 (200) + doc3 (300) = 600
-        assert len(batch) == 3, \
-            f"Should fit 3 docs totaling 600 tokens, got {len(batch)}"
+        assert (
+            len(batch) == 3
+        ), f"Should fit 3 docs totaling 600 tokens, got {len(batch)}"
 
     def test_batch_boundary_conditions(self):
         """Validate boundary conditions in batch sizing."""
@@ -95,8 +94,9 @@ class TestBatchSizing:
         # 100 + 200 + 300 + 400 + 500 = 1500 (fits)
         # 100 + 200 + 300 + 400 + 500 + 600 = 2100 (exceeds)
         # So should get 5 docs
-        assert len(batch) == 5, \
-            f"Should fit 5 docs (1500 tokens total), got {len(batch)}"
+        assert (
+            len(batch) == 5
+        ), f"Should fit 5 docs (1500 tokens total), got {len(batch)}"
 
     def test_single_document_exceeding_budget(self):
         """Validate single document larger than budget is handled."""
@@ -189,7 +189,9 @@ class TestBatchSizing:
 
         # Add documents in specific order
         queue.add_document(Document(id="1", page_content="D1"), 3000)
-        queue.add_document(Document(id="2", page_content="D2"), 6000)  # Won't fit with #1
+        queue.add_document(
+            Document(id="2", page_content="D2"), 6000
+        )  # Won't fit with #1
         queue.add_document(Document(id="3", page_content="D3"), 2000)
 
         batch = queue.get_next_batch(token_budget=8000)
@@ -210,7 +212,9 @@ class TestBatchSizing:
         realistic_tokens = [500, 800, 1200, 600, 900, 750, 1100, 650]
 
         for i, tokens in enumerate(realistic_tokens):
-            queue.add_document(Document(id=f"ticket{i}", page_content=f"Ticket {i}"), tokens)
+            queue.add_document(
+                Document(id=f"ticket{i}", page_content=f"Ticket {i}"), tokens
+            )
 
         batch = queue.get_next_batch(token_budget=8192)
 
@@ -224,8 +228,9 @@ class TestBatchSizing:
             else:
                 break
 
-        assert len(batch) == expected_count, \
-            f"Should fit {expected_count} realistic documents, got {len(batch)}"
+        assert (
+            len(batch) == expected_count
+        ), f"Should fit {expected_count} realistic documents, got {len(batch)}"
 
     def test_batch_size_reproducibility(self):
         """Validate batch sizing is deterministic and reproducible."""
@@ -241,7 +246,9 @@ class TestBatchSizing:
 
         for doc, tokens in docs:
             queue1.add_document(doc, tokens)
-            queue2.add_document(Document(id=doc.id, page_content=doc.page_content), tokens)
+            queue2.add_document(
+                Document(id=doc.id, page_content=doc.page_content), tokens
+            )
 
         batch1 = queue1.get_next_batch(token_budget=5000)
         batch2 = queue2.get_next_batch(token_budget=5000)
@@ -256,7 +263,9 @@ class TestBatchSizing:
         # Create documents and estimate their tokens
         docs = [
             Document(id="short", page_content="Short text."),
-            Document(id="medium", page_content="This is a medium length document. " * 10),
+            Document(
+                id="medium", page_content="This is a medium length document. " * 10
+            ),
             Document(id="long", page_content="This is a very long document. " * 100),
         ]
 

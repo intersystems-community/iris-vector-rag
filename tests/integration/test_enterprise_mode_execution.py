@@ -70,7 +70,9 @@ class TestEnterpriseModeExecution:
                 future.result()  # Wait for completion
 
         # All 10 should succeed
-        assert success_count == 10, f"Only {success_count}/10 succeeded. Errors: {errors}"
+        assert (
+            success_count == 10
+        ), f"Only {success_count}/10 succeeded. Errors: {errors}"
         assert len(errors) == 0
 
     def test_enterprise_mode_no_performance_degradation(self, enterprise_pool):
@@ -135,7 +137,9 @@ class TestEnterpriseModeExecution:
                 future.result()
 
         # All 50 should succeed (enterprise allows 999 connections)
-        assert success_count == 50, f"Only {success_count}/50 succeeded. Errors: {errors[:5]}"
+        assert (
+            success_count == 50
+        ), f"Only {success_count}/50 succeeded. Errors: {errors[:5]}"
         assert len(errors) == 0
 
     def test_enterprise_mode_configuration_properties(self, enterprise_config):
@@ -198,4 +202,6 @@ class TestEnterpriseModeStressTest:
 
         # Expect near 100% success
         success_rate = success_count / 200
-        assert success_rate >= 0.95, f"Only {success_count}/200 succeeded. Errors: {errors[:5]}"
+        assert (
+            success_rate >= 0.95
+        ), f"Only {success_count}/200 succeeded. Errors: {errors[:5]}"

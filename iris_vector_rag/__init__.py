@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 try:
     from dotenv import load_dotenv
+
     _env_file = Path(__file__).resolve().parent.parent / ".env"
     if _env_file.exists():
         load_dotenv(_env_file)
@@ -29,6 +30,7 @@ from .validation.validator import PreConditionValidator
 # Package version
 try:
     from importlib.metadata import version as _meta_version, PackageNotFoundError
+
     __version__ = _meta_version("iris-vector-rag")
 except PackageNotFoundError:
     __version__ = "0.11.4"
@@ -108,6 +110,7 @@ def create_pipeline(
     effective_llm_func = llm_func
     if effective_llm_func is None:
         import os
+
         default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
         llm_provider = config_manager.get("llm.provider", default_provider)
         llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")

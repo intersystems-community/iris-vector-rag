@@ -14,11 +14,11 @@ from iris_vector_rag.core.models import Document
 from iris_vector_rag.core.validators import (
     PipelineValidator,
     PipelineContractViolation,
-    ViolationSeverity
+    ViolationSeverity,
 )
 
-
 # Mock pipeline implementations for testing
+
 
 class ValidPipeline(RAGPipeline):
     """Fully compliant pipeline for testing."""
@@ -28,6 +28,7 @@ class ValidPipeline(RAGPipeline):
         if connection_manager is None or config_manager is None:
             from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -36,30 +37,32 @@ class ValidPipeline(RAGPipeline):
         super().__init__(
             connection_manager=connection_manager,
             config_manager=config_manager,
-            vector_store=vector_store
+            vector_store=vector_store,
         )
 
     def query(self, query: str, top_k: int = 20, **kwargs) -> Dict[str, Any]:
         """Fully compliant query implementation."""
         return {
-            'answer': 'Test answer',
-            'retrieved_documents': [
-                Document(page_content='Test doc', metadata={'source': 'test.pdf'})
+            "answer": "Test answer",
+            "retrieved_documents": [
+                Document(page_content="Test doc", metadata={"source": "test.pdf"})
             ],
-            'contexts': ['Test doc'],
-            'sources': ['test.pdf'],
-            'execution_time': 0.5,
-            'metadata': {
-                'num_retrieved': 1,
-                'pipeline_type': 'valid',
-                'generated_answer': True,
-                'processing_time': 0.5,
-                'retrieval_method': 'vector',
-                'context_count': 1
-            }
+            "contexts": ["Test doc"],
+            "sources": ["test.pdf"],
+            "execution_time": 0.5,
+            "metadata": {
+                "num_retrieved": 1,
+                "pipeline_type": "valid",
+                "generated_answer": True,
+                "processing_time": 0.5,
+                "retrieval_method": "vector",
+                "context_count": 1,
+            },
         }
 
-    def load_documents(self, documents_path: str = "", documents: List[Document] = None, **kwargs) -> None:
+    def load_documents(
+        self, documents_path: str = "", documents: List[Document] = None, **kwargs
+    ) -> None:
         """Compliant load_documents implementation."""
         pass
 
@@ -71,6 +74,7 @@ class MissingMethodPipeline(RAGPipeline):
         if connection_manager is None or config_manager is None:
             from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -79,12 +83,14 @@ class MissingMethodPipeline(RAGPipeline):
         super().__init__(
             connection_manager=connection_manager,
             config_manager=config_manager,
-            vector_store=vector_store
+            vector_store=vector_store,
         )
 
     # Missing query() method intentionally
 
-    def load_documents(self, documents_path: str = "", documents: List[Document] = None, **kwargs) -> None:
+    def load_documents(
+        self, documents_path: str = "", documents: List[Document] = None, **kwargs
+    ) -> None:
         pass
 
 
@@ -95,6 +101,7 @@ class InvalidSignaturePipeline(RAGPipeline):
         if connection_manager is None or config_manager is None:
             from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -103,7 +110,7 @@ class InvalidSignaturePipeline(RAGPipeline):
         super().__init__(
             connection_manager=connection_manager,
             config_manager=config_manager,
-            vector_store=vector_store
+            vector_store=vector_store,
         )
 
     def query(self, wrong_param: str) -> Dict[str, Any]:  # Missing 'query' parameter
@@ -122,6 +129,7 @@ class DeprecatedParamPipeline(RAGPipeline):
         if connection_manager is None or config_manager is None:
             from iris_vector_rag.core.connection import ConnectionManager
             from iris_vector_rag.config.manager import ConfigurationManager
+
             if config_manager is None:
                 config_manager = ConfigurationManager()
             if connection_manager is None:
@@ -130,28 +138,32 @@ class DeprecatedParamPipeline(RAGPipeline):
         super().__init__(
             connection_manager=connection_manager,
             config_manager=config_manager,
-            vector_store=vector_store
+            vector_store=vector_store,
         )
 
-    def query(self, query: str = None, query_text: str = None, top_k: int = 20, **kwargs) -> Dict[str, Any]:
+    def query(
+        self, query: str = None, query_text: str = None, top_k: int = 20, **kwargs
+    ) -> Dict[str, Any]:
         """Uses deprecated query_text parameter."""
         return {
-            'answer': 'Test',
-            'retrieved_documents': [],
-            'contexts': [],
-            'sources': [],
-            'execution_time': 0.1,
-            'metadata': {
-                'num_retrieved': 0,
-                'pipeline_type': 'deprecated',
-                'generated_answer': True,
-                'processing_time': 0.1,
-                'retrieval_method': 'none',
-                'context_count': 0
-            }
+            "answer": "Test",
+            "retrieved_documents": [],
+            "contexts": [],
+            "sources": [],
+            "execution_time": 0.1,
+            "metadata": {
+                "num_retrieved": 0,
+                "pipeline_type": "deprecated",
+                "generated_answer": True,
+                "processing_time": 0.1,
+                "retrieval_method": "none",
+                "context_count": 0,
+            },
         }
 
-    def load_documents(self, documents_path: str = "", documents: List[Document] = None, **kwargs) -> None:
+    def load_documents(
+        self, documents_path: str = "", documents: List[Document] = None, **kwargs
+    ) -> None:
         pass
 
 
@@ -190,7 +202,7 @@ class TestPipelineValidator:
 
         # Check that error mentions 'query'
         error_messages = [v.message for v in errors]
-        assert any('query' in msg.lower() for msg in error_messages)
+        assert any("query" in msg.lower() for msg in error_messages)
 
     def test_validate_invalid_signature(self):
         """Test detection of invalid method signatures."""
@@ -212,30 +224,30 @@ class TestPipelineValidator:
 
         # Check message mentions query_text
         info_messages = [v.message for v in infos]
-        assert any('query_text' in msg.lower() for msg in info_messages)
+        assert any("query_text" in msg.lower() for msg in info_messages)
 
     def test_validate_response_valid(self):
         """Test validation of a valid response."""
         validator = PipelineValidator()
         valid_response = {
-            'answer': 'Test answer',
-            'retrieved_documents': [
-                Document(page_content='doc1', metadata={'source': 'test.pdf'})
+            "answer": "Test answer",
+            "retrieved_documents": [
+                Document(page_content="doc1", metadata={"source": "test.pdf"})
             ],
-            'contexts': ['doc1'],
-            'sources': ['test.pdf'],
-            'execution_time': 1.5,
-            'metadata': {
-                'num_retrieved': 1,
-                'pipeline_type': 'test',
-                'generated_answer': True,
-                'processing_time': 1.5,
-                'retrieval_method': 'vector',
-                'context_count': 1
-            }
+            "contexts": ["doc1"],
+            "sources": ["test.pdf"],
+            "execution_time": 1.5,
+            "metadata": {
+                "num_retrieved": 1,
+                "pipeline_type": "test",
+                "generated_answer": True,
+                "processing_time": 1.5,
+                "retrieval_method": "vector",
+                "context_count": 1,
+            },
         }
 
-        violations = validator.validate_response(valid_response, 'test_pipeline')
+        violations = validator.validate_response(valid_response, "test_pipeline")
 
         # Should have no errors
         errors = [v for v in violations if v.severity == ViolationSeverity.ERROR]
@@ -245,99 +257,109 @@ class TestPipelineValidator:
         """Test detection of missing required fields in response."""
         validator = PipelineValidator()
         invalid_response = {
-            'answer': 'Test',
+            "answer": "Test",
             # Missing: retrieved_documents, contexts, sources, execution_time, metadata
         }
 
-        violations = validator.validate_response(invalid_response, 'test_pipeline')
+        violations = validator.validate_response(invalid_response, "test_pipeline")
 
         # Should have errors for missing fields
         errors = [v for v in violations if v.severity == ViolationSeverity.ERROR]
-        assert len(errors) >= 5, f"Should detect at least 5 missing fields, got {len(errors)}"
+        assert (
+            len(errors) >= 5
+        ), f"Should detect at least 5 missing fields, got {len(errors)}"
 
     def test_validate_response_invalid_types(self):
         """Test detection of invalid field types."""
         validator = PipelineValidator()
         invalid_response = {
-            'answer': 123,  # Should be string
-            'retrieved_documents': 'not a list',  # Should be list
-            'contexts': 'not a list',  # Should be list
-            'sources': 'not a list',  # Should be list
-            'execution_time': 'not a number',  # Should be numeric
-            'metadata': 'not a dict'  # Should be dict
+            "answer": 123,  # Should be string
+            "retrieved_documents": "not a list",  # Should be list
+            "contexts": "not a list",  # Should be list
+            "sources": "not a list",  # Should be list
+            "execution_time": "not a number",  # Should be numeric
+            "metadata": "not a dict",  # Should be dict
         }
 
-        violations = validator.validate_response(invalid_response, 'test_pipeline')
+        violations = validator.validate_response(invalid_response, "test_pipeline")
 
         # Should have multiple type errors
         errors = [v for v in violations if v.severity == ViolationSeverity.ERROR]
-        assert len(errors) >= 5, f"Should detect multiple type errors, got {len(errors)}"
+        assert (
+            len(errors) >= 5
+        ), f"Should detect multiple type errors, got {len(errors)}"
 
     def test_validate_response_negative_execution_time(self):
         """Test detection of negative execution time."""
         validator = PipelineValidator()
         invalid_response = {
-            'answer': 'Test',
-            'retrieved_documents': [],
-            'contexts': [],
-            'sources': [],
-            'execution_time': -1.0,  # Invalid: negative
-            'metadata': {}
+            "answer": "Test",
+            "retrieved_documents": [],
+            "contexts": [],
+            "sources": [],
+            "execution_time": -1.0,  # Invalid: negative
+            "metadata": {},
         }
 
-        violations = validator.validate_response(invalid_response, 'test_pipeline')
+        violations = validator.validate_response(invalid_response, "test_pipeline")
 
         # Should have error for negative time
         errors = [v for v in violations if v.severity == ViolationSeverity.ERROR]
-        time_errors = [e for e in errors if 'negative' in e.message.lower()]
+        time_errors = [e for e in errors if "negative" in e.message.lower()]
         assert len(time_errors) > 0, "Should detect negative execution_time"
 
     def test_validate_metadata_completeness(self):
         """Test validation of metadata fields."""
         validator = PipelineValidator()
         response_with_incomplete_metadata = {
-            'answer': 'Test',
-            'retrieved_documents': [],
-            'contexts': [],
-            'sources': [],
-            'execution_time': 1.0,
-            'metadata': {
-                'num_retrieved': 0,
+            "answer": "Test",
+            "retrieved_documents": [],
+            "contexts": [],
+            "sources": [],
+            "execution_time": 1.0,
+            "metadata": {
+                "num_retrieved": 0,
                 # Missing: pipeline_type, generated_answer, processing_time, retrieval_method, context_count
-            }
+            },
         }
 
-        violations = validator.validate_response(response_with_incomplete_metadata, 'test')
+        violations = validator.validate_response(
+            response_with_incomplete_metadata, "test"
+        )
 
         # Should have warnings for missing metadata fields
         warnings = [v for v in violations if v.severity == ViolationSeverity.WARNING]
-        assert len(warnings) >= 5, f"Should warn about missing metadata fields, got {len(warnings)}"
+        assert (
+            len(warnings) >= 5
+        ), f"Should warn about missing metadata fields, got {len(warnings)}"
 
     def test_validate_metadata_types(self):
         """Test validation of metadata field types."""
         validator = PipelineValidator()
         response_with_wrong_types = {
-            'answer': 'Test',
-            'retrieved_documents': [],
-            'contexts': [],
-            'sources': [],
-            'execution_time': 1.0,
-            'metadata': {
-                'num_retrieved': 'not an int',  # Should be int
-                'pipeline_type': 'test',
-                'generated_answer': 'not a bool',  # Should be bool
-                'processing_time': 1.0,
-                'retrieval_method': 'vector',
-                'context_count': 0
-            }
+            "answer": "Test",
+            "retrieved_documents": [],
+            "contexts": [],
+            "sources": [],
+            "execution_time": 1.0,
+            "metadata": {
+                "num_retrieved": "not an int",  # Should be int
+                "pipeline_type": "test",
+                "generated_answer": "not a bool",  # Should be bool
+                "processing_time": 1.0,
+                "retrieval_method": "vector",
+                "context_count": 0,
+            },
         }
 
-        violations = validator.validate_response(response_with_wrong_types, 'test')
+        violations = validator.validate_response(response_with_wrong_types, "test")
 
         # Should have warnings for wrong metadata types
         warnings = [v for v in violations if v.severity == ViolationSeverity.WARNING]
-        type_warnings = [w for w in warnings if 'should be' in w.message.lower()]
-        assert len(type_warnings) >= 2, f"Should warn about metadata type issues, got {len(type_warnings)}"
+        type_warnings = [w for w in warnings if "should be" in w.message.lower()]
+        assert (
+            len(type_warnings) >= 2
+        ), f"Should warn about metadata type issues, got {len(type_warnings)}"
 
     def test_strict_mode_treats_warnings_as_errors(self):
         """Test that strict_mode affects validation behavior."""
@@ -349,10 +371,13 @@ class TestPipelineValidator:
 
         # Validate a pipeline with warnings (no **kwargs)
         class NoKwargsPipeline(RAGPipeline):
-            def __init__(self, connection_manager=None, config_manager=None, vector_store=None):
+            def __init__(
+                self, connection_manager=None, config_manager=None, vector_store=None
+            ):
                 if connection_manager is None or config_manager is None:
                     from iris_vector_rag.core.connection import ConnectionManager
                     from iris_vector_rag.config.manager import ConfigurationManager
+
                     if config_manager is None:
                         config_manager = ConfigurationManager()
                     if connection_manager is None:
@@ -361,10 +386,12 @@ class TestPipelineValidator:
                 super().__init__(
                     connection_manager=connection_manager,
                     config_manager=config_manager,
-                    vector_store=vector_store
+                    vector_store=vector_store,
                 )
 
-            def query(self, query: str, top_k: int = 20) -> Dict[str, Any]:  # No **kwargs
+            def query(
+                self, query: str, top_k: int = 20
+            ) -> Dict[str, Any]:  # No **kwargs
                 return {}
 
             def load_documents(self, documents_path: str = "") -> None:  # No **kwargs
@@ -383,27 +410,27 @@ class TestPipelineValidator:
 
         assert isinstance(summary, str)
         assert len(summary) > 0
-        assert 'query' in summary.lower()
-        assert 'load_documents' in summary.lower()
-        assert 'answer' in summary.lower()
-        assert 'metadata' in summary.lower()
+        assert "query" in summary.lower()
+        assert "load_documents" in summary.lower()
+        assert "answer" in summary.lower()
+        assert "metadata" in summary.lower()
 
     def test_violation_str_representation(self):
         """Test that violations have good string representations."""
         violation = PipelineContractViolation(
             severity=ViolationSeverity.ERROR,
-            category='test_category',
-            message='Test message',
-            location='TestPipeline.query',
-            suggestion='Fix this'
+            category="test_category",
+            message="Test message",
+            location="TestPipeline.query",
+            suggestion="Fix this",
         )
 
         violation_str = str(violation)
-        assert 'ERROR' in violation_str
-        assert 'test_category' in violation_str
-        assert 'Test message' in violation_str
-        assert 'TestPipeline.query' in violation_str
-        assert 'Fix this' in violation_str
+        assert "ERROR" in violation_str
+        assert "test_category" in violation_str
+        assert "Test message" in violation_str
+        assert "TestPipeline.query" in violation_str
+        assert "Fix this" in violation_str
 
     def test_real_pipeline_validation(self):
         """Test validation against actual pipeline implementations."""
@@ -415,13 +442,21 @@ class TestPipelineValidator:
 
         # Validate BasicRAGPipeline
         basic_violations = validator.validate_pipeline_class(BasicRAGPipeline)
-        basic_errors = [v for v in basic_violations if v.severity == ViolationSeverity.ERROR]
-        assert len(basic_errors) == 0, f"BasicRAGPipeline should have no errors: {basic_errors}"
+        basic_errors = [
+            v for v in basic_violations if v.severity == ViolationSeverity.ERROR
+        ]
+        assert (
+            len(basic_errors) == 0
+        ), f"BasicRAGPipeline should have no errors: {basic_errors}"
 
         # Validate CRAGPipeline
         crag_violations = validator.validate_pipeline_class(CRAGPipeline)
-        crag_errors = [v for v in crag_violations if v.severity == ViolationSeverity.ERROR]
-        assert len(crag_errors) == 0, f"CRAGPipeline should have no errors: {crag_errors}"
+        crag_errors = [
+            v for v in crag_violations if v.severity == ViolationSeverity.ERROR
+        ]
+        assert (
+            len(crag_errors) == 0
+        ), f"CRAGPipeline should have no errors: {crag_errors}"
 
 
 class TestViolationCategories:
@@ -429,6 +464,7 @@ class TestViolationCategories:
 
     def test_inheritance_violation(self):
         """Test detection of non-RAGPipeline classes."""
+
         class NotAPipeline:
             pass
 
@@ -437,7 +473,7 @@ class TestViolationCategories:
 
         errors = [v for v in violations if v.severity == ViolationSeverity.ERROR]
         assert len(errors) > 0
-        assert any('inherit' in e.message.lower() for e in errors)
+        assert any("inherit" in e.message.lower() for e in errors)
 
     def test_method_signature_violations(self):
         """Test detection of various method signature issues."""
@@ -447,7 +483,9 @@ class TestViolationCategories:
         violations = validator.validate_pipeline_class(InvalidSignaturePipeline)
 
         # Should detect missing 'query' parameter
-        signature_violations = [v for v in violations if v.category == 'method_signature']
+        signature_violations = [
+            v for v in violations if v.category == "method_signature"
+        ]
         assert len(signature_violations) > 0
 
 
@@ -458,22 +496,22 @@ class TestResponseValidation:
         """Test that contexts must be list of strings."""
         validator = PipelineValidator()
         response = {
-            'answer': 'Test',
-            'retrieved_documents': [],
-            'contexts': [123, 456],  # Invalid: should be strings
-            'sources': [],
-            'execution_time': 1.0,
-            'metadata': {}
+            "answer": "Test",
+            "retrieved_documents": [],
+            "contexts": [123, 456],  # Invalid: should be strings
+            "sources": [],
+            "execution_time": 1.0,
+            "metadata": {},
         }
 
-        violations = validator.validate_response(response, 'test')
-        errors = [v for v in violations if 'contexts' in v.message.lower()]
+        violations = validator.validate_response(response, "test")
+        errors = [v for v in violations if "contexts" in v.message.lower()]
         assert len(errors) > 0, "Should detect non-string contexts"
 
     def test_empty_response(self):
         """Test validation of completely empty response."""
         validator = PipelineValidator()
-        violations = validator.validate_response({}, 'test')
+        violations = validator.validate_response({}, "test")
 
         errors = [v for v in violations if v.severity == ViolationSeverity.ERROR]
         # Should have errors for all 6 required fields

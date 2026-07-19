@@ -11,7 +11,6 @@ Contract Reference: specs/047-create-a-unified/contracts/fixture_manager_contrac
 import pytest
 import time
 
-
 # ==============================================================================
 # FIXTURES
 # ==============================================================================
@@ -145,9 +144,7 @@ class TestFixtureManagerConstructor:
         """✅ Accepts backend_mode override."""
         from tests.fixtures.manager import FixtureManager
 
-        manager = FixtureManager(
-            fixtures_root=fixtures_root, backend_mode="enterprise"
-        )
+        manager = FixtureManager(fixtures_root=fixtures_root, backend_mode="enterprise")
 
         assert manager.backend_mode == "enterprise"
 
@@ -161,9 +158,7 @@ class TestFixtureManagerConstructor:
 class TestLoadFixture:
     """Contract tests for FixtureManager.load_fixture()."""
 
-    def test_loads_dat_fixture_successfully(
-        self, fixture_manager, create_test_fixture
-    ):
+    def test_loads_dat_fixture_successfully(self, fixture_manager, create_test_fixture):
         """✅ Loads .DAT fixture successfully."""
         create_test_fixture("test-fixture")
 
@@ -268,7 +263,9 @@ class TestScanFixtures:
         assert fixture_metadata.version == "1.0.0"
         assert fixture_metadata.description == "Test fixture for contract tests"
 
-    def test_caches_results_and_skips_rescan(self, fixture_manager, create_test_fixture):
+    def test_caches_results_and_skips_rescan(
+        self, fixture_manager, create_test_fixture
+    ):
         """✅ Caches results and skips rescan when rescan=False."""
         create_test_fixture("test-fixture")
 
@@ -332,9 +329,7 @@ class TestListFixtures:
         assert len(fixtures) == 1
         assert fixtures[0].name == "dat-fixture"
 
-    def test_filters_by_requires_embeddings(
-        self, fixture_manager, create_test_fixture
-    ):
+    def test_filters_by_requires_embeddings(self, fixture_manager, create_test_fixture):
         """✅ Filters by requires_embeddings=True."""
         create_test_fixture("embedded-fixture")
 
@@ -522,4 +517,6 @@ class TestBackwardCompatibility:
 
     def test_fixture_manager_supports_gof_format(self, fixture_manager):
         """Fixture manager handles .gof (global format) files."""
-        assert hasattr(fixture_manager, 'load_fixture') or hasattr(fixture_manager, 'load')
+        assert hasattr(fixture_manager, "load_fixture") or hasattr(
+            fixture_manager, "load"
+        )

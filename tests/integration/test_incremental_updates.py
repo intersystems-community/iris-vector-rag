@@ -150,7 +150,9 @@ class TestIncrementalFixtureUpdates:
 
     def test_incremental_update_adds_only_delta(self):
         """✅ Incremental update processes only changed data."""
-        pytest.skip("Requires database connection - implement after basic migration works")
+        pytest.skip(
+            "Requires database connection - implement after basic migration works"
+        )
 
         from tests.fixtures.manager import FixtureManager
 
@@ -323,7 +325,9 @@ class TestMigrationErrorHandling:
 
         manager = FixtureManager()
 
-        with pytest.raises(FixtureNotFoundError, match="Fixture 'nonexistent' not found"):
+        with pytest.raises(
+            FixtureNotFoundError, match="Fixture 'nonexistent' not found"
+        ):
             manager.migrate("nonexistent", target_version="2.0.0")
 
     def test_migrate_fails_on_corrupted_manifest(self, temp_fixture_dir):
@@ -343,7 +347,9 @@ class TestMigrationErrorHandling:
         result = manager.migrate(str(fixture_path), target_version="2.0.0")
 
         assert result.success is False
-        assert "Expecting property name" in result.error_message  # JSON decode error message
+        assert (
+            "Expecting property name" in result.error_message
+        )  # JSON decode error message
 
     def test_migrate_rollback_on_failure(self):
         """✅ migrate() rolls back changes if migration fails."""

@@ -59,7 +59,7 @@ class VectorStoreConfigurationError(Exception):
         message: str,
         rejected_keys: Optional[List[str]] = None,
         allowed_keys: Optional[List[str]] = None,
-        **details: Any
+        **details: Any,
     ):
         """
         Initialize VectorStoreConfigurationError.
@@ -122,7 +122,7 @@ class PermissionDeniedError(Exception):
         resource: str,
         operation: str,
         reason: Optional[str] = None,
-        **details: Any
+        **details: Any,
     ):
         """
         Initialize PermissionDeniedError.
@@ -310,6 +310,7 @@ class GenerationError(Exception):
             parts.append(f"Details: {detail_str}")
         return " | ".join(parts)
 
+
 class VectorStoreConnectionError(Exception):
     """Raised when a connection to IRIS cannot be established or is lost."""
 
@@ -385,7 +386,7 @@ class IngestionError(Exception):
         documents_loaded: int = 0,
         documents_failed: int = 0,
         original_error: Optional[Exception] = None,
-        **details: Any
+        **details: Any,
     ):
         """
         Initialize IngestionError.

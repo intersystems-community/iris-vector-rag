@@ -115,7 +115,9 @@ class TestSchemaManagerTableValidation:
 
         try:
             # Check that expected columns exist
-            cursor.execute("SELECT doc_id, text_content, embedding FROM RAG.SourceDocuments")
+            cursor.execute(
+                "SELECT doc_id, text_content, embedding FROM RAG.SourceDocuments"
+            )
             # If we get here, columns exist
             assert True
         except Exception as e:
@@ -169,7 +171,9 @@ class TestSchemaManagerIndexCreation:
         # Create index if method exists
         if hasattr(schema_manager, "create_index"):
             try:
-                schema_manager.create_index("SourceDocuments", "doc_id", index_type="standard")
+                schema_manager.create_index(
+                    "SourceDocuments", "doc_id", index_type="standard"
+                )
                 assert True
             except Exception:
                 # Index might already exist
@@ -185,7 +189,9 @@ class TestSchemaManagerIndexCreation:
 
         try:
             # Check if we can query with vector functions
-            cursor.execute("SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL")
+            cursor.execute(
+                "SELECT COUNT(*) FROM RAG.SourceDocuments WHERE embedding IS NOT NULL"
+            )
             count = cursor.fetchone()[0]
             assert count >= 0
         finally:
@@ -233,7 +239,9 @@ class TestSchemaManagerMetadataTable:
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT schema_version FROM RAG.SchemaMetadata ORDER BY version_id DESC")
+            cursor.execute(
+                "SELECT schema_version FROM RAG.SchemaMetadata ORDER BY version_id DESC"
+            )
             row = cursor.fetchone()
             if row:
                 version = row[0]

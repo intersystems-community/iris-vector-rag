@@ -435,7 +435,7 @@ class TestConfigurationSecurity:
                             # Skip check for known placeholders
                             if value in ["dummy", "test-api-key", "placeholder"]:
                                 continue
-                                
+
                             # API keys should not be obvious test values
                             for pattern in suspicious_patterns:
                                 assert (

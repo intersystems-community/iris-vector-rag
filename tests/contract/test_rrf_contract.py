@@ -37,20 +37,25 @@ class TestRRFContract:
 
         # Verify result structure
         assert result is not None, "Result should not be None"
-        assert ('contexts' in result), "Result should have contexts"
-        assert ('metadata' in result), "Result should have metadata"
+        assert "contexts" in result, "Result should have contexts"
+        assert "metadata" in result, "Result should have metadata"
 
         # Verify documents retrieved (via RRF or fallback)
-        assert len(result['contexts']) > 0, \
-            f"RRF (or fallback) should retrieve documents, got {len(result['contexts'])}"
+        assert (
+            len(result["contexts"]) > 0
+        ), f"RRF (or fallback) should retrieve documents, got {len(result['contexts'])}"
 
         # Verify metadata
-        assert 'retrieval_method' in result['metadata'], \
-            "Metadata should contain retrieval_method"
+        assert (
+            "retrieval_method" in result["metadata"]
+        ), "Metadata should contain retrieval_method"
 
-        method = result['metadata']['retrieval_method']
-        assert method in ['rrf', 'vector_fallback', 'knowledge_graph'], \
-            f"Expected rrf or fallback, got {method}"
+        method = result["metadata"]["retrieval_method"]
+        assert method in [
+            "rrf",
+            "vector_fallback",
+            "knowledge_graph",
+        ], f"Expected rrf or fallback, got {method}"
 
     @pytest.mark.requires_database
     def test_rrf_fallback_on_zero_results(self, graphrag_pipeline, mocker, caplog):
@@ -67,34 +72,33 @@ class TestRRFContract:
         query = "What are the treatments for type 2 diabetes?"
 
         # Mock RRF to return 0 results
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_rrf',
-                return_value=([], 'rrf')
+                "retrieve_via_rrf",
+                return_value=([], "rrf"),
             )
         else:
             mocker.patch.object(
-                graphrag_pipeline,
-                '_retrieve_via_rrf',
-                return_value=([], 'rrf')
+                graphrag_pipeline, "_retrieve_via_rrf", return_value=([], "rrf")
             )
 
         # Execute query
         result = graphrag_pipeline.query(query, method="rrf")
 
         # Verify fallback
-        assert len(result['contexts']) > 0, \
-            "Fallback should retrieve documents"
+        assert len(result["contexts"]) > 0, "Fallback should retrieve documents"
 
-        assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
+        assert (
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
         # Verify logging
         log_output = caplog.text
-        assert any("fallback" in msg.lower() or "0 results" in msg.lower()
-                   for msg in log_output.split('\n')), \
-            "Should log warning about RRF fallback"
+        assert any(
+            "fallback" in msg.lower() or "0 results" in msg.lower()
+            for msg in log_output.split("\n")
+        ), "Should log warning about RRF fallback"
 
     @pytest.mark.requires_database
     def test_rrf_fallback_on_exception(self, graphrag_pipeline, mocker, caplog):
@@ -111,31 +115,34 @@ class TestRRFContract:
         query = "What are the treatments for type 2 diabetes?"
 
         # Mock RRF to raise exception
-        if hasattr(graphrag_pipeline, 'retrieval_methods'):
+        if hasattr(graphrag_pipeline, "retrieval_methods"):
             mocker.patch.object(
                 graphrag_pipeline.retrieval_methods,
-                'retrieve_via_rrf',
-                side_effect=Exception("RRF failed")
+                "retrieve_via_rrf",
+                side_effect=Exception("RRF failed"),
             )
         else:
             mocker.patch.object(
                 graphrag_pipeline,
-                '_retrieve_via_rrf',
-                side_effect=Exception("RRF failed")
+                "_retrieve_via_rrf",
+                side_effect=Exception("RRF failed"),
             )
 
         # Execute query - should not raise
         result = graphrag_pipeline.query(query, method="rrf")
 
         # Verify fallback
-        assert len(result['contexts']) > 0, \
-            "Fallback should retrieve documents after exception"
+        assert (
+            len(result["contexts"]) > 0
+        ), "Fallback should retrieve documents after exception"
 
-        assert result['metadata']['retrieval_method'] == 'vector_fallback', \
-            f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
+        assert (
+            result["metadata"]["retrieval_method"] == "vector_fallback"
+        ), f"Expected vector_fallback, got {result['metadata']['retrieval_method']}"
 
         # Verify error logged
         log_output = caplog.text
-        assert any("error" in msg.lower() or "fail" in msg.lower()
-                   for msg in log_output.split('\n')), \
-            "Should log error about RRF exception"
+        assert any(
+            "error" in msg.lower() or "fail" in msg.lower()
+            for msg in log_output.split("\n")
+        ), "Should log error about RRF exception"

@@ -13,6 +13,7 @@ from iris_vector_rag.config.manager import ConfigurationManager
 
 class DimensionMismatchError(Exception):
     """Raised when embedding dimensions don't match."""
+
     pass
 
 
@@ -45,8 +46,9 @@ class TestDimensionValidationContract:
         query = "What are the symptoms of diabetes?"
         query_embedding = embedding_manager.generate_embedding(query)
 
-        assert len(query_embedding) == 384, \
-            f"Query embedding dimension mismatch: {len(query_embedding)} != 384"
+        assert (
+            len(query_embedding) == 384
+        ), f"Query embedding dimension mismatch: {len(query_embedding)} != 384"
 
     def test_dimension_validation_before_search(self, graphrag_pipeline):
         """
@@ -62,10 +64,13 @@ class TestDimensionValidationContract:
         result = graphrag_pipeline.query(query)
 
         # If retrieval succeeds, validation passed
-        assert len(result['contexts']) >= 0, \
-            "Query execution should succeed with matching dimensions"
+        assert (
+            len(result["contexts"]) >= 0
+        ), "Query execution should succeed with matching dimensions"
 
-    def test_dimension_mismatch_raises_clear_error(self, graphrag_pipeline, embedding_manager):
+    def test_dimension_mismatch_raises_clear_error(
+        self, graphrag_pipeline, embedding_manager
+    ):
         """
         FR-005: Dimension mismatch MUST raise DimensionMismatchError with clear message.
 
@@ -83,19 +88,21 @@ class TestDimensionValidationContract:
         with pytest.raises(Exception) as exc_info:
             # Trigger dimension validation failure
             # (Implementation will add _validate_dimensions method)
-            if hasattr(graphrag_pipeline, '_validate_dimensions'):
+            if hasattr(graphrag_pipeline, "_validate_dimensions"):
                 corrupt_embedding = [0.1] * 256  # Wrong dimension
-                graphrag_pipeline._validate_dimensions(corrupt_embedding, expected_dims=384)
+                graphrag_pipeline._validate_dimensions(
+                    corrupt_embedding, expected_dims=384
+                )
             else:
                 pytest.skip("_validate_dimensions method not yet implemented")
 
         error_msg = str(exc_info.value).lower()
 
         # Error message MUST include both dimensions
-        assert "256" in error_msg or "dimension" in error_msg, \
-            "Error message must mention actual dimension"
-        assert "384" in error_msg, \
-            "Error message must mention expected dimension"
+        assert (
+            "256" in error_msg or "dimension" in error_msg
+        ), "Error message must mention actual dimension"
+        assert "384" in error_msg, "Error message must mention expected dimension"
 
     def test_dimension_error_suggests_actionable_fix(self, graphrag_pipeline):
         """
@@ -109,9 +116,11 @@ class TestDimensionValidationContract:
         # (Implementation will ensure helpful error messages)
 
         with pytest.raises(Exception) as exc_info:
-            if hasattr(graphrag_pipeline, '_validate_dimensions'):
+            if hasattr(graphrag_pipeline, "_validate_dimensions"):
                 corrupt_embedding = [0.1] * 768  # Wrong dimension (BERT-base size)
-                graphrag_pipeline._validate_dimensions(corrupt_embedding, expected_dims=384)
+                graphrag_pipeline._validate_dimensions(
+                    corrupt_embedding, expected_dims=384
+                )
             else:
                 pytest.skip("_validate_dimensions method not yet implemented")
 
@@ -119,8 +128,9 @@ class TestDimensionValidationContract:
 
         # Error message MUST suggest fix
         actionable_keywords = ["model", "re-index", "reindex", "embedding", "verify"]
-        assert any(keyword in error_msg for keyword in actionable_keywords), \
-            f"Error message must suggest actionable fix. Got: {exc_info.value}"
+        assert any(
+            keyword in error_msg for keyword in actionable_keywords
+        ), f"Error message must suggest actionable fix. Got: {exc_info.value}"
 
     def test_document_embedding_dimension_check(self, graphrag_pipeline):
         """
@@ -149,9 +159,10 @@ class TestDimensionValidationContract:
         document_embedding = result[0]
 
         # Document embedding MUST be 384D
-        assert len(document_embedding) == 384, \
-            f"Document embedding dimension mismatch: {len(document_embedding)} != 384. " \
+        assert len(document_embedding) == 384, (
+            f"Document embedding dimension mismatch: {len(document_embedding)} != 384. "
             f"Database may contain embeddings from different model. Re-indexing required."
+        )
 
     def test_mismatched_embeddings_prevented(self, graphrag_pipeline):
         """
@@ -175,5 +186,6 @@ class TestDimensionValidationContract:
         # The actual dimension validation logic will be added in implementation
 
         # For now, verify retrieval works with correct dimensions
-        assert isinstance(result['contexts'], list), \
-            "Query should execute successfully with matching dimensions"
+        assert isinstance(
+            result["contexts"], list
+        ), "Query should execute successfully with matching dimensions"

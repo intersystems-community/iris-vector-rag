@@ -12,7 +12,11 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Request, HTTPException, Depends
 
 from iris_vector_rag.api.models.request import QueryRequest
-from iris_vector_rag.api.models.response import QueryResponse, Document, DocumentMetadata
+from iris_vector_rag.api.models.response import (
+    QueryResponse,
+    Document,
+    DocumentMetadata,
+)
 from iris_vector_rag.api.models.auth import ApiKey, Permission
 from iris_vector_rag.api.models.errors import (
     ErrorResponse,
@@ -20,18 +24,16 @@ from iris_vector_rag.api.models.errors import (
     ErrorInfo,
     ErrorDetails,
     validation_error,
-    internal_server_error
+    internal_server_error,
 )
 from iris_vector_rag.api.middleware.auth import ApiKeyAuth
 from iris_vector_rag.api.services.pipeline_manager import PipelineManager
-
 
 logger = logging.getLogger(__name__)
 
 
 def create_query_router(
-    pipeline_manager: PipelineManager,
-    auth_service: ApiKeyAuth
+    pipeline_manager: PipelineManager, auth_service: ApiKeyAuth
 ) -> APIRouter:
     """
     Create query API router.
@@ -57,10 +59,12 @@ def create_query_router(
             400: {"description": "Invalid request format"},
             401: {"description": "Authentication required"},
             403: {"description": "Insufficient permissions"},
-            422: {"description": "Validation error (query too long, invalid top_k, etc.)"},
+            422: {
+                "description": "Validation error (query too long, invalid top_k, etc.)"
+            },
             429: {"description": "Rate limit exceeded"},
             500: {"description": "Internal server error"},
-            503: {"description": "Pipeline unavailable"}
+            503: {"description": "Pipeline unavailable"},
         },
         summary="Query RAG pipeline",
         description="""
@@ -84,13 +88,13 @@ def create_query_router(
         - `contexts`: List of document content (for RAGAS compatibility)
         - `sources`: Source references extracted from metadata
         - `execution_time_ms`: Total query execution time
-        """
+        """,
     )
     async def query_pipeline(
         pipeline: str,
         query_request: QueryRequest,
         request: Request,
-        api_key: ApiKey = Depends(require_read_permission)
+        api_key: ApiKey = Depends(require_read_permission),
     ) -> QueryResponse:
         """
         Query RAG pipeline (FR-001).
@@ -108,7 +112,7 @@ def create_query_router(
             HTTPException: On validation or execution errors
         """
         # Get request_id from middleware
-        request_id: UUID = getattr(request.state, 'request_id', uuid4())
+        request_id: UUID = getattr(request.state, "request_id", uuid4())
 
         start_time = time.time()
 
@@ -122,8 +126,8 @@ def create_query_router(
                         rejected_value=f"[{len(query_request.query)} characters]",
                         message="Query must be between 1 and 10000 characters",
                         max_length=10000,
-                        min_value=1
-                    ).model_dump()
+                        min_value=1,
+                    ).model_dump(),
                 )
 
             # Validate top_k (FR-003)
@@ -135,8 +139,8 @@ def create_query_router(
                         rejected_value=query_request.top_k,
                         message="top_k must be between 1 and 100",
                         min_value=1,
-                        max_value=100
-                    ).model_dump()
+                        max_value=100,
+                    ).model_dump(),
                 )
 
             # Get pipeline instance (FR-001)
@@ -151,9 +155,9 @@ def create_query_router(
                             reason=f"Pipeline not found: {pipeline}",
                             details=ErrorDetails(
                                 message=f"Pipeline '{pipeline}' does not exist or is not configured"
-                            )
+                            ),
                         )
-                    ).model_dump()
+                    ).model_dump(),
                 )
 
             # Check pipeline health
@@ -169,11 +173,11 @@ def create_query_router(
                             details=ErrorDetails(
                                 pipeline=pipeline,
                                 status="unavailable",
-                                message=pipeline_metadata.error_message or
-                                       "Pipeline is not ready to accept queries"
-                            )
+                                message=pipeline_metadata.error_message
+                                or "Pipeline is not ready to accept queries",
+                            ),
                         )
-                    ).model_dump()
+                    ).model_dump(),
                 )
 
             logger.info(
@@ -187,7 +191,7 @@ def create_query_router(
             result = pipeline_instance.query(
                 query=query_request.query,
                 top_k=query_request.top_k,
-                filters=query_request.filters
+                filters=query_request.filters,
             )
 
             int((time.time() - query_start) * 1000)
@@ -206,15 +210,13 @@ def create_query_router(
                         source=doc_data.get("metadata", {}).get("source", "unknown"),
                         chunk_index=doc_data.get("metadata", {}).get("chunk_index"),
                         page_number=doc_data.get("metadata", {}).get("page_number"),
-                        created_at=doc_data.get("metadata", {}).get("created_at")
-                    )
+                        created_at=doc_data.get("metadata", {}).get("created_at"),
+                    ),
                 )
                 retrieved_documents.append(doc)
 
             # Extract sources from metadata (FR-002)
-            sources = list(set(
-                doc.metadata.source for doc in retrieved_documents
-            ))
+            sources = list(set(doc.metadata.source for doc in retrieved_documents))
 
             # Calculate execution times
             total_execution_time_ms = int((time.time() - start_time) * 1000)
@@ -234,14 +236,14 @@ def create_query_router(
                 generation_time_ms=generation_time_ms,
                 tokens_used=result.get("metadata", {}).get("tokens_used"),
                 confidence_score=result.get("metadata", {}).get("confidence_score"),
-                metadata=result.get("metadata")
+                metadata=result.get("metadata"),
             )
 
             # Update pipeline metrics
             pipeline_manager.update_pipeline_metrics(
                 pipeline_name=pipeline,
                 execution_time_ms=total_execution_time_ms,
-                success=True
+                success=True,
             )
 
             logger.info(
@@ -262,15 +264,15 @@ def create_query_router(
             pipeline_manager.update_pipeline_metrics(
                 pipeline_name=pipeline,
                 execution_time_ms=int((time.time() - start_time) * 1000),
-                success=False
+                success=False,
             )
 
             raise HTTPException(
                 status_code=500,
                 detail=internal_server_error(
                     request_id=str(request_id),
-                    message="Query processing failed. Please try again or contact support."
-                ).model_dump()
+                    message="Query processing failed. Please try again or contact support.",
+                ).model_dump(),
             )
 
     return router

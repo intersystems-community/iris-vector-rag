@@ -9,7 +9,6 @@ Reference: specs/047-create-a-unified/tasks.md (T086)
 
 import pytest
 
-
 # ==============================================================================
 # FUNCTION-SCOPED FIXTURE EXAMPLES (default)
 # ==============================================================================
@@ -27,7 +26,9 @@ def test_with_default_scope(fixture_metadata):
     if fixture_metadata:
         assert fixture_metadata.name == "medical-graphrag-20"
         assert fixture_metadata.checksum_valid
-        print(f"Loaded {fixture_metadata.rows_loaded} rows in {fixture_metadata.load_time_seconds:.2f}s")
+        print(
+            f"Loaded {fixture_metadata.rows_loaded} rows in {fixture_metadata.load_time_seconds:.2f}s"
+        )
     else:
         pytest.skip("Fixture not available (no .DAT fixture found)")
 
@@ -141,7 +142,13 @@ def test_graphrag_pipeline_with_fixture(fixture_metadata):
     assert len(result["retrieved_documents"]) > 0
 
     # Verify metadata
-    assert result["metadata"]["retrieval_method"] in ["kg", "vector", "hybrid", "rrf", "text"]
+    assert result["metadata"]["retrieval_method"] in [
+        "kg",
+        "vector",
+        "hybrid",
+        "rrf",
+        "text",
+    ]
 
     print(f"✓ Pipeline returned {len(result['retrieved_documents'])} documents")
     print(f"✓ Retrieval method: {result['metadata']['retrieval_method']}")
@@ -182,8 +189,9 @@ def test_fixture_loads_quickly(fixture_metadata):
         pytest.skip("Fixture not available")
 
     # Verify load time is reasonable
-    assert fixture_metadata.load_time_seconds < 10.0, \
-        f"Fixture took {fixture_metadata.load_time_seconds:.2f}s (>10s threshold)"
+    assert (
+        fixture_metadata.load_time_seconds < 10.0
+    ), f"Fixture took {fixture_metadata.load_time_seconds:.2f}s (>10s threshold)"
 
     print(f"✓ Fixture loaded in {fixture_metadata.load_time_seconds:.2f}s")
 
@@ -204,8 +212,9 @@ def test_checksum_validation_passes(fixture_metadata):
     if not fixture_metadata:
         pytest.skip("Fixture not available")
 
-    assert fixture_metadata.checksum_valid, \
-        "Checksum validation should pass for valid fixture"
+    assert (
+        fixture_metadata.checksum_valid
+    ), "Checksum validation should pass for valid fixture"
 
     print("✓ Checksum validation passed")
 

@@ -356,10 +356,11 @@ ANTHROPIC_API_KEY=test_key
         if makefile_path.exists():
             makefile_content = makefile_path.read_text()
             # Find test-ragas-sample target definition
-            for line in makefile_content.split('\n'):
-                if 'test-ragas-sample:' in line and not line.strip().startswith('#'):
-                    assert 'load-data' in line, \
-                        "test-ragas-sample should have load-data as a dependency"
+            for line in makefile_content.split("\n"):
+                if "test-ragas-sample:" in line and not line.strip().startswith("#"):
+                    assert (
+                        "load-data" in line
+                    ), "test-ragas-sample should have load-data as a dependency"
                     break
 
     def test_ragas_targets_use_factory_pipeline_names(self):
@@ -369,18 +370,24 @@ ANTHROPIC_API_KEY=test_key
             makefile_content = makefile_path.read_text()
 
             # Should use factory names: basic,basic_rerank,crag,graphrag,pylate_colbert
-            assert "basic,basic_rerank,crag,graphrag,pylate_colbert" in makefile_content, \
-                "RAGAS targets should use correct factory pipeline names"
+            assert (
+                "basic,basic_rerank,crag,graphrag,pylate_colbert" in makefile_content
+            ), "RAGAS targets should use correct factory pipeline names"
 
             # Should NOT use legacy names in active targets
-            ragas_lines = [line for line in makefile_content.split('\n')
-                          if 'RAGAS_PIPELINES' in line and not line.strip().startswith('#')]
+            ragas_lines = [
+                line
+                for line in makefile_content.split("\n")
+                if "RAGAS_PIPELINES" in line and not line.strip().startswith("#")
+            ]
 
             for line in ragas_lines:
-                assert "BasicRAG" not in line, \
-                    "RAGAS targets should not use legacy name 'BasicRAG', use 'basic'"
-                assert "HybridGraphRAG" not in line, \
-                    "RAGAS targets should not reference non-existent 'HybridGraphRAG'"
+                assert (
+                    "BasicRAG" not in line
+                ), "RAGAS targets should not use legacy name 'BasicRAG', use 'basic'"
+                assert (
+                    "HybridGraphRAG" not in line
+                ), "RAGAS targets should not reference non-existent 'HybridGraphRAG'"
 
     def test_ragas_targets_reference_5_pipelines(self):
         """Test RAGAS target descriptions accurately mention 5 pipelines."""
@@ -389,13 +396,17 @@ ANTHROPIC_API_KEY=test_key
             makefile_content = makefile_path.read_text()
 
             # Check test-ragas-sample and test-ragas-1000 descriptions
-            ragas_target_lines = [line for line in makefile_content.split('\n')
-                                 if 'test-ragas' in line and '##' in line]
+            ragas_target_lines = [
+                line
+                for line in makefile_content.split("\n")
+                if "test-ragas" in line and "##" in line
+            ]
 
             # At least one should mention 5 pipelines
-            assert any('5 pipeline' in line.lower() or 'all 5' in line.lower()
-                      for line in ragas_target_lines), \
-                "RAGAS target descriptions should mention '5 pipelines'"
+            assert any(
+                "5 pipeline" in line.lower() or "all 5" in line.lower()
+                for line in ragas_target_lines
+            ), "RAGAS target descriptions should mention '5 pipelines'"
 
     # =============================================================================
     # Dynamic Pipeline Discovery Tests (Feature 031)
@@ -439,8 +450,9 @@ ANTHROPIC_API_KEY=test_key
         # Expected factory types (as of 2025-10-06)
         expected_types = {"basic", "basic_rerank", "crag", "graphrag", "pylate_colbert"}
 
-        assert script_output == expected_types, \
-            f"Helper output {script_output} doesn't match factory {expected_types}"
+        assert (
+            script_output == expected_types
+        ), f"Helper output {script_output} doesn't match factory {expected_types}"
 
     def test_ragas_target_uses_dynamic_pipelines(self):
         """Verify Makefile test-ragas-sample target calls helper script."""
@@ -448,14 +460,14 @@ ANTHROPIC_API_KEY=test_key
         makefile_content = makefile_path.read_text()
 
         # Find test-ragas-sample target
-        lines = makefile_content.split('\n')
+        lines = makefile_content.split("\n")
         found_target = False
         found_helper_call = False
 
         for line in lines:
-            if 'test-ragas-sample:' in line:
+            if "test-ragas-sample:" in line:
                 found_target = True
-            if found_target and 'get_pipeline_types.py' in line:
+            if found_target and "get_pipeline_types.py" in line:
                 found_helper_call = True
                 break
 
@@ -469,9 +481,10 @@ ANTHROPIC_API_KEY=test_key
 
         # Check for pattern: ${RAGAS_PIPELINES:-$(shell ...)}
         # This ensures env var takes precedence
-        assert "RAGAS_PIPELINES:-" in makefile_content or \
-               "RAGAS_PIPELINES:=" in makefile_content, \
-               "Makefile doesn't preserve env var override capability"
+        assert (
+            "RAGAS_PIPELINES:-" in makefile_content
+            or "RAGAS_PIPELINES:=" in makefile_content
+        ), "Makefile doesn't preserve env var override capability"
 
     # =============================================================================
     # RAGAS Evaluation Tests
@@ -979,14 +992,12 @@ ANTHROPIC_API_KEY=test_key
         """Test make targets with custom compose file configuration."""
         # Create custom compose file
         custom_compose = temp_project_dir / "docker-compose.custom.yml"
-        custom_compose.write_text(
-            """
+        custom_compose.write_text("""
 version: '3.8'
 services:
   test:
     image: hello-world
-"""
-        )
+""")
 
         # Test with custom COMPOSE_FILE environment variable
         env = os.environ.copy()

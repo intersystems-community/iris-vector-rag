@@ -81,7 +81,9 @@ class TestQueryWithValidAPIKey:
     Then: System returns answer with documents and sources within 2 seconds
     """
 
-    def test_authenticated_query_returns_answer_with_documents(self, client, auth_header):
+    def test_authenticated_query_returns_answer_with_documents(
+        self, client, auth_header
+    ):
         """
         Test that authenticated query returns complete response.
 
@@ -98,21 +100,18 @@ class TestQueryWithValidAPIKey:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={
-                "query": query,
-                "top_k": 5
-            }
+            json={"query": query, "top_k": 5},
         )
 
         elapsed_time = time.time() - start_time
 
         # Validate response status
-        assert response.status_code == 200, \
-            f"Expected 200, got {response.status_code}: {response.text}"
+        assert (
+            response.status_code == 200
+        ), f"Expected 200, got {response.status_code}: {response.text}"
 
         # Validate response time (FR: <2s p95 latency)
-        assert elapsed_time < 2.0, \
-            f"Query took {elapsed_time:.2f}s, exceeds 2s target"
+        assert elapsed_time < 2.0, f"Query took {elapsed_time:.2f}s, exceeds 2s target"
 
         data = response.json()
 
@@ -158,15 +157,16 @@ class TestQueryWithValidAPIKey:
             response = client.post(
                 f"/api/v1/{pipeline}/_search",
                 headers=auth_header,
-                json={"query": query, "top_k": 3}
+                json={"query": query, "top_k": 3},
             )
 
             # Skip if pipeline not available (optional dependency)
             if response.status_code == 503:
                 pytest.skip(f"Pipeline {pipeline} not available")
 
-            assert response.status_code == 200, \
-                f"Pipeline {pipeline} failed: {response.text}"
+            assert (
+                response.status_code == 200
+            ), f"Pipeline {pipeline} failed: {response.text}"
 
             data = response.json()
             assert "answer" in data
@@ -184,11 +184,8 @@ class TestQueryWithValidAPIKey:
             json={
                 "query": "What is diabetes?",
                 "top_k": 5,
-                "filters": {
-                    "domain": "medical",
-                    "year": 2023
-                }
-            }
+                "filters": {"domain": "medical", "year": 2023},
+            },
         )
 
         assert response.status_code == 200
@@ -208,7 +205,7 @@ class TestQueryWithValidAPIKey:
         response = client.post(
             "/api/v1/graphrag/_search",
             headers=auth_header,
-            json={"query": "What is diabetes?"}
+            json={"query": "What is diabetes?"},
         )
 
         assert response.status_code == 200
@@ -237,7 +234,7 @@ class TestQueryWithValidAPIKey:
         response = client.post(
             "/api/v1/basic/_search",
             headers=auth_header,
-            json={"query": "What is diabetes?"}
+            json={"query": "What is diabetes?"},
         )
 
         assert response.status_code == 200
@@ -271,7 +268,7 @@ class TestQueryWithValidAPIKey:
             response = client.post(
                 "/api/v1/basic/_search",
                 headers=auth_header,
-                json={"query": f"Query {query_id}"}
+                json={"query": f"Query {query_id}"},
             )
             elapsed = time.time() - start
             return response.status_code, elapsed
@@ -279,7 +276,9 @@ class TestQueryWithValidAPIKey:
         # Send 10 concurrent queries
         num_concurrent = 10
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=num_concurrent) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=num_concurrent
+        ) as executor:
             futures = [executor.submit(send_query, i) for i in range(num_concurrent)]
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
@@ -291,5 +290,6 @@ class TestQueryWithValidAPIKey:
 
         # Validate at least some queries met the 2s target
         fast_queries = [e for _, e in results if e < 2.0]
-        assert len(fast_queries) >= num_concurrent * 0.7, \
-            "At least 70% of concurrent queries should meet 2s target"
+        assert (
+            len(fast_queries) >= num_concurrent * 0.7
+        ), "At least 70% of concurrent queries should meet 2s target"

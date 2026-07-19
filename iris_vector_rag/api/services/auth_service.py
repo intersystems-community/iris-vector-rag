@@ -17,9 +17,8 @@ from iris_vector_rag.api.models.auth import (
     ApiKeyCreateRequest,
     ApiKeyResponse,
     Permission,
-    RateLimitTier
+    RateLimitTier,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +44,7 @@ class AuthService:
         self.bcrypt_rounds = bcrypt_rounds
 
     def create_api_key(
-        self,
-        request: ApiKeyCreateRequest,
-        owner_email: str
+        self, request: ApiKeyCreateRequest, owner_email: str
     ) -> ApiKeyResponse:
         """
         Create new API key.
@@ -67,9 +64,8 @@ class AuthService:
 
         # Hash secret with bcrypt (FR-010)
         key_secret_hash = bcrypt.hashpw(
-            key_secret.encode('utf-8'),
-            bcrypt.gensalt(rounds=self.bcrypt_rounds)
-        ).decode('utf-8')
+            key_secret.encode("utf-8"), bcrypt.gensalt(rounds=self.bcrypt_rounds)
+        ).decode("utf-8")
 
         # Calculate expiration
         created_at = datetime.utcnow()
@@ -88,13 +84,13 @@ class AuthService:
             name=request.name,
             permissions=request.permissions,
             rate_limit_tier=request.rate_limit_tier,
-            requests_per_minute=rate_limits['requests_per_minute'],
-            requests_per_hour=rate_limits['requests_per_hour'],
+            requests_per_minute=rate_limits["requests_per_minute"],
+            requests_per_hour=rate_limits["requests_per_hour"],
             created_at=created_at,
             expires_at=expires_at,
             is_active=True,
             owner_email=owner_email,
-            description=request.description
+            description=request.description,
         )
 
         # Store in database
@@ -109,20 +105,23 @@ class AuthService:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
 
-            cursor.execute(query, (
-                str(api_key.key_id),
-                api_key.key_secret_hash,
-                api_key.name,
-                ','.join([p.value for p in api_key.permissions]),
-                api_key.rate_limit_tier.value,
-                api_key.requests_per_minute,
-                api_key.requests_per_hour,
-                api_key.created_at,
-                api_key.expires_at,
-                api_key.is_active,
-                api_key.owner_email,
-                api_key.description
-            ))
+            cursor.execute(
+                query,
+                (
+                    str(api_key.key_id),
+                    api_key.key_secret_hash,
+                    api_key.name,
+                    ",".join([p.value for p in api_key.permissions]),
+                    api_key.rate_limit_tier.value,
+                    api_key.requests_per_minute,
+                    api_key.requests_per_hour,
+                    api_key.created_at,
+                    api_key.expires_at,
+                    api_key.is_active,
+                    api_key.owner_email,
+                    api_key.description,
+                ),
+            )
 
             conn.commit()
 
@@ -137,7 +136,7 @@ class AuthService:
             rate_limit_tier=api_key.rate_limit_tier,
             expires_at=api_key.expires_at,
             created_at=api_key.created_at,
-            message="IMPORTANT: Save this secret - it will not be shown again!"
+            message="IMPORTANT: Save this secret - it will not be shown again!",
         )
 
     def _get_rate_limits_for_tier(self, tier: RateLimitTier) -> dict:
@@ -151,18 +150,15 @@ class AuthService:
             Dictionary with requests_per_minute and requests_per_hour
         """
         tier_limits = {
-            RateLimitTier.BASIC: {
-                'requests_per_minute': 60,
-                'requests_per_hour': 1000
-            },
+            RateLimitTier.BASIC: {"requests_per_minute": 60, "requests_per_hour": 1000},
             RateLimitTier.PREMIUM: {
-                'requests_per_minute': 100,
-                'requests_per_hour': 5000
+                "requests_per_minute": 100,
+                "requests_per_hour": 5000,
             },
             RateLimitTier.ENTERPRISE: {
-                'requests_per_minute': 1000,
-                'requests_per_hour': 50000
-            }
+                "requests_per_minute": 1000,
+                "requests_per_hour": 50000,
+            },
         }
 
         return tier_limits.get(tier, tier_limits[RateLimitTier.BASIC])
@@ -199,7 +195,7 @@ class AuthService:
                 key_id=UUID(row[0]),
                 key_secret_hash=row[1],
                 name=row[2],
-                permissions=[Permission(p) for p in row[3].split(',')],
+                permissions=[Permission(p) for p in row[3].split(",")],
                 rate_limit_tier=RateLimitTier(row[4]),
                 requests_per_minute=row[5],
                 requests_per_hour=row[6],
@@ -207,7 +203,7 @@ class AuthService:
                 expires_at=row[8],
                 is_active=row[9],
                 owner_email=row[10],
-                description=row[11]
+                description=row[11],
             )
 
     def list_api_keys(self, owner_email: Optional[str] = None) -> List[ApiKey]:
@@ -247,20 +243,22 @@ class AuthService:
 
             api_keys = []
             for row in cursor.fetchall():
-                api_keys.append(ApiKey(
-                    key_id=UUID(row[0]),
-                    key_secret_hash=row[1],
-                    name=row[2],
-                    permissions=[Permission(p) for p in row[3].split(',')],
-                    rate_limit_tier=RateLimitTier(row[4]),
-                    requests_per_minute=row[5],
-                    requests_per_hour=row[6],
-                    created_at=row[7],
-                    expires_at=row[8],
-                    is_active=row[9],
-                    owner_email=row[10],
-                    description=row[11]
-                ))
+                api_keys.append(
+                    ApiKey(
+                        key_id=UUID(row[0]),
+                        key_secret_hash=row[1],
+                        name=row[2],
+                        permissions=[Permission(p) for p in row[3].split(",")],
+                        rate_limit_tier=RateLimitTier(row[4]),
+                        requests_per_minute=row[5],
+                        requests_per_hour=row[6],
+                        created_at=row[7],
+                        expires_at=row[8],
+                        is_active=row[9],
+                        owner_email=row[10],
+                        description=row[11],
+                    )
+                )
 
             return api_keys
 

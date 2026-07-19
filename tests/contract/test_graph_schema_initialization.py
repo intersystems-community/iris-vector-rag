@@ -147,12 +147,14 @@ class TestGraphTableInitialization:
                 return False  # Simulate permission failure
             return True  # Success for other tables
 
-        with patch.object(
-            schema_manager, "_detect_iris_vector_graph", return_value=True
-        ), patch.object(
-            schema_manager, "_initialize_ivg_schema", return_value={}
-        ), patch.object(
-            schema_manager, "_ivg_table_exists", side_effect=mock_ivg_table_exists
+        with (
+            patch.object(
+                schema_manager, "_detect_iris_vector_graph", return_value=True
+            ),
+            patch.object(schema_manager, "_initialize_ivg_schema", return_value={}),
+            patch.object(
+                schema_manager, "_ivg_table_exists", side_effect=mock_ivg_table_exists
+            ),
         ):
             # This will fail initially with AttributeError
             result = schema_manager.ensure_iris_vector_graph_tables()
@@ -223,12 +225,14 @@ class TestGraphTableInitialization:
             creation_order.append(table_name)
             return True
 
-        with patch.object(
-            schema_manager, "_detect_iris_vector_graph", return_value=True
-        ), patch.object(
-            schema_manager, "_initialize_ivg_schema", return_value={}
-        ), patch.object(
-            schema_manager, "_ivg_table_exists", side_effect=mock_ivg_table_exists
+        with (
+            patch.object(
+                schema_manager, "_detect_iris_vector_graph", return_value=True
+            ),
+            patch.object(schema_manager, "_initialize_ivg_schema", return_value={}),
+            patch.object(
+                schema_manager, "_ivg_table_exists", side_effect=mock_ivg_table_exists
+            ),
         ):
             # This will fail initially with AttributeError
             schema_manager.ensure_iris_vector_graph_tables()

@@ -41,7 +41,7 @@ class TestDATFixtureLoaderIntegration:
         fixture_dir = Path("/fake/path")
 
         # Should call _validate_version_compatibility
-        with patch.object(manager, '_validate_version_compatibility') as mock_validate:
+        with patch.object(manager, "_validate_version_compatibility") as mock_validate:
             try:
                 manager._load_dat_fixture(fixture_dir, metadata)
             except Exception:
@@ -106,9 +106,10 @@ class TestDATFixtureLoaderIntegration:
 
         # Test that the method exists and has correct signature
         import inspect
+
         sig = inspect.signature(manager._load_dat_fixture)
-        assert 'fixture_dir' in sig.parameters
-        assert 'metadata' in sig.parameters
+        assert "fixture_dir" in sig.parameters
+        assert "metadata" in sig.parameters
 
 
 @pytest.mark.unit
@@ -280,7 +281,7 @@ class TestFixtureStateTracking:
         manager._track_fixture_state(
             metadata=metadata,
             checksum_valid=True,
-            row_counts={"RAG.SourceDocuments": 10}
+            row_counts={"RAG.SourceDocuments": 10},
         )
 
         # Should create state entry
@@ -314,9 +315,7 @@ class TestFixtureStateTracking:
         )
 
         manager._track_fixture_state(
-            metadata=metadata,
-            checksum_valid=True,
-            row_counts={}
+            metadata=metadata, checksum_valid=True, row_counts={}
         )
 
         # Should return active fixture
@@ -347,7 +346,9 @@ class TestFixtureStateTracking:
             migration_history=[],
         )
 
-        manager._track_fixture_state(metadata=metadata1, checksum_valid=True, row_counts={})
+        manager._track_fixture_state(
+            metadata=metadata1, checksum_valid=True, row_counts={}
+        )
 
         # Load second fixture
         metadata2 = FixtureMetadata(
@@ -364,7 +365,9 @@ class TestFixtureStateTracking:
             migration_history=[],
         )
 
-        manager._track_fixture_state(metadata=metadata2, checksum_valid=True, row_counts={})
+        manager._track_fixture_state(
+            metadata=metadata2, checksum_valid=True, row_counts={}
+        )
 
         # First fixture should be deactivated
         state1 = manager.get_fixture_state("fixture1")

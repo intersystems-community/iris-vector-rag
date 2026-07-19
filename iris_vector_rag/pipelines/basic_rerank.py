@@ -24,7 +24,9 @@ class Reranker:
     def rerank(self, query: str, docs: List[Document]) -> List[Tuple[Document, float]]:
         return self._func(query, docs)
 
-    def __call__(self, query: str, docs: List[Document]) -> List[Tuple[Document, float]]:
+    def __call__(
+        self, query: str, docs: List[Document]
+    ) -> List[Tuple[Document, float]]:
         return self._func(query, docs)
 
 
@@ -92,7 +94,12 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
             **kwargs: Additional arguments passed to parent BasicRAGPipeline
         """
         # Initialize parent pipeline with all standard functionality (including embedding_config)
-        super().__init__(connection_manager, config_manager, embedding_config=embedding_config, **kwargs)
+        super().__init__(
+            connection_manager,
+            config_manager,
+            embedding_config=embedding_config,
+            **kwargs,
+        )
 
         # Set up reranking-specific configuration
         # Use dedicated reranking config section with fallback to basic config
@@ -207,9 +214,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         if generate_answer and self.llm_func and final_documents:
             try:
                 custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(
-                    query, final_documents, custom_prompt
-                )
+                answer = self._generate_answer(query, final_documents, custom_prompt)
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
@@ -222,7 +227,11 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
 
         # Build complete response (matching parent format exactly)
         contexts_list = [doc.page_content for doc in final_documents]
-        sources = self._extract_sources(final_documents) if kwargs.get("include_sources", True) else []
+        sources = (
+            self._extract_sources(final_documents)
+            if kwargs.get("include_sources", True)
+            else []
+        )
         retrieval_method = "rerank" if reranked else "vector_fallback"
 
         response = {

@@ -80,6 +80,4 @@ def detect_iris_edition(connection: Any) -> IRISEdition:
 
     except Exception as e:
         # Wrap other exceptions
-        raise EditionDetectionError(
-            f"Failed to detect IRIS edition: {e}"
-        ) from e
+        raise EditionDetectionError(f"Failed to detect IRIS edition: {e}") from e

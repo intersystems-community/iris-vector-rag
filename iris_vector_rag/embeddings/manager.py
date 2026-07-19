@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 _SENTENCE_TRANSFORMER_CACHE: Dict[str, Any] = {}
 _CACHE_LOCK = threading.Lock()
 
+
 # ============================================================================
 # Cache statistics tracking (Feature 051)
 # ============================================================================
@@ -35,6 +36,7 @@ class CachedModelInstance:
 
     Extended from Feature 050's basic cache to track detailed statistics.
     """
+
     config_name: str
     model: Any  # SentenceTransformer instance
     device: str  # "cuda:0", "mps", "cpu"
@@ -51,6 +53,7 @@ class CachedModelInstance:
 @dataclass
 class CacheStatistics:
     """Aggregate performance metrics for cache monitoring."""
+
     config_name: str
     cache_hits: int
     cache_misses: int
@@ -83,7 +86,10 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
 
     if cache_key in _SENTENCE_TRANSFORMER_CACHE:
         cached = _SENTENCE_TRANSFORMER_CACHE[cache_key]
-        if type(cached).__module__.startswith('unittest.mock') or 'Mock' in type(cached).__name__:
+        if (
+            type(cached).__module__.startswith("unittest.mock")
+            or "Mock" in type(cached).__name__
+        ):
             del _SENTENCE_TRANSFORMER_CACHE[cache_key]
         else:
             return cached
@@ -108,13 +114,16 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
                     texts_list = list(texts)
                 embeddings = []
                 for text in texts_list:
-                    seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (2**32)
+                    seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (
+                        2**32
+                    )
                     rng = random.Random(seed)
                     embeddings.append([rng.random() for _ in range(self.dim)])
                 return embeddings
 
         try:
             from sentence_transformers import SentenceTransformer
+
             logger.info(
                 "Loading SentenceTransformer model (one-time initialization): %s on %s",
                 model_name,
@@ -128,7 +137,10 @@ def _get_cached_sentence_transformer(model_name: str, device: str = "cpu"):
             )
             model = StubSentenceTransformer()
 
-        if type(model).__module__.startswith('unittest.mock') or 'Mock' in type(model).__name__:
+        if (
+            type(model).__module__.startswith("unittest.mock")
+            or "Mock" in type(model).__name__
+        ):
             return StubSentenceTransformer()
 
         _SENTENCE_TRANSFORMER_CACHE[cache_key] = model
@@ -268,7 +280,9 @@ class EmbeddingManager:
         try:
             import torch
 
-            from iris_vector_rag.common.huggingface_utils import download_huggingface_model
+            from iris_vector_rag.common.huggingface_utils import (
+                download_huggingface_model,
+            )
 
             hf_config = self.embedding_config.get("huggingface", {})
             model_name = hf_config.get(
@@ -511,6 +525,7 @@ class EmbeddingManager:
 # Cache Statistics API (Feature 051)
 # ============================================================================
 
+
 def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
     """
     Retrieve model cache statistics (FR-022).
@@ -540,7 +555,7 @@ def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
                     model_load_count=0,
                     memory_usage_mb=0.0,
                     device="unknown",
-                    total_embeddings=0
+                    total_embeddings=0,
                 )
 
             instance = _CACHE_STATS[config_name]
@@ -561,13 +576,15 @@ def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
                 model_load_count=instance.cache_misses,  # Approximation
                 memory_usage_mb=instance.memory_usage_mb,
                 device=instance.device,
-                total_embeddings=instance.total_embeddings_generated
+                total_embeddings=instance.total_embeddings_generated,
             )
         else:
             # Aggregate stats for all configs
             total_hits = sum(inst.cache_hits for inst in _CACHE_STATS.values())
             total_misses = sum(inst.cache_misses for inst in _CACHE_STATS.values())
-            total_embeddings = sum(inst.total_embeddings_generated for inst in _CACHE_STATS.values())
+            total_embeddings = sum(
+                inst.total_embeddings_generated for inst in _CACHE_STATS.values()
+            )
             total_memory = sum(inst.memory_usage_mb for inst in _CACHE_STATS.values())
             total_calls = total_hits + total_misses
             hit_rate = total_hits / total_calls if total_calls > 0 else 0.0
@@ -581,7 +598,7 @@ def get_cache_stats(config_name: Optional[str] = None) -> CacheStatistics:
                 model_load_count=total_misses,
                 memory_usage_mb=total_memory,
                 device="mixed",
-                total_embeddings=total_embeddings
+                total_embeddings=total_embeddings,
             )
 
 
@@ -639,8 +656,7 @@ def clear_cache(config_name: Optional[str] = None):
                     del _CACHE_STATS[config_name]
 
             return ClearCacheResult(
-                models_cleared=models_cleared,
-                memory_freed_mb=memory_freed
+                models_cleared=models_cleared, memory_freed_mb=memory_freed
             )
         else:
             # Clear all models
@@ -649,12 +665,13 @@ def clear_cache(config_name: Optional[str] = None):
             logger.info(f"Cleared all cached models ({models_cleared} total)")
 
             with _STATS_LOCK:
-                memory_freed = sum(inst.memory_usage_mb for inst in _CACHE_STATS.values())
+                memory_freed = sum(
+                    inst.memory_usage_mb for inst in _CACHE_STATS.values()
+                )
                 _CACHE_STATS.clear()
 
             return ClearCacheResult(
-                models_cleared=models_cleared,
-                memory_freed_mb=memory_freed
+                models_cleared=models_cleared, memory_freed_mb=memory_freed
             )
 
 
@@ -677,7 +694,7 @@ def _record_cache_miss(config_name: str, device: str, load_time_ms: float):
                 device=device,
                 load_time_ms=load_time_ms,
                 cache_misses=1,
-                memory_usage_mb=400.0  # Approximate model size
+                memory_usage_mb=400.0,  # Approximate model size
             )
         else:
             _CACHE_STATS[config_name].cache_misses += 1

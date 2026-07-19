@@ -20,11 +20,7 @@ logger = logging.getLogger(__name__)
 class DiskCacheBackend:
     """Filesystem backend for LLM response caching."""
 
-    def __init__(
-        self,
-        cache_dir: str = ".cache/iris_rag/llm",
-        ttl_seconds: int = 3600
-    ):
+    def __init__(self, cache_dir: str = ".cache/iris_rag/llm", ttl_seconds: int = 3600):
         """
         Initialize Disk cache backend.
 
@@ -35,7 +31,7 @@ class DiskCacheBackend:
         self.cache_dir = Path(cache_dir)
         self.ttl_seconds = ttl_seconds
         self.stats = {"hits": 0, "misses": 0, "sets": 0, "deletes": 0, "errors": 0}
-        
+
         # Ensure cache directory exists
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         logger.info(f"Disk cache initialized at {self.cache_dir}")
@@ -46,20 +42,20 @@ class DiskCacheBackend:
 
         Args:
             cache_key: Unique hash for the prompt/model
-            
+
         Returns:
             Cached response or None if not found/expired
         """
         cache_file = self.cache_dir / f"{cache_key}.json"
-        
+
         if not cache_file.exists():
             self.stats["misses"] += 1
             return None
-            
+
         try:
             with open(cache_file, "r") as f:
                 data = json.load(f)
-                
+
             # Check expiration
             expires_at_str = data.get("expires_at")
             if expires_at_str:
@@ -69,21 +65,17 @@ class DiskCacheBackend:
                     self.delete(cache_key)
                     self.stats["misses"] += 1
                     return None
-            
+
             self.stats["hits"] += 1
             return data.get("value")
-            
+
         except Exception as e:
             logger.error(f"Error reading disk cache file {cache_file}: {e}")
             self.stats["errors"] += 1
             return None
 
     def set(
-        self,
-        cache_key: str,
-        value: Any,
-        ttl: Optional[int] = None,
-        **kwargs
+        self, cache_key: str, value: Any, ttl: Optional[int] = None, **kwargs
     ) -> None:
         """
         Store value in disk cache.
@@ -96,22 +88,22 @@ class DiskCacheBackend:
         try:
             ttl_to_use = ttl or self.ttl_seconds
             expires_at = datetime.now() + timedelta(seconds=ttl_to_use)
-            
+
             cache_data = {
                 "cache_key": cache_key,
                 "value": value,
                 "created_at": datetime.now().isoformat(),
                 "expires_at": expires_at.isoformat(),
-                "metadata": kwargs
+                "metadata": kwargs,
             }
-            
+
             cache_file = self.cache_dir / f"{cache_key}.json"
             with open(cache_file, "w") as f:
                 json.dump(cache_data, f, indent=2)
-                
+
             self.stats["sets"] += 1
             logger.debug(f"Stored disk cache entry: {cache_key}")
-            
+
         except Exception as e:
             logger.error(f"Error writing to disk cache: {e}")
             self.stats["errors"] += 1
@@ -139,16 +131,11 @@ class DiskCacheBackend:
         """Return cache usage statistics."""
         total = self.stats["hits"] + self.stats["misses"]
         hit_rate = self.stats["hits"] / total if total > 0 else 0.0
-        return {
-            **self.stats,
-            "hit_rate": hit_rate,
-            "cache_dir": str(self.cache_dir)
-        }
+        return {**self.stats, "hit_rate": hit_rate, "cache_dir": str(self.cache_dir)}
 
 
 def create_disk_cache_backend(config: CacheConfig) -> DiskCacheBackend:
     """Factory for DiskCacheBackend."""
     return DiskCacheBackend(
-        cache_dir=config.cache_directory,
-        ttl_seconds=config.ttl_seconds
+        cache_dir=config.cache_directory, ttl_seconds=config.ttl_seconds
     )

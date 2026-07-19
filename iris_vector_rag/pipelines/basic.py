@@ -88,7 +88,9 @@ class BasicRAGPipeline(RAGPipeline):
                 f"(config: {self.embedding_config})"
             )
 
-    def load_documents(self, documents=None, documents_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    def load_documents(
+        self, documents=None, documents_path: Optional[str] = None, **kwargs
+    ) -> Dict[str, Any]:
         """
         Load and process documents into the pipeline's knowledge base.
 
@@ -118,7 +120,11 @@ class BasicRAGPipeline(RAGPipeline):
             )
 
         # Validation: empty documents list
-        if documents is not None and isinstance(documents, list) and len(documents) == 0:
+        if (
+            documents is not None
+            and isinstance(documents, list)
+            and len(documents) == 0
+        ):
             raise ValueError(
                 "Error: Empty documents list\n"
                 "Context: BasicRAG document loading\n"
@@ -142,12 +148,20 @@ class BasicRAGPipeline(RAGPipeline):
         documents_failed = 0
 
         # Validate embedding dimensions early (contract requirement FR-023)
-        if generate_embeddings and hasattr(self, "embedding_manager") and self.embedding_manager:
+        if (
+            generate_embeddings
+            and hasattr(self, "embedding_manager")
+            and self.embedding_manager
+        ):
             sample_doc = documents[0]
             if isinstance(sample_doc, Document):
                 sample_text = sample_doc.page_content
             elif isinstance(sample_doc, dict):
-                sample_text = sample_doc.get("page_content") or sample_doc.get("text") or sample_doc.get("content")
+                sample_text = (
+                    sample_doc.get("page_content")
+                    or sample_doc.get("text")
+                    or sample_doc.get("content")
+                )
             else:
                 sample_text = str(sample_doc)
 
@@ -159,7 +173,7 @@ class BasicRAGPipeline(RAGPipeline):
         try:
             if generate_embeddings:
                 # Use vector store's automatic chunking and embedding generation
-                if hasattr(self, 'vector_store') and self.vector_store:
+                if hasattr(self, "vector_store") and self.vector_store:
                     self.vector_store.add_documents(
                         documents,
                         auto_chunk=True,
@@ -175,7 +189,7 @@ class BasicRAGPipeline(RAGPipeline):
                     )
             else:
                 # Store documents without embeddings using vector store
-                if hasattr(self, 'vector_store') and self.vector_store:
+                if hasattr(self, "vector_store") and self.vector_store:
                     self._store_documents(documents)
                     documents_loaded = len(documents)
                     embeddings_generated = 0

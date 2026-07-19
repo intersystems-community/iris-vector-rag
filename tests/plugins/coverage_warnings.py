@@ -14,6 +14,7 @@ import configparser
 @dataclass
 class CoverageWarning:
     """Represents a coverage threshold violation."""
+
     module_path: str
     current_coverage: float
     threshold: float
@@ -43,11 +44,7 @@ def load_critical_patterns() -> List[str]:
         return patterns
 
     # Default critical patterns
-    return [
-        "iris_rag/pipelines/",
-        "iris_rag/storage/",
-        "iris_rag/validation/"
-    ]
+    return ["iris_rag/pipelines/", "iris_rag/storage/", "iris_rag/validation/"]
 
 
 def is_critical_module(module_path: str, patterns: List[str]) -> bool:
@@ -106,12 +103,14 @@ def collect_coverage_warnings(cov: coverage.Coverage) -> List[CoverageWarning]:
 
         # Check if below threshold
         if coverage_pct < threshold:
-            warnings.append(CoverageWarning(
-                module_path=module_path,
-                current_coverage=coverage_pct,
-                threshold=threshold,
-                is_critical=is_critical
-            ))
+            warnings.append(
+                CoverageWarning(
+                    module_path=module_path,
+                    current_coverage=coverage_pct,
+                    threshold=threshold,
+                    is_critical=is_critical,
+                )
+            )
 
     return warnings
 
@@ -156,25 +155,20 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
                 terminalreporter.write_line(
                     f"\n{critical_count} critical modules below 80% coverage!",
                     red=True,
-                    bold=True
+                    bold=True,
                 )
 
             terminalreporter.write_line(
-                f"Total modules with low coverage: {len(warnings)}",
-                yellow=True
+                f"Total modules with low coverage: {len(warnings)}", yellow=True
             )
     except Exception as e:
         # Don't fail tests if coverage warnings fail
         if config.option.verbose > 0:
-            terminalreporter.write_line(
-                f"Coverage warning plugin error: {e}",
-                red=True
-            )
+            terminalreporter.write_line(f"Coverage warning plugin error: {e}", red=True)
 
 
 def pytest_configure(config):
     """Register plugin with pytest."""
     config.addinivalue_line(
-        "markers",
-        "coverage_critical: mark test as critical for coverage purposes"
+        "markers", "coverage_critical: mark test as critical for coverage purposes"
     )

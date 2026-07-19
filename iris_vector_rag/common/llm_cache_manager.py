@@ -15,7 +15,10 @@ from dataclasses import dataclass
 from langchain_core.outputs import Generation
 
 from iris_vector_rag.common.llm_cache_config import CacheConfig, load_cache_config
-from iris_vector_rag.common.llm_cache_iris import IRISCacheBackend, create_iris_cache_backend
+from iris_vector_rag.common.llm_cache_iris import (
+    IRISCacheBackend,
+    create_iris_cache_backend,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -129,12 +132,17 @@ class LangchainCacheManager:
 
             elif self.config.backend == "disk":
                 try:
-                    from iris_vector_rag.common.llm_cache_disk import create_disk_cache_backend
+                    from iris_vector_rag.common.llm_cache_disk import (
+                        create_disk_cache_backend,
+                    )
+
                     self.cache_backend = create_disk_cache_backend(self.config)
                     # We can use the same wrapper as it just calls .get() and .set()
                     cache = LangchainIRISCacheWrapper(self.cache_backend)
                     langchain.llm_cache = cache
-                    logger.info(f"Langchain disk cache configured at {self.config.cache_directory}")
+                    logger.info(
+                        f"Langchain disk cache configured at {self.config.cache_directory}"
+                    )
                 except Exception as e:
                     logger.error(f"Failed to setup disk cache: {e}")
                     if self.config.graceful_fallback:
@@ -169,7 +177,9 @@ class LangchainCacheManager:
         """
         # Always use DBAPI for cache to avoid JDBC compatibility issues
         try:
-            from iris_vector_rag.common.iris_dbapi_connector import get_iris_dbapi_connection
+            from iris_vector_rag.common.iris_dbapi_connector import (
+                get_iris_dbapi_connection,
+            )
 
             iris_connector = get_iris_dbapi_connection()
 

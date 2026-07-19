@@ -26,8 +26,9 @@ class TestBatchQueue:
 
         # Verify FIFO order
         for i, doc in enumerate(batch):
-            assert doc.id == f"doc{i}", \
-                f"FIFO order not maintained (expected doc{i}, got {doc.id})"
+            assert (
+                doc.id == f"doc{i}"
+            ), f"FIFO order not maintained (expected doc{i}, got {doc.id})"
 
     def test_token_budget_calculations(self):
         """Validate token budget calculations are correct."""
@@ -47,8 +48,7 @@ class TestBatchQueue:
         batch = queue.get_next_batch(token_budget=6000)
 
         # Should get first 2 docs (2000 + 3000 = 5000 <= 6000)
-        assert len(batch) == 2, \
-            f"Should fit 2 docs in 6K budget, got {len(batch)}"
+        assert len(batch) == 2, f"Should fit 2 docs in 6K budget, got {len(batch)}"
         assert batch[0].id == "1", "First doc should be id='1'"
         assert batch[1].id == "2", "Second doc should be id='2'"
 
@@ -64,8 +64,9 @@ class TestBatchQueue:
         queue = BatchQueue()
 
         # Initially empty
-        assert queue.get_next_batch() is None or queue.get_next_batch() == [], \
-            "Empty queue should return None or []"
+        assert (
+            queue.get_next_batch() is None or queue.get_next_batch() == []
+        ), "Empty queue should return None or []"
 
         # Add documents
         queue.add_document(Document(id="1", page_content="Doc1"), 1000)
@@ -73,13 +74,13 @@ class TestBatchQueue:
 
         # Should have documents
         batch = queue.get_next_batch()
-        assert batch is not None and len(batch) > 0, \
-            "Queue should have documents"
+        assert batch is not None and len(batch) > 0, "Queue should have documents"
 
         # After getting all documents, should be empty again
         remaining = queue.get_next_batch()
-        assert remaining is None or remaining == [], \
-            "Queue should be empty after all documents retrieved"
+        assert (
+            remaining is None or remaining == []
+        ), "Queue should be empty after all documents retrieved"
 
     def test_empty_queue_returns_none_or_empty(self):
         """Validate empty queue returns None or empty list."""
@@ -87,8 +88,9 @@ class TestBatchQueue:
 
         result = queue.get_next_batch()
 
-        assert result is None or result == [], \
-            f"Empty queue should return None or [], got {result}"
+        assert (
+            result is None or result == []
+        ), f"Empty queue should return None or [], got {result}"
 
     def test_single_document(self):
         """Validate queue handles single document correctly."""
@@ -206,8 +208,9 @@ class TestBatchQueue:
         batch = queue.get_next_batch()
 
         # At 1500 tokens each, should fit 2 docs (3000 <= 4096)
-        assert len(batch) == 2, \
-            f"4096 budget should fit 2 docs at 1500 tokens each, got {len(batch)}"
+        assert (
+            len(batch) == 2
+        ), f"4096 budget should fit 2 docs at 1500 tokens each, got {len(batch)}"
 
     def test_dynamic_budget_override(self):
         """Validate get_next_batch can override default budget."""
@@ -221,14 +224,17 @@ class TestBatchQueue:
         batch = queue.get_next_batch(token_budget=5000)
 
         # Should fit 2 docs (4000 <= 5000) not 4 docs (8000)
-        assert len(batch) == 2, \
-            f"5000 budget should fit 2 docs at 2000 tokens each, got {len(batch)}"
+        assert (
+            len(batch) == 2
+        ), f"5000 budget should fit 2 docs at 2000 tokens each, got {len(batch)}"
 
     def test_queue_preserves_document_objects(self):
         """Validate queue preserves original document objects."""
         queue = BatchQueue()
 
-        original_doc = Document(id="test", page_content="Test content", metadata={"key": "value"})
+        original_doc = Document(
+            id="test", page_content="Test content", metadata={"key": "value"}
+        )
         queue.add_document(original_doc, token_count=100)
 
         batch = queue.get_next_batch()

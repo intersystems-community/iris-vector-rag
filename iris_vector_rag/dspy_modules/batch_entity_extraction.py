@@ -6,6 +6,7 @@ Process multiple tickets in a single LLM call for 3-5x speedup.
 Enhanced with JSON retry logic (T025) to fix the 0.7% JSON parsing failure rate
 observed in production where LLMs generate invalid escape sequences like \N, \i, etc.
 """
+
 import dspy
 import logging
 import json
@@ -16,11 +17,43 @@ logger = logging.getLogger(__name__)
 
 # Domain-specific entity type presets
 DOMAIN_PRESETS = {
-    "it_support": ["PRODUCT", "USER", "MODULE", "ERROR", "ACTION", "ORGANIZATION", "VERSION"],
-    "biomedical": ["GENE", "PROTEIN", "DISEASE", "CHEMICAL", "DRUG", "CELL_TYPE", "ORGANISM"],
-    "legal": ["PARTY", "JUDGE", "COURT", "LAW", "DATE", "MONETARY_AMOUNT", "JURISDICTION"],
+    "it_support": [
+        "PRODUCT",
+        "USER",
+        "MODULE",
+        "ERROR",
+        "ACTION",
+        "ORGANIZATION",
+        "VERSION",
+    ],
+    "biomedical": [
+        "GENE",
+        "PROTEIN",
+        "DISEASE",
+        "CHEMICAL",
+        "DRUG",
+        "CELL_TYPE",
+        "ORGANISM",
+    ],
+    "legal": [
+        "PARTY",
+        "JUDGE",
+        "COURT",
+        "LAW",
+        "DATE",
+        "MONETARY_AMOUNT",
+        "JURISDICTION",
+    ],
     "general": ["PERSON", "ORGANIZATION", "LOCATION", "DATE", "EVENT", "PRODUCT"],
-    "wikipedia": ["PERSON", "ORGANIZATION", "LOCATION", "TITLE", "ROLE", "POSITION", "EVENT"],
+    "wikipedia": [
+        "PERSON",
+        "ORGANIZATION",
+        "LOCATION",
+        "TITLE",
+        "ROLE",
+        "POSITION",
+        "EVENT",
+    ],
 }
 
 
@@ -56,7 +89,9 @@ class BatchEntityExtractionModule(dspy.Module):
     def __init__(self):
         super().__init__()
         self.extract = dspy.ChainOfThought(BatchEntityExtractionSignature)
-        logger.info("Initialized BATCH Entity Extraction Module (5-10 tickets/call) with JSON retry logic")
+        logger.info(
+            "Initialized BATCH Entity Extraction Module (5-10 tickets/call) with JSON retry logic"
+        )
 
     def _parse_json_with_retry(
         self, json_str: str, max_attempts: int = 3, context: str = "Batch JSON parsing"
@@ -85,11 +120,15 @@ class BatchEntityExtractionModule(dspy.Module):
 
                 # Ensure it's a list
                 if not isinstance(data, list):
-                    logger.warning(f"{context}: Expected list, got {type(data)}. Wrapping in list.")
+                    logger.warning(
+                        f"{context}: Expected list, got {type(data)}. Wrapping in list."
+                    )
                     data = [data]
 
                 if attempt > 0:
-                    logger.info(f"{context}: Successfully parsed after {attempt} repair attempts")
+                    logger.info(
+                        f"{context}: Successfully parsed after {attempt} repair attempts"
+                    )
 
                 return data
 
@@ -105,38 +144,40 @@ class BatchEntityExtractionModule(dspy.Module):
                     original_str = json_str
 
                     # Strategy 1: Fix trailing commas (common LLM error)
-                    json_str = json_str.replace(',]', ']').replace(',}', '}')
+                    json_str = json_str.replace(",]", "]").replace(",}", "}")
 
                     # Strategy 2: Fix invalid escape sequences
                     # Replace \N with \\N, \i with \\i, etc.
                     # But preserve valid escapes: \n, \t, \r, \", \\, \/, \b, \f
-                    valid_escapes = {'n', 't', 'r', '"', '\\', '/', 'b', 'f', 'u'}
+                    valid_escapes = {"n", "t", "r", '"', "\\", "/", "b", "f", "u"}
 
                     # Find all backslash sequences and fix invalid ones
                     repaired = []
                     i = 0
                     while i < len(json_str):
-                        if json_str[i] == '\\' and i + 1 < len(json_str):
+                        if json_str[i] == "\\" and i + 1 < len(json_str):
                             next_char = json_str[i + 1]
                             if next_char not in valid_escapes:
                                 # Invalid escape - add extra backslash
-                                repaired.append('\\\\')
+                                repaired.append("\\\\")
                                 repaired.append(next_char)
                                 i += 2
                             else:
                                 # Valid escape - keep as is
-                                repaired.append('\\')
+                                repaired.append("\\")
                                 i += 1
                         else:
                             repaired.append(json_str[i])
                             i += 1
 
-                    json_str = ''.join(repaired)
+                    json_str = "".join(repaired)
 
                     if json_str != original_str:
                         logger.debug(f"Applied JSON repair (attempt {attempt + 1})")
                     else:
-                        logger.debug(f"No repair pattern matched (attempt {attempt + 1})")
+                        logger.debug(
+                            f"No repair pattern matched (attempt {attempt + 1})"
+                        )
 
                 else:
                     # Final attempt failed
@@ -149,9 +190,7 @@ class BatchEntityExtractionModule(dspy.Module):
         return None
 
     def forward(
-        self,
-        tickets: List[Dict[str, str]],
-        entity_types: Optional[List[str]] = None
+        self, tickets: List[Dict[str, str]], entity_types: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """
         Extract entities from a batch of tickets with JSON retry logic (T025).
@@ -166,29 +205,35 @@ class BatchEntityExtractionModule(dspy.Module):
         """
         # Default to IT support types for backward compatibility
         if entity_types is None:
-            entity_types = ["PRODUCT", "USER", "MODULE", "ERROR", "ACTION", "ORGANIZATION", "VERSION"]
+            entity_types = [
+                "PRODUCT",
+                "USER",
+                "MODULE",
+                "ERROR",
+                "ACTION",
+                "ORGANIZATION",
+                "VERSION",
+            ]
 
         # Convert list to comma-separated string for DSPy
         entity_types_str = ", ".join(entity_types)
 
         try:
             # Prepare batch input
-            batch_input = json.dumps([
-                {"ticket_id": t["id"], "text": t["text"]}
-                for t in tickets
-            ])
+            batch_input = json.dumps(
+                [{"ticket_id": t["id"], "text": t["text"]} for t in tickets]
+            )
 
             # Single LLM call for entire batch
             prediction = self.extract(
-                tickets_batch=batch_input,
-                entity_types=entity_types_str
+                tickets_batch=batch_input, entity_types=entity_types_str
             )
 
             # Parse batch results with retry logic (T025)
             results = self._parse_json_with_retry(
                 prediction.batch_results,
                 max_attempts=3,
-                context=f"Batch extraction ({len(tickets)} tickets)"
+                context=f"Batch extraction ({len(tickets)} tickets)",
             )
 
             if results is None:

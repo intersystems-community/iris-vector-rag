@@ -41,7 +41,10 @@ class TestBackendModeSwitching:
         monkeypatch.delenv("IRIS_BACKEND_MODE", raising=False)
         config1 = load_configuration()
         assert config1.mode == BackendMode.COMMUNITY
-        assert config1.source == ConfigSource.DEFAULT or config1.source == ConfigSource.CONFIG_FILE
+        assert (
+            config1.source == ConfigSource.DEFAULT
+            or config1.source == ConfigSource.CONFIG_FILE
+        )
 
         # Set env var to enterprise
         monkeypatch.setenv("IRIS_BACKEND_MODE", "enterprise")
@@ -90,6 +93,7 @@ class TestBackendModeSwitching:
 
         # Mock config file path
         from iris_vector_rag.testing import backend_manager
+
         with monkeypatch.context() as m:
             m.setattr(backend_manager, "DEFAULT_CONFIG_PATH", config_file)
             config = load_configuration()
@@ -117,6 +121,7 @@ class TestBackendModeSwitching:
 
         # Mock config file path
         from iris_vector_rag.testing import backend_manager
+
         with monkeypatch.context() as m:
             m.setattr(backend_manager, "DEFAULT_CONFIG_PATH", config_file)
             config = load_configuration()
@@ -148,6 +153,7 @@ class TestConfigurationPrecedence:
         nonexistent_config = tmp_path / "nonexistent.yaml"
 
         from iris_vector_rag.testing import backend_manager
+
         with monkeypatch.context() as m:
             m.setattr(backend_manager, "DEFAULT_CONFIG_PATH", nonexistent_config)
             config = load_configuration()
@@ -187,6 +193,7 @@ class TestConfigurationPrecedence:
         monkeypatch.delenv("IRIS_BACKEND_MODE", raising=False)
 
         from iris_vector_rag.testing import backend_manager
+
         with monkeypatch.context() as m:
             m.setattr(backend_manager, "DEFAULT_CONFIG_PATH", config_file)
             config = load_configuration()

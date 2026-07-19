@@ -60,6 +60,7 @@ class ConnectionManager:
             raise ValueError(f"Unsupported database backend: {backend_name}")
 
         from iris_vector_rag.common.iris_connection import get_iris_connection
+
         return get_iris_connection()
 
     def create_connection(self, backend_name: str = "iris"):
@@ -69,6 +70,7 @@ class ConnectionManager:
     def _create_dbapi_connection(self):
         """Create a native IRIS DBAPI connection."""
         from iris_vector_rag.common.iris_connection import get_iris_connection
+
         return get_iris_connection()
 
     def close_connection(self, backend_name: str):

@@ -35,6 +35,7 @@ def client():
 def auth_header():
     """Authorization header with valid API key."""
     import base64
+
     credentials = base64.b64encode(b"test-id:test-secret").decode()
     return {"Authorization": f"ApiKey {credentials}"}
 
@@ -100,13 +101,12 @@ class TestListAvailablePipelines:
                 "graph_traversal",
                 "entity_extraction",
                 "reranking",
-                "corrective_retrieval"
+                "corrective_retrieval",
             ]
 
             # At least one capability should be recognized
             has_valid_capability = any(
-                cap in valid_capabilities
-                for cap in pipeline["capabilities"]
+                cap in valid_capabilities for cap in pipeline["capabilities"]
             )
             assert has_valid_capability
 
@@ -194,12 +194,13 @@ class TestListAvailablePipelines:
             query_response = client.post(
                 f"/api/v1/{pipeline_type}/_search",
                 headers=auth_header,
-                json={"query": "test query"}
+                json={"query": "test query"},
             )
 
             # Should not be 404 (endpoint should exist)
-            assert query_response.status_code != 404, \
-                f"Pipeline {pipeline_type} listed but query endpoint missing"
+            assert (
+                query_response.status_code != 404
+            ), f"Pipeline {pipeline_type} listed but query endpoint missing"
 
     def test_pipeline_list_endpoint_does_not_require_write_permission(self, client):
         """

@@ -40,8 +40,6 @@ if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
 
-
-
 # Removed custom event_loop fixture to avoid deprecation warning
 # pytest-asyncio will handle event loop management automatically
 
@@ -59,7 +57,7 @@ def coverage_instance():
             "*/venv/*",
             "*/.venv/*",
         ],
-        config_file=True
+        config_file=True,
     )
     cov.start()
     yield cov
@@ -355,10 +353,20 @@ def pytest_configure(config):
         "markers", "requires_internet: mark test as requiring internet connection"
     )
     # Constitutional compliance markers for coverage testing
-    config.addinivalue_line("markers", "requires_database: mark test as requiring live IRIS database per constitution")
-    config.addinivalue_line("markers", "clean_iris: mark test as requiring fresh/clean IRIS instance per constitution")
-    config.addinivalue_line("markers", "coverage_critical: mark test as critical for coverage measurement")
-    config.addinivalue_line("markers", "performance: mark test as performance validation")
+    config.addinivalue_line(
+        "markers",
+        "requires_database: mark test as requiring live IRIS database per constitution",
+    )
+    config.addinivalue_line(
+        "markers",
+        "clean_iris: mark test as requiring fresh/clean IRIS instance per constitution",
+    )
+    config.addinivalue_line(
+        "markers", "coverage_critical: mark test as critical for coverage measurement"
+    )
+    config.addinivalue_line(
+        "markers", "performance: mark test as performance validation"
+    )
 
 
 def pytest_sessionstart(session):
@@ -378,9 +386,11 @@ def pytest_sessionstart(session):
 
     for port in iris_ports:
         try:
-            result = subprocess.run([
-                sys.executable, "-c",
-                f"""
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    f"""
 import sqlalchemy_iris
 from sqlalchemy import create_engine, text
 try:
@@ -390,8 +400,12 @@ try:
     print('SUCCESS')
 except Exception:
     print('FAILED')
-"""
-            ], capture_output=True, text=True, timeout=5)
+""",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
 
             if "SUCCESS" in result.stdout:
                 iris_available = True
@@ -399,18 +413,21 @@ except Exception:
         except (subprocess.TimeoutExpired, subprocess.SubprocessError):
             continue
 
-    if not iris_available and any("e2e" in path or "integration" in path for path in test_paths):
+    if not iris_available and any(
+        "e2e" in path or "integration" in path for path in test_paths
+    ):
         pytest.exit(
             "IRIS database not running. E2E and integration tests require IRIS.\n"
             "Start IRIS with: docker-compose up -d\n"
             "Verify with: docker logs iris-pgwire-db --tail 50",
-            returncode=1
+            returncode=1,
         )
 
 
 # ============================================================================
 # Feature 035: Backend Mode Fixtures
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def backend_configuration():
@@ -558,6 +575,7 @@ def pytest_sessionfinish(session, exitstatus):
 
 # Feature 028: Test Infrastructure Resilience Fixtures
 
+
 @pytest.fixture(scope="class")
 def database_with_clean_schema(request):
     """
@@ -624,7 +642,7 @@ def validate_schema_once():
         pytest.exit(
             "Pre-flight checks failed. Cannot proceed with tests.\n"
             "Run preflight checks manually: python tests/utils/preflight_checks.py",
-            returncode=1
+            returncode=1,
         )
 
     return results
@@ -651,7 +669,9 @@ def mock_iris_vector_graph_unavailable(mocker):
     """
     # Mock the IRIS_GRAPH_CORE_AVAILABLE flag if it exists
     try:
-        mocker.patch('iris_rag.pipelines.hybrid_graphrag.IRIS_GRAPH_CORE_AVAILABLE', False)
+        mocker.patch(
+            "iris_rag.pipelines.hybrid_graphrag.IRIS_GRAPH_CORE_AVAILABLE", False
+        )
     except AttributeError:
         pass  # Flag doesn't exist, no need to mock
 
@@ -671,20 +691,21 @@ def mock_zero_results_retrieval(mocker):
             result = graphrag_pipeline.query("test", method="hybrid")
             assert result.metadata['retrieval_method'] == 'vector_fallback'
     """
+
     def mock_retrieval_method(pipeline, method_name):
         """Mock a specific retrieval method to return 0 results."""
-        if hasattr(pipeline, 'retrieval_methods'):
+        if hasattr(pipeline, "retrieval_methods"):
             mocker.patch.object(
                 pipeline.retrieval_methods,
                 method_name,
-                return_value=([], method_name.replace('retrieve_via_', ''))
+                return_value=([], method_name.replace("retrieve_via_", "")),
             )
         else:
             # Fallback to mocking the private method directly
             mocker.patch.object(
                 pipeline,
-                f'_{method_name}',
-                return_value=([], method_name.replace('retrieve_via_', ''))
+                f"_{method_name}",
+                return_value=([], method_name.replace("retrieve_via_", "")),
             )
 
     return mock_retrieval_method
@@ -703,19 +724,18 @@ def mock_connection_failure(mocker):
             result = graphrag_pipeline.query("test", method="rrf")
             assert result.metadata['retrieval_method'] == 'vector_fallback'
     """
+
     def mock_retrieval_error(pipeline, method_name, error_msg="Connection failed"):
         """Mock a specific retrieval method to raise connection error."""
-        if hasattr(pipeline, 'retrieval_methods'):
+        if hasattr(pipeline, "retrieval_methods"):
             mocker.patch.object(
                 pipeline.retrieval_methods,
                 method_name,
-                side_effect=ConnectionError(error_msg)
+                side_effect=ConnectionError(error_msg),
             )
         else:
             mocker.patch.object(
-                pipeline,
-                f'_{method_name}',
-                side_effect=ConnectionError(error_msg)
+                pipeline, f"_{method_name}", side_effect=ConnectionError(error_msg)
             )
 
     return mock_retrieval_error
@@ -725,17 +745,20 @@ def mock_connection_failure(mocker):
 # Feature 036: Pipeline Testing Fixtures
 # ============================================================================
 
+
 @pytest.fixture(scope="session")
 def basic_rag_pipeline(request):
     """Session-scoped BasicRAG pipeline — skips if IRIS unavailable."""
     from iris_vector_rag import create_pipeline
+
     try:
         import iris_vector_rag.embeddings.manager as _em
+
         _em._SENTENCE_TRANSFORMER_CACHE.clear()
     except Exception:
         pass
 
-    validate = 'integration' in str(request.node.fspath)
+    validate = "integration" in str(request.node.fspath)
 
     try:
         return create_pipeline("basic", validate_requirements=validate)
@@ -748,7 +771,7 @@ def crag_pipeline(request):
     """Session-scoped CRAG pipeline — skips if IRIS unavailable."""
     from iris_vector_rag import create_pipeline
 
-    validate = 'integration' in str(request.node.fspath)
+    validate = "integration" in str(request.node.fspath)
     try:
         return create_pipeline("crag", validate_requirements=validate)
     except Exception as e:
@@ -760,7 +783,7 @@ def basic_rerank_pipeline(request):
     """Session-scoped BasicRerank pipeline — skips if IRIS unavailable."""
     from iris_vector_rag import create_pipeline
 
-    validate = 'integration' in str(request.node.fspath)
+    validate = "integration" in str(request.node.fspath)
     try:
         return create_pipeline("basic_rerank", validate_requirements=validate)
     except Exception as e:
@@ -772,7 +795,7 @@ def pylate_colbert_pipeline(request):
     """Session-scoped PyLateColBERT pipeline — skips if unavailable."""
     from iris_vector_rag import create_pipeline
 
-    validate = 'integration' in str(request.node.fspath)
+    validate = "integration" in str(request.node.fspath)
     try:
         return create_pipeline("pylate_colbert", validate_requirements=validate)
     except Exception as e:

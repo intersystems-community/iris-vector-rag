@@ -39,7 +39,9 @@ class TestEmbeddingErrorHandling:
         ]
 
         # Patch EmbeddingManager where it's imported in the module
-        with patch("iris_vector_rag.embeddings.manager.EmbeddingManager") as mock_embedding_class:
+        with patch(
+            "iris_vector_rag.embeddings.manager.EmbeddingManager"
+        ) as mock_embedding_class:
             mock_embedding_manager = MagicMock()
             mock_embedding_class.return_value = mock_embedding_manager
             mock_embedding_manager.embed_text.side_effect = RuntimeError(

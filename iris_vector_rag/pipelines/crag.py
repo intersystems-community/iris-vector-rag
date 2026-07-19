@@ -124,7 +124,9 @@ class CRAGPipeline(RAGPipeline):
                     )
                     self.embedding_func = get_embedding_func(provider="stub")
             except ImportError:
-                logger.warning("Could not import get_embedding_func from iris_vector_rag.common.utils")
+                logger.warning(
+                    "Could not import get_embedding_func from iris_vector_rag.common.utils"
+                )
 
         if not self.llm_func:
             try:
@@ -132,7 +134,9 @@ class CRAGPipeline(RAGPipeline):
 
                 self.llm_func = get_llm_func()
             except ImportError:
-                logger.warning("Could not import get_llm_func from iris_vector_rag.common.utils")
+                logger.warning(
+                    "Could not import get_llm_func from iris_vector_rag.common.utils"
+                )
 
         # Initialize retrieval evaluator
         self.evaluator = RetrievalEvaluator(self.llm_func, self.embedding_func)
@@ -160,7 +164,9 @@ class CRAGPipeline(RAGPipeline):
             logger.warning(f"CRAG: Could not ensure DocumentChunks table: {e}")
             # Don't fail initialization - the pipeline can still work with basic retrieval
 
-    def load_documents(self, documents=None, documents_path: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    def load_documents(
+        self, documents=None, documents_path: Optional[str] = None, **kwargs
+    ) -> Dict[str, Any]:
         """
         Load documents into the knowledge base (required abstract method).
 
@@ -190,7 +196,11 @@ class CRAGPipeline(RAGPipeline):
             )
 
         # Validation: empty documents list
-        if documents is not None and isinstance(documents, list) and len(documents) == 0:
+        if (
+            documents is not None
+            and isinstance(documents, list)
+            and len(documents) == 0
+        ):
             raise ValueError(
                 "Error: Empty documents list\n"
                 "Context: CRAG document loading\n"
@@ -245,22 +255,28 @@ class CRAGPipeline(RAGPipeline):
                 ]
                 embeddings_generated = len(embeddings)
 
-            if hasattr(self, 'vector_store') and self.vector_store:
+            if hasattr(self, "vector_store") and self.vector_store:
                 document_ids = self._store_documents(documents, embeddings)
-                logger.info(f"CRAG: Loaded {len(documents)} documents with IDs: {document_ids}")
+                logger.info(
+                    f"CRAG: Loaded {len(documents)} documents with IDs: {document_ids}"
+                )
             else:
                 logger.warning("No vector store available - documents not persisted")
 
             documents_loaded = len(documents)
         except Exception as e:
-            logger.warning(f"Vector store operation failed (expected for contract tests without DB): {e}")
+            logger.warning(
+                f"Vector store operation failed (expected for contract tests without DB): {e}"
+            )
             # Still count as loaded for contract testing purposes
             documents_loaded = len(documents)
             embeddings_generated = len(documents) if generate_embeddings else 0
             documents_failed = 0
 
         processing_time = time.time() - start_time
-        logger.info(f"CRAG: Loaded {documents_loaded} documents in {processing_time:.2f} seconds")
+        logger.info(
+            f"CRAG: Loaded {documents_loaded} documents in {processing_time:.2f} seconds"
+        )
 
         return {
             "documents_loaded": documents_loaded,
@@ -417,7 +433,13 @@ class CRAGPipeline(RAGPipeline):
             execution_time = time.time() - start_time
 
             # Extract sources for metadata
-            sources = [{"doc_id": doc.metadata.get("doc_id", "unknown"), "source": doc.metadata.get("source", "unknown")} for doc in corrected_docs]
+            sources = [
+                {
+                    "doc_id": doc.metadata.get("doc_id", "unknown"),
+                    "source": doc.metadata.get("source", "unknown"),
+                }
+                for doc in corrected_docs
+            ]
             contexts_list = [doc.page_content for doc in corrected_docs]
 
             result = {
@@ -435,7 +457,9 @@ class CRAGPipeline(RAGPipeline):
                     "initial_doc_count": len(initial_docs),
                     "final_doc_count": len(corrected_docs),
                     "retrieval_method": effective_retrieval_method,  # FR-003: Include retrieval method
-                    "context_count": len(contexts_list),  # FR-003: Include context count
+                    "context_count": len(
+                        contexts_list
+                    ),  # FR-003: Include context count
                     "sources": sources,  # FR-003: Include sources in metadata
                     "processing_time": execution_time,
                 },
@@ -447,7 +471,11 @@ class CRAGPipeline(RAGPipeline):
         except Exception as e:
             logger.error(f"CRAG pipeline failed: {e}")
             # Ensure answer is a string even in error case
-            answer = "Error: Pipeline execution failed. Please check configuration and database connection." if generate_answer else None
+            answer = (
+                "Error: Pipeline execution failed. Please check configuration and database connection."
+                if generate_answer
+                else None
+            )
             return {
                 "query": query,
                 "answer": answer,
@@ -605,13 +633,17 @@ class CRAGPipeline(RAGPipeline):
         try:
             vector_dim = getattr(self.vector_store, "vector_dimension", 384)
             vector_data_type = "FLOAT"
-            if self.vector_store and hasattr(self.vector_store, "_get_vector_data_type"):
+            if self.vector_store and hasattr(
+                self.vector_store, "_get_vector_data_type"
+            ):
                 vector_data_type = self.vector_store._get_vector_data_type()
 
             # Generate query embedding
             query_embedding = self.embedding_func([query])[0]
             # Format embedding for IRIS SQL - must embed directly in SQL with brackets
-            query_embedding_str = "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
+            query_embedding_str = (
+                "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
+            )
 
             # Try chunk-based retrieval with parameterized query
             chunk_sql = f"""
@@ -696,7 +728,9 @@ class CRAGPipeline(RAGPipeline):
         try:
             vector_dim = getattr(self.vector_store, "vector_dimension", 384)
             vector_data_type = "FLOAT"
-            if self.vector_store and hasattr(self.vector_store, "_get_vector_data_type"):
+            if self.vector_store and hasattr(
+                self.vector_store, "_get_vector_data_type"
+            ):
                 vector_data_type = self.vector_store._get_vector_data_type()
 
             # ADDED: Log sample text_content from DB for comparison (moved to top)
@@ -725,7 +759,9 @@ class CRAGPipeline(RAGPipeline):
                     if isinstance(query_embedding[0], list):
                         query_embedding = query_embedding[0]
                 # Use working pattern from archived CRAG V2 (lines 50-59) - add brackets for TO_VECTOR
-                query_embedding_str = "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
+                query_embedding_str = (
+                    "[" + ",".join([f"{x:.10f}" for x in query_embedding]) + "]"
+                )
                 logger.debug(
                     f"CRAG _knowledge_base_expansion() generated embedding for semantic search: length={len(query_embedding)}"
                 )
