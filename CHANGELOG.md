@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.12.0
+
+- Add `IRISVectorEngine` — unified engine object that collapses
+  `(connection_manager, config_manager)` pair into one entry point.
+  `IRISVectorEngine.from_config()` constructs from env/YAML in one call;
+  accepts raw DBAPI connection or `ConnectionManager` as first arg.
+- Export `IRISVectorEngine` from top-level `iris_vector_rag`.
+- Add `engine=` kwarg to `create_pipeline()` and `create_validated_pipeline()`.
+- `RAGPipeline.__init__` accepts `IRISVectorEngine` as first positional arg.
+- Fully lazy — no DB connection until `.connection` or `.vector_store` accessed.
+- 313 unit tests pass; 8 new E2E tests for engine in `tests/e2e/test_engine_e2e.py`.
+- Rewrite AGENTS.md from 4-line stub to full 370-line agent reference.
+- Add `source:` field to skill manifests for agent discoverability.
+- Update README MCP section with all 8 tools and CLI commands.
+- Add `[ai]` extra installing `iris-agentic-dev`.
+
 ## v0.11.4
 
 - Consolidate all IRIS connection logic through `get_iris_connection()` — removes

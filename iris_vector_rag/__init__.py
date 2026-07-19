@@ -34,7 +34,7 @@ try:
 
     __version__ = _meta_version("iris-vector-rag")
 except PackageNotFoundError:
-    __version__ = "0.11.4"
+    __version__ = "0.12.0"
 __author__ = "Thomas Dyar"
 __description__ = "RAG pipelines backed by InterSystems IRIS vector search."
 
