@@ -1,3 +1,7 @@
+# Start IRIS: docker compose up -d
+# Stops: docker compose down
+# Logs:  docker compose logs -f iris
+
 services:
   iris:
     image: intersystemsdc/iris-community:latest
