@@ -440,57 +440,8 @@ def generate_prompt_hash(prompt: str) -> str:
     return hashlib.sha256(prompt.strip().encode("utf-8")).hexdigest()
 
 
-# ... (Embedded Python specific utilities can remain as they are) ...
-
-_iris_connector_embedded = None
 _embedding_model_embedded = None
 _llm_embedded = None
-
-
-def get_iris_connector_for_embedded():
-    global _iris_connector_embedded
-    if _iris_connector_embedded is None:
-        try:
-            try:
-                import iris
-            except ImportError:
-                raise ImportError(
-                    "IRIS Embedded Python module 'iris' not found. Ensure it is installed in your environment."
-                )
-            host = os.environ.get("IRIS_HOST", "localhost")
-            port = int(os.environ.get("IRIS_PORT", "1974"))
-            namespace = os.environ.get("IRIS_NAMESPACE", "USER")
-            username = os.environ.get("IRIS_USERNAME", "SuperUser")
-            password = os.environ.get("IRIS_PASSWORD", "SYS")
-
-            if hasattr(iris, "createConnection"):
-                _iris_connector_embedded = iris.createConnection(
-                    host,
-                    port,
-                    namespace,
-                    username,
-                    password,
-                )
-            elif hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
-                _iris_connector_embedded = iris.dbapi.connect(
-                    host,
-                    port,
-                    namespace,
-                    username,
-                    password,
-                )
-            else:
-                raise AttributeError(
-                    "IRIS module does not expose createConnection or dbapi.connect"
-                )
-            print("IRIS Embedded Python: DBAPI connection established.")
-        except ImportError:
-            print("IRIS Embedded Python: 'iris' module not found.")
-            _iris_connector_embedded = None
-        except Exception as e:
-            print(f"IRIS Embedded Python: Error connecting to DB: {e}")
-            _iris_connector_embedded = None
-    return _iris_connector_embedded
 
 
 def get_embedding_func_for_embedded(model_name_override: Optional[str] = None):

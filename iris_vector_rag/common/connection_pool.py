@@ -16,16 +16,6 @@ import os
 from contextlib import contextmanager
 from typing import Any, Dict, Generator, Optional
 
-try:
-    import iris.dbapi as iris_dbapi
-    if not hasattr(iris_dbapi, "connect"):
-        raise ImportError("IRIS DB-API missing connect()")
-except Exception as exc:
-    raise ImportError(
-        "IRIS DB-API not available or incompatible. "
-        "Install/verify the InterSystems IRIS Python client (intersystems-irispython)."
-    ) from exc
-
 logger = logging.getLogger(__name__)
 
 
@@ -114,7 +104,9 @@ class IRISConnectionPool:
             Exception: If connection creation fails
         """
         try:
-            connection = iris_dbapi.connect(
+            import iris
+
+            connection = iris.dbapi.connect(
                 hostname=self.host,
                 port=self.port,
                 namespace=self.namespace,
@@ -250,8 +242,8 @@ class IRISConnectionPool:
                     return connection
 
                 # No available connections - check if we can create new one
-                total_connections = (
-                    len(self._available_connections) + len(self._in_use_connections)
+                total_connections = len(self._available_connections) + len(
+                    self._in_use_connections
                 )
 
                 if total_connections < (self.pool_size + self.max_overflow):

@@ -1,6 +1,8 @@
 """
 Contract tests for unified IRIS connection module (TDD - Write First).
 
+Includes T003: get_iris_connector_for_embedded must NOT be exported from utils.
+
 These tests define the API contract for get_iris_connection() and related
 functionality. According to constitution Principle III (TDD), these tests
 MUST fail initially (red phase) before implementation.
@@ -490,7 +492,7 @@ class TestConnectionPooling:
     @pytest.mark.requires_database
     @pytest.mark.skipif(
         os.environ.get("SKIP_IRIS_CONTAINER", "0") == "1",
-        reason="IRIS database required for pool context manager test"
+        reason="IRIS database required for pool context manager test",
     )
     def test_pool_context_manager_support(self):
         """
@@ -511,3 +513,27 @@ class TestConnectionPooling:
 
         assert hasattr(conn_context, '__enter__')
         assert hasattr(conn_context, '__exit__')
+
+
+# ---------------------------------------------------------------------------
+# T003 — get_iris_connector_for_embedded must NOT exist in utils
+# ---------------------------------------------------------------------------
+
+class TestRemovedDuplicateFunctions:
+    """T003: verify that deprecated duplicate functions are gone from utils."""
+
+    def test_get_iris_connector_for_embedded_not_in_utils(self):
+        """get_iris_connector_for_embedded must not be exported from iris_vector_rag.common.utils."""
+        import iris_vector_rag.common.utils as utils
+
+        assert not hasattr(utils, "get_iris_connector_for_embedded"), (
+            "get_iris_connector_for_embedded was removed — callers must use get_iris_connection()"
+        )
+
+    def test_no_duplicate_iris_connector_globals_in_utils(self):
+        """Module-level _iris_connector_embedded singleton must not exist in utils."""
+        import iris_vector_rag.common.utils as utils
+
+        assert not hasattr(utils, "_iris_connector_embedded"), (
+            "_iris_connector_embedded singleton was removed from utils"
+        )

@@ -116,14 +116,6 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                     f"IRIS connection parameters missing: {missing_params}"
                 )
 
-            # Create IRIS connection using validated config
-            import iris
-
-            logger.info(
-                f"Connecting to IRIS at {connection_config['host']}:{connection_config['port']}"
-                f"/{connection_config['namespace']} for iris_vector_graph"
-            )
-
             host = connection_config["host"]
             port = connection_config["port"]
             namespace = connection_config["namespace"]
@@ -133,32 +125,19 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             if None in (host, port, namespace, username, password):
                 raise ValueError("IRIS connection parameters are incomplete")
 
-            import iris as _iris_mod
+            from iris_vector_rag.common.iris_connection import get_iris_connection
 
-            if hasattr(_iris_mod, "dbapi") and hasattr(_iris_mod.dbapi, "connect"):
-                iris_connection = _iris_mod.dbapi.connect(
-                    hostname=str(host),
-                    port=int(port),
-                    namespace=str(namespace),
-                    username=str(username),
-                    password=str(password),
-                )
-            elif hasattr(_iris_mod, "createConnection"):
-                iris_connection = _iris_mod.createConnection(
-                    str(host),
-                    int(port),
-                    str(namespace),
-                    str(username),
-                    str(password),
-                )
-            else:
-                iris_connection = _iris_mod.connect(
-                    hostname=str(host),
-                    port=int(port),
-                    namespace=str(namespace),
-                    username=str(username),
-                    password=str(password),
-                )
+            logger.info(
+                f"Connecting to IRIS at {host}:{port}/{namespace} for iris_vector_graph"
+            )
+
+            iris_connection = get_iris_connection(
+                host=str(host),
+                port=int(port),
+                namespace=str(namespace),
+                username=str(username),
+                password=str(password),
+            )
 
             try:
                 self.iris_engine = modules["IRISGraphEngine"](
