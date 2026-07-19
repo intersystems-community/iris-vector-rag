@@ -865,3 +865,26 @@ class ConfigurationManager:
         )
 
         return cloud_config
+
+    def get_schema_prefix(self) -> str:
+        """
+        Get schema prefix from environment variable or config file.
+
+        Reads IRIS_SCHEMA_PREFIX environment variable (takes precedence).
+        Falls back to config file value under storage.schema_prefix.
+        Defaults to "RAG" for backward compatibility.
+
+        Returns:
+            Schema prefix string (e.g., "RAG", "MYAPP", "TEST_IVR")
+        """
+        # Environment variable takes precedence
+        if "IRIS_SCHEMA_PREFIX" in os.environ:
+            return os.environ["IRIS_SCHEMA_PREFIX"]
+
+        # Check config file
+        config_prefix = self.get("storage:schema_prefix", None)
+        if config_prefix:
+            return config_prefix
+
+        # Default for backward compatibility
+        return "RAG"

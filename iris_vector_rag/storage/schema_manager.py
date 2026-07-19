@@ -9,6 +9,7 @@ automatic migration capabilities for vector dimensions and other schema changes.
 import json
 import logging
 import os
+import re
 import time
 from typing import Any, Dict, Optional
 
@@ -38,10 +39,9 @@ class SchemaManager:
     - Provides simple dimension API for all components
     """
 
-    # CLASS-LEVEL CACHING (shared across all instances for performance)
-    _schema_validation_cache = {}  # Cache for needs_migration() results
+    # CLASS-LEVEL CACHING: only _config_loaded is shared (optimization for config loading)
+    # _schema_validation_cache and _tables_validated are now instance-level (see __init__)
     _config_loaded = False  # Flag to prevent redundant config loading
-    _tables_validated = set()  # Cache for ensure_table_exists() to prevent spam
 
     def __init__(
         self,
@@ -49,6 +49,7 @@ class SchemaManager:
         config_manager=None,
         connection_string: Optional[str] = None,
         base_embedding_dimension: Optional[int] = None,
+        schema_prefix: Optional[str] = None,
     ):
         if config_manager is None:
             from iris_vector_rag.config.manager import ConfigurationManager
@@ -67,6 +68,13 @@ class SchemaManager:
 
         # Cache for dimension lookups
         self._dimension_cache = {}
+
+        # Instance-level caches (not class-level, so different prefixes don't collide)
+        self._schema_validation_cache: dict = {}
+        self._tables_validated: set = set()
+
+        # Configurable schema prefix (FR-001 through FR-008)
+        self.schema_prefix = self._resolve_schema_prefix(schema_prefix, config_manager)
 
         # Lazy initialization flag (Feature 078: Pure Constructors)
         self._initialized = False
@@ -97,6 +105,67 @@ class SchemaManager:
 
         # REMOVED: ensure_schema_metadata_table() call
         # Feature 078: Pure Constructors - schema initialization moved to lazy init on first use
+
+    def _validate_schema_prefix(self, prefix: str) -> None:
+        """
+        Validate schema prefix against [A-Za-z][A-Za-z0-9_]* pattern.
+
+        Raises:
+            ValueError: If prefix is empty or contains invalid characters.
+        """
+        if not prefix:
+            raise ValueError("Schema prefix cannot be empty")
+        if not re.match(r"^[A-Za-z][A-Za-z0-9_]*$", prefix):
+            raise ValueError(
+                f"Invalid schema prefix '{prefix}': must match [A-Za-z][A-Za-z0-9_]*"
+            )
+        logger.debug(f"Schema prefix '{prefix}' validated successfully")
+
+    def _resolve_schema_prefix(
+        self, ctor_arg: Optional[str], config_manager
+    ) -> str:
+        """
+        Resolve schema prefix using priority: constructor arg > config_manager > 'RAG'.
+
+        Returns:
+            Validated schema prefix string.
+        """
+        # Constructor argument takes highest precedence
+        if ctor_arg is not None:
+            self._validate_schema_prefix(ctor_arg)
+            return ctor_arg
+
+        # Config manager reads IRIS_SCHEMA_PREFIX env var and config file
+        if config_manager is not None:
+            try:
+                prefix = config_manager.get_schema_prefix()
+                if prefix and isinstance(prefix, str) and prefix != "RAG":
+                    self._validate_schema_prefix(prefix)
+                    return prefix
+                elif prefix and isinstance(prefix, str) and prefix == "RAG":
+                    return "RAG"
+            except AttributeError:
+                pass  # Config manager doesn't have get_schema_prefix yet
+
+        # Check env var directly as fallback
+        env_prefix = os.environ.get("IRIS_SCHEMA_PREFIX")
+        if env_prefix:
+            self._validate_schema_prefix(env_prefix)
+            return env_prefix
+
+        return "RAG"
+
+    def _qn(self, table_name: str) -> str:
+        """
+        Qualify a table name with the schema prefix.
+
+        Args:
+            table_name: Unqualified table name (e.g., "SourceDocuments")
+
+        Returns:
+            Fully qualified name (e.g., "MYAPP.SourceDocuments")
+        """
+        return f"{self.schema_prefix}.{table_name}"
 
     def _load_and_validate_config(self):
         """Load configuration from config manager and validate it makes sense."""
@@ -454,7 +523,7 @@ class SchemaManager:
         try:
             # Try different schema approaches in order of preference
             schema_attempts = [
-                ("RAG", "RAG.SchemaMetadata"),
+                (self.schema_prefix, self._qn("SchemaMetadata")),
                 (
                     "current user",
                     "SchemaMetadata",
@@ -520,9 +589,9 @@ class SchemaManager:
 
         try:
             cursor.execute(
-                """
+                f"""
                 SELECT schema_version, vector_dimension, embedding_model, configuration
-                FROM RAG.SchemaMetadata 
+                FROM {self._qn("SchemaMetadata")}
                 WHERE table_name = ?
             """,
                 [table_name],
@@ -655,7 +724,7 @@ class SchemaManager:
                     "foreign_keys": [
                         {
                             "column": "source_doc_id",
-                            "references": "RAG.SourceDocuments(id)",
+                            "references": f"{self._qn('SourceDocuments')}(id)",
                             "on_delete": "CASCADE",
                         }
                     ],
@@ -682,12 +751,12 @@ class SchemaManager:
                     "foreign_keys": [
                         {
                             "column": "source_entity_id",
-                            "references": "RAG.Entities(entity_id)",
+                            "references": f"{self._qn('Entities')}(entity_id)",
                             "on_delete": "CASCADE",
                         },
                         {
                             "column": "target_entity_id",
-                            "references": "RAG.Entities(entity_id)",
+                            "references": f"{self._qn('Entities')}(entity_id)",
                             "on_delete": "CASCADE",
                         },
                     ],
@@ -803,8 +872,8 @@ class SchemaManager:
         """
         # Check class-level cache first (shared across all instances)
         cache_key = f"{table_name}:{pipeline_type or 'default'}"
-        if cache_key in SchemaManager._schema_validation_cache:
-            cached_result = SchemaManager._schema_validation_cache[cache_key]
+        if cache_key in self._schema_validation_cache:
+            cached_result = self._schema_validation_cache[cache_key]
             logger.debug(
                 f"Schema validation cache HIT for {table_name} (cached: {cached_result})"
             )
@@ -820,7 +889,7 @@ class SchemaManager:
 
         if not current_config:
             logger.info(f"Table {table_name} has no schema metadata - migration needed")
-            SchemaManager._schema_validation_cache[cache_key] = True
+            self._schema_validation_cache[cache_key] = True
             return True
 
         # Compare top-level schema config fields
@@ -836,7 +905,7 @@ class SchemaManager:
                     f"Migration required for {table_name} due to {key} mismatch: "
                     f"expected={expected_config.get(key)}, actual={current_config.get(key)}"
                 )
-                SchemaManager._schema_validation_cache[cache_key] = True
+                self._schema_validation_cache[cache_key] = True
                 return True
 
         # Compare nested configuration keys
@@ -853,7 +922,7 @@ class SchemaManager:
                     f"Migration required for {table_name} due to config.{key} mismatch: "
                     f"expected={exp_val}, actual={cur_val}"
                 )
-                SchemaManager._schema_validation_cache[cache_key] = True
+                self._schema_validation_cache[cache_key] = True
                 return True
 
         # ✅ NEW: Check that all expected columns exist in physical table
@@ -870,18 +939,18 @@ class SchemaManager:
                         logger.info(
                             f"Migration required for {table_name}: missing column '{col}' in physical schema."
                         )
-                        SchemaManager._schema_validation_cache[cache_key] = True
+                        self._schema_validation_cache[cache_key] = True
                         return True
             except Exception as e:
                 logger.warning(
                     f"Could not verify physical structure of {table_name}: {e}"
                 )
-                SchemaManager._schema_validation_cache[cache_key] = True
+                self._schema_validation_cache[cache_key] = True
                 return True  # Be conservative and migrate if in doubt
 
         # Schema is valid - cache the result
         logger.info(f"✅ Schema validation PASSED for {table_name} - caching result")
-        SchemaManager._schema_validation_cache[cache_key] = False
+        self._schema_validation_cache[cache_key] = False
         return False
 
     def migrate_table(
@@ -1013,7 +1082,7 @@ class SchemaManager:
 
             # Try multiple table name approaches to work around IRIS schema issues
             table_attempts = [
-                "RAG.SourceDocuments",  # Preferred
+                self._qn("SourceDocuments"),  # Preferred
                 "SourceDocuments",  # Fallback
             ]
 
@@ -1037,10 +1106,10 @@ class SchemaManager:
                     for constraint_name, referencing_table in known_constraints:
                         # Check if referencing table exists first
                         cursor.execute(
-                            """
-                            SELECT COUNT(*) 
-                            FROM INFORMATION_SCHEMA.TABLES 
-                            WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = ?
+                            f"""
+                            SELECT COUNT(*)
+                            FROM INFORMATION_SCHEMA.TABLES
+                            WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = ?
                         """,
                             [referencing_table.upper()],
                         )
@@ -1048,16 +1117,16 @@ class SchemaManager:
 
                         if not table_exists:
                             logger.info(
-                                f"Referencing table RAG.{referencing_table} does not exist — skipping constraint drop"
+                                f"Referencing table {self._qn(referencing_table)} does not exist — skipping constraint drop"
                             )
                             continue
 
                         try:
                             logger.info(
-                                f"Dropping foreign key constraint {constraint_name} from RAG.{referencing_table}"
+                                f"Dropping foreign key constraint {constraint_name} from {self._qn(referencing_table)}"
                             )
                             cursor.execute(
-                                f"ALTER TABLE RAG.{referencing_table} DROP CONSTRAINT {constraint_name}"
+                                f"ALTER TABLE {self._qn(referencing_table)} DROP CONSTRAINT {constraint_name}"
                             )
                             logger.info(
                                 f"✓ Successfully dropped constraint {constraint_name}"
@@ -1068,13 +1137,13 @@ class SchemaManager:
                             )
                             try:
                                 logger.info(
-                                    f"Attempting to drop referencing table RAG.{referencing_table}"
+                                    f"Attempting to drop referencing table {self._qn(referencing_table)}"
                                 )
                                 cursor.execute(
-                                    f"DROP TABLE IF EXISTS RAG.{referencing_table}"
+                                    f"DROP TABLE IF EXISTS {self._qn(referencing_table)}"
                                 )
                                 logger.info(
-                                    f"✓ Dropped referencing table RAG.{referencing_table}"
+                                    f"✓ Dropped referencing table {self._qn(referencing_table)}"
                                 )
                             except Exception as table_error:
                                 logger.warning(
@@ -1145,7 +1214,7 @@ class SchemaManager:
         try:
             # Use MERGE or INSERT/UPDATE pattern
             cursor.execute(
-                "DELETE FROM RAG.SchemaMetadata WHERE table_name = ?", [table_name]
+                f"DELETE FROM {self._qn('SchemaMetadata')} WHERE table_name = ?", [table_name]
             )
 
             # Handle configuration serialization safely
@@ -1160,8 +1229,8 @@ class SchemaManager:
                     configuration_json = json.dumps({"error": "serialization_failed"})
 
             cursor.execute(
-                """
-                INSERT INTO RAG.SchemaMetadata
+                f"""
+                INSERT INTO {self._qn("SchemaMetadata")}
                 (table_name, schema_version, vector_dimension, embedding_model, configuration, updated_at)
                 VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """,
@@ -1188,10 +1257,10 @@ class SchemaManager:
         """
         try:
             # Check if chunk_id column exists
-            cursor.execute("""
+            cursor.execute(f"""
                 SELECT COLUMN_NAME
                 FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_SCHEMA = 'RAG'
+                WHERE TABLE_SCHEMA = '{self.schema_prefix}'
                   AND TABLE_NAME = 'DOCUMENTCHUNKS'
                   AND COLUMN_NAME = 'chunk_id'
             """)
@@ -1200,13 +1269,13 @@ class SchemaManager:
                 return
 
             # Add chunk_id column
-            logger.info("Adding chunk_id column to RAG.DocumentChunks...")
-            cursor.execute("ALTER TABLE RAG.DocumentChunks ADD chunk_id VARCHAR(255)")
+            logger.info(f"Adding chunk_id column to {self._qn('DocumentChunks')}...")
+            cursor.execute(f"ALTER TABLE {self._qn('DocumentChunks')} ADD chunk_id VARCHAR(255)")
 
             # Create index on chunk_id
             logger.info("Creating index on chunk_id...")
             cursor.execute(
-                "CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)"
+                f"CREATE INDEX idx_chunks_chunk_id ON {self._qn('DocumentChunks')} (chunk_id)"
             )
 
             logger.info("✓ Migration complete: chunk_id column and index added")
@@ -1227,10 +1296,10 @@ class SchemaManager:
             )
 
             # Check if table exists
-            cursor.execute("""
+            cursor.execute(f"""
                 SELECT COUNT(*)
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'DOCUMENTCHUNKS'
+                WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'DOCUMENTCHUNKS'
             """)
             table_exists = cursor.fetchone()[0] > 0
 
@@ -1248,10 +1317,10 @@ class SchemaManager:
 
             # If no preservation or table doesn't exist, create it fresh
             if table_exists:
-                cursor.execute("DROP TABLE IF EXISTS RAG.DocumentChunks")
+                cursor.execute(f"DROP TABLE IF EXISTS {self._qn('DocumentChunks')}")
 
-            create_sql = """
-            CREATE TABLE RAG.DocumentChunks (
+            create_sql = f"""
+            CREATE TABLE {self._qn("DocumentChunks")} (
                 id VARCHAR(255) PRIMARY KEY,
                 chunk_id VARCHAR(255),
                 source_document_id VARCHAR(255),
@@ -1261,15 +1330,15 @@ class SchemaManager:
                 chunk_type VARCHAR(100),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_document_id) REFERENCES RAG.SourceDocuments(id)
+                FOREIGN KEY (source_document_id) REFERENCES {self._qn("SourceDocuments")}(id)
             )
             """
             cursor.execute(create_sql)
 
             for index_sql in [
-                "CREATE INDEX idx_chunks_source_doc_id ON RAG.DocumentChunks (source_document_id)",
-                "CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)",
-                "CREATE INDEX idx_chunks_type ON RAG.DocumentChunks (chunk_type)",
+                f"CREATE INDEX idx_chunks_source_doc_id ON {self._qn('DocumentChunks')} (source_document_id)",
+                f"CREATE INDEX idx_chunks_chunk_id ON {self._qn('DocumentChunks')} (chunk_id)",
+                f"CREATE INDEX idx_chunks_type ON {self._qn('DocumentChunks')} (chunk_type)",
             ]:
                 try:
                     cursor.execute(index_sql)
@@ -1501,23 +1570,23 @@ class SchemaManager:
     def _migrate_entities_table(
         self, cursor, expected_config: Dict[str, Any], preserve_data: bool
     ) -> bool:
-        """Migrate RAG.Entities table with proper schema and foreign keys."""
+        """Migrate Entities table with proper schema and foreign keys."""
         try:
             vector_dim = expected_config["vector_dimension"]
             vector_data_type = expected_config.get("vector_data_type", "FLOAT")
 
             # Try multiple table name approaches
             table_attempts = [
-                "RAG.Entities",  # Preferred
+                self._qn("Entities"),  # Preferred
                 "Entities",  # Fallback
             ]
 
             # Ensure SourceDocuments.doc_id is unique so Entities FK can reference it
             try:
                 cursor.execute(
-                    "CREATE UNIQUE INDEX idx_source_docs_doc_id_unique ON RAG.SourceDocuments (doc_id)"
+                    f"CREATE UNIQUE INDEX idx_source_docs_doc_id_unique ON {self._qn('SourceDocuments')} (doc_id)"
                 )
-                logger.info("✅ Ensured unique index on RAG.SourceDocuments(doc_id)")
+                logger.info(f"✅ Ensured unique index on {self._qn('SourceDocuments')}(doc_id)")
             except Exception as e:
                 # Index may already exist or another benign condition; proceed
                 logger.debug(f"Unique index ensure for SourceDocuments.doc_id: {e}")
@@ -1542,7 +1611,7 @@ class SchemaManager:
                         description TEXT NULL,
                         embedding VECTOR({vector_data_type}, {vector_dim}) NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (source_doc_id) REFERENCES RAG.SourceDocuments(doc_id) ON DELETE CASCADE
+                        FOREIGN KEY (source_doc_id) REFERENCES {self._qn("SourceDocuments")}(doc_id) ON DELETE CASCADE
                     )
                     """
                     cursor.execute(create_sql)
@@ -1592,11 +1661,11 @@ class SchemaManager:
     def _migrate_entity_relationships_table(
         self, cursor, expected_config: Dict[str, Any], preserve_data: bool
     ) -> bool:
-        """Migrate RAG.EntityRelationships table with proper schema and foreign keys."""
+        """Migrate EntityRelationships table with proper schema and foreign keys."""
         try:
             # Try multiple table name approaches
             table_attempts = [
-                "RAG.EntityRelationships",  # Preferred
+                self._qn("EntityRelationships"),  # Preferred
                 "EntityRelationships",  # Fallback
             ]
 
@@ -1619,8 +1688,8 @@ class SchemaManager:
                         relationship_type VARCHAR(255) NOT NULL,
                         metadata TEXT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (source_entity_id) REFERENCES RAG.Entities(entity_id) ON DELETE CASCADE,
-                        FOREIGN KEY (target_entity_id) REFERENCES RAG.Entities(entity_id) ON DELETE CASCADE
+                        FOREIGN KEY (source_entity_id) REFERENCES {self._qn("Entities")}(entity_id) ON DELETE CASCADE,
+                        FOREIGN KEY (target_entity_id) REFERENCES {self._qn("Entities")}(entity_id) ON DELETE CASCADE
                     )
                     """
                     cursor.execute(create_sql)
@@ -1677,7 +1746,7 @@ class SchemaManager:
 
         Args:
             cursor: Database cursor
-            table: Table name (e.g., "RAG.SourceDocuments")
+            table: Qualified table name (e.g., via self._qn("SourceDocuments"))
             column: Vector column name (e.g., "embedding")
             index_name: Index name (e.g., "idx_SourceDocuments_embedding")
             try_acorn: Whether to attempt ACORN=1 optimization (default: True)
@@ -1747,12 +1816,12 @@ class SchemaManager:
             # Define vector indexes to ensure
             vector_indexes = [
                 {
-                    "table": "RAG.SourceDocuments",
+                    "table": self._qn("SourceDocuments"),
                     "column": "embedding",
                     "index_name": "idx_SourceDocuments_embedding",
                 },
                 {
-                    "table": "RAG.Entities",
+                    "table": self._qn("Entities"),
                     "column": "embedding",
                     "index_name": "idx_Entities_embedding",
                 },
@@ -2155,12 +2224,12 @@ class SchemaManager:
         """Ensure standard RAG tables exist."""
         try:
             # Check class-level cache first to avoid repeated validation spam
-            if table_name in SchemaManager._tables_validated and table_name not in (
+            if table_name in self._tables_validated and table_name not in (
                 "Entities",
                 "SourceDocuments",
             ):
                 logger.debug(
-                    f"Table RAG.{table_name} already validated (cached) - skipping check"
+                    f"Table {self._qn(table_name)} already validated (cached) - skipping check"
                 )
                 return True
 
@@ -2171,7 +2240,7 @@ class SchemaManager:
             cursor.execute(f"""
                 SELECT COUNT(*)
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = '{table_name}'
+                WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = '{table_name}'
             """)
 
             exists = cursor.fetchone()[0] > 0
@@ -2179,27 +2248,27 @@ class SchemaManager:
             if exists:
                 if table_name == "SourceDocuments":
                     try:
-                        cursor.execute("""
+                        cursor.execute(f"""
                             SELECT COLUMN_NAME
                             FROM INFORMATION_SCHEMA.COLUMNS
-                            WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'SourceDocuments'
+                            WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'SourceDocuments'
                             """)
                         columns = {row[0].lower() for row in cursor.fetchall()}
 
                         if "text_content" not in columns:
                             cursor.execute(
-                                "ALTER TABLE RAG.SourceDocuments ADD text_content LONGVARCHAR"
+                                f"ALTER TABLE {self._qn('SourceDocuments')} ADD text_content LONGVARCHAR"
                             )
                             conn.commit()
                             columns.add("text_content")
 
                         if "doc_id" not in columns:
                             cursor.execute(
-                                "ALTER TABLE RAG.SourceDocuments ADD doc_id VARCHAR(255)"
+                                f"ALTER TABLE {self._qn('SourceDocuments')} ADD doc_id VARCHAR(255)"
                             )
                             if "id" in columns:
                                 cursor.execute(
-                                    "UPDATE RAG.SourceDocuments SET doc_id = id WHERE doc_id IS NULL"
+                                    f"UPDATE {self._qn('SourceDocuments')} SET doc_id = id WHERE doc_id IS NULL"
                                 )
                             conn.commit()
                             columns.add("doc_id")
@@ -2210,7 +2279,7 @@ class SchemaManager:
                             )
                             dimension = embedding_config.get("dimension", 384)
                             cursor.execute(
-                                f"ALTER TABLE RAG.SourceDocuments ADD embedding VECTOR(FLOAT, {dimension})"
+                                f"ALTER TABLE {self._qn('SourceDocuments')} ADD embedding VECTOR(FLOAT, {dimension})"
                             )
                             conn.commit()
                     except Exception as exc:
@@ -2219,51 +2288,51 @@ class SchemaManager:
                         )
                 if table_name == "Entities":
                     try:
-                        cursor.execute("""
+                        cursor.execute(f"""
                             SELECT COLUMN_NAME
                             FROM INFORMATION_SCHEMA.COLUMNS
-                            WHERE TABLE_SCHEMA = 'RAG' AND TABLE_NAME = 'Entities'
+                            WHERE TABLE_SCHEMA = '{self.schema_prefix}' AND TABLE_NAME = 'Entities'
                             """)
                         columns = {row[0].lower() for row in cursor.fetchall()}
 
                         if "entity_id" not in columns:
                             cursor.execute(
-                                "ALTER TABLE RAG.Entities ADD entity_id VARCHAR(255)"
+                                f"ALTER TABLE {self._qn('Entities')} ADD entity_id VARCHAR(255)"
                             )
                             if "id" in columns:
                                 cursor.execute(
-                                    "UPDATE RAG.Entities SET entity_id = id WHERE entity_id IS NULL"
+                                    f"UPDATE {self._qn('Entities')} SET entity_id = id WHERE entity_id IS NULL"
                                 )
                             conn.commit()
                             columns.add("entity_id")
 
                         if "entity_name" not in columns:
                             cursor.execute(
-                                "ALTER TABLE RAG.Entities ADD entity_name VARCHAR(255)"
+                                f"ALTER TABLE {self._qn('Entities')} ADD entity_name VARCHAR(255)"
                             )
                             if "name" in columns:
                                 cursor.execute(
-                                    "UPDATE RAG.Entities SET entity_name = name WHERE entity_name IS NULL"
+                                    f"UPDATE {self._qn('Entities')} SET entity_name = name WHERE entity_name IS NULL"
                                 )
                             conn.commit()
                             columns.add("entity_name")
 
                         if "source_doc_id" not in columns:
                             cursor.execute(
-                                "ALTER TABLE RAG.Entities ADD source_doc_id VARCHAR(255)"
+                                f"ALTER TABLE {self._qn('Entities')} ADD source_doc_id VARCHAR(255)"
                             )
                             if "doc_id" in columns:
                                 cursor.execute(
-                                    "UPDATE RAG.Entities SET source_doc_id = doc_id WHERE source_doc_id IS NULL"
+                                    f"UPDATE {self._qn('Entities')} SET source_doc_id = doc_id WHERE source_doc_id IS NULL"
                                 )
                             conn.commit()
                     except Exception as exc:
                         logger.warning(f"Failed to ensure Entities columns: {exc}")
 
                 logger.debug(
-                    f"Table RAG.{table_name} exists - caching validation result"
+                    f"Table {self._qn(table_name)} exists - caching validation result"
                 )
-                SchemaManager._tables_validated.add(table_name)  # Cache the result
+                self._tables_validated.add(table_name)  # Cache the result
                 cursor.close()
                 return True
 
@@ -2285,10 +2354,10 @@ class SchemaManager:
 
             if success:
                 conn.commit()
-                logger.info(f"✅ Successfully created table RAG.{table_name}")
+                logger.info(f"✅ Successfully created table {self._qn(table_name)}")
             else:
                 conn.rollback()
-                logger.error(f"❌ Failed to create table RAG.{table_name}")
+                logger.error(f"❌ Failed to create table {self._qn(table_name)}")
 
             cursor.close()
             return success
@@ -2309,7 +2378,7 @@ class SchemaManager:
             dimension = embedding_config.get("dimension", 384)
 
             create_sql = f"""
-            CREATE TABLE RAG.SourceDocuments (
+            CREATE TABLE {self._qn("SourceDocuments")} (
                 doc_id VARCHAR(255) NOT NULL,
                 text_content LONGVARCHAR,
                 metadata VARCHAR(2000),
@@ -2328,8 +2397,8 @@ class SchemaManager:
     def _create_entities_table(self, cursor) -> bool:
         """Create Entities table."""
         try:
-            create_sql = """
-            CREATE TABLE RAG.Entities (
+            create_sql = f"""
+            CREATE TABLE {self._qn("Entities")} (
                 entity_id VARCHAR(255) NOT NULL,
                 entity_name VARCHAR(500) NOT NULL,
                 entity_type VARCHAR(100),
@@ -2345,8 +2414,8 @@ class SchemaManager:
 
             # Create indexes
             indexes = [
-                "CREATE INDEX idx_entities_name ON RAG.Entities (entity_name)",
-                "CREATE INDEX idx_entities_type ON RAG.Entities (entity_type)",
+                f"CREATE INDEX idx_entities_name ON {self._qn('Entities')} (entity_name)",
+                f"CREATE INDEX idx_entities_type ON {self._qn('Entities')} (entity_type)",
             ]
 
             for index_sql in indexes:
@@ -2360,8 +2429,8 @@ class SchemaManager:
     def _create_entity_relationships_table(self, cursor) -> bool:
         """Create EntityRelationships table."""
         try:
-            create_sql = """
-            CREATE TABLE RAG.EntityRelationships (
+            create_sql = f"""
+            CREATE TABLE {self._qn("EntityRelationships")} (
                 relationship_id VARCHAR(255) NOT NULL,
                 source_entity_id VARCHAR(255) NOT NULL,
                 target_entity_id VARCHAR(255) NOT NULL,
@@ -2378,9 +2447,9 @@ class SchemaManager:
 
             # Create indexes
             indexes = [
-                "CREATE INDEX idx_relationships_source ON RAG.EntityRelationships (source_entity_id)",
-                "CREATE INDEX idx_relationships_target ON RAG.EntityRelationships (target_entity_id)",
-                "CREATE INDEX idx_relationships_type ON RAG.EntityRelationships (relationship_type)",
+                f"CREATE INDEX idx_relationships_source ON {self._qn('EntityRelationships')} (source_entity_id)",
+                f"CREATE INDEX idx_relationships_target ON {self._qn('EntityRelationships')} (target_entity_id)",
+                f"CREATE INDEX idx_relationships_type ON {self._qn('EntityRelationships')} (relationship_type)",
             ]
 
             for index_sql in indexes:
@@ -2394,8 +2463,8 @@ class SchemaManager:
     def _create_communities_table(self, cursor) -> bool:
         """Create Communities table for GraphRAG community detection."""
         try:
-            create_sql = """
-            CREATE TABLE RAG.Communities (
+            create_sql = f"""
+            CREATE TABLE {self._qn("Communities")} (
                 community_id VARCHAR(255) NOT NULL,
                 name VARCHAR(500),
                 description VARCHAR(5000),
@@ -2414,8 +2483,8 @@ class SchemaManager:
 
             # Create indexes
             indexes = [
-                "CREATE INDEX idx_communities_level ON RAG.Communities (hierarchy_level)",
-                "CREATE INDEX idx_communities_parent ON RAG.Communities (parent_community_id)",
+                f"CREATE INDEX idx_communities_level ON {self._qn('Communities')} (hierarchy_level)",
+                f"CREATE INDEX idx_communities_parent ON {self._qn('Communities')} (parent_community_id)",
             ]
 
             for index_sql in indexes:
@@ -2436,7 +2505,7 @@ class SchemaManager:
             dimension = self.config_manager.get("embedding:dimension", 384)
 
             create_sql = f"""
-            CREATE TABLE RAG.DocumentChunks (
+            CREATE TABLE {self._qn("DocumentChunks")} (
                 id VARCHAR(255) PRIMARY KEY,
                 chunk_id VARCHAR(255),
                 source_document_id VARCHAR(255),
@@ -2446,15 +2515,15 @@ class SchemaManager:
                 chunk_type VARCHAR(100),
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (source_document_id) REFERENCES RAG.SourceDocuments(id)
+                FOREIGN KEY (source_document_id) REFERENCES {self._qn("SourceDocuments")}(id)
             )
             """
             cursor.execute(create_sql)
 
             # Create indexes
             indexes = [
-                "CREATE INDEX idx_chunks_source_doc_id ON RAG.DocumentChunks (source_document_id)",
-                "CREATE INDEX idx_chunks_chunk_id ON RAG.DocumentChunks (chunk_id)",
+                f"CREATE INDEX idx_chunks_source_doc_id ON {self._qn('DocumentChunks')} (source_document_id)",
+                f"CREATE INDEX idx_chunks_chunk_id ON {self._qn('DocumentChunks')} (chunk_id)",
             ]
 
             for index_sql in indexes:

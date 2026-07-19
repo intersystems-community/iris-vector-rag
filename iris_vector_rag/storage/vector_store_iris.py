@@ -101,7 +101,8 @@ class IRISVectorStore(VectorStore):
             from .schema_manager import SchemaManager
 
             self.schema_manager = SchemaManager(
-                self.connection_manager, self.config_manager
+                self.connection_manager,
+                self.config_manager,
             )
         table_short_name = self.table_name.replace("RAG.", "")
         self.vector_dimension = self.schema_manager.get_vector_dimension(
