@@ -8,8 +8,8 @@
   <Description>
     Production-ready RAG (Retrieval-Augmented Generation) pipelines backed by
     native InterSystems IRIS vector search. Six interchangeable pipeline
-    strategies — basic, basic_rerank, CRAG, GraphRAG/HybridGraphRAG,
-    multi-query RRF, and ColBERT/PyLate — share a single unified interface and
+    strategies -- basic, basic_rerank, CRAG, GraphRAG/HybridGraphRAG,
+    multi-query RRF, and ColBERT/PyLate -- share a single unified interface and
     response shape, swappable with one factory call. Includes RAGAS evaluation,
     LangChain integration, MCP server, REST API, and embedded-mode support via
     iris-embedded-python-wrapper. No external vector database required.
