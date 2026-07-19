@@ -82,7 +82,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --extra dev --extra evaluation --extra colbert --extra dspy --extra mcp --extra api
+          uv sync --extra dev --extra mcp --extra api
 
       - name: Check license compatibility
         run: |
