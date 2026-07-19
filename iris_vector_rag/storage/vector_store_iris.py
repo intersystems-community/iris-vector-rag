@@ -753,12 +753,12 @@ class IRISVectorStore(VectorStore):
                     success = insert_vector(
                         cursor=cursor,
                         table_name=self.table_name,
-                        vector_column_name="embedding",
+                        vector_column="embedding",
                         vector_data=embeddings[i],
-                        target_dimension=self.vector_dimension,
+                        dimension=self.vector_dimension,
                         key_columns={id_column: doc.id},
-                        additional_data=additional_data,
-                        vector_data_type=self._get_vector_data_type(),
+                        additional_columns=additional_data,
+                        dtype=self._get_vector_data_type(),
                     )
                     if success:
                         added_ids.append(doc.id)
