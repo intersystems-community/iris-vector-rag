@@ -21,19 +21,17 @@ from iris_vector_rag.storage.vector_store_iris import IRISVectorStore
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def pipeline_dependencies():
-    """Create real dependencies for E2E testing."""
-    # Configuration manager
+    """Create real dependencies for E2E testing.
+
+    Function-scoped so each test gets a fresh connection; sharing a single
+    ConnectionManager across many load_documents calls causes the IRIS DBAPI
+    C extension to segfault on repeated inserts.
+    """
     config_manager = ConfigurationManager()
-
-    # Connection manager
     connection_manager = ConnectionManager(config_manager)
-
-    # LLM function
     llm_func = get_llm_func()
-
-    # Vector store
     vector_store = IRISVectorStore(connection_manager, config_manager)
 
     return {
