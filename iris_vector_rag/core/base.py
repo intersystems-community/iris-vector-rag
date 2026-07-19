@@ -42,6 +42,19 @@ class RAGPipeline(abc.ABC):
         else:
             self.vector_store = vector_store
 
+        self._lazy_init_done = False
+
+    def initialize(self) -> None:
+        """Explicitly initialize pipeline schema. Idempotent; called lazily on first use."""
+        if hasattr(self.vector_store, "schema_manager"):
+            self.vector_store.schema_manager.ensure_schema_metadata_table()
+
+    def _ensure_initialized(self) -> None:
+        """Lazy init: call initialize() once on first use."""
+        if not self._lazy_init_done:
+            self.initialize()
+            self._lazy_init_done = True
+
     def _validate_dimensions(self, embedding: List[float], expected_dims: int) -> None:
         actual_dims = len(embedding)
         if actual_dims != expected_dims:

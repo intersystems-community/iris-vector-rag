@@ -107,6 +107,9 @@ class BasicRAGPipeline(RAGPipeline):
                 - embeddings_generated: Number of embeddings generated
                 - documents_failed: Number of documents that failed to load
         """
+        # Feature 078: Pure Constructors - lazy initialization on first use
+        self._ensure_initialized()
+
         start_time = time.time()
 
         # Validation: require either documents or documents_path
@@ -467,6 +470,9 @@ class BasicRAGPipeline(RAGPipeline):
                 "execution_time": float
             }
         """
+        # Feature 078: Pure Constructors - lazy initialization on first use
+        self._ensure_initialized()
+
         start_time = time.time()
 
         # Validation: query parameter is required and cannot be empty

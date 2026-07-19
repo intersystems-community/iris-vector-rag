@@ -134,17 +134,8 @@ class IRISVectorStore(VectorStore):
                 f"(config: {self.embedding_config_name})"
             )
 
-        # Test connection on initialization (skip in test mode)
-        try:
-            # Only test connection if not in test mode or if explicitly requested
-            import os
-
-            if os.environ.get("PYTEST_CURRENT_TEST") is None:
-                self._get_connection()
-        except Exception as e:
-            raise VectorStoreConnectionError(
-                f"Failed to initialize IRIS connection: {e}"
-            )
+        # Feature 078: Pure Constructors - no DB connection on init
+        # Connection is now established lazily on first use
 
     def _get_connection(self):
         """Get or create database connection."""

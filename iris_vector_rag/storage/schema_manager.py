@@ -68,6 +68,9 @@ class SchemaManager:
         # Cache for dimension lookups
         self._dimension_cache = {}
 
+        # Lazy initialization flag (Feature 078: Pure Constructors)
+        self._initialized = False
+
         # Load and validate configuration on initialization (only if not already loaded)
         if not SchemaManager._config_loaded:
             self._load_and_validate_config()
@@ -92,8 +95,8 @@ class SchemaManager:
                 "Schema Manager: Using cached configuration from previous instance"
             )
 
-        # Ensure schema metadata table exists
-        self.ensure_schema_metadata_table()
+        # REMOVED: ensure_schema_metadata_table() call
+        # Feature 078: Pure Constructors - schema initialization moved to lazy init on first use
 
     def _load_and_validate_config(self):
         """Load configuration from config manager and validate it makes sense."""
@@ -436,6 +439,11 @@ class SchemaManager:
 
     def ensure_schema_metadata_table(self):
         """Create schema metadata table if it doesn't exist."""
+        # Lazy init guard (Feature 078: Pure Constructors)
+        if self._initialized:
+            logger.debug("Schema metadata already initialized, skipping")
+            return
+
         connection = self.connection_manager.get_connection()
         if connection is None:
             raise ConnectionError(
@@ -472,6 +480,8 @@ class SchemaManager:
                     logger.info(
                         f"✅ Schema metadata table ensured in {schema_name} schema"
                     )
+                    # Feature 078: Mark initialization as complete after successful DDL
+                    self._initialized = True
                     break
                 except Exception as schema_error:
                     logger.warning(
@@ -487,6 +497,8 @@ class SchemaManager:
                         logger.warning(
                             "This may affect schema versioning but basic functionality will work."
                         )
+                        # Feature 078: Mark initialization as complete even on graceful failure
+                        self._initialized = True
                         return  # Exit gracefully
                     continue
 
@@ -495,6 +507,8 @@ class SchemaManager:
             logger.warning(
                 "Continuing without schema metadata table. Basic functionality will work."
             )
+            # Feature 078: Mark initialization as complete even on failure
+            self._initialized = True
             # Don't raise - allow the system to continue without metadata table
         finally:
             cursor.close()
