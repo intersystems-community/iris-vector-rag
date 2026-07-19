@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26">
+<Document name="iris-vector-rag.ZPM">
+<Module>
+  <Name>iris-vector-rag</Name>
+  <Version>0.11.4</Version>
+  <Packaging>module</Packaging>
+  <Description>
+    Production-ready RAG (Retrieval-Augmented Generation) pipelines backed by
+    native InterSystems IRIS vector search. Six interchangeable pipeline
+    strategies — basic, basic_rerank, CRAG, GraphRAG/HybridGraphRAG,
+    multi-query RRF, and ColBERT/PyLate — share a single unified interface and
+    response shape, swappable with one factory call. Includes RAGAS evaluation,
+    LangChain integration, MCP server, REST API, and embedded-mode support via
+    iris-embedded-python-wrapper. No external vector database required.
+  </Description>
+  <Keywords>rag,vector-search,llm,langchain,ragas,graphrag,colbert,embeddings,retrieval-augmented-generation</Keywords>
+  <Home>https://github.com/intersystems-community/iris-vector-rag</Home>
+  <Wiki>https://github.com/intersystems-community/iris-vector-rag#readme</Wiki>
+  <License>MIT</License>
+
+  <Author>
+    <Name>Thomas Dyar</Name>
+    <Email>thomas.dyar@intersystems.com</Email>
+    <Organization>InterSystems</Organization>
+  </Author>
+
+  <Dependencies>
+    <ModuleReference>
+      <Name>intersystems-irispython</Name>
+      <Version>5.1.2+</Version>
+    </ModuleReference>
+    <ModuleReference>
+      <Name>iris-vector-graph</Name>
+      <Version>2.1.0+</Version>
+    </ModuleReference>
+    <ModuleReference>
+      <Name>iris-embedded-python-wrapper</Name>
+      <Version>0.5.20+</Version>
+    </ModuleReference>
+  </Dependencies>
+
+  <Resource Name="RAG.SDK.Pipeline.CLS"/>
+  <Resource Name="RAG.SDK.Search.CLS"/>
+  <Resource Name="RAG.SDK.Schema.CLS"/>
+  <Resource Name="RAG.SDK.Bridge.CLS"/>
+  <Resource Name="RAG.SDK.Evaluate.CLS"/>
+
+  <SourcesRoot>iris_src</SourcesRoot>
+
+
+</Module>
+</Document>
+</Export>
