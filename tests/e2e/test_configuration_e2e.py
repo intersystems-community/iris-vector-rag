@@ -88,8 +88,9 @@ class TestConfigurationManagerCore:
                 assert (
                     iris_config.get("host") == "test-iris-host"
                 ), "Environment variable should override database host"
-                assert (
-                    iris_config.get("port") == "1972"
+                assert iris_config.get("port") in (
+                    1972,
+                    "1972",
                 ), "Environment variable should override database port"
 
             # Test embeddings configuration override

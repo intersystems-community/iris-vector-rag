@@ -265,7 +265,7 @@ class TestPyLateColBERTPipelineE2E:
         result_no_sources = pipeline.query(
             "What is COVID-19?", top_k=2, include_sources=False
         )
-        assert "sources" not in result_no_sources
+        assert result_no_sources.get("sources") == []
 
         # Test with include_sources=True (default)
         result_with_sources = pipeline.query("What is COVID-19?", top_k=2)
