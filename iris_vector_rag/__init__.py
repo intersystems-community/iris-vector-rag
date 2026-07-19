@@ -27,9 +27,13 @@ from .validation.requirements import get_pipeline_requirements
 from .validation.validator import PreConditionValidator
 
 # Package version
-__version__ = "0.10.2"
-__author__ = "InterSystems IRIS RAG Templates Project"
-__description__ = "A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend."
+try:
+    from importlib.metadata import version as _meta_version, PackageNotFoundError
+    __version__ = _meta_version("iris-vector-rag")
+except PackageNotFoundError:
+    __version__ = "0.11.4"
+__author__ = "Thomas Dyar"
+__description__ = "RAG pipelines backed by InterSystems IRIS vector search."
 
 
 def create_pipeline(

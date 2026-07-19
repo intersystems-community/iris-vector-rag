@@ -1,8 +1,8 @@
 # IRIS Vector RAG
 
-Production-ready RAG (Retrieval-Augmented Generation) pipelines powered by InterSystems IRIS vector search.
+RAG (Retrieval-Augmented Generation) pipelines powered by InterSystems IRIS vector search.
 
-**Author:** Thomas Dyar (thomas.dyar@intersystems.com)
+**Author:** Thomas Dyar (<thomas.dyar@intersystems.com>)
 
 ## Quick Start
 
@@ -49,14 +49,14 @@ pipeline = create_pipeline('multi_query_rrf') # + query expansion + rank fusion
 pipeline = create_pipeline('pylate_colbert')  # + ColBERT late interaction
 ```
 
-| Pipeline | Method | Best For |
-|----------|--------|----------|
-| `basic` | Vector similarity | General Q&A, getting started |
-| `basic_rerank` | Vector + reranking | Higher accuracy, medical/legal |
-| `crag` | Vector + evaluation + web | Fact-checking, current events |
-| `graphrag` | Vector + text + graph + RRF | Complex relationships, research |
-| `multi_query_rrf` | Query expansion + fusion | Comprehensive coverage |
-| `pylate_colbert` | ColBERT embeddings | Fine-grained matching |
+| Pipeline          | Method                      | Best For                        |
+| ----------------- | --------------------------- | ------------------------------- |
+| `basic`           | Vector similarity           | General Q&A, getting started    |
+| `basic_rerank`    | Vector + reranking          | Higher accuracy, medical/legal  |
+| `crag`            | Vector + evaluation + web   | Fact-checking, current events   |
+| `graphrag`        | Vector + text + graph + RRF | Complex relationships, research |
+| `multi_query_rrf` | Query expansion + fusion    | Comprehensive coverage          |
+| `pylate_colbert`  | ColBERT embeddings          | Fine-grained matching           |
 
 ## Response Format
 
@@ -76,7 +76,7 @@ result["metadata"]              # Timing, pipeline type, method used
 
 Environment variables (loaded automatically from `.env`):
 
-```
+```bash
 OPENAI_API_KEY=sk-...          # Required for answer generation
 IRIS_HOST=localhost             # IRIS SuperServer host
 IRIS_PORT=1972                  # IRIS SuperServer port
@@ -123,14 +123,10 @@ pip install iris-vector-rag[evaluation]  # RAGAS evaluation framework
 pip install iris-vector-rag[api]         # REST API server (FastAPI + Redis)
 ```
 
-## MCP Server
+## MCP Server (experimental)
 
-Use as an AI tool server via Model Context Protocol:
-
-```bash
-docker build -f Dockerfile.mcp -t iris-vector-rag-mcp .
-docker run -p 3000:3000 --env-file .env iris-vector-rag-mcp
-```
+The MCP server is under active development and not yet available as a
+pre-built image. Track progress at the repository issues page.
 
 ## Development
 
@@ -142,7 +138,7 @@ pytest tests/unit/ tests/contract/    # Full suite, needs IRIS running
 
 ## Architecture
 
-```
+```text
 iris_vector_rag/
 ├── pipelines/      # 6 RAG implementations (basic, crag, graphrag, etc.)
 ├── core/           # Base classes, models, connection management
