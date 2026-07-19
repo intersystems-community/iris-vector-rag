@@ -8,21 +8,14 @@ import numpy as np
 def _ensure_native_conn(conn):
     import os
 
-    import intersystems_iris
+    from iris_vector_rag.common.iris_connection import get_iris_connection
 
-    if isinstance(conn, intersystems_iris.IRISConnection):
-        return conn
-    hostname = getattr(conn, "hostname", os.environ.get("IRIS_HOSTNAME", "localhost"))
-    port = getattr(conn, "port", int(os.environ.get("IRIS_PORT", "1972")))
-    namespace = getattr(conn, "namespace", os.environ.get("IRIS_NAMESPACE", "USER"))
-    username = os.environ.get("IRIS_USERNAME", "_SYSTEM")
-    password = os.environ.get("IRIS_PASSWORD", "SYS")
-    return intersystems_iris.createConnection(
-        hostname=hostname,
-        port=port,
-        namespace=namespace,
-        username=username,
-        password=password,
+    return get_iris_connection(
+        host=getattr(conn, "hostname", os.environ.get("IRIS_HOST", "localhost")),
+        port=getattr(conn, "port", int(os.environ.get("IRIS_PORT", "1972"))),
+        namespace=getattr(conn, "namespace", os.environ.get("IRIS_NAMESPACE", "USER")),
+        username=os.environ.get("IRIS_USERNAME", "_SYSTEM"),
+        password=os.environ.get("IRIS_PASSWORD", "SYS"),
     )
 
 

@@ -41,13 +41,14 @@ def _get_iris_dbapi_module():
     """
     try:
         import iris
+
         if hasattr(iris, "dbapi") and hasattr(iris.dbapi, "connect"):
             return iris
         if hasattr(iris, "connect") or hasattr(iris, "createConnection"):
             return iris
         logger.warning(
             "iris module imported from %s but has no usable connect method",
-            getattr(iris, "__file__", "unknown")
+            getattr(iris, "__file__", "unknown"),
         )
     except Exception as e:
         logger.error("Failed to import iris module: %s: %s", type(e).__name__, e)
@@ -64,7 +65,9 @@ def auto_detect_iris_port() -> Optional[int]:
     try:
         result = subprocess.run(
             ["docker", "ps", "--format", "{{.Names}}\\t{{.Ports}}"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode == 0:
             for line in result.stdout.split("\n"):
@@ -76,7 +79,9 @@ def auto_detect_iris_port() -> Optional[int]:
         pass
 
     try:
-        result = subprocess.run(["iris", "list"], capture_output=True, text=True, timeout=5)
+        result = subprocess.run(
+            ["iris", "list"], capture_output=True, text=True, timeout=5
+        )
         if result.returncode == 0:
             lines = result.stdout.split("\n")
             for i, line in enumerate(lines):
@@ -97,7 +102,9 @@ def _validate_connection_params(h: str, p: int, n: str, u: str, pwd: str) -> Non
     if not isinstance(p, int) or p < 1 or p > 65535:
         raise ValidationError("port", p, "1-65535", f"Invalid port: {p}")
     if not n or not n.strip() or not re.match(r"^[A-Za-z0-9_]+$", n):
-        raise ValidationError("namespace", n, "alphanumeric + underscores", f"Invalid namespace: {n}")
+        raise ValidationError(
+            "namespace", n, "alphanumeric + underscores", f"Invalid namespace: {n}"
+        )
 
 
 def _get_connection_params_from_env() -> Dict[str, Any]:
@@ -107,7 +114,9 @@ def _get_connection_params_from_env() -> Dict[str, Any]:
         "host": os.environ.get("IRIS_HOST", "localhost"),
         "port": port,
         "namespace": os.environ.get("IRIS_NAMESPACE", "USER"),
-        "username": os.environ.get("IRIS_USER", os.environ.get("IRIS_USERNAME", "_SYSTEM")),
+        "username": os.environ.get(
+            "IRIS_USER", os.environ.get("IRIS_USERNAME", "_SYSTEM")
+        ),
         "password": os.environ.get("IRIS_PASSWORD", "SYS"),
     }
 
@@ -128,7 +137,12 @@ def detect_iris_edition() -> Tuple[str, int]:
 def _hard_fix_iris_passwords(host: str, port: int):
     """Bypasses 55s delay in Community containers."""
     try:
-        result = subprocess.run(["docker", "ps", "--format", "{{.Names}}\\t{{.Ports}}"], capture_output=True, text=True, timeout=5)
+        result = subprocess.run(
+            ["docker", "ps", "--format", "{{.Names}}\\t{{.Ports}}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
         container_name = None
         if result.returncode == 0:
             for line in result.stdout.split("\n"):
@@ -141,18 +155,71 @@ def _hard_fix_iris_passwords(host: str, port: int):
         cmds = [
             'Set user = ##class(Security.Users).%OpenId("SuperUser")',
             'Do user.PasswordSet("SYS")',
-            'Do user.UnExpirePassword()',
-            'Do user.%Save()',
+            "Do user.UnExpirePassword()",
+            "Do user.%Save()",
             'Set user = ##class(Security.Users).%OpenId("_SYSTEM")',
             'Do user.PasswordSet("SYS")',
-            'Do user.UnExpirePassword()',
-            'Do user.%Save()',
-            'Halt'
+            "Do user.UnExpirePassword()",
+            "Do user.%Save()",
+            "Halt",
         ]
-        subprocess.run(["docker", "exec", "-i", container_name, "iris", "session", "IRIS", "-U", "%SYS"], input="\n".join(cmds).encode(), capture_output=True, timeout=15)
+        subprocess.run(
+            [
+                "docker",
+                "exec",
+                "-i",
+                container_name,
+                "iris",
+                "session",
+                "IRIS",
+                "-U",
+                "%SYS",
+            ],
+            input="\n".join(cmds).encode(),
+            capture_output=True,
+            timeout=15,
+        )
         return True
     except Exception:
         return False
+
+
+def _try_embedded_connection(namespace: str) -> Optional[Any]:
+    """
+    Attempt a connection via the embedded-python-wrapper runtime.
+
+    Returns a connection object if running in embedded-kernel or embedded-local
+    mode (IRISINSTALLDIR set), or None if neither condition applies.
+    """
+    try:
+        import iris
+
+        if not hasattr(iris, "runtime") or not hasattr(iris, "dbapi"):
+            return None
+
+        ctx = iris.runtime.get()
+
+        if ctx.state in ("embedded-kernel", "embedded-local"):
+            logger.debug(
+                "Embedded runtime detected (%s) — using iris.dbapi.connect(namespace=...)",
+                ctx.state,
+            )
+            return iris.dbapi.connect(namespace=namespace)
+
+        install_dir = os.environ.get("IRISINSTALLDIR") or os.environ.get(
+            "ISC_PACKAGE_INSTALLDIR"
+        )
+        if install_dir and ctx.state == "unavailable":
+            logger.debug(
+                "IRISINSTALLDIR=%s — configuring embedded-local runtime", install_dir
+            )
+            iris.runtime.configure(mode="embedded", install_dir=install_dir)
+            return iris.dbapi.connect(namespace=namespace)
+
+    except Exception as exc:
+        logger.debug("Embedded connection attempt failed: %s", exc)
+
+    return None
 
 
 def get_iris_connection(
@@ -169,9 +236,15 @@ def get_iris_connection(
     u = env["username"] if username is None else username
     pwd = env["password"] if password is None else password
     _validate_connection_params(h, p, n, u, pwd)
+
+    embedded_conn = _try_embedded_connection(n)
+    if embedded_conn is not None:
+        return embedded_conn
+
     cache_key = (h, p, n, u)
 
     import socket as _socket
+
     with _socket.socket(_socket.AF_INET, _socket.SOCK_STREAM) as _s:
         _s.settimeout(2.0)
         try:
@@ -206,29 +279,41 @@ def get_iris_connection(
             try:
                 if hasattr(iris_mod, "dbapi") and hasattr(iris_mod.dbapi, "connect"):
                     conn = iris_mod.dbapi.connect(
-                        hostname=h, port=p, namespace=n, username=u, password=pwd,
+                        hostname=h,
+                        port=p,
+                        namespace=n,
+                        username=u,
+                        password=pwd,
                     )
                 elif hasattr(iris_mod, "createConnection"):
                     conn = iris_mod.createConnection(h, p, n, u, pwd)
                 else:
                     conn = iris_mod.connect(
-                        hostname=h, port=p, namespace=n, username=u, password=pwd,
+                        hostname=h,
+                        port=p,
+                        namespace=n,
+                        username=u,
+                        password=pwd,
                     )
                 _connection_cache[cache_key] = conn
                 logger.info(f"✅ Connected to IRIS at {h}:{p}/{n}")
                 return conn
             except Exception as e:
                 msg = str(e).lower()
-                if ("password change required" in msg or "expired" in msg) and attempt == 0:
+                if (
+                    "password change required" in msg or "expired" in msg
+                ) and attempt == 0:
                     if _hard_fix_iris_passwords(h, p):
                         continue
-                
+
                 # Always raise on final attempt or if not a password issue that we can fix
-                if attempt == 1 or not ("password change required" in msg or "expired" in msg):
+                if attempt == 1 or not (
+                    "password change required" in msg or "expired" in msg
+                ):
                     raise ConnectionError(
                         f"IRIS connection failed to {h}:{p}/{n}: {e} (check configuration)"
                     ) from e
-        
+
         # This part should theoretically not be reached if all paths raise or return
         raise ConnectionError(f"IRIS connection failed to {h}:{p}/{n}")
 
@@ -241,12 +326,14 @@ class IRISConnectionPool:
             max_connections = 1 if edition == "community" else 20
         self.max_connections = max_connections
         import queue
+
         self._available_connections: queue.Queue = queue.Queue(maxsize=max_connections)
         self._all_connections: List[Any] = []
         self._lock = threading.Lock()
 
     def acquire(self, timeout: float = 30.0):
         import queue
+
         try:
             conn = self._available_connections.get(timeout=timeout)
             return _PooledConnection(self, conn)
@@ -263,7 +350,6 @@ class IRISConnectionPool:
             self._available_connections.put_nowait(connection)
         except Exception:
             pass
-
 
     def close_all(self):
         with self._lock:
@@ -292,6 +378,7 @@ class _PooledConnection:
 
     def __enter__(self):
         return self._connection
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._pool.release(self._connection)
         return False

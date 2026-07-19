@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v0.11.4)"
+        required: true
+
+env:
+  PYTHON_DEFAULT_VERSION: "3.12"
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        run: pip install -e ".[dspy]" "intersystems-irispython>=5.1.2" "iris-vector-graph>=2.1.0"
+
+      - name: Install test dependencies
+        run: pip install pytest pytest-mock pytest-timeout pytest-asyncio coverage pytest-cov python-dotenv sqlalchemy
+
+      - name: Run unit tests
+        env:
+          SKIP_IRIS_CONTAINER: "1"
+        run: |
+          python -m pytest tests/unit/ \
+            --timeout=30 \
+            --tb=short \
+            -q
+
+      - name: Run contract tests (no IRIS required)
+        env:
+          SKIP_IRIS_CONTAINER: "1"
+        run: |
+          python -m pytest tests/contract/ \
+            --timeout=30 \
+            --tb=short \
+            -q \
+            -m "not requires_database"
+
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_DEFAULT_VERSION }}
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    environment: pypi
+    permissions:
+      id-token: write  # required for OIDC trusted publishing
+
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: publish
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Extract the section for this tag from CHANGELOG.md
+          python - <<'EOF'
+          import re, sys
+          tag = "${{ github.ref_name }}"
+          text = open("CHANGELOG.md").read()
+          pattern = rf"## {re.escape(tag)}\n(.*?)(?=\n## |\Z)"
+          m = re.search(pattern, text, re.DOTALL)
+          notes = m.group(1).strip() if m else f"Release {tag}"
+          with open("release_notes.md", "w") as f:
+              f.write(notes)
+          EOF
+
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release_notes.md
+          files: dist/*

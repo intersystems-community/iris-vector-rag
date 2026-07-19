@@ -25,6 +25,17 @@ ClassMethod GetDefaultDDL(dim As %Integer) As %String [ Private ]
     Return d1_"GO"_d2_"GO"_d3
 }
 
+ClassMethod Install() As %String
+{
+    Set version = "0.11.4"
+    Set cmd = "pip install iris-vector-rag=="_version
+    Set rc = $ZF(-1, cmd)
+    If rc = 0 {
+        Return {"status":"ok","message":("Installed iris-vector-rag "_version)}.%ToJSON()
+    }
+    Return {"status":"error","message":("pip exited with code "_rc)}.%ToJSON()
+}
+
 ClassMethod Drop() As %String
 {
     For tbl = "RAG.Entities", "RAG.DocumentChunks", "RAG.SourceDocuments" {

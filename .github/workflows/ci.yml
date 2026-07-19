@@ -21,7 +21,7 @@ jobs:
         python-version: ["3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -29,7 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run: pip install -e ".[dspy]" "intersystems-irispython>=5.1.2" "iris-vector-graph>=1.82.0"
+        run: pip install -e ".[dspy]" "intersystems-irispython>=5.1.2" "iris-vector-graph>=2.1.0"
 
       - name: Install test dependencies
         run: pip install pytest pytest-mock pytest-timeout pytest-asyncio coverage pytest-cov python-dotenv sqlalchemy
@@ -49,7 +49,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:

@@ -116,14 +116,6 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                     f"IRIS connection parameters missing: {missing_params}"
                 )
 
-            # Create IRIS connection using validated config
-            import iris
-
-            logger.info(
-                f"Connecting to IRIS at {connection_config['host']}:{connection_config['port']}"
-                f"/{connection_config['namespace']} for iris_vector_graph"
-            )
-
             host = connection_config["host"]
             port = connection_config["port"]
             namespace = connection_config["namespace"]
@@ -133,34 +125,39 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
             if None in (host, port, namespace, username, password):
                 raise ValueError("IRIS connection parameters are incomplete")
 
-            import iris as _iris_mod
+            from iris_vector_rag.common.iris_connection import get_iris_connection
 
-            if hasattr(_iris_mod, 'dbapi') and hasattr(_iris_mod.dbapi, 'connect'):
-                iris_connection = _iris_mod.dbapi.connect(
-                    hostname=str(host), port=int(port),
-                    namespace=str(namespace), username=str(username), password=str(password),
-                )
-            elif hasattr(_iris_mod, 'createConnection'):
-                iris_connection = _iris_mod.createConnection(
-                    str(host), int(port), str(namespace), str(username), str(password),
-                )
-            else:
-                iris_connection = _iris_mod.connect(
-                    hostname=str(host), port=int(port),
-                    namespace=str(namespace), username=str(username), password=str(password),
-                )
+            logger.info(
+                f"Connecting to IRIS at {host}:{port}/{namespace} for iris_vector_graph"
+            )
+
+            iris_connection = get_iris_connection(
+                host=str(host),
+                port=int(port),
+                namespace=str(namespace),
+                username=str(username),
+                password=str(password),
+            )
 
             try:
-                self.iris_engine = modules["IRISGraphEngine"](iris_connection)
+                self.iris_engine = modules["IRISGraphEngine"](
+                    iris_connection,
+                    embedding_dimension=self._ivg_embedding_dimension(),
+                )
                 self.fusion_engine = modules["HybridSearchFusion"](self.iris_engine)
                 self.text_engine = modules["TextSearchEngine"](iris_connection)
                 self.vector_optimizer = modules["VectorOptimizer"](iris_connection)
                 self.retrieval_methods = HybridRetrievalMethods(
-                    self.iris_engine, self.fusion_engine, self.text_engine,
-                    self.vector_optimizer, self.embedding_manager,
+                    self.iris_engine,
+                    self.fusion_engine,
+                    self.text_engine,
+                    self.vector_optimizer,
+                    self.embedding_manager,
                 )
                 self.retrieval_methods.check_hnsw_optimization()
-                logger.info("✅ Hybrid GraphRAG pipeline initialized with iris_vector_graph")
+                logger.info(
+                    "✅ Hybrid GraphRAG pipeline initialized with iris_vector_graph"
+                )
             except Exception as ivg_err:
                 logger.warning("iris_vector_graph unavailable: %s", ivg_err)
                 self.iris_engine = None
@@ -171,6 +168,14 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         except Exception as e:
             logger.error(f"Failed to initialize iris_vector_graph components: {e}")
             raise
+
+    def _ivg_embedding_dimension(self) -> int:
+        if self.schema_manager is not None and hasattr(
+            self.schema_manager, "base_embedding_dimension"
+        ):
+            return int(self.schema_manager.base_embedding_dimension)
+        embedding_config = self.config_manager.get_embedding_config()
+        return int(embedding_config.get("dimension") or 384)
 
     def _detect_hnsw_index(
         self, source_table: str, embedding_col: str
