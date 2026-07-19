@@ -55,13 +55,24 @@ class ConnectionManager:
     def get_connection(self, backend_name: str = "iris"):
         """
         Retrieves or creates a database connection for the specified backend.
+
+        Uses ConfigurationManager as the single authority for connection params (AUD-005).
         """
         if backend_name != "iris":
             raise ValueError(f"Unsupported database backend: {backend_name}")
 
         from iris_vector_rag.common.iris_connection import get_iris_connection
 
-        return get_iris_connection()
+        # Get resolved config from ConfigurationManager (env > YAML > defaults)
+        db_config = self.config_manager.get_database_config()
+
+        return get_iris_connection(
+            host=db_config.get("host"),
+            port=db_config.get("port"),
+            namespace=db_config.get("namespace"),
+            username=db_config.get("username"),
+            password=db_config.get("password"),
+        )
 
     def create_connection(self, backend_name: str = "iris"):
         """Create a database connection (alias for get_connection)."""

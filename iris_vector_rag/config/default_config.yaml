@@ -3,7 +3,7 @@ database:
   iris:
     driver: "intersystems_iris.dbapi._DBAPI"
     host: "localhost"
-    port: "1974"
+    port: 1972
     namespace: "USER"
     username: "_SYSTEM"
     password: "SYS"

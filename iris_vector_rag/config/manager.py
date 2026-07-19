@@ -515,10 +515,12 @@ class ConfigurationManager:
 
         Returns:
             Dictionary containing database configuration
+
+        Precedence: env > YAML > defaults
         """
         default_config = {
             "host": "localhost",
-            "port": 1974,  # Integer for proper type casting
+            "port": 1972,  # Integer for proper type casting (AUD-005: fixed from 1974)
             "namespace": "USER",
             "username": "_SYSTEM",
             "password": "SYS",
@@ -534,12 +536,27 @@ class ConfigurationManager:
             else:
                 default_config.update(user_config)
 
+        # Ensure port from YAML is converted to int (YAML may have "1972" as string)
+        if "port" in default_config and not isinstance(default_config["port"], int):
+            try:
+                default_config["port"] = int(default_config["port"])
+            except ValueError:
+                raise ValueError(
+                    f"Database port must be an integer, got: {default_config['port']}"
+                )
+
+        # Handle IRIS_USERNAME vs IRIS_USER precedence (FR-005: AUD-005)
+        # IRIS_USERNAME takes precedence, but IRIS_USER is a fallback for legacy code
+        if "IRIS_USERNAME" in os.environ:
+            default_config["username"] = os.environ["IRIS_USERNAME"]
+        elif "IRIS_USER" in os.environ:
+            default_config["username"] = os.environ["IRIS_USER"]
+
         # Map environment variables to config keys (legacy support)
         env_mappings = {
             "IRIS_HOST": "host",
             "IRIS_PORT": "port",
             "IRIS_NAMESPACE": "namespace",
-            "IRIS_USERNAME": "username",
             "IRIS_PASSWORD": "password",
             "IRIS_DRIVER_PATH": "driver_path",
         }
@@ -548,12 +565,21 @@ class ConfigurationManager:
         for env_key, config_key in env_mappings.items():
             if env_key in os.environ:
                 value = os.environ[env_key]
-                # Cast port to int for proper type
+                # Cast port to int for proper type and validation
                 if config_key == "port":
                     try:
                         value = int(value)
-                    except ValueError:
-                        pass  # Keep as string if casting fails
+                        # Validate port is in valid range (1-65535)
+                        if not (1 <= value <= 65535):
+                            raise ValueError(
+                                f"IRIS_PORT must be between 1 and 65535, got: {value}"
+                            )
+                    except ValueError as e:
+                        if "between" in str(e):
+                            raise
+                        raise ValueError(
+                            f"IRIS_PORT must be an integer, got: {os.environ[env_key]}"
+                        ) from e
                 default_config[config_key] = value
 
         return default_config
