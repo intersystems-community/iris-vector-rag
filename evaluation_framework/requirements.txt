@@ -20,7 +20,7 @@ datasets>=2.13.0
 
 # Biomedical NLP
 spacy>=3.6.0
-scispacy>=0.5.3
+scispacy>=0.6.2
 
 # Statistical analysis
 statsmodels>=0.14.0
