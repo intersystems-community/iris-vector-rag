@@ -40,7 +40,7 @@ class ValidPipeline(RAGPipeline):
             vector_store=vector_store,
         )
 
-    def query(self, query: str, top_k: int = 20, **kwargs) -> Dict[str, Any]:
+    def query(self, query_text: str, top_k: int = 20, **kwargs) -> Dict[str, Any]:
         """Fully compliant query implementation."""
         return {
             "answer": "Test answer",

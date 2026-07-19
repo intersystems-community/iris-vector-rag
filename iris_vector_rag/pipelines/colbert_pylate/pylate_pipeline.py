@@ -171,8 +171,8 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             )
 
         # Handle both file paths and Document objects
-        if documents_path is not None:
-            # File path - delegate to parent
+        if documents_path:
+            # Non-empty file path - delegate to parent
             result = super().load_documents(documents_path=documents_path, **kwargs)
             if result and "documents" in result:
                 docs = result["documents"]
@@ -205,7 +205,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
             return result
 
-    def query(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute ColBERT query with PyLate native reranking.
 
@@ -215,7 +215,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         3. Return top_k documents with consistent response format
 
         Args:
-            query: The query text
+            query_text: The query text
             top_k: Number of documents to return after reranking (must be between 1 and 100)
             **kwargs: Additional arguments
 
@@ -223,13 +223,13 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             Dictionary with complete RAG response including reranked documents
         """
         # Validate query
-        if not query or query.strip() == "":
+        if not query_text or query_text.strip() == "":
             raise ValueError(
                 "Error: Query parameter is required and cannot be empty\n"
                 "Context: PyLateColBERT pipeline query operation\n"
                 "Expected: Non-empty query string\n"
                 "Actual: Empty or whitespace-only string\n"
-                "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
+                "Fix: Provide a valid query string, e.g., query_text='What is diabetes?'"
             )
 
         if kwargs.get("generate_answer", True) and not os.environ.get("OPENAI_API_KEY"):
@@ -259,7 +259,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         parent_kwargs = kwargs.copy()
         parent_kwargs["generate_answer"] = False  # Generate after reranking
 
-        parent_result = super().query(query, top_k=initial_k, **parent_kwargs)
+        parent_result = super().query(query_text, top_k=initial_k, **parent_kwargs)
         candidate_documents = parent_result.get("retrieved_documents", [])
 
         # Apply PyLate native reranking if available and beneficial
@@ -269,7 +269,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             and self.is_initialized
         ):
             try:
-                final_documents = self._pylate_rerank(query, candidate_documents, top_k)
+                final_documents = self._pylate_rerank(query_text, candidate_documents, top_k)
                 reranked = True
                 self.stats["reranking_operations"] += 1
                 logger.debug(
@@ -305,7 +305,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         if generate_answer and self.llm_func and final_documents:
             try:
                 custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(query, final_documents, custom_prompt)
+                answer = self._generate_answer(query_text, final_documents, custom_prompt)
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
@@ -326,10 +326,12 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         retrieval_method = "colbert_pylate" if reranked else "dense_vector_fallback"
 
         response = {
-            "query": query,
+            "query": query_text,
             "answer": answer,
             "retrieved_documents": final_documents,
             "contexts": contexts_list,
+            "sources": sources,
+            "error": None,
             "execution_time": parent_result.get("execution_time", 0.0),
             "metadata": {
                 "num_retrieved": len(final_documents),
@@ -341,15 +343,10 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
                 "generated_answer": generate_answer and answer is not None,
                 "model_name": self.model_name,
                 "native_reranking": self.use_native_reranking,
-                "retrieval_method": retrieval_method,  # FR-003: Include retrieval method
-                "context_count": len(contexts_list),  # FR-003: Include context count
-                "sources": sources,  # FR-003: Include sources in metadata
+                "retrieval_method": retrieval_method,
+                "context_count": len(contexts_list),
             },
         }
-
-        # Add sources to top level if requested
-        if kwargs.get("include_sources", True):
-            response["sources"] = sources
 
         self.stats["queries_processed"] += 1
         logger.info(

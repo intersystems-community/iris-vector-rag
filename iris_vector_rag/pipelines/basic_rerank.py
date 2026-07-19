@@ -121,7 +121,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
             f"Initialized BasicRAGRerankingPipeline with rerank_factor={self.rerank_factor}"
         )
 
-    def query(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute RAG query with reranking - THE single method for reranking RAG operations.
 
@@ -132,7 +132,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         4. Maintains full compatibility with parent response format
 
         Args:
-            query: The query text
+            query_text: The query text
             top_k: Number of documents to return after reranking (must be between 1 and 100)
             **kwargs: Additional arguments including:
                 - include_sources: Whether to include source information (default: True)
@@ -144,13 +144,13 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
             Dictionary with complete RAG response including reranked documents
         """
         # Validate query (parent will do this, but we want early validation)
-        if not query or query.strip() == "":
+        if not query_text or query_text.strip() == "":
             raise ValueError(
                 "Error: Query parameter is required and cannot be empty\n"
                 "Context: BasicRerankRAG pipeline query operation\n"
                 "Expected: Non-empty query string\n"
                 "Actual: Empty or whitespace-only string\n"
-                "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
+                "Fix: Provide a valid query string, e.g., query_text='What is diabetes?'"
             )
 
         # Validate top_k (parent will do this, but we want early validation before rerank_factor calculation)
@@ -182,14 +182,14 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
             False  # We'll generate answer after reranking
         )
 
-        parent_result = super().query(query, top_k=initial_k, **parent_kwargs)
+        parent_result = super().query(query_text, top_k=initial_k, **parent_kwargs)
         candidate_documents = parent_result.get("retrieved_documents", [])
 
         # Always rerank if we have multiple candidates and a reranker (fixes the logic issue!)
         if len(candidate_documents) > 1 and self.reranker:
             try:
                 final_documents = self._rerank_documents(
-                    query, candidate_documents, top_k
+                    query_text, candidate_documents, top_k
                 )
                 logger.debug(
                     f"Reranked {len(candidate_documents)} documents, returning top {len(final_documents)}"
@@ -214,7 +214,7 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         if generate_answer and self.llm_func and final_documents:
             try:
                 custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(query, final_documents, custom_prompt)
+                answer = self._generate_answer(query_text, final_documents, custom_prompt)
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
@@ -235,10 +235,12 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         retrieval_method = "rerank" if reranked else "vector_fallback"
 
         response = {
-            "query": query,
+            "query": query_text,
             "answer": answer,
             "retrieved_documents": final_documents,
             "contexts": contexts_list,
+            "sources": sources,
+            "error": None,
             "execution_time": parent_result.get("execution_time", 0.0),
             "metadata": {
                 "num_retrieved": len(final_documents),
@@ -248,15 +250,11 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 "initial_candidates": len(candidate_documents),
                 "rerank_factor": self.rerank_factor,
                 "generated_answer": generate_answer and answer is not None,
-                "retrieval_method": retrieval_method,  # FR-003: Include retrieval method
-                "context_count": len(contexts_list),  # FR-003: Include context count
-                "sources": sources,  # FR-003: Include sources in metadata
+                "retrieval_method": retrieval_method,
+                "context_count": len(contexts_list),
             },
         }
 
-        # Add sources to top level if requested
-        if kwargs.get("include_sources", True):
-            response["sources"] = sources
 
         logger.info(
             f"Reranking RAG query completed - {len(final_documents)} docs returned (reranked: {reranked})"

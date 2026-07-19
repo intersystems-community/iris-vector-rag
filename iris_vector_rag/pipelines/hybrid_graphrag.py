@@ -390,11 +390,15 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         execution_time = time.time() - start_time
         execution_time_ms = (time.perf_counter() - start_perf) * 1000.0
 
+        sources = self._extract_sources(retrieved_documents) if include_sources else []
+
         response = {
             "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
             "contexts": retrieved_documents,
+            "sources": sources,
+            "error": None,
             "execution_time": execution_time,
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
@@ -407,9 +411,6 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
                 "iris_vector_graph_enabled": self.iris_engine is not None,
             },
         }
-
-        if include_sources:
-            response["sources"] = self._extract_sources(retrieved_documents)
 
         logger.info(
             f"Hybrid GraphRAG query completed in {execution_time:.2f}s ({execution_time_ms:.1f}ms) - "

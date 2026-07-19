@@ -105,9 +105,9 @@ class PipelineValidator:
 
     # Query method contract
     QUERY_METHOD_CONTRACT = {
-        "required_params": ["query"],
+        "required_params": ["query_text"],
         "optional_params": ["top_k", "kwargs"],
-        "deprecated_params": ["query_text"],  # Should map to 'query'
+        "deprecated_params": ["query"],  # Old name, replaced by query_text (AUD-006)
         "required_response_fields": [
             "answer",
             "retrieved_documents",
@@ -174,9 +174,12 @@ class PipelineValidator:
             )
             return violations  # Cannot continue validation
 
-        # Check required methods exist
+        # Check required methods exist and are concretely implemented (not still abstract)
+        import inspect as _inspect
         for method_name in self.REQUIRED_METHODS:
-            if not hasattr(pipeline_class, method_name):
+            method = getattr(pipeline_class, method_name, None)
+            is_abstract = method is not None and getattr(method, "__isabstractmethod__", False)
+            if method is None or is_abstract:
                 violations.append(
                     PipelineContractViolation(
                         severity=ViolationSeverity.ERROR,

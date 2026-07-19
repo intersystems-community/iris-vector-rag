@@ -125,7 +125,7 @@ class TestPipelineConformance:
         """
         # Create pipeline with mocked dependencies
         with patch("iris_vector_rag.pipelines.basic.ConnectionManager", return_value=mock_connection_manager):
-            with patch("iris_vector_rag.pipelines.crag.EmbeddingManager"):
+            with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
                     pipeline = create_pipeline(
                         pipeline_type,
@@ -152,7 +152,7 @@ class TestPipelineConformance:
         ]
 
         # Call load_documents
-        result = pipeline.load_documents(documents=test_documents)
+        result = pipeline.load_documents(documents_path="", documents=test_documents)
 
         # Assertions
         assert isinstance(result, dict), \
@@ -189,7 +189,7 @@ class TestPipelineConformance:
         """
         # Create pipeline with mocked dependencies
         with patch("iris_vector_rag.pipelines.basic.ConnectionManager", return_value=mock_connection_manager):
-            with patch("iris_vector_rag.pipelines.crag.EmbeddingManager"):
+            with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
                     pipeline = create_pipeline(
                         pipeline_type,
@@ -202,6 +202,13 @@ class TestPipelineConformance:
         # Mock external services
         if hasattr(pipeline, 'entity_extraction_service'):
             pipeline.entity_extraction_service = MagicMock()
+
+        # Fix embedding_manager mock to return numeric dimension (avoids dim-mismatch errors)
+        if hasattr(pipeline, 'embedding_manager'):
+            pipeline.embedding_manager = MagicMock()
+            pipeline.embedding_manager.get_embedding_dimension.return_value = 384
+            pipeline.embedding_manager.generate_embedding.return_value = [0.1] * 384
+            pipeline.embedding_manager.generate_embeddings.return_value = [[0.1] * 384]
 
         # Call query with generate_answer=False to avoid LLM requirement
         result = pipeline.query(query_text="What is test?", generate_answer=False)
@@ -240,7 +247,7 @@ class TestPipelineConformance:
         """
         # Create pipeline with mocked dependencies
         with patch("iris_vector_rag.pipelines.basic.ConnectionManager", return_value=mock_connection_manager):
-            with patch("iris_vector_rag.pipelines.crag.EmbeddingManager"):
+            with patch("iris_vector_rag.embeddings.manager.EmbeddingManager"):
                 with patch("iris_vector_rag.pipelines.graphrag.EmbeddingManager"):
                     pipeline = create_pipeline(
                         pipeline_type,
@@ -253,6 +260,13 @@ class TestPipelineConformance:
         # Mock external services
         if hasattr(pipeline, 'entity_extraction_service'):
             pipeline.entity_extraction_service = MagicMock()
+
+        # Fix embedding_manager mock to return numeric dimension (avoids dim-mismatch errors)
+        if hasattr(pipeline, 'embedding_manager'):
+            pipeline.embedding_manager = MagicMock()
+            pipeline.embedding_manager.get_embedding_dimension.return_value = 384
+            pipeline.embedding_manager.generate_embedding.return_value = [0.1] * 384
+            pipeline.embedding_manager.generate_embeddings.return_value = [[0.1] * 384]
 
         # Test keyword argument form - should not raise TypeError
         try:
