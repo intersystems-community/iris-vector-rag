@@ -203,3 +203,12 @@ Old signature kept as deprecated alias.
 - Requires **078** (pure constructors, lazy init) — landed.
 - Informs **hipporag2-pipeline** integration — implement Phase 4 in that repo after
   Phase 1–2 land here.
+
+## Clarifications
+
+### Session 2026-07-19
+
+- Q: How should `engine.connection_manager` behave when constructed via raw DBAPI connection? → A: Wrap in `ExternalConnectionWrapper` (already exists in `iris_vector_rag/__init__.py`). `from_config()` routes through the existing `get_iris_connection()` in `common/iris_connection.py`, which already handles the `iris-embedded-python-wrapper` path (tries embedded first, falls back to TCP). No new connection logic needed in `IRISVectorEngine`.
+- Q: Should `from_config()` be lazy (stores config, opens connection on first access) or eager (opens at construction)? → A: Fully lazy — `from_config()` builds `ConfigurationManager` and `ConnectionManager` but does not call `get_connection()` until `.connection` or `.vector_store` is first accessed. Consistent with FR-008 and the 078 pure-constructors principle.
+- Q: Should Phase 1 add `engine=` kwarg to both `create_pipeline()` and `create_validated_pipeline()`? → A: Both. FR-006 is explicit; `create_validated_pipeline` is the production path and must support `engine=` in Phase 1.
+- Q: Should `IRISVectorEngine` use Pydantic `BaseModel` for its config struct? → A: No. Plain class with `@property`. `IRISVectorEngine` is a stateful connection object; Pydantic doesn't compose cleanly with lazy DBAPI properties. Validation stays in `ConfigurationManager` and `_validate_connection_params` in `common/iris_connection.py`.

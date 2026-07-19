@@ -20,17 +20,29 @@ class RAGPipeline(abc.ABC):
     def __init__(
         self,
         connection_manager,
-        config_manager,
+        config_manager=None,
         vector_store: Optional[VectorStore] = None,
     ):
         """
         Initialize the RAG pipeline with connection and configuration managers.
 
+        Supports two calling conventions:
+        1. Legacy: RAGPipeline(connection_manager, config_manager, vector_store=None)
+        2. Engine overload: RAGPipeline(engine, vector_store=None) where engine is IRISVectorEngine
+
         Args:
-            connection_manager: Database connection manager
-            config_manager: Configuration manager
+            connection_manager: Database connection manager OR IRISVectorEngine instance
+            config_manager: Configuration manager (ignored if connection_manager is IRISVectorEngine)
             vector_store: Optional VectorStore instance. If None, IRISVectorStore will be instantiated.
         """
+        # engine= overload: accept IRISVectorEngine as first positional arg
+        if connection_manager.__class__.__name__ == "IRISVectorEngine":
+            engine = connection_manager
+            config_manager = engine.config_manager
+            if vector_store is None:
+                vector_store = engine.vector_store
+            connection_manager = engine.connection_manager
+
         self.connection_manager = connection_manager
         self.config_manager = config_manager
 

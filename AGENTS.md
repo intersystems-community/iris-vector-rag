@@ -67,6 +67,7 @@ examples/                  # compare_pipelines.py and usage examples
 | GraphRAG              | `pipelines/hybrid_graphrag.py`                           | Requires `iris-vector-graph>=2.4.6`                                                 |
 | Validation pre-flight | `validation/requirements.py` + `validation/validator.py` | `BasicRAGRequirements`, etc.                                                        |
 | Schema prefix         | `config/manager.py::get_schema_prefix()`                 | `IRIS_SCHEMA_PREFIX` env var; default `RAG`                                         |
+| Engine entry point    | `core/engine.py::IRISVectorEngine`                       | `from_config()` for one-line construction; replaces `(cm, cfg)` pair                |
 | MCP server            | `mcp/bridge.py`, `mcp/tool_schemas.py`                   | 8 tools: `rag_basic`, `rag_crag`, `rag_graphrag`, …                                 |
 | MCP CLI               | `mcp/cli.py`                                             | `python -m iris_vector_rag.mcp start/stop/status/health/list-tools`                 |
 | CLOB handling         | `storage/clob_handler.py::ensure_string_content()`       | Apply on every retrieved `page_content`                                             |
@@ -86,6 +87,7 @@ examples/                  # compare_pipelines.py and usage examples
 | `EmbeddingManager`            | class    | `embeddings/manager.py`        | Embedding generation + caching            |
 | `PreConditionValidator`       | class    | `validation/validator.py`      | Pre-flight table/embedding checks         |
 | `BasicRAGPipeline`            | class    | `pipelines/basic.py`           | Simplest pipeline; start here             |
+| `IRISVectorEngine`            | class    | `core/engine.py`               | Unified engine: wraps CM + cfg into one   |
 
 ## COMMANDS
 
