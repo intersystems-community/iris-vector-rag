@@ -174,6 +174,10 @@ def _create_pipeline_legacy(
         from .pipelines.multi_query_rrf import MultiQueryRRFPipeline
 
         return MultiQueryRRFPipeline(
+            connection_manager=connection_manager,
+            config_manager=config_manager,
+            llm_func=llm_func,
+            embedding_func=kwargs.get("embedding_func"),
             num_queries=kwargs.get("num_queries", 4),
             retrieved_k=kwargs.get("retrieved_k", 20),
             rrf_k=kwargs.get("rrf_k", 60),

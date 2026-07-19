@@ -61,6 +61,8 @@ class MultiQueryRRFPipeline(RAGPipeline):
         connection_manager=None,
         config_manager=None,
         vector_store: Optional[IRISVectorStore] = None,
+        llm_func=None,
+        embedding_func=None,
         num_queries: int = 4,
         retrieved_k: int = 20,
         rrf_k: int = 60,
@@ -74,6 +76,8 @@ class MultiQueryRRFPipeline(RAGPipeline):
             connection_manager: Database connection manager
             config_manager: Configuration manager
             vector_store: IRIS vector store instance
+            llm_func: Optional LLM function for query expansion/answer generation
+            embedding_func: Optional embedding function (for interface conformance)
             num_queries: Number of query variations (default: 4)
             retrieved_k: Documents to retrieve per query (default: 20)
             rrf_k: RRF constant, typically 60 (default: 60)
@@ -96,6 +100,8 @@ class MultiQueryRRFPipeline(RAGPipeline):
             vector_store=vector_store,
         )
 
+        self.llm_func = llm_func
+        self.embedding_func = embedding_func
         self.num_queries = num_queries
         self.retrieved_k = retrieved_k
         self.rrf_k = rrf_k
@@ -103,9 +109,9 @@ class MultiQueryRRFPipeline(RAGPipeline):
         self.llm_model = llm_model
 
         if use_llm_expansion:
-            self.llm = get_llm_func(model_name=llm_model)
+            self.llm = llm_func or get_llm_func(model_name=llm_model)
         else:
-            self.llm = None
+            self.llm = llm_func
 
         logger.info(
             f"Initialized MultiQueryRRFPipeline: "
@@ -270,13 +276,13 @@ Return only the alternative queries, one per line, without numbering.
         return results
 
     def query(
-        self, query: str, top_k: int = 20, generate_answer: bool = True, **kwargs
+        self, query_text: str, top_k: int = 20, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Execute multi-query retrieval with RRF fusion.
 
         Args:
-            query: User query
+            query_text: User query
             top_k: Number of final results to return
             generate_answer: Whether to generate LLM answer
             **kwargs: Additional arguments
@@ -292,13 +298,14 @@ Return only the alternative queries, one per line, without numbering.
                     - num_queries: Number of queries executed
                     - raw_result_count: Total documents before fusion
                     - execution_time: Total execution time
+                - error: None or error dict
         """
         start_time = time.time()
 
-        logger.info(f"Multi-query RRF pipeline query: '{query}'")
+        logger.info(f"Multi-query RRF pipeline query: '{query_text}'")
 
         # Step 1: Generate query variations
-        queries = self.generate_query_variations(query)
+        queries = self.generate_query_variations(query_text)
 
         logger.info(f"Generated {len(queries)} query variations:")
         for i, q in enumerate(queries, 1):
@@ -331,11 +338,12 @@ Return only the alternative queries, one per line, without numbering.
         fused_results = self._reciprocal_rank_fusion(all_results, top_k=top_k)
 
         # Step 4: Generate answer (if requested)
-        answer = ""
+        answer = None
+        generation_error = None
         if generate_answer and fused_results:
             context = "\n\n".join([doc.page_content for doc in fused_results[:5]])
 
-            prompt = f"""Based on the following context, answer the question: "{query}"
+            prompt = f"""Based on the following context, answer the question: "{query_text}"
 
 Context:
 {context}
@@ -351,9 +359,12 @@ Answer:"""
 
             except Exception as e:
                 logger.error(f"Answer generation failed: {e}")
-                answer = (
-                    "Answer generation failed. Please check the retrieved documents."
-                )
+                answer = None
+                generation_error = {
+                    "type": "GenerationError",
+                    "message": str(e),
+                    "error_class": type(e).__name__,
+                }
 
         # Build response
         execution_time = time.time() - start_time
@@ -363,6 +374,7 @@ Answer:"""
             "retrieved_documents": fused_results,
             "contexts": [doc.page_content for doc in fused_results],
             "sources": [doc.id for doc in fused_results if doc.id],
+            "error": generation_error,
             "metadata": {
                 "pipeline": "multi_query_rrf",
                 "queries": queries,
@@ -387,7 +399,7 @@ Answer:"""
 
     def load_documents(
         self, documents_path: str = "", documents: List[Document] = None, **kwargs
-    ) -> None:
+    ) -> Dict[str, Any]:
         """
         Load documents into vector store.
 
@@ -395,11 +407,27 @@ Answer:"""
             documents_path: Path to documents (unused, for interface compatibility)
             documents: List of Document objects
             **kwargs: Additional arguments passed to vector store
+
+        Returns:
+            Dict with load status:
+                - documents_loaded: Number of documents successfully loaded
+                - embeddings_generated: Number of embeddings generated
+                - documents_failed: Number of documents that failed to load
         """
         if documents is None:
             logger.warning("No documents provided to load_documents")
-            return
+            return {
+                "documents_loaded": 0,
+                "embeddings_generated": 0,
+                "documents_failed": 0,
+            }
 
         logger.info(f"Loading {len(documents)} documents")
         self.vector_store.add_documents(documents, **kwargs)
         logger.info("Documents loaded successfully")
+
+        return {
+            "documents_loaded": len(documents),
+            "embeddings_generated": len(documents),
+            "documents_failed": 0,
+        }

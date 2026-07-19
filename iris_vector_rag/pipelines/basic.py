@@ -441,7 +441,7 @@ class BasicRAGPipeline(RAGPipeline):
                 "pipeline_type": "basic",
             }
 
-    def query(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query_text: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute RAG query - THE single method for all RAG operations.
 
@@ -449,7 +449,7 @@ class BasicRAGPipeline(RAGPipeline):
         Replaces the old query()/execute()/run() method confusion.
 
         Args:
-            query: The query text
+            query_text: The query text
             top_k: Number of documents to retrieve (must be between 1 and 100)
             **kwargs: Additional arguments including:
                 - include_sources: Whether to include source information (default: True)
@@ -467,7 +467,8 @@ class BasicRAGPipeline(RAGPipeline):
                 "contexts": List[str],
                 "sources": List[Dict],
                 "metadata": Dict,
-                "execution_time": float
+                "execution_time": float,
+                "error": Optional error dict
             }
         """
         # Feature 078: Pure Constructors - lazy initialization on first use
@@ -476,7 +477,7 @@ class BasicRAGPipeline(RAGPipeline):
         start_time = time.time()
 
         # Validation: query parameter is required and cannot be empty
-        if not query or query.strip() == "":
+        if not query_text or query_text.strip() == "":
             raise ValueError(
                 "Error: Query parameter is required and cannot be empty\n"
                 "Context: BasicRAG pipeline query operation\n"
@@ -505,7 +506,7 @@ class BasicRAGPipeline(RAGPipeline):
 
         # Validate query embedding dimensions (contract requirement FR-022)
         if hasattr(self, "embedding_manager") and self.embedding_manager:
-            query_embedding = self.embedding_manager.generate_embedding(query)
+            query_embedding = self.embedding_manager.generate_embedding(query_text)
             self._validate_embedding_dimension(query_embedding)
 
         # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
@@ -536,7 +537,7 @@ class BasicRAGPipeline(RAGPipeline):
             # Use vector store for retrieval
             if hasattr(self, "vector_store") and self.vector_store:
                 retrieved_documents = self.vector_store.similarity_search(
-                    query, k=top_k
+                    query_text, k=top_k
                 )
             else:
                 logger.warning("No vector store available")
@@ -544,7 +545,6 @@ class BasicRAGPipeline(RAGPipeline):
         except Exception as e:
             logger.error(f"Document retrieval failed: {e}")
             retrieved_documents = []
-            # Capture error for later inclusion in response
             retrieval_error = {
                 "type": "RetrievalError",
                 "message": str(e),
@@ -558,7 +558,7 @@ class BasicRAGPipeline(RAGPipeline):
         elif generate_answer and self.llm_func and retrieved_documents:
             try:
                 answer = self._generate_answer(
-                    query, retrieved_documents, custom_prompt
+                    query_text, retrieved_documents, custom_prompt
                 )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
@@ -584,10 +584,11 @@ class BasicRAGPipeline(RAGPipeline):
         # Step 3: Prepare complete response
         contexts_list = [doc.page_content for doc in retrieved_documents]
         response = {
-            "query": query,
+            "query": query_text,
             "answer": answer,
             "retrieved_documents": retrieved_documents,
             "contexts": contexts_list,  # String contexts for RAGAS
+            "sources": sources,  # Top-level sources as per spec
             "execution_time": execution_time,  # Required for RAGAS debug harness
             "error": retrieval_error or generation_error,
             "metadata": {
@@ -597,13 +598,8 @@ class BasicRAGPipeline(RAGPipeline):
                 "generated_answer": generate_answer and answer is not None,
                 "retrieval_method": retrieval_method,  # FR-003: Include retrieval method
                 "context_count": len(contexts_list),  # FR-003: Include context count
-                "sources": sources,  # FR-003: Include sources in metadata
             },
         }
-
-        # Add sources to top level if requested
-        if include_sources:
-            response["sources"] = sources
 
         logger.info(
             f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved"

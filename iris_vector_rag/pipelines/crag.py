@@ -285,13 +285,13 @@ class CRAGPipeline(RAGPipeline):
         }
 
     def query(
-        self, query: str, top_k: int = 5, generate_answer: bool = True, **kwargs
+        self, query_text: str, top_k: int = 5, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Execute the CRAG pipeline implementation.
 
         Args:
-            query: The input query string
+            query_text: The input query string
             top_k: Number of top relevant documents to retrieve (must be between 1 and 100)
             generate_answer: Whether to generate an answer
             **kwargs: Additional keyword arguments
@@ -300,7 +300,7 @@ class CRAGPipeline(RAGPipeline):
             Standardized response with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
         # Validation: query parameter is required and cannot be empty
-        if not query or query.strip() == "":
+        if not query_text or query_text.strip() == "":
             raise ValueError(
                 "Error: Query parameter is required and cannot be empty\n"
                 "Context: CRAG pipeline query operation\n"
@@ -319,11 +319,11 @@ class CRAGPipeline(RAGPipeline):
                 f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
             )
 
-        logger.info(f"CRAG: Processing query: '{query[:50]}...'")
+        logger.info(f"CRAG: Processing query: '{query_text[:50]}...'")
 
         # Validate query embedding dimensions (contract requirement FR-022)
         if hasattr(self, "embedding_manager") and self.embedding_manager:
-            query_embedding = self.embedding_manager.generate_embedding(query)
+            query_embedding = self.embedding_manager.generate_embedding(query_text)
             self._validate_embedding_dimension(query_embedding)
 
         # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
@@ -355,7 +355,7 @@ class CRAGPipeline(RAGPipeline):
         try:
             # Stage 1: Initial retrieval
             try:
-                initial_docs = self._initial_retrieval(query, top_k)
+                initial_docs = self._initial_retrieval(query_text, top_k)
             except Exception as exc:
                 logger.warning(
                     "CRAG initial retrieval failed; falling back to empty vector results: %s",
@@ -363,7 +363,7 @@ class CRAGPipeline(RAGPipeline):
                 )
                 if self.evaluator:
                     try:
-                        self.evaluator.evaluate(query, [])
+                        self.evaluator.evaluate(query_text, [])
                     except Exception as eval_exc:
                         logger.warning(
                             "CRAG evaluator failed during fallback: %s",
@@ -374,7 +374,7 @@ class CRAGPipeline(RAGPipeline):
                 corrected_docs = [
                     Document(
                         id="fallback_context",
-                        page_content=query,
+                        page_content=query_text,
                         metadata={
                             "retrieval_method": "vector_fallback",
                             "source": "fallback",
@@ -385,12 +385,12 @@ class CRAGPipeline(RAGPipeline):
             else:
                 # Stage 2: Evaluate retrieval quality
                 try:
-                    retrieval_status = self.evaluator.evaluate(query, initial_docs)
+                    retrieval_status = self.evaluator.evaluate(query_text, initial_docs)
                     logger.info(f"CRAG: Retrieval status: {retrieval_status}")
 
                     # Stage 3: Apply corrective actions based on evaluation
                     corrected_docs = self._apply_corrective_actions(
-                        query, initial_docs, retrieval_status, top_k
+                        query_text, initial_docs, retrieval_status, top_k
                     )
                 except Exception as exc:
                     logger.warning(
@@ -404,7 +404,7 @@ class CRAGPipeline(RAGPipeline):
                         corrected_docs = [
                             Document(
                                 id="fallback_context",
-                                page_content=query,
+                                page_content=query_text,
                                 metadata={
                                     "retrieval_method": "vector_fallback",
                                     "source": "fallback",
@@ -418,7 +418,7 @@ class CRAGPipeline(RAGPipeline):
                 if self.llm_func:
                     try:
                         answer = self._generate_answer(
-                            query, corrected_docs, retrieval_status
+                            query_text, corrected_docs, retrieval_status
                         )
                     except Exception as e:
                         logger.warning(f"Answer generation failed: {e}")
@@ -443,11 +443,13 @@ class CRAGPipeline(RAGPipeline):
             contexts_list = [doc.page_content for doc in corrected_docs]
 
             result = {
-                "query": query,
+                "query": query_text,
                 "answer": answer,
                 "retrieved_documents": corrected_docs,
                 "contexts": contexts_list,
+                "sources": sources,  # Top-level sources as per spec
                 "execution_time": execution_time,
+                "error": None,
                 "metadata": {
                     "num_retrieved": len(corrected_docs),
                     "pipeline_type": "crag",
@@ -457,10 +459,7 @@ class CRAGPipeline(RAGPipeline):
                     "initial_doc_count": len(initial_docs),
                     "final_doc_count": len(corrected_docs),
                     "retrieval_method": effective_retrieval_method,  # FR-003: Include retrieval method
-                    "context_count": len(
-                        contexts_list
-                    ),  # FR-003: Include context count
-                    "sources": sources,  # FR-003: Include sources in metadata
+                    "context_count": len(contexts_list),
                     "processing_time": execution_time,
                 },
             }
@@ -477,19 +476,19 @@ class CRAGPipeline(RAGPipeline):
                 else None
             )
             return {
-                "query": query,
+                "query": query_text,
                 "answer": answer,
                 "retrieved_documents": [],
                 "contexts": [],
+                "sources": [],
                 "execution_time": 0.0,
+                "error": str(e),
                 "metadata": {
                     "num_retrieved": 0,
                     "pipeline_type": "crag",
                     "generated_answer": False,
-                    "error": str(e),
                     "retrieval_method": effective_retrieval_method,
                     "context_count": 0,
-                    "sources": [],
                 },
             }
 

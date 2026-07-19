@@ -65,7 +65,7 @@ class RAGPipeline(abc.ABC):
             )
 
     @abc.abstractmethod
-    def load_documents(self, documents_path: str, **kwargs) -> None:
+    def load_documents(self, documents_path: str, **kwargs) -> Dict[str, Any]:
         """
         Loads and processes documents into the RAG pipeline&#x27;s knowledge base.
 
@@ -75,6 +75,12 @@ class RAGPipeline(abc.ABC):
         Args:
             documents_path: Path to the documents or directory of documents.
             **kwargs: Additional keyword arguments for document loading.
+
+        Returns:
+            Dict with ingestion status containing keys:
+                - documents_loaded: int (number of documents successfully loaded)
+                - documents_failed: int (number of documents that failed to load)
+                - embeddings_generated: int (number of embeddings generated)
         """
 
     @abc.abstractmethod

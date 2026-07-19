@@ -79,11 +79,17 @@ class GraphRAGPipeline(RAGPipeline):
             f"Production-hardened GraphRAG pipeline initialized (entity extraction: {self.entity_extraction_enabled})"
         )
 
-    def load_documents(self, documents_path: str, **kwargs) -> None:
+    def load_documents(self, documents_path: str, **kwargs) -> Dict[str, Any]:
         """
         Load documents with integrated entity extraction.
+
+        Returns:
+            Dict with load status:
+                - documents_loaded: Number of documents successfully loaded
+                - embeddings_generated: Number of embeddings generated
+                - documents_failed: Number of documents that failed to load
         """
-        time.time()
+        start_time = time.time()
 
         if "documents" in kwargs:
             documents = kwargs["documents"]
@@ -94,7 +100,11 @@ class GraphRAGPipeline(RAGPipeline):
 
         if not documents:
             logger.warning("No documents provided to load_documents")
-            return
+            return {
+                "documents_loaded": 0,
+                "embeddings_generated": 0,
+                "documents_failed": 0,
+            }
 
         # Store documents first
         generate_embeddings = kwargs.get("generate_embeddings", True)
@@ -103,8 +113,15 @@ class GraphRAGPipeline(RAGPipeline):
         else:
             self._store_documents(documents)
 
+        documents_loaded = len(documents)
+        embeddings_generated = len(documents) if generate_embeddings else 0
+
         if not self.entity_extraction_enabled:
-            return
+            return {
+                "documents_loaded": documents_loaded,
+                "embeddings_generated": embeddings_generated,
+                "documents_failed": 0,
+            }
 
         # Ensure knowledge graph tables exist
         try:
@@ -170,6 +187,12 @@ class GraphRAGPipeline(RAGPipeline):
             f"Entity Extraction Complete: {total_entities} entities, {total_relationships} relationships in {extraction_elapsed:.2f}s"
         )
 
+        return {
+            "documents_loaded": documents_loaded,
+            "embeddings_generated": embeddings_generated,
+            "documents_failed": 0,
+        }
+
     def query(
         self,
         query_text: str,
@@ -221,6 +244,7 @@ class GraphRAGPipeline(RAGPipeline):
                 doc.metadata.get("title", doc.id) for doc in retrieved_documents
             ],
             "execution_time": execution_time,
+            "error": None,
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
                 "pipeline_type": "graphrag",
