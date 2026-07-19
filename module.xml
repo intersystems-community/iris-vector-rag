@@ -48,6 +48,7 @@
 
   <SourcesRoot>iris_src</SourcesRoot>
 
+  <Invoke Name="pip-install" Class="RAG.SDK.Schema" Method="Install" Moment="after"/>
 
 </Module>
 </Document>
