@@ -15,11 +15,12 @@ from ..core.vector_store import VectorStore
 from ..core.models import Document
 from ..core.connection import ConnectionManager
 from ..config.manager import ConfigurationManager
-from ..exceptions import VectorStoreConfigurationError
-from ..core.exceptions import (
+from ..exceptions import (
+    EmbeddingError,
+    VectorStoreConfigurationError,
     VectorStoreConnectionError,
-    VectorStoreDataError,
     VectorStoreCLOBError,
+    VectorStoreDataError,
 )
 from .clob_handler import ensure_string_content
 
@@ -650,14 +651,12 @@ class IRISVectorStore(VectorStore):
 
             return embeddings
         except Exception as e:
-            logger.warning(f"Embedding generation failed: {e}")
-            # Return empty embeddings if generation fails
-            # Handle case where vector_dimension might be a Mock object
-            try:
-                dim = int(self.vector_dimension) if self.vector_dimension else 768
-            except (TypeError, ValueError):
-                dim = 768  # Default dimension
-            return [[0.0] * dim for _ in documents]
+            logger.error(f"Failed to generate embeddings: {e}")
+            raise EmbeddingError(
+                f"Failed to generate embeddings: {e}",
+                doc_count=len(documents),
+                error_type=type(e).__name__,
+            ) from e
 
     def _store_documents(
         self, documents: List[Document], embeddings: Optional[List[List[float]]] = None
@@ -754,12 +753,12 @@ class IRISVectorStore(VectorStore):
                     success = insert_vector(
                         cursor=cursor,
                         table_name=self.table_name,
-                        vector_column="embedding",
+                        vector_column_name="embedding",
                         vector_data=embeddings[i],
-                        dimension=self.vector_dimension,
+                        target_dimension=self.vector_dimension,
                         key_columns={id_column: doc.id},
-                        additional_columns=additional_data,
-                        dtype=self._get_vector_data_type(),
+                        additional_data=additional_data,
+                        vector_data_type=self._get_vector_data_type(),
                     )
                     if success:
                         added_ids.append(doc.id)

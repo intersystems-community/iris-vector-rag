@@ -15,6 +15,7 @@ from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
+from ..exceptions import IngestionError, RetrievalError, GenerationError
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +155,7 @@ class BasicRAGPipeline(RAGPipeline):
                 embedding = self.embedding_manager.generate_embedding(sample_text)
                 self._validate_embedding_dimension(embedding)
 
-        # For contract tests without database, gracefully handle vector store operations
+        # Add documents to vector store with embeddings
         try:
             if generate_embeddings:
                 # Use vector store's automatic chunking and embedding generation
@@ -164,24 +165,35 @@ class BasicRAGPipeline(RAGPipeline):
                         auto_chunk=True,
                         chunking_strategy=kwargs.get("chunking_strategy", "fixed_size"),
                     )
+                    documents_loaded = len(documents)
+                    embeddings_generated = len(documents)
                 else:
-                    logger.warning("No vector store available - documents not persisted")
-                documents_loaded = len(documents)
-                embeddings_generated = len(documents)  # One embedding per document
+                    raise IngestionError(
+                        "Vector store not available for document ingestion",
+                        documents_loaded=0,
+                        documents_failed=len(documents),
+                    )
             else:
                 # Store documents without embeddings using vector store
                 if hasattr(self, 'vector_store') and self.vector_store:
                     self._store_documents(documents)
+                    documents_loaded = len(documents)
+                    embeddings_generated = 0
                 else:
-                    logger.warning("No vector store available - documents not persisted")
-                documents_loaded = len(documents)
-                embeddings_generated = 0
+                    raise IngestionError(
+                        "Vector store not available for document ingestion",
+                        documents_loaded=0,
+                        documents_failed=len(documents),
+                    )
+        except IngestionError:
+            raise
         except Exception as e:
-            logger.warning(f"Vector store operation failed (expected for contract tests without DB): {e}")
-            # Still count as loaded for contract testing purposes (validates API contract)
-            documents_loaded = len(documents)
-            embeddings_generated = len(documents) if generate_embeddings else 0
-            documents_failed = 0
+            raise IngestionError(
+                f"Failed to add documents to vector store: {str(e)}",
+                documents_loaded=0,
+                documents_failed=len(documents),
+                original_error=e,
+            ) from e
 
         processing_time = time.time() - start_time
         logger.info(
@@ -499,6 +511,7 @@ class BasicRAGPipeline(RAGPipeline):
             )
 
         # Step 1: Retrieve relevant documents
+        retrieval_error = None
         try:
             # Use vector store for retrieval
             if hasattr(self, "vector_store") and self.vector_store:
@@ -509,18 +522,32 @@ class BasicRAGPipeline(RAGPipeline):
                 logger.warning("No vector store available")
                 retrieved_documents = []
         except Exception as e:
-            logger.warning(f"Document retrieval failed: {e}")
+            logger.error(f"Document retrieval failed: {e}")
             retrieved_documents = []
+            # Capture error for later inclusion in response
+            retrieval_error = {
+                "type": "RetrievalError",
+                "message": str(e),
+                "error_class": type(e).__name__,
+            }
 
         # Step 2: Generate answer using LLM (if enabled and LLM available)
-        if generate_answer and self.llm_func and retrieved_documents:
+        generation_error = None
+        if retrieval_error:
+            answer = None
+        elif generate_answer and self.llm_func and retrieved_documents:
             try:
                 answer = self._generate_answer(
                     query, retrieved_documents, custom_prompt
                 )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
-                answer = "Error generating answer"
+                answer = None
+                generation_error = {
+                    "type": "GenerationError",
+                    "message": str(e),
+                    "error_class": type(e).__name__,
+                }
         elif not generate_answer:
             answer = None
         elif not retrieved_documents:
@@ -542,6 +569,7 @@ class BasicRAGPipeline(RAGPipeline):
             "retrieved_documents": retrieved_documents,
             "contexts": contexts_list,  # String contexts for RAGAS
             "execution_time": execution_time,  # Required for RAGAS debug harness
+            "error": retrieval_error or generation_error,
             "metadata": {
                 "num_retrieved": len(retrieved_documents),
                 "processing_time": execution_time,
@@ -567,10 +595,6 @@ class BasicRAGPipeline(RAGPipeline):
         expected_dim = self.embedding_manager.get_embedding_dimension()
         actual_dim = len(embedding)
         if actual_dim != expected_dim:
-            logger.error(
-                f"Dimension mismatch: expected {expected_dim}-dimensional embedding, "
-                f"got {actual_dim}. Verify embedding model configuration."
-            )
             raise ValueError(
                 "Embedding dimension mismatch: expected "
                 f"{expected_dim}, got {actual_dim}. "
@@ -639,13 +663,8 @@ class BasicRAGPipeline(RAGPipeline):
         else:
             prompt = self._create_default_prompt(query, context)
 
-        # Generate answer using LLM
-        try:
-            answer = self.llm_func(prompt)
-            return answer
-        except Exception as e:
-            logger.error(f"LLM generation failed: {e}")
-            return f"Error generating answer: {e}"
+        # Generate answer using LLM — let exceptions propagate to caller
+        return self.llm_func(prompt)
 
     def _create_default_prompt(self, query: str, context: str) -> str:
         """

@@ -186,3 +186,237 @@ class PermissionDeniedError(Exception):
             "reason": self.reason,
             **self.details,
         }
+
+
+class EmbeddingError(Exception):
+    """
+    Exception raised when embedding generation fails.
+
+    This exception is raised when the EmbeddingManager or vector store cannot
+    generate embeddings for documents, ensuring the error is not silently masked
+    by zero vectors.
+
+    Attributes:
+        message: Human-readable error message
+        details: Additional error context (e.g., model_name, document_id)
+
+    Example:
+        >>> raise EmbeddingError(
+        ...     "Failed to generate embeddings for document",
+        ...     model_name="sentence-transformers/all-MiniLM-L6-v2",
+        ...     document_id="doc_123"
+        ... )
+    """
+
+    def __init__(self, message: str, **details: Any):
+        """
+        Initialize EmbeddingError.
+
+        Args:
+            message: Error message describing the embedding failure
+            **details: Additional error context (e.g., model_name, document_id)
+        """
+        super().__init__(message)
+        self.message = message
+        self.details = details
+
+    def __str__(self) -> str:
+        """Format error message with context."""
+        parts = [self.message]
+        if self.details:
+            detail_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
+            parts.append(f"Details: {detail_str}")
+        return " | ".join(parts)
+
+
+class RetrievalError(Exception):
+    """
+    Exception raised when document retrieval from the vector store fails.
+
+    This exception is raised when similarity_search or other retrieval operations
+    fail, ensuring retrieval errors are distinguished from legitimate empty results.
+
+    Attributes:
+        message: Human-readable error message
+        details: Additional error context (e.g., query, top_k, store_type)
+
+    Example:
+        >>> raise RetrievalError(
+        ...     "Vector store similarity search failed",
+        ...     query="medical findings",
+        ...     top_k=5,
+        ...     store_type="iris"
+        ... )
+    """
+
+    def __init__(self, message: str, **details: Any):
+        """
+        Initialize RetrievalError.
+
+        Args:
+            message: Error message describing the retrieval failure
+            **details: Additional error context (e.g., query, top_k, store_type)
+        """
+        super().__init__(message)
+        self.message = message
+        self.details = details
+
+    def __str__(self) -> str:
+        """Format error message with context."""
+        parts = [self.message]
+        if self.details:
+            detail_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
+            parts.append(f"Details: {detail_str}")
+        return " | ".join(parts)
+
+
+class GenerationError(Exception):
+    """
+    Exception raised when answer generation fails.
+
+    This exception is raised when the LLM function fails during answer generation,
+    ensuring generation errors are surfaced rather than replaced with placeholder strings.
+
+    Attributes:
+        message: Human-readable error message
+        details: Additional error context (e.g., llm_model, query, doc_count)
+
+    Example:
+        >>> raise GenerationError(
+        ...     "LLM answer generation failed",
+        ...     llm_model="gpt-4",
+        ...     query="diagnosis criteria",
+        ...     doc_count=5
+        ... )
+    """
+
+    def __init__(self, message: str, **details: Any):
+        """
+        Initialize GenerationError.
+
+        Args:
+            message: Error message describing the generation failure
+            **details: Additional error context (e.g., llm_model, query, doc_count)
+        """
+        super().__init__(message)
+        self.message = message
+        self.details = details
+
+    def __str__(self) -> str:
+        """Format error message with context."""
+        parts = [self.message]
+        if self.details:
+            detail_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
+            parts.append(f"Details: {detail_str}")
+        return " | ".join(parts)
+
+class VectorStoreConnectionError(Exception):
+    """Raised when a connection to IRIS cannot be established or is lost."""
+
+    def __init__(self, message: str, **details: Any):
+        super().__init__(message)
+        self.message = message
+        self.details = details
+
+    def __str__(self) -> str:
+        parts = [self.message]
+        if self.details:
+            parts.append(", ".join(f"{k}={v}" for k, v in self.details.items()))
+        return " | ".join(parts)
+
+
+class VectorStoreDataError(Exception):
+    """Raised when document data is malformed or a filter value has an invalid type."""
+
+    def __init__(self, message: str, **details: Any):
+        super().__init__(message)
+        self.message = message
+        self.details = details
+
+    def __str__(self) -> str:
+        parts = [self.message]
+        if self.details:
+            parts.append(", ".join(f"{k}={v}" for k, v in self.details.items()))
+        return " | ".join(parts)
+
+
+class VectorStoreCLOBError(Exception):
+    """Raised when CLOB-to-string conversion fails for a retrieved document."""
+
+    def __init__(self, message: str, **details: Any):
+        super().__init__(message)
+        self.message = message
+        self.details = details
+
+    def __str__(self) -> str:
+        parts = [self.message]
+        if self.details:
+            parts.append(", ".join(f"{k}={v}" for k, v in self.details.items()))
+        return " | ".join(parts)
+
+
+class IngestionError(Exception):
+    """
+    Exception raised when document ingestion fails.
+
+    This exception is raised when documents cannot be successfully added to
+    the vector store due to database errors, validation failures, or other
+    ingestion-related issues.
+
+    Attributes:
+        message: Human-readable error message
+        documents_loaded: Number of documents successfully loaded
+        documents_failed: Number of documents that failed
+        original_error: The underlying exception that caused the failure
+        details: Additional error context
+
+    Example:
+        >>> raise IngestionError(
+        ...     "Failed to add documents to vector store",
+        ...     documents_loaded=5,
+        ...     documents_failed=3,
+        ...     original_error=database_error
+        ... )
+    """
+
+    def __init__(
+        self,
+        message: str,
+        documents_loaded: int = 0,
+        documents_failed: int = 0,
+        original_error: Optional[Exception] = None,
+        **details: Any
+    ):
+        """
+        Initialize IngestionError.
+
+        Args:
+            message: Error message describing the ingestion failure
+            documents_loaded: Number of documents successfully loaded
+            documents_failed: Number of documents that failed
+            original_error: Optional underlying exception
+            **details: Additional error context (e.g., chunk_index, error_type)
+        """
+        super().__init__(message)
+        self.message = message
+        self.documents_loaded = documents_loaded
+        self.documents_failed = documents_failed
+        self.original_error = original_error
+        self.details = details
+
+    def __str__(self) -> str:
+        """Format error message with context."""
+        parts = [self.message]
+        parts.append(
+            f"Documents: {self.documents_loaded} loaded, "
+            f"{self.documents_failed} failed"
+        )
+
+        if self.original_error:
+            parts.append(f"Root cause: {str(self.original_error)}")
+
+        if self.details:
+            detail_str = ", ".join(f"{k}={v}" for k, v in self.details.items())
+            parts.append(f"Details: {detail_str}")
+
+        return " | ".join(parts)
