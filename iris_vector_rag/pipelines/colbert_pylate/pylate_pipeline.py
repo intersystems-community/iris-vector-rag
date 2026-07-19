@@ -269,7 +269,9 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             and self.is_initialized
         ):
             try:
-                final_documents = self._pylate_rerank(query_text, candidate_documents, top_k)
+                final_documents = self._pylate_rerank(
+                    query_text, candidate_documents, top_k
+                )
                 reranked = True
                 self.stats["reranking_operations"] += 1
                 logger.debug(
@@ -305,7 +307,9 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         if generate_answer and self.llm_func and final_documents:
             try:
                 custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(query_text, final_documents, custom_prompt)
+                answer = self._generate_answer(
+                    query_text, final_documents, custom_prompt
+                )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"

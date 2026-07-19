@@ -21,7 +21,9 @@ class TestIRISVectorEngineFromConfig:
         # Import will raise ImportError until IRISVectorEngine is implemented
         from iris_vector_rag.core.engine import IRISVectorEngine
 
-        with patch("iris_vector_rag.config.manager.ConfigurationManager") as mock_cm_class:
+        with patch(
+            "iris_vector_rag.config.manager.ConfigurationManager"
+        ) as mock_cm_class:
             with patch(
                 "iris_vector_rag.core.connection.ConnectionManager"
             ) as mock_conn_class:
@@ -43,7 +45,9 @@ class TestIRISVectorEngineFromConfig:
         """from_config() creates a ConfigurationManager internally."""
         from iris_vector_rag.core.engine import IRISVectorEngine
 
-        with patch("iris_vector_rag.config.manager.ConfigurationManager") as mock_cm_class:
+        with patch(
+            "iris_vector_rag.config.manager.ConfigurationManager"
+        ) as mock_cm_class:
             with patch(
                 "iris_vector_rag.core.connection.ConnectionManager"
             ) as mock_conn_class:
@@ -63,7 +67,9 @@ class TestIRISVectorEngineFromConfig:
         """from_config() creates a ConnectionManager internally."""
         from iris_vector_rag.core.engine import IRISVectorEngine
 
-        with patch("iris_vector_rag.config.manager.ConfigurationManager") as mock_cm_class:
+        with patch(
+            "iris_vector_rag.config.manager.ConfigurationManager"
+        ) as mock_cm_class:
             with patch(
                 "iris_vector_rag.core.connection.ConnectionManager"
             ) as mock_conn_class:
@@ -239,12 +245,16 @@ class TestIRISVectorEngineFromConfigSchemaPrefix:
         """from_config(schema_prefix='CUSTOM') returns engine with custom prefix."""
         from iris_vector_rag.core.engine import IRISVectorEngine
 
-        with patch("iris_vector_rag.config.manager.ConfigurationManager") as mock_cm_class:
+        with patch(
+            "iris_vector_rag.config.manager.ConfigurationManager"
+        ) as mock_cm_class:
             with patch(
                 "iris_vector_rag.core.connection.ConnectionManager"
             ) as mock_conn_class:
                 mock_config = MagicMock()
-                mock_config.get_schema_prefix.return_value = "RAG"  # default from config
+                mock_config.get_schema_prefix.return_value = (
+                    "RAG"  # default from config
+                )
                 mock_cm_class.return_value = mock_config
 
                 mock_connection_manager = MagicMock()
@@ -260,7 +270,9 @@ class TestIRISVectorEngineFromConfigSchemaPrefix:
         """from_config() uses ConfigurationManager.get_schema_prefix() as fallback."""
         from iris_vector_rag.core.engine import IRISVectorEngine
 
-        with patch("iris_vector_rag.config.manager.ConfigurationManager") as mock_cm_class:
+        with patch(
+            "iris_vector_rag.config.manager.ConfigurationManager"
+        ) as mock_cm_class:
             with patch(
                 "iris_vector_rag.core.connection.ConnectionManager"
             ) as mock_conn_class:
@@ -286,7 +298,9 @@ class TestIRISVectorEngineConfigManager:
         from iris_vector_rag.core.engine import IRISVectorEngine
         from iris_vector_rag.config.manager import ConfigurationManager
 
-        with patch("iris_vector_rag.config.manager.ConfigurationManager") as mock_cm_class:
+        with patch(
+            "iris_vector_rag.config.manager.ConfigurationManager"
+        ) as mock_cm_class:
             with patch(
                 "iris_vector_rag.core.connection.ConnectionManager"
             ) as mock_conn_class:
@@ -309,7 +323,9 @@ class TestIRISVectorEngineConfigManager:
 
         mock_raw_conn = MagicMock()
 
-        with patch("iris_vector_rag.config.manager.ConfigurationManager") as mock_cm_class:
+        with patch(
+            "iris_vector_rag.config.manager.ConfigurationManager"
+        ) as mock_cm_class:
             mock_config = MagicMock(spec=ConfigurationManager)
             mock_cm_class.return_value = mock_config
 
@@ -391,7 +407,9 @@ class TestIRISVectorEngineEdgeCases:
         """from_config() passes kwargs to ConfigurationManager."""
         from iris_vector_rag.core.engine import IRISVectorEngine
 
-        with patch("iris_vector_rag.config.manager.ConfigurationManager") as mock_cm_class:
+        with patch(
+            "iris_vector_rag.config.manager.ConfigurationManager"
+        ) as mock_cm_class:
             with patch(
                 "iris_vector_rag.core.connection.ConnectionManager"
             ) as mock_conn_class:
@@ -406,7 +424,9 @@ class TestIRISVectorEngineEdgeCases:
                 IRISVectorEngine.from_config(config_path="/path/to/config.yaml")
 
                 # Verify ConfigurationManager was called with the kwarg
-                mock_cm_class.assert_called_once_with(config_path="/path/to/config.yaml")
+                mock_cm_class.assert_called_once_with(
+                    config_path="/path/to/config.yaml"
+                )
 
     def test_schema_prefix_type(self):
         """schema_prefix must be a string."""
@@ -433,7 +453,9 @@ class TestRAGPipelineEngineOverload:
         engine = IRISVectorEngine(mock_raw_conn)
 
         # Mock the vector store to avoid actual DB interaction
-        with patch("iris_vector_rag.storage.vector_store_iris.IRISVectorStore") as mock_vs:
+        with patch(
+            "iris_vector_rag.storage.vector_store_iris.IRISVectorStore"
+        ) as mock_vs:
             mock_vs.return_value = MagicMock()
             engine._vector_store = mock_vs.return_value
 
@@ -458,7 +480,9 @@ class TestRAGPipelineEngineOverload:
         cfg_mock = MagicMock(spec=ConfigurationManager)
 
         # Mock the vector store to avoid actual DB interaction
-        with patch("iris_vector_rag.storage.vector_store_iris.IRISVectorStore") as mock_vs:
+        with patch(
+            "iris_vector_rag.storage.vector_store_iris.IRISVectorStore"
+        ) as mock_vs:
             mock_vs_instance = MagicMock()
             mock_vs.return_value = mock_vs_instance
 

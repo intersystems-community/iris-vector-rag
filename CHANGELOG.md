@@ -14,7 +14,7 @@
 - Rewrite AGENTS.md from 4-line stub to full 370-line agent reference.
 - Add `source:` field to skill manifests for agent discoverability.
 - Update README MCP section with all 8 tools and CLI commands.
-- Add `[ai]` extra installing `iris-agentic-dev`.
+- Cross-reference `iris-agentic-dev` in AGENTS.md (not a pip extra; install from that repo).
 
 ## v0.11.4
 

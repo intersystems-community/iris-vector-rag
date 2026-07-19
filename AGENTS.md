@@ -95,7 +95,6 @@ examples/                  # compare_pipelines.py and usage examples
 # Install
 pip install -e ".[dev]"                     # Dev; add ,evaluation,colbert,dspy,mcp,api as needed
 pip install -e ".[mcp]"                     # With MCP server
-pip install -e ".[ai]"                      # With iris-agentic-dev cross-ref
 
 # IRIS lifecycle
 docker compose up -d                        # Start IRIS container (iris-vector-rag-iris, port 51972)
@@ -315,10 +314,7 @@ MCP tools for ObjectScript compilation and execution. Use iad when you need to i
 IRIS classes, run ObjectScript, or manage IRIS configuration alongside IVR pipelines.
 
 For MCP tool orchestration across IRIS packages, use iris-agentic-dev.
-
-```bash
-pip install iris-vector-rag[ai]    # installs iris-agentic-dev
-```
+Install separately — see the iris-agentic-dev repo for setup instructions.
 
 ### iris-vector-graph (ivg)
 

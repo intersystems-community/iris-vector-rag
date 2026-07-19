@@ -52,12 +52,16 @@ def schema_manager_factory():
 class TestSchemaPrefixContract:
     """Contract tests for schema prefix with real IRIS."""
 
-    def test_schema_prefix_attribute_set_correctly(self, unique_prefix, schema_manager_factory):
+    def test_schema_prefix_attribute_set_correctly(
+        self, unique_prefix, schema_manager_factory
+    ):
         """SchemaManager.schema_prefix is set to the supplied value."""
         sm = schema_manager_factory(unique_prefix)
         assert sm.schema_prefix == unique_prefix
 
-    def test_qn_generates_correct_qualified_name(self, unique_prefix, schema_manager_factory):
+    def test_qn_generates_correct_qualified_name(
+        self, unique_prefix, schema_manager_factory
+    ):
         """_qn() generates prefix.TableName with real prefix."""
         sm = schema_manager_factory(unique_prefix)
         assert sm._qn("SourceDocuments") == f"{unique_prefix}.SourceDocuments"
@@ -86,7 +90,9 @@ class TestSchemaPrefixContract:
             sm = SchemaManager(conn_mgr, cfg)
             assert sm.schema_prefix == unique_prefix
 
-    def test_ensure_schema_metadata_table_uses_prefix(self, unique_prefix, schema_manager_factory):
+    def test_ensure_schema_metadata_table_uses_prefix(
+        self, unique_prefix, schema_manager_factory
+    ):
         """
         ensure_schema_metadata_table() creates a table under the prefix schema.
 
@@ -113,7 +119,9 @@ class TestSchemaPrefixContract:
             # Drop the test table to clean up
             try:
                 cleanup_cursor = conn.cursor()
-                cleanup_cursor.execute(f"DROP TABLE IF EXISTS {sm._qn('SchemaMetadata')}")
+                cleanup_cursor.execute(
+                    f"DROP TABLE IF EXISTS {sm._qn('SchemaMetadata')}"
+                )
                 conn.commit()
                 cleanup_cursor.close()
             except Exception:

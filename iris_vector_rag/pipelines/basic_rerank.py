@@ -214,7 +214,9 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
         if generate_answer and self.llm_func and final_documents:
             try:
                 custom_prompt = kwargs.get("custom_prompt")
-                answer = self._generate_answer(query_text, final_documents, custom_prompt)
+                answer = self._generate_answer(
+                    query_text, final_documents, custom_prompt
+                )
             except Exception as e:
                 logger.warning(f"Answer generation failed: {e}")
                 answer = "Error generating answer"
@@ -254,7 +256,6 @@ class BasicRAGRerankingPipeline(BasicRAGPipeline):
                 "context_count": len(contexts_list),
             },
         }
-
 
         logger.info(
             f"Reranking RAG query completed - {len(final_documents)} docs returned (reranked: {reranked})"

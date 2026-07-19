@@ -97,6 +97,7 @@ def create_pipeline(
         effective_llm_func = llm_func
         if effective_llm_func is None:
             import os
+
             default_provider = "openai" if os.environ.get("OPENAI_API_KEY") else "stub"
             llm_provider = config_manager.get("llm.provider", default_provider)
             llm_model_name = config_manager.get("llm.model_name", "gpt-4.1-mini")
@@ -104,7 +105,11 @@ def create_pipeline(
                 provider=llm_provider, model_name=llm_model_name, **kwargs
             )
         return _create_pipeline_legacy(
-            pipeline_type, connection_manager, config_manager, effective_llm_func, **kwargs
+            pipeline_type,
+            connection_manager,
+            config_manager,
+            effective_llm_func,
+            **kwargs,
         )
 
     # Initialize configuration manager

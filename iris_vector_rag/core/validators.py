@@ -176,9 +176,12 @@ class PipelineValidator:
 
         # Check required methods exist and are concretely implemented (not still abstract)
         import inspect as _inspect
+
         for method_name in self.REQUIRED_METHODS:
             method = getattr(pipeline_class, method_name, None)
-            is_abstract = method is not None and getattr(method, "__isabstractmethod__", False)
+            is_abstract = method is not None and getattr(
+                method, "__isabstractmethod__", False
+            )
             if method is None or is_abstract:
                 violations.append(
                     PipelineContractViolation(

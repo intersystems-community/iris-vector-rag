@@ -108,8 +108,9 @@ class TestSchemaPrefixResolution:
         mock_cfg = _make_mock_cfg()
         mock_cfg.get_schema_prefix.return_value = "RAG"
 
-        env_without_prefix = {k: v for k, v in os.environ.items()
-                               if k != "IRIS_SCHEMA_PREFIX"}
+        env_without_prefix = {
+            k: v for k, v in os.environ.items() if k != "IRIS_SCHEMA_PREFIX"
+        }
         with patch.dict(os.environ, env_without_prefix, clear=True):
             sm = SchemaManager(mock_cm, mock_cfg)
         assert sm.schema_prefix == "RAG"
@@ -140,8 +141,9 @@ class TestSchemaPrefixResolution:
         mock_cfg = _make_mock_cfg()
         mock_cfg.get_schema_prefix.return_value = "CFG_PREFIX"
 
-        env_without_prefix = {k: v for k, v in os.environ.items()
-                               if k != "IRIS_SCHEMA_PREFIX"}
+        env_without_prefix = {
+            k: v for k, v in os.environ.items() if k != "IRIS_SCHEMA_PREFIX"
+        }
         with patch.dict(os.environ, env_without_prefix, clear=True):
             sm = SchemaManager(mock_cm, mock_cfg, schema_prefix="CTOR_PREFIX")
         assert sm.schema_prefix == "CTOR_PREFIX"
@@ -220,8 +222,9 @@ class TestConfigurationManagerSchemaPrefix:
     def test_get_schema_prefix_returns_default(self):
         """Without env var or config, get_schema_prefix() returns 'RAG'."""
         cfg = ConfigurationManager()
-        env_without_prefix = {k: v for k, v in os.environ.items()
-                               if k != "IRIS_SCHEMA_PREFIX"}
+        env_without_prefix = {
+            k: v for k, v in os.environ.items() if k != "IRIS_SCHEMA_PREFIX"
+        }
         with patch.dict(os.environ, env_without_prefix, clear=True):
             result = cfg.get_schema_prefix()
         assert result == "RAG"

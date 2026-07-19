@@ -121,9 +121,7 @@ class SchemaManager:
             )
         logger.debug(f"Schema prefix '{prefix}' validated successfully")
 
-    def _resolve_schema_prefix(
-        self, ctor_arg: Optional[str], config_manager
-    ) -> str:
+    def _resolve_schema_prefix(self, ctor_arg: Optional[str], config_manager) -> str:
         """
         Resolve schema prefix using priority: constructor arg > config_manager > 'RAG'.
 
@@ -1214,7 +1212,8 @@ class SchemaManager:
         try:
             # Use MERGE or INSERT/UPDATE pattern
             cursor.execute(
-                f"DELETE FROM {self._qn('SchemaMetadata')} WHERE table_name = ?", [table_name]
+                f"DELETE FROM {self._qn('SchemaMetadata')} WHERE table_name = ?",
+                [table_name],
             )
 
             # Handle configuration serialization safely
@@ -1270,7 +1269,9 @@ class SchemaManager:
 
             # Add chunk_id column
             logger.info(f"Adding chunk_id column to {self._qn('DocumentChunks')}...")
-            cursor.execute(f"ALTER TABLE {self._qn('DocumentChunks')} ADD chunk_id VARCHAR(255)")
+            cursor.execute(
+                f"ALTER TABLE {self._qn('DocumentChunks')} ADD chunk_id VARCHAR(255)"
+            )
 
             # Create index on chunk_id
             logger.info("Creating index on chunk_id...")
@@ -1586,7 +1587,9 @@ class SchemaManager:
                 cursor.execute(
                     f"CREATE UNIQUE INDEX idx_source_docs_doc_id_unique ON {self._qn('SourceDocuments')} (doc_id)"
                 )
-                logger.info(f"✅ Ensured unique index on {self._qn('SourceDocuments')}(doc_id)")
+                logger.info(
+                    f"✅ Ensured unique index on {self._qn('SourceDocuments')}(doc_id)"
+                )
             except Exception as e:
                 # Index may already exist or another benign condition; proceed
                 logger.debug(f"Unique index ensure for SourceDocuments.doc_id: {e}")

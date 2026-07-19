@@ -53,7 +53,7 @@ class TestSchemaManagerConstructorPure:
 
         # Assert
         mock_cm.get_connection.assert_not_called()
-        assert hasattr(schema_manager, '_initialized')
+        assert hasattr(schema_manager, "_initialized")
         assert schema_manager._initialized is False
 
     def test_schema_manager_ensure_schema_metadata_table_idempotent(self):
@@ -205,7 +205,7 @@ class TestBasicRAGPipelineConstructorPure:
 
         # Assert
         mock_cm.get_connection.assert_not_called()
-        assert hasattr(pipeline, '_lazy_init_done')
+        assert hasattr(pipeline, "_lazy_init_done")
         assert pipeline._lazy_init_done is False
 
     def test_basic_rag_pipeline_has_initialize_method(self):
@@ -223,7 +223,7 @@ class TestBasicRAGPipelineConstructorPure:
         pipeline = BasicRAGPipeline(mock_cm, mock_cfg)
 
         # Assert
-        assert hasattr(pipeline, 'initialize')
+        assert hasattr(pipeline, "initialize")
         assert callable(pipeline.initialize)
 
 
@@ -272,8 +272,7 @@ class TestLazyInitialization:
 
         # Mock the schema manager's ensure method
         with patch.object(
-            pipeline.vector_store.schema_manager,
-            'ensure_schema_metadata_table'
+            pipeline.vector_store.schema_manager, "ensure_schema_metadata_table"
         ) as mock_ensure:
             # Act: Call load_documents (it should trigger lazy init)
             try:
@@ -302,8 +301,7 @@ class TestLazyInitialization:
         pipeline = BasicRAGPipeline(mock_cm, mock_cfg)
 
         with patch.object(
-            pipeline.vector_store.schema_manager,
-            'ensure_schema_metadata_table'
+            pipeline.vector_store.schema_manager, "ensure_schema_metadata_table"
         ) as mock_ensure:
             # Act: Call load_documents twice
             for _ in range(2):
@@ -350,6 +348,7 @@ class TestPyTestCurrentTestGuardRemoved:
         """
         # Arrange
         import os
+
         # Ensure PYTEST_CURRENT_TEST is not set
         original = os.environ.get("PYTEST_CURRENT_TEST")
         if "PYTEST_CURRENT_TEST" in os.environ:

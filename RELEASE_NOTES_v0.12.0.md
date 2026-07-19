@@ -93,8 +93,8 @@ All existing call sites continue to work without modification. The
   gain `source:` field for agent discoverability.
 - **README** MCP server section updated to document all 8 exposed tools and
   CLI commands.
-- **`[ai]` extra** added: `pip install iris-vector-rag[ai]` installs
-  `iris-agentic-dev` for ObjectScript MCP tool access alongside pipelines.
+- **AGENTS.md** now cross-references `iris-agentic-dev` for ObjectScript MCP
+  tool access alongside pipelines (install separately from that repo).
 
 ### Testing
 
