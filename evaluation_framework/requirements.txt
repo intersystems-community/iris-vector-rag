@@ -19,7 +19,7 @@ sentence-transformers>=2.2.0
 datasets>=2.13.0
 
 # Biomedical NLP
-spacy>=3.6.0
+spacy>=3.8.14
 scispacy>=0.6.2
 
 # Statistical analysis
