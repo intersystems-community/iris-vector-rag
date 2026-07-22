@@ -37,7 +37,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 - [ ] T005 [US-FDN] Implement `QueryOptions` dataclass + `normalize_query_params()` in `iris_vector_rag/core/query_options.py` (depends on T004)
 - [ ] T006 [P] Unit test for the delegation seam in `tests/unit/test_composable_mixin.py` (normalize → run_retrieval → maybe_rerank; supported_retrieval_modes gate) — write FIRST, MUST FAIL
 - [ ] T007 [US-FDN] Implement `ComposableQueryMixin` in `iris_vector_rag/core/composable_query.py` (`_normalize_query`, `_run_retrieval`, `_maybe_rerank`, `supported_retrieval_modes`) (depends on T005, T006)
-- [ ] T008 [US-FDN] Backward-compat golden-response harness in `tests/contract/test_backward_compat_golden.py` capturing current `basic`/`crag`/`graphrag` query outputs (Principle IV safety net, supports SC-007)
+- [ ] T008 [US-FDN] Backward-compat golden-response harness in `tests/contract/test_backward_compat_golden.py` capturing current query outputs for ALL registered pipelines (`basic`, `basic_rerank`, `crag`, `graphrag`, `pylate_colbert`, `multi_query_rrf`) (Principle IV safety net, supports SC-007 and FR-013 parity)
 
 **Checkpoint**: Composable plumbing ready; unified-signature and composable-option stories can proceed.
 
@@ -52,7 +52,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 ### Tests (write FIRST, MUST FAIL)
 
 - [ ] T009 [P] [US1] Contract test in `tests/contract/test_metadata_filter_applied.py`: filter forwarded, parameterized/injection-safe (Principle VIII), threshold applied, unknown key raises clear error (FR-001/002/003)
-- [ ] T010 [P] [US1] Integration test (`.DAT` fixture `medical-graphrag-20`) in `tests/integration/test_filtered_search.py`: 100% of results match filter (SC-001)
+- [ ] T010 [P] [US1] Integration test in `tests/integration/test_filtered_search.py`: 100% of results match filter (SC-001). **Fixture**: the only existing `.DAT` fixture is `mcp-basic-rag-5docs` (5 docs, <10 so programmatic augmentation is permitted per Principle II); `medical-graphrag-20` does NOT exist in this repo. Provision a fixture that carries ≥2 distinct `source` values (extend `mcp-basic-rag-5docs` or create `composable-filter` via `make fixture-create`) so the filter has something to discriminate.
 
 ### Implementation
 
@@ -78,10 +78,10 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 - [ ] T015 [US2] Route `BasicRAGPipeline.query()` through `_normalize_query` in `iris_vector_rag/pipelines/basic.py`
 - [ ] T016 [P] [US2] Same for `iris_vector_rag/pipelines/crag.py`
-- [ ] T017 [P] [US2] Same for `iris_vector_rag/pipelines/hybrid_graphrag.py` (reconcile existing `query`/`query_text` dual-accept)
+- [ ] T017 [P] [US2] Same for `iris_vector_rag/pipelines/hybrid_graphrag.py` — this IS the registered `graphrag` type (reconcile existing `query`/`query_text` dual-accept)
 - [ ] T018 [P] [US2] Same for `iris_vector_rag/pipelines/multi_query_rrf.py` (normalize the divergent `top_k=20` default)
-- [ ] T019 [P] [US2] Same for `iris_vector_rag/pipelines/graphrag.py` and the pylate_colbert pipeline
-- [ ] T020 [US2] Standardize `include_sources` default and response-key assembly via a mixin helper (FR-006); update golden harness expectations only where response is additively enriched
+- [ ] T019 [P] [US2] Same for `iris_vector_rag/pipelines/colbert_pylate/pylate_pipeline.py` (registered `pylate_colbert` type). NOTE: `graphrag.py`/`graphrag_merged.py`/`iris_global_graphrag.py` are legacy, NOT the registered `graphrag` type, and are out of scope.
+- [ ] T020 [US2] Standardize `include_sources` default and response-key assembly via a mixin helper (FR-006). Constraint (Principle IV): `answer` and `retrieved_documents` MUST remain byte-identical to the T008 golden baseline; only NEW `metadata` keys may be added. Do NOT relax golden expectations for `answer`/`retrieved_documents` — a change there is a regression, not an enrichment.
 
 **Checkpoint**: "Swap pipelines with one line" holds (SC-002); existing callers unaffected.
 
@@ -116,7 +116,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 ### Tests (write FIRST, MUST FAIL)
 
 - [ ] T025 [P] [US4] Contract test in `tests/contract/test_retrieval_modes.py`: mode selection, `hybrid`=weighted score fusion vs `rrf`=rank fusion, per-source scores in metadata, prereq error not silent fallback (FR-010/011/012; C-M1..M7)
-- [ ] T026 [P] [US4] Integration test (`.DAT` fixture) in `tests/integration/test_hybrid_rrf_modes.py`: hybrid vs rrf differ; weights shift ranking (SC-004)
+- [ ] T026 [P] [US4] Integration test in `tests/integration/test_hybrid_rrf_modes.py`: hybrid vs rrf differ; weights shift ranking (SC-004). **Fixture**: no ≥10-doc `.DAT` fixture with a BM25 text index exists today (only `mcp-basic-rag-5docs` and JSON graphrag fixtures). Provision one (≥10 docs in `RAG.SourceDocuments` + iris-vector-graph BM25 index) via `make fixture-create` — required by Principle II for ≥10 entities.
 
 ### Implementation
 
@@ -124,7 +124,7 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 - [ ] T028 [US4] Implement `RetrievalEngine` mapping modes→strategies, reusing `HybridRetrievalMethods` and `_hybrid_utils`, in `iris_vector_rag/retrieval/engine.py`
 - [ ] T029 [US4] Confirm the iris-vector-graph BM25 entry point and wire the `text` source (research U1 follow-up) in `iris_vector_rag/retrieval/engine.py`
 - [ ] T030 [US4] Wire `retrieval`/`weights` through `ComposableQueryMixin._run_retrieval`; echo `vector_score`/`text_score`/`fusion_score` into `Document.metadata` (FR-011)
-- [ ] T031 [US4] Declare `supported_retrieval_modes` on each pipeline and enforce parity (accept every mode arg; serve or raise prereq error) (retrieval_modes.md parity contract)
+- [ ] T031 [US4] Declare `supported_retrieval_modes` on each registered pipeline and enforce parity (accept every mode arg; serve or raise prereq error) (retrieval_modes.md parity contract). For `pylate_colbert`: map modes onto late-interaction retrieval where sensible, otherwise raise the FR-012 prerequisite error naming the unsupported mode (spec edge case); `rerank` still applies.
 
 **Checkpoint**: MongoDB-style composable hybrid+rerank works across pipelines (SC-004); combined `retrieval="rrf", rerank=True` verified (C-R6).
 
@@ -247,10 +247,10 @@ US3/US4 have a real build dependency on US2's `ComposableQueryMixin`/`QueryOptio
 
 ```bash
 # After T015 (basic.py), adopt normalization across pipelines in parallel:
-Task: "Route crag.query() through _normalize_query in iris_vector_rag/pipelines/crag.py"          # T016
-Task: "Route hybrid_graphrag.query() through _normalize_query in .../hybrid_graphrag.py"           # T017
-Task: "Route multi_query_rrf.query() through _normalize_query in .../multi_query_rrf.py"           # T018
-Task: "Route graphrag.py + pylate_colbert through _normalize_query"                                # T019
+Task: "Route crag.query() through _normalize_query in iris_vector_rag/pipelines/crag.py"                 # T016
+Task: "Route hybrid_graphrag.query() (the `graphrag` type) through _normalize_query"                     # T017
+Task: "Route multi_query_rrf.query() through _normalize_query in .../multi_query_rrf.py"                  # T018
+Task: "Route colbert_pylate/pylate_pipeline.py (the `pylate_colbert` type) through _normalize_query"     # T019
 ```
 
 ---

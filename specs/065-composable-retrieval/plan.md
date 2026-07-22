@@ -73,22 +73,27 @@ specs/065-composable-retrieval/
 ```text
 iris_vector_rag/
 ├── core/
-│   ├── base.py                     # RAGPipeline ABC — add concrete composable query helpers (mixin/seam)
+│   ├── base.py                     # RAGPipeline ABC — unchanged contract; pipelines opt into the mixin
 │   ├── query_options.py            # NEW: QueryOptions dataclass + normalize_query_params() (query/query_text alias, defaults)
+│   ├── composable_query.py         # NEW: ComposableQueryMixin (the delegation seam) — the mixin lives here, NOT in base.py
 │   └── vector_store.py             # VectorStore ABC — clarify return-type contract (U3)
 ├── retrieval/                      # NEW package: the composable retrieval layer
 │   ├── __init__.py
 │   ├── engine.py                   # RetrievalEngine: resolves mode -> strategy (vector/text/hybrid/rrf)
 │   ├── modes.py                    # Mode registry + prerequisite declarations + clear-error raising (FR-012)
 │   └── rerank.py                   # Reranker resolver (bool|str|callable) + process-level cache (FR-015)
-├── pipelines/
+├── pipelines/                      # Registered types (per __init__.py factory): basic, basic_rerank, crag,
+│   │                               #   graphrag→hybrid_graphrag.py, pylate_colbert→colbert_pylate/, multi_query_rrf
 │   ├── basic.py                    # Fix FR-001/002 (forward filter + threshold); delegate to composable seam
 │   ├── basic_rerank.py             # Reuse cached reranker; becomes thin "basic + rerank=True" convenience
 │   ├── crag.py                     # Adopt unified query() signature + composable seam
-│   ├── graphrag.py / hybrid_graphrag.py
+│   ├── hybrid_graphrag.py          # This IS the registered `graphrag` type (HybridGraphRAGPipeline)
+│   ├── colbert_pylate/pylate_pipeline.py  # Registered `pylate_colbert` type (PyLateColBERTPipeline)
 │   ├── multi_query_rrf.py
 │   ├── _hybrid_utils.py            # Reused for fusion/rrf/text/vector -> Document conversion
 │   └── hybrid_graphrag_retrieval.py# Reused; BM25 text path surfaced through RetrievalEngine
+│   # NOTE: graphrag.py / graphrag_merged.py / iris_global_graphrag.py are NOT the registered `graphrag`
+│   #       type and are OUT OF SCOPE for this feature.
 ├── storage/
 │   ├── vector_store_iris.py        # Fix polymorphic return type (U3); ensure filter+threshold applied
 │   └── metadata_filter_manager.py  # Parameterized filtering (Principle VIII)
