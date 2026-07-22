@@ -14,6 +14,7 @@ from ..core.base import RAGPipeline
 from ..core.connection import ConnectionManager
 from ..core.models import Document
 from ..embeddings.manager import EmbeddingManager
+from ..exceptions import VectorStoreConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -452,23 +453,53 @@ class BasicRAGPipeline(RAGPipeline):
         include_sources = kwargs.get("include_sources", True)
         custom_prompt = kwargs.get("custom_prompt")
         generate_answer = kwargs.get("generate_answer", True)
-        kwargs.get("metadata_filter")
-        kwargs.get("similarity_threshold", 0.0)
+        metadata_filter = kwargs.get("metadata_filter")
+        similarity_threshold = kwargs.get("similarity_threshold", 0.0)
         retrieval_method = kwargs.get("method", "vector")
+
+        logger.debug(
+            "BasicRAG retrieval: top_k=%s, metadata_filter=%s, similarity_threshold=%s",
+            top_k,
+            metadata_filter,
+            similarity_threshold,
+        )
 
         # Step 1: Retrieve relevant documents
         try:
-            # Use vector store for retrieval
+            # Use vector store for retrieval, forwarding the metadata filter (FR-001)
             if hasattr(self, "vector_store") and self.vector_store:
                 retrieved_documents = self.vector_store.similarity_search(
-                    query, k=top_k
+                    query, k=top_k, filter=metadata_filter
                 )
             else:
                 logger.warning("No vector store available")
                 retrieved_documents = []
+        except VectorStoreConfigurationError:
+            # FR-003: surface invalid/unsupported filter keys (and non-scalar values)
+            # with a clear error instead of silently returning unfiltered/empty results.
+            raise
         except Exception as e:
             logger.warning(f"Document retrieval failed: {e}")
             retrieved_documents = []
+
+        # FR-002: apply similarity threshold post-retrieval. Scores are attached to
+        # each Document's metadata by the vector store ("score"/"similarity").
+        if similarity_threshold and similarity_threshold > 0.0:
+            before = len(retrieved_documents)
+            retrieved_documents = [
+                doc
+                for doc in retrieved_documents
+                if float(
+                    doc.metadata.get("score", doc.metadata.get("similarity", 0.0))
+                )
+                >= similarity_threshold
+            ]
+            logger.debug(
+                "Applied similarity_threshold=%s: %s -> %s documents",
+                similarity_threshold,
+                before,
+                len(retrieved_documents),
+            )
 
         # Step 2: Generate answer using LLM (if enabled and LLM available)
         if generate_answer and self.llm_func and retrieved_documents:

@@ -21,9 +21,14 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 **Purpose**: Scaffolding needed by the composable layer; all defaults preserve current behavior.
 
-- [ ] T001 Create `iris_vector_rag/retrieval/` package with stub modules `__init__.py`, `engine.py`, `modes.py`, `rerank.py`
-- [ ] T002 [P] Add additive, documented config keys to `iris_vector_rag/config/default_config.yaml` (`retrieval.default_mode`, `rerank` defaults, `embeddings.mode`/`text_in` toggle) — defaults MUST reproduce current behavior (Principle IV)
-- [ ] T003 [P] Add benchmark scaffold `tests/benchmarks/test_composable_overhead.py` asserting <5ms added overhead when no composable options passed (Principle VI)
+> **DEFERRED (first-PR slice, 2026-07-22)**: T001–T003 are plumbing for the composable
+> layer used by US2/US3/US4/US7. The first-PR slice (US1 filter fix + US8 README fix)
+> does not use them, so per Principle IX (YAGNI — no unused code) they are deferred to
+> the foundational PR that lands US2. Left unchecked intentionally.
+
+- [ ] T001 Create `iris_vector_rag/retrieval/` package with stub modules `__init__.py`, `engine.py`, `modes.py`, `rerank.py` *(deferred — not needed by the slice)*
+- [ ] T002 [P] Add additive, documented config keys to `iris_vector_rag/config/default_config.yaml` (`retrieval.default_mode`, `rerank` defaults, `embeddings.mode`/`text_in` toggle) — defaults MUST reproduce current behavior (Principle IV) *(deferred — not needed by the slice)*
+- [ ] T003 [P] Add benchmark scaffold `tests/benchmarks/test_composable_overhead.py` asserting <5ms added overhead when no composable options passed (Principle VI) *(deferred — no composable options in the slice)*
 
 ---
 
@@ -51,14 +56,14 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 ### Tests (write FIRST, MUST FAIL)
 
-- [ ] T009 [P] [US1] Contract test in `tests/contract/test_metadata_filter_applied.py`: filter forwarded, parameterized/injection-safe (Principle VIII), threshold applied, unknown key raises clear error (FR-001/002/003)
-- [ ] T010 [P] [US1] Integration test in `tests/integration/test_filtered_search.py`: 100% of results match filter (SC-001). **Fixture**: the only existing `.DAT` fixture is `mcp-basic-rag-5docs` (5 docs, <10 so programmatic augmentation is permitted per Principle II); `medical-graphrag-20` does NOT exist in this repo. Provision a fixture that carries ≥2 distinct `source` values (extend `mcp-basic-rag-5docs` or create `composable-filter` via `make fixture-create`) so the filter has something to discriminate.
+- [X] T009 [P] [US1] Contract test in `tests/contract/test_metadata_filter_applied.py`: filter forwarded, parameterized/injection-safe (Principle VIII), threshold applied, unknown key raises clear error (FR-001/002/003)
+- [X] T010 [P] [US1] Integration test in `tests/integration/test_filtered_search.py`: 100% of results match filter (SC-001). **Fixture**: the only existing `.DAT` fixture is `mcp-basic-rag-5docs` (5 docs, <10 so programmatic augmentation is permitted per Principle II); `medical-graphrag-20` does NOT exist in this repo. Provision a fixture that carries ≥2 distinct `source` values (extend `mcp-basic-rag-5docs` or create `composable-filter` via `make fixture-create`) so the filter has something to discriminate.
 
 ### Implementation
 
-- [ ] T011 [US1] Forward `metadata_filter` + `similarity_threshold` from `BasicRAGPipeline.query()` to the vector store in `iris_vector_rag/pipelines/basic.py` (fix discarded params at ~lines 455–464)
-- [ ] T012 [US1] Ensure `IRISVectorStore` applies the filter via parameterized SQL and post-retrieval threshold in `iris_vector_rag/storage/vector_store_iris.py` (research U2)
-- [ ] T013 [US1] Add structured logging of applied filter/threshold + empty-result flag in `iris_vector_rag/pipelines/basic.py` (Principle VII)
+- [X] T011 [US1] Forward `metadata_filter` + `similarity_threshold` from `BasicRAGPipeline.query()` to the vector store in `iris_vector_rag/pipelines/basic.py` (fix discarded params at ~lines 455–464)
+- [X] T012 [US1] Ensure `IRISVectorStore` applies the filter via parameterized SQL and post-retrieval threshold in `iris_vector_rag/storage/vector_store_iris.py` (research U2)
+- [X] T013 [US1] Add structured logging of applied filter/threshold + empty-result flag in `iris_vector_rag/pipelines/basic.py` (Principle VII)
 
 **Checkpoint**: Filtered/threshold search works and is injection-safe. MVP shippable.
 
@@ -195,11 +200,11 @@ Single-project library: package `iris_vector_rag/`, tests `tests/{contract,integ
 
 ### Tests (write FIRST, MUST FAIL)
 
-- [ ] T041 [P] [US8] Test in `tests/contract/test_readme_imports.py`: all README quickstart imports resolve (SC-006)
+- [X] T041 [P] [US8] Test in `tests/contract/test_readme_imports.py`: all README quickstart imports resolve (SC-006)
 
 ### Implementation
 
-- [ ] T042 [US8] Replace `iris_rag` → `iris_vector_rag` in `README.md` and correct package self-references in top-level docstrings/comments (FR-017)
+- [X] T042 [US8] Replace `iris_rag` → `iris_vector_rag` in `README.md` and correct package self-references in top-level docstrings/comments (FR-017)
 
 **Checkpoint**: First-run onboarding works.
 

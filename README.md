@@ -86,7 +86,7 @@ from iris_vector_rag import create_pipeline
 pipeline = create_pipeline('basic', validate_requirements=True)
 
 # Load your documents
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 docs = [
     Document(
@@ -190,7 +190,7 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 **Automatic concurrency management:**
 
 ```python
-from iris_rag.storage import IRISVectorStore
+from iris_vector_rag.storage import IRISVectorStore
 
 # Connection pool handles concurrency automatically
 store = IRISVectorStore()

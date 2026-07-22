@@ -1,5 +1,5 @@
-# iris_rag package
-# This file makes the iris_rag directory a Python package.
+# iris_vector_rag package
+# This file makes the iris_vector_rag directory a Python package.
 
 from typing import Any, Callable, Dict, List, Optional
 
