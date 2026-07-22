@@ -11,6 +11,15 @@ MongoDB's 2025–2026 vector search releases collapsed the retrieve → fuse →
 
 `iris-vector-rag` already has all of these primitives, but exposes them as separate *pipeline types* (`basic`, `basic_rerank`, `graphrag`) with inconsistent signatures, plus a set of correctness and ergonomics defects that surface on first use. This feature brings the developer experience to parity with MongoDB's composable model **while preserving backward compatibility** with existing pipeline usage.
 
+## Clarifications
+
+### Session 2026-07-22
+
+- Q: How should the `hybrid` and `rrf` retrieval modes relate — what algorithm does each mean? → A: Distinct algorithms — `hybrid` = weighted relative-score fusion (like MongoDB `$scoreFusion`, uses `weights`); `rrf` = reciprocal rank fusion (like `$rankFusion`, rank-based).
+- Q: Which pipelines must support the new query-time composable options (rerank + retrieval mode)? → A: Full parity — every registered pipeline must support every mode, erroring only where infrastructure is genuinely absent.
+- Q: What powers the `text` side of the non-graph hybrid path? → A: iris-vector-graph's BM25 text ranking (a text-search component, independent of a populated knowledge graph).
+- Q: Canonical name for the unified first query parameter? → A: `query` (with `query_text` retained as a backward-compatible alias).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Filtered search actually filters (Priority: P1)
@@ -64,16 +73,16 @@ A developer wants reranked results without committing to a dedicated pipeline ty
 
 ### User Story 4 - Hybrid / fusion retrieval as a query-time option (Priority: P2)
 
-A developer selects a retrieval mode (`vector`, `text`, `hybrid`, `rrf`) and optional per-source fusion weights on `query()`, mirroring MongoDB's `$rankFusion`/`$scoreFusion`. Basic vector + text hybrid works without requiring the full knowledge-graph infrastructure.
+A developer selects a retrieval mode (`vector`, `text`, `hybrid`, `rrf`) and optional per-source fusion weights on `query()`, mirroring MongoDB's `$rankFusion`/`$scoreFusion`. `hybrid` and `rrf` are **distinct algorithms**: `hybrid` performs weighted relative-score fusion (uses `weights`, like `$scoreFusion`), while `rrf` performs reciprocal rank fusion (rank-based, like `$rankFusion`). The `text` side is powered by **iris-vector-graph's BM25** text ranking, so hybrid works without a populated knowledge graph.
 
-**Why this priority**: Completes the composable-retrieval parity story alongside reranking. Slightly lower than US3 because it touches more subsystems (text search, fusion) and depends on US2.
+**Why this priority**: Completes the composable-retrieval parity story alongside reranking. Slightly lower than US3 because it touches more subsystems (BM25 text search, fusion) and depends on US2.
 
 **Independent Test**: On a pipeline backed by both vector and text search, run `retrieval="vector"`, `retrieval="text"`, and `retrieval="hybrid"` for the same query and confirm result sets differ and fusion weights shift ranking as expected.
 
 **Acceptance Scenarios**:
 
-1. **Given** a pipeline with vector and text search available, **When** the developer calls `query("...", retrieval="hybrid", weights={"vector": 0.7, "text": 0.3})`, **Then** results are a weighted fusion of both and metadata records the per-source scores.
-2. **Given** `retrieval="rrf"`, **When** the developer queries, **Then** results are combined via reciprocal rank fusion.
+1. **Given** a pipeline with vector and BM25 text search available, **When** the developer calls `query("...", retrieval="hybrid", weights={"vector": 0.7, "text": 0.3})`, **Then** results are a weighted relative-score fusion of both and metadata records the per-source scores.
+2. **Given** `retrieval="rrf"`, **When** the developer queries, **Then** results are combined via reciprocal rank fusion (rank-based, weights influence only the RRF contribution, not raw scores).
 3. **Given** a `retrieval` mode the current pipeline cannot satisfy (e.g. graph mode without a knowledge graph), **When** the developer queries, **Then** the system raises a clear error naming the missing prerequisite rather than silently falling back.
 4. **Given** no `retrieval` argument, **When** the developer queries, **Then** behavior matches today's default for that pipeline (backward compatible).
 
@@ -153,15 +162,15 @@ A new developer copies the README quickstart and it runs. Today the README impor
 - **FR-001**: The primary pipeline's `query()` MUST apply a supplied `metadata_filter` to retrieval so that only documents matching the filter are returned.
 - **FR-002**: The primary pipeline's `query()` MUST apply a supplied `similarity_threshold` so that documents below the threshold are excluded.
 - **FR-003**: When a filter key is not permitted, the system MUST raise a clear, actionable error rather than ignoring the filter.
-- **FR-004**: All registered pipelines MUST accept a consistent set of core query parameters with consistent names (canonical query parameter, `top_k`, `generate_answer`, `include_sources`) and consistent default values.
-- **FR-005**: The system MUST preserve backward compatibility for existing pipeline-specific parameter names via aliases, without breaking existing caller code.
+- **FR-004**: All registered pipelines MUST accept a consistent set of core query parameters with consistent names — canonical query parameter `query`, plus `top_k`, `generate_answer`, `include_sources` — and consistent default values.
+- **FR-005**: The system MUST preserve backward compatibility for existing pipeline-specific parameter names via aliases (notably `query_text` as an alias for `query`), without breaking existing caller code.
 - **FR-006**: All pipelines MUST return the same standardized response structure (`query`, `answer`, `retrieved_documents`, `contexts`, `metadata`, and `sources` when requested).
-- **FR-007**: `query()` MUST accept a rerank option expressible as a boolean, a named strategy, or a caller-supplied callable, applicable on any pipeline regardless of type.
+- **FR-007**: `query()` MUST accept a rerank option expressible as a boolean, a named strategy, or a caller-supplied callable, applicable on **every registered pipeline** regardless of type (reranking is a universal post-retrieval step).
 - **FR-008**: Reranking MUST be applied after retrieval/fusion, and reranked scores MUST be surfaced in document metadata.
 - **FR-009**: When reranking fails at runtime, the system MUST fall back to the pre-rerank ordering and record the degradation, rather than failing the query.
-- **FR-010**: `query()` MUST accept a retrieval-mode selector supporting at least `vector`, `text`, `hybrid`, and `rrf`, applicable without requiring the developer to switch pipeline types.
-- **FR-011**: `query()` MUST accept optional per-source fusion weights that influence hybrid/fusion ranking, and MUST record per-source scores in metadata.
-- **FR-012**: When a requested retrieval mode's prerequisites are unmet (e.g. no knowledge graph for graph mode), the system MUST raise a clear error naming the missing prerequisite instead of silently substituting a different mode.
+- **FR-010**: `query()` MUST accept a retrieval-mode selector supporting `vector`, `text`, `hybrid`, and `rrf` on **every registered pipeline** (full parity), where: `text` uses iris-vector-graph BM25 ranking; `hybrid` performs weighted relative-score fusion of vector + BM25; and `rrf` performs reciprocal rank fusion. Modes MUST NOT require switching pipeline types.
+- **FR-011**: `query()` MUST accept optional per-source fusion weights; in `hybrid` mode weights scale the normalized per-source scores, and in `rrf` mode weights scale each source's reciprocal-rank contribution. Per-source scores MUST be recorded in metadata.
+- **FR-012**: When a requested retrieval mode's prerequisites are genuinely absent (e.g. graph-traversal mode without a populated knowledge graph, or BM25 without iris-vector-graph installed), the system MUST raise a clear error naming the missing prerequisite instead of silently substituting a different mode.
 - **FR-013**: Omitting the new composable options (rerank, retrieval mode, weights) MUST reproduce each pipeline's current default behavior (backward compatible).
 - **FR-014**: The vector store search API MUST expose a predictable, documented return type per entry point, so callers do not need to branch on runtime argument type.
 - **FR-015**: The cross-encoder reranker MUST be initialized at most once per distinct reranker configuration per process and reused across queries.
@@ -173,7 +182,7 @@ A new developer copies the README quickstart and it runs. Today the README impor
 - **Query request**: The developer-facing inputs to `query()` — canonical query text, `top_k`, `generate_answer`, `include_sources`, `metadata_filter`, `similarity_threshold`, `rerank`, `retrieval` mode, and fusion `weights`.
 - **Retrieval result**: A retrieved document plus its scores (vector score, text score, fusion score, rerank score) exposed consistently in metadata.
 - **Reranker strategy**: A boolean/named/callable specification resolving to a reranking implementation, with cached instances keyed by configuration.
-- **Retrieval mode**: A named strategy (`vector`, `text`, `hybrid`, `rrf`, and pipeline-specific extensions) with declared prerequisites.
+- **Retrieval mode**: A named strategy with declared prerequisites — `vector` (embedding similarity), `text` (iris-vector-graph BM25), `hybrid` (weighted relative-score fusion of vector + BM25), `rrf` (reciprocal rank fusion), plus pipeline-specific extensions (e.g. graph traversal).
 
 ## Success Criteria *(mandatory)*
 
@@ -181,8 +190,8 @@ A new developer copies the README quickstart and it runs. Today the README impor
 
 - **SC-001**: 100% of `query()` calls that supply a metadata filter return only documents matching that filter (0% leakage of non-matching documents).
 - **SC-002**: A developer can switch between any two registered pipeline types by changing only the pipeline name string, with no other code changes required, for the core query parameters — verified across 100% of registered pipelines.
-- **SC-003**: A developer can enable reranking on the primary pipeline by adding a single query argument, without changing pipeline type or bypassing the factory.
-- **SC-004**: A developer can perform hybrid/fusion retrieval by adding a single query argument (plus optional weights), without switching pipeline type.
+- **SC-003**: A developer can enable reranking on any registered pipeline by adding a single query argument, without changing pipeline type or bypassing the factory — verified across 100% of registered pipelines.
+- **SC-004**: A developer can perform `vector`, `text`, `hybrid`, and `rrf` retrieval on any registered pipeline by adding a single query argument (plus optional weights), without switching pipeline type; unmet prerequisites produce a clear, named error in 100% of cases rather than a silent fallback.
 - **SC-005**: Repeated reranked queries in a single process load the reranker model at most once, reducing steady-state per-query reranking overhead to near zero model-load cost.
 - **SC-006**: 100% of README quickstart import statements execute successfully on a clean install.
 - **SC-007**: All existing pipeline usages and tests continue to pass unchanged (zero backward-compatibility regressions).
@@ -191,8 +200,9 @@ A new developer copies the README quickstart and it runs. Today the README impor
 ## Assumptions
 
 - **Backward compatibility is additive**: Existing pipeline types (`basic`, `basic_rerank`, `graphrag`, etc.) remain available. The composable options are added to the shared query surface; `basic_rerank` continues to work as a convenience alias for "basic + rerank".
-- **Canonical query parameter**: The unified first parameter is standardized to a single canonical name, with the alternate name retained as a backward-compatible alias. (Exact canonical choice deferred to `/speckit.clarify` or `/speckit.plan`.)
-- **Hybrid without graph**: Query-time `hybrid`/`rrf` modes fuse vector + native IRIS text search and do NOT require the knowledge-graph / `iris_graph_core` infrastructure. Graph-based retrieval remains available only where a knowledge graph exists (e.g. graphrag).
+- **Canonical query parameter**: The unified first parameter is `query`, with `query_text` retained as a backward-compatible alias (resolved in clarification session 2026-07-22).
+- **Full parity across pipelines**: Query-time `rerank` and the `vector`/`text`/`hybrid`/`rrf` retrieval modes are supported on every registered pipeline (resolved 2026-07-22). Reranking is a universal post-retrieval step. Fusion modes rely on iris-vector-graph BM25 for the text side, which is independent of a populated knowledge graph; graph-traversal retrieval remains gated on an actual knowledge graph. Where a genuine prerequisite is absent, the query errors clearly (FR-012) rather than silently falling back.
+- **BM25 dependency**: The `text` (and therefore `hybrid`/`rrf`) modes depend on the iris-vector-graph package's BM25 text-ranking capability being installed and its text index available. This is the same package already required by HybridGraphRAG, used here only for BM25 text search, not graph traversal.
 - **Rerank ordering**: Reranking is applied after retrieval and any fusion step, matching MongoDB's `$rerank`-after-`$rankFusion` model.
 - **Return-type fix is non-breaking**: Predictable return types are achieved by documenting/adding explicit entry points rather than silently changing the existing polymorphic method's behavior for current callers.
 - **Native embedding availability**: "Text-in" mode depends on the connected IRIS instance supporting native EMBEDDING; where unavailable, the developer supplies an embedding function as today.
