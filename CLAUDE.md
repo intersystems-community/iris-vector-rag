@@ -499,6 +499,8 @@ logging:
 ## Active Technologies
 - Python 3.10+ (existing codebase uses 3.10-3.12) (051-enterprise-enhancements)
 - InterSystems IRIS database (RAG.SourceDocuments table - existing) (051-enterprise-enhancements)
+- Python 3.10–3.12 (matches existing codebase) + InterSystems IRIS (native vector search); `iris-vector-graph` ≥2.0.0 (`iris_graph_core`) for BM25 text ranking and RRF/score fusion; `sentence-transformers` `CrossEncoder` for reranking; existing `ConfigurationManager` (065-composable-retrieval)
+- IRIS `RAG.SourceDocuments` + vector tables; `iris_graph_core` BM25/text index (065-composable-retrieval)
 
 ## Recent Changes
 - 051-enterprise-enhancements: Added Python 3.10+ (existing codebase uses 3.10-3.12)
