@@ -447,6 +447,7 @@ class BasicRAGPipeline(RAGPipeline):
                         "metadata_filter",
                         "similarity_threshold",
                         "custom_prompt",
+                        "rerank",
                     )
                     if k in kwargs
                 },
@@ -526,6 +527,14 @@ class BasicRAGPipeline(RAGPipeline):
                 similarity_threshold,
                 before,
                 len(retrieved_documents),
+            )
+
+        # Step 1b: Apply query-time reranking (FR-007 / US3)
+        if opts.rerank:
+            from iris_vector_rag.core.composable_query import ComposableQueryMixin
+
+            retrieved_documents = ComposableQueryMixin._maybe_rerank(
+                self, retrieved_documents, opts
             )
 
         # Step 2: Generate answer using LLM (if enabled and LLM available)
