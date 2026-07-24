@@ -3,6 +3,7 @@
 ## System Requirements
 
 ### Minimum Requirements
+
 - **Operating System**: macOS, Linux, or Windows with WSL2
 - **Python**: Version 3.11 or higher
 - **Memory**: 2GB available RAM
@@ -10,11 +11,13 @@
 - **Docker**: For running InterSystems IRIS database
 
 ### Recommended Requirements
-- **Memory**: 4GB+ available RAM for better performance
+
+- **Memory**: 4GB+ available RAM
 - **Storage**: 10GB+ for larger document collections
 - **Internet**: For downloading models and API access
 
 ### Required Software
+
 - **Docker and Docker Compose**: For database management
 - **Git**: For cloning the repository
 
@@ -23,6 +26,7 @@
 ### Step 1: Install Prerequisites
 
 #### Install Docker
+
 - **macOS**: Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop)
 - **Linux**: Follow the [official Docker installation guide](https://docs.docker.com/engine/install/)
 - **Windows**: Install Docker Desktop with WSL2 backend
@@ -41,6 +45,7 @@ cd rag-templates
 ### Step 3: Set Up Python Virtual Environment
 
 #### Option 1: Using Make (Recommended)
+
 ```bash
 # Create Python virtual environment (.venv) and install dependencies
 make setup-env
@@ -51,6 +56,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
 #### Option 2: Manual Setup
+
 ```bash
 # Create Python virtual environment
 python3 -m venv .venv
@@ -95,6 +101,7 @@ make validate-iris-rag
 The system uses a main configuration file at [`config/config.yaml`](../config/config.yaml). For most users, the default settings work well.
 
 #### Database Settings
+
 ```yaml
 database:
   db_host: "localhost"
@@ -105,6 +112,7 @@ database:
 ```
 
 #### Embedding Model Settings
+
 ```yaml
 embedding_model:
   name: "sentence-transformers/all-MiniLM-L6-v2"
@@ -159,6 +167,7 @@ for doc in result['retrieved_documents']:
 ### Loading Your Documents
 
 #### From a Directory
+
 ```bash
 # Load documents from a folder
 make load-data
@@ -172,18 +181,21 @@ print(f'Loaded: {result}')
 ```
 
 #### Supported File Types
+
 - **Text files**: `.txt`, `.md`
 - **PDF documents**: `.pdf` (requires additional setup)
 - **Word documents**: `.docx` (requires additional setup)
 - **Structured data**: `.json`, `.csv`
 
 #### Check What's Loaded
+
 ```bash
 # See how many documents are in the system
 make check-data
 ```
 
 #### Clear All Data
+
 ```bash
 # Remove all documents (use with caution!)
 make clear-rag-data
@@ -235,32 +247,38 @@ make test-1000
 The system supports 6 production-ready RAG techniques with unified API:
 
 ### 1. BasicRAG (`basic`)
+
 - **Best for**: General question answering, simple use cases
 - **Features**: Standard vector similarity search
 - **Example**: `pipeline = create_pipeline("basic")`
 
 ### 2. BasicRAGReranking (`basic_rerank`)
+
 - **Best for**: Improved precision in document retrieval
 - **Features**: Over-retrieval with cross-encoder reranking
 - **Example**: `pipeline = create_pipeline("basic_rerank")`
 
 ### 3. CRAG - Corrective RAG (`crag`)
+
 - **Best for**: Self-correcting, high-quality answers
 - **Features**: Automatic relevance evaluation and correction
 - **Example**: `pipeline = create_pipeline("crag")`
 
 ### 4. HybridGraphRAG (`graphrag`)
+
 - **Best for**: Complex knowledge graphs, multi-hop reasoning
 - **Features**: Vector + Text + Graph search with RRF fusion
 - **Example**: `pipeline = create_pipeline("graphrag")`
 - **Requires**: `pip install rag-templates[hybrid-graphrag]`
 
 ### 5. PyLateColBERT (`pylate_colbert`)
+
 - **Best for**: Precision retrieval with late interaction
 - **Features**: ColBERT-style token-level matching
 - **Example**: `pipeline = create_pipeline("pylate_colbert")`
 
 ### 6. IRIS-Global-GraphRAG
+
 - **Best for**: Academic papers, 3D visualization
 - **Features**: Global community detection, hierarchical summaries
 - **Direct import**: `from iris_rag.pipelines.iris_global_graphrag import ...`
@@ -294,6 +312,7 @@ print(result["answer"])
 ### Common Issues
 
 #### "Connection failed" Error
+
 ```bash
 # Check if IRIS database is running
 docker ps | grep iris_db_rag_standalone
@@ -306,6 +325,7 @@ make test-dbapi
 ```
 
 #### "No documents found" Error
+
 ```bash
 # Check if documents are loaded
 make check-data

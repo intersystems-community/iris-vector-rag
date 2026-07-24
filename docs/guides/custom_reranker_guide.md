@@ -24,10 +24,10 @@ Reranking is a crucial step in RAG pipelines that improves the relevance orderin
 
 ### Why Reranking Matters
 
-- **Improved Precision**: Cross-encoder models provide better relevance scoring than vector similarity alone
-- **Domain Adaptation**: Custom rerankers can be tailored to specific domains or use cases
-- **Multi-stage Architecture**: Enables efficient two-stage retrieval (fast vector search + precise reranking)
-- **Performance Optimization**: Allows tuning the trade-off between speed and accuracy
+- Cross-encoder models provide better relevance scoring than vector similarity alone
+- Custom rerankers can be tailored to specific domains or use cases
+- Enables efficient two-stage retrieval (fast vector search + precise reranking)
+- Allows tuning the trade-off between speed and accuracy
 
 ### Built-in vs Custom Rerankers
 
@@ -1154,29 +1154,29 @@ def extract_legal_citations(text: str) -> List[str]:
 
 ### Performance Optimization
 
-1. **Lazy Loading**: Load models only when needed
-2. **Batch Processing**: Process documents in batches for GPU efficiency
-3. **Caching**: Cache frequently used models and results
-4. **Early Stopping**: Implement score thresholds to avoid processing irrelevant documents
+1. Load models only when needed
+2. Process documents in batches for GPU efficiency
+3. Cache frequently used models and results
+4. Implement score thresholds to avoid processing irrelevant documents
 
 ### Error Handling and Robustness
 
-1. **Input Validation**: Always validate inputs
-2. **Graceful Degradation**: Provide fallbacks when reranking fails
-3. **Logging**: Log performance metrics and errors
-4. **Resource Management**: Properly manage GPU memory and model loading
+1. Always validate inputs
+2. Provide fallbacks when reranking fails
+3. Log performance metrics and errors
+4. Properly manage GPU memory and model loading
 
 ### Configuration Management
 
-1. **Environment-specific configs**: Different settings for dev/staging/prod
-2. **Parameter validation**: Validate configuration parameters
-3. **Hot reloading**: Support configuration updates without restart
+1. Different settings for dev/staging/prod
+2. Validate configuration parameters
+3. Support configuration updates without restart
 
 ### Monitoring and Metrics
 
-1. **Performance Metrics**: Track latency, throughput, memory usage
-2. **Quality Metrics**: Monitor relevance scores and user feedback
-3. **System Health**: Monitor GPU utilization, error rates
+1. Track latency, throughput, memory usage
+2. Monitor relevance scores and user feedback
+3. Monitor GPU utilization, error rates
 
 ---
 
