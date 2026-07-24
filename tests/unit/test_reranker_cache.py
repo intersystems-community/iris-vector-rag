@@ -6,7 +6,9 @@ FR-015: Reranker models are loaded once per (strategy, model_name) tuple per pro
 from __future__ import annotations
 
 import threading
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 # ---------------------------------------------------------------------------
@@ -18,13 +20,30 @@ def _clear_cache():
     rerank._RERANKER_CACHE.clear()
 
 
-def _make_mock_cross_encoder(scores=None):
-    """Return a fake CrossEncoder class that records instantiation count."""
+@pytest.fixture(autouse=True)
+def _isolate_cache():
+    """Clear the reranker cache before and after every test in this module."""
+    _clear_cache()
+    yield
+    _clear_cache()
+
+
+def _make_mock_build(scores=None):
+    """Return a (counting_build, call_count) pair — patches _build_cross_encoder_reranker."""
     scores = scores or [0.9, 0.5, 0.3]
-    instance = MagicMock()
-    instance.predict.return_value = scores
-    cls = MagicMock(return_value=instance)
-    return cls, instance
+    call_count = {"n": 0, "models": []}
+
+    def counting_build(model_name):
+        call_count["n"] += 1
+        call_count["models"].append(model_name)
+        fn = MagicMock()
+        fn.return_value = scores
+        return fn
+
+    return counting_build, call_count
+
+
+_PATCH = "iris_vector_rag.retrieval.rerank._build_cross_encoder_reranker"
 
 
 # ---------------------------------------------------------------------------
@@ -33,25 +52,25 @@ def _make_mock_cross_encoder(scores=None):
 
 class TestSingleLoadAcrossQueries:
     def test_resolve_reranker_true_loads_model_once(self):
-        """resolve_reranker(True) called N times → CrossEncoder instantiated once."""
+        """resolve_reranker(True) called N times → _build called once."""
         _clear_cache()
-        mock_cls, _ = _make_mock_cross_encoder()
-        with patch("sentence_transformers.CrossEncoder", mock_cls):
+        build, cnt = _make_mock_build()
+        with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
             r1 = resolve_reranker(True)
             r2 = resolve_reranker(True)
             r3 = resolve_reranker(True)
 
         assert r1 is r2 is r3, "Same callable must be returned from cache"
-        assert mock_cls.call_count == 1, (
-            f"CrossEncoder must be instantiated exactly once; got {mock_cls.call_count}"
+        assert cnt["n"] == 1, (
+            f"_build_cross_encoder_reranker must be called exactly once; got {cnt['n']}"
         )
 
     def test_resolve_reranker_returns_same_callable(self):
         """Cache returns same callable object on repeated calls."""
         _clear_cache()
-        mock_cls, _ = _make_mock_cross_encoder()
-        with patch("sentence_transformers.CrossEncoder", mock_cls):
+        build, _ = _make_mock_build()
+        with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
             r1 = resolve_reranker(True)
             r2 = resolve_reranker(True)
@@ -61,14 +80,14 @@ class TestSingleLoadAcrossQueries:
     def test_resolve_reranker_string_strategy_cached(self):
         """resolve_reranker('cross-encoder') also caches."""
         _clear_cache()
-        mock_cls, _ = _make_mock_cross_encoder()
-        with patch("sentence_transformers.CrossEncoder", mock_cls):
+        build, cnt = _make_mock_build()
+        with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
             r1 = resolve_reranker("cross-encoder")
             r2 = resolve_reranker("cross-encoder")
 
         assert r1 is r2
-        assert mock_cls.call_count == 1
+        assert cnt["n"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -77,43 +96,43 @@ class TestSingleLoadAcrossQueries:
 
 class TestSeparateConfigsCachedSeparately:
     def test_different_model_names_get_different_cache_entries(self):
-        """Two different model names → two CrossEncoder instantiations."""
+        """Two different model names → two _build calls."""
         _clear_cache()
-        mock_cls, _ = _make_mock_cross_encoder()
-        with patch("sentence_transformers.CrossEncoder", mock_cls):
+        build, cnt = _make_mock_build()
+        with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
             r1 = resolve_reranker(True, model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
             r2 = resolve_reranker(True, model_name="cross-encoder/ms-marco-MiniLM-L-12-v2")
 
         assert r1 is not r2, "Different model names must produce different reranker instances"
-        assert mock_cls.call_count == 2, (
-            f"Expected 2 CrossEncoder instantiations; got {mock_cls.call_count}"
+        assert cnt["n"] == 2, (
+            f"Expected 2 _build calls; got {cnt['n']}"
         )
 
     def test_same_model_name_reuses_cached_instance(self):
-        """Same model name → single CrossEncoder instantiation."""
+        """Same model name → single _build call."""
         _clear_cache()
-        mock_cls, _ = _make_mock_cross_encoder()
-        with patch("sentence_transformers.CrossEncoder", mock_cls):
+        build, cnt = _make_mock_build()
+        with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
             r1 = resolve_reranker(True, model_name="my-model")
             r2 = resolve_reranker(True, model_name="my-model")
 
         assert r1 is r2
-        assert mock_cls.call_count == 1
+        assert cnt["n"] == 1
 
     def test_true_and_default_model_name_share_cache(self):
         """resolve_reranker(True) uses default model; same as passing default explicitly."""
         _clear_cache()
         from iris_vector_rag.retrieval.rerank import _DEFAULT_MODEL
-        mock_cls, _ = _make_mock_cross_encoder()
-        with patch("sentence_transformers.CrossEncoder", mock_cls):
+        build, cnt = _make_mock_build()
+        with patch(_PATCH, side_effect=build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
             r1 = resolve_reranker(True)
             r2 = resolve_reranker(True, model_name=_DEFAULT_MODEL)
 
         assert r1 is r2
-        assert mock_cls.call_count == 1
+        assert cnt["n"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -127,13 +146,13 @@ class TestThreadSafeFirstLoad:
         call_count = {"n": 0}
         original_build = None
 
-        def counting_cross_encoder(model_name):
+        def counting_build(model_name):
             call_count["n"] += 1
-            instance = MagicMock()
-            instance.predict.return_value = [0.5]
-            return instance
+            fn = MagicMock()
+            fn.return_value = []
+            return fn
 
-        with patch("sentence_transformers.CrossEncoder", side_effect=counting_cross_encoder):
+        with patch("iris_vector_rag.retrieval.rerank._build_cross_encoder_reranker", side_effect=counting_build):
             from iris_vector_rag.retrieval.rerank import resolve_reranker
 
             results = []

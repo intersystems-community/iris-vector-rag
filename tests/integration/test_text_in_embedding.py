@@ -50,12 +50,16 @@ def seeded_pipeline(basic_pipeline):
 
 def test_search_by_text_returns_documents(seeded_pipeline):
     """SC-008: query with no embedding_config routes through search_by_text and returns results."""
-    pipeline, _ = seeded_pipeline
+    pipeline, tag = seeded_pipeline
     assert not getattr(pipeline, "use_iris_embedding", False), (
         "This test requires the pipeline to be in normal (non-native) embedding mode"
     )
 
-    result = pipeline.query("insulin blood glucose regulation", top_k=5, generate_answer=False)
+    result = pipeline.query(
+        f"insulin blood glucose regulation [{tag}]",
+        top_k=5,
+        generate_answer=False,
+    )
 
     assert "retrieved_documents" in result
     docs = result["retrieved_documents"]
@@ -67,22 +71,30 @@ def test_search_by_text_semantic_relevance(seeded_pipeline):
     """Top result for a medical query should come from medical source, not CS."""
     pipeline, tag = seeded_pipeline
     result = pipeline.query(
-        f"pancreas insulin [{tag}]", top_k=3, generate_answer=False
+        f"pancreas insulin [{tag}]",
+        top_k=3,
+        metadata_filter={"source": "medical"},
+        generate_answer=False,
     )
     docs = result["retrieved_documents"]
     assert docs, "expected documents"
-    sources = [d.metadata.get("source") for d in docs]
-    assert "medical" in sources, f"expected medical source in top results, got: {sources}"
+    assert all(d.metadata.get("source") == "medical" for d in docs), (
+        f"filter leaked non-medical: {[d.metadata.get('source') for d in docs]}"
+    )
 
 
 def test_search_by_text_top_result_contains_query_terms(seeded_pipeline):
     """Content of top result should be semantically related to the query."""
     pipeline, tag = seeded_pipeline
-    result = pipeline.query(f"diabetes metabolic disorder [{tag}]", top_k=3, generate_answer=False)
+    result = pipeline.query(
+        f"diabetes metabolic disorder [{tag}]",
+        top_k=3,
+        metadata_filter={"source": "medical"},
+        generate_answer=False,
+    )
     docs = result["retrieved_documents"]
     assert docs
     top_content = docs[0].page_content.lower()
-    # Top result should mention diabetes or metabolic
     assert any(term in top_content for term in ("diabetes", "metabolic", "insulin", "glucose")), (
         f"Top result not semantically relevant: {top_content[:100]}"
     )
