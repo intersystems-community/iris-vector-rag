@@ -1088,7 +1088,7 @@ class SchemaManager:
                         authors VARCHAR(MAX),
                         keywords VARCHAR(MAX),
                         embedding VECTOR({vector_data_type}, {vector_dim}),
-                        metadata VARCHAR(MAX),
+                        metadata VARCHAR(2000),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                     """

@@ -18,7 +18,7 @@ Welcome to the RAG Templates Framework! We're excited that you're interested in 
 
 ## Code of Conduct
 
-This project adheres to a code of conduct that we expect all contributors to follow. Please be respectful, inclusive, and collaborative in all interactions.
+Be respectful, inclusive, and collaborative in all interactions.
 
 ## Getting Started
 
@@ -31,7 +31,7 @@ This project adheres to a code of conduct that we expect all contributors to fol
 
 ### Project Overview
 
-The RAG Templates Framework provides a comprehensive solution for building Retrieval-Augmented Generation applications with:
+The RAG Templates Framework provides:
 
 - **Memory Integration**: Mem0 for persistent conversation memory
 - **MCP Server Support**: Model Context Protocol server integration
@@ -227,25 +227,25 @@ from unittest.mock import Mock, patch
 
 class TestExampleClass:
     """Test class with proper structure."""
-    
+
     def test_should_return_expected_value_when_valid_input(self):
         """Test method with descriptive name."""
         # Arrange
         input_value = "test"
         expected = "expected_result"
-        
+
         # Act
         result = example_function(input_value)
-        
+
         # Assert
         assert result == expected
-    
+
     @pytest.mark.integration
     def test_integration_scenario(self):
         """Integration test example."""
         # Test integration between components
         pass
-    
+
     @pytest.mark.asyncio
     async def test_async_function(self):
         """Async test example."""
@@ -316,6 +316,7 @@ mkdocs build
 ### Pull Request Process
 
 1. **Update Your Branch**
+
    ```bash
    git checkout main
    git pull upstream main
@@ -324,20 +325,22 @@ mkdocs build
    ```
 
 2. **Run Pre-submission Checks**
+
    ```bash
    # Run full test suite
    python -m pytest
-   
+
    # Run linting
    black --check src/ tests/
    flake8 src/ tests/
    mypy src/
-   
+
    # Check security
    bandit -r src/
    ```
 
 3. **Push and Create PR**
+
    ```bash
    git push origin your-feature-branch
    # Create pull request on GitHub
@@ -402,6 +405,7 @@ We use [Semantic Versioning](https://semver.org/):
 ### Release Workflow
 
 1. **Create Release Branch**
+
    ```bash
    git checkout -b release/v1.2.0
    ```
@@ -411,10 +415,11 @@ We use [Semantic Versioning](https://semver.org/):
    - Update `docs/docs/docs/CHANGELOG.md` with release notes
 
 3. **Final Testing**
+
    ```bash
    # Run full test suite
    python -m pytest
-   
+
    # Run performance benchmarks
    python scripts/ci/run-benchmarks.py
    ```
@@ -459,7 +464,7 @@ We use [Semantic Versioning](https://semver.org/):
 
 ### Reporting Issues
 
-When reporting issues, please include:
+When reporting issues, include:
 
 - Python version and operating system
 - Steps to reproduce the issue
@@ -469,13 +474,9 @@ When reporting issues, please include:
 
 ### Feature Requests
 
-For feature requests, please describe:
+For feature requests, describe:
 
 - The problem you're trying to solve
 - Your proposed solution
 - Alternative solutions considered
 - Implementation considerations
-
----
-
-Thank you for contributing to the RAG Templates Framework! Your contributions help make this project better for everyone.

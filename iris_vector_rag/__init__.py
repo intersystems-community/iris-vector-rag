@@ -1,5 +1,5 @@
-# iris_rag package
-# This file makes the iris_rag directory a Python package.
+# iris_vector_rag package
+# This file makes the iris_vector_rag directory a Python package.
 
 from typing import Any, Callable, Dict, List, Optional
 
@@ -18,7 +18,7 @@ from .validation.requirements import get_pipeline_requirements
 from .validation.validator import PreConditionValidator
 
 # Package version
-__version__ = "0.5.7"
+__version__ = "0.6.0"
 __author__ = "InterSystems IRIS RAG Templates Project"
 __description__ = "A comprehensive, production-ready framework for implementing Retrieval Augmented Generation (RAG) pipelines using InterSystems IRIS as the vector database backend."
 

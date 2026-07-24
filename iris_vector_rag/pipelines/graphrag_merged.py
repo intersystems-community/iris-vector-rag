@@ -826,7 +826,7 @@ class GraphRAGPipeline(RAGPipeline):
 
         logger.info("Performing vector fallback retrieval")
         try:
-            docs = self.vector_store.similarity_search(query_text, k=top_k)
+            docs = self.vector_store.search_by_text(query_text, top_k=top_k)
             for doc in docs:
                 if doc.metadata:
                     doc.metadata["retrieval_method"] = "vector_fallback"

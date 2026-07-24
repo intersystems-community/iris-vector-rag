@@ -1,10 +1,8 @@
 # IRIS Vector RAG Templates
 
-**Production-ready Retrieval-Augmented Generation (RAG) pipelines powered by InterSystems IRIS Vector Search**
+**RAG pipelines for InterSystems IRIS vector search — six pipeline types, one unified API.**
 
-Build intelligent applications that combine large language models with your enterprise data using battle-tested RAG patterns and native vector search capabilities.
-
-**Author: Thomas Dyar** (thomas.dyar@intersystems.com)
+**Author: Thomas Dyar** (<thomas.dyar@intersystems.com>)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -12,28 +10,20 @@ Build intelligent applications that combine large language models with your ente
 
 ## Why IRIS Vector RAG?
 
-🚀 **Production-Ready** - Six proven RAG architectures ready to deploy, not research prototypes
-
-⚡ **Blazing Fast** - Native IRIS vector search with HNSW indexing, no external vector databases needed
-
-🔧 **Unified API** - Swap between RAG strategies with a single line of code
-
-📊 **Enterprise-Grade** - ACID transactions, connection pooling, and horizontal scaling built-in
-
-🎯 **100% Compatible** - Works seamlessly with LangChain, RAGAS, and your existing ML stack
-
-🧪 **Fully Validated** - Comprehensive test suite with automated contract validation
+Six RAG architectures ready to deploy against IRIS native vector search — no external vector
+database required. All pipelines share one API, so switching strategies is a one-line change.
+IRIS provides ACID transactions, connection pooling, and SQL + vector in a single platform.
 
 ## Available RAG Pipelines
 
-| Pipeline Type | Use Case | Retrieval Method | When to Use |
-|---------------|----------|------------------|-------------|
-| **basic** | Standard retrieval | Vector similarity | General Q&A, getting started, baseline comparisons |
-| **basic_rerank** | Improved precision | Vector + cross-encoder reranking | Higher accuracy requirements, legal/medical domains |
-| **crag** | Self-correcting | Vector + evaluation + web search fallback | Dynamic knowledge, fact-checking, current events |
-| **graphrag** | Knowledge graphs | Vector + text + graph + RRF fusion | Complex entity relationships, research, medical knowledge |
-| **multi_query_rrf** | Multi-perspective | Query expansion + reciprocal rank fusion | Complex queries, comprehensive coverage needed |
-| **pylate_colbert** | Fine-grained matching | ColBERT late interaction embeddings | Nuanced semantic understanding, high precision |
+| Pipeline Type       | Use Case              | Retrieval Method                          | When to Use                                               |
+| ------------------- | --------------------- | ----------------------------------------- | --------------------------------------------------------- |
+| **basic**           | Standard retrieval    | Vector similarity                         | General Q&A, getting started, baseline comparisons        |
+| **basic_rerank**    | Improved precision    | Vector + cross-encoder reranking          | Higher accuracy requirements, legal/medical domains       |
+| **crag**            | Self-correcting       | Vector + evaluation + web search fallback | Dynamic knowledge, fact-checking, current events          |
+| **graphrag**        | Knowledge graphs      | Vector + text + graph + RRF fusion        | Complex entity relationships, research, medical knowledge |
+| **multi_query_rrf** | Multi-perspective     | Query expansion + reciprocal rank fusion  | Complex queries, comprehensive coverage needed            |
+| **pylate_colbert**  | Fine-grained matching | ColBERT late interaction embeddings       | Nuanced semantic understanding, high precision            |
 
 ## Quick Start
 
@@ -89,7 +79,7 @@ from iris_vector_rag import create_pipeline
 pipeline = create_pipeline('basic', validate_requirements=True)
 
 # Load your documents
-from iris_rag.core.models import Document
+from iris_vector_rag.core.models import Document
 
 docs = [
     Document(
@@ -118,7 +108,7 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 
 ## Unified API Across All Pipelines
 
-**Switch RAG strategies with one line** - all pipelines share the same interface:
+All pipelines share the same interface:
 
 ```python
 from iris_vector_rag import create_pipeline
@@ -143,7 +133,7 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 
 ### Standardized Response Format
 
-**100% LangChain & RAGAS compatible** responses:
+LangChain & RAGAS compatible responses:
 
 ```python
 {
@@ -163,9 +153,73 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 }
 ```
 
+## Composable Query-Time Options
+
+Retrieval behavior is controlled at query time — no need to switch pipeline types.
+
+### Filtered search
+
+```python
+result = pipeline.query(
+    "What is diabetes?",
+    top_k=5,
+    metadata_filter={"source": "pubmed"},
+    similarity_threshold=0.7,
+)
+assert all(d.metadata["source"] == "pubmed" for d in result["retrieved_documents"])
+```
+
+### Reranking — one argument, any pipeline
+
+```python
+# Rerank with the default cross-encoder
+result = pipeline.query("What is diabetes?", top_k=5, rerank=True)
+
+# Custom reranker callable
+result = pipeline.query("...", top_k=5, rerank=my_cross_encoder_fn)
+```
+
+### Hybrid & RRF fusion
+
+```python
+# Weighted relative-score fusion (like MongoDB $scoreFusion)
+result = pipeline.query(
+    "insulin resistance",
+    retrieval="hybrid",
+    weights={"vector": 0.7, "text": 0.3},
+)
+
+# Reciprocal rank fusion (like $rankFusion)
+result = pipeline.query("insulin resistance", retrieval="rrf")
+
+# Per-source scores in document metadata
+for d in result["retrieved_documents"]:
+    print(d.metadata.get("vector_score"), d.metadata.get("text_score"))
+```
+
+### Compose (retrieve → fuse → rerank)
+
+```python
+result = pipeline.query(
+    "insulin resistance",
+    retrieval="rrf",
+    rerank=True,
+    metadata_filter={"source": "pubmed"},
+    top_k=5,
+)
+```
+
+### Same call, every pipeline
+
+```python
+for kind in ["basic", "crag", "graphrag"]:
+    p = create_pipeline(kind)
+    r = p.query("What is diabetes?", top_k=5, rerank=True)
+```
+
 ## Pipeline Selection
 
-**Each pipeline uses the same API** - just change the pipeline type:
+Each pipeline uses the same API — just change the pipeline type:
 
 - **`basic`** - Fast vector similarity search, great for getting started
 - **`basic_rerank`** - Vector + cross-encoder reranking for higher accuracy
@@ -180,8 +234,6 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 
 ### Production-Ready Database
 
-**IRIS provides everything you need in one database:**
-
 - ✅ Native vector search (no external vector DB needed)
 - ✅ ACID transactions (your data is safe)
 - ✅ SQL + NoSQL + Vector in one platform
@@ -190,10 +242,8 @@ print(f"Retrieved: {len(result['retrieved_documents'])} documents")
 
 ### Connection Pooling
 
-**Automatic concurrency management:**
-
 ```python
-from iris_rag.storage import IRISVectorStore
+from iris_vector_rag.storage import IRISVectorStore
 
 # Connection pool handles concurrency automatically
 store = IRISVectorStore()
@@ -204,8 +254,6 @@ store = IRISVectorStore()
 
 ### Automatic Schema Management
 
-**Database schema created and migrated automatically:**
-
 ```python
 pipeline = create_pipeline('basic', validate_requirements=True)
 # ✅ Checks database connection
@@ -215,8 +263,6 @@ pipeline = create_pipeline('basic', validate_requirements=True)
 ```
 
 ### RAGAS Evaluation Built-In
-
-**Measure your RAG pipeline performance:**
 
 ```bash
 # Evaluate all pipelines on your data
@@ -232,12 +278,9 @@ make test-ragas-sample
 
 ### IRIS EMBEDDING: Auto-Vectorization
 
-**Automatic embedding generation with model caching** - eliminates repeated model loading overhead for faster document vectorization.
-
-**Key Features**:
-- ⚡ Intelligent model caching - models stay in memory across operations
-- 🎯 Multi-field vectorization - combine title, abstract, and content fields
-- 💾 Automatic device selection - GPU, Apple Silicon (MPS), or CPU fallback
+Automatic embedding generation with model caching eliminates repeated model loading overhead.
+Models stay in memory across operations, multi-field vectorization combines title, abstract, and
+content fields, and device selection (GPU, Apple Silicon MPS, or CPU) is automatic.
 
 ```python
 from iris_vector_rag import create_pipeline
@@ -256,11 +299,11 @@ pipeline.load_documents(documents=docs)
 
 ### Fast Iteration & Evaluation (New)
 
-**Develop and benchmark RAG pipelines with minimal latency and cost.**
-
-- 💾 **Persistent Disk Caching** - Cache LLM responses to local JSON files to avoid redundant API costs and enable offline development.
-- ⚡ **Auto-Hardening Bypass** - Automatically bypasses IRIS password locks for instant connectivity in local/CI containers.
-- 📊 **Unified Evaluation Framework** - Standardized multi-hop metrics (Recall@K, EM, F1) and dataset loaders (HotpotQA, MuSiQue).
+Develop and benchmark RAG pipelines with minimal latency and cost. LLM responses can be cached
+to local JSON files to avoid redundant API calls and enable offline development. IRIS password
+locks are automatically bypassed for instant connectivity in local and CI containers. Evaluation
+uses standardized multi-hop metrics (Recall@K, EM, F1) with dataset loaders for HotpotQA and
+MuSiQue.
 
 ```python
 # Enable disk-based caching
@@ -274,7 +317,8 @@ queries = loader.load('musique', sample_size=100)
 
 ## Model Context Protocol (MCP) Support
 
-**Expose RAG pipelines as MCP tools** for Claude Desktop and other MCP clients - enables conversational RAG workflows where Claude queries your documents during conversations.
+Expose RAG pipelines as MCP tools for Claude Desktop and other MCP clients — enables
+conversational RAG workflows where Claude queries your documents during conversations.
 
 ```bash
 # Start MCP server
@@ -287,15 +331,14 @@ All pipelines available as MCP tools: `rag_basic`, `rag_basic_rerank`, `rag_crag
 
 ## Architecture Overview
 
-**Framework-first design** with abstract base classes (`RAGPipeline`, `VectorStore`) and concrete implementations for 6 production-ready pipelines.
+Framework-first design with abstract base classes (`RAGPipeline`, `VectorStore`) and concrete
+implementations for 6 production-ready pipelines.
 
 **Key Components**: Core abstractions, pipeline implementations, IRIS vector store, MCP server, REST API, validation framework.
 
 📖 **[Comprehensive Architecture Guide →](docs/architecture/COMPREHENSIVE_ARCHITECTURE_OVERVIEW.md)** - System design, component interactions, extension points
 
 ## Documentation
-
-📚 **Comprehensive documentation for every use case:**
 
 - **[User Guide](docs/USER_GUIDE.md)** - Complete installation and usage
 - **[API Reference](docs/API_REFERENCE.md)** - Detailed API documentation
@@ -326,9 +369,9 @@ We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for develo
 
 ## Community & Support
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/intersystems-community/iris-vector-rag/issues)
-- 📖 **Documentation**: [Full Documentation](docs/)
-- 🏢 **Enterprise Support**: [InterSystems Support](https://www.intersystems.com/support/)
+- **Issues**: [GitHub Issues](https://github.com/intersystems-community/iris-vector-rag/issues)
+- **Documentation**: [Full Documentation](docs/)
+- **Enterprise Support**: [InterSystems Support](https://www.intersystems.com/support/)
 
 ## License
 

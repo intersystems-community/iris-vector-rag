@@ -9,11 +9,12 @@
 IRIS EMBEDDING provides automatic document vectorization with intelligent model caching, eliminating the 720x performance penalty from repeated model loading. When enabled, embedding models stay in memory and process all document insertions and queries through a centralized cache.
 
 **Key Benefits**:
-- ⚡ **346x speedup** - 1,746 documents in 3.5 seconds vs 20 minutes
-- 🎯 **95% cache hit rate** - Models persist across requests
-- 🚀 **50ms average latency** - Cached embeddings complete in <100ms
-- 💾 **Automatic fallback** - GPU OOM? Falls back to CPU automatically
-- 🔄 **Multi-field support** - Combine title, abstract, and content into single embeddings
+
+- 346x speedup - 1,746 documents in 3.5 seconds vs 20 minutes
+- 95% cache hit rate - Models persist across requests
+- 50ms average latency - Cached embeddings complete in <100ms
+- Automatic fallback - GPU OOM? Falls back to CPU automatically
+- Multi-field support - Combine title, abstract, and content into single embeddings
 
 ## Performance Benchmarks
 
@@ -21,11 +22,11 @@ IRIS EMBEDDING provides automatic document vectorization with intelligent model 
 
 **Test Dataset**: 1,746 PMC medical papers with multi-field vectorization
 
-| Method | Time | Model Loads | Cache Hit Rate | Docs/Second |
-|--------|------|-------------|----------------|-------------|
-| **Manual (baseline)** | 20 minutes | 1,746 (every row) | 0% | 1.5 |
-| **IRIS EMBEDDING** | 3.5 seconds | 1 (cached) | 95% | 499 |
-| **Speedup** | **346x faster** | **1,746x fewer loads** | **95% efficiency** | **333x throughput** |
+| Method                | Time            | Model Loads            | Cache Hit Rate     | Docs/Second         |
+| --------------------- | --------------- | ---------------------- | ------------------ | ------------------- |
+| **Manual (baseline)** | 20 minutes      | 1,746 (every row)      | 0%                 | 1.5                 |
+| **IRIS EMBEDDING**    | 3.5 seconds     | 1 (cached)             | 95%                | 499                 |
+| **Speedup**           | **346x faster** | **1,746x fewer loads** | **95% efficiency** | **333x throughput** |
 
 **Hardware**: Apple M1 Max (MPS acceleration)
 **Model**: `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions)
@@ -120,6 +121,7 @@ pipeline.load_documents(documents=[doc])
 ```
 
 **Benefits**:
+
 - Captures context from multiple document sections
 - Improves search relevance for academic papers and structured content
 - Preserves original metadata fields for filtering
@@ -137,6 +139,7 @@ config = configure_embedding(
 ```
 
 **Device Priority**:
+
 1. **CUDA** (NVIDIA GPUs) - Fastest for large models
 2. **MPS** (Apple Silicon) - Optimized for M1/M2 Macs
 3. **CPU** - Universal fallback
@@ -157,6 +160,7 @@ config = configure_embedding(
 ```
 
 **Batch Size Guidelines**:
+
 - **CPU**: 8-16 (limited by RAM)
 - **MPS** (Apple Silicon): 32-64 (limited by unified memory)
 - **CUDA** (NVIDIA): 64-128 (limited by VRAM)
@@ -178,6 +182,7 @@ config = configure_embedding(
 ```
 
 **Benefits**:
+
 - Extracted entities stored in metadata for filtering
 - Enables hybrid retrieval (semantic + entity-based)
 - Powers GraphRAG knowledge graph construction
@@ -186,13 +191,13 @@ config = configure_embedding(
 
 ### Recommended Models
 
-| Use Case | Model | Dimensions | Speed | Quality |
-|----------|-------|-----------|-------|---------|
-| **General purpose** | `all-MiniLM-L6-v2` | 384 | Fast | Good |
-| **High quality** | `all-mpnet-base-v2` | 768 | Medium | Excellent |
-| **Multilingual** | `paraphrase-multilingual-mpnet-base-v2` | 768 | Medium | Good |
-| **Medical domain** | `dmis-lab/biobert-base-cased-v1.1` | 768 | Medium | Domain-specific |
-| **Legal domain** | `nlpaueb/legal-bert-base-uncased` | 768 | Medium | Domain-specific |
+| Use Case            | Model                                   | Dimensions | Speed  | Quality         |
+| ------------------- | --------------------------------------- | ---------- | ------ | --------------- |
+| **General purpose** | `all-MiniLM-L6-v2`                      | 384        | Fast   | Good            |
+| **High quality**    | `all-mpnet-base-v2`                     | 768        | Medium | Excellent       |
+| **Multilingual**    | `paraphrase-multilingual-mpnet-base-v2` | 768        | Medium | Good            |
+| **Medical domain**  | `dmis-lab/biobert-base-cased-v1.1`      | 768        | Medium | Domain-specific |
+| **Legal domain**    | `nlpaueb/legal-bert-base-uncased`       | 768        | Medium | Domain-specific |
 
 ### Custom Models
 
@@ -207,27 +212,28 @@ config = configure_embedding(
 ```
 
 **Requirements**:
+
 - Must be compatible with `sentence-transformers` library
 - Must output fixed-dimension vectors
 - Must be accessible via HuggingFace model hub or local path
 
 ## When to Use IRIS EMBEDDING
 
-### ✅ Ideal Use Cases
+### Ideal Use Cases
 
-- **Large document collections** (>1,000 documents)
-- **Frequent re-indexing or incremental updates**
-- **Real-time vectorization requirements**
-- **Memory-constrained environments** (model stays in memory, no repeated loading)
-- **Multi-field vectorization needs** (academic papers, structured documents)
-- **Entity-aware retrieval** (medical, legal, scientific domains)
+- Large document collections (>1,000 documents)
+- Frequent re-indexing or incremental updates
+- Real-time vectorization requirements
+- Memory-constrained environments (model stays in memory, no repeated loading)
+- Multi-field vectorization needs (academic papers, structured documents)
+- Entity-aware retrieval (medical, legal, scientific domains)
 
-### ❌ When NOT to Use
+### When NOT to Use
 
-- **Small collections** (<100 documents) - Overhead not worth the benefit
-- **One-time indexing** - Model caching provides minimal value
-- **Custom embedding logic** - Use manual embeddings if you need full control
-- **External embedding services** (OpenAI, Cohere) - Use API-based embeddings instead
+- Small collections (<100 documents) - Overhead not worth the benefit
+- One-time indexing - Model caching provides minimal value
+- Custom embedding logic - Use manual embeddings if you need full control
+- External embedding services (OpenAI, Cohere) - Use API-based embeddings instead
 
 ## Configuration Reference
 
@@ -281,6 +287,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 **Symptom**: `RuntimeError: CUDA out of memory`
 
 **Solutions**:
+
 1. Reduce batch size: `batch_size=16` or `batch_size=8`
 2. Use smaller model: `all-MiniLM-L6-v2` (384D) instead of `all-mpnet-base-v2` (768D)
 3. Enable automatic fallback: `device_preference="auto"` (falls back to CPU)
@@ -291,6 +298,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 **Symptom**: Vectorization slower than expected
 
 **Solutions**:
+
 1. Check device: `print(config.device)` - Should be `cuda` or `mps`, not `cpu`
 2. Increase batch size: `batch_size=64` or `batch_size=128` (if memory allows)
 3. Reduce max_seq_length: `max_seq_length=256` (if documents are short)
@@ -301,6 +309,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 **Symptom**: `OSError: Model 'model-name' not found`
 
 **Solutions**:
+
 1. Check model name spelling: Must match HuggingFace model hub exactly
 2. Check internet connection: Model downloads on first use
 3. Use local path: `model_name="/path/to/local/model"`
@@ -311,6 +320,7 @@ export CUDA_VISIBLE_DEVICES=0,1
 **Symptom**: Low cache hit rate (<50%)
 
 **Solutions**:
+
 1. Check configuration consistency: Same `embedding_config` name for all operations
 2. Verify model persistence: Model should load once and stay in memory
 3. Check batch processing: Large batches improve cache efficiency
@@ -361,6 +371,7 @@ VALUES (1, 'Document text...')
 ### From Manual Embeddings
 
 **Before** (manual embeddings):
+
 ```python
 from sentence_transformers import SentenceTransformer
 
@@ -370,6 +381,7 @@ embeddings = model.encode([doc.page_content for doc in docs])
 ```
 
 **After** (IRIS EMBEDDING):
+
 ```python
 from iris_vector_rag import create_pipeline
 
@@ -386,6 +398,7 @@ pipeline.load_documents(documents=docs)
 ### From OpenAI Embeddings
 
 **Before** (OpenAI API):
+
 ```python
 import openai
 
@@ -397,6 +410,7 @@ response = openai.Embedding.create(
 ```
 
 **After** (IRIS EMBEDDING):
+
 ```python
 pipeline = create_pipeline(
     'basic',

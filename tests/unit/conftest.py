@@ -305,10 +305,11 @@ def patch_external_dependencies(monkeypatch):
     mock_sentence_transformers_module.SentenceTransformer = Mock(return_value=mock_sentence_transformer)
 
     # Inject mocks into sys.modules to prevent actual imports
+    # Use monkeypatch so sys.modules is restored after each test (prevents cross-suite contamination)
     if 'transformers' not in sys.modules:
-        sys.modules['transformers'] = mock_transformers
+        monkeypatch.setitem(sys.modules, 'transformers', mock_transformers)
     if 'sentence_transformers' not in sys.modules:
-        sys.modules['sentence_transformers'] = mock_sentence_transformers_module
+        monkeypatch.setitem(sys.modules, 'sentence_transformers', mock_sentence_transformers_module)
 
     try:
         monkeypatch.setattr(

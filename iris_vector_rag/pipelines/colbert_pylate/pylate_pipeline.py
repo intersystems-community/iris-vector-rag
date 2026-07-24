@@ -1,5 +1,3 @@
-# pyright: reportMissingImports=false
-
 """
 PyLate ColBERT Pipeline with Consistent Configuration
 
@@ -7,11 +5,9 @@ Simple PyLate-based ColBERT implementation that follows the same configuration
 patterns as BasicRAGReranking for consistency across the evaluation framework.
 """
 
-import importlib
 import logging
-import os
 import tempfile
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ...core.models import Document
 from ..basic import BasicRAGPipeline
@@ -29,8 +25,8 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
     def __init__(
         self,
-        connection_manager=None,
-        config_manager=None,
+        connection_manager,
+        config_manager,
         embedding_config: Optional[str] = None,
         **kwargs,
     ):
@@ -102,9 +98,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         """Import PyLate components; return True on success, else False."""
         try:
             global models, rank
-            module = importlib.import_module("pylate")
-            models = module.models
-            rank = module.rank
+            from pylate import models, rank
 
             logger.debug("PyLate library imported successfully")
             return True
@@ -191,7 +185,7 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
 
             return result
 
-    def query(self, query: str, top_k: int = 5, **kwargs) -> Dict[str, Any]:
+    def query(self, query: str = None, top_k: int = 5, **kwargs) -> Dict[str, Any]:
         """
         Execute ColBERT query with PyLate native reranking.
 
@@ -208,35 +202,33 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
         Returns:
             Dictionary with complete RAG response including reranked documents
         """
-        # Validate query
-        if not query or query.strip() == "":
-            raise ValueError(
-                "Error: Query parameter is required and cannot be empty\n"
-                "Context: PyLateColBERT pipeline query operation\n"
-                "Expected: Non-empty query string\n"
-                "Actual: Empty or whitespace-only string\n"
-                "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
-            )
+        # FR-005: normalize query / query_text alias
+        from iris_vector_rag.core.query_options import normalize_query_params
 
-        if kwargs.get("generate_answer", True) and not os.environ.get("OPENAI_API_KEY"):
-            logger.error(
-                "Missing OPENAI_API_KEY for PyLate ColBERT query. "
-                "Pipeline=pylate_colbert, operation=query, state=missing_api_key."
-            )
-            raise ValueError(
-                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
-                "or configure your API key before running PyLate ColBERT queries."
-            )
-
-        # Validate top_k
-        if top_k < 1 or top_k > 100:
-            raise ValueError(
-                f"Error: top_k parameter out of valid range\n"
-                f"Context: PyLateColBERT pipeline query operation\n"
-                f"Expected: Integer between 1 and 100 (inclusive)\n"
-                f"Actual: {top_k}\n"
-                f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
-            )
+        query_text_kwarg = kwargs.pop("query_text", None)
+        try:
+            opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k)
+        except ValueError as exc:
+            msg = str(exc)
+            if "query" in msg.lower():
+                raise ValueError(
+                    "Error: Query parameter is required and cannot be empty\n"
+                    "Context: PyLateColBERT pipeline query operation\n"
+                    "Expected: Non-empty query string\n"
+                    "Actual: Empty or whitespace-only string\n"
+                    "Fix: Provide a valid query string, e.g., query='What is diabetes?'"
+                ) from exc
+            if "top_k" in msg.lower():
+                raise ValueError(
+                    f"Error: top_k parameter out of valid range\n"
+                    f"Context: PyLateColBERT pipeline query operation\n"
+                    f"Expected: Integer between 1 and 100 (inclusive)\n"
+                    f"Actual: {top_k}\n"
+                    f"Fix: Set top_k to a value between 1 and 100, e.g., top_k=5"
+                ) from exc
+            raise
+        query = opts.query
+        top_k = opts.top_k
 
         # Calculate initial retrieval size
         initial_k = min(top_k * self.rerank_factor, 100)
@@ -326,9 +318,8 @@ class PyLateColBERTPipeline(BasicRAGPipeline):
             },
         }
 
-        # Add sources to top level if requested
-        if kwargs.get("include_sources", True):
-            response["sources"] = sources
+        # FR-006: always include top-level sources key
+        response["sources"] = sources
 
         self.stats["queries_processed"] += 1
         logger.info(

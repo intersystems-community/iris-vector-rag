@@ -41,6 +41,23 @@ pipelines:
     ensure_on_start: true
     try_acorn: true
 
+# Composable retrieval options (feature 065).
+# All defaults reproduce pre-065 behavior (Principle IV: no breaking changes).
+retrieval:
+  default_mode: "vector"       # vector | text | hybrid | rrf
+  top_k_default: 5
+  similarity_threshold: 0.0
+
+rerank:
+  enabled: false               # Default off; set rerank=True at query time to enable
+  default_strategy: "cross-encoder"
+  default_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  rerank_factor: 2             # Over-fetch multiplier: retrieve top_k * rerank_factor, rerank, return top_k
+
+embeddings:
+  mode: "sentence_transformers" # sentence_transformers | iris_native
+  text_in: false               # Enable text-side (BM25) retrieval (requires iris-vector-graph)
+
 # Pipeline validation configuration (Feature 047)
 validation:
   enabled: true                          # Enable pipeline contract validation

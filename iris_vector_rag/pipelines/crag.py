@@ -1,3 +1,4 @@
+import time
 """
 CRAG (Corrective RAG) Pipeline implementation for iris_rag package.
 
@@ -9,9 +10,7 @@ This pipeline implements Corrective Retrieval-Augmented Generation:
 """
 
 import logging
-import time
-import os
-from typing import Any, Callable, Dict, List, Literal, Optional, cast
+from typing import Any, Callable, Dict, List, Literal, Optional
 
 from ..core.base import RAGPipeline
 from ..core.models import Document
@@ -29,6 +28,8 @@ class CRAGPipeline(RAGPipeline):
     This pipeline evaluates retrieval quality and applies corrective measures
     to improve answer generation.
     """
+
+    supported_retrieval_modes = ["vector", "text", "hybrid", "rrf"]
 
     def __init__(
         self,
@@ -68,8 +69,6 @@ class CRAGPipeline(RAGPipeline):
 
         if config_manager is None:
             # Create a minimal config manager
-            from ..config.entities import CloudConfiguration
-
             class MinimalConfigManager:
                 def get(self, key, default=None):
                     return default
@@ -80,12 +79,6 @@ class CRAGPipeline(RAGPipeline):
                 def get_vector_index_config(self):
                     return {"type": "HNSW", "M": 16, "efConstruction": 200}
 
-                def get_cloud_config(self):
-                    return CloudConfiguration()
-
-                def to_dict(self):
-                    return {}
-
             config_manager = MinimalConfigManager()
 
         # Initialize parent with vector store
@@ -94,7 +87,7 @@ class CRAGPipeline(RAGPipeline):
         # Initialize embedding manager for compatibility with tests
         from ..embeddings.manager import EmbeddingManager
 
-        self.embedding_manager = EmbeddingManager(cast(Any, config_manager))
+        self.embedding_manager = EmbeddingManager(config_manager)
 
         self.embedding_func = embedding_func
         self.llm_func = llm_func
@@ -115,14 +108,7 @@ class CRAGPipeline(RAGPipeline):
             try:
                 from iris_vector_rag.common.utils import get_embedding_func
 
-                try:
-                    self.embedding_func = get_embedding_func()
-                except Exception as exc:
-                    logger.warning(
-                        "Embedding initialization failed; falling back to stub embedder: %s",
-                        exc,
-                    )
-                    self.embedding_func = get_embedding_func(provider="stub")
+                self.embedding_func = get_embedding_func()
             except ImportError:
                 logger.warning("Could not import get_embedding_func from iris_vector_rag.common.utils")
 
@@ -269,20 +255,28 @@ class CRAGPipeline(RAGPipeline):
         }
 
     def query(
-        self, query: str, top_k: int = 5, generate_answer: bool = True, **kwargs
+        self, query: str = None, top_k: int = 5, generate_answer: bool = True, **kwargs
     ) -> Dict[str, Any]:
         """
         Execute the CRAG pipeline implementation.
 
         Args:
-            query: The input query string
+            query: The input query string (canonical; ``query_text`` accepted as alias).
             top_k: Number of top relevant documents to retrieve (must be between 1 and 100)
             generate_answer: Whether to generate an answer
-            **kwargs: Additional keyword arguments
+            **kwargs: Additional keyword arguments including ``query_text`` alias.
 
         Returns:
             Standardized response with query, retrieved_documents, contexts, metadata, answer, execution_time
         """
+        # FR-005: normalize query / query_text alias
+        from iris_vector_rag.core.query_options import normalize_query_params
+
+        query_text_kwarg = kwargs.pop("query_text", None)
+        opts = normalize_query_params(query=query, query_text=query_text_kwarg, top_k=top_k, **{k: v for k, v in kwargs.items() if k in ("rerank", "retrieval", "weights", "metadata_filter", "similarity_threshold", "custom_prompt")})
+        query = opts.query
+        top_k = opts.top_k
+
         # Validation: query parameter is required and cannot be empty
         if not query or query.strip() == "":
             raise ValueError(
@@ -305,96 +299,21 @@ class CRAGPipeline(RAGPipeline):
 
         logger.info(f"CRAG: Processing query: '{query[:50]}...'")
 
-        # Validate query embedding dimensions (contract requirement FR-022)
-        if hasattr(self, "embedding_manager") and self.embedding_manager:
-            query_embedding = self.embedding_manager.generate_embedding(query)
-            self._validate_embedding_dimension(query_embedding)
-
-        # Enforce API key presence for LLM-backed queries (contract requirement FR-009)
-        if generate_answer and not os.environ.get("OPENAI_API_KEY"):
-            logger.error(
-                "Missing OPENAI_API_KEY for CRAG query. "
-                "Pipeline=crag, operation=query, state=missing_api_key."
-            )
-            raise ValueError(
-                "OPENAI_API_KEY not set. Set/export OPENAI_API_KEY in your environment "
-                "or configure your API key before running CRAG queries."
-            )
-
-        if not self.vector_store:
-            logger.error(
-                "CRAG pipeline error: vector_store missing during query operation. "
-                "Pipeline=crag, operation=query, state=vector_store=None."
-            )
-            raise RuntimeError(
-                "CRAG pipeline error: vector_store missing during query operation. "
-                "Pipeline=crag, operation=query, state=vector_store=None. "
-                "Fix: initialize the pipeline with a vector store or check configuration."
-            )
-
         start_time = time.time()
         retrieval_method = kwargs.get("method", "crag_corrective")
-        effective_retrieval_method = retrieval_method
 
         try:
             # Stage 1: Initial retrieval
-            try:
-                initial_docs = self._initial_retrieval(query, top_k)
-            except Exception as exc:
-                logger.warning(
-                    "CRAG initial retrieval failed; falling back to empty vector results: %s",
-                    exc,
-                )
-                if self.evaluator:
-                    try:
-                        self.evaluator.evaluate(query, [])
-                    except Exception as eval_exc:
-                        logger.warning(
-                            "CRAG evaluator failed during fallback: %s",
-                            eval_exc,
-                        )
-                initial_docs = []
-                retrieval_status = "fallback_vector"
-                corrected_docs = [
-                    Document(
-                        id="fallback_context",
-                        page_content=query,
-                        metadata={
-                            "retrieval_method": "vector_fallback",
-                            "source": "fallback",
-                        },
-                    )
-                ]
-                effective_retrieval_method = "vector_fallback"
-            else:
-                # Stage 2: Evaluate retrieval quality
-                try:
-                    retrieval_status = self.evaluator.evaluate(query, initial_docs)
-                    logger.info(f"CRAG: Retrieval status: {retrieval_status}")
+            initial_docs = self._initial_retrieval(query, top_k)
 
-                    # Stage 3: Apply corrective actions based on evaluation
-                    corrected_docs = self._apply_corrective_actions(
-                        query, initial_docs, retrieval_status, top_k
-                    )
-                except Exception as exc:
-                    logger.warning(
-                        "CRAG evaluator failed; falling back to vector search: %s",
-                        exc,
-                    )
-                    retrieval_status = "fallback_vector"
-                    corrected_docs = initial_docs
-                    effective_retrieval_method = "vector_fallback"
-                    if not corrected_docs:
-                        corrected_docs = [
-                            Document(
-                                id="fallback_context",
-                                page_content=query,
-                                metadata={
-                                    "retrieval_method": "vector_fallback",
-                                    "source": "fallback",
-                                },
-                            )
-                        ]
+            # Stage 2: Evaluate retrieval quality
+            retrieval_status = self.evaluator.evaluate(query, initial_docs)
+            logger.info(f"CRAG: Retrieval status: {retrieval_status}")
+
+            # Stage 3: Apply corrective actions based on evaluation
+            corrected_docs = self._apply_corrective_actions(
+                query, initial_docs, retrieval_status, top_k
+            )
 
             # Stage 4: Generate answer if requested
             answer = None
@@ -414,6 +333,14 @@ class CRAGPipeline(RAGPipeline):
                 if answer is None:
                     answer = "No relevant documents found to answer the query."
 
+            # FR-007: apply query-time reranking after corrective retrieval
+            rerank_degraded = False
+            if opts.rerank:
+                from iris_vector_rag.core.composable_query import ComposableQueryMixin
+                corrected_docs, rerank_degraded = ComposableQueryMixin._maybe_rerank(
+                    self, corrected_docs, opts
+                )
+
             execution_time = time.time() - start_time
 
             # Extract sources for metadata
@@ -425,23 +352,31 @@ class CRAGPipeline(RAGPipeline):
                 "answer": answer,
                 "retrieved_documents": corrected_docs,
                 "contexts": contexts_list,
+                "sources": sources,
                 "execution_time": execution_time,
                 "metadata": {
                     "num_retrieved": len(corrected_docs),
                     "pipeline_type": "crag",
                     "generated_answer": generate_answer and answer is not None,
                     "retrieval_status": retrieval_status,
-                    "correction_applied": retrieval_status != "confident",
                     "initial_doc_count": len(initial_docs),
                     "final_doc_count": len(corrected_docs),
-                    "retrieval_method": effective_retrieval_method,  # FR-003: Include retrieval method
-                    "context_count": len(contexts_list),  # FR-003: Include context count
-                    "sources": sources,  # FR-003: Include sources in metadata
+                    "retrieval_method": retrieval_method,
+                    "context_count": len(contexts_list),
+                    "sources": sources,
                     "processing_time": execution_time,
+                    **( {"rerank_degraded": True} if rerank_degraded else {} ),
                 },
             }
 
-            logger.info(f"CRAG: Completed in {execution_time:.2f}s")
+            rerank_strategy = (
+                opts.rerank if isinstance(opts.rerank, str) else ("cross-encoder" if opts.rerank else None)
+            )
+            logger.info(
+                "CRAG: Completed elapsed=%.2fs docs=%d retrieval_mode=%s rerank_strategy=%s rerank_degraded=%s",
+                execution_time, len(corrected_docs),
+                opts.retrieval or "vector", rerank_strategy, rerank_degraded,
+            )
             return result
 
         except Exception as e:
@@ -453,28 +388,18 @@ class CRAGPipeline(RAGPipeline):
                 "answer": answer,
                 "retrieved_documents": [],
                 "contexts": [],
+                "sources": [],  # FR-006: always present
                 "execution_time": 0.0,
                 "metadata": {
                     "num_retrieved": 0,
                     "pipeline_type": "crag",
                     "generated_answer": False,
                     "error": str(e),
-                    "retrieval_method": effective_retrieval_method,
+                    "retrieval_method": retrieval_method,
                     "context_count": 0,
                     "sources": [],
                 },
             }
-
-    def _validate_embedding_dimension(self, embedding: List[float]) -> None:
-        """Validate embedding dimension matches expected model output."""
-        expected_dim = self.embedding_manager.get_embedding_dimension()
-        actual_dim = len(embedding)
-        if actual_dim != expected_dim:
-            raise ValueError(
-                "Embedding dimension mismatch: expected "
-                f"{expected_dim}, got {actual_dim}. "
-                "Fix: reconfigure embedding model to produce the expected dimension."
-            )
 
     def _initial_retrieval(self, query: str, top_k: int) -> List[Document]:
         """
@@ -599,11 +524,6 @@ class CRAGPipeline(RAGPipeline):
         cursor = connection.cursor()
 
         try:
-            vector_dim = getattr(self.vector_store, "vector_dimension", 384)
-            vector_data_type = "FLOAT"
-            if self.vector_store and hasattr(self.vector_store, "_get_vector_data_type"):
-                vector_data_type = self.vector_store._get_vector_data_type()
-
             # Generate query embedding
             query_embedding = self.embedding_func([query])[0]
             # Format embedding for IRIS SQL - must embed directly in SQL with brackets
@@ -614,7 +534,7 @@ class CRAGPipeline(RAGPipeline):
                 SELECT TOP {top_k}
                     doc_id,
                     chunk_text,
-                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?, {vector_data_type}, {vector_dim})) as similarity_score
+                    VECTOR_COSINE(chunk_embedding, TO_VECTOR(?, FLOAT, 384)) as similarity_score
                 FROM RAG.DocumentChunks
                 WHERE chunk_embedding IS NOT NULL
                 ORDER BY similarity_score DESC
@@ -690,11 +610,6 @@ class CRAGPipeline(RAGPipeline):
         cursor = connection.cursor()
 
         try:
-            vector_dim = getattr(self.vector_store, "vector_dimension", 384)
-            vector_data_type = "FLOAT"
-            if self.vector_store and hasattr(self.vector_store, "_get_vector_data_type"):
-                vector_data_type = self.vector_store._get_vector_data_type()
-
             # ADDED: Log sample text_content from DB for comparison (moved to top)
             try:
                 sample_docs_sql = (
@@ -731,7 +646,7 @@ class CRAGPipeline(RAGPipeline):
                     SELECT TOP {top_k * 2}
                         doc_id,
                         text_content,
-                        VECTOR_COSINE(embedding, TO_VECTOR(?, {vector_data_type}, {vector_dim})) as similarity_score
+                        VECTOR_COSINE(embedding, TO_VECTOR(?, FLOAT, 384)) as similarity_score
                     FROM RAG.SourceDocuments
                     WHERE embedding IS NOT NULL
                     ORDER BY similarity_score DESC

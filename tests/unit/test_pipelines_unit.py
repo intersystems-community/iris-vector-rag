@@ -101,6 +101,7 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
             Document(page_content="Relevant document 2", metadata={"source": "test"})
         ]
         self.mock_vector_store.similarity_search.return_value = mock_search_results
+        self.mock_vector_store.search_by_text.return_value = mock_search_results
 
         pipeline = BasicRAGPipeline(
             connection_manager=self.mock_connection_manager,
@@ -118,8 +119,8 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
         self.assertEqual(result['query'], "What is machine learning?")
         self.assertEqual(result['answer'], "This is a test LLM response.")
 
-        # Verify vector store was called
-        self.mock_vector_store.similarity_search.assert_called_once()
+        # Verify vector store was called (search_by_text is the explicit entry point now)
+        self.mock_vector_store.search_by_text.assert_called_once()
 
         # Verify LLM was called with context
         self.mock_llm_func.assert_called_once()
@@ -130,6 +131,7 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
     def test_query_no_results(self):
         """Test query with no search results."""
         self.mock_vector_store.similarity_search.return_value = []
+        self.mock_vector_store.search_by_text.return_value = []
 
         pipeline = BasicRAGPipeline(
             connection_manager=self.mock_connection_manager,
@@ -154,6 +156,7 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
             Document(page_content="Test content", metadata={})
         ]
         self.mock_vector_store.similarity_search.return_value = mock_search_results
+        self.mock_vector_store.search_by_text.return_value = mock_search_results
 
         pipeline = BasicRAGPipeline(
             connection_manager=self.mock_connection_manager,
@@ -175,6 +178,7 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
     def test_error_handling_vector_store_error(self):
         """Test error handling when vector store fails."""
         self.mock_vector_store.similarity_search.side_effect = Exception("Vector store error")
+        self.mock_vector_store.search_by_text.side_effect = Exception("Vector store error")
 
         pipeline = BasicRAGPipeline(
             connection_manager=self.mock_connection_manager,
@@ -197,6 +201,7 @@ class TestBasicRAGPipelineUnit(unittest.TestCase):
             Document(page_content="Test content", metadata={})
         ]
         self.mock_vector_store.similarity_search.return_value = mock_search_results
+        self.mock_vector_store.search_by_text.return_value = mock_search_results
         self.mock_llm_func.side_effect = Exception("LLM error")
 
         pipeline = BasicRAGPipeline(
