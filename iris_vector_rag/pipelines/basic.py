@@ -492,8 +492,12 @@ class BasicRAGPipeline(RAGPipeline):
         retrieval_method = kwargs.get("method", "vector")
 
         logger.debug(
-            "BasicRAG retrieval: top_k=%s, metadata_filter=%s, similarity_threshold=%s",
+            "BasicRAG retrieval: top_k=%s retrieval_mode=%s weights=%s rerank=%s "
+            "metadata_filter=%s similarity_threshold=%s",
             top_k,
+            opts.retrieval or "vector",
+            opts.weights,
+            opts.rerank,
             metadata_filter,
             similarity_threshold,
         )
@@ -612,8 +616,18 @@ class BasicRAGPipeline(RAGPipeline):
         # Always include sources key (FR-006: consistent response shape)
         response["sources"] = sources
 
+        rerank_strategy = (
+            opts.rerank if isinstance(opts.rerank, str) else ("cross-encoder" if opts.rerank else None)
+        )
         logger.info(
-            f"RAG query completed in {execution_time:.2f}s - {len(retrieved_documents)} docs retrieved"
+            "RAG query completed: elapsed=%.2fs docs=%d retrieval_mode=%s weights=%s "
+            "rerank_strategy=%s rerank_degraded=%s",
+            execution_time,
+            len(retrieved_documents),
+            opts.retrieval or "vector",
+            opts.weights,
+            rerank_strategy,
+            rerank_degraded,
         )
         return response
 

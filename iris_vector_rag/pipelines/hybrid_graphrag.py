@@ -262,9 +262,14 @@ class HybridGraphRAGPipeline(GraphRAGPipeline):
         # FR-006: always include sources key; populate when include_sources=True
         response["sources"] = self._extract_sources(retrieved_documents) if include_sources else []
 
+        rerank_strategy = (
+            opts.rerank if isinstance(opts.rerank, str) else ("cross-encoder" if opts.rerank else None)
+        )
         logger.info(
-            f"Hybrid GraphRAG query completed in {execution_time:.2f}s ({execution_time_ms:.1f}ms) - "
-            f"{len(retrieved_documents)} docs via {retrieval_method}"
+            "Hybrid GraphRAG query completed: elapsed=%.2fs docs=%d retrieval_mode=%s "
+            "rerank_strategy=%s rerank_degraded=%s weights=%s",
+            execution_time, len(retrieved_documents),
+            opts.retrieval or retrieval_method, rerank_strategy, rerank_degraded, opts.weights,
         )
         return response
 

@@ -391,11 +391,14 @@ Answer:"""
             }
         }
 
+        rerank_strategy = (
+            opts.rerank if isinstance(opts.rerank, str) else ("cross-encoder" if opts.rerank else None)
+        )
         logger.info(
-            f"Multi-query RRF complete: {len(queries)} queries, "
-            f"{result['metadata']['raw_result_count']} raw results, "
-            f"{len(fused_results)} final results, "
-            f"{execution_time:.2f}s"
+            "Multi-query RRF complete: queries=%d raw=%d final=%d elapsed=%.2fs "
+            "retrieval_mode=%s rerank_strategy=%s rerank_degraded=%s",
+            len(queries), result['metadata']['raw_result_count'], len(fused_results), execution_time,
+            opts.retrieval or "rrf", rerank_strategy, rerank_degraded,
         )
 
         return result

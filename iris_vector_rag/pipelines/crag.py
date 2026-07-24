@@ -369,7 +369,14 @@ class CRAGPipeline(RAGPipeline):
                 },
             }
 
-            logger.info(f"CRAG: Completed in {execution_time:.2f}s")
+            rerank_strategy = (
+                opts.rerank if isinstance(opts.rerank, str) else ("cross-encoder" if opts.rerank else None)
+            )
+            logger.info(
+                "CRAG: Completed elapsed=%.2fs docs=%d retrieval_mode=%s rerank_strategy=%s rerank_degraded=%s",
+                execution_time, len(corrected_docs),
+                opts.retrieval or "vector", rerank_strategy, rerank_degraded,
+            )
             return result
 
         except Exception as e:
